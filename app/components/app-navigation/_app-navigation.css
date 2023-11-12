@@ -1,0 +1,43 @@
+.app-navigation {
+  display: grid;
+  position: relative;
+  width: 100%;
+  height: var(--page-navigation-height);
+  max-width: var(--page-max-width);
+  align-content: center;
+  background-color: var(--white);
+  border-bottom: 2px solid var(--spring-green);
+  z-index: 1;
+}
+
+.app-navigation--list {
+  display: grid;
+  position: relative;
+  width: 100%;
+  grid-auto-flow: column;
+  column-gap: 16px;
+  justify-content: end;
+  margin: 0;
+  padding: 0;
+}
+
+.app-navigation--list-item {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.app-navigation--list-item--link {
+  color: var(--lavender-floral);
+  text-decoration: none;
+  font-weight: var(--font-weight-regular);
+}
+
+.app-navigation--list-item--link:hover {
+  text-decoration: underline;
+}
+
+.app-navigation--list-item--link--active {
+  text-decoration: underline;
+  color: var(--tropical-indigo);
+  font-weight: var(--font-weight-medium);
+}

@@ -24,6 +24,8 @@ module.exports = {
     /** no vendor prefixes are needed (e.g. webkit, moz) */
     "value-no-vendor-prefix": true,
     /** units must be written in lowercase (e.g. px) */
-    "unit-case": "lower"
+    "unit-case": "lower",
+    /** no empty comments are allowed */
+    "comment-no-empty": true
   }
 }

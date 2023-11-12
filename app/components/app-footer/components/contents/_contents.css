@@ -1,0 +1,58 @@
+.app-footer--contents {
+  display: grid;
+  position: relative;
+  width: 100%;
+  grid-template-columns: max-content;
+  grid-template-rows: max-content;
+  grid-template-areas:
+    "title"
+    "pages";
+  grid-row-gap: 20px;
+  grid-area: contents;
+}
+
+.app-footer--contents--title {
+  grid-area: title;
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.app-footer--contents--list {
+  grid-area: pages;
+  display: grid;
+  position: relative;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  grid-column-gap: 24px;
+  margin: 0;
+  padding: 0;
+}
+
+.app-footer--contents--list-item {
+  display: flex;
+  position: relative;
+  list-style: none;
+  margin: 0;
+}
+
+.app-footer--contents--list-item--link {
+  color: var(--lavender-floral);
+  text-decoration: none;
+  font-weight: var(--font-weight-regular);
+}
+.app-footer--contents--list-item--link:hover {
+  text-decoration: underline;
+}
+
+@media all and (max-width: 689px) {
+  .app-footer--contents {
+    justify-items: center;
+    justify-content: center;
+  }
+
+  .app-footer--contents--list {
+    grid-auto-flow: row;
+    grid-row-gap: 12px;
+    justify-items: center;
+  }
+}

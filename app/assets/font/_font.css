@@ -1,0 +1,75 @@
+:root {
+    --font-family: IBMPlex;
+    --font-weight-regular: 400;
+    --font-weight-text: 450;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+}
+
+/** IBM Plex Regular */
+/*noinspection CssUnknownTarget*/
+
+@font-face {
+    font-family: IBMPlex;
+    src: url("/font/woff2/IBMPlexSans-Regular.woff2") format("woff2"),
+    url("/font/woff/IBMPlexSans-Regular.woff") format("woff");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+/** IBM Plex Text */
+/*noinspection CssUnknownTarget*/
+
+@font-face {
+    font-family: IBMPlex;
+    src: url("/font/woff2/IBMPlexSans-Text.woff2") format("woff2"),
+    url("/font/woff/IBMPlexSans-Text.woff") format("woff");
+    font-style: normal;
+    font-weight: 450;
+    font-display: swap;
+}
+
+/** IBM Plex Medium */
+/*noinspection CssUnknownTarget*/
+
+@font-face {
+    font-family: IBMPlex;
+    src: url("/font/woff2/IBMPlexSans-Medium.woff2") format("woff2"),
+    url("/font/woff/IBMPlexSans-Medium.woff") format("woff");
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+}
+
+/** IBM Plex SemiBold */
+/*noinspection CssUnknownTarget*/
+
+@font-face {
+    font-family: IBMPlex;
+    src: url("/font/woff2/IBMPlexSans-SemiBold.woff2") format("woff2"),
+    url("/font/woff/IBMPlexSans-SemiBold.woff") format("woff");
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+}
+
+/** IBM Plex Bold */
+/*noinspection CssUnknownTarget*/
+
+@font-face {
+    font-family: IBMPlex;
+    src: url("/font/woff2/IBMPlexSans-Bold.woff2") format("woff2"),
+    url("/font/woff/IBMPlexSans-Bold.woff") format("woff");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
+
+
+* {
+    font-family: var(--font-family), sans-serif;
+    font-weight: var(--font-weight-regular);
+}

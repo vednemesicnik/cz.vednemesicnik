@@ -1,0 +1,10 @@
+.app-body {
+  grid-area: body;
+  display: grid;
+  position: relative;
+  width: 100%;
+  min-height: calc(100dvh - var(--app-header-height));
+  grid-template-columns: minmax(auto, var(--page-max-width));
+  justify-content: center;
+  padding: 40px var(--page-side-padding);
+}

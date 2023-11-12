@@ -1,0 +1,41 @@
+.app-footer--social-sites {
+  grid-area: social-sites;
+  display: grid;
+  position: relative;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  justify-self: end;
+  align-self: start;
+}
+
+.app-footer--social-sites--list {
+  display: grid;
+  position: relative;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  margin: 0;
+  padding: 0;
+}
+
+.app-footer--social-sites--list-item {
+  display: flex;
+  position: relative;
+  list-style: none;
+  margin: 0;
+}
+
+.app-footer--social-sites--link {
+  display: flex;
+  position: relative;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  cursor: pointer;
+  fill: var(--black);
+}
+
+@media all and (max-width: 689px) {
+  .app-footer--social-sites {
+    justify-self: center;
+  }
+}

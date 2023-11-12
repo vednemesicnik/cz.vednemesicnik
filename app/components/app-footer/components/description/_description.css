@@ -1,0 +1,42 @@
+.app-footer--description {
+  display: grid;
+  position: relative;
+  grid-auto-flow: row;
+  row-gap: 8px;
+  grid-area: description;
+  align-self: center;
+}
+
+.app-footer--description-sponsor {
+  display: grid;
+  position: relative;
+  grid-auto-flow: row;
+  row-gap: 8px;
+}
+
+.app-footer--description-sponsor--logo {
+  height: 64px;
+}
+
+.app-footer--description-sponsor--text {
+  font-size: 12px;
+  text-decoration: none;
+  margin: 0;
+}
+
+.app-footer--description-text {
+  font-size: 12px;
+  font-weight: 400;
+  margin: 0;
+}
+
+@media all and (max-width: 689px) {
+  .app-footer--description-sponsor {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .app-footer--description-text {
+    text-align: center;
+  }
+}

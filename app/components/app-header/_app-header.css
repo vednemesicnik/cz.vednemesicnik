@@ -1,0 +1,36 @@
+.app-header {
+  grid-area: header;
+  display: grid;
+  position: relative;
+  grid-template-columns: minmax(auto, var(--page-max-width));
+  justify-content: center;
+  justify-items: start;
+  padding: 0 var(--page-side-padding);
+  height: calc(var(--app-header-height) + var(--page-navigation-height));
+}
+
+.app-header--name {
+  display: grid;
+  position: relative;
+  grid-template-columns: max-content max-content;
+  column-gap: 8px;
+  align-items: center;
+  justify-items: start;
+  text-decoration: none;
+  color: var(--eerie-black);
+  font-weight: var(--font-weight-regular);
+  height: var(--app-header-height);
+}
+
+.app-header--heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.app-header--navigation {
+  display: grid;
+  position: relative;
+  width: 100%;
+  height: var(--page-navigation-height);
+}

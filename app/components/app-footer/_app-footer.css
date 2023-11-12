@@ -1,0 +1,35 @@
+.app-footer {
+  grid-area: footer;
+  display: grid;
+  position: relative;
+  width: 100%;
+  grid-template-columns: minmax(auto, var(--page-max-width));
+  justify-content: center;
+  padding: 40px var(--page-side-padding);
+  border-top: 8px solid var(--spring-green)
+}
+
+.app-footer-content {
+  display: grid;
+  position: relative;
+  width: 100%;
+  grid-template-columns: 1fr max-content;
+  grid-template-rows: max-content max-content;
+  grid-template-areas:
+    "contents social-sites"
+    "description description";
+  row-gap: 60px;
+  column-gap: 20px;
+}
+
+@media all and (max-width: 689px) {
+  .app-footer-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(3, max-content);
+    grid-template-areas:
+      "social-sites"
+      "contents"
+      "description";
+    justify-items: center;
+  }
+}

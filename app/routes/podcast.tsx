@@ -3,14 +3,14 @@
 import type { MetaFunction } from "@remix-run/node"
 import { Page } from "~/components/page"
 
-export default function Index() {
+export default function Podcast() {
   return (
     <Page>
-      <h1>Hlavní stránka</h1>
+      <h1>Prázdná stránka</h1>
     </Page>
   )
 }
 
 export const meta: MetaFunction = () => {
-  return [{ title: "Vedneměsíčník" }, { name: "description", content: "Studentské nekritické noviny" }]
+  return [{ title: "Vedneměsíčník | Podcast" }]
 }
