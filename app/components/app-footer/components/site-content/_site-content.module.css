@@ -1,4 +1,4 @@
-.app-footer--contents {
+.container {
   display: grid;
   position: relative;
   width: 100%;
@@ -11,13 +11,13 @@
   grid-area: contents;
 }
 
-.app-footer--contents--title {
+.title {
   grid-area: title;
   font-size: 16px;
   font-weight: var(--font-weight-semibold);
 }
 
-.app-footer--contents--list {
+.list {
   grid-area: pages;
   display: grid;
   position: relative;
@@ -28,29 +28,30 @@
   padding: 0;
 }
 
-.app-footer--contents--list-item {
+.listItem {
   display: flex;
   position: relative;
   list-style: none;
   margin: 0;
 }
 
-.app-footer--contents--list-item--link {
+.link {
   color: var(--lavender-floral);
   text-decoration: none;
   font-weight: var(--font-weight-regular);
-}
-.app-footer--contents--list-item--link:hover {
-  text-decoration: underline;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 @media all and (max-width: 689px) {
-  .app-footer--contents {
+  .container {
     justify-items: center;
     justify-content: center;
   }
 
-  .app-footer--contents--list {
+  .list {
     grid-auto-flow: row;
     grid-row-gap: 12px;
     justify-items: center;

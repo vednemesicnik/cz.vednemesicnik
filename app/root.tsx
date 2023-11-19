@@ -1,16 +1,21 @@
 // noinspection HtmlRequiredTitleElement,JSUnusedGlobalSymbols
 
-import { cssBundleHref } from "@remix-run/css-bundle"
 import type { LinksFunction } from "@remix-run/node"
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react"
-import { links as sizesLinks } from "app/assets/sizes"
-import { links as fontLinks } from "~/assets/font"
-import { links as colorsLinks } from "~/assets/colors"
-import { AppLayout, links as appLayoutLinks } from "app/components/app-layout"
-import { AppHeader, links as appHeaderLinks } from "~/components/app-header"
-import { AppBody, links as appBodyLinks } from "~/components/app-body"
-import { AppFooter, links as appFooterLinks } from "~/components/app-footer"
-import { AppNavigation, links as appNavigationLinks } from "~/components/app-navigation"
+import { cssBundleHref } from "@remix-run/css-bundle"
+
+// App Custom Components
+import { AppLayout } from "~/components/app-layout"
+import { AppHeader } from "~/components/app-header"
+import { AppBody } from "~/components/app-body"
+import { AppFooter } from "~/components/app-footer"
+import { AppNavigation } from "~/components/app-navigation"
+
+// Stand-alone Styles
+import "~/styles/global.module.css"
+import "~/styles/fonts.module.css"
+import "~/styles/sizes.module.css"
+import "~/styles/colors.modules.css"
 
 export default function App() {
   return (
@@ -22,9 +27,8 @@ export default function App() {
         <Links />
       </head>
       <AppLayout>
-        <AppHeader>
-          <AppNavigation />
-        </AppHeader>
+        <AppHeader />
+        <AppNavigation />
         <AppBody>
           <Outlet />
         </AppBody>
@@ -38,14 +42,6 @@ export default function App() {
 }
 
 export const links: LinksFunction = () => [
-  ...sizesLinks(),
-  ...fontLinks(),
-  ...colorsLinks(),
-  ...appLayoutLinks(),
-  ...appHeaderLinks(),
-  ...appNavigationLinks(),
-  ...appBodyLinks(),
-  ...appFooterLinks(),
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   { rel: "alternate icon", href: "/favicon.ico" },

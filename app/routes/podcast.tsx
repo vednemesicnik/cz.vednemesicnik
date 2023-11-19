@@ -6,7 +6,7 @@ import { Page } from "~/components/page"
 export default function Podcast() {
   return (
     <Page>
-      <h1>Prázdná stránka</h1>
+      <h1>Podcast</h1>
     </Page>
   )
 }

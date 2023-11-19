@@ -1,1 +1,1 @@
-export { AppNavigation, links } from "./_app-navigation"
+export { AppNavigation } from "./_app-navigation"

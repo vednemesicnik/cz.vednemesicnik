@@ -1,23 +1,18 @@
-import type { ReactNode } from "react"
-import type { LinksFunction } from "@remix-run/node"
-
-import styles from "./_app-header.css"
+import styles from "./_app-header.module.css"
 import { VdmLogo } from "~/components/vdm-logo"
-import { NavLink } from "@remix-run/react"
+import { Link } from "@remix-run/react"
 
-type Props = {
-  children: ReactNode
-}
-export const AppHeader = ({ children }: Props) => {
+export const AppHeader = () => {
   return (
-    <header className={"app-header"}>
-      <NavLink to={"/"} className={"app-header--name"}>
-        <VdmLogo width={"40px"} height={"40px"} />
-        <h1 className={"app-header--heading"}>Vedneměsíčník</h1>
-      </NavLink>
-      <section className={"app-header--navigation"}>{children}</section>
+    <header className={styles.container}>
+      <section className={styles.content}>
+        <Link to={"/"} className={styles.link}>
+          <VdmLogo className={styles.logo} />
+          <h1 className={styles.name}>Vedneměsíčník</h1>
+        </Link>
+      </section>
     </header>
   )
 }
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }]
+AppHeader.displayName = "AppHeader"

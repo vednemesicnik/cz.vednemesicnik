@@ -1,1 +1,1 @@
-export { AppBody, links } from "./_app-body"
+export { AppBody } from "./_app-body"

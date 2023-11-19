@@ -1,24 +1,18 @@
-import type { LinksFunction } from "@remix-run/node"
-import styles from "./_app-footer.css"
-import { Contents, links as contentsLinks } from "./components/contents"
-import { SocialSites, links as socialSitesLinks } from "./components/social-sites"
-import { Description, links as descriptionLinks } from "./components/description"
+import styles from "./_app-footer.module.css"
+import { SiteContent } from "./components/site-content"
+import { SocialSites } from "./components/social-sites"
+import { ComplementaryInformation } from "./components/complementary-information"
 
 export const AppFooter = () => {
   return (
-    <footer className={"app-footer"}>
-      <section className={"app-footer-content"}>
-        <Contents />
+    <footer className={styles.container}>
+      <section className={styles.content}>
+        <SiteContent />
         <SocialSites />
-        <Description />
+        <ComplementaryInformation />
       </section>
     </footer>
   )
 }
 
-export const links: LinksFunction = () => [
-  ...contentsLinks(),
-  ...socialSitesLinks(),
-  ...descriptionLinks(),
-  { rel: "stylesheet", href: styles },
-]
+AppFooter.displayName = "AppFooter"

@@ -1,1 +1,1 @@
-export * from "./_social-sites"
+export { SocialSites } from "./_social-sites"

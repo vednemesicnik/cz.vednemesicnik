@@ -1,0 +1,27 @@
+.page {
+  display: grid;
+  position: relative;
+  grid-auto-flow: row;
+  align-content: start;
+  height: 100%;
+  width: 100%;
+}
+
+h1 {
+  font-size: 48px;
+  font-weight: var(--font-weight-bold);
+}
+
+p {
+  font-size: 16px;
+  font-weight: var(--font-weight-text);
+}
+
+a {
+  color: var(--lavender-floral);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

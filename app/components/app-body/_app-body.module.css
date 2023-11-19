@@ -1,4 +1,4 @@
-.app-body {
+.container {
   grid-area: body;
   display: grid;
   position: relative;

@@ -1,16 +1,30 @@
-.app-navigation {
+.container {
   display: grid;
   position: relative;
-  width: 100%;
-  height: var(--page-navigation-height);
-  max-width: var(--page-max-width);
-  align-content: center;
+  grid-template-columns: minmax(auto, var(--page-max-width));
+  justify-content: center;
+  padding: 0 var(--page-side-padding);
+  height: var(--app-navigation-height);
   background-color: var(--white);
   border-bottom: 2px solid var(--spring-green);
+}
+
+.sticky {
+  position: fixed;
+  top: 0;
+  width: 100%;
   z-index: 1;
 }
 
-.app-navigation--list {
+.content {
+  display: grid;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+}
+
+.list {
   display: grid;
   position: relative;
   width: 100%;
@@ -21,22 +35,22 @@
   padding: 0;
 }
 
-.app-navigation--list-item {
+.listItem {
   display: inline-block;
   text-decoration: none;
 }
 
-.app-navigation--list-item--link {
+.link {
   color: var(--lavender-floral);
   text-decoration: none;
   font-weight: var(--font-weight-regular);
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
-.app-navigation--list-item--link:hover {
-  text-decoration: underline;
-}
-
-.app-navigation--list-item--link--active {
+.activeLink {
   text-decoration: underline;
   color: var(--tropical-indigo);
   font-weight: var(--font-weight-medium);

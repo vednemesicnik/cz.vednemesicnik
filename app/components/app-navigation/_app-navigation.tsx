@@ -1,34 +1,47 @@
 import { NavLink } from "@remix-run/react"
-import type { LinksFunction } from "@remix-run/node"
-import styles from "./_app-navigation.css"
+import styles from "./_app-navigation.module.css"
+import { combineStyles } from "~/utils/combine-styles"
+import { applyStyles } from "~/utils/apply-styles"
+import { useLayoutEffect, useState } from "react"
 
 export const AppNavigation = () => {
+  const [isSticky, setIsSticky] = useState(false)
+
+  useLayoutEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 60
+      setIsSticky(isScrolled)
+    }
+
+    window.addEventListener("scroll", handleScroll)
+
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
   return (
-    <nav className={"app-navigation"}>
-      <ul className={"app-navigation--list"}>
-        <li className={"app-navigation--list-item"}>
-          <NavLink
-            className={({ isActive }) =>
-              `app-navigation--list-item--link ${isActive ? "app-navigation--list-item--link--active" : ""}`
-            }
-            to={"/archive"}
-          >
-            Archiv
-          </NavLink>
-        </li>
-        <li className={"app-navigation--list-item"}>
-          <NavLink
-            className={({ isActive }) =>
-              `app-navigation--list-item--link ${isActive ? "app-navigation--list-item--link--active" : ""}`
-            }
-            to={"/podcast"}
-          >
-            Podcast
-          </NavLink>
-        </li>
-      </ul>
+    <nav className={combineStyles(styles.container, applyStyles(styles.sticky).if(isSticky))}>
+      <section className={styles.content}>
+        <ul className={styles.list}>
+          <li className={styles.listItem}>
+            <NavLink
+              className={({ isActive }) => combineStyles(styles.link, applyStyles(styles.activeLink).if(isActive))}
+              to={"/archive"}
+            >
+              Archiv
+            </NavLink>
+          </li>
+          <li className={styles.listItem}>
+            <NavLink
+              className={({ isActive }) => combineStyles(styles.link, applyStyles(styles.activeLink).if(isActive))}
+              to={"/podcast"}
+            >
+              Podcast
+            </NavLink>
+          </li>
+        </ul>
+      </section>
     </nav>
   )
 }
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }]
+AppNavigation.displayName = "AppNavigation"

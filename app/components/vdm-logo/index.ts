@@ -1,1 +1,1 @@
-export * from "./_vdm-logo"
+export { VdmLogo } from "./_vdm-logo"

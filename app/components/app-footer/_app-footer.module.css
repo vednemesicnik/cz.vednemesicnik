@@ -1,4 +1,4 @@
-.app-footer {
+.container {
   grid-area: footer;
   display: grid;
   position: relative;
@@ -9,7 +9,7 @@
   border-top: 8px solid var(--spring-green)
 }
 
-.app-footer-content {
+.content {
   display: grid;
   position: relative;
   width: 100%;
@@ -23,7 +23,7 @@
 }
 
 @media all and (max-width: 689px) {
-  .app-footer-content {
+  .content {
     grid-template-columns: 1fr;
     grid-template-rows: repeat(3, max-content);
     grid-template-areas:

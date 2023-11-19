@@ -1,13 +1,12 @@
-import type { LinksFunction } from "@remix-run/node"
-import styles from "./_app-body.css"
 import type { ReactNode } from "react"
+import styles from "./_app-body.module.css"
 
 type Props = {
   children: ReactNode
 }
 
 export const AppBody = ({ children }: Props) => {
-  return <main className={"app-body"}>{children}</main>
+  return <main className={styles.container}>{children}</main>
 }
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }]
+AppBody.displayName = "AppBody"

@@ -1,6 +1,11 @@
-export const GithubIcon = () => {
+type Props = {
+  className?: string
+}
+
+export const GithubIcon = ({ className }: Props) => {
   return (
     <svg
+      className={className}
       width={"100%"}
       height={"100%"}
       viewBox={"0 0 400 400"}
@@ -24,3 +29,5 @@ export const GithubIcon = () => {
     </svg>
   )
 }
+
+GithubIcon.displayName = "GithubIcon"
