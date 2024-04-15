@@ -6,3 +6,5 @@
 /prisma/assets
 /prisma/data.db
 .env
+
+.DS_Store
