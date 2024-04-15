@@ -1,0 +1,21 @@
+.container {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.link {
+  position: relative;
+  color: black;
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  font-size: 14px;
+  text-transform: uppercase;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.active {
+  text-decoration: underline 2px;
+}

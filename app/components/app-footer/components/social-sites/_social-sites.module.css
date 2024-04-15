@@ -4,8 +4,14 @@
   position: relative;
   grid-auto-flow: column;
   grid-auto-columns: max-content;
-  justify-self: end;
+  justify-self: center;
   align-self: start;
+}
+
+@media all and (min-width: 690px) {
+  .container {
+    justify-self: end;
+  }
 }
 
 .list {
@@ -13,14 +19,14 @@
   position: relative;
   grid-auto-flow: column;
   grid-auto-columns: max-content;
+  list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.listItem {
+.list_item {
   display: flex;
   position: relative;
-  list-style: none;
   margin: 0;
 }
 
@@ -34,10 +40,4 @@
   width: 60px;
   height: 60px;
   fill: var(--black);
-}
-
-@media all and (max-width: 689px) {
-  .container {
-    justify-self: center;
-  }
 }

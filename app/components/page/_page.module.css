@@ -1,8 +1,12 @@
 .page {
+  container-name: page;
+  container-type: inline-size;
+
   display: grid;
   position: relative;
   grid-auto-flow: row;
   align-content: start;
+  justify-content: center;
   height: 100%;
   width: 100%;
 }
@@ -18,7 +22,7 @@ p {
 }
 
 a {
-  color: var(--lavender-floral);
+  color: var(--black);
   text-decoration: none;
 
   &:hover {

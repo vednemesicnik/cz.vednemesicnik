@@ -1,15 +1,26 @@
 import styles from "./_app-header.module.css"
-import { VdmLogo } from "~/components/vdm-logo"
-import { Link } from "@remix-run/react"
+import { HomeLink } from "~/components/app-header/components/home-link"
+import { Navigation } from "~/components/app-header/components/navigation"
+import { NavigationItem } from "~/components/app-header/components/navigation-item"
+import type { ReactNode } from "react"
 
-export const AppHeader = () => {
+type Props = {
+  children: ReactNode
+  isInEditMode: boolean
+}
+
+export const AppHeader = ({ children, isInEditMode }: Props) => {
   return (
     <header className={styles.container}>
+      {children}
       <section className={styles.content}>
-        <Link to={"/"} className={styles.link}>
-          <VdmLogo className={styles.logo} />
-          <h1 className={styles.name}>Vedneměsíčník</h1>
-        </Link>
+        <HomeLink isInEditMode={isInEditMode} />
+        <Navigation>
+          <NavigationItem to={"/articles"}>Články</NavigationItem>
+          <NavigationItem to={"/podcasts/vednemesicnik"}>Podcast</NavigationItem>
+          <NavigationItem to={"/archive"}>Archiv</NavigationItem>
+          <NavigationItem to={"/editorial-board"}>Redakce</NavigationItem>
+        </Navigation>
       </section>
     </header>
   )

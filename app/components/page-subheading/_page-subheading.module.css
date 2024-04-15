@@ -1,0 +1,8 @@
+.subheadline {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-medium);
+  color: gray;
+  justify-self: center;
+  margin: 0;
+  text-align: center;
+}

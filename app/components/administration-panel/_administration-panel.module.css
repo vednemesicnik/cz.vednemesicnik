@@ -1,0 +1,29 @@
+.container {
+  display: grid;
+  position: relative;
+
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(2, min-content);
+  grid-template-areas:
+    "user"
+    "navigation";
+  justify-content: stretch;
+  justify-items: center;
+
+  row-gap: 8px;
+
+  padding: 8px var(--page-side-padding);
+  width: 100%;
+  background-color: #ff5c5c;
+  border-radius: 4px;
+}
+
+@media all and (min-width: 690px) {
+  .container {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: min-content;
+    grid-template-areas: "user navigation";
+    justify-content: center;
+    justify-items: stretch;
+  }
+}

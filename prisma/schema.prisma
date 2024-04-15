@@ -1,0 +1,228 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Commands to know:
+// `npx prisma generate` - update TypeScript definitions based on this schema
+// `npx prisma db push` - push the schema changes to the database
+// `npx prisma studio` - open the Studio, which allows you to edit the schema.
+// `npx prisma migrate reset` - reset the migrations to the last version. This will reset the DB and run the seed script
+// `npx prisma migrate dev --name <descriptive-name>` - generate a migration file for any changes you make to the schema (this will be committed).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                            String          @id @default(cuid())
+  email                         String          @unique
+  username                      String          @unique
+  name                          String?
+  createdAt                     DateTime        @default(now())
+  updatedAt                     DateTime        @updatedAt
+  image                         UserImage?
+  password                      Password?
+  roles                         Role[]
+//   sessions      Session[]
+//   connections   Connection[]
+  archivedIssues                ArchivedIssue[]
+  editorialBoardMembers         EditorialBoardMember[]
+  editorialBoardMemberPositions EditorialBoardMemberPosition[]
+  podcasts                      Podcast[]
+  podcastEpisodes               PodcastEpisode[]
+}
+
+model UserImage {
+  id            String          @id @default(cuid())
+  altText       String?
+  contentType   String
+  blob          Bytes
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId        String          @unique
+}
+
+model Password {
+  hash          String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId        String          @unique
+}
+
+model Role {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  description   String          @default("")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  users         User[]
+  permissions   Permission[]
+}
+
+model Permission {
+  id            String          @id @default(cuid())
+  // action: create, read, update, delete
+  action        String
+  // entity: archived-issue, article, category, etc.
+  entity        String
+  // access: own or any
+  access        String
+  description   String          @default("")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  roles         Role[]
+  @@unique([action, entity, access])
+}
+
+// model Session {
+//   id                String      @id @default(cuid())
+//   expirationDate    DateTime
+//   createdAt         DateTime    @default(now())
+//   updatedAt         DateTime    @updatedAt
+//   user              User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+//   userId            String
+//   // non-unique foreign key
+//   @@index([userId])
+// }
+
+// model Connection {
+//   id            String      @id @default(cuid())
+//   providerName  String
+//   providerId    String
+//   createdAt     DateTime    @default(now())
+//   updatedAt     DateTime    @updatedAt
+//   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+//   userId        String
+//   @@unique([providerName, providerId])
+// }
+
+model ArchivedIssue {
+  id            String              @id @default(cuid())
+  label         String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  publishedAt   DateTime?
+  published     Boolean             @default(false)
+  cover         ArchivedIssueCover?
+  pdf           ArchivedIssuePDF?
+  author        User                @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId      String
+
+  // non-unique foreign key
+  @@index([authorId])
+}
+
+model ArchivedIssueCover {
+  id            String          @id @default(cuid())
+  altText       String
+  contentType   String
+  blob          Bytes
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  issue         ArchivedIssue   @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  issueId       String          @unique
+}
+
+model ArchivedIssuePDF {
+  id            String          @id @default(cuid())
+  fileName      String          @unique
+  contentType   String
+  blob          Bytes
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  issue         ArchivedIssue   @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  issueId       String          @unique
+}
+
+model EditorialBoardMemberPosition {
+  id            String                  @id @default(cuid())
+  key           String                  @unique
+  label         String                  @default("")
+  order         Int                     @unique
+  description   String                  @default("")
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  members       EditorialBoardMember[]
+  author        User                    @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId      String
+
+  // non-unique foreign key
+  @@index([authorId])
+}
+
+model EditorialBoardMember {
+  id            String                          @id @default(cuid())
+  name          String
+  positions     EditorialBoardMemberPosition[]
+  createdAt     DateTime                        @default(now())
+  updatedAt     DateTime                        @updatedAt
+  author        User                            @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId      String
+
+  // non-unique foreign key
+  @@index([authorId])
+}
+
+model Podcast {
+  id            String            @id @default(cuid())
+  slug          String            @unique
+  title         String
+  description   String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  episodes      PodcastEpisode[]
+  cover         PodcastCover?
+  author        User              @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId      String
+
+  // non-unique foreign key
+  @@index([authorId])
+}
+
+model PodcastCover {
+  id            String          @id @default(cuid())
+  altText       String
+  contentType   String
+  blob          Bytes
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  podcast       Podcast         @relation(fields: [podcastId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  podcastId     String          @unique
+}
+
+model PodcastEpisode {
+  id            String                @id @default(cuid())
+  slug          String                @unique
+  title         String
+  description   String
+  links         PodcastEpisodeLink[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  publishedAt   DateTime?
+  published     Boolean               @default(false)
+  podcast       Podcast               @relation(fields: [podcastId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  podcastId     String
+  author        User                  @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId      String
+
+  // non-unique foreign key
+  @@index([podcastId])
+  @@index([authorId])
+}
+
+model PodcastEpisodeLink {
+  id            String          @id @default(cuid())
+  url           String
+  label         String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  episode       PodcastEpisode  @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  episodeId     String
+
+  // non-unique foreign key
+  @@index([episodeId])
+}

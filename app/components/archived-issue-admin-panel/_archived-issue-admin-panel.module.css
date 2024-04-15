@@ -1,0 +1,11 @@
+.admin_panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 8px;
+  margin-top: 16px;
+}
+
+.delete_button_wrapper {
+  display: grid;
+  grid-template-columns: 1fr;
+}

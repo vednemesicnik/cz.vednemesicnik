@@ -1,6 +1,8 @@
 :root {
-  --app-header-height: 60px;
+  /*--app-header-height: 64px;*/
   --app-navigation-height: 40px;
   --page-max-width: 1440px;
-  --page-side-padding: 20px;
+  --page-side-padding: 24px;
+  --page-top-padding: 40px;
+  --page-bottom-padding: 80px;
 }

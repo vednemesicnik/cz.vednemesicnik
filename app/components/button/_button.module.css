@@ -1,0 +1,39 @@
+.button {
+  display: grid;
+  position: relative;
+  grid-template-columns: 1fr;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px 16px;
+  justify-items: center;
+  border-radius: 4px;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.primary {
+  background-color: black;
+
+  &:hover {
+    background-color: darkslategray;
+  }
+
+  &:disabled {
+    background-color: darkgray;
+  }
+}
+
+.danger {
+  background-color: crimson;
+
+  &:hover {
+    background-color: darkred;
+  }
+
+  &:disabled {
+    background-color: darkgray;
+  }
+}

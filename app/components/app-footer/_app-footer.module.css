@@ -6,30 +6,35 @@
   grid-template-columns: minmax(auto, var(--page-max-width));
   justify-content: center;
   padding: 40px var(--page-side-padding);
-  border-top: 8px solid var(--spring-green)
+  border-top: 8px solid var(--spring-green);
+}
+
+.edit_mode {
+  border-color: #ff5c5c;
 }
 
 .content {
   display: grid;
   position: relative;
   width: 100%;
-  grid-template-columns: 1fr max-content;
-  grid-template-rows: max-content max-content;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(3, max-content);
   grid-template-areas:
-    "contents social-sites"
-    "description description";
+    "social-sites"
+    "contents"
+    "description";
+  justify-items: center;
   row-gap: 60px;
   column-gap: 20px;
 }
 
-@media all and (max-width: 689px) {
+@media all and (min-width: 690px) {
   .content {
-    grid-template-columns: 1fr;
-    grid-template-rows: repeat(3, max-content);
+    grid-template-columns: 1fr max-content;
+    grid-template-rows: max-content max-content;
     grid-template-areas:
-      "social-sites"
-      "contents"
-      "description";
-    justify-items: center;
+      "contents social-sites"
+      "description description";
+    justify-items: stretch;
   }
 }

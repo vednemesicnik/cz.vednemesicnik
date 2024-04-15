@@ -1,11 +1,18 @@
 // noinspection JSUnusedGlobalSymbols
 
 import type { MetaFunction } from "@remix-run/node"
+
 import { Page } from "~/components/page"
+import { PageHeading } from "~/components/page-heading"
+
+export const meta: MetaFunction = () => {
+  return [{ title: "Vedneměsíčník | Spolek" }, { name: "description", content: "O spolku Vedneměsíčník, z. s." }]
+}
 
 export default function Organization() {
   return (
     <Page>
+      <PageHeading>Spolek</PageHeading>
       <h1>Vedneměsíčník, z. s.</h1>
       <p>
         Spolek Vedneměsíčník, který vznikl v říjnu roku 2010, své cíle realizuje především publikováním časopisu
@@ -27,8 +34,4 @@ export default function Organization() {
       </ul>
     </Page>
   )
-}
-
-export const meta: MetaFunction = () => {
-  return [{ title: "Vedneměsíčník | Spolek" }]
 }

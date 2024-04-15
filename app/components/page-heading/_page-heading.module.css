@@ -1,0 +1,6 @@
+.headline {
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  margin: 48px 0;
+}

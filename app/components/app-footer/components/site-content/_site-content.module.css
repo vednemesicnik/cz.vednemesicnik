@@ -9,6 +9,15 @@
     "pages";
   grid-row-gap: 20px;
   grid-area: contents;
+  justify-items: center;
+  justify-content: center;
+}
+
+@media all and (min-width: 690px) {
+  .container {
+    justify-content: start;
+    justify-items: start;
+  }
 }
 
 .title {
@@ -24,33 +33,22 @@
   grid-auto-flow: column;
   grid-auto-columns: max-content;
   grid-column-gap: 24px;
+  list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.listItem {
+.list_item {
   display: flex;
   position: relative;
-  list-style: none;
   margin: 0;
 }
 
 .link {
-  color: var(--lavender-floral);
-  text-decoration: none;
   font-weight: var(--font-weight-regular);
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
 @media all and (max-width: 689px) {
-  .container {
-    justify-items: center;
-    justify-content: center;
-  }
-
   .list {
     grid-auto-flow: row;
     grid-row-gap: 12px;

@@ -1,0 +1,27 @@
+.link {
+  grid-area: home-link;
+  display: grid;
+  position: relative;
+  grid-template-columns: max-content max-content;
+  column-gap: 24px;
+  align-items: center;
+  justify-items: start;
+  text-decoration: none;
+  color: var(--eerie-black);
+  font-weight: var(--font-weight-regular);
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.name {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+}

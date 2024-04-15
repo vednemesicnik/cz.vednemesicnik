@@ -2,10 +2,9 @@
   display: grid;
   position: relative;
   grid-template-columns: 1fr;
-  grid-template-rows: max-content var(--app-navigation-height) 1fr max-content;
+  grid-template-rows: max-content 1fr max-content;
   grid-template-areas:
     "header"
-    "navigation"
     "body"
     "footer";
   margin: 0;
