@@ -2,7 +2,7 @@
 
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node"
 import { json } from "@remix-run/node"
-import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "@remix-run/react"
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "@remix-run/react"
 import { cssBundleHref } from "@remix-run/css-bundle"
 import { HoneypotProvider } from "remix-utils/honeypot/react"
 import { AuthenticityTokenProvider } from "remix-utils/csrf/react"
@@ -88,7 +88,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   )
 }
 
-export default function App() {
+export function Layout({ children }: { children: React.ReactNode }) {
   const data = useLoaderData<typeof loader>()
 
   const isAuthorized = data.isAuthorized
@@ -115,16 +115,17 @@ export default function App() {
             <AppHeader isInEditMode={isAuthorized}>
               {isAuthorized ? <AdministrationPanel user={user} /> : null}
             </AppHeader>
-            <AppBody>
-              <Outlet />
-            </AppBody>
+            <AppBody>{children}</AppBody>
             <AppFooter isInEditMode={isAuthorized} />
             <ScrollRestoration />
             <Scripts />
-            <LiveReload />
           </AppLayout>
         </AuthenticityTokenProvider>
       </HoneypotProvider>
     </html>
   )
+}
+
+export default function App() {
+  return <Outlet />
 }
