@@ -8,6 +8,7 @@ import { createAuthSession, getAuthorization, signIn } from "~/utils/auth.server
 import { Button } from "~/components/button"
 import { HoneypotInputs } from "remix-utils/honeypot/react"
 import { checkHoneypot } from "~/utils/honeypot.server"
+import { useHydrated } from "~/utils/use-hydrated"
 
 export const meta: MetaFunction = () => {
   return [{ title: "Vedneměsíčník | Administrace - přihlášení" }]
@@ -47,13 +48,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 }
 
 export default function AdministrationSignIn() {
+  const { isHydrated } = useHydrated()
   const actionData = useActionData<typeof action>()
 
   return (
     <Page>
       <h1>Administrace - přihlášení</h1>
 
-      <Form method={"post"}>
+      <Form method={"post"} noValidate={isHydrated}>
         {actionData?.errors?.signIn ? <p>{actionData.errors.signIn}</p> : null}
 
         <HoneypotInputs />
