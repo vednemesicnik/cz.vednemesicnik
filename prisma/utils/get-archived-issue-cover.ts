@@ -11,7 +11,7 @@ export type ArchiveIssueCover = {
   blob: Buffer
 }
 export const getArchivedIssueCover = async ({ altText, filePath }: Args): Promise<ArchiveIssueCover> => {
-  if (!filePath.endsWith(".png")) throw new Error(`File ${filePath} is not a PNG file.`)
+  if (!filePath.endsWith(".jpg")) throw new Error(`File ${filePath} is not a JPG file.`)
 
   return {
     altText,
