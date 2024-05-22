@@ -1,18 +1,17 @@
-import { combineStyles } from "~/utils/combine-styles"
 import styles from "./_button.module.css"
 import type { ComponentProps } from "react"
-import { applyStyles } from "~/utils/apply-styles"
+import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
 
 type Props = ComponentProps<"button"> & {
   variant?: "primary" | "danger"
 }
 export const Button = ({ children, className, variant = "primary", ...rest }: Props) => (
   <button
-    className={combineStyles(
+    className={combineClasses(
       styles.button,
-      applyStyles(styles.primary).if(variant === "primary"),
-      applyStyles(styles.danger).if(variant === "danger"),
-      className
+      applyClasses(styles.primary).if(variant === "primary"),
+      applyClasses(styles.danger).if(variant === "danger"),
+      className ?? ""
     )}
     {...rest}
   >

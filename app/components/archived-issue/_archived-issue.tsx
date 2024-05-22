@@ -1,7 +1,6 @@
 import styles from "./_archived-issue.module.css"
-import { combineStyles } from "~/utils/combine-styles"
-import { applyStyles } from "~/utils/apply-styles"
 import { Link } from "@remix-run/react"
+import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
 
 type Props = {
   coverAlt: string
@@ -17,7 +16,7 @@ export const ArchivedIssue = ({ coverAlt, coverSrc, pdfSrc, label, isGhosted = f
       to={pdfSrc}
       title={label}
       reloadDocument={true}
-      className={combineStyles(styles.container, applyStyles(styles.ghosted).if(isGhosted))}
+      className={combineClasses(styles.container, applyClasses(styles.ghosted).if(isGhosted))}
     >
       <figure className={styles.content}>
         <img src={coverSrc} alt={coverAlt} className={styles.cover} loading={"lazy"} width={"220"} height={"300"} />
