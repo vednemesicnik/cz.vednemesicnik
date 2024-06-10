@@ -6,7 +6,7 @@ import { combineClasses } from "@liborgabrhel/style-utils"
 type Props = ComponentProps<typeof Link>
 
 export const LinkButton = ({ children, className, ...rest }: Props) => (
-  <Link className={combineClasses(styles.link_button, className ?? "")} {...rest}>
+  <Link className={combineClasses(styles.link_button, className)} {...rest}>
     {children}
   </Link>
 )

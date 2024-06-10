@@ -11,7 +11,7 @@ export const Button = ({ children, className, variant = "primary", ...rest }: Pr
       styles.button,
       applyClasses(styles.primary).if(variant === "primary"),
       applyClasses(styles.danger).if(variant === "danger"),
-      className ?? ""
+      className
     )}
     {...rest}
   >

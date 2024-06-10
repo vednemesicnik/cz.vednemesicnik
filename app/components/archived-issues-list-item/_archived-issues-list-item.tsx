@@ -6,7 +6,7 @@ type Props = ComponentProps<"li">
 
 export const ArchivedIssuesListItem = ({ children, className, ...rest }: Props) => {
   return (
-    <li className={combineClasses(styles.list_item, className ?? "")} {...rest}>
+    <li className={combineClasses(styles.list_item, className)} {...rest}>
       {children}
     </li>
   )
