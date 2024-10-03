@@ -1,0 +1,7 @@
+.divider {
+  width: 100%;
+  height: 4px;
+  background-image: var(--rose-pink-coral-gradient);
+  margin: 24px 0;
+  border: none;
+}

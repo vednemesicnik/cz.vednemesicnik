@@ -1,13 +1,15 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { MetaFunction } from "@remix-run/node"
-import { json } from "@remix-run/node"
+import { json, type MetaFunction } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
 
-import { prisma } from "~/utils/db.server"
-
+import { Headline } from "app/components/headline"
+import { Contact } from "~/components/contact"
+import { Divider } from "~/components/divider"
+import { Group } from "~/components/group"
 import { Page } from "~/components/page"
-import { PageHeading } from "app/components/page-heading"
+import { Paragraph } from "~/components/paragraph"
+import { prisma } from "~/utils/db.server"
 
 export const meta: MetaFunction = () => {
   return [{ title: "Vedneměsíčník | Redakce" }]
@@ -42,25 +44,22 @@ export default function EditorialBoard() {
 
   return (
     <Page>
-      <PageHeading>Redakce</PageHeading>
-      <h1>Tak to je naše redakce</h1>
-      <p>Prosím, seznamte se. Je nás hodně.</p>
+      <Headline>Tak to je naše redakce</Headline>
+      <Paragraph>Prosím, seznamte se. Je nás hodně.</Paragraph>
 
       {data.editorialBoardMemberPositions.map((position) => {
         return (
-          <p key={position.id}>
-            <strong>{position.label}:</strong>
-            <br />
-            {position.members.length === 0 ? "..." : position.members.map((member) => member.name).join(", ")}
-          </p>
+          <Group key={position.id} label={position.label}>
+            <Paragraph>
+              {position.members.length === 0 ? "..." : position.members.map((member) => member.name).join(", ")}
+            </Paragraph>
+          </Group>
         )
       })}
 
-      <p>
-        <strong>kontakt:</strong>
-        <br />
-        <a href="mailto:redakce@vednemesicnik.cz">redakce@vednemesicnik.cz</a>
-      </p>
+      <Divider />
+
+      <Contact label={"kontakt"} email={"redakce@vednemesicnik.cz"} />
     </Page>
   )
 }

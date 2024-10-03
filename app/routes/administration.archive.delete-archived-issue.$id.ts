@@ -1,10 +1,10 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { ActionFunctionArgs } from "@remix-run/node"
-import { redirect } from "@remix-run/node"
-import type { ParamParseKey } from "@remix-run/router"
-import { prisma } from "~/utils/db.server"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
+import { type ParamParseKey } from "@remix-run/router"
+
 import { validateCSRF } from "~/utils/csrf.server"
+import { prisma } from "~/utils/db.server"
 
 const ROUTE = "archive/delete-issue/:id"
 type RouteParams = Record<ParamParseKey<typeof ROUTE>, string>

@@ -1,9 +1,9 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { MetaFunction } from "@remix-run/node"
+import { type MetaFunction } from "@remix-run/node"
 
+import { Headline } from "app/components/headline"
 import { Page } from "~/components/page"
-import { PageHeading } from "app/components/page-heading"
 
 export const meta: MetaFunction = () => {
   return [{ title: "Vedneměsíčník" }, { name: "description", content: "Studentské nekritické noviny" }]
@@ -12,7 +12,7 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   return (
     <Page>
-      <PageHeading>Hlavní stránka</PageHeading>
+      <Headline>Hlavní stránka</Headline>
     </Page>
   )
 }

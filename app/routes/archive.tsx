@@ -1,21 +1,18 @@
 // noinspection JSUnusedGlobalSymbols,TypeScriptValidateJSTypes
 
+import { json, type LinksFunction, type LoaderFunctionArgs, type MetaFunction, redirect } from "@remix-run/node"
 import { useLoaderData, useRouteError, useSearchParams } from "@remix-run/react"
-import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node"
-import { json, redirect } from "@remix-run/node"
 
-import { Page } from "~/components/page"
-import { ArchivedIssuesList } from "app/components/archived-issues-list"
-import { ArchivedIssuesListItem } from "app/components/archived-issues-list-item"
 import { ArchivedIssue } from "~/components/archived-issue"
-
-import { prisma } from "~/utils/db.server"
+import { ArchivedIssuesList } from "~/components/archived-issues-list"
+import { ArchivedIssuesListItem } from "~/components/archived-issues-list-item"
+import { LIMIT_PARAM, LoadMoreContent } from "~/components/load-more-content"
+import { Page } from "~/components/page"
 import { getAuthorization } from "~/utils/auth.server"
-import { getArchivedIssuePdfSrc } from "~/utils/get-archived-issue-pdf-src"
+import { prisma } from "~/utils/db.server"
 import { getArchivedIssueCoverSrc } from "~/utils/get-archived-issue-cover-src"
+import { getArchivedIssuePdfSrc } from "~/utils/get-archived-issue-pdf-src"
 import { preloadFonts } from "~/utils/preload-fonts"
-import { LoadMoreContent, LIMIT_PARAM } from "~/components/load-more-content"
-import { PageHeading } from "app/components/page-heading"
 
 export const meta: MetaFunction = () => {
   return [{ title: "Vedneměsíčník | Archiv" }, { name: "description", content: "Archiv čísel Vedneměsíčníku" }]
@@ -74,7 +71,6 @@ export default function Archive() {
 
   return (
     <Page>
-      <PageHeading>Archiv</PageHeading>
       <ArchivedIssuesList>
         {archivedIssues.map((issue) => {
           const { id, cover, pdf, label, published } = issue

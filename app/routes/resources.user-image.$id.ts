@@ -1,8 +1,9 @@
 // noinspection JSUnusedGlobalSymbols,TypeScriptValidateJSTypes
 
+import { type LoaderFunctionArgs } from "@remix-run/node"
+import { type ParamParseKey } from "@remix-run/router"
+
 import { prisma } from "~/utils/db.server"
-import type { LoaderFunctionArgs } from "@remix-run/node"
-import type { ParamParseKey } from "@remix-run/router"
 
 const ROUTE = "resources/user-image/:id"
 type RouteParams = Record<ParamParseKey<typeof ROUTE>, string>

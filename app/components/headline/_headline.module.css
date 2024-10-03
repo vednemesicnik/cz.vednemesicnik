@@ -1,0 +1,8 @@
+.headline {
+  margin: 0 0 2rem 0;
+  font-size: 2.25rem;
+  font-weight: var(--font-weight-bold);
+  color: transparent;
+  background-image: var(--rose-pink-coral-gradient);
+  background-clip: text;
+}

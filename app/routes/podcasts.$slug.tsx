@@ -1,18 +1,18 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node"
-import { json } from "@remix-run/node"
-import { Page } from "~/components/page"
-import { prisma } from "~/utils/db.server"
+import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
-import { PageHeading } from "app/components/page-heading"
+import { type ParamParseKey } from "@remix-run/router"
+
+import { Headline } from "app/components/headline"
+import { Page } from "~/components/page"
 import { Podcast } from "~/components/podcast"
-import { PodcastTitle } from "~/components/podcast-title"
-import { PodcastSubtitle } from "~/components/podcast-subtitle"
 import { PodcastCover } from "~/components/podcast-cover"
 import { PodcastEpisodeList } from "~/components/podcast-episode-list"
 import { PodcastEpisodeListItem } from "~/components/podcast-episode-list-item"
-import type { ParamParseKey } from "@remix-run/router"
+import { PodcastSubtitle } from "~/components/podcast-subtitle"
+import { PodcastTitle } from "~/components/podcast-title"
+import { prisma } from "~/utils/db.server"
 import { getPodcastCoverSrc } from "~/utils/get-podcast-cover-src"
 
 const ROUTE = "podcasts/:slug"
@@ -65,7 +65,7 @@ export default function PodcastPage() {
   if (podcast === null) {
     return (
       <Page>
-        <PageHeading>Podcast</PageHeading>
+        <Headline>Podcast</Headline>
         <p>Podcast nebyl nalezen.</p>
       </Page>
     )
@@ -76,7 +76,7 @@ export default function PodcastPage() {
 
   return (
     <Page>
-      <PageHeading>Podcast</PageHeading>
+      <Headline>Podcast</Headline>
 
       <Podcast>
         <PodcastCover src={coverSrc} alt={coverAlt} />

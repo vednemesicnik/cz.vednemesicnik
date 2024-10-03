@@ -1,11 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Page } from "~/components/page"
-import type { MetaFunction } from "@remix-run/node"
+import { type MetaFunction } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
+
 import { editArchivedIssueAction } from "~/components/edit-archived-issue-action"
 import { EditArchivedIssueForm } from "~/components/edit-archived-issue-form"
 import { editArchivedIssueLoader } from "~/components/edit-archived-issue-loader"
+import { Page } from "~/components/page"
 
 export const meta: MetaFunction = () => {
   return [{ title: "Vedneměsíčník | Archiv - Upravit výtisk" }]

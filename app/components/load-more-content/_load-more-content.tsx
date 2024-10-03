@@ -1,6 +1,8 @@
-import { Button } from "~/components/button"
-import style from "./_load-more-content.module.css"
 import { Form, useNavigation } from "@remix-run/react"
+
+import { Button } from "~/components/button"
+
+import style from "./_load-more-content.module.css"
 
 export const LIMIT_PARAM = "limit"
 

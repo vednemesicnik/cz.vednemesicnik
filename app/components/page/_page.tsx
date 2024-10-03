@@ -1,4 +1,5 @@
-import type { ReactNode } from "react"
+import { type ReactNode } from "react"
+
 import styles from "./_page.module.css"
 
 type Props = {
@@ -8,5 +9,3 @@ type Props = {
 export const Page = ({ children }: Props) => {
   return <section className={styles.page}>{children}</section>
 }
-
-Page.displayName = "Page"

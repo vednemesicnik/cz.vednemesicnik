@@ -1,37 +1,57 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { MetaFunction } from "@remix-run/node"
+import { type MetaFunction } from "@remix-run/node"
 
+import { Headline } from "app/components/headline"
+import { Divider } from "~/components/divider"
+import { List } from "~/components/list"
+import { ListItem } from "~/components/list-item"
 import { Page } from "~/components/page"
-import { PageHeading } from "~/components/page-heading"
+import { Paragraph } from "~/components/paragraph"
 
 export const meta: MetaFunction = () => {
-  return [{ title: "Vedneměsíčník | Spolek" }, { name: "description", content: "O spolku Vedneměsíčník, z. s." }]
+  return [
+    { title: "Vedneměsíčník | Spolek" },
+    { name: "description", content: "O spolku Vedneměsíčník, z. s." },
+  ]
 }
 
 export default function Organization() {
   return (
     <Page>
-      <PageHeading>Spolek</PageHeading>
-      <h1>Vedneměsíčník, z. s.</h1>
-      <p>
-        Spolek Vedneměsíčník, který vznikl v říjnu roku 2010, své cíle realizuje především publikováním časopisu
-        Vedneměsíčník, který vychází v množství nejvýše čtyř čísel za rok, každé v nákladu cca 500 výtisků. Tento
-        časopis je distribuován zdarma zejména v Literární kavárně Měsíc ve dne, na českobudějovických středních
-        školách, v klubech, čajovnách a v kině Kotva. Každé číslo je pak archivováno v Jihočeské vědecké knihovně v
-        oddělení regionálního tisku. Mezi doplňkové aktivity spolku patří organizování různých společenských a
-        kulturních akcí pro středoškolské studenty (literárních večerů a autorských čtení).
-      </p>
-      <p>Vedneměsíčník vychází za laskavé podpory:</p>
-      <ul>
-        <li>Literární kavárna Měsíc ve dne</li>
-        <li>
-          <a href="https://www.bigy-cb.cz/bigy/">Biskupské gymnázium J. N. Neumanna v Č. Budějovicích</a>
-        </li>
-        <li>
+      <Headline>Vedneměsíčník, z.&nbsp;s.</Headline>
+      <Paragraph>
+        Spolek Vedneměsíčník, který vznikl v říjnu roku 2010, své cíle realizuje
+        především publikováním časopisu Vedneměsíčník, který vychází v množství
+        nejvýše čtyř čísel za rok, každé v nákladu cca 500 výtisků.
+      </Paragraph>
+      <Paragraph>
+        Tento časopis je distribuován zdarma zejména v Literární kavárně Měsíc
+        ve dne, na českobudějovických středních školách, v klubech, čajovnách a
+        v kině Kotva.
+      </Paragraph>
+      <Paragraph>
+        Každé číslo je pak archivováno v Jihočeské vědecké knihovně v oddělení
+        regionálního tisku.
+      </Paragraph>
+      <Paragraph>
+        Mezi doplňkové aktivity spolku patří organizování různých společenských
+        a kulturních akcí pro středoškolské studenty (literárních večerů a
+        autorských čtení).
+      </Paragraph>
+      <Divider />
+      <Paragraph>Vedneměsíčník vychází za laskavé podpory:</Paragraph>
+      <List>
+        <ListItem>Literární kavárna Měsíc ve dne</ListItem>
+        <ListItem>
+          <a href="https://www.bigy-cb.cz/bigy/">
+            Biskupské gymnázium J. N. Neumanna v Č. Budějovicích
+          </a>
+        </ListItem>
+        <ListItem>
           <a href="https://www.fokus-cb.cz/">Fokus České Budějovice</a>
-        </li>
-      </ul>
+        </ListItem>
+      </List>
     </Page>
   )
 }

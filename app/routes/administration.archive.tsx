@@ -1,9 +1,7 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node"
-import { redirect, json } from "@remix-run/node"
+import { json, type LoaderFunctionArgs, type MetaFunction, redirect } from "@remix-run/node"
 import { NavLink, Outlet } from "@remix-run/react"
 
 import { Page } from "~/components/page"
-
 import { getAuthorization } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
 

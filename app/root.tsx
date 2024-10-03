@@ -1,27 +1,21 @@
 // noinspection HtmlRequiredTitleElement,JSUnusedGlobalSymbols
 
-import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node"
-import { json } from "@remix-run/node"
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "@remix-run/react"
 import { cssBundleHref } from "@remix-run/css-bundle"
-import { HoneypotProvider } from "remix-utils/honeypot/react"
+import { json, type LinksFunction, type LoaderFunctionArgs } from "@remix-run/node"
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "@remix-run/react"
 import { AuthenticityTokenProvider } from "remix-utils/csrf/react"
+import { HoneypotProvider } from "remix-utils/honeypot/react"
 
-// Utils
-import { prisma } from "~/utils/db.server"
-import { getAuthorization } from "~/utils/auth.server"
-import { honeypot } from "~/utils/honeypot.server"
-import { csrf } from "~/utils/csrf.server"
-
-// App Custom Components
-import { AppLayout } from "~/components/app-layout"
-import { AppHeader } from "~/components/app-header"
+import { AdministrationPanel, type AdministrationPanelUser } from "~/components/administration-panel"
 import { AppBody } from "~/components/app-body"
 import { AppFooter } from "~/components/app-footer"
-import type { AdministrationPanelUser } from "~/components/administration-panel"
-import { AdministrationPanel } from "~/components/administration-panel"
+import { AppHeader } from "~/components/app-header"
+import { AppLayout } from "~/components/app-layout"
+import { getAuthorization } from "~/utils/auth.server"
+import { csrf } from "~/utils/csrf.server"
+import { prisma } from "~/utils/db.server"
+import { honeypot } from "~/utils/honeypot.server"
 
-// Stand-alone Styles
 import "~/styles/global.module.css"
 import "~/styles/fonts.module.css"
 import "~/styles/sizes.module.css"

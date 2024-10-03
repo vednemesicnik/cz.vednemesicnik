@@ -1,11 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Page } from "~/components/page"
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node"
-import { redirect, json } from "@remix-run/node"
-import { getAuthorization } from "~/utils/auth.server"
+import { json, type LoaderFunctionArgs, type MetaFunction, redirect } from "@remix-run/node"
 import { NavLink, Outlet } from "@remix-run/react"
-import { PageHeading } from "~/components/page-heading"
+
+import { Headline } from "app/components/headline"
+import { Page } from "~/components/page"
+import { getAuthorization } from "~/utils/auth.server"
 
 export const meta: MetaFunction = () => {
   return [{ title: "Vedneměsíčník | Administrace" }]
@@ -25,7 +25,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function Administration() {
   return (
     <Page>
-      <PageHeading>Administrace</PageHeading>
+      <Headline>Administrace</Headline>
       <NavLink to={"/administration/archive"}>Archiv</NavLink>
       <NavLink to={"/administration/articles"}>Články</NavLink>
       <NavLink to={"/administration/podcast"}>Podcast</NavLink>

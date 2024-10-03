@@ -1,10 +1,11 @@
 import type { ReactNode } from "react"
-import styles from "./_page-heading.module.css"
+
+import styles from "./_headline.module.css"
 
 type Props = {
   children: ReactNode
 }
 
-export const PageHeading = ({ children }: Props) => {
+export const Headline = ({ children }: Props) => {
   return <h1 className={styles.headline}>{children}</h1>
 }

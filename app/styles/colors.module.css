@@ -1,7 +1,6 @@
 /** Light theme */
 
 :root {
-  --spring-green: #5cffa3ff;
   --eerie-black: #1a1a1aff;
   --black: #000000ff;
   --white: #ffffffff;
@@ -9,6 +8,21 @@
   --lavender-floral: #b681ffff;
   --tropical-indigo: #9b7be4ff;
   --green-blue: #0068b8ff;
+
+  --spring-green: #5cffa3ff;
+  --light-green: #4ce88fff;
+  --rose-pink: #ff5cccff;
+  --coral: #ff7f50ff;
+  --ruddy-blue: #5ca3ffff;
+
+  --text-gray: #4f4f4fff;
+
+  --rose-pink-coral-gradient: linear-gradient(101deg, #ff5ccc 0%, #ff7f50 100%);
+  --ruddy-blue-spring-green-gradient: linear-gradient(
+    101deg,
+    #5ca3ff 0%,
+    #5cffa3 100%
+  );
 }
 
 /** Dark theme */

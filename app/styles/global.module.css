@@ -14,3 +14,16 @@
   white-space: nowrap;
   border: 0;
 }
+
+a {
+  font-weight: var(--font-weight-regular);
+  color: var(--black);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+
+  &:hover {
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--rose-pink);
+  }
+}

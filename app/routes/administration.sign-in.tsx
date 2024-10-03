@@ -1,12 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Page } from "~/components/page"
-import { json, redirect } from "@remix-run/node"
-import type { LoaderFunctionArgs, MetaFunction, ActionFunctionArgs } from "@remix-run/node"
+import { type ActionFunctionArgs, json, type LoaderFunctionArgs, type MetaFunction, redirect } from "@remix-run/node"
 import { Form, useActionData } from "@remix-run/react"
-import { createAuthSession, getAuthorization, signIn } from "~/utils/auth.server"
-import { Button } from "~/components/button"
 import { HoneypotInputs } from "remix-utils/honeypot/react"
+
+import { Button } from "~/components/button"
+import { Page } from "~/components/page"
+import { createAuthSession, getAuthorization, signIn } from "~/utils/auth.server"
 import { checkHoneypot } from "~/utils/honeypot.server"
 import { useHydrated } from "~/utils/use-hydrated"
 
