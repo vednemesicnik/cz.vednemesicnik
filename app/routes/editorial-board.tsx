@@ -12,29 +12,35 @@ import { Paragraph } from "~/components/paragraph"
 import { prisma } from "~/utils/db.server"
 
 export const meta: MetaFunction = () => {
-  return [{ title: "Vedneměsíčník | Redakce" }]
+  return [
+    { title: "Vedneměsíčník | Redakce" },
+    {
+      name: "description",
+      content: "Seznam členů a kontakt na redakci Vedneměsíčníku.",
+    },
+  ]
 }
 
 export const loader = async () => {
-  // get editorial board member positions where name is chief-editor, editor and advisor
-  const editorialBoardMemberPositions = await prisma.editorialBoardMemberPosition.findMany({
-    orderBy: {
-      order: "asc",
-    },
-    select: {
-      id: true,
-      label: true,
-      members: {
-        orderBy: {
-          createdAt: "asc",
-        },
-        select: {
-          id: true,
-          name: true,
+  const editorialBoardMemberPositions =
+    await prisma.editorialBoardMemberPosition.findMany({
+      orderBy: {
+        order: "asc",
+      },
+      select: {
+        id: true,
+        label: true,
+        members: {
+          orderBy: {
+            createdAt: "asc",
+          },
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
-    },
-  })
+    })
 
   return json({ editorialBoardMemberPositions })
 }
@@ -51,7 +57,9 @@ export default function EditorialBoard() {
         return (
           <Group key={position.id} label={position.label}>
             <Paragraph>
-              {position.members.length === 0 ? "..." : position.members.map((member) => member.name).join(", ")}
+              {position.members.length === 0
+                ? "..."
+                : position.members.map((member) => member.name).join(", ")}
             </Paragraph>
           </Group>
         )
