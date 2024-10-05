@@ -7,7 +7,6 @@
   justify-content: center;
   padding: 40px var(--page-side-padding);
   border-top: 8px solid var(--spring-green);
-  /*background-image: var(--ruddy-blue-spring-green-gradient);*/
 }
 
 .edit_mode {

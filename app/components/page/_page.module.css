@@ -4,11 +4,9 @@
 
   display: grid;
   position: relative;
+  grid-template-columns: minmax(auto, 940px);
   grid-auto-flow: row;
   align-content: start;
-  height: 100%;
-  width: 100%;
-  max-width: 940px;
 }
 
 p {
