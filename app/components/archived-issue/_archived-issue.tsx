@@ -1,6 +1,7 @@
-import styles from "./_archived-issue.module.css"
-import { Link } from "@remix-run/react"
 import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
+import { Link } from "@remix-run/react"
+
+import styles from "./_archived-issue.module.css"
 
 type Props = {
   coverAlt: string
@@ -10,16 +11,32 @@ type Props = {
   isGhosted?: boolean
 }
 
-export const ArchivedIssue = ({ coverAlt, coverSrc, pdfSrc, label, isGhosted = false }: Props) => {
+export const ArchivedIssue = ({
+  coverAlt,
+  coverSrc,
+  pdfSrc,
+  label,
+  isGhosted = false,
+}: Props) => {
   return (
     <Link
       to={pdfSrc}
       title={label}
       reloadDocument={true}
-      className={combineClasses(styles.container, applyClasses(styles.ghosted).if(isGhosted))}
+      className={combineClasses(
+        styles.container,
+        applyClasses(styles.ghosted).if(isGhosted)
+      )}
     >
       <figure className={styles.content}>
-        <img src={coverSrc} alt={coverAlt} className={styles.cover} loading={"lazy"} width={"220"} height={"300"} />
+        <img
+          src={coverSrc}
+          alt={coverAlt}
+          className={styles.cover}
+          loading={"lazy"}
+          width={"217"}
+          height={"303"}
+        />
         <figcaption className={styles.label}>{label}</figcaption>
       </figure>
     </Link>

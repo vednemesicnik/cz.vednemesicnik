@@ -17,9 +17,9 @@
 
 .cover {
   object-fit: cover;
-  width: 220px;
-  height: 300px;
-  /*aspect-ratio: auto 220 / 300;*/
+  width: 217px;
+  height: 303px;
+  /*aspect-ratio: auto 217 / 303;*/
   box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
   content-visibility: auto;
 }

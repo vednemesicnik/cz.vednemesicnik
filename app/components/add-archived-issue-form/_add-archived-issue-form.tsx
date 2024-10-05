@@ -1,10 +1,15 @@
 import { Form } from "@remix-run/react"
-import { formFields } from "./_form-fields"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+
+import { formFields } from "./_form-fields"
 
 export const AddArchivedIssueForm = () => {
   return (
-    <Form method={"post"} encType={"multipart/form-data"}>
+    <Form
+      method={"post"}
+      encType={"multipart/form-data"}
+      preventScrollReset={true}
+    >
       <fieldset>
         <legend>Popis</legend>
         <label htmlFor={formFields.ordinalNumber.id}>Číslo výtisku</label>
@@ -30,14 +35,26 @@ export const AddArchivedIssueForm = () => {
       <fieldset>
         <legend>Soubory</legend>
         <label htmlFor={formFields.cover.id}>Obálka výtisku</label>
-        <input type="file" name={formFields.cover.name} id={formFields.cover.id} accept={"image/*"} />
+        <input
+          type="file"
+          name={formFields.cover.name}
+          id={formFields.cover.id}
+          accept={"image/*"}
+        />
         <br />
         <label htmlFor={formFields.pdf.id}>PDF výtisku</label>
-        <input type="file" name={formFields.pdf.name} id={formFields.pdf.id} accept="application/pdf" />
+        <input
+          type="file"
+          name={formFields.pdf.name}
+          id={formFields.pdf.id}
+          accept="application/pdf"
+        />
       </fieldset>
       <fieldset>
         <legend>Stav</legend>
-        <label htmlFor={formFields.published.options.published.id}>Zveřejněno</label>
+        <label htmlFor={formFields.published.options.published.id}>
+          Zveřejněno
+        </label>
         <input
           type="radio"
           name={formFields.published.name}
@@ -46,7 +63,9 @@ export const AddArchivedIssueForm = () => {
           defaultChecked={true}
         />
         <br />
-        <label htmlFor={formFields.published.options.notPublished.id}>Nezveřejněno</label>
+        <label htmlFor={formFields.published.options.notPublished.id}>
+          Nezveřejněno
+        </label>
         <input
           type="radio"
           name={formFields.published.name}

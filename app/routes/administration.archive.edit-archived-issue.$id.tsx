@@ -6,10 +6,9 @@ import { useLoaderData } from "@remix-run/react"
 import { editArchivedIssueAction } from "~/components/edit-archived-issue-action"
 import { EditArchivedIssueForm } from "~/components/edit-archived-issue-form"
 import { editArchivedIssueLoader } from "~/components/edit-archived-issue-loader"
-import { Page } from "~/components/page"
 
 export const meta: MetaFunction = () => {
-  return [{ title: "Vedneměsíčník | Archiv - Upravit výtisk" }]
+  return [{ title: "Vedneměsíčník | Administrace Archivu - Upravit výtisk" }]
 }
 
 export const loader = editArchivedIssueLoader
@@ -25,7 +24,7 @@ export default function AdministrationArchiveEditArchivedIssue() {
   const pdfId = data.archivedIssue.pdf?.id
 
   return (
-    <Page>
+    <>
       <h1>Upravit výtisk</h1>
       <EditArchivedIssueForm
         id={id}
@@ -35,7 +34,7 @@ export default function AdministrationArchiveEditArchivedIssue() {
         coverId={coverId}
         pdfId={pdfId}
       />
-    </Page>
+    </>
   )
 }
 

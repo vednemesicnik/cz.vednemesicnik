@@ -1,6 +1,7 @@
 import { Form } from "@remix-run/react"
-import { formFields } from "./_form-fields"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+
+import { formFields } from "./_form-fields"
 
 type Props = {
   id: string
@@ -11,9 +12,20 @@ type Props = {
   pdfId?: string
 }
 
-export const EditArchivedIssueForm = ({ coverId, pdfId, published, publishedAt, id, ordinalNumber }: Props) => {
+export const EditArchivedIssueForm = ({
+  coverId,
+  pdfId,
+  published,
+  publishedAt,
+  id,
+  ordinalNumber,
+}: Props) => {
   return (
-    <Form method={"post"} encType={"multipart/form-data"}>
+    <Form
+      method={"post"}
+      encType={"multipart/form-data"}
+      preventScrollReset={true}
+    >
       <input hidden={true} name={formFields.issueId.name} defaultValue={id} />
       <fieldset>
         <legend>Popis</legend>
@@ -40,16 +52,36 @@ export const EditArchivedIssueForm = ({ coverId, pdfId, published, publishedAt, 
       <fieldset>
         <legend>Soubory</legend>
         <label htmlFor={formFields.cover.id}>Obálka výtisku</label>
-        <input type="file" name={formFields.cover.name} id={formFields.cover.id} accept={"image/*"} />
-        <input hidden={true} name={formFields.coverId.name} defaultValue={coverId} />
+        <input
+          type="file"
+          name={formFields.cover.name}
+          id={formFields.cover.id}
+          accept={"image/*"}
+        />
+        <input
+          hidden={true}
+          name={formFields.coverId.name}
+          defaultValue={coverId}
+        />
         <br />
         <label htmlFor={formFields.pdf.id}>PDF výtisku</label>
-        <input type="file" name={formFields.pdf.name} id={formFields.pdf.id} accept="application/pdf" />
-        <input hidden={true} name={formFields.pdfId.name} defaultValue={pdfId} />
+        <input
+          type="file"
+          name={formFields.pdf.name}
+          id={formFields.pdf.id}
+          accept="application/pdf"
+        />
+        <input
+          hidden={true}
+          name={formFields.pdfId.name}
+          defaultValue={pdfId}
+        />
       </fieldset>
       <fieldset>
         <legend>Stav</legend>
-        <label htmlFor={formFields.published.options.published.id}>Zveřejněno</label>
+        <label htmlFor={formFields.published.options.published.id}>
+          Zveřejněno
+        </label>
         <input
           type="radio"
           name={formFields.published.name}
@@ -58,7 +90,9 @@ export const EditArchivedIssueForm = ({ coverId, pdfId, published, publishedAt, 
           defaultChecked={published}
         />
         <br />
-        <label htmlFor={formFields.published.options.notPublished.id}>Nezveřejněno</label>
+        <label htmlFor={formFields.published.options.notPublished.id}>
+          Nezveřejněno
+        </label>
         <input
           type="radio"
           name={formFields.published.name}

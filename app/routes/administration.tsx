@@ -1,6 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { json, type LoaderFunctionArgs, type MetaFunction, redirect } from "@remix-run/node"
+import {
+  json,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+  redirect,
+} from "@remix-run/node"
 import { NavLink, Outlet } from "@remix-run/react"
 
 import { Headline } from "app/components/headline"
@@ -26,10 +31,19 @@ export default function Administration() {
   return (
     <Page>
       <Headline>Administrace</Headline>
-      <NavLink to={"/administration/archive"}>Archiv</NavLink>
-      <NavLink to={"/administration/articles"}>Články</NavLink>
-      <NavLink to={"/administration/podcast"}>Podcast</NavLink>
-      <NavLink to={"/administration/editorial-board"}>Redakce</NavLink>
+      <NavLink to={"/administration/archive"} preventScrollReset={true}>
+        Archiv
+      </NavLink>
+      <NavLink to={"/administration/articles"} preventScrollReset={true}>
+        Články
+      </NavLink>
+      <NavLink to={"/administration/podcast"} preventScrollReset={true}>
+        Podcast
+      </NavLink>
+      <NavLink to={"/administration/editorial-board"} preventScrollReset={true}>
+        Redakce
+      </NavLink>
+      <hr />
       <Outlet />
     </Page>
   )

@@ -3,11 +3,14 @@
 import { type ActionFunctionArgs, redirect } from "@remix-run/node"
 import { type ParamParseKey } from "@remix-run/router"
 
+import { routesConfig } from "~/config/routes-config"
 import { validateCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
 
-const ROUTE = "archive/delete-issue/:id"
-type RouteParams = Record<ParamParseKey<typeof ROUTE>, string>
+type DeleteArchivedIssuePath =
+  typeof routesConfig.administration.archive.deleteArchivedIssue.dynamicPath
+
+type RouteParams = Record<ParamParseKey<DeleteArchivedIssuePath>, string>
 
 export const loader = async () => {
   return redirect("/")
@@ -24,5 +27,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     where: { id },
   }))
 
-  return redirect("/archive")
+  const archiveAdministrationPath =
+    routesConfig.administration.archive.index.staticPath
+
+  return redirect(archiveAdministrationPath)
 }

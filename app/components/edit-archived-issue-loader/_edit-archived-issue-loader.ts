@@ -1,18 +1,23 @@
-import type { LoaderFunctionArgs } from "@remix-run/node"
-import { redirect, json } from "@remix-run/node"
-import { prisma } from "~/utils/db.server"
+import { json, type LoaderFunctionArgs, redirect } from "@remix-run/node"
 import type { ParamParseKey } from "@remix-run/router"
-import { getAuthSession } from "~/utils/auth.server"
 
-const ROUTE = "archive/edit-issue/:id"
-type RouteParams = Record<ParamParseKey<typeof ROUTE>, string>
+import { type routesConfig } from "~/config/routes-config"
+import { getAuthorization } from "~/utils/auth.server"
+import { prisma } from "~/utils/db.server"
 
-export const editArchivedIssueLoader = async ({ params, request }: LoaderFunctionArgs) => {
-  const authSession = await getAuthSession(request)
-  const userId = authSession.get("userId")
+type EditArchivedIssuePath =
+  typeof routesConfig.administration.archive.editArchivedIssue.dynamicPath
 
-  if (userId === undefined) {
-    throw redirect("/administration/signin")
+type RouteParams = Record<ParamParseKey<EditArchivedIssuePath>, string>
+
+export const editArchivedIssueLoader = async ({
+  params,
+  request,
+}: LoaderFunctionArgs) => {
+  const { isAuthorized } = await getAuthorization(request)
+
+  if (!isAuthorized) {
+    throw redirect("/administration/sign-in")
   }
 
   const { id } = params as RouteParams
@@ -38,7 +43,11 @@ export const editArchivedIssueLoader = async ({ params, request }: LoaderFunctio
     },
   })
 
-  if (archivedIssue === null) throw new Response(null, { status: 404, statusText: "Archived issue not found." })
+  if (archivedIssue === null)
+    throw new Response(null, {
+      status: 404,
+      statusText: "Archived issue not found.",
+    })
 
   return json({ archivedIssue })
 }

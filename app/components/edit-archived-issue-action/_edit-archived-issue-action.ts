@@ -1,13 +1,17 @@
-import type { ActionFunctionArgs } from "@remix-run/node"
-import { redirect } from "@remix-run/node"
+import { createId } from "@paralleldrive/cuid2"
+import { type ArchivedIssueCover, type ArchivedIssuePDF } from "@prisma/client"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
+
+import { formFields } from "~/components/edit-archived-issue-form/_form-fields"
+import { routesConfig } from "~/config/routes-config"
+import { validateCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
 import { getMultipartFormData } from "~/utils/get-multipart-form-data"
-import { formFields } from "~/components/edit-archived-issue-form/_form-fields"
 import { hasFile } from "~/utils/has-file"
-import { createId } from "@paralleldrive/cuid2"
-import { validateCSRF } from "~/utils/csrf.server"
 
-export const editArchivedIssueAction = async ({ request }: ActionFunctionArgs) => {
+export const editArchivedIssueAction = async ({
+  request,
+}: ActionFunctionArgs) => {
   const formData = await getMultipartFormData(request)
 
   await validateCSRF(formData, request.headers)
@@ -25,33 +29,40 @@ export const editArchivedIssueAction = async ({ request }: ActionFunctionArgs) =
 
   const publishedAtDate = new Date(publishedAt as string)
   const year = publishedAtDate.getFullYear()
-  const monthYear = publishedAtDate.toLocaleDateString("cs-CZ", { year: "numeric", month: "long" })
+  const monthYear = publishedAtDate.toLocaleDateString("cs-CZ", {
+    year: "numeric",
+    month: "long",
+  })
   const label = `${ordinalNumber}/${monthYear}`
 
   const coverAltText = `Obálka výtisku ${label}`
-  const pdfFilename = `VDM-${year}-${ordinalNumber}.pdf`
+  const pdfFileName = `VDM-${year}-${ordinalNumber}.pdf`
 
-  const coverData = hasFile(cover)
-    ? {
-        id: createId(),
-        altText: coverAltText,
-        contentType: cover.type,
-        blob: Buffer.from(await cover.arrayBuffer()),
-      }
-    : {
-        altText: coverAltText,
-      }
+  const coverData = (
+    hasFile(cover)
+      ? {
+          id: createId(),
+          altText: coverAltText,
+          contentType: cover.type,
+          blob: Buffer.from(await cover.arrayBuffer()),
+        }
+      : {
+          altText: coverAltText,
+        }
+  ) satisfies Partial<ArchivedIssueCover>
 
-  const pdfData = hasFile(pdf)
-    ? {
-        id: createId(),
-        filename: pdfFilename,
-        contentType: pdf.type,
-        blob: Buffer.from(await pdf.arrayBuffer()),
-      }
-    : {
-        filename: pdfFilename,
-      }
+  const pdfData = (
+    hasFile(pdf)
+      ? {
+          id: createId(),
+          fileName: pdfFileName,
+          contentType: pdf.type,
+          blob: Buffer.from(await pdf.arrayBuffer()),
+        }
+      : {
+          fileName: pdfFileName,
+        }
+  ) satisfies Partial<ArchivedIssuePDF>
 
   await prisma.archivedIssue.update({
     where: { id: id },
@@ -74,5 +85,8 @@ export const editArchivedIssueAction = async ({ request }: ActionFunctionArgs) =
     },
   })
 
-  return redirect(`/archive`)
+  const archiveAdministrationPath =
+    routesConfig.administration.archive.index.staticPath
+
+  return redirect(archiveAdministrationPath)
 }
