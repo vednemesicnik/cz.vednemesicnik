@@ -21,6 +21,18 @@
   --ruddy-blue-spring-green-gradient: linear-gradient(
     101deg,
     #5ca3ff 0%,
+    #5cffa3 75%
+  );
+  --test-gradient-1: linear-gradient(
+    101deg,
+    #5ca3ff 0%,
+    #43d6a9 52%,
+    #5cffa3 100%
+  );
+  --test-gradient-2: linear-gradient(
+    101deg,
+    #0068b8 0%,
+    #43d6a9 52%,
     #5cffa3 100%
   );
 }
