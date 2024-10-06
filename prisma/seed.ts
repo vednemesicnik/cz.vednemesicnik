@@ -2,24 +2,21 @@
 
 import { prisma } from "~/utils/db.server"
 
-// DB seed utils
-import { cleanupDb } from "./utils/cleanup-db"
-import { createArchivedIssues } from "./utils/create-archived-issues"
-import { createEditorialBoardMemberPositions } from "./utils/create-editorial-board-member-positions"
-import { createEditorialBoardMembers } from "./utils/create-editorial-board-members"
-import { createPermissions } from "./utils/create-permissions"
-import { createPodcast } from "./utils/create-podcast"
-import { createRoles } from "./utils/create-roles"
-import { createUsers } from "./utils/create-users"
-
-// DB seed data
 import { archivedIssues } from "./data/archived-issues"
-import { editorialBoardMemberPositions } from "./data/editorial-board-member-postions"
 import { editorialBoardMembers } from "./data/editorial-board-members"
+import { editorialBoardPositions } from "./data/editorial-board-postions"
 import { permissions } from "./data/permissions"
 import { podcastData } from "./data/podcast"
 import { roles } from "./data/roles"
 import { users } from "./data/users"
+import { cleanupDb } from "./utils/cleanup-db"
+import { createArchivedIssues } from "./utils/create-archived-issues"
+import { createEditorialBoardMembers } from "./utils/create-editorial-board-members"
+import { createEditorialBoardPositions } from "./utils/create-editorial-board-positions"
+import { createPermissions } from "./utils/create-permissions"
+import { createPodcast } from "./utils/create-podcast"
+import { createRoles } from "./utils/create-roles"
+import { createUsers } from "./utils/create-users"
 
 async function seed() {
   console.log("🌱 Seeding...")
@@ -52,7 +49,7 @@ async function seed() {
 
   // Editorial board member positions 🪪
   console.time("🪪 Member positions have been created")
-  await createEditorialBoardMemberPositions(prisma, editorialBoardMemberPositions)
+  await createEditorialBoardPositions(prisma, editorialBoardPositions)
   console.timeEnd("🪪 Member positions have been created")
 
   // Editorial board members 👥

@@ -49,7 +49,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   })
 
   const editorialBoardMemberPositionsPromise =
-    prisma.editorialBoardMemberPosition.findMany({
+    prisma.editorialBoardPosition.findMany({
       select: {
         id: true,
         key: true,

@@ -1,21 +1,21 @@
 import type { PrismaClient } from "@prisma/client"
 
-export type EditorialBoardMemberPositionsData = {
+export type EditorialBoardPositionsData = {
   key: "chief-editor" | "editor" | "proofreader" | "artist" | "developer"
-  label: string
+  pluralLabel: string
   order: number
 }[]
 
-export const createEditorialBoardMemberPositions = async (
+export const createEditorialBoardPositions = async (
   prisma: PrismaClient,
-  data: EditorialBoardMemberPositionsData
+  data: EditorialBoardPositionsData
 ) => {
   for (const position of data) {
-    await prisma.editorialBoardMemberPosition
+    await prisma.editorialBoardPosition
       .create({
         data: {
           key: position.key,
-          label: position.label,
+          pluralLabel: position.pluralLabel,
           order: position.order,
           author: {
             connect: { username: "owner" },
@@ -23,7 +23,10 @@ export const createEditorialBoardMemberPositions = async (
         },
       })
       .catch((error) => {
-        console.error("Error creating an editorial board member position:", error)
+        console.error(
+          "Error creating an editorial board member position:",
+          error
+        )
         return null
       })
   }

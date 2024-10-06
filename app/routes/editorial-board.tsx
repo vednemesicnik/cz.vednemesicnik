@@ -23,13 +23,13 @@ export const meta: MetaFunction = () => {
 
 export const loader = async () => {
   const editorialBoardMemberPositions =
-    await prisma.editorialBoardMemberPosition.findMany({
+    await prisma.editorialBoardPosition.findMany({
       orderBy: {
         order: "asc",
       },
       select: {
         id: true,
-        label: true,
+        pluralLabel: true,
         members: {
           orderBy: {
             createdAt: "asc",
@@ -55,7 +55,7 @@ export default function EditorialBoard() {
 
       {data.editorialBoardMemberPositions.map((position) => {
         return (
-          <Group key={position.id} label={position.label}>
+          <Group key={position.id} label={position.pluralLabel}>
             <Paragraph>
               {position.members.length === 0
                 ? "..."

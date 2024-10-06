@@ -27,7 +27,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const editorialBoardMemberPositions =
-    await prisma.editorialBoardMemberPosition.findMany({
+    await prisma.editorialBoardPosition.findMany({
       select: {
         id: true,
         key: true,
