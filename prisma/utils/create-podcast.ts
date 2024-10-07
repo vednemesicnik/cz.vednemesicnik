@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client"
+
 import { getPodcastCover } from "./get-podcast-cover"
 
 export type PodcastData = {
@@ -19,7 +20,10 @@ export type PodcastData = {
   }
 }
 
-export const createPodcast = async (prisma: PrismaClient, data: PodcastData) => {
+export const createPodcast = async (
+  prisma: PrismaClient,
+  data: PodcastData
+) => {
   await prisma.podcast
     .create({
       data: {

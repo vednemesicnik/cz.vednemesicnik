@@ -36,7 +36,7 @@ export const podcastData: PodcastData = {
     },
   ],
   cover: {
-    altText: "Obálka Podcastu Vedneměsíčník",
+    altText: "Obálka podcastu Vedneměsíčník",
     filePath: "prisma/assets/vednemesicnik_podcast_cover.jpg",
   },
 }

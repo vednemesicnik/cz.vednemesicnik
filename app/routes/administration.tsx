@@ -37,8 +37,8 @@ export default function Administration() {
       <NavLink to={"/administration/articles"} preventScrollReset={true}>
         Články
       </NavLink>
-      <NavLink to={"/administration/podcast"} preventScrollReset={true}>
-        Podcast
+      <NavLink to={"/administration/podcasts"} preventScrollReset={true}>
+        Podcasty
       </NavLink>
       <NavLink to={"/administration/editorial-board"} preventScrollReset={true}>
         Redakce
