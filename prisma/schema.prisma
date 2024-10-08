@@ -34,6 +34,7 @@ model User {
   editorialBoardMemberPositions EditorialBoardPosition[]
   podcasts                      Podcast[]
   podcastEpisodes               PodcastEpisode[]
+  podcastEpisodeLinks           PodcastEpisodeLink[]
 }
 
 model UserImage {
@@ -221,7 +222,10 @@ model PodcastEpisodeLink {
   updatedAt     DateTime        @updatedAt
   episode       PodcastEpisode  @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   episodeId     String
+  author        User            @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId      String
 
   // non-unique foreign key
   @@index([episodeId])
+  @@index([authorId])
 }

@@ -1,7 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { createId } from "@paralleldrive/cuid2"
-import type { PodcastCover } from "@prisma/client"
 import {
   type ActionFunctionArgs,
   json,
@@ -17,17 +15,15 @@ import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 import { getAuthorization } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
-import { getMultipartFormData } from "~/utils/get-multipart-form-data"
-import { hasFile } from "~/utils/has-file"
 import { slugify } from "~/utils/slugify"
 
 type RouteParams = Record<
-  ParamParseKey<"administration/podcasts/edit-podcast/:podcastId">,
+  ParamParseKey<"administration/podcasts/:podcastId/edit-episode/:episodeId">,
   string
 >
 
 export const meta: MetaFunction = () => {
-  return [{ title: "Vedneměsíčník | Administrace Podcastů - Upravit podcast" }]
+  return [{ title: "Vedneměsíčník | Administrace Podcastu - Upravit epizodu" }]
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -37,38 +33,37 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw redirect("/administration/sign-in")
   }
 
-  const { podcastId } = params as RouteParams
+  const { podcastId, episodeId } = params as RouteParams
 
-  const podcast = await prisma.podcast.findUnique({
+  const podcastPromise = prisma.podcast.findUniqueOrThrow({
     where: { id: podcastId },
+    select: {
+      id: true,
+    },
+  })
+
+  const episodePromise = prisma.podcastEpisode.findUniqueOrThrow({
+    where: { id: episodeId },
     select: {
       id: true,
       title: true,
       slug: true,
       description: true,
-      cover: {
-        select: {
-          id: true,
-        },
-      },
+      published: true,
+      publishedAt: true,
     },
   })
 
-  if (podcast === null) {
-    throw new Response(null, {
-      status: 404,
-      statusText: "Podcast not found",
-    })
-  }
+  const [podcast, episode] = await Promise.all([podcastPromise, episodePromise])
 
-  return json({ podcast })
+  return json({ podcast, episode })
 }
 
-export default function AdministrationPodcastsEditPodcast() {
-  const { podcast } = useLoaderData<typeof loader>()
+export default function PodcastAdministrationEditEpisode() {
+  const { podcast, episode } = useLoaderData<typeof loader>()
 
-  const [title, setTitle] = useState(podcast.title)
-  const [slug, setSlug] = useState(podcast.slug)
+  const [title, setTitle] = useState(episode.title)
+  const [slug, setSlug] = useState(episode.slug)
   const [isSlugFocused, setIsSlugFocused] = useState(false)
 
   useEffect(() => {
@@ -79,10 +74,21 @@ export default function AdministrationPodcastsEditPodcast() {
 
   return (
     <>
-      <h1>Přidat podcast</h1>
+      <h1>Upavit epizodu</h1>
       <Form method="post" encType={"multipart/form-data"}>
         <AuthenticityTokenInput />
         <input type="hidden" name="podcastId" value={podcast.id} />
+        <input type="hidden" name="episodeId" value={episode.id} />
+        <label>
+          Název
+          <input
+            type="text"
+            name="title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+          />
+        </label>
+        <br />
         <label>
           Slug
           <input
@@ -95,76 +101,59 @@ export default function AdministrationPodcastsEditPodcast() {
         </label>
         <br />
         <label>
-          Název
+          Popis
+          <textarea name="description" defaultValue={episode.description} />
+        </label>
+        <br />
+        <label>
+          Publikováno
           <input
-            type="text"
-            name="title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
+            type="checkbox"
+            name="published"
+            defaultChecked={episode.published}
           />
         </label>
         <br />
         <label>
-          Popis
-          <textarea name="description" defaultValue={podcast.description} />
+          Publikováno dne
+          <input
+            type="date"
+            name="publishedAt"
+            defaultValue={episode.publishedAt?.split("T")[0] ?? ""}
+          />
         </label>
         <br />
-        <label>
-          Obálka
-          <input type="file" name="cover" accept={"image/*"} />
-        </label>
-        <input type="hidden" name="coverId" value={podcast.cover?.id} />
-        <br />
-        <button type="submit">Upravit podcast</button>
+        <button type="submit">Upravit epizodu</button>
       </Form>
     </>
   )
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const formData = await getMultipartFormData(request)
+  const formData = await request.formData()
 
   await validateCSRF(formData, request.headers)
 
   const podcastId = formData.get("podcastId") as string
+  const episodeId = formData.get("episodeId") as string
   const title = formData.get("title") as string
   const slug = formData.get("slug") as string
   const description = formData.get("description") as string
-  const cover = formData.get("cover") as File
-  const coverId = formData.get("coverId") as string
+  const published = formData.get("published") === "on"
+  const publishedAt = formData.get("publishedAt") as string
 
   // TODO: Add validation
-  // Cover image should have a 200 kB maximum size
 
-  const coverAltText = `Obálka podcastu ${title}`
-
-  const coverData = (
-    hasFile(cover)
-      ? {
-          id: createId(),
-          altText: coverAltText,
-          contentType: cover.type,
-          blob: Buffer.from(await cover.arrayBuffer()),
-        }
-      : {
-          altText: coverAltText,
-        }
-  ) satisfies Partial<PodcastCover>
-
-  await prisma.podcast.update({
-    where: { id: podcastId },
+  await prisma.podcastEpisode.update({
+    where: { id: episodeId },
     data: {
       title,
       slug,
       description,
-      cover: {
-        update: {
-          where: { id: coverId },
-          data: coverData,
-        },
-      },
+      published,
+      publishedAt: new Date(publishedAt),
     },
   })
 
-  return redirect("/administration/podcasts")
+  return redirect(`/administration/podcasts/${podcastId}`)
 }

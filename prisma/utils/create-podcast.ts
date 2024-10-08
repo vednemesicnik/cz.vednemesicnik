@@ -38,7 +38,13 @@ export const createPodcast = async (
             publishedAt: episode.publishedAt,
             published: episode.published,
             links: {
-              create: episode.links,
+              create: episode.links.map((link) => ({
+                label: link.label,
+                url: link.url,
+                author: {
+                  connect: { username: "owner" },
+                },
+              })),
             },
             author: {
               connect: { username: "owner" },

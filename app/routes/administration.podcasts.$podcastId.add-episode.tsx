@@ -1,7 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { createId } from "@paralleldrive/cuid2"
-import type { PodcastCover } from "@prisma/client"
 import {
   type ActionFunctionArgs,
   json,
@@ -17,17 +15,15 @@ import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 import { getAuthorization } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
-import { getMultipartFormData } from "~/utils/get-multipart-form-data"
-import { hasFile } from "~/utils/has-file"
 import { slugify } from "~/utils/slugify"
 
 type RouteParams = Record<
-  ParamParseKey<"administration/podcasts/edit-podcast/:podcastId">,
+  ParamParseKey<"administration/podcasts/:podcastId/add-episode">,
   string
 >
 
 export const meta: MetaFunction = () => {
-  return [{ title: "Vedneměsíčník | Administrace Podcastů - Upravit podcast" }]
+  return [{ title: "Vedneměsíčník | Administrace Podcastu - Přidat epizodu" }]
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -39,36 +35,21 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const { podcastId } = params as RouteParams
 
-  const podcast = await prisma.podcast.findUnique({
+  const podcast = await prisma.podcast.findUniqueOrThrow({
     where: { id: podcastId },
     select: {
       id: true,
-      title: true,
-      slug: true,
-      description: true,
-      cover: {
-        select: {
-          id: true,
-        },
-      },
     },
   })
-
-  if (podcast === null) {
-    throw new Response(null, {
-      status: 404,
-      statusText: "Podcast not found",
-    })
-  }
 
   return json({ podcast })
 }
 
-export default function AdministrationPodcastsEditPodcast() {
+export default function PodcastAdministrationAddEpisode() {
   const { podcast } = useLoaderData<typeof loader>()
 
-  const [title, setTitle] = useState(podcast.title)
-  const [slug, setSlug] = useState(podcast.slug)
+  const [title, setTitle] = useState("")
+  const [slug, setSlug] = useState("")
   const [isSlugFocused, setIsSlugFocused] = useState(false)
 
   useEffect(() => {
@@ -79,10 +60,20 @@ export default function AdministrationPodcastsEditPodcast() {
 
   return (
     <>
-      <h1>Přidat podcast</h1>
-      <Form method="post" encType={"multipart/form-data"}>
+      <h1>Přidat epizodu</h1>
+      <Form method="post">
         <AuthenticityTokenInput />
         <input type="hidden" name="podcastId" value={podcast.id} />
+        <label>
+          Název
+          <input
+            type="text"
+            name="title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+          />
+        </label>
+        <br />
         <label>
           Slug
           <input
@@ -95,34 +86,28 @@ export default function AdministrationPodcastsEditPodcast() {
         </label>
         <br />
         <label>
-          Název
-          <input
-            type="text"
-            name="title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-          />
-        </label>
-        <br />
-        <label>
           Popis
-          <textarea name="description" defaultValue={podcast.description} />
+          <textarea name="description" />
         </label>
         <br />
         <label>
-          Obálka
-          <input type="file" name="cover" accept={"image/*"} />
+          Publikováno
+          <input type="checkbox" name="published" />
         </label>
-        <input type="hidden" name="coverId" value={podcast.cover?.id} />
         <br />
-        <button type="submit">Upravit podcast</button>
+        <label>
+          Publikováno dne
+          <input type="date" name="publishedAt" />
+        </label>
+        <br />
+        <button type="submit">Přidat epizodu</button>
       </Form>
     </>
   )
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const formData = await getMultipartFormData(request)
+  const formData = await request.formData()
 
   await validateCSRF(formData, request.headers)
 
@@ -130,41 +115,26 @@ export async function action({ request }: ActionFunctionArgs) {
   const title = formData.get("title") as string
   const slug = formData.get("slug") as string
   const description = formData.get("description") as string
-  const cover = formData.get("cover") as File
-  const coverId = formData.get("coverId") as string
+  const published = formData.get("published") === "on"
+  const publishedAt = formData.get("publishedAt") as string
 
   // TODO: Add validation
-  // Cover image should have a 200 kB maximum size
 
-  const coverAltText = `Obálka podcastu ${title}`
-
-  const coverData = (
-    hasFile(cover)
-      ? {
-          id: createId(),
-          altText: coverAltText,
-          contentType: cover.type,
-          blob: Buffer.from(await cover.arrayBuffer()),
-        }
-      : {
-          altText: coverAltText,
-        }
-  ) satisfies Partial<PodcastCover>
-
-  await prisma.podcast.update({
-    where: { id: podcastId },
+  await prisma.podcastEpisode.create({
     data: {
       title,
       slug,
       description,
-      cover: {
-        update: {
-          where: { id: coverId },
-          data: coverData,
-        },
+      published,
+      publishedAt: new Date(publishedAt),
+      podcast: {
+        connect: { id: podcastId },
+      },
+      author: {
+        connect: { username: "owner" },
       },
     },
   })
 
-  return redirect("/administration/podcasts")
+  return redirect(`/administration/podcasts/${podcastId}`)
 }
