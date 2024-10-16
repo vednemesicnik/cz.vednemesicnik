@@ -1,7 +1,8 @@
-import type { Session } from "@remix-run/node"
-import { createCookie, createCookieSessionStorage } from "@remix-run/node"
-import { prisma } from "~/utils/db.server"
-import bcrypt from "bcryptjs"
+import {
+  createCookie,
+  createCookieSessionStorage,
+  type Session,
+} from "@remix-run/node"
 
 type AuthSessionData = {
   userId: string
@@ -13,7 +14,10 @@ type AuthSessionFlashData = {
 
 type AuthSession = Session<AuthSessionData, AuthSessionFlashData>
 
-export const authStorage = createCookieSessionStorage<AuthSessionData, AuthSessionFlashData>({
+export const authStorage = createCookieSessionStorage<
+  AuthSessionData,
+  AuthSessionFlashData
+>({
   cookie: createCookie("auth", {
     httpOnly: true,
     path: "/",
@@ -53,26 +57,4 @@ export const getAuthorization = async (request: Request) => {
   }
 
   return { isAuthorized: false }
-}
-
-export const signIn = async (email: string, password: string) => {
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: {
-      id: true,
-      password: { select: { hash: true } },
-    },
-  })
-
-  if (user === null || user.password === null) {
-    return null
-  }
-
-  const isValid = await bcrypt.compare(password, user.password.hash)
-
-  if (!isValid) {
-    return null
-  }
-
-  return { id: user.id }
 }

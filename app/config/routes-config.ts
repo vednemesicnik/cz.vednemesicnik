@@ -12,11 +12,6 @@ export const routesConfig = {
         getStaticPath: (id: string) =>
           `/administration/archive/edit-archived-issue/${id}` as const,
       },
-      deleteArchivedIssue: {
-        dynamicPath: "/administration/archive/delete-archived-issue/:id",
-        getStaticPath: (id: string) =>
-          `/administration/archive/delete-archived-issue/${id}` as const,
-      },
     },
   },
 } as const

@@ -1,3 +1,3 @@
-export function getArchivedIssuePdfSrc(id: string) {
-  return `/resources/archived-issue-pdf/${id}`
+export function getArchivedIssuePdfSrc(fileName: string) {
+  return `/resources/archived-issue-pdf/${fileName}`
 }

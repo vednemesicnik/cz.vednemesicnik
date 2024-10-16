@@ -1,4 +1,7 @@
-import { unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node"
+import {
+  unstable_createMemoryUploadHandler,
+  unstable_parseMultipartFormData,
+} from "@remix-run/node"
 
 export const getMultipartFormData = async (request: Request) => {
   const uploadHandler = unstable_createMemoryUploadHandler({

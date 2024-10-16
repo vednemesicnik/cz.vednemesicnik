@@ -204,7 +204,7 @@ model PodcastEpisode {
   updatedAt     DateTime              @updatedAt
   publishedAt   DateTime?
   published     Boolean               @default(false)
-  podcast       Podcast               @relation(fields: [podcastId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  podcast       Podcast               @relation(fields: [podcastId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   podcastId     String
   author        User                  @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   authorId      String

@@ -1,9 +1,11 @@
 import { Form } from "@remix-run/react"
-import styles from "./_archived-issue-admin-panel.module.css"
-import { LinkButton } from "~/components/link-button"
-import { Button } from "~/components/button"
-import { formConfig } from "~/config/form-config"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+
+import { Button } from "~/components/button"
+import { LinkButton } from "~/components/link-button"
+import { formConfig } from "~/config/form-config"
+
+import styles from "./_archived-issue-admin-panel.module.css"
 
 type Props = {
   issueId: string
@@ -12,12 +14,16 @@ export const ArchivedIssueAdminPanel = ({ issueId }: Props) => {
   return (
     <nav className={styles.admin_panel}>
       <LinkButton to={`/archive/edit-issue/${issueId}`}>Upravit</LinkButton>
-      <Form method="post" action={`/archive/delete-issue/${issueId}`} className={styles.delete_button_wrapper}>
+      <Form
+        method="post"
+        action={`/archive/delete-issue/${issueId}`}
+        className={styles.delete_button_wrapper}
+      >
         <AuthenticityTokenInput />
         <Button
           type="submit"
-          name={formConfig.submitButton.name}
-          value={formConfig.submitButton.value.deleteArchivedIssue}
+          name={formConfig.intent.name}
+          value={formConfig.intent.value.delete}
           variant={"danger"}
         >
           Smazat

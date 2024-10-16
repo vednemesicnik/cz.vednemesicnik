@@ -1,9 +1,14 @@
 export const formConfig = {
-  submitButton: {
+  intent: {
     name: "intent",
     value: {
-      deleteArchivedIssue: "delete-archived-issue",
+      delete: "delete",
       signOut: "sign-out",
+    },
+  },
+  field: {
+    name: {
+      archivedIssueId: "archived-issue-id",
     },
   },
 } as const

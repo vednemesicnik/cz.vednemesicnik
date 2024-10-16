@@ -1,6 +1,12 @@
 // noinspection JSUnusedGlobalSymbols,TypeScriptValidateJSTypes
 
-import { json, type LinksFunction, type LoaderFunctionArgs, type MetaFunction, redirect } from "@remix-run/node"
+import {
+  json,
+  type LinksFunction,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+  redirect,
+} from "@remix-run/node"
 import { useLoaderData, useRouteError, useSearchParams } from "@remix-run/react"
 
 import { ArchivedIssue } from "~/components/archived-issue"
@@ -15,10 +21,15 @@ import { getArchivedIssuePdfSrc } from "~/utils/get-archived-issue-pdf-src"
 import { preloadFonts } from "~/utils/preload-fonts"
 
 export const meta: MetaFunction = () => {
-  return [{ title: "Vedneměsíčník | Archiv" }, { name: "description", content: "Archiv čísel Vedneměsíčníku" }]
+  return [
+    { title: "Vedneměsíčník | Archiv" },
+    { name: "description", content: "Archiv čísel Vedneměsíčníku" },
+  ]
 }
 
-export const links: LinksFunction = () => [...preloadFonts("regular", "medium", "semiBold", "bold")]
+export const links: LinksFunction = () => [
+  ...preloadFonts("regular", "medium", "semiBold", "bold"),
+]
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url)
@@ -50,6 +61,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       pdf: {
         select: {
           id: true,
+          fileName: true,
         },
       },
     },
@@ -81,7 +93,7 @@ export default function Archive() {
 
           const coverAlt = cover.altText
           const coverSrc = getArchivedIssueCoverSrc(cover.id)
-          const pdfSrc = getArchivedIssuePdfSrc(pdf.id)
+          const pdfSrc = getArchivedIssuePdfSrc(pdf.fileName)
           const isGhosted = !published && isAuthorized
 
           return (
@@ -97,7 +109,9 @@ export default function Archive() {
           )
         })}
       </ArchivedIssuesList>
-      {archivedIssues.length < limit ? null : <LoadMoreContent limit={limit + 20} action={"/archive"} />}
+      {archivedIssues.length < limit ? null : (
+        <LoadMoreContent limit={limit + 20} action={"/archive"} />
+      )}
     </Page>
   )
 }

@@ -1,8 +1,10 @@
-import styles from "./_app-header.module.css"
+import type { ReactNode } from "react"
+
 import { HomeLink } from "~/components/app-header/components/home-link"
 import { Navigation } from "~/components/app-header/components/navigation"
 import { NavigationItem } from "~/components/app-header/components/navigation-item"
-import type { ReactNode } from "react"
+
+import styles from "./_app-header.module.css"
 
 type Props = {
   children: ReactNode
@@ -17,7 +19,7 @@ export const AppHeader = ({ children, isInEditMode }: Props) => {
         <HomeLink isInEditMode={isInEditMode} />
         <Navigation>
           <NavigationItem to={"/articles"}>Články</NavigationItem>
-          <NavigationItem to={"/podcasts/vednemesicnik"}>Podcast</NavigationItem>
+          <NavigationItem to={"/podcasts"}>Podcasty</NavigationItem>
           <NavigationItem to={"/archive"}>Archiv</NavigationItem>
           <NavigationItem to={"/editorial-board"}>Redakce</NavigationItem>
         </Navigation>

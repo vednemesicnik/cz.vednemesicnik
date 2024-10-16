@@ -24,7 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect("/administration/sign-in")
   }
 
-  return json({ status: "OK" })
+  return json({ status: "success" })
 }
 
 export default function Administration() {
@@ -33,9 +33,6 @@ export default function Administration() {
       <Headline>Administrace</Headline>
       <NavLink to={"/administration/archive"} preventScrollReset={true}>
         Archiv
-      </NavLink>
-      <NavLink to={"/administration/articles"} preventScrollReset={true}>
-        Články
       </NavLink>
       <NavLink to={"/administration/podcasts"} preventScrollReset={true}>
         Podcasty
