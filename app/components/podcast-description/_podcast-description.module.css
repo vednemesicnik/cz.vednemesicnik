@@ -1,0 +1,4 @@
+.paragraph {
+  grid-area: description;
+  margin: 0;
+}

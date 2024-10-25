@@ -11,7 +11,7 @@ export async function addMember({ fullName, positionIds }: Args) {
   try {
     await prisma.editorialBoardMember.create({
       data: {
-        name: fullName, // TODO: change in Prisma schema to fullName
+        fullName,
         positions: {
           connect: positionIds.map((positionId) => ({ id: positionId })),
         },

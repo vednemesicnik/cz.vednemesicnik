@@ -15,15 +15,69 @@
   border: 0;
 }
 
+/* Hyperlink */
+
 a {
-  font-weight: var(--font-weight-regular);
-  color: var(--black);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
   text-decoration-line: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-style: solid;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.1em;
 
   &:hover {
-    text-decoration-line: underline;
-    text-decoration-thickness: 2px;
     text-decoration-color: var(--rose-pink);
+  }
+
+  &::selection {
+    background-color: var(--rose-pink);
+    color: var(--pale-purple);
+  }
+}
+
+/* Paragraph */
+
+p {
+  font-weight: var(--font-weight-text);
+  line-height: 1.5;
+
+  &::selection {
+    background-color: var(--spring-green);
+    color: var(--dark-green);
+  }
+}
+
+/* Span */
+span {
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+
+  &::selection {
+    background-color: var(--spring-green);
+    color: var(--dark-green);
+  }
+}
+
+/* Headline */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--font-weight-bold);
+  line-height: 1.25;
+
+  &::selection {
+    background-color: var(--ruddy-blue);
+    color: var(--alice-blue);
+    /*background-color: var(--aureolin);*/
+    /*color: var(--cream);*/
   }
 }

@@ -1,12 +1,26 @@
 // noinspection HtmlRequiredTitleElement,JSUnusedGlobalSymbols
 
 import { cssBundleHref } from "@remix-run/css-bundle"
-import { json, type LinksFunction, type LoaderFunctionArgs } from "@remix-run/node"
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "@remix-run/react"
+import {
+  json,
+  type LinksFunction,
+  type LoaderFunctionArgs,
+} from "@remix-run/node"
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+} from "@remix-run/react"
 import { AuthenticityTokenProvider } from "remix-utils/csrf/react"
 import { HoneypotProvider } from "remix-utils/honeypot/react"
 
-import { AdministrationPanel, type AdministrationPanelUser } from "~/components/administration-panel"
+import {
+  AdministrationPanel,
+  type AdministrationPanelUser,
+} from "~/components/administration-panel"
 import { AppBody } from "~/components/app-body"
 import { AppFooter } from "~/components/app-footer"
 import { AppHeader } from "~/components/app-header"
@@ -110,7 +124,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {isAuthorized ? <AdministrationPanel user={user} /> : null}
             </AppHeader>
             <AppBody>{children}</AppBody>
-            <AppFooter isInEditMode={isAuthorized} />
+            <AppFooter />
             <ScrollRestoration />
             <Scripts />
           </AppLayout>

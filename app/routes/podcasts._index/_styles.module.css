@@ -1,0 +1,17 @@
+.articleList {
+  margin-top: 96px;
+}
+
+.link {
+  text-decoration: none;
+
+  & h3 {
+    text-decoration: underline;
+  }
+
+  &:hover {
+    & h3 {
+      text-decoration-color: #ff5ccc;
+    }
+  }
+}

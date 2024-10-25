@@ -13,16 +13,9 @@ export const NavigationItem = ({ children, to }: Props) => (
   <li className={styles.container}>
     <NavLink
       to={to}
-      className={({ isActive }) => {
-        console.log(isActive)
-        console.log(
-          combineClasses(styles.link, applyClasses(styles.active).if(isActive))
-        )
-        return combineClasses(
-          styles.link,
-          applyClasses(styles.active).if(isActive)
-        )
-      }}
+      className={({ isActive }) =>
+        combineClasses(styles.link, applyClasses(styles.active).if(isActive))
+      }
     >
       {children}
     </NavLink>

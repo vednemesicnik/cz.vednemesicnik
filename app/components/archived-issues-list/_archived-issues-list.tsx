@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+
 import styles from "./_archived-issues-list.module.css"
 
 type Props = {

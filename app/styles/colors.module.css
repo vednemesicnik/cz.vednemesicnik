@@ -7,33 +7,38 @@
   --silver: #ccccccff;
   --lavender-floral: #b681ffff;
   --tropical-indigo: #9b7be4ff;
+
   --green-blue: #0068b8ff;
 
+  --aquamarine: #99ffc5ff;
   --spring-green: #5cffa3ff;
-  --light-green: #4ce88fff;
-  --rose-pink: #ff5cccff;
-  --coral: #ff7f50ff;
+  --dark-green: #002912ff;
+
+  --cream: #fffdd6ff;
+  --icterine: #fff87cff;
+  --aureolin: #f5e900ff;
+
+  --alice-blue: #ebf4ffff;
   --ruddy-blue: #5ca3ffff;
+  --marine-blue: #003e8fff;
+
+  --rose-pink: #ff5cccff;
+  --pale-purple: #ffebf9ff;
+
+  --coral: #ff7f50ff;
+  --seashell: #fff0ebff;
 
   --text-gray: #4f4f4fff;
 
-  --rose-pink-coral-gradient: linear-gradient(101deg, #ff5ccc 0%, #ff7f50 100%);
-  --ruddy-blue-spring-green-gradient: linear-gradient(
+  --rose-pink--coral---gradient: linear-gradient(
+    101deg,
+    #ff5ccc 0%,
+    #ff7f50 75%
+  );
+  --ruddy-blue--spring-green---gradient: linear-gradient(
     101deg,
     #5ca3ff 0%,
     #5cffa3 75%
-  );
-  --test-gradient-1: linear-gradient(
-    101deg,
-    #5ca3ff 0%,
-    #43d6a9 52%,
-    #5cffa3 100%
-  );
-  --test-gradient-2: linear-gradient(
-    101deg,
-    #0068b8 0%,
-    #43d6a9 52%,
-    #5cffa3 100%
   );
 }
 

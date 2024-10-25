@@ -15,10 +15,14 @@ export const LoadMoreContent = ({ action, limit }: Props) => {
   const navigation = useNavigation()
 
   const isLoadingMore = navigation.state !== "idle"
-  console.log({ isLoadingMore })
 
   return (
-    <Form className={style.container} method={"get"} action={action} preventScrollReset={true}>
+    <Form
+      className={style.container}
+      method={"get"}
+      action={action}
+      preventScrollReset={true}
+    >
       <input type={"hidden"} name={LIMIT_PARAM} value={limit} />
       <Button type={"submit"} disabled={isLoadingMore}>
         Načíst další

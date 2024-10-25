@@ -5,9 +5,10 @@
   border: none;
   color: white;
   cursor: pointer;
-  padding: 4px 16px;
   justify-items: center;
-  border-radius: 4px;
+  font-size: 1.2rem;
+  font-weight: var(--font-weight-semibold);
+  padding: 12px 24px;
 
   &:disabled {
     cursor: not-allowed;
@@ -15,14 +16,20 @@
 }
 
 .primary {
-  background-color: black;
+  background-color: var(--spring-green);
+  color: var(--dark-green);
 
   &:hover {
-    background-color: darkslategray;
+    background-color: var(--aquamarine);
   }
 
   &:disabled {
     background-color: darkgray;
+  }
+
+  &::selection {
+    background-color: var(--alice-blue);
+    color: var(--marine-blue);
   }
 }
 

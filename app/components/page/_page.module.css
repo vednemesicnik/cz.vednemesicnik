@@ -4,12 +4,17 @@
 
   display: grid;
   position: relative;
-  grid-template-columns: minmax(auto, 940px);
+  width: 100%;
+  grid-template-columns: 1fr;
   grid-auto-flow: row;
   align-content: start;
+  justify-items: center;
+  text-align: center;
 }
 
-p {
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-text);
+@media all and (width > 768px) {
+  .page {
+    justify-items: start;
+    text-align: start;
+  }
 }

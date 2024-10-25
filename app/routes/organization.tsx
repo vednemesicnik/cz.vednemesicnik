@@ -4,6 +4,7 @@ import { type MetaFunction } from "@remix-run/node"
 
 import { Headline } from "app/components/headline"
 import { Divider } from "~/components/divider"
+import { Hyperlink } from "~/components/hyperlink"
 import { List } from "~/components/list"
 import { ListItem } from "~/components/list-item"
 import { Page } from "~/components/page"
@@ -39,17 +40,19 @@ export default function Organization() {
         a kulturních akcí pro středoškolské studenty (literárních večerů a
         autorských čtení).
       </Paragraph>
-      <Divider />
+      <Divider variant={"secondary"} />
       <Paragraph>Vedneměsíčník vychází za laskavé podpory:</Paragraph>
       <List>
         <ListItem>Literární kavárna Měsíc ve dne</ListItem>
         <ListItem>
-          <a href="https://www.bigy-cb.cz/bigy/">
+          <Hyperlink to="https://www.bigy-cb.cz/bigy/">
             Biskupské gymnázium J. N. Neumanna v Č. Budějovicích
-          </a>
+          </Hyperlink>
         </ListItem>
         <ListItem>
-          <a href="https://www.fokus-cb.cz/">Fokus České Budějovice</a>
+          <Hyperlink to="https://www.fokus-cb.cz/">
+            Fokus České Budějovice
+          </Hyperlink>
         </ListItem>
       </List>
     </Page>

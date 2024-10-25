@@ -22,7 +22,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       where: { id },
       select: {
         id: true,
-        name: true,
+        fullName: true,
         positions: {
           select: {
             id: true,

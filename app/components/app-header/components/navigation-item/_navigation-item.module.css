@@ -6,13 +6,19 @@
 .link {
   position: relative;
   font-weight: var(--font-weight-semibold);
-  font-size: 14px;
   color: var(--black);
   text-transform: uppercase;
 }
 
 .active {
-  text-decoration-line: underline;
-  text-decoration-thickness: 2px;
-  text-decoration-color: var(--coral);
+  color: transparent;
+  background-image: var(--rose-pink--coral---gradient);
+  background-clip: text;
+
+  text-decoration-color: var(--rose-pink);
+
+  &::selection {
+    background-color: var(--coral);
+    color: var(--seashell);
+  }
 }

@@ -13,7 +13,7 @@ export async function updateMember({ id, fullName, positionIds }: Args) {
     await prisma.editorialBoardMember.update({
       where: { id },
       data: {
-        name: fullName, // TODO: change in Prisma schema to fullName
+        fullName,
         positions: {
           set: positionIds.map((positionId) => ({ id: positionId })),
         },

@@ -1,23 +1,14 @@
-import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
+import { Divider } from "~/components/divider"
 
 import styles from "./_app-footer.module.css"
 import { ComplementaryInformation } from "./components/complementary-information"
 import { SiteContent } from "./components/site-content"
 import { SocialSites } from "./components/social-sites"
 
-type Props = {
-  children?: never
-  isInEditMode: boolean
-}
-
-export const AppFooter = ({ isInEditMode }: Props) => {
+export const AppFooter = () => {
   return (
-    <footer
-      className={combineClasses(
-        styles.container,
-        applyClasses(styles.edit_mode).if(isInEditMode)
-      )}
-    >
+    <footer className={styles.container}>
+      <Divider />
       <section className={styles.content}>
         <SiteContent />
         <SocialSites />

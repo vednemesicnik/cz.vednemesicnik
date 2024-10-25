@@ -11,7 +11,7 @@ export default function Route() {
 
   return (
     <>
-      <h1>Členové</h1>
+      <h1>Administrace Členů</h1>
       <NavLink
         to={"/administration/editorial-board/members/add-member"}
         preventScrollReset={true}
@@ -30,7 +30,7 @@ export default function Route() {
         <tbody>
           {loaderData.editoiralBoardMembers.map((member) => (
             <tr key={member.id}>
-              <td>{member.name}</td>
+              <td>{member.fullName}</td>
               <td>
                 {member.positions.map((position) => position.key).join(", ")}
               </td>

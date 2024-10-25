@@ -7,18 +7,19 @@
   align-items: center;
   justify-items: start;
   text-decoration: none;
-  color: var(--eerie-black);
+  color: var(--dark-green);
   font-weight: var(--font-weight-regular);
-
-  &:hover {
-    text-decoration: none;
-  }
 }
 
 .name {
   font-size: 1.5rem;
   font-weight: var(--font-weight-semibold);
   margin: 0;
+
+  &::selection {
+    background-color: var(--spring-green);
+    color: var(--dark-green);
+  }
 }
 
 .logo {

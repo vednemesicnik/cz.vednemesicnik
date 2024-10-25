@@ -12,6 +12,7 @@ import { useLoaderData, useRouteError, useSearchParams } from "@remix-run/react"
 import { ArchivedIssue } from "~/components/archived-issue"
 import { ArchivedIssuesList } from "~/components/archived-issues-list"
 import { ArchivedIssuesListItem } from "~/components/archived-issues-list-item"
+import { Headline } from "~/components/headline"
 import { LIMIT_PARAM, LoadMoreContent } from "~/components/load-more-content"
 import { Page } from "~/components/page"
 import { getAuthorization } from "~/utils/auth.server"
@@ -83,6 +84,7 @@ export default function Archive() {
 
   return (
     <Page>
+      <Headline>Archiv</Headline>
       <ArchivedIssuesList>
         {archivedIssues.map((issue) => {
           const { id, cover, pdf, label, published } = issue

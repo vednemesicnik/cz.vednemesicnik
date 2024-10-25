@@ -1,0 +1,17 @@
+.grid {
+  display: grid;
+  position: relative;
+  grid-template-columns: repeat(auto-fit, 217px);
+  justify-content: center;
+  grid-gap: 24px;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  list-style: none;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    justify-content: start;
+  }
+}

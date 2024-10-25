@@ -1,0 +1,36 @@
+.listItem {
+  display: grid;
+  grid-auto-flow: row;
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(3, min-content);
+  grid-template-areas:
+    "cover"
+    "title"
+    "publish-date"
+    "description"
+    "links";
+  justify-items: center;
+  align-items: start;
+  text-align: center;
+  grid-gap: 24px;
+  margin: 24px 0;
+}
+
+@media all and (width > 768px) {
+  .detail {
+    grid-template-columns: min-content 1fr;
+    grid-template-rows: min-content min-content max-content 1fr;
+    grid-template-areas:
+      "cover title"
+      "cover publish-date"
+      "cover description"
+      ". links";
+    justify-items: start;
+    align-items: start;
+    text-align: start;
+  }
+}

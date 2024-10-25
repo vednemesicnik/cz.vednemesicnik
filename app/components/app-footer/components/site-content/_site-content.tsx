@@ -1,4 +1,5 @@
 import { Link } from "@remix-run/react"
+
 import styles from "./_site-content.module.css"
 
 export const SiteContent = () => {
@@ -27,8 +28,8 @@ export const SiteContent = () => {
           </Link>
         </li>
         <li className={styles.listItem}>
-          <Link to={"/podcasts/vednemesicnik"} className={styles.link}>
-            Podcast
+          <Link to={"/podcasts"} className={styles.link}>
+            Podcasty
           </Link>
         </li>
       </ul>

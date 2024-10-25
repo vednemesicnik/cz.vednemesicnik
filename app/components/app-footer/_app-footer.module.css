@@ -6,11 +6,6 @@
   grid-template-columns: minmax(auto, var(--page-max-width));
   justify-content: center;
   padding: 40px var(--page-side-padding);
-  border-top: 8px solid var(--spring-green);
-}
-
-.edit_mode {
-  border-color: #ff5c5c;
 }
 
 .content {

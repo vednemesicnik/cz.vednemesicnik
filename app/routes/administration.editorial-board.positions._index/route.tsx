@@ -11,7 +11,7 @@ export default function Route() {
 
   return (
     <>
-      <h1>Pozice</h1>
+      <h1>Administrace Pozic</h1>
       <NavLink
         to={"/administration/editorial-board/positions/add-position"}
         preventScrollReset={true}

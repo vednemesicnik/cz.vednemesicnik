@@ -2,7 +2,6 @@
   display: grid;
   position: relative;
   grid-auto-flow: row;
-  justify-items: start;
 }
 
 .label {

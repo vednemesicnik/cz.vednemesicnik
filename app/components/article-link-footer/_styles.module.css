@@ -1,0 +1,9 @@
+.footer {
+  display: grid;
+  position: relative;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  grid-gap: 16px;
+  justify-items: start;
+  width: 100%;
+}

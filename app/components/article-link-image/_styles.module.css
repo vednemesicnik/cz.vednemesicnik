@@ -1,0 +1,7 @@
+.cover {
+  grid-area: image;
+  object-fit: cover;
+  width: 150px;
+  height: 100px;
+  content-visibility: auto;
+}

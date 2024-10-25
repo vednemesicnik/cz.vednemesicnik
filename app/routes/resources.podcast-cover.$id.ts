@@ -16,7 +16,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   })
 
   if (image === null)
-    return new Response("Podcast cover not found.", { status: 404 })
+    return new Response("Podcast cover not found.", { status: 400 })
 
   return new Response(image.blob, {
     headers: {

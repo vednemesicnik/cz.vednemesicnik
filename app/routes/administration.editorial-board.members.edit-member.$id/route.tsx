@@ -17,7 +17,7 @@ export default function Route() {
     lastResult: actionData?.lastResult,
     defaultValue: {
       id: loaderData.editorialBoardMember.id,
-      fullName: loaderData.editorialBoardMember.name,
+      fullName: loaderData.editorialBoardMember.fullName,
       positionIds: loaderData.editorialBoardMember.positions.map(
         (position) => position.id
       ),

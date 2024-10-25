@@ -19,7 +19,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   })
 
   if (pdf === null)
-    return new Response("Archived issue PDF not found.", { status: 404 })
+    return new Response("Archived issue PDF not found.", { status: 400 })
 
   return new Response(pdf.blob, {
     headers: {

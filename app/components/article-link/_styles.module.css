@@ -1,0 +1,28 @@
+.link {
+  text-decoration: none;
+
+  & h3 {
+    text-decoration: underline;
+  }
+
+  &:hover {
+    & h3 {
+      text-decoration-color: var(--rose-pink);
+    }
+  }
+}
+
+.article {
+  display: grid;
+  position: relative;
+  grid-template-columns: min-content 1fr;
+  grid-template-rows: min-content 1fr;
+  grid-template-areas:
+    "image title"
+    "image details";
+  justify-items: start;
+  align-items: start;
+  text-align: center;
+  grid-gap: 24px;
+  margin: 24px 0;
+}

@@ -1,18 +1,21 @@
 import type { PrismaClient } from "@prisma/client"
 
 export type EditorialBoardMembersData = {
-  name: string
+  fullName: string
   positions: {
     key: string
   }[]
 }[]
 
-export const createEditorialBoardMembers = async (prisma: PrismaClient, data: EditorialBoardMembersData) => {
+export const createEditorialBoardMembers = async (
+  prisma: PrismaClient,
+  data: EditorialBoardMembersData
+) => {
   for (const member of data) {
     await prisma.editorialBoardMember
       .create({
         data: {
-          name: member.name,
+          fullName: member.fullName,
           positions: {
             connect: member.positions,
           },

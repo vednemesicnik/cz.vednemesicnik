@@ -7,6 +7,7 @@ export type PodcastData = {
   title: string
   description: string
   episodes: {
+    number: number
     slug: string
     title: string
     description: string
@@ -32,6 +33,7 @@ export const createPodcast = async (
         description: data.description,
         episodes: {
           create: data.episodes.map((episode) => ({
+            number: episode.number,
             slug: episode.slug,
             title: episode.title,
             description: episode.description,

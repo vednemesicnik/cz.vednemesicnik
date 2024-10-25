@@ -156,7 +156,7 @@ model EditorialBoardPosition {
 
 model EditorialBoardMember {
   id            String                          @id @default(cuid())
-  name          String
+  fullName      String
   positions     EditorialBoardPosition[]
   createdAt     DateTime                        @default(now())
   updatedAt     DateTime                        @updatedAt
@@ -197,6 +197,7 @@ model PodcastCover {
 model PodcastEpisode {
   id            String                @id @default(cuid())
   slug          String                @unique
+  number        Int
   title         String
   description   String
   links         PodcastEpisodeLink[]
@@ -206,8 +207,12 @@ model PodcastEpisode {
   published     Boolean               @default(false)
   podcast       Podcast               @relation(fields: [podcastId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   podcastId     String
+  cover         PodcastEpisodeCover?
   author        User                  @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   authorId      String
+
+  // episode number should be unique within a podcast
+  @@unique([podcastId, number])
 
   // non-unique foreign key
   @@index([podcastId])
@@ -228,4 +233,15 @@ model PodcastEpisodeLink {
   // non-unique foreign key
   @@index([episodeId])
   @@index([authorId])
+}
+
+model PodcastEpisodeCover {
+  id            String          @id @default(cuid())
+  altText       String
+  contentType   String
+  blob          Bytes
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  episode       PodcastEpisode  @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  episodeId     String          @unique
 }

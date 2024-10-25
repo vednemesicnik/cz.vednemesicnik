@@ -36,7 +36,7 @@ export const loader = async () => {
           },
           select: {
             id: true,
-            name: true,
+            fullName: true,
           },
         },
       },
@@ -59,13 +59,13 @@ export default function EditorialBoard() {
             <Paragraph>
               {position.members.length === 0
                 ? "..."
-                : position.members.map((member) => member.name).join(", ")}
+                : position.members.map((member) => member.fullName).join(", ")}
             </Paragraph>
           </Group>
         )
       })}
 
-      <Divider />
+      <Divider variant={"secondary"} />
 
       <Contact label={"kontakt"} email={"redakce@vednemesicnik.cz"} />
     </Page>

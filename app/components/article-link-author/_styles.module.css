@@ -1,0 +1,13 @@
+.container {
+  display: grid;
+  position: relative;
+  grid-template-columns: repeat(2, min-content);
+  grid-gap: 8px;
+  align-self: end;
+}
+
+.paragraph {
+  font-size: 0.875rem;
+  text-align: start;
+  margin: 0;
+}
