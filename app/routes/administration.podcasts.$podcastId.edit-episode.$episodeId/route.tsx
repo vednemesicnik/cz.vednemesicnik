@@ -25,6 +25,7 @@ export default function Route() {
     lastResult: actionData?.lastResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
+      number: loaderData.episode.number,
       description: loaderData.episode.description,
       published: loaderData.episode.published,
       publishedAt: loaderData.episode.publishedAt?.split("T")[0],
@@ -66,12 +67,32 @@ export default function Route() {
         />
         <fieldset>
           <legend>Detaily</legend>
+          <label htmlFor={fields.number.id}>Číslo: </label>
+          <input
+            {...getInputProps(fields.number, { type: "number" })}
+            defaultValue={fields.number.initialValue}
+          />
+          {fields.number.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
+          <br />
           <label htmlFor={fields.title.id}>Název: </label>
           <input
             {...getInputProps(fields.title, { type: "text" })}
             onChange={(event) => setTitle(event.target.value)}
             value={title}
           />
+          {fields.title.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
           <br />
           <label htmlFor={fields.slug.id}>Slug: </label>
           <input
@@ -80,21 +101,49 @@ export default function Route() {
             onFocus={() => setIsSlugFocused(true)}
             value={slug}
           />
+          {fields.slug.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
           <br />
           <label htmlFor={fields.description.id}>Popis: </label>
           <textarea
             {...getTextareaProps(fields.description)}
             defaultValue={fields.description.initialValue}
           />
+          {fields.description.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
           <br />
           <label htmlFor={fields.published.id}>Publikováno: </label>
           <input {...getInputProps(fields.published, { type: "checkbox" })} />
+          {fields.published.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
           <br />
           <label htmlFor={fields.publishedAt.id}>Publikováno dne: </label>
           <input
             {...getInputProps(fields.publishedAt, { type: "date" })}
             defaultValue={fields.publishedAt.initialValue}
           />
+          {fields.publishedAt.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
         </fieldset>
         <AuthenticityTokenInput />
         <br />

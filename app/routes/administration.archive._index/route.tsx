@@ -20,7 +20,7 @@ export default function Route() {
         Přidat výtisk
       </NavLink>
       <hr />
-      <table>
+      <table style={{ width: "100%" }}>
         <thead>
           <tr>
             <th>Název</th>

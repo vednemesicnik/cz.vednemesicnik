@@ -1,0 +1,20 @@
+.container {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.link {
+  position: relative;
+  font-weight: var(--font-weight-semibold);
+  color: var(--black);
+  text-transform: uppercase;
+}
+
+.active {
+  text-decoration-color: var(--coral);
+
+  &::selection {
+    background-color: var(--coral);
+    color: var(--seashell);
+  }
+}

@@ -1,3 +1,5 @@
+import { sizeConfig } from "~/config/size-config"
+
 import styles from "./_styles.module.css"
 
 type Props = {
@@ -6,14 +8,18 @@ type Props = {
 }
 
 export function ArticleLinkImage({ alt, src }: Props) {
+  const { width, height } = sizeConfig.articleLinkImage
+
   return (
-    <img
-      alt={alt}
-      src={src}
-      loading={"lazy"}
-      width={"150"}
-      height={"100"}
-      className={styles.cover}
-    />
+    <picture className={styles.picture}>
+      <img
+        alt={alt}
+        src={src}
+        loading={"lazy"}
+        width={width}
+        height={height}
+        className={styles.image}
+      />
+    </picture>
   )
 }

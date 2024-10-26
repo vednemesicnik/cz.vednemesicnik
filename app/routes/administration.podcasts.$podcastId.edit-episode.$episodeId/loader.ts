@@ -28,6 +28,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     where: { id: episodeId },
     select: {
       id: true,
+      number: true,
       title: true,
       slug: true,
       description: true,

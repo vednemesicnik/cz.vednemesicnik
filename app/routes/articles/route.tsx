@@ -15,4 +15,4 @@ export default function Route() {
   )
 }
 
-export { meta } from "./meta"
+export { meta } from "./_meta"

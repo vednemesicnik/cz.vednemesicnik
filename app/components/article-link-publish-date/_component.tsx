@@ -1,3 +1,5 @@
+import { getFormattedPublishDate } from "~/utils/get-formatted-publish-date"
+
 import styles from "./_styles.module.css"
 
 type Props = {
@@ -7,13 +9,7 @@ type Props = {
 export const ArticleLinkPublishDate = ({ date }: Props) => {
   return (
     <p className={styles.paragraph}>
-      {date === null
-        ? "..."
-        : new Date(date).toLocaleDateString("cs-CZ", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
+      {date === null ? "..." : getFormattedPublishDate(date)}
     </p>
   )
 }

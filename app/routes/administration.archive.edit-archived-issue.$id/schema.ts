@@ -29,6 +29,9 @@ export const schema = z.object({
   pdf: z
     .instanceof(File)
     .optional()
+    .refine((file) => !file || file.type === "application/pdf", {
+      message: "Format of the file is not supported",
+    })
     .refine(
       (file) => {
         return !file || file.size <= MAX_PDF_UPLOAD_SIZE

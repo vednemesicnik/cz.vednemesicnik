@@ -1,19 +1,25 @@
-import { Link } from "@remix-run/react"
-import type { ReactNode } from "react"
-
 import styles from "./_styles.module.css"
 
 type Props = {
-  children: ReactNode
-  to: string
+  label: string
+  src: string
+  alt: string
+  width: number
+  height: number
 }
 
-export function Tile({ children, to }: Props) {
+export const Tile = ({ label, src, alt, width, height }: Props) => {
   return (
-    <li>
-      <Link to={to}>
-        <section className={styles.container}>{children}</section>
-      </Link>
-    </li>
+    <figure className={styles.container}>
+      <img
+        src={src}
+        alt={alt}
+        loading={"lazy"}
+        width={width}
+        height={height}
+        className={styles.image}
+      />
+      <figcaption className={styles.label}>{label}</figcaption>
+    </figure>
   )
 }

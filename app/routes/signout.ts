@@ -1,8 +1,8 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { ActionFunctionArgs } from "@remix-run/node"
-import { redirect } from "@remix-run/node"
-import { getAuthSession, deleteAuthSession } from "~/utils/auth.server"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
+
+import { deleteAuthSession, getAuthSession } from "~/utils/auth.server"
 import { redirectBack } from "~/utils/redirect-back"
 
 export const loader = () => {

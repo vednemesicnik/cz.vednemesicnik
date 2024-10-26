@@ -29,7 +29,7 @@ export const schema = z.object({
   pdf: z
     .instanceof(File, { message: "PDF file is required" })
     .refine((file) => file.type === "application/pdf", {
-      message: "Format of the PDF file is not supported",
+      message: "Format of the file is not supported",
     })
     .refine(
       (file) => {

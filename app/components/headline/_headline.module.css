@@ -1,11 +1,11 @@
 .headline {
-  margin: 0 0 2rem 0;
   font-size: 2.25rem;
   color: transparent;
   background-image: var(--rose-pink--coral---gradient);
   background-clip: text;
   background-size: 200% 200%;
   animation: wave-animation 6s ease-in-out infinite;
+  margin: 0;
 }
 
 @keyframes wave-animation {
@@ -16,4 +16,8 @@
   50% {
     background-position: 95% 100%;
   }
+}
+
+.marginBottom {
+  margin-bottom: 2.5rem;
 }

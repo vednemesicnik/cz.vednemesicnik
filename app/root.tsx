@@ -29,14 +29,15 @@ import { getAuthorization } from "~/utils/auth.server"
 import { csrf } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
 import { honeypot } from "~/utils/honeypot.server"
-
 import "~/styles/global.module.css"
 import "~/styles/fonts.module.css"
 import "~/styles/sizes.module.css"
 import "~/styles/colors.module.css"
+import { preloadFonts } from "~/utils/preload-fonts"
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
+  ...preloadFonts("regular", "text", "medium", "semiBold", "bold"),
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   { rel: "alternate icon", href: "/favicon.ico" },
 ]

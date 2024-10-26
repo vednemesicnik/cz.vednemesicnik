@@ -47,12 +47,32 @@ export default function Route() {
       <Form method="post" {...getFormProps(form)}>
         <fieldset>
           <legend>Detaily</legend>
+          <label htmlFor={fields.number.id}>Číslo: </label>
+          <input
+            {...getInputProps(fields.number, { type: "number" })}
+            defaultValue={fields.number.initialValue}
+          />
+          {fields.number.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
+          <br />
           <label htmlFor={fields.title.id}>Název: </label>
           <input
             {...getInputProps(fields.title, { type: "text" })}
             onChange={(event) => setTitle(event.target.value)}
             value={title}
           />
+          {fields.title.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
           <br />
           <label htmlFor={fields.slug.id}>Slug: </label>
           <input
@@ -61,21 +81,49 @@ export default function Route() {
             onFocus={() => setIsSlugFocused(true)}
             value={slug}
           />
+          {fields.slug.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
           <br />
           <label htmlFor={fields.description.id}>Popis: </label>
           <textarea
             {...getInputProps(fields.description, { type: "text" })}
             defaultValue={fields.description.initialValue}
           />
+          {fields.description.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
           <br />
           <label htmlFor={fields.published.id}>Publikováno: </label>
           <input {...getInputProps(fields.published, { type: "checkbox" })} />
+          {fields.published.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
           <br />
           <label htmlFor={fields.publishedAt.id}>Publikováno dne: </label>
           <input
             {...getInputProps(fields.publishedAt, { type: "date" })}
             defaultValue={fields.publishedAt.initialValue}
           />
+          {fields.publishedAt.errors?.map((error) => {
+            return (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
+            )
+          })}
         </fieldset>
         <input
           {...getInputProps(fields.podcastId, { type: "hidden" })}

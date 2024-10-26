@@ -3,7 +3,13 @@
   position: relative;
   grid-template-columns: repeat(2, min-content);
   grid-gap: 8px;
-  align-self: end;
+  align-items: center;
+  flex-shrink: 1;
+}
+
+.image {
+  object-fit: cover;
+  content-visibility: auto;
 }
 
 .paragraph {

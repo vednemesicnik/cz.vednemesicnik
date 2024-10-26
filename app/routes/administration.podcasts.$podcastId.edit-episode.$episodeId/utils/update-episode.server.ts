@@ -5,6 +5,7 @@ import { prisma } from "~/utils/db.server"
 type Args = {
   podcastId: string
   episodeId: string
+  number: number
   title: string
   slug: string
   published: boolean
@@ -14,6 +15,7 @@ type Args = {
 
 export async function updateEpisode({
   episodeId,
+  number,
   title,
   slug,
   published,
@@ -24,6 +26,7 @@ export async function updateEpisode({
     await prisma.podcastEpisode.update({
       where: { id: episodeId },
       data: {
+        number,
         title,
         slug,
         description,

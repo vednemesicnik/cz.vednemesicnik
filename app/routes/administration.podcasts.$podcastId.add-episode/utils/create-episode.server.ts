@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client"
 import { prisma } from "~/utils/db.server"
 
 type Args = {
+  number: number
   title: string
   slug: string
   description: string
@@ -12,6 +13,7 @@ type Args = {
 }
 
 export async function createEpisode({
+  number,
   title,
   slug,
   description,
@@ -22,6 +24,7 @@ export async function createEpisode({
   try {
     await prisma.podcastEpisode.create({
       data: {
+        number,
         title,
         slug,
         description,
