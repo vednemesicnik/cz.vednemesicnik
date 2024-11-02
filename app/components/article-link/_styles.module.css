@@ -15,14 +15,27 @@
 .article {
   display: grid;
   position: relative;
-  grid-template-columns: min-content 1fr;
-  grid-template-rows: min-content 1fr;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
   grid-template-areas:
-    "image title"
-    "image details";
-  justify-items: start;
-  align-items: start;
-  text-align: center;
-  grid-gap: 24px;
-  margin: 24px 0;
+    "image"
+    "title"
+    "details";
+  justify-items: center;
+  align-items: center;
+  grid-gap: 16px;
+  margin: 16px 0;
+}
+
+@media all and (min-width: 768px) {
+  .article {
+    grid-template-columns: min-content 1fr;
+    grid-template-rows: min-content;
+    grid-template-areas:
+      "image title"
+      "image details";
+    justify-items: start;
+    grid-gap: 24px;
+    margin: 24px 0;
+  }
 }

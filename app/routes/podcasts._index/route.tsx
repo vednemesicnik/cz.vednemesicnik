@@ -28,10 +28,7 @@ export default function Podcasts() {
       <TileGrid>
         {podcasts.map((podcast) => {
           const coverAlt = podcast.cover?.altText ?? ""
-          const coverSrc = getPodcastCoverSrc(podcast.cover?.id ?? "", {
-            width: sizeConfig.podcastCover.width * 2,
-            quality: 75,
-          })
+          const coverSrc = getPodcastCoverSrc(podcast.cover?.id ?? "")
 
           return (
             <TileGridItem key={podcast.id}>
@@ -52,14 +49,7 @@ export default function Podcasts() {
       <ArticleList>
         {episodes.map((episode, index) => {
           const coverAlt = episode.podcast?.cover?.altText ?? ""
-          const coverSrc = getPodcastCoverSrc(
-            episode.podcast?.cover?.id ?? "",
-            { width: sizeConfig.articleLinkImage.width * 2, quality: 75 }
-          )
-          const coverSrcSmall = getPodcastCoverSrc(
-            episode.podcast?.cover?.id ?? "",
-            { width: sizeConfig.articleLinkAuthorImage.width * 2, quality: 75 }
-          )
+          const coverSrc = getPodcastCoverSrc(episode.podcast?.cover?.id ?? "")
 
           return (
             <ArticleListItem
@@ -72,10 +62,7 @@ export default function Podcasts() {
                 <ArticleLinkImage alt={coverAlt} src={coverSrc} />
                 <ArticleLinkTitle>{episode.title}</ArticleLinkTitle>
                 <ArticleLinkFooter>
-                  <ArticleLinkAuthor
-                    imageSrc={coverSrcSmall}
-                    imageAlt={coverAlt}
-                  >
+                  <ArticleLinkAuthor imageSrc={coverSrc} imageAlt={coverAlt}>
                     {episode.podcast.title}
                   </ArticleLinkAuthor>
                   <ArticleLinkPublishDate date={episode.publishedAt} />

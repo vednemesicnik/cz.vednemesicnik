@@ -1,0 +1,11 @@
+.picture {
+  display: flex;
+  overflow: hidden;
+  border-radius: 3px;
+}
+
+.image {
+  object-fit: cover;
+  aspect-ratio: auto;
+  content-visibility: auto;
+}

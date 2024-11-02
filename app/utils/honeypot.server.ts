@@ -1,5 +1,5 @@
 import { Honeypot, SpamError } from "remix-utils/honeypot/server"
-import * as process from "process"
+
 export const honeypot = new Honeypot({
   validFromFieldName: undefined,
   encryptionSeed: process.env.HONEYPOT_SECRET,

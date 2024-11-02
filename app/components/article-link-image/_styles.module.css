@@ -29,8 +29,3 @@
     background-position: 95% 100%;
   }
 }
-
-.image {
-  object-fit: cover;
-  content-visibility: auto;
-}

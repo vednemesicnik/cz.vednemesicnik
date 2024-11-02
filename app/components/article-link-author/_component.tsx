@@ -1,5 +1,6 @@
 import { type ReactNode } from "react"
 
+import { Image } from "~/components/image"
 import { sizeConfig } from "~/config/size-config"
 
 import styles from "./_styles.module.css"
@@ -15,14 +16,7 @@ export const ArticleLinkAuthor = ({ children, imageSrc, imageAlt }: Props) => {
 
   return (
     <section className={styles.container}>
-      <img
-        className={styles.image}
-        src={imageSrc}
-        alt={imageAlt}
-        width={width}
-        height={height}
-        loading={"lazy"}
-      />
+      <Image src={imageSrc} alt={imageAlt} width={width} height={height} />
       <p className={styles.paragraph}>{children}</p>
     </section>
   )

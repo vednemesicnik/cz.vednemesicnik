@@ -10,7 +10,6 @@ import { ArticleList } from "~/components/article-list"
 import { ArticleListItem } from "~/components/article-list-item"
 import { Page } from "~/components/page"
 import { Paragraph } from "~/components/paragraph"
-import { sizeConfig } from "~/config/size-config"
 import { type loader } from "~/routes/podcasts.$podcastSlug._index/_loader"
 import { getPodcastCoverSrc } from "~/utils/get-podcast-cover-src"
 import { isLast } from "~/utils/is-last"
@@ -21,10 +20,7 @@ export default function PodcastPage() {
   const { podcast } = useLoaderData<typeof loader>()
 
   const podcastCoverAlt = podcast.cover?.altText ?? ""
-  const podcastCoverSrc = getPodcastCoverSrc(podcast.cover?.id ?? "", {
-    width: sizeConfig.articleLinkImage.width * 2,
-    quality: 75,
-  })
+  const podcastCoverSrc = getPodcastCoverSrc(podcast.cover?.id ?? "")
 
   return (
     <Page>

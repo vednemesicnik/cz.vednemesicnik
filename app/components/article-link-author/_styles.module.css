@@ -7,11 +7,6 @@
   flex-shrink: 1;
 }
 
-.image {
-  object-fit: cover;
-  content-visibility: auto;
-}
-
 .paragraph {
   font-size: 0.875rem;
   text-align: start;

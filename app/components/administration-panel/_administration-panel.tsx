@@ -1,7 +1,8 @@
-import styles from "./_administration-panel.module.css"
 import { getUserImageSrc } from "~/utils/get-user-image-src"
-import { User } from "./components/user"
+
+import styles from "./_administration-panel.module.css"
 import { Navigation } from "./components/navigation"
+import { User } from "./components/user"
 
 export type AdministrationPanelUser = {
   name: string | undefined
@@ -17,7 +18,8 @@ type Props = {
 }
 
 export const AdministrationPanel = ({ user }: Props) => {
-  const userImageSrc = user.image.id !== undefined ? getUserImageSrc(user.image.id) : undefined
+  const userImageSrc =
+    user.image.id !== undefined ? getUserImageSrc(user.image.id) : undefined
   const userImageAlt = user.image.altText ?? "Obrázek uživatele"
   const name = user.email ?? "Neznámý uživatel"
 

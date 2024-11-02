@@ -1,3 +1,5 @@
+import { Image } from "~/components/image"
+
 import styles from "./_styles.module.css"
 
 type Props = {
@@ -11,14 +13,7 @@ type Props = {
 export const Tile = ({ label, src, alt, width, height }: Props) => {
   return (
     <figure className={styles.container}>
-      <img
-        src={src}
-        alt={alt}
-        loading={"lazy"}
-        width={width}
-        height={height}
-        className={styles.image}
-      />
+      <Image src={src} alt={alt} width={width} height={height} />
       <figcaption className={styles.label}>{label}</figcaption>
     </figure>
   )

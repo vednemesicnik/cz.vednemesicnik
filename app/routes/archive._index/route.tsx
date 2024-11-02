@@ -39,10 +39,7 @@ export default function Archive() {
           if (cover === null || pdf === null) return null
 
           const coverAlt = cover.altText
-          const coverSrc = getArchivedIssueCoverSrc(cover.id, {
-            width: sizeConfig.archivedIssueCover.width * 2,
-            quality: 75,
-          })
+          const coverSrc = getArchivedIssueCoverSrc(cover.id)
           const pdfSrc = getArchivedIssuePdfSrc(pdf.fileName)
 
           return (

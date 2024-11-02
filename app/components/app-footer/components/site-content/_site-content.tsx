@@ -18,6 +18,11 @@ export const SiteContent = () => {
           </Link>
         </li>
         <li className={styles.listItem}>
+          <Link to={"/podcasts"} className={styles.link}>
+            Podcasty
+          </Link>
+        </li>
+        <li className={styles.listItem}>
           <Link to={"/editorial-board"} className={styles.link}>
             Redakce
           </Link>
@@ -25,11 +30,6 @@ export const SiteContent = () => {
         <li className={styles.listItem}>
           <Link to={"/organization"} className={styles.link}>
             Spolek
-          </Link>
-        </li>
-        <li className={styles.listItem}>
-          <Link to={"/podcasts"} className={styles.link}>
-            Podcasty
           </Link>
         </li>
       </ul>
