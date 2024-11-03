@@ -32,7 +32,6 @@ export const Image = ({
   const [isImageLoaded, setIsImageLoaded] = useState(false)
 
   const { isHydrated } = useHydrated()
-  console.log("isHydrated: ", isHydrated)
 
   const {
     avifSrc_1x: avifPlaceholderSrc_1x,
@@ -66,6 +65,10 @@ export const Image = ({
     opacity: isImageLoaded ? 1 : 0,
     from: { opacity: 0 },
   })
+
+  const handleOnLoad = () => {
+    setIsImageLoaded(true)
+  }
 
   return (
     <section className={combineClasses(styles.container, className)}>
@@ -103,10 +106,7 @@ export const Image = ({
             width={width}
             height={height}
             loading={"lazy"}
-            onLoad={(event) => {
-              console.log("Image loaded: ", event.currentTarget.complete)
-              setIsImageLoaded(true)
-            }}
+            onLoad={handleOnLoad}
           />
         </animated.picture>
       )}
