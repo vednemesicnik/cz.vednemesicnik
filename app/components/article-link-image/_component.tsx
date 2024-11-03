@@ -9,7 +9,8 @@ type Props = {
 }
 
 export function ArticleLinkImage({ alt, src }: Props) {
-  const { width, height } = sizeConfig.articleLinkImage
+  const { width, height, placeholderWidth, placeholderHeight } =
+    sizeConfig.articleLinkImage
 
   return (
     <Image
@@ -18,6 +19,8 @@ export function ArticleLinkImage({ alt, src }: Props) {
       width={width}
       height={height}
       className={styles.picture}
+      placeholderWidth={placeholderWidth}
+      placeholderHeight={placeholderHeight}
     />
   )
 }

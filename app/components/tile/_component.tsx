@@ -8,12 +8,29 @@ type Props = {
   alt: string
   width: number
   height: number
+  placeholderWidth: number
+  placeholderHeight: number
 }
 
-export const Tile = ({ label, src, alt, width, height }: Props) => {
+export const Tile = ({
+  label,
+  src,
+  alt,
+  width,
+  height,
+  placeholderWidth,
+  placeholderHeight,
+}: Props) => {
   return (
     <figure className={styles.container}>
-      <Image src={src} alt={alt} width={width} height={height} />
+      <Image
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        placeholderWidth={placeholderWidth}
+        placeholderHeight={placeholderHeight}
+      />
       <figcaption className={styles.label}>{label}</figcaption>
     </figure>
   )

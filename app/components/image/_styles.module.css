@@ -1,7 +1,24 @@
-.picture {
+.container {
   display: flex;
+  position: relative;
   overflow: hidden;
   border-radius: 3px;
+}
+
+.placeholderPicture {
+  display: flex;
+  position: relative;
+  opacity: 1;
+  filter: blur(5px);
+  background-clip: padding-box;
+}
+
+.picture {
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
 }
 
 .image {

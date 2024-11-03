@@ -37,6 +37,12 @@ export default function Route() {
                 alt={coverAlt}
                 width={sizeConfig.archivedIssueCover.width}
                 height={sizeConfig.archivedIssueCover.height}
+                placeholderWidth={
+                  sizeConfig.archivedIssueCover.placeholderWidth
+                }
+                placeholderHeight={
+                  sizeConfig.archivedIssueCover.placeholderHeight
+                }
               />
             </Link>
           </FeaturedBanner>

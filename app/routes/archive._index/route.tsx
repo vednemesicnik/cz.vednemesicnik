@@ -51,6 +51,12 @@ export default function Archive() {
                   alt={coverAlt}
                   width={sizeConfig.archivedIssueCover.width}
                   height={sizeConfig.archivedIssueCover.height}
+                  placeholderWidth={
+                    sizeConfig.archivedIssueCover.placeholderWidth
+                  }
+                  placeholderHeight={
+                    sizeConfig.archivedIssueCover.placeholderHeight
+                  }
                 />
               </Link>
             </TileGridItem>
