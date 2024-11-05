@@ -6,9 +6,4 @@ export const formConfig = {
       signOut: "sign-out",
     },
   },
-  field: {
-    name: {
-      archivedIssueId: "archived-issue-id",
-    },
-  },
 } as const

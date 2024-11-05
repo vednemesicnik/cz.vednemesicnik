@@ -18,13 +18,9 @@ export default function Route() {
   const [form, fields] = useForm({
     id: "add-podcast",
     constraint: getZodConstraint(schema),
-    lastResult: actionData?.lastResult,
+    lastResult: actionData?.submissionResult,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema })
-    },
-    defaultValue: {
-      email: "",
-      password: "",
     },
     shouldValidate: "onSubmit",
     shouldRevalidate: "onBlur",
@@ -51,7 +47,8 @@ export default function Route() {
           <label htmlFor={fields.email.id}>E-mail</label>
           <input
             {...getInputProps(fields.email, { type: "email" })}
-            defaultValue={fields.email.initialValue}
+            key={fields.email.key}
+            defaultValue={fields.email.initialValue ?? fields.email.value ?? ""}
             placeholder={"example@local.dev"}
           />
           {fields.email.errors?.map((error) => {
@@ -65,7 +62,10 @@ export default function Route() {
           <label htmlFor={fields.password.id}>Heslo</label>
           <input
             {...getInputProps(fields.password, { type: "password" })}
-            defaultValue={fields.password.initialValue}
+            key={fields.password.key}
+            defaultValue={
+              fields.password.initialValue ?? fields.password.value ?? ""
+            }
           />
           {fields.password.errors?.map((error) => {
             return (

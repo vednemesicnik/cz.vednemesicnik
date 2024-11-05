@@ -18,7 +18,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (submission.status !== "success") {
-    return json({ lastResult: submission.reply() })
+    return json(
+      {
+        submissionResult: submission.reply({
+          hideFields: ["password"],
+        }),
+      },
+      {
+        status: submission.status === "error" ? 400 : 200,
+      }
+    )
   }
 
   const { email, password } = submission.value
@@ -26,11 +35,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await signIn({ email, password })
 
   if (user === null) {
-    return json({
-      lastResult: submission.reply({
-        formErrors: ["E-mail nebo heslo je nesprávné."],
-      }),
-    })
+    return json(
+      {
+        submissionResult: submission.reply({
+          hideFields: ["password"],
+          formErrors: ["E-mail nebo heslo je nesprávné."],
+        }),
+      },
+      {
+        status: 400,
+      }
+    )
   }
 
   return redirect("/administration", {

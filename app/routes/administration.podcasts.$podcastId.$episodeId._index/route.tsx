@@ -1,12 +1,17 @@
-import { Form, NavLink, useLoaderData } from "@remix-run/react"
-import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+import { NavLink, useLoaderData } from "@remix-run/react"
 
-import { Button } from "~/components/button"
-import { formConfig } from "~/config/form-config"
+import { Actions } from "~/components/actions"
+import {
+  DeleteConfirmationModal,
+  useDeleteConfirmation,
+} from "~/components/delete-confirmation-modal"
 import { type loader } from "~/routes/administration.podcasts.$podcastId.$episodeId._index/loader"
 
 export default function Route() {
   const { episode, podcast } = useLoaderData<typeof loader>()
+
+  const { idForDeletion, isModalOpen, openModal, closeModal } =
+    useDeleteConfirmation()
 
   return (
     <>
@@ -27,33 +32,29 @@ export default function Route() {
           </tr>
         </thead>
         <tbody>
-          {episode.links.map((link) => (
-            <tr key={link.id}>
-              <td>{link.label}</td>
-              <td>{link.url}</td>
-              <td>
-                <NavLink
-                  to={`/administration/podcasts/${podcast.id}/${episode.id}/edit-link/${link.id}`}
-                >
-                  Upravit
-                </NavLink>
-                <Form method="post" preventScrollReset={true}>
-                  <input type="hidden" name="id" value={link.id} />
-                  <AuthenticityTokenInput />
-                  <Button
-                    type="submit"
-                    variant={"danger"}
-                    name={formConfig.intent.name}
-                    value={formConfig.intent.value.delete}
-                  >
-                    Odstranit
-                  </Button>
-                </Form>
-              </td>
-            </tr>
-          ))}
+          {episode.links.map((link) => {
+            const editLinkPath = `/administration/podcasts/${podcast.id}/${episode.id}/edit-link/${link.id}`
+
+            return (
+              <tr key={link.id}>
+                <td>{link.label}</td>
+                <td>{link.url}</td>
+                <td>
+                  <Actions
+                    editPath={editLinkPath}
+                    onDelete={openModal(link.id)}
+                  />
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
+      <DeleteConfirmationModal
+        id={idForDeletion}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </>
   )
 }

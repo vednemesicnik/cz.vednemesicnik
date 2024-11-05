@@ -1,13 +1,18 @@
-import { Form, NavLink, useLoaderData } from "@remix-run/react"
-import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+import { NavLink, useLoaderData } from "@remix-run/react"
 
-import { Button } from "~/components/button"
-import { formConfig } from "~/config/form-config"
+import { Actions } from "~/components/actions"
+import {
+  DeleteConfirmationModal,
+  useDeleteConfirmation,
+} from "~/components/delete-confirmation-modal"
 
 import { type loader } from "./loader"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
+
+  const { idForDeletion, isModalOpen, openModal, closeModal } =
+    useDeleteConfirmation()
 
   return (
     <>
@@ -28,35 +33,31 @@ export default function Route() {
           </tr>
         </thead>
         <tbody>
-          {loaderData.editoiralBoardMembers.map((member) => (
-            <tr key={member.id}>
-              <td>{member.fullName}</td>
-              <td>
-                {member.positions.map((position) => position.key).join(", ")}
-              </td>
-              <td>
-                <NavLink
-                  to={`/administration/editorial-board/members/edit-member/${member.id}`}
-                >
-                  Upravit
-                </NavLink>
-                <Form method="post" preventScrollReset={true}>
-                  <input type="hidden" name="id" value={member.id} />
-                  <AuthenticityTokenInput />
-                  <Button
-                    type="submit"
-                    variant={"danger"}
-                    name={formConfig.intent.name}
-                    value={formConfig.intent.value.delete}
-                  >
-                    Odstranit
-                  </Button>
-                </Form>
-              </td>
-            </tr>
-          ))}
+          {loaderData.editoiralBoardMembers.map((member) => {
+            const editMemberPath = `/administration/editorial-board/members/edit-member/${member.id}`
+
+            return (
+              <tr key={member.id}>
+                <td>{member.fullName}</td>
+                <td>
+                  {member.positions.map((position) => position.key).join(", ")}
+                </td>
+                <td>
+                  <Actions
+                    editPath={editMemberPath}
+                    onDelete={openModal(member.id)}
+                  />
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
+      <DeleteConfirmationModal
+        id={idForDeletion}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </>
   )
 }

@@ -1,13 +1,18 @@
-import { Form, NavLink, useLoaderData } from "@remix-run/react"
-import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+import { NavLink, useLoaderData } from "@remix-run/react"
 
-import { Button } from "~/components/button"
-import { formConfig } from "~/config/form-config"
+import { Actions } from "~/components/actions"
+import {
+  DeleteConfirmationModal,
+  useDeleteConfirmation,
+} from "~/components/delete-confirmation-modal"
 
 import { type loader } from "./loader"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
+
+  const { idForDeletion, isModalOpen, openModal, closeModal } =
+    useDeleteConfirmation()
 
   return (
     <>
@@ -28,43 +33,41 @@ export default function Route() {
             <th>Akce</th>
           </tr>
         </thead>
-        {loaderData.podcast.episodes.map((episode) => (
-          <tr key={episode.id}>
-            <td>
-              <NavLink
-                to={`/administration/podcasts/${loaderData.podcast.id}/${episode.id}`}
-              >
-                {episode.title}
-              </NavLink>
-            </td>
-            <td>{episode.published ? "🟢" : "🔴"}</td>
-            <td>
-              {episode.publishedAt
-                ? new Date(episode.publishedAt).toLocaleDateString("cs-CZ")
-                : "Nepublikováno"}
-            </td>
-            <td>
-              <NavLink
-                to={`/administration/podcasts/${loaderData.podcast.id}/edit-episode/${episode.id}`}
-              >
-                Upravit
-              </NavLink>
-              <Form method="post" preventScrollReset={true}>
-                <input type="hidden" name="id" value={episode.id} />
-                <AuthenticityTokenInput />
-                <Button
-                  type="submit"
-                  variant={"danger"}
-                  name={formConfig.intent.name}
-                  value={formConfig.intent.value.delete}
-                >
-                  Odstranit
-                </Button>
-              </Form>
-            </td>
-          </tr>
-        ))}
+        <tbody>
+          {loaderData.podcast.episodes.map((episode) => {
+            const editEpisodePath = `/administration/podcasts/${loaderData.podcast.id}/edit-episode/${episode.id}`
+
+            return (
+              <tr key={episode.id}>
+                <td>
+                  <NavLink
+                    to={`/administration/podcasts/${loaderData.podcast.id}/${episode.id}`}
+                  >
+                    {episode.title}
+                  </NavLink>
+                </td>
+                <td>{episode.published ? "🟢" : "🔴"}</td>
+                <td>
+                  {episode.publishedAt
+                    ? new Date(episode.publishedAt).toLocaleDateString("cs-CZ")
+                    : "Nepublikováno"}
+                </td>
+                <td>
+                  <Actions
+                    editPath={editEpisodePath}
+                    onDelete={openModal(episode.id)}
+                  />
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
       </table>
+      <DeleteConfirmationModal
+        id={idForDeletion}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </>
   )
 }

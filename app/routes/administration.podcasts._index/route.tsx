@@ -1,23 +1,28 @@
-import { Form, NavLink, useLoaderData } from "@remix-run/react"
-import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+import { Link, useLoaderData } from "@remix-run/react"
 
-import { Button } from "~/components/button"
-import { formConfig } from "~/config/form-config"
+import { Actions } from "~/components/actions"
+import {
+  DeleteConfirmationModal,
+  useDeleteConfirmation,
+} from "~/components/delete-confirmation-modal"
 
 import { type loader } from "./loader"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
 
+  const { idForDeletion, isModalOpen, openModal, closeModal } =
+    useDeleteConfirmation()
+
   return (
     <>
       <h1>Administrace Podcastů</h1>
-      <NavLink
+      <Link
         to={`/administration/podcasts/add-podcast`}
         preventScrollReset={true}
       >
         Přidat podcast
-      </NavLink>
+      </Link>
       <hr />
       <table>
         <thead>
@@ -26,35 +31,33 @@ export default function Route() {
             <th>Akce</th>
           </tr>
         </thead>
-        {loaderData.podcasts.map((podcast) => (
-          <tr key={podcast.id}>
-            <td>
-              <NavLink to={`/administration/podcasts/${podcast.id}`}>
-                {podcast.title}
-              </NavLink>
-            </td>
-            <td>
-              <NavLink
-                to={`/administration/podcasts/edit-podcast/${podcast.id}`}
-              >
-                Upravit
-              </NavLink>
-              <Form method="post" preventScrollReset={true}>
-                <input type="hidden" name="id" value={podcast.id} />
-                <AuthenticityTokenInput />
-                <Button
-                  type="submit"
-                  variant={"danger"}
-                  name={formConfig.intent.name}
-                  value={formConfig.intent.value.delete}
-                >
-                  Odstranit
-                </Button>
-              </Form>
-            </td>
-          </tr>
-        ))}
+        <tbody>
+          {loaderData.podcasts.map((podcast) => {
+            const editPodcastPath = `/administration/podcasts/edit-podcast/${podcast.id}`
+
+            return (
+              <tr key={podcast.id}>
+                <td>
+                  <Link to={`/administration/podcasts/${podcast.id}`}>
+                    {podcast.title}
+                  </Link>
+                </td>
+                <td>
+                  <Actions
+                    editPath={editPodcastPath}
+                    onDelete={openModal(podcast.id)}
+                  />
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
       </table>
+      <DeleteConfirmationModal
+        id={idForDeletion}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </>
   )
 }

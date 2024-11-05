@@ -1,20 +1,13 @@
-import { json, type LoaderFunctionArgs, redirect } from "@remix-run/node"
+import { json, type LoaderFunctionArgs } from "@remix-run/node"
 import type { ParamParseKey } from "@remix-run/router"
 
-import { getAuthorization } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
 
 type RouteParams = Record<
   ParamParseKey<"administration/editorial-board/positions/edit-position/:id">,
   string
 >
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { isAuthorized } = await getAuthorization(request)
-
-  if (!isAuthorized) {
-    throw redirect("/administration/sign-in")
-  }
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const { id } = params as RouteParams
 
   const editorialBoardPositionsCountPromise =

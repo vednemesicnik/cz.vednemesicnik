@@ -57,20 +57,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   }
 
-  if (isAuthorized) {
-    const user = await prisma.user.findUnique({
+  if (isAuthorized && userId) {
+    const user = await prisma.user.findUniqueOrThrow({
       where: {
         id: userId,
       },
       select: {
         name: true,
         email: true,
-        image: {
-          select: {
-            id: true,
-            altText: true,
-          },
-        },
       },
     })
 
@@ -78,8 +72,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       name: user?.name ?? undefined,
       email: user?.email ?? undefined,
       image: {
-        id: user?.image?.id ?? undefined,
-        altText: user?.image?.altText ?? undefined,
+        id: undefined,
+        altText: undefined,
       },
     }
   }

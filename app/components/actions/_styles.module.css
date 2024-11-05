@@ -1,0 +1,15 @@
+.container {
+  display: grid;
+  position: relative;
+  grid-auto-flow: column;
+  justify-items: start;
+  justify-content: end;
+  align-items: center;
+  gap: 16px;
+}
+
+@media all and (min-width: 768px) {
+  .container {
+    gap: 24px;
+  }
+}

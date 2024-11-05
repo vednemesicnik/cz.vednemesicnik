@@ -1,13 +1,18 @@
-import { Form, NavLink, useLoaderData } from "@remix-run/react"
-import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+import { NavLink, useLoaderData } from "@remix-run/react"
 
-import { Button } from "~/components/button"
-import { formConfig } from "~/config/form-config"
+import { Actions } from "~/components/actions"
+import {
+  DeleteConfirmationModal,
+  useDeleteConfirmation,
+} from "~/components/delete-confirmation-modal"
 
 import { type loader } from "./loader"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
+
+  const { idForDeletion, isModalOpen, openModal, closeModal } =
+    useDeleteConfirmation()
 
   return (
     <>
@@ -29,34 +34,30 @@ export default function Route() {
           </tr>
         </thead>
         <tbody>
-          {loaderData.editoiralBoardMemberPositions.map((position) => (
-            <tr key={position.id}>
-              <td>{position.key}</td>
-              <td>{position.pluralLabel}</td>
-              <td>{position.order}</td>
-              <td>
-                <NavLink
-                  to={`/administration/editorial-board/positions/edit-position/${position.id}`}
-                >
-                  Upravit
-                </NavLink>
-                <Form method="post" preventScrollReset={true}>
-                  <input type="hidden" name="id" value={position.id} />
-                  <AuthenticityTokenInput />
-                  <Button
-                    type="submit"
-                    variant={"danger"}
-                    name={formConfig.intent.name}
-                    value={formConfig.intent.value.delete}
-                  >
-                    Odstranit
-                  </Button>
-                </Form>
-              </td>
-            </tr>
-          ))}
+          {loaderData.editoiralBoardMemberPositions.map((position) => {
+            const editPositionPath = `/administration/editorial-board/positions/edit-position/${position.id}`
+
+            return (
+              <tr key={position.id}>
+                <td>{position.key}</td>
+                <td>{position.pluralLabel}</td>
+                <td>{position.order}</td>
+                <td>
+                  <Actions
+                    editPath={editPositionPath}
+                    onDelete={openModal(position.id)}
+                  />
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
+      <DeleteConfirmationModal
+        id={idForDeletion}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </>
   )
 }

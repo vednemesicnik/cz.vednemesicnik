@@ -1,21 +1,21 @@
-import { NavLink, Outlet } from "@remix-run/react"
+import { Link, Outlet } from "@remix-run/react"
 
 export default function Route() {
   return (
     <>
       <h1>Administrace Redakce</h1>
-      <NavLink
+      <Link
         to={"/administration/editorial-board/positions"}
         preventScrollReset={true}
       >
         Pozice
-      </NavLink>
-      <NavLink
+      </Link>
+      <Link
         to={"/administration/editorial-board/members"}
         preventScrollReset={true}
       >
         Členové
-      </NavLink>
+      </Link>
       <hr />
       <Outlet />
     </>

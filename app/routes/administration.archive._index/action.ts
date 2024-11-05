@@ -11,11 +11,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   await validateCSRF(formData, request.headers)
 
   const intent = formData.get(formConfig.intent.name)
-  const deleteAction = formConfig.intent.value.delete
+  const deleteIntent = formConfig.intent.value.delete
 
-  invariantResponse(intent === deleteAction, "Invalid intent")
+  invariantResponse(intent === deleteIntent, "Invalid intent")
 
-  const id = formData.get(formConfig.field.name.archivedIssueId)
+  const id = formData.get("id")
 
   invariantResponse(typeof id === "string", "Missing archived issue ID")
 

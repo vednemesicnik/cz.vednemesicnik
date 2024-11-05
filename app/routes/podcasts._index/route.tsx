@@ -37,6 +37,8 @@ export default function Podcasts() {
                   label={podcast.title}
                   width={sizeConfig.podcastCover.width}
                   height={sizeConfig.podcastCover.height}
+                  placeholderWidth={sizeConfig.podcastCover.placeholderWidth}
+                  placeholderHeight={sizeConfig.podcastCover.placeholderHeight}
                   src={coverSrc}
                   alt={coverAlt}
                 />

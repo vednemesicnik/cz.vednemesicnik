@@ -1,14 +1,18 @@
-import { Form, Link, NavLink, useLoaderData } from "@remix-run/react"
-import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+import { NavLink, useLoaderData } from "@remix-run/react"
 
-import { Button } from "~/components/button"
-import { formConfig } from "~/config/form-config"
+import { Actions } from "~/components/actions"
+import {
+  DeleteConfirmationModal,
+  useDeleteConfirmation,
+} from "~/components/delete-confirmation-modal"
 import { routesConfig } from "~/config/routes-config"
 
 import { type loader } from "./loader"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
+  const { idForDeletion, isModalOpen, openModal, closeModal } =
+    useDeleteConfirmation()
 
   const addArchivedIssuePath =
     routesConfig.administration.archive.addArchivedIssue.staticPath
@@ -40,25 +44,21 @@ export default function Route() {
                 <td>{issue.label}</td>
                 <td>{issue.published ? "🟢" : "🔴"}</td>
                 <td>
-                  <Link to={editArchivedIssuePath}>Upravit</Link>
-                  <Form method="post" preventScrollReset={true}>
-                    <AuthenticityTokenInput />
-                    <input type="hidden" name={"id"} value={issue.id} />
-                    <Button
-                      type="submit"
-                      variant={"danger"}
-                      name={formConfig.intent.name}
-                      value={formConfig.intent.value.delete}
-                    >
-                      Odstranit
-                    </Button>
-                  </Form>
+                  <Actions
+                    editPath={editArchivedIssuePath}
+                    onDelete={openModal(issue.id)}
+                  />
                 </td>
               </tr>
             )
           })}
         </tbody>
       </table>
+      <DeleteConfirmationModal
+        id={idForDeletion}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </>
   )
 }
