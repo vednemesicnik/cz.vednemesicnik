@@ -14,6 +14,7 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from "@remix-run/react"
+import { type ReactNode } from "react"
 import { AuthenticityTokenProvider } from "remix-utils/csrf/react"
 import { HoneypotProvider } from "remix-utils/honeypot/react"
 
@@ -91,7 +92,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   )
 }
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children }: { children: ReactNode }) {
   const data = useLoaderData<typeof loader>()
 
   const isAuthorized = data.isAuthorized
