@@ -1,6 +1,7 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { Form, useActionData } from "@remix-run/react"
+import { useEffect, useRef } from "react"
 import { HoneypotInputs } from "remix-utils/honeypot/react"
 
 import { Button } from "~/components/button"
@@ -15,6 +16,8 @@ export default function Route() {
   const { isHydrated } = useHydrated()
   const actionData = useActionData<typeof action>()
 
+  const passwordInputRef = useRef<HTMLInputElement>(null)
+
   const [form, fields] = useForm({
     id: "add-podcast",
     constraint: getZodConstraint(schema),
@@ -26,6 +29,18 @@ export default function Route() {
     shouldRevalidate: "onBlur",
     defaultNoValidate: isHydrated,
   })
+
+  useEffect(() => {
+    const passwordInput = passwordInputRef.current
+    if (passwordInput === null) return
+
+    if (
+      (form.errors && form.errors.length > 0) ||
+      (fields.password.errors && fields.password.errors.length > 0)
+    ) {
+      passwordInput.value = ""
+    }
+  }, [fields.password.errors, form.errors])
 
   return (
     <Page>
@@ -61,6 +76,7 @@ export default function Route() {
           <br />
           <label htmlFor={fields.password.id}>Heslo</label>
           <input
+            ref={passwordInputRef}
             {...getInputProps(fields.password, { type: "password" })}
             key={fields.password.key}
             defaultValue={
