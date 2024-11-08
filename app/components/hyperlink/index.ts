@@ -1,1 +1,1 @@
-export { Hyperlink } from "./_hyperlink"
+export { Hyperlink } from "./_component"

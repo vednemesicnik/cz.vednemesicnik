@@ -1,3 +1,4 @@
+import { Hyperlink } from "~/components/hyperlink"
 import { FacebookIcon, InstagramIcon } from "~/components/social-site-icons"
 
 import styles from "./_social-sites.module.css"
@@ -8,24 +9,24 @@ export const SocialSites = () => {
       <h2 className={"screen-reader-only"}>Sociální sítě</h2>
       <ul className={styles.list}>
         <li className={styles.listItem}>
-          <a
+          <Hyperlink
             title={"Instagram"}
-            href={"https://www.instagram.com/vednemesicnik/"}
+            to={"https://www.instagram.com/vednemesicnik/"}
             className={styles.link}
           >
             <span className={"screen-reader-only"}>Instagram</span>
             <InstagramIcon className={styles.logo} />
-          </a>
+          </Hyperlink>
         </li>
         <li className={styles.listItem}>
-          <a
+          <Hyperlink
             title={"Facebook"}
-            href={"https://www.facebook.com/vednemesicnik"}
+            to={"https://www.facebook.com/vednemesicnik"}
             className={styles.link}
           >
             <span className={"screen-reader-only"}>Facebook</span>
             <FacebookIcon className={styles.logo} />
-          </a>
+          </Hyperlink>
         </li>
       </ul>
     </section>

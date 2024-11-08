@@ -1,3 +1,5 @@
+import { appendParameters } from "~/utils/append-parameters"
+
 export const WIDTH_SEARCH_PARAM = "width"
 export const HEIGHT_SEARCH_PARAM = "height"
 export const QUALITY_SEARCH_PARAM = "quality"
@@ -50,10 +52,7 @@ export function createImageSourceRoute<
     searchParams.set(FORMAT_SEARCH_PARAM, format)
   }
 
-  const searchParamsString = searchParams.toString()
-  const routeWithSearchParams = [route, searchParamsString]
-    .filter(Boolean)
-    .join("?")
+  const routeWithSearchParams = appendParameters(route, searchParams.toString())
 
   return routeWithSearchParams as RouteWithSearchParams<
     Route,

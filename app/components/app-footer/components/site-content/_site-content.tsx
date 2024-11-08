@@ -22,6 +22,11 @@ export const SiteContent = () => {
             Podcasty
           </Link>
         </li>
+        <li>
+          <Link to={"/support"} className={styles.link}>
+            Podpora
+          </Link>
+        </li>
         <li className={styles.listItem}>
           <Link to={"/editorial-board"} className={styles.link}>
             Redakce

@@ -1,13 +1,15 @@
 import { useLoaderData } from "@remix-run/react"
 
-import { Contact } from "~/components/contact"
 import { Divider } from "~/components/divider"
 import { Group } from "~/components/group"
 import { Headline } from "~/components/headline"
+import { MailHyperlink } from "~/components/mail-hyperlink"
 import { Page } from "~/components/page"
 import { Paragraph } from "~/components/paragraph"
 
 import { type loader } from "./_loader"
+
+const EMAIL_ADDRESS = "redakce@vednemesicnik.cz"
 
 export default function Route() {
   const data = useLoaderData<typeof loader>()
@@ -31,7 +33,11 @@ export default function Route() {
 
       <Divider variant={"secondary"} />
 
-      <Contact label={"kontakt"} email={"redakce@vednemesicnik.cz"} />
+      <Paragraph>Máte nějaký nápad nebo nám chcete něco sdělit?</Paragraph>
+      <Paragraph>
+        Napište nám na{" "}
+        <MailHyperlink to={EMAIL_ADDRESS}>{EMAIL_ADDRESS}</MailHyperlink>.
+      </Paragraph>
     </Page>
   )
 }

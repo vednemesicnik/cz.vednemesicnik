@@ -1,8 +1,0 @@
-.hyperlink {
-  font-weight: var(--font-weight-medium);
-
-  &::selection {
-    /*background-color: var(--rose-pink);*/
-    /*color: var(--white);*/
-  }
-}
