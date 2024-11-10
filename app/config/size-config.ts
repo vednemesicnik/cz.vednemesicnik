@@ -34,4 +34,11 @@ export const sizeConfig = {
     placeholderWidth: 2,
     placeholderHeight: 2,
   },
+  // aspect ratio 1:1
+  userImage: {
+    width: 80,
+    height: 80,
+    placeholderWidth: 8,
+    placeholderHeight: 8,
+  },
 } as const

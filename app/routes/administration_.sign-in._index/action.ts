@@ -5,7 +5,8 @@ import { createAuthSession } from "~/utils/auth.server"
 import { checkHoneypot } from "~/utils/honeypot.server"
 
 import { schema } from "./schema"
-import { signIn } from "./utils/sign-in.server"
+import { getNewSession } from "./utils/get-new-session.server"
+import { getUser } from "./utils/get-user.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
@@ -32,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { email, password } = submission.value
 
-  const user = await signIn({ email, password })
+  const user = await getUser({ email, password })
 
   if (user === null) {
     return json(
@@ -48,9 +49,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   }
 
+  const session = await getNewSession(user.id)
+
   return redirect("/administration", {
     headers: {
-      "Set-Cookie": await createAuthSession(request, user.id),
+      "Set-Cookie": await createAuthSession(
+        request,
+        session.id,
+        session.expirationDate
+      ),
     },
   })
 }

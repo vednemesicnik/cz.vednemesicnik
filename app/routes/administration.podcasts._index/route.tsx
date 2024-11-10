@@ -16,7 +16,7 @@ export default function Route() {
 
   return (
     <>
-      <h1>Administrace Podcastů</h1>
+      <h3>Podcasty</h3>
       <Link
         to={`/administration/podcasts/add-podcast`}
         preventScrollReset={true}

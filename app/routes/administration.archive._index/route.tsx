@@ -1,4 +1,4 @@
-import { NavLink, useLoaderData } from "@remix-run/react"
+import { Link, useLoaderData } from "@remix-run/react"
 
 import { Actions } from "~/components/actions"
 import {
@@ -6,8 +6,9 @@ import {
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
 import { routesConfig } from "~/config/routes-config"
+import { canCreate, canDelete, canUpdate } from "~/utils/permissions"
 
-import { type loader } from "./loader"
+import { type loader } from "./_loader"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
@@ -17,14 +18,19 @@ export default function Route() {
   const addArchivedIssuePath =
     routesConfig.administration.archive.addArchivedIssue.staticPath
 
+  const permissions = loaderData.session.user.role.permissions
+  const userId = loaderData.session.user.id
+
+  const { canCreateOwn, canCreateAny } = canCreate(permissions)
+
   return (
     <>
-      <h1>Administrace Archivu</h1>
-      <NavLink to={addArchivedIssuePath} preventScrollReset={true}>
-        Přidat výtisk
-      </NavLink>
+      <h3>Archiv</h3>
+      {(canCreateOwn || canCreateAny) && (
+        <Link to={addArchivedIssuePath}>Přidat výtisk</Link>
+      )}
       <hr />
-      <table style={{ width: "100%" }}>
+      <table>
         <thead>
           <tr>
             <th>Název</th>
@@ -39,13 +45,28 @@ export default function Route() {
                 issue.id
               )
 
+            const authorId = issue.author.id
+
+            const { canUpdateOwn, canUpdateAny } = canUpdate(
+              permissions,
+              userId,
+              authorId
+            )
+            const { canDeleteOwn, canDeleteAny } = canDelete(
+              permissions,
+              userId,
+              authorId
+            )
+
             return (
               <tr key={issue.id}>
                 <td>{issue.label}</td>
                 <td>{issue.published ? "🟢" : "🔴"}</td>
                 <td>
                   <Actions
+                    canEdit={canUpdateAny || canUpdateOwn}
                     editPath={editArchivedIssuePath}
+                    canDelete={canDeleteAny || canDeleteOwn}
                     onDelete={openModal(issue.id)}
                   />
                 </td>
@@ -63,6 +84,6 @@ export default function Route() {
   )
 }
 
-export { meta } from "./meta"
-export { loader } from "./loader"
-export { action } from "./action"
+export { meta } from "./_meta"
+export { loader } from "./_loader"
+export { action } from "./_action"

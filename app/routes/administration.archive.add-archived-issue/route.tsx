@@ -1,13 +1,25 @@
-import { getFormProps, getInputProps, useForm } from "@conform-to/react"
+import {
+  getFormProps,
+  getInputProps,
+  getSelectProps,
+  useForm,
+} from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { Form, useActionData } from "@remix-run/react"
+import { Form, useActionData, useLoaderData } from "@remix-run/react"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 
-import { type action } from "./action"
-import { schema } from "./schema"
+import { canCreate, canPublish } from "~/utils/permissions"
+
+import { type action } from "./_action"
+import { type loader } from "./_loader"
+import { schema } from "./_schema"
 
 export default function Route() {
+  const loaderData = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
+
+  const permissions = loaderData.session.user.role.permissions
+  const userId = loaderData.session.user.id
 
   const [form, fields] = useForm({
     id: "add-archived-issue",
@@ -16,7 +28,8 @@ export default function Route() {
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
       ordinalNumber: "",
-      publishedAt: new Date().toISOString().split("T")[0],
+      releasedAt: new Date().toISOString().split("T")[0],
+      authorId: userId,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -31,9 +44,17 @@ export default function Route() {
     }
   }
 
+  const { canCreateOwn, canCreateAny } = canCreate(permissions)
+
+  const { canPublishOwn, canPublishAny } = canPublish(
+    permissions,
+    userId,
+    userId
+  )
+
   return (
     <>
-      <h1>Přidat výtisk</h1>
+      <h3>Přidat výtisk</h3>
 
       <Form
         method={"post"}
@@ -47,7 +68,6 @@ export default function Route() {
             {...getInputProps(fields.ordinalNumber, { type: "number" })}
             placeholder={"1"}
             step={1}
-            defaultValue={fields.ordinalNumber.initialValue}
           />
           {fields.ordinalNumber.errors?.map((error) => {
             return (
@@ -57,12 +77,9 @@ export default function Route() {
             )
           })}
           <br />
-          <label htmlFor={fields.publishedAt.id}>Datum vydání</label>
-          <input
-            {...getInputProps(fields.publishedAt, { type: "date" })}
-            defaultValue={fields.publishedAt.initialValue}
-          />
-          {fields.publishedAt.errors?.map((error) => {
+          <label htmlFor={fields.releasedAt.id}>Datum vydání</label>
+          <input {...getInputProps(fields.releasedAt, { type: "date" })} />
+          {fields.releasedAt.errors?.map((error) => {
             return (
               <output key={error} style={{ color: "red" }}>
                 {error}
@@ -100,19 +117,35 @@ export default function Route() {
             )
           })}
         </fieldset>
-        <fieldset>
+        <fieldset disabled={!(canPublishOwn || canPublishAny)}>
           <legend>Stav</legend>
           <label htmlFor={fields.published.id}>Zveřejněno</label>
           <input {...getInputProps(fields.published, { type: "checkbox" })} />
         </fieldset>
+        <fieldset>
+          <legend>Autor</legend>
+          <label htmlFor={fields.authorId.id}>Autor</label>
+          {/* from loaderData.user create select with names as options */}
+          <select {...getSelectProps(fields.authorId)}>
+            {loaderData.users.map((user) => {
+              return (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+              )
+            })}
+          </select>
+        </fieldset>
         <AuthenticityTokenInput />
         <br />
-        <button type="submit">Přidat</button>
+        <button type="submit" disabled={!(canCreateOwn || canCreateAny)}>
+          Přidat
+        </button>
       </Form>
     </>
   )
 }
 
-export { meta } from "./meta"
-export { loader } from "./loader"
-export { action } from "./action"
+export { action } from "./_action"
+export { loader } from "./_loader"
+export { meta } from "./_meta"

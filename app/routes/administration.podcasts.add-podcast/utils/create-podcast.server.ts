@@ -23,6 +23,8 @@ export async function createPodcast({ cover, title, slug, description }: Args) {
             blob: Buffer.from(await cover.arrayBuffer()),
           },
         },
+        publishedAt: new Date(),
+        published: true,
         author: {
           connect: { username: "owner" },
         },

@@ -6,27 +6,31 @@ import { prisma } from "~/utils/db.server"
 type Args = {
   id: string
   ordinalNumber: string
-  publishedAt: string
+  releasedAt: string
   published: boolean
+  publishedBefore: boolean
   coverId: string
   cover?: File
   pdfId: string
   pdf?: File
+  authorId: string
 }
 
 export const updateArchivedIssue = async ({
   id,
   ordinalNumber,
-  publishedAt,
+  releasedAt,
   published,
+  publishedBefore,
   coverId,
   cover,
   pdfId,
   pdf,
+  authorId,
 }: Args) => {
-  const publishedDate = new Date(publishedAt as string)
-  const year = publishedDate.getFullYear()
-  const monthYear = publishedDate.toLocaleDateString("cs-CZ", {
+  const releaseDate = new Date(releasedAt as string)
+  const year = releaseDate.getFullYear()
+  const monthYear = releaseDate.toLocaleDateString("cs-CZ", {
     year: "numeric",
     month: "long",
   })
@@ -40,7 +44,8 @@ export const updateArchivedIssue = async ({
       where: { id: id },
       data: {
         label: label,
-        publishedAt: publishedDate,
+        releasedAt: releaseDate,
+        ...(!publishedBefore && published ? { publishedAt: new Date() } : {}),
         published,
         cover: {
           update: {
@@ -74,6 +79,7 @@ export const updateArchivedIssue = async ({
                   },
           },
         },
+        authorId: authorId,
       },
     })
   } catch (error) {

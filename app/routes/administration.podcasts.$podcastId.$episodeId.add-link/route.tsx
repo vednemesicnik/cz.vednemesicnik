@@ -31,7 +31,7 @@ export default function Route() {
 
   return (
     <>
-      <h1>Přidat link</h1>
+      <h3>Přidat link</h3>
       <Form {...getFormProps(form)} method="post">
         <input
           {...getInputProps(fields.podcastId, { type: "hidden" })}

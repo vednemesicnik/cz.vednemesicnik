@@ -1,7 +1,7 @@
 import { createCookie } from "@remix-run/node"
 import { CSRF, CSRFError } from "remix-utils/csrf/server"
 
-const cookie = createCookie("csrf", {
+const cookie = createCookie("vdm_csrf", {
   httpOnly: true,
   path: "/",
   sameSite: "lax",

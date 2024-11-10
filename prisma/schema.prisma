@@ -26,8 +26,9 @@ model User {
   updatedAt                     DateTime        @updatedAt
   image                         UserImage?
   password                      Password?
-  roles                         Role[]
-//   sessions      Session[]
+  role                          Role            @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  roleId                        String          @unique
+  sessions                      Session[]
 //   connections   Connection[]
   archivedIssues                ArchivedIssue[]
   editorialBoardMembers         EditorialBoardMember[]
@@ -66,7 +67,7 @@ model Role {
 
 model Permission {
   id            String          @id @default(cuid())
-  // action: create, read, update, delete
+  // action: create, read, update, delete, etc.
   action        String
   // entity: archived-issue, article, category, etc.
   entity        String
@@ -79,16 +80,16 @@ model Permission {
   @@unique([action, entity, access])
 }
 
-// model Session {
-//   id                String      @id @default(cuid())
-//   expirationDate    DateTime
-//   createdAt         DateTime    @default(now())
-//   updatedAt         DateTime    @updatedAt
-//   user              User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-//   userId            String
-//   // non-unique foreign key
-//   @@index([userId])
-// }
+model Session {
+  id                String      @id @default(cuid())
+  expirationDate    DateTime
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId            String
+  // non-unique foreign key
+  @@index([userId])
+}
 
 // model Connection {
 //   id            String      @id @default(cuid())
@@ -104,6 +105,7 @@ model Permission {
 model ArchivedIssue {
   id            String              @id @default(cuid())
   label         String
+  releasedAt    DateTime
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   publishedAt   DateTime?
@@ -174,6 +176,8 @@ model Podcast {
   description   String
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
+  publishedAt   DateTime?
+  published     Boolean           @default(false)
   episodes      PodcastEpisode[]
   cover         PodcastCover?
   author        User              @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
@@ -225,6 +229,8 @@ model PodcastEpisodeLink {
   label         String
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  publishedAt   DateTime?
+  published     Boolean         @default(false)
   episode       PodcastEpisode  @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   episodeId     String
   author        User            @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)

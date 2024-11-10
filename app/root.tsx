@@ -14,7 +14,6 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from "@remix-run/react"
-import { type ReactNode } from "react"
 import { AuthenticityTokenProvider } from "remix-utils/csrf/react"
 import { HoneypotProvider } from "remix-utils/honeypot/react"
 
@@ -26,7 +25,7 @@ import { AppBody } from "~/components/app-body"
 import { AppFooter } from "~/components/app-footer"
 import { AppHeader } from "~/components/app-header"
 import { AppLayout } from "~/components/app-layout"
-import { getAuthorization } from "~/utils/auth.server"
+import { getAuthentication } from "~/utils/auth.server"
 import { csrf } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
 import { honeypot } from "~/utils/honeypot.server"
@@ -47,7 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const honeypotInputProps = honeypot.getInputProps()
   const [csrfToken, csrfCookieHeader] = await csrf.commitToken(request)
 
-  const { isAuthorized, userId } = await getAuthorization(request)
+  const { isAuthenticated, sessionId } = await getAuthentication(request)
 
   let administrationPanelUser: AdministrationPanelUser = {
     name: undefined,
@@ -58,20 +57,25 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   }
 
-  if (isAuthorized && userId) {
-    const user = await prisma.user.findUniqueOrThrow({
+  if (sessionId !== undefined) {
+    const session = await prisma.session.findUnique({
       where: {
-        id: userId,
+        id: sessionId,
       },
       select: {
-        name: true,
-        email: true,
+        id: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
     })
 
     administrationPanelUser = {
-      name: user?.name ?? undefined,
-      email: user?.email ?? undefined,
+      name: session?.user.name ?? undefined,
+      email: session?.user.email ?? undefined,
       image: {
         id: undefined,
         altText: undefined,
@@ -81,7 +85,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return json(
     {
-      isAuthorized,
+      isAuthenticated,
       user: administrationPanelUser,
       honeypotInputProps,
       csrfToken,
@@ -92,16 +96,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   )
 }
 
-export function Layout({ children }: { children: ReactNode }) {
-  const data = useLoaderData<typeof loader>()
+export default function App() {
+  const loaderData = useLoaderData<typeof loader>()
 
-  const isAuthorized = data.isAuthorized
+  const isAuthenticated = loaderData?.isAuthenticated ?? false
   const user = {
-    name: data.user.name,
-    email: data.user.email,
+    name: loaderData?.user.name,
+    email: loaderData?.user.email,
     image: {
-      id: data.user.image.id,
-      altText: data.user.image.altText,
+      id: loaderData?.user.image.id,
+      altText: loaderData?.user.image.altText,
     },
   }
 
@@ -113,13 +117,15 @@ export function Layout({ children }: { children: ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <HoneypotProvider {...data.honeypotInputProps}>
-        <AuthenticityTokenProvider token={data.csrfToken}>
+      <HoneypotProvider {...loaderData.honeypotInputProps}>
+        <AuthenticityTokenProvider token={loaderData.csrfToken}>
           <AppLayout>
-            <AppHeader isInEditMode={isAuthorized}>
-              {isAuthorized ? <AdministrationPanel user={user} /> : null}
+            <AppHeader isInEditMode={isAuthenticated}>
+              {isAuthenticated ? <AdministrationPanel user={user} /> : null}
             </AppHeader>
-            <AppBody>{children}</AppBody>
+            <AppBody>
+              <Outlet />
+            </AppBody>
             <AppFooter />
             <ScrollRestoration />
             <Scripts />
@@ -128,8 +134,4 @@ export function Layout({ children }: { children: ReactNode }) {
       </HoneypotProvider>
     </html>
   )
-}
-
-export default function App() {
-  return <Outlet />
 }

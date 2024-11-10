@@ -1,11 +1,18 @@
-import { getFormProps, getInputProps, useForm } from "@conform-to/react"
+import {
+  getFormProps,
+  getInputProps,
+  getSelectProps,
+  useForm,
+} from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { Form, useActionData, useLoaderData } from "@remix-run/react"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 
-import { type action } from "./action"
-import { type loader } from "./loader"
-import { schema } from "./schema"
+import { canPublish, canUpdate } from "~/utils/permissions"
+
+import { type action } from "./_action"
+import { type loader } from "./_loader"
+import { schema } from "./_schema"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
@@ -19,10 +26,12 @@ export default function Route() {
     defaultValue: {
       id: loaderData.archivedIssue.id,
       ordinalNumber: loaderData.archivedIssue.label.split("/")[0],
-      publishedAt: loaderData.archivedIssue.publishedAt?.split("T")[0],
+      releasedAt: loaderData.archivedIssue.releasedAt?.split("T")[0],
       published: loaderData.archivedIssue.published,
+      publishedBefore: loaderData.archivedIssue.published,
       coverId: loaderData.archivedIssue.cover?.id,
       pdfId: loaderData.archivedIssue.pdf?.id,
+      authorId: loaderData.archivedIssue.author.id,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -37,25 +46,36 @@ export default function Route() {
     }
   }
 
+  const permissions = loaderData.session.user.role.permissions
+  const userId = loaderData.session.user.id
+  const authorId = loaderData.archivedIssue.author.id
+
+  const { canUpdateOwn, canUpdateAny } = canUpdate(
+    permissions,
+    userId,
+    authorId
+  )
+  const { canPublishOwn, canPublishAny } = canPublish(
+    permissions,
+    userId,
+    authorId
+  )
+
   return (
     <>
-      <h1>Upravit výtisk</h1>
+      <h3>Upravit výtisk</h3>
       <Form
         {...getFormProps(form)}
         method={"post"}
         encType={"multipart/form-data"}
       >
-        <input
-          {...getInputProps(fields.id, { type: "hidden" })}
-          defaultValue={fields.id.initialValue}
-        />
+        <input {...getInputProps(fields.id, { type: "hidden" })} />
         <fieldset>
           <legend>Popis</legend>
           <label htmlFor={fields.ordinalNumber.id}>Číslo výtisku</label>
           <input
             {...getInputProps(fields.ordinalNumber, { type: "number" })}
             step={1}
-            defaultValue={fields.ordinalNumber.initialValue}
           />
           {fields.ordinalNumber.errors?.map((error) => {
             return (
@@ -65,12 +85,9 @@ export default function Route() {
             )
           })}
           <br />
-          <label htmlFor={fields.publishedAt.id}>Datum vydání</label>
-          <input
-            {...getInputProps(fields.publishedAt, { type: "date" })}
-            defaultValue={fields.publishedAt.initialValue}
-          />
-          {fields.publishedAt.errors?.map((error) => {
+          <label htmlFor={fields.releasedAt.id}>Datum vydání</label>
+          <input {...getInputProps(fields.releasedAt, { type: "date" })} />
+          {fields.releasedAt.errors?.map((error) => {
             return (
               <output key={error} style={{ color: "red" }}>
                 {error}
@@ -80,10 +97,7 @@ export default function Route() {
         </fieldset>
         <fieldset>
           <legend>Soubory</legend>
-          <input
-            {...getInputProps(fields.coverId, { type: "hidden" })}
-            defaultValue={fields.coverId.initialValue}
-          />
+          <input {...getInputProps(fields.coverId, { type: "hidden" })} />
           <label htmlFor={fields.cover.id}>Obálka výtisku</label>
           <input
             {...getInputProps(fields.cover, { type: "file" })}
@@ -98,10 +112,7 @@ export default function Route() {
             )
           })}
           <br />
-          <input
-            {...getInputProps(fields.pdfId, { type: "hidden" })}
-            defaultValue={fields.pdfId.initialValue}
-          />
+          <input {...getInputProps(fields.pdfId, { type: "hidden" })} />
           <label htmlFor={fields.pdf.id}>PDF výtisku</label>
           <input
             {...getInputProps(fields.pdf, { type: "file" })}
@@ -116,19 +127,38 @@ export default function Route() {
             )
           })}
         </fieldset>
-        <fieldset>
+        <fieldset disabled={!(canPublishOwn || canPublishAny)}>
           <legend>Stav</legend>
           <label htmlFor={fields.published.id}>Zveřejněno</label>
           <input {...getInputProps(fields.published, { type: "checkbox" })} />
+          <input
+            {...getInputProps(fields.publishedBefore, { type: "hidden" })}
+          />
+        </fieldset>
+        <fieldset>
+          <legend>Autor</legend>
+          <label htmlFor={fields.authorId.id}>Autor</label>
+          {/* from loaderData.user create select with names as options */}
+          <select {...getSelectProps(fields.authorId)}>
+            {loaderData.users.map((user) => {
+              return (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+              )
+            })}
+          </select>
         </fieldset>
         <AuthenticityTokenInput />
         <br />
-        <button type="submit">Upravit</button>
+        <button type="submit" disabled={!(canUpdateOwn || canUpdateAny)}>
+          Upravit
+        </button>
       </Form>
     </>
   )
 }
 
-export { meta } from "./meta"
-export { loader } from "./loader"
-export { action } from "./action"
+export { meta } from "./_meta"
+export { loader } from "./_loader"
+export { action } from "./_action"

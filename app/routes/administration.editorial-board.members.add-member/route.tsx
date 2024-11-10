@@ -32,7 +32,7 @@ export default function Route() {
 
   return (
     <>
-      <h1>Přidat člena</h1>
+      <h3>Přidat člena</h3>
       <Form {...getFormProps(form)} method="post">
         <fieldset>
           <legend>Informace o členovi</legend>

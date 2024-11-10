@@ -7,7 +7,7 @@ type Args = {
   password: string
 }
 
-export const signIn = async ({ email, password }: Args) => {
+export const getUser = async ({ email, password }: Args) => {
   const user = await prisma.user.findUnique({
     where: { email },
     select: {

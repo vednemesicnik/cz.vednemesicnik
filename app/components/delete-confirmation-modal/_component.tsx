@@ -1,4 +1,4 @@
-import { Form } from "@remix-run/react"
+import { useFetcher } from "@remix-run/react"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 
 import { Button } from "~/components/button"
@@ -14,6 +14,7 @@ type Props = {
 }
 
 export const DeleteConfirmationModal = ({ id, isOpen, onClose }: Props) => {
+  const { Form } = useFetcher()
   const titleId = `delete-confirmation-for-item-${id}`
 
   return (

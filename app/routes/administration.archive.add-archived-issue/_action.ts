@@ -2,15 +2,17 @@ import { parseWithZod } from "@conform-to/zod"
 import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
 
 import { routesConfig } from "~/config/routes-config"
+import { requireAuthentication } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
 import { getMultipartFormData } from "~/utils/get-multipart-form-data"
 
-import { schema } from "./schema"
-import { updateArchivedIssue } from "./utils/update-archived-issue.server"
+import { schema } from "./_schema"
+import { addArchivedIssue } from "./utils/add-archived-issue.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await getMultipartFormData(request)
   await validateCSRF(formData, request.headers)
+  await requireAuthentication(request)
 
   const submission = await parseWithZod(formData, {
     schema,
@@ -21,7 +23,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ lastResult: submission.reply() })
   }
 
-  await updateArchivedIssue(submission.value)
+  await addArchivedIssue(submission.value)
 
   const archiveAdministrationPath =
     routesConfig.administration.archive.index.staticPath

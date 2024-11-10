@@ -43,7 +43,7 @@ export default function Route() {
 
   return (
     <>
-      <h1>Přidat epizodu</h1>
+      <h3>Přidat epizodu</h3>
       <Form method="post" {...getFormProps(form)}>
         <fieldset>
           <legend>Detaily</legend>

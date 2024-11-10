@@ -1,16 +1,19 @@
-// noinspection JSUnusedGlobalSymbols
+import type { ActionFunctionArgs } from "@remix-run/node"
 
-import { type ActionFunctionArgs, redirect } from "@remix-run/node"
-
-import { deleteAuthSession, getAuthSession } from "~/utils/auth.server"
+import {
+  deleteAuthSession,
+  getAuthSession,
+  getSessionId,
+} from "~/utils/auth.server"
 import { redirectBack } from "~/utils/redirect-back"
 
-export const loader = () => {
-  return redirect("/")
-}
+import { deleteSession } from "./utils/delete-session.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authSession = await getAuthSession(request)
+  const sessionId = getSessionId(authSession)
+
+  deleteSession(sessionId)
 
   return redirectBack(request, {
     headers: {

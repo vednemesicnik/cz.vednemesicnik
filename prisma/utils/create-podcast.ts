@@ -6,6 +6,8 @@ export type PodcastData = {
   slug: string
   title: string
   description: string
+  publishedAt: Date
+  published: boolean
   episodes: {
     number: number
     slug: string
@@ -13,7 +15,12 @@ export type PodcastData = {
     description: string
     publishedAt: Date
     published: boolean
-    links: { label: string; url: string }[]
+    links: {
+      label: string
+      url: string
+      publishedAt: Date
+      published: boolean
+    }[]
   }[]
   cover?: {
     altText: string
@@ -31,6 +38,8 @@ export const createPodcast = async (
         slug: data.slug,
         title: data.title,
         description: data.description,
+        publishedAt: data.publishedAt,
+        published: data.published,
         episodes: {
           create: data.episodes.map((episode) => ({
             number: episode.number,
@@ -43,6 +52,8 @@ export const createPodcast = async (
               create: episode.links.map((link) => ({
                 label: link.label,
                 url: link.url,
+                publishedAt: link.publishedAt,
+                published: link.published,
                 author: {
                   connect: { username: "owner" },
                 },

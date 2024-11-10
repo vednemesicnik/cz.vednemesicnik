@@ -39,7 +39,7 @@ export default function Route() {
 
   return (
     <>
-      <h1>Upravit pozici</h1>
+      <h3>Upravit pozici</h3>
       <Form {...getFormProps(form)} method="post">
         <input
           {...getInputProps(fields.id, { type: "hidden" })}

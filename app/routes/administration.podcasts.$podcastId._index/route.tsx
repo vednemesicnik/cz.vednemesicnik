@@ -16,7 +16,7 @@ export default function Route() {
 
   return (
     <>
-      <h1>Administrace Podcastu {loaderData.podcast.title}</h1>
+      <h3>Podcast {loaderData.podcast.title}</h3>
       <NavLink
         to={`/administration/podcasts/${loaderData.podcast.id}/add-episode`}
         preventScrollReset={true}

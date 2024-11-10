@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
+
 import type { RoleName } from "./create-roles"
 
 export type UsersData = {
@@ -23,7 +24,7 @@ export const createUsers = async (prisma: PrismaClient, data: UsersData) => {
               hash: bcrypt.hashSync(user.password, 10),
             },
           },
-          roles: {
+          role: {
             connect: { name: user.role },
           },
         },

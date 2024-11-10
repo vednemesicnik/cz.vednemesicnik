@@ -4,22 +4,24 @@ import { prisma } from "~/utils/db.server"
 
 type Args = {
   ordinalNumber: string
-  publishedAt: string
+  releasedAt: string
   published: boolean
   cover: File
   pdf: File
+  authorId: string
 }
 
 export const addArchivedIssue = async ({
   ordinalNumber,
-  publishedAt,
+  releasedAt,
   published,
   cover,
   pdf,
+  authorId,
 }: Args) => {
-  const publishedDate = new Date(publishedAt)
-  const year = publishedDate.getFullYear()
-  const monthYear = publishedDate.toLocaleDateString("cs-CZ", {
+  const releaseDate = new Date(releasedAt)
+  const year = releaseDate.getFullYear()
+  const monthYear = releaseDate.toLocaleDateString("cs-CZ", {
     year: "numeric",
     month: "long",
   })
@@ -29,7 +31,8 @@ export const addArchivedIssue = async ({
     await prisma.archivedIssue.create({
       data: {
         label: label,
-        publishedAt: publishedDate,
+        releasedAt: releaseDate,
+        publishedAt: published ? new Date() : undefined,
         published,
         cover: {
           create: {
@@ -45,9 +48,7 @@ export const addArchivedIssue = async ({
             blob: Buffer.from(await pdf.arrayBuffer()),
           },
         },
-        author: {
-          connect: { username: "owner" },
-        },
+        authorId: authorId,
       },
     })
   } catch (error) {

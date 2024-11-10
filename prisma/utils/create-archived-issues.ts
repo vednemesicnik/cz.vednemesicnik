@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client"
+
 import { getArchivedIssueCover } from "./get-archived-issue-cover"
 import { getArchivedIssuePdf } from "./get-archived-issue-pdf"
 
@@ -6,6 +7,7 @@ export type ArchivedIssuesData = {
   label: string
   publishedAt: Date
   published: boolean
+  releasedAt: Date
   cover?: {
     altText: string
     filePath: string
@@ -16,7 +18,10 @@ export type ArchivedIssuesData = {
   }
 }[]
 
-export const createArchivedIssues = async (prisma: PrismaClient, data: ArchivedIssuesData) => {
+export const createArchivedIssues = async (
+  prisma: PrismaClient,
+  data: ArchivedIssuesData
+) => {
   for (const archivedIssue of data) {
     await prisma.archivedIssue
       .create({
@@ -24,6 +29,7 @@ export const createArchivedIssues = async (prisma: PrismaClient, data: ArchivedI
           label: archivedIssue.label,
           publishedAt: archivedIssue.publishedAt,
           published: archivedIssue.published,
+          releasedAt: archivedIssue.releasedAt,
           cover: archivedIssue.cover
             ? {
                 create: await getArchivedIssueCover({
