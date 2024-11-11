@@ -19,6 +19,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         },
       },
     },
+    orderBy: {
+      role: {
+        name: "asc",
+      },
+    },
   })
 
   return json({ users })
