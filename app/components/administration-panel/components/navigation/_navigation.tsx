@@ -8,7 +8,11 @@ export const Navigation = () => {
       <Link className={styles.link_button} to={"/administration"}>
         Administrace
       </Link>
-      <Form className={styles.form} method={"post"} action={"/sign-out"}>
+      <Form
+        className={styles.form}
+        method={"post"}
+        action={"/administration/sign-out"}
+      >
         <button className={styles.button} type="submit">
           Odhlásit se
         </button>

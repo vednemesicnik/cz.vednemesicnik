@@ -11,8 +11,6 @@ import { type loader } from "./_loader"
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
 
-  console.log(loaderData)
-
   const imageSrc = getUserImageSrc(loaderData.user.image?.id ?? "")
   const imageAlt = loaderData.user.image?.altText ?? ""
 

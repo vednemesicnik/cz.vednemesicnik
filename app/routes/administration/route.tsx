@@ -38,11 +38,6 @@ export default function Route() {
       (permission.access === "own" || permission.access === "any")
   )
 
-  console.log({
-    canReadUser,
-    permissions: loaderData.session.user.role.permissions,
-  })
-
   return (
     <Page>
       <Headline>Administrace</Headline>
