@@ -1,22 +1,16 @@
 import type { PrismaClient } from "@prisma/client"
 
-import type {
-  PermissionAccess,
-  PermissionAction,
-  PermissionsEntity,
-} from "./create-permissions"
-
-export type RoleName =
-  | "owner"
-  | "administrator"
-  | "editor"
-  | "author"
-  | "contributor"
+import {
+  type PermissionAccess,
+  type PermissionAction,
+  type PermissionEntity,
+} from "~~/types/permission"
+import { type RoleName } from "~~/types/role"
 
 export type RolesData = {
   name: RoleName
   permissions: {
-    entity: PermissionsEntity
+    entity: PermissionEntity
     access: PermissionAccess
     actions: PermissionAction[]
   }[]

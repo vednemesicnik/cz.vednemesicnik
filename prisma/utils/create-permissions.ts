@@ -1,23 +1,13 @@
 import type { PrismaClient } from "@prisma/client"
 
-export type PermissionsEntity =
-  | "archived_issue"
-  | "editorial_board_member"
-  | "editorial_board_member_position"
-  | "podcast"
-  | "podcast_episode"
-  | "podcast_episode_link"
-  | "user"
-export type PermissionAction =
-  | "create"
-  | "publish"
-  | "read"
-  | "update"
-  | "delete"
-export type PermissionAccess = "own" | "any"
+import {
+  type PermissionAccess,
+  type PermissionAction,
+  type PermissionEntity,
+} from "~~/types/permission"
 
 export type PermissionsData = {
-  entities: PermissionsEntity[]
+  entities: PermissionEntity[]
   actions: PermissionAction[]
   accesses: PermissionAccess[]
 }

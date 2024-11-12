@@ -4,7 +4,31 @@ import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireAuthentication(request)
+  const { sessionId } = await requireAuthentication(request)
+
+  const session = await prisma.session.findUniqueOrThrow({
+    where: { id: sessionId },
+    select: {
+      user: {
+        select: {
+          id: true,
+          role: {
+            select: {
+              permissions: {
+                where: {
+                  entity: "user",
+                },
+                select: {
+                  action: true,
+                  access: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
 
   const users = await prisma.user.findMany({
     select: {
@@ -26,5 +50,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  return json({ users })
+  return json({ users, session })
 }

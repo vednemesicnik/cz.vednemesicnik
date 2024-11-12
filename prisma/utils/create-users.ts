@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
-import type { RoleName } from "./create-roles"
+import { type RoleName } from "~~/types/role"
 
 export type UsersData = {
   email: string

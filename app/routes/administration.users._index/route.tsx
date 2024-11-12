@@ -5,6 +5,7 @@ import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
+import { canCreate, canDelete, canUpdate } from "~/utils/permissions"
 
 import { type loader } from "./_loader"
 
@@ -14,10 +15,19 @@ export default function Route() {
   const { idForDeletion, isModalOpen, openModal, closeModal } =
     useDeleteConfirmation()
 
+  const permissions = loaderData.session.user.role.permissions
+  const userId = loaderData.session.user.id
+
+  const { canCreateOwn, canCreateAny } = canCreate(permissions)
+  const { canUpdateOwn, canUpdateAny } = canUpdate(permissions, userId, userId)
+  const { canDeleteOwn, canDeleteAny } = canDelete(permissions, userId, userId)
+
   return (
     <>
       <h3>Uživatelé</h3>
-      <Link to={`/administration/users/add-user`}>Přidat uživatele</Link>
+      {(canCreateOwn || canCreateAny) && (
+        <Link to={`/administration/users/add-user`}>Přidat uživatele</Link>
+      )}
       <br />
       <table>
         <thead>
@@ -41,9 +51,9 @@ export default function Route() {
                 <td>{user.role.name}</td>
                 <td>
                   <Actions
-                    canEdit={user.role.name !== "owner"}
+                    canEdit={canUpdateOwn || canUpdateAny}
                     editPath={editUserPath}
-                    canDelete={user.role.name !== "owner"}
+                    canDelete={canDeleteOwn || canDeleteAny}
                     onDelete={openModal(user.id)}
                   />
                 </td>

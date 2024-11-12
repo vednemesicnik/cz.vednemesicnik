@@ -1,28 +1,14 @@
 import { type Permission } from "@prisma/client"
 
+import {
+  type PermissionAccess,
+  type PermissionEntity,
+} from "~~/types/permission"
+
 // access: "own" | "any"
 // action: "create" | "read" | "update" | "delete" | "publish"
 
 type Permissions = Pick<Permission, "access" | "action">[]
-
-export const canReadAny = (permissions: Permissions) => {
-  return permissions.some(
-    (permission) => permission.action === "read" && permission.access === "any"
-  )
-}
-
-export const canReadOwn = (permissions: Permissions) => {
-  return permissions.some(
-    (permission) => permission.action === "read" && permission.access === "own"
-  )
-}
-
-export const canRead = (permissions: Permissions) => {
-  return {
-    canReadAny: canReadAny(permissions),
-    canReadOwn: canReadOwn(permissions),
-  }
-}
 
 export const canCreateAny = (permissions: Permissions) => {
   return permissions.some(
@@ -136,4 +122,39 @@ export const canPublish = (
     canPublishAny: canPublishAny(permissions),
     canPublishOwn: canPublishOwn(permissions, userId, authorId),
   }
+}
+
+type CanReadEntityOptions = {
+  access?: PermissionAccess[]
+  userId?: string
+  authorId?: string
+}
+
+export const canReadEntities = (
+  entities: PermissionEntity[],
+  permissions: Pick<Permission, "entity" | "access" | "action">[],
+  options?: CanReadEntityOptions
+) => {
+  return entities.map((entity) => {
+    const filteredPermissions = permissions.filter(
+      (permission) =>
+        permission.entity === entity && permission.action === "read"
+    )
+
+    if (filteredPermissions.length === 0) {
+      return false
+    }
+
+    const { access = ["any"], userId, authorId } = options || {}
+
+    if (access.includes("own")) {
+      return filteredPermissions.some(
+        (permission) =>
+          permission.access === "any" ||
+          (permission.access === "own" && userId === authorId)
+      )
+    }
+
+    return filteredPermissions.some((permission) => permission.access === "any")
+  })
 }

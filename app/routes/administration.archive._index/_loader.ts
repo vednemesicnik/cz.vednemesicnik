@@ -2,10 +2,22 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node"
 
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { canReadAny } from "~/utils/permissions"
+import { canReadEntities } from "~/utils/permissions"
+import {
+  type PermissionAction,
+  type PermissionEntity,
+} from "~~/types/permission"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { sessionId } = await requireAuthentication(request)
+
+  const archivedIssueEntity: PermissionEntity = "archived_issue"
+  const archivedIssueActions: PermissionAction[] = [
+    "read",
+    "create",
+    "update",
+    "delete",
+  ]
 
   const session = await prisma.session.findUniqueOrThrow({
     where: {
@@ -19,10 +31,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             select: {
               permissions: {
                 where: {
-                  entity: "archived_issue",
-                  action: { in: ["read", "create", "update", "delete"] },
+                  entity: archivedIssueEntity,
+                  action: { in: archivedIssueActions },
                 },
                 select: {
+                  entity: true,
                   action: true,
                   access: true,
                 },
@@ -34,8 +47,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
+  const [canReadAnyArchivedIssues] = canReadEntities(
+    [archivedIssueEntity],
+    session.user.role.permissions
+  )
+
   const archivedIssues = await prisma.archivedIssue.findMany({
-    ...(canReadAny(session.user.role.permissions)
+    ...(canReadAnyArchivedIssues
       ? {}
       : {
           where: {
