@@ -2,6 +2,8 @@ import { json } from "@remix-run/node"
 
 import { prisma } from "~/utils/db.server"
 
+const DEFAULT_MAX_AGE = 60 * 30 // 30 minutes in seconds
+
 export const loader = async () => {
   const editorialBoardMemberPositions =
     await prisma.editorialBoardPosition.findMany({
@@ -23,5 +25,8 @@ export const loader = async () => {
       },
     })
 
-  return json({ editorialBoardMemberPositions })
+  return json(
+    { editorialBoardMemberPositions },
+    { headers: { "Cache-Control": `public, max-age=${DEFAULT_MAX_AGE}` } }
+  )
 }
