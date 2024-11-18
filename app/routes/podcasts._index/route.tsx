@@ -22,7 +22,7 @@ export default function Podcasts() {
 
   return (
     <>
-      <Headline>Podcasty</Headline>
+      <Headline>Tohle si poslechněte</Headline>
 
       <TileGrid>
         {podcasts.map((podcast) => {

@@ -30,7 +30,7 @@ export default function Archive() {
 
   return (
     <Page>
-      <Headline>Archiv</Headline>
+      <Headline>Naše čísla pohromadě</Headline>
 
       <TileGrid>
         {archivedIssues.map((issue) => {
