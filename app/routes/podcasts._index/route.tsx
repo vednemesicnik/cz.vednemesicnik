@@ -9,7 +9,6 @@ import { ArticleLinkTitle } from "~/components/article-link-title"
 import { ArticleList } from "~/components/article-list"
 import { ArticleListItem } from "~/components/article-list-item"
 import { Headline } from "~/components/headline"
-import { Page } from "~/components/page"
 import { Tile } from "~/components/tile"
 import { TileGrid } from "~/components/tile-grid"
 import { TileGridItem } from "~/components/tile-grid-item"
@@ -22,7 +21,7 @@ export default function Podcasts() {
   const { podcasts, episodes } = useLoaderData<typeof loader>()
 
   return (
-    <Page>
+    <>
       <Headline>Podcasty</Headline>
 
       <TileGrid>
@@ -74,7 +73,7 @@ export default function Podcasts() {
           )
         })}
       </ArticleList>
-    </Page>
+    </>
   )
 }
 

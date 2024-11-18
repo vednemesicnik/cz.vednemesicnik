@@ -4,7 +4,6 @@ import { Headline } from "~/components/headline"
 import { Hyperlink } from "~/components/hyperlink"
 import { List } from "~/components/list"
 import { ListItem } from "~/components/list-item"
-import { Page } from "~/components/page"
 import { Paragraph } from "~/components/paragraph"
 import { Subheadline } from "~/components/subheadline"
 import { getFormattedPublishDate } from "~/utils/get-formatted-publish-date"
@@ -18,7 +17,7 @@ export default function Route() {
   )
 
   return (
-    <Page>
+    <>
       <Headline marginBottom={false}>{loaderData.episode.title}</Headline>
       <Subheadline marginTop={true} marginBottom={true}>
         {formattedPublishDate}
@@ -31,7 +30,7 @@ export default function Route() {
           </ListItem>
         ))}
       </List>
-    </Page>
+    </>
   )
 }
 

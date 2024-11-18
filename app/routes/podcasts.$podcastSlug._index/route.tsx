@@ -1,14 +1,13 @@
 import { useLoaderData } from "@remix-run/react"
 
-import { ArticleLinkImage } from "app/components/article-link-image"
-import { ArticleLinkPublishDate } from "app/components/article-link-publish-date"
-import { ArticleLinkTitle } from "app/components/article-link-title"
-import { Headline } from "app/components/headline"
 import { ArticleLink } from "~/components/article-link"
 import { ArticleLinkFooter } from "~/components/article-link-footer"
+import { ArticleLinkImage } from "~/components/article-link-image"
+import { ArticleLinkPublishDate } from "~/components/article-link-publish-date"
+import { ArticleLinkTitle } from "~/components/article-link-title"
 import { ArticleList } from "~/components/article-list"
 import { ArticleListItem } from "~/components/article-list-item"
-import { Page } from "~/components/page"
+import { Headline } from "~/components/headline"
 import { Paragraph } from "~/components/paragraph"
 import { type loader } from "~/routes/podcasts.$podcastSlug._index/_loader"
 import { getPodcastCoverSrc } from "~/utils/get-podcast-cover-src"
@@ -23,7 +22,7 @@ export default function PodcastPage() {
   const podcastCoverSrc = getPodcastCoverSrc(podcast.cover?.id ?? "")
 
   return (
-    <Page>
+    <>
       <Headline>{podcast.title}</Headline>
       <Paragraph>{podcast.description}</Paragraph>
 
@@ -45,9 +44,9 @@ export default function PodcastPage() {
           )
         })}
       </ArticleList>
-    </Page>
+    </>
   )
 }
 
-export { meta } from "./_meta"
 export { loader } from "./_loader"
+export { meta } from "./_meta"
