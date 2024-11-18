@@ -21,7 +21,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     select: {
       user: {
         select: {
-          id: true,
+          authorId: true,
           role: {
             select: {
               permissions: {
@@ -41,14 +41,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   })
 
-  const users = await prisma.user.findMany({
+  const authors = await prisma.author.findMany({
     ...(canUpdateAny(session.user.role.permissions)
       ? {}
-      : {
-          where: {
-            id: session.user.id,
-          },
-        }),
+      : { where: { id: session.user.authorId } }),
     select: {
       id: true,
       name: true,
@@ -82,5 +78,5 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   })
 
-  return json({ archivedIssue, session, users })
+  return json({ archivedIssue, session, authors })
 }

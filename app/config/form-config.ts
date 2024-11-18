@@ -4,6 +4,7 @@ export const formConfig = {
     value: {
       delete: "delete",
       signOut: "sign-out",
+      signInWithBiometric: "sign-in-with-biometric",
     },
   },
 } as const

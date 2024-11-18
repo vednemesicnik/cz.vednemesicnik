@@ -1,6 +1,8 @@
 // noinspection TypeScriptValidateJSTypes
 
 import { prisma } from "~/utils/db.server"
+import { author } from "~~/data/author"
+import { createAuthor } from "~~/utils/create-author"
 
 import { archivedIssues } from "./data/archived-issues"
 import { editorialBoardMembers } from "./data/editorial-board-members"
@@ -42,24 +44,29 @@ async function seed() {
   await createUsers(prisma, users)
   console.timeEnd("👤️ Users have been created")
 
+  // VDM Author 🗣️
+  console.time("🗣 VDM Author has been created")
+  const { id: authorId } = (await createAuthor(prisma, author)) ?? { id: "" }
+  console.timeEnd("🗣 VDM Author has been created")
+
   // Archived issues 🗞️
   console.time("🗞️ Archive issues have been created")
-  await createArchivedIssues(prisma, archivedIssues)
+  await createArchivedIssues(prisma, archivedIssues, authorId)
   console.timeEnd("🗞️ Archive issues have been created")
 
   // Editorial board member positions 🪪
   console.time("🪪 Member positions have been created")
-  await createEditorialBoardPositions(prisma, editorialBoardPositions)
+  await createEditorialBoardPositions(prisma, editorialBoardPositions, authorId)
   console.timeEnd("🪪 Member positions have been created")
 
   // Editorial board members 👥
   console.time("👥 Editorial board members have been created")
-  await createEditorialBoardMembers(prisma, editorialBoardMembers)
+  await createEditorialBoardMembers(prisma, editorialBoardMembers, authorId)
   console.timeEnd("👥 Editorial board members have been created")
 
   // Podcast 🎙
   console.time("🎙️ Podcast has been created")
-  await createPodcast(prisma, podcastData)
+  await createPodcast(prisma, podcastData, authorId)
   console.timeEnd("🎙️ Podcast has been created")
 
   console.timeEnd(`🌱 Database has been seeded`)

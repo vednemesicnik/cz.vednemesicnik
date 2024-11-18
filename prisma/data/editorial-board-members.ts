@@ -1,4 +1,4 @@
-import type { EditorialBoardMembersData } from "../utils/create-editorial-board-members"
+import type { EditorialBoardMembersData } from "~~/utils/create-editorial-board-members"
 
 export const editorialBoardMembers: EditorialBoardMembersData = [
   { fullName: "Lucie Procházková", positions: [{ key: "chief-editor" }] },

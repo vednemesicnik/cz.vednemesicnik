@@ -6,9 +6,10 @@ type Args = {
   label: string
   url: string
   episodeId: string
+  authorId: string
 }
 
-export async function createLink({ label, url, episodeId }: Args) {
+export async function createLink({ label, url, episodeId, authorId }: Args) {
   try {
     await prisma.podcastEpisodeLink.create({
       data: {
@@ -20,7 +21,7 @@ export async function createLink({ label, url, episodeId }: Args) {
         publishedAt: new Date(),
         published: true,
         author: {
-          connect: { username: "owner" },
+          connect: { id: authorId },
         },
       },
     })

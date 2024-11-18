@@ -1,6 +1,7 @@
 import {
   getFormProps,
   getInputProps,
+  getSelectProps,
   getTextareaProps,
   useForm,
 } from "@conform-to/react"
@@ -11,9 +12,9 @@ import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 
 import { slugify } from "~/utils/slugify"
 
-import { type action } from "./action"
-import { type loader } from "./loader"
-import { schema } from "./schema"
+import { type action } from "./_action"
+import { type loader } from "./_loader"
+import { schema } from "./_schema"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
@@ -31,6 +32,7 @@ export default function Route() {
       publishedAt: loaderData.episode.publishedAt?.split("T")[0],
       podcastId: loaderData.podcast.id,
       episodeId: loaderData.episode.id,
+      authorId: loaderData.episode.authorId,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -145,6 +147,19 @@ export default function Route() {
             )
           })}
         </fieldset>
+        <fieldset>
+          <legend>Autor</legend>
+          <label htmlFor={fields.authorId.id}>Autor</label>
+          <select {...getSelectProps(fields.authorId)}>
+            {loaderData.authors.map((author) => {
+              return (
+                <option key={author.id} value={author.id}>
+                  {author.name}
+                </option>
+              )
+            })}
+          </select>
+        </fieldset>
         <AuthenticityTokenInput />
         <br />
         <button type="submit">Upravit epizodu</button>
@@ -153,6 +168,6 @@ export default function Route() {
   )
 }
 
-export { meta } from "./meta"
-export { loader } from "./loader"
-export { action } from "./action"
+export { meta } from "./_meta"
+export { loader } from "./_loader"
+export { action } from "./_action"

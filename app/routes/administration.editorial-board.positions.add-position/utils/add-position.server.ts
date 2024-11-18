@@ -6,9 +6,10 @@ type Args = {
   order: number
   key: string
   pluralLabel: string
+  authorId: string
 }
 
-export async function addPosition({ order, key, pluralLabel }: Args) {
+export async function addPosition({ order, key, pluralLabel, authorId }: Args) {
   try {
     await prisma.$transaction(async (prisma) => {
       // Update the orders of existing positions
@@ -37,7 +38,7 @@ export async function addPosition({ order, key, pluralLabel }: Args) {
           pluralLabel,
           order,
           author: {
-            connect: { username: "owner" },
+            connect: { id: authorId },
           },
         },
       })

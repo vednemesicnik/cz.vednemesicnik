@@ -7,9 +7,16 @@ type Args = {
   title: string
   slug: string
   description: string
+  authorId: string
 }
 
-export async function createPodcast({ cover, title, slug, description }: Args) {
+export async function createPodcast({
+  cover,
+  title,
+  slug,
+  description,
+  authorId,
+}: Args) {
   try {
     await prisma.podcast.create({
       data: {
@@ -26,7 +33,7 @@ export async function createPodcast({ cover, title, slug, description }: Args) {
         publishedAt: new Date(),
         published: true,
         author: {
-          connect: { username: "owner" },
+          connect: { id: authorId },
         },
       },
     })

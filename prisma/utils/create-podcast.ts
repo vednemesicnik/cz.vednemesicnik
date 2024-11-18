@@ -30,7 +30,8 @@ export type PodcastData = {
 
 export const createPodcast = async (
   prisma: PrismaClient,
-  data: PodcastData
+  data: PodcastData,
+  authorId: string
 ) => {
   await prisma.podcast
     .create({
@@ -55,12 +56,12 @@ export const createPodcast = async (
                 publishedAt: link.publishedAt,
                 published: link.published,
                 author: {
-                  connect: { username: "owner" },
+                  connect: { id: authorId },
                 },
               })),
             },
             author: {
-              connect: { username: "owner" },
+              connect: { id: authorId },
             },
           })),
         },
@@ -73,7 +74,7 @@ export const createPodcast = async (
             }
           : undefined,
         author: {
-          connect: { username: "owner" },
+          connect: { id: authorId },
         },
       },
     })

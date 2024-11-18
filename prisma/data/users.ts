@@ -1,37 +1,37 @@
-import type { UsersData } from "../utils/create-users"
+import type { UsersData } from "~~/utils/create-users"
 
 export const users: UsersData = [
   {
     email: "owner@local.dev",
-    username: "owner",
+    username: "owner@local.dev",
     name: "Owner",
     password: "owner",
     role: "owner",
   },
   {
     email: "admin@local.dev",
-    username: "admin",
+    username: "admin@local.dev",
     name: "Admin",
     password: "admin",
     role: "administrator",
   },
   {
     email: "editor@local.dev",
-    username: "editor",
+    username: "editor@local.dev",
     name: "Editor",
     password: "editor",
     role: "editor",
   },
   {
     email: "author@local.dev",
-    username: "author",
+    username: "author@local.dev",
     name: "Author",
     password: "author",
     role: "author",
   },
   {
     email: "contributor@local.dev",
-    username: "contributor",
+    username: "contributor@local.dev",
     name: "Contributor",
     password: "contributor",
     role: "contributor",

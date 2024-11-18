@@ -9,7 +9,8 @@ export type EditorialBoardMembersData = {
 
 export const createEditorialBoardMembers = async (
   prisma: PrismaClient,
-  data: EditorialBoardMembersData
+  data: EditorialBoardMembersData,
+  authorId: string
 ) => {
   for (const member of data) {
     await prisma.editorialBoardMember
@@ -20,7 +21,7 @@ export const createEditorialBoardMembers = async (
             connect: member.positions,
           },
           author: {
-            connect: { username: "owner" },
+            connect: { id: authorId },
           },
         },
       })

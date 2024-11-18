@@ -5,7 +5,7 @@ import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
-import { type loader } from "~/routes/administration.podcasts.$podcastId.$episodeId._index/loader"
+import { type loader } from "~/routes/administration.podcasts.$podcastId.$episodeId._index/_loader"
 
 export default function Route() {
   const { episode, podcast } = useLoaderData<typeof loader>()
@@ -59,6 +59,6 @@ export default function Route() {
   )
 }
 
-export { meta } from "./meta"
-export { loader } from "./loader"
-export { action } from "./action"
+export { action } from "./_action"
+export { loader } from "./_loader"
+export { meta } from "./_meta"

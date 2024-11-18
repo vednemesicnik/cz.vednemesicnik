@@ -1,4 +1,4 @@
-import type { EditorialBoardPositionsData } from "../utils/create-editorial-board-positions"
+import type { EditorialBoardPositionsData } from "~~/utils/create-editorial-board-positions"
 
 export const editorialBoardPositions: EditorialBoardPositionsData = [
   { key: "chief-editor", pluralLabel: "šéfredaktorky", order: 1 },

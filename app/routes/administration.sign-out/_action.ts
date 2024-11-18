@@ -1,23 +1,25 @@
 import type { ActionFunctionArgs } from "@remix-run/node"
 
 import {
-  deleteAuthSession,
-  getAuthSession,
-  getSessionId,
+  deleteSessionAuthCookieSession,
+  getSessionAuthCookieSession,
+  getSessionAuthId,
 } from "~/utils/auth.server"
 import { redirectBack } from "~/utils/redirect-back"
 
 import { deleteSession } from "./utils/delete-session.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const authSession = await getAuthSession(request)
-  const sessionId = getSessionId(authSession)
+  const sessionAuthCookieSession = await getSessionAuthCookieSession(request)
+  const sessionId = getSessionAuthId(sessionAuthCookieSession)
 
   deleteSession(sessionId)
 
   return redirectBack(request, {
     headers: {
-      "Set-Cookie": await deleteAuthSession(authSession),
+      "Set-Cookie": await deleteSessionAuthCookieSession(
+        sessionAuthCookieSession
+      ),
     },
   })
 }

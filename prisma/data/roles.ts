@@ -1,4 +1,4 @@
-import type { RolesData } from "../utils/create-roles"
+import type { RolesData } from "~~/utils/create-roles"
 
 export const roles: RolesData = [
   {

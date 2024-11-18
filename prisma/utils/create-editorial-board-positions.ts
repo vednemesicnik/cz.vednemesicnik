@@ -8,7 +8,8 @@ export type EditorialBoardPositionsData = {
 
 export const createEditorialBoardPositions = async (
   prisma: PrismaClient,
-  data: EditorialBoardPositionsData
+  data: EditorialBoardPositionsData,
+  authorId: string
 ) => {
   for (const position of data) {
     await prisma.editorialBoardPosition
@@ -18,7 +19,7 @@ export const createEditorialBoardPositions = async (
           pluralLabel: position.pluralLabel,
           order: position.order,
           author: {
-            connect: { username: "owner" },
+            connect: { id: authorId },
           },
         },
       })

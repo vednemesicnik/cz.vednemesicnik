@@ -1,4 +1,4 @@
-import type { PermissionsData } from "../utils/create-permissions"
+import type { PermissionsData } from "~~/utils/create-permissions"
 
 export const permissions: PermissionsData = {
   entities: [

@@ -1,4 +1,4 @@
-import type { ArchivedIssuesData } from "../utils/create-archived-issues"
+import type { ArchivedIssuesData } from "~~/utils/create-archived-issues"
 
 export const archivedIssues: ArchivedIssuesData = [
   // 2003

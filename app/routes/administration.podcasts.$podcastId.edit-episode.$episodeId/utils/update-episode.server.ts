@@ -11,6 +11,7 @@ type Args = {
   published: boolean
   publishedAt: string
   description: string
+  authorId: string
 }
 
 export async function updateEpisode({
@@ -21,6 +22,7 @@ export async function updateEpisode({
   published,
   publishedAt,
   description,
+  authorId,
 }: Args) {
   try {
     await prisma.podcastEpisode.update({
@@ -32,6 +34,9 @@ export async function updateEpisode({
         description,
         published,
         publishedAt: new Date(publishedAt),
+        author: {
+          connect: { id: authorId },
+        },
       },
     })
   } catch (error) {

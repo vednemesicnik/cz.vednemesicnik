@@ -20,7 +20,8 @@ export type ArchivedIssuesData = {
 
 export const createArchivedIssues = async (
   prisma: PrismaClient,
-  data: ArchivedIssuesData
+  data: ArchivedIssuesData,
+  authorId: string
 ) => {
   for (const archivedIssue of data) {
     await prisma.archivedIssue
@@ -47,7 +48,7 @@ export const createArchivedIssues = async (
               }
             : undefined,
           author: {
-            connect: { username: "owner" },
+            connect: { id: authorId },
           },
         },
       })

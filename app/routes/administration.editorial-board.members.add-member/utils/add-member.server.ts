@@ -5,9 +5,10 @@ import { prisma } from "~/utils/db.server"
 type Args = {
   fullName: string
   positionIds: string[]
+  authorId: string
 }
 
-export async function addMember({ fullName, positionIds }: Args) {
+export async function addMember({ fullName, positionIds, authorId }: Args) {
   try {
     await prisma.editorialBoardMember.create({
       data: {
@@ -16,7 +17,7 @@ export async function addMember({ fullName, positionIds }: Args) {
           connect: positionIds.map((positionId) => ({ id: positionId })),
         },
         author: {
-          connect: { username: "owner" },
+          connect: { id: authorId },
         },
       },
     })

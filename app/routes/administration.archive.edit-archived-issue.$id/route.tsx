@@ -47,18 +47,18 @@ export default function Route() {
   }
 
   const permissions = loaderData.session.user.role.permissions
-  const userId = loaderData.session.user.id
-  const authorId = loaderData.archivedIssue.author.id
+  const { user } = loaderData.session
+  const { author } = loaderData.archivedIssue
 
   const { canUpdateOwn, canUpdateAny } = canUpdate(
     permissions,
-    userId,
-    authorId
+    user.authorId,
+    author.id
   )
   const { canPublishOwn, canPublishAny } = canPublish(
     permissions,
-    userId,
-    authorId
+    user.authorId,
+    author.id
   )
 
   return (
@@ -140,10 +140,10 @@ export default function Route() {
           <label htmlFor={fields.authorId.id}>Autor</label>
           {/* from loaderData.user create select with names as options */}
           <select {...getSelectProps(fields.authorId)}>
-            {loaderData.users.map((user) => {
+            {loaderData.authors.map((author) => {
               return (
-                <option key={user.id} value={user.id}>
-                  {user.name}
+                <option key={author.id} value={author.id}>
+                  {author.name}
                 </option>
               )
             })}

@@ -1,4 +1,4 @@
-import type { PodcastData } from "../utils/create-podcast"
+import type { PodcastData } from "~~/utils/create-podcast"
 
 export const podcastData: PodcastData = {
   slug: "vednemesicnik",

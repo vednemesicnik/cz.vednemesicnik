@@ -14,7 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     select: {
       user: {
         select: {
-          id: true,
+          authorId: true,
           role: {
             select: {
               permissions: {
@@ -34,19 +34,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  const users = await prisma.user.findMany({
+  const authors = await prisma.author.findMany({
     ...(canCreateAny(session.user.role.permissions)
       ? {}
-      : {
-          where: {
-            id: session.user.id,
-          },
-        }),
+      : { where: { id: session.user.authorId } }),
     select: {
       id: true,
       name: true,
     },
   })
 
-  return json({ session, users })
+  return json({ session, authors })
 }

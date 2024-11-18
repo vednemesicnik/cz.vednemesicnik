@@ -1,12 +1,17 @@
-import { getFormProps, getInputProps, useForm } from "@conform-to/react"
+import {
+  getFormProps,
+  getInputProps,
+  getSelectProps,
+  useForm,
+} from "@conform-to/react"
 import { Form, useActionData, useLoaderData } from "@remix-run/react"
 import { Fragment } from "react"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 
 import { Button } from "~/components/button"
 
-import { type action } from "./action"
-import { type loader } from "./loader"
+import { type action } from "./_action"
+import { type loader } from "./_loader"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
@@ -21,6 +26,7 @@ export default function Route() {
       positionIds: loaderData.editorialBoardMember.positions.map(
         (position) => position.id
       ),
+      authorId: loaderData.editorialBoardMember.authorId,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -78,6 +84,19 @@ export default function Route() {
             )
           })}
         </fieldset>
+        <fieldset>
+          <legend>Autor</legend>
+          <label htmlFor={fields.authorId.id}>Autor</label>
+          <select {...getSelectProps(fields.authorId)}>
+            {loaderData.authors.map((author) => {
+              return (
+                <option key={author.id} value={author.id}>
+                  {author.name}
+                </option>
+              )
+            })}
+          </select>
+        </fieldset>
         <AuthenticityTokenInput />
         <br />
         <Button type="submit">Upravit člena</Button>
@@ -86,6 +105,6 @@ export default function Route() {
   )
 }
 
-export { meta } from "./meta"
-export { loader } from "./loader"
-export { action } from "./action"
+export { meta } from "./_meta"
+export { loader } from "./_loader"
+export { action } from "./_action"

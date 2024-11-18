@@ -6,7 +6,7 @@ import {
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
 
-import { type loader } from "./loader"
+import { type loader } from "./_loader"
 
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
@@ -62,6 +62,6 @@ export default function Route() {
   )
 }
 
-export { meta } from "./meta"
-export { loader } from "./loader"
-export { action } from "./action"
+export { meta } from "./_meta"
+export { loader } from "./_loader"
+export { action } from "./_action"

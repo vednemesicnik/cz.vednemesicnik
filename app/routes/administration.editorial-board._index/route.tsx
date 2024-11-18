@@ -22,5 +22,5 @@ export default function Route() {
   )
 }
 
-export { meta } from "./meta"
-export { loader } from "./loader"
+export { meta } from "./_meta"
+export { loader } from "./_loader"

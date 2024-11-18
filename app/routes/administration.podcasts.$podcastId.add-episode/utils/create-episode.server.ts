@@ -10,6 +10,7 @@ type Args = {
   published: boolean
   publishedAt: string
   podcastId: string
+  authorId: string
 }
 
 export async function createEpisode({
@@ -20,6 +21,7 @@ export async function createEpisode({
   published,
   publishedAt,
   podcastId,
+  authorId,
 }: Args) {
   try {
     await prisma.podcastEpisode.create({
@@ -34,7 +36,7 @@ export async function createEpisode({
           connect: { id: podcastId },
         },
         author: {
-          connect: { username: "owner" },
+          connect: { id: authorId },
         },
       },
     })

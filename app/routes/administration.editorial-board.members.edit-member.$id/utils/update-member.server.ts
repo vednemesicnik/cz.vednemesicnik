@@ -6,9 +6,15 @@ type Args = {
   id: string
   fullName: string
   positionIds: string[]
+  authorId: string
 }
 
-export async function updateMember({ id, fullName, positionIds }: Args) {
+export async function updateMember({
+  id,
+  fullName,
+  positionIds,
+  authorId,
+}: Args) {
   try {
     await prisma.editorialBoardMember.update({
       where: { id },
@@ -17,6 +23,7 @@ export async function updateMember({ id, fullName, positionIds }: Args) {
         positions: {
           set: positionIds.map((positionId) => ({ id: positionId })),
         },
+        author: { connect: { id: authorId } },
       },
     })
   } catch (error) {

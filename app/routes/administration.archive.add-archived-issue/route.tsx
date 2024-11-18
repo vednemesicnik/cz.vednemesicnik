@@ -19,7 +19,7 @@ export default function Route() {
   const actionData = useActionData<typeof action>()
 
   const permissions = loaderData.session.user.role.permissions
-  const userId = loaderData.session.user.id
+  const authorId = loaderData.session.user.authorId
 
   const [form, fields] = useForm({
     id: "add-archived-issue",
@@ -29,7 +29,7 @@ export default function Route() {
     defaultValue: {
       ordinalNumber: "",
       releasedAt: new Date().toISOString().split("T")[0],
-      authorId: userId,
+      authorId: authorId,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -48,8 +48,8 @@ export default function Route() {
 
   const { canPublishOwn, canPublishAny } = canPublish(
     permissions,
-    userId,
-    userId
+    authorId,
+    authorId
   )
 
   return (
@@ -125,12 +125,11 @@ export default function Route() {
         <fieldset>
           <legend>Autor</legend>
           <label htmlFor={fields.authorId.id}>Autor</label>
-          {/* from loaderData.user create select with names as options */}
           <select {...getSelectProps(fields.authorId)}>
-            {loaderData.users.map((user) => {
+            {loaderData.authors.map((author) => {
               return (
-                <option key={user.id} value={user.id}>
-                  {user.name}
+                <option key={author.id} value={author.id}>
+                  {author.name}
                 </option>
               )
             })}

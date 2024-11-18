@@ -28,6 +28,8 @@
     "@remix-run/node": "2.13.1",
     "@remix-run/react": "2.13.1",
     "@remix-run/serve": "2.13.1",
+    "@simplewebauthn/browser": "11.0.0",
+    "@simplewebauthn/server": "11.0.0",
     "bcryptjs": "2.4.3",
     "crypto-js": "4.2.0",
     "isbot": "5.1.17",
@@ -40,6 +42,7 @@
   },
   "devDependencies": {
     "@remix-run/dev": "2.13.1",
+    "@simplewebauthn/types": "11.0.0",
     "@types/bcryptjs": "2.4.6",
     "@types/node": "22.9.0",
     "@types/react": "18.3.12",

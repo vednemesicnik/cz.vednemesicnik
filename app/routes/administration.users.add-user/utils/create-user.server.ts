@@ -19,6 +19,11 @@ export const createUser = async ({
   roleId,
 }: Args) => {
   try {
+    const author = await prisma.author.create({
+      data: {
+        name,
+      },
+    })
     await prisma.user.create({
       data: {
         email,
@@ -32,6 +37,11 @@ export const createUser = async ({
         role: {
           connect: {
             id: roleId,
+          },
+        },
+        author: {
+          connect: {
+            id: author.id,
           },
         },
       },
