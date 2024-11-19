@@ -23,3 +23,15 @@ logs
 # Ignore temporary files
 tmp
 temp
+
+# Ignore Docker files
+.dockerignore
+Dockerfile
+
+# Ignore git files
+.gitignore
+.git
+
+# Ignore Prisma files
+prisma/data.db
+prisma/data.db-journal

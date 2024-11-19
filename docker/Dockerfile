@@ -5,7 +5,7 @@ FROM node:20-slim as base
 ENV NODE_ENV production
 
 # Install openssl for Prisma
-RUN apt-get update && apt-get install -y fuse3 openssl sqlite3 ca-certificates
+RUN apt-get update && apt-get install -y openssl sqlite3
 
 # Install all node_modules, including dev dependencies
 FROM base as deps
@@ -57,17 +57,10 @@ ENV NODE_ENV="production"
 # For WAL support: https://github.com/prisma/prisma-engines/issues/4675#issuecomment-1914383246
 ENV PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK = "1"
 
-ENV SESSION_SECRET="dummy_secret"
-ENV HONEYPOT_SECRET="dummy_secret"
-
 # add shortcut for connecting to database CLI
-# RUN echo "#!/bin/sh\nset -x\nsqlite3 \$DATABASE_URL" > /usr/local/bin/database-cli && chmod +x /usr/local/bin/database-cli
+RUN echo "#!/bin/sh\nset -x\nsqlite3 \$DATABASE_URL" > /usr/local/bin/database-cli && chmod +x /usr/local/bin/database-cli
 
 WORKDIR /app
-
-# Generate random value and save it to .env file which will be loaded by dotenv
-RUN INTERNAL_COMMAND_TOKEN=$(openssl rand -hex 32) && \
-  echo "INTERNAL_COMMAND_TOKEN=$INTERNAL_COMMAND_TOKEN" > .env
 
 COPY --from=production-deps /app/node_modules /app/node_modules
 COPY --from=build /app/node_modules/.prisma /app/node_modules/.prisma
@@ -76,10 +69,12 @@ COPY --from=build /app/build/server /app/build/server
 COPY --from=build /app/build/client /app/build/client
 COPY --from=build /app/package.json /app/package.json
 COPY --from=build /app/prisma /app/prisma
-COPY --from=build /app/scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
+COPY --from=build /app/scripts/docker-entry-point.sh /app/scripts/docker-entry-point.sh
 
 ADD . .
 
-ENTRYPOINT [ "./scripts/docker-entrypoint.sh" ]
+
+
+ENTRYPOINT [ "./scripts/docker-entry-point.sh" ]
 
 

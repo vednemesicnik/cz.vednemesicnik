@@ -1,0 +1,25 @@
+name: vdm
+
+services:
+  app:
+    image: vdm_app
+
+    container_name: vdm_app
+
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+
+    ports:
+      - "8081:8081"
+
+    environment:
+      SESSION_SECRET: "dummy_secret"
+      HONEYPOT_SECRET: "dummy_secret"
+
+    volumes:
+      - data:/data
+
+volumes:
+  data:
+    name: vdm_data

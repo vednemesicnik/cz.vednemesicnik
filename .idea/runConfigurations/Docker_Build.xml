@@ -1,7 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="docker/Dockerfile: Compose Deployment" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
+  <configuration default="false" name="Docker Build" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
     <deployment type="dockerfile">
       <settings>
+        <option name="imageTag" value="node_20" />
         <option name="containerName" value="vdm-production-demo" />
         <option name="contextFolderPath" value="." />
         <option name="portBindings">
@@ -9,7 +10,7 @@
             <DockerPortBindingImpl>
               <option name="containerPort" value="8081" />
               <option name="hostIp" value="0.0.0.0" />
-              <option name="hostPort" value="4000" />
+              <option name="hostPort" value="8081" />
             </DockerPortBindingImpl>
           </list>
         </option>
