@@ -2,7 +2,7 @@
   box-sizing: border-box;
 }
 
-:global(.screen-reader-only:not(:focus):not(:active)) {
+.screen-reader-only:not(:focus):not(:active) {
   position: absolute;
   width: 1px;
   height: 1px;

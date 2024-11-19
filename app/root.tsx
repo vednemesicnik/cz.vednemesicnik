@@ -1,6 +1,5 @@
 // noinspection HtmlRequiredTitleElement,JSUnusedGlobalSymbols
 
-import { cssBundleHref } from "@remix-run/css-bundle"
 import {
   json,
   type LinksFunction,
@@ -29,14 +28,13 @@ import { getAuthentication } from "~/utils/auth.server"
 import { csrf } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
 import { honeypot } from "~/utils/honeypot.server"
-import "~/styles/global.module.css"
-import "~/styles/fonts.module.css"
-import "~/styles/sizes.module.css"
-import "~/styles/colors.module.css"
+import "~/styles/global.css"
+import "~/styles/fonts.css"
+import "~/styles/sizes.css"
+import "~/styles/colors.css"
 import { preloadFonts } from "~/utils/preload-fonts"
 
 export const links: LinksFunction = () => [
-  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
   ...preloadFonts("regular", "text", "medium", "semiBold", "bold"),
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   { rel: "alternate icon", href: "/favicon.ico" },
