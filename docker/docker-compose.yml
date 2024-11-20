@@ -14,8 +14,8 @@ services:
       - "8081:8081"
 
     environment:
-      SESSION_SECRET: "dummy_secret"
-      HONEYPOT_SECRET: "dummy_secret"
+      SESSION_SECRET: "s3cret1"
+      HONEYPOT_SECRET: "s3cret2"
 
     volumes:
       - data:/data
