@@ -34,8 +34,9 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules /app/node_modules
 
+ADD package.json package-lock.json ./
 ADD prisma .
-RUN npx prisma generate
+RUN npm run prisma:generate
 
 ADD . .
 
@@ -73,8 +74,4 @@ COPY --from=build /app/scripts/docker-entry-point.sh /app/scripts/docker-entry-p
 
 ADD . .
 
-
-
 ENTRYPOINT [ "./scripts/docker-entry-point.sh" ]
-
-

@@ -8,8 +8,6 @@ type RouteParams = Record<
   string
 >
 
-const DEFAULT_MAX_AGE = 60 * 30 // 30 minutes in seconds
-
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const { episodeSlug } = params as RouteParams
 
@@ -18,8 +16,5 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     select: { title: true },
   })
 
-  return json(
-    { podcastEpisode },
-    { headers: { "Cache-Control": `public, max-age=${DEFAULT_MAX_AGE}` } }
-  )
+  return json({ podcastEpisode })
 }

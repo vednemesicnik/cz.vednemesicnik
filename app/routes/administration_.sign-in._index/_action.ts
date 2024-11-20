@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json } from "@remix-run/node"
+import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
 import bcrypt from "bcryptjs"
 
 import { schema } from "~/routes/administration_.sign-in._index/components/password-form"
@@ -77,21 +77,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     select: { id: true, expirationDate: true },
   })
 
-  return json(
-    {
-      submissionResult: null,
-      registrationOptions: null,
-      authenticationOptions: null,
-      isAuthenticated: true,
+  return redirect("/administration", {
+    headers: {
+      "Set-Cookie": await setSessionAuthCookieSession(
+        request,
+        session.id,
+        session.expirationDate
+      ),
     },
-    {
-      headers: {
-        "Set-Cookie": await setSessionAuthCookieSession(
-          request,
-          session.id,
-          session.expirationDate
-        ),
-      },
-    }
-  )
+  })
 }

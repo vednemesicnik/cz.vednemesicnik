@@ -91,7 +91,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     {
       headers: {
         ...(csrfCookieHeader ? { "Set-Cookie": csrfCookieHeader } : {}),
-        "Cache-Control": "public, max-age=60",
       },
     }
   )

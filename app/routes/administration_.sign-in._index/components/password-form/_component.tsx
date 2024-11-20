@@ -1,6 +1,6 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { useFetcher } from "@remix-run/react"
+import { Form, useActionData } from "@remix-run/react"
 import { useEffect, useRef } from "react"
 import { HoneypotInputs } from "remix-utils/honeypot/react"
 
@@ -13,12 +13,12 @@ import { schema } from "./_schema"
 export const PasswordForm = () => {
   const { isHydrated } = useHydrated()
   const passwordInputRef = useRef<HTMLInputElement>(null)
-  const { Form, data } = useFetcher<typeof action>()
+  const actionData = useActionData<typeof action>()
 
   const [form, fields] = useForm({
     id: "password-sign-in",
     constraint: getZodConstraint(schema),
-    lastResult: data?.submissionResult,
+    lastResult: actionData?.submissionResult,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema })
     },

@@ -2,8 +2,6 @@ import { json } from "@remix-run/node"
 
 import { prisma } from "~/utils/db.server"
 
-const DEFAULT_MAX_AGE = 60 * 30 // 30 minutes in seconds
-
 export const loader = async () => {
   const podcastsPromise = prisma.podcast.findMany({
     select: {
@@ -53,8 +51,5 @@ export const loader = async () => {
     episodesPromise,
   ])
 
-  return json(
-    { podcasts, episodes },
-    { headers: { "Cache-Control": `public, max-age=${DEFAULT_MAX_AGE}` } }
-  )
+  return json({ podcasts, episodes })
 }
