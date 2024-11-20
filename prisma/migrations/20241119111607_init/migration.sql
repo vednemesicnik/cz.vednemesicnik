@@ -364,11 +364,17 @@ CREATE INDEX "_EditorialBoardMemberToEditorialBoardPosition_B_index" ON "_Editor
 -- Manually seed initial data
 
 PRAGMA foreign_keys=OFF;
-INSERT INTO Author VALUES('cm3pu051x00246enn6wnzn5x9','Vedneměsíčník, z. s.',NULL,1732104006550,1732104006550);
+INSERT INTO User VALUES('cm3pu054500256ennvy3whxmz','spolek@vednemesicnik.cz','vednemesicnik','Vedneměsíčník, z. s.',1732104006629,1732104006629,'cm3pu051h001y6ennrvbvukwi','cm3pu051x00246enn6wnzn5x9');
 
 INSERT INTO Password VALUES('$2a$10$pGWEQR/yaQ7gAugm69XRXeLE5eDEpBuMlZad6P/5.bXFjaAc5NxDa','cm3pu054500256ennvy3whxmz');
 
-INSERT INTO User VALUES('cm3pu054500256ennvy3whxmz','spolek@vednemesicnik.cz','vednemesicnik','Vedneměsíčník, z. s.',1732104006629,1732104006629,'cm3pu051h001y6ennrvbvukwi','cm3pu051x00246enn6wnzn5x9');
+INSERT INTO Author VALUES('cm3pu051x00246enn6wnzn5x9','Vedneměsíčník, z. s.',NULL,1732104006550,1732104006550);
+
+INSERT INTO Role VALUES('cm3pu051h001y6ennrvbvukwi','owner','',1732104006533,1732104006533);
+INSERT INTO Role VALUES('cm3pu051m001z6enn6gvxlvky','administrator','',1732104006538,1732104006538);
+INSERT INTO Role VALUES('cm3pu051q00206enn77cb4kfr','editor','',1732104006542,1732104006542);
+INSERT INTO Role VALUES('cm3pu051t00216enn693wos4o','author','',1732104006545,1732104006545);
+INSERT INTO Role VALUES('cm3pu051v00226ennllatd34s','contributor','',1732104006548,1732104006548);
 
 INSERT INTO Permission VALUES('cm3pu050500006enn7upaxe2n','create','archived_issue','own','',1732104006485,1732104006485);
 INSERT INTO Permission VALUES('cm3pu050600016ennxw2yrd62','create','archived_issue','any','',1732104006487,1732104006487);
@@ -440,12 +446,6 @@ INSERT INTO Permission VALUES('cm3pu051c001u6ennmgktszih','update','user','own',
 INSERT INTO Permission VALUES('cm3pu051c001v6enn5tdww4lb','update','user','any','',1732104006529,1732104006529);
 INSERT INTO Permission VALUES('cm3pu051d001w6enn56d23h9z','delete','user','own','',1732104006529,1732104006529);
 INSERT INTO Permission VALUES('cm3pu051e001x6ennn7547r9m','delete','user','any','',1732104006530,1732104006530);
-
-INSERT INTO Role VALUES('cm3pu051h001y6ennrvbvukwi','owner','',1732104006533,1732104006533);
-INSERT INTO Role VALUES('cm3pu051m001z6enn6gvxlvky','administrator','',1732104006538,1732104006538);
-INSERT INTO Role VALUES('cm3pu051q00206enn77cb4kfr','editor','',1732104006542,1732104006542);
-INSERT INTO Role VALUES('cm3pu051t00216enn693wos4o','author','',1732104006545,1732104006545);
-INSERT INTO Role VALUES('cm3pu051v00226ennllatd34s','contributor','',1732104006548,1732104006548);
 
 INSERT INTO _PermissionToRole VALUES('cm3pu050600016ennxw2yrd62','cm3pu051h001y6ennrvbvukwi');
 INSERT INTO _PermissionToRole VALUES('cm3pu050c00096enn5su11ja1','cm3pu051h001y6ennrvbvukwi');

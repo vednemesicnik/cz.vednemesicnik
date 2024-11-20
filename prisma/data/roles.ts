@@ -74,11 +74,31 @@ export const roles: RolesData = [
         actions: ["read", "create", "update", "publish", "delete"],
       },
 
+      // Podcast Episode Link:
+      // - Any access: read, create, update, publish, delete
+      // - Own access: read, create, update, publish, delete
+      {
+        entity: "podcast_episode_link",
+        access: "any",
+        actions: ["read", "create", "update", "delete"],
+      },
+      {
+        entity: "podcast_episode_link",
+        access: "own",
+        actions: ["read", "create", "update", "delete"],
+      },
+
       // User:
       // - Any access: read, create, update, delete
+      // - Own access: read, create, update, delete
       {
         entity: "user",
         access: "any",
+        actions: ["read", "create", "update", "delete"],
+      },
+      {
+        entity: "user",
+        access: "own",
         actions: ["read", "create", "update", "delete"],
       },
     ],
@@ -156,11 +176,31 @@ export const roles: RolesData = [
         actions: ["read", "create", "update", "publish", "delete"],
       },
 
+      // Podcast Episode Link:
+      // - Any access: read, create, update, publish, delete
+      // - Own access: read, create, update, publish, delete
+      {
+        entity: "podcast_episode_link",
+        access: "any",
+        actions: ["read", "create", "update", "delete"],
+      },
+      {
+        entity: "podcast_episode_link",
+        access: "own",
+        actions: ["read", "create", "update", "delete"],
+      },
+
       // User:
       // - Any access: read, create, update
+      // - Own access: read, create, update
       {
         entity: "user",
         access: "any",
+        actions: ["read", "create", "update"],
+      },
+      {
+        entity: "user",
+        access: "own",
         actions: ["read", "create", "update"],
       },
     ],
@@ -234,6 +274,20 @@ export const roles: RolesData = [
       },
       {
         entity: "podcast_episode",
+        access: "own",
+        actions: ["read", "create", "update", "publish"],
+      },
+
+      // Podcast Episode Link:
+      // - Any access: read, create, update, publish
+      // - Own access: read, create, update, publish
+      {
+        entity: "podcast_episode_link",
+        access: "any",
+        actions: ["read", "create", "update", "publish"],
+      },
+      {
+        entity: "podcast_episode_link",
         access: "own",
         actions: ["read", "create", "update", "publish"],
       },
@@ -311,6 +365,20 @@ export const roles: RolesData = [
         access: "own",
         actions: ["read", "create", "update", "publish"],
       },
+
+      // Podcast Episode Link:
+      // - Any access: read
+      // - Own access: read, create, update, publish
+      {
+        entity: "podcast_episode_link",
+        access: "any",
+        actions: ["read"],
+      },
+      {
+        entity: "podcast_episode_link",
+        access: "own",
+        actions: ["read", "create", "update", "publish"],
+      },
     ],
   },
   {
@@ -354,6 +422,20 @@ export const roles: RolesData = [
       },
       {
         entity: "podcast_episode",
+        access: "own",
+        actions: ["read", "create", "update"],
+      },
+
+      // Podcast Episode Link:
+      // - Any access: read
+      // - Own access: read, create, update
+      {
+        entity: "podcast_episode_link",
+        access: "any",
+        actions: ["read"],
+      },
+      {
+        entity: "podcast_episode_link",
         access: "own",
         actions: ["read", "create", "update"],
       },
