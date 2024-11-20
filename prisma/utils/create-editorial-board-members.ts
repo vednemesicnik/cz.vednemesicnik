@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@prisma/client"
 
+import { users } from "~~/data/users"
+
 export type EditorialBoardMembersData = {
   fullName: string
   positions: {
@@ -9,9 +11,13 @@ export type EditorialBoardMembersData = {
 
 export const createEditorialBoardMembers = async (
   prisma: PrismaClient,
-  data: EditorialBoardMembersData,
-  authorId: string
+  data: EditorialBoardMembersData
 ) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email: users[0].email },
+    select: { authorId: true },
+  })
+
   for (const member of data) {
     await prisma.editorialBoardMember
       .create({
@@ -21,7 +27,7 @@ export const createEditorialBoardMembers = async (
             connect: member.positions,
           },
           author: {
-            connect: { id: authorId },
+            connect: { id: user.authorId },
           },
         },
       })

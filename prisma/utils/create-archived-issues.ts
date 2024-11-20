@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@prisma/client"
 
+import { users } from "~~/data/users"
+
 import { getArchivedIssueCover } from "./get-archived-issue-cover"
 import { getArchivedIssuePdf } from "./get-archived-issue-pdf"
 
@@ -20,9 +22,13 @@ export type ArchivedIssuesData = {
 
 export const createArchivedIssues = async (
   prisma: PrismaClient,
-  data: ArchivedIssuesData,
-  authorId: string
+  data: ArchivedIssuesData
 ) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email: users[0].email },
+    select: { authorId: true },
+  })
+
   for (const archivedIssue of data) {
     await prisma.archivedIssue
       .create({
@@ -48,7 +54,7 @@ export const createArchivedIssues = async (
               }
             : undefined,
           author: {
-            connect: { id: authorId },
+            connect: { id: user.authorId },
           },
         },
       })

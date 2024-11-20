@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@prisma/client"
 
+import { users } from "~~/data/users"
+
 import { getPodcastCover } from "./get-podcast-cover"
 
 export type PodcastData = {
@@ -30,9 +32,13 @@ export type PodcastData = {
 
 export const createPodcast = async (
   prisma: PrismaClient,
-  data: PodcastData,
-  authorId: string
+  data: PodcastData
 ) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email: users[0].email },
+    select: { authorId: true },
+  })
+
   await prisma.podcast
     .create({
       data: {
@@ -56,12 +62,12 @@ export const createPodcast = async (
                 publishedAt: link.publishedAt,
                 published: link.published,
                 author: {
-                  connect: { id: authorId },
+                  connect: { id: user.authorId },
                 },
               })),
             },
             author: {
-              connect: { id: authorId },
+              connect: { id: user.authorId },
             },
           })),
         },
@@ -74,7 +80,7 @@ export const createPodcast = async (
             }
           : undefined,
         author: {
-          connect: { id: authorId },
+          connect: { id: user.authorId },
         },
       },
     })
