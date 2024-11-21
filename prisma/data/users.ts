@@ -1,15 +1,13 @@
 import type { UsersData } from "~~/utils/create-users"
 
 export const users: UsersData = [
-  // The first user is the owner of the site
   {
-    email: "spolek@vednemesicnik.cz",
-    username: "vednemesicnik",
+    email: "owner@local.dev",
+    username: "owner",
     name: "Vedneměsíčník, z. s.",
-    password: "spolek",
+    password: "owner",
     role: "owner",
   },
-  // The following users are for testing purposes
   {
     email: "admin@local.dev",
     username: "admin@local.dev",

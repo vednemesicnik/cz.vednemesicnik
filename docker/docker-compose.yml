@@ -1,25 +1,20 @@
-name: vdm
+name: vdm_app
 
 services:
   app:
-    image: vdm_app
-
-    container_name: vdm_app
-
+    image: vdm_app_image
+    container_name: vdm_app_container
     build:
-      context: ../
+      context: ..
       dockerfile: docker/Dockerfile
-
     ports:
-      - "8081:8081"
-
-    environment:
-      SESSION_SECRET: "s3cret1"
-      HONEYPOT_SECRET: "s3cret2"
-
+      - "8080:8080"
+    env_file:
+      - .env
     volumes:
       - data:/data
+    restart: unless-stopped
 
 volumes:
   data:
-    name: vdm_data
+    name: vdm_app_data

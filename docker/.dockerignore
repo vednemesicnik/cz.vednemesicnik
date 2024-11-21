@@ -6,6 +6,7 @@ npm-debug.log
 
 # Ignore build directories
 build
+public/build
 
 # Ignore environment variables
 .env
@@ -35,3 +36,12 @@ Dockerfile
 # Ignore Prisma files
 prisma/data.db
 prisma/data.db-journal
+
+# Ignore example files
+*.example
+
+# Ignore Fly files
+fly.toml
+
+# Ignore cache files
+.cache
