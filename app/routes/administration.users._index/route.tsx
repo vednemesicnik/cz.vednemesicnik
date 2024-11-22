@@ -5,7 +5,7 @@ import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
-import { canCreate, canDelete, canUpdate } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 
 import { type loader } from "./_loader"
 
@@ -16,16 +16,18 @@ export default function Route() {
     useDeleteConfirmation()
 
   const permissions = loaderData.session.user.role.permissions
-  const userId = loaderData.session.user.id
+  const ownUserId = loaderData.session.user.id
 
-  const { canCreateOwn, canCreateAny } = canCreate(permissions)
-  const { canUpdateOwn, canUpdateAny } = canUpdate(permissions, userId, userId)
-  const { canDeleteOwn, canDeleteAny } = canDelete(permissions, userId, userId)
+  const [hasCreateRight] = getRights(permissions, {
+    actions: ["create"],
+    access: ["own", "any"],
+    // there is no need to compare ownId with targetId
+  })
 
   return (
     <>
       <h3>Uživatelé</h3>
-      {(canCreateOwn || canCreateAny) && (
+      {hasCreateRight && (
         <Link to={`/administration/users/add-user`}>Přidat uživatele</Link>
       )}
       <br />
@@ -43,6 +45,20 @@ export default function Route() {
           {loaderData.users.map((user) => {
             const editUserPath = `/administration/users/edit-user/${user.id}`
 
+            const [hasUpdateRight] = getRights(permissions, {
+              actions: ["update"],
+              access: ["own", "any"],
+              ownId: ownUserId,
+              targetId: user.id,
+            })
+
+            const [hasDeleteRight] = getRights(permissions, {
+              actions: ["delete"],
+              access: ["own", "any"],
+              ownId: ownUserId,
+              targetId: user.id,
+            })
+
             return (
               <tr key={user.id}>
                 <td>{user.email}</td>
@@ -51,9 +67,9 @@ export default function Route() {
                 <td>{user.role.name}</td>
                 <td>
                   <Actions
-                    canEdit={canUpdateOwn || canUpdateAny}
+                    canEdit={hasUpdateRight}
                     editPath={editUserPath}
-                    canDelete={canDeleteOwn || canDeleteAny}
+                    canDelete={hasDeleteRight}
                     onDelete={openModal(user.id)}
                   />
                 </td>

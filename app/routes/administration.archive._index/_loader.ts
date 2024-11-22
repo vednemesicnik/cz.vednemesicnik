@@ -2,7 +2,7 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node"
 
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { canReadEntities } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 import {
   type PermissionAction,
   type PermissionEntity,
@@ -26,7 +26,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     select: {
       user: {
         select: {
-          id: true,
+          authorId: true,
           role: {
             select: {
               permissions: {
@@ -47,18 +47,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  const [canReadAnyArchivedIssues] = canReadEntities(
-    [archivedIssueEntity],
-    session.user.role.permissions
-  )
+  const [hasReadAnyRight] = getRights(session.user.role.permissions, {
+    actions: ["read"],
+  })
 
   const archivedIssues = await prisma.archivedIssue.findMany({
-    ...(canReadAnyArchivedIssues
+    ...(hasReadAnyRight
       ? {}
       : {
           where: {
             author: {
-              id: session.user.id,
+              id: session.user.authorId,
             },
           },
         }),

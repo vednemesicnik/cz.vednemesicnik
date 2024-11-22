@@ -28,6 +28,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 select: {
                   action: true,
                   access: true,
+                  entity: true,
                 },
               },
             },

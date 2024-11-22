@@ -6,7 +6,7 @@ import {
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
 import { routesConfig } from "~/config/routes-config"
-import { canCreate, canDelete, canUpdate } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 
 import { type loader } from "./_loader"
 
@@ -18,17 +18,18 @@ export default function Route() {
   const addArchivedIssuePath =
     routesConfig.administration.archive.addArchivedIssue.staticPath
 
-  const permissions = loaderData.session.user.role.permissions
-  const userId = loaderData.session.user.id
+  const { user } = loaderData.session
 
-  const { canCreateOwn, canCreateAny } = canCreate(permissions)
+  const [hasCreateRight] = getRights(user.role.permissions, {
+    actions: ["create"],
+    access: ["own", "any"],
+    // there is no need to compare ownAuthorId with targetAuthorId
+  })
 
   return (
     <>
       <h3>Archiv</h3>
-      {(canCreateOwn || canCreateAny) && (
-        <Link to={addArchivedIssuePath}>Přidat výtisk</Link>
-      )}
+      {hasCreateRight && <Link to={addArchivedIssuePath}>Přidat výtisk</Link>}
       <hr />
       <table>
         <thead>
@@ -45,18 +46,18 @@ export default function Route() {
                 issue.id
               )
 
-            const authorId = issue.author.id
-
-            const { canUpdateOwn, canUpdateAny } = canUpdate(
-              permissions,
-              userId,
-              authorId
-            )
-            const { canDeleteOwn, canDeleteAny } = canDelete(
-              permissions,
-              userId,
-              authorId
-            )
+            const [hasUpdateRight] = getRights(user.role.permissions, {
+              actions: ["update"],
+              access: ["own", "any"],
+              ownId: user.authorId,
+              targetId: issue.author.id,
+            })
+            const [hasDeleteRight] = getRights(user.role.permissions, {
+              actions: ["delete"],
+              access: ["own", "any"],
+              ownId: user.authorId,
+              targetId: issue.author.id,
+            })
 
             return (
               <tr key={issue.id}>
@@ -64,9 +65,9 @@ export default function Route() {
                 <td>{issue.published ? "🟢" : "🔴"}</td>
                 <td>
                   <Actions
-                    canEdit={canUpdateAny || canUpdateOwn}
+                    canEdit={hasUpdateRight}
                     editPath={editArchivedIssuePath}
-                    canDelete={canDeleteAny || canDeleteOwn}
+                    canDelete={hasDeleteRight}
                     onDelete={openModal(issue.id)}
                   />
                 </td>

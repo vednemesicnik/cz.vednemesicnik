@@ -8,7 +8,7 @@ import { parseWithZod } from "@conform-to/zod"
 import { Form, useLoaderData } from "@remix-run/react"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 
-import { canUpdate } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 
 import { type loader } from "./_loader"
 import { schema } from "./_schema"
@@ -16,13 +16,14 @@ import { schema } from "./_schema"
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
 
-  const permissions = loaderData.session.user.role.permissions
+  const { user, session } = loaderData
 
-  const { canUpdateOwn, canUpdateAny } = canUpdate(
-    permissions,
-    loaderData.user.id,
-    loaderData.session.user.id
-  )
+  const [hasUpdateRight] = getRights(session.user.role.permissions, {
+    actions: ["update"],
+    access: ["own", "any"],
+    ownId: session.user.id,
+    targetId: user.id,
+  })
 
   const [form, fields] = useForm({
     id: "add-user",
@@ -130,7 +131,7 @@ export default function Route() {
         <input {...getInputProps(fields.userId, { type: "hidden" })} />
         <AuthenticityTokenInput />
         <br />
-        <button type="submit" disabled={!(canUpdateOwn || canUpdateAny)}>
+        <button type="submit" disabled={!hasUpdateRight}>
           Upravit uživatele
         </button>
       </Form>

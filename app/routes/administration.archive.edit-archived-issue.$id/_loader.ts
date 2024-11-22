@@ -4,7 +4,7 @@ import type { ParamParseKey } from "@remix-run/router"
 import { type routesConfig } from "~/config/routes-config"
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { canUpdateAny } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 
 type EditArchivedIssuePath =
   typeof routesConfig.administration.archive.editArchivedIssue.dynamicPath
@@ -32,6 +32,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 select: {
                   action: true,
                   access: true,
+                  entity: true,
                 },
               },
             },
@@ -41,10 +42,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   })
 
+  const [hasUpdateAnyRight] = getRights(session.user.role.permissions, {
+    actions: ["update"],
+  })
+
   const authors = await prisma.author.findMany({
-    ...(canUpdateAny(session.user.role.permissions)
-      ? {}
-      : { where: { id: session.user.authorId } }),
+    ...(hasUpdateAnyRight ? {} : { where: { id: session.user.authorId } }),
     select: {
       id: true,
       name: true,

@@ -6,9 +6,10 @@ import {
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { Form, useActionData, useLoaderData } from "@remix-run/react"
+import { useEffect, useRef } from "react"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 
-import { canPublish, canUpdate } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 
 import { type action } from "./_action"
 import { type loader } from "./_loader"
@@ -18,20 +19,25 @@ export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
 
+  const publishedInputRef = useRef<HTMLInputElement>(null)
+
+  const { archivedIssue, session } = loaderData
+  const { user } = session
+
   const [form, fields] = useForm({
     id: "edit-archived-issue-form",
     constraint: getZodConstraint(schema),
     lastResult: actionData?.lastResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
-      id: loaderData.archivedIssue.id,
-      ordinalNumber: loaderData.archivedIssue.label.split("/")[0],
-      releasedAt: loaderData.archivedIssue.releasedAt?.split("T")[0],
-      published: loaderData.archivedIssue.published,
-      publishedBefore: loaderData.archivedIssue.published,
-      coverId: loaderData.archivedIssue.cover?.id,
-      pdfId: loaderData.archivedIssue.pdf?.id,
-      authorId: loaderData.archivedIssue.author.id,
+      id: archivedIssue.id,
+      ordinalNumber: archivedIssue.label.split("/")[0],
+      releasedAt: archivedIssue.releasedAt?.split("T")[0],
+      published: archivedIssue.published,
+      publishedBefore: archivedIssue.published,
+      coverId: archivedIssue.cover?.id,
+      pdfId: archivedIssue.pdf?.id,
+      authorId: archivedIssue.author.id,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -46,20 +52,28 @@ export default function Route() {
     }
   }
 
-  const permissions = loaderData.session.user.role.permissions
-  const { user } = loaderData.session
-  const { author } = loaderData.archivedIssue
+  const [hasUpdateRight] = getRights(user.role.permissions, {
+    actions: ["update"],
+    access: ["own", "any"],
+    ownId: user.authorId,
+    targetId: archivedIssue.author.id,
+  })
 
-  const { canUpdateOwn, canUpdateAny } = canUpdate(
-    permissions,
-    user.authorId,
-    author.id
-  )
-  const { canPublishOwn, canPublishAny } = canPublish(
-    permissions,
-    user.authorId,
-    author.id
-  )
+  const [hasPublishRight] = getRights(user.role.permissions, {
+    actions: ["publish"],
+    access: ["own", "any"],
+    ownId: user.authorId,
+    targetId: fields.authorId.value || archivedIssue.author.id,
+  })
+
+  const publishedBeforeValue = archivedIssue.published
+
+  useEffect(() => {
+    const publishedInput = publishedInputRef.current
+    if (publishedInput !== null && !hasPublishRight) {
+      publishedInput.checked = publishedBeforeValue
+    }
+  }, [hasPublishRight, publishedBeforeValue])
 
   return (
     <>
@@ -127,10 +141,13 @@ export default function Route() {
             )
           })}
         </fieldset>
-        <fieldset disabled={!(canPublishOwn || canPublishAny)}>
+        <fieldset disabled={!hasPublishRight}>
           <legend>Stav</legend>
           <label htmlFor={fields.published.id}>Zveřejněno</label>
-          <input {...getInputProps(fields.published, { type: "checkbox" })} />
+          <input
+            {...getInputProps(fields.published, { type: "checkbox" })}
+            ref={publishedInputRef}
+          />
           <input
             {...getInputProps(fields.publishedBefore, { type: "hidden" })}
           />
@@ -151,7 +168,7 @@ export default function Route() {
         </fieldset>
         <AuthenticityTokenInput />
         <br />
-        <button type="submit" disabled={!(canUpdateOwn || canUpdateAny)}>
+        <button type="submit" disabled={!hasUpdateRight}>
           Upravit
         </button>
       </Form>

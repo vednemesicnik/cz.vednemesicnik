@@ -20,6 +20,12 @@ export const updateUser = async ({
   roleId,
   userId,
 }: Args) => {
+  if (process.env.PERMANENT_USER_ID === userId) {
+    throw new Response("Error: Unable to update the user.", {
+      status: 400,
+    })
+  }
+
   try {
     const user = await prisma.user.update({
       where: { id: userId },

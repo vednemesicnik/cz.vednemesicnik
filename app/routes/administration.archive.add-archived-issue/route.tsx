@@ -8,7 +8,7 @@ import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { Form, useActionData, useLoaderData } from "@remix-run/react"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 
-import { canCreate, canPublish } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 
 import { type action } from "./_action"
 import { type loader } from "./_loader"
@@ -18,18 +18,17 @@ export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
 
-  const permissions = loaderData.session.user.role.permissions
-  const authorId = loaderData.session.user.authorId
+  const { user } = loaderData.session
 
   const [form, fields] = useForm({
     id: "add-archived-issue",
     constraint: getZodConstraint(schema),
-    lastResult: actionData?.lastResult,
+    lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
       ordinalNumber: "",
       releasedAt: new Date().toISOString().split("T")[0],
-      authorId: authorId,
+      authorId: user.authorId,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -44,13 +43,18 @@ export default function Route() {
     }
   }
 
-  const { canCreateOwn, canCreateAny } = canCreate(permissions)
+  const [hasCreateRight] = getRights(user.role.permissions, {
+    actions: ["create"],
+    access: ["own", "any"],
+    // there is no need to compare ownAuthorId with targetAuthorId
+  })
 
-  const { canPublishOwn, canPublishAny } = canPublish(
-    permissions,
-    authorId,
-    authorId
-  )
+  const [hasPublishRight] = getRights(user.role.permissions, {
+    actions: ["publish"],
+    access: ["own", "any"],
+    ownId: user.authorId,
+    targetId: fields.authorId.value,
+  })
 
   return (
     <>
@@ -117,7 +121,7 @@ export default function Route() {
             )
           })}
         </fieldset>
-        <fieldset disabled={!(canPublishOwn || canPublishAny)}>
+        <fieldset disabled={!hasPublishRight}>
           <legend>Stav</legend>
           <label htmlFor={fields.published.id}>Zveřejněno</label>
           <input {...getInputProps(fields.published, { type: "checkbox" })} />
@@ -137,7 +141,7 @@ export default function Route() {
         </fieldset>
         <AuthenticityTokenInput />
         <br />
-        <button type="submit" disabled={!(canCreateOwn || canCreateAny)}>
+        <button type="submit" disabled={!hasCreateRight}>
           Přidat
         </button>
       </Form>

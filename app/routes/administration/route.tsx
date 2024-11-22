@@ -3,7 +3,7 @@ import { Link, Outlet, useLoaderData } from "@remix-run/react"
 import { Headline } from "app/components/headline"
 import { Divider } from "~/components/divider"
 import { Page } from "~/components/page"
-import { canReadEntities } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 
 import { type loader } from "./_loader"
 
@@ -16,17 +16,17 @@ export default function Route() {
     canReadEditorialBoardMemberPositions,
     canReadPodcasts,
     canReadUsers,
-  ] = canReadEntities(
-    [
+  ] = getRights(loaderData.session.user.role.permissions, {
+    entities: [
       "archived_issue",
       "editorial_board_member",
       "editorial_board_member_position",
       "podcast",
       "user",
     ],
-    loaderData.session.user.role.permissions,
-    { access: ["any", "own"] }
-  )
+    actions: ["read"],
+    access: ["any", "own"],
+  })
 
   return (
     <Page>

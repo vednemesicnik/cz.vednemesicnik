@@ -2,7 +2,7 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node"
 
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { canCreateAny } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { sessionId } = await requireAuthentication(request)
@@ -25,6 +25,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
                 select: {
                   action: true,
                   access: true,
+                  entity: true,
                 },
               },
             },
@@ -34,10 +35,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
+  const [hasCreateAnyRight] = getRights(session.user.role.permissions, {
+    actions: ["create"],
+  })
+
   const authors = await prisma.author.findMany({
-    ...(canCreateAny(session.user.role.permissions)
-      ? {}
-      : { where: { id: session.user.authorId } }),
+    ...(hasCreateAnyRight ? {} : { where: { id: session.user.authorId } }),
     select: {
       id: true,
       name: true,

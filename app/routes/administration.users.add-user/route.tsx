@@ -8,7 +8,7 @@ import { parseWithZod } from "@conform-to/zod"
 import { Form, useLoaderData } from "@remix-run/react"
 import { AuthenticityTokenInput } from "remix-utils/csrf/react"
 
-import { canCreate } from "~/utils/permissions"
+import { getRights } from "~/utils/permissions"
 
 import { type loader } from "./_loader"
 import { schema } from "./_schema"
@@ -18,7 +18,11 @@ export default function Route() {
 
   const permissions = loaderData.session.user.role.permissions
 
-  const { canCreateOwn, canCreateAny } = canCreate(permissions)
+  const [hasCreateRight] = getRights(permissions, {
+    actions: ["create"],
+    access: ["own", "any"],
+    // there is no need to compare ownId with targetId
+  })
 
   const [form, fields] = useForm({
     id: "add-user",
@@ -118,7 +122,7 @@ export default function Route() {
         </fieldset>
         <AuthenticityTokenInput />
         <br />
-        <button type="submit" disabled={!(canCreateOwn || canCreateAny)}>
+        <button type="submit" disabled={!hasCreateRight}>
           Přidat uživatele
         </button>
       </Form>
