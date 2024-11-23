@@ -34,3 +34,7 @@ Make sure to deploy the output of `npm run build`
 
 - `build/server`
 - `build/client`
+
+### Project Documentation
+
+Documentation for this project is located in the `docs` directory [here](./docs/README.md).
