@@ -88,18 +88,74 @@ export const roles: RolesData = [
         actions: ["read", "create", "update", "delete"],
       },
 
-      // User:
-      // - Any access: read, create, update, delete
-      // - Own access: read, create, update, delete
+      // User - owner:
+      // - Any access: read, update
+      // - Own access: read, update
       {
-        entity: "user",
+        entity: "user_owner",
         access: "any",
-        actions: ["read", "create", "update", "delete"],
+        actions: ["read", "update"],
       },
       {
-        entity: "user",
+        entity: "user_owner",
         access: "own",
-        actions: ["read", "create", "update", "delete"],
+        actions: ["read", "update"],
+      },
+
+      // User - administrator:
+      // - Any access: read, create, update, update role, delete
+      // - Own access: read, create, update, update role, delete
+      {
+        entity: "user_administrator",
+        access: "any",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+      {
+        entity: "user_administrator",
+        access: "own",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+
+      // User - editor:
+      // - Any access: read, create, update, update role, delete
+      // - Own access: read, create, update, update role, delete
+      {
+        entity: "user_editor",
+        access: "any",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+      {
+        entity: "user_editor",
+        access: "own",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+
+      // User - author:
+      // - Any access: read, create, update, update role, delete
+      // - Own access: read, create, update, update role, delete
+      {
+        entity: "user_author",
+        access: "any",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+      {
+        entity: "user_author",
+        access: "own",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+
+      // User - contributor:
+      // - Any access: read, create, update, update role, delete
+      // - Own access: read, create, update, update role, delete
+      {
+        entity: "user_contributor",
+        access: "any",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+      {
+        entity: "user_contributor",
+        access: "own",
+        actions: ["read", "create", "update", "update_role", "delete"],
       },
     ],
   },
@@ -190,18 +246,60 @@ export const roles: RolesData = [
         actions: ["read", "create", "update", "delete"],
       },
 
-      // User:
-      // - Any access: read, create, update
-      // - Own access: read, create, update
+      // User - administrator:
+      // - Any access: read, update
+      // - Own access: read, update
       {
-        entity: "user",
+        entity: "user_administrator",
         access: "any",
-        actions: ["read", "create", "update"],
+        actions: ["read", "update"],
       },
       {
-        entity: "user",
+        entity: "user_administrator",
         access: "own",
-        actions: ["read", "create", "update"],
+        actions: ["read", "update"],
+      },
+
+      // User - editor:
+      // - Any access: read, create, update, update role, delete
+      // - Own access: read, create, update, update role, delete
+      {
+        entity: "user_editor",
+        access: "any",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+      {
+        entity: "user_editor",
+        access: "own",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+
+      // User - author:
+      // - Any access: read, create, update, update role, delete
+      // - Own access: read, create, update, update role, delete
+      {
+        entity: "user_author",
+        access: "any",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+      {
+        entity: "user_author",
+        access: "own",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+
+      // User - contributor:
+      // - Any access: read, create, update, update role, delete
+      // - Own access: read, create, update, update role, delete
+      {
+        entity: "user_contributor",
+        access: "any",
+        actions: ["read", "create", "update", "update_role", "delete"],
+      },
+      {
+        entity: "user_contributor",
+        access: "own",
+        actions: ["read", "create", "update", "update_role", "delete"],
       },
     ],
   },
