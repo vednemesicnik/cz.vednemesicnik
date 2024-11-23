@@ -364,7 +364,7 @@ CREATE INDEX "_EditorialBoardMemberToEditorialBoardPosition_B_index" ON "_Editor
 -- Manually seed initial data
 
 PRAGMA foreign_keys=OFF;
-INSERT INTO User VALUES('cm3pu054500256ennvy3whxmz','spolek@vednemesicnik.cz','vednemesicnik','Vedneměsíčník, z. s.',1732104006629,1732104006629,'cm3pu051h001y6ennrvbvukwi','cm3pu051x00246enn6wnzn5x9');
+INSERT INTO User VALUES('cm3pu054500256ennvy3whxmz','spolek@vednemesicnik.cz','spolek@vednemesicnik.cz','Vedneměsíčník, z. s.',1732104006629,1732104006629,'cm3pu051h001y6ennrvbvukwi','cm3pu051x00246enn6wnzn5x9');
 
 INSERT INTO Password VALUES('$2a$10$pGWEQR/yaQ7gAugm69XRXeLE5eDEpBuMlZad6P/5.bXFjaAc5NxDa','cm3pu054500256ennvy3whxmz');
 
