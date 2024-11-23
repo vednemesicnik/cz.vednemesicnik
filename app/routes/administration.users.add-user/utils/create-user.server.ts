@@ -1,7 +1,7 @@
-import { Prisma } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
   email: string
@@ -19,41 +19,37 @@ export const createUser = async ({
   roleId,
 }: Args) => {
   try {
-    const author = await prisma.author.create({
-      data: {
-        name,
-      },
-    })
-    await prisma.user.create({
-      data: {
-        email,
-        username,
-        name,
-        password: {
-          create: {
-            hash: bcrypt.hashSync(password, 10),
+    await prisma.$transaction(async (prisma) => {
+      const author = await prisma.author.create({
+        data: {
+          name,
+        },
+      })
+
+      await prisma.user.create({
+        data: {
+          email,
+          username,
+          name,
+          password: {
+            create: {
+              hash: bcrypt.hashSync(password, 10),
+            },
+          },
+          role: {
+            connect: {
+              id: roleId,
+            },
+          },
+          author: {
+            connect: {
+              id: author.id,
+            },
           },
         },
-        role: {
-          connect: {
-            id: roleId,
-          },
-        },
-        author: {
-          connect: {
-            id: author.id,
-          },
-        },
-      },
+      })
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new Response(
-        `Error ${error.code}: Unable to add user. ${error.message}`,
-        { status: 400 }
-      )
-    }
-
-    throw error
+    throwDbError(error, "Unable to create the user.")
   }
 }

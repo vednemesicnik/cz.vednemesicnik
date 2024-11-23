@@ -38,7 +38,7 @@ export default function Route() {
       email: loaderData.user.email,
       username: loaderData.user.username,
       name: loaderData.user.name,
-      roleId: loaderData.user.roleId,
+      roleId: loaderData.user.role.id,
       userId: loaderData.user.id,
     },
   })
@@ -112,22 +112,27 @@ export default function Route() {
             </output>
           ))}
         </fieldset>
-        <fieldset>
-          <legend>Oprávnění</legend>
-          <label htmlFor={fields.roleId.id}>Role</label>
-          <select {...getSelectProps(fields.roleId)}>
-            {loaderData.roles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.name}
-              </option>
+        {user.role.name !== "owner" && (
+          <fieldset>
+            <legend>Oprávnění</legend>
+            <label htmlFor={fields.roleId.id}>Role</label>
+            <select {...getSelectProps(fields.roleId)}>
+              {loaderData.roles.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
+                </option>
+              ))}
+            </select>
+            {fields.roleId.errors?.map((error) => (
+              <output key={error} style={{ color: "red" }}>
+                {error}
+              </output>
             ))}
-          </select>
-          {fields.roleId.errors?.map((error) => (
-            <output key={error} style={{ color: "red" }}>
-              {error}
-            </output>
-          ))}
-        </fieldset>
+          </fieldset>
+        )}
+        {user.role.name === "owner" && (
+          <input {...getInputProps(fields.roleId, { type: "hidden" })} />
+        )}
         <input {...getInputProps(fields.userId, { type: "hidden" })} />
         <AuthenticityTokenInput />
         <br />

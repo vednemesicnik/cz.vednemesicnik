@@ -1,6 +1,5 @@
-import { Prisma } from "@prisma/client"
-
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
   label: string
@@ -26,13 +25,6 @@ export async function createLink({ label, url, episodeId, authorId }: Args) {
       },
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new Response(
-        `Error ${error.code}: Unable to create link. ${error.message}`,
-        { status: 400 }
-      )
-    }
-
-    throw error
+    throwDbError(error, "Unable to create the link.")
   }
 }

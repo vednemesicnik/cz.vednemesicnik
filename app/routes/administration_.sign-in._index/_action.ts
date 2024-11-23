@@ -9,6 +9,7 @@ import {
 } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
 import { checkHoneypot } from "~/utils/honeypot.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
@@ -69,21 +70,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   }
 
-  const session = await prisma.session.create({
-    data: {
-      user: { connect: { id: user.id } },
-      expirationDate: getSessionAuthCookieSessionExpirationDate(),
-    },
-    select: { id: true, expirationDate: true },
-  })
+  try {
+    const session = await prisma.session.create({
+      data: {
+        user: { connect: { id: user.id } },
+        expirationDate: getSessionAuthCookieSessionExpirationDate(),
+      },
+      select: { id: true, expirationDate: true },
+    })
 
-  return redirect("/administration", {
-    headers: {
-      "Set-Cookie": await setSessionAuthCookieSession(
-        request,
-        session.id,
-        session.expirationDate
-      ),
-    },
-  })
+    return redirect("/administration", {
+      headers: {
+        "Set-Cookie": await setSessionAuthCookieSession(
+          request,
+          session.id,
+          session.expirationDate
+        ),
+      },
+    })
+  } catch (error) {
+    throwDbError(error, "Unable to create the session.")
+  }
 }

@@ -1,6 +1,5 @@
-import { Prisma } from "@prisma/client"
-
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
   order: number
@@ -44,13 +43,6 @@ export async function addPosition({ order, key, pluralLabel, authorId }: Args) {
       })
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new Response(
-        `Error ${error.code}: Unable to add the editorial board position. ${error.message}`,
-        {
-          status: 400,
-        }
-      )
-    }
+    throwDbError(error, `Unable to add the editorial board position.`)
   }
 }

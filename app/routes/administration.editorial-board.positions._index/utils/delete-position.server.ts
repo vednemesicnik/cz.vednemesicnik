@@ -1,6 +1,5 @@
-import { Prisma } from "@prisma/client"
-
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 export async function deletePosition(id: string) {
   try {
@@ -33,13 +32,6 @@ export async function deletePosition(id: string) {
       }
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new Response(
-        `Error ${error.code}: Unable to delete the editorial board position. ${error.message}`,
-        {
-          status: 400,
-        }
-      )
-    }
+    throwDbError(error, "Unable to delete the editorial board position.")
   }
 }

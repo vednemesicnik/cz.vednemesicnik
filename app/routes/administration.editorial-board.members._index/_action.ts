@@ -2,7 +2,7 @@ import { invariantResponse } from "@epic-web/invariant"
 import { type ActionFunctionArgs, json } from "@remix-run/node"
 
 import { formConfig } from "~/config/form-config"
-import { deleteMemeber } from "~/routes/administration.editorial-board.members._index/utils/delete-memeber.server"
+import { deleteMember } from "~/routes/administration.editorial-board.members._index/utils/delete-memeber.server"
 import { requireAuthentication } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
 
@@ -19,7 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   invariantResponse(typeof id === "string", "Missing member ID")
 
-  await deleteMemeber(id)
+  await deleteMember(id)
 
   return json({ status: "success" })
 }

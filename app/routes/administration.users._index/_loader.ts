@@ -14,6 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           id: true,
           role: {
             select: {
+              name: true,
               permissions: {
                 where: {
                   entity: "user",

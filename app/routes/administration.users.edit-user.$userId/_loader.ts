@@ -45,11 +45,19 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       email: true,
       username: true,
       name: true,
-      roleId: true,
+      role: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   })
 
   const rolesPromise = prisma.role.findMany({
+    where: {
+      name: { not: "owner" },
+    },
     select: {
       id: true,
       name: true,

@@ -8,9 +8,10 @@ import { schema } from "./_schema"
 import { updateUser } from "./utils/update-user"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const { sessionId } = await requireAuthentication(request)
+
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)
-  await requireAuthentication(request)
 
   const submission = await parseWithZod(formData, {
     schema,
@@ -21,7 +22,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ lastResult: submission.reply() })
   }
 
-  await updateUser(submission.value)
+  await updateUser(submission.value, sessionId)
 
   return redirect("/administration/users")
 }

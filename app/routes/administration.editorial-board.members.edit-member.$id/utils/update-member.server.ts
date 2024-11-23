@@ -1,6 +1,5 @@
-import { Prisma } from "@prisma/client"
-
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
   id: string
@@ -27,15 +26,6 @@ export async function updateMember({
       },
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new Response(
-        `Error ${error.code}: Unable to update the editorial board member. ${error.message}`,
-        {
-          status: 400,
-        }
-      )
-    }
-
-    throw error
+    throwDbError(error, "Unable to update the editorial board member.")
   }
 }

@@ -5,6 +5,7 @@ import { formConfig } from "~/config/form-config"
 import { requireAuthentication } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
@@ -23,14 +24,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     "Missing current session ID"
   )
 
-  await prisma.session.deleteMany({
-    where: {
-      userId: userId,
-      id: {
-        not: currentSessionId,
+  try {
+    await prisma.session.deleteMany({
+      where: {
+        userId: userId,
+        id: {
+          not: currentSessionId,
+        },
       },
-    },
-  })
+    })
+  } catch (error) {
+    throwDbError(error, "Unable to delete the user's sessions.")
+  }
 
   return json({ status: "success" })
 }

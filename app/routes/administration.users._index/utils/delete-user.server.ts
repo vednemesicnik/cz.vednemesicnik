@@ -1,6 +1,5 @@
-import { Prisma } from "@prisma/client"
-
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 export const deleteUser = async (id: string) => {
   if (process.env.PERMANENT_USER_ID === id) {
@@ -14,15 +13,6 @@ export const deleteUser = async (id: string) => {
       where: { id },
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new Response(
-        `Error ${error.code}: Unable to delete the user. ${error.message}`,
-        {
-          status: 400,
-        }
-      )
-    }
-
-    throw error
+    throwDbError(error, "Unable to delete the user.")
   }
 }

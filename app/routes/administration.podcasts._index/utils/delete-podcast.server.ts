@@ -1,6 +1,5 @@
-import { Prisma } from "@prisma/client"
-
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 export const deletePodcast = async (id: string) => {
   try {
@@ -8,15 +7,6 @@ export const deletePodcast = async (id: string) => {
       where: { id },
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new Response(
-        `Error ${error.code}: Unable to delete the podcast. ${error.message}`,
-        {
-          status: 400,
-        }
-      )
-    }
-
-    throw error
+    throwDbError(error, "Unable to delete the podcast.")
   }
 }

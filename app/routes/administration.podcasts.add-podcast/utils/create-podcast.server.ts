@@ -1,6 +1,5 @@
-import { Prisma } from "@prisma/client"
-
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
   cover: File
@@ -38,15 +37,6 @@ export async function createPodcast({
       },
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new Response(
-        `Error ${error.code}: Unable to create the podcast. ${error.message}`,
-        {
-          status: 400,
-        }
-      )
-    }
-
-    throw error
+    throwDbError(error, "Unable to create the podcast.")
   }
 }

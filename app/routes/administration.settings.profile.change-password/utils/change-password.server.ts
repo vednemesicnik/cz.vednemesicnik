@@ -1,7 +1,7 @@
-import { Prisma } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
 import { prisma } from "~/utils/db.server"
+import { throwDbError } from "~/utils/throw-db-error.server"
 
 export const changePassword = async (userId: string, newPassword: string) => {
   try {
@@ -14,15 +14,6 @@ export const changePassword = async (userId: string, newPassword: string) => {
       },
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new Response(
-        `Error ${error.code}: Unable to update the password. ${error.message}`,
-        {
-          status: 400,
-        }
-      )
-    }
-
-    throw error
+    throwDbError(error, "Unable to update the password.")
   }
 }

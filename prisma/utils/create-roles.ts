@@ -24,7 +24,6 @@ export const createRoles = async (prisma: PrismaClient, data: RolesData) => {
           name: role.name,
           permissions: {
             connect: await prisma.permission.findMany({
-              select: { id: true },
               where: {
                 OR: role.permissions.map((permission) => ({
                   entity: permission.entity,
