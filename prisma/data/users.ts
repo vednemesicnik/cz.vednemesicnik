@@ -3,7 +3,7 @@ import type { UsersData } from "~~/utils/create-users"
 export const users: UsersData = [
   {
     email: "owner@local.dev",
-    username: "owner",
+    username: "owner@local.dev",
     name: "Vedneměsíčník, z. s.",
     password: "owner",
     role: "owner",

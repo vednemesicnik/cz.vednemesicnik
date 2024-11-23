@@ -1,5 +1,3 @@
-// noinspection TypeScriptValidateJSTypes
-
 import { prisma } from "~/utils/db.server"
 
 import { archivedIssues } from "./data/archived-issues"
