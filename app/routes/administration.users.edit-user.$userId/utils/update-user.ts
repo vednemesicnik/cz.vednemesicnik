@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs"
 
 import { prisma } from "~/utils/db.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
+import { throwError } from "~/utils/throw-error.server"
+import { type RoleName } from "~~/types/role"
 
 type Data = {
   email: string
@@ -12,37 +14,35 @@ type Data = {
   userId: string
 }
 
-export const updateUser = async (data: Data, sessionId: string) => {
-  const { email, username, name, password, roleId, userId } = data
-
-  const session = await prisma.session.findUniqueOrThrow({
-    where: { id: sessionId },
+export const updateUser = async ({
+  email,
+  username,
+  name,
+  password,
+  roleId,
+  userId,
+}: Data) => {
+  const userToUpdate = await prisma.user.findUnique({
+    where: { id: userId },
     select: {
-      user: {
+      role: {
         select: {
-          id: true,
-          role: {
-            select: {
-              id: true,
-            },
-          },
+          name: true,
         },
       },
     },
   })
 
-  if (
-    (process.env.PERMANENT_USER_ID === userId && userId !== session.user.id) ||
-    session.user.role.id !== roleId
-  ) {
-    throw new Response("Error: Unable to update the user.", {
-      status: 400,
-    })
+  const owner: RoleName = "owner"
+
+  // Owner cannot be updated
+  if (userToUpdate === null || userToUpdate.role.name === owner) {
+    throwError("Unable to update the user.")
   }
 
   try {
     await prisma.$transaction(async (prisma) => {
-      const user = await prisma.user.update({
+      const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: {
           email,
@@ -66,7 +66,7 @@ export const updateUser = async (data: Data, sessionId: string) => {
       })
 
       await prisma.author.update({
-        where: { id: user.authorId },
+        where: { id: updatedUser.authorId },
         data: {
           name,
         },

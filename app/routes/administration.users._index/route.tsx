@@ -15,8 +15,6 @@ export default function Route() {
   const { idForDeletion, isModalOpen, openModal, closeModal } =
     useDeleteConfirmation()
 
-  const isOwner = loaderData.session.user.role.name === "owner"
-
   const permissions = loaderData.session.user.role.permissions
   const ownUserId = loaderData.session.user.id
 
@@ -61,10 +59,7 @@ export default function Route() {
               targetId: user.id,
             })
 
-            const canEdit =
-              user.role.name !== "owner"
-                ? hasUpdateRight
-                : isOwner && hasUpdateRight
+            const canEdit = user.role.name !== "owner" ? hasUpdateRight : false
 
             const canDelete =
               user.role.name !== "owner" ? hasDeleteRight : false
