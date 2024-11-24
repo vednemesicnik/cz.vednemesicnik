@@ -1,36 +1,54 @@
 # Author Roles and Permissions
 
-This documentation outlines the permissions associated with the roles of **Contributor**, **Author**, and **Editor** in the context of managing content entities such as podcasts, articles, and archived issues. The permissions specify actions, access levels, and applicable entities.
+This documentation outlines the permissions and actions available to authors in the roles of **Contributor**, **Author**, and **Editor**. Permissions are applied to the following entities: **Article**, **Article Category**, **Podcast**, **Podcast Episode**, **Podcast Episode Link**, **Archived Issue**, **Editorial Board Position**, and **Editorial Board Member**.
 
 ---
 
 ## Roles and Permissions Overview
 
-| **Role**        | **Action** | **Access** | **Archived Issue** | **Podcast** | **Podcast Episode** | **Podcast Episode Link** | **Article** | **Article Category** |
-| --------------- | ---------- | ---------- | ------------------ | ----------- | ------------------- | ------------------------ | ----------- | -------------------- |
-| **Contributor** | View       | Own        | ❌                 | ✅          | ✅                  | ✅                       | ✅          | ❌                   |
-|                 | Create     | Own        | ❌                 | ✅          | ✅                  | ✅                       | ✅          | ❌                   |
-|                 | Update     | Own        | ❌                 | ✅          | ✅                  | ✅                       | ✅          | ❌                   |
-|                 | Delete     | Own        | ❌                 | ✅          | ✅                  | ✅                       | ✅          | ❌                   |
-| **Author**      | View       | Own        | ❌                 | ✅          | ✅                  | ✅                       | ✅          | ❌                   |
-|                 | Create     | Own        | ❌                 | ✅          | ✅                  | ✅                       | ✅          | ❌                   |
-|                 | Update     | Own        | ❌                 | ✅          | ✅                  | ✅                       | ✅          | ❌                   |
-|                 | Delete     | Own        | ❌                 | ✅          | ✅                  | ✅                       | ✅          | ❌                   |
-|                 | Publish    | Own        | ❌                 | ✅          | ✅                  | ✅                       | ✅          | ❌                   |
-|                 | View       | Any        | ❌                 | ❌          | ❌                  | ❌                       | ❌          | ✅                   |
-|                 | Update     | Any        | ❌                 | ❌          | ❌                  | ❌                       | ❌          | ✅                   |
-| **Editor**      | View       | Own, Any   | ✅                 | ✅          | ✅                  | ✅                       | ✅          | ✅                   |
-|                 | Create     | Own, Any   | ✅                 | ✅          | ✅                  | ✅                       | ✅          | ✅                   |
-|                 | Update     | Own, Any   | ✅                 | ✅          | ✅                  | ✅                       | ✅          | ✅                   |
-|                 | Delete     | Own, Any   | ✅                 | ✅          | ✅                  | ✅                       | ✅          | ✅                   |
-|                 | Publish    | Own, Any   | ✅                 | ✅          | ✅                  | ✅                       | ✅          | ✅                   |
+| **Role**        | **Action** | **Access** | **Article** | **Article Category** | **Podcast** | **Podcast Episode** | **Podcast Episode Link** | **Archived Issue** | **Editorial Board Position** | **Editorial Board Member** |
+| --------------- | ---------- | ---------- | ----------- | -------------------- | ----------- | ------------------- | ------------------------ | ------------------ | ---------------------------- | -------------------------- |
+| **Contributor** | View       | Own        | ✅          | ❌                   | ✅          | ✅                  | ✅                       | ❌                 | ❌                           | ❌                         |
+|                 | Create     | Own        | ✅          | ❌                   | ✅          | ✅                  | ✅                       | ❌                 | ❌                           | ❌                         |
+|                 | Update     | Own        | ✅          | ❌                   | ✅          | ✅                  | ✅                       | ❌                 | ❌                           | ❌                         |
+|                 | Delete     | Own        | ✅          | ❌                   | ✅          | ✅                  | ✅                       | ❌                 | ❌                           | ❌                         |
+|                 | Publish    | None       | ❌          | ❌                   | ❌          | ❌                  | ❌                       | ❌                 | ❌                           | ❌                         |
+| **Author**      | View       | Own        | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
+|                 | Create     | Own        | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
+|                 | Update     | Own        | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
+|                 | Delete     | Own        | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
+|                 | Publish    | Own        | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
+| **Editor**      | View       | Own, Any   | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
+|                 | Create     | Own, Any   | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
+|                 | Update     | Own, Any   | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
+|                 | Delete     | Own, Any   | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
+|                 | Publish    | Own, Any   | ✅          | ✅                   | ✅          | ✅                  | ✅                       | ✅                 | ✅                           | ✅                         |
 
 ---
 
 ## Legend
 
+- **Access**:
+  - **Own**: Permissions apply only to the author’s own content or responsibilities.
+  - **Any**: Permissions apply to all content or responsibilities in the system.
+  - **None**: No permission is granted for the action.
 - **✅**: Permission granted.
 - **❌**: Permission denied.
+
+---
+
+## Entities Descriptions
+
+| **Entity**                   | **Description**                                                        |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| **Article**                  | Content pieces managed by authors.                                     |
+| **Article Category**         | Categories under which articles are grouped.                           |
+| **Podcast**                  | Podcasts managed by authors.                                           |
+| **Podcast Episode**          | Individual episodes within a podcast series.                           |
+| **Podcast Episode Link**     | Links associated with podcast episodes, such as external resources.    |
+| **Archived Issue**           | Previously published content archived for reference.                   |
+| **Editorial Board Position** | Roles or positions within the editorial board (e.g., Editor-in-Chief). |
+| **Editorial Board Member**   | Individuals holding positions within the editorial board.              |
 
 ---
 
@@ -38,35 +56,22 @@ This documentation outlines the permissions associated with the roles of **Contr
 
 ### **Contributor**
 
-- **View, Create, Update, Delete (Own)**:
-  - **Entities**: Podcasts, Podcast Episodes, Podcast Episode Links, Articles.
-  - **Restrictions**: Cannot access **Archived Issues** or manage **Article Categories**.
+- **Capabilities**:
+  - Limited to managing their own content (e.g., articles, podcasts, podcast episodes).
+- **Restrictions**:
+  - Cannot publish any content.
+  - Cannot access or manage archived issues or editorial board roles/members.
 
 ### **Author**
 
-- **View, Create, Update, Delete, Publish (Own)**:
-  - **Entities**: Podcasts, Podcast Episodes, Podcast Episode Links, Articles.
-- **View, Update (Any)**:
-  - **Entities**: Article Categories.
-  - **Restrictions**: Limited to managing their own content, except for categories.
+- **Capabilities**:
+  - Full control over their own content, including publishing and managing editorial board-related entities.
+- **Restrictions**:
+  - Cannot manage content created by others.
 
 ### **Editor**
 
-- **View, Create, Update, Delete, Publish (Own, Any)**:
-  - **Entities**: All listed entities.
 - **Capabilities**:
-  - Manage and reassign authorship of content.
-  - Full control over content entities and categories.
-
----
-
-## Entities Descriptions
-
-| **Entity**               | **Description**                                                              |
-| ------------------------ | ---------------------------------------------------------------------------- |
-| **Archived Issue**       | Previously published content archived for reference.                         |
-| **Podcast**              | Podcasts managed in the system.                                              |
-| **Podcast Episode**      | Individual episodes within a podcast series.                                 |
-| **Podcast Episode Link** | Links associated with podcast episodes, such as external resources.          |
-| **Article**              | Articles managed in the system.                                              |
-| **Article Category**     | Categories under which articles are organized for better content management. |
+  - Full control over all content and entities, including managing others' content, responsibilities, and publishing.
+- **Restrictions**:
+  - None.

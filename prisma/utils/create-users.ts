@@ -1,14 +1,15 @@
 import type { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
-import { type RoleName } from "~~/types/role"
+import { type AuthorRoleName, type UserRoleName } from "~~/types/role"
 
 export type UsersData = {
   email: string
   username: string
   name: string
   password: string
-  role: RoleName
+  userRole: UserRoleName
+  authorRole: AuthorRoleName
 }[]
 
 export const createUsers = async (prisma: PrismaClient, data: UsersData) => {
@@ -18,6 +19,9 @@ export const createUsers = async (prisma: PrismaClient, data: UsersData) => {
         .create({
           data: {
             name: user.name,
+            role: {
+              connect: { name: user.authorRole },
+            },
           },
         })
         .catch((error) => {
@@ -37,7 +41,7 @@ export const createUsers = async (prisma: PrismaClient, data: UsersData) => {
               },
             },
             role: {
-              connect: { name: user.role },
+              connect: { name: user.userRole },
             },
             author: {
               connect: { id: author?.id },

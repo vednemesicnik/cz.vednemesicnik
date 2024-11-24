@@ -1,25 +1,25 @@
 import type { PrismaClient } from "@prisma/client"
 
 import {
-  type PermissionAccess,
-  type PermissionAction,
-  type PermissionEntity,
+  type UserPermissionAccess,
+  type UserPermissionAction,
+  type UserPermissionEntity,
 } from "~~/types/permission"
 
-export type PermissionsData = {
-  entities: PermissionEntity[]
-  actions: PermissionAction[]
-  accesses: PermissionAccess[]
+export type UserPermissionsData = {
+  entities: UserPermissionEntity[]
+  actions: UserPermissionAction[]
+  accesses: UserPermissionAccess[]
 }
 
-export const createPermissions = async (
+export const createUserPermissions = async (
   prisma: PrismaClient,
-  data: PermissionsData
+  data: UserPermissionsData
 ) => {
   for (const entity of data.entities) {
     for (const action of data.actions) {
       for (const access of data.accesses) {
-        await prisma.permission
+        await prisma.userPermission
           .create({ data: { entity, action, access } })
           .catch((error) => {
             console.error("Error creating a permission:", error)

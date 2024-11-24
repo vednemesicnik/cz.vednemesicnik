@@ -1,29 +1,32 @@
 import type { PrismaClient } from "@prisma/client"
 
 import {
-  type PermissionAccess,
-  type PermissionAction,
-  type PermissionEntity,
+  type UserPermissionAccess,
+  type UserPermissionAction,
+  type UserPermissionEntity,
 } from "~~/types/permission"
-import { type RoleName } from "~~/types/role"
+import { type UserRoleName } from "~~/types/role"
 
-export type RolesData = {
-  name: RoleName
+export type UserRolesData = {
+  name: UserRoleName
   permissions: {
-    entity: PermissionEntity
-    access: PermissionAccess
-    actions: PermissionAction[]
+    entity: UserPermissionEntity
+    access: UserPermissionAccess
+    actions: UserPermissionAction[]
   }[]
 }[]
 
-export const createRoles = async (prisma: PrismaClient, data: RolesData) => {
+export const createUserRoles = async (
+  prisma: PrismaClient,
+  data: UserRolesData
+) => {
   for (const role of data) {
-    await prisma.role
+    await prisma.userRole
       .create({
         data: {
           name: role.name,
           permissions: {
-            connect: await prisma.permission.findMany({
+            connect: await prisma.userPermission.findMany({
               where: {
                 OR: role.permissions.map((permission) => ({
                   entity: permission.entity,

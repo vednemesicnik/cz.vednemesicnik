@@ -27,7 +27,7 @@ model User {
   image       UserImage?
   password    Password?
   roleId      String
-  role        Role          @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  role        UserRole      @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   sessions    Session[]
   passkeys    Passkey[]
   connections Connection[]
@@ -52,28 +52,25 @@ model Password {
   user          User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
-model Role {
+model UserRole {
   id            String          @id @default(cuid())
   name          String          @unique
   description   String          @default("")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   users         User[]
-  permissions   Permission[]
+  permissions   UserPermission[]
 }
 
-model Permission {
+model UserPermission {
   id            String          @id @default(cuid())
-  // action: create, read, update, delete, etc.
   action        String
-  // entity: archived-issue, article, category, etc.
   entity        String
-  // access: own or any
   access        String
   description   String          @default("")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  roles         Role[]
+  roles         UserRole[]
   @@unique([action, entity, access])
 }
 
@@ -149,12 +146,36 @@ model Author {
   createdAt               DateTime                  @default(now())
   updatedAt               DateTime                  @updatedAt
   user                    User?
+  roleId                  String
+  role                    AuthorRole                @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   archivedIssues          ArchivedIssue[]
   editorialBoardPositions EditorialBoardPosition[]
   editorialBoardMembers   EditorialBoardMember[]
   podcasts                Podcast[]
   podcastEpisodes         PodcastEpisode[]
   podcastEpisodeLinks     PodcastEpisodeLink[]
+}
+
+model AuthorRole {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  description   String          @default("")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  users         Author[]
+  permissions   AuthorPermission[]
+}
+
+model AuthorPermission {
+  id            String          @id @default(cuid())
+  action        String
+  entity        String
+  access        String
+  description   String          @default("")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  roles         AuthorRole[]
+  @@unique([action, entity, access])
 }
 
 model ArchivedIssue {
@@ -194,34 +215,6 @@ model ArchivedIssuePDF {
   updatedAt     DateTime        @updatedAt
   issueId       String          @unique
   issue         ArchivedIssue   @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-}
-
-model EditorialBoardPosition {
-  id            String                  @id @default(cuid())
-  key           String                  @unique
-  pluralLabel   String                  @default("")
-  order         Int                     @unique
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  members       EditorialBoardMember[]
-  authorId      String
-  author        Author                  @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-
-  // non-unique foreign key
-  @@index([authorId])
-}
-
-model EditorialBoardMember {
-  id            String                          @id @default(cuid())
-  fullName      String
-  positions     EditorialBoardPosition[]
-  createdAt     DateTime                        @default(now())
-  updatedAt     DateTime                        @updatedAt
-  authorId      String
-  author        Author                          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-
-  // non-unique foreign key
-  @@index([authorId])
 }
 
 model Podcast {
@@ -305,4 +298,32 @@ model PodcastEpisodeCover {
   updatedAt     DateTime        @updatedAt
   episodeId     String          @unique
   episode       PodcastEpisode  @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model EditorialBoardPosition {
+  id            String                  @id @default(cuid())
+  key           String                  @unique
+  pluralLabel   String                  @default("")
+  order         Int                     @unique
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  members       EditorialBoardMember[]
+  authorId      String
+  author        Author                  @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  // non-unique foreign key
+  @@index([authorId])
+}
+
+model EditorialBoardMember {
+  id            String                          @id @default(cuid())
+  fullName      String
+  positions     EditorialBoardPosition[]
+  createdAt     DateTime                        @default(now())
+  updatedAt     DateTime                        @updatedAt
+  authorId      String
+  author        Author                          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  // non-unique foreign key
+  @@index([authorId])
 }

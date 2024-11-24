@@ -1,74 +1,87 @@
 # User Roles and Permissions
 
-This documentation outlines the permissions associated with users in the roles of **Author**, **Administrator**, and **Owner**, including permissions for role assignments and content management.
+This documentation outlines the permissions and actions available to users in the roles of **User**, **Administrator**, and **Owner**. Permissions are applied to two primary entities: **User** and **Author**.
 
 ---
 
 ## Roles and Permissions Overview
 
-| **Role**          | **Action**          | **Access** | **User** | **Editorial Board Position** | **Editorial Board Member** |
-| ----------------- | ------------------- | ---------- | -------- | ---------------------------- | -------------------------- |
-| **Author (User)** | View                | Own        | ❌       | ✅                           | ✅                         |
-|                   | Create              | Own        | ❌       | ✅                           | ✅                         |
-|                   | Update              | Own        | ❌       | ✅                           | ✅                         |
-|                   | Delete              | Own        | ❌       | ✅                           | ✅                         |
-| **Administrator** | View                | Own, Any   | ✅       | ✅                           | ✅                         |
-|                   | Create              | Own, Any   | ✅       | ✅                           | ✅                         |
-|                   | Update              | Own, Any   | ✅       | ✅                           | ✅                         |
-|                   | Delete              | Own, Any   | ✅       | ✅                           | ✅                         |
-|                   | Assign Role: Admin  | Own, Any   | ✅       | ❌                           | ❌                         |
-|                   | Assign Role: Author | Own, Any   | ✅       | ❌                           | ❌                         |
-| **Owner**         | View                | Own, Any   | ✅       | ✅                           | ✅                         |
-|                   | Create              | Own, Any   | ✅       | ✅                           | ✅                         |
-|                   | Update              | Own, Any   | ✅       | ✅                           | ✅                         |
-|                   | Delete              | Own, Any   | ✅       | ✅                           | ✅                         |
-|                   | Assign Role: Owner  | Own, Any   | ✅       | ❌                           | ❌                         |
-|                   | Assign Role: Admin  | Own, Any   | ✅       | ❌                           | ❌                         |
-|                   | Assign Role: Author | Own, Any   | ✅       | ❌                           | ❌                         |
+| **Role**          | **Action**               | **Access** | **User** | **Author** |
+| ----------------- | ------------------------ | ---------- | -------- | ---------- |
+| **User**          | View                     | Own        | ✅       | ✅         |
+|                   | Create                   | None       | ❌       | ❌         |
+|                   | Update                   | Own        | ✅       | ✅         |
+|                   | Delete                   | None       | ❌       | ❌         |
+|                   | Assign Role: Owner       | None       | ❌       | ❌         |
+|                   | Assign Role: Admin       | None       | ❌       | ❌         |
+|                   | Assign Role: User        | None       | ❌       | ❌         |
+|                   | Assign Role: Editor      | None       | ❌       | ❌         |
+|                   | Assign Role: Author      | None       | ❌       | ❌         |
+|                   | Assign Role: Contributor | None       | ❌       | ❌         |
+| **Administrator** | View                     | Own, Any   | ✅       | ✅         |
+|                   | Create                   | Own, Any   | ✅       | ✅         |
+|                   | Update                   | Own, Any   | ✅       | ✅         |
+|                   | Delete                   | Own, Any   | ✅       | ✅         |
+|                   | Assign Role: Owner       | None       | ❌       | ❌         |
+|                   | Assign Role: Admin       | Own, Any   | ✅       | ❌         |
+|                   | Assign Role: User        | Own, Any   | ✅       | ❌         |
+|                   | Assign Role: Editor      | Own, Any   | ❌       | ✅         |
+|                   | Assign Role: Author      | Own, Any   | ❌       | ✅         |
+|                   | Assign Role: Contributor | Own, Any   | ❌       | ✅         |
+| **Owner**         | View                     | Own, Any   | ✅       | ✅         |
+|                   | Create                   | Own, Any   | ✅       | ✅         |
+|                   | Update                   | Own, Any   | ✅       | ✅         |
+|                   | Delete                   | Own, Any   | ✅       | ✅         |
+|                   | Assign Role: Owner       | Own, Any   | ✅       | ❌         |
+|                   | Assign Role: Admin       | Own, Any   | ✅       | ❌         |
+|                   | Assign Role: User        | Own, Any   | ✅       | ❌         |
+|                   | Assign Role: Editor      | Own, Any   | ❌       | ✅         |
+|                   | Assign Role: Author      | Own, Any   | ❌       | ✅         |
+|                   | Assign Role: Contributor | Own, Any   | ❌       | ✅         |
 
 ---
 
 ## Legend
 
 - **Access**:
-  - **Own**: Permissions apply only to the user's own content or assignments.
-  - **Any**: Permissions apply to all content or assignments in the system.
+  - **Own**: Permissions apply only to the user’s own data or associated content.
+  - **Any**: Permissions apply to all data or content in the system.
+  - **None**: No permission is granted for the action.
 - **✅**: Permission granted.
 - **❌**: Permission denied.
 
 ---
 
+## Entities Descriptions
+
+| **Entity** | **Description**                                  |
+| ---------- | ------------------------------------------------ |
+| **User**   | System users with access to CMS or system tools. |
+| **Author** | Content creators and managers within the system. |
+
+---
+
 ## Roles Explained
 
-### **Author (User)**
+### **User**
 
 - **Capabilities**:
-  - Can manage **Editorial Board Positions** and **Editorial Board Members** for their own content.
+  - Can view and update their own **User** and **Author** entities.
 - **Restrictions**:
-  - Cannot manage Users or assign roles.
+  - Cannot create, delete, or assign roles.
 
 ### **Administrator**
 
 - **Capabilities**:
-  - Can manage Users and Editorial Board entities for all users (Own and Any).
-  - Can assign the **Administrator** and **Author** roles.
+  - Full management of both **User** and **Author** entities.
+  - Can assign roles such as **Admin**, **User**, **Editor**, **Author**, and **Contributor**.
 - **Restrictions**:
   - Cannot assign the **Owner** role.
 
 ### **Owner**
 
 - **Capabilities**:
-  - Full access to all entities and actions.
+  - Full control over all actions and entities.
   - Can assign any role, including the **Owner** role.
 - **Restrictions**:
-  - There can only be one active **Owner** at any time.
-
----
-
-## Entities Descriptions
-
-| **Entity**                   | **Description**                                                            |
-| ---------------------------- | -------------------------------------------------------------------------- |
-| **User**                     | System users with access to the CMS or system tools.                       |
-| **Editorial Board Position** | Positions within the editorial board (e.g., Editor-in-Chief, Contributor). |
-| **Editorial Board Member**   | Members holding specific positions in the editorial board.                 |
+  - Limited to one active **Owner** at a time.

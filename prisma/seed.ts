@@ -1,19 +1,23 @@
 import { prisma } from "~/utils/db.server"
+import { authorPermissions } from "~~/data/author-permissions"
+import { authorRoles } from "~~/data/author-roles"
+import { userPermissions } from "~~/data/user-permissions"
+import { userRoles } from "~~/data/user-roles"
+import { createAuthorPermissions } from "~~/utils/create-author-permissions"
+import { createAuthorRoles } from "~~/utils/create-author-roles"
+import { createUserPermissions } from "~~/utils/create-user-permissions"
+import { createUserRoles } from "~~/utils/create-user-roles"
 
 import { archivedIssues } from "./data/archived-issues"
 import { editorialBoardMembers } from "./data/editorial-board-members"
 import { editorialBoardPositions } from "./data/editorial-board-postions"
-import { permissions } from "./data/permissions"
 import { podcastData } from "./data/podcast"
-import { roles } from "./data/roles"
 import { users } from "./data/users"
 import { cleanupDb } from "./utils/cleanup-db"
 import { createArchivedIssues } from "./utils/create-archived-issues"
 import { createEditorialBoardMembers } from "./utils/create-editorial-board-members"
 import { createEditorialBoardPositions } from "./utils/create-editorial-board-positions"
-import { createPermissions } from "./utils/create-permissions"
 import { createPodcast } from "./utils/create-podcast"
-import { createRoles } from "./utils/create-roles"
 import { createUsers } from "./utils/create-users"
 
 async function seed() {
@@ -27,12 +31,14 @@ async function seed() {
 
   // Permissions 🔑
   console.time("🔑 Permissions have been created")
-  await createPermissions(prisma, permissions)
+  await createUserPermissions(prisma, userPermissions)
+  await createAuthorPermissions(prisma, authorPermissions)
   console.timeEnd("🔑 Permissions have been created")
 
   // Roles 👑
   console.time("👑 Roles have been created")
-  await createRoles(prisma, roles)
+  await createUserRoles(prisma, userRoles)
+  await createAuthorRoles(prisma, authorRoles)
   console.timeEnd("👑 Roles have been created")
 
   // Users 👤️

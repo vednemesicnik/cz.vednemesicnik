@@ -4,3 +4,7 @@ export type RoleName =
   | "editor"
   | "author"
   | "contributor"
+
+export type AuthorRoleName = "editor" | "author" | "contributor"
+
+export type UserRoleName = "owner" | "administrator" | "user"
