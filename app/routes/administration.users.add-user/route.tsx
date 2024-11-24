@@ -58,17 +58,6 @@ export default function Route() {
             </output>
           ))}
           <br />
-          <label htmlFor={fields.username.id}>Uživatelské jméno</label>
-          <input
-            {...getInputProps(fields.username, { type: "text" })}
-            placeholder={"user"}
-          />
-          {fields.username.errors?.map((error) => (
-            <output key={error} style={{ color: "red" }}>
-              {error}
-            </output>
-          ))}
-          <br />
           <label htmlFor={fields.name.id}>Jméno a příjmení</label>
           <input
             {...getInputProps(fields.name, { type: "text" })}

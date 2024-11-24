@@ -10,47 +10,80 @@ import { type loader } from "./_loader"
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
 
+  const [canViewUsers, canViewAuthors] = getRights(
+    loaderData.session.user.role.permissions,
+    {
+      entities: ["user", "author"],
+      actions: ["view"],
+      access: ["any", "own"],
+    }
+  )
+
   const [
-    canReadArchivedIssues,
-    canReadEditorialBoardMembers,
-    canReadEditorialBoardMemberPositions,
-    canReadPodcasts,
-    canReadUsers,
-  ] = getRights(loaderData.session.user.role.permissions, {
+    canViewArticles,
+    canViewArticleCategories,
+    canViewPodcasts,
+    canViewArchivedIssues,
+    canViewEditorialBoardPositions,
+    canViewEditorialBoardMembers,
+  ] = getRights(loaderData.session.user.author.role.permissions, {
     entities: [
-      "archived_issue",
-      "editorial_board_member",
-      "editorial_board_member_position",
+      "article",
+      "article_category",
       "podcast",
-      "user",
+      "archived_issue",
+      "editorial_board_position",
+      "editorial_board_member",
     ],
-    actions: ["read"],
+    actions: ["view"],
     access: ["any", "own"],
   })
 
   return (
     <Page>
       <Headline>Administrace</Headline>
-      {canReadArchivedIssues && (
-        <Link to={"/administration/archive"} preventScrollReset={true}>
-          Archiv
-        </Link>
-      )}
-      {canReadPodcasts && (
-        <Link to={"/administration/podcasts"} preventScrollReset={true}>
-          Podcasty
-        </Link>
-      )}
-      {canReadEditorialBoardMembers && canReadEditorialBoardMemberPositions && (
-        <Link to={"/administration/editorial-board"} preventScrollReset={true}>
-          Redakce
-        </Link>
-      )}
-      {canReadUsers && (
+      {canViewUsers && (
         <Link to={"/administration/users"} preventScrollReset={true}>
           Uživatelé
         </Link>
       )}
+      {canViewAuthors && (
+        <Link to={"/administration/authors"} preventScrollReset={true}>
+          Autoři
+        </Link>
+      )}
+      {canViewArticles && (
+        <Link to={"/administration/articles"} preventScrollReset={true}>
+          Články
+        </Link>
+      )}
+      {canViewArticleCategories && (
+        <Link
+          to={"/administration/article-categories"}
+          preventScrollReset={true}
+        >
+          Kategorie článků
+        </Link>
+      )}
+      {canViewPodcasts && (
+        <Link to={"/administration/podcasts"} preventScrollReset={true}>
+          Podcasty
+        </Link>
+      )}
+      {canViewArchivedIssues && (
+        <Link to={"/administration/archive"} preventScrollReset={true}>
+          Archiv
+        </Link>
+      )}
+      {canViewEditorialBoardPositions ||
+        (canViewEditorialBoardMembers && (
+          <Link
+            to={"/administration/editorial-board"}
+            preventScrollReset={true}
+          >
+            Redakce
+          </Link>
+        ))}
       <Link to={"/administration/settings"} preventScrollReset={true}>
         Nastavení
       </Link>

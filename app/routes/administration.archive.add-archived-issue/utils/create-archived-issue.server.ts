@@ -1,9 +1,13 @@
 import { invariantResponse } from "@epic-web/invariant"
 
 import { prisma } from "~/utils/db.server"
+import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-check.server"
 import { getRights } from "~/utils/permissions"
 import { throwDbError } from "~/utils/throw-db-error.server"
-import type { PermissionAction, PermissionEntity } from "~~/types/permission"
+import type {
+  AuthorPermissionAction,
+  AuthorPermissionEntity,
+} from "~~/types/permission"
 
 type Data = {
   ordinalNumber: string
@@ -15,41 +19,18 @@ type Data = {
 }
 
 export const createArchivedIssue = async (data: Data, sessionId: string) => {
-  const entity: PermissionEntity = "archived_issue"
-  const actions: PermissionAction[] = ["create", "publish"]
+  const entities: AuthorPermissionEntity[] = ["archived_issue"]
+  const actions: AuthorPermissionAction[] = ["create", "publish"]
 
-  const session = await prisma.session.findUniqueOrThrow({
-    where: { id: sessionId },
-    select: {
-      user: {
-        select: {
-          authorId: true,
-          role: {
-            select: {
-              permissions: {
-                where: {
-                  entity,
-                  action: { in: actions },
-                },
-                select: {
-                  access: true,
-                  action: true,
-                  entity: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+  const author = await getAuthorForPermissionCheck(sessionId, {
+    actions,
+    entities,
   })
 
-  const permissions = session.user.role.permissions
-
-  const [hasCreateRight] = getRights(permissions, {
+  const [hasCreateRight] = getRights(author.permissions, {
     actions: ["create"],
     access: ["any", "own"],
-    ownId: session.user.authorId,
+    ownId: author.id,
     targetId: data.authorId,
   })
 
@@ -59,15 +40,14 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
 
   const { ordinalNumber, releasedAt, published, cover, pdf, authorId } = data
 
-  const [hasPublishRight] = getRights(permissions, {
+  const [hasPublishRight] = getRights(author.permissions, {
     actions: ["publish"],
     access: ["any", "own"],
-    ownId: session.user.authorId,
+    ownId: author.id,
     targetId: data.authorId,
   })
 
   const formattedPublished = hasPublishRight ? published : false
-  const formattedPublishedAt = formattedPublished ? new Date() : undefined
 
   const releaseDate = new Date(releasedAt)
   const year = releaseDate.getFullYear()
@@ -83,7 +63,7 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
         label: label,
         releasedAt: releaseDate,
         published: formattedPublished,
-        publishedAt: formattedPublishedAt,
+        publishedAt: formattedPublished ? new Date() : undefined,
         cover: {
           create: {
             altText: `Obálka výtisku ${label}`,

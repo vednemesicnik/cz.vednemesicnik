@@ -52,17 +52,17 @@ export default function Route() {
     }
   }
 
-  const [hasUpdateRight] = getRights(user.role.permissions, {
+  const [hasUpdateRight] = getRights(user.author.role.permissions, {
     actions: ["update"],
     access: ["own", "any"],
-    ownId: user.authorId,
+    ownId: user.author.id,
     targetId: archivedIssue.author.id,
   })
 
-  const [hasPublishRight] = getRights(user.role.permissions, {
+  const [hasPublishRight] = getRights(user.author.role.permissions, {
     actions: ["publish"],
     access: ["own", "any"],
-    ownId: user.authorId,
+    ownId: user.author.id,
     targetId: fields.authorId.value || archivedIssue.author.id,
   })
 

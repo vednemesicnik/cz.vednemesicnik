@@ -5,31 +5,29 @@ import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
   email: string
-  username: string
   name: string
   password: string
   roleId: string
 }
 
-export const createUser = async ({
-  email,
-  username,
-  name,
-  password,
-  roleId,
-}: Args) => {
+export const createUser = async ({ email, name, password, roleId }: Args) => {
   try {
     await prisma.$transaction(async (prisma) => {
       const author = await prisma.author.create({
         data: {
           name,
+          role: {
+            connect: {
+              name: "author",
+            },
+          },
         },
       })
 
       await prisma.user.create({
         data: {
           email,
-          username,
+          username: email,
           name,
           password: {
             create: {

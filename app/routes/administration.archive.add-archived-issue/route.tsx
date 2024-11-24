@@ -28,7 +28,7 @@ export default function Route() {
     defaultValue: {
       ordinalNumber: "",
       releasedAt: new Date().toISOString().split("T")[0],
-      authorId: user.authorId,
+      authorId: user.author.id,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -43,16 +43,17 @@ export default function Route() {
     }
   }
 
-  const [hasCreateRight] = getRights(user.role.permissions, {
+  const [hasCreateRight] = getRights(user.author.role.permissions, {
     actions: ["create"],
     access: ["own", "any"],
-    // there is no need to compare ownAuthorId with targetAuthorId
+    ownId: user.author.id,
+    targetId: fields.authorId.value,
   })
 
-  const [hasPublishRight] = getRights(user.role.permissions, {
+  const [hasPublishRight] = getRights(user.author.role.permissions, {
     actions: ["publish"],
     access: ["own", "any"],
-    ownId: user.authorId,
+    ownId: user.author.id,
     targetId: fields.authorId.value,
   })
 

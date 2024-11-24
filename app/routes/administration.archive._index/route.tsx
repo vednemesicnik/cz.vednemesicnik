@@ -20,7 +20,7 @@ export default function Route() {
 
   const { user } = loaderData.session
 
-  const [hasCreateRight] = getRights(user.role.permissions, {
+  const [hasCreateRight] = getRights(user.author.role.permissions, {
     actions: ["create"],
     access: ["own", "any"],
     // there is no need to compare ownAuthorId with targetAuthorId
@@ -46,16 +46,16 @@ export default function Route() {
                 issue.id
               )
 
-            const [hasUpdateRight] = getRights(user.role.permissions, {
+            const [hasUpdateRight] = getRights(user.author.role.permissions, {
               actions: ["update"],
               access: ["own", "any"],
-              ownId: user.authorId,
+              ownId: user.author.id,
               targetId: issue.author.id,
             })
-            const [hasDeleteRight] = getRights(user.role.permissions, {
+            const [hasDeleteRight] = getRights(user.author.role.permissions, {
               actions: ["delete"],
               access: ["own", "any"],
-              ownId: user.authorId,
+              ownId: user.author.id,
               targetId: issue.author.id,
             })
 

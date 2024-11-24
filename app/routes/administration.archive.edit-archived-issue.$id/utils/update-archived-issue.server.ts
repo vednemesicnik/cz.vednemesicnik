@@ -1,9 +1,16 @@
+import { invariantResponse } from "@epic-web/invariant"
 import { createId } from "@paralleldrive/cuid2"
 
 import { prisma } from "~/utils/db.server"
+import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-check.server"
+import { getRights } from "~/utils/permissions"
 import { throwDbError } from "~/utils/throw-db-error.server"
+import type {
+  AuthorPermissionAction,
+  AuthorPermissionEntity,
+} from "~~/types/permission"
 
-type Args = {
+type Data = {
   id: string
   ordinalNumber: string
   releasedAt: string
@@ -16,18 +23,48 @@ type Args = {
   authorId: string
 }
 
-export const updateArchivedIssue = async ({
-  id,
-  ordinalNumber,
-  releasedAt,
-  published,
-  publishedBefore,
-  coverId,
-  cover,
-  pdfId,
-  pdf,
-  authorId,
-}: Args) => {
+export const updateArchivedIssue = async (data: Data, sessionId: string) => {
+  const {
+    id,
+    ordinalNumber,
+    releasedAt,
+    published,
+    publishedBefore,
+    coverId,
+    cover,
+    pdfId,
+    pdf,
+    authorId,
+  } = data
+
+  const entities: AuthorPermissionEntity[] = ["archived_issue"]
+  const actions: AuthorPermissionAction[] = ["update", "publish"]
+
+  const author = await getAuthorForPermissionCheck(sessionId, {
+    actions,
+    entities,
+  })
+
+  const [hasUpdateRight] = getRights(author.permissions, {
+    actions: ["update"],
+    access: ["any", "own"],
+    ownId: author.id,
+    targetId: data.authorId,
+  })
+
+  invariantResponse(hasUpdateRight, "Unauthorized", {
+    status: 401,
+  })
+
+  const [hasPublishRight] = getRights(author.permissions, {
+    actions: ["publish"],
+    access: ["any", "own"],
+    ownId: author.id,
+    targetId: data.authorId,
+  })
+
+  const formattedPublished = hasPublishRight ? published : publishedBefore
+
   const releaseDate = new Date(releasedAt as string)
   const year = releaseDate.getFullYear()
   const monthYear = releaseDate.toLocaleDateString("cs-CZ", {
@@ -45,8 +82,10 @@ export const updateArchivedIssue = async ({
       data: {
         label: label,
         releasedAt: releaseDate,
-        ...(!publishedBefore && published ? { publishedAt: new Date() } : {}),
-        published,
+        published: formattedPublished,
+        ...(!publishedBefore && formattedPublished
+          ? { publishedAt: new Date() }
+          : {}),
         cover: {
           update: {
             where: { id: coverId },

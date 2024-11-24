@@ -8,9 +8,10 @@ import { validateCSRF } from "~/utils/csrf.server"
 import { deleteArchivedIssue } from "./utils/delete-archived-issue.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const { sessionId } = await requireAuthentication(request)
+
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)
-  await requireAuthentication(request)
 
   const intent = formData.get(formConfig.intent.name)
   const deleteIntent = formConfig.intent.value.delete
@@ -21,7 +22,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   invariantResponse(typeof id === "string", "Missing archived issue ID")
 
-  await deleteArchivedIssue(id)
+  await deleteArchivedIssue(id, sessionId)
 
   return json({ status: "success" })
 }

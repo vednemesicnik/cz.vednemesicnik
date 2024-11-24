@@ -6,6 +6,8 @@ import {
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
 import { getRights } from "~/utils/permissions"
+import { type PermissionEntity } from "~~/types/permission"
+import { type RoleName } from "~~/types/role"
 
 import { type loader } from "./_loader"
 
@@ -45,7 +47,22 @@ export default function Route() {
           {loaderData.users.map((user) => {
             const editUserPath = `/administration/users/edit-user/${user.id}`
 
+            const mapRoleToEntity = (role: RoleName) => {
+              const roleToEntity: Record<RoleName, PermissionEntity> = {
+                owner: "user_owner",
+                administrator: "user_administrator",
+                editor: "user_editor",
+                author: "user_author",
+                contributor: "user_contributor",
+              } as const
+
+              return roleToEntity[role]
+            }
+
+            const entity = mapRoleToEntity(user.role.name as RoleName)
+
             const [hasUpdateRight] = getRights(permissions, {
+              entities: [entity],
               actions: ["update"],
               access: ["own", "any"],
               ownId: ownUserId,
@@ -53,16 +70,12 @@ export default function Route() {
             })
 
             const [hasDeleteRight] = getRights(permissions, {
+              entities: [entity],
               actions: ["delete"],
               access: ["own", "any"],
               ownId: ownUserId,
               targetId: user.id,
             })
-
-            const canEdit = user.role.name !== "owner" ? hasUpdateRight : false
-
-            const canDelete =
-              user.role.name !== "owner" ? hasDeleteRight : false
 
             return (
               <tr key={user.id}>
@@ -72,9 +85,9 @@ export default function Route() {
                 <td>{user.role.name}</td>
                 <td>
                   <Actions
-                    canEdit={canEdit}
+                    canEdit={hasUpdateRight}
                     editPath={editUserPath}
-                    canDelete={canDelete}
+                    canDelete={hasDeleteRight}
                     onDelete={openModal(user.id)}
                   />
                 </td>

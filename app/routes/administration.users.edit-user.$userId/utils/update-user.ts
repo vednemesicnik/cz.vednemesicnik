@@ -7,7 +7,6 @@ import { type RoleName } from "~~/types/role"
 
 type Data = {
   email: string
-  username: string
   name: string
   password?: string
   roleId: string
@@ -16,7 +15,6 @@ type Data = {
 
 export const updateUser = async ({
   email,
-  username,
   name,
   password,
   roleId,
@@ -46,7 +44,7 @@ export const updateUser = async ({
         where: { id: userId },
         data: {
           email,
-          username,
+          username: email,
           name,
           ...(password !== undefined
             ? {

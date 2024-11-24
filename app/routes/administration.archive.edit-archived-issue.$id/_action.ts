@@ -10,9 +10,10 @@ import { schema } from "./_schema"
 import { updateArchivedIssue } from "./utils/update-archived-issue.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const { sessionId } = await requireAuthentication(request)
+
   const formData = await getMultipartFormData(request)
   await validateCSRF(formData, request.headers)
-  await requireAuthentication(request)
 
   const submission = await parseWithZod(formData, {
     schema,
@@ -23,7 +24,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ lastResult: submission.reply() })
   }
 
-  await updateArchivedIssue(submission.value)
+  await updateArchivedIssue(submission.value, sessionId)
 
   const archiveAdministrationPath =
     routesConfig.administration.archive.index.staticPath

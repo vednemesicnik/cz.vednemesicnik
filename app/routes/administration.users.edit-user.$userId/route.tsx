@@ -25,6 +25,15 @@ export default function Route() {
     targetId: user.id,
   })
 
+  const [hasUpdateRoleRight] = getRights(session.user.role.permissions, {
+    actions: ["update_role"],
+    access: ["own", "any"],
+    ownId: session.user.id,
+    targetId: user.id,
+  })
+
+  console.log({ hasUpdateRight, hasUpdateRoleRight })
+
   const [form, fields] = useForm({
     id: "add-user",
     lastResult: null,
@@ -36,7 +45,6 @@ export default function Route() {
     shouldRevalidate: "onBlur",
     defaultValue: {
       email: loaderData.user.email,
-      username: loaderData.user.username,
       name: loaderData.user.name,
       roleId: loaderData.user.role.id,
       userId: loaderData.user.id,
@@ -61,17 +69,6 @@ export default function Route() {
             placeholder={"user@domain.name"}
           />
           {fields.email.errors?.map((error) => (
-            <output key={error} style={{ color: "red" }}>
-              {error}
-            </output>
-          ))}
-          <br />
-          <label htmlFor={fields.username.id}>Uživatelské jméno</label>
-          <input
-            {...getInputProps(fields.username, { type: "text" })}
-            placeholder={"user"}
-          />
-          {fields.username.errors?.map((error) => (
             <output key={error} style={{ color: "red" }}>
               {error}
             </output>
@@ -112,7 +109,7 @@ export default function Route() {
             </output>
           ))}
         </fieldset>
-        {user.role.name !== "owner" && (
+        {hasUpdateRoleRight && (
           <fieldset>
             <legend>Oprávnění</legend>
             <label htmlFor={fields.roleId.id}>Role</label>
@@ -130,7 +127,7 @@ export default function Route() {
             ))}
           </fieldset>
         )}
-        {user.role.name === "owner" && (
+        {!hasUpdateRoleRight && (
           <input {...getInputProps(fields.roleId, { type: "hidden" })} />
         )}
         <input {...getInputProps(fields.userId, { type: "hidden" })} />

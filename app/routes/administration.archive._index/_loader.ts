@@ -4,16 +4,16 @@ import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
 import { getRights } from "~/utils/permissions"
 import {
-  type PermissionAction,
-  type PermissionEntity,
+  type AuthorPermissionAction,
+  type AuthorPermissionEntity,
 } from "~~/types/permission"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { sessionId } = await requireAuthentication(request)
 
-  const archivedIssueEntity: PermissionEntity = "archived_issue"
-  const archivedIssueActions: PermissionAction[] = [
-    "read",
+  const authorPermissionEntity: AuthorPermissionEntity = "archived_issue"
+  const authorPermissionActions: AuthorPermissionAction[] = [
+    "view",
     "create",
     "update",
     "delete",
@@ -26,18 +26,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     select: {
       user: {
         select: {
-          authorId: true,
-          role: {
+          author: {
             select: {
-              permissions: {
-                where: {
-                  entity: archivedIssueEntity,
-                  action: { in: archivedIssueActions },
-                },
+              id: true,
+              role: {
                 select: {
-                  entity: true,
-                  action: true,
-                  access: true,
+                  permissions: {
+                    where: {
+                      entity: authorPermissionEntity,
+                      action: { in: authorPermissionActions },
+                    },
+                    select: {
+                      entity: true,
+                      action: true,
+                      access: true,
+                    },
+                  },
                 },
               },
             },
@@ -47,17 +51,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  const [hasReadAnyRight] = getRights(session.user.role.permissions, {
-    actions: ["read"],
+  const [canViewAny] = getRights(session.user.author.role.permissions, {
+    actions: ["view"],
   })
 
   const archivedIssues = await prisma.archivedIssue.findMany({
-    ...(hasReadAnyRight
+    ...(canViewAny
       ? {}
       : {
           where: {
             author: {
-              id: session.user.authorId,
+              id: session.user.author.id,
             },
           },
         }),
