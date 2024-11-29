@@ -53,10 +53,10 @@ Draft → Published → Archived → (back to Draft if Restored)
 
 ```plaintext
 Draft (Create, Update, Publish, Delete)
-    ↓
+    ↘ (to Published if published)
+    ↖ (back to Draft if unpublished)
 Published (Update, Unpublish, Archive)
-    ↓
+    ↘ (to Archived if archived)
 Archived (Restore, Update, Delete [Editor only])
-    ↓
-(back to Draft if restored)
+    ↘ (back to Draft if restored)
 ```
