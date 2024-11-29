@@ -12,7 +12,7 @@ This guide outlines the lifecycle of content items with actions (e.g., create, u
 
 ---
 
-## Lifecycle Overview
+## Lifecycle Flow
 
 ```plaintext
 Draft → Published → Archived → (back to Draft if Restored)
@@ -49,14 +49,10 @@ Draft → Published → Archived → (back to Draft if Restored)
 
 ---
 
-## Lifecycle Flow with Actions
+## State with Actions
 
 ```plaintext
 Draft (Create, Update, Publish, Delete)
-    ↘ (to Published if published)
-    ↖ (back to Draft if unpublished)
 Published (Update, Unpublish, Archive)
-    ↘ (to Archived if archived)
 Archived (Restore, Update, Delete [Editor only])
-    ↘ (back to Draft if restored)
 ```
