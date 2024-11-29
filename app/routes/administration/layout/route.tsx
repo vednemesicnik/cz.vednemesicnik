@@ -1,7 +1,7 @@
 import { Link, Outlet, useLoaderData } from "@remix-run/react"
 
-import { Headline } from "app/components/headline"
 import { Divider } from "~/components/divider"
+import { Headline } from "~/components/headline"
 import { Page } from "~/components/page"
 import { getRights } from "~/utils/permissions"
 
@@ -30,7 +30,7 @@ export default function Route() {
       "article",
       "article_category",
       "podcast",
-      "archived_issue",
+      "issue",
       "editorial_board_position",
       "editorial_board_member",
     ],

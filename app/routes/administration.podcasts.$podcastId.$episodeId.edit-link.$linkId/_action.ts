@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
 
 import { updateLink } from "~/routes/administration.podcasts.$podcastId.$episodeId.edit-link.$linkId/utils/update-link.server"
 import { requireAuthentication } from "~/utils/auth.server"
@@ -18,7 +18,7 @@ export async function action({ request }: ActionFunctionArgs) {
   })
 
   if (submission.status !== "success") {
-    return json({ lastResult: submission.reply() })
+    return { lastResult: submission.reply() }
   }
 
   const { podcastId, episodeId, linkId, label, url } = submission.value

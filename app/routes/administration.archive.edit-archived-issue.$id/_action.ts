@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
 
 import { routesConfig } from "~/config/routes-config"
 import { requireAuthentication } from "~/utils/auth.server"
@@ -21,7 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (submission.status !== "success") {
-    return json({ lastResult: submission.reply() })
+    return { lastResult: submission.reply() }
   }
 
   await updateArchivedIssue(submission.value, sessionId)

@@ -1,5 +1,5 @@
 import { invariantResponse } from "@epic-web/invariant"
-import { type ActionFunctionArgs, json } from "@remix-run/node"
+import { type ActionFunctionArgs } from "@remix-run/node"
 
 import { formConfig } from "~/config/form-config"
 import { requireAuthentication } from "~/utils/auth.server"
@@ -37,5 +37,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     throwDbError(error, "Unable to delete the user's sessions.")
   }
 
-  return json({ status: "success" })
+  return { status: "success" }
 }

@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs, redirect } from "@remix-run/node"
+import { type LoaderFunctionArgs, redirect } from "@remix-run/node"
 
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
@@ -63,5 +63,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  return json({ users, session })
+  return { users, session }
 }

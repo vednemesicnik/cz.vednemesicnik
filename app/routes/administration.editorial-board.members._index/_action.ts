@@ -1,5 +1,5 @@
 import { invariantResponse } from "@epic-web/invariant"
-import { type ActionFunctionArgs, json } from "@remix-run/node"
+import { type ActionFunctionArgs } from "@remix-run/node"
 
 import { formConfig } from "~/config/form-config"
 import { deleteMember } from "~/routes/administration.editorial-board.members._index/utils/delete-memeber.server"
@@ -21,5 +21,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   await deleteMember(id)
 
-  return json({ status: "success" })
+  return { status: "success" }
 }

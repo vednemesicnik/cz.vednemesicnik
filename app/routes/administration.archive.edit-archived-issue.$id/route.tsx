@@ -32,7 +32,7 @@ export default function Route() {
     defaultValue: {
       id: issue.id,
       ordinalNumber: issue.label.split("/")[0],
-      releasedAt: issue.releasedAt?.split("T")[0],
+      releasedAt: issue.releasedAt?.toISOString().split("T")[0],
       published: issue.state === "published",
       publishedBefore: issue.state === "published",
       coverId: issue.cover?.id,

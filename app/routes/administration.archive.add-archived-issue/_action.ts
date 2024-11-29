@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
+import { type ActionFunctionArgs, data, redirect } from "@remix-run/node"
 
 import { routesConfig } from "~/config/routes-config"
 import { schema } from "~/routes/administration.archive.add-archived-issue/_schema"
@@ -22,7 +22,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (submission.status !== "success") {
-    return json(
+    return data(
       { submissionResult: submission.reply() },
       { status: getStatusCodeFromSubmissionStatus(submission.status) }
     )

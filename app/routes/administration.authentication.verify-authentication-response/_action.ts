@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, json } from "@remix-run/node"
+import { type ActionFunctionArgs, data } from "@remix-run/node"
 import { verifyAuthenticationResponse } from "@simplewebauthn/server"
 
 import {
@@ -24,7 +24,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (passkey === null) {
-    return json({ status: "fail", verified: false }, { status: 400 })
+    return data({ status: "fail", verified: false }, { status: 400 })
   }
 
   const verifiedAuthenticationResponse = await verifyAuthenticationResponse({
@@ -50,8 +50,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     })
 
-    return json({ status: "success", verified: true })
+    return { status: "success", verified: true }
   }
 
-  return json({ status: "fail", verified: false }, { status: 400 })
+  return data({ status: "fail", verified: false }, { status: 400 })
 }

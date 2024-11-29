@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
 
 import { createUser } from "~/routes/administration.users.add-user/utils/create-user.server"
 import { requireAuthentication } from "~/utils/auth.server"
@@ -19,7 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (submission.status !== "success") {
-    return json({ lastResult: submission.reply() })
+    return { lastResult: submission.reply() }
   }
 
   await createUser(submission.value, sessionId)

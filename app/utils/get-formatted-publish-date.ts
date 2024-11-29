@@ -1,5 +1,5 @@
-export const getFormattedPublishDate = (date: string | null) => {
-  if (!date) {
+export const getFormattedPublishDate = (date: Date | null) => {
+  if (date === null) {
     return "..."
   }
 

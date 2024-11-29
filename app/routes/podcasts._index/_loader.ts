@@ -1,5 +1,3 @@
-import { json } from "@remix-run/node"
-
 import { prisma } from "~/utils/db.server"
 
 export const loader = async () => {
@@ -57,5 +55,5 @@ export const loader = async () => {
     episodesPromise,
   ])
 
-  return json({ podcasts, episodes })
+  return { podcasts, episodes }
 }

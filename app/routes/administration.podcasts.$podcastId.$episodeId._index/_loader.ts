@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node"
+import { type LoaderFunctionArgs } from "@remix-run/node"
 import type { ParamParseKey } from "@remix-run/router"
 
 import { requireAuthentication } from "~/utils/auth.server"
@@ -35,5 +35,5 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const [podcast, episode] = await Promise.all([podcastPromise, episodePromise])
 
-  return json({ episode, podcast })
+  return { episode, podcast }
 }

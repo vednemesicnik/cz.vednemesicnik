@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
 
 import { requireAuthentication } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
@@ -18,7 +18,7 @@ export async function action({ request }: ActionFunctionArgs) {
   })
 
   if (submission.status !== "success") {
-    return json({ lastResult: submission.reply() })
+    return { lastResult: submission.reply() }
   }
 
   await createEpisode(submission.value)

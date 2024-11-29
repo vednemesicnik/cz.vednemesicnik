@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
 
 import { addPosition } from "~/routes/administration.editorial-board.positions.add-position/utils/add-position.server"
 import { requireAuthentication } from "~/utils/auth.server"
@@ -22,7 +22,7 @@ export async function action({ request }: ActionFunctionArgs) {
   })
 
   if (submission.status !== "success") {
-    return json({ lastResult: submission.reply() })
+    return { lastResult: submission.reply() }
   }
 
   await addPosition(submission.value)

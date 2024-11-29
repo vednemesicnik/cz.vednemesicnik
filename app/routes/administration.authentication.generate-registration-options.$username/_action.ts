@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, json } from "@remix-run/node"
+import { type ActionFunctionArgs, data } from "@remix-run/node"
 import type { ParamParseKey } from "@remix-run/router"
 import { generateRegistrationOptions } from "@simplewebauthn/server"
 
@@ -24,7 +24,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     },
   })
 
-  return json(
+  return data(
     {
       status: "success",
       options,

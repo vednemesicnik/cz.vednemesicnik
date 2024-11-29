@@ -5,12 +5,12 @@ export const routesConfig = {
         staticPath: "/administration/archive",
       },
       addArchivedIssue: {
-        staticPath: "/administration/archive/add-archived-issue",
+        staticPath: "/administration/archive/add-issue",
       },
       editArchivedIssue: {
-        dynamicPath: "/administration/archive/edit-archived-issue/:id",
+        dynamicPath: "/administration/archive/edit-issue/:id",
         getStaticPath: (id: string) =>
-          `/administration/archive/edit-archived-issue/${id}` as const,
+          `/administration/archive/edit-issue/${id}` as const,
       },
     },
   },

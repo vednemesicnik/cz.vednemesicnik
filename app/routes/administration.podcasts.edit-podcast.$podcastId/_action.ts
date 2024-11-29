@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
 
 import { updatePodcast } from "~/routes/administration.podcasts.edit-podcast.$podcastId/utils/update-podcast.server"
 import { requireAuthentication } from "~/utils/auth.server"
@@ -19,7 +19,7 @@ export async function action({ request }: ActionFunctionArgs) {
   })
 
   if (submission.status !== "success") {
-    return json({ lastResult: submission.reply() })
+    return { lastResult: submission.reply() }
   }
 
   await updatePodcast(submission.value)

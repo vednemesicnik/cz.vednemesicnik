@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
+import { type ActionFunctionArgs, data, redirect } from "@remix-run/node"
 import bcrypt from "bcryptjs"
 
 import { schema } from "~/routes/administration_.sign-in._index/components/password-form"
@@ -22,7 +22,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (submission.status !== "success") {
-    return json(
+    return data(
       {
         submissionResult: submission.reply({
           hideFields: ["password"],
@@ -54,7 +54,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (user === null) {
-    return json(
+    return data(
       {
         submissionResult: submission.reply({
           hideFields: ["password"],

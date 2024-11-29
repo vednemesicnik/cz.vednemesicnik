@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node"
+import { type LoaderFunctionArgs } from "@remix-run/node"
 import type { ParamParseKey } from "@remix-run/router"
 
 import { prisma } from "~/utils/db.server"
@@ -16,5 +16,5 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     select: { title: true },
   })
 
-  return json({ podcastEpisode })
+  return { podcastEpisode }
 }

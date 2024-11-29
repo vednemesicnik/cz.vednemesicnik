@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node"
+import { type ActionFunctionArgs, redirect } from "@remix-run/node"
 
 import { changePassword } from "~/routes/administration.settings.profile.change-password/utils/change-password.server"
 import { requireAuthentication } from "~/utils/auth.server"
@@ -18,7 +18,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (submission.status !== "success") {
-    return json({ lastResult: submission.reply() })
+    return { lastResult: submission.reply() }
   }
 
   const { userId, newPassword } = submission.value

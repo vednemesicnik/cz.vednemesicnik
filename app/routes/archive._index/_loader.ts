@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs, redirect } from "@remix-run/node"
+import { type LoaderFunctionArgs, redirect } from "@remix-run/node"
 
 import { LIMIT_PARAM } from "~/components/load-more-content"
 import { prisma } from "~/utils/db.server"
@@ -38,5 +38,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  return json({ archivedIssues })
+  return { archivedIssues }
 }

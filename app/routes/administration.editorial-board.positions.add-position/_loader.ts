@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node"
+import { type LoaderFunctionArgs } from "@remix-run/node"
 
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
@@ -27,5 +27,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const editorialBoardPositionsCount =
     await prisma.editorialBoardPosition.count()
 
-  return json({ editorialBoardPositionsCount, session, authors })
+  return { editorialBoardPositionsCount, session, authors }
 }

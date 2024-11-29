@@ -1,7 +1,7 @@
 // noinspection HtmlRequiredTitleElement,JSUnusedGlobalSymbols
 
 import {
-  json,
+  data,
   type LinksFunction,
   type LoaderFunctionArgs,
 } from "@remix-run/node"
@@ -81,7 +81,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
   }
 
-  return json(
+  return data(
     {
       isAuthenticated,
       user: administrationPanelUser,

@@ -3,7 +3,7 @@ import { getFormattedPublishDate } from "~/utils/get-formatted-publish-date"
 import styles from "./_styles.module.css"
 
 type Props = {
-  date: string | null
+  date: Date | null
 }
 
 export const ArticleLinkPublishDate = ({ date }: Props) => {
