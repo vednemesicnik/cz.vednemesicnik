@@ -18,7 +18,7 @@ export default function Route() {
 
   const permissions = loaderData.session.user.role.permissions
 
-  const [hasCreateRight] = getRights(permissions, {
+  const [[hasCreateRight]] = getRights(permissions, {
     actions: ["create"],
     access: ["own", "any"],
     // there is no need to compare ownId with targetId

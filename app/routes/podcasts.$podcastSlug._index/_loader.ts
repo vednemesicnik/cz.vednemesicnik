@@ -17,7 +17,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       description: true,
       episodes: {
         where: {
-          published: true,
+          state: "published",
         },
         select: {
           id: true,

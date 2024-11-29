@@ -8,7 +8,7 @@ type RouteParams = Record<ParamParseKey<"archive/:fileName">, string>
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const { fileName } = params as RouteParams
 
-  const pdf = await prisma.archivedIssuePDF.findUniqueOrThrow({
+  const pdf = await prisma.issuePDF.findUniqueOrThrow({
     where: { fileName },
     select: { fileName: true, contentType: true, blob: true },
   })

@@ -29,7 +29,7 @@ export async function createEpisode({
         title,
         slug,
         description,
-        published,
+        state: published ? "published" : "draft",
         publishedAt: new Date(publishedAt),
         podcast: {
           connect: { id: podcastId },

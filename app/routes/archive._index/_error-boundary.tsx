@@ -10,7 +10,7 @@ export const ErrorBoundary = () => {
   if (isRouteErrorResponse(error)) {
     return (
       <Page>
-        <Headline>Archiv</Headline>
+        <Headline>Naše čísla pohromadě</Headline>
         <Paragraph>PDF soubor nebyl nalezen.</Paragraph>
         <code>
           Chyba: {error.status} - {error.statusText}
@@ -22,8 +22,8 @@ export const ErrorBoundary = () => {
   } else if (error instanceof Error) {
     return (
       <Page>
-        <Headline>Archiv</Headline>
-        <Paragraph>Při hledání PDF souboru se něco pokazilo.</Paragraph>
+        <Headline>Naše čísla pohromadě</Headline>
+        <Paragraph>Při hledání čísel v databázi se něco pokazilo.</Paragraph>
         <code>
           {error.message}
           <br />
@@ -34,7 +34,7 @@ export const ErrorBoundary = () => {
   } else {
     return (
       <Page>
-        <Headline>Archiv</Headline>
+        <Headline>Naše čísla pohromadě</Headline>
         <Paragraph>Něco se pokazilo.</Paragraph>
       </Page>
     )

@@ -1,11 +1,4 @@
-// noinspection JSUnusedGlobalSymbols,TypeScriptValidateJSTypes
-
-import {
-  Link,
-  useLoaderData,
-  useRouteError,
-  useSearchParams,
-} from "@remix-run/react"
+import { Link, useLoaderData, useSearchParams } from "@remix-run/react"
 
 import { Headline } from "~/components/headline"
 import { LIMIT_PARAM, LoadMoreContent } from "~/components/load-more-content"
@@ -14,8 +7,8 @@ import { Tile } from "~/components/tile"
 import { TileGrid } from "~/components/tile-grid"
 import { TileGridItem } from "~/components/tile-grid-item"
 import { sizeConfig } from "~/config/size-config"
-import { getArchivedIssueCoverSrc } from "~/utils/get-archived-issue-cover-src"
-import { getArchivedIssuePdfSrc } from "~/utils/get-archived-issue-pdf-src"
+import { getIssueCoverSrc } from "~/utils/get-issue-cover-src"
+import { getIssuePdfSrc } from "~/utils/get-issue-pdf-src"
 
 import { type loader } from "./_loader"
 
@@ -39,8 +32,8 @@ export default function Archive() {
           if (cover === null || pdf === null) return null
 
           const coverAlt = cover.altText
-          const coverSrc = getArchivedIssueCoverSrc(cover.id)
-          const pdfSrc = getArchivedIssuePdfSrc(pdf.fileName)
+          const coverSrc = getIssueCoverSrc(cover.id)
+          const pdfSrc = getIssuePdfSrc(pdf.fileName)
 
           return (
             <TileGridItem key={id}>
@@ -74,14 +67,4 @@ export default function Archive() {
 export { loader } from "./_loader"
 export { meta } from "./_meta"
 
-export const ErrorBoundary = () => {
-  const error = useRouteError()
-  console.error(error)
-
-  return (
-    <Page>
-      <h1>Archiv</h1>
-      <p>Došlo k chybě při načítání archivu.</p>
-    </Page>
-  )
-}
+export { ErrorBoundary } from "./_error-boundary"

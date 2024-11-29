@@ -18,7 +18,7 @@ export async function createLink({ label, url, episodeId, authorId }: Args) {
           connect: { id: episodeId },
         },
         publishedAt: new Date(),
-        published: true,
+        state: "published",
         author: {
           connect: { id: authorId },
         },

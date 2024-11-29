@@ -35,23 +35,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  const [canAssignRoleOwner] = getRights(session.user.role.permissions, {
-    actions: ["assign_role_owner"],
-    access: ["any", "own"],
-  })
-
-  const [canAssignRoleAdministrator] = getRights(
-    session.user.role.permissions,
-    {
-      actions: ["assign_role_administrator"],
+  const [[canAssignRoleOwner, canAssignRoleAdministrator, canAssignRoleUser]] =
+    getRights(session.user.role.permissions, {
+      actions: [
+        "assign_role_owner",
+        "assign_role_administrator",
+        "assign_role_user",
+      ],
       access: ["any", "own"],
-    }
-  )
-
-  const [canAssignRoleUser] = getRights(session.user.role.permissions, {
-    actions: ["assign_role_user"],
-    access: ["any", "own"],
-  })
+    })
 
   const roles = await prisma.userRole.findMany({
     where: {

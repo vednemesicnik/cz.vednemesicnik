@@ -10,22 +10,21 @@ import { type loader } from "./_loader"
 export default function Route() {
   const loaderData = useLoaderData<typeof loader>()
 
-  const [canViewUsers, canViewAuthors] = getRights(
+  const [[canViewUsers], [canViewAuthors]] = getRights(
     loaderData.session.user.role.permissions,
     {
       entities: ["user", "author"],
-      actions: ["view"],
       access: ["any", "own"],
     }
   )
 
   const [
-    canViewArticles,
-    canViewArticleCategories,
-    canViewPodcasts,
-    canViewArchivedIssues,
-    canViewEditorialBoardPositions,
-    canViewEditorialBoardMembers,
+    [canViewArticles],
+    [canViewArticleCategories],
+    [canViewPodcasts],
+    [canViewArchivedIssues],
+    [canViewEditorialBoardPositions],
+    [canViewEditorialBoardMembers],
   ] = getRights(loaderData.session.user.author.role.permissions, {
     entities: [
       "article",
@@ -35,7 +34,6 @@ export default function Route() {
       "editorial_board_position",
       "editorial_board_member",
     ],
-    actions: ["view"],
     access: ["any", "own"],
   })
 
@@ -75,15 +73,11 @@ export default function Route() {
           Archiv
         </Link>
       )}
-      {canViewEditorialBoardPositions ||
-        (canViewEditorialBoardMembers && (
-          <Link
-            to={"/administration/editorial-board"}
-            preventScrollReset={true}
-          >
-            Redakce
-          </Link>
-        ))}
+      {(canViewEditorialBoardPositions || canViewEditorialBoardMembers) && (
+        <Link to={"/administration/editorial-board"} preventScrollReset={true}>
+          Redakce
+        </Link>
+      )}
       <Link to={"/administration/settings"} preventScrollReset={true}>
         Nastavení
       </Link>

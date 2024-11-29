@@ -2,7 +2,7 @@ import { Link } from "@remix-run/react"
 
 import { VdmLogo } from "~/components/vdm-logo"
 
-import styles from "./_home-link.module.css"
+import styles from "./_styles.module.css"
 
 type Props = {
   children?: never

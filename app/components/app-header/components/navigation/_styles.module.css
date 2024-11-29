@@ -1,0 +1,18 @@
+.container {
+  grid-area: navigation;
+  display: grid;
+  position: relative;
+}
+
+.list {
+  display: flex;
+  position: relative;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}

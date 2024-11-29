@@ -46,7 +46,7 @@ export default function Route() {
                     {episode.title}
                   </NavLink>
                 </td>
-                <td>{episode.published ? "🟢" : "🔴"}</td>
+                <td>{episode.state}</td>
                 <td>
                   {episode.publishedAt
                     ? new Date(episode.publishedAt).toLocaleDateString("cs-CZ")

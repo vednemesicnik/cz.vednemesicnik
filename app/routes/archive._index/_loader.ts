@@ -12,9 +12,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect(url.toString(), { status: 301 })
   }
 
-  const archivedIssues = await prisma.archivedIssue.findMany({
+  const archivedIssues = await prisma.issue.findMany({
     where: {
-      published: true,
+      state: "published",
     },
     orderBy: {
       publishedAt: "desc",

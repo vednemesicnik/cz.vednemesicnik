@@ -18,7 +18,7 @@ type RouteParams = Record<ParamParseKey<EditArchivedIssuePath>, string>
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { sessionId } = await requireAuthentication(request)
 
-  const authorPermissionEntity: AuthorPermissionEntity = "archived_issue"
+  const authorPermissionEntity: AuthorPermissionEntity = "issue"
   const authorPermissionActions: AuthorPermissionAction[] = [
     "update",
     "publish",
@@ -56,9 +56,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   })
 
-  const [hasUpdateAnyRight] = getRights(session.user.author.role.permissions, {
-    actions: ["update"],
-  })
+  const [[hasUpdateAnyRight]] = getRights(
+    session.user.author.role.permissions,
+    {
+      actions: ["update"],
+    }
+  )
 
   const authorsPromise = prisma.author.findMany({
     ...(hasUpdateAnyRight ? {} : { where: { id: session.user.author.id } }),
@@ -70,13 +73,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const { id } = params as RouteParams
 
-  const archivedIssuePromise = prisma.archivedIssue.findUniqueOrThrow({
+  const issuePromise = prisma.issue.findUniqueOrThrow({
     where: { id: id },
     select: {
       id: true,
       label: true,
       releasedAt: true,
-      published: true,
+      state: true,
       cover: {
         select: {
           id: true,
@@ -95,10 +98,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   })
 
-  const [archivedIssue, authors] = await Promise.all([
-    archivedIssuePromise,
-    authorsPromise,
-  ])
+  const [issue, authors] = await Promise.all([issuePromise, authorsPromise])
 
-  return json({ archivedIssue, session, authors })
+  return json({ issue, session, authors })
 }

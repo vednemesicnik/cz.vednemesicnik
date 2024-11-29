@@ -40,7 +40,7 @@ export const userRoles: UserRolesData = [
           "update",
           "delete",
           "assign_role_administrator",
-          "assign_role_editor",
+          "assign_role_user",
         ],
       },
       {
@@ -84,7 +84,7 @@ export const userRoles: UserRolesData = [
           "delete",
           "assign_role_owner",
           "assign_role_administrator",
-          "assign_role_editor",
+          "assign_role_user",
         ],
       },
       {
@@ -97,7 +97,7 @@ export const userRoles: UserRolesData = [
           "delete",
           "assign_role_owner",
           "assign_role_administrator",
-          "assign_role_editor",
+          "assign_role_user",
         ],
       },
       {

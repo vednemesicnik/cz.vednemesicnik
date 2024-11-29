@@ -1,1 +1,1 @@
-export { Navigation } from "./_navigation"
+export { Navigation } from "./_component"

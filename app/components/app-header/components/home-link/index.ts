@@ -1,1 +1,1 @@
-export { HomeLink } from "./_home-link"
+export { HomeLink } from "./_component"

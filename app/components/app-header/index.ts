@@ -1,1 +1,1 @@
-export { AppHeader } from "./_app-header"
+export { AppHeader } from "./_component"

@@ -10,14 +10,14 @@ import {
 } from "~~/types/permission"
 
 export const deleteArchivedIssue = async (id: string, sessionId: string) => {
-  const archivedIssuePromise = prisma.archivedIssue.findUniqueOrThrow({
+  const issuePromise = prisma.issue.findUniqueOrThrow({
     where: { id },
     select: {
       authorId: true,
     },
   })
 
-  const entities: AuthorPermissionEntity[] = ["archived_issue"]
+  const entities: AuthorPermissionEntity[] = ["issue"]
   const actions: AuthorPermissionAction[] = ["delete"]
 
   const authorPromise = getAuthorForPermissionCheck(sessionId, {
@@ -25,15 +25,12 @@ export const deleteArchivedIssue = async (id: string, sessionId: string) => {
     actions,
   })
 
-  const [archivedIssue, author] = await Promise.all([
-    archivedIssuePromise,
-    authorPromise,
-  ])
+  const [issue, author] = await Promise.all([issuePromise, authorPromise])
 
-  const [hasDeleteRight] = getRights(author.permissions, {
+  const [[hasDeleteRight]] = getRights(author.permissions, {
     access: ["any", "own"],
     ownId: author.id,
-    targetId: archivedIssue.authorId,
+    targetId: issue.authorId,
   })
 
   invariantResponse(
@@ -42,7 +39,7 @@ export const deleteArchivedIssue = async (id: string, sessionId: string) => {
   )
 
   try {
-    await prisma.archivedIssue.delete({
+    await prisma.issue.delete({
       where: { id },
     })
   } catch (error) {

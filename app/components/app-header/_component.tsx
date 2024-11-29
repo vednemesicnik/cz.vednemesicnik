@@ -4,7 +4,7 @@ import { HomeLink } from "~/components/app-header/components/home-link"
 import { Navigation } from "~/components/app-header/components/navigation"
 import { NavigationItem } from "~/components/app-header/components/navigation-item"
 
-import styles from "./_app-header.module.css"
+import styles from "./_styles.module.css"
 
 type Props = {
   children: ReactNode

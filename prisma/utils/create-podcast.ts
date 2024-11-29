@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client"
 
 import { users } from "~~/data/users"
+import { type ContentState } from "~~/types/content-state"
 
 import { getPodcastCover } from "./get-podcast-cover"
 
@@ -9,19 +10,19 @@ export type PodcastData = {
   title: string
   description: string
   publishedAt: Date
-  published: boolean
+  state: ContentState
   episodes: {
     number: number
     slug: string
     title: string
     description: string
     publishedAt: Date
-    published: boolean
+    state: ContentState
     links: {
       label: string
       url: string
       publishedAt: Date
-      published: boolean
+      state: ContentState
     }[]
   }[]
   cover?: {
@@ -46,7 +47,7 @@ export const createPodcast = async (
         title: data.title,
         description: data.description,
         publishedAt: data.publishedAt,
-        published: data.published,
+        state: data.state,
         episodes: {
           create: data.episodes.map((episode) => ({
             number: episode.number,
@@ -54,13 +55,13 @@ export const createPodcast = async (
             title: episode.title,
             description: episode.description,
             publishedAt: episode.publishedAt,
-            published: episode.published,
+            state: episode.state,
             links: {
               create: episode.links.map((link) => ({
                 label: link.label,
                 url: link.url,
                 publishedAt: link.publishedAt,
-                published: link.published,
+                state: link.state,
                 author: {
                   connect: { id: user.authorId },
                 },

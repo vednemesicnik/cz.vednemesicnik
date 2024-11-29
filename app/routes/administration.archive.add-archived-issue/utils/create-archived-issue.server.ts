@@ -19,7 +19,7 @@ type Data = {
 }
 
 export const createArchivedIssue = async (data: Data, sessionId: string) => {
-  const entities: AuthorPermissionEntity[] = ["archived_issue"]
+  const entities: AuthorPermissionEntity[] = ["issue"]
   const actions: AuthorPermissionAction[] = ["create", "publish"]
 
   const author = await getAuthorForPermissionCheck(sessionId, {
@@ -27,8 +27,8 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
     entities,
   })
 
-  const [hasCreateRight] = getRights(author.permissions, {
-    actions: ["create"],
+  const [[hasCreateRight, hasPublishRight]] = getRights(author.permissions, {
+    actions: ["create", "publish"],
     access: ["any", "own"],
     ownId: author.id,
     targetId: data.authorId,
@@ -39,13 +39,6 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
   })
 
   const { ordinalNumber, releasedAt, published, cover, pdf, authorId } = data
-
-  const [hasPublishRight] = getRights(author.permissions, {
-    actions: ["publish"],
-    access: ["any", "own"],
-    ownId: author.id,
-    targetId: data.authorId,
-  })
 
   const formattedPublished = hasPublishRight ? published : false
 
@@ -58,11 +51,11 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
   const label = `${ordinalNumber}/${monthYear}`
 
   try {
-    await prisma.archivedIssue.create({
+    await prisma.issue.create({
       data: {
         label: label,
         releasedAt: releaseDate,
-        published: formattedPublished,
+        state: formattedPublished ? "published" : "draft",
         publishedAt: formattedPublished ? new Date() : undefined,
         cover: {
           create: {

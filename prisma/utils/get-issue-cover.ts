@@ -5,13 +5,17 @@ type Args = {
   filePath: string
 }
 
-export type ArchiveIssueCover = {
+export type IssueCover = {
   altText: string
   contentType: string
   blob: Buffer
 }
-export const getArchivedIssueCover = async ({ altText, filePath }: Args): Promise<ArchiveIssueCover> => {
-  if (!filePath.endsWith(".jpg")) throw new Error(`File ${filePath} is not a JPG file.`)
+export const getIssueCover = async ({
+  altText,
+  filePath,
+}: Args): Promise<IssueCover> => {
+  if (!filePath.endsWith(".jpg"))
+    throw new Error(`File ${filePath} is not a JPG file.`)
 
   return {
     altText,

@@ -28,7 +28,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       title: true,
       slug: true,
       description: true,
-      published: true,
+      state: true,
       publishedAt: true,
       authorId: true,
     },

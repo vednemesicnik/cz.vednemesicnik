@@ -54,6 +54,7 @@ model Password {
 
 model UserRole {
   id            String          @id @default(cuid())
+  // name: "owner", "administrator", "user"
   name          String          @unique
   description   String          @default("")
   createdAt     DateTime        @default(now())
@@ -64,8 +65,11 @@ model UserRole {
 
 model UserPermission {
   id            String          @id @default(cuid())
+  // action: "view", "create", "update", "delete", "assign_role_owner", "assign_role_administrator", "assign_role_user", "assing_role_author", "assign_role_editor", "assign_role_contributor"
   action        String
+  // entity: "user", "author"
   entity        String
+  // access: "own", "any"
   access        String
   description   String          @default("")
   createdAt     DateTime        @default(now())
@@ -148,16 +152,20 @@ model Author {
   user                    User?
   roleId                  String
   role                    AuthorRole                @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  archivedIssues          ArchivedIssue[]
+  issues                  Issue[]
   editorialBoardPositions EditorialBoardPosition[]
   editorialBoardMembers   EditorialBoardMember[]
   podcasts                Podcast[]
   podcastEpisodes         PodcastEpisode[]
   podcastEpisodeLinks     PodcastEpisodeLink[]
+  articles                Article[]
+  tags                    ArticleTag[]
+  categories              ArticleCategory[]
 }
 
 model AuthorRole {
   id            String          @id @default(cuid())
+  // name: "editor", "author", "contributor"
   name          String          @unique
   description   String          @default("")
   createdAt     DateTime        @default(now())
@@ -168,8 +176,11 @@ model AuthorRole {
 
 model AuthorPermission {
   id            String          @id @default(cuid())
+  // action: "view", "create", "update", "delete", "publish", "retract", "archive", "restore"
   action        String
+  // entity: "article", "article_tag", "article_category", "podcast", "podcast_episode", "podcast_episode_link", "issue", "editorial_board_position", "editorial_board_member"
   entity        String
+  // access: "own", "any"
   access        String
   description   String          @default("")
   createdAt     DateTime        @default(now())
@@ -178,35 +189,36 @@ model AuthorPermission {
   @@unique([action, entity, access])
 }
 
-model ArchivedIssue {
+model Issue {
   id            String              @id @default(cuid())
   label         String
   releasedAt    DateTime
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   publishedAt   DateTime?
-  published     Boolean             @default(false)
-  cover         ArchivedIssueCover?
-  pdf           ArchivedIssuePDF?
+  // state: "draft", "published", "archived"
+  state         String              @default("draft")
+  cover         IssueCover?
+  pdf           IssuePDF?
   authorId      String
-  author        Author                @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  author        Author              @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
 }
 
-model ArchivedIssueCover {
+model IssueCover {
   id            String          @id @default(cuid())
   altText       String
   contentType   String
   blob          Bytes
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  issue         ArchivedIssue   @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  issue         Issue   @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   issueId       String          @unique
 }
 
-model ArchivedIssuePDF {
+model IssuePDF {
   id            String          @id @default(cuid())
   fileName      String          @unique
   contentType   String
@@ -214,7 +226,7 @@ model ArchivedIssuePDF {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   issueId       String          @unique
-  issue         ArchivedIssue   @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  issue         Issue   @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Podcast {
@@ -225,7 +237,8 @@ model Podcast {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   publishedAt   DateTime?
-  published     Boolean           @default(false)
+  // state: "draft", "published", "archived"
+  state         String            @default("draft")
   episodes      PodcastEpisode[]
   cover         PodcastCover?
   authorId      String
@@ -256,7 +269,8 @@ model PodcastEpisode {
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
   publishedAt   DateTime?
-  published     Boolean               @default(false)
+  // state: "draft", "published", "archived"
+  state         String                @default("draft")
   podcast       Podcast               @relation(fields: [podcastId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   podcastId     String
   cover         PodcastEpisodeCover?
@@ -278,7 +292,8 @@ model PodcastEpisodeLink {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   publishedAt   DateTime?
-  published     Boolean         @default(false)
+  // state: "draft", "published", "archived"
+  state         String          @default("draft")
   episode       PodcastEpisode  @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   episodeId     String
   authorId      String
@@ -323,6 +338,77 @@ model EditorialBoardMember {
   updatedAt     DateTime                        @updatedAt
   authorId      String
   author        Author                          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  // non-unique foreign key
+  @@index([authorId])
+}
+
+model Article {
+  id              String              @id @default(cuid())
+  slug            String              @unique
+  title           String
+  content         String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  publishedAt     DateTime?
+  // state: "draft", "published", "archived"
+  state           String              @default("draft")
+  authorId        String
+  author          Author              @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  featuredImage   ArticleImage?       @relation("FeaturedArticleImage")
+  images          ArticleImage[]      @relation("ArticleImage")
+  tags            ArticleTag[]
+  categories      ArticleCategory[]
+
+  // non-unique foreign key
+  @@index([authorId])
+}
+
+model ArticleImage {
+  id                    String          @id @default(cuid())
+  altText               String
+  contentType           String
+  blob                  Bytes
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  articleId             String
+  article               Article        @relation("ArticleImage", fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  featuredInArticleId   String?         @unique
+  featuredInArticle     Article?        @relation("FeaturedArticleImage", fields: [featuredInArticleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // non-unique foreign key
+  @@index([articleId])
+}
+
+model ArticleTag {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  slug          String          @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  publishedAt   DateTime?
+  // state: "draft", "published", "archived"
+  state         String          @default("draft")
+  articles      Article[]
+  authorId      String
+  author        Author          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  // non-unique foreign key
+  @@index([authorId])
+}
+
+model ArticleCategory {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  slug          String          @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  publishedAt   DateTime?
+  // state: "draft", "published", "archived"
+  state         String          @default("draft")
+  articles      Article[]
+  authorId      String
+  author        Author          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])

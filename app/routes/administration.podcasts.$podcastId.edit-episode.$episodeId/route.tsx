@@ -28,7 +28,7 @@ export default function Route() {
     defaultValue: {
       number: loaderData.episode.number,
       description: loaderData.episode.description,
-      published: loaderData.episode.published,
+      published: loaderData.episode.state === "published",
       publishedAt: loaderData.episode.publishedAt?.split("T")[0],
       podcastId: loaderData.podcast.id,
       episodeId: loaderData.episode.id,

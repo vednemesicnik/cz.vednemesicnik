@@ -30,7 +30,7 @@ export async function createPodcast({
           },
         },
         publishedAt: new Date(),
-        published: true,
+        state: "published",
         author: {
           connect: { id: authorId },
         },

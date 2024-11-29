@@ -4,6 +4,12 @@ import { prisma } from "~/utils/db.server"
 
 export const loader = async () => {
   const podcastsPromise = prisma.podcast.findMany({
+    where: {
+      state: "published",
+    },
+    orderBy: {
+      publishedAt: "desc",
+    },
     select: {
       id: true,
       slug: true,
@@ -19,7 +25,7 @@ export const loader = async () => {
 
   const episodesPromise = prisma.podcastEpisode.findMany({
     where: {
-      published: true,
+      state: "published",
     },
     orderBy: {
       publishedAt: "desc",

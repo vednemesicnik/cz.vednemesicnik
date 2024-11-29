@@ -15,7 +15,7 @@ type RouteParams = Record<
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { id } = params as RouteParams
 
-  const image = await prisma.archivedIssueCover.findUniqueOrThrow({
+  const image = await prisma.issueCover.findUniqueOrThrow({
     where: { id: id },
     select: { blob: true },
   })

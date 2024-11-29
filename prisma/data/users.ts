@@ -3,7 +3,6 @@ import type { UsersData } from "~~/utils/create-users"
 export const users: UsersData = [
   {
     email: "owner@local.dev",
-    username: "owner@local.dev",
     name: "Vedneměsíčník, z. s.",
     password: "owner",
     userRole: "owner",
@@ -11,7 +10,6 @@ export const users: UsersData = [
   },
   {
     email: "admin@local.dev",
-    username: "admin@local.dev",
     name: "Admin",
     password: "admin",
     userRole: "administrator",
@@ -19,7 +17,6 @@ export const users: UsersData = [
   },
   {
     email: "editor@local.dev",
-    username: "editor@local.dev",
     name: "Editor",
     password: "editor",
     userRole: "user",
@@ -27,7 +24,6 @@ export const users: UsersData = [
   },
   {
     email: "author@local.dev",
-    username: "author@local.dev",
     name: "Author",
     password: "author",
     userRole: "user",
@@ -35,7 +31,6 @@ export const users: UsersData = [
   },
   {
     email: "contributor@local.dev",
-    username: "contributor@local.dev",
     name: "Contributor",
     password: "contributor",
     userRole: "user",

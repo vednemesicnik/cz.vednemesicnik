@@ -6,38 +6,38 @@ This documentation outlines the permissions and actions available to users in th
 
 ## Roles and Permissions Overview
 
-| **Role**          | **Action**               | **Access** | **User** | **Author** |
-|-------------------|--------------------------|------------|----------|------------|
-| **User**          | View                     | Own        | ✅        | ✅          |
-|                   | Create                   | None       | ❌        | ❌          |
-|                   | Update                   | Own        | ✅        | ✅          |
-|                   | Delete                   | None       | ❌        | ❌          |
-|                   | Assign Role: Owner       | None       | ❌        | ❌          |
-|                   | Assign Role: Admin       | None       | ❌        | ❌          |
-|                   | Assign Role: User        | None       | ❌        | ❌          |
-|                   | Assign Role: Editor      | None       | ❌        | ❌          |
-|                   | Assign Role: Author      | None       | ❌        | ❌          |
-|                   | Assign Role: Contributor | None       | ❌        | ❌          |
-| **Administrator** | View                     | Own, Any   | ✅        | ✅          |
-|                   | Create                   | Own, Any   | ✅        | ✅          |
-|                   | Update                   | Own, Any   | ✅        | ✅          |
-|                   | Delete                   | Own, Any   | ✅        | ✅          |
-|                   | Assign Role: Owner       | None       | ❌        | ❌          |
-|                   | Assign Role: Admin       | Own, Any   | ✅        | ❌          |
-|                   | Assign Role: User        | Own, Any   | ✅        | ❌          |
-|                   | Assign Role: Editor      | Own, Any   | ❌        | ✅          |
-|                   | Assign Role: Author      | Own, Any   | ❌        | ✅          |
-|                   | Assign Role: Contributor | Own, Any   | ❌        | ✅          |
-| **Owner**         | View                     | Own, Any   | ✅        | ✅          |
-|                   | Create                   | Own, Any   | ✅        | ✅          |
-|                   | Update                   | Own, Any   | ✅        | ✅          |
-|                   | Delete                   | Own, Any   | ✅        | ✅          |
-|                   | Assign Role: Owner       | Own, Any   | ✅        | ❌          |
-|                   | Assign Role: Admin       | Own, Any   | ✅        | ❌          |
-|                   | Assign Role: User        | Own, Any   | ✅        | ❌          |
-|                   | Assign Role: Editor      | Own, Any   | ❌        | ✅          |
-|                   | Assign Role: Author      | Own, Any   | ❌        | ✅          |
-|                   | Assign Role: Contributor | Own, Any   | ❌        | ✅          |
+| **Role**          | **Action**               | **Access** | **👤 User** | **✍️ Author** |
+|-------------------|--------------------------|------------|-------------|---------------|
+| **User**          | View                     | Own        | ✅           | ✅             |
+|                   | Create                   | None       | ❌           | ❌             |
+|                   | Update                   | Own        | ✅           | ✅             |
+|                   | Delete                   | None       | ❌           | ❌             |
+|                   | Assign Role: Owner       | None       | ❌           | ❌             |
+|                   | Assign Role: Admin       | None       | ❌           | ❌             |
+|                   | Assign Role: User        | None       | ❌           | ❌             |
+|                   | Assign Role: Editor      | None       | ❌           | ❌             |
+|                   | Assign Role: Author      | None       | ❌           | ❌             |
+|                   | Assign Role: Contributor | None       | ❌           | ❌             |
+| **Administrator** | View                     | Own, Any   | ✅           | ✅             |
+|                   | Create                   | Own, Any   | ✅           | ✅             |
+|                   | Update                   | Own, Any   | ✅           | ✅             |
+|                   | Delete                   | Own, Any   | ✅           | ✅             |
+|                   | Assign Role: Owner       | None       | ❌           | ❌             |
+|                   | Assign Role: Admin       | Own, Any   | ✅           | ❌             |
+|                   | Assign Role: User        | Own, Any   | ✅           | ❌             |
+|                   | Assign Role: Editor      | Own, Any   | ❌           | ✅             |
+|                   | Assign Role: Author      | Own, Any   | ❌           | ✅             |
+|                   | Assign Role: Contributor | Own, Any   | ❌           | ✅             |
+| **Owner**         | View                     | Own, Any   | ✅           | ✅             |
+|                   | Create                   | Own, Any   | ✅           | ✅             |
+|                   | Update                   | Own, Any   | ✅           | ✅             |
+|                   | Delete                   | Own, Any   | ✅           | ✅             |
+|                   | Assign Role: Owner       | Own, Any   | ✅           | ❌             |
+|                   | Assign Role: Admin       | Own, Any   | ✅           | ❌             |
+|                   | Assign Role: User        | Own, Any   | ✅           | ❌             |
+|                   | Assign Role: Editor      | Own, Any   | ❌           | ✅             |
+|                   | Assign Role: Author      | Own, Any   | ❌           | ✅             |
+|                   | Assign Role: Contributor | Own, Any   | ❌           | ✅             |
 
 ---
 

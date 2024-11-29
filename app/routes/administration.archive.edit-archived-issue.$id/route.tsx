@@ -21,7 +21,7 @@ export default function Route() {
 
   const publishedInputRef = useRef<HTMLInputElement>(null)
 
-  const { archivedIssue, session } = loaderData
+  const { issue, session } = loaderData
   const { user } = session
 
   const [form, fields] = useForm({
@@ -30,14 +30,14 @@ export default function Route() {
     lastResult: actionData?.lastResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
-      id: archivedIssue.id,
-      ordinalNumber: archivedIssue.label.split("/")[0],
-      releasedAt: archivedIssue.releasedAt?.split("T")[0],
-      published: archivedIssue.published,
-      publishedBefore: archivedIssue.published,
-      coverId: archivedIssue.cover?.id,
-      pdfId: archivedIssue.pdf?.id,
-      authorId: archivedIssue.author.id,
+      id: issue.id,
+      ordinalNumber: issue.label.split("/")[0],
+      releasedAt: issue.releasedAt?.split("T")[0],
+      published: issue.state === "published",
+      publishedBefore: issue.state === "published",
+      coverId: issue.cover?.id,
+      pdfId: issue.pdf?.id,
+      authorId: issue.author.id,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -52,21 +52,17 @@ export default function Route() {
     }
   }
 
-  const [hasUpdateRight] = getRights(user.author.role.permissions, {
-    actions: ["update"],
-    access: ["own", "any"],
-    ownId: user.author.id,
-    targetId: archivedIssue.author.id,
-  })
+  const [[hasUpdateRight, hasPublishRight]] = getRights(
+    user.author.role.permissions,
+    {
+      actions: ["update", "publish"],
+      access: ["own", "any"],
+      ownId: user.author.id,
+      targetId: fields.authorId.value || issue.author.id,
+    }
+  )
 
-  const [hasPublishRight] = getRights(user.author.role.permissions, {
-    actions: ["publish"],
-    access: ["own", "any"],
-    ownId: user.author.id,
-    targetId: fields.authorId.value || archivedIssue.author.id,
-  })
-
-  const publishedBeforeValue = archivedIssue.published
+  const publishedBeforeValue = issue.state === "published"
 
   useEffect(() => {
     const publishedInput = publishedInputRef.current

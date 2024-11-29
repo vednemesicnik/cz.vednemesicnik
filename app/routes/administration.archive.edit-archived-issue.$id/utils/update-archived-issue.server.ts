@@ -37,7 +37,7 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
     authorId,
   } = data
 
-  const entities: AuthorPermissionEntity[] = ["archived_issue"]
+  const entities: AuthorPermissionEntity[] = ["issue"]
   const actions: AuthorPermissionAction[] = ["update", "publish"]
 
   const author = await getAuthorForPermissionCheck(sessionId, {
@@ -45,8 +45,8 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
     entities,
   })
 
-  const [hasUpdateRight] = getRights(author.permissions, {
-    actions: ["update"],
+  const [[hasUpdateRight, hasPublishRight]] = getRights(author.permissions, {
+    actions: ["update", "publish"],
     access: ["any", "own"],
     ownId: author.id,
     targetId: data.authorId,
@@ -54,13 +54,6 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
 
   invariantResponse(hasUpdateRight, "Unauthorized", {
     status: 401,
-  })
-
-  const [hasPublishRight] = getRights(author.permissions, {
-    actions: ["publish"],
-    access: ["any", "own"],
-    ownId: author.id,
-    targetId: data.authorId,
   })
 
   const formattedPublished = hasPublishRight ? published : publishedBefore
@@ -77,12 +70,12 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
   const pdfFileName = `VDM-${year}-${ordinalNumber}.pdf`
 
   try {
-    await prisma.archivedIssue.update({
+    await prisma.issue.update({
       where: { id: id },
       data: {
         label: label,
         releasedAt: releaseDate,
-        published: formattedPublished,
+        state: formattedPublished ? "published" : "draft",
         ...(!publishedBefore && formattedPublished
           ? { publishedAt: new Date() }
           : {}),

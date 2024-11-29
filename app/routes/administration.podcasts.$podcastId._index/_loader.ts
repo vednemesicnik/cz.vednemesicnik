@@ -23,7 +23,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           id: true,
           title: true,
           publishedAt: true,
-          published: true,
+          state: true,
         },
         orderBy: { publishedAt: "desc" },
       },

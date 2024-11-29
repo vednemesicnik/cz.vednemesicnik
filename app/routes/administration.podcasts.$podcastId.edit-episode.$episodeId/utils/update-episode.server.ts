@@ -31,7 +31,7 @@ export async function updateEpisode({
         title,
         slug,
         description,
-        published,
+        state: published ? "published" : "draft",
         publishedAt: new Date(publishedAt),
         author: {
           connect: { id: authorId },

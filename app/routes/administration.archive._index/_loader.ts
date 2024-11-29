@@ -11,7 +11,7 @@ import {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { sessionId } = await requireAuthentication(request)
 
-  const authorPermissionEntity: AuthorPermissionEntity = "archived_issue"
+  const authorPermissionEntity: AuthorPermissionEntity = "issue"
   const authorPermissionActions: AuthorPermissionAction[] = [
     "view",
     "create",
@@ -51,11 +51,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  const [canViewAny] = getRights(session.user.author.role.permissions, {
+  const [[canViewAny]] = getRights(session.user.author.role.permissions, {
     actions: ["view"],
   })
 
-  const archivedIssues = await prisma.archivedIssue.findMany({
+  const issues = await prisma.issue.findMany({
     ...(canViewAny
       ? {}
       : {
@@ -71,7 +71,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     select: {
       id: true,
       label: true,
-      published: true,
+      state: true,
       author: {
         select: {
           id: true,
@@ -80,5 +80,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  return json({ archivedIssues, session })
+  return json({ archivedIssues: issues, session })
 }

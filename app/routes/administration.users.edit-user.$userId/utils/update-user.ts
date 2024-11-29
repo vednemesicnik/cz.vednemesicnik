@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs"
 import { prisma } from "~/utils/db.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 import { throwError } from "~/utils/throw-error.server"
-import { type RoleName } from "~~/types/role"
+import { type UserRoleName } from "~~/types/role"
 
 type Data = {
   email: string
@@ -31,7 +31,7 @@ export const updateUser = async ({
     },
   })
 
-  const owner: RoleName = "owner"
+  const owner: UserRoleName = "owner"
 
   // Owner cannot be updated
   if (userToUpdate === null || userToUpdate.role.name === owner) {

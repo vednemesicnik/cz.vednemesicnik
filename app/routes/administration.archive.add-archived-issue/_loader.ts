@@ -11,7 +11,7 @@ import {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { sessionId } = await requireAuthentication(request)
 
-  const authorPermissionEntity: AuthorPermissionEntity = "archived_issue"
+  const authorPermissionEntity: AuthorPermissionEntity = "issue"
   const authorPermissionActions: AuthorPermissionAction[] = [
     "create",
     "publish",
@@ -49,7 +49,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  const [canCreateAny] = getRights(session.user.author.role.permissions, {
+  const [[canCreateAny]] = getRights(session.user.author.role.permissions, {
     actions: ["create"],
   })
 

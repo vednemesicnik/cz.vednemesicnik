@@ -11,8 +11,8 @@ import { Page } from "~/components/page"
 import { Tile } from "~/components/tile"
 import { sizeConfig } from "~/config/size-config"
 import { type loader } from "~/routes/_index/_loader"
-import { getArchivedIssueCoverSrc } from "~/utils/get-archived-issue-cover-src"
-import { getArchivedIssuePdfSrc } from "~/utils/get-archived-issue-pdf-src"
+import { getIssueCoverSrc } from "~/utils/get-issue-cover-src"
+import { getIssuePdfSrc } from "~/utils/get-issue-pdf-src"
 import { getPodcastCoverSrc } from "~/utils/get-podcast-cover-src"
 
 export default function Route() {
@@ -22,8 +22,8 @@ export default function Route() {
     <Page>
       {loaderData.latestArchivedIssues.map((issue) => {
         const coverAlt = issue.cover?.altText ?? ""
-        const coverSrc = getArchivedIssueCoverSrc(issue.cover?.id ?? "")
-        const pdfSrc = getArchivedIssuePdfSrc(issue.pdf?.fileName ?? "")
+        const coverSrc = getIssueCoverSrc(issue.cover?.id ?? "")
+        const pdfSrc = getIssuePdfSrc(issue.pdf?.fileName ?? "")
 
         return (
           <FeaturedBanner

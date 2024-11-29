@@ -20,7 +20,7 @@ export default function Route() {
 
   const { user } = loaderData.session
 
-  const [hasCreateRight] = getRights(user.author.role.permissions, {
+  const [[hasCreateRight]] = getRights(user.author.role.permissions, {
     actions: ["create"],
     access: ["own", "any"],
     // there is no need to compare ownAuthorId with targetAuthorId
@@ -46,23 +46,20 @@ export default function Route() {
                 issue.id
               )
 
-            const [hasUpdateRight] = getRights(user.author.role.permissions, {
-              actions: ["update"],
-              access: ["own", "any"],
-              ownId: user.author.id,
-              targetId: issue.author.id,
-            })
-            const [hasDeleteRight] = getRights(user.author.role.permissions, {
-              actions: ["delete"],
-              access: ["own", "any"],
-              ownId: user.author.id,
-              targetId: issue.author.id,
-            })
+            const [[hasUpdateRight, hasDeleteRight]] = getRights(
+              user.author.role.permissions,
+              {
+                actions: ["update", "delete"],
+                access: ["own", "any"],
+                ownId: user.author.id,
+                targetId: issue.author.id,
+              }
+            )
 
             return (
               <tr key={issue.id}>
                 <td>{issue.label}</td>
-                <td>{issue.published ? "🟢" : "🔴"}</td>
+                <td>{issue.state}</td>
                 <td>
                   <Actions
                     canEdit={hasUpdateRight}

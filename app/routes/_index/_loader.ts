@@ -3,9 +3,9 @@ import { json } from "@remix-run/node"
 import { prisma } from "~/utils/db.server"
 
 export const loader = async () => {
-  const latestArchivedIssuesPromise = prisma.archivedIssue.findMany({
+  const latestArchivedIssuesPromise = prisma.issue.findMany({
     where: {
-      published: true,
+      state: "published",
     },
     orderBy: {
       publishedAt: "desc",
@@ -31,7 +31,7 @@ export const loader = async () => {
 
   const latestPodcastEpisodesPromise = prisma.podcastEpisode.findMany({
     where: {
-      published: true,
+      state: "published",
     },
     orderBy: {
       publishedAt: "desc",

@@ -43,19 +43,15 @@ export default function Route() {
     }
   }
 
-  const [hasCreateRight] = getRights(user.author.role.permissions, {
-    actions: ["create"],
-    access: ["own", "any"],
-    ownId: user.author.id,
-    targetId: fields.authorId.value,
-  })
-
-  const [hasPublishRight] = getRights(user.author.role.permissions, {
-    actions: ["publish"],
-    access: ["own", "any"],
-    ownId: user.author.id,
-    targetId: fields.authorId.value,
-  })
+  const [[hasCreateRight, hasPublishRight]] = getRights(
+    user.author.role.permissions,
+    {
+      actions: ["create", "publish"],
+      access: ["own", "any"],
+      ownId: user.author.id,
+      targetId: fields.authorId.value,
+    }
+  )
 
   return (
     <>
