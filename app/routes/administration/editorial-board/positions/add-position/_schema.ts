@@ -4,7 +4,9 @@ export const getSchema = (positionsCount: number) =>
   z.object({
     key: z
       .string({ message: "Key is required" })
-      .regex(/^[a-z]+$/, { message: "Key must be lowercase" })
+      .regex(/^[a-z-]+$/, {
+        message: "Key must be lowercase and can include hyphens",
+      })
       .transform((value) => value.trim()),
     pluralLabel: z
       .string({ message: "Plural label is required" })
