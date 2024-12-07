@@ -38,7 +38,7 @@ export async function updatePodcast({
                     id: createId(),
                     altText: coverAltText,
                     contentType: cover.type,
-                    blob: Buffer.from(await cover.arrayBuffer()),
+                    blob: Uint8Array.from(await cover.bytes()),
                   }
                 : {
                     altText: coverAltText,

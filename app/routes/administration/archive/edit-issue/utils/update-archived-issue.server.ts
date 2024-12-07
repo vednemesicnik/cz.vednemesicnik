@@ -88,7 +88,7 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
                     id: createId(), // New ID forces browser to download new image
                     altText: coverAltText,
                     contentType: cover.type,
-                    blob: Buffer.from(await cover.arrayBuffer()),
+                    blob: Uint8Array.from(await cover.bytes()),
                   }
                 : {
                     altText: coverAltText,
@@ -104,7 +104,7 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
                     id: createId(), // New ID forces browser to download new PDF
                     fileName: pdfFileName,
                     contentType: pdf.type,
-                    blob: Buffer.from(await pdf.arrayBuffer()),
+                    blob: Uint8Array.from(await pdf.bytes()),
                   }
                 : {
                     fileName: pdfFileName,

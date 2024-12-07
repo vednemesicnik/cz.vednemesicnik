@@ -61,14 +61,14 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
           create: {
             altText: `Obálka výtisku ${label}`,
             contentType: cover.type,
-            blob: Buffer.from(await cover.arrayBuffer()),
+            blob: Uint8Array.from(await cover.bytes()),
           },
         },
         pdf: {
           create: {
             fileName: `VDM-${year}-${ordinalNumber}.pdf`,
             contentType: pdf.type,
-            blob: Buffer.from(await pdf.arrayBuffer()),
+            blob: Uint8Array.from(await pdf.bytes()),
           },
         },
         authorId: authorId,

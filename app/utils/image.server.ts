@@ -23,7 +23,7 @@ export const getImageParams = (request: Request) => {
 
 export const createImageResponse = (
   image: {
-    blob: Buffer
+    blob: Uint8Array
     contentType: string
   },
   fileName: string
