@@ -1,6 +1,6 @@
 import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
-import { NavLink } from "@remix-run/react"
 import type { ReactNode } from "react"
+import { NavLink } from "react-router"
 
 import styles from "./_styles.module.css"
 

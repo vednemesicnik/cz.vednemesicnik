@@ -1,6 +1,6 @@
-import { useFetcher } from "@remix-run/react"
-import { AuthenticityTokenInput } from "remix-utils/csrf/react"
+import { useFetcher } from "react-router"
 
+import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
 import { Modal } from "~/components/modal"
 import { formConfig } from "~/config/form-config"

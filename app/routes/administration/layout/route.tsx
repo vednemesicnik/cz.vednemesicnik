@@ -1,4 +1,4 @@
-import { Link, Outlet, useLoaderData } from "@remix-run/react"
+import { Link, Outlet, useLoaderData } from "react-router";
 
 import { Divider } from "~/components/divider"
 import { Headline } from "~/components/headline"

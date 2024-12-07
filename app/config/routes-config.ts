@@ -2,14 +2,16 @@ export const routesConfig = {
   administration: {
     archive: {
       index: {
-        staticPath: "/administration/archive",
+        route: "/administration/archive",
+        getPath: () => "/administration/archive" as const,
       },
       addArchivedIssue: {
-        staticPath: "/administration/archive/add-issue",
+        route: "/administration/archive/add-issue",
+        getPath: () => "/administration/archive/add-issue" as const,
       },
       editArchivedIssue: {
-        dynamicPath: "/administration/archive/edit-issue/:id",
-        getStaticPath: (id: string) =>
+        route: "/administration/archive/edit-issue/:id",
+        getPath: (id: string) =>
           `/administration/archive/edit-issue/${id}` as const,
       },
     },

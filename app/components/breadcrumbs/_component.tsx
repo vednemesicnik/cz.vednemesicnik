@@ -1,11 +1,11 @@
-import { type UIMatch, useMatches } from "@remix-run/react"
 import type { ReactNode } from "react"
+import { type UIMatch, useMatches } from "react-router"
 
 import styles from "./_styles.module.css"
 
-type BreadcrumbMatch = UIMatch<
-  Record<string, unknown>,
-  { breadcrumb: (data?: unknown) => ReactNode }
+export type BreadcrumbMatch = UIMatch<
+  unknown,
+  { breadcrumb: (match?: unknown) => ReactNode }
 >
 
 export const Breadcrumbs = () => {
@@ -13,6 +13,8 @@ export const Breadcrumbs = () => {
     ({ handle }) => Boolean(handle) && "breadcrumb" in handle
   )
   const matchesCount = matches.length
+
+  console.log({ matches, matchesCount })
 
   return (
     <nav className={styles.container}>

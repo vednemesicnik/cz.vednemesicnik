@@ -31,7 +31,7 @@ export const Image = ({
 }: Props) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false)
 
-  const { isHydrated } = useHydrated()
+  const isHydrated = useHydrated()
 
   const {
     avifSrc_1x: avifPlaceholderSrc_1x,
@@ -56,6 +56,10 @@ export const Image = ({
     quality: DEFAULT_QUALITY,
   })
 
+  const handleOnLoad = () => {
+    setIsImageLoaded(true)
+  }
+
   const placeholderImageSpringStyles = useSpring({
     opacity: isImageLoaded ? 0 : 1,
     from: { opacity: 1 },
@@ -65,10 +69,6 @@ export const Image = ({
     opacity: isImageLoaded ? 1 : 0,
     from: { opacity: 0 },
   })
-
-  const handleOnLoad = () => {
-    setIsImageLoaded(true)
-  }
 
   return (
     <section className={combineClasses(styles.container, className)}>

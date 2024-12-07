@@ -1,4 +1,4 @@
-import { useLoaderData } from "@remix-run/react"
+import { useLoaderData } from "react-router";
 
 import { Divider } from "~/components/divider"
 import { Group } from "~/components/group"

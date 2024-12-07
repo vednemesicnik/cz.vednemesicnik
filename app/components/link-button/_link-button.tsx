@@ -1,6 +1,6 @@
 import { combineClasses } from "@liborgabrhel/style-utils"
-import { Link } from "@remix-run/react"
 import type { ComponentProps } from "react"
+import { Link } from "react-router"
 
 import styles from "./_link-button.module.css"
 

@@ -7,4 +7,7 @@ export const formConfig = {
       signInWithBiometric: "sign-in-with-biometric",
     },
   },
+  authenticityToken: {
+    name: "csrf",
+  },
 } as const

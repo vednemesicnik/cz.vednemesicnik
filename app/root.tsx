@@ -2,18 +2,14 @@
 
 import {
   data,
+  Links,
   type LinksFunction,
   type LoaderFunctionArgs,
-} from "@remix-run/node"
-import {
-  Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLoaderData,
-} from "@remix-run/react"
-import { AuthenticityTokenProvider } from "remix-utils/csrf/react"
+} from "react-router"
 import { HoneypotProvider } from "remix-utils/honeypot/react"
 
 import {
@@ -24,8 +20,9 @@ import { AppBody } from "~/components/app-body"
 import { AppFooter } from "~/components/app-footer"
 import { AppHeader } from "~/components/app-header"
 import { AppLayout } from "~/components/app-layout"
+import { AuthenticityTokenProvider } from "~/components/authenticity-token-provider"
 import { getAuthentication } from "~/utils/auth.server"
-import { csrf } from "~/utils/csrf.server"
+import { commitCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
 import { honeypot } from "~/utils/honeypot.server"
 import "~/styles/global.css"
@@ -33,6 +30,8 @@ import "~/styles/fonts.css"
 import "~/styles/sizes.css"
 import "~/styles/colors.css"
 import { preloadFonts } from "~/utils/preload-fonts"
+
+import type { Route } from "./+types/root"
 
 export const links: LinksFunction = () => [
   ...preloadFonts("regular", "text", "medium", "semiBold", "bold"),
@@ -42,7 +41,7 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const honeypotInputProps = honeypot.getInputProps()
-  const [csrfToken, csrfCookieHeader] = await csrf.commitToken(request)
+  const [csrfToken, csrfCookieHeader] = await commitCSRF(request)
 
   const { isAuthenticated, sessionId } = await getAuthentication(request)
 
@@ -96,9 +95,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   )
 }
 
-export default function App() {
-  const loaderData = useLoaderData<typeof loader>()
-
+export default function App({ loaderData }: Route.ComponentProps) {
   const isAuthenticated = loaderData?.isAuthenticated ?? false
   const user = {
     name: loaderData?.user.name,
