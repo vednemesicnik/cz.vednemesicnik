@@ -14,8 +14,6 @@ export const Breadcrumbs = () => {
   )
   const matchesCount = matches.length
 
-  console.log({ matches, matchesCount })
-
   return (
     <nav className={styles.container}>
       <ul className={styles.list}>
