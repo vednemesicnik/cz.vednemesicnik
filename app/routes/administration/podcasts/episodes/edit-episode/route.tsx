@@ -12,6 +12,7 @@ import { useEffect, useState } from "react"
 import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
+import { Headline } from "~/components/headline"
 import { slugify } from "~/utils/slugify"
 
 import type { Route } from "./+types/route"
@@ -54,7 +55,7 @@ export default function Route({
 
   return (
     <>
-      <h3>Upavit epizodu</h3>
+      <Headline>Upavit epizodu</Headline>
       <Form
         {...getFormProps(form)}
         encType={"multipart/form-data"}
@@ -169,6 +170,7 @@ export default function Route({
   )
 }
 
+export { handle } from "./_handle"
 export { meta } from "./_meta"
 export { loader } from "./_loader"
 export { action } from "./_action"

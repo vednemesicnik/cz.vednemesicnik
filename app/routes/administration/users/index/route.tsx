@@ -7,6 +7,7 @@ import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
+import { Headline } from "~/components/headline"
 import { getRights } from "~/utils/permissions"
 
 import type { Route } from "./+types/route"
@@ -26,7 +27,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <h3>Uživatelé</h3>
+      <Headline>Uživatelé</Headline>
       {hasCreateRight && (
         <Link to={`/administration/users/add-user`}>Přidat uživatele</Link>
       )}

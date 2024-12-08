@@ -7,6 +7,7 @@ import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
+import { Headline } from "~/components/headline"
 
 import type { Route } from "./+types/route"
 
@@ -16,7 +17,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <h3>Podcasty</h3>
+      <Headline>Podcasty</Headline>
       <Link
         to={`/administration/podcasts/add-podcast`}
         preventScrollReset={true}

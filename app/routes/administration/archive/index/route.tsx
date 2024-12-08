@@ -7,6 +7,7 @@ import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
+import { Headline } from "~/components/headline"
 import { routesConfig } from "~/config/routes-config"
 import { getRights } from "~/utils/permissions"
 
@@ -29,7 +30,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <h3>Archiv</h3>
+      <Headline>Archiv</Headline>
       {hasCreateRight && <Link to={addIssuePath}>Přidat výtisk</Link>}
       <hr />
       <table>

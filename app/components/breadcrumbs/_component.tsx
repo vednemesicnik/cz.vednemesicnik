@@ -3,15 +3,13 @@ import { type UIMatch, useMatches } from "react-router"
 
 import styles from "./_styles.module.css"
 
-export type BreadcrumbMatch = UIMatch<
-  unknown,
-  { breadcrumb: (match?: unknown) => ReactNode }
->
+type Match = UIMatch<unknown, { breadcrumb: (match?: unknown) => ReactNode }>
 
 export const Breadcrumbs = () => {
-  const matches = (useMatches() as unknown as BreadcrumbMatch[]).filter(
+  const matches = (useMatches() as unknown as Match[]).filter(
     ({ handle }) => Boolean(handle) && "breadcrumb" in handle
   )
+
   const matchesCount = matches.length
 
   return (

@@ -1,14 +1,13 @@
-import { Link, type UIMatch } from "react-router"
+import { Link } from "react-router"
 
-import type { Route } from "./+types/route"
+import { type CustomUIMatch } from "~/routes/types"
 
-interface RouteMatch extends UIMatch {
-  params: Route.ComponentProps["params"]
-  data: Route.ComponentProps["loaderData"]
-}
+import type { Info } from "./+types/route"
+
+type Match = CustomUIMatch<Info["params"], Info["loaderData"]>
 
 export const handle = {
-  breadcrumb: (match: RouteMatch) => {
+  breadcrumb: (match: Match) => {
     const { podcastSlug } = match.params
     const { title } = match.data.podcast
 

@@ -1,2 +1,2 @@
 export { Breadcrumbs } from "./_component"
-export type { BreadcrumbMatch } from "./_component"
+export type { Match } from "./_component"

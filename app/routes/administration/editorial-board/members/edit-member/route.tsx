@@ -11,6 +11,7 @@ import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
+import { Headline } from "~/components/headline"
 
 import type { Route } from "./+types/route"
 
@@ -38,7 +39,7 @@ export default function Route({
 
   return (
     <>
-      <h3>Upravit člena</h3>
+      <Headline>Upravit člena</Headline>
       <Form {...getFormProps(form)} method="post">
         <input
           {...getInputProps(fields.id, { type: "hidden" })}
@@ -106,6 +107,7 @@ export default function Route({
   )
 }
 
+export { handle } from "./_handle"
 export { meta } from "./_meta"
 export { loader } from "./_loader"
 export { action } from "./_action"

@@ -57,7 +57,7 @@ export default [
       index("routes/administration/index/route.tsx"),
 
       // Archive Administration
-      ...prefix("archive", [
+      route("archive", "routes/administration/archive/splat/route.tsx", [
         index("routes/administration/archive/index/route.tsx"),
         route("add-issue", "routes/administration/archive/add-issue/route.tsx"),
         route(
@@ -67,7 +67,7 @@ export default [
       ]),
 
       // Podcast Administration
-      ...prefix("podcasts", [
+      route("podcasts", "routes/administration/podcasts/splat/route.tsx", [
         index("routes/administration/podcasts/index/route.tsx"),
         route(
           "add-podcast",
@@ -79,36 +79,44 @@ export default [
         ),
 
         // Podcast Episode Administration
-        ...prefix(":podcastId", [
-          index("routes/administration/podcasts/episodes/index/route.tsx"),
-          route(
-            "add-episode",
-            "routes/administration/podcasts/episodes/add-episode/route.tsx"
-          ),
-          route(
-            "edit-episode/:episodeId",
-            "routes/administration/podcasts/episodes/edit-episode/route.tsx"
-          ),
+        route(
+          ":podcastId",
+          "routes/administration/podcasts/episodes/splat/route.tsx",
+          [
+            index("routes/administration/podcasts/episodes/index/route.tsx"),
+            route(
+              "add-episode",
+              "routes/administration/podcasts/episodes/add-episode/route.tsx"
+            ),
+            route(
+              "edit-episode/:episodeId",
+              "routes/administration/podcasts/episodes/edit-episode/route.tsx"
+            ),
 
-          // Podcast Episode Link Administration
-          ...prefix(":episodeId", [
-            index(
-              "routes/administration/podcasts/episodes/links/index/route.tsx"
-            ),
+            // Podcast Episode Link Administration
             route(
-              "add-link",
-              "routes/administration/podcasts/episodes/links/add-link/route.tsx"
+              ":episodeId",
+              "routes/administration/podcasts/episodes/links/splat/route.tsx",
+              [
+                index(
+                  "routes/administration/podcasts/episodes/links/index/route.tsx"
+                ),
+                route(
+                  "add-link",
+                  "routes/administration/podcasts/episodes/links/add-link/route.tsx"
+                ),
+                route(
+                  "edit-link/:linkId",
+                  "routes/administration/podcasts/episodes/links/edit-link/route.tsx"
+                ),
+              ]
             ),
-            route(
-              "edit-link/:linkId",
-              "routes/administration/podcasts/episodes/links/edit-link/route.tsx"
-            ),
-          ]),
-        ]),
+          ]
+        ),
       ]),
 
       // User Administration
-      ...prefix("users", [
+      route("users", "routes/administration/users/splat/route.tsx", [
         index("routes/administration/users/index/route.tsx"),
         route("add-user", "routes/administration/users/add-user/route.tsx"),
         route(
@@ -118,46 +126,62 @@ export default [
       ]),
 
       // Editorial Board Administration
-      ...prefix("editorial-board", [
-        index("routes/administration/editorial-board/index/route.tsx"),
-        ...prefix("members", [
-          index(
-            "routes/administration/editorial-board/members/index/route.tsx"
+      route(
+        "editorial-board",
+        "routes/administration/editorial-board/splat/route.tsx",
+        [
+          index("routes/administration/editorial-board/index/route.tsx"),
+          route(
+            "members",
+            "routes/administration/editorial-board/members/splat/route.tsx",
+            [
+              index(
+                "routes/administration/editorial-board/members/index/route.tsx"
+              ),
+              route(
+                "add-member",
+                "routes/administration/editorial-board/members/add-member/route.tsx"
+              ),
+              route(
+                "edit-member/:memberId",
+                "routes/administration/editorial-board/members/edit-member/route.tsx"
+              ),
+            ]
           ),
           route(
-            "add-member",
-            "routes/administration/editorial-board/members/add-member/route.tsx"
+            "positions",
+            "routes/administration/editorial-board/positions/splat/route.tsx",
+            [
+              index(
+                "routes/administration/editorial-board/positions/index/route.tsx"
+              ),
+              route(
+                "add-position",
+                "routes/administration/editorial-board/positions/add-position/route.tsx"
+              ),
+              route(
+                "edit-position/:positionId",
+                "routes/administration/editorial-board/positions/edit-position/route.tsx"
+              ),
+            ]
           ),
-          route(
-            "edit-member/:memberId",
-            "routes/administration/editorial-board/members/edit-member/route.tsx"
-          ),
-        ]),
-        ...prefix("positions", [
-          index(
-            "routes/administration/editorial-board/positions/index/route.tsx"
-          ),
-          route(
-            "add-position",
-            "routes/administration/editorial-board/positions/add-position/route.tsx"
-          ),
-          route(
-            "edit-position/:positionId",
-            "routes/administration/editorial-board/positions/edit-position/route.tsx"
-          ),
-        ]),
-      ]),
+        ]
+      ),
 
       // Settings Administration
-      ...prefix("settings", [
+      route("settings", "routes/administration/settings/splat/route.tsx", [
         index("routes/administration/settings/index/route.tsx"),
-        ...prefix("profile", [
-          index("routes/administration/settings/profile/index/route.tsx"),
-          route(
-            "change-password",
-            "routes/administration/settings/profile/change-password/route.tsx"
-          ),
-        ]),
+        route(
+          "profile",
+          "routes/administration/settings/profile/splat/route.tsx",
+          [
+            index("routes/administration/settings/profile/index/route.tsx"),
+            route(
+              "change-password",
+              "routes/administration/settings/profile/change-password/route.tsx"
+            ),
+          ]
+        ),
       ]),
     ]),
   ]),

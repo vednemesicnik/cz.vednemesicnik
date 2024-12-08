@@ -10,6 +10,7 @@ import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
+import { Headline } from "~/components/headline"
 import { getRights } from "~/utils/permissions"
 
 import type { Route } from "./+types/route"
@@ -56,7 +57,7 @@ export default function Route({
 
   return (
     <>
-      <h3>Přidat výtisk</h3>
+      <Headline>Přidat výtisk</Headline>
 
       <Form
         method={"post"}
@@ -147,6 +148,7 @@ export default function Route({
   )
 }
 
+export { handle } from "./_handle"
 export { action } from "./_action"
 export { loader } from "./_loader"
 export { meta } from "./_meta"

@@ -1,9 +1,13 @@
-import { Link } from "react-router";
+// noinspection JSUnusedGlobalSymbols
+
+import { Link } from "react-router"
+
+import { Headline } from "~/components/headline"
 
 export default function Route() {
   return (
     <>
-      <h3>Nastavení</h3>
+      <Headline>Nastavení</Headline>
 
       <Link to={"/administration/settings/profile"}>Profil</Link>
     </>

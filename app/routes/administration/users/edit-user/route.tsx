@@ -10,6 +10,7 @@ import { parseWithZod } from "@conform-to/zod"
 import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
+import { Headline } from "~/components/headline"
 import { getRights } from "~/utils/permissions"
 
 import type { Route } from "./+types/route"
@@ -56,7 +57,7 @@ export default function Route({
 
   return (
     <>
-      <h3>Upravit uživatele</h3>
+      <Headline>Upravit uživatele</Headline>
 
       <Form method={"post"} {...getFormProps(form)}>
         {form.errors?.map((error) => (
@@ -144,5 +145,6 @@ export default function Route({
   )
 }
 
+export { handle } from "./_handle"
 export { action } from "./_action"
 export { loader } from "./_loader"

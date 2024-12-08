@@ -10,6 +10,7 @@ import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
+import { Headline } from "~/components/headline"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
@@ -40,7 +41,7 @@ export default function Route({
 
   return (
     <>
-      <h3>Upravit link</h3>
+      <Headline>Upravit odkaz</Headline>
       <Form {...getFormProps(form)} method="post">
         <input
           {...getInputProps(fields.podcastId, { type: "hidden" })}
@@ -105,6 +106,7 @@ export default function Route({
   )
 }
 
+export { handle } from "./_handle"
 export { action } from "./_action"
 export { loader } from "./_loader"
 export { meta } from "./_meta"

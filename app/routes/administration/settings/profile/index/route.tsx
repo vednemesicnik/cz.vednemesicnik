@@ -3,6 +3,7 @@
 import { Form, Link } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
+import { Headline } from "~/components/headline"
 import { Image } from "~/components/image"
 import { formConfig } from "~/config/form-config"
 import { sizeConfig } from "~/config/size-config"
@@ -16,7 +17,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <h3>Profil</h3>
+      <Headline>Profil</Headline>
 
       <Image
         src={imageSrc}

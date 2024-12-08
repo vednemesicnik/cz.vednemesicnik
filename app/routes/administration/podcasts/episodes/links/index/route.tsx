@@ -7,6 +7,7 @@ import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
+import { Headline } from "~/components/headline"
 
 import type { Route } from "./+types/route"
 
@@ -18,7 +19,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <h3>Epizoda</h3>
+      <Headline>{episode.title}</Headline>
       <NavLink
         to={`/administration/podcasts/${podcast.id}/${episode.id}/add-link`}
         preventScrollReset={true}
