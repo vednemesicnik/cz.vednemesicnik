@@ -3,6 +3,7 @@ import { invariantResponse } from "@epic-web/invariant"
 import { prisma } from "~/utils/db.server"
 import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-check.server"
 import { getRights } from "~/utils/permissions"
+import { convertImage } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 import type {
   AuthorPermissionAction,
@@ -50,6 +51,13 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
   })
   const label = `${ordinalNumber}/${monthYear}`
 
+  const convertedCover = await convertImage(cover, {
+    width: "905",
+    height: "1280",
+    quality: "100",
+    format: "jpeg",
+  })
+
   try {
     await prisma.issue.create({
       data: {
@@ -60,15 +68,15 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
         cover: {
           create: {
             altText: `Obálka výtisku ${label}`,
-            contentType: cover.type,
-            blob: Uint8Array.from(await cover.bytes()),
+            contentType: convertedCover.contentType,
+            blob: Uint8Array.from(convertedCover.blob),
           },
         },
         pdf: {
           create: {
             fileName: `VDM-${year}-${ordinalNumber}.pdf`,
             contentType: pdf.type,
-            blob: Uint8Array.from(await pdf.bytes()),
+            blob: await pdf.bytes(),
           },
         },
         authorId: authorId,

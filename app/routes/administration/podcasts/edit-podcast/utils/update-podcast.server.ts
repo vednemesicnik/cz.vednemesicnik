@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2"
 
 import { prisma } from "~/utils/db.server"
+import { convertImage } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
@@ -21,6 +22,14 @@ export async function updatePodcast({
   cover,
 }: Args) {
   const coverAltText = `Obálka podcastu ${title}`
+  const convertedCover = cover
+    ? await convertImage(cover, {
+        width: "1280",
+        height: "1280",
+        quality: "100",
+        format: "jpeg",
+      })
+    : undefined
 
   try {
     await prisma.podcast.update({
@@ -33,12 +42,12 @@ export async function updatePodcast({
           update: {
             where: { id: coverId },
             data:
-              cover !== undefined
+              convertedCover !== undefined
                 ? {
                     id: createId(),
                     altText: coverAltText,
-                    contentType: cover.type,
-                    blob: Uint8Array.from(await cover.bytes()),
+                    contentType: convertedCover.contentType,
+                    blob: Uint8Array.from(convertedCover.blob),
                   }
                 : {
                     altText: coverAltText,

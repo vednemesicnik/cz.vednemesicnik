@@ -9,8 +9,13 @@ type Options = {
   format: string | null
 }
 
-export const convertImage = async (image: Uint8Array, options: Options) => {
-  const sharpImage = sharp(image)
+export const convertImage = async (
+  image: Uint8Array | File,
+  options: Options
+) => {
+  const sharpImage = sharp(
+    image instanceof Uint8Array ? image : await image.bytes()
+  )
 
   const metadata = await sharpImage.metadata()
 

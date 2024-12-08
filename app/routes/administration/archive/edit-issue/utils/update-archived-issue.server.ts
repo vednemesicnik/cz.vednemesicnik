@@ -4,6 +4,7 @@ import { createId } from "@paralleldrive/cuid2"
 import { prisma } from "~/utils/db.server"
 import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-check.server"
 import { getRights } from "~/utils/permissions"
+import { convertImage } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 import type {
   AuthorPermissionAction,
@@ -69,6 +70,15 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
   const coverAltText = `Obálka výtisku ${label}`
   const pdfFileName = `VDM-${year}-${ordinalNumber}.pdf`
 
+  const convertedCover = cover
+    ? await convertImage(cover, {
+        width: "905",
+        height: "1280",
+        quality: "100",
+        format: "jpeg",
+      })
+    : undefined
+
   try {
     await prisma.issue.update({
       where: { id: id },
@@ -83,12 +93,12 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
           update: {
             where: { id: coverId },
             data:
-              cover !== undefined
+              convertedCover !== undefined
                 ? {
                     id: createId(), // New ID forces browser to download new image
                     altText: coverAltText,
-                    contentType: cover.type,
-                    blob: Uint8Array.from(await cover.bytes()),
+                    contentType: convertedCover.contentType,
+                    blob: Uint8Array.from(convertedCover.blob),
                   }
                 : {
                     altText: coverAltText,
@@ -104,7 +114,7 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
                     id: createId(), // New ID forces browser to download new PDF
                     fileName: pdfFileName,
                     contentType: pdf.type,
-                    blob: Uint8Array.from(await pdf.bytes()),
+                    blob: await pdf.bytes(),
                   }
                 : {
                     fileName: pdfFileName,

@@ -1,4 +1,5 @@
 import { prisma } from "~/utils/db.server"
+import { convertImage } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
@@ -16,6 +17,13 @@ export async function createPodcast({
   description,
   authorId,
 }: Args) {
+  const convertedCover = await convertImage(cover, {
+    width: "1280",
+    height: "1280",
+    quality: "100",
+    format: "jpeg",
+  })
+
   try {
     await prisma.podcast.create({
       data: {
@@ -25,8 +33,8 @@ export async function createPodcast({
         cover: {
           create: {
             altText: `Obálka podcastu ${title}`,
-            contentType: cover.type,
-            blob: Uint8Array.from(await cover.bytes()),
+            contentType: convertedCover.contentType,
+            blob: Uint8Array.from(convertedCover.blob),
           },
         },
         publishedAt: new Date(),
