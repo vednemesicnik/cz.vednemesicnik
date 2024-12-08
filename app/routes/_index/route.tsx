@@ -1,4 +1,6 @@
-import { Link, useLoaderData } from "react-router";
+// noinspection JSUnusedGlobalSymbols
+
+import { Link } from "react-router"
 
 import { ArticleLink } from "~/components/article-link"
 import { ArticleLinkAuthor } from "~/components/article-link-author"
@@ -10,14 +12,13 @@ import { FeaturedBanner } from "~/components/featured-banner"
 import { Page } from "~/components/page"
 import { Tile } from "~/components/tile"
 import { sizeConfig } from "~/config/size-config"
-import { type loader } from "~/routes/_index/_loader"
 import { getIssueCoverSrc } from "~/utils/get-issue-cover-src"
 import { getIssuePdfSrc } from "~/utils/get-issue-pdf-src"
 import { getPodcastCoverSrc } from "~/utils/get-podcast-cover-src"
 
-export default function Route() {
-  const loaderData = useLoaderData<typeof loader>()
+import type { Route } from "./+types/route"
 
+export default function Route({ loaderData }: Route.ComponentProps) {
   return (
     <Page>
       {loaderData.latestArchivedIssues.map((issue) => {

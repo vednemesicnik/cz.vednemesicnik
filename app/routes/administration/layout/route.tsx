@@ -1,15 +1,15 @@
-import { Link, Outlet, useLoaderData } from "react-router";
+// noinspection JSUnusedGlobalSymbols
+
+import { Link, Outlet } from "react-router"
 
 import { Divider } from "~/components/divider"
 import { Headline } from "~/components/headline"
 import { Page } from "~/components/page"
 import { getRights } from "~/utils/permissions"
 
-import { type loader } from "./_loader"
+import type { Route } from "./+types/route"
 
-export default function Route() {
-  const loaderData = useLoaderData<typeof loader>()
-
+export default function Route({ loaderData }: Route.ComponentProps) {
   const [[canViewUsers], [canViewAuthors]] = getRights(
     loaderData.session.user.role.permissions,
     {

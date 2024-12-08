@@ -1,4 +1,6 @@
-import { Form, Link, useLoaderData } from "react-router"
+// noinspection JSUnusedGlobalSymbols
+
+import { Form, Link } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Image } from "~/components/image"
@@ -6,11 +8,9 @@ import { formConfig } from "~/config/form-config"
 import { sizeConfig } from "~/config/size-config"
 import { getUserImageSrc } from "~/utils/get-user-image-src"
 
-import { type loader } from "./_loader"
+import type { Route } from "./+types/route"
 
-export default function Route() {
-  const loaderData = useLoaderData<typeof loader>()
-
+export default function Route({ loaderData }: Route.ComponentProps) {
   const imageSrc = getUserImageSrc(loaderData.user.image?.id ?? "")
   const imageAlt = loaderData.user.image?.altText ?? ""
 

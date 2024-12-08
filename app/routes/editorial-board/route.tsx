@@ -1,4 +1,4 @@
-import { useLoaderData } from "react-router";
+// noinspection JSUnusedGlobalSymbols
 
 import { Divider } from "~/components/divider"
 import { Group } from "~/components/group"
@@ -7,19 +7,17 @@ import { MailHyperlink } from "~/components/mail-hyperlink"
 import { Page } from "~/components/page"
 import { Paragraph } from "~/components/paragraph"
 
-import { type loader } from "./_loader"
+import type { Route } from "./+types/route"
 
 const EMAIL_ADDRESS = "redakce@vednemesicnik.cz"
 
-export default function Route() {
-  const data = useLoaderData<typeof loader>()
-
+export default function Route({ loaderData }: Route.ComponentProps) {
   return (
     <Page>
       <Headline>Tak to je naše redakce</Headline>
       <Paragraph>Prosím, seznamte se. Je nás hodně.</Paragraph>
 
-      {data.editorialBoardMemberPositions.map((position) => {
+      {loaderData.editorialBoardMemberPositions.map((position) => {
         return (
           <Group key={position.id} label={position.pluralLabel}>
             <Paragraph>

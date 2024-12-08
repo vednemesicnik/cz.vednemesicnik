@@ -9,19 +9,18 @@ import {
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useState } from "react"
-import { Form, useActionData, useLoaderData } from "react-router"
+import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { slugify } from "~/utils/slugify"
 
-import { type action } from "./_action"
-import { type loader } from "./_loader"
+import type { Route } from "./+types/route"
 import { schema } from "./_schema"
 
-export default function Route() {
-  const loaderData = useLoaderData<typeof loader>()
-  const actionData = useActionData<typeof action>()
-
+export default function Route({
+  loaderData,
+  actionData,
+}: Route.ComponentProps) {
   const [form, fields] = useForm({
     id: "add-podcast",
     constraint: getZodConstraint(schema),

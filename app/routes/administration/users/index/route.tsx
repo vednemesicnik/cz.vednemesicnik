@@ -1,4 +1,6 @@
-import { Link, useLoaderData } from "react-router";
+// noinspection JSUnusedGlobalSymbols
+
+import { Link } from "react-router"
 
 import { Actions } from "~/components/actions"
 import {
@@ -7,11 +9,9 @@ import {
 } from "~/components/delete-confirmation-modal"
 import { getRights } from "~/utils/permissions"
 
-import { type loader } from "./_loader"
+import type { Route } from "./+types/route"
 
-export default function Route() {
-  const loaderData = useLoaderData<typeof loader>()
-
+export default function Route({ loaderData }: Route.ComponentProps) {
   const { idForDeletion, isModalOpen, openModal, closeModal } =
     useDeleteConfirmation()
 
