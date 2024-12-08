@@ -41,7 +41,7 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const honeypotInputProps = honeypot.getInputProps()
-  const [csrfToken, csrfCookieHeader] = await commitCSRF(request)
+  const [csrfToken, csrfCookie] = await commitCSRF(request)
 
   const { isAuthenticated, sessionId } = await getAuthentication(request)
 
@@ -89,7 +89,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
     {
       headers: {
-        ...(csrfCookieHeader ? { "Set-Cookie": csrfCookieHeader } : {}),
+        ...(csrfCookie ? { "Set-Cookie": csrfCookie } : {}),
       },
     }
   )

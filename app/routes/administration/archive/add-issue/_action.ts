@@ -3,7 +3,7 @@ import { data, redirect } from "react-router"
 
 import { routesConfig } from "~/config/routes-config"
 import { requireAuthentication } from "~/utils/auth.server"
-// import { validateCSRF } from "~/utils/csrf.server"
+import { validateCSRF } from "~/utils/csrf.server"
 import { getMultipartFormData } from "~/utils/get-multipart-form-data"
 import { getStatusCodeFromSubmissionStatus } from "~/utils/get-status-code-from-submission-status"
 
@@ -15,7 +15,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const { sessionId } = await requireAuthentication(request)
 
   const formData = await getMultipartFormData(request)
-  // await validateCSRF(formData, request.headers)
+  await validateCSRF(formData, request.headers)
 
   const submission = await parseWithZod(formData, {
     schema,

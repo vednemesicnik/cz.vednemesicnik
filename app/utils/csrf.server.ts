@@ -4,6 +4,10 @@ import { createCookie } from "react-router"
 
 import { formConfig } from "~/config/form-config"
 
+const SEPARATOR = "."
+const ENCODING = "base64url"
+const DEFAULT_BYTES = 32
+
 const environment = process.env.NODE_ENV ?? "development"
 const sessionSecrets = process.env.SESSION_SECRET?.split(",")
 const csrfSecret = sessionSecrets?.[0] ?? ""
@@ -17,29 +21,24 @@ const cookie = createCookie("vdm_csrf", {
   maxAge: 60 * 60 * 24, // 1 day
 })
 
-// export const csrf = new CSRF({ cookie })
-
 function sign(token: string) {
-  return crypto
-    .createHmac("sha256", csrfSecret)
-    .update(token)
-    .digest("base64url")
+  return crypto.createHmac("sha256", csrfSecret).update(token).digest(ENCODING)
 }
 
-function generate(bytes = 32) {
-  const token = crypto.randomBytes(bytes).toString("base64url")
+function generate(bytes = DEFAULT_BYTES) {
+  const token = crypto.randomBytes(bytes).toString(ENCODING)
   const signature = sign(token)
 
-  return [token, signature].join(".")
+  return [token, signature].join(SEPARATOR)
 }
 
 function verifySignature(token: string) {
-  const [value, signature] = token.split(".")
+  const [value, signature] = token.split(SEPARATOR)
   const expectedSignature = sign(value)
   return signature === expectedSignature
 }
 
-export const commitCSRF = async (request: Request, bytes = 32) => {
+export const commitCSRF = async (request: Request, bytes = DEFAULT_BYTES) => {
   const existingCsrfToken = await cookie.parse(request.headers.get("cookie"))
 
   const csrfToken =

@@ -2,16 +2,17 @@ import { parseWithZod } from "@conform-to/zod"
 import { type ActionFunctionArgs, redirect } from "react-router"
 
 import { requireAuthentication } from "~/utils/auth.server"
-// import { validateCSRF } from "~/utils/csrf.server"
+import { validateCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
 
 import { getSchema } from "./_schema"
 import { updatePosition } from "./utils/update-position.server"
 
 export async function action({ request }: ActionFunctionArgs) {
-  const formData = await request.formData()
-  // await validateCSRF(formData, request.headers)
   await requireAuthentication(request)
+
+  const formData = await request.formData()
+  await validateCSRF(formData, request.headers)
 
   const editorialBoardPositionsCount =
     await prisma.editorialBoardPosition.count()
