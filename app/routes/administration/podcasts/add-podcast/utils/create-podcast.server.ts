@@ -34,7 +34,7 @@ export async function createPodcast({
           create: {
             altText: `Obálka podcastu ${title}`,
             contentType: convertedCover.contentType,
-            blob: Uint8Array.from(convertedCover.blob),
+            blob: convertedCover.blob,
           },
         },
         publishedAt: new Date(),

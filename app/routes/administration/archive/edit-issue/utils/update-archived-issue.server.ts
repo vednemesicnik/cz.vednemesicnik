@@ -98,7 +98,7 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
                     id: createId(), // New ID forces browser to download new image
                     altText: coverAltText,
                     contentType: convertedCover.contentType,
-                    blob: Uint8Array.from(convertedCover.blob),
+                    blob: convertedCover.blob,
                   }
                 : {
                     altText: coverAltText,

@@ -31,7 +31,7 @@ export const createImageResponse = (
   return new Response(image.blob, {
     headers: {
       "Content-Type": image.contentType,
-      "Content-Length": Buffer.byteLength(image.blob).toString(),
+      "Content-Length": image.blob.byteLength.toString(),
       "Content-Disposition": `inline; filename="${fileName}"`,
       "Cache-Control": "public, max-age=31536000, immutable", // 31536000 seconds = 365 days
     },

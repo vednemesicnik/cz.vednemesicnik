@@ -9,10 +9,21 @@ type Options = {
   format: string | null
 }
 
+/**
+ * Converts an image to the specified format, dimensions, and quality.
+ *
+ * @param {Uint8Array | File} image - The image to be converted. Can be a Uint8Array or a File.
+ * @param {Object} options - The options for the conversion.
+ * @param {string | null} options.width - The desired width of the converted image. If null, the original width is used.
+ * @param {string | null} options.height - The desired height of the converted image. If null, the original height is used.
+ * @param {string | null} options.quality - The quality of the converted image. If null, defaults to 100.
+ * @param {string | null} options.format - The format of the converted image. Can be "avif", "webp", "png", or "jpeg". Defaults to "jpeg".
+ * @returns {Promise<{blob: Uint8Array<ArrayBufferLike>, contentType: string}>} - A promise that resolves to an object containing the converted image blob and its content type.
+ */
 export const convertImage = async (
   image: Uint8Array | File,
   options: Options
-) => {
+): Promise<{ blob: Uint8Array<ArrayBufferLike>; contentType: string }> => {
   const sharpImage = sharp(
     image instanceof Uint8Array ? image : await image.bytes()
   )
@@ -52,7 +63,7 @@ export const convertImage = async (
       break
   }
 
-  const blob = await sharpImage.toBuffer()
+  const blob = Uint8Array.from(await sharpImage.toBuffer())
 
   return { blob, contentType }
 }

@@ -69,7 +69,7 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
           create: {
             altText: `Obálka výtisku ${label}`,
             contentType: convertedCover.contentType,
-            blob: Uint8Array.from(convertedCover.blob),
+            blob: convertedCover.blob,
           },
         },
         pdf: {

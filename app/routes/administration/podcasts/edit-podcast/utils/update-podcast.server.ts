@@ -47,7 +47,7 @@ export async function updatePodcast({
                     id: createId(),
                     altText: coverAltText,
                     contentType: convertedCover.contentType,
-                    blob: Uint8Array.from(convertedCover.blob),
+                    blob: convertedCover.blob,
                   }
                 : {
                     altText: coverAltText,
