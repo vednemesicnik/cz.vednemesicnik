@@ -45,7 +45,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         credentialTransports: JSON.stringify(
           registrationInfo.credential.transports
         ),
-        credentialPublicKey: Buffer.from(registrationInfo.credential.publicKey),
+        credentialPublicKey: Uint8Array.from(
+          registrationInfo.credential.publicKey
+        ),
         credentialDeviceType: registrationInfo.credentialDeviceType,
         credentialBackedUp: registrationInfo.credentialBackedUp,
         user: {

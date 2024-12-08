@@ -8,7 +8,7 @@ type Args = {
 export type IssuePdf = {
   fileName: string
   contentType: string
-  blob: Buffer
+  blob: Uint8Array
 }
 export const getIssuePdf = async ({
   filePath,

@@ -8,7 +8,7 @@ type Args = {
 export type IssueCover = {
   altText: string
   contentType: string
-  blob: Buffer
+  blob: Uint8Array
 }
 export const getIssueCover = async ({
   altText,
