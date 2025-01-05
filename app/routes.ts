@@ -33,6 +33,9 @@ export default [
     route(":fileName", "routes/archive/issue-pdf/route.ts"),
   ]),
 
+  // Issue PDF route for backward compatibility
+  route("pdf/:fileName", "routes/pdf/issue-pdf/route.ts"),
+
   // Podcasts routes
   ...prefix("podcasts", [
     layout("routes/podcasts/layout/route.tsx", [
