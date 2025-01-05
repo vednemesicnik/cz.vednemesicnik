@@ -26,9 +26,18 @@ a {
   text-decoration-style: solid;
   text-decoration-thickness: 0.1em;
   text-underline-offset: 0.1em;
+  border: 2px solid transparent;
+  border-radius: 4px;
 
   &:hover {
     text-decoration-color: var(--rose-pink);
+  }
+
+  &:focus-visible {
+    border-color: var(--night);
+    box-shadow: 0 0 4px 0 var(--rose-pink);
+    text-decoration-color: var(--rose-pink);
+    outline: none;
   }
 
   &::selection {

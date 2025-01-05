@@ -1,9 +1,9 @@
 .dialog {
   padding: 0;
   border: none;
-  border-radius: 0.5rem;
-  max-width: 90vw;
-  max-height: 90vh;
+  border-radius: 4px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
   background-color: transparent;
   opacity: 0;
   transform: scale(0.9);

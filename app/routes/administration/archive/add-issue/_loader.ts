@@ -1,6 +1,8 @@
+import { redirect } from "react-router"
+
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { getRights } from "~/utils/permissions"
+import { getAuthorRights } from "~/utils/get-author-rights"
 import {
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
@@ -29,6 +31,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
               id: true,
               role: {
                 select: {
+                  name: true,
                   permissions: {
                     where: {
                       entity: authorPermissionEntity,
@@ -38,6 +41,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
                       action: true,
                       access: true,
                       entity: true,
+                      state: true,
                     },
                   },
                 },
@@ -49,12 +53,33 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     },
   })
 
-  const [[canCreateAny]] = getRights(session.user.author.role.permissions, {
+  const [
+    // entity: issue
+    [
+      // action: create
+      [
+        // access: own
+        [hasCreateOwnIssueRight],
+        // access: any
+        [hasCreateAnyIssueRight],
+      ],
+    ],
+  ] = getAuthorRights(session.user.author.role.permissions, {
+    entities: ["issue"],
     actions: ["create"],
+    access: ["own", "any"],
   })
 
+  const canCreateIssue = hasCreateOwnIssueRight || hasCreateAnyIssueRight
+
+  if (!canCreateIssue) {
+    redirect("/administration/archive")
+  }
+
   const authors = await prisma.author.findMany({
-    ...(canCreateAny ? {} : { where: { id: session.user.author.id } }),
+    ...(hasCreateAnyIssueRight
+      ? {}
+      : { where: { id: session.user.author.id } }),
     select: {
       id: true,
       name: true,

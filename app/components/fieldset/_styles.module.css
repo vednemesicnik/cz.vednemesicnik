@@ -1,0 +1,29 @@
+.fieldset {
+  position: relative;
+  width: 100%;
+  border: 2px solid var(--coral);
+  border-radius: 4px;
+  padding: 16px;
+  margin: 0;
+
+  &:focus-within {
+    border-color: var(--rose-pink);
+  }
+}
+
+.legend {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-medium);
+  margin: 0;
+  padding: 0 8px;
+}
+
+.content {
+  display: grid;
+  position: relative;
+  grid-auto-flow: row;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}

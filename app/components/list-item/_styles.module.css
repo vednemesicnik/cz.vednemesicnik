@@ -8,6 +8,7 @@
   line-height: 1.5rem;
   font-weight: var(--font-weight-regular);
   text-align: start;
+  color: var(--eerie-black);
 
   &:before {
     content: "";

@@ -1,6 +1,5 @@
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { getRights } from "~/utils/permissions"
 import { type UserPermissionEntity } from "~~/types/permission"
 
 import type { Route } from "./+types/route"
@@ -19,6 +18,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           id: true,
           role: {
             select: {
+              level: true,
               permissions: {
                 where: {
                   entity,
@@ -47,6 +47,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: {
           id: true,
           name: true,
+          level: true,
         },
       },
     },
@@ -54,24 +55,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const [session, user] = await Promise.all([sessionPromise, userPromise])
 
-  const [[canAssignRoleOwner, canAssignRoleAdministrator, canAssignRoleUser]] =
-    getRights(session.user.role.permissions, {
-      actions: [
-        "assign_role_owner",
-        "assign_role_administrator",
-        "assign_role_user",
-      ],
-      access: ["any", "own"],
-    })
-
   const roles = await prisma.userRole.findMany({
     where: {
-      name: {
-        in: [
-          ...(canAssignRoleOwner ? ["owner"] : []),
-          ...(canAssignRoleAdministrator ? ["administrator"] : []),
-          ...(canAssignRoleUser ? ["user"] : []),
-        ],
+      level: {
+        gte: session.user.role.level,
       },
     },
     select: {

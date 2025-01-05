@@ -34,6 +34,7 @@ export const getAuthorForPermissionCheck = async (
                       access: true,
                       action: true,
                       entity: true,
+                      state: true,
                     },
                   },
                 },

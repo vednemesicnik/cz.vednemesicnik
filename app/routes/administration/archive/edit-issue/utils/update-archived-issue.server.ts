@@ -1,9 +1,12 @@
 import { invariantResponse } from "@epic-web/invariant"
 import { createId } from "@paralleldrive/cuid2"
 
+import { contentStateConfig } from "~/config/content-state-config"
 import { prisma } from "~/utils/db.server"
 import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-check.server"
-import { getRights } from "~/utils/permissions"
+import { getAuthorRights } from "~/utils/get-author-rights"
+import { getIssueData } from "~/utils/get-issue-data"
+import { getPublishDate } from "~/utils/get-publish-date"
 import { convertImage } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 import type {
@@ -15,12 +18,12 @@ type Data = {
   id: string
   ordinalNumber: string
   releasedAt: string
-  published: boolean
-  publishedBefore: boolean
   coverId: string
   cover?: File
   pdfId: string
   pdf?: File
+  state: string
+  publishedAt?: string
   authorId: string
 }
 
@@ -29,8 +32,8 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
     id,
     ordinalNumber,
     releasedAt,
-    published,
-    publishedBefore,
+    state,
+    publishedAt,
     coverId,
     cover,
     pdfId,
@@ -39,36 +42,161 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
   } = data
 
   const entities: AuthorPermissionEntity[] = ["issue"]
-  const actions: AuthorPermissionAction[] = ["update", "publish"]
+  const actions: AuthorPermissionAction[] = [
+    "update",
+    "publish",
+    "retract",
+    "archive",
+    "restore",
+  ]
 
   const author = await getAuthorForPermissionCheck(sessionId, {
     actions,
     entities,
   })
 
-  const [[hasUpdateRight, hasPublishRight]] = getRights(author.permissions, {
-    actions: ["update", "publish"],
-    access: ["any", "own"],
+  const issue = await prisma.issue.findUniqueOrThrow({
+    where: { id },
+    select: {
+      state: true,
+    },
+  })
+
+  const [
+    // entity: issue
+    [
+      // action: update
+      [
+        // access: own
+        [hasUpdateOwnIssueRight],
+        // access: any
+        [hasUpdateAnyIssueRight],
+      ],
+      // action: publish
+      [
+        // access: own
+        [hasPublishOwnIssueRight],
+        // access: any
+        [hasPublishAnyIssueRight],
+      ],
+      // action: retract
+      [
+        // access: own
+        [hasRetractOwnIssueRight],
+        // access: any
+        [hasRetractAnyIssueRight],
+      ],
+      // action: archive
+      [
+        // access: own
+        [hasArchiveOwnIssueRight],
+        // access: any
+        [hasArchiveAnyIssueRight],
+      ],
+      // action: restore
+      [
+        // access: own
+        [hasRestoreOwnIssueRight],
+        // access: any
+        [hasRestoreAnyIssueRight],
+      ],
+    ],
+  ] = getAuthorRights(author.permissions, {
+    entities: ["issue"],
+    actions: ["update", "publish", "retract", "archive", "restore"],
+    access: ["own", "any"],
+    states: [issue.state],
     ownId: author.id,
-    targetId: data.authorId,
+    targetId: authorId,
   })
 
-  invariantResponse(hasUpdateRight, "Unauthorized", {
-    status: 401,
-  })
+  const isUpdating = issue.state === state
+  const isArchivingDraft =
+    issue.state === contentStateConfig.map.draft &&
+    state === contentStateConfig.map.archived
+  const isPublishingArchived =
+    issue.state === contentStateConfig.map.archived &&
+    state === contentStateConfig.map.published
+  const isPublishing =
+    issue.state === contentStateConfig.map.draft &&
+    state === contentStateConfig.map.published
+  const isRetracting =
+    issue.state === contentStateConfig.map.published &&
+    state === contentStateConfig.map.draft
+  const isArchiving =
+    issue.state === contentStateConfig.map.published &&
+    state === contentStateConfig.map.archived
+  const isRestoring =
+    issue.state === contentStateConfig.map.archived &&
+    state === contentStateConfig.map.draft
 
-  const formattedPublished = hasPublishRight ? published : publishedBefore
+  /** Draft issue can't be archived */
+  invariantResponse(
+    !isArchivingDraft,
+    "Unauthorized to archive a draft issue",
+    { status: 401 }
+  )
 
-  const releaseDate = new Date(releasedAt as string)
-  const year = releaseDate.getFullYear()
-  const monthYear = releaseDate.toLocaleDateString("cs-CZ", {
-    year: "numeric",
-    month: "long",
-  })
-  const label = `${ordinalNumber}/${monthYear}`
+  /** Archived issue can't be published */
+  invariantResponse(
+    !isPublishingArchived,
+    "Unauthorized to publish an archived issue",
+    { status: 401 }
+  )
 
-  const coverAltText = `Obálka výtisku ${label}`
-  const pdfFileName = `VDM-${year}-${ordinalNumber}.pdf`
+  /** If the issue is being updated, the user must have the right to update */
+  if (isUpdating) {
+    invariantResponse(
+      hasUpdateOwnIssueRight || hasUpdateAnyIssueRight,
+      "Unauthorized to update the issue",
+      { status: 401 }
+    )
+  }
+
+  /** If the issue is being published, the user must have the right to publish */
+  if (isPublishing) {
+    invariantResponse(
+      hasPublishOwnIssueRight || hasPublishAnyIssueRight,
+      "Unauthorized to publish the issue",
+      { status: 401 }
+    )
+  }
+
+  /** If the issue is being retracted, the user must have the right to retract */
+  if (isRetracting) {
+    console.log({ authorPermissions: author.permissions })
+    console.log({ hasRetractOwnIssueRight, hasRetractAnyIssueRight })
+    invariantResponse(
+      hasRetractOwnIssueRight || hasRetractAnyIssueRight,
+      "Unauthorized to retract the issue",
+      { status: 401 }
+    )
+  }
+
+  /** If the issue is being archived, the user must have the right to archive */
+  if (isArchiving) {
+    invariantResponse(
+      hasArchiveOwnIssueRight || hasArchiveAnyIssueRight,
+      "Unauthorized to archive the issue",
+      { status: 401 }
+    )
+  }
+
+  /** If the issue is being restored, the user must have the right to restore */
+  if (isRestoring) {
+    invariantResponse(
+      hasRestoreOwnIssueRight || hasRestoreAnyIssueRight,
+      "Unauthorized to restore the issue",
+      { status: 401 }
+    )
+  }
+
+  const { label, releaseDate, coverAltText, pdfFileName } = getIssueData(
+    ordinalNumber,
+    releasedAt
+  )
+
+  const publishDate = getPublishDate(publishedAt, state)
 
   const convertedCover = cover
     ? await convertImage(cover, {
@@ -85,10 +213,8 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
       data: {
         label: label,
         releasedAt: releaseDate,
-        state: formattedPublished ? "published" : "draft",
-        ...(!publishedBefore && formattedPublished
-          ? { publishedAt: new Date() }
-          : {}),
+        state: state,
+        publishedAt: publishDate,
         cover: {
           update: {
             where: { id: coverId },

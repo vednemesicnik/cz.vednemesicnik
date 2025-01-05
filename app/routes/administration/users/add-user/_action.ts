@@ -8,7 +8,7 @@ import { schema } from "./_schema"
 import { createUser } from "./utils/create-user.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { sessionId } = await requireAuthentication(request)
+  await requireAuthentication(request)
 
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)
@@ -22,7 +22,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return { submissionResult: submission.reply() }
   }
 
-  const response = await createUser(submission.value, sessionId)
+  const response = await createUser(submission.value)
 
   if (response?.ok === true) {
     throw redirect("/administration/users")

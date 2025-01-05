@@ -1,6 +1,6 @@
-/** Light theme */
-
 :root {
+  color-scheme: light dark;
+
   --eerie-black: #1a1a1aff;
   --black: #000000ff;
   --white: #ffffffff;
@@ -11,7 +11,8 @@
   --green-blue: #0068b8ff;
 
   --aquamarine: #99ffc5ff;
-  --spring-green: #5cffa3ff;
+  /*noinspection CssInvalidFunction*/
+  --spring-green: light-dark(#5cffa3ff, #5cffa3ff);
   --dark-green: #002912ff;
 
   --cream: #fffdd6ff;
@@ -19,39 +20,30 @@
   --aureolin: #f5e900ff;
 
   --alice-blue: #ebf4ffff;
-  --ruddy-blue: #5ca3ffff;
+  /*noinspection CssInvalidFunction*/
+  --ruddy-blue: light-dark(#5ca3ffff, #5ca3ffff);
   --marine-blue: #003e8fff;
 
-  --rose-pink: #ff5cccff;
+  /*noinspection CssInvalidFunction*/
+  --rose-pink: light-dark(#ff5cccff, #ff5cccff);
   --pale-purple: #ffebf9ff;
 
-  --coral: #ff7f50ff;
+  /*noinspection CssInvalidFunction*/
+  --coral: light-dark(#ff7f50ff, #ff7f50ff);
   --seashell: #fff0ebff;
 
-  --text-gray: #4f4f4fff;
+  --night: #121416ff;
+  --onyx: #373d43ff;
+  --cadet-gray: #9aa4acff;
 
   --rose-pink--coral---gradient: linear-gradient(
     101deg,
-    #ff5ccc 0%,
-    #ff7f50 75%
+    var(--rose-pink) 0%,
+    var(--coral) 75%
   );
   --ruddy-blue--spring-green---gradient: linear-gradient(
     101deg,
-    #5ca3ff 0%,
-    #5cffa3 75%
+    var(--ruddy-blue) 0%,
+    var(--spring-green) 75%
   );
-}
-
-/** Dark theme */
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --spring-green: #5cffa3ff;
-    --eerie-black: #1a1a1aff;
-    --black: #000000ff;
-    --white: #ffffffff;
-    --silver: #ccccccff;
-    --lavender-floral: #b681ffff;
-    --tropical-indigo: #9b7be4ff;
-  }
 }

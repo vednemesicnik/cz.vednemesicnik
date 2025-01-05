@@ -8,7 +8,7 @@ import { validateCSRF } from "~/utils/csrf.server"
 import { deleteUser } from "./utils/delete-user.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { sessionId } = await requireAuthentication(request)
+  await requireAuthentication(request)
 
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)
@@ -19,7 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const id = formData.get("id")
   invariantResponse(typeof id === "string", "Missing user ID")
 
-  await deleteUser(id, sessionId)
+  await deleteUser(id)
 
   return { status: "success" }
 }

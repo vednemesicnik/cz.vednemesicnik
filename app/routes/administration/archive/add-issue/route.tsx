@@ -7,11 +7,20 @@ import {
   useForm,
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
+import { Button } from "~/components/button"
+import { Fieldset } from "~/components/fieldset/_component"
+import { FileInput } from "~/components/file-input"
+import { Form } from "~/components/form"
+import { FormActions } from "~/components/form-actions"
 import { Headline } from "~/components/headline"
-import { getRights } from "~/utils/permissions"
+import { Input } from "~/components/input"
+import { LinkButton } from "~/components/link-button"
+import { Select } from "~/components/select"
+import { contentStateConfig } from "~/config/content-state-config"
+import { getAuthorRights } from "~/utils/get-author-rights"
+import { getFormattedDateString } from "~/utils/get-formatted-date-string"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
@@ -29,7 +38,7 @@ export default function Route({
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
       ordinalNumber: "",
-      releasedAt: new Date().toISOString().split("T")[0],
+      releasedAt: getFormattedDateString(new Date()),
       authorId: user.author.id,
     },
     shouldDirtyConsider: (field) => {
@@ -39,110 +48,136 @@ export default function Route({
     shouldRevalidate: "onBlur",
   })
 
-  const handleFileChange = (dirty: boolean) => () => {
-    if (!dirty) {
-      form.validate()
+  const handleFileChange = (name: string, dirty: boolean) => () => {
+    if (dirty) {
+      form.validate({ name })
     }
   }
 
-  const [[hasCreateRight, hasPublishRight]] = getRights(
-    user.author.role.permissions,
-    {
-      actions: ["create", "publish"],
-      access: ["own", "any"],
-      ownId: user.author.id,
-      targetId: fields.authorId.value,
+  const [
+    // entity: "issue"
+    [
+      // action: "create"
+      [
+        // access: "own"
+        [
+          hasCreateOwnDraftIssueRight,
+          hasCreateOwnPublishedIssueRight,
+          hasCreateOwnArchivedIssueRight,
+        ],
+        // access: "any"
+        [
+          hasCreateAnyDraftIssueRight,
+          hasCreateAnyPublishedIssueRight,
+          hasCreateAnyArchivedIssueRight,
+        ],
+      ],
+    ],
+  ] = getAuthorRights(user.author.role.permissions, {
+    entities: ["issue"],
+    actions: ["create"],
+    access: ["own", "any"],
+    states: ["draft", "published", "archived"],
+    ownId: user.author.id,
+    targetId: fields.authorId.value,
+  })
+
+  const canCreateDraftIssue =
+    hasCreateOwnDraftIssueRight || hasCreateAnyDraftIssueRight
+  const canCreatePublishedIssue =
+    hasCreateOwnPublishedIssueRight || hasCreateAnyPublishedIssueRight
+  const canCreateArchivedIssue =
+    hasCreateOwnArchivedIssueRight || hasCreateAnyArchivedIssueRight
+
+  const contentStates = contentStateConfig.states.filter((state) => {
+    switch (state) {
+      case "draft":
+        return canCreateDraftIssue
+      case "published":
+        return canCreatePublishedIssue
+      case "archived":
+        return canCreateArchivedIssue
+      default:
+        return false
     }
-  )
+  })
+
+  const contentStatesMap = contentStateConfig.selectMap
 
   return (
     <>
-      <Headline>Přidat výtisk</Headline>
+      <Headline>Přidat číslo</Headline>
 
       <Form
         method={"post"}
         encType={"multipart/form-data"}
         {...getFormProps(form)}
+        errors={form.errors}
       >
-        <fieldset>
-          <legend>Popis</legend>
-          <label htmlFor={fields.ordinalNumber.id}>Číslo výtisku</label>
-          <input
+        <Fieldset legend={"Základní informace"}>
+          <Input
+            label={"Pořadové číslo"}
             {...getInputProps(fields.ordinalNumber, { type: "number" })}
             placeholder={"1"}
             step={1}
+            errors={fields.ordinalNumber.errors}
           />
-          {fields.ordinalNumber.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.releasedAt.id}>Datum vydání</label>
-          <input {...getInputProps(fields.releasedAt, { type: "date" })} />
-          {fields.releasedAt.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-        </fieldset>
-        <fieldset>
-          <legend>Soubory</legend>
-          <label htmlFor={fields.cover.id}>Obálka výtisku</label>
-          <input
+          <Input
+            label={"Datum vydání"}
+            {...getInputProps(fields.releasedAt, { type: "date" })}
+            errors={fields.releasedAt.errors}
+          />
+        </Fieldset>
+
+        <Fieldset legend={"Soubory"}>
+          <FileInput
+            label={"Obálka"}
+            accept={"image"}
+            onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
+            errors={fields.cover.errors}
             {...getInputProps(fields.cover, { type: "file" })}
-            accept={"image/*"}
-            onChange={handleFileChange(fields.cover.dirty)}
           />
-          {fields.cover.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.pdf.id}>PDF výtisku</label>
-          <input
+          <FileInput
+            label={"PDF"}
+            accept={"pdf"}
+            onChange={handleFileChange(fields.pdf.name, fields.pdf.dirty)}
+            errors={fields.pdf.errors}
             {...getInputProps(fields.pdf, { type: "file" })}
-            accept="application/pdf"
-            onChange={handleFileChange(fields.pdf.dirty)}
           />
-          {fields.pdf.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-        </fieldset>
-        <fieldset disabled={!hasPublishRight}>
-          <legend>Stav</legend>
-          <label htmlFor={fields.published.id}>Zveřejněno</label>
-          <input {...getInputProps(fields.published, { type: "checkbox" })} />
-        </fieldset>
-        <fieldset>
-          <legend>Autor</legend>
-          <label htmlFor={fields.authorId.id}>Autor</label>
-          <select {...getSelectProps(fields.authorId)}>
-            {loaderData.authors.map((author) => {
-              return (
-                <option key={author.id} value={author.id}>
-                  {author.name}
-                </option>
-              )
-            })}
-          </select>
-        </fieldset>
+        </Fieldset>
+
+        <Fieldset legend={"Stav publikace"}>
+          <Select label={"Stav"} {...getSelectProps(fields.state)}>
+            {contentStates.map((state, index) => (
+              <option key={index} value={state}>
+                {contentStatesMap[state]}
+              </option>
+            ))}
+          </Select>
+        </Fieldset>
+
+        <Fieldset legend={"Informace o autorovi"}>
+          <Select label={"Autor"} {...getSelectProps(fields.authorId)}>
+            {loaderData.authors.map((author) => (
+              <option key={author.id} value={author.id}>
+                {author.name}
+              </option>
+            ))}
+          </Select>
+        </Fieldset>
+
         <AuthenticityTokenInput />
-        <br />
-        <button type="submit" disabled={!hasCreateRight}>
-          Přidat
-        </button>
+
+        <FormActions>
+          <Button
+            type="submit"
+            disabled={contentStates.length === 0}
+            variant={"default"}
+          >
+            Přidat
+          </Button>
+          <LinkButton to={"/administration/archive"}>Zrušit</LinkButton>
+        </FormActions>
       </Form>
     </>
   )

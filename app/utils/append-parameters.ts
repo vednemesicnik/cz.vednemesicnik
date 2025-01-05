@@ -1,2 +1,2 @@
-export const appendParameters = (route: string, searchParams: string) =>
-  [route, searchParams].filter(Boolean).join("?")
+export const appendParameters = (route: string, parameters: string) =>
+  [route, parameters].filter(Boolean).join("?")

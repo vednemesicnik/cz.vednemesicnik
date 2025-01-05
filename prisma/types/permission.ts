@@ -1,14 +1,6 @@
-export type UserPermissionAction =
-  | "view"
-  | "create"
-  | "update"
-  | "delete"
-  | "assign_role_owner"
-  | "assign_role_administrator"
-  | "assign_role_user"
-  | "assign_role_editor"
-  | "assign_role_author"
-  | "assign_role_contributor"
+import { type ContentState } from "~~/types/content-state"
+
+export type UserPermissionAction = "view" | "create" | "update" | "delete"
 
 export type UserPermissionAccess = "own" | "any"
 
@@ -36,3 +28,5 @@ export type AuthorPermissionEntity =
   | "issue"
   | "editorial_board_position"
   | "editorial_board_member"
+
+export type AuthorPermissionState = ContentState

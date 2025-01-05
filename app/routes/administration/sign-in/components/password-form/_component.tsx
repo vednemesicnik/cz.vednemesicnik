@@ -1,10 +1,11 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useRef } from "react"
-import { Form, useActionData } from "react-router"
+import { useActionData } from "react-router"
 import { HoneypotInputs } from "remix-utils/honeypot/react"
 
 import { Button } from "~/components/button"
+import { Form } from "~/components/form"
 import { useHydrated } from "~/utils/use-hydrated"
 
 import { type action } from "../../_action"
@@ -42,15 +43,7 @@ export const PasswordForm = () => {
 
   return (
     <>
-      <Form {...getFormProps(form)} method={"post"}>
-        {form.errors?.map((error) => {
-          return (
-            <output key={error} style={{ color: "red" }}>
-              {error}
-            </output>
-          )
-        })}
-
+      <Form {...getFormProps(form)} method={"post"} errors={form.errors}>
         <HoneypotInputs />
 
         <fieldset>

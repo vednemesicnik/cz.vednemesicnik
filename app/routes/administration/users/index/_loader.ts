@@ -1,8 +1,7 @@
-import { type LoaderFunctionArgs, redirect } from "react-router";
+import { type LoaderFunctionArgs } from "react-router"
 
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { getRights } from "~/utils/permissions"
 import { type UserPermissionEntity } from "~~/types/permission"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -19,6 +18,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           role: {
             select: {
               name: true,
+              level: true,
               permissions: {
                 where: {
                   entity: { in: entities },
@@ -36,15 +36,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  const [[hasRightToViewUsers]] = getRights(session.user.role.permissions, {
-    actions: ["view"],
-    access: ["any", "own"],
-  })
-
-  if (!hasRightToViewUsers) {
-    throw redirect("/administration")
-  }
-
   const users = await prisma.user.findMany({
     select: {
       id: true,
@@ -55,6 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         select: {
           id: true,
           name: true,
+          level: true,
         },
       },
     },

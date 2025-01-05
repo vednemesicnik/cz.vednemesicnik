@@ -4,6 +4,7 @@ export const authorPermissions: AuthorPermissionsData = {
   entities: [
     "article",
     "article_category",
+    "article_tag",
     "podcast",
     "podcast_episode",
     "podcast_episode_link",
@@ -22,4 +23,5 @@ export const authorPermissions: AuthorPermissionsData = {
     "restore",
   ],
   accesses: ["own", "any"],
+  states: ["draft", "published", "archived"],
 }

@@ -2,7 +2,9 @@ import { invariantResponse } from "@epic-web/invariant"
 
 import { prisma } from "~/utils/db.server"
 import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-check.server"
-import { getRights } from "~/utils/permissions"
+import { getAuthorRights } from "~/utils/get-author-rights"
+import { getIssueData } from "~/utils/get-issue-data"
+import { getPublishDate } from "~/utils/get-publish-date"
 import { convertImage } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 import type {
@@ -13,13 +15,15 @@ import type {
 type Data = {
   ordinalNumber: string
   releasedAt: string
-  published: boolean
+  state: string
   cover: File
   pdf: File
   authorId: string
 }
 
 export const createArchivedIssue = async (data: Data, sessionId: string) => {
+  const { ordinalNumber, releasedAt, state, cover, pdf, authorId } = data
+
   const entities: AuthorPermissionEntity[] = ["issue"]
   const actions: AuthorPermissionAction[] = ["create", "publish"]
 
@@ -28,28 +32,41 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
     entities,
   })
 
-  const [[hasCreateRight, hasPublishRight]] = getRights(author.permissions, {
-    actions: ["create", "publish"],
+  const [
+    // entity: issue
+    [
+      // action: create
+      [
+        // access: own
+        [hasCreateOwnIssueRight],
+        // access: any
+        [hasCreateAnyIssueRight],
+      ],
+    ],
+  ] = getAuthorRights(author.permissions, {
+    entities: ["issue"],
+    actions: ["create"],
     access: ["any", "own"],
+    states: [state],
     ownId: author.id,
-    targetId: data.authorId,
+    targetId: authorId,
   })
 
-  invariantResponse(hasCreateRight, "Unauthorized", {
-    status: 401,
-  })
+  /** User must have the right to create an issue */
+  invariantResponse(
+    hasCreateOwnIssueRight || hasCreateAnyIssueRight,
+    "Unauthorized",
+    {
+      status: 401,
+    }
+  )
 
-  const { ordinalNumber, releasedAt, published, cover, pdf, authorId } = data
+  const publishDate = getPublishDate(undefined, state)
 
-  const formattedPublished = hasPublishRight ? published : false
-
-  const releaseDate = new Date(releasedAt)
-  const year = releaseDate.getFullYear()
-  const monthYear = releaseDate.toLocaleDateString("cs-CZ", {
-    year: "numeric",
-    month: "long",
-  })
-  const label = `${ordinalNumber}/${monthYear}`
+  const { releaseDate, label, pdfFileName, coverAltText } = getIssueData(
+    ordinalNumber,
+    releasedAt
+  )
 
   const convertedCover = await convertImage(cover, {
     width: "905",
@@ -63,18 +80,18 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
       data: {
         label: label,
         releasedAt: releaseDate,
-        state: formattedPublished ? "published" : "draft",
-        publishedAt: formattedPublished ? new Date() : undefined,
+        state: state,
+        publishedAt: publishDate,
         cover: {
           create: {
-            altText: `Obálka výtisku ${label}`,
+            altText: coverAltText,
             contentType: convertedCover.contentType,
             blob: convertedCover.blob,
           },
         },
         pdf: {
           create: {
-            fileName: `VDM-${year}-${ordinalNumber}.pdf`,
+            fileName: pdfFileName,
             contentType: pdf.type,
             blob: await pdf.bytes(),
           },

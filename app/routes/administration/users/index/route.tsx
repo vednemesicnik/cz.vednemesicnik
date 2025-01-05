@@ -8,7 +8,7 @@ import {
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
 import { Headline } from "~/components/headline"
-import { getRights } from "~/utils/permissions"
+import { getUserRights } from "~/utils/get-user-rights"
 
 import type { Route } from "./+types/route"
 
@@ -16,19 +16,31 @@ export default function Route({ loaderData }: Route.ComponentProps) {
   const { idForDeletion, isModalOpen, openModal, closeModal } =
     useDeleteConfirmation()
 
-  const permissions = loaderData.session.user.role.permissions
-  const ownUserId = loaderData.session.user.id
+  const { permissions, level } = loaderData.session.user.role
 
-  const [[hasCreateRight]] = getRights(permissions, {
+  const [
+    // entity: user
+    [
+      // action: create
+      [
+        // access: own
+        hasCreateOwnUserRight,
+        // access: any
+        hasCreateAnyUserRight,
+      ],
+    ],
+  ] = getUserRights(permissions, {
+    entities: ["user"],
     actions: ["create"],
     access: ["own", "any"],
-    // there is no need to compare ownId with targetId
   })
+
+  const canCreateUser = hasCreateOwnUserRight || hasCreateAnyUserRight
 
   return (
     <>
       <Headline>Uživatelé</Headline>
-      {hasCreateRight && (
+      {canCreateUser && (
         <Link to={`/administration/users/add-user`}>Přidat uživatele</Link>
       )}
       <br />
@@ -46,12 +58,38 @@ export default function Route({ loaderData }: Route.ComponentProps) {
           {loaderData.users.map((user) => {
             const editUserPath = `/administration/users/edit-user/${user.id}`
 
-            const [[hasUpdateRight, hasDeleteRight]] = getRights(permissions, {
+            const [
+              // entity: user
+              [
+                // action: update
+                [
+                  // access: own
+                  hasUpdateOwnRight,
+                  // access: any
+                  hasUpdateAnyRight,
+                ],
+                // action: delete
+                [
+                  // access: own
+                  hasDeleteOwnRight,
+                  // access: any
+                  hasDeleteAnyRight,
+                ],
+              ],
+            ] = getUserRights(permissions, {
+              entities: ["user"],
               actions: ["update", "delete"],
               access: ["own", "any"],
-              ownId: ownUserId,
+              ownId: loaderData.session.user.id,
               targetId: user.id,
             })
+
+            const canUpdateUser =
+              (hasUpdateOwnRight || hasUpdateAnyRight) &&
+              user.role.level >= level
+            const canDeleteUser =
+              (hasDeleteOwnRight || hasDeleteAnyRight) &&
+              user.role.level >= level
 
             return (
               <tr key={user.id}>
@@ -61,9 +99,9 @@ export default function Route({ loaderData }: Route.ComponentProps) {
                 <td>{user.role.name}</td>
                 <td>
                   <Actions
-                    canEdit={hasUpdateRight}
+                    canEdit={canUpdateUser}
                     editPath={editUserPath}
-                    canDelete={hasDeleteRight}
+                    canDelete={canDeleteUser}
                     onDelete={openModal(user.id)}
                   />
                 </td>

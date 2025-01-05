@@ -1,8 +1,7 @@
-import { type LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs } from "react-router"
 
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { getRights } from "~/utils/permissions"
 import { type UserPermissionEntity } from "~~/types/permission"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -35,24 +34,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  const [[canAssignRoleOwner, canAssignRoleAdministrator, canAssignRoleUser]] =
-    getRights(session.user.role.permissions, {
-      actions: [
-        "assign_role_owner",
-        "assign_role_administrator",
-        "assign_role_user",
-      ],
-      access: ["any", "own"],
-    })
-
   const roles = await prisma.userRole.findMany({
     where: {
       name: {
-        in: [
-          ...(canAssignRoleOwner ? ["owner"] : []),
-          ...(canAssignRoleAdministrator ? ["administrator"] : []),
-          ...(canAssignRoleUser ? ["user"] : []),
-        ],
+        in: ["user", "administrator"],
       },
     },
     select: {

@@ -4,12 +4,14 @@ import {
   type AuthorPermissionAccess,
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
+  type AuthorPermissionState,
 } from "~~/types/permission"
 
 export type AuthorPermissionsData = {
   entities: AuthorPermissionEntity[]
   actions: AuthorPermissionAction[]
   accesses: AuthorPermissionAccess[]
+  states: AuthorPermissionState[]
 }
 
 export const createAuthorPermissions = async (
@@ -17,14 +19,16 @@ export const createAuthorPermissions = async (
   data: AuthorPermissionsData
 ) => {
   for (const entity of data.entities) {
-    for (const action of data.actions) {
+    for (const state of data.states) {
       for (const access of data.accesses) {
-        await prisma.authorPermission
-          .create({ data: { entity, action, access } })
-          .catch((error) => {
-            console.error("Error creating a permission:", error)
-            return null
-          })
+        for (const action of data.actions) {
+          await prisma.authorPermission
+            .create({ data: { entity, action, access, state } })
+            .catch((error) => {
+              console.error("Error creating a permission:", error)
+              return null
+            })
+        }
       }
     }
   }

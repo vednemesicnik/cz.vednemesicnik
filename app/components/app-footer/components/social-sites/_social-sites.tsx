@@ -13,6 +13,7 @@ export const SocialSites = () => {
             title={"Instagram"}
             to={"https://www.instagram.com/vednemesicnik/"}
             className={styles.link}
+            hasIcon={false}
           >
             <span className={"screen-reader-only"}>Instagram</span>
             <InstagramIcon className={styles.logo} />
@@ -23,6 +24,7 @@ export const SocialSites = () => {
             title={"Facebook"}
             to={"https://www.facebook.com/vednemesicnik"}
             className={styles.link}
+            hasIcon={false}
           >
             <span className={"screen-reader-only"}>Facebook</span>
             <FacebookIcon className={styles.logo} />

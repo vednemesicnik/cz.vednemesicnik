@@ -1,3 +1,14 @@
 .hyperlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   font-weight: var(--font-weight-medium);
+  font-size: inherit;
+}
+
+.icon {
+  font-size: inherit;
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
 }

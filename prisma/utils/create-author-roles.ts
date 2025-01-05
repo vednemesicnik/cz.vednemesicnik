@@ -4,15 +4,18 @@ import {
   type AuthorPermissionAccess,
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
+  type AuthorPermissionState,
 } from "~~/types/permission"
-import { type AuthorRoleName } from "~~/types/role"
+import { type AuthorRoleLevel, type AuthorRoleName } from "~~/types/role"
 
 export type AuthorRolesData = {
   name: AuthorRoleName
+  level: AuthorRoleLevel
   permissions: {
     entity: AuthorPermissionEntity
     access: AuthorPermissionAccess
     actions: AuthorPermissionAction[]
+    state: AuthorPermissionState
   }[]
 }[]
 
@@ -25,6 +28,7 @@ export const createAuthorRoles = async (
       .create({
         data: {
           name: role.name,
+          level: role.level,
           permissions: {
             connect: await prisma.authorPermission.findMany({
               where: {
@@ -32,6 +36,7 @@ export const createAuthorRoles = async (
                   entity: permission.entity,
                   access: permission.access,
                   action: { in: permission.actions },
+                  state: permission.state,
                 })),
               },
             }),

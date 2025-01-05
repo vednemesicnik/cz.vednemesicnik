@@ -11,7 +11,6 @@ import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Headline } from "~/components/headline"
-import { getRights } from "~/utils/permissions"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
@@ -20,14 +19,6 @@ export default function Route({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const permissions = loaderData.session.user.role.permissions
-
-  const [[hasCreateRight]] = getRights(permissions, {
-    actions: ["create"],
-    access: ["own", "any"],
-    // there is no need to compare ownId with targetId
-  })
-
   const [form, fields] = useForm({
     id: "add-user",
     lastResult: actionData?.submissionResult,
@@ -115,9 +106,7 @@ export default function Route({
         </fieldset>
         <AuthenticityTokenInput />
         <br />
-        <button type="submit" disabled={!hasCreateRight}>
-          Přidat uživatele
-        </button>
+        <button type="submit">Přidat uživatele</button>
       </Form>
     </>
   )

@@ -9,9 +9,9 @@ import {
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useState } from "react"
-import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
+import { Form } from "~/components/form"
 import { Headline } from "~/components/headline"
 import { slugify } from "~/utils/slugify"
 
@@ -31,7 +31,7 @@ export default function Route({
     },
     defaultValue: {
       description: "",
-      authorId: loaderData.session.user.authorId,
+      authorId: loaderData.session.user.author.id,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")

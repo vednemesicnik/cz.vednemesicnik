@@ -26,7 +26,9 @@ export const DeleteConfirmationModal = ({ id, isOpen, onClose }: Props) => {
     >
       <h2 id={titleId}>Opravdu chcete tutu akci provést?</h2>
       <section className={styles.actions}>
-        <Button onClick={onClose}>Ne</Button>
+        <Button onClick={onClose} variant={"default"}>
+          Ne
+        </Button>
         <Form
           method="post"
           preventScrollReset={true}

@@ -9,9 +9,10 @@ import {
 } from "~/components/delete-confirmation-modal"
 import { Headline } from "~/components/headline"
 import { routesConfig } from "~/config/routes-config"
-import { getRights } from "~/utils/permissions"
 
 import type { Route } from "./+types/route"
+import { getCreateRights } from "./utils/get-create-rights"
+import { getUpdateAndDeleteRights } from "./utils/get-update-and-delete-rights"
 
 export default function Route({ loaderData }: Route.ComponentProps) {
   const { idForDeletion, isModalOpen, openModal, closeModal } =
@@ -22,41 +23,55 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
   const { user } = loaderData.session
 
-  const [[hasCreateRight]] = getRights(user.author.role.permissions, {
-    actions: ["create"],
-    access: ["own", "any"],
-    // there is no need to compare ownAuthorId with targetAuthorId
-  })
+  const {
+    hasCreateOwnDraftRight,
+    hasCreateOwnPublishedRight,
+    hasCreateAnyDraftRight,
+    hasCreateAnyPublishedRight,
+  } = getCreateRights({ permissions: user.author.role.permissions })
+
+  const hasCreateRight =
+    hasCreateOwnDraftRight ||
+    hasCreateOwnPublishedRight ||
+    hasCreateAnyDraftRight ||
+    hasCreateAnyPublishedRight
+
+  console.log({ authorRolePermissions: user.author.role.permissions })
 
   return (
     <>
       <Headline>Archiv</Headline>
-      {hasCreateRight && <Link to={addIssuePath}>Přidat výtisk</Link>}
+      {hasCreateRight && <Link to={addIssuePath}>Přidat číslo</Link>}
       <hr />
       <table>
         <thead>
           <tr>
             <th>Název</th>
-            <th>Zveřejněno</th>
+            <th>Stav</th>
             <th>Akce</th>
           </tr>
         </thead>
         <tbody>
-          {loaderData.archivedIssues.map((issue) => {
+          {loaderData.issues.map((issue) => {
             const editArchivedIssuePath =
               routesConfig.administration.archive.editArchivedIssue.getPath(
                 issue.id
               )
 
-            const [[hasUpdateRight, hasDeleteRight]] = getRights(
-              user.author.role.permissions,
-              {
-                actions: ["update", "delete"],
-                access: ["own", "any"],
-                ownId: user.author.id,
-                targetId: issue.author.id,
-              }
-            )
+            const {
+              hasUpdateOwnRight,
+              hasUpdateAnyRight,
+              hasDeleteOwnRight,
+              hasDeleteAnyRight,
+            } = getUpdateAndDeleteRights({
+              userAuthorPermissions: user.author.role.permissions,
+              userAuthorId: user.author.id,
+              issueState: issue.state,
+              issueAuthorId: issue.authorId,
+            })
+
+            const hasUpdateRight = hasUpdateOwnRight || hasUpdateAnyRight
+            const hasDeleteRight = hasDeleteOwnRight || hasDeleteAnyRight
 
             return (
               <tr key={issue.id}>

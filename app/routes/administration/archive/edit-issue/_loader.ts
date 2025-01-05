@@ -1,6 +1,8 @@
+import { redirect } from "react-router"
+
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { getRights } from "~/utils/permissions"
+import { getAuthorRights } from "~/utils/get-author-rights"
 import {
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
@@ -15,9 +17,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const authorPermissionActions: AuthorPermissionAction[] = [
     "update",
     "publish",
+    "retract",
+    "archive",
+    "restore",
   ]
 
-  const session = await prisma.session.findUniqueOrThrow({
+  const sessionPromise = prisma.session.findUniqueOrThrow({
     where: {
       id: sessionId,
     },
@@ -29,6 +34,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               id: true,
               role: {
                 select: {
+                  name: true,
                   permissions: {
                     where: {
                       entity: authorPermissionEntity,
@@ -38,6 +44,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
                       action: true,
                       access: true,
                       entity: true,
+                      state: true,
                     },
                   },
                 },
@@ -46,21 +53,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           },
         },
       },
-    },
-  })
-
-  const [[hasUpdateAnyRight]] = getRights(
-    session.user.author.role.permissions,
-    {
-      actions: ["update"],
-    }
-  )
-
-  const authorsPromise = prisma.author.findMany({
-    ...(hasUpdateAnyRight ? {} : { where: { id: session.user.author.id } }),
-    select: {
-      id: true,
-      name: true,
     },
   })
 
@@ -73,6 +65,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       label: true,
       releasedAt: true,
       state: true,
+      publishedAt: true,
       cover: {
         select: {
           id: true,
@@ -91,7 +84,40 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     },
   })
 
-  const [issue, authors] = await Promise.all([issuePromise, authorsPromise])
+  const [session, issue] = await Promise.all([sessionPromise, issuePromise])
+
+  const [
+    // entity: issue
+    [
+      // action: update
+      [
+        // access: own
+        [hasUpdateOwnRight],
+        // access: any
+        [hasUpdateAnyRight],
+      ],
+    ],
+  ] = getAuthorRights(session.user.author.role.permissions, {
+    entities: ["issue"],
+    actions: ["update"],
+    access: ["own", "any"],
+    ownId: session.user.author.id,
+    targetId: issue.author.id,
+  })
+
+  const canUpdateIssue = hasUpdateOwnRight || hasUpdateAnyRight
+
+  if (!canUpdateIssue) {
+    throw redirect("/administration/archive")
+  }
+
+  const authors = await prisma.author.findMany({
+    ...(hasUpdateAnyRight ? {} : { where: { id: session.user.author.id } }),
+    select: {
+      id: true,
+      name: true,
+    },
+  })
 
   return { issue, session, authors }
 }

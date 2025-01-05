@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs } from "react-router"
 
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
@@ -18,6 +18,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authorPermissionEntities: AuthorPermissionEntity[] = [
     "article",
     "article_category",
+    "article_tag",
     "podcast",
     "issue",
     "editorial_board_position",
@@ -68,6 +69,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
                       entity: true,
                       action: true,
                       access: true,
+                      state: true,
                     },
                   },
                 },

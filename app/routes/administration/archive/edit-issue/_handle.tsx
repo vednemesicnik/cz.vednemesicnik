@@ -9,11 +9,10 @@ type Match = CustomUIMatch<Info["params"], Info["loaderData"]>
 export const handle = {
   breadcrumb: (match: Match) => {
     const { issueId } = match.params
-    const { label } = match.data.issue
 
     return (
       <Link to={`/administration/archive/edit-issue/${issueId}`}>
-        Upravit výtisk [{label}]
+        Upravit číslo
       </Link>
     )
   },

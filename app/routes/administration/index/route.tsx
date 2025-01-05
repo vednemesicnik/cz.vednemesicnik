@@ -3,83 +3,159 @@
 import { Link } from "react-router"
 
 import { Headline } from "~/components/headline"
-import { getRights } from "~/utils/permissions"
+import { getAuthorRights } from "~/utils/get-author-rights"
+import { getUserRights } from "~/utils/get-user-rights"
 
 import type { Route } from "./+types/route"
 
 export default function Route({ loaderData }: Route.ComponentProps) {
-  const [[canViewUsers], [canViewAuthors]] = getRights(
-    loaderData.session.user.role.permissions,
-    {
-      entities: ["user", "author"],
-      access: ["any", "own"],
-    }
-  )
+  const [
+    // entity: user
+    [
+      // action: view
+      [
+        // access: own
+        hasViewOwnUserRight,
+        // access: any
+        hasViewAnyUserRight,
+      ],
+    ],
+    // entity: author
+    [
+      // action: view
+      [
+        // access: own
+        hasViewOwnAuthorRight,
+        // access: any
+        hasViewAnyAuthorRight,
+      ],
+    ],
+  ] = getUserRights(loaderData.session.user.role.permissions, {
+    entities: ["user", "author"],
+    actions: ["view"],
+    access: ["own", "any"],
+  })
+
+  const canViewUsers = hasViewOwnUserRight || hasViewAnyUserRight
+  const canViewAuthors = hasViewAnyAuthorRight || hasViewOwnAuthorRight
 
   const [
-    [canViewArticles],
-    [canViewArticleCategories],
-    [canViewPodcasts],
-    [canViewArchivedIssues],
-    [canViewEditorialBoardPositions],
-    [canViewEditorialBoardMembers],
-  ] = getRights(loaderData.session.user.author.role.permissions, {
+    // entity: article
+    [
+      // action: view
+      [
+        // access: own
+        [hasViewOwnArticleRight],
+        // access: any
+        [hasViewAnyArticleRight],
+      ],
+    ],
+    // entity: article_category
+    [
+      // action: view
+      [
+        // access: own
+        [hasViewOwnArticleCategoryRight],
+        // access: any
+        [hasViewAnyArticleCategoryRight],
+      ],
+    ],
+    // entity: article_tag
+    [
+      // action: view
+      [
+        // access: own
+        [hasViewOwnArticleTagRight],
+        // access: any
+        [hasViewAnyArticleTagRight],
+      ],
+    ],
+    // entity: podcast
+    [
+      // action: view
+      [
+        // access: own
+        [hasViewOwnPodcastRight],
+        // access: any
+        [hasViewAnyPodcastRight],
+      ],
+    ],
+    // entity: issue
+    [
+      // action: view
+      [
+        // access: own
+        [hasViewOwnIssueRight],
+        // access: any
+        [hasViewAnyIssueRight],
+      ],
+    ],
+    // entity: editorial_board_position
+    [
+      // action: view
+      [
+        // access: own
+        [hasViewOwnEditorialBoardPositionRight],
+        // access: any
+        [hasViewAnyEditorialBoardPositionRight],
+      ],
+    ],
+    // entity: editorial_board_member
+    [
+      // action: view
+      [
+        // access: own
+        [hasViewOwnEditorialBoardMemberRight],
+        // access: any
+        [hasViewAnyEditorialBoardMemberRight],
+      ],
+    ],
+  ] = getAuthorRights(loaderData.session.user.author.role.permissions, {
     entities: [
       "article",
       "article_category",
+      "article_tag",
       "podcast",
       "issue",
       "editorial_board_position",
       "editorial_board_member",
     ],
-    access: ["any", "own"],
+    actions: ["view"],
+    access: ["own", "any"],
   })
+
+  const canViewArticles = hasViewOwnArticleRight || hasViewAnyArticleRight
+  const canViewArticleCategories =
+    hasViewOwnArticleCategoryRight || hasViewAnyArticleCategoryRight
+  const canViewArticleTags =
+    hasViewOwnArticleTagRight || hasViewAnyArticleTagRight
+  const canViewPodcasts = hasViewOwnPodcastRight || hasViewAnyPodcastRight
+  const canViewIssues = hasViewOwnIssueRight || hasViewAnyIssueRight
+  const canViewEditorialBoardPositions =
+    hasViewOwnEditorialBoardPositionRight ||
+    hasViewAnyEditorialBoardPositionRight
+  const canViewEditorialBoardMembers =
+    hasViewOwnEditorialBoardMemberRight || hasViewAnyEditorialBoardMemberRight
 
   return (
     <>
       <Headline>Administrace</Headline>
 
-      {canViewUsers && (
-        <Link to={"/administration/users"} preventScrollReset={true}>
-          Uživatelé
-        </Link>
-      )}
-      {canViewAuthors && (
-        <Link to={"/administration/authors"} preventScrollReset={true}>
-          Autoři
-        </Link>
-      )}
-      {canViewArticles && (
-        <Link to={"/administration/articles"} preventScrollReset={true}>
-          Články
-        </Link>
-      )}
+      {canViewUsers && <Link to={"/administration/users"}>Uživatelé</Link>}
+      {canViewAuthors && <Link to={"/administration/authors"}>Autoři</Link>}
+      {canViewArticles && <Link to={"/administration/articles"}>Články</Link>}
       {canViewArticleCategories && (
-        <Link
-          to={"/administration/article-categories"}
-          preventScrollReset={true}
-        >
-          Kategorie článků
-        </Link>
+        <Link to={"/administration/article-categories"}>Kategorie článků</Link>
       )}
-      {canViewPodcasts && (
-        <Link to={"/administration/podcasts"} preventScrollReset={true}>
-          Podcasty
-        </Link>
+      {canViewArticleTags && (
+        <Link to={"/administration/article-tags"}>Štítky článků</Link>
       )}
-      {canViewArchivedIssues && (
-        <Link to={"/administration/archive"} preventScrollReset={true}>
-          Archiv
-        </Link>
-      )}
+      {canViewPodcasts && <Link to={"/administration/podcasts"}>Podcasty</Link>}
+      {canViewIssues && <Link to={"/administration/archive"}>Archiv</Link>}
       {(canViewEditorialBoardPositions || canViewEditorialBoardMembers) && (
-        <Link to={"/administration/editorial-board"} preventScrollReset={true}>
-          Redakce
-        </Link>
+        <Link to={"/administration/editorial-board"}>Redakce</Link>
       )}
-      <Link to={"/administration/settings"} preventScrollReset={true}>
-        Nastavení
-      </Link>
+      <Link to={"/administration/settings"}>Nastavení</Link>
     </>
   )
 }

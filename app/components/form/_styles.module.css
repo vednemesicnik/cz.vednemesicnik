@@ -1,0 +1,8 @@
+.form {
+  display: grid;
+  grid-auto-flow: row;
+  width: 100%;
+  justify-items: start;
+  align-items: start;
+  row-gap: 8px;
+}

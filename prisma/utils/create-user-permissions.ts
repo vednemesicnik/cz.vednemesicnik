@@ -17,8 +17,8 @@ export const createUserPermissions = async (
   data: UserPermissionsData
 ) => {
   for (const entity of data.entities) {
-    for (const action of data.actions) {
-      for (const access of data.accesses) {
+    for (const access of data.accesses) {
+      for (const action of data.actions) {
         await prisma.userPermission
           .create({ data: { entity, action, access } })
           .catch((error) => {

@@ -1,11 +1,12 @@
 import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
 import type { ComponentProps } from "react"
 
-import styles from "./_button.module.css"
+import styles from "./_styles.module.css"
 
 type Props = ComponentProps<"button"> & {
-  variant?: "primary" | "danger"
+  variant?: "primary" | "danger" | "default"
 }
+
 export const Button = ({
   children,
   className,
@@ -17,6 +18,7 @@ export const Button = ({
       styles.button,
       applyClasses(styles.primary).if(variant === "primary"),
       applyClasses(styles.danger).if(variant === "danger"),
+      applyClasses(styles.default).if(variant === "default"),
       className
     )}
     {...rest}

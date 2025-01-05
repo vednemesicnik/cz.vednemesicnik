@@ -5,10 +5,11 @@ import {
   type UserPermissionAction,
   type UserPermissionEntity,
 } from "~~/types/permission"
-import { type UserRoleName } from "~~/types/role"
+import { type UserRoleLevel, type UserRoleName } from "~~/types/role"
 
 export type UserRolesData = {
   name: UserRoleName
+  level: UserRoleLevel
   permissions: {
     entity: UserPermissionEntity
     access: UserPermissionAccess
@@ -25,6 +26,7 @@ export const createUserRoles = async (
       .create({
         data: {
           name: role.name,
+          level: role.level,
           permissions: {
             connect: await prisma.userPermission.findMany({
               where: {

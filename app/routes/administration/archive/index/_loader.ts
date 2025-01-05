@@ -1,6 +1,6 @@
+import { getViewRights } from "~/routes/administration/archive/index/utils/get-view-rights.server"
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { getRights } from "~/utils/permissions"
 import {
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
@@ -31,6 +31,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
               id: true,
               role: {
                 select: {
+                  name: true,
                   permissions: {
                     where: {
                       entity: authorPermissionEntity,
@@ -40,6 +41,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
                       entity: true,
                       action: true,
                       access: true,
+                      state: true,
                     },
                   },
                 },
@@ -51,20 +53,38 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     },
   })
 
-  const [[canViewAny]] = getRights(session.user.author.role.permissions, {
-    actions: ["view"],
-  })
+  const {
+    hasViewOwnDraftIssueRight,
+    hasViewOwnPublishedIssueRight,
+    hasViewOwnArchivedIssueRight,
+    hasViewAnyDraftIssueRight,
+    hasViewAnyPublishedIssueRight,
+    hasViewAnyArchivedIssueRight,
+  } = getViewRights({ permissions: session.user.author.role.permissions })
 
   const issues = await prisma.issue.findMany({
-    ...(canViewAny
-      ? {}
-      : {
-          where: {
-            author: {
-              id: session.user.author.id,
-            },
-          },
-        }),
+    where: {
+      OR: [
+        {
+          state: "draft",
+          ...(hasViewOwnDraftIssueRight && !hasViewAnyDraftIssueRight
+            ? { authorId: session.user.author.id }
+            : {}),
+        },
+        {
+          state: "published",
+          ...(hasViewOwnPublishedIssueRight && !hasViewAnyPublishedIssueRight
+            ? { authorId: session.user.author.id }
+            : {}),
+        },
+        {
+          state: "archived",
+          ...(hasViewOwnArchivedIssueRight && !hasViewAnyArchivedIssueRight
+            ? { authorId: session.user.author.id }
+            : {}),
+        },
+      ],
+    },
     orderBy: {
       publishedAt: "desc",
     },
@@ -72,13 +92,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       id: true,
       label: true,
       state: true,
-      author: {
-        select: {
-          id: true,
-        },
-      },
+      authorId: true,
     },
   })
 
-  return { archivedIssues: issues, session }
+  return { issues, session }
 }

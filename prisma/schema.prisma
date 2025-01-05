@@ -18,101 +18,101 @@ datasource db {
 }
 
 model User {
-  id          String        @id @default(cuid())
-  email       String        @unique
-  username    String        @unique
+  id          String       @id @default(cuid())
+  email       String       @unique
+  username    String       @unique
   name        String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   image       UserImage?
   password    Password?
   roleId      String
-  role        UserRole      @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  role        UserRole     @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   sessions    Session[]
   passkeys    Passkey[]
   connections Connection[]
-  authorId    String        @unique
-  author      Author        @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId    String       @unique
+  author      Author       @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 }
 
 model UserImage {
-  id            String          @id @default(cuid())
-  altText       String?
-  contentType   String
-  blob          Bytes
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  userId        String          @unique
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id          String   @id @default(cuid())
+  altText     String?
+  contentType String
+  blob        Bytes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Password {
-  hash          String
-  userId        String          @unique
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hash   String
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model UserRole {
-  id            String          @id @default(cuid())
-  // name: "owner", "administrator", "user"
-  name          String          @unique
-  description   String          @default("")
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  users         User[]
-  permissions   UserPermission[]
+  id          String           @id @default(cuid())
+  name        String           @unique
+  level       Int
+  description String           @default("")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       User[]
+  permissions UserPermission[]
 }
 
 model UserPermission {
-  id            String          @id @default(cuid())
-  // action: "view", "create", "update", "delete", "assign_role_owner", "assign_role_administrator", "assign_role_user", "assing_role_author", "assign_role_editor", "assign_role_contributor"
-  action        String
-  // entity: "user", "author"
-  entity        String
-  // access: "own", "any"
-  access        String
-  description   String          @default("")
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  roles         UserRole[]
+  id          String     @id @default(cuid())
+  action      String
+  entity      String
+  access      String
+  description String     @default("")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  roles       UserRole[]
+
   @@unique([action, entity, access])
 }
 
 model Session {
-  id                String      @id @default(cuid())
-  expirationDate    DateTime
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  userId            String
-  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id             String   @id @default(cuid())
+  expirationDate DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   // non-unique foreign key
   @@index([userId])
 }
 
 model Passkey {
-  id                    String   @id @default(cuid())
-  credentialId          String   @unique
-  credentialPublicKey   Bytes
-  credentialCounter     BigInt
-  credentialTransports  String
-  credentialDeviceType  String
-  credentialBackedUp    Boolean
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  userId                String
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id                   String   @id @default(cuid())
+  credentialId         String   @unique
+  credentialPublicKey  Bytes
+  credentialCounter    BigInt
+  credentialTransports String
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   // non-unique foreign key
   @@index([userId])
 }
 
 model Connection {
-  id            String      @id @default(cuid())
-  providerName  String
-  providerId    String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id           String   @id @default(cuid())
+  providerName String
+  providerId   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([providerName, providerId])
   // non-unique foreign key
@@ -120,38 +120,38 @@ model Connection {
 }
 
 model Verification {
-  id            String      @id @default(cuid())
+  id        String    @id @default(cuid())
   // The type of verification, e.g. "email" or "phone"
-  type          String
+  type      String
   // The thing we're trying to verify, e.g. a user's email or phone number
-  target        String
+  target    String
   // The secret key used to generate the otp
-  secret        String
+  secret    String
   // The algorithm used to generate the otp
-  algorithm     String
+  algorithm String
   // The number of digits in the otp
-  digits        Int
+  digits    Int
   // The number of seconds the otp is valid for
-  period        Int
+  period    Int
   // The valid characters for the otp
-  charSet       String
+  charSet   String
   // When it's safe to delete this verification
-  expiresAt     DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@unique([target, type])
 }
 
 model Author {
-  id                      String                    @id @default(cuid())
+  id                      String                   @id @default(cuid())
   name                    String
   bio                     String?
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
   user                    User?
   roleId                  String
-  role                    AuthorRole                @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  role                    AuthorRole               @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   issues                  Issue[]
   editorialBoardPositions EditorialBoardPosition[]
   editorialBoardMembers   EditorialBoardMember[]
@@ -164,140 +164,138 @@ model Author {
 }
 
 model AuthorRole {
-  id            String          @id @default(cuid())
-  // name: "editor", "author", "contributor"
-  name          String          @unique
-  description   String          @default("")
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  users         Author[]
-  permissions   AuthorPermission[]
+  id          String             @id @default(cuid())
+  name        String             @unique
+  level       Int
+  description String             @default("")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  users       Author[]
+  permissions AuthorPermission[]
 }
 
 model AuthorPermission {
-  id            String          @id @default(cuid())
-  // action: "view", "create", "update", "delete", "publish", "retract", "archive", "restore"
-  action        String
-  // entity: "article", "article_tag", "article_category", "podcast", "podcast_episode", "podcast_episode_link", "issue", "editorial_board_position", "editorial_board_member"
-  entity        String
-  // access: "own", "any"
-  access        String
-  description   String          @default("")
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  roles         AuthorRole[]
-  @@unique([action, entity, access])
+  id          String       @id @default(cuid())
+  action      String
+  entity      String
+  access      String
+  state       String
+  description String       @default("")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  roles       AuthorRole[]
+
+  @@unique([action, entity, access, state])
 }
 
 model Issue {
-  id            String              @id @default(cuid())
-  label         String
-  releasedAt    DateTime
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  publishedAt   DateTime?
-  // state: "draft", "published", "archived"
-  state         String              @default("draft")
-  cover         IssueCover?
-  pdf           IssuePDF?
-  authorId      String
-  author        Author              @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id          String      @id @default(cuid())
+  label       String
+  releasedAt  DateTime
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  publishedAt DateTime?
+  // state: "draft" | "published" | "archived"
+  state       String      @default("draft")
+  cover       IssueCover?
+  pdf         IssuePDF?
+  authorId    String
+  author      Author      @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
 }
 
 model IssueCover {
-  id            String          @id @default(cuid())
-  altText       String
-  contentType   String
-  blob          Bytes
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  issue         Issue   @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  issueId       String          @unique
+  id          String   @id @default(cuid())
+  altText     String
+  contentType String
+  blob        Bytes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  issueId     String   @unique
 }
 
 model IssuePDF {
-  id            String          @id @default(cuid())
-  fileName      String          @unique
-  contentType   String
-  blob          Bytes
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  issueId       String          @unique
-  issue         Issue   @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id          String   @id @default(cuid())
+  fileName    String   @unique
+  contentType String
+  blob        Bytes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  issueId     String   @unique
+  issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Podcast {
-  id            String            @id @default(cuid())
-  slug          String            @unique
-  title         String
-  description   String
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  publishedAt   DateTime?
-  // state: "draft", "published", "archived"
-  state         String            @default("draft")
-  episodes      PodcastEpisode[]
-  cover         PodcastCover?
-  authorId      String
-  author        Author            @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id          String           @id @default(cuid())
+  slug        String           @unique
+  title       String
+  description String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  publishedAt DateTime?
+  // state: "draft" | "published" | "archived"
+  state       String           @default("draft")
+  episodes    PodcastEpisode[]
+  cover       PodcastCover?
+  authorId    String
+  author      Author           @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
 }
 
 model PodcastCover {
-  id            String          @id @default(cuid())
-  altText       String
-  contentType   String
-  blob          Bytes
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  podcastId     String          @unique
-  podcast       Podcast         @relation(fields: [podcastId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id          String   @id @default(cuid())
+  altText     String
+  contentType String
+  blob        Bytes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  podcastId   String   @unique
+  podcast     Podcast  @relation(fields: [podcastId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model PodcastEpisode {
-  id            String                @id @default(cuid())
-  slug          String                @unique
-  number        Int
-  title         String
-  description   String
-  links         PodcastEpisodeLink[]
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
-  publishedAt   DateTime?
-  // state: "draft", "published", "archived"
-  state         String                @default("draft")
-  podcast       Podcast               @relation(fields: [podcastId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  podcastId     String
-  cover         PodcastEpisodeCover?
-  authorId      String
-  author        Author                @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id          String               @id @default(cuid())
+  slug        String               @unique
+  number      Int
+  title       String
+  description String
+  links       PodcastEpisodeLink[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  publishedAt DateTime?
+  // state: "draft" | "published" | "archived"
+  state       String               @default("draft")
+  podcast     Podcast              @relation(fields: [podcastId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  podcastId   String
+  cover       PodcastEpisodeCover?
+  authorId    String
+  author      Author               @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // episode number should be unique within a podcast
   @@unique([podcastId, number])
-
   // non-unique foreign key
   @@index([podcastId])
   @@index([authorId])
 }
 
 model PodcastEpisodeLink {
-  id            String          @id @default(cuid())
-  url           String
-  label         String
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  publishedAt   DateTime?
-  // state: "draft", "published", "archived"
-  state         String          @default("draft")
-  episode       PodcastEpisode  @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  episodeId     String
-  authorId      String
-  author        Author          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id          String         @id @default(cuid())
+  url         String
+  label       String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  publishedAt DateTime?
+  // state: "draft" | "published" | "archived"
+  state       String         @default("draft")
+  episode     PodcastEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  episodeId   String
+  authorId    String
+  author      Author         @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([episodeId])
@@ -305,110 +303,112 @@ model PodcastEpisodeLink {
 }
 
 model PodcastEpisodeCover {
-  id            String          @id @default(cuid())
-  altText       String
-  contentType   String
-  blob          Bytes
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  episodeId     String          @unique
-  episode       PodcastEpisode  @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id          String         @id @default(cuid())
+  altText     String
+  contentType String
+  blob        Bytes
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  episodeId   String         @unique
+  episode     PodcastEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model EditorialBoardPosition {
-  id            String                  @id @default(cuid())
-  key           String                  @unique
-  pluralLabel   String                  @default("")
-  order         Int                     @unique
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  members       EditorialBoardMember[]
-  authorId      String
-  author        Author                  @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id          String                 @id @default(cuid())
+  key         String                 @unique
+  pluralLabel String                 @default("")
+  order       Int                    @unique
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  state       String                 @default("published")
+  members     EditorialBoardMember[]
+  authorId    String
+  author      Author                 @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
 }
 
 model EditorialBoardMember {
-  id            String                          @id @default(cuid())
-  fullName      String
-  positions     EditorialBoardPosition[]
-  createdAt     DateTime                        @default(now())
-  updatedAt     DateTime                        @updatedAt
-  authorId      String
-  author        Author                          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id        String                   @id @default(cuid())
+  fullName  String
+  positions EditorialBoardPosition[]
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+  state     String                   @default("published")
+  authorId  String
+  author    Author                   @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
 }
 
 model Article {
-  id              String              @id @default(cuid())
-  slug            String              @unique
-  title           String
-  content         String
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  publishedAt     DateTime?
-  // state: "draft", "published", "archived"
-  state           String              @default("draft")
-  authorId        String
-  author          Author              @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  featuredImage   ArticleImage?       @relation("FeaturedArticleImage")
-  images          ArticleImage[]      @relation("ArticleImage")
-  tags            ArticleTag[]
-  categories      ArticleCategory[]
+  id            String            @id @default(cuid())
+  slug          String            @unique
+  title         String
+  content       String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  publishedAt   DateTime?
+  // state: "draft" | "published" | "archived"
+  state         String            @default("draft")
+  authorId      String
+  author        Author            @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  featuredImage ArticleImage?     @relation("FeaturedArticleImage")
+  images        ArticleImage[]    @relation("ArticleImage")
+  tags          ArticleTag[]
+  categories    ArticleCategory[]
 
   // non-unique foreign key
   @@index([authorId])
 }
 
 model ArticleImage {
-  id                    String          @id @default(cuid())
-  altText               String
-  contentType           String
-  blob                  Bytes
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
-  articleId             String
-  article               Article        @relation("ArticleImage", fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  featuredInArticleId   String?         @unique
-  featuredInArticle     Article?        @relation("FeaturedArticleImage", fields: [featuredInArticleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id                  String   @id @default(cuid())
+  altText             String
+  contentType         String
+  blob                Bytes
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  articleId           String
+  article             Article  @relation("ArticleImage", fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  featuredInArticleId String?  @unique
+  featuredInArticle   Article? @relation("FeaturedArticleImage", fields: [featuredInArticleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([articleId])
 }
 
 model ArticleTag {
-  id            String          @id @default(cuid())
-  name          String          @unique
-  slug          String          @unique
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  publishedAt   DateTime?
-  // state: "draft", "published", "archived"
-  state         String          @default("draft")
-  articles      Article[]
-  authorId      String
-  author        Author          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+  // state: "draft" | "published" | "archived"
+  state       String    @default("draft")
+  articles    Article[]
+  authorId    String
+  author      Author    @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
 }
 
 model ArticleCategory {
-  id            String          @id @default(cuid())
-  name          String          @unique
-  slug          String          @unique
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  publishedAt   DateTime?
-  // state: "draft", "published", "archived"
-  state         String          @default("draft")
-  articles      Article[]
-  authorId      String
-  author        Author          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+  // state: "draft" | "published" | "archived"
+  state       String    @default("draft")
+  articles    Article[]
+  authorId    String
+  author      Author    @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])

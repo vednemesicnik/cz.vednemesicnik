@@ -2,7 +2,8 @@ import { type UserRolesData } from "~~/utils/create-user-roles"
 
 export const userRoles: UserRolesData = [
   {
-    name: "user",
+    name: "member",
+    level: 3,
     permissions: [
       {
         entity: "user",
@@ -18,113 +19,33 @@ export const userRoles: UserRolesData = [
   },
   {
     name: "administrator",
+    level: 2,
     permissions: [
       {
         entity: "user",
-        access: "own",
-        actions: [
-          "view",
-          "create",
-          "update",
-          "delete",
-          "assign_role_administrator",
-          "assign_role_user",
-        ],
-      },
-      {
-        entity: "user",
         access: "any",
-        actions: [
-          "view",
-          "create",
-          "update",
-          "delete",
-          "assign_role_administrator",
-          "assign_role_user",
-        ],
-      },
-      {
-        entity: "author",
-        access: "own",
-        actions: [
-          "view",
-          "create",
-          "update",
-          "delete",
-          "assign_role_editor",
-          "assign_role_author",
-          "assign_role_contributor",
-        ],
+        actions: ["view", "create", "update", "delete"],
       },
       {
         entity: "author",
         access: "any",
-        actions: [
-          "view",
-          "create",
-          "update",
-          "delete",
-          "assign_role_editor",
-          "assign_role_author",
-          "assign_role_contributor",
-        ],
+        actions: ["view", "create", "update", "delete"],
       },
     ],
   },
   {
     name: "owner",
+    level: 1,
     permissions: [
       {
         entity: "user",
-        access: "own",
-        actions: [
-          "view",
-          "create",
-          "update",
-          "delete",
-          "assign_role_owner",
-          "assign_role_administrator",
-          "assign_role_user",
-        ],
-      },
-      {
-        entity: "user",
         access: "any",
-        actions: [
-          "view",
-          "create",
-          "update",
-          "delete",
-          "assign_role_owner",
-          "assign_role_administrator",
-          "assign_role_user",
-        ],
-      },
-      {
-        entity: "author",
-        access: "own",
-        actions: [
-          "view",
-          "create",
-          "update",
-          "delete",
-          "assign_role_editor",
-          "assign_role_author",
-          "assign_role_contributor",
-        ],
+        actions: ["view", "create", "update", "delete"],
       },
       {
         entity: "author",
         access: "any",
-        actions: [
-          "view",
-          "create",
-          "update",
-          "delete",
-          "assign_role_editor",
-          "assign_role_author",
-          "assign_role_contributor",
-        ],
+        actions: ["view", "create", "update", "delete"],
       },
     ],
   },
