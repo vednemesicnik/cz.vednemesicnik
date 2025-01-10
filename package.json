@@ -48,7 +48,6 @@
   },
   "devDependencies": {
     "@react-router/dev": "7.0.2",
-    "@react-router/fs-routes": "7.0.2",
     "@simplewebauthn/types": "12.0.0",
     "@types/bcryptjs": "2.4.6",
     "@types/node": "22.10.1",
