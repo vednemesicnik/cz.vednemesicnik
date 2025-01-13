@@ -52,7 +52,7 @@ module.exports = {
       plugins: ["@typescript-eslint", "import"],
       parser: "@typescript-eslint/parser",
       settings: {
-        "import/internal-regex": "^~/",
+        "import/internal-regex": "^~+/",
         "import/resolver": {
           node: {
             extensions: [".ts", ".tsx"],
@@ -99,6 +99,10 @@ module.exports = {
         pathGroups: [
           {
             pattern: "~/**",
+            group: "internal",
+          },
+          {
+            pattern: "~~/**",
             group: "internal",
           },
         ],
