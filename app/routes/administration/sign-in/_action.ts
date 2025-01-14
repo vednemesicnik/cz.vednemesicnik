@@ -6,7 +6,7 @@ import { setSessionAuthCookieSession } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
 import { checkHoneypot } from "~/utils/honeypot.server"
 
-import { schema } from "./components/password-form"
+import { schema } from "./_schema"
 import { createSession } from "./utils/create-session.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
