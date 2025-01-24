@@ -1,11 +1,9 @@
 /node_modules
-
 /.cache
 /build
 /public/build
 /prisma/data.db
-.env
-
-.DS_Store
-
-.react-router/
+/prisma/data.sql
+/.env
+/.DS_Store
+/.react-router/
