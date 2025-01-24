@@ -79,6 +79,9 @@ Components are styled with CSS modules for encapsulation and reuse. Non-route-sp
 - Implement dark mode and improve test coverage.
 - Upgrade to React 19 to leverage new features.
 - Strengthen authentication with WebAuthN and other modern methods.
+- Improve SEO and metadata handling for better search visibility.
+- Integrate analytics and tracking for user insights.
+- Implement a commenting system and social sharing features.
 
 ## Summary
 This project provides a flexible platform tailored to the needs of a student magazine, enabling efficient content management and creative expression. Built with modern technologies and a clear vision for future enhancements, it ensures scalability, maintainability, and an evolving feature set.
