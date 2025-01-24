@@ -1,14 +1,14 @@
 # Base node image
-FROM node:20-slim as base
+FROM node:22-slim AS base
 
 # Set node environment
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Install openssl for Prisma
 RUN apt-get update && apt-get install -y openssl sqlite3
 
 # Install all node_modules, including dev dependencies
-FROM base as deps
+FROM base AS deps
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ ADD package.json package-lock.json ./
 RUN npm ci --include=dev
 
 # Setup production node_modules
-FROM base as production-deps
+FROM base AS production-deps
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ ADD package.json package-lock.json ./
 RUN npm prune --omit=dev
 
 # Build the app
-FROM base as build
+FROM base AS build
 
 WORKDIR /app
 
@@ -46,8 +46,6 @@ ENV DATABASE_FILENAME="data.db"
 ENV DATABASE_DIR="/data"
 ENV DATABASE_PATH="$DATABASE_DIR/$DATABASE_FILENAME"
 ENV DATABASE_URL="file:$DATABASE_PATH"
-ENV CACHE_DATABASE_FILENAME="cache.db"
-ENV CACHE_DATABASE_PATH="$DATABASE_DIR/$CACHE_DATABASE_FILENAME"
 ENV INTERNAL_PORT="8081"
 ENV PORT="8080"
 # For WAL support: https://github.com/prisma/prisma-engines/issues/4675#issuecomment-1914383246
