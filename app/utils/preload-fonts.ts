@@ -1,4 +1,4 @@
-import type { LinkDescriptor } from "react-router";
+import type { LinkDescriptor } from "react-router"
 
 const fontMap = {
   regular: "IBMPlexSans-Regular",
@@ -12,7 +12,7 @@ const createLinkDescriptor = (font: string): LinkDescriptor => ({
   rel: "preload",
   as: "font",
   type: "font/woff2",
-  href: `/font/woff2/${font}.woff2`,
+  href: `/fonts/${font}.woff2?v=1.1.0`,
   crossOrigin: "anonymous",
 })
 

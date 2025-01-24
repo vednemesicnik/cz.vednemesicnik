@@ -1,5 +1,5 @@
 :root {
-  --font-family: IBMPlex;
+  --font-family: "IBM Plex Sans";
   --font-weight-regular: 400;
   --font-weight-text: 450;
   --font-weight-medium: 500;
@@ -11,10 +11,11 @@
 /*noinspection CssUnknownTarget*/
 
 @font-face {
-  font-family: IBMPlex;
+  font-family: "IBM Plex Sans";
   src:
-    url("/font/woff2/IBMPlexSans-Regular.woff2") format("woff2"),
-    url("/font/woff/IBMPlexSans-Regular.woff") format("woff");
+    local("IBM Plex Sans"),
+    local("IBMPlexSans"),
+    url("/fonts/IBMPlexSans-Regular.woff2?v=1.1.0") format("woff2");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -24,10 +25,11 @@
 /*noinspection CssUnknownTarget*/
 
 @font-face {
-  font-family: IBMPlex;
+  font-family: "IBM Plex Sans";
   src:
-    url("/font/woff2/IBMPlexSans-Text.woff2") format("woff2"),
-    url("/font/woff/IBMPlexSans-Text.woff") format("woff");
+    local("IBM Plex Sans Text"),
+    local("IBMPlexSans-Text"),
+    url("/fonts/IBMPlexSans-Text.woff2?v=1.1.0") format("woff2");
   font-style: normal;
   font-weight: 450;
   font-display: swap;
@@ -37,10 +39,11 @@
 /*noinspection CssUnknownTarget*/
 
 @font-face {
-  font-family: IBMPlex;
+  font-family: "IBM Plex Sans";
   src:
-    url("/font/woff2/IBMPlexSans-Medium.woff2") format("woff2"),
-    url("/font/woff/IBMPlexSans-Medium.woff") format("woff");
+    local("IBM Plex Sans Medium"),
+    local("IBMPlexSans-Medium"),
+    url("/fonts/IBMPlexSans-Medium.woff2?v=1.1.0") format("woff2");
   font-style: normal;
   font-weight: 500;
   font-display: swap;
@@ -50,10 +53,11 @@
 /*noinspection CssUnknownTarget*/
 
 @font-face {
-  font-family: IBMPlex;
+  font-family: "IBM Plex Sans";
   src:
-    url("/font/woff2/IBMPlexSans-SemiBold.woff2") format("woff2"),
-    url("/font/woff/IBMPlexSans-SemiBold.woff") format("woff");
+    local("IBM Plex Sans SemiBold"),
+    local("IBMPlexSans-SemiBold"),
+    url("/fonts/IBMPlexSans-SemiBold.woff2?v=1.1.0") format("woff2");
   font-style: normal;
   font-weight: 600;
   font-display: swap;
@@ -63,10 +67,11 @@
 /*noinspection CssUnknownTarget*/
 
 @font-face {
-  font-family: IBMPlex;
+  font-family: "IBM Plex Sans";
   src:
-    url("/font/woff2/IBMPlexSans-Bold.woff2") format("woff2"),
-    url("/font/woff/IBMPlexSans-Bold.woff") format("woff");
+    local("IBM Plex Sans Bold"),
+    local("IBMPlexSans-Bold"),
+    url("/fonts/IBMPlexSans-Bold.woff2?v=1.1.0") format("woff2");
   font-style: normal;
   font-weight: 700;
   font-display: swap;
