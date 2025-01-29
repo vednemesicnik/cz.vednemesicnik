@@ -6,7 +6,6 @@ npm-debug.log
 
 # Ignore build directories
 build
-public/build
 
 # Ignore environment variables
 .env
@@ -17,9 +16,6 @@ public/build
 
 # Ignore test coverage reports
 coverage
-
-# Ignore logs
-logs
 
 # Ignore temporary files
 tmp
@@ -32,10 +28,6 @@ Dockerfile
 # Ignore git files
 .gitignore
 .git
-
-# Ignore Prisma files
-prisma/data.db
-prisma/data.db-journal
 
 # Ignore example files
 *.example

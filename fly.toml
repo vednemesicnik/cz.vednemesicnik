@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for cz-vednemesicnik on 2024-12-07T16:16:58+01:00
+# fly.toml app configuration file generated for cz-vednemesicnik on 2025-01-29T16:31:47+01:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -7,8 +7,8 @@ app = 'cz-vednemesicnik'
 primary_region = 'fra'
 
 [build]
-  dockerfile = '/docker/Dockerfile'
-  ignorefile = '/docker/.dockerignore'
+  dockerfile = '/docker/fly/Dockerfile'
+  ignorefile = '.dockerignore'
 
 [[mounts]]
   source = 'data'

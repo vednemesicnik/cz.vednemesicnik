@@ -4,7 +4,7 @@ FROM node:22-slim AS base
 # Set node environment
 ENV NODE_ENV=production
 
-# Install openssl for Prisma
+# Install dependencies for database
 RUN apt-get update && apt-get install -y openssl sqlite3
 
 # Install all node_modules, including dev dependencies
@@ -42,7 +42,7 @@ RUN npm run build
 # Finally, build the production image with minimal footprint
 FROM base
 
-ENV DATABASE_FILENAME="data.db"
+ENV DATABASE_FILENAME="sqlite.db"
 ENV DATABASE_DIR="/data"
 ENV DATABASE_PATH="$DATABASE_DIR/$DATABASE_FILENAME"
 ENV DATABASE_URL="file:$DATABASE_PATH"
@@ -62,7 +62,8 @@ COPY --from=build /app/node_modules/.prisma /app/node_modules/.prisma
 COPY --from=build /app/build/server /app/build/server
 COPY --from=build /app/build/client /app/build/client
 COPY --from=build /app/package.json /app/package.json
-COPY --from=build /app/prisma /app/prisma
+COPY --from=build /app/prisma/schema.prisma /app/prisma/schema.prisma
+COPY --from=build /app/prisma/migrations /app/prisma/migrations
 COPY --from=build /app/scripts/docker-entry-point.sh /app/scripts/docker-entry-point.sh
 
 ENTRYPOINT [ "/app/scripts/docker-entry-point.sh" ]

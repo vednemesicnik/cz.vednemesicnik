@@ -5,8 +5,8 @@ services:
     image: vdm_app_image
     container_name: vdm_app_container
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: ../../
+      dockerfile: docker/local/Dockerfile
     ports:
       - "8080:8080"
     env_file:
