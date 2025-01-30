@@ -2,8 +2,8 @@ import { z } from "zod"
 
 import { contentStateConfig } from "~/config/content-state-config"
 
-const MAX_COVER_UPLOAD_SIZE = 1024 * 200 // 200 kB
-const MAX_PDF_UPLOAD_SIZE = 1024 * 1024 * 8 // 8 MB
+const MAX_COVER_UPLOAD_SIZE = 1024 * 1024 * 5 // 5 kB
+const MAX_PDF_UPLOAD_SIZE = 1024 * 1024 * 10 // 10 MB
 
 export const schema = z.object({
   ordinalNumber: z
@@ -24,7 +24,7 @@ export const schema = z.object({
       (file) => {
         return file.size <= MAX_COVER_UPLOAD_SIZE
       },
-      { message: "Obálka by měla mít maximální velikost 200 kB" }
+      { message: "Obálka by měla mít maximální velikost 5 MB" }
     ),
   pdf: z
     .instanceof(File, { message: "PDF soubor je povinný" })
@@ -35,7 +35,7 @@ export const schema = z.object({
       (file) => {
         return file.size <= MAX_PDF_UPLOAD_SIZE
       },
-      { message: "PDF soubor by měl mít maximální velikost 8 MB" }
+      { message: "PDF soubor by měl mít maximální velikost 10 MB" }
     ),
   state: z.enum(contentStateConfig.states as [string, ...string[]], {
     message: "Zvolený stav není podporován",
