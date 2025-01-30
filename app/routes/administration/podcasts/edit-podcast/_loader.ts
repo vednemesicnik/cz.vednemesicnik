@@ -20,6 +20,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       title: true,
       slug: true,
       description: true,
+      publishedAt: true,
       cover: {
         select: {
           id: true,

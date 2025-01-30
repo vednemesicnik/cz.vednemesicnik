@@ -15,6 +15,9 @@ export const schema = z.object({
     .regex(/^[^-]/, "Slug cannot start with a hyphen")
     .transform(slugify),
   description: z.string({ message: "Description is required" }),
+  publishedAt: z
+    .string({ message: "Published at is required" })
+    .date("Published at must be in the format dd.mm.yyyy"),
   cover: z
     .instanceof(File)
     .optional()

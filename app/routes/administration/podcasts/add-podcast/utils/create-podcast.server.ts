@@ -8,6 +8,7 @@ type Args = {
   slug: string
   description: string
   authorId: string
+  publishedAt: string
 }
 
 export async function createPodcast({
@@ -16,6 +17,7 @@ export async function createPodcast({
   slug,
   description,
   authorId,
+  publishedAt,
 }: Args) {
   const convertedCover = await convertImage(cover, {
     width: "1280",
@@ -37,7 +39,7 @@ export async function createPodcast({
             blob: convertedCover.blob,
           },
         },
-        publishedAt: new Date(),
+        publishedAt: new Date(publishedAt),
         state: "published",
         author: {
           connect: { id: authorId },

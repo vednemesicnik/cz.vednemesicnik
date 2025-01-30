@@ -11,6 +11,7 @@ type Args = {
   description: string
   coverId: string
   cover?: File
+  publishedAt: string
 }
 
 export async function updatePodcast({
@@ -20,6 +21,7 @@ export async function updatePodcast({
   description,
   coverId,
   cover,
+  publishedAt,
 }: Args) {
   const coverAltText = `Obálka podcastu ${title}`
   const convertedCover = cover
@@ -38,6 +40,8 @@ export async function updatePodcast({
         title,
         slug,
         description,
+        publishedAt: new Date(publishedAt),
+        state: "published",
         cover: {
           update: {
             where: { id: coverId },

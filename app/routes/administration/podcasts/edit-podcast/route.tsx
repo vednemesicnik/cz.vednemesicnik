@@ -9,10 +9,19 @@ import {
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useState } from "react"
-import { Form } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
+import { Button } from "~/components/button"
+import { Fieldset } from "~/components/fieldset"
+import { FileInput } from "~/components/file-input"
+import { Form } from "~/components/form"
+import { FormActions } from "~/components/form-actions"
 import { Headline } from "~/components/headline"
+import { Input } from "~/components/input"
+import { LinkButton } from "~/components/link-button"
+import { Select } from "~/components/select"
+import { TextArea } from "~/components/text-area"
+import { getFormattedDateString } from "~/utils/get-formatted-date-string"
 import { slugify } from "~/utils/slugify"
 
 import type { Route } from "./+types/route"
@@ -34,6 +43,7 @@ export default function Route({
       description: loaderData.podcast.description,
       coverId: loaderData.podcast.cover?.id,
       authorId: loaderData.session.user.authorId,
+      publishedAt: getFormattedDateString(loaderData.podcast.publishedAt),
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -68,70 +78,54 @@ export default function Route({
           {...getInputProps(fields.coverId, { type: "hidden" })}
           defaultValue={fields.coverId.initialValue}
         />
-        <fieldset>
-          <legend>Detaily</legend>
-          <label htmlFor={fields.title.id}>Název: </label>
-          <input
-            {...getInputProps(fields.title, { type: "text" })}
+
+        <Fieldset legend={"Detaily"}>
+          <Input
+            label={"Název"}
             onChange={(event) => setTitle(event.target.value)}
             placeholder={"Název podcastu"}
             value={title}
+            errors={fields.title.errors}
+            {...getInputProps(fields.title, { type: "text" })}
           />
-          {fields.title.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.slug.id}>Slug: </label>
-          <input
-            {...getInputProps(fields.slug, { type: "text" })}
+
+          <Input
+            label={"Slug"}
             onChange={(event) => setSlug(slugify(event.target.value))}
             onFocus={() => setIsSlugFocused(true)}
             placeholder={"slug-podcastu"}
             value={slug}
+            errors={fields.slug.errors}
+            {...getInputProps(fields.slug, { type: "text" })}
           />
-          {fields.slug.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.description.id}>Popis: </label>
-          <textarea
-            {...getTextareaProps(fields.description)}
-            defaultValue={fields.description.initialValue}
+
+          <TextArea
+            label={"Popis"}
             placeholder={"Popis podcastu"}
+            errors={fields.description.errors}
+            {...getTextareaProps(fields.description)}
           />
-          {fields.description.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.cover.id}>Obálka: </label>
-          <input
+
+          <Input
+            label={"Datum vydání"}
+            errors={fields.publishedAt.errors}
+            {...getInputProps(fields.publishedAt, { type: "date" })}
+          />
+
+          <FileInput
+            label={"Obálka"}
+            accept={"image"}
+            errors={fields.cover.errors}
             {...getInputProps(fields.cover, { type: "file" })}
-            accept={"image/*"}
           />
-          {fields.cover.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-        </fieldset>
-        <fieldset>
-          <legend>Autor</legend>
-          <label htmlFor={fields.authorId.id}>Autor</label>
-          <select {...getSelectProps(fields.authorId)}>
+        </Fieldset>
+
+        <Fieldset legend={"Informace o autorovi"}>
+          <Select
+            label={"Autor"}
+            errors={fields.authorId.errors}
+            {...getSelectProps(fields.authorId)}
+          >
             {loaderData.authors.map((author) => {
               return (
                 <option key={author.id} value={author.id}>
@@ -139,11 +133,17 @@ export default function Route({
                 </option>
               )
             })}
-          </select>
-        </fieldset>
+          </Select>
+        </Fieldset>
+
         <AuthenticityTokenInput />
-        <br />
-        <button type="submit">Upravit podcast</button>
+
+        <FormActions>
+          <Button type="submit" variant={"default"}>
+            Upravit
+          </Button>
+          <LinkButton to={"/administration/podcasts"}>Zrušit</LinkButton>
+        </FormActions>
       </Form>
     </>
   )

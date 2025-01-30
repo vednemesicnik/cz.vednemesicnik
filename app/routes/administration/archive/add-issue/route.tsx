@@ -157,7 +157,11 @@ export default function Route({
         </Fieldset>
 
         <Fieldset legend={"Informace o autorovi"}>
-          <Select label={"Autor"} {...getSelectProps(fields.authorId)}>
+          <Select
+            label={"Autor"}
+            errors={fields.authorId.errors}
+            {...getSelectProps(fields.authorId)}
+          >
             {loaderData.authors.map((author) => (
               <option key={author.id} value={author.id}>
                 {author.name}
