@@ -19,7 +19,10 @@
     "prisma:db:push": "prisma db push",
     "prisma:db:seed": "prisma db seed",
     "prisma:format": "prisma format",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "sql:generate": "sh ./scripts/sql-generate.sh",
+    "docker:compose:up": "sh ./scripts/docker-compose-up.sh",
+    "docker:compose:down": "sh ./scripts/docker-compose-down.sh"
   },
   "dependencies": {
     "@conform-to/react": "1.2.2",
