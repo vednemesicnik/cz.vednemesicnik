@@ -1,4 +1,4 @@
 #!/bin/sh -ex
 
 cd docker/local
-docker-compose up -d
+docker compose up -d
