@@ -46,7 +46,7 @@ ENV DATABASE_FILENAME="sqlite.db"
 ENV DATABASE_DIR="/data"
 ENV DATABASE_PATH="$DATABASE_DIR/$DATABASE_FILENAME"
 ENV DATABASE_URL="file:$DATABASE_PATH"
-ENV INTERNAL_PORT="8081"
+ENV HOST="0.0.0.0"
 ENV PORT="8080"
 # For WAL support: https://github.com/prisma/prisma-engines/issues/4675#issuecomment-1914383246
 ENV PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK="1"
@@ -64,6 +64,6 @@ COPY --from=build /app/build/client /app/build/client
 COPY --from=build /app/package.json /app/package.json
 COPY --from=build /app/prisma/schema.prisma /app/prisma/schema.prisma
 COPY --from=build /app/prisma/migrations /app/prisma/migrations
-COPY --from=build /app/scripts/docker-entry-point.sh /app/scripts/docker-entry-point.sh
+COPY --from=build /app/scripts/docker-entry-point-fly.sh /app/scripts/docker-entry-point.sh
 
 ENTRYPOINT [ "/app/scripts/docker-entry-point.sh" ]
