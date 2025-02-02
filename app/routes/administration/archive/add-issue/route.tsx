@@ -7,6 +7,7 @@ import {
   useForm,
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
+import { useNavigation } from "react-router"
 
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
@@ -30,6 +31,8 @@ export default function Route({
   actionData,
 }: Route.ComponentProps) {
   const { user } = loaderData.session
+
+  const { state } = useNavigation()
 
   const [form, fields] = useForm({
     id: "add-archived-issue",
@@ -114,7 +117,7 @@ export default function Route({
         {...getFormProps(form)}
         errors={form.errors}
       >
-        <Fieldset legend={"Základní informace"}>
+        <Fieldset legend={"Základní informace"} disabled={state !== "idle"}>
           <Input
             label={"Pořadové číslo"}
             {...getInputProps(fields.ordinalNumber, { type: "number" })}
@@ -129,7 +132,7 @@ export default function Route({
           />
         </Fieldset>
 
-        <Fieldset legend={"Soubory"}>
+        <Fieldset legend={"Soubory"} disabled={state !== "idle"}>
           <FileInput
             label={"Obálka"}
             accept={"image"}
@@ -146,7 +149,7 @@ export default function Route({
           />
         </Fieldset>
 
-        <Fieldset legend={"Stav publikace"}>
+        <Fieldset legend={"Stav publikace"} disabled={state !== "idle"}>
           <Select label={"Stav"} {...getSelectProps(fields.state)}>
             {contentStates.map((state, index) => (
               <option key={index} value={state}>
@@ -156,7 +159,7 @@ export default function Route({
           </Select>
         </Fieldset>
 
-        <Fieldset legend={"Informace o autorovi"}>
+        <Fieldset legend={"Informace o autorovi"} disabled={state !== "idle"}>
           <Select
             label={"Autor"}
             errors={fields.authorId.errors}
@@ -175,7 +178,7 @@ export default function Route({
         <FormActions>
           <Button
             type="submit"
-            disabled={contentStates.length === 0}
+            disabled={contentStates.length === 0 || state !== "idle"}
             variant={"default"}
           >
             Přidat
