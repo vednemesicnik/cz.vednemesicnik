@@ -6,7 +6,7 @@ export const loader = async () => {
       state: "published",
     },
     orderBy: {
-      publishedAt: "desc",
+      releasedAt: "desc",
     },
     take: 1,
     select: {

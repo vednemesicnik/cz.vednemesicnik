@@ -15,7 +15,7 @@ import { getIssuePdfSrc } from "~/utils/get-issue-pdf-src"
 import type { Route } from "./+types/route"
 
 export default function Archive({ loaderData }: Route.ComponentProps) {
-  const { archivedIssues } = loaderData
+  const { issues, issuesCount } = loaderData
 
   const [searchParams] = useSearchParams()
   const limit = Number(searchParams.get(LIMIT_PARAM))
@@ -27,7 +27,7 @@ export default function Archive({ loaderData }: Route.ComponentProps) {
       <Headline>Naše čísla pohromadě</Headline>
 
       <TileGrid>
-        {archivedIssues.map((issue) => {
+        {issues.map((issue) => {
           const { id, cover, pdf, label } = issue
 
           if (cover === null || pdf === null) return null
@@ -58,7 +58,7 @@ export default function Archive({ loaderData }: Route.ComponentProps) {
         })}
       </TileGrid>
 
-      {archivedIssues.length < limit ? null : (
+      {issuesCount <= limit ? null : (
         <LoadMoreContent limit={limit + 20} action={"/archive"} />
       )}
     </Page>

@@ -12,12 +12,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect(url.toString(), { status: 301 })
   }
 
-  const archivedIssues = await prisma.issue.findMany({
+  const issuesPromise = prisma.issue.findMany({
     where: {
       state: "published",
     },
     orderBy: {
-      publishedAt: "desc",
+      releasedAt: "desc",
     },
     take: Number(limit),
     select: {
@@ -38,5 +38,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   })
 
-  return { archivedIssues }
+  const issuesCountPromise = prisma.issue.count({
+    where: {
+      state: "published",
+    },
+  })
+
+  const [issues, issuesCount] = await Promise.all([
+    issuesPromise,
+    issuesCountPromise,
+  ])
+
+  return { issues, issuesCount }
 }
