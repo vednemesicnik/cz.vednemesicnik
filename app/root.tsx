@@ -29,12 +29,10 @@ import "~/styles/global.css"
 import "~/styles/fonts.css"
 import "~/styles/sizes.css"
 import "~/styles/colors.css"
-import { preloadFonts } from "~/utils/preload-fonts"
 
 import type { Route } from "./+types/root"
 
 export const links: LinksFunction = () => [
-  ...preloadFonts("regular", "text", "medium", "semiBold", "bold"),
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   { rel: "alternate icon", href: "/favicon.ico" },
 ]
