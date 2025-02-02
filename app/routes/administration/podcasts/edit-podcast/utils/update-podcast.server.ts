@@ -28,7 +28,7 @@ export async function updatePodcast({
     ? await convertImage(cover, {
         width: "1280",
         height: "1280",
-        quality: "100",
+        quality: "80",
         format: "jpeg",
       })
     : undefined

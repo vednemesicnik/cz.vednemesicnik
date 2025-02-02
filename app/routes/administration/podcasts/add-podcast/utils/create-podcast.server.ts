@@ -22,7 +22,7 @@ export async function createPodcast({
   const convertedCover = await convertImage(cover, {
     width: "1280",
     height: "1280",
-    quality: "100",
+    quality: "80",
     format: "jpeg",
   })
 

@@ -71,7 +71,7 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
   const convertedCover = await convertImage(cover, {
     width: "905",
     height: "1280",
-    quality: "100",
+    quality: "80",
     format: "jpeg",
   })
 
