@@ -4,23 +4,34 @@ Next to the automatic snapshots, taken by Fly.io every 24 hours, stored for 5 da
 SQLite database is a single file, so it is easy to copy it to another location.
 
 ## How to manually back up the database
-1. SSH into the Fly.io instance.
+1. SSH into console.
 ```shell
 fly ssh console --app cz-vednemesicnik
 ```
 2. Back up the database file by copying it with the `.backup` command.
 ```shell
-sqlite3 $DATABASE_URL ".backup /app/backup-$(date +%Y-%m-%d).db"
+sqlite3 $DATABASE_URL ".backup /app/backup.db"
 ```
 3. Zip the backup file.
 ```shell
-gzip /app/backup-$(date +%Y-%m-%d).db
+gzip /app/backup.db
 ```
-4. Download the zipped backup file to the local machine in the new terminal window.
+4. Exit the console by pressing `Ctrl`+`D`.
+5. SSH in to the sftp shell.
 ```shell
-fly ssh sftp get --app cz-vednemesicnik /app/backup-$(date +%Y-%m-%d).db.gz ~/Downloads/cz-vednemesicnik-backup-$(date +%Y-%m-%d).db.gz
+fly ssh sftp shell --app cz-vednemesicnik
 ```
-5. Delete the zipped backup file from the app directory.
+6. Download the zipped backup file.
 ```shell
-rm /app/backup-$(date +%Y-%m-%d).db.gz
+get /app/backup.db.gz /path/to/cz-vednemesicnik-backup-$(date +%Y-%m-%d).db.gz
 ```
+7. Exit the sftp shell by pressing `Ctrl`+`D`.
+8. SSH into the console again.
+```shell
+fly ssh console --app cz-vednemesicnik
+```
+9. Delete the zipped backup file from the app directory.
+```shell
+rm /app/backup.db.gz
+```
+10. Exit the console by pressing `Ctrl`+`D`.

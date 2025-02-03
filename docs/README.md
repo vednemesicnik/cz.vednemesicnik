@@ -12,3 +12,4 @@ This is the documentation for the project.
 - [Notes](_notes.md)
 - [Deploy to Fly.io](_deploy-to-fly.md)
 - [Manual Database Backup](_manual-database-backup.md)
+- [Manual Database Restore](_manual-database-restore.md)
