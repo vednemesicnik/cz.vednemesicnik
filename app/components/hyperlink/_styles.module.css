@@ -12,8 +12,7 @@
   line-height: inherit;
 
   &:before {
-    content: "'";
-    visibility: hidden;
+    content: "\200B"; /* Zero-width space to keep the height of the line-height */
   }
 }
 
