@@ -12,7 +12,7 @@
   line-height: inherit;
 
   &:before {
-    content: "|";
+    content: "'";
     visibility: hidden;
   }
 }
