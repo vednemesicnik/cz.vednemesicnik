@@ -34,7 +34,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
       <Paragraph>Máte nějaký nápad nebo nám chcete něco sdělit?</Paragraph>
       <Paragraph>
         Napište nám na{" "}
-        <MailHyperlink to={EMAIL_ADDRESS}>{EMAIL_ADDRESS}</MailHyperlink>.
+        <MailHyperlink address={EMAIL_ADDRESS}>{EMAIL_ADDRESS}</MailHyperlink>.
       </Paragraph>
     </Page>
   )

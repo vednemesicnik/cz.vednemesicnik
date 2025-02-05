@@ -34,12 +34,12 @@ export default function Route() {
       <List>
         <ListItem>Literární kavárna Měsíc ve dne</ListItem>
         <ListItem>
-          <Hyperlink to="https://www.bigy-cb.cz/bigy/">
+          <Hyperlink href="https://www.bigy-cb.cz/bigy/">
             Biskupské gymnázium J. N. Neumanna v Č. Budějovicích
           </Hyperlink>
         </ListItem>
         <ListItem>
-          <Hyperlink to="https://www.fokus-cb.cz/">
+          <Hyperlink href="https://www.fokus-cb.cz/">
             Fokus České Budějovice
           </Hyperlink>
         </ListItem>

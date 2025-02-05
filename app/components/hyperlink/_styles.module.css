@@ -1,24 +1,11 @@
-.hyperlink {
-  display: inline;
-  font-weight: var(--font-weight-medium);
-  font-size: inherit;
-  line-height: inherit;
-}
-
 .iconWrapper {
   display: inline-flex;
   align-items: center;
   font-size: inherit;
   line-height: inherit;
+  margin-left: 2px;
 
   &:before {
     content: "\200B"; /* Zero-width space to keep the height of the line-height */
   }
-}
-
-.icon {
-  font-size: inherit;
-  width: 1em;
-  height: 1em;
-  fill: currentColor;
 }

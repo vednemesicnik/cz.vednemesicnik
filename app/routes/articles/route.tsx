@@ -9,7 +9,7 @@ export default function Route() {
       <Headline>Čtení, které vás chytne</Headline>
       <Paragraph>
         Všechny naše <span>články</span> si můžete prozatím přečíst na platformě{" "}
-        <Hyperlink to={"https://medium.com/vednemesicnik"}>Medium</Hyperlink>.
+        <Hyperlink href={"https://medium.com/vednemesicnik"}>Medium</Hyperlink>.
       </Paragraph>
     </Page>
   )

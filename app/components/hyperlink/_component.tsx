@@ -1,45 +1,30 @@
-import { combineClasses } from "@liborgabrhel/style-utils"
-import { type ComponentProps, type ReactNode } from "react"
+import { type ComponentProps, type JSX } from "react"
+
+import { BaseHyperlink } from "~/components/base-hyperlink"
+import { OpenInNewIcon } from "~/components/icons/open-in-new-icon"
 
 import styles from "./_styles.module.css"
 
-type Props = Omit<ComponentProps<"a">, "href" | "rel" | "target"> & {
-  to: string
-  title?: string
-  className?: string
-  children: ReactNode
-  hasIcon?: boolean
-}
+type Props = Omit<ComponentProps<"a">, "rel" | "target">
 
-export const Hyperlink = ({
-  to,
-  title,
-  className,
-  children,
-  hasIcon = true,
-  ...rest
-}: Props) => {
+/**
+ * Hyperlink component renders a `BaseHyperlink` component with optional external link icon.
+ *
+ * @param {Object} props - The properties object.
+ * @param {React.ReactNode} props.children - The content to be displayed inside the anchor element.
+ * @param {Object} [props.rest] - Additional properties to be passed to the anchor element.
+ * @returns {JSX.Element} The rendered anchor element with external link icon.
+ */
+export const Hyperlink = ({ children, ...rest }: Props): JSX.Element => {
   return (
-    <a
-      href={to}
-      className={combineClasses(styles.hyperlink, className)}
-      title={title}
-      target={"_blank"}
-      rel="noreferrer"
-      {...rest}
-    >
+    <BaseHyperlink {...rest}>
       {children}
-      {hasIcon && (
-        <span className={styles.iconWrapper}>
-          <svg
-            xmlns={"http://www.w3.org/2000/svg"}
-            viewBox={"0 -960 960 960"}
-            className={styles.icon}
-          >
-            <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
-          </svg>
-        </span>
-      )}
-    </a>
+      <span
+        className={styles.iconWrapper}
+        aria-label={"Ikona externího odkazu"}
+      >
+        <OpenInNewIcon />
+      </span>
+    </BaseHyperlink>
   )
 }

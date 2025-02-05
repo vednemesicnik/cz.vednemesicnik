@@ -93,7 +93,7 @@ export const FileInput = ({
           />
         </section>
         <Hyperlink
-          to={fileUrl ?? ""}
+          href={fileUrl ?? ""}
           className={combineClasses(
             styles.previewLink,
             applyClasses(styles.visible).if(fileUrl !== null)

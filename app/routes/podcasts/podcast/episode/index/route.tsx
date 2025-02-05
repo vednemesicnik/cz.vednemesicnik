@@ -25,7 +25,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
       <List>
         {loaderData.episode.links.map((link) => (
           <ListItem key={link.id}>
-            <Hyperlink to={link.url}>{link.label}</Hyperlink>
+            <Hyperlink href={link.url}>{link.label}</Hyperlink>
           </ListItem>
         ))}
       </List>

@@ -1,0 +1,6 @@
+.baseHyperlink {
+  display: inline;
+  font-weight: var(--font-weight-medium);
+  font-size: inherit;
+  line-height: inherit;
+}

@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 import { Headline } from "~/components/headline"
 import { MailHyperlink } from "~/components/mail-hyperlink"
 import { Page } from "~/components/page"
@@ -13,7 +15,7 @@ export default function Route() {
       <Paragraph>Našli jste chybu nebo máte nápad na vylepšení?</Paragraph>
       <Paragraph>
         Napište nám na{" "}
-        <MailHyperlink to={SUPPORT_EMAIL_ADDRESS}>
+        <MailHyperlink address={SUPPORT_EMAIL_ADDRESS}>
           {SUPPORT_EMAIL_ADDRESS}
         </MailHyperlink>
         .
