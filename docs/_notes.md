@@ -11,3 +11,13 @@
 
 - RSS 2.0
 
+## Components
+
+- Compound components pattern
+- Presentational and container components pattern
+- Single Responsibility Principle
+- Open-Closed Principle
+- Liskov Substitution Principle
+- Interface Segregation Principle
+- Dependency Inversion Principle
+- Composition over Inheritance
