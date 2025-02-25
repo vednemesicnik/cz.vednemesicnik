@@ -12,18 +12,16 @@ type Props = {
 }
 
 export const ArticleLinkAuthor = ({ children, imageSrc, imageAlt }: Props) => {
-  const { width, height, placeholderWidth, placeholderHeight } =
-    sizeConfig.articleLinkAuthorImage
+  const { width, height } = sizeConfig.articleLinkAuthorImage
 
   return (
     <section className={styles.container}>
       <Image
         src={imageSrc}
         alt={imageAlt}
+        fallback={"/images/article-link-author-image"}
         width={width}
         height={height}
-        placeholderWidth={placeholderWidth}
-        placeholderHeight={placeholderHeight}
       />
       <p className={styles.paragraph}>{children}</p>
     </section>

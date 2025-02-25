@@ -200,9 +200,9 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
 
   const convertedCover = cover
     ? await convertImage(cover, {
-        width: "905",
-        height: "1280",
-        quality: "80",
+        width: 905,
+        height: 1280,
+        quality: 80,
         format: "jpeg",
       })
     : undefined

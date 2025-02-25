@@ -26,9 +26,9 @@ export async function updatePodcast({
   const coverAltText = `Obálka podcastu ${title}`
   const convertedCover = cover
     ? await convertImage(cover, {
-        width: "1280",
-        height: "1280",
-        quality: "80",
+        width: 1280,
+        height: 1280,
+        quality: 80,
         format: "jpeg",
       })
     : undefined

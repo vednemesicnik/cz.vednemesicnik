@@ -24,8 +24,6 @@ export default function Route({ loaderData }: Route.ComponentProps) {
         alt={imageAlt}
         width={sizeConfig.userImage.width}
         height={sizeConfig.userImage.height}
-        placeholderWidth={sizeConfig.userImage.placeholderWidth}
-        placeholderHeight={sizeConfig.userImage.placeholderHeight}
       />
       <p>e-mail: {loaderData.user.email}</p>
       <p>uživatelské jméno: {loaderData.user.username}</p>

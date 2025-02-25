@@ -4,9 +4,9 @@ import type { FormatEnum } from "sharp"
 export const sharp = serverSharp.default
 
 type Options = {
-  width: string | null
-  height: string | null
-  quality: string | null
+  width: number | null
+  height: number | null
+  quality: number | null
   format: keyof FormatEnum | null
 }
 
@@ -31,9 +31,9 @@ export const convertImage = async (
 
   const metadata = await sharpImage.metadata()
 
-  const width = options.width ? Number(options.width) : metadata.width
-  const height = options.height ? Number(options.height) : metadata.height
-  const quality = options.quality ? Number(options.quality) : 100
+  const width = options.width ? options.width : metadata.width
+  const height = options.height ? options.height : metadata.height
+  const quality = options.quality ? options.quality : 100
   const format = options.format ? options.format : "jpeg"
 
   sharpImage.resize({ width })
