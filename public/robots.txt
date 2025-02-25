@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /administration/
+Allow: /
+
+# Sitemap: https://vednemesicnik.cz/sitemap/sitemap-index.xml TODO: Uncomment when ready
