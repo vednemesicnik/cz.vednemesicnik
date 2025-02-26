@@ -53,7 +53,8 @@ export const createImageResponse = (
     blob: Uint8Array
     contentType: string
   },
-  fileName: string
+  fileName: string,
+  tag: string
 ) => {
   return new Response(image.blob, {
     headers: {
@@ -61,6 +62,7 @@ export const createImageResponse = (
       "Content-Length": image.blob.byteLength.toString(),
       "Content-Disposition": `inline; filename="${fileName}"`,
       "Cache-Control": "public, max-age=31536000, immutable", // 31536000 seconds = 365 days
+      ETag: tag,
     },
   })
 }

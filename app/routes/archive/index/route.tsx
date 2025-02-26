@@ -12,7 +12,6 @@ import { TileGridItem } from "~/components/tile-grid-item"
 import { sizeConfig } from "~/config/size-config"
 import { getIssueCoverSrc } from "~/utils/get-issue-cover-src"
 import { getIssuePdfSrc } from "~/utils/get-issue-pdf-src"
-import { useSequentialLoading } from "~/utils/use-sequential-loading"
 
 import type { Route } from "./+types/route"
 
@@ -22,21 +21,12 @@ export default function Route({ loaderData }: Route.ComponentProps) {
   const [searchParams] = useSearchParams()
   const limit = Number(searchParams.get(LIMIT_PARAM))
 
-  const {
-    shouldLoadLowRes,
-    shouldLoadHighRes,
-    handleLowResLoaded,
-    handleHighResLoaded,
-  } = useSequentialLoading({
-    itemsCount: issues.length,
-  })
-
   return (
     <Page>
       <Headline>Naše čísla pohromadě</Headline>
 
       <TileGrid>
-        {issues.map((issue, index) => {
+        {issues.map((issue) => {
           const { id, cover, pdf, label } = issue
 
           if (cover === null || pdf === null) return null
@@ -51,18 +41,9 @@ export default function Route({ loaderData }: Route.ComponentProps) {
                 <Tile label={label}>
                   <Image
                     src={coverSrc}
-                    fallback={"/images/issue-cover"}
                     alt={coverAlt}
                     width={sizeConfig.archivedIssueCover.width}
                     height={sizeConfig.archivedIssueCover.height}
-                    shouldLoadLowRes={shouldLoadLowRes(index)}
-                    shouldLoadHighRes={shouldLoadHighRes(index)}
-                    onLowResLoad={() => {
-                      handleLowResLoaded(index)
-                    }}
-                    onHighResLoad={() => {
-                      handleHighResLoaded(index)
-                    }}
                   />
                 </Tile>
               </Link>

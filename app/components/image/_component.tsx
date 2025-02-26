@@ -1,6 +1,6 @@
 import { combineClasses } from "@liborgabrhel/style-utils"
 import { animated, useSpring } from "@react-spring/web"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { createImageSources } from "~/utils/create-image-sources"
 import { useHydrated } from "~/utils/use-hydrated"
@@ -12,29 +12,13 @@ const DEFAULT_PLACEHOLDER_QUALITY = 25
 
 type Props = {
   src: string
-  fallback?: string
   alt: string
   width: number
   height: number
   className?: string
-  shouldLoadLowRes?: boolean
-  shouldLoadHighRes?: boolean
-  onLowResLoad?: () => void
-  onHighResLoad?: () => void
 }
 
-export const Image = ({
-  src,
-  fallback,
-  alt,
-  width,
-  height,
-  className,
-  shouldLoadLowRes = true,
-  shouldLoadHighRes = true,
-  onLowResLoad,
-  onHighResLoad,
-}: Props) => {
+export const Image = ({ src, alt, width, height, className }: Props) => {
   const isHydrated = useHydrated()
 
   const [isLowResImageLoaded, setIsLowResImageLoaded] = useState(false)
@@ -50,17 +34,11 @@ export const Image = ({
     avifSrc_1x: avifPlaceholderSrc_1x,
     webpSrc_1x: webpPlaceholderSrc_1x,
     jpegSrc_1x: jpegPlaceholderSrc_1x,
-  } = shouldLoadLowRes || isLowResImageLoaded
-    ? createImageSources(src, {
-        width: calculatedPlaceholderWidth,
-        height: calculatedPlaceholderHeight,
-        quality: DEFAULT_PLACEHOLDER_QUALITY,
-      })
-    : {
-        avifSrc_1x: `${fallback}.avif`,
-        webpSrc_1x: `${fallback}.webp`,
-        jpegSrc_1x: `${fallback}.jpeg`,
-      }
+  } = createImageSources(src, {
+    width: calculatedPlaceholderWidth,
+    height: calculatedPlaceholderHeight,
+    quality: DEFAULT_PLACEHOLDER_QUALITY,
+  })
 
   const {
     avifSrc_1x,
@@ -69,71 +47,55 @@ export const Image = ({
     webpSrc_2x,
     jpegSrc_1x,
     jpegSrc_2x,
-  } =
-    shouldLoadHighRes || isHighResImageLoaded
-      ? createImageSources(src, {
-          width,
-          height,
-          quality: DEFAULT_QUALITY,
-        })
-      : {
-          avifSrc_1x: "",
-          avifSrc_2x: "",
-          webpSrc_1x: "",
-          webpSrc_2x: "",
-          jpegSrc_1x: "",
-          jpegSrc_2x: "",
-        }
+  } = createImageSources(src, {
+    width,
+    height,
+    quality: DEFAULT_QUALITY,
+  })
 
-  const handleLowResImageLoad = useCallback(() => {
+  const handleLowResImageLoad = () => {
     setIsLowResImageLoaded(true)
-    if (onLowResLoad !== undefined) {
-      onLowResLoad()
-    }
-  }, [onLowResLoad])
+  }
 
-  const handleHighResImageLoad = useCallback(() => {
+  const handleHighResImageLoad = () => {
     setIsHighResImageLoaded(true)
-    if (onHighResLoad !== undefined) {
-      onHighResLoad()
-    }
-  }, [onHighResLoad])
+  }
 
   useEffect(() => {
-    if (shouldLoadLowRes && lowResImageRef.current) {
+    if (lowResImageRef.current) {
       const lowResImage = lowResImageRef.current
 
       if (lowResImage.complete) {
-        handleLowResImageLoad()
+        setIsLowResImageLoaded(true)
       }
     }
-  }, [shouldLoadLowRes, handleLowResImageLoad])
+  }, [])
 
   useEffect(() => {
-    if (shouldLoadHighRes && highResImageRef.current) {
+    if (highResImageRef.current) {
       const highResImage = highResImageRef.current
 
       if (highResImage.complete) {
-        handleHighResImageLoad()
+        setIsHighResImageLoaded(true)
       }
     }
-  }, [shouldLoadHighRes, handleHighResImageLoad])
+  }, [])
 
-  const placeholderImageSpringStyles = useSpring({
+  const lowResImageSpringStyles = useSpring({
     opacity: isHighResImageLoaded ? 0 : 1,
-    from: { opacity: 1 },
+    from: { opacity: isLowResImageLoaded ? 1 : 0 },
   })
 
-  const imageSpringStyles = useSpring({
+  const highResImageSpringStyles = useSpring({
     opacity: isHighResImageLoaded ? 1 : 0,
-    from: { opacity: 0 },
+    from: { opacity: isHighResImageLoaded ? 1 : 0 },
   })
 
   return (
     <section className={combineClasses(styles.container, className)}>
       <animated.picture
-        className={styles.placeholderPicture}
-        style={placeholderImageSpringStyles}
+        className={styles.lowResPicture}
+        style={lowResImageSpringStyles}
       >
         <source type="image/avif" srcSet={avifPlaceholderSrc_1x} />
         <source type="image/webp" srcSet={webpPlaceholderSrc_1x} />
@@ -145,12 +107,17 @@ export const Image = ({
           width={width}
           height={height}
           loading={"lazy"}
+          decoding={"async"}
+          fetchPriority={"high"}
           onLoad={handleLowResImageLoad}
         />
       </animated.picture>
 
-      {isHydrated && (shouldLoadHighRes || isHighResImageLoaded) && (
-        <animated.picture className={styles.picture} style={imageSpringStyles}>
+      {isHydrated && (
+        <animated.picture
+          className={styles.highResPicture}
+          style={highResImageSpringStyles}
+        >
           <source
             type="image/avif"
             srcSet={`${avifSrc_1x}, ${avifSrc_2x} 2x`}
@@ -168,6 +135,8 @@ export const Image = ({
             width={width}
             height={height}
             loading={"lazy"}
+            decoding={"async"}
+            fetchPriority={"auto"}
             onLoad={handleHighResImageLoad}
           />
         </animated.picture>

@@ -5,7 +5,7 @@
   border-radius: 3px;
 }
 
-.placeholderPicture {
+.lowResPicture {
   display: flex;
   position: relative;
   opacity: 1;
@@ -13,7 +13,7 @@
   background-clip: padding-box;
 }
 
-.picture {
+.highResPicture {
   display: flex;
   position: absolute;
   top: 0;

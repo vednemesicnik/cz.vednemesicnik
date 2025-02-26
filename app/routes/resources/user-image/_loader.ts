@@ -1,4 +1,5 @@
 import { prisma } from "~/utils/db.server"
+import { getContentHash } from "~/utils/hash.server"
 import { createImageResponse, getImageParams } from "~/utils/image.server"
 import { convertImage } from "~/utils/sharp.server"
 
@@ -21,5 +22,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     format,
   })
 
-  return createImageResponse(convertedImage, userId)
+  const tag = getContentHash(request.url)
+
+  return createImageResponse(convertedImage, userId, tag)
 }

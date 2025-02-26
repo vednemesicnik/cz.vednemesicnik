@@ -16,13 +16,7 @@ export const ArticleLinkAuthor = ({ children, imageSrc, imageAlt }: Props) => {
 
   return (
     <section className={styles.container}>
-      <Image
-        src={imageSrc}
-        alt={imageAlt}
-        fallback={"/images/article-link-author-image"}
-        width={width}
-        height={height}
-      />
+      <Image src={imageSrc} alt={imageAlt} width={width} height={height} />
       <p className={styles.paragraph}>{children}</p>
     </section>
   )

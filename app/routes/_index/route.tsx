@@ -37,7 +37,6 @@ export default function Route({ loaderData }: Route.ComponentProps) {
                 <Image
                   src={coverSrc}
                   alt={coverAlt}
-                  fallback={"/images/issue-cover"}
                   width={sizeConfig.archivedIssueCover.width}
                   height={sizeConfig.archivedIssueCover.height}
                 />
