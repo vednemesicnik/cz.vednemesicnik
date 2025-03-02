@@ -1,5 +1,5 @@
 import { prisma } from "~/utils/db.server"
-import { convertImage } from "~/utils/sharp.server"
+import { getConvertedImageStream } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
@@ -19,7 +19,7 @@ export async function createPodcast({
   authorId,
   publishedAt,
 }: Args) {
-  const convertedCover = await convertImage(cover, {
+  const convertedCover = await getConvertedImageStream(cover, {
     width: 1280,
     height: 1280,
     quality: 80,
@@ -36,7 +36,7 @@ export async function createPodcast({
           create: {
             altText: `Obálka podcastu ${title}`,
             contentType: convertedCover.contentType,
-            blob: convertedCover.blob,
+            blob: Uint8Array.from(await convertedCover.stream.toBuffer()),
           },
         },
         publishedAt: new Date(publishedAt),

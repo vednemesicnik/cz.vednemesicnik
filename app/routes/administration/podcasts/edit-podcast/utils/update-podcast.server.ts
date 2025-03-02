@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2"
 
 import { prisma } from "~/utils/db.server"
-import { convertImage } from "~/utils/sharp.server"
+import { getConvertedImageStream } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
@@ -25,7 +25,7 @@ export async function updatePodcast({
 }: Args) {
   const coverAltText = `Obálka podcastu ${title}`
   const convertedCover = cover
-    ? await convertImage(cover, {
+    ? await getConvertedImageStream(cover, {
         width: 1280,
         height: 1280,
         quality: 80,
@@ -51,7 +51,9 @@ export async function updatePodcast({
                     id: createId(),
                     altText: coverAltText,
                     contentType: convertedCover.contentType,
-                    blob: convertedCover.blob,
+                    blob: Uint8Array.from(
+                      await convertedCover.stream.toBuffer()
+                    ),
                   }
                 : {
                     altText: coverAltText,

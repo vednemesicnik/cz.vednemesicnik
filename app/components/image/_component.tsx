@@ -108,7 +108,6 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
           height={height}
           loading={"lazy"}
           decoding={"async"}
-          fetchPriority={"high"}
           onLoad={handleLowResImageLoad}
         />
       </animated.picture>
@@ -136,7 +135,6 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
             height={height}
             loading={"lazy"}
             decoding={"async"}
-            fetchPriority={"auto"}
             onLoad={handleHighResImageLoad}
           />
         </animated.picture>

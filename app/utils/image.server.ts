@@ -1,4 +1,6 @@
-import type { FormatEnum } from "sharp"
+import { PassThrough } from "node:stream"
+
+import type { FormatEnum, Sharp } from "sharp"
 import { z } from "zod"
 
 import {
@@ -48,20 +50,59 @@ export const getImageParams = (request: Request) => {
   }
 }
 
+/**
+ * Pumps data from a Sharp stream to a Web Streams API WritableStream
+ */
+function pumpSharpStreamToWebStream(
+  sharpStream: Sharp,
+  writable: WritableStream
+): void {
+  // Set up the background process
+  ;(async () => {
+    try {
+      // Get the node stream from sharp
+      const nodeStream = sharpStream.pipe(new PassThrough())
+      const writer = writable.getWriter()
+
+      // Manual pumping from node stream to web stream
+      nodeStream.on("data", (chunk: Uint8Array) => {
+        writer.write(chunk)
+      })
+
+      nodeStream.on("end", () => {
+        writer.close()
+      })
+
+      nodeStream.on("error", (err: Error) => {
+        writer.abort(err)
+      })
+    } catch (err) {
+      console.error("Image processing error:", err)
+      writable.abort(err instanceof Error ? err : new Error(String(err)))
+    }
+  })()
+}
+
 export const createImageResponse = (
   image: {
-    blob: Uint8Array
+    stream: Sharp
     contentType: string
   },
   fileName: string,
   tag: string
 ) => {
-  return new Response(image.blob, {
+  // Create a web-standard TransformStream
+  const { readable, writable } = new TransformStream()
+
+  // Start pumping data in the background
+  pumpSharpStreamToWebStream(image.stream, writable)
+
+  // Return the response immediately
+  return new Response(readable, {
     headers: {
       "Content-Type": image.contentType,
-      "Content-Length": image.blob.byteLength.toString(),
       "Content-Disposition": `inline; filename="${fileName}"`,
-      "Cache-Control": "public, max-age=31536000, immutable", // 31536000 seconds = 365 days
+      "Cache-Control": "public, max-age=31536000, immutable",
       ETag: tag,
     },
   })

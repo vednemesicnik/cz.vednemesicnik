@@ -7,7 +7,7 @@ import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-c
 import { getAuthorRights } from "~/utils/get-author-rights"
 import { getIssueData } from "~/utils/get-issue-data"
 import { getPublishDate } from "~/utils/get-publish-date"
-import { convertImage } from "~/utils/sharp.server"
+import { getConvertedImageStream } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 import type {
   AuthorPermissionAction,
@@ -199,7 +199,7 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
   const publishDate = getPublishDate(publishedAt, state)
 
   const convertedCover = cover
-    ? await convertImage(cover, {
+    ? await getConvertedImageStream(cover, {
         width: 905,
         height: 1280,
         quality: 80,
@@ -224,7 +224,9 @@ export const updateArchivedIssue = async (data: Data, sessionId: string) => {
                     id: createId(), // New ID forces browser to download new image
                     altText: coverAltText,
                     contentType: convertedCover.contentType,
-                    blob: convertedCover.blob,
+                    blob: Uint8Array.from(
+                      await convertedCover.stream.toBuffer()
+                    ),
                   }
                 : {
                     altText: coverAltText,

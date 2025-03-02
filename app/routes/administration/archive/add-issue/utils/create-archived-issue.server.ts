@@ -5,7 +5,7 @@ import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-c
 import { getAuthorRights } from "~/utils/get-author-rights"
 import { getIssueData } from "~/utils/get-issue-data"
 import { getPublishDate } from "~/utils/get-publish-date"
-import { convertImage } from "~/utils/sharp.server"
+import { getConvertedImageStream } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 import type {
   AuthorPermissionAction,
@@ -68,7 +68,7 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
     releasedAt
   )
 
-  const convertedCover = await convertImage(cover, {
+  const convertedCover = await getConvertedImageStream(cover, {
     width: 905,
     height: 1280,
     quality: 80,
@@ -86,7 +86,7 @@ export const createArchivedIssue = async (data: Data, sessionId: string) => {
           create: {
             altText: coverAltText,
             contentType: convertedCover.contentType,
-            blob: convertedCover.blob,
+            blob: Uint8Array.from(await convertedCover.stream.toBuffer()),
           },
         },
         pdf: {

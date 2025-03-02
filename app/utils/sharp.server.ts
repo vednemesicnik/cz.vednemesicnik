@@ -1,5 +1,5 @@
 import * as serverSharp from "sharp"
-import type { FormatEnum } from "sharp"
+import type { FormatEnum, Sharp } from "sharp"
 
 export const sharp = serverSharp.default
 
@@ -11,42 +11,51 @@ type Options = {
 }
 
 /**
- * Converts an image to the specified format, dimensions, and quality.
+ * Converts an image to the specified format, dimensions, and quality and returns a stream.
  *
  * @param {Uint8Array | File} image - The image to be converted. Can be a Uint8Array or a File.
  * @param {Object} options - The options for the conversion.
- * @param {string | null} options.width - The desired width of the converted image. If null, the original width is used.
- * @param {string | null} options.height - The desired height of the converted image. If null, the original height is used.
- * @param {string | null} options.quality - The quality of the converted image. If null, defaults to 100.
- * @param {string | null} options.format - The format of the converted image. Can be "avif", "webp", "png", or "jpeg". Defaults to "jpeg".
- * @returns {Promise<{blob: Uint8Array<ArrayBufferLike>, contentType: string}>} - A promise that resolves to an object containing the converted image blob and its content type.
+ * @param {number | null} options.width - The desired width of the converted image. If null, the original width is used.
+ * @param {number | null} options.height - The desired height of the converted image. If null, the original height is used.
+ * @param {number | null} options.quality - The quality of the converted image. If null, defaults to 100.
+ * @param {keyof FormatEnum | null} options.format - The format of the converted image. Can be "avif", "webp", "png", or "jpeg". Defaults to "jpeg".
+ * @returns {Promise<{stream: Sharp, contentType: string}>} - A promise that resolves to an object containing the image stream and its content type.
  */
-export const convertImage = async (
+export const getConvertedImageStream = async (
   image: Uint8Array | File,
   options: Options
-): Promise<{ blob: Uint8Array<ArrayBufferLike>; contentType: string }> => {
-  const sharpImage = sharp(
-    image instanceof Uint8Array ? image : await image.bytes()
-  )
+): Promise<{ stream: Sharp; contentType: string }> => {
+  // Convert input to buffer if needed
+  const imageBuffer = image instanceof Uint8Array ? image : await image.bytes()
 
+  // Create sharp instance
+  const sharpImage = sharp(imageBuffer)
+
+  // Get metadata for default dimensions
   const metadata = await sharpImage.metadata()
 
-  const width = options.width ? options.width : metadata.width
-  const height = options.height ? options.height : metadata.height
-  const quality = options.quality ? options.quality : 100
-  const format = options.format ? options.format : "jpeg"
+  // Set options with defaults
+  const width = options.width || metadata.width
+  const height = options.height || null
+  const quality = options.quality || 100
+  const format = options.format || "jpeg"
 
-  sharpImage.resize({ width })
+  // Create transformation pipeline
+  let pipeline = sharpImage.resize({
+    width,
+    height: height || undefined,
+    fit: height ? "cover" : undefined,
+  })
 
-  if (height !== undefined) {
-    sharpImage.resize({ height, fit: "cover" })
-  }
+  // Set format and quality
+  pipeline = pipeline.toFormat(format, { quality })
 
+  // Determine content type
   const contentType = `image/${format}`
 
-  sharpImage.toFormat(format, { quality })
-
-  const blob = Uint8Array.from(await sharpImage.toBuffer())
-
-  return { blob, contentType }
+  // Return stream and content type
+  return {
+    stream: pipeline,
+    contentType,
+  }
 }
