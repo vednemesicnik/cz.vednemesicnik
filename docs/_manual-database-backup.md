@@ -23,15 +23,19 @@ fly ssh sftp shell --app cz-vednemesicnik
 ```
 6. Download the zipped backup file.
 ```shell
-get /app/backup.db.gz /path/to/cz-vednemesicnik-backup-$(date +%Y-%m-%d).db.gz
+get /app/backup.db.gz /path/to/backup.db.gz
 ```
 7. Exit the sftp shell by pressing `Ctrl`+`D`.
-8. SSH into the console again.
+8. Rename the downloaded file to include the current date.
+```shell
+mv /path/to/backup.db.gz /path/to/backup-$(date +%Y-%m-%d).db.gz
+```
+9. SSH into the console again.
 ```shell
 fly ssh console --app cz-vednemesicnik
 ```
-9. Delete the zipped backup file from the app directory.
+10. Delete the zipped backup file from the app directory.
 ```shell
 rm /app/backup.db.gz
 ```
-10. Exit the console by pressing `Ctrl`+`D`.
+11. Exit the console by pressing `Ctrl`+`D`.
