@@ -1,7 +1,7 @@
 import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
 import type { ReactNode } from "react"
 
-import styles from "./_headline.module.css"
+import styles from "./_styles.module.css"
 
 type Props = {
   children: ReactNode

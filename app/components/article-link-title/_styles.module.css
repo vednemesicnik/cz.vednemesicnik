@@ -1,6 +1,6 @@
 .title {
   grid-area: title;
-  font-size: 1.25rem;
+  font-size: var(--text-size-5);
   text-align: center;
   margin: 0;
 }
@@ -8,6 +8,5 @@
 @media (min-width: 768px) {
   .title {
     text-align: start;
-    font-size: 1.75rem;
   }
 }

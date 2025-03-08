@@ -1,6 +1,6 @@
 import { Divider } from "~/components/divider"
 
-import styles from "./_app-footer.module.css"
+import styles from "./_styles.module.css"
 import { ComplementaryInformation } from "./components/complementary-information"
 import { SiteContent } from "./components/site-content"
 import { SocialSites } from "./components/social-sites"

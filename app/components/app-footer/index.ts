@@ -1,1 +1,1 @@
-export { AppFooter } from "./_app-footer"
+export { AppFooter } from "./_component"

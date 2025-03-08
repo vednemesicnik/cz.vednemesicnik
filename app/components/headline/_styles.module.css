@@ -1,5 +1,5 @@
 .headline {
-  font-size: 2.25rem;
+  font-size: var(--text-size-7);
   color: transparent;
   background-image: var(--rose-pink--coral---gradient);
   background-clip: text;
