@@ -23,6 +23,7 @@
   position: relative;
   align-items: center;
   gap: 8px;
+  font-size: var(--font-size-small);
 }
 
 @media all and (min-width: 768px) {

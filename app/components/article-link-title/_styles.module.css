@@ -1,6 +1,6 @@
 .title {
   grid-area: title;
-  font-size: var(--text-size-5);
+  font-size: var(--font-size-heading5);
   text-align: center;
   margin: 0;
 }

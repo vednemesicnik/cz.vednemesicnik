@@ -26,7 +26,7 @@
 }
 
 .descriptionText {
-  font-size: var(--text-size-1);
+  font-size: var(--font-size-note);
   font-weight: var(--font-weight-regular);
   margin: 0;
 }

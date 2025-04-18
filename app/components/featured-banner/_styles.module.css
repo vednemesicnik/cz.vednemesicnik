@@ -28,7 +28,7 @@
 }
 
 .title {
-  font-size: var(--text-size-7);
+  font-size: var(--font-size-heading3);
   font-weight: var(--font-weight-bold);
   justify-self: start;
   margin: 0;
