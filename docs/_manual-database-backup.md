@@ -28,7 +28,7 @@ get /app/backup.db.gz /path/to/backup.db.gz
 7. Exit the sftp shell by pressing `Ctrl`+`D`.
 8. Rename the downloaded file to include the current date.
 ```shell
-mv /path/to/backup.db.gz /path/to/backup-$(date +%Y-%m-%d).db.gz
+mv /path/to/backup.db.gz /path/to/cz-vednemesicnik-backup-$(date +%Y-%m-%d).db.gz
 ```
 9. SSH into the console again.
 ```shell
