@@ -172,23 +172,6 @@ export default [
           ]
         ),
 
-      // Settings Administration
-      route("settings", "routes/administration/settings/splat/route.tsx", [
-        index("routes/administration/settings/index/route.tsx"),
-        route(
-          "profile",
-          "routes/administration/settings/profile/splat/route.tsx",
-          [
-            index("routes/administration/settings/profile/index/route.tsx"),
-            route(
-              "change-password",
-              "routes/administration/settings/profile/change-password/route.tsx"
-            ),
-          ]
-        ),
-      ]),
-    ]),
-  ]),
         // Settings Administration
         route("settings", "routes/administration/settings/splat/route.tsx", [
           index("routes/administration/settings/index/route.tsx"),
@@ -207,24 +190,9 @@ export default [
       ]),
     ]),
   ]),
-        // Settings Administration
-        route("settings", "routes/administration/settings/splat/route.tsx", [
-          index("routes/administration/settings/index/route.tsx"),
-          route(
-            "profile",
-            "routes/administration/settings/profile/splat/route.tsx",
-            [
-              index("routes/administration/settings/profile/index/route.tsx"),
-              route(
-                "change-password",
-                "routes/administration/settings/profile/change-password/route.tsx"
-              ),
-            ]
-          ),
-        ]),
-      ]),
-    ]),
-  ]),
+
+  // Links route
+  route("links", "routes/links/route.tsx"),
 
   // Issue PDF route for backward compatibility
   route("pdf/:fileName", "routes/pdf/issue-pdf/route.ts"),
