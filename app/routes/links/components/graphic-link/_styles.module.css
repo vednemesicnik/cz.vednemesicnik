@@ -1,0 +1,50 @@
+.link {
+  display: grid;
+  position: relative;
+  width: 100%;
+  grid-template-columns: auto min-content;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 16px;
+  border-radius: 8px;
+  background-color: var(--black);
+  min-height: 44px;
+  text-decoration: none;
+  transition: all 250ms ease-in-out;
+  border: 2px solid transparent;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--rose-pink);
+    outline: none;
+  }
+}
+
+.linkText {
+  color: var(--white);
+  text-align: center;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-small);
+  padding-block: 8px;
+}
+
+.imageFrame {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: start;
+  width: 68px;
+  height: 36px;
+  overflow: hidden;
+  align-self: end;
+}
+
+.imageWrapper {
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  transform: rotate3d(0, 0, 1, 4deg) translate3d(0, 2px, 0);
+}
+
+.image {
+  border-radius: 1px;
+}

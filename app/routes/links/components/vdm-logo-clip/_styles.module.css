@@ -1,0 +1,17 @@
+.container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.clip {
+  position: absolute;
+}
+
+.logo {
+  width: 92px;
+  height: 92px;
+  background-color: var(--white);
+  transform: scale(0.99) translate3d(-16px, -16px, 0);
+  transform-origin: center center;
+}

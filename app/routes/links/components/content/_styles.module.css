@@ -1,0 +1,8 @@
+.container {
+  display: grid;
+  position: relative;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+  background-color: var(--white);
+  padding: 16px;
+}

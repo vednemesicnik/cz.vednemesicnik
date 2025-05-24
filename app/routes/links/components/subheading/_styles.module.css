@@ -1,0 +1,6 @@
+.text {
+  font-size: var(--font-size-note);
+  font-weight: var(--font-weight-regular);
+  text-align: center;
+  margin: 0;
+}

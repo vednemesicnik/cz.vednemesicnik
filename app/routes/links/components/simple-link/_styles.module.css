@@ -1,0 +1,23 @@
+.linkButton {
+  display: grid;
+  position: relative;
+  width: 100%;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: var(--black);
+  color: var(--white);
+  text-decoration: none;
+  text-align: center;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-small);
+  border: none;
+  min-height: 44px;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--rose-pink);
+    outline: none;
+  }
+}
