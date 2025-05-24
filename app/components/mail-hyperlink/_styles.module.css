@@ -1,3 +1,10 @@
+.link {
+  display: inline;
+  font-weight: var(--font-weight-medium);
+  font-size: inherit;
+  line-height: inherit;
+}
+
 .iconWrapper {
   display: inline-flex;
   align-items: center;

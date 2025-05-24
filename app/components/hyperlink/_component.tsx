@@ -1,3 +1,4 @@
+import { clsx } from "clsx"
 import { type ComponentProps, type JSX } from "react"
 
 import { BaseHyperlink } from "~/components/base-hyperlink"
@@ -15,9 +16,13 @@ type Props = Omit<ComponentProps<"a">, "rel" | "target">
  * @param {Object} [props.rest] - Additional properties to be passed to the anchor element.
  * @returns {JSX.Element} The rendered anchor element with external link icon.
  */
-export const Hyperlink = ({ children, ...rest }: Props): JSX.Element => {
+export const Hyperlink = ({
+  children,
+  className,
+  ...rest
+}: Props): JSX.Element => {
   return (
-    <BaseHyperlink {...rest}>
+    <BaseHyperlink className={clsx(styles.link, className)} {...rest}>
       {children}
       <span
         className={styles.iconWrapper}
