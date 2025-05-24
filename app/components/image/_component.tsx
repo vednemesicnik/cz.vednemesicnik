@@ -1,5 +1,5 @@
-import { combineClasses } from "@liborgabrhel/style-utils"
 import { animated, useSpring } from "@react-spring/web"
+import { clsx } from "clsx"
 import { useEffect, useRef, useState } from "react"
 
 import { createImageSources } from "~/utils/create-image-sources"
@@ -92,7 +92,7 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
   })
 
   return (
-    <section className={combineClasses(styles.container, className)}>
+    <section className={clsx(className, styles.container)}>
       <animated.picture
         className={styles.lowResPicture}
         style={lowResImageSpringStyles}
