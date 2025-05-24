@@ -1,17 +1,8 @@
 .container {
-  grid-area: social-sites;
   display: grid;
   position: relative;
   grid-auto-flow: column;
   grid-auto-columns: max-content;
-  justify-self: center;
-  align-self: start;
-}
-
-@media all and (min-width: 690px) {
-  .container {
-    justify-self: end;
-  }
 }
 
 .list {
@@ -33,6 +24,9 @@
 .link {
   display: flex;
   position: relative;
+  font-weight: var(--font-weight-medium);
+  font-size: inherit;
+  line-height: inherit;
   cursor: pointer;
 }
 

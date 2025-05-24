@@ -1,9 +1,9 @@
 import { Divider } from "~/components/divider"
+import { SocialSites } from "~/components/social-sites"
 
 import styles from "./_styles.module.css"
 import { ComplementaryInformation } from "./components/complementary-information"
 import { SiteContent } from "./components/site-content"
-import { SocialSites } from "./components/social-sites"
 
 export const AppFooter = () => {
   return (
@@ -11,7 +11,7 @@ export const AppFooter = () => {
       <Divider />
       <section className={styles.content}>
         <SiteContent />
-        <SocialSites />
+        <SocialSites className={styles.socialSites} />
         <ComplementaryInformation />
       </section>
     </footer>

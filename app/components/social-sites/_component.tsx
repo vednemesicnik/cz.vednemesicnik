@@ -1,11 +1,17 @@
+import { clsx } from "clsx"
+
 import { BaseHyperlink } from "~/components/base-hyperlink"
 import { FacebookIcon, InstagramIcon } from "~/components/social-site-icons"
 
-import styles from "./_social-sites.module.css"
+import styles from "./_styles.module.css"
 
-export const SocialSites = () => {
+type Props = {
+  className?: string
+}
+
+export const SocialSites = ({ className }: Props) => {
   return (
-    <section className={styles.container}>
+    <section className={clsx(styles.container, className)}>
       <h2 className={"screen-reader-only"}>Sociální sítě</h2>
       <ul className={styles.list}>
         <li className={styles.listItem}>

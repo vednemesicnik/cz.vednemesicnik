@@ -23,6 +23,10 @@
   column-gap: 20px;
 }
 
+.socialSites {
+  grid-area: social-sites;
+}
+
 @media all and (min-width: 690px) {
   .content {
     grid-template-columns: 1fr max-content;
