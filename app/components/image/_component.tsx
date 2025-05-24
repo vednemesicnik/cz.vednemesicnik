@@ -92,7 +92,7 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
   })
 
   return (
-    <section className={clsx(className, styles.container)}>
+    <section className={clsx(styles.container, className)}>
       <animated.picture
         className={styles.lowResPicture}
         style={lowResImageSpringStyles}

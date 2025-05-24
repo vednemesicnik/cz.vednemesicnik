@@ -1,8 +1,10 @@
-.container {
-  display: flex;
-  position: relative;
-  overflow: hidden;
-  border-radius: 3px;
+@layer component {
+  .container {
+    display: flex;
+    position: relative;
+    overflow: hidden;
+    border-radius: 3px;
+  }
 }
 
 .lowResPicture {

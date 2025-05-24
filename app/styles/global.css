@@ -1,3 +1,5 @@
+@layer component, route;
+
 * {
   box-sizing: border-box;
 }

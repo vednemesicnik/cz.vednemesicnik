@@ -11,9 +11,9 @@ import {
 } from "react-router"
 
 import "~/styles/global.css"
+import "~/styles/colors.css"
 import "~/styles/fonts.css"
 import "~/styles/sizes.css"
-import "~/styles/colors.css"
 
 export const links: LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
