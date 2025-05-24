@@ -66,6 +66,10 @@ html {
     "liga" 1,
     "calt" 1;
   font-kerning: normal;
+
+  button {
+    font-family: var(--font-family), sans-serif;
+  }
 }
 
 /** IBM Plex Regular */
