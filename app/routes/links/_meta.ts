@@ -18,9 +18,9 @@ export const meta: Route.MetaFunction = () => {
     { property: "og:description", content: pageDescription },
     { property: "og:url", content: "https://vednemesicnik.cz/links" },
     { property: "og:type", content: "website" },
-    // {
-    //   property: "og:image",
-    //   content: "https://vednemesicnik.cz/images/vednemesicnik-og-image.png",
-    // },
+    {
+      property: "og:image",
+      content: "https://vednemesicnik.cz/images/og/links-cz-vednemesicnik.jpg",
+    },
   ]
 }
