@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 import {
+  href,
   Links,
   type LinksFunction,
   Meta,
@@ -33,6 +34,9 @@ export function Layout({ children }: { children: ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
+
+        {/* Environment variables body script - sets ENV for client */}
+        <script src={href("/resources/env-script")} />
       </body>
     </html>
   )

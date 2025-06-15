@@ -19,6 +19,10 @@ import { getPodcastCoverSrc } from "~/utils/get-podcast-cover-src"
 
 import type { Route } from "./+types/route"
 
+export { links } from "./_links"
+export { loader } from "./_loader"
+export { meta } from "./_meta"
+
 export default function Route({ loaderData }: Route.ComponentProps) {
   return (
     <Page>
@@ -73,6 +77,3 @@ export default function Route({ loaderData }: Route.ComponentProps) {
     </Page>
   )
 }
-
-export { loader } from "./_loader"
-export { meta } from "./_meta"

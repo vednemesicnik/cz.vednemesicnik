@@ -209,5 +209,6 @@ export default [
       "routes/resources/podcast-episode-cover/route.ts"
     ),
     route("user-image/:userId", "routes/resources/user-image/route.ts"),
+    route("env-script", "routes/resources/env-script/route.ts"),
   ]),
 ] satisfies RouteConfig

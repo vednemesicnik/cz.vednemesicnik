@@ -10,6 +10,9 @@ primary_region = 'fra'
   dockerfile = '/docker/fly/Dockerfile'
   ignorefile = '.dockerignore'
 
+[env]
+  BASE_URL = 'https://vednemesicnik.cz'
+
 [[mounts]]
   source = 'data'
   destination = '/data'

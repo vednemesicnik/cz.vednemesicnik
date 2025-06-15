@@ -17,8 +17,13 @@ import {
   ServerRouter,
 } from "react-router"
 
+import { getEnv, initEnv } from "~/utils/env.server"
+
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000
+
+initEnv()
+global.ENV = getEnv()
 
 export default function handleRequest(
   request: Request,
