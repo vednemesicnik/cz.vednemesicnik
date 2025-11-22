@@ -18,7 +18,9 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"],
-      "~~/*": ["./prisma/*"]
+      "~~/*": ["./prisma/*"],
+      "@generated/*": ["./generated/*"],
+      "@constants/*": ["./constants/*"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,

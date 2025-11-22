@@ -10,39 +10,39 @@ This is a student magazine publishing platform built with React Router v7, Prism
 
 ### Running the Application
 ```bash
-npm run dev                        # Start Vite dev server on port 3000
-npm run build                      # Build for production
-npm start                          # Run production build
+pnpm dev                           # Start Vite dev server on port 3000
+pnpm build                         # Build for production
+pnpm start                         # Run production build
 ```
 
 ### Code Quality
 ```bash
-npm run typecheck                  # Run TypeScript type checking and generate React Router types
-npm run routes:generate            # Generate React Router type definitions
-npm run lint                       # Run ESLint
-npm run test                       # Run Vitest tests (non-watch mode)
+pnpm typecheck                     # Run TypeScript type checking and generate React Router types
+pnpm routes:generate               # Generate React Router type definitions
+pnpm lint                          # Run ESLint
+pnpm test                          # Run Vitest tests (non-watch mode)
 ```
 
 ### Database Management
 ```bash
-npm run prisma:generate            # Generate Prisma client
-npm run prisma:migrate:dev         # Create and apply migration (dev)
-npm run prisma:migrate:dev-init    # Create initial migration (create-only)
-npm run prisma:migrate:deploy      # Apply migrations (production)
-npm run prisma:migrate:reset       # Reset database and re-apply migrations
-npm run prisma:db:push             # Push schema changes without migration
-npm run prisma:db:seed             # Seed database
-npm run prisma:format              # Format Prisma schema file
-npm run prisma:studio              # Open Prisma Studio
+pnpm prisma:generate               # Generate Prisma client
+pnpm prisma:migrate:dev            # Create and apply migration (dev)
+pnpm prisma:migrate:dev-init       # Create initial migration (create-only)
+pnpm prisma:migrate:deploy         # Apply migrations (production)
+pnpm prisma:migrate:reset          # Reset database and re-apply migrations
+pnpm prisma:db:push                # Push schema changes without migration
+pnpm prisma:db:seed                # Seed database
+pnpm prisma:format                 # Format Prisma schema file
+pnpm prisma:studio                 # Open Prisma Studio
 ```
 
 ### Testing and Utilities
 ```bash
-npm run test                       # Run all Vitest tests
-npm run sql:generate               # Generate SQL scripts
-npm run generate:static-images     # Generate static images using Sharp
-npm run docker:compose:up          # Start Docker containers
-npm run docker:compose:down        # Stop Docker containers
+pnpm test                          # Run all Vitest tests
+pnpm sql:generate                  # Generate SQL scripts
+pnpm generate:static-images        # Generate static images using Sharp
+pnpm docker:compose:up             # Start Docker containers
+pnpm docker:compose:down           # Stop Docker containers
 ```
 
 ## Architecture

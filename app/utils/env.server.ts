@@ -2,10 +2,12 @@
 
 import { z } from "zod"
 
+import { ENV_KEYS } from "@constants/env"
+
 const schema = z.object({
-  NODE_ENV: z.enum(["production", "development", "test"] as const),
-  SESSION_SECRET: z.string(),
-  HONEYPOT_SECRET: z.string(),
+  [ENV_KEYS.NODE_ENV]: z.enum(["production", "development", "test"] as const),
+  [ENV_KEYS.SESSION_SECRET]: z.string(),
+  [ENV_KEYS.HONEYPOT_SECRET]: z.string(),
 })
 
 declare global {

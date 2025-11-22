@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client"
+import { Prisma } from "@generated/prisma/client"
 
 export const throwDbError = (error: unknown, message: string) => {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {

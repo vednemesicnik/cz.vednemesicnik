@@ -5,6 +5,10 @@
 /build
 /public/build
 
+# Generated files
+/generated/
+
+# Prisma
 /prisma/*.db
 /prisma/*.db-journal
 /prisma/*.sql
