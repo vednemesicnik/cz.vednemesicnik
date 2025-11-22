@@ -4,7 +4,6 @@ import { z } from "zod"
 
 const schema = z.object({
   NODE_ENV: z.enum(["production", "development", "test"] as const),
-  BASE_URL: z.string(),
   SESSION_SECRET: z.string(),
   HONEYPOT_SECRET: z.string(),
 })
@@ -46,7 +45,6 @@ export function initEnv() {
 export function getEnv() {
   return {
     MODE: process.env.NODE_ENV,
-    BASE_URL: process.env.BASE_URL,
   }
 }
 
