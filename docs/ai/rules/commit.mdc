@@ -17,4 +17,5 @@ Constraints {
   Use the related descriptions from the activity log to plan the message.
   Use multiple -m flags, one for each log entry.
   Limit the first commit message line length to 50 characters.
+  Do NOT add any AI-generated attribution, co-authorship claims, or statements indicating the commit was created by an AI agent.
 }

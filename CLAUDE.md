@@ -50,6 +50,8 @@ pnpm docker:compose:down           # Stop Docker containers
 ### Path Aliases
 - `~/` → `./app/` - Application code
 - `~~/` → `./prisma/` - Database schema and migrations
+- `@generated/` → `./generated/` - Generated files
+- `@constants/` → `./constants/` - Shared constants
 
 ### Routing Structure
 React Router v7 file-based routing with nested layouts:
@@ -136,7 +138,7 @@ Forms use Conform (@conform-to/react + @conform-to/zod) with Zod validation:
 ### Configuration Files
 - `vite.config.ts` - Dev server on port 3000, React Router plugin, tsconfig paths
 - `react-router.config.ts` - SSR enabled
-- `tsconfig.json` - Path aliases configured (`~/*` and `~~/*`)
+- `tsconfig.json` - Path aliases configured (`~/*`, `~~/*`, `@generated/*`, `@constants/*`)
 - `prisma/schema.prisma` - Database schema with SQLite provider
 
 ## Important Patterns
