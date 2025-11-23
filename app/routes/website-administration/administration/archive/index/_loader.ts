@@ -1,4 +1,4 @@
-import { getViewRights } from "~/routes/administration/archive/index/utils/get-view-rights.server"
+import { getViewRights } from "~/routes/website-administration/administration/archive/index/utils/get-view-rights.server"
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
 import {

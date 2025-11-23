@@ -4,8 +4,8 @@ import { useFetcher, useNavigate } from "react-router"
 import { HoneypotInputs } from "remix-utils/honeypot/react"
 
 import { Modal } from "~/components/modal"
-import { type action as generateRegistrationOptionsAction } from "~/routes/administration/authentication/generate-registration-options/_action"
-import { type action as verifyRegistrationResponseAction } from "~/routes/administration/authentication/verify-registration-response/_action"
+import { type action as generateRegistrationOptionsAction } from "~/routes/website-administration/administration/authentication/generate-registration-options/_action"
+import { type action as verifyRegistrationResponseAction } from "~/routes/website-administration/administration/authentication/verify-registration-response/_action"
 
 type Props = {
   isOpen: boolean

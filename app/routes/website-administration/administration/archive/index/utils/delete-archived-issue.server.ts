@@ -1,4 +1,4 @@
-import { checkDeleteRights } from "~/routes/administration/archive/index/utils/check-delete-rights.server"
+import { checkDeleteRights } from "~/routes/website-administration/administration/archive/index/utils/check-delete-rights.server"
 import { prisma } from "~/utils/db.server"
 import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-check.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
