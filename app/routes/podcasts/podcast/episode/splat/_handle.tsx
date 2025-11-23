@@ -1,16 +1,25 @@
-import { Link } from "react-router"
+import { href } from "react-router"
 
-import { type CustomUIMatch } from "~/routes/types"
+import type { Breadcrumb, BreadcrumbMatch } from "~/types/breadcrumb"
 
-import type { Info } from "./+types/route"
+import type { Route } from "./+types/route"
 
-type Match = CustomUIMatch<Info["params"], Info["loaderData"]>
+type Match = BreadcrumbMatch<
+  Route.ComponentProps["loaderData"],
+  Route.ComponentProps["params"]
+>
 
 export const handle = {
-  breadcrumb: (match: Match) => {
+  breadcrumb: (match: Match): Breadcrumb => {
     const { podcastSlug, episodeSlug } = match.params
-    const { title } = match.data.podcastEpisode
+    const { title } = match.loaderData?.podcastEpisode ?? {}
 
-    return <Link to={`/podcasts/${podcastSlug}/${episodeSlug}`}>{title}</Link>
+    return {
+      label: `${title}`,
+      path: href(`/podcasts/:podcastSlug/:episodeSlug`, {
+        podcastSlug,
+        episodeSlug,
+      }),
+    }
   },
 }

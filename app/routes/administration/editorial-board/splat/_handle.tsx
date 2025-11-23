@@ -1,7 +1,12 @@
-import { Link } from "react-router"
+import { href } from "react-router"
+
+import type { Breadcrumb } from "~/types/breadcrumb"
 
 export const handle = {
-  breadcrumb: () => {
-    return <Link to={`/administration/editorial-board`}>Redakce</Link>
+  breadcrumb: (): Breadcrumb => {
+    return {
+      label: "Redakce",
+      path: href("/administration/editorial-board"),
+    }
   },
 }

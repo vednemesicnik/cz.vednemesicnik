@@ -1,26 +1,75 @@
-import type { ReactNode } from "react"
-import { type UIMatch, useMatches } from "react-router"
+import { BreadcrumbLink } from "~/components/breadcrumb-link"
+import type { Breadcrumb } from "~/types/breadcrumb"
 
 import styles from "./_styles.module.css"
 
-type Match = UIMatch<unknown, { breadcrumb: (match?: unknown) => ReactNode }>
+type Props = {
+  breadcrumbs: Breadcrumb[]
+}
 
-export const Breadcrumbs = () => {
-  const matches = (useMatches() as unknown as Match[]).filter(
-    ({ handle }) => Boolean(handle) && "breadcrumb" in handle
-  )
-
-  const matchesCount = matches.length
+/**
+ * Breadcrumb navigation component for displaying hierarchical page location.
+ *
+ * Renders a horizontal breadcrumb trail that shows the user's current location
+ * within the site hierarchy. The last breadcrumb represents the current page
+ * and is marked with `aria-current="page"` for accessibility. Breadcrumbs are
+ * separated by forward slashes.
+ *
+ * @param props - Component props containing the breadcrumbs array
+ * @returns A semantic nav element containing the breadcrumb trail
+ *
+ * @example
+ * ```tsx
+ * // In a route component or layout
+ * import { useMatches } from "react-router"
+ * import { getBreadcrumbs } from "~/utils/breadcrumbs"
+ *
+ * function MyLayout() {
+ *   const matches = useMatches()
+ *   const breadcrumbs = getBreadcrumbs(matches)
+ *
+ *   return <Breadcrumbs breadcrumbs={breadcrumbs} />
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With explicit breadcrumb data
+ * <Breadcrumbs
+ *   breadcrumbs={[
+ *     { label: "Home", path: "/" },
+ *     { label: "Administration", path: "/administration" },
+ *     { label: "Users", path: "/administration/users" }
+ *   ]}
+ * />
+ * ```
+ *
+ * @remarks
+ * - Automatically identifies the last breadcrumb as the current page
+ * - Uses semantic HTML (`<nav>`, `<ul>`, `<li>`) for accessibility
+ * - Separates breadcrumbs with forward slashes (except after the last item)
+ * - Integrates with React Router for navigation and active state detection
+ * - Works with the `getBreadcrumbs()` utility to extract breadcrumbs from route matches
+ */
+export const Breadcrumbs = ({ breadcrumbs }: Props) => {
+  const breadcrumbsCount = breadcrumbs.length
 
   return (
     <nav className={styles.container}>
       <ul className={styles.list}>
-        {matches.map((match, index) => {
-          const isLast = matchesCount === index + 1
+        {breadcrumbs.map((breadcrumb, index) => {
+          const isCurrentPage = breadcrumbsCount === index + 1
+          const hasSeparator = !isCurrentPage
+
           return (
             <li key={index} className={styles.listItem}>
-              {match.handle.breadcrumb(match)}
-              {!isLast && <span>/</span>}
+              <BreadcrumbLink
+                to={breadcrumb.path}
+                isCurrentPage={isCurrentPage}
+              >
+                {breadcrumb.label}
+              </BreadcrumbLink>
+              {hasSeparator && <span>/</span>}
             </li>
           )
         })}

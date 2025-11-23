@@ -19,11 +19,13 @@
 }
 
 .listItem {
-  display: flex;
+  display: inline-flex;
   position: relative;
   align-items: center;
   gap: 8px;
   font-size: var(--font-size-small);
+  font-weight: 400;
+  line-height: var(--line-height-normal);
 }
 
 @media all and (min-width: 768px) {

@@ -1,22 +1,25 @@
-import { Link } from "react-router"
+import { href } from "react-router"
 
-import { type CustomUIMatch } from "~/routes/types"
+import type { Breadcrumb, BreadcrumbMatch } from "~/types/breadcrumb"
 
-import type { Info } from "./+types/route"
+import type { Route } from "./+types/route"
 
-type Match = CustomUIMatch<Info["params"], Info["loaderData"]>
+type Match = BreadcrumbMatch<
+  Route.ComponentProps["loaderData"],
+  Route.ComponentProps["params"]
+>
 
 export const handle = {
-  breadcrumb: (match: Match) => {
+  breadcrumb: (match: Match): Breadcrumb => {
     const { positionId } = match.params
-    const { key } = match.data.editorialBoardPosition
+    const { key } = match.loaderData?.editorialBoardPosition ?? {}
 
-    return (
-      <Link
-        to={`/administration/editorial-board/positions/edit-position/${positionId}`}
-      >
-        Upravit pozici [{key}]
-      </Link>
-    )
+    return {
+      label: `Upravit pozici [${key}]`,
+      path: href(
+        "/administration/editorial-board/positions/edit-position/:positionId",
+        { positionId }
+      ),
+    }
   },
 }
