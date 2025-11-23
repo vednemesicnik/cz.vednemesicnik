@@ -20,3 +20,5 @@
 .env
 
 /.claude
+*storybook.log
+storybook-static
