@@ -1,0 +1,96 @@
+import type { Meta, StoryObj } from "@storybook/react-vite"
+
+import { Button } from "./_component"
+
+const meta: Meta<typeof Button> = {
+  title: "Primitives/Button",
+  component: Button,
+  tags: ["autodocs"],
+  argTypes: {
+    variant: {
+      control: "select",
+      options: ["primary", "danger", "default"],
+      description: "Visual style variant of the button",
+    },
+    disabled: {
+      control: "boolean",
+      description: "Whether the button is disabled",
+    },
+    type: {
+      control: "select",
+      options: ["button", "submit", "reset"],
+      description: "HTML button type attribute",
+    },
+  },
+}
+
+export default meta
+type Story = StoryObj<typeof Button>
+
+/**
+ * Primary button variant used for main call-to-action buttons.
+ * Use this for the most important action on a page or form.
+ */
+export const Primary: Story = {
+  args: {
+    children: "Primary Button",
+    variant: "primary",
+  },
+}
+
+/**
+ * Danger button variant used for destructive actions.
+ * Use this for delete, remove, or other potentially harmful operations.
+ */
+export const Danger: Story = {
+  args: {
+    children: "Delete",
+    variant: "danger",
+  },
+}
+
+/**
+ * Default button variant used for secondary actions.
+ * Use this for cancel, back, or other less prominent actions.
+ */
+export const Default: Story = {
+  args: {
+    children: "Cancel",
+    variant: "default",
+  },
+}
+
+/**
+ * Disabled state prevents user interaction.
+ * The button appears visually muted and cannot be clicked.
+ */
+export const Disabled: Story = {
+  args: {
+    children: "Disabled Button",
+    variant: "primary",
+    disabled: true,
+  },
+}
+
+/**
+ * Submit button for forms.
+ * When used inside a form, this will trigger form submission.
+ */
+export const FormSubmit: Story = {
+  args: {
+    children: "Submit Form",
+    variant: "primary",
+    type: "submit",
+  },
+}
+
+/**
+ * Button with longer text content.
+ * Shows how the button handles varying content lengths.
+ */
+export const LongText: Story = {
+  args: {
+    children: "This is a button with much longer text content",
+    variant: "primary",
+  },
+}
