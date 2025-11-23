@@ -1,5 +1,4 @@
-import { Link } from "react-router";
-
+import { BaseLink } from "~/components/base-link"
 import { VdmLogo } from "~/components/vdm-logo"
 
 import styles from "./_styles.module.css"
@@ -11,12 +10,12 @@ type Props = {
 
 export const HomeLink = ({ isInEditMode }: Props) => {
   return (
-    <Link to={"/"} className={styles.link}>
+    <BaseLink to={"/"} className={styles.link}>
       <VdmLogo
         className={styles.logo}
         variant={isInEditMode ? "editMode" : "default"}
       />
       <h1 className={styles.name}>Vedneměsíčník</h1>
-    </Link>
+    </BaseLink>
   )
 }

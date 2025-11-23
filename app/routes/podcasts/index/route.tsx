@@ -1,7 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Link } from "react-router"
-
 import { ArticleLink } from "~/components/article-link"
 import { ArticleLinkAuthor } from "~/components/article-link-author"
 import { ArticleLinkFooter } from "~/components/article-link-footer"
@@ -10,6 +8,7 @@ import { ArticleLinkPublishDate } from "~/components/article-link-publish-date"
 import { ArticleLinkTitle } from "~/components/article-link-title"
 import { ArticleList } from "~/components/article-list"
 import { ArticleListItem } from "~/components/article-list-item"
+import { BaseLink } from "~/components/base-link"
 import { Headline } from "~/components/headline"
 import { Image } from "~/components/image"
 import { Tile } from "~/components/tile"
@@ -35,7 +34,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
           return (
             <TileGridItem key={podcast.id}>
-              <Link to={`/podcasts/${podcast.slug}`}>
+              <BaseLink to={`/podcasts/${podcast.slug}`}>
                 <Tile label={podcast.title}>
                   <Image
                     src={coverSrc}
@@ -44,7 +43,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
                     height={sizeConfig.podcastCover.height}
                   />
                 </Tile>
-              </Link>
+              </BaseLink>
             </TileGridItem>
           )
         })}

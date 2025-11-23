@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { BaseLink } from "~/components/base-link"
 
 import styles from "./_site-content.module.css"
 
@@ -8,34 +8,34 @@ export const SiteContent = () => {
       <h2 className={styles.title}>Obsah webu</h2>
       <ul className={styles.list}>
         <li className={styles.listItem}>
-          <Link to={"/archive"} className={styles.link}>
+          <BaseLink to={"/archive"} className={styles.link}>
             Archiv
-          </Link>
+          </BaseLink>
         </li>
         <li className={styles.listItem}>
-          <Link to={"/articles"} className={styles.link}>
+          <BaseLink to={"/articles"} className={styles.link}>
             Články
-          </Link>
+          </BaseLink>
         </li>
         <li className={styles.listItem}>
-          <Link to={"/podcasts"} className={styles.link}>
+          <BaseLink to={"/podcasts"} className={styles.link}>
             Podcasty
-          </Link>
+          </BaseLink>
         </li>
         <li>
-          <Link to={"/support"} className={styles.link}>
+          <BaseLink to={"/support"} className={styles.link}>
             Podpora
-          </Link>
+          </BaseLink>
         </li>
         <li className={styles.listItem}>
-          <Link to={"/editorial-board"} className={styles.link}>
+          <BaseLink to={"/editorial-board"} className={styles.link}>
             Redakce
-          </Link>
+          </BaseLink>
         </li>
         <li className={styles.listItem}>
-          <Link to={"/organization"} className={styles.link}>
+          <BaseLink to={"/organization"} className={styles.link}>
             Spolek
-          </Link>
+          </BaseLink>
         </li>
       </ul>
     </section>

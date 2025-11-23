@@ -13,6 +13,7 @@ export const NavigationItem = ({ children, to }: Props) => (
   <li className={styles.container}>
     <NavLink
       prefetch={"intent"}
+      viewTransition={true}
       to={to}
       className={({ isActive }) =>
         combineClasses(styles.link, applyClasses(styles.active).if(isActive))
