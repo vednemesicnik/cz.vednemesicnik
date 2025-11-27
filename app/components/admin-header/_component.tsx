@@ -10,7 +10,7 @@ type Props = {
   children?: ReactNode
 }
 
-export const AdministrationHeader = ({ children }: Props) => {
+export const AdminHeader = ({ children }: Props) => {
   return (
     <header className={styles.header}>
       <div className={styles.content}>

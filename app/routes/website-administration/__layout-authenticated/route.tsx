@@ -2,12 +2,12 @@
 
 import { Outlet } from "react-router"
 
+import { AdminHeader } from "~/components/admin-header"
+import { AdminUserMenu } from "~/components/admin-user-menu"
 import { AdministrationFooter } from "~/components/administration-footer"
-import { AdministrationHeader } from "~/components/administration-header"
 import { AdministrationPage } from "~/components/administration-page"
 import { AdministrationSidebar } from "~/components/administration-sidebar"
 import { AuthenticityTokenProvider } from "~/components/authenticity-token-provider"
-import { UserMenu } from "~/components/user-menu"
 
 import "~/styles/admin-tokens.css"
 
@@ -38,9 +38,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AuthenticityTokenProvider token={loaderData.csrfToken}>
       <div className={styles.layout}>
-        <AdministrationHeader>
-          <UserMenu userName={user.name} userEmail={user.email} />
-        </AdministrationHeader>
+        <AdminHeader>
+          <AdminUserMenu userName={user.name} userEmail={user.email} />
+        </AdminHeader>
         <AdministrationSidebar navigationItems={navigationItems} />
         <AdministrationPage>
           <Outlet />

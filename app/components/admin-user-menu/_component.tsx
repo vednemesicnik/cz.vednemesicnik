@@ -14,7 +14,7 @@ type Props = {
   userEmail: string
 }
 
-export const UserMenu = ({ userName, userEmail }: Props) => {
+export const AdminUserMenu = ({ userName, userEmail }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
