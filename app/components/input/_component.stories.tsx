@@ -6,6 +6,14 @@ const meta: Meta<typeof Input> = {
   title: "Primitives/Input",
   component: Input,
   tags: ["autodocs"],
+  parameters: {
+    docs: {
+      description: {
+        component:
+          "Modern input field component with label, error messages, and comprehensive state management. Features smooth transitions, hover effects, and focus-visible box-shadow for keyboard navigation (Tab key). Uses form design tokens for consistent styling.",
+      },
+    },
+  },
   argTypes: {
     label: {
       control: "text",
@@ -18,7 +26,7 @@ const meta: Meta<typeof Input> = {
     },
     required: {
       control: "boolean",
-      description: "Whether the input is required",
+      description: "Whether the input is required (shows asterisk in label)",
     },
     disabled: {
       control: "boolean",
@@ -26,7 +34,8 @@ const meta: Meta<typeof Input> = {
     },
     errors: {
       control: "object",
-      description: "Array of error messages to display",
+      description:
+        "Array of error messages to display. When present, input shows error styling with red border and focus shadow.",
     },
   },
 }

@@ -1,4 +1,4 @@
-@layer base, component, route;
+@layer base, component, variant, layout, route;
 
 * {
   box-sizing: border-box;

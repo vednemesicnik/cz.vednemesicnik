@@ -1,4 +1,4 @@
-import { combineClasses } from "@liborgabrhel/style-utils"
+import { clsx } from "clsx"
 import { type ComponentProps } from "react"
 import { Form as ReactRouterForm } from "react-router"
 
@@ -13,10 +13,7 @@ type Props = {
 
 export const Form = ({ children, className, errors, ...rest }: Props) => {
   return (
-    <ReactRouterForm
-      className={combineClasses(styles.form, className)}
-      {...rest}
-    >
+    <ReactRouterForm className={clsx(styles.form, className)} {...rest}>
       <ErrorMessageGroup>
         {errors?.map((error, index) => (
           <ErrorMessage key={index}>{error}</ErrorMessage>

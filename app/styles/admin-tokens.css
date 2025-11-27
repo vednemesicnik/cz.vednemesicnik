@@ -1,0 +1,102 @@
+/**
+ * Administration Interface Design Tokens
+ *
+ * Unified tokens for admin UI including forms.
+ * Supports light/dark modes via light-dark() function.
+ * Typography uses global variables from fonts.css directly.
+ */
+
+:root {
+  /* ========================================
+     Colors - Backgrounds
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-primary: light-dark(#ffffff, #0f0f1a);
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-secondary: light-dark(#f8fafc, #1a1a2e);
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-tertiary: light-dark(#f1f5f9, #2d2d44);
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-hover: light-dark(#f3f0ff, #1e1435);
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-disabled: light-dark(#f8f9fa, #0f0f1a);
+
+  /* ========================================
+     Colors - Borders
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-border: light-dark(#cbd5e1, #3d3d52);
+  /*noinspection CssInvalidFunction*/
+  --admin-border-hover: light-dark(#94a3b8, #52526b);
+  /*noinspection CssInvalidFunction*/
+  --admin-border-strong: light-dark(#cbd5e1, #64748b);
+
+  /* ========================================
+     Colors - Text
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-text-primary: light-dark(#0f172a, #f1f5f9);
+  /*noinspection CssInvalidFunction*/
+  --admin-text-secondary: light-dark(#64748b, #cbd5e1);
+  /*noinspection CssInvalidFunction*/
+  --admin-text-tertiary: light-dark(#94a3b8, #94a3b8);
+
+  /* ========================================
+     Colors - Purple Accent (Primary)
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-purple: light-dark(#7c3aed, #8b5cf6);
+  /*noinspection CssInvalidFunction*/
+  --admin-purple-hover: light-dark(#6d28d9, #7c3aed);
+  /*noinspection CssInvalidFunction*/
+  --admin-purple-active: light-dark(#5b21b6, #6d28d9);
+
+  /* ========================================
+     Colors - Semantic
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-success: light-dark(#10b981, #34d399);
+  /*noinspection CssInvalidFunction*/
+  --admin-error: light-dark(#e11d48, #fb7185);
+  /*noinspection CssInvalidFunction*/
+  --admin-warning: light-dark(#f59e0b, #fbbf24);
+
+  /* ========================================
+     Colors - Danger (Buttons)
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-danger: light-dark(#ef4444, #dc2626);
+  /*noinspection CssInvalidFunction*/
+  --admin-danger-hover: light-dark(#dc2626, #b91c1c);
+  /*noinspection CssInvalidFunction*/
+  --admin-danger-active: light-dark(#b91c1c, #991b1b);
+
+  /* ========================================
+     Focus Shadows
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-focus-shadow: 0 0 0 3px
+    light-dark(rgba(124, 58, 237, 0.3), rgba(139, 92, 246, 0.3));
+  /*noinspection CssInvalidFunction*/
+  --admin-focus-shadow-error: 0 0 0 3px
+    light-dark(rgba(225, 29, 72, 0.25), rgba(251, 113, 133, 0.25));
+  /*noinspection CssInvalidFunction*/
+  --admin-focus-shadow-danger: 0 0 0 3px
+    light-dark(rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+
+  /* ========================================
+     Layout
+     ======================================== */
+  --admin-header-height: 64px;
+  --admin-sidebar-width: 240px;
+  --admin-footer-height: 60px;
+
+  /* ========================================
+     Z-Index Scale
+     ======================================== */
+  --admin-z-header: 100;
+  --admin-z-sidebar: 50;
+  --admin-z-dropdown: 1000;
+  --admin-z-modal: 2000;
+  --admin-z-tooltip: 3000;
+}

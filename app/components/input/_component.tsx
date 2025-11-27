@@ -1,3 +1,4 @@
+import { clsx } from "clsx"
 import { type ComponentProps } from "react"
 
 import { ErrorMessage } from "~/components/error-message"
@@ -12,12 +13,19 @@ type Props = ComponentProps<"input"> & {
 }
 
 export const Input = ({ label, errors, id, required, ...rest }: Props) => {
+  const hasErrors = errors !== undefined && errors.length > 0
+
   return (
     <section className={styles.container}>
       <Label htmlFor={id} required={required}>
         {label}
       </Label>
-      <input className={styles.input} id={id} required={required} {...rest} />
+      <input
+        className={clsx(styles.input, hasErrors && styles.inputError)}
+        id={id}
+        required={required}
+        {...rest}
+      />
       <ErrorMessageGroup>
         {errors?.map((error, index) => (
           <ErrorMessage key={index}>{error}</ErrorMessage>
