@@ -1,0 +1,44 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 8px;
+  padding-inline: 12px;
+  background-color: transparent;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out;
+  color: var(--admin-text-primary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+}
+
+.trigger:hover {
+  background-color: var(--admin-bg-secondary);
+  border-color: var(--admin-border-strong);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--admin-purple);
+  outline-offset: 2px;
+}
+
+.userName {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.icon {
+  flex-shrink: 0;
+  transition: transform 200ms ease-out;
+}
+
+.trigger[aria-expanded="true"] .icon {
+  transform: rotate(180deg);
+}

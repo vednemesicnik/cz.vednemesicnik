@@ -1,0 +1,41 @@
+.container {
+  position: relative;
+}
+
+.link,
+.button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-block: 10px;
+  padding-inline: 12px;
+  color: var(--admin-text-primary);
+  text-decoration: none;
+  text-align: left;
+  font-size: var(--font-size-small);
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.link:hover,
+.button:hover {
+  background-color: var(--admin-bg-tertiary);
+}
+
+.link:focus-visible,
+.button:focus-visible {
+  outline: 2px solid var(--admin-purple);
+  outline-offset: -2px;
+}
+
+.form {
+  margin: 0;
+}
