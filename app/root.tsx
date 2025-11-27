@@ -36,7 +36,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <Scripts />
 
         {/* Environment variables body script - sets ENV for client */}
-        <script src={href("/resources/env-script")} />
+        <script src={href("/resources/env.js")} />
       </body>
     </html>
   )
