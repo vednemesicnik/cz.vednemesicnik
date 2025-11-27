@@ -17,7 +17,7 @@
   /*noinspection CssInvalidFunction*/
   --admin-bg-tertiary: light-dark(#f1f5f9, #2d2d44);
   /*noinspection CssInvalidFunction*/
-  --admin-bg-hover: light-dark(#f3f0ff, #1e1435);
+  --admin-bg-hover: light-dark(#f3f0ff, #372554);
   /*noinspection CssInvalidFunction*/
   --admin-bg-disabled: light-dark(#f8f9fa, #0f0f1a);
 
@@ -52,6 +52,16 @@
   --admin-purple-active: light-dark(#5b21b6, #6d28d9);
 
   /* ========================================
+     Colors - Amber Accent (Secondary)
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-amber: light-dark(#f59e0b, #fbbf24);
+  /*noinspection CssInvalidFunction*/
+  --admin-amber-hover: light-dark(#d97706, #f59e0b);
+  /*noinspection CssInvalidFunction*/
+  --admin-amber-active: light-dark(#b45309, #d97706);
+
+  /* ========================================
      Colors - Semantic
      ======================================== */
   /*noinspection CssInvalidFunction*/
@@ -59,7 +69,7 @@
   /*noinspection CssInvalidFunction*/
   --admin-error: light-dark(#e11d48, #fb7185);
   /*noinspection CssInvalidFunction*/
-  --admin-warning: light-dark(#f59e0b, #fbbf24);
+  --admin-warning: light-dark(#fb923c, #fdba74);
 
   /* ========================================
      Colors - Danger (Buttons)
