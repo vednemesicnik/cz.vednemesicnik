@@ -8,7 +8,7 @@ module.exports = {
     /** zero lengths do not need specified unit (e.g.{ margin: 0;}) */
     "length-zero-no-unit": true,
     /** there must be empty line before a new css at-rule (e.g. @media) */
-    "at-rule-empty-line-before": "always",
+    "at-rule-empty-line-before": ["always", { except: ["@layer"] }],
     /** duplicate properties are not allowed (e.g. {color: white; color: pink;}) */
     "declaration-block-no-duplicate-properties": true,
     /** longhand properties can not be overwritten by shorthand properties (e.g. {padding-left: 10px; padding: 20px;}) */
