@@ -1,6 +1,7 @@
 import { Activity, useCallback, useEffect, useRef, useState } from "react"
-import { Form, Link } from "react-router"
+import { Form } from "react-router"
 
+import { BaseLink } from "~/components/base-link"
 import { AccountBoxIcon } from "~/components/icons/account-box-icon"
 import { ExitToAppIcon } from "~/components/icons/exit-to-app-icon"
 
@@ -59,14 +60,14 @@ export const UserMenu = ({ userName, userEmail }: Props) => {
 
       <Activity mode={isOpen ? "visible" : "hidden"}>
         <Dropdown>
-          <Link
+          <BaseLink
             to="/administration/settings/profile"
             className={styles.link}
             onClick={handleClose}
           >
             <AccountBoxIcon className={styles.icon} />
             Profil
-          </Link>
+          </BaseLink>
           <Form
             className={styles.form}
             method={"post"}
