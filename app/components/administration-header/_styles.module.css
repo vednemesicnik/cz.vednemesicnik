@@ -18,6 +18,7 @@
   grid-template-columns: 1fr auto;
   height: 100%;
   align-items: center;
+  justify-items: start;
   padding-inline: 24px;
   gap: 16px;
 }
