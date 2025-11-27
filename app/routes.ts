@@ -101,125 +101,134 @@ export default [
           ]),
 
           // Podcast Administration
-          route(
-            "podcasts",
-            "routes/website-administration/administration/podcasts/splat/route.tsx",
-            [
-              index(
-                "routes/website-administration/administration/podcasts/index/route.tsx"
-              ),
-              route(
-                "add-podcast",
-                "routes/website-administration/administration/podcasts/add-podcast/route.tsx"
-              ),
-              route(
-                "edit-podcast/:podcastId",
-                "routes/website-administration/administration/podcasts/edit-podcast/route.tsx"
-              ),
+          ...prefix("podcasts", [
+            layout(
+              "routes/website-administration/administration/podcasts/__layout/route.tsx",
+              [
+                index(
+                  "routes/website-administration/administration/podcasts/index/route.tsx"
+                ),
+                route(
+                  "add-podcast",
+                  "routes/website-administration/administration/podcasts/add-podcast/route.tsx"
+                ),
+                route(
+                  "edit-podcast/:podcastId",
+                  "routes/website-administration/administration/podcasts/edit-podcast/route.tsx"
+                ),
 
-              // Podcast Episode Administration
-              route(
-                ":podcastId",
-                "routes/website-administration/administration/podcasts/episodes/splat/route.tsx",
-                [
-                  index(
-                    "routes/website-administration/administration/podcasts/episodes/index/route.tsx"
-                  ),
-                  route(
-                    "add-episode",
-                    "routes/website-administration/administration/podcasts/episodes/add-episode/route.tsx"
-                  ),
-                  route(
-                    "edit-episode/:episodeId",
-                    "routes/website-administration/administration/podcasts/episodes/edit-episode/route.tsx"
-                  ),
-
-                  // Podcast Episode Link Administration
-                  route(
-                    ":episodeId",
-                    "routes/website-administration/administration/podcasts/episodes/links/splat/route.tsx",
+                // Podcast Episode Administration
+                ...prefix(":podcastId", [
+                  layout(
+                    "routes/website-administration/administration/podcasts/episodes/__layout/route.tsx",
                     [
                       index(
-                        "routes/website-administration/administration/podcasts/episodes/links/index/route.tsx"
+                        "routes/website-administration/administration/podcasts/episodes/index/route.tsx"
                       ),
                       route(
-                        "add-link",
-                        "routes/website-administration/administration/podcasts/episodes/links/add-link/route.tsx"
+                        "add-episode",
+                        "routes/website-administration/administration/podcasts/episodes/add-episode/route.tsx"
                       ),
                       route(
-                        "edit-link/:linkId",
-                        "routes/website-administration/administration/podcasts/episodes/links/edit-link/route.tsx"
+                        "edit-episode/:episodeId",
+                        "routes/website-administration/administration/podcasts/episodes/edit-episode/route.tsx"
+                      ),
+
+                      // Podcast Episode Link Administration
+                      ...prefix(":episodeId", [
+                        layout(
+                          "routes/website-administration/administration/podcasts/episodes/links/__layout/route.tsx",
+                          [
+                            index(
+                              "routes/website-administration/administration/podcasts/episodes/links/index/route.tsx"
+                            ),
+                            route(
+                              "add-link",
+                              "routes/website-administration/administration/podcasts/episodes/links/add-link/route.tsx"
+                            ),
+                            route(
+                              "edit-link/:linkId",
+                              "routes/website-administration/administration/podcasts/episodes/links/edit-link/route.tsx"
+                            ),
+                          ]
+                        ),
+                      ]),
+                    ]
+                  ),
+                ]),
+              ]
+            ),
+          ]),
+
+          // User Administration
+          ...prefix("users", [
+            layout(
+              "routes/website-administration/administration/users/__layout/route.tsx",
+              [
+                index(
+                  "routes/website-administration/administration/users/index/route.tsx"
+                ),
+                route(
+                  "add-user",
+                  "routes/website-administration/administration/users/add-user/route.tsx"
+                ),
+                route(
+                  "edit-user/:userId",
+                  "routes/website-administration/administration/users/edit-user/route.tsx"
+                ),
+              ]
+            ),
+          ]),
+
+          // Editorial Board Administration
+          ...prefix("editorial-board", [
+            layout(
+              "routes/website-administration/administration/editorial-board/__layout/route.tsx",
+              [
+                index(
+                  "routes/website-administration/administration/editorial-board/index/route.tsx"
+                ),
+
+                ...prefix("members", [
+                  layout(
+                    "routes/website-administration/administration/editorial-board/members/__layout/route.tsx",
+                    [
+                      index(
+                        "routes/website-administration/administration/editorial-board/members/index/route.tsx"
+                      ),
+                      route(
+                        "add-member",
+                        "routes/website-administration/administration/editorial-board/members/add-member/route.tsx"
+                      ),
+                      route(
+                        "edit-member/:memberId",
+                        "routes/website-administration/administration/editorial-board/members/edit-member/route.tsx"
                       ),
                     ]
                   ),
-                ]
-              ),
-            ]
-          ),
+                ]),
 
-          // User Administration
-          route(
-            "users",
-            "routes/website-administration/administration/users/splat/route.tsx",
-            [
-              index(
-                "routes/website-administration/administration/users/index/route.tsx"
-              ),
-              route(
-                "add-user",
-                "routes/website-administration/administration/users/add-user/route.tsx"
-              ),
-              route(
-                "edit-user/:userId",
-                "routes/website-administration/administration/users/edit-user/route.tsx"
-              ),
-            ]
-          ),
-
-          // Editorial Board Administration
-          route(
-            "editorial-board",
-            "routes/website-administration/administration/editorial-board/splat/route.tsx",
-            [
-              index(
-                "routes/website-administration/administration/editorial-board/index/route.tsx"
-              ),
-              route(
-                "members",
-                "routes/website-administration/administration/editorial-board/members/splat/route.tsx",
-                [
-                  index(
-                    "routes/website-administration/administration/editorial-board/members/index/route.tsx"
+                ...prefix("positions", [
+                  layout(
+                    "routes/website-administration/administration/editorial-board/positions/__layout/route.tsx",
+                    [
+                      index(
+                        "routes/website-administration/administration/editorial-board/positions/index/route.tsx"
+                      ),
+                      route(
+                        "add-position",
+                        "routes/website-administration/administration/editorial-board/positions/add-position/route.tsx"
+                      ),
+                      route(
+                        "edit-position/:positionId",
+                        "routes/website-administration/administration/editorial-board/positions/edit-position/route.tsx"
+                      ),
+                    ]
                   ),
-                  route(
-                    "add-member",
-                    "routes/website-administration/administration/editorial-board/members/add-member/route.tsx"
-                  ),
-                  route(
-                    "edit-member/:memberId",
-                    "routes/website-administration/administration/editorial-board/members/edit-member/route.tsx"
-                  ),
-                ]
-              ),
-              route(
-                "positions",
-                "routes/website-administration/administration/editorial-board/positions/splat/route.tsx",
-                [
-                  index(
-                    "routes/website-administration/administration/editorial-board/positions/index/route.tsx"
-                  ),
-                  route(
-                    "add-position",
-                    "routes/website-administration/administration/editorial-board/positions/add-position/route.tsx"
-                  ),
-                  route(
-                    "edit-position/:positionId",
-                    "routes/website-administration/administration/editorial-board/positions/edit-position/route.tsx"
-                  ),
-                ]
-              ),
-            ]
-          ),
+                ]),
+              ]
+            ),
+          ]),
 
           // Settings Administration
           ...prefix("settings", [
