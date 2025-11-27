@@ -2,7 +2,7 @@
   display: grid;
   grid-auto-flow: row;
   gap: 4px;
-  margin: 4px 0;
   justify-items: start;
-  min-height: 1rem;
+  min-height: var(--font-size-small);
+  min-width: 100%;
 }

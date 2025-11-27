@@ -7,5 +7,5 @@ type Props = {
 }
 
 export const ErrorMessageGroup = ({ children }: Props) => {
-  return <section className={styles.container}>{children}</section>
+  return <div className={styles.container}>{children}</div>
 }
