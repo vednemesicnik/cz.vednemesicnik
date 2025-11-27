@@ -1,0 +1,44 @@
+.header {
+  @layer component {
+    grid-area: header;
+    display: grid;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--admin-z-header);
+    height: var(--admin-header-height);
+    background-color: var(--admin-bg-primary);
+    box-shadow: var(--admin-shadow-md);
+  }
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  height: 100%;
+  align-items: center;
+  padding-inline: 24px;
+  gap: 16px;
+}
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+}
+
+.title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin: 0;
+  color: var(--admin-text-primary);
+}

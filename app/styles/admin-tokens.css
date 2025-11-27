@@ -72,6 +72,21 @@
   --admin-danger-active: light-dark(#b91c1c, #991b1b);
 
   /* ========================================
+     Shadows
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-shadow-sm: 0 1px 2px 0
+    light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.3));
+  /*noinspection CssInvalidFunction*/
+  --admin-shadow-md:
+    0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)),
+    0 1px 2px 0 light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3));
+  /*noinspection CssInvalidFunction*/
+  --admin-shadow-lg:
+    0 4px 6px -1px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)),
+    0 2px 4px -1px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3));
+
+  /* ========================================
      Focus Shadows
      ======================================== */
   /*noinspection CssInvalidFunction*/

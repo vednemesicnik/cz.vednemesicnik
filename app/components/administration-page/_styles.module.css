@@ -1,0 +1,10 @@
+.page {
+  grid-area: content;
+  display: grid;
+  position: relative;
+  grid-auto-flow: row;
+  width: 100%;
+  min-height: calc(
+    100vh - var(--admin-header-height) - var(--admin-footer-height)
+  );
+}

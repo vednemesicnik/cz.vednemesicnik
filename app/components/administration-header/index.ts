@@ -1,0 +1,1 @@
+export { AdministrationHeader } from "./_component"
