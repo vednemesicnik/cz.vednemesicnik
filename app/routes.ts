@@ -55,14 +55,21 @@ export default [
     route("support", "routes/website/support/route.tsx"),
   ]),
 
-  // Website - Administration
-  layout("routes/website-administration/__layout/route.tsx", [
-    // Administration routes
-    ...prefix("administration", [
-      route(
-        "sign-in",
-        "routes/website-administration/administration/sign-in/route.tsx"
-      ),
+  // Website Administration
+  ...prefix("administration", [
+    // Non-authenticated routes
+    layout(
+      "routes/website-administration/non-authenticated/__layout/route.tsx",
+      [
+        route(
+          "sign-in",
+          "routes/website-administration/non-authenticated/sign-in/route.tsx"
+        ),
+      ]
+    ),
+
+    // Authenticated routes
+    layout("routes/website-administration/__layout/route.tsx", [
       route(
         "sign-out",
         "routes/website-administration/administration/sign-out/route.ts"

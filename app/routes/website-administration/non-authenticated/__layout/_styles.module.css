@@ -1,0 +1,16 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: var(--admin-header-height) 1fr var(--admin-footer-height);
+  grid-template-areas:
+    "header"
+    "content"
+    "footer";
+  margin: 0;
+  background-color: var(--admin-bg-secondary);
+  min-height: 100vh;
+
+  @supports (height: 100dvh) {
+    min-height: 100dvh;
+  }
+}
