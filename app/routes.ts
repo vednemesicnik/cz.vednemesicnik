@@ -222,28 +222,31 @@ export default [
           ),
 
           // Settings Administration
-          route(
-            "settings",
-            "routes/website-administration/administration/settings/splat/route.tsx",
-            [
-              index(
-                "routes/website-administration/administration/settings/index/route.tsx"
-              ),
-              route(
-                "profile",
-                "routes/website-administration/administration/settings/profile/splat/route.tsx",
-                [
-                  index(
-                    "routes/website-administration/administration/settings/profile/index/route.tsx"
+          ...prefix("settings", [
+            layout(
+              "routes/website-administration/administration/settings/__layout/route.tsx",
+              [
+                index(
+                  "routes/website-administration/administration/settings/index/route.tsx"
+                ),
+
+                ...prefix("profile", [
+                  layout(
+                    "routes/website-administration/administration/settings/profile/__layout/route.tsx",
+                    [
+                      index(
+                        "routes/website-administration/administration/settings/profile/index/route.tsx"
+                      ),
+                      route(
+                        "change-password",
+                        "routes/website-administration/administration/settings/profile/change-password/route.tsx"
+                      ),
+                    ]
                   ),
-                  route(
-                    "change-password",
-                    "routes/website-administration/administration/settings/profile/change-password/route.tsx"
-                  ),
-                ]
-              ),
-            ]
-          ),
+                ]),
+              ]
+            ),
+          ]),
         ]
       ),
     ]),
