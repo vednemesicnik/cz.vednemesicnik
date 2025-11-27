@@ -15,7 +15,7 @@ export default function LayoutRouteComponent({
 
   return (
     <Page>
-      <Breadcrumbs breadcrumbs={breadcrumbs} />
+      <Breadcrumbs items={breadcrumbs} />
       <Outlet />
     </Page>
   )

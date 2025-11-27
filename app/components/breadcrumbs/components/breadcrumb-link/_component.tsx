@@ -47,9 +47,7 @@ export const BreadcrumbLink = ({
   return (
     <NavLink
       aria-current={isCurrentPage ? "page" : undefined}
-      className={({ isActive }) =>
-        clsx(styles.link, isActive && styles.current)
-      }
+      className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
       end={true}
       prefetch={"intent"}
       to={to}
