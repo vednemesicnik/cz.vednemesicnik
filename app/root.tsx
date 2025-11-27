@@ -15,6 +15,7 @@ import "~/styles/global.css"
 import "~/styles/colors.css"
 import "~/styles/fonts.css"
 import "~/styles/sizes.css"
+import "~/styles/admin-tokens.css"
 
 export const links: LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },

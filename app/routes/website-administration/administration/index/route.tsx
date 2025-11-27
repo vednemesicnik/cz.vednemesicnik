@@ -139,7 +139,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Headline>Administrace</Headline>
+      <Headline>Přehled</Headline>
 
       {canViewUsers && <Link to={"/administration/users"}>Uživatelé</Link>}
       {canViewAuthors && <Link to={"/administration/authors"}>Autoři</Link>}

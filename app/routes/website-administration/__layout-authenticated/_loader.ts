@@ -4,10 +4,8 @@ import type { AdministrationPanelUser } from "~/components/administration-panel"
 import { getAuthentication } from "~/utils/auth.server"
 import { commitCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
-import { honeypot } from "~/utils/honeypot.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const honeypotInputProps = honeypot.getInputProps()
   const [csrfToken, csrfCookie] = await commitCSRF(request)
 
   const { isAuthenticated, sessionId } = await getAuthentication(request)
@@ -37,13 +35,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
     })
 
-    administrationPanelUser = {
-      name: session?.user.name ?? undefined,
-      email: session?.user.email ?? undefined,
-      image: {
-        id: undefined,
-        altText: undefined,
-      },
+    if (session) {
+      administrationPanelUser = {
+        name: session.user.name ?? undefined,
+        email: session.user.email ?? undefined,
+        image: {
+          id: undefined,
+          altText: undefined,
+        },
+      }
     }
   }
 
@@ -51,7 +51,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     {
       isAuthenticated,
       user: administrationPanelUser,
-      honeypotInputProps,
       csrfToken,
     },
     {

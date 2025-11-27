@@ -3,10 +3,11 @@
 import { Outlet } from "react-router"
 
 import { Breadcrumbs } from "~/components/breadcrumbs"
-import { Page } from "~/components/page"
 import { getBreadcrumbs } from "~/utils/breadcrumbs"
 
 import type { Route } from "./+types/route"
+
+export { handle } from "./_handle"
 
 export default function LayoutRouteComponent({
   matches,
@@ -14,11 +15,9 @@ export default function LayoutRouteComponent({
   const breadcrumbs = getBreadcrumbs(matches)
 
   return (
-    <Page>
-      <Breadcrumbs breadcrumbs={breadcrumbs} />
+    <>
+      <Breadcrumbs items={breadcrumbs} />
       <Outlet />
-    </Page>
+    </>
   )
 }
-
-export { handle } from "./_handle"
