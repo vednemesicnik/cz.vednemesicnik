@@ -2,8 +2,8 @@
 
 import { Outlet } from "react-router"
 
-export default function Route() {
+export { handle } from "./_handle"
+
+export default function LayoutRouteComponent() {
   return <Outlet />
 }
-
-export { handle } from "./_handle"

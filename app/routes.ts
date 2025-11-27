@@ -81,23 +81,24 @@ export default [
         "routes/website-administration/administration/__layout-sections/route.tsx",
         [
           // Archive Administration
-          route(
-            "archive",
-            "routes/website-administration/administration/archive/splat/route.tsx",
-            [
-              index(
-                "routes/website-administration/administration/archive/index/route.tsx"
-              ),
-              route(
-                "add-issue",
-                "routes/website-administration/administration/archive/add-issue/route.tsx"
-              ),
-              route(
-                "edit-issue/:issueId",
-                "routes/website-administration/administration/archive/edit-issue/route.tsx"
-              ),
-            ]
-          ),
+          ...prefix("archive", [
+            layout(
+              "routes/website-administration/administration/archive/__layout/route.tsx",
+              [
+                index(
+                  "routes/website-administration/administration/archive/index/route.tsx"
+                ),
+                route(
+                  "add-issue",
+                  "routes/website-administration/administration/archive/add-issue/route.tsx"
+                ),
+                route(
+                  "edit-issue/:issueId",
+                  "routes/website-administration/administration/archive/edit-issue/route.tsx"
+                ),
+              ]
+            ),
+          ]),
 
           // Podcast Administration
           route(
