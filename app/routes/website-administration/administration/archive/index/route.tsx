@@ -4,6 +4,14 @@ import { Link } from "react-router"
 
 import { Actions } from "~/components/actions"
 import {
+  AdminTable,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
+} from "~/components/admin-table"
+import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
@@ -43,15 +51,13 @@ export default function Route({ loaderData }: Route.ComponentProps) {
       <Headline>Archiv</Headline>
       {hasCreateRight && <Link to={addIssuePath}>Přidat číslo</Link>}
       <hr />
-      <table>
-        <thead>
-          <tr>
-            <th>Název</th>
-            <th>Stav</th>
-            <th>Akce</th>
-          </tr>
-        </thead>
-        <tbody>
+      <AdminTable>
+        <TableHeader>
+          <TableHeaderCell>Název</TableHeaderCell>
+          <TableHeaderCell>Stav</TableHeaderCell>
+          <TableHeaderCell>Akce</TableHeaderCell>
+        </TableHeader>
+        <TableBody>
           {loaderData.issues.map((issue) => {
             const editArchivedIssuePath =
               routesConfig.administration.archive.editArchivedIssue.getPath(
@@ -74,22 +80,22 @@ export default function Route({ loaderData }: Route.ComponentProps) {
             const hasDeleteRight = hasDeleteOwnRight || hasDeleteAnyRight
 
             return (
-              <tr key={issue.id}>
-                <td>{issue.label}</td>
-                <td>{issue.state}</td>
-                <td>
+              <TableRow key={issue.id}>
+                <TableCell>{issue.label}</TableCell>
+                <TableCell>{issue.state}</TableCell>
+                <TableCell>
                   <Actions
                     canEdit={hasUpdateRight}
                     editPath={editArchivedIssuePath}
                     canDelete={hasDeleteRight}
                     onDelete={openModal(issue.id)}
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </AdminTable>
       <DeleteConfirmationModal
         id={idForDeletion}
         isOpen={isModalOpen}
