@@ -1,60 +1,53 @@
 import { clsx } from "clsx"
 import type { ComponentProps } from "react"
-import { NavLink } from "react-router"
+
+import { BaseBreadcrumbLink } from "~/components/base-breadcrumb-link"
 
 import styles from "./_styles.module.css"
 
-type Props = {
-  isCurrentPage: boolean
-} & ComponentProps<typeof NavLink>
+type Props = ComponentProps<typeof BaseBreadcrumbLink>
 
 /**
  * A specialized navigation link component for breadcrumb trails.
  *
- * Wraps React Router's NavLink with breadcrumb-specific styling and accessibility
- * features. Automatically applies visual styling for active/current pages and sets
- * appropriate ARIA attributes for screen readers.
+ * Wraps BaseBreadcrumbLink with public website styling. Automatically applies
+ * visual styling for active/current pages and sets appropriate ARIA attributes
+ * for screen readers.
  *
- * @param props - Component props including NavLink properties and isCurrentPage flag
+ * @param props - Component props including NavLink properties
  * @returns A styled navigation link with breadcrumb accessibility features
  *
  * @example
  * ```tsx
  * // In a breadcrumb navigation
- * <BreadcrumbLink to="/admin" isCurrentPage={false}>
- *   Administration
+ * <BreadcrumbLink to="/articles">
+ *   Articles
  * </BreadcrumbLink>
  *
- * // Current page (last breadcrumb)
- * <BreadcrumbLink to="/admin/users" isCurrentPage={true}>
- *   Users
+ * // Current page (automatically detected via useMatch)
+ * <BreadcrumbLink to="/articles/my-post">
+ *   My Post
  * </BreadcrumbLink>
  * ```
  *
  * @remarks
- * - Sets `aria-current="page"` when `isCurrentPage` is true for accessibility
+ * - Automatically detects current page via useMatch hook
+ * - Sets `aria-current="page"` for the current route
  * - Uses `end={true}` for exact route matching
  * - Enables intent-based prefetching for improved navigation performance
  * - Supports view transitions for smooth page changes
- * - Applies active styling via the `isActive` state from NavLink
  */
-export const BreadcrumbLink = ({
-  children,
-  to,
-  isCurrentPage,
-  ...rest
-}: Props) => {
+export const BreadcrumbLink = ({ className, ...rest }: Props) => {
   return (
-    <NavLink
-      aria-current={isCurrentPage ? "page" : undefined}
-      className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
-      end={true}
-      prefetch={"intent"}
-      to={to}
-      viewTransition={true}
+    <BaseBreadcrumbLink
+      className={(props) =>
+        clsx(
+          styles.link,
+          props.isActive && styles.active,
+          typeof className === "function" ? className(props) : className
+        )
+      }
       {...rest}
-    >
-      {children}
-    </NavLink>
+    />
   )
 }

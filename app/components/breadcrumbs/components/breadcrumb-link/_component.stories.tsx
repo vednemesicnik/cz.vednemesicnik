@@ -20,14 +20,9 @@ export default meta
 type Story = StoryObj<typeof BreadcrumbLink>
 
 export const Default: Story = {
-  render: (args) => (
-    <BreadcrumbLink to={args.to} isCurrentPage={args.isCurrentPage}>
-      {args.children}
-    </BreadcrumbLink>
-  ),
+  render: (args) => <BreadcrumbLink to={args.to}>{args.children}</BreadcrumbLink>,
   args: {
     to: "/home",
-    isCurrentPage: false,
     children: "Home",
   },
 }

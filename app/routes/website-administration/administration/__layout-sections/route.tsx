@@ -2,7 +2,7 @@
 
 import { Outlet } from "react-router"
 
-import { Breadcrumbs } from "~/components/breadcrumbs"
+import { AdminBreadcrumbs } from "~/components/admin-breadcrumbs"
 import { getBreadcrumbs } from "~/utils/breadcrumbs"
 
 import type { Route } from "./+types/route"
@@ -16,7 +16,7 @@ export default function LayoutRouteComponent({
 
   return (
     <>
-      <Breadcrumbs items={breadcrumbs} />
+      <AdminBreadcrumbs items={breadcrumbs} />
       <Outlet />
     </>
   )

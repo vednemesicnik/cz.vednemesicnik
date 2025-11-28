@@ -120,6 +120,7 @@
      Z-Index Scale
      ======================================== */
   --admin-z-header: 100;
+  --admin-z-breadcrumbs: 99;
   --admin-z-sidebar: 50;
   --admin-z-dropdown: 1000;
   --admin-z-modal: 2000;

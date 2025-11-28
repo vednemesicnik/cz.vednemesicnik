@@ -58,15 +58,12 @@ export const Breadcrumbs = ({ items }: Props) => {
     <nav className={styles.container}>
       <ul className={styles.list}>
         {items.map((breadcrumb, index) => {
-          const isCurrentPage = breadcrumbsCount === index + 1
-          const hasSeparator = !isCurrentPage
+          const isLastItem = breadcrumbsCount === index + 1
+          const hasSeparator = !isLastItem
 
           return (
             <li key={index} className={styles.listItem}>
-              <BreadcrumbLink
-                to={breadcrumb.path}
-                isCurrentPage={isCurrentPage}
-              >
+              <BreadcrumbLink to={breadcrumb.path}>
                 {breadcrumb.label}
               </BreadcrumbLink>
               {hasSeparator && <span>/</span>}
