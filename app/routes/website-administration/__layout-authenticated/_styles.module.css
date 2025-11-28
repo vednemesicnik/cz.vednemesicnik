@@ -1,3 +1,9 @@
+.page {
+  @layer layout {
+    align-content: start;
+  }
+}
+
 .layout {
   display: grid;
   grid-template-columns: var(--admin-sidebar-width) 1fr;

@@ -42,7 +42,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <AdminUserMenu userName={user.name} userEmail={user.email} />
         </AdminHeader>
         <AdministrationSidebar navigationItems={navigationItems} />
-        <AdministrationPage>
+        <AdministrationPage className={styles.page}>
           <Outlet />
         </AdministrationPage>
         <AdministrationFooter />

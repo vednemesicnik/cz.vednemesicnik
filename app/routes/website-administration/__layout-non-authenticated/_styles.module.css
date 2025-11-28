@@ -1,3 +1,9 @@
+.page {
+  @layer layout {
+    align-content: stretch;
+  }
+}
+
 .layout {
   display: grid;
   grid-template-columns: 1fr;

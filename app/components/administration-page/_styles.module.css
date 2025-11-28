@@ -1,13 +1,13 @@
 .page {
-  grid-area: content;
-  display: grid;
-  position: relative;
-  grid-template-columns: 1fr;
-  grid-auto-flow: row;
-  align-items: start;
-  align-content: start;
-  width: 100%;
-  min-height: calc(
-    100vh - var(--admin-header-height) - var(--admin-footer-height)
-  );
+  @layer component {
+    grid-area: content;
+    display: grid;
+    position: relative;
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    width: 100%;
+    min-height: calc(
+      100vh - var(--admin-header-height) - var(--admin-footer-height)
+    );
+  }
 }

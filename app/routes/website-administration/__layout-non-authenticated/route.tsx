@@ -18,7 +18,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <HoneypotProvider {...loaderData.honeypotInputProps}>
       <div className={styles.layout}>
         <AdminHeader />
-        <AdministrationPage>
+        <AdministrationPage className={styles.page}>
           <Outlet />
         </AdministrationPage>
         <AdministrationFooter />
