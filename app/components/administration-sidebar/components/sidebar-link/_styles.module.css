@@ -12,11 +12,17 @@
     border-color 150ms ease-out;
   border: none;
   border-inline-start: 3px solid transparent;
-}
 
-.link:hover {
-  background-color: var(--admin-bg-tertiary);
-  color: var(--admin-text-primary);
+  &:hover {
+    background-color: var(--admin-bg-tertiary);
+    color: var(--admin-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--admin-purple);
+    outline-offset: -2px;
+    border-radius: 4px;
+  }
 }
 
 .linkActive {
@@ -24,9 +30,4 @@
   color: var(--admin-purple);
   border-inline-start-color: var(--admin-purple);
   font-weight: var(--font-weight-semibold);
-}
-
-.link:focus-visible {
-  outline: 2px solid var(--admin-purple);
-  outline-offset: -2px;
 }
