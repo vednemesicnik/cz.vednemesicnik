@@ -12,10 +12,9 @@ type Match = BreadcrumbMatch<
 export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { issueId } = match.params
+    const label = match.loaderData?.issue.label ?? "Neznámé číslo"
+    const path = href(`/administration/archive/:issueId`, { issueId })
 
-    return {
-      label: "Upravit číslo",
-      path: href(`/administration/archive/edit-issue/:issueId`, { issueId }),
-    }
+    return { label, path }
   },
 }

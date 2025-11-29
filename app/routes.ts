@@ -89,11 +89,11 @@ export default [
                   "routes/website-administration/administration/archive/index/route.tsx"
                 ),
                 route(
-                  "add-issue",
+                  "new-issue",
                   "routes/website-administration/administration/archive/add-issue/route.tsx"
                 ),
                 route(
-                  "edit-issue/:issueId",
+                  ":issueId",
                   "routes/website-administration/administration/archive/edit-issue/route.tsx"
                 ),
               ]

@@ -8,6 +8,7 @@
   /* Typography */
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
+  line-height: 1;
 
   /* Spacing */
   padding-block: 12px;

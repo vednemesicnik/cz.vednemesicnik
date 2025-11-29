@@ -1,0 +1,33 @@
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: 12px;
+  padding-inline: 24px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  color: var(--admin-purple);
+  background-color: transparent;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover {
+    color: var(--admin-text-primary);
+    background-color: var(--admin-purple-hover);
+  }
+
+  &:active {
+    color: var(--admin-text-primary);
+    background-color: var(--admin-purple-active);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--admin-focus-shadow);
+  }
+}

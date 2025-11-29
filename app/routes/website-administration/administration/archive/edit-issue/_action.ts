@@ -1,7 +1,6 @@
 import { parseWithZod } from "@conform-to/zod"
-import { redirect } from "react-router"
+import { href, redirect } from "react-router"
 
-import { routesConfig } from "~/config/routes-config"
 import { requireAuthentication } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
 import { getMultipartFormData } from "~/utils/get-multipart-form-data"
@@ -28,10 +27,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const response = await updateArchivedIssue(submission.value, sessionId)
 
   if (response?.ok === true) {
-    const archiveAdministrationPath =
-      routesConfig.administration.archive.index.getPath()
-
-    throw redirect(archiveAdministrationPath)
+    throw redirect(href("/administration/archive"))
   }
 
   return { submissionResult: null }

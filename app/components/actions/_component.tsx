@@ -1,5 +1,4 @@
-import { Link } from "react-router";
-
+import { BaseLink } from "~/components/base-link"
 import { Button } from "~/components/button"
 
 import styles from "./_styles.module.css"
@@ -19,7 +18,7 @@ export const Actions = ({
 }: Props) => {
   return (
     <section className={styles.container}>
-      {canEdit && <Link to={editPath}>Upravit</Link>}
+      {canEdit && <BaseLink to={editPath}>Upravit</BaseLink>}
       {canDelete && (
         <Button onClick={onDelete} variant={"danger"}>
           Odstranit

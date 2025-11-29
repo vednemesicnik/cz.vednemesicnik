@@ -10,6 +10,7 @@ import {
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useState } from "react"
 
+import { AdminLinkButton } from "~/components/admin-link-button"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
 import { Fieldset } from "~/components/fieldset"
@@ -18,7 +19,6 @@ import { Form } from "~/components/form"
 import { FormActions } from "~/components/form-actions"
 import { Headline } from "~/components/headline"
 import { Input } from "~/components/input"
-import { LinkButton } from "~/components/link-button"
 import { Select } from "~/components/select"
 import { TextArea } from "~/components/text-area"
 import { getFormattedDateString } from "~/utils/get-formatted-date-string"
@@ -127,7 +127,7 @@ export default function Route({
           <Button type="submit" variant={"default"}>
             Přidat
           </Button>
-          <LinkButton to={"/administration/podcasts"}>Zrušit</LinkButton>
+          <AdminLinkButton to={"/administration/podcasts"}>Zrušit</AdminLinkButton>
         </FormActions>
       </Form>
     </>

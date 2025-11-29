@@ -9,15 +9,15 @@ import {
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useNavigation } from "react-router"
 
+import { AdminHeadline } from "~/components/admin-headline"
+import { AdminLinkButton } from "~/components/admin-link-button"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
 import { Fieldset } from "~/components/fieldset/_component"
 import { FileInput } from "~/components/file-input"
 import { Form } from "~/components/form"
 import { FormActions } from "~/components/form-actions"
-import { Headline } from "~/components/headline"
 import { Input } from "~/components/input"
-import { LinkButton } from "~/components/link-button"
 import { Select } from "~/components/select"
 import { contentStateConfig } from "~/config/content-state-config"
 import { getAuthorRights } from "~/utils/get-author-rights"
@@ -25,6 +25,7 @@ import { getFormattedDateString } from "~/utils/get-formatted-date-string"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
+import styles from "./_styles.module.css"
 
 export default function Route({
   loaderData,
@@ -109,13 +110,14 @@ export default function Route({
 
   return (
     <>
-      <Headline>Přidat číslo</Headline>
+      <AdminHeadline className={styles.headline}>Nové číslo</AdminHeadline>
 
       <Form
         method={"post"}
         encType={"multipart/form-data"}
         {...getFormProps(form)}
         errors={form.errors}
+        className={styles.form}
       >
         <Fieldset legend={"Základní informace"} disabled={state !== "idle"}>
           <Input
@@ -179,11 +181,13 @@ export default function Route({
           <Button
             type="submit"
             disabled={contentStates.length === 0 || state !== "idle"}
-            variant={"default"}
+            variant={"primary"}
           >
             Přidat
           </Button>
-          <LinkButton to={"/administration/archive"}>Zrušit</LinkButton>
+          <AdminLinkButton to={"/administration/archive"}>
+            Zrušit
+          </AdminLinkButton>
         </FormActions>
       </Form>
     </>

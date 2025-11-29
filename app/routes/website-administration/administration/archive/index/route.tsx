@@ -1,8 +1,9 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Link } from "react-router"
+import { href } from "react-router"
 
 import { Actions } from "~/components/actions"
+import { AdminHeadline } from "~/components/admin-headline"
 import {
   AdminTable,
   TableBody,
@@ -11,12 +12,11 @@ import {
   TableHeaderCell,
   TableRow,
 } from "~/components/admin-table"
+import { BaseLink } from "~/components/base-link"
 import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
 } from "~/components/delete-confirmation-modal"
-import { Headline } from "~/components/headline"
-import { routesConfig } from "~/config/routes-config"
 
 import type { Route } from "./+types/route"
 import { getCreateRights } from "./utils/get-create-rights"
@@ -25,9 +25,6 @@ import { getUpdateAndDeleteRights } from "./utils/get-update-and-delete-rights"
 export default function Route({ loaderData }: Route.ComponentProps) {
   const { idForDeletion, isModalOpen, openModal, closeModal } =
     useDeleteConfirmation()
-
-  const addIssuePath =
-    routesConfig.administration.archive.addArchivedIssue.getPath()
 
   const { user } = loaderData.session
 
@@ -48,9 +45,12 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Headline>Archiv</Headline>
-      {hasCreateRight && <Link to={addIssuePath}>Přidat číslo</Link>}
-      <hr />
+      <AdminHeadline>Archiv</AdminHeadline>
+      {hasCreateRight && (
+        <BaseLink to={href("/administration/archive/new-issue")}>
+          Přidat číslo
+        </BaseLink>
+      )}
       <AdminTable>
         <TableHeader>
           <TableHeaderCell>Název</TableHeaderCell>
@@ -59,10 +59,12 @@ export default function Route({ loaderData }: Route.ComponentProps) {
         </TableHeader>
         <TableBody>
           {loaderData.issues.map((issue) => {
-            const editArchivedIssuePath =
-              routesConfig.administration.archive.editArchivedIssue.getPath(
-                issue.id
-              )
+            const editArchivedIssuePath = href(
+              "/administration/archive/:issueId",
+              {
+                issueId: issue.id,
+              }
+            )
 
             const {
               hasUpdateOwnRight,
