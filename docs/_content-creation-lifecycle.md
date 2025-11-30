@@ -15,31 +15,12 @@ This guide outlines the lifecycle of content items with actions (e.g., create, u
 ## Lifecycle Flow
 
 ```plaintext
-Draft → [Review & Approval*] → Published → Archived
-                                     ↓           ↓
-                                  Retract     Restore
-                                     ↓           ↓
-                                   Draft ←──────┘
+Draft → Published → Archived
+            ↓           ↓
+         Retract     Restore
+            ↓           ↓
+          Draft ←──────┘
 ```
-
-**\* Review & Approval required for:**
-- **Contributors**: Must be reviewed by Creator or Coordinator
-- **Creators**: Must be reviewed by Coordinator
-- **Coordinators**: Can self-publish without review
-
----
-
-## Review Workflow
-
-Before content can be published, it may require review and approval based on the author's role:
-
-| **Author Role** | **Review Required?** | **Who Can Approve?**               |
-|-----------------|----------------------|------------------------------------|
-| Contributor     | ✅ Yes                | Creator or Coordinator (level ≤ 2) |
-| Creator         | ✅ Yes                | Coordinator only (level = 1)       |
-| Coordinator     | ❌ No                 | Can self-publish                   |
-
-This **Strict Review** workflow ensures editorial oversight while allowing flexibility for trusted coordinators to expedite urgent content.
 
 ---
 

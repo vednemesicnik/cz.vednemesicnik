@@ -157,23 +157,32 @@ model Verification {
 }
 
 model Author {
-  id                      String                   @id @default(cuid())
-  name                    String
-  bio                     String?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  user                    User?
-  roleId                  String
-  role                    AuthorRole               @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  issues                  Issue[]
-  editorialBoardPositions EditorialBoardPosition[]
-  editorialBoardMembers   EditorialBoardMember[]
-  podcasts                Podcast[]
-  podcastEpisodes         PodcastEpisode[]
-  podcastEpisodeLinks     PodcastEpisodeLink[]
-  articles                Article[]
-  tags                    ArticleTag[]
-  categories              ArticleCategory[]
+  id                         String                   @id @default(cuid())
+  name                       String
+  bio                        String?
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+  user                       User?
+  roleId                     String
+  role                       AuthorRole               @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  // Authored content
+  issues                     Issue[]                  @relation("AuthoredIssues")
+  editorialBoardPositions    EditorialBoardPosition[]
+  editorialBoardMembers      EditorialBoardMember[]
+  podcasts                   Podcast[]                @relation("AuthoredPodcasts")
+  podcastEpisodes            PodcastEpisode[]         @relation("AuthoredPodcastEpisodes")
+  podcastEpisodeLinks        PodcastEpisodeLink[]     @relation("AuthoredPodcastEpisodeLinks")
+  articles                   Article[]                @relation("AuthoredArticles")
+  tags                       ArticleTag[]             @relation("AuthoredArticleTags")
+  categories                 ArticleCategory[]        @relation("AuthoredArticleCategories")
+  // Reviewed content
+  reviewedIssues             Issue[]                  @relation("ReviewedIssues")
+  reviewedPodcasts           Podcast[]                @relation("ReviewedPodcasts")
+  reviewedPodcastEpisodes    PodcastEpisode[]         @relation("ReviewedPodcastEpisodes")
+  reviewedPodcastEpisodeLinks PodcastEpisodeLink[]    @relation("ReviewedPodcastEpisodeLinks")
+  reviewedArticles           Article[]                @relation("ReviewedArticles")
+  reviewedArticleTags        ArticleTag[]             @relation("ReviewedArticleTags")
+  reviewedArticleCategories  ArticleCategory[]        @relation("ReviewedArticleCategories")
 }
 
 model AuthorRole {
@@ -216,6 +225,7 @@ enum AuthorPermissionAction {
   retract
   archive
   restore
+  review
 }
 
 enum AuthorPermissionEntity {
@@ -236,20 +246,24 @@ enum AuthorPermissionAccess {
 }
 
 model Issue {
-  id          String       @id @default(cuid())
-  label       String
-  releasedAt  DateTime
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  publishedAt DateTime?
-  state       ContentState @default(draft)
-  cover       IssueCover?
-  pdf         IssuePDF?
-  authorId    String
-  author      Author       @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id           String       @id @default(cuid())
+  label        String
+  releasedAt   DateTime
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  publishedAt  DateTime?
+  state        ContentState @default(draft)
+  reviewedById String?
+  reviewedBy   Author?      @relation("ReviewedIssues", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reviewedAt   DateTime?
+  cover        IssueCover?
+  pdf          IssuePDF?
+  authorId     String
+  author       Author       @relation("AuthoredIssues", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
+  @@index([reviewedById])
 }
 
 model IssueCover {
@@ -275,21 +289,25 @@ model IssuePDF {
 }
 
 model Podcast {
-  id          String           @id @default(cuid())
-  slug        String           @unique
-  title       String
-  description String
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  publishedAt DateTime?
-  state       ContentState     @default(draft)
-  episodes    PodcastEpisode[]
-  cover       PodcastCover?
-  authorId    String
-  author      Author           @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id           String           @id @default(cuid())
+  slug         String           @unique
+  title        String
+  description  String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  publishedAt  DateTime?
+  state        ContentState     @default(draft)
+  reviewedById String?
+  reviewedBy   Author?          @relation("ReviewedPodcasts", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reviewedAt   DateTime?
+  episodes     PodcastEpisode[]
+  cover        PodcastCover?
+  authorId     String
+  author       Author           @relation("AuthoredPodcasts", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
+  @@index([reviewedById])
 }
 
 model PodcastCover {
@@ -304,45 +322,53 @@ model PodcastCover {
 }
 
 model PodcastEpisode {
-  id          String               @id @default(cuid())
-  slug        String               @unique
-  number      Int
-  title       String
-  description String
-  links       PodcastEpisodeLink[]
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  publishedAt DateTime?
-  state       ContentState         @default(draft)
-  podcast     Podcast              @relation(fields: [podcastId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  podcastId   String
-  cover       PodcastEpisodeCover?
-  authorId    String
-  author      Author               @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id           String               @id @default(cuid())
+  slug         String               @unique
+  number       Int
+  title        String
+  description  String
+  links        PodcastEpisodeLink[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  publishedAt  DateTime?
+  state        ContentState         @default(draft)
+  reviewedById String?
+  reviewedBy   Author?              @relation("ReviewedPodcastEpisodes", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reviewedAt   DateTime?
+  podcast      Podcast              @relation(fields: [podcastId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  podcastId    String
+  cover        PodcastEpisodeCover?
+  authorId     String
+  author       Author               @relation("AuthoredPodcastEpisodes", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // episode number should be unique within a podcast
   @@unique([podcastId, number])
   // non-unique foreign key
   @@index([podcastId])
   @@index([authorId])
+  @@index([reviewedById])
 }
 
 model PodcastEpisodeLink {
-  id          String         @id @default(cuid())
-  url         String
-  label       String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  publishedAt DateTime?
-  state       ContentState   @default(draft)
-  episode     PodcastEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  episodeId   String
-  authorId    String
-  author      Author         @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id           String         @id @default(cuid())
+  url          String
+  label        String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  publishedAt  DateTime?
+  state        ContentState   @default(draft)
+  reviewedById String?
+  reviewedBy   Author?        @relation("ReviewedPodcastEpisodeLinks", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reviewedAt   DateTime?
+  episode      PodcastEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  episodeId    String
+  authorId     String
+  author       Author         @relation("AuthoredPodcastEpisodeLinks", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([episodeId])
   @@index([authorId])
+  @@index([reviewedById])
 }
 
 model PodcastEpisodeCover {
@@ -395,8 +421,11 @@ model Article {
   updatedAt     DateTime          @updatedAt
   publishedAt   DateTime?
   state         ContentState      @default(draft)
+  reviewedById  String?
+  reviewedBy    Author?           @relation("ReviewedArticles", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reviewedAt    DateTime?
   authorId      String
-  author        Author            @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  author        Author            @relation("AuthoredArticles", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   featuredImage ArticleImage?     @relation("FeaturedArticleImage")
   images        ArticleImage[]    @relation("ArticleImage")
   tags          ArticleTag[]
@@ -404,6 +433,7 @@ model Article {
 
   // non-unique foreign key
   @@index([authorId])
+  @@index([reviewedById])
 }
 
 model ArticleImage {
@@ -423,35 +453,43 @@ model ArticleImage {
 }
 
 model ArticleTag {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  slug        String       @unique
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  publishedAt DateTime?
-  state       ContentState @default(draft)
-  articles    Article[]
-  authorId    String
-  author      Author       @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id           String       @id @default(cuid())
+  name         String       @unique
+  slug         String       @unique
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  publishedAt  DateTime?
+  state        ContentState @default(draft)
+  reviewedById String?
+  reviewedBy   Author?      @relation("ReviewedArticleTags", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reviewedAt   DateTime?
+  articles     Article[]
+  authorId     String
+  author       Author       @relation("AuthoredArticleTags", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
+  @@index([reviewedById])
 }
 
 model ArticleCategory {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  slug        String       @unique
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  publishedAt DateTime?
-  state       ContentState @default(draft)
-  articles    Article[]
-  authorId    String
-  author      Author       @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id           String       @id @default(cuid())
+  name         String       @unique
+  slug         String       @unique
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  publishedAt  DateTime?
+  state        ContentState @default(draft)
+  reviewedById String?
+  reviewedBy   Author?      @relation("ReviewedArticleCategories", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reviewedAt   DateTime?
+  articles     Article[]
+  authorId     String
+  author       Author       @relation("AuthoredArticleCategories", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   // non-unique foreign key
   @@index([authorId])
+  @@index([reviewedById])
 }
 
 enum ContentState {
