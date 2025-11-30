@@ -21,6 +21,7 @@ export const authorPermissions: AuthorPermissionsData = {
     "retract",
     "archive",
     "restore",
+    "review",
   ],
   accesses: ["own", "any"],
   states: ["draft", "published", "archived"],
