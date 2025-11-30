@@ -1,12 +1,12 @@
 import { redirect } from "react-router"
 
-import { requireAuthentication } from "~/utils/auth.server"
-import { prisma } from "~/utils/db.server"
-import { getAuthorRights } from "~/utils/get-author-rights"
 import {
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
-} from "~~/types/permission"
+} from "@generated/prisma/enums"
+import { requireAuthentication } from "~/utils/auth.server"
+import { prisma } from "~/utils/db.server"
+import { getAuthorRights } from "~/utils/get-author-rights"
 
 import type { Route } from "./+types/route"
 

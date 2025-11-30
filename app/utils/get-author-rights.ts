@@ -2,13 +2,13 @@ import {
   type AuthorPermissionAccess,
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
-  type AuthorPermissionState,
-} from "~~/types/permission"
+  type ContentState,
+} from "@generated/prisma/enums"
 
 type Access = AuthorPermissionAccess | string
 type Action = AuthorPermissionAction | string
 type Entity = AuthorPermissionEntity | string
-type State = AuthorPermissionState | string
+type State = ContentState | string
 
 type Permissions = {
   access: Access

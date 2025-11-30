@@ -1,6 +1,11 @@
 import { invariantResponse } from "@epic-web/invariant"
 import { createId } from "@paralleldrive/cuid2"
 
+import {
+  type AuthorPermissionAction,
+  type AuthorPermissionEntity,
+  type ContentState,
+} from "@generated/prisma/enums"
 import { contentStateConfig } from "~/config/content-state-config"
 import { prisma } from "~/utils/db.server"
 import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-check.server"
@@ -9,10 +14,6 @@ import { getIssueData } from "~/utils/get-issue-data"
 import { getPublishDate } from "~/utils/get-publish-date"
 import { getConvertedImageStream } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
-import type {
-  AuthorPermissionAction,
-  AuthorPermissionEntity,
-} from "~~/types/permission"
 
 type Data = {
   id: string
@@ -22,7 +23,7 @@ type Data = {
   cover?: File
   pdfId: string
   pdf?: File
-  state: string
+  state: ContentState
   publishedAt?: string
   authorId: string
 }

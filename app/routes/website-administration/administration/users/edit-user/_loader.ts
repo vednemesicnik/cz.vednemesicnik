@@ -1,6 +1,6 @@
+import { type UserPermissionEntity } from "@generated/prisma/enums"
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { type UserPermissionEntity } from "~~/types/permission"
 
 import type { Route } from "./+types/route"
 

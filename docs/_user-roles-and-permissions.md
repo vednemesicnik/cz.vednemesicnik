@@ -13,6 +13,25 @@ This documentation outlines the permissions and actions available to users in th
 | **Administrator** | 2         | System administrator with full access to all user accounts and author profiles. |
 | **Owner**         | 1         | System owner with full control over all user accounts and author profiles.      |
 
+### Role Level Hierarchy
+
+The **level** field establishes a hierarchical authority structure for role assignment and access control:
+
+- **Level 1 (Owner)**: Highest authority - can assign any role including Owner
+- **Level 2 (Administrator)**: Mid-level authority - can assign Administrator and Member roles, but NOT Owner
+- **Level 3 (Member)**: Entry level - cannot assign roles to others
+
+Lower level numbers indicate higher authority. This hierarchy prevents privilege escalation by ensuring users can only assign roles at their level or below.
+
+**How it works:**
+When assigning roles, users can only assign roles with a level greater than or equal to their own level.
+
+**Examples:**
+- ✅ Administrator (level 2) can assign Administrator (level 2) or Member (level 3) roles
+- ❌ Administrator (level 2) CANNOT assign Owner (level 1) role
+- ✅ Owner (level 1) can assign any role (all levels ≥ 1)
+- ❌ Member (level 3) cannot assign any roles (no administrative access)
+
 ### 👤 User Entity Permissions
 | **Role**          | **Action** | **Access** | **Notes**                                                           |
 |-------------------|------------|------------|---------------------------------------------------------------------|

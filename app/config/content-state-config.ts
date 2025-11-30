@@ -1,4 +1,4 @@
-import { type ContentState } from "~~/types/content-state"
+import { type ContentState } from "@generated/prisma/enums"
 
 type ContentStateConfig = {
   map: Record<ContentState, ContentState>

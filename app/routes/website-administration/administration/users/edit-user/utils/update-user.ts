@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs"
 
+import { type UserRoleName } from "@generated/prisma/enums"
 import { prisma } from "~/utils/db.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 import { throwError } from "~/utils/throw-error.server"
-import { type UserRoleName } from "~~/types/role"
 
 type Data = {
   email: string

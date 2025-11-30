@@ -1,8 +1,8 @@
 import { type LoaderFunctionArgs } from "react-router"
 
+import { type UserPermissionEntity } from "@generated/prisma/enums"
 import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
-import { type UserPermissionEntity } from "~~/types/permission"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { sessionId } = await requireAuthentication(request)

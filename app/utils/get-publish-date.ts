@@ -1,5 +1,5 @@
+import { type ContentState } from "@generated/prisma/enums"
 import { contentStateConfig } from "~/config/content-state-config"
-import { type ContentState } from "~~/types/content-state"
 
 export const getPublishDate = (
   publishedAt: string | undefined,

@@ -1,5 +1,10 @@
 import { invariantResponse } from "@epic-web/invariant"
 
+import {
+  type AuthorPermissionAction,
+  type AuthorPermissionEntity,
+  type ContentState,
+} from "@generated/prisma/enums"
 import { prisma } from "~/utils/db.server"
 import { getAuthorForPermissionCheck } from "~/utils/get-author-for-permission-check.server"
 import { getAuthorRights } from "~/utils/get-author-rights"
@@ -7,15 +12,11 @@ import { getIssueData } from "~/utils/get-issue-data"
 import { getPublishDate } from "~/utils/get-publish-date"
 import { getConvertedImageStream } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
-import type {
-  AuthorPermissionAction,
-  AuthorPermissionEntity,
-} from "~~/types/permission"
 
 type Data = {
   ordinalNumber: string
   releasedAt: string
-  state: string
+  state: ContentState
   cover: File
   pdf: File
   authorId: string

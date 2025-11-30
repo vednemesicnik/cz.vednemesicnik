@@ -18,7 +18,7 @@ export const createUser = async ({ email, name, password, roleId }: Data) => {
           name,
           role: {
             connect: {
-              name: "author",
+              name: "contributor",
             },
           },
         },

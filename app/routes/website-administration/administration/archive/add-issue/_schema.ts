@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { contentStateConfig } from "~/config/content-state-config"
+import { ContentState } from "@generated/prisma/enums"
 
 const MAX_COVER_UPLOAD_SIZE = 1024 * 1024 * 5 // 5 kB
 const MAX_PDF_UPLOAD_SIZE = 1024 * 1024 * 10 // 10 MB
@@ -37,7 +37,7 @@ export const schema = z.object({
       },
       { message: "PDF soubor by měl mít maximální velikost 10 MB" }
     ),
-  state: z.enum(contentStateConfig.states as [string, ...string[]], {
+  state: z.nativeEnum(ContentState, {
     message: "Zvolený stav není podporován",
   }),
   authorId: z.string({ message: "Autor je povinný" }),

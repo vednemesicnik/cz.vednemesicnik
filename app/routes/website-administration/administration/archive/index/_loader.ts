@@ -1,10 +1,10 @@
-import { getViewRights } from "~/routes/website-administration/administration/archive/index/utils/get-view-rights.server"
-import { requireAuthentication } from "~/utils/auth.server"
-import { prisma } from "~/utils/db.server"
 import {
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
-} from "~~/types/permission"
+} from "@generated/prisma/enums"
+import { getViewRights } from "~/routes/website-administration/administration/archive/index/utils/get-view-rights.server"
+import { requireAuthentication } from "~/utils/auth.server"
+import { prisma } from "~/utils/db.server"
 
 import type { Route } from "./+types/route"
 

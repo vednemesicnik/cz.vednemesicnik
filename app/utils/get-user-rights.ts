@@ -2,7 +2,7 @@ import type {
   UserPermissionAccess,
   UserPermissionAction,
   UserPermissionEntity,
-} from "~~/types/permission"
+} from "@generated/prisma/enums"
 
 type Access = UserPermissionAccess | string
 type Action = UserPermissionAction | string
