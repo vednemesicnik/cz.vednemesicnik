@@ -5,7 +5,7 @@ import styles from "./_styles.module.css"
 
 type Props = Pick<ComponentProps<"svg">, "className">
 
-export const OpenInNewIcon = ({ className }: Props) => {
+export const DeleteIcon = ({ className }: Props) => {
   return (
     <svg
       xmlns={"http://www.w3.org/2000/svg"}
@@ -14,7 +14,7 @@ export const OpenInNewIcon = ({ className }: Props) => {
     >
       <path
         d={
-          "M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z"
+          "M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"
         }
       />
     </svg>
