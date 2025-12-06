@@ -1,4 +1,4 @@
-import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
+import { clsx } from "clsx"
 import { type ReactNode, useEffect, useRef, useState } from "react"
 
 import styles from "./_styles.module.css"
@@ -68,15 +68,12 @@ export const Modal = ({
   return (
     <dialog
       ref={dialogRef}
-      className={combineClasses(
-        styles.dialog,
-        applyClasses(styles.hidden).if(isHidden)
-      )}
+      className={clsx(styles.dialog, isHidden && styles.hidden)}
       aria-modal="true"
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
     >
-      <section className={combineClasses(styles.container, className)}>
+      <section className={clsx(styles.container, className)}>
         {children}
       </section>
     </dialog>

@@ -8,6 +8,6 @@ type Props = {
   className?: string
 }
 
-export const AdministrationPage = ({ children, className }: Props) => {
-  return <div className={clsx(styles.page, className)}>{children}</div>
-}
+export const AdminActionGroup = ({ children, className }: Props) => (
+  <div className={clsx(styles.group, className)}>{children}</div>
+)

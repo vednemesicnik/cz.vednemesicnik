@@ -1,0 +1,1 @@
+export { AdminActionButton } from "./_component"

@@ -7,11 +7,7 @@ import styles from "./_styles.module.css"
 
 type Props = ComponentProps<typeof BaseLink>
 
-export const AdminLinkButton = ({
-  children,
-  className,
-  ...rest
-}: Props) => (
+export const AdminLinkButton = ({ children, className, ...rest }: Props) => (
   <BaseLink className={clsx(styles.linkButton, className)} {...rest}>
     {children}
   </BaseLink>

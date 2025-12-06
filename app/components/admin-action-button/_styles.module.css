@@ -1,0 +1,109 @@
+/* ========================================
+   Publish Action (Emerald - move to published state)
+   ======================================== */
+.publish {
+  background-color: var(--admin-action-publish);
+  color: var(--white);
+  border: 2px solid transparent;
+
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-action-publish-hover);
+  }
+
+  &:active:not(:disabled) {
+    background-color: var(--admin-action-publish-active);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+    outline: none;
+  }
+}
+
+/* ========================================
+   Retract Action (Amber - move to draft state)
+   ======================================== */
+.retract {
+  background-color: var(--admin-action-retract);
+  color: var(--white);
+  border: 2px solid transparent;
+
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-action-retract-hover);
+  }
+
+  &:active:not(:disabled) {
+    background-color: var(--admin-action-retract-active);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+    outline: none;
+  }
+}
+
+/* ========================================
+   Archive Action (Rose/Red - move to archived state)
+   ======================================== */
+.archive {
+  background-color: var(--admin-action-archive);
+  color: var(--white);
+  border: 2px solid transparent;
+
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-action-archive-hover);
+  }
+
+  &:active:not(:disabled) {
+    background-color: var(--admin-action-archive-active);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.3);
+    outline: none;
+  }
+}
+
+/* ========================================
+   Restore Action (Amber - restore to draft state)
+   ======================================== */
+.restore {
+  background-color: var(--admin-action-restore);
+  color: var(--white);
+  border: 2px solid transparent;
+
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-action-restore-hover);
+  }
+
+  &:active:not(:disabled) {
+    background-color: var(--admin-action-restore-active);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+    outline: none;
+  }
+}
+
+/* ========================================
+   Delete Action (Danger - Red)
+   ======================================== */
+.delete {
+  background-color: var(--admin-danger);
+  color: var(--white);
+  border: 2px solid transparent;
+
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-danger-hover);
+  }
+
+  &:active:not(:disabled) {
+    background-color: var(--admin-danger-active);
+  }
+
+  &:focus-visible {
+    box-shadow: var(--admin-focus-shadow-danger);
+    outline: none;
+  }
+}

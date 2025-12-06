@@ -1,6 +1,8 @@
 import { clsx } from "clsx"
 import type { ComponentProps } from "react"
 
+import { BaseButton } from "~/components/base-button"
+
 import styles from "./_styles.module.css"
 
 type Props = ComponentProps<"button"> & {
@@ -13,9 +15,8 @@ export const Button = ({
   variant = "primary",
   ...rest
 }: Props) => (
-  <button
+  <BaseButton
     className={clsx(
-      styles.button,
       variant === "primary" && styles.primary,
       variant === "danger" && styles.danger,
       variant === "default" && styles.default,
@@ -24,5 +25,5 @@ export const Button = ({
     {...rest}
   >
     {children}
-  </button>
+  </BaseButton>
 )

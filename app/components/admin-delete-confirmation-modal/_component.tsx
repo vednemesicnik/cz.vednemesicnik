@@ -1,5 +1,6 @@
 import { useFetcher } from "react-router"
 
+import { AdminActionButton } from "~/components/admin-action-button"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
 import { Modal } from "~/components/modal"
@@ -24,10 +25,13 @@ export const DeleteConfirmationModal = ({ id, isOpen, onClose }: Props) => {
       titleId={titleId}
       className={styles.container}
     >
-      <h2 id={titleId}>Opravdu chcete tutu akci provést?</h2>
+      <h2 id={titleId} className={styles.title}>
+        Opravdu chcete tuto akci provést?
+      </h2>
+      <p className={styles.description}>Tato akce je nevratná.</p>
       <section className={styles.actions}>
         <Button onClick={onClose} variant={"default"}>
-          Ne
+          Zrušit
         </Button>
         <Form
           method="post"
@@ -37,14 +41,14 @@ export const DeleteConfirmationModal = ({ id, isOpen, onClose }: Props) => {
         >
           <AuthenticityTokenInput />
           <input type="hidden" name={"id"} defaultValue={id} />
-          <Button
+          <AdminActionButton
             type="submit"
-            variant={"danger"}
+            action={"delete"}
             name={formConfig.intent.name}
             value={formConfig.intent.value.delete}
           >
-            Ano
-          </Button>
+            Smazat
+          </AdminActionButton>
         </Form>
       </section>
     </Modal>

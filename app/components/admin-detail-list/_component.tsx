@@ -8,6 +8,6 @@ type Props = {
   className?: string
 }
 
-export const AdministrationPage = ({ children, className }: Props) => {
-  return <div className={clsx(styles.page, className)}>{children}</div>
+export const AdminDetailList = ({ children, className }: Props) => {
+  return <dl className={clsx(styles.list, className)}>{children}</dl>
 }
