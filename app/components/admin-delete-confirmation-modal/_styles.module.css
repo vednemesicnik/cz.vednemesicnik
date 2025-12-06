@@ -1,0 +1,52 @@
+.container {
+  @layer variant {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    justify-items: center;
+    gap: 24px;
+    padding: 24px;
+    background-color: var(--admin-bg-primary);
+    border: 1px solid var(--admin-border);
+    border-radius: 4px;
+    box-shadow: var(--admin-shadow-lg);
+    min-width: 400px;
+    max-width: 500px;
+  }
+}
+
+.title {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-heading6);
+    font-weight: var(--font-weight-semibold);
+    color: var(--admin-text-primary);
+    line-height: 1.4;
+    text-align: center;
+  }
+}
+
+.description {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-base);
+    color: var(--admin-text-secondary);
+    line-height: 1.5;
+    text-align: center;
+  }
+}
+
+.actions {
+  @layer component {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-start;
+    align-items: center;
+  }
+}
+
+.form {
+  @layer component {
+    display: contents;
+  }
+}
