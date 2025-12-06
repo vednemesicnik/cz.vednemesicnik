@@ -3,7 +3,7 @@ import { getPageTitle } from "~/utils/get-page-title"
 import type { Route } from "./+types/route"
 
 export const meta: Route.MetaFunction = () => {
-  const title = getPageTitle("Administrace: Archiv - Nové číslo")
+  const title = getPageTitle("Administrace: Archiv - Přidat číslo")
 
   return [{ title }]
 }

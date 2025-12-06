@@ -7,7 +7,7 @@ import {
   useForm,
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { useNavigation } from "react-router"
+import { href, useNavigation } from "react-router"
 
 import { AdminHeadline } from "~/components/admin-headline"
 import { AdminLinkButton } from "~/components/admin-link-button"
@@ -19,8 +19,6 @@ import { Form } from "~/components/form"
 import { FormActions } from "~/components/form-actions"
 import { Input } from "~/components/input"
 import { Select } from "~/components/select"
-import { contentStateConfig } from "~/config/content-state-config"
-import { getAuthorRights } from "~/utils/get-author-rights"
 import { getFormattedDateString } from "~/utils/get-formatted-date-string"
 import { getIssueOrdinalNumber } from "~/utils/get-issue-ordinal-number"
 
@@ -31,9 +29,7 @@ export default function Route({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const { issue, session } = loaderData
-  const { user } = session
-
+  const { issue } = loaderData
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
@@ -47,8 +43,6 @@ export default function Route({
       releasedAt: getFormattedDateString(issue.releasedAt),
       coverId: issue.cover?.id,
       pdfId: issue.pdf?.id,
-      state: issue.state,
-      publishedAt: getFormattedDateString(issue.publishedAt),
       authorId: issue.author.id,
     },
     shouldDirtyConsider: (field) => {
@@ -64,91 +58,12 @@ export default function Route({
     }
   }
 
-  const [
-    // entity: "issue"
-    [
-      // action: "update"
-      [
-        // access: "own"
-        [hasUpdateOwnIssueRight],
-        // access: "any"
-        [hasUpdateAnyIssueRight],
-      ],
-      // action: "publish"
-      [
-        // access: "own"
-        [hasPublishOwnIssueRight],
-        // access: "any"
-        [hasPublishAnyIssueRight],
-      ],
-      // action: "retract"
-      [
-        // access: "own"
-        [hasRetractOwnIssueRight],
-        // access: "any"
-        [hasRetractAnyIssueRight],
-      ],
-      // action: "archive"
-      [
-        // access: "own"
-        [hasArchiveOwnIssueRight],
-        // access: "any"
-        [hasArchiveAnyIssueRight],
-      ],
-      // action: "restore"
-      [
-        // access: "own"
-        [hasRestoreOwnIssueRight],
-        // access: "any"
-        [hasRestoreAnyIssueRight],
-      ],
-    ],
-  ] = getAuthorRights(user.author.role.permissions, {
-    entities: ["issue"],
-    actions: ["update", "publish", "retract", "archive", "restore"],
-    access: ["own", "any"],
-    states: [issue.state],
-    ownId: user.author.id,
-    targetId: fields.authorId.value || issue.author.id,
-  })
-
-  console.log({ authorPermissions: user.author.role.permissions })
-
-  const contentStates = contentStateConfig.states.filter((state) => {
-    switch (state) {
-      case "draft":
-        return (
-          (issue.state === "draft" &&
-            (hasUpdateOwnIssueRight || hasUpdateAnyIssueRight)) ||
-          hasRetractOwnIssueRight ||
-          hasRetractAnyIssueRight ||
-          hasRestoreOwnIssueRight ||
-          hasRestoreAnyIssueRight
-        )
-      case "published":
-        return (
-          (issue.state === "published" &&
-            (hasUpdateOwnIssueRight || hasUpdateAnyIssueRight)) ||
-          hasPublishOwnIssueRight ||
-          hasPublishAnyIssueRight
-        )
-      case "archived":
-        return (
-          (issue.state === "archived" &&
-            (hasUpdateOwnIssueRight || hasUpdateAnyIssueRight)) ||
-          hasArchiveOwnIssueRight ||
-          hasArchiveAnyIssueRight
-        )
-      default:
-        return false
-    }
-  })
-
-  const contentStatesMap = contentStateConfig.selectMap
+  const isLoadingOrSubmitting = state !== "idle"
+  const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
     <>
-      <AdminHeadline>{issue.label}</AdminHeadline>
+      <AdminHeadline>Upravit číslo ({issue.label})</AdminHeadline>
       <Form
         {...getFormProps(form)}
         method={"post"}
@@ -157,7 +72,10 @@ export default function Route({
       >
         <input {...getInputProps(fields.id, { type: "hidden" })} />
 
-        <Fieldset legend={"Základní informace"} disabled={state !== "idle"}>
+        <Fieldset
+          legend={"Základní informace"}
+          disabled={isLoadingOrSubmitting}
+        >
           <Input
             label={"Pořadové číslo"}
             {...getInputProps(fields.ordinalNumber, { type: "number" })}
@@ -171,7 +89,7 @@ export default function Route({
           />
         </Fieldset>
 
-        <Fieldset legend={"Soubory"} disabled={state !== "idle"}>
+        <Fieldset legend={"Soubory"} disabled={isLoadingOrSubmitting}>
           <input {...getInputProps(fields.coverId, { type: "hidden" })} />
           <FileInput
             label={"Obálka"}
@@ -190,18 +108,10 @@ export default function Route({
           />
         </Fieldset>
 
-        <Fieldset legend={"Stav publikace"} disabled={state !== "idle"}>
-          <Select label={"Stav"} {...getSelectProps(fields.state)}>
-            {contentStates.map((state, index) => (
-              <option key={index} value={state}>
-                {contentStatesMap[state]}
-              </option>
-            ))}
-          </Select>
-          <input {...getInputProps(fields.publishedAt, { type: "hidden" })} />
-        </Fieldset>
-
-        <Fieldset legend={"Informace o autorovi"} disabled={state !== "idle"}>
+        <Fieldset
+          legend={"Informace o autorovi"}
+          disabled={isLoadingOrSubmitting}
+        >
           <Select
             label={"Autor"}
             errors={fields.authorId.errors}
@@ -220,14 +130,12 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button
-            type="submit"
-            disabled={contentStates.length === 0 || state !== "idle"}
-            variant={"primary"}
-          >
+          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
             Upravit
           </Button>
-          <AdminLinkButton to={"/administration/archive"}>
+          <AdminLinkButton
+            to={href("/administration/archive/:issueId", { issueId: issue.id })}
+          >
             Zrušit
           </AdminLinkButton>
         </FormActions>

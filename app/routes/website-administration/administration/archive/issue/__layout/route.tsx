@@ -2,14 +2,9 @@
 
 import { Outlet } from "react-router"
 
-import { AdministrationPage } from "~/components/administration-page/_component"
-
 export { handle } from "./_handle"
+export { loader } from "./_loader"
 
 export default function LayoutRouteComponent() {
-  return (
-    <AdministrationPage>
-      <Outlet />
-    </AdministrationPage>
-  )
+  return <Outlet />
 }

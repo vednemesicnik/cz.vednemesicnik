@@ -4,8 +4,8 @@ import { Outlet } from "react-router"
 
 import { AdminHeader } from "~/components/admin-header"
 import { AdminUserMenu } from "~/components/admin-user-menu"
+import { AdministrationContent } from "~/components/administration-content"
 import { AdministrationFooter } from "~/components/administration-footer"
-import { AdministrationPage } from "~/components/administration-page"
 import { AdministrationSidebar } from "~/components/administration-sidebar"
 import { AuthenticityTokenProvider } from "~/components/authenticity-token-provider"
 
@@ -42,9 +42,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <AdminUserMenu userName={user.name} userEmail={user.email} />
         </AdminHeader>
         <AdministrationSidebar navigationItems={navigationItems} />
-        <AdministrationPage className={styles.page}>
+        <AdministrationContent className={styles.page}>
           <Outlet />
-        </AdministrationPage>
+        </AdministrationContent>
         <AdministrationFooter />
       </div>
     </AuthenticityTokenProvider>

@@ -86,16 +86,26 @@ export default [
               "routes/website-administration/administration/archive/__layout/route.tsx",
               [
                 index(
-                  "routes/website-administration/administration/archive/index/route.tsx"
+                  "routes/website-administration/administration/archive/_index/route.tsx"
                 ),
                 route(
-                  "new-issue",
+                  "add-issue",
                   "routes/website-administration/administration/archive/add-issue/route.tsx"
                 ),
-                route(
-                  ":issueId",
-                  "routes/website-administration/administration/archive/edit-issue/route.tsx"
-                ),
+                ...prefix(":issueId", [
+                  layout(
+                    "routes/website-administration/administration/archive/issue/__layout/route.tsx",
+                    [
+                      index(
+                        "routes/website-administration/administration/archive/issue/_index/route.tsx"
+                      ),
+                      route(
+                        "edit-issue",
+                        "routes/website-administration/administration/archive/issue/edit-issue/route.tsx"
+                      ),
+                    ]
+                  ),
+                ]),
               ]
             ),
           ]),
@@ -269,7 +279,7 @@ export default [
 
   // Resource routes
   ...prefix("resources", [
-    route("issue-cover/:issueId", "routes/resources/issue-cover/route.ts"),
+    route("issue-cover/:id", "routes/resources/issue-cover/route.ts"),
     route(
       "podcast-cover/:podcastId",
       "routes/resources/podcast-cover/route.ts"

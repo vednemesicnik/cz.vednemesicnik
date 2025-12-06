@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Link, useSearchParams } from "react-router"
+import { href, Link, useSearchParams } from "react-router"
 
 import { Headline } from "~/components/headline"
 import { Image } from "~/components/image"
@@ -10,7 +10,6 @@ import { Tile } from "~/components/tile"
 import { TileGrid } from "~/components/tile-grid"
 import { TileGridItem } from "~/components/tile-grid-item"
 import { sizeConfig } from "~/config/size-config"
-import { getIssueCoverSrc } from "~/utils/get-issue-cover-src"
 import { getIssuePdfSrc } from "~/utils/get-issue-pdf-src"
 
 import type { Route } from "./+types/route"
@@ -32,7 +31,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
           if (cover === null || pdf === null) return null
 
           const coverAlt = cover.altText
-          const coverSrc = getIssueCoverSrc(cover.id)
+          const coverSrc = href("/resources/issue-cover/:id", { id: cover.id })
           const pdfSrc = getIssuePdfSrc(pdf.fileName)
 
           return (

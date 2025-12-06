@@ -4,8 +4,8 @@ import { Outlet } from "react-router"
 import { HoneypotProvider } from "remix-utils/honeypot/react"
 
 import { AdminHeader } from "~/components/admin-header"
+import { AdministrationContent } from "~/components/administration-content"
 import { AdministrationFooter } from "~/components/administration-footer"
-import { AdministrationPage } from "~/components/administration-page"
 
 import "~/styles/admin-tokens.css"
 import type { Route } from "./+types/route"
@@ -18,9 +18,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <HoneypotProvider {...loaderData.honeypotInputProps}>
       <div className={styles.layout}>
         <AdminHeader />
-        <AdministrationPage className={styles.page}>
+        <AdministrationContent className={styles.page}>
           <Outlet />
-        </AdministrationPage>
+        </AdministrationContent>
         <AdministrationFooter />
       </div>
     </HoneypotProvider>

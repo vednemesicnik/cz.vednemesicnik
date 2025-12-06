@@ -37,8 +37,5 @@ export const schema = z.object({
       },
       { message: "PDF soubor by měl mít maximální velikost 10 MB" }
     ),
-  state: z.nativeEnum(ContentState, {
-    message: "Zvolený stav není podporován",
-  }),
   authorId: z.string({ message: "Autor je povinný" }),
 })
