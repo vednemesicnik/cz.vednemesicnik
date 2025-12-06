@@ -271,6 +271,30 @@ export const authorRoles: AuthorRolesData = [
         access: "own",
         actions: ["retract", "archive"],
       },
+      {
+        entity: "editorial_board_member",
+        state: "draft",
+        access: "any",
+        actions: ["view", "review"],
+      },
+      {
+        entity: "editorial_board_member",
+        state: "published",
+        access: "any",
+        actions: ["view"],
+      },
+      {
+        entity: "editorial_board_member",
+        state: "draft",
+        access: "own",
+        actions: ["create", "update", "delete", "publish"],
+      },
+      {
+        entity: "editorial_board_member",
+        state: "published",
+        access: "own",
+        actions: ["retract", "archive"],
+      },
     ],
   },
   {
@@ -287,7 +311,7 @@ export const authorRoles: AuthorRolesData = [
         entity: "article",
         state: "published",
         access: "any",
-        actions: ["view", "create", "retract", "archive"],
+        actions: ["view", "retract", "archive"],
       },
       {
         entity: "article",
@@ -305,7 +329,7 @@ export const authorRoles: AuthorRolesData = [
         entity: "article_category",
         state: "published",
         access: "any",
-        actions: ["view", "create", "retract", "archive"],
+        actions: ["view", "retract", "archive"],
       },
       {
         entity: "article_category",
@@ -323,7 +347,7 @@ export const authorRoles: AuthorRolesData = [
         entity: "article_tag",
         state: "published",
         access: "any",
-        actions: ["view", "create", "retract", "archive"],
+        actions: ["view", "retract", "archive"],
       },
       {
         entity: "article_tag",
@@ -341,7 +365,7 @@ export const authorRoles: AuthorRolesData = [
         entity: "podcast",
         state: "published",
         access: "any",
-        actions: ["view", "create", "retract", "archive"],
+        actions: ["view", "retract", "archive"],
       },
       {
         entity: "podcast",
@@ -359,7 +383,7 @@ export const authorRoles: AuthorRolesData = [
         entity: "podcast_episode",
         state: "published",
         access: "any",
-        actions: ["view", "create", "retract", "archive"],
+        actions: ["view", "retract", "archive"],
       },
       {
         entity: "podcast_episode",
@@ -377,7 +401,7 @@ export const authorRoles: AuthorRolesData = [
         entity: "podcast_episode_link",
         state: "published",
         access: "any",
-        actions: ["view", "create", "retract", "archive"],
+        actions: ["view", "retract", "archive"],
       },
       {
         entity: "podcast_episode_link",
@@ -395,7 +419,7 @@ export const authorRoles: AuthorRolesData = [
         entity: "issue",
         state: "published",
         access: "any",
-        actions: ["view", "create", "retract", "archive"],
+        actions: ["view", "retract", "archive"],
       },
       {
         entity: "issue",
@@ -405,15 +429,39 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         entity: "editorial_board_position",
+        state: "draft",
+        access: "any",
+        actions: ["view", "create", "update", "delete", "publish", "review"],
+      },
+      {
+        entity: "editorial_board_position",
         state: "published",
         access: "any",
-        actions: ["view", "create", "update", "delete"],
+        actions: ["view", "retract", "archive"],
+      },
+      {
+        entity: "editorial_board_position",
+        state: "archived",
+        access: "any",
+        actions: ["view", "delete", "restore"],
+      },
+      {
+        entity: "editorial_board_member",
+        state: "draft",
+        access: "any",
+        actions: ["view", "create", "update", "delete", "publish", "review"],
       },
       {
         entity: "editorial_board_member",
         state: "published",
         access: "any",
-        actions: ["view", "create", "update", "delete"],
+        actions: ["view", "retract", "archive"],
+      },
+      {
+        entity: "editorial_board_member",
+        state: "archived",
+        access: "any",
+        actions: ["view", "delete", "restore"],
       },
     ],
   },
