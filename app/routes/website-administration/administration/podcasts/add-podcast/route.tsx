@@ -10,14 +10,15 @@ import {
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useState } from "react"
 
+import { AdminHeadline } from "~/components/admin-headline"
 import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdministrationPage } from "~/components/administration-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
 import { Fieldset } from "~/components/fieldset"
 import { FileInput } from "~/components/file-input"
 import { Form } from "~/components/form"
 import { FormActions } from "~/components/form-actions"
-import { Headline } from "~/components/headline"
 import { Input } from "~/components/input"
 import { Select } from "~/components/select"
 import { TextArea } from "~/components/text-area"
@@ -60,8 +61,8 @@ export default function Route({
   }, [title, isSlugFocused])
 
   return (
-    <>
-      <Headline>Přidat podcast</Headline>
+    <AdministrationPage>
+      <AdminHeadline>Přidat podcast</AdminHeadline>
       <Form
         {...getFormProps(form)}
         encType={"multipart/form-data"}
@@ -81,7 +82,7 @@ export default function Route({
             label={"Slug"}
             onChange={(event) => setSlug(slugify(event.target.value))}
             onFocus={() => setIsSlugFocused(true)}
-            placeholder={"slug-podcastu"}
+            placeholder={"nazev-podcastu"}
             value={slug}
             errors={fields.slug.errors}
             {...getInputProps(fields.slug, { type: "text" })}
@@ -124,13 +125,15 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" variant={"default"}>
+          <Button type="submit" variant={"primary"}>
             Přidat
           </Button>
-          <AdminLinkButton to={"/administration/podcasts"}>Zrušit</AdminLinkButton>
+          <AdminLinkButton to={"/administration/podcasts"}>
+            Zrušit
+          </AdminLinkButton>
         </FormActions>
       </Form>
-    </>
+    </AdministrationPage>
   )
 }
 

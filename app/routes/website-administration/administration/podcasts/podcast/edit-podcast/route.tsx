@@ -9,6 +9,7 @@ import {
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useState } from "react"
+import { href } from "react-router"
 
 import { AdminLinkButton } from "~/components/admin-link-button"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
@@ -142,7 +143,13 @@ export default function Route({
           <Button type="submit" variant={"default"}>
             Upravit
           </Button>
-          <AdminLinkButton to={"/administration/podcasts"}>Zrušit</AdminLinkButton>
+          <AdminLinkButton
+            to={href("/administration/podcasts/:podcastId", {
+              podcastId: loaderData.podcast.id,
+            })}
+          >
+            Zrušit
+          </AdminLinkButton>
         </FormActions>
       </Form>
     </>

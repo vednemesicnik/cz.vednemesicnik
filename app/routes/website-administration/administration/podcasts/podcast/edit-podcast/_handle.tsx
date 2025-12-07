@@ -16,7 +16,7 @@ export const handle = {
 
     return {
       label: `Upravit podcast [${title}]`,
-      path: href(`/administration/podcasts/edit-podcast/:podcastId`, {
+      path: href(`/administration/podcasts/:podcastId/edit-podcast`, {
         podcastId,
       }),
     }

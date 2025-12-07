@@ -116,16 +116,26 @@ export default [
               "routes/website-administration/administration/podcasts/__layout/route.tsx",
               [
                 index(
-                  "routes/website-administration/administration/podcasts/index/route.tsx"
+                  "routes/website-administration/administration/podcasts/_index/route.tsx"
                 ),
                 route(
                   "add-podcast",
                   "routes/website-administration/administration/podcasts/add-podcast/route.tsx"
                 ),
-                route(
-                  "edit-podcast/:podcastId",
-                  "routes/website-administration/administration/podcasts/edit-podcast/route.tsx"
-                ),
+                ...prefix(":podcastId", [
+                  layout(
+                    "routes/website-administration/administration/podcasts/podcast/__layout/route.tsx",
+                    [
+                      index(
+                        "routes/website-administration/administration/podcasts/podcast/_index/route.tsx"
+                      ),
+                      route(
+                        "edit-podcast",
+                        "routes/website-administration/administration/podcasts/podcast/edit-podcast/route.tsx"
+                      ),
+                    ]
+                  ),
+                ]),
 
                 // Podcast Episode Administration
                 ...prefix(":podcastId", [
