@@ -91,6 +91,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       entity: "issue",
       action: "create",
       state: "draft",
+      targetAuthorId: context.authorId,
     }).hasPermission,
   }
 }
