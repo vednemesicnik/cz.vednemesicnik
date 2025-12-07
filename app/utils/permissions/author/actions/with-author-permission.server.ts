@@ -7,7 +7,10 @@ import type {
 } from "@generated/prisma/enums"
 import { requireAuthentication } from "~/utils/auth.server"
 
-import { getAuthorPermissionContext } from "../context/get-author-permission-context.server"
+import {
+  type AuthorPermissionContext,
+  getAuthorPermissionContext,
+} from "../context/get-author-permission-context.server"
 
 export async function withAuthorPermission<T>(
   request: Request,
@@ -15,7 +18,7 @@ export async function withAuthorPermission<T>(
     entity: AuthorPermissionEntity
     action: AuthorPermissionAction
     getTarget: () => Promise<{ authorId: string; state: ContentState }>
-    execute: () => Promise<T>
+    execute: (context: AuthorPermissionContext) => Promise<T>
     errorMessage?: string
   }
 ): Promise<T> {
@@ -41,5 +44,5 @@ export async function withAuthorPermission<T>(
       `You do not have permission to ${options.action} this ${options.entity}.`
   )
 
-  return options.execute()
+  return options.execute(context)
 }

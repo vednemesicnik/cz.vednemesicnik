@@ -9,7 +9,7 @@ import styles from "./_styles.module.css"
 type Props = ComponentProps<"button"> & {
   action: keyof Pick<
     typeof AuthorPermissionAction,
-    "publish" | "retract" | "archive" | "restore" | "delete"
+    "publish" | "retract" | "archive" | "restore" | "delete" | "review"
   >
 }
 
@@ -26,6 +26,7 @@ export const AdminActionButton = ({
       action === "archive" && styles.archive,
       action === "restore" && styles.restore,
       action === "delete" && styles.delete,
+      action === "review" && styles.review,
       className
     )}
     {...rest}

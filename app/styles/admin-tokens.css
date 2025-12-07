@@ -127,6 +127,14 @@
   /*noinspection CssInvalidFunction*/
   --admin-action-restore-active: light-dark(#b45309, #92400e);
 
+  /* Review action - Blue palette (approve/review content) */
+  /*noinspection CssInvalidFunction*/
+  --admin-action-review: light-dark(#3b82f6, #2563eb);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-review-hover: light-dark(#2563eb, #1d4ed8);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-review-active: light-dark(#1d4ed8, #1e40af);
+
   /* ========================================
      Colors - Danger (Buttons)
      ======================================== */

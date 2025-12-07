@@ -107,3 +107,25 @@
     outline: none;
   }
 }
+
+/* ========================================
+   Review Action (Blue - approve/review action)
+   ======================================== */
+.review {
+  background-color: var(--admin-action-review);
+  color: var(--white);
+  border: 2px solid transparent;
+
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-action-review-hover);
+  }
+
+  &:active:not(:disabled) {
+    background-color: var(--admin-action-review-active);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    outline: none;
+  }
+}

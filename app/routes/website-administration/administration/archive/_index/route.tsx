@@ -19,6 +19,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from "~/components/admin-table"
+import { AdministrationPage } from "~/components/administration-page"
 import { DeleteIcon } from "~/components/icons/delete-icon"
 import { EditIcon } from "~/components/icons/edit-icon"
 import { VisibilityIcon } from "~/components/icons/visibility-icon"
@@ -34,7 +35,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
     useDeleteConfirmation()
 
   return (
-    <>
+    <AdministrationPage>
       <AdminHeadline>Archiv</AdminHeadline>
       {loaderData.canCreate && (
         <AdminLinkButton to={href("/administration/archive/add-issue")}>
@@ -101,6 +102,6 @@ export default function Route({ loaderData }: Route.ComponentProps) {
         isOpen={isModalOpen}
         onClose={closeModal}
       />
-    </>
+    </AdministrationPage>
   )
 }

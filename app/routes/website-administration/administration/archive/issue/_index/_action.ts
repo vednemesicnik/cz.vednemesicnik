@@ -28,10 +28,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
           where: { id },
           select: { authorId: true, state: true },
         }),
-      execute: () => prisma.issue.delete({ where: { id } }),
+      execute: async () => prisma.issue.delete({ where: { id } }),
     })
 
-    throw redirect(href("/administration/archive"))
+    return redirect(href("/administration/archive"))
   }
 
   // Handle publish action (draft → published)
@@ -44,12 +44,59 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
           where: { id },
           select: { authorId: true, state: true },
         }),
-      execute: () =>
-        prisma.issue.update({
+      execute: async () => {
+        // Get the issue with author role and reviews
+        const issue = await prisma.issue.findUniqueOrThrow({
+          where: { id },
+          select: {
+            author: {
+              select: {
+                role: {
+                  select: {
+                    level: true,
+                  },
+                },
+              },
+            },
+            reviews: {
+              select: {
+                reviewer: {
+                  select: {
+                    role: {
+                      select: {
+                        level: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        })
+
+        // Check if author is not a Coordinator (level !== 1)
+        const isNotCoordinator = issue.author.role.level !== 1
+
+        // If author is not a Coordinator, require Coordinator review
+        if (isNotCoordinator) {
+          const hasCoordinatorReview = issue.reviews.some(
+            (review) => review.reviewer.role.level === 1
+          )
+
+          invariantResponse(
+            hasCoordinatorReview,
+            "Nelze publikovat bez schválení koordinátora"
+          )
+        }
+
+        await prisma.issue.update({
           where: { id },
           data: { state: "published", publishedAt: new Date() },
-        }),
+        })
+      },
     })
+
+    return redirect(href("/administration/archive/:issueId", { issueId: id }))
   }
 
   // Handle retract action (published → draft)
@@ -62,12 +109,21 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
           where: { id },
           select: { authorId: true, state: true },
         }),
-      execute: () =>
-        prisma.issue.update({
+      execute: async () => {
+        await prisma.issue.update({
           where: { id },
-          data: { state: "draft", publishedAt: null },
-        }),
+          data: {
+            state: "draft",
+            publishedAt: null,
+            reviews: {
+              deleteMany: {}, // Delete all reviews for this issue
+            },
+          },
+        })
+      },
     })
+
+    return redirect(href("/administration/archive/:issueId", { issueId: id }))
   }
 
   // Handle archive action (published → archived)
@@ -80,12 +136,14 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
           where: { id },
           select: { authorId: true, state: true },
         }),
-      execute: () =>
+      execute: async () =>
         prisma.issue.update({
           where: { id },
           data: { state: "archived" },
         }),
     })
+
+    return redirect(href("/administration/archive/:issueId", { issueId: id }))
   }
 
   // Handle restore action (archived → draft)
@@ -98,16 +156,64 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
           where: { id },
           select: { authorId: true, state: true },
         }),
-      execute: () =>
-        prisma.issue.update({
+      execute: async () => {
+        await prisma.issue.update({
           where: { id },
-          data: { state: "draft", publishedAt: null },
-        }),
+          data: {
+            state: "draft",
+            publishedAt: null,
+            reviews: {
+              deleteMany: {}, // Delete all reviews for this issue
+            },
+          },
+        })
+      },
     })
+
+    return redirect(href("/administration/archive/:issueId", { issueId: id }))
+  }
+
+  // Handle review action
+  if (intent === "review") {
+    await withAuthorPermission(request, {
+      entity: "issue",
+      action: "review",
+      getTarget: () =>
+        prisma.issue.findUniqueOrThrow({
+          where: { id },
+          select: { authorId: true, state: true },
+        }),
+      execute: async (context) => {
+        const reviewerId = context.authorId
+
+        // Check if the reviewer has already reviewed this issue
+        const existingReview = await prisma.review.findFirst({
+          where: {
+            issueId: id,
+            reviewerId,
+          },
+        })
+
+        // If no existing review, create one
+        if (!existingReview) {
+          await prisma.review.create({
+            data: {
+              state: "approved",
+              issueId: id,
+              reviewerId,
+            },
+          })
+        }
+      },
+    })
+
+    return redirect(href("/administration/archive/:issueId", { issueId: id }))
   }
 
   invariantResponse(
-    ["delete", "publish", "retract", "archive", "restore"].includes(intent),
+    ["delete", "publish", "retract", "archive", "restore", "review"].includes(
+      intent
+    ),
     "Invalid intent"
   )
 

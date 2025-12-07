@@ -19,6 +19,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       "retract",
       "archive",
       "restore",
+      "review",
     ],
   })
 
@@ -36,6 +37,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: {
           id: true,
           name: true,
+          role: {
+            select: {
+              level: true,
+            },
+          },
         },
       },
       cover: {
@@ -47,6 +53,25 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: {
           id: true,
           fileName: true,
+        },
+      },
+      reviews: {
+        select: {
+          id: true,
+          state: true,
+          createdAt: true,
+          reviewer: {
+            select: {
+              id: true,
+              name: true,
+              role: {
+                select: {
+                  level: true,
+                  name: true,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -88,6 +113,15 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorId: issue.author.id,
   })
 
+  // Find Coordinator review (level 1)
+  const coordinatorReview = issue.reviews.find(
+    (review) => review.reviewer.role.level === 1
+  )
+
+  // Check if author is not a Coordinator and needs review
+  const isNotCoordinator = issue.author.role.level !== 1
+  const needsCoordinatorReview = isNotCoordinator && !coordinatorReview
+
   // Check retract permission (published → draft)
   const { hasPermission: canRetract } = context.can({
     entity: "issue",
@@ -112,6 +146,26 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorId: issue.author.id,
   })
 
+  // Check review permission
+  const { hasPermission: canReview } = context.can({
+    entity: "issue",
+    action: "review",
+    state: issue.state,
+    targetAuthorId: issue.author.id,
+  })
+
+  // Don't show review button if:
+  // 1. Author is Coordinator (level 1) - they don't need reviews
+  // 2. Current user is the author - can't review own content
+  const authorIsCoordinator = issue.author.role.level === 1
+  const isOwnContent = issue.author.id === context.authorId
+  const shouldShowReview = canReview && !authorIsCoordinator && !isOwnContent
+
+  // Check if current user has already reviewed this issue
+  const hasReviewed = issue.reviews.some(
+    (review) => review.reviewer.id === context.authorId
+  )
+
   return {
     issue: {
       id: issue.id,
@@ -130,6 +184,18 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       pdfUrl: issue.pdf
         ? href("/archive/:fileName", { fileName: issue.pdf.fileName })
         : null,
+      reviews: issue.reviews.map((review) => ({
+        id: review.id,
+        state: review.state,
+        createdAt: getFormattedPublishDate(review.createdAt),
+        reviewer: {
+          id: review.reviewer.id,
+          name: review.reviewer.name,
+          roleName: review.reviewer.role.name,
+          roleLevel: review.reviewer.role.level,
+        },
+      })),
+      hasCoordinatorReview: !!coordinatorReview,
     },
     canUpdate,
     canDelete,
@@ -137,5 +203,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     canRetract,
     canArchive,
     canRestore,
+    canReview: shouldShowReview,
+    hasReviewed,
+    needsCoordinatorReview,
   }
 }

@@ -127,10 +127,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
           },
         },
         authorId: authorId,
+        reviews: {
+          deleteMany: {}, // Delete all reviews when issue is updated (content changed, needs re-approval)
+        },
       },
     })
 
-    return redirect(href("/administration/archive"))
+    return redirect(href("/administration/archive/:issueId", { issueId: id }))
   } catch (error) {
     throwDbError(error, "Unable to update the archived issue.")
   }
