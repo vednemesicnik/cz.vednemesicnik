@@ -1,7 +1,5 @@
 import { z } from "zod"
 
-import { ContentState } from "@generated/prisma/enums"
-
 const MAX_COVER_UPLOAD_SIZE = 1024 * 1024 * 5 // 5 kB
 const MAX_PDF_UPLOAD_SIZE = 1024 * 1024 * 10 // 10 MB
 

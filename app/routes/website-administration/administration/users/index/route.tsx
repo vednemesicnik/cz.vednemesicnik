@@ -6,7 +6,7 @@ import { Actions } from "~/components/actions"
 import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
-} from "~/components/delete-confirmation-modal"
+} from "~/components/admin-delete-confirmation-modal"
 import { Headline } from "~/components/headline"
 import { getUserRights } from "~/utils/get-user-rights"
 
@@ -99,10 +99,8 @@ export default function Route({ loaderData }: Route.ComponentProps) {
                 <td>{user.role.name}</td>
                 <td>
                   <Actions
-                    canEdit={canUpdateUser}
-                    editPath={editUserPath}
-                    canDelete={canDeleteUser}
-                    onDelete={openModal(user.id)}
+                    editPath={canUpdateUser ? editUserPath : undefined}
+                    onDelete={canDeleteUser ? openModal(user.id) : undefined}
                   />
                 </td>
               </tr>

@@ -1,14 +1,11 @@
 import { parseWithZod } from "@conform-to/zod"
-import { invariantResponse } from "@epic-web/invariant"
 import { createId } from "@paralleldrive/cuid2"
 import { href, redirect } from "react-router"
 
-import { contentStateConfig } from "~/config/content-state-config"
 import { validateCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
 import { getIssueData } from "~/utils/get-issue-data"
 import { getMultipartFormData } from "~/utils/get-multipart-form-data"
-import { getPublishDate } from "~/utils/get-publish-date"
 import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
 import { checkAuthorPermission } from "~/utils/permissions/author/guards/check-author-permission.server"
 import { getConvertedImageStream } from "~/utils/sharp.server"
@@ -71,7 +68,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
     action: "update",
     state: existingIssue.state,
     targetAuthorId: authorId,
-    errorMessage: "You do not have permission to assign this author to the issue.",
+    errorMessage:
+      "You do not have permission to assign this author to the issue.",
   })
 
   const { label, releaseDate, coverAltText, pdfFileName } = getIssueData(

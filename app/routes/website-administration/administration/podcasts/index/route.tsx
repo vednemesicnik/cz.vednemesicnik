@@ -6,7 +6,7 @@ import { Actions } from "~/components/actions"
 import {
   DeleteConfirmationModal,
   useDeleteConfirmation,
-} from "~/components/delete-confirmation-modal"
+} from "~/components/admin-delete-confirmation-modal"
 import { Headline } from "~/components/headline"
 
 import type { Route } from "./+types/route"
