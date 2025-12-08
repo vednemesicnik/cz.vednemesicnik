@@ -10,6 +10,7 @@ import {
 } from "~/components/admin-delete-confirmation-modal"
 import { AdminHeadline } from "~/components/admin-headline"
 import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AdminStateBadge } from "~/components/admin-state-badge"
 import {
   AdminTable,
@@ -19,7 +20,6 @@ import {
   TableHeaderCell,
   TableRow,
 } from "~/components/admin-table"
-import { AdministrationPage } from "~/components/administration-page"
 import { DeleteIcon } from "~/components/icons/delete-icon"
 import { EditIcon } from "~/components/icons/edit-icon"
 import { VisibilityIcon } from "~/components/icons/visibility-icon"
@@ -35,7 +35,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
     useDeleteConfirmation()
 
   return (
-    <AdministrationPage>
+    <AdminPage>
       <AdminHeadline>Archiv</AdminHeadline>
       {loaderData.canCreate && (
         <AdminLinkButton to={href("/administration/archive/add-issue")}>
@@ -102,6 +102,6 @@ export default function Route({ loaderData }: Route.ComponentProps) {
         isOpen={isModalOpen}
         onClose={closeModal}
       />
-    </AdministrationPage>
+    </AdminPage>
   )
 }

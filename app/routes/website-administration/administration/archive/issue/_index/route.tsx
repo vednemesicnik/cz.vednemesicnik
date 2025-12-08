@@ -14,8 +14,8 @@ import { AdminDetailList } from "~/components/admin-detail-list"
 import { AdminDetailSection } from "~/components/admin-detail-section"
 import { AdminHeadline } from "~/components/admin-headline"
 import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AdminStateBadge } from "~/components/admin-state-badge"
-import { AdministrationPage } from "~/components/administration-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Hyperlink } from "~/components/hyperlink"
 import { ArchiveIcon } from "~/components/icons/archive-icon"
@@ -54,7 +54,7 @@ export default function RouteComponent({
     useDeleteConfirmation()
 
   return (
-    <AdministrationPage>
+    <AdminPage>
       <AdminHeadline>{issue.label}</AdminHeadline>
 
       <AdminActionGroup>
@@ -204,6 +204,6 @@ export default function RouteComponent({
         isOpen={isModalOpen}
         onClose={closeModal}
       />
-    </AdministrationPage>
+    </AdminPage>
   )
 }

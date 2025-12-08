@@ -11,10 +11,10 @@ import { useNavigation } from "react-router"
 
 import { AdminHeadline } from "~/components/admin-headline"
 import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdministrationPage } from "~/components/administration-page"
+import { AdminPage } from "~/components/admin-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset/_component"
+import { Fieldset } from "~/components/fieldset"
 import { FileInput } from "~/components/file-input"
 import { Form } from "~/components/form"
 import { FormActions } from "~/components/form-actions"
@@ -63,7 +63,7 @@ export default function Route({
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
-    <AdministrationPage>
+    <AdminPage>
       <AdminHeadline>Přidat číslo</AdminHeadline>
 
       <Form
@@ -135,6 +135,6 @@ export default function Route({
           </AdminLinkButton>
         </FormActions>
       </Form>
-    </AdministrationPage>
+    </AdminPage>
   )
 }
