@@ -96,10 +96,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       },
     })
 
-    return redirect(href("/administration/podcasts/:podcastId", { podcastId: id }))
+    return redirect(
+      href("/administration/podcasts/:podcastId", { podcastId: id })
+    )
   }
 
-  // Handle retract action (published → draft)
+  // Handle retract action (published → draft) TODO: change all its episodes to draft as well
   if (intent === "retract") {
     await withAuthorPermission(request, {
       entity: "podcast",
@@ -123,10 +125,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       },
     })
 
-    return redirect(href("/administration/podcasts/:podcastId", { podcastId: id }))
+    return redirect(
+      href("/administration/podcasts/:podcastId", { podcastId: id })
+    )
   }
 
-  // Handle archive action (published → archived)
+  // Handle archive action (published → archived) TODO: change all its episodes to archived as well
   if (intent === "archive") {
     await withAuthorPermission(request, {
       entity: "podcast",
@@ -143,10 +147,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         }),
     })
 
-    return redirect(href("/administration/podcasts/:podcastId", { podcastId: id }))
+    return redirect(
+      href("/administration/podcasts/:podcastId", { podcastId: id })
+    )
   }
 
-  // Handle restore action (archived → draft)
+  // Handle restore action (archived → draft) TODO: change all its episodes to draft as well
   if (intent === "restore") {
     await withAuthorPermission(request, {
       entity: "podcast",
@@ -170,7 +176,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       },
     })
 
-    return redirect(href("/administration/podcasts/:podcastId", { podcastId: id }))
+    return redirect(
+      href("/administration/podcasts/:podcastId", { podcastId: id })
+    )
   }
 
   // Handle review action
@@ -207,7 +215,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       },
     })
 
-    return redirect(href("/administration/podcasts/:podcastId", { podcastId: id }))
+    return redirect(
+      href("/administration/podcasts/:podcastId", { podcastId: id })
+    )
   }
 
   invariantResponse(

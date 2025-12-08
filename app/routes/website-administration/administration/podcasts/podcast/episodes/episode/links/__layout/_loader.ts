@@ -1,6 +1,5 @@
+import type { Route } from "~/routes/website-administration/administration/podcasts/podcast/episodes/episode/links/_index/+types/route"
 import { prisma } from "~/utils/db.server"
-
-import type { Route } from "../index/+types/route"
 
 export const loader = async ({ params }: Route.LoaderArgs) => {
   const { episodeId } = params

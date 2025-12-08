@@ -9,20 +9,20 @@ import {
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useState } from "react"
-import { href } from "react-router"
+import { href, useNavigation } from "react-router"
 
+import { AdminHeadline } from "~/components/admin-headline"
 import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
 import { Fieldset } from "~/components/fieldset"
 import { FileInput } from "~/components/file-input"
 import { Form } from "~/components/form"
 import { FormActions } from "~/components/form-actions"
-import { Headline } from "~/components/headline"
 import { Input } from "~/components/input"
 import { Select } from "~/components/select"
 import { TextArea } from "~/components/text-area"
-import { getFormattedDateString } from "~/utils/get-formatted-date-string"
 import { slugify } from "~/utils/slugify"
 
 import type { Route } from "./+types/route"
@@ -32,19 +32,19 @@ export default function Route({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
+  const { podcast } = loaderData
+  const { state } = useNavigation()
+
   const [form, fields] = useForm({
-    id: "add-podcast",
+    id: "edit-podcast-form",
     constraint: getZodConstraint(schema),
     lastResult: actionData?.submissionResult,
-    onValidate({ formData }) {
-      return parseWithZod(formData, { schema })
-    },
+    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
-      id: loaderData.podcast.id,
-      description: loaderData.podcast.description,
-      coverId: loaderData.podcast.cover?.id,
-      authorId: loaderData.session.user.authorId,
-      publishedAt: getFormattedDateString(loaderData.podcast.publishedAt),
+      id: podcast.id,
+      description: podcast.description,
+      coverId: podcast.cover?.id,
+      authorId: podcast.author.id,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -53,8 +53,8 @@ export default function Route({
     shouldRevalidate: "onBlur",
   })
 
-  const [title, setTitle] = useState(loaderData.podcast.title)
-  const [slug, setSlug] = useState(loaderData.podcast.slug)
+  const [title, setTitle] = useState(podcast.title)
+  const [slug, setSlug] = useState(podcast.slug)
   const [isSlugFocused, setIsSlugFocused] = useState(false)
 
   useEffect(() => {
@@ -63,28 +63,31 @@ export default function Route({
     }
   }, [title, isSlugFocused])
 
+  const handleFileChange = (name: string, dirty: boolean) => () => {
+    if (dirty) {
+      form.validate({ name })
+    }
+  }
+
+  const isLoadingOrSubmitting = state !== "idle"
+  const canSubmit = !isLoadingOrSubmitting && form.valid
+
   return (
-    <>
-      <Headline>Upravit podcast</Headline>
+    <AdminPage>
+      <AdminHeadline>Upravit podcast ({podcast.title})</AdminHeadline>
       <Form
         {...getFormProps(form)}
+        method={"post"}
         encType={"multipart/form-data"}
-        method="post"
+        errors={form.errors}
       >
-        <input
-          {...getInputProps(fields.id, { type: "hidden" })}
-          defaultValue={fields.id.initialValue}
-        />
-        <input
-          {...getInputProps(fields.coverId, { type: "hidden" })}
-          defaultValue={fields.coverId.initialValue}
-        />
+        <input {...getInputProps(fields.id, { type: "hidden" })} />
 
-        <Fieldset legend={"Detaily"}>
+        <Fieldset legend={"Detaily"} disabled={isLoadingOrSubmitting}>
           <Input
             label={"Název"}
-            onChange={(event) => setTitle(event.target.value)}
             placeholder={"Název podcastu"}
+            onChange={(event) => setTitle(event.target.value)}
             value={title}
             errors={fields.title.errors}
             {...getInputProps(fields.title, { type: "text" })}
@@ -92,9 +95,9 @@ export default function Route({
 
           <Input
             label={"Slug"}
+            placeholder={"nazev-podcastu"}
             onChange={(event) => setSlug(slugify(event.target.value))}
             onFocus={() => setIsSlugFocused(true)}
-            placeholder={"slug-podcastu"}
             value={slug}
             errors={fields.slug.errors}
             {...getInputProps(fields.slug, { type: "text" })}
@@ -107,21 +110,20 @@ export default function Route({
             {...getTextareaProps(fields.description)}
           />
 
-          <Input
-            label={"Datum vydání"}
-            errors={fields.publishedAt.errors}
-            {...getInputProps(fields.publishedAt, { type: "date" })}
-          />
-
+          <input {...getInputProps(fields.coverId, { type: "hidden" })} />
           <FileInput
             label={"Obálka"}
             accept={"image"}
+            onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
             errors={fields.cover.errors}
             {...getInputProps(fields.cover, { type: "file" })}
           />
         </Fieldset>
 
-        <Fieldset legend={"Informace o autorovi"}>
+        <Fieldset
+          legend={"Informace o autorovi"}
+          disabled={isLoadingOrSubmitting}
+        >
           <Select
             label={"Autor"}
             errors={fields.authorId.errors}
@@ -140,19 +142,19 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" variant={"default"}>
+          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
             Upravit
           </Button>
           <AdminLinkButton
             to={href("/administration/podcasts/:podcastId", {
-              podcastId: loaderData.podcast.id,
+              podcastId: podcast.id,
             })}
           >
             Zrušit
           </AdminLinkButton>
         </FormActions>
       </Form>
-    </>
+    </AdminPage>
   )
 }
 

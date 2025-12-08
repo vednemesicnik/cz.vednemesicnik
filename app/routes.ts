@@ -110,7 +110,7 @@ export default [
             ),
           ]),
 
-          // Podcast Administration
+          // Podcasts Administration
           ...prefix("podcasts", [
             layout(
               "routes/website-administration/administration/podcasts/__layout/route.tsx",
@@ -133,43 +133,63 @@ export default [
                         "edit-podcast",
                         "routes/website-administration/administration/podcasts/podcast/edit-podcast/route.tsx"
                       ),
-                    ]
-                  ),
-                ]),
-
-                // Podcast Episode Administration
-                ...prefix(":podcastId", [
-                  layout(
-                    "routes/website-administration/administration/podcasts/episodes/__layout/route.tsx",
-                    [
-                      index(
-                        "routes/website-administration/administration/podcasts/episodes/index/route.tsx"
-                      ),
-                      route(
-                        "add-episode",
-                        "routes/website-administration/administration/podcasts/episodes/add-episode/route.tsx"
-                      ),
-                      route(
-                        "edit-episode/:episodeId",
-                        "routes/website-administration/administration/podcasts/episodes/edit-episode/route.tsx"
-                      ),
-
-                      // Podcast Episode Link Administration
-                      ...prefix(":episodeId", [
+                      // Podcast Episodes Administration
+                      ...prefix("episodes", [
                         layout(
-                          "routes/website-administration/administration/podcasts/episodes/links/__layout/route.tsx",
+                          "routes/website-administration/administration/podcasts/podcast/episodes/__layout/route.tsx",
                           [
                             index(
-                              "routes/website-administration/administration/podcasts/episodes/links/index/route.tsx"
+                              "routes/website-administration/administration/podcasts/podcast/episodes/_index/route.tsx"
                             ),
                             route(
-                              "add-link",
-                              "routes/website-administration/administration/podcasts/episodes/links/add-link/route.tsx"
+                              "add-episode",
+                              "routes/website-administration/administration/podcasts/podcast/episodes/add-episode/route.tsx"
                             ),
-                            route(
-                              "edit-link/:linkId",
-                              "routes/website-administration/administration/podcasts/episodes/links/edit-link/route.tsx"
-                            ),
+                            // Podcast Episode Administration
+                            ...prefix(":episodeId", [
+                              layout(
+                                "routes/website-administration/administration/podcasts/podcast/episodes/episode/__layout/route.tsx",
+                                [
+                                  index(
+                                    "routes/website-administration/administration/podcasts/podcast/episodes/episode/_index/route.tsx"
+                                  ),
+                                  route(
+                                    "edit-episode",
+                                    "routes/website-administration/administration/podcasts/podcast/episodes/episode/edit-episode/route.tsx"
+                                  ),
+                                  // Podcast Episode Links Administration
+                                  ...prefix("links", [
+                                    layout(
+                                      "routes/website-administration/administration/podcasts/podcast/episodes/episode/links/__layout/route.tsx",
+                                      [
+                                        index(
+                                          "routes/website-administration/administration/podcasts/podcast/episodes/episode/links/_index/route.tsx"
+                                        ),
+                                        route(
+                                          "add-link",
+                                          "routes/website-administration/administration/podcasts/podcast/episodes/episode/links/add-link/route.tsx"
+                                        ),
+                                        // Podcast Episode Link Administration
+                                        ...prefix(":linkId", [
+                                          layout(
+                                            "routes/website-administration/administration/podcasts/podcast/episodes/episode/links/link/__layout/route.tsx",
+                                            [
+                                              index(
+                                                "routes/website-administration/administration/podcasts/podcast/episodes/episode/links/link/_index/route.tsx"
+                                              ),
+                                              route(
+                                                "edit-link",
+                                                "routes/website-administration/administration/podcasts/podcast/episodes/episode/links/link/edit-link/route.tsx"
+                                              ),
+                                            ]
+                                          ),
+                                        ]),
+                                      ]
+                                    ),
+                                  ]),
+                                ]
+                              ),
+                            ]),
                           ]
                         ),
                       ]),

@@ -5,23 +5,23 @@ import { getConvertedImageStream } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
-  title: string
   id: string
+  title: string
   slug: string
   description: string
   coverId: string
   cover?: File
-  publishedAt: string
+  authorId: string
 }
 
 export async function updatePodcast({
-  title,
   id,
+  title,
   slug,
   description,
   coverId,
   cover,
-  publishedAt,
+  authorId,
 }: Args) {
   const coverAltText = `Obálka podcastu ${title}`
   const convertedCover = cover
@@ -40,15 +40,13 @@ export async function updatePodcast({
         title,
         slug,
         description,
-        publishedAt: new Date(publishedAt),
-        state: "published",
         cover: {
           update: {
             where: { id: coverId },
             data:
               convertedCover !== undefined
                 ? {
-                    id: createId(),
+                    id: createId(), // New ID forces browser to download new image
                     altText: coverAltText,
                     contentType: convertedCover.contentType,
                     blob: Uint8Array.from(
@@ -60,11 +58,10 @@ export async function updatePodcast({
                   },
           },
         },
+        authorId: authorId,
       },
     })
-
-    return { ok: true }
   } catch (error) {
-    throwDbError(error, "Unable to update the podcast.")
+    return throwDbError(error, "Unable to update the podcast.")
   }
 }

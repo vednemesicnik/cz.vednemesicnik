@@ -14,8 +14,8 @@ import { AdminDetailList } from "~/components/admin-detail-list"
 import { AdminDetailSection } from "~/components/admin-detail-section"
 import { AdminHeadline } from "~/components/admin-headline"
 import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AdminStateBadge } from "~/components/admin-state-badge"
-import { AdministrationPage } from "~/components/administration-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Hyperlink } from "~/components/hyperlink"
 import { ArchiveIcon } from "~/components/icons/archive-icon"
@@ -54,10 +54,17 @@ export default function RouteComponent({
     useDeleteConfirmation()
 
   return (
-    <AdministrationPage>
+    <AdminPage>
       <AdminHeadline>{podcast.title}</AdminHeadline>
 
       <AdminActionGroup>
+        <AdminLinkButton
+          to={href("/administration/podcasts/:podcastId/episodes", {
+            podcastId,
+          })}
+        >
+          Zobrazit epizody
+        </AdminLinkButton>
         {canUpdate && (
           <AdminLinkButton
             to={href("/administration/podcasts/:podcastId/edit-podcast", {
@@ -142,7 +149,9 @@ export default function RouteComponent({
             <AdminStateBadge state={podcast.state} />
           </AdminDetailItem>
           {podcast.description && (
-            <AdminDetailItem label="Popis">{podcast.description}</AdminDetailItem>
+            <AdminDetailItem label="Popis">
+              {podcast.description}
+            </AdminDetailItem>
           )}
           {podcast.publishedAt && (
             <AdminDetailItem label="Datum publikování">
@@ -167,7 +176,9 @@ export default function RouteComponent({
 
       <AdminDetailSection title="Metadata">
         <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">{podcast.createdAt}</AdminDetailItem>
+          <AdminDetailItem label="Vytvořeno">
+            {podcast.createdAt}
+          </AdminDetailItem>
           <AdminDetailItem label="Aktualizováno">
             {podcast.updatedAt}
           </AdminDetailItem>
@@ -197,6 +208,6 @@ export default function RouteComponent({
         isOpen={isModalOpen}
         onClose={closeModal}
       />
-    </AdministrationPage>
+    </AdminPage>
   )
 }

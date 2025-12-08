@@ -12,13 +12,12 @@ type Match = BreadcrumbMatch<
 export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { podcastId } = match.params
-    const { title } = match.loaderData?.podcast ?? {}
 
-    return {
-      label: `Upravit podcast [${title}]`,
-      path: href(`/administration/podcasts/:podcastId/edit-podcast`, {
-        podcastId,
-      }),
-    }
+    const label = "Upravit podcast"
+    const path = href("/administration/podcasts/:podcastId/edit-podcast", {
+      podcastId,
+    })
+
+    return { label, path }
   },
 }

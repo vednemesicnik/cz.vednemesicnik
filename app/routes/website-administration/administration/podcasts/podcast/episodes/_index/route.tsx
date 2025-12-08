@@ -26,9 +26,9 @@ import { VisibilityIcon } from "~/components/icons/visibility-icon"
 
 import type { Route } from "./+types/route"
 
-export { meta } from "./_meta"
-export { loader } from "./_loader"
 export { action } from "./_action"
+export { loader } from "./_loader"
+export { meta } from "./_meta"
 
 export default function Route({ loaderData }: Route.ComponentProps) {
   const { idForDeletion, isModalOpen, openModal, closeModal } =
@@ -36,12 +36,14 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Podcasty</AdminHeadline>
-      {loaderData.canCreate && (
-        <AdminLinkButton to={href("/administration/podcasts/add-podcast")}>
-          Přidat podcast
-        </AdminLinkButton>
-      )}
+      <AdminHeadline>Epizody</AdminHeadline>
+      <AdminLinkButton
+        to={href("/administration/podcasts/:podcastId/episodes/add-episode", {
+          podcastId: loaderData.podcast.id,
+        })}
+      >
+        Přidat epizodu
+      </AdminLinkButton>
       <AdminTable>
         <TableHeader>
           <TableHeaderCell>Název</TableHeaderCell>
@@ -49,47 +51,46 @@ export default function Route({ loaderData }: Route.ComponentProps) {
           <TableHeaderCell>Akce</TableHeaderCell>
         </TableHeader>
         <TableBody>
-          {loaderData.podcasts.map((podcast) => {
+          {loaderData.podcast.episodes.map((episode) => {
             return (
-              <TableRow key={podcast.id}>
-                <TableCell>{podcast.title}</TableCell>
+              <TableRow key={episode.id}>
+                <TableCell>{episode.title}</TableCell>
                 <TableCell>
-                  <AdminStateBadge state={podcast.state} />
+                  <AdminStateBadge state={episode.state} />
                 </TableCell>
                 <TableCell>
                   <AdminActionGroup>
-                    {podcast.canView && (
-                      <AdminLinkButton
-                        to={href("/administration/podcasts/:podcastId", {
-                          podcastId: podcast.id,
-                        })}
-                      >
-                        <VisibilityIcon />
-                        Zobrazit
-                      </AdminLinkButton>
-                    )}
-                    {podcast.canEdit && (
-                      <AdminLinkButton
-                        to={href(
-                          "/administration/podcasts/:podcastId/edit-podcast",
-                          {
-                            podcastId: podcast.id,
-                          }
-                        )}
-                      >
-                        <EditIcon />
-                        Upravit
-                      </AdminLinkButton>
-                    )}
-                    {podcast.canDelete && (
-                      <AdminActionButton
-                        action={"delete"}
-                        onClick={openModal(podcast.id)}
-                      >
-                        <DeleteIcon />
-                        Smazat
-                      </AdminActionButton>
-                    )}
+                    <AdminLinkButton
+                      to={href(
+                        "/administration/podcasts/:podcastId/episodes/:episodeId",
+                        {
+                          podcastId: loaderData.podcast.id,
+                          episodeId: episode.id,
+                        }
+                      )}
+                    >
+                      <VisibilityIcon />
+                      Zobrazit
+                    </AdminLinkButton>
+                    <AdminLinkButton
+                      to={href(
+                        "/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode",
+                        {
+                          podcastId: loaderData.podcast.id,
+                          episodeId: episode.id,
+                        }
+                      )}
+                    >
+                      <EditIcon />
+                      Upravit
+                    </AdminLinkButton>
+                    <AdminActionButton
+                      action={"delete"}
+                      onClick={openModal(episode.id)}
+                    >
+                      <DeleteIcon />
+                      Smazat
+                    </AdminActionButton>
                   </AdminActionGroup>
                 </TableCell>
               </TableRow>
