@@ -9,19 +9,35 @@ import {
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useState } from "react"
-import { Form } from "react-router"
+import { useNavigation } from "react-router"
 
+import { AdminHeadline } from "~/components/admin-headline"
+import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Headline } from "~/components/headline"
+import { Button } from "~/components/button"
+import { Fieldset } from "~/components/fieldset"
+import { Form } from "~/components/form"
+import { FormActions } from "~/components/form-actions"
+import { Input } from "~/components/input"
+import { Select } from "~/components/select"
+import { TextArea } from "~/components/text-area"
 import { slugify } from "~/utils/slugify"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
 
+export { handle } from "./_handle"
+export { action } from "./_action"
+export { loader } from "./_loader"
+export { meta } from "./_meta"
+
 export default function Route({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
+  const { state } = useNavigation()
+
   const [form, fields] = useForm({
     id: "edit-episode",
     constraint: getZodConstraint(schema),
@@ -30,9 +46,7 @@ export default function Route({
     defaultValue: {
       number: loaderData.episode.number,
       description: loaderData.episode.description,
-      published: loaderData.episode.state === "published",
-      publishedAt: loaderData.episode.publishedAt?.toISOString().split("T")[0],
-      podcastId: loaderData.podcast.id,
+      podcastId: loaderData.podcastId,
       episodeId: loaderData.episode.id,
       authorId: loaderData.episode.authorId,
     },
@@ -49,18 +63,18 @@ export default function Route({
 
   useEffect(() => {
     if (!isSlugFocused) {
-      setSlug(slugify(title))
+      setSlug(slugify(title ?? ""))
     }
   }, [title, isSlugFocused])
 
+  const isLoadingOrSubmitting = state !== "idle"
+  const canSubmit = !isLoadingOrSubmitting && form.valid
+
   return (
-    <>
-      <Headline>Upavit epizodu</Headline>
-      <Form
-        {...getFormProps(form)}
-        encType={"multipart/form-data"}
-        method="post"
-      >
+    <AdminPage>
+      <AdminHeadline>Upravit epizodu</AdminHeadline>
+
+      <Form method={"post"} {...getFormProps(form)} errors={form.errors}>
         <input
           {...getInputProps(fields.podcastId, { type: "hidden" })}
           defaultValue={fields.podcastId.initialValue}
@@ -69,108 +83,72 @@ export default function Route({
           {...getInputProps(fields.episodeId, { type: "hidden" })}
           defaultValue={fields.episodeId.initialValue}
         />
-        <fieldset>
-          <legend>Detaily</legend>
-          <label htmlFor={fields.number.id}>Číslo: </label>
-          <input
+
+        <Fieldset legend={"Detaily"} disabled={isLoadingOrSubmitting}>
+          <Input
+            label={"Číslo"}
+            placeholder={"Číslo epizody"}
+            errors={fields.number.errors}
             {...getInputProps(fields.number, { type: "number" })}
-            defaultValue={fields.number.initialValue}
           />
-          {fields.number.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.title.id}>Název: </label>
-          <input
-            {...getInputProps(fields.title, { type: "text" })}
+
+          <Input
+            label={"Název"}
+            placeholder={"Název epizody"}
             onChange={(event) => setTitle(event.target.value)}
             value={title}
+            errors={fields.title.errors}
+            {...getInputProps(fields.title, { type: "text" })}
           />
-          {fields.title.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.slug.id}>Slug: </label>
-          <input
-            {...getInputProps(fields.slug, { type: "text" })}
+
+          <Input
+            label={"Slug"}
+            placeholder={"nazev-epizody"}
             onChange={(event) => setSlug(slugify(event.target.value))}
             onFocus={() => setIsSlugFocused(true)}
             value={slug}
+            errors={fields.slug.errors}
+            {...getInputProps(fields.slug, { type: "text" })}
           />
-          {fields.slug.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.description.id}>Popis: </label>
-          <textarea
+
+          <TextArea
+            label={"Popis"}
+            placeholder={"Popis epizody"}
+            errors={fields.description.errors}
             {...getTextareaProps(fields.description)}
-            defaultValue={fields.description.initialValue}
           />
-          {fields.description.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.published.id}>Publikováno: </label>
-          <input {...getInputProps(fields.published, { type: "checkbox" })} />
-          {fields.published.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.publishedAt.id}>Publikováno dne: </label>
-          <input
-            {...getInputProps(fields.publishedAt, { type: "date" })}
-            defaultValue={fields.publishedAt.initialValue}
-          />
-          {fields.publishedAt.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-        </fieldset>
-        <fieldset>
-          <legend>Autor</legend>
-          <label htmlFor={fields.authorId.id}>Autor</label>
-          <select {...getSelectProps(fields.authorId)}>
-            {loaderData.authors.map((author) => {
-              return (
-                <option key={author.id} value={author.id}>
-                  {author.name}
-                </option>
-              )
-            })}
-          </select>
-        </fieldset>
+        </Fieldset>
+
+        <Fieldset
+          legend={"Informace o autorovi"}
+          disabled={isLoadingOrSubmitting}
+        >
+          <Select
+            label={"Autor"}
+            errors={fields.authorId.errors}
+            {...getSelectProps(fields.authorId)}
+          >
+            {loaderData.authors.map((author) => (
+              <option key={author.id} value={author.id}>
+                {author.name}
+              </option>
+            ))}
+          </Select>
+        </Fieldset>
+
         <AuthenticityTokenInput />
-        <br />
-        <button type="submit">Upravit epizodu</button>
+
+        <FormActions>
+          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+            Uložit
+          </Button>
+          <AdminLinkButton
+            to={`/administration/podcasts/${loaderData.podcastId}/episodes/${loaderData.episode.id}`}
+          >
+            Zrušit
+          </AdminLinkButton>
+        </FormActions>
       </Form>
-    </>
+    </AdminPage>
   )
 }
-
-export { handle } from "./_handle"
-export { meta } from "./_meta"
-export { loader } from "./_loader"
-export { action } from "./_action"

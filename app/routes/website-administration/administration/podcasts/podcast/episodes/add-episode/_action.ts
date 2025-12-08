@@ -1,15 +1,15 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, redirect } from "react-router"
+import { href, redirect } from "react-router"
 
-import { requireAuthentication } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
+import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { checkAuthorPermission } from "~/utils/permissions/author/guards/check-author-permission.server"
 
+import type { Route } from "./+types/route"
 import { schema } from "./_schema"
 import { createEpisode } from "./utils/create-episode.server"
 
-export async function action({ request }: ActionFunctionArgs) {
-  await requireAuthentication(request)
-
+export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)
 
@@ -22,13 +22,27 @@ export async function action({ request }: ActionFunctionArgs) {
     return { submissionResult: submission.reply() }
   }
 
-  const response = await createEpisode(submission.value)
+  const context = await getAuthorPermissionContext(request, {
+    entities: ["podcast_episode"],
+    actions: ["create"],
+  })
 
-  if (response?.ok === true) {
-    const podcastId = submission.value.podcastId
+  const { authorId } = submission.value
 
-    throw redirect(`/administration/podcasts/${podcastId}`)
-  }
+  checkAuthorPermission(context, {
+    entity: "podcast_episode",
+    action: "create",
+    state: "draft",
+    targetAuthorId: authorId,
+  })
 
-  return { submissionResult: null }
+  const { episodeId } = await createEpisode(submission.value)
+  const { podcastId } = submission.value
+
+  return redirect(
+    href("/administration/podcasts/:podcastId/episodes/:episodeId", {
+      podcastId,
+      episodeId,
+    })
+  )
 }

@@ -62,6 +62,6 @@ export async function updatePodcast({
       },
     })
   } catch (error) {
-    return throwDbError(error, "Unable to update the podcast.")
+    throwDbError(error, "Unable to update the podcast.")
   }
 }

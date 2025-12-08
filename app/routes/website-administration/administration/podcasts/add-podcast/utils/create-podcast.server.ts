@@ -37,7 +37,6 @@ export async function createPodcast({
             blob: Uint8Array.from(await convertedCover.stream.toBuffer()),
           },
         },
-        state: "draft",
         authorId: authorId,
       },
     })

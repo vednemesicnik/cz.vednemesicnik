@@ -37,13 +37,18 @@ export default function Route({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       <AdminHeadline>Epizody</AdminHeadline>
-      <AdminLinkButton
-        to={href("/administration/podcasts/:podcastId/episodes/add-episode", {
-          podcastId: loaderData.podcast.id,
-        })}
-      >
-        Přidat epizodu
-      </AdminLinkButton>
+      {loaderData.canCreate && (
+        <AdminLinkButton
+          to={href(
+            "/administration/podcasts/:podcastId/episodes/add-episode",
+            {
+              podcastId: loaderData.podcast.id,
+            }
+          )}
+        >
+          Přidat epizodu
+        </AdminLinkButton>
+      )}
       <AdminTable>
         <TableHeader>
           <TableHeaderCell>Název</TableHeaderCell>
@@ -60,37 +65,43 @@ export default function Route({ loaderData }: Route.ComponentProps) {
                 </TableCell>
                 <TableCell>
                   <AdminActionGroup>
-                    <AdminLinkButton
-                      to={href(
-                        "/administration/podcasts/:podcastId/episodes/:episodeId",
-                        {
-                          podcastId: loaderData.podcast.id,
-                          episodeId: episode.id,
-                        }
-                      )}
-                    >
-                      <VisibilityIcon />
-                      Zobrazit
-                    </AdminLinkButton>
-                    <AdminLinkButton
-                      to={href(
-                        "/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode",
-                        {
-                          podcastId: loaderData.podcast.id,
-                          episodeId: episode.id,
-                        }
-                      )}
-                    >
-                      <EditIcon />
-                      Upravit
-                    </AdminLinkButton>
-                    <AdminActionButton
-                      action={"delete"}
-                      onClick={openModal(episode.id)}
-                    >
-                      <DeleteIcon />
-                      Smazat
-                    </AdminActionButton>
+                    {episode.canView && (
+                      <AdminLinkButton
+                        to={href(
+                          "/administration/podcasts/:podcastId/episodes/:episodeId",
+                          {
+                            podcastId: loaderData.podcast.id,
+                            episodeId: episode.id,
+                          }
+                        )}
+                      >
+                        <VisibilityIcon />
+                        Zobrazit
+                      </AdminLinkButton>
+                    )}
+                    {episode.canEdit && (
+                      <AdminLinkButton
+                        to={href(
+                          "/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode",
+                          {
+                            podcastId: loaderData.podcast.id,
+                            episodeId: episode.id,
+                          }
+                        )}
+                      >
+                        <EditIcon />
+                        Upravit
+                      </AdminLinkButton>
+                    )}
+                    {episode.canDelete && (
+                      <AdminActionButton
+                        action={"delete"}
+                        onClick={openModal(episode.id)}
+                      >
+                        <DeleteIcon />
+                        Smazat
+                      </AdminActionButton>
+                    )}
                   </AdminActionGroup>
                 </TableCell>
               </TableRow>

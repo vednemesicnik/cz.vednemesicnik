@@ -1,21 +1,16 @@
-import { requireAuthentication } from "~/utils/auth.server"
+import { href } from "react-router"
+
 import { prisma } from "~/utils/db.server"
+import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { requireAuthorPermission } from "~/utils/permissions/author/guards/require-author-permission.server"
+import { getAuthorsByPermission } from "~/utils/permissions/author/queries/get-authors-by-permission.server"
 
 import type { Route } from "./+types/route"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  await requireAuthentication(request)
-
   const { podcastId, episodeId } = params
 
-  const podcastPromise = prisma.podcast.findUniqueOrThrow({
-    where: { id: podcastId },
-    select: {
-      id: true,
-    },
-  })
-
-  const episodePromise = prisma.podcastEpisode.findUniqueOrThrow({
+  const episode = await prisma.podcastEpisode.findUniqueOrThrow({
     where: { id: episodeId },
     select: {
       id: true,
@@ -24,23 +19,36 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       slug: true,
       description: true,
       state: true,
-      publishedAt: true,
       authorId: true,
     },
   })
 
-  const authorsPromise = prisma.author.findMany({
-    select: {
-      id: true,
-      name: true,
-    },
+  const context = await getAuthorPermissionContext(request, {
+    entities: ["podcast_episode"],
+    actions: ["update"],
   })
 
-  const [podcast, episode, authors] = await Promise.all([
-    podcastPromise,
-    episodePromise,
-    authorsPromise,
-  ])
+  requireAuthorPermission(context, {
+    entity: "podcast_episode",
+    action: "update",
+    state: episode.state,
+    targetAuthorId: episode.authorId,
+    redirectTo: href(
+      "/administration/podcasts/:podcastId/episodes/:episodeId",
+      { podcastId, episodeId }
+    ),
+  })
 
-  return { podcast, episode, authors }
+  const authors = await getAuthorsByPermission(
+    context,
+    "podcast_episode",
+    "update",
+    episode.state
+  )
+
+  return {
+    podcastId,
+    episode,
+    authors,
+  }
 }

@@ -6,8 +6,6 @@ type Args = {
   title: string
   slug: string
   description: string
-  published: boolean
-  publishedAt: string
   podcastId: string
   authorId: string
 }
@@ -17,20 +15,16 @@ export async function createEpisode({
   title,
   slug,
   description,
-  published,
-  publishedAt,
   podcastId,
   authorId,
 }: Args) {
   try {
-    await prisma.podcastEpisode.create({
+    const episode = await prisma.podcastEpisode.create({
       data: {
         number,
         title,
         slug,
         description,
-        state: published ? "published" : "draft",
-        publishedAt: new Date(publishedAt),
         podcast: {
           connect: { id: podcastId },
         },
@@ -40,8 +34,8 @@ export async function createEpisode({
       },
     })
 
-    return { ok: true }
+    return { episodeId: episode.id }
   } catch (error) {
-    throwDbError(error, "Unable to create the episode.")
+    return throwDbError(error, "Unable to create the episode.")
   }
 }

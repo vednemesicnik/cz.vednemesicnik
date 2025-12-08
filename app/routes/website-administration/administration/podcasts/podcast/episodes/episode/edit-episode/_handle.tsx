@@ -16,7 +16,7 @@ export const handle = {
     return {
       label: "Upravit epizodu",
       path: href(
-        `/administration/podcasts/:podcastId/edit-episode/:episodeId`,
+        `/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode`,
         {
           podcastId,
           episodeId,
