@@ -1,1 +1,0 @@
-export { AdministrationPage } from "./_component"

@@ -1,3 +1,4 @@
+import { clsx } from "clsx"
 import type { ComponentProps } from "react"
 
 import { ErrorMessage } from "~/components/error-message"
@@ -12,6 +13,8 @@ type Props = ComponentProps<"textarea"> & {
 }
 
 export const TextArea = ({ label, errors, id, required, ...rest }: Props) => {
+  const hasErrors = errors !== undefined && errors.length > 0
+
   return (
     <section className={styles.container}>
       <Label htmlFor={id} required={required}>
@@ -19,7 +22,7 @@ export const TextArea = ({ label, errors, id, required, ...rest }: Props) => {
       </Label>
       <textarea
         id={id}
-        className={styles.textarea}
+        className={clsx(styles.textarea, hasErrors && styles.textareaError)}
         required={required}
         rows={10}
         {...rest}
