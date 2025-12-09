@@ -1,15 +1,16 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, redirect } from "react-router"
+import { href, redirect } from "react-router"
 
-import { requireAuthentication } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
+import { prisma } from "~/utils/db.server"
+import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { checkAuthorPermission } from "~/utils/permissions/author/guards/check-author-permission.server"
 
+import type { Route } from "./+types/route"
 import { schema } from "./_schema"
 import { updateLink } from "./utils/update-link.server"
 
-export async function action({ request }: ActionFunctionArgs) {
-  await requireAuthentication(request)
-
+export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)
 
@@ -22,13 +23,47 @@ export async function action({ request }: ActionFunctionArgs) {
     return { submissionResult: submission.reply() }
   }
 
-  const { podcastId, episodeId, linkId, label, url } = submission.value
+  const context = await getAuthorPermissionContext(request, {
+    entities: ["podcast_episode_link"],
+    actions: ["update"],
+  })
 
-  const response = await updateLink({ linkId, label, url })
+  const { episodeId, linkId } = params
 
-  if (response?.ok === true) {
-    throw redirect(`/administration/podcasts/${podcastId}/${episodeId}`)
-  }
+  // Get episode state and link author to check permissions
+  const episodePromise = prisma.podcastEpisode.findUniqueOrThrow({
+    where: { id: episodeId },
+    select: { state: true },
+  })
 
-  return { submissionResult: null }
+  const linkPromise = prisma.podcastEpisodeLink.findUniqueOrThrow({
+    where: { id: linkId },
+    select: { authorId: true },
+  })
+
+  const [episode, link] = await Promise.all([episodePromise, linkPromise])
+
+  checkAuthorPermission(context, {
+    entity: "podcast_episode_link",
+    action: "update",
+    state: episode.state,
+    targetAuthorId: link.authorId,
+  })
+
+  const { label, url } = submission.value
+
+  await updateLink({ linkId, label, url })
+
+  const { podcastId } = submission.value
+
+  return redirect(
+    href(
+      "/administration/podcasts/:podcastId/episodes/:episodeId/links/:linkId",
+      {
+        podcastId,
+        episodeId,
+        linkId,
+      }
+    )
+  )
 }

@@ -1,15 +1,15 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, redirect } from "react-router"
+import { href, redirect } from "react-router"
 
-import { requireAuthentication } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
+import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { checkAuthorPermission } from "~/utils/permissions/author/guards/check-author-permission.server"
 
+import type { Route } from "./+types/route"
 import { schema } from "./_schema"
 import { createLink } from "./utils/create-link.server"
 
-export async function action({ request }: ActionFunctionArgs) {
-  await requireAuthentication(request)
-
+export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)
 
@@ -22,13 +22,33 @@ export async function action({ request }: ActionFunctionArgs) {
     return { submissionResult: submission.reply() }
   }
 
-  const response = await createLink(submission.value)
+  const context = await getAuthorPermissionContext(request, {
+    entities: ["podcast_episode_link"],
+    actions: ["create"],
+  })
 
-  if (response?.ok === true) {
-    const { podcastId, episodeId } = submission.value
+  const { authorId } = submission.value
 
-    throw redirect(`/administration/podcasts/${podcastId}/${episodeId}`)
-  }
+  // Check if user can create draft links
+  checkAuthorPermission(context, {
+    entity: "podcast_episode_link",
+    action: "create",
+    state: "draft",
+    targetAuthorId: authorId,
+  })
 
-  return { submissionResult: null }
+  const { linkId } = await createLink(submission.value)
+
+  const { podcastId, episodeId } = submission.value
+
+  return redirect(
+    href(
+      "/administration/podcasts/:podcastId/episodes/:episodeId/links/:linkId",
+      {
+        podcastId,
+        episodeId,
+        linkId,
+      }
+    )
+  )
 }

@@ -1,17 +1,16 @@
-import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
+import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { checkAuthorPermission } from "~/utils/permissions/author/guards/check-author-permission.server"
 
 import type { Route } from "./+types/route"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const { sessionId } = await requireAuthentication(request)
+  const context = await getAuthorPermissionContext(request, {
+    entities: ["podcast_episode_link"],
+    actions: ["update"],
+  })
 
   const { podcastId, episodeId, linkId } = params
-
-  const sessionPromise = prisma.session.findUniqueOrThrow({
-    where: { id: sessionId },
-    select: { user: { select: { authorId: true } } },
-  })
 
   const podcastPromise = prisma.podcast.findUniqueOrThrow({
     where: { id: podcastId },
@@ -20,7 +19,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const episodePromise = prisma.podcastEpisode.findUniqueOrThrow({
     where: { id: episodeId },
-    select: { id: true },
+    select: {
+      id: true,
+      state: true,
+    },
   })
 
   const linkPromise = prisma.podcastEpisodeLink.findUniqueOrThrow({
@@ -40,13 +42,25 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     },
   })
 
-  const [session, podcast, episode, link, authors] = await Promise.all([
-    sessionPromise,
+  const [podcast, episode, link, authors] = await Promise.all([
     podcastPromise,
     episodePromise,
     linkPromise,
     authorsPromise,
   ])
 
-  return { session, podcast, episode, link, authors }
+  // Check if user can edit this link
+  checkAuthorPermission(context, {
+    entity: "podcast_episode_link",
+    action: "update",
+    state: episode.state,
+    targetAuthorId: link.authorId,
+  })
+
+  return {
+    podcast,
+    episode,
+    link,
+    authors,
+  }
 }

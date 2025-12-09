@@ -7,18 +7,33 @@ import {
   useForm,
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { Form } from "react-router"
+import { href, useNavigation } from "react-router"
 
+import { AdminHeadline } from "~/components/admin-headline"
+import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Headline } from "~/components/headline"
+import { Button } from "~/components/button"
+import { Fieldset } from "~/components/fieldset"
+import { Form } from "~/components/form"
+import { FormActions } from "~/components/form-actions"
+import { Input } from "~/components/input"
+import { Select } from "~/components/select"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
+
+export { handle } from "./_handle"
+export { meta } from "./_meta"
+export { loader } from "./_loader"
+export { action } from "./_action"
 
 export default function Route({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
+  const { state } = useNavigation()
+
   const [form, fields] = useForm({
     id: "add-link",
     constraint: getZodConstraint(schema),
@@ -29,7 +44,7 @@ export default function Route({
       url: "",
       podcastId: loaderData.podcast.id,
       episodeId: loaderData.episode.id,
-      authorId: loaderData.session.user.authorId,
+      authorId: loaderData.selfAuthorId,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -38,10 +53,14 @@ export default function Route({
     shouldRevalidate: "onBlur",
   })
 
+  const isLoadingOrSubmitting = state !== "idle"
+  const canSubmit = !isLoadingOrSubmitting && form.valid
+
   return (
-    <>
-      <Headline>Přidat odkaz</Headline>
-      <Form {...getFormProps(form)} method="post">
+    <AdminPage>
+      <AdminHeadline>Přidat odkaz</AdminHeadline>
+
+      <Form method={"post"} {...getFormProps(form)} errors={form.errors}>
         <input
           {...getInputProps(fields.podcastId, { type: "hidden" })}
           defaultValue={fields.podcastId.initialValue}
@@ -50,40 +69,28 @@ export default function Route({
           {...getInputProps(fields.episodeId, { type: "hidden" })}
           defaultValue={fields.episodeId.initialValue}
         />
-        <fieldset>
-          <legend>Detaily</legend>
-          <label htmlFor={fields.label.id}>Štítek: </label>
-          <input
-            {...getInputProps(fields.label, { type: "text" })}
-            defaultValue={fields.label.initialValue}
+
+        <Fieldset legend={"Detaily"} disabled={isLoadingOrSubmitting}>
+          <Input
+            label={"Štítek"}
             placeholder={"Poslechněte si na Spotify"}
+            errors={fields.label.errors}
+            {...getInputProps(fields.label, { type: "text" })}
           />
-          {fields.label.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.url.id}>URL: </label>
-          <input
-            {...getInputProps(fields.url, { type: "url" })}
-            defaultValue={fields.url.initialValue}
+          <Input
+            label={"URL"}
             placeholder={"https://open.spotify.com/episode/..."}
+            errors={fields.url.errors}
+            {...getInputProps(fields.url, { type: "url" })}
           />
-          {fields.url.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-        </fieldset>
-        <fieldset>
-          <legend>Autor</legend>
-          <label htmlFor={fields.authorId.id}>Autor</label>
-          <select {...getSelectProps(fields.authorId)}>
+        </Fieldset>
+
+        <Fieldset legend={"Autor"} disabled={isLoadingOrSubmitting}>
+          <Select
+            label={"Autor"}
+            errors={fields.authorId.errors}
+            {...getSelectProps(fields.authorId)}
+          >
             {loaderData.authors.map((author) => {
               return (
                 <option key={author.id} value={author.id}>
@@ -91,17 +98,28 @@ export default function Route({
                 </option>
               )
             })}
-          </select>
-        </fieldset>
+          </Select>
+        </Fieldset>
+
         <AuthenticityTokenInput />
-        <br />
-        <button type="submit">Přidat odakz</button>
+
+        <FormActions>
+          <Button type={"submit"} disabled={!canSubmit} variant={"primary"}>
+            Přidat
+          </Button>
+          <AdminLinkButton
+            to={href(
+              "/administration/podcasts/:podcastId/episodes/:episodeId/links",
+              {
+                podcastId: loaderData.podcast.id,
+                episodeId: loaderData.episode.id,
+              }
+            )}
+          >
+            Zrušit
+          </AdminLinkButton>
+        </FormActions>
       </Form>
-    </>
+    </AdminPage>
   )
 }
-
-export { handle } from "./_handle"
-export { meta } from "./_meta"
-export { loader } from "./_loader"
-export { action } from "./_action"

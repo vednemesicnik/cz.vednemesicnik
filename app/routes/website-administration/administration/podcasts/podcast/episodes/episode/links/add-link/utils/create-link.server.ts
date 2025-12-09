@@ -10,7 +10,7 @@ type Args = {
 
 export async function createLink({ label, url, episodeId, authorId }: Args) {
   try {
-    await prisma.podcastEpisodeLink.create({
+    const link = await prisma.podcastEpisodeLink.create({
       data: {
         label,
         url,
@@ -23,10 +23,13 @@ export async function createLink({ label, url, episodeId, authorId }: Args) {
           connect: { id: authorId },
         },
       },
+      select: {
+        id: true,
+      },
     })
 
-    return { ok: true }
+    return { linkId: link.id }
   } catch (error) {
-    throwDbError(error, "Unable to create the link.")
+    return throwDbError(error, "Unable to create the link.")
   }
 }
