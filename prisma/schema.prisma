@@ -371,6 +371,7 @@ model EditorialBoardPosition {
   order       Int                    @unique
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
+  publishedAt DateTime?
   state       ContentState           @default(draft)
   members     EditorialBoardMember[]
   author      Author                 @relation("EditorialBoardPositionCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
@@ -382,15 +383,16 @@ model EditorialBoardPosition {
 }
 
 model EditorialBoardMember {
-  id        String                   @id @default(cuid())
-  fullName  String
-  positions EditorialBoardPosition[]
-  createdAt DateTime                 @default(now())
-  updatedAt DateTime                 @updatedAt
-  state     ContentState             @default(draft)
-  author    Author                   @relation("EditorialBoardMemberCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  authorId  String
-  reviews   Review[]                 @relation("EditorialBoardMemberReviews")
+  id          String                   @id @default(cuid())
+  fullName    String
+  positions   EditorialBoardPosition[]
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  publishedAt DateTime?
+  state       ContentState             @default(draft)
+  author      Author                   @relation("EditorialBoardMemberCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId    String
+  reviews     Review[]                 @relation("EditorialBoardMemberReviews")
 
   // non-unique foreign key
   @@index([authorId])
