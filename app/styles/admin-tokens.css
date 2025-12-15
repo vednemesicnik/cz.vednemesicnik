@@ -146,6 +146,16 @@
   --admin-danger-active: light-dark(#b91c1c, #991b1b);
 
   /* ========================================
+     Colors - Button Text
+     ======================================== */
+  /* Text color for buttons with colored backgrounds (primary, danger) */
+  /*noinspection CssInvalidFunction*/
+  --admin-button-text: light-dark(#ffffff, #ffffff);
+  /* Text color for secondary/outlined buttons */
+  /*noinspection CssInvalidFunction*/
+  --admin-button-text-secondary: light-dark(#0f172a, #f1f5f9);
+
+  /* ========================================
      Shadows
      ======================================== */
   /*noinspection CssInvalidFunction*/

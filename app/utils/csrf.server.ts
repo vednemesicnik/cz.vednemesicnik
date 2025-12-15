@@ -2,7 +2,7 @@ import crypto from "crypto"
 
 import { createCookie } from "react-router"
 
-import { formConfig } from "~/config/form-config"
+import { FORM_CONFIG } from "~/config/form-config"
 
 const SEPARATOR = "."
 const ENCODING = "base64url"
@@ -68,7 +68,7 @@ export class CSRFError extends Error {
 }
 
 async function validate(formData: FormData, headers: Headers) {
-  const csrfFormDataKey = formConfig.authenticityToken.name
+  const csrfFormDataKey = FORM_CONFIG.authenticityToken.name
 
   if (formData instanceof Request && formData.bodyUsed) {
     throw new Error(

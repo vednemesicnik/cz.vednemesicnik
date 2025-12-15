@@ -1,0 +1,49 @@
+.avatar {
+  @layer component {
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+
+    /* Shape */
+    border-radius: 50%;
+    overflow: hidden;
+
+    /* Border */
+    border: 3px solid var(--admin-border);
+
+    /* Background */
+    background-color: var(--admin-bg-secondary);
+  }
+}
+
+.image {
+  @layer component {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.small {
+  @layer component {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+.medium {
+  @layer component {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+.large {
+  @layer component {
+    width: 128px;
+    height: 128px;
+  }
+}

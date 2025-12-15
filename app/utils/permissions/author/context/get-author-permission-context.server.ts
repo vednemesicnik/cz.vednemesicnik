@@ -83,6 +83,7 @@ export async function getAuthorPermissionContext(
     }) => {
       const access = config.access ?? ["own", "any"]
       const states = config.state ? [config.state] : ["*"]
+      const targetAuthorId = config.targetAuthorId ?? author.id
 
       const result = getAuthorRights(author.role.permissions, {
         entities: [config.entity],
@@ -90,7 +91,7 @@ export async function getAuthorPermissionContext(
         access,
         states,
         ownId: author.id,
-        targetId: config.targetAuthorId,
+        targetId: targetAuthorId,
       })
 
       // Result structure: [entity][action][access][state]

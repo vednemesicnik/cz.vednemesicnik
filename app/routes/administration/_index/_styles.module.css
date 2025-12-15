@@ -1,0 +1,43 @@
+.section {
+  @layer component {
+    /* Layout */
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+
+    /* Spacing */
+    margin-bottom: 48px;
+  }
+}
+
+.sectionTitle {
+  @layer component {
+    /* Reset */
+    margin: 0;
+
+    /* Typography */
+    font-size: var(--font-size-heading4);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--admin-text-primary);
+  }
+}
+
+.statsGrid {
+  @layer component {
+    /* Layout */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+}
+
+.pendingList {
+  @layer component {
+    /* Layout */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+}

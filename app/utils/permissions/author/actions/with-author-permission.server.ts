@@ -12,15 +12,17 @@ import {
   getAuthorPermissionContext,
 } from "../context/get-author-permission-context.server"
 
+type Options<T> = {
+  entity: AuthorPermissionEntity
+  action: AuthorPermissionAction
+  target: { authorId: string; state: ContentState }
+  execute: (context: AuthorPermissionContext) => Promise<T>
+  errorMessage?: string
+}
+
 export async function withAuthorPermission<T>(
   request: Request,
-  options: {
-    entity: AuthorPermissionEntity
-    action: AuthorPermissionAction
-    getTarget: () => Promise<{ authorId: string; state: ContentState }>
-    execute: (context: AuthorPermissionContext) => Promise<T>
-    errorMessage?: string
-  }
+  options: Options<T>
 ): Promise<T> {
   await requireAuthentication(request)
 
@@ -29,13 +31,11 @@ export async function withAuthorPermission<T>(
     actions: [options.action],
   })
 
-  const target = await options.getTarget()
-
   const { hasPermission } = context.can({
     entity: options.entity,
     action: options.action,
-    state: target.state,
-    targetAuthorId: target.authorId,
+    state: options.target.state,
+    targetAuthorId: options.target.authorId,
   })
 
   invariantResponse(

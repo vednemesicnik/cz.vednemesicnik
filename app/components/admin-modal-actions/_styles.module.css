@@ -1,0 +1,8 @@
+.actions {
+  @layer component {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-start;
+    align-items: center;
+  }
+}

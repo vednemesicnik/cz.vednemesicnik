@@ -1,0 +1,97 @@
+.item {
+  @layer component {
+    /* Layout */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    /* Spacing */
+    padding: 16px 20px;
+    border-radius: 8px;
+
+    /* Colors */
+    background-color: var(--admin-bg-secondary);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text-primary);
+
+    /* Typography */
+    text-decoration: none;
+
+    /* Transitions */
+    transition:
+      background-color 150ms ease-out,
+      border-color 150ms ease-out,
+      box-shadow 150ms ease-out;
+
+    /* Hover State */
+    &:hover:not(:focus-visible) {
+      background-color: var(--admin-bg-hover);
+      border-color: var(--admin-purple);
+      box-shadow: var(--admin-shadow-sm);
+    }
+
+    /* Focus State */
+    &:focus-visible {
+      background-color: var(--admin-bg-hover);
+      border-color: var(--admin-purple);
+      box-shadow: var(--admin-focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+.header {
+  @layer component {
+    /* Layout */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.type {
+  @layer component {
+    /* Spacing */
+    padding: 4px 10px;
+    border-radius: 6px;
+
+    /* Colors */
+    background-color: var(--admin-purple);
+    color: var(--admin-bg-primary);
+
+    /* Typography */
+    font-size: var(--font-size-note);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+}
+
+.date {
+  @layer component {
+    /* Typography */
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-regular);
+    color: var(--admin-text-tertiary);
+  }
+}
+
+.title {
+  @layer component {
+    /* Typography */
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--admin-text-primary);
+  }
+}
+
+.author {
+  @layer component {
+    /* Typography */
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-regular);
+    color: var(--admin-text-secondary);
+  }
+}
