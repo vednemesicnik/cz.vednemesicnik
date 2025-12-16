@@ -1,0 +1,7 @@
+[production]
+> 0.3%
+last 3 versions
+not dead # exclude browsers that are no longer maintained
+
+[development]
+last 1 version
