@@ -8,7 +8,7 @@ import { getUserPermissionContext } from "~/utils/permissions/user/context/get-u
 import { checkUserPermission } from "~/utils/permissions/user/guards/check-user-permission.server"
 
 import { schema } from "./_schema"
-import { createUser } from "./utils/create-user.server"
+import { updateAuthor } from "./utils/update-author.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
@@ -27,24 +27,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const context = await getUserPermissionContext(request, {
-    entities: ["user"],
-    actions: ["create"],
+    entities: ["author"],
+    actions: ["update"],
   })
 
-  // Get the target role to check hierarchy
-  const targetRole = await prisma.userRole.findUniqueOrThrow({
-    where: { id: submission.value.roleId },
-    select: { level: true },
+  // Get the author to check ownership
+  const author = await prisma.author.findUniqueOrThrow({
+    where: { id: submission.value.authorId },
+    select: {
+      user: { select: { id: true } },
+    },
   })
 
-  // Check if user can create users with the specified role
+  // Check if user can update this author
   checkUserPermission(context, {
-    entity: "user",
-    action: "create",
-    targetUserRoleLevel: targetRole.level,
+    entity: "author",
+    action: "update",
+    targetUserId: author.user?.id,
   })
 
-  const { userId } = await createUser(submission.value)
+  await updateAuthor(submission.value)
 
-  return redirect(href("/administration/users/:userId", { userId }))
+  return redirect(
+    href("/administration/authors/:authorId", {
+      authorId: submission.value.authorId,
+    })
+  )
 }

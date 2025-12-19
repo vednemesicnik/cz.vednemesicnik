@@ -14,7 +14,10 @@ import {
 type Options<T> = {
   entity: UserPermissionEntity
   action: UserPermissionAction
-  target: { userId: string; roleLevel: number }
+  target: {
+    userId?: string
+    roleLevel?: number
+  }
   execute: (context: UserPermissionContext) => Promise<T>
   errorMessage?: string
 }
@@ -34,7 +37,7 @@ export async function withUserPermission<T>(
     entity: options.entity,
     action: options.action,
     targetUserId: options.target.userId,
-    targetRoleLevel: options.target.roleLevel,
+    targetUserRoleLevel: options.target.roleLevel,
   })
 
   invariantResponse(

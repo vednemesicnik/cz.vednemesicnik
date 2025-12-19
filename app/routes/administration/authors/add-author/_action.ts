@@ -2,13 +2,12 @@ import { parseWithZod } from "@conform-to/zod"
 import { type ActionFunctionArgs, data, href, redirect } from "react-router"
 
 import { validateCSRF } from "~/utils/csrf.server"
-import { prisma } from "~/utils/db.server"
 import { getStatusCodeFromSubmissionStatus } from "~/utils/get-status-code-from-submission-status"
 import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
 import { checkUserPermission } from "~/utils/permissions/user/guards/check-user-permission.server"
 
 import { schema } from "./_schema"
-import { createUser } from "./utils/create-user.server"
+import { createAuthor } from "./utils/create-author.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
@@ -27,24 +26,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const context = await getUserPermissionContext(request, {
-    entities: ["user"],
+    entities: ["author"],
     actions: ["create"],
   })
 
-  // Get the target role to check hierarchy
-  const targetRole = await prisma.userRole.findUniqueOrThrow({
-    where: { id: submission.value.roleId },
-    select: { level: true },
-  })
-
-  // Check if user can create users with the specified role
+  // Check if user can create authors
   checkUserPermission(context, {
-    entity: "user",
+    entity: "author",
     action: "create",
-    targetUserRoleLevel: targetRole.level,
   })
 
-  const { userId } = await createUser(submission.value)
+  const { authorId } = await createAuthor(submission.value)
 
-  return redirect(href("/administration/users/:userId", { userId }))
+  return redirect(href("/administration/authors/:authorId", { authorId }))
 }

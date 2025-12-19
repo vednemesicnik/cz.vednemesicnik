@@ -17,7 +17,7 @@ import { AdminLinkButton } from "~/components/admin-link-button"
 import { AdminPage } from "~/components/admin-page"
 import { DeleteIcon } from "~/components/icons/delete-icon"
 import { EditIcon } from "~/components/icons/edit-icon"
-import { getAuthorRoleLabel, getUserRoleLabel } from "~/utils/role-labels"
+import { getAuthorRoleLabel } from "~/utils/role-labels"
 
 import type { Route } from "./+types/route"
 
@@ -29,28 +29,28 @@ export default function RouteComponent({
   loaderData,
   params,
 }: Route.ComponentProps) {
-  const { user, canUpdate, canDelete } = loaderData
-  const { userId } = params
+  const { author, canUpdate, canDelete } = loaderData
+  const { authorId } = params
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
     {
-      action: href("/administration/users/:userId", { userId }),
+      action: href("/administration/authors/:authorId", { authorId }),
       withRedirect: true,
     }
   )
 
   return (
     <AdminPage>
-      <AdminHeadline>{user.name}</AdminHeadline>
+      <AdminHeadline>{author.name}</AdminHeadline>
 
       <AdminActionGroup>
         {canUpdate && (
           <AdminLinkButton
-            to={href("/administration/users/:userId/edit-user", {
-              userId,
+            to={href("/administration/authors/:authorId/edit-author", {
+              authorId,
             })}
           >
             <EditIcon />
@@ -67,33 +67,40 @@ export default function RouteComponent({
 
       <AdminDetailSection title="Základní informace">
         <AdminDetailList>
-          <AdminDetailItem label="Jméno">{user.name}</AdminDetailItem>
-          <AdminDetailItem label="E-mail">{user.email}</AdminDetailItem>
-          <AdminDetailItem label="Uživatelské jméno">
-            {user.username}
-          </AdminDetailItem>
-          <AdminDetailItem label="Uživatelská role">
-            {getUserRoleLabel(user.role.name)}
+          <AdminDetailItem label="Jméno">{author.name}</AdminDetailItem>
+          <AdminDetailItem label="Bio">{author.bio ?? "—"}</AdminDetailItem>
+          <AdminDetailItem label="Role">
+            {getAuthorRoleLabel(author.role.name)}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>
 
-      <AdminDetailSection title="Autorský profil">
+      <AdminDetailSection title="Propojený uživatel">
         <AdminDetailList>
-          <AdminDetailItem label="Jméno autora">
-            {user.author.name}
-          </AdminDetailItem>
-          <AdminDetailItem label="Autorská role">
-            {getAuthorRoleLabel(user.author.role.name)}
-          </AdminDetailItem>
+          {author.user ? (
+            <>
+              <AdminDetailItem label="Jméno uživatele">
+                {author.user.name}
+              </AdminDetailItem>
+              <AdminDetailItem label="E-mail">
+                {author.user.email}
+              </AdminDetailItem>
+            </>
+          ) : (
+            <AdminDetailItem label="Uživatel">
+              Autor není propojen s uživatelským účtem
+            </AdminDetailItem>
+          )}
         </AdminDetailList>
       </AdminDetailSection>
 
       <AdminDetailSection title="Metadata">
         <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">{user.createdAt}</AdminDetailItem>
+          <AdminDetailItem label="Vytvořeno">
+            {author.createdAt}
+          </AdminDetailItem>
           <AdminDetailItem label="Naposledy upraveno">
-            {user.updatedAt}
+            {author.updatedAt}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>

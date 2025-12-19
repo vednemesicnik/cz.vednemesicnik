@@ -24,6 +24,7 @@ export async function getUserPermissionContext(
       user: {
         select: {
           id: true,
+          authorId: true,
           role: {
             select: {
               name: true,
@@ -56,6 +57,7 @@ export async function getUserPermissionContext(
 
   return {
     userId: user.id,
+    authorId: user.authorId,
     roleName: user.role.name,
     roleLevel: user.role.level,
     permissions: user.role.permissions,
@@ -65,7 +67,7 @@ export async function getUserPermissionContext(
       action: UserPermissionAction
       access?: UserPermissionAccess[]
       targetUserId?: string
-      targetRoleLevel?: number
+      targetUserRoleLevel?: number
     }) => {
       const access = config.access ?? ["own", "any"]
 
@@ -91,8 +93,8 @@ export async function getUserPermissionContext(
       let hasPermission = hasOwn || hasAny
 
       if (
-        config.targetRoleLevel !== undefined &&
-        config.targetRoleLevel < user.role.level
+        config.targetUserRoleLevel !== undefined &&
+        config.targetUserRoleLevel < user.role.level
       ) {
         hasPermission = false
       }

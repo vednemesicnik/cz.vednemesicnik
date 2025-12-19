@@ -4,6 +4,15 @@ import { prisma } from "~/utils/db.server"
 import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
 import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
 
+import { getPendingArticleCategories } from "./utils/get-pending-article-categories.server"
+import { getPendingArticleTags } from "./utils/get-pending-article-tags.server"
+import { getPendingArticles } from "./utils/get-pending-articles.server"
+import { getPendingEditorialBoardMembers } from "./utils/get-pending-editorial-board-members.server"
+import { getPendingEditorialBoardPositions } from "./utils/get-pending-editorial-board-positions.server"
+import { getPendingIssues } from "./utils/get-pending-issues.server"
+import { getPendingPodcastEpisodes } from "./utils/get-pending-podcast-episodes.server"
+import { getPendingPodcasts } from "./utils/get-pending-podcasts.server"
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Get permission contexts
   const [authorContext, userContext] = await Promise.all([
@@ -27,6 +36,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   ])
 
   const currentAuthorId = authorContext.authorId
+  const currentRoleLevel = authorContext.roleLevel
 
   // Check permissions for viewing draft content from other authors
   const canViewArticleDrafts = authorContext.can({
@@ -77,7 +87,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     state: "draft",
   }).hasAny
 
-  // Fetch draft content created by other authors (for review) - only if user has permission
+  // Fetch draft content created by other authors (for review)
+  const pendingOptions = { currentAuthorId, currentRoleLevel }
+
+  const emptyResult = { items: [], count: 0 }
+
   const [
     draftArticles,
     draftPodcasts,
@@ -89,134 +103,29 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     draftEditorialBoardPositions,
   ] = await Promise.all([
     canViewArticleDrafts
-      ? prisma.article.findMany({
-          where: {
-            state: "draft",
-            authorId: { not: currentAuthorId },
-          },
-          select: {
-            id: true,
-            title: true,
-            createdAt: true,
-            author: { select: { name: true } },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-      : Promise.resolve([]),
+      ? getPendingArticles(pendingOptions)
+      : Promise.resolve(emptyResult),
     canViewPodcastDrafts
-      ? prisma.podcast.findMany({
-          where: {
-            state: "draft",
-            authorId: { not: currentAuthorId },
-          },
-          select: {
-            id: true,
-            title: true,
-            createdAt: true,
-            author: { select: { name: true } },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-      : Promise.resolve([]),
+      ? getPendingPodcasts(pendingOptions)
+      : Promise.resolve(emptyResult),
     canViewPodcastEpisodeDrafts
-      ? prisma.podcastEpisode.findMany({
-          where: {
-            state: "draft",
-            authorId: { not: currentAuthorId },
-          },
-          select: {
-            id: true,
-            title: true,
-            createdAt: true,
-            author: { select: { name: true } },
-            podcast: { select: { id: true, title: true } },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-      : Promise.resolve([]),
+      ? getPendingPodcastEpisodes(pendingOptions)
+      : Promise.resolve(emptyResult),
     canViewIssueDrafts
-      ? prisma.issue.findMany({
-          where: {
-            state: "draft",
-            authorId: { not: currentAuthorId },
-          },
-          select: {
-            id: true,
-            label: true,
-            createdAt: true,
-            author: { select: { name: true } },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-      : Promise.resolve([]),
+      ? getPendingIssues(pendingOptions)
+      : Promise.resolve(emptyResult),
     canViewArticleCategoryDrafts
-      ? prisma.articleCategory.findMany({
-          where: {
-            state: "draft",
-            authorId: { not: currentAuthorId },
-          },
-          select: {
-            id: true,
-            name: true,
-            createdAt: true,
-            author: { select: { name: true } },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-      : Promise.resolve([]),
+      ? getPendingArticleCategories(pendingOptions)
+      : Promise.resolve(emptyResult),
     canViewArticleTagDrafts
-      ? prisma.articleTag.findMany({
-          where: {
-            state: "draft",
-            authorId: { not: currentAuthorId },
-          },
-          select: {
-            id: true,
-            name: true,
-            createdAt: true,
-            author: { select: { name: true } },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-      : Promise.resolve([]),
+      ? getPendingArticleTags(pendingOptions)
+      : Promise.resolve(emptyResult),
     canViewEditorialBoardMemberDrafts
-      ? prisma.editorialBoardMember.findMany({
-          where: {
-            state: "draft",
-            authorId: { not: currentAuthorId },
-          },
-          select: {
-            id: true,
-            fullName: true,
-            createdAt: true,
-            author: { select: { name: true } },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-      : Promise.resolve([]),
+      ? getPendingEditorialBoardMembers(pendingOptions)
+      : Promise.resolve(emptyResult),
     canViewEditorialBoardPositionDrafts
-      ? prisma.editorialBoardPosition.findMany({
-          where: {
-            state: "draft",
-            authorId: { not: currentAuthorId },
-          },
-          select: {
-            id: true,
-            key: true,
-            createdAt: true,
-            author: { select: { name: true } },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-      : Promise.resolve([]),
+      ? getPendingEditorialBoardPositions(pendingOptions)
+      : Promise.resolve(emptyResult),
   ])
 
   // Fetch statistics
@@ -225,6 +134,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     publishedArticles,
     totalPodcasts,
     publishedPodcasts,
+    totalPodcastEpisodes,
+    publishedPodcastEpisodes,
     totalIssues,
     publishedIssues,
   ] = await Promise.all([
@@ -232,33 +143,56 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     prisma.article.count({ where: { state: "published" } }),
     prisma.podcast.count(),
     prisma.podcast.count({ where: { state: "published" } }),
+    prisma.podcastEpisode.count(),
+    prisma.podcastEpisode.count({ where: { state: "published" } }),
     prisma.issue.count(),
     prisma.issue.count({ where: { state: "published" } }),
   ])
 
+  const totalPendingCount =
+    draftArticles.count +
+    draftPodcasts.count +
+    draftPodcastEpisodes.count +
+    draftIssues.count +
+    draftArticleCategories.count +
+    draftArticleTags.count +
+    draftEditorialBoardMembers.count +
+    draftEditorialBoardPositions.count
+
   const pendingReviewItems = {
-    articles: draftArticles,
-    podcasts: draftPodcasts,
-    podcastEpisodes: draftPodcastEpisodes,
-    issues: draftIssues,
-    articleCategories: draftArticleCategories,
-    articleTags: draftArticleTags,
-    editorialBoardMembers: draftEditorialBoardMembers,
-    editorialBoardPositions: draftEditorialBoardPositions,
+    articles: draftArticles.items,
+    podcasts: draftPodcasts.items,
+    podcastEpisodes: draftPodcastEpisodes.items,
+    issues: draftIssues.items,
+    articleCategories: draftArticleCategories.items,
+    articleTags: draftArticleTags.items,
+    editorialBoardMembers: draftEditorialBoardMembers.items,
+    editorialBoardPositions: draftEditorialBoardPositions.items,
+    totalCount: totalPendingCount,
   }
 
   const statistics = {
     articles: { total: totalArticles, published: publishedArticles },
     podcasts: { total: totalPodcasts, published: publishedPodcasts },
+    podcastEpisodes: {
+      total: totalPodcastEpisodes,
+      published: publishedPodcastEpisodes,
+    },
     issues: { total: totalIssues, published: publishedIssues },
   }
 
   // Check permissions for navigation cards
   const permissions = {
-    canViewUsers: userContext.can({ entity: "user", action: "view" })
-      .hasPermission,
-    canViewAuthors: userContext.can({ entity: "author", action: "view" })
-      .hasPermission,
+    canViewUsers: userContext.can({
+      entity: "user",
+      action: "view",
+      targetUserId: userContext.userId,
+    }).hasPermission,
+    canViewAuthors: userContext.can({
+      entity: "author",
+      action: "view",
+      targetUserId: userContext.userId,
+    }).hasPermission,
     canViewArticles: authorContext.can({ entity: "article", action: "view" })
       .hasPermission,
     canViewArticleCategories: authorContext.can({

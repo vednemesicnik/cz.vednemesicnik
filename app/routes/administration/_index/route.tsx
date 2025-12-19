@@ -25,15 +25,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     canViewEditorialBoardMembers,
   } = permissions
 
-  const totalPendingItems =
-    pendingReviewItems.articles.length +
-    pendingReviewItems.podcasts.length +
-    pendingReviewItems.podcastEpisodes.length +
-    pendingReviewItems.issues.length +
-    pendingReviewItems.articleCategories.length +
-    pendingReviewItems.articleTags.length +
-    pendingReviewItems.editorialBoardMembers.length +
-    pendingReviewItems.editorialBoardPositions.length
+  const hasDisplayedPendingItems =
+    pendingReviewItems.articles.length > 0 ||
+    pendingReviewItems.podcasts.length > 0 ||
+    pendingReviewItems.podcastEpisodes.length > 0 ||
+    pendingReviewItems.issues.length > 0 ||
+    pendingReviewItems.articleCategories.length > 0 ||
+    pendingReviewItems.articleTags.length > 0 ||
+    pendingReviewItems.editorialBoardMembers.length > 0 ||
+    pendingReviewItems.editorialBoardPositions.length > 0
 
   return (
     <AdminPage>
@@ -56,6 +56,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             subtext={`${statistics.podcasts.published} publikováno`}
           />
           <AdminStatCard
+            icon="🎧"
+            label="Epizody"
+            value={statistics.podcastEpisodes.total}
+            subtext={`${statistics.podcastEpisodes.published} publikováno`}
+          />
+          <AdminStatCard
             icon="📰"
             label="Vydání"
             value={statistics.issues.total}
@@ -64,14 +70,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <AdminStatCard
             icon="⏳"
             label="Čeká na schválení"
-            value={totalPendingItems}
+            value={pendingReviewItems.totalCount}
             subtext="konceptů"
           />
         </div>
       </section>
 
       {/* Pending Review Section */}
-      {totalPendingItems > 0 && (
+      {hasDisplayedPendingItems && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Čeká na schválení</h2>
           <div className={styles.pendingList}>

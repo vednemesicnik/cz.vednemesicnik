@@ -79,10 +79,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       ])
 
       permissions = {
-        canViewUsers: userContext.can({ entity: "user", action: "view" })
-          .hasPermission,
-        canViewAuthors: userContext.can({ entity: "author", action: "view" })
-          .hasPermission,
+        canViewUsers: userContext.can({
+          entity: "user",
+          action: "view",
+          targetUserId: userContext.userId,
+        }).hasPermission,
+        canViewAuthors: userContext.can({
+          entity: "author",
+          action: "view",
+          targetUserId: userContext.userId,
+        }).hasPermission,
         canViewArticles: authorContext.can({
           entity: "article",
           action: "view",

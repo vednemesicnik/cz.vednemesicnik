@@ -138,6 +138,14 @@ export default [
           id: "userId",
         }),
 
+        // Authors
+        ...createAdminEntriesSection({
+          name: "authors",
+          entry: "author",
+          path: "routes/administration/authors",
+          id: "authorId",
+        }),
+
         // Settings
         ...createAdminIntersection(
           {

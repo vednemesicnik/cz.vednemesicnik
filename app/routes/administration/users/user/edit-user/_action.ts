@@ -70,7 +70,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     entity: "user",
     action: "update",
     targetUserId: targetUser.id,
-    targetRoleLevel: targetUser.role.level,
+    targetUserRoleLevel: targetUser.role.level,
   })
 
   // Check if user can assign the new role
@@ -78,7 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     entity: "user",
     action: "update",
     targetUserId: targetUser.id,
-    targetRoleLevel: newRole.level,
+    targetUserRoleLevel: newRole.level,
   })
 
   await updateUser(submission.value)

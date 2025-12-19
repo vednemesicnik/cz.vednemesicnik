@@ -11,7 +11,7 @@ type CheckUserPermissionOptions = {
   entity: UserPermissionEntity
   action: UserPermissionAction
   targetUserId?: string
-  targetRoleLevel?: number
+  targetUserRoleLevel?: number
   errorMessage?: string
 }
 
@@ -23,7 +23,7 @@ export function checkUserPermission(
     entity: options.entity,
     action: options.action,
     targetUserId: options.targetUserId,
-    targetRoleLevel: options.targetRoleLevel,
+    targetUserRoleLevel: options.targetUserRoleLevel,
   })
 
   invariantResponse(

@@ -54,7 +54,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     entity: "user",
     action: "view",
     targetUserId: user.id,
-    targetRoleLevel: user.role.level,
+    targetUserRoleLevel: user.role.level,
   })
 
   if (!canView) {
@@ -66,7 +66,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     entity: "user",
     action: "update",
     targetUserId: user.id,
-    targetRoleLevel: user.role.level,
+    targetUserRoleLevel: user.role.level,
   })
 
   // Check delete permission
@@ -74,7 +74,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     entity: "user",
     action: "delete",
     targetUserId: user.id,
-    targetRoleLevel: user.role.level,
+    targetUserRoleLevel: user.role.level,
   })
 
   return {

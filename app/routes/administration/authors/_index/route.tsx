@@ -11,8 +11,8 @@ import {
   TableHeader,
   TableHeaderCell,
 } from "~/components/admin-table"
-import { ItemRow } from "~/routes/administration/users/_index/components/item-row"
-import { getUserRoleLabel } from "~/utils/role-labels"
+import { ItemRow } from "~/routes/administration/authors/_index/components/item-row"
+import { getAuthorRoleLabel } from "~/utils/role-labels"
 
 import type { Route } from "./+types/route"
 
@@ -22,32 +22,30 @@ export { meta } from "./_meta"
 export default function Route({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
-      <AdminHeadline>Uživatelé</AdminHeadline>
+      <AdminHeadline>Autoři</AdminHeadline>
       {loaderData.canCreate && (
-        <AdminLinkButton to={href("/administration/users/add-user")}>
-          Přidat uživatele
+        <AdminLinkButton to={href("/administration/authors/add-author")}>
+          Přidat autora
         </AdminLinkButton>
       )}
       <AdminTable>
         <TableHeader>
-          <TableHeaderCell>E-mail</TableHeaderCell>
-          <TableHeaderCell>Uživatelské jméno</TableHeaderCell>
           <TableHeaderCell>Jméno</TableHeaderCell>
           <TableHeaderCell>Role</TableHeaderCell>
+          <TableHeaderCell>E-mail uživatele</TableHeaderCell>
           <TableHeaderCell>Akce</TableHeaderCell>
         </TableHeader>
         <TableBody>
-          {loaderData.users.map((user) => (
+          {loaderData.authors.map((author) => (
             <ItemRow
-              key={user.id}
-              id={user.id}
-              email={user.email}
-              username={user.username}
-              name={user.name}
-              roleName={getUserRoleLabel(user.role.name)}
-              canView={user.canView}
-              canUpdate={user.canUpdate}
-              canDelete={user.canDelete}
+              key={author.id}
+              id={author.id}
+              name={author.name}
+              roleName={getAuthorRoleLabel(author.role.name)}
+              userEmail={author.user?.email ?? null}
+              canView={author.canView}
+              canUpdate={author.canUpdate}
+              canDelete={author.canDelete}
             />
           ))}
         </TableBody>
