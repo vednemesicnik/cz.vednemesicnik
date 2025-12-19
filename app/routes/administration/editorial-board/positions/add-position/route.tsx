@@ -60,10 +60,7 @@ export default function RouteComponent({
       <AdminHeadline>Přidat pozici</AdminHeadline>
 
       <Form method="post" {...getFormProps(form)}>
-        <Fieldset
-          legend={"Detaily pozice"}
-          disabled={isLoadingOrSubmitting}
-        >
+        <Fieldset legend={"Detaily pozice"} disabled={isLoadingOrSubmitting}>
           <Input
             label={"Unikátní klíč v angličtině"}
             {...getInputProps(fields.key, { type: "text" })}

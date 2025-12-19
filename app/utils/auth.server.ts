@@ -1,4 +1,9 @@
-import { createCookie, createCookieSessionStorage, redirect, type Session } from "react-router";
+import {
+  createCookie,
+  createCookieSessionStorage,
+  redirect,
+  type Session,
+} from "react-router"
 
 import { prisma } from "~/utils/db.server"
 

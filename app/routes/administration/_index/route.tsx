@@ -154,12 +154,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.editorialBoardMembers.map((member) => (
               <AdminPendingItem
                 key={member.id}
-                to={href(
-                  "/administration/editorial-board/members/:memberId",
-                  {
-                    memberId: member.id,
-                  }
-                )}
+                to={href("/administration/editorial-board/members/:memberId", {
+                  memberId: member.id,
+                })}
                 title={member.fullName}
                 author={member.author.name}
                 date={new Date(member.createdAt)}

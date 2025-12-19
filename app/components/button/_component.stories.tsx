@@ -23,7 +23,8 @@ const meta: Meta<typeof Button> = {
     },
     disabled: {
       control: "boolean",
-      description: "Whether the button is disabled (reduces opacity and prevents interaction)",
+      description:
+        "Whether the button is disabled (reduces opacity and prevents interaction)",
     },
     type: {
       control: "select",

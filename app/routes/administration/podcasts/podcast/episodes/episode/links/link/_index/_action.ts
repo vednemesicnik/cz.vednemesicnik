@@ -49,10 +49,13 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
       if (withRedirect) {
         throw redirect(
-          href("/administration/podcasts/:podcastId/episodes/:episodeId/links", {
-            podcastId,
-            episodeId,
-          })
+          href(
+            "/administration/podcasts/:podcastId/episodes/:episodeId/links",
+            {
+              podcastId,
+              episodeId,
+            }
+          )
         )
       }
       break

@@ -30,9 +30,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // Fetch users based on permissions
   const rawUsers = await prisma.user.findMany({
-    where: viewOwnPerms.hasPermission && !viewAnyPerms.hasPermission
-      ? { id: context.userId }
-      : {},
+    where:
+      viewOwnPerms.hasPermission && !viewAnyPerms.hasPermission
+        ? { id: context.userId }
+        : {},
     select: {
       id: true,
       email: true,

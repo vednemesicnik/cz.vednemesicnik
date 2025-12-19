@@ -172,7 +172,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       author: podcast.author,
       hasCover: !!podcast.cover,
       coverUrl: podcast.cover
-        ? href("/resources/podcast-cover/:podcastId", { podcastId: podcast.cover.id })
+        ? href("/resources/podcast-cover/:podcastId", {
+            podcastId: podcast.cover.id,
+          })
         : null,
       reviews: podcast.reviews.map((review) => ({
         id: review.id,

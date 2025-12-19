@@ -1,4 +1,4 @@
-import { Form, useNavigation } from "react-router";
+import { Form, useNavigation } from "react-router"
 
 import { Button } from "~/components/button"
 

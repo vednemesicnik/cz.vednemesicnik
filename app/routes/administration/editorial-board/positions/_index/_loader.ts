@@ -16,24 +16,23 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     targetAuthorId: context.authorId,
   })
 
-  const editorialBoardPositions =
-    await prisma.editorialBoardPosition.findMany({
-      orderBy: {
-        order: "asc",
-      },
-      select: {
-        id: true,
-        key: true,
-        pluralLabel: true,
-        order: true,
-        state: true,
-        author: {
-          select: {
-            id: true,
-          },
+  const editorialBoardPositions = await prisma.editorialBoardPosition.findMany({
+    orderBy: {
+      order: "asc",
+    },
+    select: {
+      id: true,
+      key: true,
+      pluralLabel: true,
+      order: true,
+      state: true,
+      author: {
+        select: {
+          id: true,
         },
       },
-    })
+    },
+  })
 
   const positionsWithPermissions = editorialBoardPositions.map((position) => {
     const { hasPermission: canView } = context.can({

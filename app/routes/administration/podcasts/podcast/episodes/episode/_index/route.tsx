@@ -55,10 +55,10 @@ export default function RouteComponent({
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
     {
-      action: href(
-        "/administration/podcasts/:podcastId/episodes/:episodeId",
-        { podcastId, episodeId }
-      ),
+      action: href("/administration/podcasts/:podcastId/episodes/:episodeId", {
+        podcastId,
+        episodeId,
+      }),
       withRedirect: true,
     }
   )

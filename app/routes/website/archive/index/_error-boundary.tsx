@@ -1,4 +1,4 @@
-import { isRouteErrorResponse, useRouteError } from "react-router";
+import { isRouteErrorResponse, useRouteError } from "react-router"
 
 import { Headline } from "~/components/headline"
 import { Page } from "~/components/page"

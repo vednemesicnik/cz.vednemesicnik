@@ -71,5 +71,7 @@ export async function action({ request }: Route.ActionArgs) {
     authorId,
   })
 
-  return redirect(href("/administration/podcasts/:podcastId", { podcastId: id }))
+  return redirect(
+    href("/administration/podcasts/:podcastId", { podcastId: id })
+  )
 }

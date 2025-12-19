@@ -7,9 +7,5 @@ type Props = {
 }
 
 export const LinkGroup = ({ children }: Props) => {
-  return (
-    <ul className={styles.linkGroup}>
-      {children}
-    </ul>
-  )
+  return <ul className={styles.linkGroup}>{children}</ul>
 }

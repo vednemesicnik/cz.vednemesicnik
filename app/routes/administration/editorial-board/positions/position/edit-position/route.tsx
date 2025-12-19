@@ -67,10 +67,7 @@ export default function RouteComponent({
         <input {...getInputProps(fields.id, { type: "hidden" })} />
         <input {...getInputProps(fields.currentOrder, { type: "hidden" })} />
 
-        <Fieldset
-          legend={"Detaily pozice"}
-          disabled={isLoadingOrSubmitting}
-        >
+        <Fieldset legend={"Detaily pozice"} disabled={isLoadingOrSubmitting}>
           <Input
             label={"Unikátní klíč v angličtině"}
             {...getInputProps(fields.key, { type: "text" })}

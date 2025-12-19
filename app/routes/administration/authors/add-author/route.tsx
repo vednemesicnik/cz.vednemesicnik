@@ -93,7 +93,9 @@ export default function RouteComponent({
           <Button type="submit" disabled={!canSubmit} variant={"primary"}>
             Přidat
           </Button>
-          <AdminLinkButton to={"/administration/authors"}>Zrušit</AdminLinkButton>
+          <AdminLinkButton to={"/administration/authors"}>
+            Zrušit
+          </AdminLinkButton>
         </FormActions>
       </Form>
     </AdminPage>

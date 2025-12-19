@@ -37,10 +37,10 @@ export const ItemRow = ({
   const dialogRef = useRef<HTMLDialogElement | null>(null)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(dialogRef, {
-    action: href(
-      "/administration/podcasts/:podcastId/episodes/:episodeId",
-      { podcastId, episodeId: id }
-    ),
+    action: href("/administration/podcasts/:podcastId/episodes/:episodeId", {
+      podcastId,
+      episodeId: id,
+    }),
   })
 
   return (
