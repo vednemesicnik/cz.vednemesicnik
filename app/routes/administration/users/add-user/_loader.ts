@@ -3,6 +3,8 @@ import { type LoaderFunctionArgs } from "react-router"
 import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
 import { getAssignableRoles } from "~/utils/permissions/user/queries/get-assignable-roles.server"
 
+import { getAuthorsWithoutUser } from "./utils/get-authors-without-user.server"
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const context = await getUserPermissionContext(request, {
     entities: ["user"],
@@ -21,7 +23,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw new Response("Forbidden", { status: 403 })
   }
 
-  const roles = await getAssignableRoles(context)
+  const [roles, authorsWithoutUser] = await Promise.all([
+    getAssignableRoles(context),
+    getAuthorsWithoutUser(),
+  ])
 
-  return { roles }
+  return { roles, authorsWithoutUser }
 }

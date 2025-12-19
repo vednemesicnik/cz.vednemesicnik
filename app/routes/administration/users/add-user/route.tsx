@@ -7,6 +7,7 @@ import {
   useForm,
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
+import { useState } from "react"
 import { useNavigation } from "react-router"
 
 import { AdminHeadline } from "~/components/admin-headline"
@@ -18,6 +19,7 @@ import { Fieldset } from "~/components/fieldset"
 import { Form } from "~/components/form"
 import { FormActions } from "~/components/form-actions"
 import { Input } from "~/components/input"
+import { Radio } from "~/components/radio"
 import { Select } from "~/components/select"
 
 import type { Route } from "./+types/route"
@@ -33,6 +35,7 @@ export default function RouteComponent({
   actionData,
 }: Route.ComponentProps) {
   const { state } = useNavigation()
+  const [authorMode, setAuthorMode] = useState<"new" | "existing">("new")
 
   const [form, fields] = useForm({
     id: "add-user",
@@ -41,6 +44,9 @@ export default function RouteComponent({
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
+    },
+    defaultValue: {
+      authorMode: "new",
     },
     shouldValidate: "onSubmit",
     shouldRevalidate: "onBlur",
@@ -82,6 +88,46 @@ export default function RouteComponent({
             })}
             errors={fields.passwordConfirmation.errors}
           />
+        </Fieldset>
+
+        <Fieldset legend={"Profil autora"} disabled={isLoadingOrSubmitting}>
+          <Radio
+            label="Vytvořit nový profil autora"
+            {...getInputProps(fields.authorMode, {
+              type: "radio",
+              value: "new",
+            })}
+            errors={fields.authorMode.errors}
+            onChange={(e) =>
+              setAuthorMode(e.currentTarget.value as "new" | "existing")
+            }
+          />
+          <Radio
+            label="Připojit k existujícímu autorovi"
+            {...getInputProps(fields.authorMode, {
+              type: "radio",
+              value: "existing",
+            })}
+            errors={fields.authorMode.errors}
+            onChange={(e) =>
+              setAuthorMode(e.currentTarget.value as "new" | "existing")
+            }
+          />
+
+          {authorMode === "existing" && (
+            <Select
+              label="Vyberte autora"
+              {...getSelectProps(fields.existingAuthorId)}
+              errors={fields.existingAuthorId.errors}
+            >
+              <option value="">Vyberte autora</option>
+              {loaderData.authorsWithoutUser.map((author) => (
+                <option key={author.id} value={author.id}>
+                  {author.name} ({author.role.name})
+                </option>
+              ))}
+            </Select>
+          )}
         </Fieldset>
 
         <Fieldset legend={"Oprávnění"} disabled={isLoadingOrSubmitting}>
