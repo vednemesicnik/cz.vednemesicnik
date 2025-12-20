@@ -1,9 +1,9 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
 export const getAuthorsWithoutUser = async () => {
   return prisma.author.findMany({
-    where: {
-      user: null,
+    orderBy: {
+      name: 'asc',
     },
     select: {
       id: true,
@@ -14,8 +14,8 @@ export const getAuthorsWithoutUser = async () => {
         },
       },
     },
-    orderBy: {
-      name: "asc",
+    where: {
+      user: null,
     },
   })
 }

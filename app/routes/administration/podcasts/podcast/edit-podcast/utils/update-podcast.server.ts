@@ -1,8 +1,8 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from '@paralleldrive/cuid2'
 
-import { prisma } from "~/utils/db.server"
-import { getConvertedImageStream } from "~/utils/sharp.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { getConvertedImageStream } from '~/utils/sharp.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
   id: string
@@ -26,42 +26,42 @@ export async function updatePodcast({
   const coverAltText = `Obálka podcastu ${title}`
   const convertedCover = cover
     ? await getConvertedImageStream(cover, {
-        width: 1280,
+        format: 'jpeg',
         height: 1280,
         quality: 80,
-        format: "jpeg",
+        width: 1280,
       })
     : undefined
 
   try {
     await prisma.podcast.update({
-      where: { id },
       data: {
-        title,
-        slug,
-        description,
+        authorId: authorId,
         cover: {
           update: {
-            where: { id: coverId },
             data:
               convertedCover !== undefined
                 ? {
-                    id: createId(), // New ID forces browser to download new image
                     altText: coverAltText,
-                    contentType: convertedCover.contentType,
                     blob: Uint8Array.from(
-                      await convertedCover.stream.toBuffer()
+                      await convertedCover.stream.toBuffer(),
                     ),
+                    contentType: convertedCover.contentType,
+                    id: createId(), // New ID forces browser to download new image
                   }
                 : {
                     altText: coverAltText,
                   },
+            where: { id: coverId },
           },
         },
-        authorId: authorId,
+        description,
+        slug,
+        title,
       },
+      where: { id },
     })
   } catch (error) {
-    throwDbError(error, "Unable to update the podcast.")
+    throwDbError(error, 'Unable to update the podcast.')
   }
 }

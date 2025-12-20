@@ -1,1 +1,1 @@
-export { VdmLogoClip } from "./_component"
+export { VdmLogoClip } from './_component'

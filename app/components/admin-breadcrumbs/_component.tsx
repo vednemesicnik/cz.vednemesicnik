@@ -1,9 +1,9 @@
-import { Activity } from "react"
+import { Activity } from 'react'
 
-import { BaseBreadcrumbLink } from "~/components/base-breadcrumb-link"
-import type { Breadcrumb } from "~/types/breadcrumb"
+import { BaseBreadcrumbLink } from '~/components/base-breadcrumb-link'
+import type { Breadcrumb } from '~/types/breadcrumb'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   items: Breadcrumb[]
@@ -50,11 +50,11 @@ export const AdminBreadcrumbs = ({ items }: Props) => {
           const isLastItem = breadcrumbsCount === index + 1
 
           return (
-            <li key={index} className={styles.listItem}>
-              <BaseBreadcrumbLink to={breadcrumb.path} className={styles.link}>
+            <li className={styles.listItem} key={index}>
+              <BaseBreadcrumbLink className={styles.link} to={breadcrumb.path}>
                 {breadcrumb.label}
               </BaseBreadcrumbLink>
-              <Activity mode={isLastItem ? "hidden" : "visible"}>
+              <Activity mode={isLastItem ? 'hidden' : 'visible'}>
                 <span className={styles.separator}>/</span>
               </Activity>
             </li>

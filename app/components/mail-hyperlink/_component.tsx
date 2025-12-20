@@ -1,13 +1,13 @@
-import { clsx } from "clsx"
-import { type ComponentProps, type JSX } from "react"
+import { clsx } from 'clsx'
+import type { ComponentProps, JSX } from 'react'
 
-import { BaseHyperlink } from "~/components/base-hyperlink"
-import { MailIcon } from "~/components/icons/mail-icon"
-import { appendParameters } from "~/utils/append-parameters"
+import { BaseHyperlink } from '~/components/base-hyperlink'
+import { MailIcon } from '~/components/icons/mail-icon'
+import { appendParameters } from '~/utils/append-parameters'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
-type Props = Omit<ComponentProps<"a">, "href"> & {
+type Props = Omit<ComponentProps<'a'>, 'href'> & {
   address: string
   subject?: string
   body?: string
@@ -28,8 +28,8 @@ type Props = Omit<ComponentProps<"a">, "href"> & {
  */
 export const MailHyperlink = ({
   address,
-  subject = "",
-  body = "",
+  subject = '',
+  body = '',
   children,
   className,
   ...rest
@@ -39,7 +39,7 @@ export const MailHyperlink = ({
     body && `body=${encodeURIComponent(body)}`,
   ]
     .filter(Boolean)
-    .join("&")
+    .join('&')
 
   const link = appendParameters(`mailto:${address}`, mailParams)
 
@@ -47,15 +47,12 @@ export const MailHyperlink = ({
     <BaseHyperlink
       className={clsx(styles.link, className)}
       href={link}
-      target={undefined}
       rel={undefined}
+      target={undefined}
       {...rest}
     >
       {children}
-      <span
-        className={styles.iconWrapper}
-        aria-label={"Ikona mailového odkazu"}
-      >
+      <span className={styles.iconWrapper}>
         <MailIcon />
       </span>
     </BaseHyperlink>

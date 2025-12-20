@@ -1,16 +1,15 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminNavigationCard } from "~/components/admin-navigation-card"
-import { AdminNavigationGrid } from "~/components/admin-navigation-grid"
-import { AdminPage } from "~/components/admin-page"
-import { AdminPendingItem } from "~/components/admin-pending-item"
-import { AdminStatCard } from "~/components/admin-stat-card"
-
-import type { Route } from "./+types/route"
-import styles from "./_styles.module.css"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminNavigationCard } from '~/components/admin-navigation-card'
+import { AdminNavigationGrid } from '~/components/admin-navigation-grid'
+import { AdminPage } from '~/components/admin-page'
+import { AdminPendingItem } from '~/components/admin-pending-item'
+import { AdminStatCard } from '~/components/admin-stat-card'
+import styles from './_styles.module.css'
+import type { Route } from './+types/route'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { pendingReviewItems, statistics, permissions } = loaderData
@@ -46,32 +45,32 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <AdminStatCard
             icon="📝"
             label="Články"
-            value={statistics.articles.total}
             subtext={`${statistics.articles.published} publikováno`}
+            value={statistics.articles.total}
           />
           <AdminStatCard
             icon="🎙️"
             label="Podcasty"
-            value={statistics.podcasts.total}
             subtext={`${statistics.podcasts.published} publikováno`}
+            value={statistics.podcasts.total}
           />
           <AdminStatCard
             icon="🎧"
             label="Epizody"
-            value={statistics.podcastEpisodes.total}
             subtext={`${statistics.podcastEpisodes.published} publikováno`}
+            value={statistics.podcastEpisodes.total}
           />
           <AdminStatCard
             icon="📰"
             label="Vydání"
-            value={statistics.issues.total}
             subtext={`${statistics.issues.published} publikováno`}
+            value={statistics.issues.total}
           />
           <AdminStatCard
             icon="⏳"
             label="Čeká na schválení"
-            value={pendingReviewItems.totalCount}
             subtext="konceptů"
+            value={pendingReviewItems.totalCount}
           />
         </div>
       </section>
@@ -83,98 +82,98 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <div className={styles.pendingList}>
             {pendingReviewItems.articles.map((article) => (
               <AdminPendingItem
-                key={article.id}
-                to={`/administration/articles/article/${article.id}`}
-                title={article.title}
                 author={article.author.name}
                 date={new Date(article.createdAt)}
+                key={article.id}
+                title={article.title}
+                to={`/administration/articles/article/${article.id}`}
                 type="Článek"
               />
             ))}
             {pendingReviewItems.podcasts.map((podcast) => (
               <AdminPendingItem
-                key={podcast.id}
-                to={href("/administration/podcasts/:podcastId", {
-                  podcastId: podcast.id,
-                })}
-                title={podcast.title}
                 author={podcast.author.name}
                 date={new Date(podcast.createdAt)}
+                key={podcast.id}
+                title={podcast.title}
+                to={href('/administration/podcasts/:podcastId', {
+                  podcastId: podcast.id,
+                })}
                 type="Podcast"
               />
             ))}
             {pendingReviewItems.podcastEpisodes.map((episode) => (
               <AdminPendingItem
-                key={episode.id}
-                to={href(
-                  "/administration/podcasts/:podcastId/episodes/:episodeId",
-                  {
-                    podcastId: episode.podcast.id,
-                    episodeId: episode.id,
-                  }
-                )}
-                title={`${episode.podcast.title} - ${episode.title}`}
                 author={episode.author.name}
                 date={new Date(episode.createdAt)}
+                key={episode.id}
+                title={`${episode.podcast.title} - ${episode.title}`}
+                to={href(
+                  '/administration/podcasts/:podcastId/episodes/:episodeId',
+                  {
+                    episodeId: episode.id,
+                    podcastId: episode.podcast.id,
+                  },
+                )}
                 type="Epizoda"
               />
             ))}
             {pendingReviewItems.issues.map((issue) => (
               <AdminPendingItem
-                key={issue.id}
-                to={href("/administration/archive/:issueId", {
-                  issueId: issue.id,
-                })}
-                title={issue.label}
                 author={issue.author.name}
                 date={new Date(issue.createdAt)}
+                key={issue.id}
+                title={issue.label}
+                to={href('/administration/archive/:issueId', {
+                  issueId: issue.id,
+                })}
                 type="Vydání"
               />
             ))}
             {pendingReviewItems.articleCategories.map((category) => (
               <AdminPendingItem
-                key={category.id}
-                to={`/administration/article-categories/category/${category.id}`}
-                title={category.name}
                 author={category.author.name}
                 date={new Date(category.createdAt)}
+                key={category.id}
+                title={category.name}
+                to={`/administration/article-categories/category/${category.id}`}
                 type="Kategorie"
               />
             ))}
             {pendingReviewItems.articleTags.map((tag) => (
               <AdminPendingItem
-                key={tag.id}
-                to={`/administration/article-tags/tag/${tag.id}`}
-                title={tag.name}
                 author={tag.author.name}
                 date={new Date(tag.createdAt)}
+                key={tag.id}
+                title={tag.name}
+                to={`/administration/article-tags/tag/${tag.id}`}
                 type="Štítek"
               />
             ))}
             {pendingReviewItems.editorialBoardMembers.map((member) => (
               <AdminPendingItem
-                key={member.id}
-                to={href("/administration/editorial-board/members/:memberId", {
-                  memberId: member.id,
-                })}
-                title={member.fullName}
                 author={member.author.name}
                 date={new Date(member.createdAt)}
+                key={member.id}
+                title={member.fullName}
+                to={href('/administration/editorial-board/members/:memberId', {
+                  memberId: member.id,
+                })}
                 type="Člen redakce"
               />
             ))}
             {pendingReviewItems.editorialBoardPositions.map((position) => (
               <AdminPendingItem
-                key={position.id}
-                to={href(
-                  "/administration/editorial-board/positions/:positionId",
-                  {
-                    positionId: position.id,
-                  }
-                )}
-                title={position.key}
                 author={position.author.name}
                 date={new Date(position.createdAt)}
+                key={position.id}
+                title={position.key}
+                to={href(
+                  '/administration/editorial-board/positions/:positionId',
+                  {
+                    positionId: position.id,
+                  },
+                )}
                 type="Pozice"
               />
             ))}
@@ -188,57 +187,57 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <AdminNavigationGrid>
           {canViewUsers && (
             <AdminNavigationCard
-              to={href("/administration/users")}
-              title="Uživatelé"
               description="Správa uživatelských účtů"
               icon="👥"
+              title="Uživatelé"
+              to={href('/administration/users')}
             />
           )}
           {canViewAuthors && (
             <AdminNavigationCard
-              to={"/administration/authors"}
-              title="Autoři"
               description="Správa autorů obsahu"
               icon="✍️"
+              title="Autoři"
+              to={'/administration/authors'}
             />
           )}
           {canViewArticles && (
             <AdminNavigationCard
-              to={"/administration/articles"}
-              title="Články"
               description="Správa článků a blogových příspěvků"
               icon="📝"
+              title="Články"
+              to={'/administration/articles'}
             />
           )}
           {canViewPodcasts && (
             <AdminNavigationCard
-              to={href("/administration/podcasts")}
-              title="Podcasty"
               description="Správa podcastů a epizod"
               icon="🎙️"
+              title="Podcasty"
+              to={href('/administration/podcasts')}
             />
           )}
           {canViewIssues && (
             <AdminNavigationCard
-              to={href("/administration/archive")}
-              title="Archiv"
               description="Správa vydání časopisu"
               icon="📰"
+              title="Archiv"
+              to={href('/administration/archive')}
             />
           )}
           {(canViewEditorialBoardPositions || canViewEditorialBoardMembers) && (
             <AdminNavigationCard
-              to={href("/administration/editorial-board")}
-              title="Redakce"
               description="Správa členů a pozic redakce"
               icon="👔"
+              title="Redakce"
+              to={href('/administration/editorial-board')}
             />
           )}
           <AdminNavigationCard
-            to={href("/administration/settings")}
-            title="Nastavení"
             description="Uživatelské nastavení a profil"
             icon="⚙️"
+            title="Nastavení"
+            to={href('/administration/settings')}
           />
         </AdminNavigationGrid>
       </section>
@@ -246,5 +245,5 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   )
 }
 
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { loader } from './_loader'
+export { meta } from './_meta'

@@ -1,5 +1,5 @@
-import { prisma } from "~/utils/db.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
   id: string
@@ -20,29 +20,29 @@ export async function updatePosition({
     await prisma.$transaction(async (prisma) => {
       // Set the target position's order to a temporary value
       await prisma.editorialBoardPosition.update({
-        where: { id },
         data: { order: 0 },
+        where: { id },
       })
 
       // Adjust the orders of other positions
       if (newOrder > currentOrder) {
         // Decrease the order of positions between currentOrder and newOrder
         const positionsToUpdate = await prisma.editorialBoardPosition.findMany({
+          orderBy: {
+            order: 'asc',
+          },
           where: {
             order: {
               gt: currentOrder,
               lte: newOrder,
             },
           },
-          orderBy: {
-            order: "asc",
-          },
         })
 
         for (const position of positionsToUpdate) {
           await prisma.editorialBoardPosition.update({
-            where: { id: position.id },
             data: { order: position.order - 1 },
+            where: { id: position.id },
           })
         }
       }
@@ -50,34 +50,34 @@ export async function updatePosition({
       if (newOrder < currentOrder) {
         // Increase the order of positions between newOrder and currentOrder
         const positionsToUpdate = await prisma.editorialBoardPosition.findMany({
+          orderBy: {
+            order: 'desc',
+          },
           where: {
             order: {
               gte: newOrder,
               lt: currentOrder,
             },
           },
-          orderBy: {
-            order: "desc",
-          },
         })
 
         for (const position of positionsToUpdate) {
           await prisma.editorialBoardPosition.update({
-            where: { id: position.id },
             data: { order: position.order + 1 },
+            where: { id: position.id },
           })
         }
       }
 
       // Update the order of the target position to the new order
       await prisma.editorialBoardPosition.update({
+        data: { key, order: newOrder, pluralLabel },
         where: { id },
-        data: { order: newOrder, key, pluralLabel },
       })
     })
 
     return { positionId: id }
   } catch (error) {
-    return throwDbError(error, "Unable to update the editorial board position.")
+    return throwDbError(error, 'Unable to update the editorial board position.')
   }
 }

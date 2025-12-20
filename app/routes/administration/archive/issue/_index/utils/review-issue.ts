@@ -1,16 +1,15 @@
-import { prisma } from "~/utils/db.server"
-import { withAuthorPermission } from "~/utils/permissions/author/actions/with-author-permission.server"
+import { prisma } from '~/utils/db.server'
+import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 
 type Options = {
   id: string
-  target: Parameters<typeof withAuthorPermission>[1]["target"]
+  target: Parameters<typeof withAuthorPermission>[1]['target']
 }
 
 export const reviewIssue = (request: Request, options: Options) =>
   withAuthorPermission(request, {
-    entity: "issue",
-    action: "review",
-    target: options.target,
+    action: 'review',
+    entity: 'issue',
     execute: async (context) => {
       const reviewerId = context.authorId
 
@@ -26,11 +25,12 @@ export const reviewIssue = (request: Request, options: Options) =>
       if (!existingReview) {
         await prisma.review.create({
           data: {
-            state: "approved",
             issueId: options.id,
             reviewerId,
+            state: 'approved',
           },
         })
       }
     },
+    target: options.target,
   })

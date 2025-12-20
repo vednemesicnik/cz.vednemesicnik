@@ -1,13 +1,13 @@
-import type { ActionFunctionArgs } from "react-router"
+import type { ActionFunctionArgs } from 'react-router'
 
 import {
   deleteSessionAuthCookieSession,
   getSessionAuthCookieSession,
   getSessionAuthId,
-} from "~/utils/auth.server"
-import { redirectBack } from "~/utils/redirect-back"
+} from '~/utils/auth.server'
+import { redirectBack } from '~/utils/redirect-back'
 
-import { deleteSession } from "./utils/delete-session.server"
+import { deleteSession } from './utils/delete-session.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const sessionAuthCookieSession = await getSessionAuthCookieSession(request)
@@ -17,8 +17,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   return redirectBack(request, {
     headers: {
-      "Set-Cookie": await deleteSessionAuthCookieSession(
-        sessionAuthCookieSession
+      'Set-Cookie': await deleteSessionAuthCookieSession(
+        sessionAuthCookieSession,
       ),
     },
   })

@@ -1,13 +1,13 @@
-import { data } from "react-router"
+import { data } from 'react-router'
 
-import type { AdministrationPanelUser } from "~/components/administration-panel"
-import { requireAuthentication } from "~/utils/auth.server"
-import { commitCSRF } from "~/utils/csrf.server"
-import { prisma } from "~/utils/db.server"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
-import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
+import type { AdministrationPanelUser } from '~/components/administration-panel'
+import { requireAuthentication } from '~/utils/auth.server'
+import { commitCSRF } from '~/utils/csrf.server'
+import { prisma } from '~/utils/db.server'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [csrfToken, csrfCookie] = await commitCSRF(request)
@@ -15,120 +15,120 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const { isAuthenticated, sessionId } = await requireAuthentication(request)
 
   let administrationPanelUser: AdministrationPanelUser = {
-    name: undefined,
     email: undefined,
     image: {
-      id: undefined,
       altText: undefined,
+      id: undefined,
     },
+    name: undefined,
   }
 
   if (sessionId !== undefined) {
     const session = await prisma.session.findUnique({
-      where: {
-        id: sessionId,
-      },
       select: {
         id: true,
         user: {
           select: {
-            name: true,
             email: true,
+            name: true,
           },
         },
+      },
+      where: {
+        id: sessionId,
       },
     })
 
     if (session) {
       administrationPanelUser = {
-        name: session.user.name ?? undefined,
         email: session.user.email ?? undefined,
         image: {
-          id: undefined,
           altText: undefined,
+          id: undefined,
         },
+        name: session.user.name ?? undefined,
       }
     }
   }
 
   // Get permission contexts if authenticated
   let permissions = {
-    canViewUsers: false,
-    canViewAuthors: false,
     canViewArticles: false,
-    canViewPodcasts: false,
-    canViewIssues: false,
+    canViewAuthors: false,
     canViewEditorialBoard: false,
+    canViewIssues: false,
+    canViewPodcasts: false,
+    canViewUsers: false,
   }
 
   if (isAuthenticated) {
     try {
       const [authorContext, userContext] = await Promise.all([
         getAuthorPermissionContext(request, {
+          actions: ['view'],
           entities: [
-            "article",
-            "podcast",
-            "issue",
-            "editorial_board_position",
-            "editorial_board_member",
+            'article',
+            'podcast',
+            'issue',
+            'editorial_board_position',
+            'editorial_board_member',
           ],
-          actions: ["view"],
         }),
         getUserPermissionContext(request, {
-          entities: ["user", "author"],
-          actions: ["view"],
+          actions: ['view'],
+          entities: ['user', 'author'],
         }),
       ])
 
       permissions = {
-        canViewUsers: userContext.can({
-          entity: "user",
-          action: "view",
-          targetUserId: userContext.userId,
+        canViewArticles: authorContext.can({
+          action: 'view',
+          entity: 'article',
         }).hasPermission,
         canViewAuthors: userContext.can({
-          entity: "author",
-          action: "view",
+          action: 'view',
+          entity: 'author',
           targetUserId: userContext.userId,
         }).hasPermission,
-        canViewArticles: authorContext.can({
-          entity: "article",
-          action: "view",
-        }).hasPermission,
-        canViewPodcasts: authorContext.can({
-          entity: "podcast",
-          action: "view",
-        }).hasPermission,
-        canViewIssues: authorContext.can({ entity: "issue", action: "view" })
-          .hasPermission,
         canViewEditorialBoard:
           authorContext.can({
-            entity: "editorial_board_position",
-            action: "view",
+            action: 'view',
+            entity: 'editorial_board_position',
           }).hasPermission ||
           authorContext.can({
-            entity: "editorial_board_member",
-            action: "view",
+            action: 'view',
+            entity: 'editorial_board_member',
           }).hasPermission,
+        canViewIssues: authorContext.can({ action: 'view', entity: 'issue' })
+          .hasPermission,
+        canViewPodcasts: authorContext.can({
+          action: 'view',
+          entity: 'podcast',
+        }).hasPermission,
+        canViewUsers: userContext.can({
+          action: 'view',
+          entity: 'user',
+          targetUserId: userContext.userId,
+        }).hasPermission,
       }
     } catch (error) {
       // If permission check fails, user might not have author role
       // Leave all permissions as false
-      console.error("Failed to load permissions:", error)
+      console.error('Failed to load permissions:', error)
     }
   }
 
   return data(
     {
-      isAuthenticated,
-      user: administrationPanelUser,
       csrfToken,
+      isAuthenticated,
       permissions,
+      user: administrationPanelUser,
     },
     {
       headers: {
-        ...(csrfCookie ? { "Set-Cookie": csrfCookie } : {}),
+        ...(csrfCookie ? { 'Set-Cookie': csrfCookie } : {}),
       },
-    }
+    },
   )
 }

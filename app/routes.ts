@@ -4,195 +4,199 @@ import {
   index,
   layout,
   prefix,
-  route,
   type RouteConfig,
-} from "@react-router/dev/routes"
+  route,
+} from '@react-router/dev/routes'
 
-import { createAdminEntriesSection } from "../utils/create-admin-entries-section"
-import { createAdminIntersection } from "../utils/create-admin-intersection"
+import { createAdminEntriesSection } from '../utils/create-admin-entries-section'
+import { createAdminIntersection } from '../utils/create-admin-intersection'
 
 export default [
   // Health check route
-  route("health", "routes/health/route.ts"),
+  route('health', 'routes/health/route.ts'),
 
   // Website
-  layout("routes/website/__layout/route.tsx", [
+  layout('routes/website/__layout/route.tsx', [
     // Home route
-    index("routes/website/_index/route.tsx"),
+    index('routes/website/_index/route.tsx'),
 
     // Articles routes
-    route("articles", "routes/website/articles/route.tsx"),
+    route('articles', 'routes/website/articles/route.tsx'),
 
     // Podcasts routes
-    ...prefix("podcasts", [
-      layout("routes/website/podcasts/layout/route.tsx", [
-        index("routes/website/podcasts/index/route.tsx"),
+    ...prefix('podcasts', [
+      layout('routes/website/podcasts/layout/route.tsx', [
+        index('routes/website/podcasts/index/route.tsx'),
         route(
-          ":podcastSlug",
-          "routes/website/podcasts/podcast/splat/route.tsx",
+          ':podcastSlug',
+          'routes/website/podcasts/podcast/splat/route.tsx',
           [
-            index("routes/website/podcasts/podcast/index/route.tsx"),
+            index('routes/website/podcasts/podcast/index/route.tsx'),
             route(
-              ":episodeSlug",
-              "routes/website/podcasts/podcast/episode/splat/route.tsx",
-              [index("routes/website/podcasts/podcast/episode/index/route.tsx")]
+              ':episodeSlug',
+              'routes/website/podcasts/podcast/episode/splat/route.tsx',
+              [
+                index(
+                  'routes/website/podcasts/podcast/episode/index/route.tsx',
+                ),
+              ],
             ),
-          ]
+          ],
         ),
       ]),
     ]),
 
     // Archive routes
-    ...prefix("archive", [
-      index("routes/website/archive/_index/route.tsx"),
-      route(":fileName", "routes/website/archive/issue-pdf/route.tsx"),
+    ...prefix('archive', [
+      index('routes/website/archive/_index/route.tsx'),
+      route(':fileName', 'routes/website/archive/issue-pdf/route.tsx'),
     ]),
 
     // Issue PDF route for backward compatibility
-    route("pdf/:fileName", "routes/website/archive/issue-pdf/route.tsx", {
-      id: "issue-pdf-backward-compatibility",
+    route('pdf/:fileName', 'routes/website/archive/issue-pdf/route.tsx', {
+      id: 'issue-pdf-backward-compatibility',
     }),
 
     // Editorial Board routes
-    route("editorial-board", "routes/website/editorial-board/route.tsx"),
+    route('editorial-board', 'routes/website/editorial-board/route.tsx'),
 
     // Organization routes
-    route("organization", "routes/website/organization/route.tsx"),
+    route('organization', 'routes/website/organization/route.tsx'),
 
     // Support routes
-    route("support", "routes/website/support/route.tsx"),
+    route('support', 'routes/website/support/route.tsx'),
   ]),
 
   // Administration
-  ...prefix("administration", [
-    layout("routes/administration/__layout/route.tsx", [
+  ...prefix('administration', [
+    layout('routes/administration/__layout/route.tsx', [
       // Sign out
-      route("sign-out", "routes/administration/sign-out/route.ts"),
+      route('sign-out', 'routes/administration/sign-out/route.ts'),
 
       // Non-authenticated routes
-      layout("routes/administration/__layout-non-authenticated/route.tsx", [
+      layout('routes/administration/__layout-non-authenticated/route.tsx', [
         // Sign in
-        route("sign-in", "routes/administration/sign-in/route.tsx"),
+        route('sign-in', 'routes/administration/sign-in/route.tsx'),
       ]),
 
       // Authenticated routes
-      layout("routes/administration/__layout-authenticated/route.tsx", [
+      layout('routes/administration/__layout-authenticated/route.tsx', [
         // Dashboard
-        index("routes/administration/_index/route.tsx"),
+        index('routes/administration/_index/route.tsx'),
 
         // Sections
-        layout("routes/administration/__layout-section/route.tsx", [
+        layout('routes/administration/__layout-section/route.tsx', [
           // Archive
           ...createAdminEntriesSection({
-            name: "archive",
-            entry: "issue",
-            path: "routes/administration/archive",
-            id: "issueId",
+            entry: 'issue',
+            id: 'issueId',
+            name: 'archive',
+            path: 'routes/administration/archive',
           }),
 
           // Podcasts
           ...createAdminEntriesSection(
             {
-              name: "podcasts",
-              entry: "podcast",
-              path: "routes/administration/podcasts",
-              id: "podcastId",
+              entry: 'podcast',
+              id: 'podcastId',
+              name: 'podcasts',
+              path: 'routes/administration/podcasts',
             },
             // Podcast Episodes
             ...createAdminEntriesSection(
               {
-                name: "episodes",
-                entry: "episode",
-                path: "routes/administration/podcasts/podcast/episodes",
-                id: "episodeId",
+                entry: 'episode',
+                id: 'episodeId',
+                name: 'episodes',
+                path: 'routes/administration/podcasts/podcast/episodes',
               },
               // Episode Links
               ...createAdminEntriesSection({
-                name: "links",
-                entry: "link",
-                path: "routes/administration/podcasts/podcast/episodes/episode/links",
-                id: "linkId",
-              })
-            )
+                entry: 'link',
+                id: 'linkId',
+                name: 'links',
+                path: 'routes/administration/podcasts/podcast/episodes/episode/links',
+              }),
+            ),
           ),
 
           // Editorial Board
           ...createAdminIntersection(
             {
-              name: "editorial-board",
-              path: "routes/administration/editorial-board",
+              name: 'editorial-board',
+              path: 'routes/administration/editorial-board',
             },
             ...createAdminEntriesSection({
-              name: "positions",
-              path: "routes/administration/editorial-board/positions",
-              entry: "position",
-              id: "positionId",
+              entry: 'position',
+              id: 'positionId',
+              name: 'positions',
+              path: 'routes/administration/editorial-board/positions',
             }),
             ...createAdminEntriesSection({
-              name: "members",
-              path: "routes/administration/editorial-board/members",
-              entry: "member",
-              id: "memberId",
-            })
+              entry: 'member',
+              id: 'memberId',
+              name: 'members',
+              path: 'routes/administration/editorial-board/members',
+            }),
           ),
 
           // Users
           ...createAdminEntriesSection({
-            name: "users",
-            entry: "user",
-            path: "routes/administration/users",
-            id: "userId",
+            entry: 'user',
+            id: 'userId',
+            name: 'users',
+            path: 'routes/administration/users',
           }),
 
           // Authors
           ...createAdminEntriesSection({
-            name: "authors",
-            entry: "author",
-            path: "routes/administration/authors",
-            id: "authorId",
+            entry: 'author',
+            id: 'authorId',
+            name: 'authors',
+            path: 'routes/administration/authors',
           }),
 
           // Settings
           ...createAdminIntersection(
             {
-              name: "settings",
-              path: "routes/administration/settings",
+              name: 'settings',
+              path: 'routes/administration/settings',
             },
             // Profile Settings
             ...createAdminIntersection(
               {
-                name: "profile",
-                path: "routes/administration/settings/profile",
+                name: 'profile',
+                path: 'routes/administration/settings/profile',
               },
               route(
-                "change-password",
-                "routes/administration/settings/profile/change-password/route.tsx"
-              )
-            )
+                'change-password',
+                'routes/administration/settings/profile/change-password/route.tsx',
+              ),
+            ),
           ),
 
           // Catch-all for non-existent sections
-          route("*", "routes/administration/404/route.tsx"),
+          route('*', 'routes/administration/404/route.tsx'),
         ]),
       ]),
     ]),
   ]),
 
   // Links route
-  route("links", "routes/links/route.tsx"),
+  route('links', 'routes/links/route.tsx'),
 
   // Resource routes
-  ...prefix("resources", [
-    route("issue-cover/:id", "routes/resources/issue-cover/route.ts"),
+  ...prefix('resources', [
+    route('issue-cover/:id', 'routes/resources/issue-cover/route.ts'),
     route(
-      "podcast-cover/:podcastId",
-      "routes/resources/podcast-cover/route.ts"
+      'podcast-cover/:podcastId',
+      'routes/resources/podcast-cover/route.ts',
     ),
     route(
-      "podcast-episode-cover/:episodeId",
-      "routes/resources/podcast-episode-cover/route.ts"
+      'podcast-episode-cover/:episodeId',
+      'routes/resources/podcast-episode-cover/route.ts',
     ),
-    route("user-image/:userId", "routes/resources/user-image/route.ts"),
-    route("env.js", "routes/resources/env-script/route.ts"),
+    route('user-image/:userId', 'routes/resources/user-image/route.ts'),
+    route('env.js', 'routes/resources/env-script/route.ts'),
   ]),
 ] satisfies RouteConfig

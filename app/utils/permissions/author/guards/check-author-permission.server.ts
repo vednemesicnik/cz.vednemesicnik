@@ -1,12 +1,12 @@
-import { invariantResponse } from "@epic-web/invariant"
+import { invariantResponse } from '@epic-web/invariant'
 
 import type {
   AuthorPermissionAction,
   AuthorPermissionEntity,
   ContentState,
-} from "@generated/prisma/enums"
+} from '@generated/prisma/enums'
 
-import type { AuthorPermissionContext } from "../context/get-author-permission-context.server"
+import type { AuthorPermissionContext } from '../context/get-author-permission-context.server'
 
 type CheckAuthorPermissionOptions = {
   entity: AuthorPermissionEntity
@@ -18,11 +18,11 @@ type CheckAuthorPermissionOptions = {
 
 export function checkAuthorPermission(
   context: AuthorPermissionContext,
-  options: CheckAuthorPermissionOptions
+  options: CheckAuthorPermissionOptions,
 ) {
   const { hasPermission, hasOwn, hasAny } = context.can({
-    entity: options.entity,
     action: options.action,
+    entity: options.entity,
     state: options.state,
     targetAuthorId: options.targetAuthorId,
   })
@@ -30,8 +30,8 @@ export function checkAuthorPermission(
   invariantResponse(
     hasPermission,
     options.errorMessage ??
-      `You do not have permission to ${options.action} this ${options.entity}.`
+      `You do not have permission to ${options.action} this ${options.entity}.`,
   )
 
-  return { hasOwn, hasAny }
+  return { hasAny, hasOwn }
 }

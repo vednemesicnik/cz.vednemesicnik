@@ -1,6 +1,6 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react'
 
-import styles from "./_podcast-episode-list-item.module.css"
+import styles from './_podcast-episode-list-item.module.css'
 
 type Props = {
   children: ReactNode

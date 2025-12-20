@@ -1,34 +1,34 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { Button } from "~/components/button"
-import { Input } from "~/components/input"
+import { Button } from '~/components/button'
+import { Input } from '~/components/input'
 
-import { Form } from "./_component"
+import { Form } from './_component'
 
 const meta: Meta<typeof Form> = {
-  title: "Primitives/Form",
+  argTypes: {
+    errors: {
+      control: 'object',
+      description:
+        'Array of form-level error messages (displayed at the top of the form)',
+    },
+    method: {
+      control: 'select',
+      description: 'HTTP method for form submission',
+      options: ['get', 'post'],
+    },
+  },
   component: Form,
-  tags: ["autodocs"],
   parameters: {
     docs: {
       description: {
         component:
-          "Form wrapper component with built-in error handling and proper spacing. Provides consistent layout and gap between form fields. Uses form design tokens for spacing and max-width constraints.",
+          'Form wrapper component with built-in error handling and proper spacing. Provides consistent layout and gap between form fields. Uses form design tokens for spacing and max-width constraints.',
       },
     },
   },
-  argTypes: {
-    errors: {
-      control: "object",
-      description:
-        "Array of form-level error messages (displayed at the top of the form)",
-    },
-    method: {
-      control: "select",
-      options: ["get", "post"],
-      description: "HTTP method for form submission",
-    },
-  },
+  tags: ['autodocs'],
+  title: 'Primitives/Form',
 }
 
 export default meta
@@ -42,20 +42,20 @@ export const LoginForm: Story = {
   render: () => (
     <Form method="post">
       <Input
-        label="Email"
         id="email"
+        label="Email"
         name="email"
-        type="email"
         placeholder="your.email@example.com"
         required
+        type="email"
       />
       <Input
-        label="Password"
         id="password"
+        label="Password"
         name="password"
-        type="password"
         placeholder="Enter your password"
         required
+        type="password"
       />
       <Button type="submit" variant="primary">
         Sign In
@@ -72,23 +72,23 @@ export const WithFieldErrors: Story = {
   render: () => (
     <Form method="post">
       <Input
-        label="Email"
+        errors={['Please enter a valid email address']}
         id="email"
+        label="Email"
         name="email"
-        type="email"
         required
-        errors={["Please enter a valid email address"]}
+        type="email"
       />
       <Input
-        label="Password"
-        id="password"
-        name="password"
-        type="password"
-        required
         errors={[
-          "Password must be at least 8 characters",
-          "Password must contain at least one number",
+          'Password must be at least 8 characters',
+          'Password must contain at least one number',
         ]}
+        id="password"
+        label="Password"
+        name="password"
+        required
+        type="password"
       />
       <Button type="submit" variant="primary">
         Sign In
@@ -104,27 +104,27 @@ export const WithFieldErrors: Story = {
 export const WithFormErrors: Story = {
   render: () => (
     <Form
-      method="post"
       errors={[
-        "Invalid credentials. Please check your email and password.",
-        "Your account has been locked after multiple failed attempts.",
+        'Invalid credentials. Please check your email and password.',
+        'Your account has been locked after multiple failed attempts.',
       ]}
+      method="post"
     >
       <Input
-        label="Email"
         id="email"
+        label="Email"
         name="email"
-        type="email"
         placeholder="your.email@example.com"
         required
+        type="email"
       />
       <Input
-        label="Password"
         id="password"
+        label="Password"
         name="password"
-        type="password"
         placeholder="Enter your password"
         required
+        type="password"
       />
       <Button type="submit" variant="primary">
         Sign In
@@ -141,36 +141,36 @@ export const RegistrationForm: Story = {
   render: () => (
     <Form method="post">
       <Input
-        label="Full Name"
         id="name"
+        label="Full Name"
         name="name"
-        type="text"
         placeholder="John Doe"
         required
+        type="text"
       />
       <Input
-        label="Email"
         id="email"
+        label="Email"
         name="email"
-        type="email"
         placeholder="your.email@example.com"
         required
+        type="email"
       />
       <Input
-        label="Password"
         id="password"
+        label="Password"
         name="password"
-        type="password"
         placeholder="Create a password"
         required
+        type="password"
       />
       <Input
-        label="Confirm Password"
         id="confirm-password"
+        label="Confirm Password"
         name="confirmPassword"
-        type="password"
         placeholder="Confirm your password"
         required
+        type="password"
       />
       <Button type="submit" variant="primary">
         Create Account
@@ -187,22 +187,22 @@ export const FormWithMultipleActions: Story = {
   render: () => (
     <Form method="post">
       <Input
-        label="Username"
         id="username"
+        label="Username"
         name="username"
-        type="text"
         placeholder="Enter username"
         required
+        type="text"
       />
       <Input
-        label="Email"
         id="email"
+        label="Email"
         name="email"
-        type="email"
         placeholder="your.email@example.com"
         required
+        type="email"
       />
-      <div style={{ display: "flex", gap: "12px" }}>
+      <div style={{ display: 'flex', gap: '12px' }}>
         <Button type="submit" variant="primary">
           Save
         </Button>

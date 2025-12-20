@@ -1,10 +1,10 @@
-import type { PrismaClient } from "@generated/prisma/client"
-import {
-  type UserPermissionAccess,
-  type UserPermissionAction,
-  type UserPermissionEntity,
-  type UserRoleName,
-} from "@generated/prisma/enums"
+import type { PrismaClient } from '@generated/prisma/client'
+import type {
+  UserPermissionAccess,
+  UserPermissionAction,
+  UserPermissionEntity,
+  UserRoleName,
+} from '@generated/prisma/enums'
 
 export type UserRolesData = {
   name: UserRoleName
@@ -18,21 +18,21 @@ export type UserRolesData = {
 
 export const createUserRoles = async (
   prisma: PrismaClient,
-  data: UserRolesData
+  data: UserRolesData,
 ) => {
   for (const role of data) {
     await prisma.userRole
       .create({
         data: {
-          name: role.name,
           level: role.level,
+          name: role.name,
           permissions: {
             connect: await prisma.userPermission.findMany({
               where: {
                 OR: role.permissions.map((permission) => ({
-                  entity: permission.entity,
                   access: permission.access,
                   action: { in: permission.actions },
+                  entity: permission.entity,
                 })),
               },
             }),
@@ -40,7 +40,7 @@ export const createUserRoles = async (
         },
       })
       .catch((error) => {
-        console.error("Error creating a role:", error)
+        console.error('Error creating a role:', error)
         return null
       })
   }

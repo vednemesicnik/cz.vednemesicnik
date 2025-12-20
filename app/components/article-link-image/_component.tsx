@@ -1,7 +1,7 @@
-import { Image } from "~/components/image"
-import { sizeConfig } from "~/config/size-config"
+import { Image } from '~/components/image'
+import { sizeConfig } from '~/config/size-config'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   alt: string
@@ -14,10 +14,10 @@ export function ArticleLinkImage({ alt, src }: Props) {
   return (
     <Image
       alt={alt}
+      className={styles.picture}
+      height={height}
       src={src}
       width={width}
-      height={height}
-      className={styles.picture}
     />
   )
 }

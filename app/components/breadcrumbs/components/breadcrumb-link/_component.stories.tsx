@@ -1,12 +1,10 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
-import { MemoryRouter } from "react-router"
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { MemoryRouter } from 'react-router'
 
-import { BreadcrumbLink } from "./_component"
+import { BreadcrumbLink } from './_component'
 
 const meta: Meta<typeof BreadcrumbLink> = {
-  title: "Navigation/BreadcrumbLink",
   component: BreadcrumbLink,
-  tags: ["autodocs"],
   decorators: [
     (Story) => (
       <MemoryRouter>
@@ -14,17 +12,19 @@ const meta: Meta<typeof BreadcrumbLink> = {
       </MemoryRouter>
     ),
   ],
+  tags: ['autodocs'],
+  title: 'Navigation/BreadcrumbLink',
 }
 
 export default meta
 type Story = StoryObj<typeof BreadcrumbLink>
 
 export const Default: Story = {
+  args: {
+    children: 'Home',
+    to: '/home',
+  },
   render: (args) => (
     <BreadcrumbLink to={args.to}>{args.children}</BreadcrumbLink>
   ),
-  args: {
-    to: "/home",
-    children: "Home",
-  },
 }

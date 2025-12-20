@@ -1,22 +1,20 @@
-import { invariantResponse } from "@epic-web/invariant"
+import { invariantResponse } from '@epic-web/invariant'
 
-import { prisma } from "~/utils/db.server"
-import { withAuthorPermission } from "~/utils/permissions/author/actions/with-author-permission.server"
+import { prisma } from '~/utils/db.server'
+import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 
 type Options = {
   id: string
-  target: Parameters<typeof withAuthorPermission>[1]["target"]
+  target: Parameters<typeof withAuthorPermission>[1]['target']
 }
 
 export const publishEpisode = (request: Request, options: Options) =>
   withAuthorPermission(request, {
-    entity: "podcast_episode",
-    action: "publish",
-    target: options.target,
+    action: 'publish',
+    entity: 'podcast_episode',
     execute: async () => {
       // Get the episode with author role and reviews
       const episode = await prisma.podcastEpisode.findUniqueOrThrow({
-        where: { id: options.id },
         select: {
           author: {
             select: {
@@ -41,6 +39,7 @@ export const publishEpisode = (request: Request, options: Options) =>
             },
           },
         },
+        where: { id: options.id },
       })
 
       // Check if author is not a Coordinator (level !== 1)
@@ -49,18 +48,19 @@ export const publishEpisode = (request: Request, options: Options) =>
       // If author is not a Coordinator, require Coordinator review
       if (isNotCoordinator) {
         const hasCoordinatorReview = episode.reviews.some(
-          (review) => review.reviewer.role.level === 1
+          (review) => review.reviewer.role.level === 1,
         )
 
         invariantResponse(
           hasCoordinatorReview,
-          "Nelze publikovat bez schválení koordinátora"
+          'Nelze publikovat bez schválení koordinátora',
         )
       }
 
       await prisma.podcastEpisode.update({
+        data: { publishedAt: new Date(), state: 'published' },
         where: { id: options.id },
-        data: { state: "published", publishedAt: new Date() },
       })
     },
+    target: options.target,
   })

@@ -1,11 +1,11 @@
-import { invariantResponse } from "@epic-web/invariant"
-import { type ActionFunctionArgs } from "react-router"
+import { invariantResponse } from '@epic-web/invariant'
+import type { ActionFunctionArgs } from 'react-router'
 
-import { FORM_CONFIG } from "~/config/form-config"
-import { requireAuthentication } from "~/utils/auth.server"
-import { validateCSRF } from "~/utils/csrf.server"
-import { prisma } from "~/utils/db.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { FORM_CONFIG } from '~/config/form-config'
+import { requireAuthentication } from '~/utils/auth.server'
+import { validateCSRF } from '~/utils/csrf.server'
+import { prisma } from '~/utils/db.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await requireAuthentication(request)
@@ -16,30 +16,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get(FORM_CONFIG.intent.name)
   invariantResponse(
     intent === FORM_CONFIG.intent.value.delete,
-    "Invalid intent"
+    'Invalid intent',
   )
 
-  const userId = formData.get("userId")
-  invariantResponse(typeof userId === "string", "Missing user ID")
+  const userId = formData.get('userId')
+  invariantResponse(typeof userId === 'string', 'Missing user ID')
 
-  const currentSessionId = formData.get("currentSessionId")
+  const currentSessionId = formData.get('currentSessionId')
   invariantResponse(
-    typeof currentSessionId === "string",
-    "Missing current session ID"
+    typeof currentSessionId === 'string',
+    'Missing current session ID',
   )
 
   try {
     await prisma.session.deleteMany({
       where: {
-        userId: userId,
         id: {
           not: currentSessionId,
         },
+        userId: userId,
       },
     })
   } catch (error) {
     throwDbError(error, "Unable to delete the user's sessions.")
   }
 
-  return { status: "success" }
+  return { status: 'success' }
 }

@@ -1,1 +1,1 @@
-export { AdminBreadcrumbs } from "./_component"
+export { AdminBreadcrumbs } from './_component'

@@ -1,5 +1,5 @@
-import { prisma } from "~/utils/db.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
   id: string
@@ -16,18 +16,18 @@ export async function updateMember({
 }: Args) {
   try {
     await prisma.editorialBoardMember.update({
-      where: { id },
       data: {
+        author: { connect: { id: authorId } },
         fullName,
         positions: {
           set: positionIds.map((positionId) => ({ id: positionId })),
         },
-        author: { connect: { id: authorId } },
       },
+      where: { id },
     })
 
     return { ok: true }
   } catch (error) {
-    throwDbError(error, "Unable to update the editorial board member.")
+    throwDbError(error, 'Unable to update the editorial board member.')
   }
 }

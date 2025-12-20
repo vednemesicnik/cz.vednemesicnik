@@ -1,6 +1,6 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
-import { generateUsername } from "./generate-username"
+import { generateUsername } from './generate-username'
 
 /**
  * Generates a unique username from a name by appending a number if needed
@@ -25,8 +25,8 @@ export async function getUniqueUsername(name: string): Promise<string> {
 
 async function isUsernameTaken(username: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
-    where: { username },
     select: { id: true },
+    where: { username },
   })
 
   return user !== null

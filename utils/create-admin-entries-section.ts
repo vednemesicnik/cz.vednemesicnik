@@ -2,9 +2,9 @@ import {
   index,
   layout,
   prefix,
-  route,
   type RouteConfigEntry,
-} from "@react-router/dev/routes"
+  route,
+} from '@react-router/dev/routes'
 
 type Args = {
   name: string

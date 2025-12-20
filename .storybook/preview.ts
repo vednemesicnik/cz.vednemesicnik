@@ -1,16 +1,16 @@
-import type { Preview, Decorator } from "@storybook/react-vite"
-import { useEffect } from "react"
+import type { Decorator, Preview } from '@storybook/react-vite'
+import { useEffect } from 'react'
 
 // Import global styles
-import "../app/styles/colors.css"
-import "../app/styles/fonts.css"
-import "../app/styles/sizes.css"
-import "../app/styles/global.css"
-import "../app/styles/admin-tokens.css"
+import '../app/styles/colors.css'
+import '../app/styles/fonts.css'
+import '../app/styles/sizes.css'
+import '../app/styles/global.css'
+import '../app/styles/admin-tokens.css'
 
 // Custom decorator to toggle color-scheme
 const withColorScheme: Decorator = (Story, context) => {
-  const colorScheme = context.globals.colorScheme || "light"
+  const colorScheme = context.globals.colorScheme || 'light'
 
   useEffect(() => {
     document.documentElement.style.colorScheme = colorScheme
@@ -24,35 +24,35 @@ const preview: Preview = {
 
   globalTypes: {
     colorScheme: {
-      description: "Color scheme for components",
-      defaultValue: "light",
+      defaultValue: 'light',
+      description: 'Color scheme for components',
       toolbar: {
-        title: "Color Scheme",
-        icon: "circlehollow",
-        items: [
-          { value: "light", icon: "sun", title: "Light" },
-          { value: "dark", icon: "moon", title: "Dark" },
-        ],
         dynamicTitle: true,
+        icon: 'circlehollow',
+        items: [
+          { icon: 'sun', title: 'Light', value: 'light' },
+          { icon: 'moon', title: 'Dark', value: 'dark' },
+        ],
+        title: 'Color Scheme',
       },
     },
   },
 
   parameters: {
-    controls: {
-      matchers: {
-        color: /(background|color)$/i,
-        date: /Date$/i,
-      },
-    },
     a11y: {
       config: {
         rules: [
           {
-            id: "color-contrast",
             enabled: true,
+            id: 'color-contrast',
           },
         ],
+      },
+    },
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/i,
       },
     },
   },

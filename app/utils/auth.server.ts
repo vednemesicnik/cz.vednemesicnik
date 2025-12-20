@@ -3,11 +3,11 @@ import {
   createCookieSessionStorage,
   redirect,
   type Session,
-} from "react-router"
+} from 'react-router'
 
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
-const SESSION_AUTH_ID_KEY = "sessionAuthId"
+const SESSION_AUTH_ID_KEY = 'sessionAuthId'
 
 type SessionAuthCookieData = {
   [SESSION_AUTH_ID_KEY]: string
@@ -26,22 +26,22 @@ const cookieSessionStorage = createCookieSessionStorage<
   SessionAuthCookieData,
   SessionAuthCookieFlashData
 >({
-  cookie: createCookie("vdm_session_auth", {
+  cookie: createCookie('vdm_session_auth', {
     httpOnly: true,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    secrets: process.env.SESSION_SECRET?.split(","),
+    path: '/',
+    sameSite: 'lax',
+    secrets: process.env.SESSION_SECRET?.split(','),
+    secure: process.env.NODE_ENV === 'production',
   }),
 })
 
 export const getSessionAuthCookieSession = async (request: Request) =>
-  cookieSessionStorage.getSession(request.headers.get("Cookie"))
+  cookieSessionStorage.getSession(request.headers.get('Cookie'))
 
 export const setSessionAuthCookieSession = async (
   request: Request,
   sessionAuthId: string,
-  expirationDate: Date
+  expirationDate: Date,
 ) => {
   const cookieSession = await getSessionAuthCookieSession(request)
   cookieSession.set(SESSION_AUTH_ID_KEY, sessionAuthId)
@@ -52,7 +52,7 @@ export const setSessionAuthCookieSession = async (
 }
 
 export const deleteSessionAuthCookieSession = async (
-  cookieSession: SessionAuthCookieSession
+  cookieSession: SessionAuthCookieSession,
 ) => cookieSessionStorage.destroySession(cookieSession)
 
 export const getSessionAuthId = (cookieSession: SessionAuthCookieSession) =>
@@ -60,14 +60,14 @@ export const getSessionAuthId = (cookieSession: SessionAuthCookieSession) =>
 
 const getSessionFromDatabase = async (sessionAuthId: string) => {
   return prisma.session.findUnique({
+    select: {
+      id: true,
+    },
     where: {
-      id: sessionAuthId,
       expirationDate: {
         gt: new Date(),
       },
-    },
-    select: {
-      id: true,
+      id: sessionAuthId,
     },
   })
 }
@@ -83,9 +83,9 @@ export const requireAuthentication = async (request: Request) => {
   }
 
   if (session === null) {
-    throw redirect("/administration/sign-in", {
+    throw redirect('/administration/sign-in', {
       headers: {
-        "Set-Cookie": await deleteSessionAuthCookieSession(cookieSession),
+        'Set-Cookie': await deleteSessionAuthCookieSession(cookieSession),
       },
     })
   }
@@ -120,7 +120,7 @@ export const requireUnauthenticated = async (request: Request) => {
   }
 
   if (session !== null) {
-    throw redirect("/administration")
+    throw redirect('/administration')
   }
 
   return {

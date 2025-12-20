@@ -1,9 +1,9 @@
-import { Divider } from "~/components/divider"
-import { SocialSites } from "~/components/social-sites"
+import { Divider } from '~/components/divider'
+import { SocialSites } from '~/components/social-sites'
 
-import styles from "./_styles.module.css"
-import { ComplementaryInformation } from "./components/complementary-information"
-import { SiteContent } from "./components/site-content"
+import styles from './_styles.module.css'
+import { ComplementaryInformation } from './components/complementary-information'
+import { SiteContent } from './components/site-content'
 
 export const AppFooter = () => {
   return (
@@ -18,4 +18,4 @@ export const AppFooter = () => {
   )
 }
 
-AppFooter.displayName = "AppFooter"
+AppFooter.displayName = 'AppFooter'

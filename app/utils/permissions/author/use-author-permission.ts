@@ -4,8 +4,8 @@ import type {
   AuthorPermissionEntity,
   AuthorRoleName,
   ContentState,
-} from "@generated/prisma/enums"
-import { getAuthorRights } from "~/utils/permissions/core/get-author-rights"
+} from '@generated/prisma/enums'
+import { getAuthorRights } from '~/utils/permissions/core/get-author-rights'
 
 type AuthorPermission = {
   entity: AuthorPermissionEntity
@@ -32,15 +32,15 @@ export function useAuthorPermission(options: UseAuthorPermissionOptions) {
       state?: ContentState
       targetAuthorId?: string
     }): { hasOwn: boolean; hasAny: boolean; hasPermission: boolean } => {
-      const access = config.access ?? ["own", "any"]
-      const states = config.state ? [config.state] : ["*"]
+      const access = config.access ?? ['own', 'any']
+      const states = config.state ? [config.state] : ['*']
 
       const rights = getAuthorRights(permissions, {
-        entities: [config.entity],
-        actions: [config.action],
         access,
-        states,
+        actions: [config.action],
+        entities: [config.entity],
         ownId: authorId,
+        states,
         targetId: config.targetAuthorId,
       })
 
@@ -52,8 +52,8 @@ export function useAuthorPermission(options: UseAuthorPermissionOptions) {
       const hasAny = rights[0]?.[0]?.[1]?.[0] ?? false
 
       return {
-        hasOwn,
         hasAny,
+        hasOwn,
         hasPermission: hasOwn || hasAny,
       }
     },

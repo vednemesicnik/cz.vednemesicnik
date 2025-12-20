@@ -1,31 +1,31 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Form } from "react-router"
+import { Form } from 'react-router'
 
-import { AdminAvatar } from "~/components/admin-avatar"
-import { AdminButton } from "~/components/admin-button"
-import { AdminDetailItem } from "~/components/admin-detail-item"
-import { AdminDetailList } from "~/components/admin-detail-list"
-import { AdminDetailSection } from "~/components/admin-detail-section"
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { FORM_CONFIG } from "~/config/form-config"
-import { getUserImageSrc } from "~/utils/get-user-image-src"
+import { AdminAvatar } from '~/components/admin-avatar'
+import { AdminButton } from '~/components/admin-button'
+import { AdminDetailItem } from '~/components/admin-detail-item'
+import { AdminDetailList } from '~/components/admin-detail-list'
+import { AdminDetailSection } from '~/components/admin-detail-section'
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { FORM_CONFIG } from '~/config/form-config'
+import { getUserImageSrc } from '~/utils/get-user-image-src'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const imageSrc = getUserImageSrc(loaderData.user.image?.id ?? "")
-  const imageAlt = loaderData.user.image?.altText ?? ""
+  const imageSrc = getUserImageSrc(loaderData.user.image?.id ?? '')
+  const imageAlt = loaderData.user.image?.altText ?? ''
 
   return (
     <AdminPage>
       <AdminHeadline>Profil</AdminHeadline>
 
       <AdminDetailSection title="Základní informace">
-        <AdminAvatar src={imageSrc} alt={imageAlt} size="large" />
+        <AdminAvatar alt={imageAlt} size="large" src={imageSrc} />
 
         <AdminDetailList>
           <AdminDetailItem label="E-mail">
@@ -53,16 +53,16 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </AdminDetailList>
 
           <Form method="post">
-            <input type="hidden" name="userId" value={loaderData.user.id} />
+            <input name="userId" type="hidden" value={loaderData.user.id} />
             <input
-              type="hidden"
               name="currentSessionId"
+              type="hidden"
               value={loaderData.currentSession.id}
             />
             <AuthenticityTokenInput />
             <AdminButton
-              type="submit"
               name={FORM_CONFIG.intent.name}
+              type="submit"
               value={FORM_CONFIG.intent.value.delete}
               variant="danger"
             >
@@ -75,6 +75,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   )
 }
 
-export { action } from "./_action"
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { action } from './_action'
+export { loader } from './_loader'
+export { meta } from './_meta'

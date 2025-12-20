@@ -1,22 +1,20 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href, isRouteErrorResponse, Link, useSearchParams } from "react-router"
+import { href, isRouteErrorResponse, Link, useSearchParams } from 'react-router'
 
-import { Headline } from "~/components/headline"
-import { Image } from "~/components/image"
-import { LIMIT_PARAM, LoadMoreContent } from "~/components/load-more-content"
-import { Page } from "~/components/page"
-import { Paragraph } from "~/components/paragraph"
-import { Tile } from "~/components/tile"
-import { TileGrid } from "~/components/tile-grid"
-import { TileGridItem } from "~/components/tile-grid-item"
-import { sizeConfig } from "~/config/size-config"
-import { getIssuePdfSrc } from "~/utils/get-issue-pdf-src"
+import { Headline } from '~/components/headline'
+import { Image } from '~/components/image'
+import { LIMIT_PARAM, LoadMoreContent } from '~/components/load-more-content'
+import { Page } from '~/components/page'
+import { Paragraph } from '~/components/paragraph'
+import { Tile } from '~/components/tile'
+import { TileGrid } from '~/components/tile-grid'
+import { TileGridItem } from '~/components/tile-grid-item'
+import { sizeConfig } from '~/config/size-config'
+import { getIssuePdfSrc } from '~/utils/get-issue-pdf-src'
 
-import type { Route } from "./+types/route"
-
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function Route({ loaderData }: Route.ComponentProps) {
   const { issues, issuesCount } = loaderData
@@ -35,18 +33,18 @@ export default function Route({ loaderData }: Route.ComponentProps) {
           if (cover === null || pdf === null) return null
 
           const coverAlt = cover.altText
-          const coverSrc = href("/resources/issue-cover/:id", { id: cover.id })
+          const coverSrc = href('/resources/issue-cover/:id', { id: cover.id })
           const pdfSrc = getIssuePdfSrc(pdf.fileName)
 
           return (
             <TileGridItem key={id}>
-              <Link to={pdfSrc} title={label} reloadDocument={true}>
+              <Link reloadDocument={true} title={label} to={pdfSrc}>
                 <Tile label={label}>
                   <Image
-                    src={coverSrc}
                     alt={coverAlt}
-                    width={sizeConfig.archivedIssueCover.width}
                     height={sizeConfig.archivedIssueCover.height}
+                    src={coverSrc}
+                    width={sizeConfig.archivedIssueCover.width}
                   />
                 </Tile>
               </Link>
@@ -56,7 +54,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
       </TileGrid>
 
       {issuesCount <= limit ? null : (
-        <LoadMoreContent limit={limit + 20} action={"/archive"} />
+        <LoadMoreContent action={'/archive'} limit={limit + 20} />
       )}
     </Page>
   )

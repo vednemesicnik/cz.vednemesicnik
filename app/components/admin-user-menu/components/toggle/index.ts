@@ -1,1 +1,1 @@
-export { Toggle } from "./_component"
+export { Toggle } from './_component'

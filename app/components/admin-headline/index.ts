@@ -1,1 +1,1 @@
-export { AdminHeadline } from "./_component"
+export { AdminHeadline } from './_component'

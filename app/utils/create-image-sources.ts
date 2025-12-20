@@ -1,4 +1,4 @@
-import { createImageSourceRoute } from "~/utils/create-image-source-route"
+import { createImageSourceRoute } from '~/utils/create-image-source-route'
 
 type Options = {
   width: number
@@ -10,53 +10,53 @@ export function createImageSources(src: string, options: Options) {
   const { width, height, quality } = options
 
   const avifSrc_1x = createImageSourceRoute(src, {
-    format: "avif",
-    width,
+    format: 'avif',
     height,
     quality,
+    width,
   })
 
   const avifSrc_2x = createImageSourceRoute(src, {
-    format: "avif",
-    width: width * 2,
+    format: 'avif',
     height: height * 2,
     quality,
+    width: width * 2,
   })
 
   const webpSrc_1x = createImageSourceRoute(src, {
-    format: "webp",
-    width,
+    format: 'webp',
     height,
     quality,
+    width,
   })
 
   const webpSrc_2x = createImageSourceRoute(src, {
-    format: "webp",
-    width: width * 2,
+    format: 'webp',
     height: height * 2,
     quality,
+    width: width * 2,
   })
 
   const jpegSrc_1x = createImageSourceRoute(src, {
-    format: "jpeg",
-    width,
+    format: 'jpeg',
     height,
     quality,
+    width,
   })
 
   const jpegSrc_2x = createImageSourceRoute(src, {
-    format: "jpeg",
-    width: width * 2,
+    format: 'jpeg',
     height: height * 2,
     quality,
+    width: width * 2,
   })
 
   return {
     avifSrc_1x,
     avifSrc_2x,
-    webpSrc_1x,
-    webpSrc_2x,
     jpegSrc_1x,
     jpegSrc_2x,
+    webpSrc_1x,
+    webpSrc_2x,
   }
 }

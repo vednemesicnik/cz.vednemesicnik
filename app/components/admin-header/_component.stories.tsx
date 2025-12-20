@@ -1,14 +1,18 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
-import { MemoryRouter } from "react-router"
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { MemoryRouter } from 'react-router'
 
-import { AdminUserMenu } from "~/components/admin-user-menu"
+import { AdminUserMenu } from '~/components/admin-user-menu'
 
-import { AdminHeader } from "./_component"
+import { AdminHeader } from './_component'
 
 const meta: Meta<typeof AdminHeader> = {
-  title: "Administration/AdministrationHeader",
+  argTypes: {
+    children: {
+      control: false,
+      description: 'Optional content (typically UserMenu component)',
+    },
+  },
   component: AdminHeader,
-  tags: ["autodocs"],
   decorators: [
     (Story) => (
       <MemoryRouter>
@@ -17,14 +21,10 @@ const meta: Meta<typeof AdminHeader> = {
     ),
   ],
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
-  argTypes: {
-    children: {
-      control: false,
-      description: "Optional content (typically UserMenu component)",
-    },
-  },
+  tags: ['autodocs'],
+  title: 'Administration/AdministrationHeader',
 }
 
 export default meta
@@ -45,7 +45,7 @@ export const Default: Story = {
 export const WithUserMenu: Story = {
   args: {
     children: (
-      <AdminUserMenu userName="Jan Novák" userEmail="jan.novak@example.com" />
+      <AdminUserMenu userEmail="jan.novak@example.com" userName="Jan Novák" />
     ),
   },
 }
@@ -68,8 +68,8 @@ export const WithLongUserName: Story = {
   args: {
     children: (
       <AdminUserMenu
-        userName="Alexandr Konstantinovič Novotný"
         userEmail="alexandr.novotny@example.com"
+        userName="Alexandr Konstantinovič Novotný"
       />
     ),
   },

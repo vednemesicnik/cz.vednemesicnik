@@ -1,30 +1,30 @@
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
-import { requireAuthorPermission } from "~/utils/permissions/author/guards/require-author-permission.server"
-import { getAuthorsByPermission } from "~/utils/permissions/author/queries/get-authors-by-permission.server"
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { requireAuthorPermission } from '~/utils/permissions/author/guards/require-author-permission.server'
+import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
-    entities: ["issue"],
-    actions: ["create"],
+    actions: ['create'],
+    entities: ['issue'],
   })
 
   requireAuthorPermission(context, {
-    entity: "issue",
-    action: "create",
-    state: "draft",
+    action: 'create',
+    entity: 'issue',
+    redirectTo: href('/administration/archive'),
+    state: 'draft',
     targetAuthorId: context.authorId,
-    redirectTo: href("/administration/archive"),
   })
 
   const authors = await getAuthorsByPermission(
     context,
-    "issue",
-    "create",
-    "draft"
+    'issue',
+    'create',
+    'draft',
   )
 
   return {

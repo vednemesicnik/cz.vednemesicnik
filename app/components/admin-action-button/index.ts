@@ -1,1 +1,1 @@
-export { AdminActionButton } from "./_component"
+export { AdminActionButton } from './_component'

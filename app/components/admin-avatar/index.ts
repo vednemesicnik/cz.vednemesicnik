@@ -1,1 +1,1 @@
-export { AdminAvatar } from "./_component"
+export { AdminAvatar } from './_component'

@@ -1,24 +1,24 @@
-import { describe, expect, test } from "vitest"
+import { describe, expect, test } from 'vitest'
 
-import { getAuthorRights } from "./get-author-rights"
+import { getAuthorRights } from './get-author-rights'
 
-describe("getAuthorRights", () => {
+describe('getAuthorRights', () => {
   test("should return true for matching permissions with 'article' entity", () => {
     const permissions = [
-      { entity: "article", action: "update", access: "any", state: "draft" },
-      { entity: "issue", action: "delete", access: "own", state: "published" },
+      { access: 'any', action: 'update', entity: 'article', state: 'draft' },
+      { access: 'own', action: 'delete', entity: 'issue', state: 'published' },
     ]
 
     const options = {
-      entities: ["article"],
-      actions: ["update"],
-      access: ["any"],
-      states: ["draft"],
+      access: ['any'],
+      actions: ['update'],
+      entities: ['article'],
+      states: ['draft'],
     }
 
     const [[[[hasArticleUpdateAnyDraftRight]]]] = getAuthorRights(
       permissions,
-      options
+      options,
     )
 
     expect(hasArticleUpdateAnyDraftRight).toEqual(true)
@@ -26,28 +26,28 @@ describe("getAuthorRights", () => {
 
   test("should return false for non-matching permissions with 'issue' entity", () => {
     const permissions = [
-      { entity: "article", action: "update", access: "any", state: "draft" },
+      { access: 'any', action: 'update', entity: 'article', state: 'draft' },
     ]
 
     const options = {
-      entities: ["issue"],
-      actions: ["delete"],
-      access: ["own"],
-      states: ["published"],
+      access: ['own'],
+      actions: ['delete'],
+      entities: ['issue'],
+      states: ['published'],
     }
 
     const [[[[hasIssueDeleteOwnPublishedRight]]]] = getAuthorRights(
       permissions,
-      options
+      options,
     )
 
     expect(hasIssueDeleteOwnPublishedRight).toEqual(false)
   })
 
-  test("should handle no options and return true if any permission matches", () => {
+  test('should handle no options and return true if any permission matches', () => {
     const permissions = [
-      { entity: "article", action: "update", access: "any", state: "draft" },
-      { entity: "issue", action: "delete", access: "own", state: "published" },
+      { access: 'any', action: 'update', entity: 'article', state: 'draft' },
+      { access: 'own', action: 'delete', entity: 'issue', state: 'published' },
     ]
 
     const [[[[hasRight]]]] = getAuthorRights(permissions)
@@ -55,45 +55,45 @@ describe("getAuthorRights", () => {
     expect(hasRight).toEqual(true)
   })
 
-  test("should return true for own access with matching ids", () => {
+  test('should return true for own access with matching ids', () => {
     const permissions = [
-      { entity: "article", action: "update", access: "own", state: "draft" },
+      { access: 'own', action: 'update', entity: 'article', state: 'draft' },
     ]
 
     const options = {
-      entities: ["article"],
-      actions: ["update"],
-      access: ["own"],
-      states: ["draft"],
-      ownId: "123",
-      targetId: "123",
+      access: ['own'],
+      actions: ['update'],
+      entities: ['article'],
+      ownId: '123',
+      states: ['draft'],
+      targetId: '123',
     }
 
     const [[[[hasArticleUpdateOwnDraftRight]]]] = getAuthorRights(
       permissions,
-      options
+      options,
     )
 
     expect(hasArticleUpdateOwnDraftRight).toEqual(true)
   })
 
-  test("should return false for own access with non-matching ids", () => {
+  test('should return false for own access with non-matching ids', () => {
     const permissions = [
-      { entity: "article", action: "update", access: "own", state: "draft" },
+      { access: 'own', action: 'update', entity: 'article', state: 'draft' },
     ]
 
     const options = {
-      entities: ["article"],
-      actions: ["update"],
-      access: ["own"],
-      states: ["draft"],
-      ownId: "123",
-      targetId: "456",
+      access: ['own'],
+      actions: ['update'],
+      entities: ['article'],
+      ownId: '123',
+      states: ['draft'],
+      targetId: '456',
     }
 
     const [[[[hasArticleUpdateOwnDraftRight]]]] = getAuthorRights(
       permissions,
-      options
+      options,
     )
 
     expect(hasArticleUpdateOwnDraftRight).toEqual(false)

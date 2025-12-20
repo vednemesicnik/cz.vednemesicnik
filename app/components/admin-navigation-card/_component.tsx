@@ -1,9 +1,9 @@
-import { clsx } from "clsx"
-import type { ReactNode } from "react"
+import { clsx } from 'clsx'
+import type { ReactNode } from 'react'
 
-import { BaseLink } from "~/components/base-link"
+import { BaseLink } from '~/components/base-link'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   to: string
@@ -21,7 +21,7 @@ export const AdminNavigationCard = ({
   className,
 }: Props) => {
   return (
-    <BaseLink to={to} className={clsx(styles.card, className)}>
+    <BaseLink className={clsx(styles.card, className)} to={to}>
       {icon && <div className={styles.icon}>{icon}</div>}
       <div className={styles.content}>
         <h3 className={styles.title}>{title}</h3>

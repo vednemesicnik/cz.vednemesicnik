@@ -5,28 +5,27 @@ import {
   getInputProps,
   getSelectProps,
   useForm,
-} from "@conform-to/react"
-import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { href, useNavigation } from "react-router"
+} from '@conform-to/react'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { href, useNavigation } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset"
-import { Form } from "~/components/form"
-import { FormActions } from "~/components/form-actions"
-import { Input } from "~/components/input"
-import { Select } from "~/components/select"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
+import { Fieldset } from '~/components/fieldset'
+import { Form } from '~/components/form'
+import { FormActions } from '~/components/form-actions'
+import { Input } from '~/components/input'
+import { Select } from '~/components/select'
+import { schema } from './_schema'
+import type { Route } from './+types/route'
 
-import type { Route } from "./+types/route"
-import { schema } from "./_schema"
-
-export { action } from "./_action"
-export { handle } from "./_handle"
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { action } from './_action'
+export { handle } from './_handle'
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function RouteComponent({
   loaderData,
@@ -37,24 +36,24 @@ export default function RouteComponent({
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
-    id: "edit-user",
     constraint: getZodConstraint(schema),
-    lastResult: actionData?.submissionResult,
-    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
-    shouldDirtyConsider: (field) => {
-      return !field.startsWith("csrf")
-    },
-    shouldValidate: "onSubmit",
-    shouldRevalidate: "onBlur",
     defaultValue: {
       email: loaderData.user.email,
       name: loaderData.user.name,
       roleId: loaderData.user.role.id,
       userId: loaderData.user.id,
     },
+    id: 'edit-user',
+    lastResult: actionData?.submissionResult,
+    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
+    shouldDirtyConsider: (field) => {
+      return !field.startsWith('csrf')
+    },
+    shouldRevalidate: 'onBlur',
+    shouldValidate: 'onSubmit',
   })
 
-  const isLoadingOrSubmitting = state !== "idle"
+  const isLoadingOrSubmitting = state !== 'idle'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -62,40 +61,40 @@ export default function RouteComponent({
       <AdminHeadline>Upravit uživatele</AdminHeadline>
 
       <Form method="post" {...getFormProps(form)}>
-        <Fieldset legend={"Detaily uživatele"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily uživatele'}>
           <Input
-            label={"E-mail"}
-            {...getInputProps(fields.email, { type: "email" })}
-            placeholder={"user@domain.name"}
+            label={'E-mail'}
+            {...getInputProps(fields.email, { type: 'email' })}
             errors={fields.email.errors}
+            placeholder={'user@domain.name'}
           />
           <Input
-            label={"Jméno a příjmení"}
-            {...getInputProps(fields.name, { type: "text" })}
-            placeholder={"Jan Novák"}
+            label={'Jméno a příjmení'}
+            {...getInputProps(fields.name, { type: 'text' })}
             errors={fields.name.errors}
+            placeholder={'Jan Novák'}
           />
         </Fieldset>
 
-        <Fieldset legend={"Heslo"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Heslo'}>
           <Input
-            label={"Heslo"}
-            {...getInputProps(fields.password, { type: "password" })}
+            label={'Heslo'}
+            {...getInputProps(fields.password, { type: 'password' })}
             errors={fields.password.errors}
           />
           <Input
-            label={"Potvrzení hesla"}
+            label={'Potvrzení hesla'}
             {...getInputProps(fields.passwordConfirmation, {
-              type: "password",
+              type: 'password',
             })}
             errors={fields.passwordConfirmation.errors}
           />
         </Fieldset>
 
         {loaderData.roles.length > 0 ? (
-          <Fieldset legend={"Oprávnění"} disabled={isLoadingOrSubmitting}>
+          <Fieldset disabled={isLoadingOrSubmitting} legend={'Oprávnění'}>
             <Select
-              label={"Role"}
+              label={'Role'}
               {...getSelectProps(fields.roleId)}
               errors={fields.roleId.errors}
             >
@@ -107,18 +106,18 @@ export default function RouteComponent({
             </Select>
           </Fieldset>
         ) : (
-          <input {...getInputProps(fields.roleId, { type: "hidden" })} />
+          <input {...getInputProps(fields.roleId, { type: 'hidden' })} />
         )}
 
-        <input {...getInputProps(fields.userId, { type: "hidden" })} />
+        <input {...getInputProps(fields.userId, { type: 'hidden' })} />
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
             Uložit
           </Button>
           <AdminLinkButton
-            to={href("/administration/users/:userId", { userId })}
+            to={href('/administration/users/:userId', { userId })}
           >
             Zrušit
           </AdminLinkButton>

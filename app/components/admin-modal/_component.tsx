@@ -1,18 +1,14 @@
-import {
-  type ComponentPropsWithoutRef,
-  type ReactNode,
-  type RefObject,
-} from "react"
+import type { ComponentPropsWithoutRef, ReactNode, RefObject } from 'react'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
   ref: RefObject<HTMLDialogElement | null>
-} & ComponentPropsWithoutRef<"dialog">
+} & ComponentPropsWithoutRef<'dialog'>
 
 export const AdminDialog = ({ children, ref, ...dialogProps }: Props) => (
-  <dialog ref={ref} className={styles.dialog} {...dialogProps}>
+  <dialog className={styles.dialog} ref={ref} {...dialogProps}>
     {children}
   </dialog>
 )

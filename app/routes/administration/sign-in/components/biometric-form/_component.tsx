@@ -1,10 +1,10 @@
-import { startRegistration } from "@simplewebauthn/browser"
-import { useEffect } from "react"
-import { useFetcher, useNavigate } from "react-router"
-import { HoneypotInputs } from "remix-utils/honeypot/react"
+import { startRegistration } from '@simplewebauthn/browser'
+import { useEffect } from 'react'
+import { useFetcher, useNavigate } from 'react-router'
+import { HoneypotInputs } from 'remix-utils/honeypot/react'
 
-import { type action as generateRegistrationOptionsAction } from "~/routes/administration/authentication/generate-registration-options/_action"
-import { type action as verifyRegistrationResponseAction } from "~/routes/administration/authentication/verify-registration-response/_action"
+import type { action as generateRegistrationOptionsAction } from '~/routes/administration/authentication/generate-registration-options/_action'
+import type { action as verifyRegistrationResponseAction } from '~/routes/administration/authentication/verify-registration-response/_action'
 
 type Props = {
   onClose: () => void
@@ -29,9 +29,9 @@ export const BiometricModal = ({ onClose }: Props) => {
 
         const verifyRegistrationResponse = (registrationResponse: string) => {
           verifyRegistrationResponseFetcher.submit(registrationResponse, {
-            action: "/administration/sign-in/verify",
-            method: "POST",
-            encType: "application/json",
+            action: '/administration/sign-in/verify',
+            encType: 'application/json',
+            method: 'POST',
           })
         }
 
@@ -40,14 +40,14 @@ export const BiometricModal = ({ onClose }: Props) => {
 
       void register()
     }
-  }, [options, onClose, verifyRegistrationResponseFetcher])
+  }, [options, verifyRegistrationResponseFetcher])
 
   const navigate = useNavigate()
   const isVerified = verifyRegistrationResponseFetcher.data?.verified ?? false
 
   useEffect(() => {
     if (isVerified) {
-      navigate("/administration", { replace: true })
+      navigate('/administration', { replace: true })
     }
   }, [isVerified, navigate])
 
@@ -70,22 +70,22 @@ export const BiometricModal = ({ onClose }: Props) => {
 
   return (
     <>
-      <h3 id={"use-biometric-modal-title"}>Přihlásit se pomocí biometrie</h3>
+      <h3 id={'use-biometric-modal-title'}>Přihlásit se pomocí biometrie</h3>
       <p>
         Pro zvýšení bezpečnosti můžete použít biometrické autentizační
         prostředky.
       </p>
-      <button onClick={onClose} type={"button"}>
+      <button onClick={onClose} type={'button'}>
         Zavřít
       </button>
       <GenerateRegistrationOptionsForm
+        action={'/administration/sign-in/generate-registration-options'}
+        method={'post'}
         onSubmit={onClose}
-        method={"post"}
-        action={"/administration/sign-in/generate-registration-options"}
       >
         <HoneypotInputs />
 
-        <button type={"submit"}>Přidat biometrickou autentizaci</button>
+        <button type={'submit'}>Přidat biometrickou autentizaci</button>
       </GenerateRegistrationOptionsForm>
     </>
   )

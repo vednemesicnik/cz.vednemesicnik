@@ -1,4 +1,4 @@
-import type { Params, UIMatch } from "react-router"
+import type { Params, UIMatch } from 'react-router'
 
 export type Breadcrumb = {
   label: string

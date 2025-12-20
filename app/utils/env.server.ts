@@ -1,11 +1,10 @@
 // noinspection JSUnusedGlobalSymbols,ES6ConvertVarToLetConst
 
-import { z } from "zod"
-
-import { ENV_KEYS } from "@constants/env"
+import { ENV_KEYS } from '@constants/env'
+import { z } from 'zod'
 
 const schema = z.object({
-  [ENV_KEYS.NODE_ENV]: z.enum(["production", "development", "test"] as const),
+  [ENV_KEYS.NODE_ENV]: z.enum(['production', 'development', 'test'] as const),
   [ENV_KEYS.SESSION_SECRET]: z.string(),
   [ENV_KEYS.HONEYPOT_SECRET]: z.string(),
 })
@@ -23,10 +22,10 @@ export function initEnv() {
 
   if (!parsed.success) {
     console.error(
-      "❌ Invalid environment variables:",
-      parsed.error.flatten().fieldErrors
+      '❌ Invalid environment variables:',
+      parsed.error.flatten().fieldErrors,
     )
-    throw new Error("Invalid environment variables")
+    throw new Error('Invalid environment variables')
   }
 
   return

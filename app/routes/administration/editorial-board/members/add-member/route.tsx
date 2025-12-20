@@ -5,23 +5,22 @@ import {
   getInputProps,
   getSelectProps,
   useForm,
-} from "@conform-to/react"
-import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { useNavigation } from "react-router"
+} from '@conform-to/react'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { useNavigation } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset"
-import { Form } from "~/components/form"
-import { FormActions } from "~/components/form-actions"
-import { Input } from "~/components/input"
-import { Select } from "~/components/select"
-
-import type { Route } from "./+types/route"
-import { schema } from "./_schema"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
+import { Fieldset } from '~/components/fieldset'
+import { Form } from '~/components/form'
+import { FormActions } from '~/components/form-actions'
+import { Input } from '~/components/input'
+import { Select } from '~/components/select'
+import { schema } from './_schema'
+import type { Route } from './+types/route'
 
 export default function RouteComponent({
   loaderData,
@@ -30,23 +29,23 @@ export default function RouteComponent({
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
-    id: "add-member",
     constraint: getZodConstraint(schema),
+    defaultValue: {
+      authorId: loaderData.selfAuthorId,
+      fullName: '',
+      positionIds: [],
+    },
+    id: 'add-member',
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
-    defaultValue: {
-      fullName: "",
-      positionIds: [],
-      authorId: loaderData.selfAuthorId,
-    },
     shouldDirtyConsider: (field) => {
-      return !field.startsWith("csrf")
+      return !field.startsWith('csrf')
     },
-    shouldValidate: "onSubmit",
-    shouldRevalidate: "onBlur",
+    shouldRevalidate: 'onBlur',
+    shouldValidate: 'onSubmit',
   })
 
-  const isLoadingOrSubmitting = state !== "idle"
+  const isLoadingOrSubmitting = state !== 'idle'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -55,23 +54,23 @@ export default function RouteComponent({
 
       <Form method="post" {...getFormProps(form)}>
         <Fieldset
-          legend={"Informace o členovi"}
           disabled={isLoadingOrSubmitting}
+          legend={'Informace o členovi'}
         >
           <Input
-            label={"Celé jméno"}
-            {...getInputProps(fields.fullName, { type: "text" })}
-            placeholder={"Jan Novák"}
+            label={'Celé jméno'}
+            {...getInputProps(fields.fullName, { type: 'text' })}
             errors={fields.fullName.errors}
+            placeholder={'Jan Novák'}
           />
         </Fieldset>
 
-        <Fieldset legend={"Pozice"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Pozice'}>
           <Select
-            label={"Pozice"}
+            label={'Pozice'}
             {...getSelectProps(fields.positionIds)}
-            multiple
             errors={fields.positionIds.errors}
+            multiple
           >
             {loaderData.editorialBoardMemberPositions.map((position) => (
               <option key={position.id} value={position.id}>
@@ -81,9 +80,9 @@ export default function RouteComponent({
           </Select>
         </Fieldset>
 
-        <Fieldset legend={"Autor"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Autor'}>
           <Select
-            label={"Autor"}
+            label={'Autor'}
             {...getSelectProps(fields.authorId)}
             errors={fields.authorId.errors}
           >
@@ -98,10 +97,10 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
             Přidat
           </Button>
-          <AdminLinkButton to={"/administration/editorial-board/members"}>
+          <AdminLinkButton to={'/administration/editorial-board/members'}>
             Zrušit
           </AdminLinkButton>
         </FormActions>
@@ -110,7 +109,7 @@ export default function RouteComponent({
   )
 }
 
-export { handle } from "./_handle"
-export { meta } from "./_meta"
-export { loader } from "./_loader"
-export { action } from "./_action"
+export { action } from './_action'
+export { handle } from './_handle'
+export { loader } from './_loader'
+export { meta } from './_meta'

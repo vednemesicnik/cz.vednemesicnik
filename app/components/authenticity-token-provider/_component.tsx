@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext } from "react"
+import { createContext, type ReactNode, useContext } from 'react'
 
 // Context
 
@@ -22,7 +22,7 @@ export const useAuthenticityToken = () => {
 
   if (context === null) {
     throw new Error(
-      "useAuthenticityToken must be used within a AuthenticityTokenProvider"
+      'useAuthenticityToken must be used within a AuthenticityTokenProvider',
     )
   }
 

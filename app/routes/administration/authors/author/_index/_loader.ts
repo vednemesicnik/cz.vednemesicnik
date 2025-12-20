@@ -1,40 +1,40 @@
-import { prisma } from "~/utils/db.server"
-import { getFormattedPublishDate } from "~/utils/get-formatted-publish-date"
-import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
+import { prisma } from '~/utils/db.server'
+import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { authorId } = params
 
   const context = await getUserPermissionContext(request, {
-    entities: ["author"],
-    actions: ["view", "update", "delete"],
+    actions: ['view', 'update', 'delete'],
+    entities: ['author'],
   })
 
   const author = await prisma.author.findUniqueOrThrow({
-    where: { id: authorId },
     select: {
-      id: true,
-      name: true,
       bio: true,
       createdAt: true,
-      updatedAt: true,
+      id: true,
+      name: true,
       role: {
         select: {
           id: true,
-          name: true,
           level: true,
+          name: true,
         },
       },
+      updatedAt: true,
       user: {
         select: {
-          id: true,
           email: true,
+          id: true,
           name: true,
         },
       },
     },
+    where: { id: authorId },
   })
 
   // targetUserId is the user who owns this author profile (or undefined for external authors)
@@ -42,41 +42,41 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // Check view permission
   const viewPerms = context.can({
-    entity: "author",
-    action: "view",
+    action: 'view',
+    entity: 'author',
     targetUserId,
   })
 
   if (!viewPerms.hasPermission) {
-    throw new Response("Forbidden", { status: 403 })
+    throw new Response('Forbidden', { status: 403 })
   }
 
   // Check update permission
   const updatePerms = context.can({
-    entity: "author",
-    action: "update",
+    action: 'update',
+    entity: 'author',
     targetUserId,
   })
 
   // Check delete permission - cannot delete own author profile
   const deletePerms = context.can({
-    entity: "author",
-    action: "delete",
+    action: 'delete',
+    entity: 'author',
     targetUserId,
   })
 
   return {
     author: {
-      id: author.id,
-      name: author.name,
       bio: author.bio,
       createdAt: getFormattedPublishDate(author.createdAt),
-      updatedAt: getFormattedPublishDate(author.updatedAt),
+      id: author.id,
+      name: author.name,
       role: author.role,
+      updatedAt: getFormattedPublishDate(author.updatedAt),
       user: author.user,
     },
-    canUpdate: updatePerms.hasPermission,
     // Can only delete authors without linked User (onDelete: Restrict in schema)
     canDelete: deletePerms.hasPermission && !author.user,
+    canUpdate: updatePerms.hasPermission,
   }
 }

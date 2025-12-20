@@ -1,6 +1,6 @@
-import type { UIMatch } from "react-router"
+import type { UIMatch } from 'react-router'
 
-import type { Breadcrumb, BreadcrumbCapableMatch } from "~/types/breadcrumb"
+import type { Breadcrumb, BreadcrumbCapableMatch } from '~/types/breadcrumb'
 
 /**
  * Type predicate to check if a match has breadcrumb capability.
@@ -15,16 +15,16 @@ import type { Breadcrumb, BreadcrumbCapableMatch } from "~/types/breadcrumb"
  * ```
  */
 function hasBreadcrumb(
-  match: UIMatch | unknown
+  match: UIMatch | unknown,
 ): match is BreadcrumbCapableMatch {
   return (
     match !== null &&
-    typeof match === "object" &&
-    "handle" in match &&
+    typeof match === 'object' &&
+    'handle' in match &&
     match.handle !== null &&
-    typeof match.handle === "object" &&
-    "breadcrumb" in match.handle &&
-    typeof match.handle.breadcrumb === "function"
+    typeof match.handle === 'object' &&
+    'breadcrumb' in match.handle &&
+    typeof match.handle.breadcrumb === 'function'
   )
 }
 
@@ -84,16 +84,16 @@ export function getBreadcrumbs(matches: unknown[]): Breadcrumb[] {
  */
 export const createBreadcrumbStructuredData = (
   breadcrumbs: Breadcrumb[],
-  baseUrl: string
+  baseUrl: string,
 ) => {
   return {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
     itemListElement: breadcrumbs.map((breadcrumb, index) => {
       const url = new URL(breadcrumb.path, baseUrl)
 
       return {
-        "@type": "ListItem",
+        '@type': 'ListItem',
         item: url.href,
         name: breadcrumb.label,
         position: index + 1,

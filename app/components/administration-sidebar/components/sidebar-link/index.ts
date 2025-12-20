@@ -1,1 +1,1 @@
-export { SidebarLink } from "./_component"
+export { SidebarLink } from './_component'

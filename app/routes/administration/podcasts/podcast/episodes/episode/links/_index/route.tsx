@@ -1,22 +1,20 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
 import {
   AdminTable,
   TableBody,
   TableHeader,
   TableHeaderCell,
-} from "~/components/admin-table"
-import { ItemRow } from "~/routes/administration/podcasts/podcast/episodes/episode/links/_index/components/item-row"
+} from '~/components/admin-table'
+import { ItemRow } from '~/routes/administration/podcasts/podcast/episodes/episode/links/_index/components/item-row'
 
-import type { Route } from "./+types/route"
-
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function Route({ loaderData }: Route.ComponentProps) {
   return (
@@ -25,11 +23,11 @@ export default function Route({ loaderData }: Route.ComponentProps) {
       {loaderData.canCreate && (
         <AdminLinkButton
           to={href(
-            "/administration/podcasts/:podcastId/episodes/:episodeId/links/add-link",
+            '/administration/podcasts/:podcastId/episodes/:episodeId/links/add-link',
             {
-              podcastId: loaderData.podcast.id,
               episodeId: loaderData.episode.id,
-            }
+              podcastId: loaderData.podcast.id,
+            },
           )}
         >
           Přidat odkaz
@@ -44,15 +42,15 @@ export default function Route({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {loaderData.episode.links.map((link) => (
             <ItemRow
-              key={link.id}
-              podcastId={loaderData.podcast.id}
+              canDelete={link.canDelete}
+              canEdit={link.canEdit}
+              canView={link.canView}
               episodeId={loaderData.episode.id}
               id={link.id}
+              key={link.id}
               label={link.label}
+              podcastId={loaderData.podcast.id}
               url={link.url}
-              canView={link.canView}
-              canEdit={link.canEdit}
-              canDelete={link.canDelete}
             />
           ))}
         </TableBody>

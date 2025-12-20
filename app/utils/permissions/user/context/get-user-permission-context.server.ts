@@ -2,10 +2,10 @@ import type {
   UserPermissionAccess,
   UserPermissionAction,
   UserPermissionEntity,
-} from "@generated/prisma/enums"
-import { requireAuthentication } from "~/utils/auth.server"
-import { prisma } from "~/utils/db.server"
-import { getUserRights } from "~/utils/permissions/core/get-user-rights"
+} from '@generated/prisma/enums'
+import { requireAuthentication } from '~/utils/auth.server'
+import { prisma } from '~/utils/db.server'
+import { getUserRights } from '~/utils/permissions/core/get-user-rights'
 
 type GetUserPermissionContextOptions = {
   entities: UserPermissionEntity[]
@@ -14,30 +14,29 @@ type GetUserPermissionContextOptions = {
 
 export async function getUserPermissionContext(
   request: Request,
-  options: GetUserPermissionContextOptions
+  options: GetUserPermissionContextOptions,
 ) {
   const { sessionId } = await requireAuthentication(request)
 
   const session = await prisma.session.findUniqueOrThrow({
-    where: { id: sessionId },
     select: {
       user: {
         select: {
-          id: true,
           authorId: true,
+          id: true,
           role: {
             select: {
-              name: true,
               level: true,
+              name: true,
               permissions: {
-                where: {
-                  entity: { in: options.entities },
-                  action: { in: options.actions },
-                },
                 select: {
-                  entity: true,
-                  action: true,
                   access: true,
+                  action: true,
+                  entity: true,
+                },
+                where: {
+                  action: { in: options.actions },
+                  entity: { in: options.entities },
                 },
               },
             },
@@ -45,22 +44,19 @@ export async function getUserPermissionContext(
         },
       },
     },
+    where: { id: sessionId },
   })
 
   const user = session.user
 
   if (!user.role) {
     throw new Error(
-      "User does not have an associated role. Cannot determine permissions."
+      'User does not have an associated role. Cannot determine permissions.',
     )
   }
 
   return {
-    userId: user.id,
     authorId: user.authorId,
-    roleName: user.role.name,
-    roleLevel: user.role.level,
-    permissions: user.role.permissions,
 
     can: (config: {
       entity: UserPermissionEntity
@@ -69,12 +65,12 @@ export async function getUserPermissionContext(
       targetUserId?: string
       targetUserRoleLevel?: number
     }) => {
-      const access = config.access ?? ["own", "any"]
+      const access = config.access ?? ['own', 'any']
 
       const result = getUserRights(user.role.permissions, {
-        entities: [config.entity],
-        actions: [config.action],
         access,
+        actions: [config.action],
+        entities: [config.entity],
         ownId: user.id,
         targetId: config.targetUserId,
       })
@@ -100,11 +96,15 @@ export async function getUserPermissionContext(
       }
 
       return {
-        hasOwn,
         hasAny,
+        hasOwn,
         hasPermission,
       }
     },
+    permissions: user.role.permissions,
+    roleLevel: user.role.level,
+    roleName: user.role.name,
+    userId: user.id,
   }
 }
 

@@ -1,64 +1,64 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
 export const loader = async () => {
   const latestArchivedIssuesPromise = prisma.issue.findMany({
-    where: {
-      state: "published",
-    },
     orderBy: {
-      releasedAt: "desc",
+      releasedAt: 'desc',
     },
-    take: 1,
     select: {
+      cover: {
+        select: {
+          altText: true,
+          id: true,
+        },
+      },
       id: true,
       label: true,
       pdf: {
         select: {
-          id: true,
           fileName: true,
-        },
-      },
-      cover: {
-        select: {
           id: true,
-          altText: true,
         },
       },
+    },
+    take: 1,
+    where: {
+      state: 'published',
     },
   })
 
   const latestPodcastEpisodesPromise = prisma.podcastEpisode.findMany({
-    where: {
-      state: "published",
-    },
     orderBy: {
-      publishedAt: "desc",
+      publishedAt: 'desc',
     },
-    take: 1,
     select: {
-      id: true,
-      slug: true,
-      title: true,
-      publishedAt: true,
       cover: {
         select: {
-          id: true,
           altText: true,
+          id: true,
         },
       },
+      id: true,
       podcast: {
         select: {
+          cover: {
+            select: {
+              altText: true,
+              id: true,
+            },
+          },
           id: true,
           slug: true,
           title: true,
-          cover: {
-            select: {
-              id: true,
-              altText: true,
-            },
-          },
         },
       },
+      publishedAt: true,
+      slug: true,
+      title: true,
+    },
+    take: 1,
+    where: {
+      state: 'published',
     },
   })
 

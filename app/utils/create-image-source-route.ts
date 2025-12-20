@@ -1,11 +1,11 @@
-import { appendParameters } from "~/utils/append-parameters"
+import { appendParameters } from '~/utils/append-parameters'
 
-export const WIDTH_SEARCH_PARAM = "width"
-export const HEIGHT_SEARCH_PARAM = "height"
-export const QUALITY_SEARCH_PARAM = "quality"
-export const FORMAT_SEARCH_PARAM = "format"
+export const WIDTH_SEARCH_PARAM = 'width'
+export const HEIGHT_SEARCH_PARAM = 'height'
+export const QUALITY_SEARCH_PARAM = 'quality'
+export const FORMAT_SEARCH_PARAM = 'format'
 
-type Format = "avif" | "webp" | "png" | "jpeg"
+type Format = 'avif' | 'webp' | 'png' | 'jpeg'
 
 export type ImageOptions = {
   width?: number
@@ -22,15 +22,17 @@ type HasDefinedOptions<Options> = Options extends
   ? true
   : false
 
-type RouteWithSearchParams<Route extends string, Options> =
-  HasDefinedOptions<Options> extends true ? `${Route}?${string}` : Route
+type RouteWithSearchParams<
+  Route extends string,
+  Options,
+> = HasDefinedOptions<Options> extends true ? `${Route}?${string}` : Route
 
 export function createImageSourceRoute<
   Route extends string,
   Options extends ImageOptions,
 >(
   route: Route,
-  options?: Options
+  options?: Options,
 ): RouteWithSearchParams<Route, NonNullable<Options>> {
   const { width, height, quality, format } = options ?? {}
 

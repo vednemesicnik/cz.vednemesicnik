@@ -1,11 +1,11 @@
-import { type ContentState } from "@generated/prisma/enums"
+import type { ContentState } from '@generated/prisma/enums'
 
 export const getPublishDate = (
   publishedAt: string | undefined,
-  state: ContentState
+  state: ContentState,
 ) => {
   // Should be published and was not published yet
-  if (state === "published" && publishedAt === undefined) {
+  if (state === 'published' && publishedAt === undefined) {
     return new Date()
   }
 

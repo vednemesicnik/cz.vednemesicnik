@@ -1,18 +1,18 @@
-import { describe, expect, test } from "vitest"
+import { describe, expect, test } from 'vitest'
 
-import { getUserRights } from "./get-user-rights"
+import { getUserRights } from './get-user-rights'
 
-describe("getUserRights", () => {
+describe('getUserRights', () => {
   test("should return true for matching permissions with 'author' entity", () => {
     const permissions = [
-      { entity: "author", action: "update", access: "any" },
-      { entity: "user", action: "delete", access: "own" },
+      { access: 'any', action: 'update', entity: 'author' },
+      { access: 'own', action: 'delete', entity: 'user' },
     ]
 
     const options = {
-      entities: ["author"],
-      actions: ["update"],
-      access: ["any"],
+      access: ['any'],
+      actions: ['update'],
+      entities: ['author'],
     }
 
     const [[[hasAuthorUpdateAnyRight]]] = getUserRights(permissions, options)
@@ -21,12 +21,12 @@ describe("getUserRights", () => {
   })
 
   test("should return false for non-matching permissions with 'user' entity", () => {
-    const permissions = [{ entity: "author", action: "update", access: "any" }]
+    const permissions = [{ access: 'any', action: 'update', entity: 'author' }]
 
     const options = {
-      entities: ["user"],
-      actions: ["delete"],
-      access: ["own"],
+      access: ['own'],
+      actions: ['delete'],
+      entities: ['user'],
     }
 
     const [[[hasUserDeleteOwnRight]]] = getUserRights(permissions, options)
@@ -34,8 +34,8 @@ describe("getUserRights", () => {
     expect(hasUserDeleteOwnRight).toEqual(false)
   })
 
-  test("should handle no options when permissions filtered by database query", () => {
-    const permissions = [{ entity: "author", action: "update", access: "any" }]
+  test('should handle no options when permissions filtered by database query', () => {
+    const permissions = [{ access: 'any', action: 'update', entity: 'author' }]
 
     const [[[hasRight]]] = getUserRights(permissions)
 

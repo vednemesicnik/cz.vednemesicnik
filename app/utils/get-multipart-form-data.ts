@@ -1,4 +1,4 @@
-import { type FileUpload, parseFormData } from "@mjackson/form-data-parser"
+import { type FileUpload, parseFormData } from '@mjackson/form-data-parser'
 
 const MAX_FILE_SIZE = 1024 * 1024 * 10 // 10 MB
 

@@ -1,5 +1,5 @@
-import { prisma } from "~/utils/db.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
   fullName: string
@@ -11,12 +11,12 @@ export async function addMember({ fullName, positionIds, authorId }: Args) {
   try {
     const member = await prisma.editorialBoardMember.create({
       data: {
+        author: {
+          connect: { id: authorId },
+        },
         fullName,
         positions: {
           connect: positionIds.map((positionId) => ({ id: positionId })),
-        },
-        author: {
-          connect: { id: authorId },
         },
       },
     })
@@ -25,6 +25,6 @@ export async function addMember({ fullName, positionIds, authorId }: Args) {
       memberId: member.id,
     }
   } catch (error) {
-    return throwDbError(error, "Unable to add the editorial board member.")
+    return throwDbError(error, 'Unable to add the editorial board member.')
   }
 }

@@ -1,19 +1,19 @@
-import { clsx } from "clsx"
-import { type ComponentProps } from "react"
+import { clsx } from 'clsx'
+import type { ComponentProps } from 'react'
 
-import { ErrorMessage } from "~/components/error-message"
-import { ErrorMessageGroup } from "~/components/error-message-group"
+import { ErrorMessage } from '~/components/error-message'
+import { ErrorMessageGroup } from '~/components/error-message-group'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
-type Props = ComponentProps<"input"> & {
+type Props = ComponentProps<'input'> & {
   label: string
   errors?: string[]
 }
 
 export const Radio = ({
   label,
-  type = "radio",
+  type = 'radio',
   errors,
   id,
   ...rest
@@ -23,10 +23,10 @@ export const Radio = ({
   return (
     <section className={styles.container}>
       <div className={styles.wrapper}>
-        <input type={type} id={id} className={styles.radio} {...rest} />
+        <input className={styles.radio} id={id} type={type} {...rest} />
         <label
-          htmlFor={id}
           className={clsx(styles.label, hasErrors && styles.labelError)}
+          htmlFor={id}
         >
           {label}
         </label>

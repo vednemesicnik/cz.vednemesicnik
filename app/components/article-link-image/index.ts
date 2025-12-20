@@ -1,1 +1,1 @@
-export { ArticleLinkImage } from "./_component"
+export { ArticleLinkImage } from './_component'

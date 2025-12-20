@@ -1,46 +1,30 @@
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import { prisma } from "~/utils/db.server"
-import { getFormattedPublishDate } from "~/utils/get-formatted-publish-date"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { prisma } from '~/utils/db.server'
+import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { episodeId } = params
 
   const context = await getAuthorPermissionContext(request, {
-    entities: ["podcast_episode"],
     actions: [
-      "view",
-      "update",
-      "delete",
-      "publish",
-      "retract",
-      "archive",
-      "restore",
-      "review",
+      'view',
+      'update',
+      'delete',
+      'publish',
+      'retract',
+      'archive',
+      'restore',
+      'review',
     ],
+    entities: ['podcast_episode'],
   })
 
   const episode = await prisma.podcastEpisode.findUniqueOrThrow({
-    where: { id: episodeId },
     select: {
-      id: true,
-      number: true,
-      title: true,
-      slug: true,
-      description: true,
-      state: true,
-      publishedAt: true,
-      createdAt: true,
-      updatedAt: true,
-      podcast: {
-        select: {
-          id: true,
-          title: true,
-        },
-      },
       author: {
         select: {
           id: true,
@@ -57,11 +41,21 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           id: true,
         },
       },
-      reviews: {
+      createdAt: true,
+      description: true,
+      id: true,
+      number: true,
+      podcast: {
         select: {
           id: true,
-          state: true,
+          title: true,
+        },
+      },
+      publishedAt: true,
+      reviews: {
+        select: {
           createdAt: true,
+          id: true,
           reviewer: {
             select: {
               id: true,
@@ -74,50 +68,56 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               },
             },
           },
+          state: true,
         },
       },
+      slug: true,
+      state: true,
+      title: true,
+      updatedAt: true,
     },
+    where: { id: episodeId },
   })
 
   // Check view permission
   const { hasPermission: canView } = context.can({
-    entity: "podcast_episode",
-    action: "view",
+    action: 'view',
+    entity: 'podcast_episode',
     state: episode.state,
     targetAuthorId: episode.author.id,
   })
 
   if (!canView) {
-    throw new Response("Forbidden", { status: 403 })
+    throw new Response('Forbidden', { status: 403 })
   }
 
   // Check update permission
   const { hasPermission: canUpdate } = context.can({
-    entity: "podcast_episode",
-    action: "update",
+    action: 'update',
+    entity: 'podcast_episode',
     state: episode.state,
     targetAuthorId: episode.author.id,
   })
 
   // Check delete permission
   const { hasPermission: canDelete } = context.can({
-    entity: "podcast_episode",
-    action: "delete",
+    action: 'delete',
+    entity: 'podcast_episode',
     state: episode.state,
     targetAuthorId: episode.author.id,
   })
 
   // Check publish permission (draft → published)
   const { hasPermission: canPublish } = context.can({
-    entity: "podcast_episode",
-    action: "publish",
+    action: 'publish',
+    entity: 'podcast_episode',
     state: episode.state,
     targetAuthorId: episode.author.id,
   })
 
   // Find Coordinator review (level 1)
   const coordinatorReview = episode.reviews.find(
-    (review) => review.reviewer.role.level === 1
+    (review) => review.reviewer.role.level === 1,
   )
 
   // Check if author is not a Coordinator and needs review
@@ -126,32 +126,32 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // Check retract permission (published → draft)
   const { hasPermission: canRetract } = context.can({
-    entity: "podcast_episode",
-    action: "retract",
+    action: 'retract',
+    entity: 'podcast_episode',
     state: episode.state,
     targetAuthorId: episode.author.id,
   })
 
   // Check archive permission (published → archived)
   const { hasPermission: canArchive } = context.can({
-    entity: "podcast_episode",
-    action: "archive",
+    action: 'archive',
+    entity: 'podcast_episode',
     state: episode.state,
     targetAuthorId: episode.author.id,
   })
 
   // Check restore permission (archived → draft)
   const { hasPermission: canRestore } = context.can({
-    entity: "podcast_episode",
-    action: "restore",
+    action: 'restore',
+    entity: 'podcast_episode',
     state: episode.state,
     targetAuthorId: episode.author.id,
   })
 
   // Check review permission
   const { hasPermission: canReview } = context.can({
-    entity: "podcast_episode",
-    action: "review",
+    action: 'review',
+    entity: 'podcast_episode',
     state: episode.state,
     targetAuthorId: episode.author.id,
   })
@@ -165,48 +165,48 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // Check if current user has already reviewed this episode
   const hasReviewed = episode.reviews.some(
-    (review) => review.reviewer.id === context.authorId
+    (review) => review.reviewer.id === context.authorId,
   )
 
   return {
+    canArchive,
+    canDelete,
+    canPublish,
+    canRestore,
+    canRetract,
+    canReview: shouldShowReview,
+    canUpdate,
     episode: {
-      id: episode.id,
-      number: episode.number,
-      title: episode.title,
-      slug: episode.slug,
-      description: episode.description,
-      state: episode.state,
-      publishedAt: getFormattedPublishDate(episode.publishedAt),
-      createdAt: getFormattedPublishDate(episode.createdAt),
-      updatedAt: getFormattedPublishDate(episode.updatedAt),
-      podcast: episode.podcast,
       author: episode.author,
-      hasCover: !!episode.cover,
       coverUrl: episode.cover
-        ? href("/resources/podcast-episode-cover/:episodeId", {
+        ? href('/resources/podcast-episode-cover/:episodeId', {
             episodeId: episode.cover.id,
           })
         : null,
+      createdAt: getFormattedPublishDate(episode.createdAt),
+      description: episode.description,
+      hasCoordinatorReview: !!coordinatorReview,
+      hasCover: !!episode.cover,
+      id: episode.id,
+      number: episode.number,
+      podcast: episode.podcast,
+      publishedAt: getFormattedPublishDate(episode.publishedAt),
       reviews: episode.reviews.map((review) => ({
-        id: review.id,
-        state: review.state,
         createdAt: getFormattedPublishDate(review.createdAt),
+        id: review.id,
         reviewer: {
           id: review.reviewer.id,
           name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
           roleLevel: review.reviewer.role.level,
+          roleName: review.reviewer.role.name,
         },
+        state: review.state,
       })),
-      hasCoordinatorReview: !!coordinatorReview,
+      slug: episode.slug,
+      state: episode.state,
+      title: episode.title,
+      updatedAt: getFormattedPublishDate(episode.updatedAt),
     },
-    canUpdate,
-    canDelete,
-    canPublish,
-    canRetract,
-    canArchive,
-    canRestore,
-    canReview: shouldShowReview,
     hasReviewed,
     needsCoordinatorReview,
   }

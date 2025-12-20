@@ -1,22 +1,20 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
 import {
   AdminTable,
   TableBody,
   TableHeader,
   TableHeaderCell,
-} from "~/components/admin-table"
-import { ItemRow } from "~/routes/administration/podcasts/podcast/episodes/_index/components/item-row"
+} from '~/components/admin-table'
+import { ItemRow } from '~/routes/administration/podcasts/podcast/episodes/_index/components/item-row'
 
-import type { Route } from "./+types/route"
-
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function Route({ loaderData }: Route.ComponentProps) {
   return (
@@ -24,7 +22,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
       <AdminHeadline>Epizody</AdminHeadline>
       {loaderData.canCreate && (
         <AdminLinkButton
-          to={href("/administration/podcasts/:podcastId/episodes/add-episode", {
+          to={href('/administration/podcasts/:podcastId/episodes/add-episode', {
             podcastId: loaderData.podcast.id,
           })}
         >
@@ -40,14 +38,14 @@ export default function Route({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {loaderData.podcast.episodes.map((episode) => (
             <ItemRow
+              canDelete={episode.canDelete}
+              canEdit={episode.canEdit}
+              canView={episode.canView}
+              id={episode.id}
               key={episode.id}
               podcastId={loaderData.podcast.id}
-              id={episode.id}
-              title={episode.title}
               state={episode.state}
-              canView={episode.canView}
-              canEdit={episode.canEdit}
-              canDelete={episode.canDelete}
+              title={episode.title}
             />
           ))}
         </TableBody>

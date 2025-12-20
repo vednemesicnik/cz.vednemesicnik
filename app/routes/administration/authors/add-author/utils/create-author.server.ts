@@ -1,5 +1,5 @@
-import { prisma } from "~/utils/db.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Data = {
   name: string
@@ -11,8 +11,8 @@ export const createAuthor = async ({ name, bio, roleId }: Data) => {
   try {
     const author = await prisma.author.create({
       data: {
-        name,
         bio: bio ?? null,
+        name,
         role: {
           connect: {
             id: roleId,
@@ -26,6 +26,6 @@ export const createAuthor = async ({ name, bio, roleId }: Data) => {
 
     return { authorId: author.id }
   } catch (error) {
-    return throwDbError(error, "Unable to create the author.")
+    return throwDbError(error, 'Unable to create the author.')
   }
 }

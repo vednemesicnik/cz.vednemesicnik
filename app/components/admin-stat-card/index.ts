@@ -1,1 +1,1 @@
-export { AdminStatCard } from "./_component"
+export { AdminStatCard } from './_component'

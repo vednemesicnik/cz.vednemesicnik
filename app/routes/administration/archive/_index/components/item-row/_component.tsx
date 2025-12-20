@@ -1,19 +1,18 @@
-import { useRef } from "react"
-import { href, useFetcher } from "react-router"
-
-import type { ContentState } from "@generated/prisma/enums"
-import { AdminActionButton } from "~/components/admin-action-button"
-import { AdminActionGroup } from "~/components/admin-action-group"
+import type { ContentState } from '@generated/prisma/enums'
+import { useRef } from 'react'
+import { href, useFetcher } from 'react-router'
+import { AdminActionButton } from '~/components/admin-action-button'
+import { AdminActionGroup } from '~/components/admin-action-group'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
-} from "~/components/admin-delete-confirmation-dialog"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminStateBadge } from "~/components/admin-state-badge"
-import { TableCell, TableRow } from "~/components/admin-table"
-import { DeleteIcon } from "~/components/icons/delete-icon"
-import { EditIcon } from "~/components/icons/edit-icon"
-import { VisibilityIcon } from "~/components/icons/visibility-icon"
+} from '~/components/admin-delete-confirmation-dialog'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminStateBadge } from '~/components/admin-state-badge'
+import { TableCell, TableRow } from '~/components/admin-table'
+import { DeleteIcon } from '~/components/icons/delete-icon'
+import { EditIcon } from '~/components/icons/edit-icon'
+import { VisibilityIcon } from '~/components/icons/visibility-icon'
 
 type Props = {
   id: string
@@ -36,10 +35,10 @@ export const ItemRow = ({
   const fetcherKey = `delete-issue-${id}`
 
   const fetcher = useFetcher({ key: fetcherKey })
-  const isDeleting = fetcher.state !== "idle"
+  const isDeleting = fetcher.state !== 'idle'
 
   const { openDialog } = useAdminDeleteConfirmationDialog(dialogRef, {
-    action: href("/administration/archive/:issueId", { issueId: id }),
+    action: href('/administration/archive/:issueId', { issueId: id }),
     key: fetcherKey,
   })
 
@@ -53,10 +52,10 @@ export const ItemRow = ({
         <AdminActionGroup>
           {canView && (
             <AdminLinkButton
-              to={href("/administration/archive/:issueId", {
+              disabled={isDeleting}
+              to={href('/administration/archive/:issueId', {
                 issueId: id,
               })}
-              disabled={isDeleting}
             >
               <VisibilityIcon />
               Zobrazit
@@ -64,10 +63,10 @@ export const ItemRow = ({
           )}
           {canEdit && (
             <AdminLinkButton
-              to={href("/administration/archive/:issueId/edit-issue", {
+              disabled={isDeleting}
+              to={href('/administration/archive/:issueId/edit-issue', {
                 issueId: id,
               })}
-              disabled={isDeleting}
             >
               <EditIcon />
               Upravit
@@ -76,12 +75,12 @@ export const ItemRow = ({
           {canDelete && (
             <>
               <AdminActionButton
-                action={"delete"}
-                onClick={openDialog}
+                action={'delete'}
                 disabled={isDeleting}
+                onClick={openDialog}
               >
                 <DeleteIcon />
-                {isDeleting ? "Mažu..." : "Smazat"}
+                {isDeleting ? 'Mažu...' : 'Smazat'}
               </AdminActionButton>
               <AdminDeleteConfirmationDialog ref={dialogRef} />
             </>

@@ -1,7 +1,7 @@
-import { clsx } from "clsx"
-import type { ReactNode } from "react"
+import { clsx } from 'clsx'
+import type { ReactNode } from 'react'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   title?: string

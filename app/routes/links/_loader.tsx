@@ -1,37 +1,33 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
 export const loader = async () => {
   const latestIssue = await prisma.issue.findFirst({
-    where: {
-      state: "published",
-    },
     orderBy: {
-      releasedAt: "desc",
+      releasedAt: 'desc',
     },
     select: {
-      label: true,
       cover: {
         select: {
           id: true,
         },
       },
+      label: true,
       pdf: {
         select: {
           fileName: true,
         },
       },
     },
+    where: {
+      state: 'published',
+    },
   })
 
   const latestPodcastEpisode = await prisma.podcastEpisode.findFirst({
-    where: {
-      state: "published",
-    },
     orderBy: {
-      publishedAt: "desc",
+      publishedAt: 'desc',
     },
     select: {
-      slug: true,
       cover: {
         select: {
           id: true,
@@ -39,14 +35,18 @@ export const loader = async () => {
       },
       podcast: {
         select: {
-          slug: true,
           cover: {
             select: {
               id: true,
             },
           },
+          slug: true,
         },
       },
+      slug: true,
+    },
+    where: {
+      state: 'published',
     },
   })
 

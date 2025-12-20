@@ -1,1 +1,1 @@
-export { ArrowUpward } from "./_component"
+export { ArrowUpward } from './_component'

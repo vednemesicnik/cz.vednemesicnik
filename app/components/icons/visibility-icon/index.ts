@@ -1,1 +1,1 @@
-export { VisibilityIcon } from "./_component"
+export { VisibilityIcon } from './_component'

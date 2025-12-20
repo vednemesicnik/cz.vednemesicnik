@@ -1,1 +1,1 @@
-export { AuthenticityTokenProvider, useAuthenticityToken } from "./_component"
+export { AuthenticityTokenProvider, useAuthenticityToken } from './_component'

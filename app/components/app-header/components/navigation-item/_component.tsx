@@ -1,8 +1,8 @@
-import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
-import type { ReactNode } from "react"
-import { NavLink } from "react-router"
+import { applyClasses, combineClasses } from '@liborgabrhel/style-utils'
+import type { ReactNode } from 'react'
+import { NavLink } from 'react-router'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
@@ -12,12 +12,12 @@ type Props = {
 export const NavigationItem = ({ children, to }: Props) => (
   <li className={styles.container}>
     <NavLink
-      prefetch={"intent"}
-      viewTransition={true}
-      to={to}
       className={({ isActive }) =>
         combineClasses(styles.link, applyClasses(styles.active).if(isActive))
       }
+      prefetch={'intent'}
+      to={to}
+      viewTransition={true}
     >
       {children}
     </NavLink>

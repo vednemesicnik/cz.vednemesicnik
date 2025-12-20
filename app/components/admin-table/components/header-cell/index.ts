@@ -1,1 +1,1 @@
-export { TableHeaderCell } from "./_component"
+export { TableHeaderCell } from './_component'

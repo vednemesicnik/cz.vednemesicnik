@@ -1,1 +1,1 @@
-export { CheckIcon } from "./_component"
+export { CheckIcon } from './_component'

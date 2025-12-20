@@ -1,1 +1,1 @@
-export { AdminNavigationGrid } from "./_component"
+export { AdminNavigationGrid } from './_component'

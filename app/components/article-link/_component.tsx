@@ -1,8 +1,8 @@
-import { type ReactNode } from "react"
+import type { ReactNode } from 'react'
 
-import { BaseLink } from "~/components/base-link"
+import { BaseLink } from '~/components/base-link'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
@@ -11,7 +11,7 @@ type Props = {
 
 export const ArticleLink = ({ children, to }: Props) => {
   return (
-    <BaseLink to={to} className={styles.link}>
+    <BaseLink className={styles.link} to={to}>
       <article className={styles.article}>{children}</article>
     </BaseLink>
   )

@@ -1,6 +1,6 @@
-import { prisma } from "~/utils/db.server"
-import { getConvertedImageStream } from "~/utils/sharp.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { getConvertedImageStream } from '~/utils/sharp.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
   title: string
@@ -18,26 +18,26 @@ export async function createPodcast({
   authorId,
 }: Args) {
   const convertedCover = await getConvertedImageStream(cover, {
-    width: 1280,
+    format: 'jpeg',
     height: 1280,
     quality: 80,
-    format: "jpeg",
+    width: 1280,
   })
 
   try {
     const podcast = await prisma.podcast.create({
       data: {
-        title,
-        slug,
-        description,
+        authorId: authorId,
         cover: {
           create: {
             altText: `Obálka podcastu ${title}`,
-            contentType: convertedCover.contentType,
             blob: Uint8Array.from(await convertedCover.stream.toBuffer()),
+            contentType: convertedCover.contentType,
           },
         },
-        authorId: authorId,
+        description,
+        slug,
+        title,
       },
     })
 
@@ -45,6 +45,6 @@ export async function createPodcast({
       podcastId: podcast.id,
     }
   } catch (error) {
-    return throwDbError(error, "Unable to create the podcast.")
+    return throwDbError(error, 'Unable to create the podcast.')
   }
 }

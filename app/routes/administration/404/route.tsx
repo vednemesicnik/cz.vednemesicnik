@@ -1,16 +1,16 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { isRouteErrorResponse } from "react-router"
+import { isRouteErrorResponse } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminPage } from "~/components/admin-page"
-import { AdminParagraph } from "~/components/admin-paragraph"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminPage } from '~/components/admin-page'
+import { AdminParagraph } from '~/components/admin-paragraph'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
-export { handle } from "./_handle"
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { handle } from './_handle'
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   if (isRouteErrorResponse(error)) {

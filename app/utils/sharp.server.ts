@@ -1,5 +1,5 @@
-import * as serverSharp from "sharp"
-import type { FormatEnum, Sharp } from "sharp"
+import type { FormatEnum, Sharp } from 'sharp'
+import * as serverSharp from 'sharp'
 
 export const sharp = serverSharp.default
 
@@ -23,7 +23,7 @@ type Options = {
  */
 export const getConvertedImageStream = async (
   image: Uint8Array | File,
-  options: Options
+  options: Options,
 ): Promise<{ stream: Sharp; contentType: string }> => {
   // Convert input to buffer if needed
   const imageBuffer = image instanceof File ? await image.bytes() : image
@@ -38,13 +38,13 @@ export const getConvertedImageStream = async (
   const width = options.width || metadata.width
   const height = options.height || null
   const quality = options.quality || 100
-  const format = options.format || "jpeg"
+  const format = options.format || 'jpeg'
 
   // Create transformation pipeline
   let pipeline = sharpImage.resize({
-    width,
+    fit: height ? 'cover' : undefined,
     height: height || undefined,
-    fit: height ? "cover" : undefined,
+    width,
   })
 
   // Set format and quality
@@ -55,7 +55,7 @@ export const getConvertedImageStream = async (
 
   // Return stream and content type
   return {
-    stream: pipeline,
     contentType,
+    stream: pipeline,
   }
 }

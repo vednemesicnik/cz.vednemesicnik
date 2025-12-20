@@ -1,6 +1,6 @@
-import { BaseLink } from "~/components/base-link"
+import { BaseLink } from '~/components/base-link'
 
-import styles from "./_site-content.module.css"
+import styles from './_site-content.module.css'
 
 export const SiteContent = () => {
   return (
@@ -8,32 +8,32 @@ export const SiteContent = () => {
       <h2 className={styles.title}>Obsah webu</h2>
       <ul className={styles.list}>
         <li className={styles.listItem}>
-          <BaseLink to={"/archive"} className={styles.link}>
+          <BaseLink className={styles.link} to={'/archive'}>
             Archiv
           </BaseLink>
         </li>
         <li className={styles.listItem}>
-          <BaseLink to={"/articles"} className={styles.link}>
+          <BaseLink className={styles.link} to={'/articles'}>
             Články
           </BaseLink>
         </li>
         <li className={styles.listItem}>
-          <BaseLink to={"/podcasts"} className={styles.link}>
+          <BaseLink className={styles.link} to={'/podcasts'}>
             Podcasty
           </BaseLink>
         </li>
         <li>
-          <BaseLink to={"/support"} className={styles.link}>
+          <BaseLink className={styles.link} to={'/support'}>
             Podpora
           </BaseLink>
         </li>
         <li className={styles.listItem}>
-          <BaseLink to={"/editorial-board"} className={styles.link}>
+          <BaseLink className={styles.link} to={'/editorial-board'}>
             Redakce
           </BaseLink>
         </li>
         <li className={styles.listItem}>
-          <BaseLink to={"/organization"} className={styles.link}>
+          <BaseLink className={styles.link} to={'/organization'}>
             Spolek
           </BaseLink>
         </li>
@@ -42,4 +42,4 @@ export const SiteContent = () => {
   )
 }
 
-SiteContent.displayName = "SiteContent"
+SiteContent.displayName = 'SiteContent'

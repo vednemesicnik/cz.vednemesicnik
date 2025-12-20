@@ -1,7 +1,6 @@
-import bcrypt from "bcryptjs"
-
-import type { PrismaClient } from "@generated/prisma/client"
-import { type AuthorRoleName, type UserRoleName } from "@generated/prisma/enums"
+import type { PrismaClient } from '@generated/prisma/client'
+import type { AuthorRoleName, UserRoleName } from '@generated/prisma/enums'
+import bcrypt from 'bcryptjs'
 
 export type UsersData = {
   email: string
@@ -16,8 +15,15 @@ export const createUsers = async (prisma: PrismaClient, data: UsersData) => {
     await prisma.user
       .create({
         data: {
+          author: {
+            create: {
+              name: user.name,
+              role: {
+                connect: { name: user.authorRole },
+              },
+            },
+          },
           email: user.email,
-          username: user.email,
           name: user.name,
           password: {
             create: {
@@ -27,18 +33,11 @@ export const createUsers = async (prisma: PrismaClient, data: UsersData) => {
           role: {
             connect: { name: user.userRole },
           },
-          author: {
-            create: {
-              name: user.name,
-              role: {
-                connect: { name: user.authorRole },
-              },
-            },
-          },
+          username: user.email,
         },
       })
       .catch((error) => {
-        console.error("Error creating a user:", error)
+        console.error('Error creating a user:', error)
         return null
       })
   }

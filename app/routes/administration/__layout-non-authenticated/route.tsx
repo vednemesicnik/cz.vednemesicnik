@@ -1,16 +1,15 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Outlet } from "react-router"
-import { HoneypotProvider } from "remix-utils/honeypot/react"
+import { Outlet } from 'react-router'
+import { HoneypotProvider } from 'remix-utils/honeypot/react'
 
-import { AdminHeader } from "~/components/admin-header"
-import { AdministrationContent } from "~/components/administration-content"
-import { AdministrationFooter } from "~/components/administration-footer"
+import { AdminHeader } from '~/components/admin-header'
+import { AdministrationContent } from '~/components/administration-content'
+import { AdministrationFooter } from '~/components/administration-footer'
+import styles from './_styles.module.css'
+import type { Route } from './+types/route'
 
-import type { Route } from "./+types/route"
-import styles from "./_styles.module.css"
-
-export { loader } from "./_loader"
+export { loader } from './_loader'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (

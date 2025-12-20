@@ -1,11 +1,11 @@
-import { verifyAuthenticationResponse } from "@simplewebauthn/server"
-import { type ActionFunctionArgs, data } from "react-router"
+import { verifyAuthenticationResponse } from '@simplewebauthn/server'
+import { type ActionFunctionArgs, data } from 'react-router'
 
 import {
   getBiometricChallenge,
   getBiometricCookieSession,
-} from "~/utils/biometric.server"
-import { prisma } from "~/utils/db.server"
+} from '~/utils/biometric.server'
+import { prisma } from '~/utils/db.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const body = await request.json()
@@ -14,44 +14,44 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const biometricChallenge = getBiometricChallenge(biometricCookieSession)
 
   const passkey = await prisma.passkey.findUnique({
-    where: { credentialId: body.id },
     select: {
+      credentialCounter: true,
       credentialId: true,
       credentialPublicKey: true,
-      credentialCounter: true,
       credentialTransports: true,
     },
+    where: { credentialId: body.id },
   })
 
   if (passkey === null) {
-    return data({ status: "fail", verified: false }, { status: 400 })
+    return data({ status: 'fail', verified: false }, { status: 400 })
   }
 
   const verifiedAuthenticationResponse = await verifyAuthenticationResponse({
-    response: body,
-    expectedChallenge: biometricChallenge ?? "",
-    expectedOrigin: process.env.RELYING_PARTY_ORIGIN ?? "",
-    expectedRPID: process.env.RELYING_PARTY_ID ?? "",
     credential: {
+      counter: Number(passkey.credentialCounter),
       id: passkey.credentialId,
       publicKey: passkey.credentialPublicKey,
-      counter: Number(passkey.credentialCounter),
       transports: JSON.parse(passkey.credentialTransports),
     },
+    expectedChallenge: biometricChallenge ?? '',
+    expectedOrigin: process.env.RELYING_PARTY_ORIGIN ?? '',
+    expectedRPID: process.env.RELYING_PARTY_ID ?? '',
+    response: body,
   })
 
   if (verifiedAuthenticationResponse.verified) {
     const { authenticationInfo } = verifiedAuthenticationResponse
 
     await prisma.passkey.update({
-      where: { credentialId: authenticationInfo.credentialID },
       data: {
         credentialCounter: authenticationInfo.newCounter,
       },
+      where: { credentialId: authenticationInfo.credentialID },
     })
 
-    return { status: "success", verified: true }
+    return { status: 'success', verified: true }
   }
 
-  return data({ status: "fail", verified: false }, { status: 400 })
+  return data({ status: 'fail', verified: false }, { status: 400 })
 }

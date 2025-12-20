@@ -1,1 +1,1 @@
-export { AdminDetailItem } from "./_component"
+export { AdminDetailItem } from './_component'

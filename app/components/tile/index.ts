@@ -1,1 +1,1 @@
-export { Tile } from "./_component"
+export { Tile } from './_component'

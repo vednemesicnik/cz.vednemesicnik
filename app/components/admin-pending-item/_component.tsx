@@ -1,7 +1,7 @@
-import { clsx } from "clsx"
-import { Link } from "react-router"
+import { clsx } from 'clsx'
+import { Link } from 'react-router'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   to: string
@@ -20,14 +20,14 @@ export const AdminPendingItem = ({
   type,
   className,
 }: Props) => {
-  const formattedDate = new Intl.DateTimeFormat("cs-CZ", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+  const formattedDate = new Intl.DateTimeFormat('cs-CZ', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
   }).format(date)
 
   return (
-    <Link to={to} className={clsx(styles.item, className)}>
+    <Link className={clsx(styles.item, className)} to={to}>
       <div className={styles.header}>
         <span className={styles.type}>{type}</span>
         <span className={styles.date}>{formattedDate}</span>

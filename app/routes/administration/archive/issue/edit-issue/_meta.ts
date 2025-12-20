@@ -1,11 +1,11 @@
-import { getPageTitle } from "~/utils/get-page-title"
+import { getPageTitle } from '~/utils/get-page-title'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = ({ loaderData }) => {
-  const issueLabel = loaderData?.issue?.label ?? "???"
+  const issueLabel = loaderData?.issue?.label ?? '???'
   const title = getPageTitle(
-    `Administrace: Archiv - ${issueLabel} - Upravit číslo`
+    `Administrace: Archiv - ${issueLabel} - Upravit číslo`,
   )
 
   return [{ title }]

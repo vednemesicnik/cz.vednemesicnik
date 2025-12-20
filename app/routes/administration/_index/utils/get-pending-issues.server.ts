@@ -1,5 +1,5 @@
-import type { Prisma } from "@generated/prisma/client"
-import { prisma } from "~/utils/db.server"
+import type { Prisma } from '@generated/prisma/client'
+import { prisma } from '~/utils/db.server'
 
 type GetPendingIssuesOptions = {
   currentAuthorId: string
@@ -10,28 +10,28 @@ export async function getPendingIssues(options: GetPendingIssuesOptions) {
   const { currentAuthorId, currentRoleLevel } = options
 
   const where: Prisma.IssueWhereInput = {
-    state: "draft",
-    authorId: { not: currentAuthorId },
     author:
       currentRoleLevel === 1
         ? undefined
         : { role: { level: { gt: currentRoleLevel } } },
+    authorId: { not: currentAuthorId },
+    state: 'draft',
   }
 
   const [items, count] = await Promise.all([
     prisma.issue.findMany({
-      where,
+      orderBy: { createdAt: 'desc' },
       select: {
+        author: { select: { name: true } },
+        createdAt: true,
         id: true,
         label: true,
-        createdAt: true,
-        author: { select: { name: true } },
       },
-      orderBy: { createdAt: "desc" },
       take: 5,
+      where,
     }),
     prisma.issue.count({ where }),
   ])
 
-  return { items, count }
+  return { count, items }
 }

@@ -1,22 +1,22 @@
-import { clsx } from "clsx"
-import { type ChangeEvent, type ComponentProps, useState } from "react"
+import { clsx } from 'clsx'
+import { type ChangeEvent, type ComponentProps, useState } from 'react'
 
-import { ErrorMessage } from "~/components/error-message"
-import { ErrorMessageGroup } from "~/components/error-message-group"
-import { Hyperlink } from "~/components/hyperlink"
-import { UploadFileIcon } from "~/components/icons/upload-file-icon"
-import { Label } from "~/components/label"
+import { ErrorMessage } from '~/components/error-message'
+import { ErrorMessageGroup } from '~/components/error-message-group'
+import { Hyperlink } from '~/components/hyperlink'
+import { UploadFileIcon } from '~/components/icons/upload-file-icon'
+import { Label } from '~/components/label'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 const MIME_TYPES = {
-  pdf: "application/pdf",
-  image: "image/*",
+  image: 'image/*',
+  pdf: 'application/pdf',
 }
 
-type Props = Omit<ComponentProps<"input">, "accept"> & {
+type Props = Omit<ComponentProps<'input'>, 'accept'> & {
   label: string
-  accept: "pdf" | "image"
+  accept: 'pdf' | 'image'
   errors?: string[]
 }
 
@@ -58,37 +58,37 @@ export const FileInput = ({
       <section className={styles.fileArea}>
         <section className={styles.inputArea}>
           <section
+            aria-hidden={'true'}
             className={clsx(
               styles.inputData,
-              fileName !== null && styles.inputDataSet
+              fileName !== null && styles.inputDataSet,
             )}
-            aria-hidden={"true"}
           >
             <UploadFileIcon className={styles.fileIcon} />
-            <span className={styles.fileName} aria-hidden={"true"}>
-              {fileName ? fileName : "Vyberte soubor"}
+            <span aria-hidden={'true'} className={styles.fileName}>
+              {fileName ? fileName : 'Vyberte soubor'}
             </span>
           </section>
           <input
-            id={id}
-            required={required}
             accept={acceptValue}
-            onChange={handleFileChange}
-            className={styles.input}
-            aria-labelledby={id}
             aria-label={
-              fileName ? `Vybraný soubor: ${fileName}` : "Vyberte soubor"
+              fileName ? `Vybraný soubor: ${fileName}` : 'Vyberte soubor'
             }
+            aria-labelledby={id}
+            className={styles.input}
+            id={id}
+            onChange={handleFileChange}
+            required={required}
             {...rest}
           />
         </section>
         <Hyperlink
-          href={fileUrl ?? ""}
+          aria-hidden={'true'}
           className={clsx(
             styles.previewLink,
-            fileUrl !== null && styles.visible
+            fileUrl !== null && styles.visible,
           )}
-          aria-hidden={"true"}
+          href={fileUrl ?? ''}
         >
           Ukázat nahraný soubor
         </Hyperlink>

@@ -1,19 +1,19 @@
-import { prisma } from "~/utils/db.server"
-import { withAuthorPermission } from "~/utils/permissions/author/actions/with-author-permission.server"
+import { prisma } from '~/utils/db.server'
+import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 
 type Options = {
   id: string
-  target: Parameters<typeof withAuthorPermission>[1]["target"]
+  target: Parameters<typeof withAuthorPermission>[1]['target']
 }
 
 export const archivePodcast = (request: Request, options: Options) =>
   withAuthorPermission(request, {
-    entity: "podcast",
-    action: "archive",
-    target: options.target,
+    action: 'archive',
+    entity: 'podcast',
     execute: () =>
       prisma.podcast.update({
+        data: { state: 'archived' },
         where: { id: options.id },
-        data: { state: "archived" },
       }),
+    target: options.target,
   })

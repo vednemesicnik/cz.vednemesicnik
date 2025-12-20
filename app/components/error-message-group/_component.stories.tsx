@@ -1,19 +1,19 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { ErrorMessage } from "~/components/error-message"
+import { ErrorMessage } from '~/components/error-message'
 
-import { ErrorMessageGroup } from "./_component"
+import { ErrorMessageGroup } from './_component'
 
 const meta: Meta<typeof ErrorMessageGroup> = {
-  title: "Primitives/ErrorMessageGroup",
-  component: ErrorMessageGroup,
-  tags: ["autodocs"],
   argTypes: {
     children: {
       control: false,
-      description: "ErrorMessage components to display in the group",
+      description: 'ErrorMessage components to display in the group',
     },
   },
+  component: ErrorMessageGroup,
+  tags: ['autodocs'],
+  title: 'Primitives/ErrorMessageGroup',
 }
 
 export default meta

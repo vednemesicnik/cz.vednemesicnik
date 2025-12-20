@@ -1,13 +1,13 @@
-import type { RefObject } from "react"
+import type { RefObject } from 'react'
 
-import { AdminButton } from "~/components/admin-button"
-import { AdminDialog } from "~/components/admin-modal"
-import { AdminModalActions } from "~/components/admin-modal-actions"
-import { AdminModalContent } from "~/components/admin-modal-content"
-import { AdminModalDescription } from "~/components/admin-modal-description"
-import { AdminModalTitle } from "~/components/admin-modal-title"
-import { DeleteIcon } from "~/components/icons/delete-icon"
-import { DIALOG_RETURN_VALUE } from "~/config/dialog-config"
+import { AdminButton } from '~/components/admin-button'
+import { AdminDialog } from '~/components/admin-modal'
+import { AdminModalActions } from '~/components/admin-modal-actions'
+import { AdminModalContent } from '~/components/admin-modal-content'
+import { AdminModalDescription } from '~/components/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin-modal-title'
+import { DeleteIcon } from '~/components/icons/delete-icon'
+import { DIALOG_RETURN_VALUE } from '~/config/dialog-config'
 
 type Props = {
   ref: RefObject<HTMLDialogElement | null>
@@ -26,16 +26,16 @@ export const AdminDeleteConfirmationDialog = ({ ref }: Props) => {
         <AdminModalDescription>Tato akce je nevratná.</AdminModalDescription>
         <AdminModalActions>
           <AdminButton
-            type={"button"}
-            variant={"secondary"}
             onClick={handleDecline}
+            type={'button'}
+            variant={'secondary'}
           >
             Zrušit
           </AdminButton>
           <AdminButton
-            type={"button"}
-            variant={"danger"}
             onClick={handleAccept}
+            type={'button'}
+            variant={'danger'}
           >
             <DeleteIcon />
             Smazat

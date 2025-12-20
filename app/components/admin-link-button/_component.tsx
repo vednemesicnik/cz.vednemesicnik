@@ -1,9 +1,9 @@
-import { clsx } from "clsx"
-import type { ComponentProps, MouseEvent } from "react"
+import { clsx } from 'clsx'
+import type { ComponentProps, MouseEvent } from 'react'
 
-import { BaseLink } from "~/components/base-link"
+import { BaseLink } from '~/components/base-link'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = ComponentProps<typeof BaseLink> & {
   disabled?: boolean
@@ -26,8 +26,8 @@ export const AdminLinkButton = ({
 
   return (
     <BaseLink
-      className={clsx(styles.linkButton, className)}
       aria-disabled={disabled}
+      className={clsx(styles.linkButton, className)}
       onClick={handleClick}
       {...rest}
     >

@@ -1,10 +1,10 @@
-import { Divider } from "~/components/divider"
-import { Headline } from "~/components/headline"
-import { Hyperlink } from "~/components/hyperlink"
-import { List } from "~/components/list"
-import { ListItem } from "~/components/list-item"
-import { Page } from "~/components/page"
-import { Paragraph } from "~/components/paragraph"
+import { Divider } from '~/components/divider'
+import { Headline } from '~/components/headline'
+import { Hyperlink } from '~/components/hyperlink'
+import { List } from '~/components/list'
+import { ListItem } from '~/components/list-item'
+import { Page } from '~/components/page'
+import { Paragraph } from '~/components/paragraph'
 
 export default function Route() {
   return (
@@ -29,7 +29,7 @@ export default function Route() {
         a kulturních akcí pro středoškolské studenty (literárních večerů a
         autorských čtení).
       </Paragraph>
-      <Divider variant={"secondary"} />
+      <Divider variant={'secondary'} />
       <Paragraph>Vedneměsíčník vychází za laskavé podpory:</Paragraph>
       <List>
         <ListItem>Literární kavárna Měsíc ve dne</ListItem>
@@ -48,4 +48,4 @@ export default function Route() {
   )
 }
 
-export { meta } from "./_meta"
+export { meta } from './_meta'

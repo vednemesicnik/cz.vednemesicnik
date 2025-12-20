@@ -1,17 +1,17 @@
-import { useRef } from "react"
-import { href } from "react-router"
+import { useRef } from 'react'
+import { href } from 'react-router'
 
-import { AdminActionButton } from "~/components/admin-action-button"
-import { AdminActionGroup } from "~/components/admin-action-group"
+import { AdminActionButton } from '~/components/admin-action-button'
+import { AdminActionGroup } from '~/components/admin-action-group'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
-} from "~/components/admin-delete-confirmation-dialog"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { TableCell, TableRow } from "~/components/admin-table"
-import { DeleteIcon } from "~/components/icons/delete-icon"
-import { EditIcon } from "~/components/icons/edit-icon"
-import { VisibilityIcon } from "~/components/icons/visibility-icon"
+} from '~/components/admin-delete-confirmation-dialog'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { TableCell, TableRow } from '~/components/admin-table'
+import { DeleteIcon } from '~/components/icons/delete-icon'
+import { EditIcon } from '~/components/icons/edit-icon'
+import { VisibilityIcon } from '~/components/icons/visibility-icon'
 
 type Props = {
   id: string
@@ -37,20 +37,20 @@ export const ItemRow = ({
   const dialogRef = useRef<HTMLDialogElement | null>(null)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(dialogRef, {
-    action: href("/administration/users/:userId", { userId: id }),
+    action: href('/administration/users/:userId', { userId: id }),
   })
 
   return (
     <TableRow>
       <TableCell>{email}</TableCell>
       <TableCell>{username}</TableCell>
-      <TableCell>{name ?? "..."}</TableCell>
+      <TableCell>{name ?? '...'}</TableCell>
       <TableCell>{roleName}</TableCell>
       <TableCell>
         <AdminActionGroup>
           {canView && (
             <AdminLinkButton
-              to={href("/administration/users/:userId", { userId: id })}
+              to={href('/administration/users/:userId', { userId: id })}
             >
               <VisibilityIcon />
               Zobrazit
@@ -58,7 +58,7 @@ export const ItemRow = ({
           )}
           {canUpdate && (
             <AdminLinkButton
-              to={href("/administration/users/:userId/edit-user", {
+              to={href('/administration/users/:userId/edit-user', {
                 userId: id,
               })}
             >
@@ -68,7 +68,7 @@ export const ItemRow = ({
           )}
           {canDelete && (
             <>
-              <AdminActionButton action={"delete"} onClick={openDialog}>
+              <AdminActionButton action={'delete'} onClick={openDialog}>
                 <DeleteIcon />
                 Smazat
               </AdminActionButton>

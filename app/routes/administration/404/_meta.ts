@@ -1,9 +1,9 @@
-import { getPageTitle } from "~/utils/get-page-title"
+import { getPageTitle } from '~/utils/get-page-title'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = () => {
-  const title = getPageTitle("Administrace: 404 – Sekce nenalezena")
+  const title = getPageTitle('Administrace: 404 – Sekce nenalezena')
 
   return [{ title }]
 }

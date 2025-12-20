@@ -1,28 +1,28 @@
-import crypto from "crypto"
+import crypto from 'node:crypto'
 
-import { createCookie } from "react-router"
+import { createCookie } from 'react-router'
 
-import { FORM_CONFIG } from "~/config/form-config"
+import { FORM_CONFIG } from '~/config/form-config'
 
-const SEPARATOR = "."
-const ENCODING = "base64url"
+const SEPARATOR = '.'
+const ENCODING = 'base64url'
 const DEFAULT_BYTES = 32
 
-const environment = process.env.NODE_ENV ?? "development"
-const sessionSecrets = process.env.SESSION_SECRET?.split(",")
-const csrfSecret = sessionSecrets?.[0] ?? ""
+const environment = process.env.NODE_ENV ?? 'development'
+const sessionSecrets = process.env.SESSION_SECRET?.split(',')
+const csrfSecret = sessionSecrets?.[0] ?? ''
 
-const cookie = createCookie("vdm_csrf", {
+const cookie = createCookie('vdm_csrf', {
   httpOnly: true,
-  path: "/",
-  sameSite: "lax",
-  secure: environment === "production",
-  secrets: sessionSecrets,
   maxAge: 60 * 60 * 24, // 1 day
+  path: '/',
+  sameSite: 'lax',
+  secrets: sessionSecrets,
+  secure: environment === 'production',
 })
 
 function sign(token: string) {
-  return crypto.createHmac("sha256", csrfSecret).update(token).digest(ENCODING)
+  return crypto.createHmac('sha256', csrfSecret).update(token).digest(ENCODING)
 }
 
 function generate(bytes = DEFAULT_BYTES) {
@@ -39,10 +39,10 @@ function verifySignature(token: string) {
 }
 
 export const commitCSRF = async (request: Request, bytes = DEFAULT_BYTES) => {
-  const existingCsrfToken = await cookie.parse(request.headers.get("cookie"))
+  const existingCsrfToken = await cookie.parse(request.headers.get('cookie'))
 
   const csrfToken =
-    typeof existingCsrfToken === "string" ? existingCsrfToken : generate(bytes)
+    typeof existingCsrfToken === 'string' ? existingCsrfToken : generate(bytes)
 
   const csrfCookie = existingCsrfToken
     ? null
@@ -52,18 +52,18 @@ export const commitCSRF = async (request: Request, bytes = DEFAULT_BYTES) => {
 }
 
 export type CSRFErrorCode =
-  | "missing_token_in_cookie"
-  | "invalid_token_in_cookie"
-  | "tampered_token_in_cookie"
-  | "missing_token_in_body"
-  | "mismatched_token"
+  | 'missing_token_in_cookie'
+  | 'invalid_token_in_cookie'
+  | 'tampered_token_in_cookie'
+  | 'missing_token_in_body'
+  | 'mismatched_token'
 
 export class CSRFError extends Error {
   code: CSRFErrorCode
   constructor(code: CSRFErrorCode, message: string) {
     super(message)
     this.code = code
-    this.name = "CSRFError"
+    this.name = 'CSRFError'
   }
 }
 
@@ -72,39 +72,39 @@ async function validate(formData: FormData, headers: Headers) {
 
   if (formData instanceof Request && formData.bodyUsed) {
     throw new Error(
-      "The body of the request was read before calling CSRF#verify. Ensure you clone it before reading it."
+      'The body of the request was read before calling CSRF#verify. Ensure you clone it before reading it.',
     )
   }
 
-  const csrfCookie = await cookie.parse(headers.get("cookie"))
+  const csrfCookie = await cookie.parse(headers.get('cookie'))
 
   // if the session doesn't have a csrf token, throw an error
   if (csrfCookie === null) {
     throw new CSRFError(
-      "missing_token_in_cookie",
-      "Can't find CSRF token in cookie."
+      'missing_token_in_cookie',
+      "Can't find CSRF token in cookie.",
     )
   }
 
-  if (typeof csrfCookie !== "string") {
+  if (typeof csrfCookie !== 'string') {
     throw new CSRFError(
-      "invalid_token_in_cookie",
-      "Invalid CSRF token in cookie."
+      'invalid_token_in_cookie',
+      'Invalid CSRF token in cookie.',
     )
   }
 
   if (!verifySignature(csrfCookie)) {
     throw new CSRFError(
-      "tampered_token_in_cookie",
-      "Tampered CSRF token in cookie."
+      'tampered_token_in_cookie',
+      'Tampered CSRF token in cookie.',
     )
   }
 
   // if the body doesn't have a csrf token, throw an error
   if (!formData.get(csrfFormDataKey)) {
     throw new CSRFError(
-      "missing_token_in_body",
-      "Can't find CSRF token in body."
+      'missing_token_in_body',
+      "Can't find CSRF token in body.",
     )
   }
 
@@ -112,8 +112,8 @@ async function validate(formData: FormData, headers: Headers) {
   // error
   if (formData.get(csrfFormDataKey) !== csrfCookie) {
     throw new CSRFError(
-      "mismatched_token",
-      "Can't verify CSRF token authenticity."
+      'mismatched_token',
+      "Can't verify CSRF token authenticity.",
     )
   }
 }
@@ -123,7 +123,7 @@ export const validateCSRF = async (formData: FormData, headers: Headers) => {
     await validate(formData, headers)
   } catch (error) {
     if (error instanceof CSRFError) {
-      throw new Response("Invalid CSRF token", { status: 403 })
+      throw new Response('Invalid CSRF token', { status: 403 })
     }
 
     throw error

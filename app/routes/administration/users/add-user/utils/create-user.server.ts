@@ -1,7 +1,7 @@
-import bcrypt from "bcryptjs"
+import bcrypt from 'bcryptjs'
 
-import { prisma } from "~/utils/db.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 type DataBase = {
   email: string
@@ -11,11 +11,11 @@ type DataBase = {
 }
 
 type DataWithNewAuthor = DataBase & {
-  authorMode: "new"
+  authorMode: 'new'
 }
 
 type DataWithExistingAuthor = DataBase & {
-  authorMode: "existing"
+  authorMode: 'existing'
   existingAuthorId: string
 }
 
@@ -26,13 +26,13 @@ export const createUser = async (data: Data) => {
     const user = await prisma.$transaction(async (prisma) => {
       let authorId: string
 
-      if (data.authorMode === "new") {
+      if (data.authorMode === 'new') {
         const author = await prisma.author.create({
           data: {
             name: data.name,
             role: {
               connect: {
-                name: "contributor",
+                name: 'contributor',
               },
             },
           },
@@ -44,8 +44,12 @@ export const createUser = async (data: Data) => {
 
       return prisma.user.create({
         data: {
+          author: {
+            connect: {
+              id: authorId,
+            },
+          },
           email: data.email,
-          username: data.email,
           name: data.name,
           password: {
             create: {
@@ -57,11 +61,7 @@ export const createUser = async (data: Data) => {
               id: data.roleId,
             },
           },
-          author: {
-            connect: {
-              id: authorId,
-            },
-          },
+          username: data.email,
         },
         select: {
           id: true,
@@ -71,6 +71,6 @@ export const createUser = async (data: Data) => {
 
     return { userId: user.id }
   } catch (error) {
-    return throwDbError(error, "Unable to create the user.")
+    return throwDbError(error, 'Unable to create the user.')
   }
 }

@@ -5,23 +5,22 @@ import {
   getInputProps,
   getSelectProps,
   useForm,
-} from "@conform-to/react"
-import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { href, useNavigation } from "react-router"
+} from '@conform-to/react'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { href, useNavigation } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset"
-import { Form } from "~/components/form"
-import { FormActions } from "~/components/form-actions"
-import { Input } from "~/components/input"
-import { Select } from "~/components/select"
-
-import type { Route } from "./+types/route"
-import { getSchema } from "./_schema"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
+import { Fieldset } from '~/components/fieldset'
+import { Form } from '~/components/form'
+import { FormActions } from '~/components/form-actions'
+import { Input } from '~/components/input'
+import { Select } from '~/components/select'
+import { getSchema } from './_schema'
+import type { Route } from './+types/route'
 
 export default function RouteComponent({
   loaderData,
@@ -32,31 +31,31 @@ export default function RouteComponent({
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
-    id: "edit-position",
     constraint: getZodConstraint(
-      getSchema(loaderData.editorialBoardPositionsCount)
+      getSchema(loaderData.editorialBoardPositionsCount),
     ),
+    defaultValue: {
+      authorId: loaderData.editorialBoardPosition.authorId,
+      currentOrder: loaderData.editorialBoardPosition.order,
+      id: loaderData.editorialBoardPosition.id,
+      key: loaderData.editorialBoardPosition.key,
+      newOrder: loaderData.editorialBoardPosition.order,
+      pluralLabel: loaderData.editorialBoardPosition.pluralLabel,
+    },
+    id: 'edit-position',
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) =>
       parseWithZod(formData, {
         schema: getSchema(loaderData.editorialBoardPositionsCount),
       }),
-    defaultValue: {
-      id: loaderData.editorialBoardPosition.id,
-      key: loaderData.editorialBoardPosition.key,
-      pluralLabel: loaderData.editorialBoardPosition.pluralLabel,
-      currentOrder: loaderData.editorialBoardPosition.order,
-      newOrder: loaderData.editorialBoardPosition.order,
-      authorId: loaderData.editorialBoardPosition.authorId,
-    },
     shouldDirtyConsider: (field) => {
-      return !field.startsWith("csrf")
+      return !field.startsWith('csrf')
     },
-    shouldValidate: "onSubmit",
-    shouldRevalidate: "onBlur",
+    shouldRevalidate: 'onBlur',
+    shouldValidate: 'onSubmit',
   })
 
-  const isLoadingOrSubmitting = state !== "idle"
+  const isLoadingOrSubmitting = state !== 'idle'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -64,35 +63,35 @@ export default function RouteComponent({
       <AdminHeadline>Upravit pozici</AdminHeadline>
 
       <Form method="post" {...getFormProps(form)}>
-        <input {...getInputProps(fields.id, { type: "hidden" })} />
-        <input {...getInputProps(fields.currentOrder, { type: "hidden" })} />
+        <input {...getInputProps(fields.id, { type: 'hidden' })} />
+        <input {...getInputProps(fields.currentOrder, { type: 'hidden' })} />
 
-        <Fieldset legend={"Detaily pozice"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily pozice'}>
           <Input
-            label={"Unikátní klíč v angličtině"}
-            {...getInputProps(fields.key, { type: "text" })}
-            placeholder={"editor"}
+            label={'Unikátní klíč v angličtině'}
+            {...getInputProps(fields.key, { type: 'text' })}
             errors={fields.key.errors}
+            placeholder={'editor'}
           />
 
           <Input
-            label={"Označení v množném čísle"}
-            {...getInputProps(fields.pluralLabel, { type: "text" })}
-            placeholder={"redaktorky a redaktoři"}
+            label={'Označení v množném čísle'}
+            {...getInputProps(fields.pluralLabel, { type: 'text' })}
             errors={fields.pluralLabel.errors}
+            placeholder={'redaktorky a redaktoři'}
           />
 
           <Input
-            label={"Pořadí"}
-            {...getInputProps(fields.newOrder, { type: "number" })}
-            placeholder={"2"}
+            label={'Pořadí'}
+            {...getInputProps(fields.newOrder, { type: 'number' })}
             errors={fields.newOrder.errors}
+            placeholder={'2'}
           />
         </Fieldset>
 
-        <Fieldset legend={"Autor"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Autor'}>
           <Select
-            label={"Autor"}
+            label={'Autor'}
             {...getSelectProps(fields.authorId)}
             errors={fields.authorId.errors}
           >
@@ -107,11 +106,11 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
             Uložit
           </Button>
           <AdminLinkButton
-            to={href("/administration/editorial-board/positions/:positionId", {
+            to={href('/administration/editorial-board/positions/:positionId', {
               positionId,
             })}
           >
@@ -123,7 +122,7 @@ export default function RouteComponent({
   )
 }
 
-export { handle } from "./_handle"
-export { action } from "./_action"
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { action } from './_action'
+export { handle } from './_handle'
+export { loader } from './_loader'
+export { meta } from './_meta'

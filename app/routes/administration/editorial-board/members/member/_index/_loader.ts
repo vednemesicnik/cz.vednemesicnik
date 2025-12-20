@@ -1,35 +1,28 @@
-import { prisma } from "~/utils/db.server"
-import { getFormattedPublishDate } from "~/utils/get-formatted-publish-date"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { prisma } from '~/utils/db.server'
+import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { memberId } = params
 
   const context = await getAuthorPermissionContext(request, {
-    entities: ["editorial_board_member"],
     actions: [
-      "view",
-      "update",
-      "delete",
-      "publish",
-      "retract",
-      "archive",
-      "restore",
-      "review",
+      'view',
+      'update',
+      'delete',
+      'publish',
+      'retract',
+      'archive',
+      'restore',
+      'review',
     ],
+    entities: ['editorial_board_member'],
   })
 
   const member = await prisma.editorialBoardMember.findUniqueOrThrow({
-    where: { id: memberId },
     select: {
-      id: true,
-      fullName: true,
-      state: true,
-      publishedAt: true,
-      createdAt: true,
-      updatedAt: true,
       author: {
         select: {
           id: true,
@@ -41,6 +34,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           },
         },
       },
+      createdAt: true,
+      fullName: true,
+      id: true,
       positions: {
         select: {
           id: true,
@@ -48,11 +44,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           pluralLabel: true,
         },
       },
+      publishedAt: true,
       reviews: {
         select: {
-          id: true,
-          state: true,
           createdAt: true,
+          id: true,
           reviewer: {
             select: {
               id: true,
@@ -65,50 +61,54 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               },
             },
           },
+          state: true,
         },
       },
+      state: true,
+      updatedAt: true,
     },
+    where: { id: memberId },
   })
 
   // Check view permission
   const { hasPermission: canView } = context.can({
-    entity: "editorial_board_member",
-    action: "view",
+    action: 'view',
+    entity: 'editorial_board_member',
     state: member.state,
     targetAuthorId: member.author.id,
   })
 
   if (!canView) {
-    throw new Response("Forbidden", { status: 403 })
+    throw new Response('Forbidden', { status: 403 })
   }
 
   // Check update permission
   const { hasPermission: canUpdate } = context.can({
-    entity: "editorial_board_member",
-    action: "update",
+    action: 'update',
+    entity: 'editorial_board_member',
     state: member.state,
     targetAuthorId: member.author.id,
   })
 
   // Check delete permission
   const { hasPermission: canDelete } = context.can({
-    entity: "editorial_board_member",
-    action: "delete",
+    action: 'delete',
+    entity: 'editorial_board_member',
     state: member.state,
     targetAuthorId: member.author.id,
   })
 
   // Check publish permission (draft → published)
   const { hasPermission: canPublish } = context.can({
-    entity: "editorial_board_member",
-    action: "publish",
+    action: 'publish',
+    entity: 'editorial_board_member',
     state: member.state,
     targetAuthorId: member.author.id,
   })
 
   // Find Coordinator review (level 1)
   const coordinatorReview = member.reviews.find(
-    (review) => review.reviewer.role.level === 1
+    (review) => review.reviewer.role.level === 1,
   )
 
   // Check if author is not a Coordinator and needs review
@@ -117,32 +117,32 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // Check retract permission (published → draft)
   const { hasPermission: canRetract } = context.can({
-    entity: "editorial_board_member",
-    action: "retract",
+    action: 'retract',
+    entity: 'editorial_board_member',
     state: member.state,
     targetAuthorId: member.author.id,
   })
 
   // Check archive permission (published → archived)
   const { hasPermission: canArchive } = context.can({
-    entity: "editorial_board_member",
-    action: "archive",
+    action: 'archive',
+    entity: 'editorial_board_member',
     state: member.state,
     targetAuthorId: member.author.id,
   })
 
   // Check restore permission (archived → draft)
   const { hasPermission: canRestore } = context.can({
-    entity: "editorial_board_member",
-    action: "restore",
+    action: 'restore',
+    entity: 'editorial_board_member',
     state: member.state,
     targetAuthorId: member.author.id,
   })
 
   // Check review permission
   const { hasPermission: canReview } = context.can({
-    entity: "editorial_board_member",
-    action: "review",
+    action: 'review',
+    entity: 'editorial_board_member',
     state: member.state,
     targetAuthorId: member.author.id,
   })
@@ -156,40 +156,40 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // Check if current user has already reviewed this member
   const hasReviewed = member.reviews.some(
-    (review) => review.reviewer.id === context.authorId
+    (review) => review.reviewer.id === context.authorId,
   )
 
   return {
+    canArchive,
+    canDelete,
+    canPublish,
+    canRestore,
+    canRetract,
+    canReview: shouldShowReview,
+    canUpdate,
+    hasReviewed,
     member: {
-      id: member.id,
-      fullName: member.fullName,
-      state: member.state,
-      publishedAt: getFormattedPublishDate(member.publishedAt),
-      createdAt: getFormattedPublishDate(member.createdAt),
-      updatedAt: getFormattedPublishDate(member.updatedAt),
       author: member.author,
+      createdAt: getFormattedPublishDate(member.createdAt),
+      fullName: member.fullName,
+      hasCoordinatorReview: !!coordinatorReview,
+      id: member.id,
       positions: member.positions,
+      publishedAt: getFormattedPublishDate(member.publishedAt),
       reviews: member.reviews.map((review) => ({
-        id: review.id,
-        state: review.state,
         createdAt: getFormattedPublishDate(review.createdAt),
+        id: review.id,
         reviewer: {
           id: review.reviewer.id,
           name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
           roleLevel: review.reviewer.role.level,
+          roleName: review.reviewer.role.name,
         },
+        state: review.state,
       })),
-      hasCoordinatorReview: !!coordinatorReview,
+      state: member.state,
+      updatedAt: getFormattedPublishDate(member.updatedAt),
     },
-    canUpdate,
-    canDelete,
-    canPublish,
-    canRetract,
-    canArchive,
-    canRestore,
-    canReview: shouldShowReview,
-    hasReviewed,
     needsCoordinatorReview,
   }
 }

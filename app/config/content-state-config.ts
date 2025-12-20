@@ -1,4 +1,4 @@
-import { type ContentState } from "@generated/prisma/enums"
+import type { ContentState } from '@generated/prisma/enums'
 
 type ContentStateConfig = {
   map: Record<ContentState, ContentState>
@@ -8,14 +8,14 @@ type ContentStateConfig = {
 
 export const contentStateConfig: ContentStateConfig = {
   map: {
-    draft: "draft",
-    published: "published",
-    archived: "archived",
+    archived: 'archived',
+    draft: 'draft',
+    published: 'published',
   },
   selectMap: {
-    draft: "Rozpracováno",
-    published: "Publikováno",
-    archived: "Archivováno",
+    archived: 'Archivováno',
+    draft: 'Rozpracováno',
+    published: 'Publikováno',
   },
-  states: ["draft", "published", "archived"],
+  states: ['draft', 'published', 'archived'],
 }

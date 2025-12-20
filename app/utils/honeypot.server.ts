@@ -1,8 +1,8 @@
-import { Honeypot, SpamError } from "remix-utils/honeypot/server"
+import { Honeypot, SpamError } from 'remix-utils/honeypot/server'
 
 export const honeypot = new Honeypot({
-  validFromFieldName: undefined,
   encryptionSeed: process.env.HONEYPOT_SECRET,
+  validFromFieldName: undefined,
 })
 
 export const checkHoneypot = (formData: FormData) => {
@@ -10,7 +10,7 @@ export const checkHoneypot = (formData: FormData) => {
     honeypot.check(formData)
   } catch (error) {
     if (error instanceof SpamError) {
-      throw new Response("Invalid form.", { status: 400 })
+      throw new Response('Invalid form.', { status: 400 })
     }
 
     throw error

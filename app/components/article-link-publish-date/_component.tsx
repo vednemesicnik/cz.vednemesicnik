@@ -1,6 +1,6 @@
-import { getFormattedPublishDate } from "~/utils/get-formatted-publish-date"
+import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   date: Date | null
@@ -9,7 +9,7 @@ type Props = {
 export const ArticleLinkPublishDate = ({ date }: Props) => {
   return (
     <p className={styles.paragraph}>
-      {date === null ? "..." : getFormattedPublishDate(date)}
+      {date === null ? '...' : getFormattedPublishDate(date)}
     </p>
   )
 }

@@ -1,4 +1,4 @@
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 export const AdministrationFooter = () => {
   return (

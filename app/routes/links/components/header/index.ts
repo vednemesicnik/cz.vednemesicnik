@@ -1,1 +1,1 @@
-export { Header } from "./_component"
+export { Header } from './_component'

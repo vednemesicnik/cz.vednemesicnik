@@ -1,23 +1,23 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
 export const loader = async () => {
   const editorialBoardMemberPositions =
     await prisma.editorialBoardPosition.findMany({
       orderBy: {
-        order: "asc",
+        order: 'asc',
       },
       select: {
         id: true,
-        pluralLabel: true,
         members: {
           orderBy: {
-            createdAt: "asc",
+            createdAt: 'asc',
           },
           select: {
-            id: true,
             fullName: true,
+            id: true,
           },
         },
+        pluralLabel: true,
       },
     })
 

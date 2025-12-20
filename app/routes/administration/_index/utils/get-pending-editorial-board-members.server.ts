@@ -1,5 +1,5 @@
-import type { Prisma } from "@generated/prisma/client"
-import { prisma } from "~/utils/db.server"
+import type { Prisma } from '@generated/prisma/client'
+import { prisma } from '~/utils/db.server'
 
 type GetPendingEditorialBoardMembersOptions = {
   currentAuthorId: string
@@ -7,33 +7,33 @@ type GetPendingEditorialBoardMembersOptions = {
 }
 
 export async function getPendingEditorialBoardMembers(
-  options: GetPendingEditorialBoardMembersOptions
+  options: GetPendingEditorialBoardMembersOptions,
 ) {
   const { currentAuthorId, currentRoleLevel } = options
 
   const where: Prisma.EditorialBoardMemberWhereInput = {
-    state: "draft",
-    authorId: { not: currentAuthorId },
     author:
       currentRoleLevel === 1
         ? undefined
         : { role: { level: { gt: currentRoleLevel } } },
+    authorId: { not: currentAuthorId },
+    state: 'draft',
   }
 
   const [items, count] = await Promise.all([
     prisma.editorialBoardMember.findMany({
-      where,
+      orderBy: { createdAt: 'desc' },
       select: {
-        id: true,
-        fullName: true,
-        createdAt: true,
         author: { select: { name: true } },
+        createdAt: true,
+        fullName: true,
+        id: true,
       },
-      orderBy: { createdAt: "desc" },
       take: 5,
+      where,
     }),
     prisma.editorialBoardMember.count({ where }),
   ])
 
-  return { items, count }
+  return { count, items }
 }

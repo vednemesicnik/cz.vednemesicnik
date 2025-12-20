@@ -1,92 +1,92 @@
-import { prisma } from "~/utils/db.server"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { prisma } from '~/utils/db.server'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
-    entities: ["podcast_episode"],
-    actions: ["view", "create", "update", "delete"],
+    actions: ['view', 'create', 'update', 'delete'],
+    entities: ['podcast_episode'],
   })
 
   const { podcastId } = params
 
   // Check view permissions for each state
   const draftPerms = context.can({
-    entity: "podcast_episode",
-    action: "view",
-    state: "draft",
+    action: 'view',
+    entity: 'podcast_episode',
+    state: 'draft',
   })
   const publishedPerms = context.can({
-    entity: "podcast_episode",
-    action: "view",
-    state: "published",
+    action: 'view',
+    entity: 'podcast_episode',
+    state: 'published',
   })
   const archivedPerms = context.can({
-    entity: "podcast_episode",
-    action: "view",
-    state: "archived",
+    action: 'view',
+    entity: 'podcast_episode',
+    state: 'archived',
   })
 
   const podcast = await prisma.podcast.findUniqueOrThrow({
-    where: { id: podcastId },
     select: {
-      id: true,
-      title: true,
       episodes: {
+        orderBy: { publishedAt: 'desc' },
+        select: {
+          authorId: true,
+          id: true,
+          publishedAt: true,
+          state: true,
+          title: true,
+        },
         where: {
           OR: [
             {
-              state: "draft",
+              state: 'draft',
               ...(draftPerms.hasOwn && !draftPerms.hasAny
                 ? { authorId: context.authorId }
                 : {}),
             },
             {
-              state: "published",
+              state: 'published',
               ...(publishedPerms.hasOwn && !publishedPerms.hasAny
                 ? { authorId: context.authorId }
                 : {}),
             },
             {
-              state: "archived",
+              state: 'archived',
               ...(archivedPerms.hasOwn && !archivedPerms.hasAny
                 ? { authorId: context.authorId }
                 : {}),
             },
           ],
         },
-        select: {
-          id: true,
-          title: true,
-          publishedAt: true,
-          state: true,
-          authorId: true,
-        },
-        orderBy: { publishedAt: "desc" },
       },
+      id: true,
+      title: true,
     },
+    where: { id: podcastId },
   })
 
   // Compute permissions for each episode
   const episodes = podcast.episodes.map((episode) => {
     return {
       ...episode,
-      canView: context.can({
-        entity: "podcast_episode",
-        action: "view",
+      canDelete: context.can({
+        action: 'delete',
+        entity: 'podcast_episode',
         state: episode.state,
         targetAuthorId: episode.authorId,
       }).hasPermission,
       canEdit: context.can({
-        entity: "podcast_episode",
-        action: "update",
+        action: 'update',
+        entity: 'podcast_episode',
         state: episode.state,
         targetAuthorId: episode.authorId,
       }).hasPermission,
-      canDelete: context.can({
-        entity: "podcast_episode",
-        action: "delete",
+      canView: context.can({
+        action: 'view',
+        entity: 'podcast_episode',
         state: episode.state,
         targetAuthorId: episode.authorId,
       }).hasPermission,
@@ -94,15 +94,15 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   })
 
   return {
+    canCreate: context.can({
+      action: 'create',
+      entity: 'podcast_episode',
+      state: 'draft',
+      targetAuthorId: context.authorId,
+    }).hasPermission,
     podcast: {
       ...podcast,
       episodes,
     },
-    canCreate: context.can({
-      entity: "podcast_episode",
-      action: "create",
-      state: "draft",
-      targetAuthorId: context.authorId,
-    }).hasPermission,
   }
 }

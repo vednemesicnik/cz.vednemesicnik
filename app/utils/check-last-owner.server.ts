@@ -1,6 +1,6 @@
-import { invariantResponse } from "@epic-web/invariant"
+import { invariantResponse } from '@epic-web/invariant'
 
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
 /**
  * Checks if deleting a user would remove the last Owner from the system.
@@ -14,7 +14,6 @@ import { prisma } from "~/utils/db.server"
  */
 export async function checkLastOwner(userId: string): Promise<void> {
   const targetUser = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
     select: {
       role: {
         select: {
@@ -22,17 +21,18 @@ export async function checkLastOwner(userId: string): Promise<void> {
         },
       },
     },
+    where: { id: userId },
   })
 
   // Only check if the target user is an Owner
-  if (targetUser.role.name === "owner") {
+  if (targetUser.role.name === 'owner') {
     const ownerCount = await prisma.user.count({
-      where: { role: { name: "owner" } },
+      where: { role: { name: 'owner' } },
     })
 
     invariantResponse(
       ownerCount > 1,
-      "Nelze smazat jediného Ownera v systému. Systém musí mít alespoň jednoho Ownera."
+      'Nelze smazat jediného Ownera v systému. Systém musí mít alespoň jednoho Ownera.',
     )
   }
 }

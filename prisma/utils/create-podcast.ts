@@ -1,8 +1,8 @@
-import type { PrismaClient } from "@generated/prisma/client"
-import { type ContentState } from "@generated/prisma/enums"
-import { users } from "~~/data/users"
+import type { PrismaClient } from '@generated/prisma/client'
+import type { ContentState } from '@generated/prisma/enums'
+import { users } from '~~/data/users'
 
-import { getPodcastCover } from "./get-podcast-cover"
+import { getPodcastCover } from './get-podcast-cover'
 
 export type PodcastData = {
   slug: string
@@ -32,44 +32,18 @@ export type PodcastData = {
 
 export const createPodcast = async (
   prisma: PrismaClient,
-  data: PodcastData
+  data: PodcastData,
 ) => {
   const user = await prisma.user.findUniqueOrThrow({
-    where: { email: users[0].email },
     select: { authorId: true },
+    where: { email: users[0].email },
   })
 
   await prisma.podcast
     .create({
       data: {
-        slug: data.slug,
-        title: data.title,
-        description: data.description,
-        publishedAt: data.publishedAt,
-        state: data.state,
-        episodes: {
-          create: data.episodes.map((episode) => ({
-            number: episode.number,
-            slug: episode.slug,
-            title: episode.title,
-            description: episode.description,
-            publishedAt: episode.publishedAt,
-            state: episode.state,
-            links: {
-              create: episode.links.map((link) => ({
-                label: link.label,
-                url: link.url,
-                publishedAt: link.publishedAt,
-                state: link.state,
-                author: {
-                  connect: { id: user.authorId },
-                },
-              })),
-            },
-            author: {
-              connect: { id: user.authorId },
-            },
-          })),
+        author: {
+          connect: { id: user.authorId },
         },
         cover: data.cover
           ? {
@@ -79,13 +53,39 @@ export const createPodcast = async (
               }),
             }
           : undefined,
-        author: {
-          connect: { id: user.authorId },
+        description: data.description,
+        episodes: {
+          create: data.episodes.map((episode) => ({
+            author: {
+              connect: { id: user.authorId },
+            },
+            description: episode.description,
+            links: {
+              create: episode.links.map((link) => ({
+                author: {
+                  connect: { id: user.authorId },
+                },
+                label: link.label,
+                publishedAt: link.publishedAt,
+                state: link.state,
+                url: link.url,
+              })),
+            },
+            number: episode.number,
+            publishedAt: episode.publishedAt,
+            slug: episode.slug,
+            state: episode.state,
+            title: episode.title,
+          })),
         },
+        publishedAt: data.publishedAt,
+        slug: data.slug,
+        state: data.state,
+        title: data.title,
       },
     })
     .catch((error) => {
-      console.error("Error creating podcast:", error)
+      console.error('Error creating podcast:', error)
       return null
     })
 }

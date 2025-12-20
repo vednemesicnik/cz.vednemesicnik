@@ -1,11 +1,12 @@
-import { isRouteErrorResponse } from "react-router"
+import { isRouteErrorResponse } from 'react-router'
 
-import { Headline } from "~/components/headline"
-import { Page } from "~/components/page"
-import { Paragraph } from "~/components/paragraph"
+import { Headline } from '~/components/headline'
+import { Page } from '~/components/page'
+import { Paragraph } from '~/components/paragraph'
 
-import type { Route } from "./+types/route"
-export { loader } from "./_loader"
+import type { Route } from './+types/route'
+
+export { loader } from './_loader'
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   if (isRouteErrorResponse(error)) {

@@ -1,6 +1,6 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
-import type { UserPermissionContext } from "../context/get-user-permission-context.server"
+import type { UserPermissionContext } from '../context/get-user-permission-context.server'
 
 type GetAssignableRolesOptions = {
   /** User ID of the user being edited (for edit context only) */
@@ -25,7 +25,7 @@ type GetAssignableRolesOptions = {
  */
 export async function getAssignableRoles(
   context: UserPermissionContext,
-  options: GetAssignableRolesOptions = {}
+  options: GetAssignableRolesOptions = {},
 ) {
   const { targetUserId } = options
 
@@ -33,43 +33,43 @@ export async function getAssignableRoles(
   if (targetUserId !== undefined) {
     // Fetch the owner user to check if target is the owner
     const ownerUser = await prisma.user.findFirst({
-      where: {
-        role: { name: "owner" },
-      },
       select: { id: true },
+      where: {
+        role: { name: 'owner' },
+      },
     })
 
     if (ownerUser && targetUserId === ownerUser.id) {
       // Target is the owner - return only Owner role
       return prisma.userRole.findMany({
-        where: { name: "owner" },
         select: {
           id: true,
-          name: true,
           level: true,
+          name: true,
         },
+        where: { name: 'owner' },
       })
     }
   }
 
   // Determine level comparison based on current user's role
-  const isContextUserOwner = context.roleName === "owner"
+  const isContextUserOwner = context.roleName === 'owner'
 
   // Owner uses gt (greater than) to exclude owner role from assignable roles
   // Non-owners use gte (greater than or equal) to include their own role level
   return prisma.userRole.findMany({
+    orderBy: {
+      level: 'asc',
+    },
+    select: {
+      id: true,
+      level: true,
+      name: true,
+    },
     where: {
       level: isContextUserOwner
         ? { gt: context.roleLevel }
         : { gte: context.roleLevel },
-    },
-    select: {
-      id: true,
-      name: true,
-      level: true,
-    },
-    orderBy: {
-      level: "asc",
     },
   })
 }

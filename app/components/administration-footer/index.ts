@@ -1,1 +1,1 @@
-export { AdministrationFooter } from "./_component"
+export { AdministrationFooter } from './_component'

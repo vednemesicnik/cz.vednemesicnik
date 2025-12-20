@@ -1,8 +1,8 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react'
 
-import { ArrowDropDownIcon } from "~/components/icons/arrow-drop-down-icon"
+import { ArrowDropDownIcon } from '~/components/icons/arrow-drop-down-icon'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
@@ -13,11 +13,11 @@ type Props = {
 export const Toggle = ({ children, isOpen, onClick }: Props) => {
   return (
     <button
-      type="button"
-      className={styles.trigger}
-      onClick={onClick}
       aria-expanded={isOpen}
       aria-haspopup="true"
+      className={styles.trigger}
+      onClick={onClick}
+      type="button"
     >
       <span className={styles.userName}>{children}</span>
       <ArrowDropDownIcon className={styles.icon} />

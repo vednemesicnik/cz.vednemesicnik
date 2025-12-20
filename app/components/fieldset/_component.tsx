@@ -1,8 +1,8 @@
-import { type ComponentProps, type ReactNode } from "react"
+import type { ComponentProps, ReactNode } from 'react'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
-type Props = ComponentProps<"fieldset"> & {
+type Props = ComponentProps<'fieldset'> & {
   legend: string
   children: ReactNode
 }

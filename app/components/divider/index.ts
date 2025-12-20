@@ -1,1 +1,1 @@
-export { Divider } from "./_component"
+export { Divider } from './_component'

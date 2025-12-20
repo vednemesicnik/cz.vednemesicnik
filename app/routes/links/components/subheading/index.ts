@@ -1,1 +1,1 @@
-export { Subheading } from "./_component"
+export { Subheading } from './_component'

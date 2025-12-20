@@ -6,31 +6,29 @@ import {
   getSelectProps,
   getTextareaProps,
   useForm,
-} from "@conform-to/react"
-import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { useEffect, useState } from "react"
-import { useNavigation } from "react-router"
+} from '@conform-to/react'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { useEffect, useState } from 'react'
+import { useNavigation } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset"
-import { Form } from "~/components/form"
-import { FormActions } from "~/components/form-actions"
-import { Input } from "~/components/input"
-import { Select } from "~/components/select"
-import { TextArea } from "~/components/text-area"
-import { slugify } from "~/utils/slugify"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
+import { Fieldset } from '~/components/fieldset'
+import { Form } from '~/components/form'
+import { FormActions } from '~/components/form-actions'
+import { Input } from '~/components/input'
+import { Select } from '~/components/select'
+import { TextArea } from '~/components/text-area'
+import { slugify } from '~/utils/slugify'
+import { schema } from './_schema'
 
-import type { Route } from "./+types/route"
-import { schema } from "./_schema"
-
-export { handle } from "./_handle"
-export { action } from "./_action"
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { action } from './_action'
+export { handle } from './_handle'
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function Route({
   loaderData,
@@ -39,87 +37,87 @@ export default function Route({
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
-    id: "add-episode",
     constraint: getZodConstraint(schema),
+    defaultValue: {
+      authorId: loaderData.selfAuthorId,
+      description: '',
+      podcastId: loaderData.podcast.id,
+    },
+    id: 'add-episode',
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
-    defaultValue: {
-      description: "",
-      podcastId: loaderData.podcast.id,
-      authorId: loaderData.selfAuthorId,
-    },
     shouldDirtyConsider: (field) => {
-      return !field.startsWith("csrf")
+      return !field.startsWith('csrf')
     },
-    shouldValidate: "onSubmit",
-    shouldRevalidate: "onBlur",
+    shouldRevalidate: 'onBlur',
+    shouldValidate: 'onSubmit',
   })
 
-  const [title, setTitle] = useState("")
-  const [slug, setSlug] = useState("")
+  const [title, setTitle] = useState('')
+  const [slug, setSlug] = useState('')
   const [isSlugFocused, setIsSlugFocused] = useState(false)
 
   useEffect(() => {
     if (!isSlugFocused) {
-      setSlug(slugify(title ?? ""))
+      setSlug(slugify(title ?? ''))
     }
   }, [title, isSlugFocused])
 
-  const isLoadingOrSubmitting = state !== "idle"
+  const isLoadingOrSubmitting = state !== 'idle'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
     <AdminPage>
       <AdminHeadline>Přidat epizodu</AdminHeadline>
 
-      <Form method={"post"} {...getFormProps(form)} errors={form.errors}>
-        <Fieldset legend={"Detaily"} disabled={isLoadingOrSubmitting}>
+      <Form method={'post'} {...getFormProps(form)} errors={form.errors}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
           <Input
-            label={"Číslo"}
-            placeholder={"Číslo epizody"}
             errors={fields.number.errors}
-            {...getInputProps(fields.number, { type: "number" })}
+            label={'Číslo'}
+            placeholder={'Číslo epizody'}
+            {...getInputProps(fields.number, { type: 'number' })}
           />
 
           <Input
-            label={"Název"}
-            placeholder={"Název epizody"}
-            onChange={(event) => setTitle(event.target.value)}
-            value={title}
             errors={fields.title.errors}
-            {...getInputProps(fields.title, { type: "text" })}
+            label={'Název'}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder={'Název epizody'}
+            value={title}
+            {...getInputProps(fields.title, { type: 'text' })}
           />
 
           <Input
-            label={"Slug"}
-            placeholder={"nazev-epizody"}
+            errors={fields.slug.errors}
+            label={'Slug'}
             onChange={(event) => setSlug(slugify(event.target.value))}
             onFocus={() => setIsSlugFocused(true)}
+            placeholder={'nazev-epizody'}
             value={slug}
-            errors={fields.slug.errors}
-            {...getInputProps(fields.slug, { type: "text" })}
+            {...getInputProps(fields.slug, { type: 'text' })}
           />
 
           <TextArea
-            label={"Popis"}
-            placeholder={"Popis epizody"}
             errors={fields.description.errors}
+            label={'Popis'}
+            placeholder={'Popis epizody'}
             {...getTextareaProps(fields.description)}
           />
         </Fieldset>
 
         <input
-          {...getInputProps(fields.podcastId, { type: "hidden" })}
+          {...getInputProps(fields.podcastId, { type: 'hidden' })}
           defaultValue={fields.podcastId.initialValue}
         />
 
         <Fieldset
-          legend={"Informace o autorovi"}
           disabled={isLoadingOrSubmitting}
+          legend={'Informace o autorovi'}
         >
           <Select
-            label={"Autor"}
             errors={fields.authorId.errors}
+            label={'Autor'}
             {...getSelectProps(fields.authorId)}
           >
             {loaderData.authors.map((author) => (
@@ -133,7 +131,7 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
             Přidat
           </Button>
           <AdminLinkButton

@@ -1,19 +1,18 @@
-import { useRef } from "react"
-import { href } from "react-router"
-
-import type { ContentState } from "@generated/prisma/enums"
-import { AdminActionButton } from "~/components/admin-action-button"
-import { AdminActionGroup } from "~/components/admin-action-group"
+import type { ContentState } from '@generated/prisma/enums'
+import { useRef } from 'react'
+import { href } from 'react-router'
+import { AdminActionButton } from '~/components/admin-action-button'
+import { AdminActionGroup } from '~/components/admin-action-group'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
-} from "~/components/admin-delete-confirmation-dialog"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminStateBadge } from "~/components/admin-state-badge"
-import { TableCell, TableRow } from "~/components/admin-table"
-import { DeleteIcon } from "~/components/icons/delete-icon"
-import { EditIcon } from "~/components/icons/edit-icon"
-import { VisibilityIcon } from "~/components/icons/visibility-icon"
+} from '~/components/admin-delete-confirmation-dialog'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminStateBadge } from '~/components/admin-state-badge'
+import { TableCell, TableRow } from '~/components/admin-table'
+import { DeleteIcon } from '~/components/icons/delete-icon'
+import { EditIcon } from '~/components/icons/edit-icon'
+import { VisibilityIcon } from '~/components/icons/visibility-icon'
 
 type Props = {
   id: string
@@ -37,7 +36,7 @@ export const ItemRow = ({
   const dialogRef = useRef<HTMLDialogElement | null>(null)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(dialogRef, {
-    action: href("/administration/editorial-board/members/:memberId", {
+    action: href('/administration/editorial-board/members/:memberId', {
       memberId: id,
     }),
   })
@@ -53,7 +52,7 @@ export const ItemRow = ({
         <AdminActionGroup>
           {canView && (
             <AdminLinkButton
-              to={href("/administration/editorial-board/members/:memberId", {
+              to={href('/administration/editorial-board/members/:memberId', {
                 memberId: id,
               })}
             >
@@ -64,10 +63,10 @@ export const ItemRow = ({
           {canEdit && (
             <AdminLinkButton
               to={href(
-                "/administration/editorial-board/members/:memberId/edit-member",
+                '/administration/editorial-board/members/:memberId/edit-member',
                 {
                   memberId: id,
-                }
+                },
               )}
             >
               <EditIcon />
@@ -76,7 +75,7 @@ export const ItemRow = ({
           )}
           {canDelete && (
             <>
-              <AdminActionButton action={"delete"} onClick={openDialog}>
+              <AdminActionButton action={'delete'} onClick={openDialog}>
                 <DeleteIcon />
                 Smazat
               </AdminActionButton>

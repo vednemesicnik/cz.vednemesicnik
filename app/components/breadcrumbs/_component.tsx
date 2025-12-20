@@ -1,7 +1,7 @@
-import type { Breadcrumb } from "~/types/breadcrumb"
+import type { Breadcrumb } from '~/types/breadcrumb'
 
-import styles from "./_styles.module.css"
-import { BreadcrumbLink } from "./components/breadcrumb-link"
+import styles from './_styles.module.css'
+import { BreadcrumbLink } from './components/breadcrumb-link'
 
 type Props = {
   items: Breadcrumb[]
@@ -62,7 +62,7 @@ export const Breadcrumbs = ({ items }: Props) => {
           const hasSeparator = !isLastItem
 
           return (
-            <li key={index} className={styles.listItem}>
+            <li className={styles.listItem} key={index}>
               <BreadcrumbLink to={breadcrumb.path}>
                 {breadcrumb.label}
               </BreadcrumbLink>

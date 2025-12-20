@@ -1,1 +1,1 @@
-export { GraphicLink } from "./_component"
+export { GraphicLink } from './_component'

@@ -1,1 +1,1 @@
-export { NavigationItem } from "./_component"
+export { NavigationItem } from './_component'

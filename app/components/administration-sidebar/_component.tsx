@@ -1,5 +1,5 @@
-import styles from "./_styles.module.css"
-import { SidebarLink } from "./components/sidebar-link"
+import styles from './_styles.module.css'
+import { SidebarLink } from './components/sidebar-link'
 
 export type NavigationItem = {
   to: string
@@ -20,8 +20,8 @@ export const AdministrationSidebar = ({ navigationItems }: Props) => {
       <nav className={styles.nav}>
         <ul className={styles.list}>
           {visibleItems.map((item) => (
-            <li key={item.to} className={styles.item}>
-              <SidebarLink to={item.to} end={item.end}>
+            <li className={styles.item} key={item.to}>
+              <SidebarLink end={item.end} to={item.to}>
                 {item.label}
               </SidebarLink>
             </li>

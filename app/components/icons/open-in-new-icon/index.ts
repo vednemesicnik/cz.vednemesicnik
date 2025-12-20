@@ -1,1 +1,1 @@
-export { OpenInNewIcon } from "./_component"
+export { OpenInNewIcon } from './_component'

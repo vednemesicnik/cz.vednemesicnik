@@ -1,1 +1,1 @@
-export { MailHyperlink } from "./_component"
+export { MailHyperlink } from './_component'

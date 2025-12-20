@@ -1,1 +1,1 @@
-export { ArticleLinkFooter } from "./_component"
+export { ArticleLinkFooter } from './_component'

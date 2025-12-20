@@ -1,1 +1,1 @@
-export { BiometricModal } from "./_component"
+export { BiometricModal } from './_component'

@@ -1,1 +1,1 @@
-export { AdminDialog } from "./_component"
+export { AdminDialog } from './_component'

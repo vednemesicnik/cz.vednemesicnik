@@ -1,6 +1,6 @@
-import { BaseLink } from "~/components/base-link"
+import { BaseLink } from '~/components/base-link'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   to: string
@@ -10,10 +10,10 @@ type Props = {
 export const SimpleLink = ({ children, to }: Props) => {
   return (
     <BaseLink
-      to={to}
+      aria-label={children}
       className={styles.linkButton}
       reloadDocument={true}
-      aria-label={children}
+      to={to}
     >
       {children}
     </BaseLink>

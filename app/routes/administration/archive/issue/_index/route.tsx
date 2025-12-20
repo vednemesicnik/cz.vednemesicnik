@@ -1,40 +1,40 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef } from "react"
-import { href, useFetcher } from "react-router"
+import { Activity, useRef } from 'react'
+import { href, useFetcher } from 'react-router'
 
-import { AdminActionButton } from "~/components/admin-action-button"
-import { AdminActionGroup } from "~/components/admin-action-group"
+import { AdminActionButton } from '~/components/admin-action-button'
+import { AdminActionGroup } from '~/components/admin-action-group'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
-} from "~/components/admin-delete-confirmation-dialog"
-import { AdminDetailItem } from "~/components/admin-detail-item"
-import { AdminDetailList } from "~/components/admin-detail-list"
-import { AdminDetailSection } from "~/components/admin-detail-section"
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AdminStateBadge } from "~/components/admin-state-badge"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Hyperlink } from "~/components/hyperlink"
-import { ArchiveIcon } from "~/components/icons/archive-icon"
-import { ArrowUpward } from "~/components/icons/arrow-upward"
-import { CheckIcon } from "~/components/icons/check-icon"
-import { DeleteIcon } from "~/components/icons/delete-icon"
-import { EditIcon } from "~/components/icons/edit-icon"
-import { RefreshIcon } from "~/components/icons/refresh-icon"
-import { UndoIcon } from "~/components/icons/undo-icon"
-import { FORM_CONFIG } from "~/config/form-config"
+} from '~/components/admin-delete-confirmation-dialog'
+import { AdminDetailItem } from '~/components/admin-detail-item'
+import { AdminDetailList } from '~/components/admin-detail-list'
+import { AdminDetailSection } from '~/components/admin-detail-section'
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AdminStateBadge } from '~/components/admin-state-badge'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Hyperlink } from '~/components/hyperlink'
+import { ArchiveIcon } from '~/components/icons/archive-icon'
+import { ArrowUpward } from '~/components/icons/arrow-upward'
+import { CheckIcon } from '~/components/icons/check-icon'
+import { DeleteIcon } from '~/components/icons/delete-icon'
+import { EditIcon } from '~/components/icons/edit-icon'
+import { RefreshIcon } from '~/components/icons/refresh-icon'
+import { UndoIcon } from '~/components/icons/undo-icon'
+import { FORM_CONFIG } from '~/config/form-config'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
 
-export { action } from "./_action"
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { action } from './_action'
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function RouteComponent({
   loaderData,
@@ -58,10 +58,10 @@ export default function RouteComponent({
   const fetcher = useFetcher({ key: fetcherKey })
   const { Form } = fetcher
 
-  const isSubmitting = fetcher.state !== "idle"
+  const isSubmitting = fetcher.state !== 'idle'
 
   const submittingIntent =
-    fetcher.state !== "idle" && fetcher.formData
+    fetcher.state !== 'idle' && fetcher.formData
       ? fetcher.formData.get(INTENT_NAME)
       : null
 
@@ -70,10 +70,10 @@ export default function RouteComponent({
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
     {
-      action: href("/administration/archive/:issueId", { issueId }),
-      withRedirect: true,
+      action: href('/administration/archive/:issueId', { issueId }),
       key: fetcherKey,
-    }
+      withRedirect: true,
+    },
   )
 
   return (
@@ -83,10 +83,10 @@ export default function RouteComponent({
       <AdminActionGroup>
         {canUpdate && (
           <AdminLinkButton
-            to={href("/administration/archive/:issueId/edit-issue", {
+            disabled={isSubmitting}
+            to={href('/administration/archive/:issueId/edit-issue', {
               issueId,
             })}
-            disabled={isSubmitting}
           >
             <EditIcon />
             Upravit
@@ -96,16 +96,16 @@ export default function RouteComponent({
           <Form method="post">
             <AuthenticityTokenInput />
             <AdminActionButton
-              type={"submit"}
-              action={"review"}
+              action={'review'}
               disabled={isSubmitting}
               name={INTENT_NAME}
+              type={'submit'}
               value={INTENT_VALUE.review}
             >
               <CheckIcon />
               {submittingIntent === INTENT_VALUE.review
-                ? "Schvaluji..."
-                : "Schválit"}
+                ? 'Schvaluji...'
+                : 'Schválit'}
             </AdminActionButton>
           </Form>
         )}
@@ -113,21 +113,21 @@ export default function RouteComponent({
           <Form method="post">
             <AuthenticityTokenInput />
             <AdminActionButton
-              type={"submit"}
-              action={"publish"}
+              action={'publish'}
               disabled={needsCoordinatorReview || isSubmitting}
+              name={INTENT_NAME}
               title={
                 needsCoordinatorReview
-                  ? "Nelze publikovat bez schválení koordinátora"
+                  ? 'Nelze publikovat bez schválení koordinátora'
                   : undefined
               }
-              name={INTENT_NAME}
+              type={'submit'}
               value={INTENT_VALUE.publish}
             >
               <ArrowUpward />
               {submittingIntent === INTENT_VALUE.publish
-                ? "Zveřejňuji..."
-                : "Zveřejnit"}
+                ? 'Zveřejňuji...'
+                : 'Zveřejnit'}
             </AdminActionButton>
           </Form>
         )}
@@ -135,16 +135,16 @@ export default function RouteComponent({
           <Form method="post">
             <AuthenticityTokenInput />
             <AdminActionButton
-              type={"submit"}
-              action={"retract"}
+              action={'retract'}
               disabled={isSubmitting}
               name={INTENT_NAME}
+              type={'submit'}
               value={INTENT_VALUE.retract}
             >
               <UndoIcon />
               {submittingIntent === INTENT_VALUE.retract
-                ? "Stahuji..."
-                : "Stáhnout z publikace"}
+                ? 'Stahuji...'
+                : 'Stáhnout z publikace'}
             </AdminActionButton>
           </Form>
         )}
@@ -152,16 +152,16 @@ export default function RouteComponent({
           <Form method="post">
             <AuthenticityTokenInput />
             <AdminActionButton
-              type={"submit"}
-              action={"archive"}
+              action={'archive'}
               disabled={isSubmitting}
               name={INTENT_NAME}
+              type={'submit'}
               value={INTENT_VALUE.archive}
             >
               <ArchiveIcon />
               {submittingIntent === INTENT_VALUE.archive
-                ? "Archivuji..."
-                : "Archivovat"}
+                ? 'Archivuji...'
+                : 'Archivovat'}
             </AdminActionButton>
           </Form>
         )}
@@ -169,27 +169,27 @@ export default function RouteComponent({
           <Form method="post">
             <AuthenticityTokenInput />
             <AdminActionButton
-              type={"submit"}
-              action={"restore"}
+              action={'restore'}
               disabled={isSubmitting}
               name={INTENT_NAME}
+              type={'submit'}
               value={INTENT_VALUE.restore}
             >
               <RefreshIcon />
               {submittingIntent === INTENT_VALUE.restore
-                ? "Obnovuji..."
-                : "Obnovit"}
+                ? 'Obnovuji...'
+                : 'Obnovit'}
             </AdminActionButton>
           </Form>
         )}
         {canDelete && (
           <AdminActionButton
             action="delete"
-            onClick={openDialog}
             disabled={isSubmitting}
+            onClick={openDialog}
           >
             <DeleteIcon />
-            {submittingIntent === INTENT_VALUE.delete ? "Mažu..." : "Smazat"}
+            {submittingIntent === INTENT_VALUE.delete ? 'Mažu...' : 'Smazat'}
           </AdminActionButton>
         )}
       </AdminActionGroup>
@@ -218,14 +218,14 @@ export default function RouteComponent({
             {issue.hasCover && issue.coverUrl ? (
               <Hyperlink href={issue.coverUrl}>Zobrazit obálku</Hyperlink>
             ) : (
-              "Žádná obálka"
+              'Žádná obálka'
             )}
           </AdminDetailItem>
           <AdminDetailItem label="PDF">
             {issue.pdfUrl ? (
               <Hyperlink href={issue.pdfUrl}>Zobrazit PDF</Hyperlink>
             ) : (
-              "Žádné PDF"
+              'Žádné PDF'
             )}
           </AdminDetailItem>
         </AdminDetailList>
@@ -242,18 +242,18 @@ export default function RouteComponent({
 
       <AdminDetailSection title="Schválení">
         <AdminDetailList>
-          <Activity mode={issue.reviews.length > 0 ? "visible" : "hidden"}>
+          <Activity mode={issue.reviews.length > 0 ? 'visible' : 'hidden'}>
             {issue.reviews.map((review) => (
               <AdminDetailItem
                 key={review.id}
-                label={`${review.reviewer.name} (${review.reviewer.roleName === "coordinator" ? "Koordinátor" : "Tvůrce"})`}
+                label={`${review.reviewer.name} (${review.reviewer.roleName === 'coordinator' ? 'Koordinátor' : 'Tvůrce'})`}
               >
                 {review.createdAt}
               </AdminDetailItem>
             ))}
           </Activity>
           <AdminDetailItem label="Schváleno koordinátorem">
-            {issue.hasCoordinatorReview ? "Ano" : "Ne"}
+            {issue.hasCoordinatorReview ? 'Ano' : 'Ne'}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>

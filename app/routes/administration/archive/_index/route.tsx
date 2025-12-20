@@ -1,29 +1,29 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
 import {
   AdminTable,
   TableBody,
   TableHeader,
   TableHeaderCell,
-} from "~/components/admin-table"
-import { ItemRow } from "~/routes/administration/archive/_index/components/item-row"
+} from '~/components/admin-table'
+import { ItemRow } from '~/routes/administration/archive/_index/components/item-row'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       <AdminHeadline>Archiv</AdminHeadline>
       {loaderData.canCreate && (
-        <AdminLinkButton to={href("/administration/archive/add-issue")}>
+        <AdminLinkButton to={href('/administration/archive/add-issue')}>
           Přidat číslo
         </AdminLinkButton>
       )}
@@ -36,13 +36,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {loaderData.issues.map((issue) => (
             <ItemRow
-              key={issue.id}
+              canDelete={issue.canDelete}
+              canEdit={issue.canEdit}
+              canView={issue.canView}
               id={issue.id}
+              key={issue.id}
               label={issue.label}
               state={issue.state}
-              canView={issue.canView}
-              canEdit={issue.canEdit}
-              canDelete={issue.canDelete}
             />
           ))}
         </TableBody>

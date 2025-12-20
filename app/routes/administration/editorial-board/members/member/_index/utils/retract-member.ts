@@ -1,25 +1,25 @@
-import { prisma } from "~/utils/db.server"
-import { withAuthorPermission } from "~/utils/permissions/author/actions/with-author-permission.server"
+import { prisma } from '~/utils/db.server'
+import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 
 type Options = {
   id: string
-  target: Parameters<typeof withAuthorPermission>[1]["target"]
+  target: Parameters<typeof withAuthorPermission>[1]['target']
 }
 
 export const retractMember = (request: Request, options: Options) =>
   withAuthorPermission(request, {
-    entity: "editorial_board_member",
-    action: "retract",
-    target: options.target,
+    action: 'retract',
+    entity: 'editorial_board_member',
     execute: () =>
       prisma.editorialBoardMember.update({
-        where: { id: options.id },
         data: {
-          state: "draft",
           publishedAt: null,
           reviews: {
             deleteMany: {}, // Delete all reviews for this member
           },
+          state: 'draft',
         },
+        where: { id: options.id },
       }),
+    target: options.target,
   })

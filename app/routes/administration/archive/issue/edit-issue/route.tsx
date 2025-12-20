@@ -5,26 +5,24 @@ import {
   getInputProps,
   getSelectProps,
   useForm,
-} from "@conform-to/react"
-import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { href, useNavigation } from "react-router"
+} from '@conform-to/react'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { href, useNavigation } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset"
-import { FileInput } from "~/components/file-input"
-import { Form } from "~/components/form"
-import { FormActions } from "~/components/form-actions"
-import { Input } from "~/components/input"
-import { Select } from "~/components/select"
-import { getFormattedDateString } from "~/utils/get-formatted-date-string"
-import { getIssueOrdinalNumber } from "~/utils/get-issue-ordinal-number"
-
-import type { Route } from "./+types/route"
-import { schema } from "./_schema"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
+import { Fieldset } from '~/components/fieldset'
+import { FileInput } from '~/components/file-input'
+import { Form } from '~/components/form'
+import { FormActions } from '~/components/form-actions'
+import { Input } from '~/components/input'
+import { Select } from '~/components/select'
+import { getFormattedDateString } from '~/utils/get-formatted-date-string'
+import { getIssueOrdinalNumber } from '~/utils/get-issue-ordinal-number'
+import { schema } from './_schema'
 
 export default function Route({
   loaderData,
@@ -34,23 +32,23 @@ export default function Route({
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
-    id: "edit-archived-issue-form",
     constraint: getZodConstraint(schema),
-    lastResult: actionData?.submissionResult,
-    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
+      authorId: issue.author.id,
+      coverId: issue.cover?.id,
       id: issue.id,
       ordinalNumber: getIssueOrdinalNumber(issue.label),
-      releasedAt: getFormattedDateString(issue.releasedAt),
-      coverId: issue.cover?.id,
       pdfId: issue.pdf?.id,
-      authorId: issue.author.id,
+      releasedAt: getFormattedDateString(issue.releasedAt),
     },
+    id: 'edit-archived-issue-form',
+    lastResult: actionData?.submissionResult,
+    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldDirtyConsider: (field) => {
-      return !field.startsWith("csrf")
+      return !field.startsWith('csrf')
     },
-    shouldValidate: "onSubmit",
-    shouldRevalidate: "onBlur",
+    shouldRevalidate: 'onBlur',
+    shouldValidate: 'onSubmit',
   })
 
   const handleFileChange = (name: string, dirty: boolean) => () => {
@@ -59,7 +57,7 @@ export default function Route({
     }
   }
 
-  const isLoadingOrSubmitting = state !== "idle"
+  const isLoadingOrSubmitting = state !== 'idle'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -67,55 +65,55 @@ export default function Route({
       <AdminHeadline>Upravit číslo ({issue.label})</AdminHeadline>
       <Form
         {...getFormProps(form)}
-        method={"post"}
-        encType={"multipart/form-data"}
+        encType={'multipart/form-data'}
         errors={form.errors}
+        method={'post'}
       >
-        <input {...getInputProps(fields.id, { type: "hidden" })} />
+        <input {...getInputProps(fields.id, { type: 'hidden' })} />
 
         <Fieldset
-          legend={"Základní informace"}
           disabled={isLoadingOrSubmitting}
+          legend={'Základní informace'}
         >
           <Input
-            label={"Pořadové číslo"}
-            {...getInputProps(fields.ordinalNumber, { type: "number" })}
-            step={1}
+            label={'Pořadové číslo'}
+            {...getInputProps(fields.ordinalNumber, { type: 'number' })}
             errors={fields.ordinalNumber.errors}
+            step={1}
           />
           <Input
-            label={"Datum vydání"}
-            {...getInputProps(fields.releasedAt, { type: "date" })}
+            label={'Datum vydání'}
+            {...getInputProps(fields.releasedAt, { type: 'date' })}
             errors={fields.releasedAt.errors}
           />
         </Fieldset>
 
-        <Fieldset legend={"Soubory"} disabled={isLoadingOrSubmitting}>
-          <input {...getInputProps(fields.coverId, { type: "hidden" })} />
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Soubory'}>
+          <input {...getInputProps(fields.coverId, { type: 'hidden' })} />
           <FileInput
-            label={"Obálka"}
-            accept={"image"}
+            accept={'image'}
             errors={fields.cover.errors}
+            label={'Obálka'}
             onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
-            {...getInputProps(fields.cover, { type: "file" })}
+            {...getInputProps(fields.cover, { type: 'file' })}
           />
-          <input {...getInputProps(fields.pdfId, { type: "hidden" })} />
+          <input {...getInputProps(fields.pdfId, { type: 'hidden' })} />
           <FileInput
-            label={"PDF"}
-            accept={"pdf"}
+            accept={'pdf'}
             errors={fields.pdf.errors}
+            label={'PDF'}
             onChange={handleFileChange(fields.pdf.name, fields.pdf.dirty)}
-            {...getInputProps(fields.pdf, { type: "file" })}
+            {...getInputProps(fields.pdf, { type: 'file' })}
           />
         </Fieldset>
 
         <Fieldset
-          legend={"Informace o autorovi"}
           disabled={isLoadingOrSubmitting}
+          legend={'Informace o autorovi'}
         >
           <Select
-            label={"Autor"}
             errors={fields.authorId.errors}
+            label={'Autor'}
             {...getSelectProps(fields.authorId)}
           >
             {loaderData.authors.map((author) => {
@@ -131,11 +129,11 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
             Upravit
           </Button>
           <AdminLinkButton
-            to={href("/administration/archive/:issueId", { issueId: issue.id })}
+            to={href('/administration/archive/:issueId', { issueId: issue.id })}
           >
             Zrušit
           </AdminLinkButton>
@@ -145,7 +143,7 @@ export default function Route({
   )
 }
 
-export { handle } from "./_handle"
-export { meta } from "./_meta"
-export { loader } from "./_loader"
-export { action } from "./_action"
+export { action } from './_action'
+export { handle } from './_handle'
+export { loader } from './_loader'
+export { meta } from './_meta'

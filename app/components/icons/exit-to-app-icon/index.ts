@@ -1,1 +1,1 @@
-export { ExitToAppIcon } from "./_component"
+export { ExitToAppIcon } from './_component'

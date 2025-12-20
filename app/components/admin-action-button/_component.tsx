@@ -1,15 +1,14 @@
-import { clsx } from "clsx"
-import type { ComponentProps } from "react"
+import type { AuthorPermissionAction } from '@generated/prisma/enums'
+import { clsx } from 'clsx'
+import type { ComponentProps } from 'react'
+import { BaseButton } from '~/components/base-button'
 
-import type { AuthorPermissionAction } from "@generated/prisma/enums"
-import { BaseButton } from "~/components/base-button"
+import styles from './_styles.module.css'
 
-import styles from "./_styles.module.css"
-
-type Props = ComponentProps<"button"> & {
+type Props = ComponentProps<'button'> & {
   action: keyof Pick<
     typeof AuthorPermissionAction,
-    "publish" | "retract" | "archive" | "restore" | "delete" | "review"
+    'publish' | 'retract' | 'archive' | 'restore' | 'delete' | 'review'
   >
 }
 
@@ -21,13 +20,13 @@ export const AdminActionButton = ({
 }: Props) => (
   <BaseButton
     className={clsx(
-      action === "publish" && styles.publish,
-      action === "retract" && styles.retract,
-      action === "archive" && styles.archive,
-      action === "restore" && styles.restore,
-      action === "delete" && styles.delete,
-      action === "review" && styles.review,
-      className
+      action === 'publish' && styles.publish,
+      action === 'retract' && styles.retract,
+      action === 'archive' && styles.archive,
+      action === 'restore' && styles.restore,
+      action === 'delete' && styles.delete,
+      action === 'review' && styles.review,
+      className,
     )}
     {...rest}
   >

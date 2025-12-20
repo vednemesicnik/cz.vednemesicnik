@@ -1,13 +1,13 @@
-import { clsx } from "clsx"
-import type { ComponentProps } from "react"
+import { clsx } from 'clsx'
+import type { ComponentProps } from 'react'
 
-import { ErrorMessage } from "~/components/error-message"
-import { ErrorMessageGroup } from "~/components/error-message-group"
-import { Label } from "~/components/label"
+import { ErrorMessage } from '~/components/error-message'
+import { ErrorMessageGroup } from '~/components/error-message-group'
+import { Label } from '~/components/label'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
-type Props = ComponentProps<"textarea"> & {
+type Props = ComponentProps<'textarea'> & {
   label: string
   errors?: string[]
 }
@@ -21,8 +21,8 @@ export const TextArea = ({ label, errors, id, required, ...rest }: Props) => {
         {label}
       </Label>
       <textarea
-        id={id}
         className={clsx(styles.textarea, hasErrors && styles.textareaError)}
+        id={id}
         required={required}
         rows={10}
         {...rest}

@@ -1,62 +1,62 @@
-import { prisma } from "~/utils/db.server"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { prisma } from '~/utils/db.server'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
-    entities: ["issue"],
-    actions: ["view", "create", "update", "delete"],
+    actions: ['view', 'create', 'update', 'delete'],
+    entities: ['issue'],
   })
 
   // Check view permissions for each state
   const draftPerms = context.can({
-    entity: "issue",
-    action: "view",
-    state: "draft",
+    action: 'view',
+    entity: 'issue',
+    state: 'draft',
   })
   const publishedPerms = context.can({
-    entity: "issue",
-    action: "view",
-    state: "published",
+    action: 'view',
+    entity: 'issue',
+    state: 'published',
   })
   const archivedPerms = context.can({
-    entity: "issue",
-    action: "view",
-    state: "archived",
+    action: 'view',
+    entity: 'issue',
+    state: 'archived',
   })
 
   const rawIssues = await prisma.issue.findMany({
+    orderBy: {
+      releasedAt: 'desc',
+    },
+    select: {
+      authorId: true,
+      id: true,
+      label: true,
+      state: true,
+    },
     where: {
       OR: [
         {
-          state: "draft",
+          state: 'draft',
           ...(draftPerms.hasOwn && !draftPerms.hasAny
             ? { authorId: context.authorId }
             : {}),
         },
         {
-          state: "published",
+          state: 'published',
           ...(publishedPerms.hasOwn && !publishedPerms.hasAny
             ? { authorId: context.authorId }
             : {}),
         },
         {
-          state: "archived",
+          state: 'archived',
           ...(archivedPerms.hasOwn && !archivedPerms.hasAny
             ? { authorId: context.authorId }
             : {}),
         },
       ],
-    },
-    orderBy: {
-      releasedAt: "desc",
-    },
-    select: {
-      id: true,
-      label: true,
-      state: true,
-      authorId: true,
     },
   })
 
@@ -64,21 +64,21 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const issues = rawIssues.map((issue) => {
     return {
       ...issue,
-      canView: context.can({
-        entity: "issue",
-        action: "view",
+      canDelete: context.can({
+        action: 'delete',
+        entity: 'issue',
         state: issue.state,
         targetAuthorId: issue.authorId,
       }).hasPermission,
       canEdit: context.can({
-        entity: "issue",
-        action: "update",
+        action: 'update',
+        entity: 'issue',
         state: issue.state,
         targetAuthorId: issue.authorId,
       }).hasPermission,
-      canDelete: context.can({
-        entity: "issue",
-        action: "delete",
+      canView: context.can({
+        action: 'view',
+        entity: 'issue',
         state: issue.state,
         targetAuthorId: issue.authorId,
       }).hasPermission,
@@ -86,12 +86,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   })
 
   return {
-    issues,
     canCreate: context.can({
-      entity: "issue",
-      action: "create",
-      state: "draft",
+      action: 'create',
+      entity: 'issue',
+      state: 'draft',
       targetAuthorId: context.authorId,
     }).hasPermission,
+    issues,
   }
 }

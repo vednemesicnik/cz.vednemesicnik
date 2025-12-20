@@ -1,5 +1,5 @@
-import { prisma } from "~/utils/db.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 export async function deletePosition(id: string) {
   try {
@@ -12,26 +12,26 @@ export async function deletePosition(id: string) {
 
       // Get the positions with order greater than the deleted position's order
       const positionsToUpdate = await prisma.editorialBoardPosition.findMany({
+        orderBy: {
+          order: 'asc',
+        },
         where: {
           order: {
             gt: deletedPositionOrder,
           },
         },
-        orderBy: {
-          order: "asc",
-        },
       })
 
       for (const position of positionsToUpdate) {
         await prisma.editorialBoardPosition.update({
-          where: { id: position.id },
           data: {
             order: position.order - 1,
           },
+          where: { id: position.id },
         })
       }
     })
   } catch (error) {
-    throwDbError(error, "Unable to delete the editorial board position.")
+    throwDbError(error, 'Unable to delete the editorial board position.')
   }
 }

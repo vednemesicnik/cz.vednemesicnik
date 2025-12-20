@@ -1,1 +1,1 @@
-export { Image } from "./_component"
+export { Image } from './_component'

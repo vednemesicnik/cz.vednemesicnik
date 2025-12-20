@@ -1,1 +1,1 @@
-export { AdminActionGroup } from "./_component"
+export { AdminActionGroup } from './_component'

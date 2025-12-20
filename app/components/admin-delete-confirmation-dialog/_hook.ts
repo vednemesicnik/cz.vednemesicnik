@@ -1,21 +1,21 @@
-import { type RefObject, useCallback, useEffect, useState } from "react"
-import { type FetcherSubmitOptions, useFetcher } from "react-router"
+import { type RefObject, useCallback, useEffect, useState } from 'react'
+import { type FetcherSubmitOptions, useFetcher } from 'react-router'
 
-import { useAuthenticityToken } from "~/components/authenticity-token-provider"
-import { DIALOG_RETURN_VALUE } from "~/config/dialog-config"
-import { FORM_CONFIG } from "~/config/form-config"
+import { useAuthenticityToken } from '~/components/authenticity-token-provider'
+import { DIALOG_RETURN_VALUE } from '~/config/dialog-config'
+import { FORM_CONFIG } from '~/config/form-config'
 
 type Options = {
   withRedirect?: boolean
-  action: FetcherSubmitOptions["action"]
+  action: FetcherSubmitOptions['action']
   key?: string
 }
 
 export const useAdminDeleteConfirmationDialog = (
   dialogRef: RefObject<HTMLDialogElement | null>,
-  options: Options
+  options: Options,
 ) => {
-  const [returnValue, setReturnValue] = useState<string>("")
+  const [returnValue, setReturnValue] = useState<string>('')
   const { submit } = useFetcher({ key: options.key })
 
   const authTokenName = FORM_CONFIG.authenticityToken.name
@@ -23,7 +23,7 @@ export const useAdminDeleteConfirmationDialog = (
   const intentName = FORM_CONFIG.intent.name
   const intentValue = FORM_CONFIG.intent.value.delete
   const redirectName = FORM_CONFIG.redirect.name
-  const redirectValue = options?.withRedirect ? "true" : "false"
+  const redirectValue = options?.withRedirect ? 'true' : 'false'
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -34,9 +34,9 @@ export const useAdminDeleteConfirmationDialog = (
       setReturnValue(dialog.returnValue)
     }
 
-    dialog.addEventListener("close", handleClose)
+    dialog.addEventListener('close', handleClose)
 
-    return () => dialog.removeEventListener("close", handleClose)
+    return () => dialog.removeEventListener('close', handleClose)
   }, [dialogRef])
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export const useAdminDeleteConfirmationDialog = (
       formData.append(intentName, intentValue)
       formData.append(redirectName, redirectValue)
 
-      void submit(formData, { action: options.action, method: "POST" })
+      void submit(formData, { action: options.action, method: 'POST' })
     }
   }, [
     authTokenName,

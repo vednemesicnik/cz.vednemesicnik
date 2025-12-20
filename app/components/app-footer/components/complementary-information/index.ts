@@ -1,1 +1,1 @@
-export { ComplementaryInformation } from "./_complementary-information"
+export { ComplementaryInformation } from './_complementary-information'

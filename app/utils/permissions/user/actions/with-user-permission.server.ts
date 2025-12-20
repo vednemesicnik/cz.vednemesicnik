@@ -1,15 +1,15 @@
-import { invariantResponse } from "@epic-web/invariant"
+import { invariantResponse } from '@epic-web/invariant'
 
 import type {
   UserPermissionAction,
   UserPermissionEntity,
-} from "@generated/prisma/enums"
-import { requireAuthentication } from "~/utils/auth.server"
+} from '@generated/prisma/enums'
+import { requireAuthentication } from '~/utils/auth.server'
 
 import {
   getUserPermissionContext,
   type UserPermissionContext,
-} from "../context/get-user-permission-context.server"
+} from '../context/get-user-permission-context.server'
 
 type Options<T> = {
   entity: UserPermissionEntity
@@ -24,18 +24,18 @@ type Options<T> = {
 
 export async function withUserPermission<T>(
   request: Request,
-  options: Options<T>
+  options: Options<T>,
 ): Promise<T> {
   await requireAuthentication(request)
 
   const context = await getUserPermissionContext(request, {
-    entities: [options.entity],
     actions: [options.action],
+    entities: [options.entity],
   })
 
   const { hasPermission } = context.can({
-    entity: options.entity,
     action: options.action,
+    entity: options.entity,
     targetUserId: options.target.userId,
     targetUserRoleLevel: options.target.roleLevel,
   })
@@ -43,7 +43,7 @@ export async function withUserPermission<T>(
   invariantResponse(
     hasPermission,
     options.errorMessage ??
-      `You do not have permission to ${options.action} this ${options.entity}.`
+      `You do not have permission to ${options.action} this ${options.entity}.`,
   )
 
   return options.execute(context)

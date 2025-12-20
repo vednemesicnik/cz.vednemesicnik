@@ -1,13 +1,13 @@
-import { Activity, useCallback, useEffect, useRef, useState } from "react"
-import { Form } from "react-router"
+import { Activity, useCallback, useEffect, useRef, useState } from 'react'
+import { Form } from 'react-router'
 
-import { BaseLink } from "~/components/base-link"
-import { AccountBoxIcon } from "~/components/icons/account-box-icon"
-import { ExitToAppIcon } from "~/components/icons/exit-to-app-icon"
+import { BaseLink } from '~/components/base-link'
+import { AccountBoxIcon } from '~/components/icons/account-box-icon'
+import { ExitToAppIcon } from '~/components/icons/exit-to-app-icon'
 
-import styles from "./_styles.module.css"
-import { Dropdown } from "./components/dropdown"
-import { Toggle } from "./components/toggle"
+import styles from './_styles.module.css'
+import { Dropdown } from './components/dropdown'
+import { Toggle } from './components/toggle'
 
 type Props = {
   userName?: string
@@ -28,19 +28,19 @@ export const AdminUserMenu = ({ userName, userEmail }: Props) => {
     }
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         setIsOpen(false)
       }
     }
 
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
-      document.addEventListener("keydown", handleEscape)
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-      document.removeEventListener("keydown", handleEscape)
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
     }
   }, [isOpen])
 
@@ -58,20 +58,20 @@ export const AdminUserMenu = ({ userName, userEmail }: Props) => {
         {displayName}
       </Toggle>
 
-      <Activity mode={isOpen ? "visible" : "hidden"}>
+      <Activity mode={isOpen ? 'visible' : 'hidden'}>
         <Dropdown>
           <BaseLink
-            to="/administration/settings/profile"
             className={styles.link}
             onClick={handleClose}
+            to="/administration/settings/profile"
           >
             <AccountBoxIcon className={styles.icon} />
             Profil
           </BaseLink>
           <Form
+            action={'/administration/sign-out'}
             className={styles.form}
-            method={"post"}
-            action={"/administration/sign-out"}
+            method={'post'}
           >
             <button className={styles.button} type="submit">
               <ExitToAppIcon className={styles.icon} />

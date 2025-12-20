@@ -1,29 +1,29 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { useRef } from "react"
-import { href } from "react-router"
+import { useRef } from 'react'
+import { href } from 'react-router'
 
-import { AdminActionButton } from "~/components/admin-action-button"
-import { AdminActionGroup } from "~/components/admin-action-group"
+import { AdminActionButton } from '~/components/admin-action-button'
+import { AdminActionGroup } from '~/components/admin-action-group'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
-} from "~/components/admin-delete-confirmation-dialog"
-import { AdminDetailItem } from "~/components/admin-detail-item"
-import { AdminDetailList } from "~/components/admin-detail-list"
-import { AdminDetailSection } from "~/components/admin-detail-section"
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { DeleteIcon } from "~/components/icons/delete-icon"
-import { EditIcon } from "~/components/icons/edit-icon"
-import { getAuthorRoleLabel, getUserRoleLabel } from "~/utils/role-labels"
+} from '~/components/admin-delete-confirmation-dialog'
+import { AdminDetailItem } from '~/components/admin-detail-item'
+import { AdminDetailList } from '~/components/admin-detail-list'
+import { AdminDetailSection } from '~/components/admin-detail-section'
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { DeleteIcon } from '~/components/icons/delete-icon'
+import { EditIcon } from '~/components/icons/edit-icon'
+import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
-export { action } from "./_action"
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { action } from './_action'
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function RouteComponent({
   loaderData,
@@ -37,9 +37,9 @@ export default function RouteComponent({
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
     {
-      action: href("/administration/users/:userId", { userId }),
+      action: href('/administration/users/:userId', { userId }),
       withRedirect: true,
-    }
+    },
   )
 
   return (
@@ -49,7 +49,7 @@ export default function RouteComponent({
       <AdminActionGroup>
         {canUpdate && (
           <AdminLinkButton
-            to={href("/administration/users/:userId/edit-user", {
+            to={href('/administration/users/:userId/edit-user', {
               userId,
             })}
           >

@@ -1,25 +1,25 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { Label } from "./_component"
+import { Label } from './_component'
 
 const meta: Meta<typeof Label> = {
-  title: "Primitives/Label",
-  component: Label,
-  tags: ["autodocs"],
   argTypes: {
     children: {
-      control: "text",
-      description: "Label text content",
-    },
-    required: {
-      control: "boolean",
-      description: "Whether to show required indicator (*)",
+      control: 'text',
+      description: 'Label text content',
     },
     htmlFor: {
-      control: "text",
-      description: "ID of the form element this label is for",
+      control: 'text',
+      description: 'ID of the form element this label is for',
+    },
+    required: {
+      control: 'boolean',
+      description: 'Whether to show required indicator (*)',
     },
   },
+  component: Label,
+  tags: ['autodocs'],
+  title: 'Primitives/Label',
 }
 
 export default meta
@@ -31,8 +31,8 @@ type Story = StoryObj<typeof Label>
  */
 export const Default: Story = {
   args: {
-    children: "Username",
-    htmlFor: "username",
+    children: 'Username',
+    htmlFor: 'username',
   },
 }
 
@@ -42,8 +42,8 @@ export const Default: Story = {
  */
 export const Required: Story = {
   args: {
-    children: "Email Address",
-    htmlFor: "email",
+    children: 'Email Address',
+    htmlFor: 'email',
     required: true,
   },
 }
@@ -54,8 +54,8 @@ export const Required: Story = {
  */
 export const LongText: Story = {
   args: {
-    children: "What is your preferred contact method?",
-    htmlFor: "contact-method",
+    children: 'What is your preferred contact method?',
+    htmlFor: 'contact-method',
   },
 }
 
@@ -65,8 +65,8 @@ export const LongText: Story = {
  */
 export const RequiredLongText: Story = {
   args: {
-    children: "Please describe your issue in detail",
-    htmlFor: "description",
+    children: 'Please describe your issue in detail',
+    htmlFor: 'description',
     required: true,
   },
 }

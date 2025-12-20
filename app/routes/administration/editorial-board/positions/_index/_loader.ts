@@ -1,75 +1,75 @@
-import { prisma } from "~/utils/db.server"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { prisma } from '~/utils/db.server'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
-    entities: ["editorial_board_position"],
-    actions: ["view", "create", "update", "delete"],
+    actions: ['view', 'create', 'update', 'delete'],
+    entities: ['editorial_board_position'],
   })
 
   // Check create permission
   const { hasPermission: canCreate } = context.can({
-    entity: "editorial_board_position",
-    action: "create",
+    action: 'create',
+    entity: 'editorial_board_position',
     targetAuthorId: context.authorId,
   })
 
   const editorialBoardPositions = await prisma.editorialBoardPosition.findMany({
     orderBy: {
-      order: "asc",
+      order: 'asc',
     },
     select: {
-      id: true,
-      key: true,
-      pluralLabel: true,
-      order: true,
-      state: true,
       author: {
         select: {
           id: true,
         },
       },
+      id: true,
+      key: true,
+      order: true,
+      pluralLabel: true,
+      state: true,
     },
   })
 
   const positionsWithPermissions = editorialBoardPositions.map((position) => {
     const { hasPermission: canView } = context.can({
-      entity: "editorial_board_position",
-      action: "view",
+      action: 'view',
+      entity: 'editorial_board_position',
       state: position.state,
       targetAuthorId: position.author.id,
     })
 
     const { hasPermission: canEdit } = context.can({
-      entity: "editorial_board_position",
-      action: "update",
+      action: 'update',
+      entity: 'editorial_board_position',
       state: position.state,
       targetAuthorId: position.author.id,
     })
 
     const { hasPermission: canDelete } = context.can({
-      entity: "editorial_board_position",
-      action: "delete",
+      action: 'delete',
+      entity: 'editorial_board_position',
       state: position.state,
       targetAuthorId: position.author.id,
     })
 
     return {
+      canDelete,
+      canEdit,
+      canView,
       id: position.id,
       key: position.key,
-      pluralLabel: position.pluralLabel,
       order: position.order,
+      pluralLabel: position.pluralLabel,
       state: position.state,
-      canView,
-      canEdit,
-      canDelete,
     }
   })
 
   return {
-    positions: positionsWithPermissions,
     canCreate,
+    positions: positionsWithPermissions,
   }
 }

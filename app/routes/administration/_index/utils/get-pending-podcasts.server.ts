@@ -1,5 +1,5 @@
-import type { Prisma } from "@generated/prisma/client"
-import { prisma } from "~/utils/db.server"
+import type { Prisma } from '@generated/prisma/client'
+import { prisma } from '~/utils/db.server'
 
 type GetPendingPodcastsOptions = {
   currentAuthorId: string
@@ -10,28 +10,28 @@ export async function getPendingPodcasts(options: GetPendingPodcastsOptions) {
   const { currentAuthorId, currentRoleLevel } = options
 
   const where: Prisma.PodcastWhereInput = {
-    state: "draft",
-    authorId: { not: currentAuthorId },
     author:
       currentRoleLevel === 1
         ? undefined
         : { role: { level: { gt: currentRoleLevel } } },
+    authorId: { not: currentAuthorId },
+    state: 'draft',
   }
 
   const [items, count] = await Promise.all([
     prisma.podcast.findMany({
-      where,
+      orderBy: { createdAt: 'desc' },
       select: {
+        author: { select: { name: true } },
+        createdAt: true,
         id: true,
         title: true,
-        createdAt: true,
-        author: { select: { name: true } },
       },
-      orderBy: { createdAt: "desc" },
       take: 5,
+      where,
     }),
     prisma.podcast.count({ where }),
   ])
 
-  return { items, count }
+  return { count, items }
 }

@@ -1,11 +1,11 @@
-import { animated, useSpring } from "@react-spring/web"
-import { clsx } from "clsx"
-import { useEffect, useRef, useState } from "react"
+import { animated, useSpring } from '@react-spring/web'
+import { clsx } from 'clsx'
+import { useEffect, useRef, useState } from 'react'
 
-import { createImageSources } from "~/utils/create-image-sources"
-import { useHydrated } from "~/utils/use-hydrated"
+import { createImageSources } from '~/utils/create-image-sources'
+import { useHydrated } from '~/utils/use-hydrated'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 const DEFAULT_QUALITY = 75
 const DEFAULT_PLACEHOLDER_QUALITY = 25
@@ -35,9 +35,9 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
     webpSrc_1x: webpPlaceholderSrc_1x,
     jpegSrc_1x: jpegPlaceholderSrc_1x,
   } = createImageSources(src, {
-    width: calculatedPlaceholderWidth,
     height: calculatedPlaceholderHeight,
     quality: DEFAULT_PLACEHOLDER_QUALITY,
+    width: calculatedPlaceholderWidth,
   })
 
   const {
@@ -48,9 +48,9 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
     jpegSrc_1x,
     jpegSrc_2x,
   } = createImageSources(src, {
-    width,
     height,
     quality: DEFAULT_QUALITY,
+    width,
   })
 
   const handleLowResImageLoad = () => {
@@ -82,13 +82,13 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
   }, [])
 
   const lowResImageSpringStyles = useSpring({
-    opacity: isHighResImageLoaded ? 0 : 1,
     from: { opacity: isLowResImageLoaded ? 1 : 0 },
+    opacity: isHighResImageLoaded ? 0 : 1,
   })
 
   const highResImageSpringStyles = useSpring({
-    opacity: isHighResImageLoaded ? 1 : 0,
     from: { opacity: isHighResImageLoaded ? 1 : 0 },
+    opacity: isHighResImageLoaded ? 1 : 0,
   })
 
   return (
@@ -97,18 +97,18 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
         className={styles.lowResPicture}
         style={lowResImageSpringStyles}
       >
-        <source type="image/avif" srcSet={avifPlaceholderSrc_1x} />
-        <source type="image/webp" srcSet={webpPlaceholderSrc_1x} />
+        <source srcSet={avifPlaceholderSrc_1x} type="image/avif" />
+        <source srcSet={webpPlaceholderSrc_1x} type="image/webp" />
         <img
-          ref={lowResImageRef}
-          className={styles.image}
-          src={jpegPlaceholderSrc_1x}
           alt={alt}
-          width={width}
+          className={styles.image}
+          decoding={'async'}
           height={height}
-          loading={"lazy"}
-          decoding={"async"}
+          loading={'lazy'}
           onLoad={handleLowResImageLoad}
+          ref={lowResImageRef}
+          src={jpegPlaceholderSrc_1x}
+          width={width}
         />
       </animated.picture>
 
@@ -118,24 +118,24 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
           style={highResImageSpringStyles}
         >
           <source
-            type="image/avif"
             srcSet={`${avifSrc_1x}, ${avifSrc_2x} 2x`}
+            type="image/avif"
           />
           <source
-            type="image/webp"
             srcSet={`${webpSrc_1x}, ${webpSrc_2x} 2x`}
+            type="image/webp"
           />
           <img
-            ref={highResImageRef}
-            className={styles.image}
-            srcSet={`${jpegSrc_1x}, ${jpegSrc_2x} 2x`}
-            src={jpegSrc_1x}
             alt={alt}
-            width={width}
+            className={styles.image}
+            decoding={'async'}
             height={height}
-            loading={"lazy"}
-            decoding={"async"}
+            loading={'lazy'}
             onLoad={handleHighResImageLoad}
+            ref={highResImageRef}
+            src={jpegSrc_1x}
+            srcSet={`${jpegSrc_1x}, ${jpegSrc_2x} 2x`}
+            width={width}
           />
         </animated.picture>
       )}

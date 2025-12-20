@@ -1,14 +1,13 @@
-import { redirect } from "react-router"
-
 import type {
   AuthorPermissionAccess,
   AuthorPermissionAction,
   AuthorPermissionEntity,
   ContentState,
-} from "@generated/prisma/enums"
-import { requireAuthentication } from "~/utils/auth.server"
-import { prisma } from "~/utils/db.server"
-import { getAuthorRights } from "~/utils/permissions/core/get-author-rights"
+} from '@generated/prisma/enums'
+import { redirect } from 'react-router'
+import { requireAuthentication } from '~/utils/auth.server'
+import { prisma } from '~/utils/db.server'
+import { getAuthorRights } from '~/utils/permissions/core/get-author-rights'
 
 type GetAuthorPermissionContextOptions = {
   entities: AuthorPermissionEntity[]
@@ -17,12 +16,11 @@ type GetAuthorPermissionContextOptions = {
 
 export async function getAuthorPermissionContext(
   request: Request,
-  options: GetAuthorPermissionContextOptions
+  options: GetAuthorPermissionContextOptions,
 ) {
   const { sessionId } = await requireAuthentication(request)
 
   const session = await prisma.session.findUniqueOrThrow({
-    where: { id: sessionId },
     select: {
       user: {
         select: {
@@ -31,18 +29,18 @@ export async function getAuthorPermissionContext(
               id: true,
               role: {
                 select: {
-                  name: true,
                   level: true,
+                  name: true,
                   permissions: {
-                    where: {
-                      entity: { in: options.entities },
-                      action: { in: options.actions },
-                    },
                     select: {
-                      entity: true,
-                      action: true,
                       access: true,
+                      action: true,
+                      entity: true,
                       state: true,
+                    },
+                    where: {
+                      action: { in: options.actions },
+                      entity: { in: options.entities },
                     },
                   },
                 },
@@ -52,6 +50,7 @@ export async function getAuthorPermissionContext(
         },
       },
     },
+    where: { id: sessionId },
   })
 
   const author = session.user.author
@@ -59,20 +58,17 @@ export async function getAuthorPermissionContext(
   if (!author) {
     // Redirect users without author records to the admin dashboard
     // They may have system permissions but not content permissions
-    throw redirect("/administration")
+    throw redirect('/administration')
   }
 
   if (!author.role) {
     throw new Error(
-      "Author does not have an associated role. Cannot determine permissions."
+      'Author does not have an associated role. Cannot determine permissions.',
     )
   }
 
   return {
     authorId: author.id,
-    roleName: author.role.name,
-    roleLevel: author.role.level,
-    permissions: author.role.permissions,
 
     can: (config: {
       entity: AuthorPermissionEntity
@@ -81,16 +77,16 @@ export async function getAuthorPermissionContext(
       state?: ContentState
       targetAuthorId?: string
     }) => {
-      const access = config.access ?? ["own", "any"]
-      const states = config.state ? [config.state] : ["*"]
+      const access = config.access ?? ['own', 'any']
+      const states = config.state ? [config.state] : ['*']
       const targetAuthorId = config.targetAuthorId ?? author.id
 
       const result = getAuthorRights(author.role.permissions, {
-        entities: [config.entity],
-        actions: [config.action],
         access,
-        states,
+        actions: [config.action],
+        entities: [config.entity],
         ownId: author.id,
+        states,
         targetId: targetAuthorId,
       })
 
@@ -105,11 +101,14 @@ export async function getAuthorPermissionContext(
       const hasAny = result[0][0][1][0]
 
       return {
-        hasOwn,
         hasAny,
+        hasOwn,
         hasPermission: hasOwn || hasAny,
       }
     },
+    permissions: author.role.permissions,
+    roleLevel: author.role.level,
+    roleName: author.role.name,
   }
 }
 

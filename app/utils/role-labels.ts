@@ -1,13 +1,13 @@
-import type { AuthorRoleName, UserRoleName } from "@generated/prisma/enums"
+import type { AuthorRoleName, UserRoleName } from '@generated/prisma/enums'
 
 /**
  * User role labels (system access roles)
  * In the future, these could be replaced with i18n translation keys
  */
 const userRoleLabels: Record<UserRoleName, string> = {
-  owner: "Vlastník",
-  administrator: "Administrátor",
-  member: "Člen",
+  administrator: 'Administrátor',
+  member: 'Člen',
+  owner: 'Vlastník',
 }
 
 /**
@@ -15,9 +15,9 @@ const userRoleLabels: Record<UserRoleName, string> = {
  * In the future, these could be replaced with i18n translation keys
  */
 const authorRoleLabels: Record<AuthorRoleName, string> = {
-  coordinator: "Koordinátor",
-  creator: "Tvůrce",
-  contributor: "Přispěvatel",
+  contributor: 'Přispěvatel',
+  coordinator: 'Koordinátor',
+  creator: 'Tvůrce',
 }
 
 /**

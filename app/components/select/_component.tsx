@@ -1,12 +1,12 @@
-import { type ComponentProps, type ReactNode } from "react"
+import type { ComponentProps, ReactNode } from 'react'
 
-import { ErrorMessage } from "~/components/error-message"
-import { ErrorMessageGroup } from "~/components/error-message-group"
-import { Label } from "~/components/label"
+import { ErrorMessage } from '~/components/error-message'
+import { ErrorMessageGroup } from '~/components/error-message-group'
+import { Label } from '~/components/label'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
-type Props = ComponentProps<"select"> & {
+type Props = ComponentProps<'select'> & {
   label: string
   errors?: string[]
   children: ReactNode
@@ -25,7 +25,7 @@ export const Select = ({
       <Label htmlFor={id} required={required}>
         {label}
       </Label>
-      <select id={id} className={styles.select} {...rest}>
+      <select className={styles.select} id={id} {...rest}>
         {children}
       </select>
       <ErrorMessageGroup>

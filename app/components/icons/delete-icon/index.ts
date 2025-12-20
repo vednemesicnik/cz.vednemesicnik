@@ -1,1 +1,1 @@
-export { DeleteIcon } from "./_component"
+export { DeleteIcon } from './_component'

@@ -6,32 +6,30 @@ import {
   getSelectProps,
   getTextareaProps,
   useForm,
-} from "@conform-to/react"
-import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { useEffect, useState } from "react"
-import { useNavigation } from "react-router"
+} from '@conform-to/react'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { useEffect, useState } from 'react'
+import { useNavigation } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset"
-import { FileInput } from "~/components/file-input"
-import { Form } from "~/components/form"
-import { FormActions } from "~/components/form-actions"
-import { Input } from "~/components/input"
-import { Select } from "~/components/select"
-import { TextArea } from "~/components/text-area"
-import { slugify } from "~/utils/slugify"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
+import { Fieldset } from '~/components/fieldset'
+import { FileInput } from '~/components/file-input'
+import { Form } from '~/components/form'
+import { FormActions } from '~/components/form-actions'
+import { Input } from '~/components/input'
+import { Select } from '~/components/select'
+import { TextArea } from '~/components/text-area'
+import { slugify } from '~/utils/slugify'
+import { schema } from './_schema'
 
-import type { Route } from "./+types/route"
-import { schema } from "./_schema"
-
-export { handle } from "./_handle"
-export { action } from "./_action"
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { action } from './_action'
+export { handle } from './_handle'
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function Route({
   loaderData,
@@ -40,27 +38,27 @@ export default function Route({
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
-    id: "add-podcast",
     constraint: getZodConstraint(schema),
-    lastResult: actionData?.submissionResult,
-    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
       authorId: loaderData.selfAuthorId,
     },
+    id: 'add-podcast',
+    lastResult: actionData?.submissionResult,
+    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldDirtyConsider: (field) => {
-      return !field.startsWith("csrf")
+      return !field.startsWith('csrf')
     },
-    shouldValidate: "onSubmit",
-    shouldRevalidate: "onBlur",
+    shouldRevalidate: 'onBlur',
+    shouldValidate: 'onSubmit',
   })
 
-  const [title, setTitle] = useState("")
-  const [slug, setSlug] = useState("")
+  const [title, setTitle] = useState('')
+  const [slug, setSlug] = useState('')
   const [isSlugFocused, setIsSlugFocused] = useState(false)
 
   useEffect(() => {
     if (!isSlugFocused) {
-      setSlug(slugify(title ?? ""))
+      setSlug(slugify(title ?? ''))
     }
   }, [title, isSlugFocused])
 
@@ -70,7 +68,7 @@ export default function Route({
     }
   }
 
-  const isLoadingOrSubmitting = state !== "idle"
+  const isLoadingOrSubmitting = state !== 'idle'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -78,54 +76,54 @@ export default function Route({
       <AdminHeadline>Přidat podcast</AdminHeadline>
 
       <Form
-        method={"post"}
-        encType={"multipart/form-data"}
+        encType={'multipart/form-data'}
+        method={'post'}
         {...getFormProps(form)}
         errors={form.errors}
       >
-        <Fieldset legend={"Detaily"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
           <Input
-            label={"Název"}
-            placeholder={"Název podcastu"}
-            onChange={(event) => setTitle(event.target.value)}
-            value={title}
             errors={fields.title.errors}
-            {...getInputProps(fields.title, { type: "text" })}
+            label={'Název'}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder={'Název podcastu'}
+            value={title}
+            {...getInputProps(fields.title, { type: 'text' })}
           />
 
           <Input
-            label={"Slug"}
-            placeholder={"nazev-podcastu"}
+            errors={fields.slug.errors}
+            label={'Slug'}
             onChange={(event) => setSlug(slugify(event.target.value))}
             onFocus={() => setIsSlugFocused(true)}
+            placeholder={'nazev-podcastu'}
             value={slug}
-            errors={fields.slug.errors}
-            {...getInputProps(fields.slug, { type: "text" })}
+            {...getInputProps(fields.slug, { type: 'text' })}
           />
 
           <TextArea
-            label={"Popis"}
-            placeholder={"Popis podcastu"}
             errors={fields.description.errors}
+            label={'Popis'}
+            placeholder={'Popis podcastu'}
             {...getTextareaProps(fields.description)}
           />
 
           <FileInput
-            label={"Obálka"}
-            accept={"image"}
-            onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
+            accept={'image'}
             errors={fields.cover.errors}
-            {...getInputProps(fields.cover, { type: "file" })}
+            label={'Obálka'}
+            onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
+            {...getInputProps(fields.cover, { type: 'file' })}
           />
         </Fieldset>
 
         <Fieldset
-          legend={"Informace o autorovi"}
           disabled={isLoadingOrSubmitting}
+          legend={'Informace o autorovi'}
         >
           <Select
-            label={"Autor"}
             errors={fields.authorId.errors}
+            label={'Autor'}
             {...getSelectProps(fields.authorId)}
           >
             {loaderData.authors.map((author) => (
@@ -139,10 +137,10 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
             Přidat
           </Button>
-          <AdminLinkButton to={"/administration/podcasts"}>
+          <AdminLinkButton to={'/administration/podcasts'}>
             Zrušit
           </AdminLinkButton>
         </FormActions>

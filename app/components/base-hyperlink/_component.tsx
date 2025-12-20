@@ -1,6 +1,6 @@
-import { type ComponentProps, type JSX } from "react"
+import type { ComponentProps, JSX } from 'react'
 
-type Props = ComponentProps<"a">
+type Props = ComponentProps<'a'>
 
 /**
  * BaseHyperlink component renders an anchor (`<a>`) element.
@@ -13,7 +13,7 @@ type Props = ComponentProps<"a">
  */
 export const BaseHyperlink = ({ children, ...rest }: Props): JSX.Element => {
   return (
-    <a target={"_blank"} rel={"noopener noreferrer"} {...rest}>
+    <a rel={'noopener noreferrer'} target={'_blank'} {...rest}>
       {children}
     </a>
   )

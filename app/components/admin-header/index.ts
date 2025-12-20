@@ -1,1 +1,1 @@
-export { AdminHeader } from "./_component"
+export { AdminHeader } from './_component'

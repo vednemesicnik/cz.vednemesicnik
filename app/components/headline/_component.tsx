@@ -1,7 +1,7 @@
-import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
-import type { ReactNode } from "react"
+import { applyClasses, combineClasses } from '@liborgabrhel/style-utils'
+import type { ReactNode } from 'react'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
@@ -13,7 +13,7 @@ export const Headline = ({ children, marginBottom = true }: Props) => {
     <h2
       className={combineClasses(
         styles.headline,
-        applyClasses(styles.marginBottom).if(marginBottom)
+        applyClasses(styles.marginBottom).if(marginBottom),
       )}
     >
       {children}

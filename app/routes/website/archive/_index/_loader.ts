@@ -1,44 +1,44 @@
-import { type LoaderFunctionArgs, redirect } from "react-router"
+import { type LoaderFunctionArgs, redirect } from 'react-router'
 
-import { LIMIT_PARAM } from "~/components/load-more-content"
-import { getAuthentication } from "~/utils/auth.server"
-import { prisma } from "~/utils/db.server"
+import { LIMIT_PARAM } from '~/components/load-more-content'
+import { getAuthentication } from '~/utils/auth.server'
+import { prisma } from '~/utils/db.server'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url)
   const limit = url.searchParams.get(LIMIT_PARAM)
 
   if (!limit) {
-    url.searchParams.set(LIMIT_PARAM, "20")
+    url.searchParams.set(LIMIT_PARAM, '20')
     throw redirect(url.toString(), { status: 301 })
   }
 
   const { isAuthenticated } = await getAuthentication(request)
 
   const issuesPromise = prisma.issue.findMany({
-    where: {
-      state: {
-        in: isAuthenticated ? ["published", "draft"] : ["published"],
-      },
-    },
     orderBy: {
-      releasedAt: "desc",
+      releasedAt: 'desc',
     },
-    take: Number(limit),
     select: {
-      id: true,
-      label: true,
       cover: {
         select: {
-          id: true,
           altText: true,
+          id: true,
         },
       },
+      id: true,
+      label: true,
       pdf: {
         select: {
-          id: true,
           fileName: true,
+          id: true,
         },
+      },
+    },
+    take: Number(limit),
+    where: {
+      state: {
+        in: isAuthenticated ? ['published', 'draft'] : ['published'],
       },
     },
   })
@@ -46,7 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const issuesCountPromise = prisma.issue.count({
     where: {
       state: {
-        in: isAuthenticated ? ["published", "draft"] : ["published"],
+        in: isAuthenticated ? ['published', 'draft'] : ['published'],
       },
     },
   })

@@ -1,9 +1,9 @@
-import { clsx } from "clsx"
-import type { ComponentProps } from "react"
+import { clsx } from 'clsx'
+import type { ComponentProps } from 'react'
 
-import { BaseBreadcrumbLink } from "~/components/base-breadcrumb-link"
+import { BaseBreadcrumbLink } from '~/components/base-breadcrumb-link'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = ComponentProps<typeof BaseBreadcrumbLink>
 
@@ -44,7 +44,7 @@ export const BreadcrumbLink = ({ className, ...rest }: Props) => {
         clsx(
           styles.link,
           props.isActive && styles.active,
-          typeof className === "function" ? className(props) : className
+          typeof className === 'function' ? className(props) : className,
         )
       }
       {...rest}

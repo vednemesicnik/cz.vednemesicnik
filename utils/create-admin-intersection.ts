@@ -3,7 +3,7 @@ import {
   layout,
   prefix,
   type RouteConfigEntry,
-} from "@react-router/dev/routes"
+} from '@react-router/dev/routes'
 
 type Args = {
   name: string

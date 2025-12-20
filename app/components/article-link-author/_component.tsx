@@ -1,9 +1,9 @@
-import { type ReactNode } from "react"
+import type { ReactNode } from 'react'
 
-import { Image } from "~/components/image"
-import { sizeConfig } from "~/config/size-config"
+import { Image } from '~/components/image'
+import { sizeConfig } from '~/config/size-config'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
@@ -16,7 +16,7 @@ export const ArticleLinkAuthor = ({ children, imageSrc, imageAlt }: Props) => {
 
   return (
     <section className={styles.container}>
-      <Image src={imageSrc} alt={imageAlt} width={width} height={height} />
+      <Image alt={imageAlt} height={height} src={imageSrc} width={width} />
       <p className={styles.paragraph}>{children}</p>
     </section>
   )

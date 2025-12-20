@@ -1,1 +1,1 @@
-export { loader } from "./_loader"
+export { loader } from './_loader'

@@ -1,22 +1,20 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
 import {
   AdminTable,
   TableBody,
   TableHeader,
   TableHeaderCell,
-} from "~/components/admin-table"
-import { ItemRow } from "~/routes/administration/editorial-board/positions/_index/components/item-row"
+} from '~/components/admin-table'
+import { ItemRow } from '~/routes/administration/editorial-board/positions/_index/components/item-row'
 
-import type { Route } from "./+types/route"
-
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function Route({ loaderData }: Route.ComponentProps) {
   return (
@@ -24,7 +22,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
       <AdminHeadline>Pozice</AdminHeadline>
       {loaderData.canCreate && (
         <AdminLinkButton
-          to={href("/administration/editorial-board/positions/add-position")}
+          to={href('/administration/editorial-board/positions/add-position')}
         >
           Přidat pozici
         </AdminLinkButton>
@@ -40,15 +38,15 @@ export default function Route({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {loaderData.positions.map((position) => (
             <ItemRow
-              key={position.id}
-              id={position.id}
-              keyValue={position.key}
-              pluralLabel={position.pluralLabel}
-              order={position.order}
-              state={position.state}
-              canView={position.canView}
-              canEdit={position.canEdit}
               canDelete={position.canDelete}
+              canEdit={position.canEdit}
+              canView={position.canView}
+              id={position.id}
+              key={position.id}
+              keyValue={position.key}
+              order={position.order}
+              pluralLabel={position.pluralLabel}
+              state={position.state}
             />
           ))}
         </TableBody>

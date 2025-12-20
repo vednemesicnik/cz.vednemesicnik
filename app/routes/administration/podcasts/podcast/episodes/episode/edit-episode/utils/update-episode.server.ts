@@ -1,5 +1,5 @@
-import { prisma } from "~/utils/db.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
   id: string
@@ -20,16 +20,16 @@ export async function updateEpisode({
 }: Args) {
   try {
     await prisma.podcastEpisode.update({
-      where: { id },
       data: {
-        number,
-        title,
-        slug,
-        description,
         authorId,
+        description,
+        number,
+        slug,
+        title,
       },
+      where: { id },
     })
   } catch (error) {
-    throwDbError(error, "Unable to update the episode.")
+    throwDbError(error, 'Unable to update the episode.')
   }
 }

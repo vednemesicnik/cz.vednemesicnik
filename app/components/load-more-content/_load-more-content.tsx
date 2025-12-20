@@ -1,10 +1,10 @@
-import { Form, useNavigation } from "react-router"
+import { Form, useNavigation } from 'react-router'
 
-import { Button } from "~/components/button"
+import { Button } from '~/components/button'
 
-import style from "./_load-more-content.module.css"
+import style from './_load-more-content.module.css'
 
-export const LIMIT_PARAM = "limit"
+export const LIMIT_PARAM = 'limit'
 
 type Props = {
   action: string
@@ -14,17 +14,17 @@ type Props = {
 export const LoadMoreContent = ({ action, limit }: Props) => {
   const navigation = useNavigation()
 
-  const isLoadingMore = navigation.state !== "idle"
+  const isLoadingMore = navigation.state !== 'idle'
 
   return (
     <Form
-      className={style.container}
-      method={"get"}
       action={action}
+      className={style.container}
+      method={'get'}
       preventScrollReset={true}
     >
-      <input type={"hidden"} name={LIMIT_PARAM} value={limit} />
-      <Button type={"submit"} disabled={isLoadingMore}>
+      <input name={LIMIT_PARAM} type={'hidden'} value={limit} />
+      <Button disabled={isLoadingMore} type={'submit'}>
         Načíst další
       </Button>
     </Form>

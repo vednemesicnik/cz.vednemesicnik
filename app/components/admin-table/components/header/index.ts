@@ -1,1 +1,1 @@
-export { TableHeader } from "./_component"
+export { TableHeader } from './_component'

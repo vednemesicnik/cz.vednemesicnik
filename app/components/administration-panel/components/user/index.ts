@@ -1,1 +1,1 @@
-export { User } from "./_user"
+export { User } from './_user'

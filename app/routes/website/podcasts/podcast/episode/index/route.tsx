@@ -1,24 +1,22 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Headline } from "~/components/headline"
-import { Hyperlink } from "~/components/hyperlink"
-import { List } from "~/components/list"
-import { ListItem } from "~/components/list-item"
-import { Paragraph } from "~/components/paragraph"
-import { Subheadline } from "~/components/subheadline"
-import { getFormattedPublishDate } from "~/utils/get-formatted-publish-date"
-
-import type { Route } from "./+types/route"
+import { Headline } from '~/components/headline'
+import { Hyperlink } from '~/components/hyperlink'
+import { List } from '~/components/list'
+import { ListItem } from '~/components/list-item'
+import { Paragraph } from '~/components/paragraph'
+import { Subheadline } from '~/components/subheadline'
+import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
 
 export default function Route({ loaderData }: Route.ComponentProps) {
   const formattedPublishDate = getFormattedPublishDate(
-    loaderData.episode.publishedAt
+    loaderData.episode.publishedAt,
   )
 
   return (
     <>
       <Headline marginBottom={false}>{loaderData.episode.title}</Headline>
-      <Subheadline marginTop={true} marginBottom={true}>
+      <Subheadline marginBottom={true} marginTop={true}>
         {formattedPublishDate}
       </Subheadline>
       <Paragraph>{loaderData.episode.description}</Paragraph>
@@ -33,5 +31,5 @@ export default function Route({ loaderData }: Route.ComponentProps) {
   )
 }
 
-export { meta } from "./_meta"
-export { loader } from "./_loader"
+export { loader } from './_loader'
+export { meta } from './_meta'

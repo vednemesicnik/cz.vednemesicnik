@@ -1,1 +1,1 @@
-export { ArticleLinkPublishDate } from "./_component"
+export { ArticleLinkPublishDate } from './_component'

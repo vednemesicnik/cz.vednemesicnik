@@ -2,9 +2,9 @@ import {
   createCookie,
   createCookieSessionStorage,
   type Session,
-} from "react-router"
+} from 'react-router'
 
-const BIOMETRIC_CHALLENGE_KEY = "biometricChallenge"
+const BIOMETRIC_CHALLENGE_KEY = 'biometricChallenge'
 
 type BiometricCookieData = {
   [BIOMETRIC_CHALLENGE_KEY]: string
@@ -23,22 +23,22 @@ const cookieSessionStorage = createCookieSessionStorage<
   BiometricCookieData,
   BiometricCookieFlashData
 >({
-  cookie: createCookie("vdm_biometric", {
+  cookie: createCookie('vdm_biometric', {
     httpOnly: true,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    secrets: process.env.SESSION_SECRET?.split(","),
     maxAge: 60, // 1 minute (in seconds)
+    path: '/',
+    sameSite: 'lax',
+    secrets: process.env.SESSION_SECRET?.split(','),
+    secure: process.env.NODE_ENV === 'production',
   }),
 })
 
 export const getBiometricCookieSession = async (request: Request) =>
-  cookieSessionStorage.getSession(request.headers.get("Cookie"))
+  cookieSessionStorage.getSession(request.headers.get('Cookie'))
 
 export const setBiometricCookieSession = async (
   request: Request,
-  biometricChallenge: string
+  biometricChallenge: string,
 ) => {
   const cookieSession = await getBiometricCookieSession(request)
 
@@ -48,7 +48,7 @@ export const setBiometricCookieSession = async (
 }
 
 export const deleteBiometricCookieSession = async (
-  cookieSession: BiometricCookieSession
+  cookieSession: BiometricCookieSession,
 ) => cookieSessionStorage.destroySession(cookieSession)
 
 export const getBiometricChallenge = (cookieSession: BiometricCookieSession) =>

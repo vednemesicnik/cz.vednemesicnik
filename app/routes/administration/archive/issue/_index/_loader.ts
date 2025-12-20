@@ -1,38 +1,30 @@
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import { prisma } from "~/utils/db.server"
-import { getFormattedPublishDate } from "~/utils/get-formatted-publish-date"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { prisma } from '~/utils/db.server'
+import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { issueId } = params
 
   const context = await getAuthorPermissionContext(request, {
-    entities: ["issue"],
     actions: [
-      "view",
-      "update",
-      "delete",
-      "publish",
-      "retract",
-      "archive",
-      "restore",
-      "review",
+      'view',
+      'update',
+      'delete',
+      'publish',
+      'retract',
+      'archive',
+      'restore',
+      'review',
     ],
+    entities: ['issue'],
   })
 
   const issue = await prisma.issue.findUniqueOrThrow({
-    where: { id: issueId },
     select: {
-      id: true,
-      label: true,
-      releasedAt: true,
-      state: true,
-      publishedAt: true,
-      createdAt: true,
-      updatedAt: true,
       author: {
         select: {
           id: true,
@@ -49,17 +41,21 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           id: true,
         },
       },
+      createdAt: true,
+      id: true,
+      label: true,
       pdf: {
         select: {
-          id: true,
           fileName: true,
+          id: true,
         },
       },
+      publishedAt: true,
+      releasedAt: true,
       reviews: {
         select: {
-          id: true,
-          state: true,
           createdAt: true,
+          id: true,
           reviewer: {
             select: {
               id: true,
@@ -72,50 +68,54 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               },
             },
           },
+          state: true,
         },
       },
+      state: true,
+      updatedAt: true,
     },
+    where: { id: issueId },
   })
 
   // Check view permission
   const { hasPermission: canView } = context.can({
-    entity: "issue",
-    action: "view",
+    action: 'view',
+    entity: 'issue',
     state: issue.state,
     targetAuthorId: issue.author.id,
   })
 
   if (!canView) {
-    throw new Response("Forbidden", { status: 403 })
+    throw new Response('Forbidden', { status: 403 })
   }
 
   // Check update permission
   const { hasPermission: canUpdate } = context.can({
-    entity: "issue",
-    action: "update",
+    action: 'update',
+    entity: 'issue',
     state: issue.state,
     targetAuthorId: issue.author.id,
   })
 
   // Check delete permission
   const { hasPermission: canDelete } = context.can({
-    entity: "issue",
-    action: "delete",
+    action: 'delete',
+    entity: 'issue',
     state: issue.state,
     targetAuthorId: issue.author.id,
   })
 
   // Check publish permission (draft → published)
   const { hasPermission: canPublish } = context.can({
-    entity: "issue",
-    action: "publish",
+    action: 'publish',
+    entity: 'issue',
     state: issue.state,
     targetAuthorId: issue.author.id,
   })
 
   // Find Coordinator review (level 1)
   const coordinatorReview = issue.reviews.find(
-    (review) => review.reviewer.role.level === 1
+    (review) => review.reviewer.role.level === 1,
   )
 
   // Check if author is not a Coordinator and needs review
@@ -124,32 +124,32 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // Check retract permission (published → draft)
   const { hasPermission: canRetract } = context.can({
-    entity: "issue",
-    action: "retract",
+    action: 'retract',
+    entity: 'issue',
     state: issue.state,
     targetAuthorId: issue.author.id,
   })
 
   // Check archive permission (published → archived)
   const { hasPermission: canArchive } = context.can({
-    entity: "issue",
-    action: "archive",
+    action: 'archive',
+    entity: 'issue',
     state: issue.state,
     targetAuthorId: issue.author.id,
   })
 
   // Check restore permission (archived → draft)
   const { hasPermission: canRestore } = context.can({
-    entity: "issue",
-    action: "restore",
+    action: 'restore',
+    entity: 'issue',
     state: issue.state,
     targetAuthorId: issue.author.id,
   })
 
   // Check review permission
   const { hasPermission: canReview } = context.can({
-    entity: "issue",
-    action: "review",
+    action: 'review',
+    entity: 'issue',
     state: issue.state,
     targetAuthorId: issue.author.id,
   })
@@ -163,48 +163,48 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // Check if current user has already reviewed this issue
   const hasReviewed = issue.reviews.some(
-    (review) => review.reviewer.id === context.authorId
+    (review) => review.reviewer.id === context.authorId,
   )
 
   return {
+    canArchive,
+    canDelete,
+    canPublish,
+    canRestore,
+    canRetract,
+    canReview: shouldShowReview,
+    canUpdate,
+    hasReviewed,
     issue: {
+      author: issue.author,
+      coverUrl: issue.cover
+        ? href('/resources/issue-cover/:id', { id: issue.cover.id })
+        : null,
+      createdAt: getFormattedPublishDate(issue.createdAt),
+      hasCoordinatorReview: !!coordinatorReview,
+      hasCover: !!issue.cover,
       id: issue.id,
       label: issue.label,
-      releasedAt: getFormattedPublishDate(issue.releasedAt),
-      state: issue.state,
-      publishedAt: getFormattedPublishDate(issue.publishedAt),
-      createdAt: getFormattedPublishDate(issue.createdAt),
-      updatedAt: getFormattedPublishDate(issue.updatedAt),
-      author: issue.author,
-      hasCover: !!issue.cover,
-      coverUrl: issue.cover
-        ? href("/resources/issue-cover/:id", { id: issue.cover.id })
-        : null,
       pdfFileName: issue.pdf?.fileName ?? null,
       pdfUrl: issue.pdf
-        ? href("/archive/:fileName", { fileName: issue.pdf.fileName })
+        ? href('/archive/:fileName', { fileName: issue.pdf.fileName })
         : null,
+      publishedAt: getFormattedPublishDate(issue.publishedAt),
+      releasedAt: getFormattedPublishDate(issue.releasedAt),
       reviews: issue.reviews.map((review) => ({
-        id: review.id,
-        state: review.state,
         createdAt: getFormattedPublishDate(review.createdAt),
+        id: review.id,
         reviewer: {
           id: review.reviewer.id,
           name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
           roleLevel: review.reviewer.role.level,
+          roleName: review.reviewer.role.name,
         },
+        state: review.state,
       })),
-      hasCoordinatorReview: !!coordinatorReview,
+      state: issue.state,
+      updatedAt: getFormattedPublishDate(issue.updatedAt),
     },
-    canUpdate,
-    canDelete,
-    canPublish,
-    canRetract,
-    canArchive,
-    canRestore,
-    canReview: shouldShowReview,
-    hasReviewed,
     needsCoordinatorReview,
   }
 }

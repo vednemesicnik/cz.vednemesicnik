@@ -1,1 +1,1 @@
-export { LinkGroupItem } from "./_component"
+export { LinkGroupItem } from './_component'

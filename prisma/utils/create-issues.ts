@@ -1,9 +1,9 @@
-import type { PrismaClient } from "@generated/prisma/client"
-import { type ContentState } from "@generated/prisma/enums"
-import { users } from "~~/data/users"
+import type { PrismaClient } from '@generated/prisma/client'
+import type { ContentState } from '@generated/prisma/enums'
+import { users } from '~~/data/users'
 
-import { getIssueCover } from "./get-issue-cover"
-import { getIssuePdf } from "./get-issue-pdf"
+import { getIssueCover } from './get-issue-cover'
+import { getIssuePdf } from './get-issue-pdf'
 
 export type IssuesData = {
   label: string
@@ -22,18 +22,17 @@ export type IssuesData = {
 
 export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
   const user = await prisma.user.findUniqueOrThrow({
-    where: { email: users[0].email },
     select: { authorId: true },
+    where: { email: users[0].email },
   })
 
   for (const issue of data) {
     await prisma.issue
       .create({
         data: {
-          label: issue.label,
-          publishedAt: issue.publishedAt,
-          state: issue.state,
-          releasedAt: issue.releasedAt,
+          author: {
+            connect: { id: user.authorId },
+          },
           cover: issue.cover
             ? {
                 create: await getIssueCover({
@@ -42,6 +41,7 @@ export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
                 }),
               }
             : undefined,
+          label: issue.label,
           pdf: issue.pdf
             ? {
                 create: await getIssuePdf({
@@ -50,13 +50,13 @@ export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
                 }),
               }
             : undefined,
-          author: {
-            connect: { id: user.authorId },
-          },
+          publishedAt: issue.publishedAt,
+          releasedAt: issue.releasedAt,
+          state: issue.state,
         },
       })
       .catch((error) => {
-        console.error("Error creating an archived issue:", error)
+        console.error('Error creating an archived issue:', error)
         return null
       })
   }

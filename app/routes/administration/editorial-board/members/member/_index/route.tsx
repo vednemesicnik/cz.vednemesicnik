@@ -1,35 +1,35 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef } from "react"
-import { Form, href } from "react-router"
+import { Activity, useRef } from 'react'
+import { Form, href } from 'react-router'
 
-import { AdminActionButton } from "~/components/admin-action-button"
-import { AdminActionGroup } from "~/components/admin-action-group"
+import { AdminActionButton } from '~/components/admin-action-button'
+import { AdminActionGroup } from '~/components/admin-action-group'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
-} from "~/components/admin-delete-confirmation-dialog"
-import { AdminDetailItem } from "~/components/admin-detail-item"
-import { AdminDetailList } from "~/components/admin-detail-list"
-import { AdminDetailSection } from "~/components/admin-detail-section"
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AdminStateBadge } from "~/components/admin-state-badge"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { ArchiveIcon } from "~/components/icons/archive-icon"
-import { ArrowUpward } from "~/components/icons/arrow-upward"
-import { CheckIcon } from "~/components/icons/check-icon"
-import { DeleteIcon } from "~/components/icons/delete-icon"
-import { EditIcon } from "~/components/icons/edit-icon"
-import { RefreshIcon } from "~/components/icons/refresh-icon"
-import { UndoIcon } from "~/components/icons/undo-icon"
+} from '~/components/admin-delete-confirmation-dialog'
+import { AdminDetailItem } from '~/components/admin-detail-item'
+import { AdminDetailList } from '~/components/admin-detail-list'
+import { AdminDetailSection } from '~/components/admin-detail-section'
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AdminStateBadge } from '~/components/admin-state-badge'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { ArchiveIcon } from '~/components/icons/archive-icon'
+import { ArrowUpward } from '~/components/icons/arrow-upward'
+import { CheckIcon } from '~/components/icons/check-icon'
+import { DeleteIcon } from '~/components/icons/delete-icon'
+import { EditIcon } from '~/components/icons/edit-icon'
+import { RefreshIcon } from '~/components/icons/refresh-icon'
+import { UndoIcon } from '~/components/icons/undo-icon'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
-export { action } from "./_action"
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { action } from './_action'
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function RouteComponent({
   loaderData,
@@ -54,11 +54,11 @@ export default function RouteComponent({
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
     {
-      action: href("/administration/editorial-board/members/:memberId", {
+      action: href('/administration/editorial-board/members/:memberId', {
         memberId,
       }),
       withRedirect: true,
-    }
+    },
   )
 
   return (
@@ -69,10 +69,10 @@ export default function RouteComponent({
         {canUpdate && (
           <AdminLinkButton
             to={href(
-              "/administration/editorial-board/members/:memberId/edit-member",
+              '/administration/editorial-board/members/:memberId/edit-member',
               {
                 memberId,
-              }
+              },
             )}
           >
             <EditIcon />
@@ -82,8 +82,8 @@ export default function RouteComponent({
         {canReview && !hasReviewed && (
           <Form method="post">
             <AuthenticityTokenInput />
-            <input type="hidden" name="intent" value="review" />
-            <AdminActionButton type="submit" action="review">
+            <input name="intent" type="hidden" value="review" />
+            <AdminActionButton action="review" type="submit">
               <CheckIcon />
               Schválit
             </AdminActionButton>
@@ -92,16 +92,16 @@ export default function RouteComponent({
         {canPublish && (
           <Form method="post">
             <AuthenticityTokenInput />
-            <input type="hidden" name="intent" value="publish" />
+            <input name="intent" type="hidden" value="publish" />
             <AdminActionButton
-              type="submit"
               action="publish"
               disabled={needsCoordinatorReview}
               title={
                 needsCoordinatorReview
-                  ? "Nelze publikovat bez schválení koordinátora"
+                  ? 'Nelze publikovat bez schválení koordinátora'
                   : undefined
               }
+              type="submit"
             >
               <ArrowUpward />
               Zveřejnit
@@ -111,8 +111,8 @@ export default function RouteComponent({
         {canRetract && (
           <Form method="post">
             <AuthenticityTokenInput />
-            <input type="hidden" name="intent" value="retract" />
-            <AdminActionButton type="submit" action="retract">
+            <input name="intent" type="hidden" value="retract" />
+            <AdminActionButton action="retract" type="submit">
               <UndoIcon />
               Stáhnout z publikace
             </AdminActionButton>
@@ -121,8 +121,8 @@ export default function RouteComponent({
         {canArchive && (
           <Form method="post">
             <AuthenticityTokenInput />
-            <input type="hidden" name="intent" value="archive" />
-            <AdminActionButton type="submit" action="archive">
+            <input name="intent" type="hidden" value="archive" />
+            <AdminActionButton action="archive" type="submit">
               <ArchiveIcon />
               Archivovat
             </AdminActionButton>
@@ -131,8 +131,8 @@ export default function RouteComponent({
         {canRestore && (
           <Form method="post">
             <AuthenticityTokenInput />
-            <input type="hidden" name="intent" value="restore" />
-            <AdminActionButton type="submit" action="restore">
+            <input name="intent" type="hidden" value="restore" />
+            <AdminActionButton action="restore" type="submit">
               <RefreshIcon />
               Obnovit
             </AdminActionButton>
@@ -188,18 +188,18 @@ export default function RouteComponent({
 
       <AdminDetailSection title="Schválení">
         <AdminDetailList>
-          <Activity mode={member.reviews.length > 0 ? "visible" : "hidden"}>
+          <Activity mode={member.reviews.length > 0 ? 'visible' : 'hidden'}>
             {member.reviews.map((review) => (
               <AdminDetailItem
                 key={review.id}
-                label={`${review.reviewer.name} (${review.reviewer.roleName === "coordinator" ? "Koordinátor" : "Tvůrce"})`}
+                label={`${review.reviewer.name} (${review.reviewer.roleName === 'coordinator' ? 'Koordinátor' : 'Tvůrce'})`}
               >
                 {review.createdAt}
               </AdminDetailItem>
             ))}
           </Activity>
           <AdminDetailItem label="Schváleno koordinátorem">
-            {member.hasCoordinatorReview ? "Ano" : "Ne"}
+            {member.hasCoordinatorReview ? 'Ano' : 'Ne'}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>

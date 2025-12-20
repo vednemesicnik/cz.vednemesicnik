@@ -1,24 +1,24 @@
-import { type LoaderFunctionArgs } from "react-router"
+import type { LoaderFunctionArgs } from 'react-router'
 
-import { prisma } from "~/utils/db.server"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
-import { getAuthorsByPermission } from "~/utils/permissions/author/queries/get-authors-by-permission.server"
+import { prisma } from '~/utils/db.server'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const context = await getAuthorPermissionContext(request, {
-    entities: ["editorial_board_position"],
-    actions: ["create"],
+    actions: ['create'],
+    entities: ['editorial_board_position'],
   })
 
   // Check create permission
   const canCreate = context.can({
-    entity: "editorial_board_position",
-    action: "create",
+    action: 'create',
+    entity: 'editorial_board_position',
   }).hasPermission
 
   // If author cannot create positions, they shouldn't access this page
   if (!canCreate) {
-    throw new Response("Forbidden", { status: 403 })
+    throw new Response('Forbidden', { status: 403 })
   }
 
   const editorialBoardPositionsCount =
@@ -26,14 +26,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const authors = await getAuthorsByPermission(
     context,
-    "editorial_board_position",
-    "create",
-    "draft"
+    'editorial_board_position',
+    'create',
+    'draft',
   )
 
   return {
-    editorialBoardPositionsCount,
     authors,
+    editorialBoardPositionsCount,
     selfAuthorId: context.authorId,
   }
 }

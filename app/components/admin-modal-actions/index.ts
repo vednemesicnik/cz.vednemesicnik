@@ -1,1 +1,1 @@
-export { AdminModalActions } from "./_component"
+export { AdminModalActions } from './_component'

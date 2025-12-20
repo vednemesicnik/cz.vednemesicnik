@@ -1,1 +1,1 @@
-export { AuthenticityTokenInput } from "./_component"
+export { AuthenticityTokenInput } from './_component'

@@ -1,1 +1,1 @@
-export { TileGridItem } from "./_component"
+export { TileGridItem } from './_component'

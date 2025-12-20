@@ -1,13 +1,13 @@
-import { clsx } from "clsx"
-import { type ComponentProps } from "react"
+import { clsx } from 'clsx'
+import type { ComponentProps } from 'react'
 
-import { ErrorMessage } from "~/components/error-message"
-import { ErrorMessageGroup } from "~/components/error-message-group"
-import { Label } from "~/components/label"
+import { ErrorMessage } from '~/components/error-message'
+import { ErrorMessageGroup } from '~/components/error-message-group'
+import { Label } from '~/components/label'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
-type Props = ComponentProps<"input"> & {
+type Props = ComponentProps<'input'> & {
   label: string
   errors?: string[]
 }

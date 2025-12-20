@@ -1,29 +1,29 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { Select } from "./_component"
+import { Select } from './_component'
 
 const meta: Meta<typeof Select> = {
-  title: "Primitives/Select",
-  component: Select,
-  tags: ["autodocs"],
   argTypes: {
-    label: {
-      control: "text",
-      description: "Label text for the select field",
-    },
-    required: {
-      control: "boolean",
-      description: "Whether the select is required",
-    },
     disabled: {
-      control: "boolean",
-      description: "Whether the select is disabled",
+      control: 'boolean',
+      description: 'Whether the select is disabled',
     },
     errors: {
-      control: "object",
-      description: "Array of error messages to display",
+      control: 'object',
+      description: 'Array of error messages to display',
+    },
+    label: {
+      control: 'text',
+      description: 'Label text for the select field',
+    },
+    required: {
+      control: 'boolean',
+      description: 'Whether the select is required',
     },
   },
+  component: Select,
+  tags: ['autodocs'],
+  title: 'Primitives/Select',
 }
 
 export default meta
@@ -35,8 +35,8 @@ type Story = StoryObj<typeof Select>
  */
 export const Default: Story = {
   args: {
-    label: "Country",
-    id: "country",
+    id: 'country',
+    label: 'Country',
   },
   render: (args) => (
     <Select {...args}>
@@ -55,8 +55,8 @@ export const Default: Story = {
  */
 export const Required: Story = {
   args: {
-    label: "Role",
-    id: "role",
+    id: 'role',
+    label: 'Role',
     required: true,
   },
   render: (args) => (
@@ -75,9 +75,9 @@ export const Required: Story = {
  */
 export const WithErrors: Story = {
   args: {
-    label: "Category",
-    id: "category",
-    errors: ["Please select a category"],
+    errors: ['Please select a category'],
+    id: 'category',
+    label: 'Category',
   },
   render: (args) => (
     <Select {...args}>
@@ -95,14 +95,14 @@ export const WithErrors: Story = {
  */
 export const Disabled: Story = {
   args: {
-    label: "Status",
-    id: "status",
     disabled: true,
+    id: 'status',
+    label: 'Status',
   },
   render: (args) => (
     <Select {...args}>
       <option value="draft">Draft</option>
-      <option value="published" selected>
+      <option selected value="published">
         Published
       </option>
       <option value="archived">Archived</option>
@@ -116,9 +116,9 @@ export const Disabled: Story = {
  */
 export const WithDefaultValue: Story = {
   args: {
-    label: "Language",
-    id: "language",
-    defaultValue: "en",
+    defaultValue: 'en',
+    id: 'language',
+    label: 'Language',
   },
   render: (args) => (
     <Select {...args}>
@@ -136,8 +136,8 @@ export const WithDefaultValue: Story = {
  */
 export const WithGroups: Story = {
   args: {
-    label: "Favorite Food",
-    id: "food",
+    id: 'food',
+    label: 'Favorite Food',
   },
   render: (args) => (
     <Select {...args}>
@@ -162,8 +162,8 @@ export const WithGroups: Story = {
  */
 export const ArticleState: Story = {
   args: {
-    label: "Article State",
-    id: "article-state",
+    id: 'article-state',
+    label: 'Article State',
     required: true,
   },
   render: (args) => (

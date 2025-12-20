@@ -1,9 +1,9 @@
-import {
-  type AuthorPermissionAccess,
-  type AuthorPermissionAction,
-  type AuthorPermissionEntity,
-  type ContentState,
-} from "@generated/prisma/enums"
+import type {
+  AuthorPermissionAccess,
+  AuthorPermissionAction,
+  AuthorPermissionEntity,
+  ContentState,
+} from '@generated/prisma/enums'
 
 type Access = AuthorPermissionAccess | string
 type Action = AuthorPermissionAction | string
@@ -45,13 +45,13 @@ type Options = {
  */
 export const getAuthorRights = (
   permissions: Permissions,
-  options?: Options
+  options?: Options,
 ): boolean[][][][] => {
   const {
-    access = ["any"],
-    actions = ["*"],
-    entities = ["*"],
-    states = ["*"],
+    access = ['any'],
+    actions = ['*'],
+    entities = ['*'],
+    states = ['*'],
     ownId,
     targetId,
   } = options ?? {}
@@ -62,21 +62,21 @@ export const getAuthorRights = (
         return states.map((state) => {
           let filteredPermissions = permissions
 
-          if (entity !== "*") {
+          if (entity !== '*') {
             filteredPermissions = filteredPermissions.filter(
-              (permission) => entity === permission.entity
+              (permission) => entity === permission.entity,
             )
           }
 
-          if (action !== "*") {
+          if (action !== '*') {
             filteredPermissions = filteredPermissions.filter(
-              (permission) => action === permission.action
+              (permission) => action === permission.action,
             )
           }
 
-          if (access !== "*") {
+          if (access !== '*') {
             filteredPermissions = filteredPermissions.filter((permission) => {
-              if (access === "own") {
+              if (access === 'own') {
                 return access === permission.access && ownId === targetId
               } else {
                 return access === permission.access
@@ -84,9 +84,9 @@ export const getAuthorRights = (
             })
           }
 
-          if (state !== "*") {
+          if (state !== '*') {
             filteredPermissions = filteredPermissions.filter(
-              (permission) => state === permission.state
+              (permission) => state === permission.state,
             )
           }
 

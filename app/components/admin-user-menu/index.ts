@@ -1,1 +1,1 @@
-export { AdminUserMenu } from "./_component"
+export { AdminUserMenu } from './_component'

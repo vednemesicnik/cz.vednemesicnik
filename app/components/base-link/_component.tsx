@@ -1,11 +1,11 @@
-import type { ComponentProps } from "react"
-import { Link } from "react-router"
+import type { ComponentProps } from 'react'
+import { Link } from 'react-router'
 
 type Props = ComponentProps<typeof Link>
 
 export const BaseLink = ({
   children,
-  prefetch = "intent",
+  prefetch = 'intent',
   viewTransition = true,
   ...rest
 }: Props) => {

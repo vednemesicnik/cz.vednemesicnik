@@ -1,12 +1,11 @@
-import { redirect } from "react-router"
-
 import type {
   AuthorPermissionAction,
   AuthorPermissionEntity,
   ContentState,
-} from "@generated/prisma/enums"
+} from '@generated/prisma/enums'
+import { redirect } from 'react-router'
 
-import type { AuthorPermissionContext } from "../context/get-author-permission-context.server"
+import type { AuthorPermissionContext } from '../context/get-author-permission-context.server'
 
 type RequireAuthorPermissionOptions = {
   entity: AuthorPermissionEntity
@@ -18,18 +17,18 @@ type RequireAuthorPermissionOptions = {
 
 export function requireAuthorPermission(
   context: AuthorPermissionContext,
-  options: RequireAuthorPermissionOptions
+  options: RequireAuthorPermissionOptions,
 ) {
   const { hasPermission, hasOwn, hasAny } = context.can({
-    entity: options.entity,
     action: options.action,
+    entity: options.entity,
     state: options.state,
     targetAuthorId: options.targetAuthorId,
   })
 
   if (!hasPermission) {
-    throw redirect(options.redirectTo ?? "/administration")
+    throw redirect(options.redirectTo ?? '/administration')
   }
 
-  return { hasOwn, hasAny }
+  return { hasAny, hasOwn }
 }

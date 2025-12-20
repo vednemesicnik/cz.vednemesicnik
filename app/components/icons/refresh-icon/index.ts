@@ -1,1 +1,1 @@
-export { RefreshIcon } from "./_component"
+export { RefreshIcon } from './_component'

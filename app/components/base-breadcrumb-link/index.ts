@@ -1,1 +1,1 @@
-export { BaseBreadcrumbLink } from "./_component"
+export { BaseBreadcrumbLink } from './_component'

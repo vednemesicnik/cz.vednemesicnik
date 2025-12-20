@@ -1,1 +1,1 @@
-export { AdminParagraph } from "./_component"
+export { AdminParagraph } from './_component'

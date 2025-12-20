@@ -6,27 +6,25 @@ import {
   getSelectProps,
   getTextareaProps,
   useForm,
-} from "@conform-to/react"
-import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { useEffect, useState } from "react"
-import { href, useNavigation } from "react-router"
+} from '@conform-to/react'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { useEffect, useState } from 'react'
+import { href, useNavigation } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset"
-import { FileInput } from "~/components/file-input"
-import { Form } from "~/components/form"
-import { FormActions } from "~/components/form-actions"
-import { Input } from "~/components/input"
-import { Select } from "~/components/select"
-import { TextArea } from "~/components/text-area"
-import { slugify } from "~/utils/slugify"
-
-import type { Route } from "./+types/route"
-import { schema } from "./_schema"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
+import { Fieldset } from '~/components/fieldset'
+import { FileInput } from '~/components/file-input'
+import { Form } from '~/components/form'
+import { FormActions } from '~/components/form-actions'
+import { Input } from '~/components/input'
+import { Select } from '~/components/select'
+import { TextArea } from '~/components/text-area'
+import { slugify } from '~/utils/slugify'
+import { schema } from './_schema'
 
 export default function Route({
   loaderData,
@@ -36,21 +34,21 @@ export default function Route({
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
-    id: "edit-podcast-form",
     constraint: getZodConstraint(schema),
+    defaultValue: {
+      authorId: podcast.author.id,
+      coverId: podcast.cover?.id,
+      description: podcast.description,
+      id: podcast.id,
+    },
+    id: 'edit-podcast-form',
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
-    defaultValue: {
-      id: podcast.id,
-      description: podcast.description,
-      coverId: podcast.cover?.id,
-      authorId: podcast.author.id,
-    },
     shouldDirtyConsider: (field) => {
-      return !field.startsWith("csrf")
+      return !field.startsWith('csrf')
     },
-    shouldValidate: "onSubmit",
-    shouldRevalidate: "onBlur",
+    shouldRevalidate: 'onBlur',
+    shouldValidate: 'onSubmit',
   })
 
   const [title, setTitle] = useState(podcast.title)
@@ -69,7 +67,7 @@ export default function Route({
     }
   }
 
-  const isLoadingOrSubmitting = state !== "idle"
+  const isLoadingOrSubmitting = state !== 'idle'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -77,56 +75,56 @@ export default function Route({
       <AdminHeadline>Upravit podcast ({podcast.title})</AdminHeadline>
       <Form
         {...getFormProps(form)}
-        method={"post"}
-        encType={"multipart/form-data"}
+        encType={'multipart/form-data'}
         errors={form.errors}
+        method={'post'}
       >
-        <input {...getInputProps(fields.id, { type: "hidden" })} />
+        <input {...getInputProps(fields.id, { type: 'hidden' })} />
 
-        <Fieldset legend={"Detaily"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
           <Input
-            label={"Název"}
-            placeholder={"Název podcastu"}
-            onChange={(event) => setTitle(event.target.value)}
-            value={title}
             errors={fields.title.errors}
-            {...getInputProps(fields.title, { type: "text" })}
+            label={'Název'}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder={'Název podcastu'}
+            value={title}
+            {...getInputProps(fields.title, { type: 'text' })}
           />
 
           <Input
-            label={"Slug"}
-            placeholder={"nazev-podcastu"}
+            errors={fields.slug.errors}
+            label={'Slug'}
             onChange={(event) => setSlug(slugify(event.target.value))}
             onFocus={() => setIsSlugFocused(true)}
+            placeholder={'nazev-podcastu'}
             value={slug}
-            errors={fields.slug.errors}
-            {...getInputProps(fields.slug, { type: "text" })}
+            {...getInputProps(fields.slug, { type: 'text' })}
           />
 
           <TextArea
-            label={"Popis"}
-            placeholder={"Popis podcastu"}
             errors={fields.description.errors}
+            label={'Popis'}
+            placeholder={'Popis podcastu'}
             {...getTextareaProps(fields.description)}
           />
 
-          <input {...getInputProps(fields.coverId, { type: "hidden" })} />
+          <input {...getInputProps(fields.coverId, { type: 'hidden' })} />
           <FileInput
-            label={"Obálka"}
-            accept={"image"}
-            onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
+            accept={'image'}
             errors={fields.cover.errors}
-            {...getInputProps(fields.cover, { type: "file" })}
+            label={'Obálka'}
+            onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
+            {...getInputProps(fields.cover, { type: 'file' })}
           />
         </Fieldset>
 
         <Fieldset
-          legend={"Informace o autorovi"}
           disabled={isLoadingOrSubmitting}
+          legend={'Informace o autorovi'}
         >
           <Select
-            label={"Autor"}
             errors={fields.authorId.errors}
+            label={'Autor'}
             {...getSelectProps(fields.authorId)}
           >
             {loaderData.authors.map((author) => {
@@ -142,11 +140,11 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
             Upravit
           </Button>
           <AdminLinkButton
-            to={href("/administration/podcasts/:podcastId", {
+            to={href('/administration/podcasts/:podcastId', {
               podcastId: podcast.id,
             })}
           >
@@ -158,7 +156,7 @@ export default function Route({
   )
 }
 
-export { handle } from "./_handle"
-export { meta } from "./_meta"
-export { loader } from "./_loader"
-export { action } from "./_action"
+export { action } from './_action'
+export { handle } from './_handle'
+export { loader } from './_loader'
+export { meta } from './_meta'

@@ -2,7 +2,7 @@ import type {
   UserPermissionAccess,
   UserPermissionAction,
   UserPermissionEntity,
-} from "@generated/prisma/enums"
+} from '@generated/prisma/enums'
 
 type Access = UserPermissionAccess | string
 type Action = UserPermissionAction | string
@@ -40,12 +40,12 @@ type Options = {
  */
 export const getUserRights = (
   permissions: Permissions,
-  options?: Options
+  options?: Options,
 ): boolean[][][] => {
   const {
-    access = ["*"],
-    actions = ["*"],
-    entities = ["*"],
+    access = ['*'],
+    actions = ['*'],
+    entities = ['*'],
     ownId,
     targetId,
   } = options ?? {}
@@ -55,21 +55,21 @@ export const getUserRights = (
       return access.map((access) => {
         let filteredPermissions = permissions
 
-        if (entity !== "*") {
+        if (entity !== '*') {
           filteredPermissions = filteredPermissions.filter(
-            (permission) => entity === permission.entity
+            (permission) => entity === permission.entity,
           )
         }
 
-        if (action !== "*") {
+        if (action !== '*') {
           filteredPermissions = filteredPermissions.filter(
-            (permission) => action === permission.action
+            (permission) => action === permission.action,
           )
         }
 
-        if (access !== "*") {
+        if (access !== '*') {
           filteredPermissions = filteredPermissions.filter((permission) => {
-            if (access === "own") {
+            if (access === 'own') {
               return access === permission.access && ownId === targetId
             } else {
               return access === permission.access

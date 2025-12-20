@@ -1,8 +1,8 @@
-import type { MetaFunction } from "react-router"
+import type { MetaFunction } from 'react-router'
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Vedneměsíčník | Spolek" },
-    { name: "description", content: "O spolku Vedneměsíčník, z. s." },
+    { title: 'Vedneměsíčník | Spolek' },
+    { content: 'O spolku Vedneměsíčník, z. s.', name: 'description' },
   ]
 }

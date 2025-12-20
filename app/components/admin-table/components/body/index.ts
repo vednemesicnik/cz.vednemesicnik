@@ -1,1 +1,1 @@
-export { TableBody } from "./_component"
+export { TableBody } from './_component'

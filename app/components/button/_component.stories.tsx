@@ -1,37 +1,37 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { Button } from "./_component"
+import { Button } from './_component'
 
 const meta: Meta<typeof Button> = {
-  title: "Primitives/Button",
+  argTypes: {
+    disabled: {
+      control: 'boolean',
+      description:
+        'Whether the button is disabled (reduces opacity and prevents interaction)',
+    },
+    type: {
+      control: 'select',
+      description: 'HTML button type attribute',
+      options: ['button', 'submit', 'reset'],
+    },
+    variant: {
+      control: 'select',
+      description:
+        "Visual style variant: 'primary' for main actions (bright green), 'danger' for destructive actions (red), 'default' for secondary actions (outlined)",
+      options: ['primary', 'danger', 'default'],
+    },
+  },
   component: Button,
-  tags: ["autodocs"],
   parameters: {
     docs: {
       description: {
         component:
-          "Modern button component with three distinct variants. Features smooth transitions, hover effects, subtle scale on click, and focus-visible box-shadow for keyboard navigation (Tab key). Uses form design tokens for consistent styling across all variants.",
+          'Modern button component with three distinct variants. Features smooth transitions, hover effects, subtle scale on click, and focus-visible box-shadow for keyboard navigation (Tab key). Uses form design tokens for consistent styling across all variants.',
       },
     },
   },
-  argTypes: {
-    variant: {
-      control: "select",
-      options: ["primary", "danger", "default"],
-      description:
-        "Visual style variant: 'primary' for main actions (bright green), 'danger' for destructive actions (red), 'default' for secondary actions (outlined)",
-    },
-    disabled: {
-      control: "boolean",
-      description:
-        "Whether the button is disabled (reduces opacity and prevents interaction)",
-    },
-    type: {
-      control: "select",
-      options: ["button", "submit", "reset"],
-      description: "HTML button type attribute",
-    },
-  },
+  tags: ['autodocs'],
+  title: 'Primitives/Button',
 }
 
 export default meta
@@ -43,8 +43,8 @@ type Story = StoryObj<typeof Button>
  */
 export const Primary: Story = {
   args: {
-    children: "Primary Button",
-    variant: "primary",
+    children: 'Primary Button',
+    variant: 'primary',
   },
 }
 
@@ -54,8 +54,8 @@ export const Primary: Story = {
  */
 export const Danger: Story = {
   args: {
-    children: "Delete",
-    variant: "danger",
+    children: 'Delete',
+    variant: 'danger',
   },
 }
 
@@ -65,8 +65,8 @@ export const Danger: Story = {
  */
 export const Default: Story = {
   args: {
-    children: "Cancel",
-    variant: "default",
+    children: 'Cancel',
+    variant: 'default',
   },
 }
 
@@ -76,9 +76,9 @@ export const Default: Story = {
  */
 export const Disabled: Story = {
   args: {
-    children: "Disabled Button",
-    variant: "primary",
+    children: 'Disabled Button',
     disabled: true,
+    variant: 'primary',
   },
 }
 
@@ -88,9 +88,9 @@ export const Disabled: Story = {
  */
 export const FormSubmit: Story = {
   args: {
-    children: "Submit Form",
-    variant: "primary",
-    type: "submit",
+    children: 'Submit Form',
+    type: 'submit',
+    variant: 'primary',
   },
 }
 
@@ -100,7 +100,7 @@ export const FormSubmit: Story = {
  */
 export const LongText: Story = {
   args: {
-    children: "This is a button with much longer text content",
-    variant: "primary",
+    children: 'This is a button with much longer text content',
+    variant: 'primary',
   },
 }

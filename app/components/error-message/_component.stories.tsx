@@ -1,17 +1,17 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { ErrorMessage } from "./_component"
+import { ErrorMessage } from './_component'
 
 const meta: Meta<typeof ErrorMessage> = {
-  title: "Primitives/ErrorMessage",
-  component: ErrorMessage,
-  tags: ["autodocs"],
   argTypes: {
     children: {
-      control: "text",
-      description: "Error message text content",
+      control: 'text',
+      description: 'Error message text content',
     },
   },
+  component: ErrorMessage,
+  tags: ['autodocs'],
+  title: 'Primitives/ErrorMessage',
 }
 
 export default meta
@@ -23,7 +23,7 @@ type Story = StoryObj<typeof ErrorMessage>
  */
 export const Default: Story = {
   args: {
-    children: "This field is required",
+    children: 'This field is required',
   },
 }
 
@@ -33,7 +33,7 @@ export const Default: Story = {
  */
 export const InvalidEmail: Story = {
   args: {
-    children: "Please enter a valid email address",
+    children: 'Please enter a valid email address',
   },
 }
 
@@ -43,7 +43,7 @@ export const InvalidEmail: Story = {
  */
 export const PasswordTooShort: Story = {
   args: {
-    children: "Password must be at least 8 characters long",
+    children: 'Password must be at least 8 characters long',
   },
 }
 
@@ -53,7 +53,7 @@ export const PasswordTooShort: Story = {
  */
 export const ServerError: Story = {
   args: {
-    children: "Username already exists. Please choose another.",
+    children: 'Username already exists. Please choose another.',
   },
 }
 
@@ -64,7 +64,7 @@ export const ServerError: Story = {
 export const LongMessage: Story = {
   args: {
     children:
-      "The file you are trying to upload exceeds the maximum size limit of 5MB. Please compress or resize the file and try again.",
+      'The file you are trying to upload exceeds the maximum size limit of 5MB. Please compress or resize the file and try again.',
   },
 }
 
@@ -74,7 +74,7 @@ export const LongMessage: Story = {
  */
 export const OutOfRange: Story = {
   args: {
-    children: "Value must be between 1 and 100",
+    children: 'Value must be between 1 and 100',
   },
 }
 
@@ -84,7 +84,7 @@ export const OutOfRange: Story = {
  */
 export const SelectionRequired: Story = {
   args: {
-    children: "Please select at least one option",
+    children: 'Please select at least one option',
   },
 }
 
@@ -94,6 +94,6 @@ export const SelectionRequired: Story = {
  */
 export const InvalidFormat: Story = {
   args: {
-    children: "Phone number must be in format: (123) 456-7890",
+    children: 'Phone number must be in format: (123) 456-7890',
   },
 }

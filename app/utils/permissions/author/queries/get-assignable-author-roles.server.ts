@@ -1,6 +1,6 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
-import type { UserPermissionContext } from "../../user/context/get-user-permission-context.server"
+import type { UserPermissionContext } from '../../user/context/get-user-permission-context.server'
 
 /**
  * Fetches author roles that the current user can assign when editing an author.
@@ -11,21 +11,21 @@ import type { UserPermissionContext } from "../../user/context/get-user-permissi
  */
 export async function getAssignableAuthorRoles(
   context: UserPermissionContext,
-  targetAuthorId: string
+  targetAuthorId: string,
 ) {
   // Member can only see their own current role (cannot change it)
-  if (context.roleName === "member" && context.authorId === targetAuthorId) {
+  if (context.roleName === 'member' && context.authorId === targetAuthorId) {
     const author = await prisma.author.findUnique({
-      where: { id: targetAuthorId },
       select: {
         role: {
           select: {
             id: true,
-            name: true,
             level: true,
+            name: true,
           },
         },
       },
+      where: { id: targetAuthorId },
     })
 
     return author ? [author.role] : []
@@ -33,13 +33,13 @@ export async function getAssignableAuthorRoles(
 
   // Administrator and Owner can assign any author role
   return prisma.authorRole.findMany({
+    orderBy: {
+      level: 'asc',
+    },
     select: {
       id: true,
-      name: true,
       level: true,
-    },
-    orderBy: {
-      level: "asc",
+      name: true,
     },
   })
 }

@@ -1,6 +1,6 @@
-import { BaseHyperlink } from "~/components/base-hyperlink"
+import { BaseHyperlink } from '~/components/base-hyperlink'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   href: string
@@ -10,10 +10,10 @@ type Props = {
 export const SimpleHyperlink = ({ children, href }: Props) => {
   return (
     <BaseHyperlink
-      href={href}
-      className={styles.linkButton}
-      target={"_self"}
       aria-label={children}
+      className={styles.linkButton}
+      href={href}
+      target={'_self'}
     >
       {children}
     </BaseHyperlink>

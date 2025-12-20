@@ -1,1 +1,1 @@
-export { Footer } from "./_component"
+export { Footer } from './_component'

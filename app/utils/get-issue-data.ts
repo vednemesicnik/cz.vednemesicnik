@@ -1,9 +1,9 @@
 export const getIssueData = (ordinalNumber: string, releasedAt: string) => {
   const releaseDate = new Date(releasedAt)
   const year = releaseDate.getFullYear()
-  const monthYear = releaseDate.toLocaleDateString("cs-CZ", {
-    year: "numeric",
-    month: "long",
+  const monthYear = releaseDate.toLocaleDateString('cs-CZ', {
+    month: 'long',
+    year: 'numeric',
   })
 
   const label = `${ordinalNumber}/${monthYear}`
@@ -12,9 +12,9 @@ export const getIssueData = (ordinalNumber: string, releasedAt: string) => {
   const pdfFileName = `VDM-${year}-${ordinalNumber}.pdf`
 
   return {
-    label,
-    releaseDate,
     coverAltText,
+    label,
     pdfFileName,
+    releaseDate,
   }
 }

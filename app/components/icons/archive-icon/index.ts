@@ -1,1 +1,1 @@
-export { ArchiveIcon } from "./_component"
+export { ArchiveIcon } from './_component'

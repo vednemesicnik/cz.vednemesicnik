@@ -1,5 +1,5 @@
-import { prisma } from "~/utils/db.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
+import { prisma } from '~/utils/db.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
   number: number
@@ -21,21 +21,21 @@ export async function createEpisode({
   try {
     const episode = await prisma.podcastEpisode.create({
       data: {
-        number,
-        title,
-        slug,
-        description,
-        podcast: {
-          connect: { id: podcastId },
-        },
         author: {
           connect: { id: authorId },
         },
+        description,
+        number,
+        podcast: {
+          connect: { id: podcastId },
+        },
+        slug,
+        title,
       },
     })
 
     return { episodeId: episode.id }
   } catch (error) {
-    return throwDbError(error, "Unable to create the episode.")
+    return throwDbError(error, 'Unable to create the episode.')
   }
 }

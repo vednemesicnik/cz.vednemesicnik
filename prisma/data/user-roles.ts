@@ -1,51 +1,51 @@
-import { type UserRolesData } from "~~/utils/create-user-roles"
+import type { UserRolesData } from '~~/utils/create-user-roles'
 
 export const userRoles: UserRolesData = [
   {
-    name: "member",
     level: 3,
+    name: 'member',
     permissions: [
       {
-        entity: "user",
-        access: "own",
-        actions: ["view", "update"],
+        access: 'own',
+        actions: ['view', 'update'],
+        entity: 'user',
       },
       {
-        entity: "author",
-        access: "own",
-        actions: ["view", "update"],
+        access: 'own',
+        actions: ['view', 'update'],
+        entity: 'author',
       },
     ],
   },
   {
-    name: "administrator",
     level: 2,
+    name: 'administrator',
     permissions: [
       {
-        entity: "user",
-        access: "any",
-        actions: ["view", "create", "update", "delete"],
+        access: 'any',
+        actions: ['view', 'create', 'update', 'delete'],
+        entity: 'user',
       },
       {
-        entity: "author",
-        access: "any",
-        actions: ["view", "create", "update", "delete"],
+        access: 'any',
+        actions: ['view', 'create', 'update', 'delete'],
+        entity: 'author',
       },
     ],
   },
   {
-    name: "owner",
     level: 1,
+    name: 'owner',
     permissions: [
       {
-        entity: "user",
-        access: "any",
-        actions: ["view", "create", "update", "delete"],
+        access: 'any',
+        actions: ['view', 'create', 'update', 'delete'],
+        entity: 'user',
       },
       {
-        entity: "author",
-        access: "any",
-        actions: ["view", "create", "update", "delete"],
+        access: 'any',
+        actions: ['view', 'create', 'update', 'delete'],
+        entity: 'author',
       },
     ],
   },

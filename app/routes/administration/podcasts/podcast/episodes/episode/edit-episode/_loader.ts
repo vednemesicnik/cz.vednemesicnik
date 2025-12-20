@@ -1,54 +1,54 @@
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import { prisma } from "~/utils/db.server"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
-import { requireAuthorPermission } from "~/utils/permissions/author/guards/require-author-permission.server"
-import { getAuthorsByPermission } from "~/utils/permissions/author/queries/get-authors-by-permission.server"
+import { prisma } from '~/utils/db.server'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { requireAuthorPermission } from '~/utils/permissions/author/guards/require-author-permission.server'
+import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { podcastId, episodeId } = params
 
   const episode = await prisma.podcastEpisode.findUniqueOrThrow({
-    where: { id: episodeId },
     select: {
+      authorId: true,
+      description: true,
       id: true,
       number: true,
-      title: true,
       slug: true,
-      description: true,
       state: true,
-      authorId: true,
+      title: true,
     },
+    where: { id: episodeId },
   })
 
   const context = await getAuthorPermissionContext(request, {
-    entities: ["podcast_episode"],
-    actions: ["update"],
+    actions: ['update'],
+    entities: ['podcast_episode'],
   })
 
   requireAuthorPermission(context, {
-    entity: "podcast_episode",
-    action: "update",
+    action: 'update',
+    entity: 'podcast_episode',
+    redirectTo: href(
+      '/administration/podcasts/:podcastId/episodes/:episodeId',
+      { episodeId, podcastId },
+    ),
     state: episode.state,
     targetAuthorId: episode.authorId,
-    redirectTo: href(
-      "/administration/podcasts/:podcastId/episodes/:episodeId",
-      { podcastId, episodeId }
-    ),
   })
 
   const authors = await getAuthorsByPermission(
     context,
-    "podcast_episode",
-    "update",
-    episode.state
+    'podcast_episode',
+    'update',
+    episode.state,
   )
 
   return {
-    podcastId,
-    episode,
     authors,
+    episode,
+    podcastId,
   }
 }

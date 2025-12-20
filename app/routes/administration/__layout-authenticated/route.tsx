@@ -1,67 +1,66 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Outlet } from "react-router"
+import { Outlet } from 'react-router'
 
-import { AdminHeader } from "~/components/admin-header"
-import { AdminUserMenu } from "~/components/admin-user-menu"
-import { AdministrationContent } from "~/components/administration-content"
-import { AdministrationFooter } from "~/components/administration-footer"
-import { AdministrationSidebar } from "~/components/administration-sidebar"
-import { AuthenticityTokenProvider } from "~/components/authenticity-token-provider"
+import { AdminHeader } from '~/components/admin-header'
+import { AdminUserMenu } from '~/components/admin-user-menu'
+import { AdministrationContent } from '~/components/administration-content'
+import { AdministrationFooter } from '~/components/administration-footer'
+import { AdministrationSidebar } from '~/components/administration-sidebar'
+import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
+import styles from './_styles.module.css'
+import type { Route } from './+types/route'
 
-import type { Route } from "./+types/route"
-import styles from "./_styles.module.css"
-
-export { loader } from "./_loader"
+export { loader } from './_loader'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const user = {
+    email: loaderData?.user.email ?? '',
     name: loaderData?.user.name,
-    email: loaderData?.user.email ?? "",
   }
 
   const { permissions } = loaderData
 
   const navigationItems = [
-    { to: "/administration", label: "Přehled", visible: true, end: true },
+    { end: true, label: 'Přehled', to: '/administration', visible: true },
     {
-      to: "/administration/users",
-      label: "Uživatelé",
+      label: 'Uživatelé',
+      to: '/administration/users',
       visible: permissions.canViewUsers,
     },
     {
-      to: "/administration/authors",
-      label: "Autoři",
+      label: 'Autoři',
+      to: '/administration/authors',
       visible: permissions.canViewAuthors,
     },
     {
-      to: "/administration/articles",
-      label: "Články",
+      label: 'Články',
+      to: '/administration/articles',
       visible: permissions.canViewArticles,
     },
     {
-      to: "/administration/podcasts",
-      label: "Podcasty",
+      label: 'Podcasty',
+      to: '/administration/podcasts',
       visible: permissions.canViewPodcasts,
     },
     {
-      to: "/administration/archive",
-      label: "Archiv",
+      label: 'Archiv',
+      to: '/administration/archive',
       visible: permissions.canViewIssues,
     },
     {
-      to: "/administration/editorial-board",
-      label: "Redakce",
+      label: 'Redakce',
+      to: '/administration/editorial-board',
       visible: permissions.canViewEditorialBoard,
     },
-    { to: "/administration/settings", label: "Nastavení", visible: true },
+    { label: 'Nastavení', to: '/administration/settings', visible: true },
   ]
 
   return (
     <AuthenticityTokenProvider token={loaderData.csrfToken}>
       <div className={styles.layout}>
         <AdminHeader>
-          <AdminUserMenu userName={user.name} userEmail={user.email} />
+          <AdminUserMenu userEmail={user.email} userName={user.name} />
         </AdminHeader>
         <AdministrationSidebar navigationItems={navigationItems} />
         <AdministrationContent className={styles.page}>

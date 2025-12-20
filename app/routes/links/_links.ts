@@ -1,9 +1,9 @@
-import { href } from "react-router"
+import { href } from 'react-router'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const links: Route.LinksFunction = () => {
-  const baseUrl = "https://vednemesicnik.cz"
+  const baseUrl = 'https://vednemesicnik.cz'
 
-  return [{ rel: "canonical", href: `${baseUrl}${href("/links")}` }]
+  return [{ href: `${baseUrl}${href('/links')}`, rel: 'canonical' }]
 }

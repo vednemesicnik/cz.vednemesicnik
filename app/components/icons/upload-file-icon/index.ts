@@ -1,1 +1,1 @@
-export { UploadFileIcon } from "./_component"
+export { UploadFileIcon } from './_component'

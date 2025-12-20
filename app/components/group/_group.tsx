@@ -1,6 +1,6 @@
-import { type ReactNode } from "react"
+import type { ReactNode } from 'react'
 
-import styles from "./_group.module.css"
+import styles from './_group.module.css'
 
 type Props = {
   label: string

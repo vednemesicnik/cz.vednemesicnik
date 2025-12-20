@@ -1,33 +1,33 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { TextArea } from "./_component"
+import { TextArea } from './_component'
 
 const meta: Meta<typeof TextArea> = {
-  title: "Primitives/TextArea",
-  component: TextArea,
-  tags: ["autodocs"],
   argTypes: {
-    label: {
-      control: "text",
-      description: "Label text for the textarea field",
-    },
-    required: {
-      control: "boolean",
-      description: "Whether the textarea is required",
-    },
     disabled: {
-      control: "boolean",
-      description: "Whether the textarea is disabled",
+      control: 'boolean',
+      description: 'Whether the textarea is disabled',
     },
     errors: {
-      control: "object",
-      description: "Array of error messages to display",
+      control: 'object',
+      description: 'Array of error messages to display',
+    },
+    label: {
+      control: 'text',
+      description: 'Label text for the textarea field',
+    },
+    required: {
+      control: 'boolean',
+      description: 'Whether the textarea is required',
     },
     rows: {
-      control: "number",
-      description: "Number of visible text rows",
+      control: 'number',
+      description: 'Number of visible text rows',
     },
   },
+  component: TextArea,
+  tags: ['autodocs'],
+  title: 'Primitives/TextArea',
 }
 
 export default meta
@@ -39,9 +39,9 @@ type Story = StoryObj<typeof TextArea>
  */
 export const Default: Story = {
   args: {
-    label: "Description",
-    id: "description",
-    placeholder: "Enter a detailed description...",
+    id: 'description',
+    label: 'Description',
+    placeholder: 'Enter a detailed description...',
   },
 }
 
@@ -51,9 +51,9 @@ export const Default: Story = {
  */
 export const Required: Story = {
   args: {
-    label: "Article Content",
-    id: "content",
-    placeholder: "Write your article content here...",
+    id: 'content',
+    label: 'Article Content',
+    placeholder: 'Write your article content here...',
     required: true,
   },
 }
@@ -64,12 +64,12 @@ export const Required: Story = {
  */
 export const WithErrors: Story = {
   args: {
-    label: "Biography",
-    id: "bio",
     errors: [
-      "Biography must be at least 50 characters",
-      "Please avoid special characters",
+      'Biography must be at least 50 characters',
+      'Please avoid special characters',
     ],
+    id: 'bio',
+    label: 'Biography',
   },
 }
 
@@ -79,10 +79,10 @@ export const WithErrors: Story = {
  */
 export const Disabled: Story = {
   args: {
-    label: "Generated Summary",
-    id: "summary",
-    value: "This is an automatically generated summary that cannot be edited.",
     disabled: true,
+    id: 'summary',
+    label: 'Generated Summary',
+    value: 'This is an automatically generated summary that cannot be edited.',
   },
 }
 
@@ -92,10 +92,10 @@ export const Disabled: Story = {
  */
 export const WithValue: Story = {
   args: {
-    label: "Comments",
-    id: "comments",
+    id: 'comments',
+    label: 'Comments',
     value:
-      "This is a pre-filled comment.\n\nIt can contain multiple lines of text.\n\nEach paragraph is separated by line breaks.",
+      'This is a pre-filled comment.\n\nIt can contain multiple lines of text.\n\nEach paragraph is separated by line breaks.',
   },
 }
 
@@ -105,9 +105,9 @@ export const WithValue: Story = {
  */
 export const CustomRows: Story = {
   args: {
-    label: "Short Note",
-    id: "note",
-    placeholder: "Enter a brief note...",
+    id: 'note',
+    label: 'Short Note',
+    placeholder: 'Enter a brief note...',
     rows: 3,
   },
 }
@@ -118,9 +118,9 @@ export const CustomRows: Story = {
  */
 export const LongForm: Story = {
   args: {
-    label: "Article Body",
-    id: "article-body",
-    placeholder: "Write your article here...",
+    id: 'article-body',
+    label: 'Article Body',
+    placeholder: 'Write your article here...',
     required: true,
     rows: 15,
   },

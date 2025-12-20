@@ -1,1 +1,1 @@
-export { List } from "./_component"
+export { List } from './_component'

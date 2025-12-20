@@ -1,10 +1,10 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react'
 
-import { HomeLink } from "~/components/app-header/components/home-link"
-import { Navigation } from "~/components/app-header/components/navigation"
-import { NavigationItem } from "~/components/app-header/components/navigation-item"
+import { HomeLink } from '~/components/app-header/components/home-link'
+import { Navigation } from '~/components/app-header/components/navigation'
+import { NavigationItem } from '~/components/app-header/components/navigation-item'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   children?: ReactNode
@@ -18,14 +18,14 @@ export const AppHeader = ({ children, isInEditMode = false }: Props) => {
       <section className={styles.content}>
         <HomeLink isInEditMode={isInEditMode} />
         <Navigation>
-          <NavigationItem to={"/articles"}>Články</NavigationItem>
-          <NavigationItem to={"/podcasts"}>Podcasty</NavigationItem>
-          <NavigationItem to={"/archive"}>Archiv</NavigationItem>
-          <NavigationItem to={"/editorial-board"}>Redakce</NavigationItem>
+          <NavigationItem to={'/articles'}>Články</NavigationItem>
+          <NavigationItem to={'/podcasts'}>Podcasty</NavigationItem>
+          <NavigationItem to={'/archive'}>Archiv</NavigationItem>
+          <NavigationItem to={'/editorial-board'}>Redakce</NavigationItem>
         </Navigation>
       </section>
     </header>
   )
 }
 
-AppHeader.displayName = "AppHeader"
+AppHeader.displayName = 'AppHeader'

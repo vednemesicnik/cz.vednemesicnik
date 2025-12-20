@@ -1,43 +1,43 @@
-import type { Meta, StoryObj } from "@storybook/react-vite"
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { Input } from "./_component"
+import { Input } from './_component'
 
 const meta: Meta<typeof Input> = {
-  title: "Primitives/Input",
+  argTypes: {
+    disabled: {
+      control: 'boolean',
+      description: 'Whether the input is disabled',
+    },
+    errors: {
+      control: 'object',
+      description:
+        'Array of error messages to display. When present, input shows error styling with red border and focus shadow.',
+    },
+    label: {
+      control: 'text',
+      description: 'Label text for the input field',
+    },
+    required: {
+      control: 'boolean',
+      description: 'Whether the input is required (shows asterisk in label)',
+    },
+    type: {
+      control: 'select',
+      description: 'HTML input type attribute',
+      options: ['text', 'email', 'password', 'number', 'tel', 'url'],
+    },
+  },
   component: Input,
-  tags: ["autodocs"],
   parameters: {
     docs: {
       description: {
         component:
-          "Modern input field component with label, error messages, and comprehensive state management. Features smooth transitions, hover effects, and focus-visible box-shadow for keyboard navigation (Tab key). Uses form design tokens for consistent styling.",
+          'Modern input field component with label, error messages, and comprehensive state management. Features smooth transitions, hover effects, and focus-visible box-shadow for keyboard navigation (Tab key). Uses form design tokens for consistent styling.',
       },
     },
   },
-  argTypes: {
-    label: {
-      control: "text",
-      description: "Label text for the input field",
-    },
-    type: {
-      control: "select",
-      options: ["text", "email", "password", "number", "tel", "url"],
-      description: "HTML input type attribute",
-    },
-    required: {
-      control: "boolean",
-      description: "Whether the input is required (shows asterisk in label)",
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the input is disabled",
-    },
-    errors: {
-      control: "object",
-      description:
-        "Array of error messages to display. When present, input shows error styling with red border and focus shadow.",
-    },
-  },
+  tags: ['autodocs'],
+  title: 'Primitives/Input',
 }
 
 export default meta
@@ -49,9 +49,9 @@ type Story = StoryObj<typeof Input>
  */
 export const Default: Story = {
   args: {
-    label: "Username",
-    id: "username",
-    placeholder: "Enter your username",
+    id: 'username',
+    label: 'Username',
+    placeholder: 'Enter your username',
   },
 }
 
@@ -61,11 +61,11 @@ export const Default: Story = {
  */
 export const Required: Story = {
   args: {
-    label: "Email Address",
-    id: "email",
-    type: "email",
-    placeholder: "user@example.com",
+    id: 'email',
+    label: 'Email Address',
+    placeholder: 'user@example.com',
     required: true,
+    type: 'email',
   },
 }
 
@@ -75,13 +75,13 @@ export const Required: Story = {
  */
 export const WithErrors: Story = {
   args: {
-    label: "Password",
-    id: "password",
-    type: "password",
     errors: [
-      "Password must be at least 8 characters",
-      "Password must contain at least one number",
+      'Password must be at least 8 characters',
+      'Password must contain at least one number',
     ],
+    id: 'password',
+    label: 'Password',
+    type: 'password',
   },
 }
 
@@ -91,10 +91,10 @@ export const WithErrors: Story = {
  */
 export const Disabled: Story = {
   args: {
-    label: "Account ID",
-    id: "account-id",
-    value: "12345",
     disabled: true,
+    id: 'account-id',
+    label: 'Account ID',
+    value: '12345',
   },
 }
 
@@ -104,10 +104,10 @@ export const Disabled: Story = {
  */
 export const EmailInput: Story = {
   args: {
-    label: "Email",
-    id: "email-field",
-    type: "email",
-    placeholder: "name@example.com",
+    id: 'email-field',
+    label: 'Email',
+    placeholder: 'name@example.com',
+    type: 'email',
   },
 }
 
@@ -117,10 +117,10 @@ export const EmailInput: Story = {
  */
 export const PasswordInput: Story = {
   args: {
-    label: "Password",
-    id: "password-field",
-    type: "password",
-    placeholder: "Enter your password",
+    id: 'password-field',
+    label: 'Password',
+    placeholder: 'Enter your password',
+    type: 'password',
   },
 }
 
@@ -130,11 +130,11 @@ export const PasswordInput: Story = {
  */
 export const NumberInput: Story = {
   args: {
-    label: "Age",
-    id: "age",
-    type: "number",
-    min: 0,
+    id: 'age',
+    label: 'Age',
     max: 120,
+    min: 0,
+    type: 'number',
   },
 }
 
@@ -144,8 +144,8 @@ export const NumberInput: Story = {
  */
 export const WithValue: Story = {
   args: {
-    label: "Full Name",
-    id: "full-name",
-    value: "John Doe",
+    id: 'full-name',
+    label: 'Full Name',
+    value: 'John Doe',
   },
 }

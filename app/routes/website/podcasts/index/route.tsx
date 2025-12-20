@@ -1,24 +1,22 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { ArticleLink } from "~/components/article-link"
-import { ArticleLinkAuthor } from "~/components/article-link-author"
-import { ArticleLinkFooter } from "~/components/article-link-footer"
-import { ArticleLinkImage } from "~/components/article-link-image"
-import { ArticleLinkPublishDate } from "~/components/article-link-publish-date"
-import { ArticleLinkTitle } from "~/components/article-link-title"
-import { ArticleList } from "~/components/article-list"
-import { ArticleListItem } from "~/components/article-list-item"
-import { BaseLink } from "~/components/base-link"
-import { Headline } from "~/components/headline"
-import { Image } from "~/components/image"
-import { Tile } from "~/components/tile"
-import { TileGrid } from "~/components/tile-grid"
-import { TileGridItem } from "~/components/tile-grid-item"
-import { sizeConfig } from "~/config/size-config"
-import { getPodcastCoverSrc } from "~/utils/get-podcast-cover-src"
-import { isLast } from "~/utils/is-last"
-
-import type { Route } from "./+types/route"
+import { ArticleLink } from '~/components/article-link'
+import { ArticleLinkAuthor } from '~/components/article-link-author'
+import { ArticleLinkFooter } from '~/components/article-link-footer'
+import { ArticleLinkImage } from '~/components/article-link-image'
+import { ArticleLinkPublishDate } from '~/components/article-link-publish-date'
+import { ArticleLinkTitle } from '~/components/article-link-title'
+import { ArticleList } from '~/components/article-list'
+import { ArticleListItem } from '~/components/article-list-item'
+import { BaseLink } from '~/components/base-link'
+import { Headline } from '~/components/headline'
+import { Image } from '~/components/image'
+import { Tile } from '~/components/tile'
+import { TileGrid } from '~/components/tile-grid'
+import { TileGridItem } from '~/components/tile-grid-item'
+import { sizeConfig } from '~/config/size-config'
+import { getPodcastCoverSrc } from '~/utils/get-podcast-cover-src'
+import { isLast } from '~/utils/is-last'
 
 export default function Route({ loaderData }: Route.ComponentProps) {
   const { podcasts, episodes } = loaderData
@@ -29,18 +27,18 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
       <TileGrid>
         {podcasts.map((podcast) => {
-          const coverAlt = podcast.cover?.altText ?? ""
-          const coverSrc = getPodcastCoverSrc(podcast.cover?.id ?? "")
+          const coverAlt = podcast.cover?.altText ?? ''
+          const coverSrc = getPodcastCoverSrc(podcast.cover?.id ?? '')
 
           return (
             <TileGridItem key={podcast.id}>
               <BaseLink to={`/podcasts/${podcast.slug}`}>
                 <Tile label={podcast.title}>
                   <Image
-                    src={coverSrc}
                     alt={coverAlt}
-                    width={sizeConfig.podcastCover.width}
                     height={sizeConfig.podcastCover.height}
+                    src={coverSrc}
+                    width={sizeConfig.podcastCover.width}
                   />
                 </Tile>
               </BaseLink>
@@ -51,13 +49,13 @@ export default function Route({ loaderData }: Route.ComponentProps) {
 
       <ArticleList>
         {episodes.map((episode, index) => {
-          const coverAlt = episode.podcast?.cover?.altText ?? ""
-          const coverSrc = getPodcastCoverSrc(episode.podcast?.cover?.id ?? "")
+          const coverAlt = episode.podcast?.cover?.altText ?? ''
+          const coverSrc = getPodcastCoverSrc(episode.podcast?.cover?.id ?? '')
 
           return (
             <ArticleListItem
-              key={episode.id}
               isLast={isLast(index, episodes.length)}
+              key={episode.id}
             >
               <ArticleLink
                 to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
@@ -65,7 +63,7 @@ export default function Route({ loaderData }: Route.ComponentProps) {
                 <ArticleLinkImage alt={coverAlt} src={coverSrc} />
                 <ArticleLinkTitle>{episode.title}</ArticleLinkTitle>
                 <ArticleLinkFooter>
-                  <ArticleLinkAuthor imageSrc={coverSrc} imageAlt={coverAlt}>
+                  <ArticleLinkAuthor imageAlt={coverAlt} imageSrc={coverSrc}>
                     {episode.podcast.title}
                   </ArticleLinkAuthor>
                   <ArticleLinkPublishDate date={episode.publishedAt} />
@@ -79,5 +77,5 @@ export default function Route({ loaderData }: Route.ComponentProps) {
   )
 }
 
-export { loader } from "./_loader"
-export { meta } from "./_meta"
+export { loader } from './_loader'
+export { meta } from './_meta'

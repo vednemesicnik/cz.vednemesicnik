@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols,HtmlRequiredTitleElement
 
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react'
 import {
   href,
   isRouteErrorResponse,
@@ -10,20 +10,20 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-} from "react-router"
+} from 'react-router'
 
-import "~/styles/global.css"
-import "~/styles/colors.css"
-import "~/styles/fonts.css"
-import "~/styles/sizes.css"
+import '~/styles/global.css'
+import '~/styles/colors.css'
+import '~/styles/fonts.css'
+import '~/styles/sizes.css'
 
-import type { Route } from "./+types/root"
+import type { Route } from './+types/root'
 
 export const links: LinksFunction = () => [
-  { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-  { rel: "alternate icon", href: "/favicon.ico" },
-  { rel: "preconnect", href: "https://rsms.me/" },
-  { rel: "stylesheet", href: "https://rsms.me/inter/inter.css" },
+  { href: '/favicon.svg', rel: 'icon', type: 'image/svg+xml' },
+  { href: '/favicon.ico', rel: 'alternate icon' },
+  { href: 'https://rsms.me/', rel: 'preconnect' },
+  { href: 'https://rsms.me/inter/inter.css', rel: 'stylesheet' },
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -31,7 +31,7 @@ export function Layout({ children }: { children: ReactNode }) {
     <html lang="cs-CZ">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta content="width=device-width, initial-scale=1" name="viewport" />
         <Meta />
         <Links />
       </head>
@@ -41,7 +41,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <Scripts />
 
         {/* Environment variables body script - sets ENV for client */}
-        <script src={href("/resources/env.js")} />
+        <script src={href('/resources/env.js')} />
       </body>
     </html>
   )

@@ -1,1 +1,1 @@
-export { AdminStateBadge } from "./_component"
+export { AdminStateBadge } from './_component'

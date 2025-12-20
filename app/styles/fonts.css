@@ -22,19 +22,24 @@
     --font-size-base: 1rem;
     --font-size-heading6: calc(var(--font-size-base) * var(--type-scale-ratio));
     --font-size-heading5: calc(
-      var(--font-size-heading6) * var(--type-scale-ratio)
+      var(--font-size-heading6) *
+      var(--type-scale-ratio)
     );
     --font-size-heading4: calc(
-      var(--font-size-heading5) * var(--type-scale-ratio)
+      var(--font-size-heading5) *
+      var(--type-scale-ratio)
     );
     --font-size-heading3: calc(
-      var(--font-size-heading4) * var(--type-scale-ratio)
+      var(--font-size-heading4) *
+      var(--type-scale-ratio)
     );
     --font-size-heading2: calc(
-      var(--font-size-heading3) * var(--type-scale-ratio)
+      var(--font-size-heading3) *
+      var(--type-scale-ratio)
     );
     --font-size-heading1: calc(
-      var(--font-size-heading2) * var(--type-scale-ratio)
+      var(--font-size-heading2) *
+      var(--type-scale-ratio)
     );
 
     --line-height-tight: 1.25;

@@ -1,1 +1,1 @@
-export { UndoIcon } from "./_component"
+export { UndoIcon } from './_component'

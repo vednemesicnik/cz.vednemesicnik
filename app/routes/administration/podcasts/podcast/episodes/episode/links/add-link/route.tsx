@@ -5,28 +5,26 @@ import {
   getInputProps,
   getSelectProps,
   useForm,
-} from "@conform-to/react"
-import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { href, useNavigation } from "react-router"
+} from '@conform-to/react'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { href, useNavigation } from 'react-router'
 
-import { AdminHeadline } from "~/components/admin-headline"
-import { AdminLinkButton } from "~/components/admin-link-button"
-import { AdminPage } from "~/components/admin-page"
-import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset"
-import { Form } from "~/components/form"
-import { FormActions } from "~/components/form-actions"
-import { Input } from "~/components/input"
-import { Select } from "~/components/select"
+import { AdminHeadline } from '~/components/admin-headline'
+import { AdminLinkButton } from '~/components/admin-link-button'
+import { AdminPage } from '~/components/admin-page'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
+import { Fieldset } from '~/components/fieldset'
+import { Form } from '~/components/form'
+import { FormActions } from '~/components/form-actions'
+import { Input } from '~/components/input'
+import { Select } from '~/components/select'
+import { schema } from './_schema'
 
-import type { Route } from "./+types/route"
-import { schema } from "./_schema"
-
-export { handle } from "./_handle"
-export { meta } from "./_meta"
-export { loader } from "./_loader"
-export { action } from "./_action"
+export { action } from './_action'
+export { handle } from './_handle'
+export { loader } from './_loader'
+export { meta } from './_meta'
 
 export default function Route({
   loaderData,
@@ -35,60 +33,60 @@ export default function Route({
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
-    id: "add-link",
     constraint: getZodConstraint(schema),
+    defaultValue: {
+      authorId: loaderData.selfAuthorId,
+      episodeId: loaderData.episode.id,
+      label: '',
+      podcastId: loaderData.podcast.id,
+      url: '',
+    },
+    id: 'add-link',
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
-    defaultValue: {
-      label: "",
-      url: "",
-      podcastId: loaderData.podcast.id,
-      episodeId: loaderData.episode.id,
-      authorId: loaderData.selfAuthorId,
-    },
     shouldDirtyConsider: (field) => {
-      return !field.startsWith("csrf")
+      return !field.startsWith('csrf')
     },
-    shouldValidate: "onSubmit",
-    shouldRevalidate: "onBlur",
+    shouldRevalidate: 'onBlur',
+    shouldValidate: 'onSubmit',
   })
 
-  const isLoadingOrSubmitting = state !== "idle"
+  const isLoadingOrSubmitting = state !== 'idle'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
     <AdminPage>
       <AdminHeadline>Přidat odkaz</AdminHeadline>
 
-      <Form method={"post"} {...getFormProps(form)} errors={form.errors}>
+      <Form method={'post'} {...getFormProps(form)} errors={form.errors}>
         <input
-          {...getInputProps(fields.podcastId, { type: "hidden" })}
+          {...getInputProps(fields.podcastId, { type: 'hidden' })}
           defaultValue={fields.podcastId.initialValue}
         />
         <input
-          {...getInputProps(fields.episodeId, { type: "hidden" })}
+          {...getInputProps(fields.episodeId, { type: 'hidden' })}
           defaultValue={fields.episodeId.initialValue}
         />
 
-        <Fieldset legend={"Detaily"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
           <Input
-            label={"Štítek"}
-            placeholder={"Poslechněte si na Spotify"}
             errors={fields.label.errors}
-            {...getInputProps(fields.label, { type: "text" })}
+            label={'Štítek'}
+            placeholder={'Poslechněte si na Spotify'}
+            {...getInputProps(fields.label, { type: 'text' })}
           />
           <Input
-            label={"URL"}
-            placeholder={"https://open.spotify.com/episode/..."}
             errors={fields.url.errors}
-            {...getInputProps(fields.url, { type: "url" })}
+            label={'URL'}
+            placeholder={'https://open.spotify.com/episode/...'}
+            {...getInputProps(fields.url, { type: 'url' })}
           />
         </Fieldset>
 
-        <Fieldset legend={"Autor"} disabled={isLoadingOrSubmitting}>
+        <Fieldset disabled={isLoadingOrSubmitting} legend={'Autor'}>
           <Select
-            label={"Autor"}
             errors={fields.authorId.errors}
+            label={'Autor'}
             {...getSelectProps(fields.authorId)}
           >
             {loaderData.authors.map((author) => {
@@ -104,16 +102,16 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type={"submit"} disabled={!canSubmit} variant={"primary"}>
+          <Button disabled={!canSubmit} type={'submit'} variant={'primary'}>
             Přidat
           </Button>
           <AdminLinkButton
             to={href(
-              "/administration/podcasts/:podcastId/episodes/:episodeId/links",
+              '/administration/podcasts/:podcastId/episodes/:episodeId/links',
               {
-                podcastId: loaderData.podcast.id,
                 episodeId: loaderData.episode.id,
-              }
+                podcastId: loaderData.podcast.id,
+              },
             )}
           >
             Zrušit

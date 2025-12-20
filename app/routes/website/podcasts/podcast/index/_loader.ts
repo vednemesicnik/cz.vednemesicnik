@@ -1,28 +1,29 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ params }: Route.LoaderArgs) => {
   const { podcastSlug } = params
 
   const podcast = await prisma.podcast.findUniqueOrThrow({
-    where: { slug: podcastSlug },
     select: {
-      id: true,
-      slug: true,
-      title: true,
+      cover: {
+        select: {
+          altText: true,
+          id: true,
+        },
+      },
       description: true,
       episodes: {
-        where: {
-          state: "published",
-        },
         select: {
-          id: true,
-          slug: true,
-          number: true,
-          title: true,
+          cover: {
+            select: {
+              altText: true,
+              id: true,
+            },
+          },
           description: true,
-          publishedAt: true,
+          id: true,
           links: {
             select: {
               id: true,
@@ -30,21 +31,20 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
               url: true,
             },
           },
-          cover: {
-            select: {
-              id: true,
-              altText: true,
-            },
-          },
+          number: true,
+          publishedAt: true,
+          slug: true,
+          title: true,
+        },
+        where: {
+          state: 'published',
         },
       },
-      cover: {
-        select: {
-          id: true,
-          altText: true,
-        },
-      },
+      id: true,
+      slug: true,
+      title: true,
     },
+    where: { slug: podcastSlug },
   })
 
   return { podcast }

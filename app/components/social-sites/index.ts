@@ -1,1 +1,1 @@
-export { SocialSites } from "./_component"
+export { SocialSites } from './_component'

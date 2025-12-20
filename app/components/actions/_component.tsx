@@ -1,10 +1,10 @@
-import { BaseLink } from "~/components/base-link"
-import { Button } from "~/components/button"
-import { DeleteIcon } from "~/components/icons/delete-icon"
-import { EditIcon } from "~/components/icons/edit-icon"
-import { VisibilityIcon } from "~/components/icons/visibility-icon"
+import { BaseLink } from '~/components/base-link'
+import { Button } from '~/components/button'
+import { DeleteIcon } from '~/components/icons/delete-icon'
+import { EditIcon } from '~/components/icons/edit-icon'
+import { VisibilityIcon } from '~/components/icons/visibility-icon'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   viewPath?: string
@@ -16,17 +16,17 @@ export const Actions = ({ viewPath, editPath, onDelete }: Props) => {
   return (
     <section className={styles.container}>
       {viewPath && (
-        <BaseLink to={viewPath} aria-label="View">
+        <BaseLink aria-label="View" to={viewPath}>
           <VisibilityIcon />
         </BaseLink>
       )}
       {editPath && (
-        <BaseLink to={editPath} aria-label="Edit">
+        <BaseLink aria-label="Edit" to={editPath}>
           <EditIcon />
         </BaseLink>
       )}
       {onDelete && (
-        <Button onClick={onDelete} variant={"danger"} aria-label="Delete">
+        <Button aria-label="Delete" onClick={onDelete} variant={'danger'}>
           <DeleteIcon />
         </Button>
       )}

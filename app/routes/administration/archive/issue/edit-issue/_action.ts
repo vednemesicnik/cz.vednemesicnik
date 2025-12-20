@@ -1,29 +1,28 @@
-import { parseWithZod } from "@conform-to/zod"
-import { createId } from "@paralleldrive/cuid2"
-import { href, redirect } from "react-router"
+import { parseWithZod } from '@conform-to/zod'
+import { createId } from '@paralleldrive/cuid2'
+import { href, redirect } from 'react-router'
 
-import { validateCSRF } from "~/utils/csrf.server"
-import { prisma } from "~/utils/db.server"
-import { getIssueData } from "~/utils/get-issue-data"
-import { getMultipartFormData } from "~/utils/get-multipart-form-data"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
-import { checkAuthorPermission } from "~/utils/permissions/author/guards/check-author-permission.server"
-import { getConvertedImageStream } from "~/utils/sharp.server"
-import { throwDbError } from "~/utils/throw-db-error.server"
-
-import type { Route } from "./+types/route"
-import { schema } from "./_schema"
+import { validateCSRF } from '~/utils/csrf.server'
+import { prisma } from '~/utils/db.server'
+import { getIssueData } from '~/utils/get-issue-data'
+import { getMultipartFormData } from '~/utils/get-multipart-form-data'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
+import { getConvertedImageStream } from '~/utils/sharp.server'
+import { throwDbError } from '~/utils/throw-db-error.server'
+import { schema } from './_schema'
+import type { Route } from './+types/route'
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await getMultipartFormData(request)
   await validateCSRF(formData, request.headers)
 
   const submission = await parseWithZod(formData, {
-    schema,
     async: true,
+    schema,
   })
 
-  if (submission.status !== "success") {
+  if (submission.status !== 'success') {
     return { submissionResult: submission.reply() }
   }
 
@@ -40,102 +39,102 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   // Get permission context
   const context = await getAuthorPermissionContext(request, {
-    entities: ["issue"],
-    actions: ["update"],
+    actions: ['update'],
+    entities: ['issue'],
   })
 
   // Get existing issue to check current state and author
   const existingIssue = await prisma.issue.findUniqueOrThrow({
-    where: { id },
     select: {
-      state: true,
       authorId: true,
+      state: true,
     },
+    where: { id },
   })
 
   // Check permission to update THIS specific issue
   checkAuthorPermission(context, {
-    entity: "issue",
-    action: "update",
+    action: 'update',
+    entity: 'issue',
+    errorMessage: 'You do not have permission to update this issue.',
     state: existingIssue.state,
     targetAuthorId: existingIssue.authorId,
-    errorMessage: "You do not have permission to update this issue.",
   })
 
   // Check permission to assign the SELECTED author
   checkAuthorPermission(context, {
-    entity: "issue",
-    action: "update",
+    action: 'update',
+    entity: 'issue',
+    errorMessage:
+      'You do not have permission to assign this author to the issue.',
     state: existingIssue.state,
     targetAuthorId: authorId,
-    errorMessage:
-      "You do not have permission to assign this author to the issue.",
   })
 
   const { label, releaseDate, coverAltText, pdfFileName } = getIssueData(
     ordinalNumber,
-    releasedAt
+    releasedAt,
   )
 
   const convertedCover = cover
     ? await getConvertedImageStream(cover, {
-        width: 905,
+        format: 'jpeg',
         height: 1280,
         quality: 80,
-        format: "jpeg",
+        width: 905,
       })
     : undefined
 
   try {
     await prisma.issue.update({
-      where: { id: id },
       data: {
-        label: label,
-        releasedAt: releaseDate,
+        authorId: authorId,
         cover: {
           update: {
-            where: { id: coverId },
             data:
               convertedCover !== undefined
                 ? {
-                    id: createId(), // New ID forces browser to download new image
                     altText: coverAltText,
-                    contentType: convertedCover.contentType,
                     blob: Uint8Array.from(
-                      await convertedCover.stream.toBuffer()
+                      await convertedCover.stream.toBuffer(),
                     ),
+                    contentType: convertedCover.contentType,
+                    id: createId(), // New ID forces browser to download new image
                   }
                 : {
                     altText: coverAltText,
                   },
+            where: { id: coverId },
           },
         },
+        label: label,
         pdf: {
           update: {
-            where: { id: pdfId },
             data:
               pdf !== undefined
                 ? {
-                    id: createId(), // New ID forces browser to download new PDF
-                    fileName: pdfFileName,
-                    contentType: pdf.type,
                     blob: await pdf.bytes(),
+                    contentType: pdf.type,
+                    fileName: pdfFileName,
+                    id: createId(), // New ID forces browser to download new PDF
                   }
                 : {
                     fileName: pdfFileName,
                   },
+            where: { id: pdfId },
           },
         },
-        authorId: authorId,
+        releasedAt: releaseDate,
         reviews: {
           deleteMany: {}, // Delete all reviews when issue is updated (content changed, needs re-approval)
         },
       },
+      where: { id: id },
     })
 
-    return redirect(href("/administration/archive/:issueId", { issueId: id }))
+    return redirect(href('/administration/archive/:issueId', { issueId: id }))
   } catch (error) {
-    throwDbError(error, "Unable to update the archived issue.")
+    throwDbError(error, 'Unable to update the archived issue.')
   }
 
   return { submissionResult: null }

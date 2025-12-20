@@ -1,5 +1,5 @@
-import type { Prisma } from "@generated/prisma/client"
-import { prisma } from "~/utils/db.server"
+import type { Prisma } from '@generated/prisma/client'
+import { prisma } from '~/utils/db.server'
 
 type GetPendingArticleTagsOptions = {
   currentAuthorId: string
@@ -7,33 +7,33 @@ type GetPendingArticleTagsOptions = {
 }
 
 export async function getPendingArticleTags(
-  options: GetPendingArticleTagsOptions
+  options: GetPendingArticleTagsOptions,
 ) {
   const { currentAuthorId, currentRoleLevel } = options
 
   const where: Prisma.ArticleTagWhereInput = {
-    state: "draft",
-    authorId: { not: currentAuthorId },
     author:
       currentRoleLevel === 1
         ? undefined
         : { role: { level: { gt: currentRoleLevel } } },
+    authorId: { not: currentAuthorId },
+    state: 'draft',
   }
 
   const [items, count] = await Promise.all([
     prisma.articleTag.findMany({
-      where,
+      orderBy: { createdAt: 'desc' },
       select: {
+        author: { select: { name: true } },
+        createdAt: true,
         id: true,
         name: true,
-        createdAt: true,
-        author: { select: { name: true } },
       },
-      orderBy: { createdAt: "desc" },
       take: 5,
+      where,
     }),
     prisma.articleTag.count({ where }),
   ])
 
-  return { items, count }
+  return { count, items }
 }

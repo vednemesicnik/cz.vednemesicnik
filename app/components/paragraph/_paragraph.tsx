@@ -1,6 +1,6 @@
-import { type ReactNode } from "react"
+import type { ReactNode } from 'react'
 
-import styles from "./_paragraph.module.css"
+import styles from './_paragraph.module.css'
 
 type Props = {
   children: ReactNode

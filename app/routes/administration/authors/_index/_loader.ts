@@ -1,55 +1,55 @@
-import { type LoaderFunctionArgs } from "react-router"
+import type { LoaderFunctionArgs } from 'react-router'
 
-import { prisma } from "~/utils/db.server"
-import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
+import { prisma } from '~/utils/db.server'
+import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const context = await getUserPermissionContext(request, {
-    entities: ["author"],
-    actions: ["view", "create", "update", "delete"],
+    actions: ['view', 'create', 'update', 'delete'],
+    entities: ['author'],
   })
 
   // Check if user has any view permission for authors
   // We check against own userId to see if they have at least "own" access
   const viewPerms = context.can({
-    entity: "author",
-    action: "view",
+    action: 'view',
+    entity: 'author',
     targetUserId: context.userId,
   })
 
   // If user has no view permissions at all, they shouldn't access this page
   if (!viewPerms.hasPermission) {
-    throw new Response("Forbidden", { status: 403 })
+    throw new Response('Forbidden', { status: 403 })
   }
 
   // Fetch authors based on permissions
   // If user only has "own" permission, filter to only their author profile
   const rawAuthors = await prisma.author.findMany({
-    where:
-      viewPerms.hasOwn && !viewPerms.hasAny
-        ? { user: { id: context.userId } }
-        : {},
+    orderBy: {
+      name: 'asc',
+    },
     select: {
+      bio: true,
       id: true,
       name: true,
-      bio: true,
       role: {
         select: {
           id: true,
-          name: true,
           level: true,
+          name: true,
         },
       },
       user: {
         select: {
-          id: true,
           email: true,
+          id: true,
         },
       },
     },
-    orderBy: {
-      name: "asc",
-    },
+    where:
+      viewPerms.hasOwn && !viewPerms.hasAny
+        ? { user: { id: context.userId } }
+        : {},
   })
 
   // Compute permissions for each author
@@ -59,30 +59,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     return {
       ...author,
-      canView: context.can({
-        entity: "author",
-        action: "view",
-        targetUserId,
-      }).hasPermission,
-      canUpdate: context.can({
-        entity: "author",
-        action: "update",
-        targetUserId,
-      }).hasPermission,
       // Can only delete authors without linked User (onDelete: Restrict in schema)
       canDelete:
         context.can({
-          entity: "author",
-          action: "delete",
+          action: 'delete',
+          entity: 'author',
           targetUserId,
         }).hasPermission && !author.user,
+      canUpdate: context.can({
+        action: 'update',
+        entity: 'author',
+        targetUserId,
+      }).hasPermission,
+      canView: context.can({
+        action: 'view',
+        entity: 'author',
+        targetUserId,
+      }).hasPermission,
     }
   })
 
   // Create doesn't need targetUserId - it's creating a new author
   const createPerms = context.can({
-    entity: "author",
-    action: "create",
+    action: 'create',
+    entity: 'author',
   })
 
   return {

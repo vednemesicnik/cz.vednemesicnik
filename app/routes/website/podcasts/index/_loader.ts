@@ -1,52 +1,52 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
 export const loader = async () => {
   const podcastsPromise = prisma.podcast.findMany({
-    where: {
-      state: "published",
-    },
     orderBy: {
-      publishedAt: "desc",
+      publishedAt: 'desc',
     },
     select: {
+      cover: {
+        select: {
+          altText: true,
+          id: true,
+        },
+      },
       id: true,
       slug: true,
       title: true,
-      cover: {
-        select: {
-          id: true,
-          altText: true,
-        },
-      },
+    },
+    where: {
+      state: 'published',
     },
   })
 
   const episodesPromise = prisma.podcastEpisode.findMany({
-    where: {
-      state: "published",
-    },
     orderBy: {
-      publishedAt: "desc",
+      publishedAt: 'desc',
     },
-    take: 10,
     select: {
       id: true,
-      slug: true,
-      title: true,
-      publishedAt: true,
       podcast: {
         select: {
+          cover: {
+            select: {
+              altText: true,
+              id: true,
+            },
+          },
           id: true,
           slug: true,
           title: true,
-          cover: {
-            select: {
-              id: true,
-              altText: true,
-            },
-          },
         },
       },
+      publishedAt: true,
+      slug: true,
+      title: true,
+    },
+    take: 10,
+    where: {
+      state: 'published',
     },
   })
 
@@ -55,5 +55,5 @@ export const loader = async () => {
     episodesPromise,
   ])
 
-  return { podcasts, episodes }
+  return { episodes, podcasts }
 }

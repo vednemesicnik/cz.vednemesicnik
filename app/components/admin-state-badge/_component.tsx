@@ -1,8 +1,7 @@
-import { clsx } from "clsx"
+import type { ContentState } from '@generated/prisma/enums'
+import { clsx } from 'clsx'
 
-import type { ContentState } from "@generated/prisma/enums"
-
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   state: ContentState
@@ -10,9 +9,9 @@ type Props = {
 }
 
 const stateLabels: Record<ContentState, string> = {
-  draft: "Koncept",
-  published: "Publikováno",
-  archived: "Archivováno",
+  archived: 'Archivováno',
+  draft: 'Koncept',
+  published: 'Publikováno',
 }
 
 export const AdminStateBadge = ({ state, className }: Props) => {

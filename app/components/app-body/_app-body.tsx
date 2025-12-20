@@ -1,6 +1,6 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react'
 
-import styles from "./_app-body.module.css"
+import styles from './_app-body.module.css'
 
 type Props = {
   children: ReactNode

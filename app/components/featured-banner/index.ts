@@ -1,1 +1,1 @@
-export { FeaturedBanner } from "./_component"
+export { FeaturedBanner } from './_component'

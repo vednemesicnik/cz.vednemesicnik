@@ -1,4 +1,4 @@
-import { prisma } from "~/utils/db.server"
+import { prisma } from '~/utils/db.server'
 
 /**
  * Fetches all author roles for creating a new author.
@@ -6,13 +6,13 @@ import { prisma } from "~/utils/db.server"
  */
 export async function getAllAuthorRoles() {
   return prisma.authorRole.findMany({
+    orderBy: {
+      level: 'asc',
+    },
     select: {
       id: true,
-      name: true,
       level: true,
-    },
-    orderBy: {
-      level: "asc",
+      name: true,
     },
   })
 }

@@ -1,12 +1,12 @@
-import { clsx } from "clsx"
-import { type ComponentProps, type JSX } from "react"
+import { clsx } from 'clsx'
+import type { ComponentProps, JSX } from 'react'
 
-import { BaseHyperlink } from "~/components/base-hyperlink"
-import { OpenInNewIcon } from "~/components/icons/open-in-new-icon"
+import { BaseHyperlink } from '~/components/base-hyperlink'
+import { OpenInNewIcon } from '~/components/icons/open-in-new-icon'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
-type Props = Omit<ComponentProps<"a">, "rel" | "target">
+type Props = Omit<ComponentProps<'a'>, 'rel' | 'target'>
 
 /**
  * Hyperlink component renders a `BaseHyperlink` component with optional external link icon.
@@ -24,10 +24,7 @@ export const Hyperlink = ({
   return (
     <BaseHyperlink className={clsx(styles.link, className)} {...rest}>
       {children}
-      <span
-        className={styles.iconWrapper}
-        aria-label={"Ikona externího odkazu"}
-      >
+      <span className={styles.iconWrapper}>
         <OpenInNewIcon />
       </span>
     </BaseHyperlink>

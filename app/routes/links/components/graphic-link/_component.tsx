@@ -1,7 +1,7 @@
-import { BaseLink } from "~/components/base-link"
-import { Image } from "~/components/image"
+import { BaseLink } from '~/components/base-link'
+import { Image } from '~/components/image'
 
-import styles from "./_styles.module.css"
+import styles from './_styles.module.css'
 
 type Props = {
   children: string
@@ -16,21 +16,21 @@ type Props = {
 export const GraphicLink = ({ children, to, image }: Props) => {
   return (
     <BaseLink
-      className={styles.link}
-      to={to}
-      reloadDocument={true}
       aria-label={children}
+      className={styles.link}
+      reloadDocument={true}
+      to={to}
     >
       <span className={styles.linkText}>{children}</span>
       {image !== undefined && (
-        <div className={styles.imageFrame} aria-hidden="true">
+        <div aria-hidden="true" className={styles.imageFrame}>
           <div className={styles.imageWrapper}>
             <Image
+              alt={''}
               className={styles.image}
-              src={image.src}
-              alt={""}
-              width={image.width}
               height={image.height}
+              src={image.src}
+              width={image.width}
             />
           </div>
         </div>

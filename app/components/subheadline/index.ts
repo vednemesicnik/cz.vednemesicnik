@@ -1,1 +1,1 @@
-export { Subheadline } from "./_component"
+export { Subheadline } from './_component'

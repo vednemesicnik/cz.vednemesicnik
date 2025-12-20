@@ -1,37 +1,37 @@
-import { prisma } from "~/utils/db.server"
-import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { prisma } from '~/utils/db.server'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
-import type { Route } from "./+types/route"
+import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
-    entities: ["podcast_episode_link"],
-    actions: ["view", "create", "update", "delete"],
+    actions: ['view', 'create', 'update', 'delete'],
+    entities: ['podcast_episode_link'],
   })
 
   const { podcastId, episodeId } = params
 
   const podcastPromise = prisma.podcast.findUniqueOrThrow({
-    where: { id: podcastId },
     select: { id: true },
+    where: { id: podcastId },
   })
 
   const episodePromise = prisma.podcastEpisode.findUniqueOrThrow({
-    where: { id: episodeId },
     select: {
       id: true,
-      title: true,
-      state: true,
       links: {
         select: {
+          authorId: true,
           id: true,
           label: true,
-          url: true,
           state: true,
-          authorId: true,
+          url: true,
         },
       },
+      state: true,
+      title: true,
     },
+    where: { id: episodeId },
   })
 
   const [podcast, episode] = await Promise.all([podcastPromise, episodePromise])
@@ -40,21 +40,21 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const links = episode.links.map((link) => {
     return {
       ...link,
-      canView: context.can({
-        entity: "podcast_episode_link",
-        action: "view",
+      canDelete: context.can({
+        action: 'delete',
+        entity: 'podcast_episode_link',
         state: link.state,
         targetAuthorId: link.authorId,
       }).hasPermission,
       canEdit: context.can({
-        entity: "podcast_episode_link",
-        action: "update",
+        action: 'update',
+        entity: 'podcast_episode_link',
         state: link.state,
         targetAuthorId: link.authorId,
       }).hasPermission,
-      canDelete: context.can({
-        entity: "podcast_episode_link",
-        action: "delete",
+      canView: context.can({
+        action: 'view',
+        entity: 'podcast_episode_link',
         state: link.state,
         targetAuthorId: link.authorId,
       }).hasPermission,
@@ -62,16 +62,16 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   })
 
   return {
+    canCreate: context.can({
+      action: 'create',
+      entity: 'podcast_episode_link',
+      state: 'draft',
+      targetAuthorId: context.authorId,
+    }).hasPermission,
     episode: {
       ...episode,
       links,
     },
     podcast,
-    canCreate: context.can({
-      entity: "podcast_episode_link",
-      action: "create",
-      state: "draft",
-      targetAuthorId: context.authorId,
-    }).hasPermission,
   }
 }
