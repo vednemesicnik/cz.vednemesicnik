@@ -3,7 +3,10 @@ import { Hyperlink } from "~/components/hyperlink"
 import { Page } from "~/components/page"
 import { Paragraph } from "~/components/paragraph"
 
-export default function Route() {
+export { loader } from "./_loader"
+export { meta } from "./_meta"
+
+export default function RouteComponent() {
   return (
     <Page>
       <Headline>Čtení, které vás chytne</Headline>
@@ -14,5 +17,3 @@ export default function Route() {
     </Page>
   )
 }
-
-export { meta } from "./_meta"
