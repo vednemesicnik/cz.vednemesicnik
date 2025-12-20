@@ -26,7 +26,7 @@ export const getConvertedImageStream = async (
   options: Options
 ): Promise<{ stream: Sharp; contentType: string }> => {
   // Convert input to buffer if needed
-  const imageBuffer = image instanceof Uint8Array ? image : await image.bytes()
+  const imageBuffer = image instanceof File ? await image.bytes() : image
 
   // Create sharp instance
   const sharpImage = sharp(imageBuffer)
