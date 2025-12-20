@@ -1,19 +1,23 @@
 import { type LoaderFunctionArgs } from "react-router"
 
-import { requireAuthentication } from "~/utils/auth.server"
-import { prisma } from "~/utils/db.server"
+import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { sessionId } = await requireAuthentication(request)
-
-  const session = await prisma.session.findUniqueOrThrow({
-    where: {
-      id: sessionId,
-    },
-    select: {
-      userId: true,
-    },
+  const context = await getUserPermissionContext(request, {
+    entities: ["user"],
+    actions: ["update"],
   })
 
-  return { userId: session.userId }
+  // Check if user can update their own profile
+  const canUpdate = context.can({
+    entity: "user",
+    action: "update",
+    targetUserId: context.userId,
+  }).hasPermission
+
+  if (!canUpdate) {
+    throw new Response("Forbidden", { status: 403 })
+  }
+
+  return { userId: context.userId }
 }

@@ -13,8 +13,6 @@ export const changePassword = async (userId: string, newPassword: string) => {
         hash: bcrypt.hashSync(newPassword, 10),
       },
     })
-
-    return { ok: true }
   } catch (error) {
     throwDbError(error, "Unable to update the password.")
   }

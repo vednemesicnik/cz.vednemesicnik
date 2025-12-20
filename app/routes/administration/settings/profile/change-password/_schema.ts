@@ -6,20 +6,20 @@ export const schema = z
     userId: z.string(),
     newPassword: z
       .string({
-        message: "Password is required",
+        required_error: "Heslo je povinné",
       })
       .min(5, {
-        message: "Password must be at least 5 characters long",
+        message: "Heslo musí mít alespoň 5 znaků",
       }),
     newPasswordConfirmation: z
       .string({
-        message: "Password confirmation is required",
+        required_error: "Potvrzení hesla je povinné",
       })
       .min(5, {
-        message: "Password confirmation must be at least 5 characters long",
+        message: "Potvrzení hesla musí mít alespoň 5 znaků",
       }),
   })
   .refine((data) => data.newPassword === data.newPasswordConfirmation, {
-    message: "Passwords do not match",
+    message: "Hesla se neshodují",
     path: ["newPasswordConfirmation"],
   })
