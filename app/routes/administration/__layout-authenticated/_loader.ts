@@ -1,16 +1,18 @@
-import { data, type LoaderFunctionArgs } from "react-router"
+import { data } from "react-router"
 
 import type { AdministrationPanelUser } from "~/components/administration-panel"
-import { getAuthentication } from "~/utils/auth.server"
+import { requireAuthentication } from "~/utils/auth.server"
 import { commitCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
 import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
 import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+import type { Route } from "./+types/route"
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
   const [csrfToken, csrfCookie] = await commitCSRF(request)
 
-  const { isAuthenticated, sessionId } = await getAuthentication(request)
+  const { isAuthenticated, sessionId } = await requireAuthentication(request)
 
   let administrationPanelUser: AdministrationPanelUser = {
     name: undefined,
