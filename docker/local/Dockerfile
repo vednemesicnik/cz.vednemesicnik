@@ -42,7 +42,7 @@ ADD . .
 RUN pnpm prisma:generate
 
 # Run the build
-RUN pnpm build
+RUN pnpm app:build
 
 # Finally, build the production image with minimal footprint
 FROM base

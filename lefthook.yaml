@@ -1,0 +1,33 @@
+# Lefthook Git hooks configuration
+# Refer for explanation to following link:
+# https://lefthook.dev/configuration/
+
+pre-push:
+  parallel: true
+  commands:
+    check:
+      run: pnpm biome:check:push {push_files}
+      glob: "*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc,md,css}"
+    typecheck:
+      run: pnpm app:typecheck
+    test:
+      run: pnpm test
+    prisma-format:
+      run: pnpm prisma:format
+      glob: "*.prisma"
+
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      run: pnpm biome:format:staged {staged_files}
+      glob: "*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc,md,css}"
+      stage_fixed: true
+    lint:
+      run: pnpm biome:lint:staged {staged_files}
+      glob: "*.{js,ts,cjs,mjs,jsx,tsx}"
+      stage_fixed: true
+    prisma-format:
+      run: pnpm prisma:format
+      glob: "*.prisma"
+      stage_fixed: true

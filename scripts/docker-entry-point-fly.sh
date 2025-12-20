@@ -4,4 +4,4 @@
 pnpm prisma:migrate:deploy
 
 # Start the server
-pnpm start
+pnpm app:start

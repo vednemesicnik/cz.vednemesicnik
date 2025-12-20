@@ -11,18 +11,25 @@ This is a student magazine publishing platform built with React Router v7, Prism
 ### Running the Application
 
 ```bash
-pnpm dev                           # Start Vite dev server on port 3000
-pnpm build                         # Build for production
-pnpm start                         # Run production build
+pnpm app:dev                       # Start Vite dev server on port 3000
+pnpm app:build                     # Build for production
+pnpm app:start                     # Run production build
 ```
 
 ### Code Quality
 
 ```bash
-pnpm typecheck                     # Run TypeScript type checking and generate React Router types
-pnpm routes:generate               # Generate React Router type definitions
-pnpm lint                          # Run ESLint
+pnpm app:typecheck                 # Run TypeScript type checking and generate React Router types
+pnpm app:routes:generate           # Generate React Router type definitions
 pnpm test                          # Run Vitest tests (non-watch mode)
+```
+
+### Git Hooks
+
+Install Git hooks for code quality automation:
+
+```bash
+pnpm lefthook:install              # Install Lefthook Git hooks
 ```
 
 ### Database Management

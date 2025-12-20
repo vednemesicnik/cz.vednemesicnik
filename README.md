@@ -7,7 +7,7 @@
 Run the Vite dev server:
 
 ```shellscript
-pnpm dev
+pnpm app:dev
 ```
 
 ## Deployment
@@ -15,13 +15,13 @@ pnpm dev
 First, build your app for production:
 
 ```sh
-pnpm build
+pnpm app:build
 ```
 
 Then run the app in production mode:
 
 ```sh
-pnpm start
+pnpm app:start
 ```
 
 Now you'll need to pick a host to deploy it to.
@@ -30,7 +30,7 @@ Now you'll need to pick a host to deploy it to.
 
 If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
 
-Make sure to deploy the output of `pnpm build`
+Make sure to deploy the output of `pnpm app:build`
 
 - `build/server`
 - `build/client`
