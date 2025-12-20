@@ -1,17 +1,17 @@
-import { isRouteErrorResponse, useRouteError } from "react-router"
+import { isRouteErrorResponse } from "react-router"
 
 import { Headline } from "~/components/headline"
 import { Page } from "~/components/page"
 import { Paragraph } from "~/components/paragraph"
 
-export const ErrorBoundary = () => {
-  const error = useRouteError()
+import type { Route } from "./+types/route"
+export { loader } from "./_loader"
 
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   if (isRouteErrorResponse(error)) {
     return (
       <Page>
         <Headline>Naše čísla pohromadě</Headline>
-        <Paragraph>PDF soubor nebyl nalezen.</Paragraph>
         <code>
           Chyba: {error.status} - {error.statusText}
           <br />

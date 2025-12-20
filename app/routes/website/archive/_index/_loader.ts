@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, redirect } from "react-router"
 
 import { LIMIT_PARAM } from "~/components/load-more-content"
+import { getAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -12,9 +13,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect(url.toString(), { status: 301 })
   }
 
+  const { isAuthenticated } = await getAuthentication(request)
+
   const issuesPromise = prisma.issue.findMany({
     where: {
-      state: "published",
+      state: {
+        in: isAuthenticated ? ["published", "draft"] : ["published"],
+      },
     },
     orderBy: {
       releasedAt: "desc",
@@ -40,7 +45,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const issuesCountPromise = prisma.issue.count({
     where: {
-      state: "published",
+      state: {
+        in: isAuthenticated ? ["published", "draft"] : ["published"],
+      },
     },
   })
 

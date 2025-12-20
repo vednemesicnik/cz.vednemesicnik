@@ -5,10 +5,14 @@ import type { Route } from "./+types/route"
 export const loader = async ({ params }: Route.LoaderArgs) => {
   const { fileName } = params
 
-  const pdf = await prisma.issuePDF.findUniqueOrThrow({
+  const pdf = await prisma.issuePDF.findUnique({
     where: { fileName },
     select: { fileName: true, contentType: true, blob: true },
   })
+
+  if (pdf === null) {
+    throw new Response("PDF soubor nebyl nalezen", { status: 404 })
+  }
 
   return new Response(pdf.blob, {
     headers: {

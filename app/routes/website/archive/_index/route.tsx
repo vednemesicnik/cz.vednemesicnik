@@ -1,11 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href, Link, useSearchParams } from "react-router"
+import { href, isRouteErrorResponse, Link, useSearchParams } from "react-router"
 
 import { Headline } from "~/components/headline"
 import { Image } from "~/components/image"
 import { LIMIT_PARAM, LoadMoreContent } from "~/components/load-more-content"
 import { Page } from "~/components/page"
+import { Paragraph } from "~/components/paragraph"
 import { Tile } from "~/components/tile"
 import { TileGrid } from "~/components/tile-grid"
 import { TileGridItem } from "~/components/tile-grid-item"
@@ -13,6 +14,9 @@ import { sizeConfig } from "~/config/size-config"
 import { getIssuePdfSrc } from "~/utils/get-issue-pdf-src"
 
 import type { Route } from "./+types/route"
+
+export { loader } from "./_loader"
+export { meta } from "./_meta"
 
 export default function Route({ loaderData }: Route.ComponentProps) {
   const { issues, issuesCount } = loaderData
@@ -58,6 +62,37 @@ export default function Route({ loaderData }: Route.ComponentProps) {
   )
 }
 
-export { meta } from "./_meta"
-export { loader } from "./_loader"
-export { ErrorBoundary } from "./_error-boundary"
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (isRouteErrorResponse(error)) {
+    return (
+      <Page>
+        <Headline>Naše čísla pohromadě</Headline>
+        <Paragraph>Při hledání čísel v databázi se něco pokazilo.</Paragraph>
+        <code>
+          Chyba: {error.status} - {error.statusText}
+          <br />
+          Detail: {error.data}
+        </code>
+      </Page>
+    )
+  } else if (error instanceof Error) {
+    return (
+      <Page>
+        <Headline>Naše čísla pohromadě</Headline>
+        <Paragraph>Při hledání čísel v databázi se něco pokazilo.</Paragraph>
+        <code>
+          {error.message}
+          <br />
+          {error.stack}
+        </code>
+      </Page>
+    )
+  } else {
+    return (
+      <Page>
+        <Headline>Naše čísla pohromadě</Headline>
+        <Paragraph>Něco se pokazilo.</Paragraph>
+      </Page>
+    )
+  }
+}

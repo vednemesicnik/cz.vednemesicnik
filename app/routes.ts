@@ -44,8 +44,8 @@ export default [
 
     // Archive routes
     ...prefix("archive", [
-      index("routes/website/archive/index/route.tsx"),
-      route(":fileName", "routes/website/archive/issue-pdf/route.ts"),
+      index("routes/website/archive/_index/route.tsx"),
+      route(":fileName", "routes/website/archive/issue-pdf/route.tsx"),
     ]),
 
     // Editorial Board routes
