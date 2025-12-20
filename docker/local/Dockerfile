@@ -57,6 +57,10 @@ ENV PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK="1"
 ADD scripts/database-cli.sh /usr/local/bin/database-cli
 RUN chmod +x /usr/local/bin/database-cli
 
+# Add shortcut for seeding owner user
+ADD scripts/seed-owner.sh /usr/local/bin/seed-owner
+RUN chmod +x /usr/local/bin/seed-owner
+
 WORKDIR /app
 
 COPY --from=production-deps /app/node_modules /app/node_modules

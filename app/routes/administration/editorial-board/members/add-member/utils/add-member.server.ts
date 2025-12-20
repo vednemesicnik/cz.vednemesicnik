@@ -9,7 +9,7 @@ type Args = {
 
 export async function addMember({ fullName, positionIds, authorId }: Args) {
   try {
-    await prisma.editorialBoardMember.create({
+    const member = await prisma.editorialBoardMember.create({
       data: {
         fullName,
         positions: {
@@ -21,8 +21,10 @@ export async function addMember({ fullName, positionIds, authorId }: Args) {
       },
     })
 
-    return { ok: true }
+    return {
+      memberId: member.id,
+    }
   } catch (error) {
-    throwDbError(error, "Unable to add the editorial board member.")
+    return throwDbError(error, "Unable to add the editorial board member.")
   }
 }

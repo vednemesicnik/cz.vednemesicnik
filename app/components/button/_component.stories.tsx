@@ -6,15 +6,25 @@ const meta: Meta<typeof Button> = {
   title: "Primitives/Button",
   component: Button,
   tags: ["autodocs"],
+  parameters: {
+    docs: {
+      description: {
+        component:
+          "Modern button component with three distinct variants. Features smooth transitions, hover effects, subtle scale on click, and focus-visible box-shadow for keyboard navigation (Tab key). Uses form design tokens for consistent styling across all variants.",
+      },
+    },
+  },
   argTypes: {
     variant: {
       control: "select",
       options: ["primary", "danger", "default"],
-      description: "Visual style variant of the button",
+      description:
+        "Visual style variant: 'primary' for main actions (bright green), 'danger' for destructive actions (red), 'default' for secondary actions (outlined)",
     },
     disabled: {
       control: "boolean",
-      description: "Whether the button is disabled",
+      description:
+        "Whether the button is disabled (reduces opacity and prevents interaction)",
     },
     type: {
       control: "select",

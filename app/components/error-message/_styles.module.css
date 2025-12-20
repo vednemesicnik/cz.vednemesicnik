@@ -4,20 +4,17 @@
   align-items: start;
   justify-content: start;
   gap: 4px;
+  color: var(--admin-error);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-small);
 }
 
 .error {
-  color: #c70000; /* WCAG AA compliant red (4.51:1 contrast on white) */
-  font-weight: var(--font-weight-medium);
-  font-size: 1rem;
   line-height: 1;
   padding: 0;
   margin: 0;
 }
 
 .icon {
-  width: 1rem;
-  height: 1rem;
-  fill: #c70000; /* WCAG AA compliant red (4.51:1 contrast on white) */
   flex-shrink: 0;
 }

@@ -3,21 +3,19 @@ import { getConvertedImageStream } from "~/utils/sharp.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 
 type Args = {
-  cover: File
   title: string
   slug: string
   description: string
+  cover: File
   authorId: string
-  publishedAt: string
 }
 
 export async function createPodcast({
-  cover,
   title,
   slug,
   description,
+  cover,
   authorId,
-  publishedAt,
 }: Args) {
   const convertedCover = await getConvertedImageStream(cover, {
     width: 1280,
@@ -27,7 +25,7 @@ export async function createPodcast({
   })
 
   try {
-    await prisma.podcast.create({
+    const podcast = await prisma.podcast.create({
       data: {
         title,
         slug,
@@ -39,16 +37,14 @@ export async function createPodcast({
             blob: Uint8Array.from(await convertedCover.stream.toBuffer()),
           },
         },
-        publishedAt: new Date(publishedAt),
-        state: "published",
-        author: {
-          connect: { id: authorId },
-        },
+        authorId: authorId,
       },
     })
 
-    return { ok: true }
+    return {
+      podcastId: podcast.id,
+    }
   } catch (error) {
-    throwDbError(error, "Unable to create the podcast.")
+    return throwDbError(error, "Unable to create the podcast.")
   }
 }

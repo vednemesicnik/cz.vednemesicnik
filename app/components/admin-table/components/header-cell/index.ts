@@ -1,0 +1,1 @@
+export { TableHeaderCell } from "./_component"

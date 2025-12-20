@@ -1,0 +1,6 @@
+export { AdminTable } from "./_component"
+export { TableHeader } from "./components/header"
+export { TableHeaderCell } from "./components/header-cell"
+export { TableBody } from "./components/body"
+export { TableRow } from "./components/row"
+export { TableCell } from "./components/cell"

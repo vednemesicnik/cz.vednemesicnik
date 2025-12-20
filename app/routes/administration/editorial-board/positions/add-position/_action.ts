@@ -1,16 +1,16 @@
 import { parseWithZod } from "@conform-to/zod"
-import { type ActionFunctionArgs, redirect } from "react-router"
+import { type ActionFunctionArgs, data, href, redirect } from "react-router"
 
-import { requireAuthentication } from "~/utils/auth.server"
 import { validateCSRF } from "~/utils/csrf.server"
 import { prisma } from "~/utils/db.server"
+import { getStatusCodeFromSubmissionStatus } from "~/utils/get-status-code-from-submission-status"
+import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { checkAuthorPermission } from "~/utils/permissions/author/guards/check-author-permission.server"
 
 import { getSchema } from "./_schema"
 import { addPosition } from "./utils/add-position.server"
 
 export async function action({ request }: ActionFunctionArgs) {
-  await requireAuthentication(request)
-
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)
 
@@ -23,14 +23,28 @@ export async function action({ request }: ActionFunctionArgs) {
   })
 
   if (submission.status !== "success") {
-    return { submissionResult: submission.reply() }
+    return data(
+      { submissionResult: submission.reply() },
+      { status: getStatusCodeFromSubmissionStatus(submission.status) }
+    )
   }
 
-  const response = await addPosition(submission.value)
+  const context = await getAuthorPermissionContext(request, {
+    entities: ["editorial_board_position"],
+    actions: ["create"],
+  })
 
-  if (response?.ok === true) {
-    throw redirect("/administration/editorial-board/positions")
-  }
+  // Check if author can create editorial board positions
+  checkAuthorPermission(context, {
+    entity: "editorial_board_position",
+    action: "create",
+  })
 
-  return { submissionResult: null }
+  const { positionId } = await addPosition(submission.value)
+
+  return redirect(
+    href("/administration/editorial-board/positions/:positionId", {
+      positionId,
+    })
+  )
 }

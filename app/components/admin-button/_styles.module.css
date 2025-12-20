@@ -1,0 +1,100 @@
+.button {
+  @layer variant {
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+
+    /* Typography */
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+
+    /* Spacing */
+    padding-block: 12px;
+    padding-inline: 24px;
+    border-radius: 8px;
+
+    /* Interaction */
+    cursor: pointer;
+    user-select: none;
+
+    /* Disabled State */
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+}
+
+/* Primary Variant - Purple */
+.primary {
+  @layer variant {
+    background-color: var(--admin-purple);
+    color: var(--admin-button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--admin-purple-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--admin-purple-active);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--admin-focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+/* Secondary Variant - Outlined */
+.secondary {
+  @layer variant {
+    background-color: transparent;
+    color: var(--admin-button-text-secondary);
+    border: 2px solid var(--admin-border-strong);
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--admin-bg-hover);
+      border-color: var(--admin-purple);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--admin-bg-hover);
+      border-color: var(--admin-purple);
+    }
+
+    &:focus-visible {
+      background-color: var(--admin-bg-hover);
+      border-color: var(--admin-purple);
+      box-shadow: var(--admin-focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+/* Danger Variant - Red */
+.danger {
+  @layer variant {
+    background-color: var(--admin-danger);
+    color: var(--admin-button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--admin-danger-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--admin-danger-active);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--admin-focus-shadow-danger);
+      outline: none;
+    }
+  }
+}

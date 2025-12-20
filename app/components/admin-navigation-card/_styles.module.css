@@ -1,0 +1,112 @@
+.card {
+  @layer component {
+    /* Layout */
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+    position: relative;
+
+    /* Spacing */
+    padding: 24px;
+    border-radius: 12px;
+
+    /* Colors */
+    background-color: var(--admin-bg-secondary);
+    border: 2px solid var(--admin-border);
+    color: var(--admin-text-primary);
+
+    /* Typography */
+    text-decoration: none;
+
+    /* Interaction */
+    cursor: pointer;
+    user-select: none;
+
+    /* Transitions */
+    transition:
+      background-color 200ms ease-out,
+      border-color 200ms ease-out,
+      box-shadow 200ms ease-out,
+      transform 150ms ease-out;
+
+    /* Hover State */
+    &:hover:not(:focus-visible) {
+      background-color: var(--admin-bg-hover);
+      border-color: var(--admin-purple);
+      box-shadow: var(--admin-shadow-md);
+    }
+
+    /* Active State */
+    &:active {
+      transform: scale(0.98);
+    }
+
+    /* Focus State */
+    &:focus-visible {
+      background-color: var(--admin-bg-hover);
+      border-color: var(--admin-purple);
+      box-shadow: var(--admin-focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+.icon {
+  @layer component {
+    /* Layout */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    /* Sizing */
+    width: 48px;
+    height: 48px;
+
+    /* Colors */
+    background-color: var(--admin-purple);
+    color: var(--admin-bg-primary);
+    border-radius: 8px;
+
+    /* Typography */
+    font-size: 24px;
+    line-height: 1;
+  }
+}
+
+.content {
+  @layer component {
+    /* Layout */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+}
+
+.title {
+  @layer component {
+    /* Reset */
+    margin: 0;
+
+    /* Typography */
+    font-size: var(--font-size-heading5);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--admin-text-primary);
+  }
+}
+
+.description {
+  @layer component {
+    /* Reset */
+    margin: 0;
+
+    /* Typography */
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-normal);
+    color: var(--admin-text-secondary);
+  }
+}

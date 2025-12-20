@@ -9,30 +9,40 @@
 .fileArea {
   display: grid;
   grid-template-rows: 1fr min-content;
-  border: 2px solid var(--cadet-gray);
-  border-radius: 4px;
+  border: 2px solid var(--admin-border);
+  border-radius: 8px;
   width: 100%;
   max-width: 600px;
   padding: 36px 36px 12px 36px;
   justify-items: start;
+  background-color: var(--admin-bg-primary);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
   &:focus-within {
-    border-color: var(--night);
-    box-shadow: 0 0 4px 0 var(--rose-pink);
+    border-color: var(--admin-purple);
+    box-shadow: var(--admin-focus-shadow);
   }
 }
 
 .inputArea {
   display: grid;
   grid-template-areas: "input";
-  border: 2px dashed var(--cadet-gray);
-  border-radius: 4px;
+  border: 2px dashed var(--admin-border);
+  border-radius: 8px;
   margin-bottom: 8px;
   width: 100%;
   height: 300px;
   max-height: 30dvh;
   justify-items: stretch;
   align-items: stretch;
+  background-color: var(--admin-bg-secondary);
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--admin-border-hover);
+  }
 }
 
 .input {
@@ -51,24 +61,24 @@
   align-items: center;
   justify-self: center;
   align-self: center;
-  color: var(--cadet-gray);
+  color: var(--admin-text-tertiary);
 }
 
 .inputDataSet {
-  color: var(--night);
+  color: var(--admin-text-primary);
 }
 
 .fileName {
-  font-size: 1.25rem;
+  font-size: var(--font-size-heading6);
   font-weight: var(--font-weight-medium);
+  color: inherit;
 }
 
 .fileNameSet {
-  color: var(--night);
+  color: var(--admin-text-primary);
 }
 
 .fileIcon {
-  fill: currentColor;
   width: 48px;
   height: 48px;
 }

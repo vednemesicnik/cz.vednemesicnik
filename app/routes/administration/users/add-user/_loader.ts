@@ -1,50 +1,32 @@
 import { type LoaderFunctionArgs } from "react-router"
 
-import { requireAuthentication } from "~/utils/auth.server"
-import { prisma } from "~/utils/db.server"
-import { type UserPermissionEntity } from "~~/types/permission"
+import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
+import { getAssignableRoles } from "~/utils/permissions/user/queries/get-assignable-roles.server"
+
+import { getAuthorsWithoutUser } from "./utils/get-authors-without-user.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { sessionId } = await requireAuthentication(request)
-
-  const entity: UserPermissionEntity = "user"
-
-  const session = await prisma.session.findUniqueOrThrow({
-    where: { id: sessionId },
-    select: {
-      user: {
-        select: {
-          id: true,
-          role: {
-            select: {
-              permissions: {
-                where: {
-                  entity,
-                },
-                select: {
-                  action: true,
-                  access: true,
-                  entity: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+  const context = await getUserPermissionContext(request, {
+    entities: ["user"],
+    actions: ["create"],
   })
 
-  const roles = await prisma.userRole.findMany({
-    where: {
-      name: {
-        in: ["user", "administrator"],
-      },
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  })
+  // Check create permission
+  const canCreate = context.can({
+    entity: "user",
+    action: "create",
+    targetUserId: context.userId,
+  }).hasPermission
 
-  return { roles, session }
+  // If user cannot create users, they shouldn't access this page
+  if (!canCreate) {
+    throw new Response("Forbidden", { status: 403 })
+  }
+
+  const [roles, authorsWithoutUser] = await Promise.all([
+    getAssignableRoles(context),
+    getAuthorsWithoutUser(),
+  ])
+
+  return { roles, authorsWithoutUser }
 }

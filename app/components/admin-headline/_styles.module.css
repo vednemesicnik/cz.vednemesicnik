@@ -1,0 +1,7 @@
+.headline {
+  margin: 0;
+  font-size: 24px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  color: var(--admin-text-primary);
+}

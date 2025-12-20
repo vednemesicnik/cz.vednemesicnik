@@ -1,10 +1,9 @@
-import type { PrismaClient } from "@prisma/client"
-
+import type { PrismaClient } from "@generated/prisma/client"
 import {
   type UserPermissionAccess,
   type UserPermissionAction,
   type UserPermissionEntity,
-} from "~~/types/permission"
+} from "@generated/prisma/enums"
 
 export type UserPermissionsData = {
   entities: UserPermissionEntity[]

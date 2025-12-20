@@ -1,4 +1,4 @@
-import { Form, Link } from "react-router";
+import { Form, Link } from "react-router"
 
 import styles from "./_navigation.module.css"
 

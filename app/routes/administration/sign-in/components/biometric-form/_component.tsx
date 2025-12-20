@@ -3,16 +3,14 @@ import { useEffect } from "react"
 import { useFetcher, useNavigate } from "react-router"
 import { HoneypotInputs } from "remix-utils/honeypot/react"
 
-import { Modal } from "~/components/modal"
 import { type action as generateRegistrationOptionsAction } from "~/routes/administration/authentication/generate-registration-options/_action"
 import { type action as verifyRegistrationResponseAction } from "~/routes/administration/authentication/verify-registration-response/_action"
 
 type Props = {
-  isOpen: boolean
   onClose: () => void
 }
 
-export const BiometricModal = ({ isOpen, onClose }: Props) => {
+export const BiometricModal = ({ onClose }: Props) => {
   const generateRegistrationOptionsFetcher =
     useFetcher<typeof generateRegistrationOptionsAction>()
   const verifyRegistrationResponseFetcher =
@@ -71,11 +69,7 @@ export const BiometricModal = ({ isOpen, onClose }: Props) => {
     generateRegistrationOptionsFetcher.Form
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      titleId={"use-biometric-modal-title"}
-    >
+    <>
       <h3 id={"use-biometric-modal-title"}>Přihlásit se pomocí biometrie</h3>
       <p>
         Pro zvýšení bezpečnosti můžete použít biometrické autentizační
@@ -93,6 +87,6 @@ export const BiometricModal = ({ isOpen, onClose }: Props) => {
 
         <button type={"submit"}>Přidat biometrickou autentizaci</button>
       </GenerateRegistrationOptionsForm>
-    </Modal>
+    </>
   )
 }

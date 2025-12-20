@@ -1,0 +1,12 @@
+.row {
+  border-bottom: 1px solid var(--admin-border);
+  transition: background-color 0.15s ease;
+}
+
+.row:hover {
+  background-color: var(--admin-bg-hover);
+}
+
+.row:last-child {
+  border-bottom: none;
+}

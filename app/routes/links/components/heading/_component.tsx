@@ -7,7 +7,5 @@ type Props = {
 }
 
 export const Heading = ({ children }: Props) => {
-  return (
-    <h1 className={styles.text}>{children}</h1>
-  )
+  return <h1 className={styles.text}>{children}</h1>
 }

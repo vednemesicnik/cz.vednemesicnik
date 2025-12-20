@@ -13,6 +13,25 @@ This documentation outlines the permissions and actions available to users in th
 | **Administrator** | 2         | System administrator with full access to all user accounts and author profiles. |
 | **Owner**         | 1         | System owner with full control over all user accounts and author profiles.      |
 
+### Role Level Hierarchy
+
+The **level** field establishes a hierarchical authority structure for role assignment and access control:
+
+- **Level 1 (Owner)**: Highest authority - can assign any role including Owner
+- **Level 2 (Administrator)**: Mid-level authority - can assign Administrator and Member roles, but NOT Owner
+- **Level 3 (Member)**: Entry level - cannot assign roles to others
+
+Lower level numbers indicate higher authority. This hierarchy prevents privilege escalation by ensuring users can only assign roles at their level or below.
+
+**How it works:**
+When assigning roles, users can only assign roles with a level greater than or equal to their own level.
+
+**Examples:**
+- ✅ Administrator (level 2) can assign Administrator (level 2) or Member (level 3) roles
+- ❌ Administrator (level 2) CANNOT assign Owner (level 1) role
+- ✅ Owner (level 1) can assign any role (all levels ≥ 1)
+- ❌ Member (level 3) cannot assign any roles (no administrative access)
+
 ### 👤 User Entity Permissions
 | **Role**          | **Action** | **Access** | **Notes**                                                           |
 |-------------------|------------|------------|---------------------------------------------------------------------|
@@ -48,7 +67,6 @@ This documentation outlines the permissions and actions available to users in th
 - **Access**:
   - **Own**: Permissions apply only to the user’s own data or associated content.
   - **Any**: Permissions apply to all data or content in the system.
-  - **Not owner**: Permissions apply to all entities except those owned by users with the "Owner" role.
 - **Notes**: Provides additional context or restrictions for specific actions and roles.
 
 ---
@@ -64,26 +82,36 @@ This documentation outlines the permissions and actions available to users in th
 
 ## Roles Explained
 
-### **User**
+### **Member** (User Role - Level 3)
 
 - **Capabilities**:
-  - Can view and update their own **User** and **Author** entities.
+  - Can view and update their own **User** account.
+  - Can view and update their own **Author** profile.
 - **Restrictions**:
-  - Cannot create, delete, or assign roles.
+  - Cannot assign any roles (no administrative access).
+  - Cannot create or delete any accounts.
+  - Cannot access other users' accounts or author profiles.
 
-### **Administrator**
+### **Administrator** (User Role - Level 2)
 
 - **Capabilities**:
   - Full management of both **User** and **Author** entities.
-  - Can assign roles such as **Admin**, **User**, **Editor**, **Author**, and **Contributor**.
+  - Can assign **User roles** with level ≥ 2: Administrator, Member.
+  - Can assign **Author roles**: Coordinator, Creator, Contributor (see Author Roles documentation).
+  - Can view all user accounts, including Owner accounts.
+  - Can create accounts for Administrator and Member roles.
+  - Can update and delete accounts for Members and other Administrators.
 - **Restrictions**:
-  - Cannot assign the **Owner** role.
+  - Cannot assign roles with level < 2 (cannot assign Owner role).
+  - Cannot create, update, or delete **Owner** accounts (level 1 is protected by role hierarchy).
 
-### **Owner**
+### **Owner** (User Role - Level 1)
 
 - **Capabilities**:
-  - Full control over all actions and entities.
-  - Can assign any role, including the **Owner** role.
+  - Full control over all actions and entities in the system.
+  - Can assign **User roles** with level ≥ 1: Owner, Administrator, Member (all roles).
+  - Can assign **Author roles**: Coordinator, Creator, Contributor.
+  - Can create, view, update, and delete any user account or author profile.
 - **Restrictions**:
   - Limited to one active **Owner** at a time.
 

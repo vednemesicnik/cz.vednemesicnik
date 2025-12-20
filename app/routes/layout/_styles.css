@@ -1,7 +1,0 @@
-body {
-  grid-template-rows: max-content 1fr max-content;
-  grid-template-areas:
-    "header"
-    "body"
-    "footer";
-}

@@ -1,0 +1,1 @@
+export { AdminDetailItem } from "./_component"

@@ -1,0 +1,4 @@
+.header {
+  background-color: var(--admin-bg-secondary);
+  border-bottom: 2px solid var(--admin-border-strong);
+}

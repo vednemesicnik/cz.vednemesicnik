@@ -1,13 +1,21 @@
-export const formConfig = {
+export const FORM_CONFIG = {
+  authenticityToken: {
+    name: "csrf",
+  },
   intent: {
     name: "intent",
     value: {
+      archive: "archive",
       delete: "delete",
-      signOut: "sign-out",
+      publish: "publish",
+      restore: "restore",
+      retract: "retract",
+      review: "review",
       signInWithBiometric: "sign-in-with-biometric",
+      signOut: "sign-out",
     },
   },
-  authenticityToken: {
-    name: "csrf",
+  redirect: {
+    name: "redirect",
   },
 } as const

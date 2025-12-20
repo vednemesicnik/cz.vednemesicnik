@@ -7,11 +7,11 @@ import { NavigationItem } from "~/components/app-header/components/navigation-it
 import styles from "./_styles.module.css"
 
 type Props = {
-  children: ReactNode
-  isInEditMode: boolean
+  children?: ReactNode
+  isInEditMode?: boolean
 }
 
-export const AppHeader = ({ children, isInEditMode }: Props) => {
+export const AppHeader = ({ children, isInEditMode = false }: Props) => {
   return (
     <header className={styles.container}>
       {children}

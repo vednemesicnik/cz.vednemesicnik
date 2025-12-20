@@ -1,0 +1,9 @@
+.description {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-base);
+    color: var(--admin-text-secondary);
+    line-height: 1.5;
+    text-align: center;
+  }
+}

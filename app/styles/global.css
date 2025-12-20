@@ -1,4 +1,4 @@
-@layer base, component, route;
+@layer base, component, variant, layout, route;
 
 * {
   box-sizing: border-box;
@@ -32,98 +32,5 @@
     @supports (min-width: 100dvh) {
       min-height: 100dvh;
     }
-  }
-
-  /* Hyperlink */
-  a {
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    color: inherit;
-    text-decoration-line: underline;
-    text-decoration-style: solid;
-    text-decoration-thickness: 0.1em;
-    text-underline-offset: 0.1em;
-    border: 2px solid transparent;
-    border-radius: 4px;
-
-    &:hover {
-      text-decoration-color: var(--rose-pink);
-    }
-
-    &:focus-visible {
-      border-color: var(--night);
-      box-shadow: 0 0 4px 0 var(--rose-pink);
-      text-decoration-color: var(--rose-pink);
-      outline: none;
-    }
-
-    &::selection {
-      background-color: var(--rose-pink);
-      color: var(--pale-purple);
-    }
-  }
-
-  /* Paragraph */
-  p {
-    font-weight: var(--font-weight-text);
-    line-height: 1.5;
-
-    &::selection {
-      background-color: var(--spring-green);
-      color: var(--dark-green);
-    }
-  }
-
-  /* Span */
-  span {
-    font-family: inherit;
-    font-weight: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    color: inherit;
-
-    &::selection {
-      background-color: var(--spring-green);
-      color: var(--dark-green);
-    }
-  }
-
-  /* Headline */
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-weight: var(--font-weight-bold);
-    line-height: 1.25;
-
-    &::selection {
-      background-color: var(--ruddy-blue);
-      color: var(--alice-blue);
-      /*background-color: var(--aureolin);*/
-      /*color: var(--cream);*/
-    }
-  }
-
-  /* Table */
-  table {
-    table-layout: fixed;
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th,
-  td {
-    border-top: 1px solid var(--black);
-    padding: 0.25rem;
-  }
-
-  th {
-    background-color: var(--black);
-    color: var(--white);
-    text-align: left;
   }
 }

@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import {
   href,
+  isRouteErrorResponse,
   Links,
   type LinksFunction,
   Meta,
@@ -15,6 +16,9 @@ import "~/styles/global.css"
 import "~/styles/colors.css"
 import "~/styles/fonts.css"
 import "~/styles/sizes.css"
+import "~/styles/admin-tokens.css"
+
+import type { Route } from "./+types/root"
 
 export const links: LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
@@ -36,7 +40,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <Scripts />
 
         {/* Environment variables body script - sets ENV for client */}
-        <script src={href("/resources/env-script")} />
+        <script src={href("/resources/env.js")} />
       </body>
     </html>
   )
@@ -44,4 +48,28 @@ export function Layout({ children }: { children: ReactNode }) {
 
 export default function App() {
   return <Outlet />
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (isRouteErrorResponse(error)) {
+    return (
+      <>
+        <h1>
+          {error.status} {error.statusText}
+        </h1>
+        <p>{error.data}</p>
+      </>
+    )
+  } else if (error instanceof Error) {
+    return (
+      <div>
+        <h1>Error</h1>
+        <p>{error.message}</p>
+        <p>The stack trace is:</p>
+        <pre>{error.stack}</pre>
+      </div>
+    )
+  } else {
+    return <h1>Unknown Error</h1>
+  }
 }

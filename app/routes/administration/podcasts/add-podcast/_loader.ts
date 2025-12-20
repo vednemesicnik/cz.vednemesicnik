@@ -1,75 +1,34 @@
-import { type LoaderFunctionArgs, redirect } from "react-router"
+import { href } from "react-router"
 
-import { requireAuthentication } from "~/utils/auth.server"
-import { prisma } from "~/utils/db.server"
-import { getAuthorRights } from "~/utils/get-author-rights"
-import { type AuthorPermissionEntity } from "~~/types/permission"
+import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { requireAuthorPermission } from "~/utils/permissions/author/guards/require-author-permission.server"
+import { getAuthorsByPermission } from "~/utils/permissions/author/queries/get-authors-by-permission.server"
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { sessionId } = await requireAuthentication(request)
+import type { Route } from "./+types/route"
 
-  const entities: AuthorPermissionEntity[] = ["podcast"]
-
-  const session = await prisma.session.findUniqueOrThrow({
-    where: { id: sessionId },
-    select: {
-      user: {
-        select: {
-          author: {
-            select: {
-              id: true,
-              role: {
-                select: {
-                  permissions: {
-                    where: {
-                      entity: { in: entities },
-                    },
-                    select: {
-                      action: true,
-                      access: true,
-                      entity: true,
-                      state: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  })
-
-  const [
-    // entity: podcast
-    [
-      // action: create
-      [
-        // access: own
-        [hasCreateOwnPodcastRight],
-        // access: any
-        [hasRightToCreateAnyPodcast],
-      ],
-    ],
-  ] = getAuthorRights(session.user.author.role.permissions, {
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const context = await getAuthorPermissionContext(request, {
     entities: ["podcast"],
     actions: ["create"],
-    access: ["own", "any"],
   })
 
-  if (!(hasCreateOwnPodcastRight || hasRightToCreateAnyPodcast)) {
-    throw redirect("/administration/podcasts")
+  requireAuthorPermission(context, {
+    entity: "podcast",
+    action: "create",
+    state: "draft",
+    targetAuthorId: context.authorId,
+    redirectTo: href("/administration/podcasts"),
+  })
+
+  const authors = await getAuthorsByPermission(
+    context,
+    "podcast",
+    "create",
+    "draft"
+  )
+
+  return {
+    authors,
+    selfAuthorId: context.authorId,
   }
-
-  const authors = await prisma.author.findMany({
-    ...(hasRightToCreateAnyPodcast
-      ? {}
-      : { where: { id: session.user.author.id } }),
-    select: {
-      id: true,
-      name: true,
-    },
-  })
-
-  return { session, authors }
 }

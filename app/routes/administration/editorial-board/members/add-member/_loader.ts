@@ -1,36 +1,44 @@
-import { type LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs } from "react-router"
 
-import { requireAuthentication } from "~/utils/auth.server"
 import { prisma } from "~/utils/db.server"
+import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
+import { getAuthorsByPermission } from "~/utils/permissions/author/queries/get-authors-by-permission.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { sessionId } = await requireAuthentication(request)
-
-  const sessionPromise = prisma.session.findUniqueOrThrow({
-    where: { id: sessionId },
-    select: { user: { select: { authorId: true } } },
+  const context = await getAuthorPermissionContext(request, {
+    entities: ["editorial_board_member"],
+    actions: ["create"],
   })
 
-  const editorialBoardMemberPositionsPromise =
+  // Check create permission
+  const canCreate = context.can({
+    entity: "editorial_board_member",
+    action: "create",
+  }).hasPermission
+
+  // If author cannot create members, they shouldn't access this page
+  if (!canCreate) {
+    throw new Response("Forbidden", { status: 403 })
+  }
+
+  const [editorialBoardMemberPositions, authors] = await Promise.all([
     prisma.editorialBoardPosition.findMany({
       select: {
         id: true,
         key: true,
       },
-    })
-
-  const authorsPromise = prisma.author.findMany({
-    select: {
-      id: true,
-      name: true,
-    },
-  })
-
-  const [session, editorialBoardMemberPositions, authors] = await Promise.all([
-    sessionPromise,
-    editorialBoardMemberPositionsPromise,
-    authorsPromise,
+    }),
+    getAuthorsByPermission(
+      context,
+      "editorial_board_member",
+      "create",
+      "draft"
+    ),
   ])
 
-  return { session, editorialBoardMemberPositions, authors }
+  return {
+    editorialBoardMemberPositions,
+    authors,
+    selfAuthorId: context.authorId,
+  }
 }

@@ -1,7 +1,6 @@
-import type { PrismaClient } from "@prisma/client"
-
+import type { PrismaClient } from "@generated/prisma/client"
+import { type ContentState } from "@generated/prisma/enums"
 import { users } from "~~/data/users"
-import { type ContentState } from "~~/types/content-state"
 
 import { getIssueCover } from "./get-issue-cover"
 import { getIssuePdf } from "./get-issue-pdf"

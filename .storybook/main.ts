@@ -1,26 +1,21 @@
-import type { StorybookConfig } from '@storybook/react-vite';
-import { mergeConfig } from 'vite';
-import tsconfigPaths from 'vite-tsconfig-paths';
+import type { StorybookConfig } from "@storybook/react-vite"
 
 const config: StorybookConfig = {
-  "stories": [
-    "../app/**/*.stories.@(js|jsx|mjs|ts|tsx)",
-    "../app/**/*.mdx"
-  ],
-  "addons": [
+  stories: ["../app/**/*.stories.@(js|jsx|mjs|ts|tsx)", "../app/**/*.mdx"],
+  addons: [
     "@chromatic-com/storybook",
     "@storybook/addon-docs",
     "@storybook/addon-onboarding",
     "@storybook/addon-a11y",
-    "@storybook/addon-vitest"
+    "@storybook/addon-vitest",
   ],
-  "framework": {
-    "name": "@storybook/react-vite",
-    "options": {
+  framework: {
+    name: "@storybook/react-vite",
+    options: {
       builder: {
-        viteConfigPath: '.storybook/vite.config.ts',
+        viteConfigPath: ".storybook/vite.config.ts",
       },
-    }
+    },
   },
-};
-export default config;
+}
+export default config

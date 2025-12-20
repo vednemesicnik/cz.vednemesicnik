@@ -6,112 +6,154 @@ import {
   getSelectProps,
   useForm,
 } from "@conform-to/react"
-import { parseWithZod } from "@conform-to/zod"
-import { Form } from "react-router"
+import { getZodConstraint, parseWithZod } from "@conform-to/zod"
+import { useState } from "react"
+import { useNavigation } from "react-router"
 
+import { AdminHeadline } from "~/components/admin-headline"
+import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
-import { Headline } from "~/components/headline"
+import { Button } from "~/components/button"
+import { Fieldset } from "~/components/fieldset"
+import { Form } from "~/components/form"
+import { FormActions } from "~/components/form-actions"
+import { Input } from "~/components/input"
+import { Radio } from "~/components/radio"
+import { Select } from "~/components/select"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
 
-export default function Route({
+export { action } from "./_action"
+export { handle } from "./_handle"
+export { loader } from "./_loader"
+export { meta } from "./_meta"
+
+export default function RouteComponent({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
+  const { state } = useNavigation()
+  const [authorMode, setAuthorMode] = useState<"new" | "existing">("new")
+
   const [form, fields] = useForm({
     id: "add-user",
+    constraint: getZodConstraint(schema),
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
     },
+    defaultValue: {
+      authorMode: "new",
+    },
     shouldValidate: "onSubmit",
     shouldRevalidate: "onBlur",
   })
 
-  return (
-    <>
-      <Headline>Přidat uživatele</Headline>
+  const isLoadingOrSubmitting = state !== "idle"
+  const canSubmit = !isLoadingOrSubmitting && form.valid
 
-      <Form method={"post"} {...getFormProps(form)}>
-        {form.errors?.map((error) => (
-          <output key={error} style={{ color: "red" }}>
-            {error}
-          </output>
-        ))}
-        <fieldset>
-          <legend>Detaily uživatele</legend>
-          <label htmlFor={fields.email.id}>E-mail</label>
-          <input
+  return (
+    <AdminPage>
+      <AdminHeadline>Přidat uživatele</AdminHeadline>
+
+      <Form method="post" {...getFormProps(form)}>
+        <Fieldset legend={"Detaily uživatele"} disabled={isLoadingOrSubmitting}>
+          <Input
+            label="E-mail"
             {...getInputProps(fields.email, { type: "email" })}
-            placeholder={"user@domain.name"}
+            placeholder="user@domain.name"
+            errors={fields.email.errors}
           />
-          {fields.email.errors?.map((error) => (
-            <output key={error} style={{ color: "red" }}>
-              {error}
-            </output>
-          ))}
-          <br />
-          <label htmlFor={fields.name.id}>Jméno a příjmení</label>
-          <input
+          <Input
+            label="Jméno a příjmení"
             {...getInputProps(fields.name, { type: "text" })}
-            placeholder={"John Doe"}
+            placeholder="Jan Novák"
+            errors={fields.name.errors}
           />
-          {fields.name.errors?.map((error) => (
-            <output key={error} style={{ color: "red" }}>
-              {error}
-            </output>
-          ))}
-        </fieldset>
-        <fieldset>
-          <legend>Heslo</legend>
-          <label htmlFor={fields.password.id}>Heslo</label>
-          <input {...getInputProps(fields.password, { type: "password" })} />
-          {fields.password.errors?.map((error) => (
-            <output key={error} style={{ color: "red" }}>
-              {error}
-            </output>
-          ))}
-          <br />
-          <label htmlFor={fields.passwordConfirmation.id}>
-            Potvrzení hesla
-          </label>
-          <input
+        </Fieldset>
+
+        <Fieldset legend={"Heslo"} disabled={isLoadingOrSubmitting}>
+          <Input
+            label="Heslo"
+            {...getInputProps(fields.password, { type: "password" })}
+            errors={fields.password.errors}
+          />
+          <Input
+            label="Potvrzení hesla"
             {...getInputProps(fields.passwordConfirmation, {
               type: "password",
             })}
+            errors={fields.passwordConfirmation.errors}
           />
-          {fields.passwordConfirmation.errors?.map((error) => (
-            <output key={error} style={{ color: "red" }}>
-              {error}
-            </output>
-          ))}
-        </fieldset>
-        <fieldset>
-          <legend>Oprávnění</legend>
-          <label htmlFor={fields.roleId.id}>Role</label>
-          <select {...getSelectProps(fields.roleId)}>
+        </Fieldset>
+
+        <Fieldset legend={"Profil autora"} disabled={isLoadingOrSubmitting}>
+          <Radio
+            label="Vytvořit nový profil autora"
+            {...getInputProps(fields.authorMode, {
+              type: "radio",
+              value: "new",
+            })}
+            errors={fields.authorMode.errors}
+            onChange={(e) =>
+              setAuthorMode(e.currentTarget.value as "new" | "existing")
+            }
+          />
+          <Radio
+            label="Připojit k existujícímu autorovi"
+            {...getInputProps(fields.authorMode, {
+              type: "radio",
+              value: "existing",
+            })}
+            errors={fields.authorMode.errors}
+            onChange={(e) =>
+              setAuthorMode(e.currentTarget.value as "new" | "existing")
+            }
+          />
+
+          {authorMode === "existing" && (
+            <Select
+              label="Vyberte autora"
+              {...getSelectProps(fields.existingAuthorId)}
+              errors={fields.existingAuthorId.errors}
+            >
+              <option value="">Vyberte autora</option>
+              {loaderData.authorsWithoutUser.map((author) => (
+                <option key={author.id} value={author.id}>
+                  {author.name} ({author.role.name})
+                </option>
+              ))}
+            </Select>
+          )}
+        </Fieldset>
+
+        <Fieldset legend={"Oprávnění"} disabled={isLoadingOrSubmitting}>
+          <Select
+            label="Role"
+            {...getSelectProps(fields.roleId)}
+            errors={fields.roleId.errors}
+          >
+            <option value="">Vyberte roli</option>
             {loaderData.roles.map((role) => (
               <option key={role.id} value={role.id}>
                 {role.name}
               </option>
             ))}
-          </select>
-          {fields.roleId.errors?.map((error) => (
-            <output key={error} style={{ color: "red" }}>
-              {error}
-            </output>
-          ))}
-        </fieldset>
+          </Select>
+        </Fieldset>
+
         <AuthenticityTokenInput />
-        <br />
-        <button type="submit">Přidat uživatele</button>
+
+        <FormActions>
+          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+            Přidat
+          </Button>
+          <AdminLinkButton to={"/administration/users"}>Zrušit</AdminLinkButton>
+        </FormActions>
       </Form>
-    </>
+    </AdminPage>
   )
 }
-
-export { handle } from "./_handle"
-export { action } from "./_action"
-export { loader } from "./_loader"

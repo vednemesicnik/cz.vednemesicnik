@@ -1,5 +1,9 @@
-import type { MetaFunction } from "react-router";
+import { getPageTitle } from "~/utils/get-page-title"
 
-export const meta: MetaFunction = () => {
-  return [{ title: "Vedneměsíčník | Administrace Podcastů - Přidat podcast" }]
+import type { Route } from "./+types/route"
+
+export const meta: Route.MetaFunction = () => {
+  const title = getPageTitle("Administrace: Podcasty - Přidat podcast")
+
+  return [{ title }]
 }

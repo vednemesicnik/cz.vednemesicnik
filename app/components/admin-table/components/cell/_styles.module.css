@@ -1,0 +1,14 @@
+.cell {
+  padding: 16px;
+  font-size: var(--font-size-base);
+  color: var(--admin-text-primary);
+  vertical-align: middle;
+}
+
+.cell:first-child {
+  padding-left: 24px;
+}
+
+.cell:last-child {
+  padding-right: 24px;
+}

@@ -7,12 +7,16 @@ import { HoneypotInputs } from "remix-utils/honeypot/react"
 
 import { Button } from "~/components/button"
 import { Form } from "~/components/form"
-import { Headline } from "~/components/headline"
-import { Page } from "~/components/page"
+import { Input } from "~/components/input"
 import { useHydrated } from "~/utils/use-hydrated"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
+import styles from "./_styles.module.css"
+
+export { meta } from "./_meta"
+export { loader } from "./_loader"
+export { action } from "./_action"
 
 export default function Route({ actionData }: Route.ComponentProps) {
   const isHydrated = useHydrated()
@@ -43,53 +47,41 @@ export default function Route({ actionData }: Route.ComponentProps) {
   }, [formErrorsCount, passwordErrorsCount])
 
   return (
-    <Page>
-      <Headline>Administrace - přihlášení</Headline>
+    <div className={styles.container}>
+      <section className={styles.card}>
+        <h1 className={styles.title}>Přihlášení</h1>
+        <p className={styles.subtitle}>
+          Zadejte své přihlašovací údaje pro přístup do administrace
+        </p>
 
-      <Form {...getFormProps(form)} method={"post"} errors={form.errors}>
-        <HoneypotInputs />
+        <Form
+          {...getFormProps(form)}
+          method={"post"}
+          errors={form.errors}
+          className={styles.form}
+        >
+          <HoneypotInputs />
 
-        <fieldset>
-          <legend>Přihlašovací údaje</legend>
-          <label htmlFor={fields.email.id}>E-mail</label>
-          <input
+          <Input
+            label={"E-mail"}
+            errors={fields.email.errors}
             {...getInputProps(fields.email, { type: "email" })}
-            key={fields.email.key}
-            defaultValue={fields.email.initialValue ?? fields.email.value ?? ""}
-            placeholder={"example@local.dev"}
+            placeholder={"vas-email@example.com"}
           />
-          {fields.email.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.password.id}>Heslo</label>
-          <input
-            ref={passwordInputRef}
-            {...getInputProps(fields.password, { type: "password" })}
-            key={fields.password.key}
-            defaultValue={
-              fields.password.initialValue ?? fields.password.value ?? ""
-            }
-          />
-          {fields.password.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-        </fieldset>
 
-        <Button type="submit">Přihlásit</Button>
-      </Form>
-    </Page>
+          <Input
+            ref={passwordInputRef}
+            label={"Heslo"}
+            errors={fields.password.errors}
+            {...getInputProps(fields.password, { type: "password" })}
+            placeholder={"••••••••"}
+          />
+
+          <Button type="submit" className={styles.button}>
+            Přihlásit se
+          </Button>
+        </Form>
+      </section>
+    </div>
   )
 }
-
-export { meta } from "./_meta"
-export { loader } from "./_loader"
-export { action } from "./_action"

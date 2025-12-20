@@ -1,8 +1,8 @@
-import { prisma } from "~/utils/db.server"
 import {
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
-} from "~~/types/permission"
+} from "@generated/prisma/enums"
+import { prisma } from "~/utils/db.server"
 
 type Options = {
   actions: AuthorPermissionAction[]

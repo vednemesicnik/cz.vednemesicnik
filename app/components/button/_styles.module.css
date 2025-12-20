@@ -1,74 +1,64 @@
-.button {
-  display: grid;
-  position: relative;
-  grid-template-columns: 1fr;
-  border: none;
-  color: white;
-  cursor: pointer;
-  justify-items: center;
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-semibold);
-  padding: 12px 24px;
-
-  &:disabled {
-    cursor: not-allowed;
-  }
-}
-
+/* ========================================
+   Primary Variant (Purple)
+   ======================================== */
 .primary {
-  background-color: var(--spring-green);
-  color: var(--dark-green);
+  background-color: var(--admin-purple);
+  color: var(--white);
+  border: none;
 
-  &:hover {
-    background-color: var(--aquamarine);
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-purple-hover);
   }
 
-  &:disabled {
-    background-color: darkgray;
-  }
-
-  &::selection {
-    background-color: var(--alice-blue);
-    color: var(--marine-blue);
-  }
-}
-
-.danger {
-  background-color: crimson;
-
-  &:hover {
-    background-color: darkred;
-  }
-
-  &:disabled {
-    background-color: darkgray;
-  }
-}
-
-.default {
-  padding: 8px 24px;
-  font-weight: var(--font-weight-medium);
-  border-radius: 4px;
-  background-color: transparent;
-  border: 2px solid var(--night);
-  color: var(--night);
-  transition:
-    background-color 150ms ease-out,
-    color 150ms ease-out;
-
-  &:hover {
-    background-color: var(--night);
-    color: var(--white);
+  &:active:not(:disabled) {
+    background-color: var(--admin-purple-active);
   }
 
   &:focus-visible {
-    background-color: var(--night);
-    color: var(--white);
+    box-shadow: var(--admin-focus-shadow);
     outline: none;
-    box-shadow: 0 0 4px 0 var(--rose-pink);
+  }
+}
+
+/* ========================================
+   Danger Variant (Red)
+   ======================================== */
+.danger {
+  background-color: var(--admin-danger);
+  color: var(--white);
+  border: none;
+
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-danger-hover);
   }
 
-  &:disabled {
-    opacity: 0.25;
+  &:active:not(:disabled) {
+    background-color: var(--admin-danger-active);
+  }
+
+  &:focus-visible {
+    box-shadow: var(--admin-focus-shadow-danger);
+    outline: none;
+  }
+}
+
+/* ========================================
+   Default Variant (Outline)
+   ======================================== */
+.default {
+  background-color: transparent;
+  color: var(--admin-text-primary);
+  border: 2px solid var(--admin-border-strong);
+
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-bg-hover);
+    border-color: var(--admin-purple);
+  }
+
+  &:focus-visible {
+    background-color: var(--admin-bg-hover);
+    border-color: var(--admin-purple);
+    box-shadow: var(--admin-focus-shadow);
+    outline: none;
   }
 }

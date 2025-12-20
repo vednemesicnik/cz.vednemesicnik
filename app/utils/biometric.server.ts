@@ -1,4 +1,8 @@
-import { createCookie, createCookieSessionStorage, type Session } from "react-router";
+import {
+  createCookie,
+  createCookieSessionStorage,
+  type Session,
+} from "react-router"
 
 const BIOMETRIC_CHALLENGE_KEY = "biometricChallenge"
 

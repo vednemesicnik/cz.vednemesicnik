@@ -1,0 +1,9 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--admin-shadow-sm);
+}

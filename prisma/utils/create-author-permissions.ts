@@ -1,17 +1,16 @@
-import type { PrismaClient } from "@prisma/client"
-
+import type { PrismaClient } from "@generated/prisma/client"
 import {
   type AuthorPermissionAccess,
   type AuthorPermissionAction,
   type AuthorPermissionEntity,
-  type AuthorPermissionState,
-} from "~~/types/permission"
+  type ContentState,
+} from "@generated/prisma/enums"
 
 export type AuthorPermissionsData = {
   entities: AuthorPermissionEntity[]
   actions: AuthorPermissionAction[]
   accesses: AuthorPermissionAccess[]
-  states: AuthorPermissionState[]
+  states: ContentState[]
 }
 
 export const createAuthorPermissions = async (

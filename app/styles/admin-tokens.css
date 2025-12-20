@@ -1,0 +1,202 @@
+/**
+ * Administration Interface Design Tokens
+ *
+ * Unified tokens for admin UI including forms.
+ * Supports light/dark modes via light-dark() function.
+ * Typography uses global variables from fonts.css directly.
+ */
+
+:root {
+  /* ========================================
+     Colors - Backgrounds
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-primary: light-dark(#ffffff, #0f0f1a);
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-secondary: light-dark(#f8fafc, #1a1a2e);
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-tertiary: light-dark(#f1f5f9, #2d2d44);
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-hover: light-dark(#f3f0ff, #372554);
+  /*noinspection CssInvalidFunction*/
+  --admin-bg-disabled: light-dark(#f8f9fa, #0f0f1a);
+
+  /* ========================================
+     Colors - Borders
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-border: light-dark(#cbd5e1, #3d3d52);
+  /*noinspection CssInvalidFunction*/
+  --admin-border-hover: light-dark(#94a3b8, #52526b);
+  /*noinspection CssInvalidFunction*/
+  --admin-border-strong: light-dark(#cbd5e1, #64748b);
+
+  /* ========================================
+     Colors - Text
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-text-primary: light-dark(#0f172a, #f1f5f9);
+  /*noinspection CssInvalidFunction*/
+  --admin-text-secondary: light-dark(#64748b, #cbd5e1);
+  /*noinspection CssInvalidFunction*/
+  --admin-text-tertiary: light-dark(#94a3b8, #94a3b8);
+
+  /* ========================================
+     Colors - Purple Accent (Primary)
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-purple: light-dark(#7c3aed, #8b5cf6);
+  /*noinspection CssInvalidFunction*/
+  --admin-purple-hover: light-dark(#6d28d9, #7c3aed);
+  /*noinspection CssInvalidFunction*/
+  --admin-purple-active: light-dark(#5b21b6, #6d28d9);
+
+  /* ========================================
+     Colors - Amber Accent (Secondary)
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-amber: light-dark(#f59e0b, #fbbf24);
+  /*noinspection CssInvalidFunction*/
+  --admin-amber-hover: light-dark(#d97706, #f59e0b);
+  /*noinspection CssInvalidFunction*/
+  --admin-amber-active: light-dark(#b45309, #d97706);
+
+  /* ========================================
+     Colors - Semantic
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-success: light-dark(#10b981, #34d399);
+  /*noinspection CssInvalidFunction*/
+  --admin-error: light-dark(#e11d48, #fb7185);
+  /*noinspection CssInvalidFunction*/
+  --admin-warning: light-dark(#fb923c, #fdba74);
+
+  /* ========================================
+     Colors - Content States
+     ======================================== */
+  /* Draft state - Amber palette (work in progress) */
+  /*noinspection CssInvalidFunction*/
+  --admin-state-draft-bg: light-dark(#fef3c7, #78350f);
+  /*noinspection CssInvalidFunction*/
+  --admin-state-draft-text: light-dark(#92400e, #fcd34d);
+
+  /* Published state - Emerald palette (success/active) */
+  /*noinspection CssInvalidFunction*/
+  --admin-state-published-bg: light-dark(#d1fae5, #064e3b);
+  /*noinspection CssInvalidFunction*/
+  --admin-state-published-text: light-dark(#065f46, #6ee7b7);
+
+  /* Archived state - Red palette (inactive/stopped) */
+  /*noinspection CssInvalidFunction*/
+  --admin-state-archived-bg: light-dark(#fee2e2, #7f1d1d);
+  /*noinspection CssInvalidFunction*/
+  --admin-state-archived-text: light-dark(#991b1b, #fca5a5);
+
+  /* ========================================
+     Colors - Action Buttons
+     ======================================== */
+  /* Publish action - Emerald palette (move to published state) */
+  /*noinspection CssInvalidFunction*/
+  --admin-action-publish: light-dark(#10b981, #059669);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-publish-hover: light-dark(#059669, #047857);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-publish-active: light-dark(#047857, #065f46);
+
+  /* Retract action - Amber palette (move to draft state) */
+  /*noinspection CssInvalidFunction*/
+  --admin-action-retract: light-dark(#f59e0b, #d97706);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-retract-hover: light-dark(#d97706, #b45309);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-retract-active: light-dark(#b45309, #92400e);
+
+  /* Archive action - Rose/Red palette (move to archived state) */
+  /*noinspection CssInvalidFunction*/
+  --admin-action-archive: light-dark(#f43f5e, #e11d48);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-archive-hover: light-dark(#e11d48, #be123c);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-archive-active: light-dark(#be123c, #9f1239);
+
+  /* Restore action - Amber palette (restore to draft state) */
+  /*noinspection CssInvalidFunction*/
+  --admin-action-restore: light-dark(#f59e0b, #d97706);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-restore-hover: light-dark(#d97706, #b45309);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-restore-active: light-dark(#b45309, #92400e);
+
+  /* Review action - Blue palette (approve/review content) */
+  /*noinspection CssInvalidFunction*/
+  --admin-action-review: light-dark(#3b82f6, #2563eb);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-review-hover: light-dark(#2563eb, #1d4ed8);
+  /*noinspection CssInvalidFunction*/
+  --admin-action-review-active: light-dark(#1d4ed8, #1e40af);
+
+  /* ========================================
+     Colors - Danger (Buttons)
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-danger: light-dark(#ef4444, #dc2626);
+  /*noinspection CssInvalidFunction*/
+  --admin-danger-hover: light-dark(#dc2626, #b91c1c);
+  /*noinspection CssInvalidFunction*/
+  --admin-danger-active: light-dark(#b91c1c, #991b1b);
+
+  /* ========================================
+     Colors - Button Text
+     ======================================== */
+  /* Text color for buttons with colored backgrounds (primary, danger) */
+  /*noinspection CssInvalidFunction*/
+  --admin-button-text: light-dark(#ffffff, #ffffff);
+  /* Text color for secondary/outlined buttons */
+  /*noinspection CssInvalidFunction*/
+  --admin-button-text-secondary: light-dark(#0f172a, #f1f5f9);
+
+  /* ========================================
+     Shadows
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-shadow-sm: 0 1px 2px 0
+    light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.3));
+  /*noinspection CssInvalidFunction*/
+  --admin-shadow-md:
+    0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)),
+    0 1px 2px 0 light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3));
+  /*noinspection CssInvalidFunction*/
+  --admin-shadow-lg:
+    0 4px 6px -1px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)),
+    0 2px 4px -1px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3));
+
+  /* ========================================
+     Focus Shadows
+     ======================================== */
+  /*noinspection CssInvalidFunction*/
+  --admin-focus-shadow: 0 0 0 3px
+    light-dark(rgba(124, 58, 237, 0.3), rgba(139, 92, 246, 0.3));
+  /*noinspection CssInvalidFunction*/
+  --admin-focus-shadow-error: 0 0 0 3px
+    light-dark(rgba(225, 29, 72, 0.25), rgba(251, 113, 133, 0.25));
+  /*noinspection CssInvalidFunction*/
+  --admin-focus-shadow-danger: 0 0 0 3px
+    light-dark(rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+
+  /* ========================================
+     Layout
+     ======================================== */
+  --admin-header-height: 64px;
+  --admin-sidebar-width: 240px;
+  --admin-footer-height: 60px;
+
+  /* ========================================
+     Z-Index Scale
+     ======================================== */
+  --admin-z-header: 100;
+  --admin-z-breadcrumbs: 99;
+  --admin-z-sidebar: 50;
+  --admin-z-dropdown: 1000;
+  --admin-z-modal: 2000;
+  --admin-z-tooltip: 3000;
+}

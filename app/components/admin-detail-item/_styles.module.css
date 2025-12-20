@@ -1,0 +1,24 @@
+.item {
+  @layer component {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    column-gap: 24px;
+    align-items: start;
+  }
+}
+
+.label {
+  @layer component {
+    font-size: 14px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--admin-text-secondary);
+  }
+}
+
+.value {
+  @layer component {
+    font-size: 14px;
+    color: var(--admin-text-primary);
+    word-break: break-word;
+  }
+}

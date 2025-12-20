@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs } from "react-router"
 
 import { requireUnauthenticated } from "~/utils/auth.server"
 

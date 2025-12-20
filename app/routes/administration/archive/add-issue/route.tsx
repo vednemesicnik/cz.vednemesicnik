@@ -9,29 +9,31 @@ import {
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useNavigation } from "react-router"
 
+import { AdminHeadline } from "~/components/admin-headline"
+import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
-import { Fieldset } from "~/components/fieldset/_component"
+import { Fieldset } from "~/components/fieldset"
 import { FileInput } from "~/components/file-input"
 import { Form } from "~/components/form"
 import { FormActions } from "~/components/form-actions"
-import { Headline } from "~/components/headline"
 import { Input } from "~/components/input"
-import { LinkButton } from "~/components/link-button"
 import { Select } from "~/components/select"
-import { contentStateConfig } from "~/config/content-state-config"
-import { getAuthorRights } from "~/utils/get-author-rights"
 import { getFormattedDateString } from "~/utils/get-formatted-date-string"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
 
+export { handle } from "./_handle"
+export { action } from "./_action"
+export { loader } from "./_loader"
+export { meta } from "./_meta"
+
 export default function Route({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const { user } = loaderData.session
-
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
@@ -42,7 +44,7 @@ export default function Route({
     defaultValue: {
       ordinalNumber: "",
       releasedAt: getFormattedDateString(new Date()),
-      authorId: user.author.id,
+      authorId: loaderData.selfAuthorId,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -57,59 +59,12 @@ export default function Route({
     }
   }
 
-  const [
-    // entity: "issue"
-    [
-      // action: "create"
-      [
-        // access: "own"
-        [
-          hasCreateOwnDraftIssueRight,
-          hasCreateOwnPublishedIssueRight,
-          hasCreateOwnArchivedIssueRight,
-        ],
-        // access: "any"
-        [
-          hasCreateAnyDraftIssueRight,
-          hasCreateAnyPublishedIssueRight,
-          hasCreateAnyArchivedIssueRight,
-        ],
-      ],
-    ],
-  ] = getAuthorRights(user.author.role.permissions, {
-    entities: ["issue"],
-    actions: ["create"],
-    access: ["own", "any"],
-    states: ["draft", "published", "archived"],
-    ownId: user.author.id,
-    targetId: fields.authorId.value,
-  })
-
-  const canCreateDraftIssue =
-    hasCreateOwnDraftIssueRight || hasCreateAnyDraftIssueRight
-  const canCreatePublishedIssue =
-    hasCreateOwnPublishedIssueRight || hasCreateAnyPublishedIssueRight
-  const canCreateArchivedIssue =
-    hasCreateOwnArchivedIssueRight || hasCreateAnyArchivedIssueRight
-
-  const contentStates = contentStateConfig.states.filter((state) => {
-    switch (state) {
-      case "draft":
-        return canCreateDraftIssue
-      case "published":
-        return canCreatePublishedIssue
-      case "archived":
-        return canCreateArchivedIssue
-      default:
-        return false
-    }
-  })
-
-  const contentStatesMap = contentStateConfig.selectMap
+  const isLoadingOrSubmitting = state !== "idle"
+  const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
-    <>
-      <Headline>Přidat číslo</Headline>
+    <AdminPage>
+      <AdminHeadline>Přidat číslo</AdminHeadline>
 
       <Form
         method={"post"}
@@ -117,7 +72,10 @@ export default function Route({
         {...getFormProps(form)}
         errors={form.errors}
       >
-        <Fieldset legend={"Základní informace"} disabled={state !== "idle"}>
+        <Fieldset
+          legend={"Základní informace"}
+          disabled={isLoadingOrSubmitting}
+        >
           <Input
             label={"Pořadové číslo"}
             {...getInputProps(fields.ordinalNumber, { type: "number" })}
@@ -132,7 +90,7 @@ export default function Route({
           />
         </Fieldset>
 
-        <Fieldset legend={"Soubory"} disabled={state !== "idle"}>
+        <Fieldset legend={"Soubory"} disabled={isLoadingOrSubmitting}>
           <FileInput
             label={"Obálka"}
             accept={"image"}
@@ -149,17 +107,10 @@ export default function Route({
           />
         </Fieldset>
 
-        <Fieldset legend={"Stav publikace"} disabled={state !== "idle"}>
-          <Select label={"Stav"} {...getSelectProps(fields.state)}>
-            {contentStates.map((state, index) => (
-              <option key={index} value={state}>
-                {contentStatesMap[state]}
-              </option>
-            ))}
-          </Select>
-        </Fieldset>
-
-        <Fieldset legend={"Informace o autorovi"} disabled={state !== "idle"}>
+        <Fieldset
+          legend={"Informace o autorovi"}
+          disabled={isLoadingOrSubmitting}
+        >
           <Select
             label={"Autor"}
             errors={fields.authorId.errors}
@@ -176,21 +127,14 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button
-            type="submit"
-            disabled={contentStates.length === 0 || state !== "idle"}
-            variant={"default"}
-          >
+          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
             Přidat
           </Button>
-          <LinkButton to={"/administration/archive"}>Zrušit</LinkButton>
+          <AdminLinkButton to={"/administration/archive"}>
+            Zrušit
+          </AdminLinkButton>
         </FormActions>
       </Form>
-    </>
+    </AdminPage>
   )
 }
-
-export { handle } from "./_handle"
-export { action } from "./_action"
-export { loader } from "./_loader"
-export { meta } from "./_meta"

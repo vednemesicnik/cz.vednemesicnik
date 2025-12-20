@@ -8,185 +8,162 @@ import {
   type RouteConfig,
 } from "@react-router/dev/routes"
 
+import { createAdminEntriesSection } from "../utils/create-admin-entries-section"
+import { createAdminIntersection } from "../utils/create-admin-intersection"
+
 export default [
   // Health check route
   route("health", "routes/health/route.ts"),
 
-  layout("routes/layout/route.tsx", [
+  // Website
+  layout("routes/website/__layout/route.tsx", [
     // Home route
-    index("routes/_index/route.tsx"),
+    index("routes/website/_index/route.tsx"),
 
     // Articles routes
-    route("articles", "routes/articles/route.tsx"),
-
-    // Editorial Board routes
-    route("editorial-board", "routes/editorial-board/route.tsx"),
-
-    // Organization routes
-    route("organization", "routes/organization/route.tsx"),
-
-    // Support routes
-    route("support", "routes/support/route.tsx"),
-
-    // Archive routes
-    ...prefix("archive", [
-      index("routes/archive/index/route.tsx"),
-      route(":fileName", "routes/archive/issue-pdf/route.ts"),
-    ]),
+    route("articles", "routes/website/articles/route.tsx"),
 
     // Podcasts routes
     ...prefix("podcasts", [
-      layout("routes/podcasts/layout/route.tsx", [
-        index("routes/podcasts/index/route.tsx"),
-        route(":podcastSlug", "routes/podcasts/podcast/splat/route.tsx", [
-          index("routes/podcasts/podcast/index/route.tsx"),
-          route(
-            ":episodeSlug",
-            "routes/podcasts/podcast/episode/splat/route.tsx",
-            [index("routes/podcasts/podcast/episode/index/route.tsx")]
-          ),
-        ]),
-      ]),
-    ]),
-
-    // Administration routes
-    ...prefix("administration", [
-      route("sign-in", "routes/administration/sign-in/route.tsx"),
-      route("sign-out", "routes/administration/sign-out/route.ts"),
-
-      layout("routes/administration/layout/route.tsx", [
-        index("routes/administration/index/route.tsx"),
-
-        // Archive Administration
-        route("archive", "routes/administration/archive/splat/route.tsx", [
-          index("routes/administration/archive/index/route.tsx"),
-          route(
-            "add-issue",
-            "routes/administration/archive/add-issue/route.tsx"
-          ),
-          route(
-            "edit-issue/:issueId",
-            "routes/administration/archive/edit-issue/route.tsx"
-          ),
-        ]),
-
-        // Podcast Administration
-        route("podcasts", "routes/administration/podcasts/splat/route.tsx", [
-          index("routes/administration/podcasts/index/route.tsx"),
-          route(
-            "add-podcast",
-            "routes/administration/podcasts/add-podcast/route.tsx"
-          ),
-          route(
-            "edit-podcast/:podcastId",
-            "routes/administration/podcasts/edit-podcast/route.tsx"
-          ),
-
-          // Podcast Episode Administration
-          route(
-            ":podcastId",
-            "routes/administration/podcasts/episodes/splat/route.tsx",
-            [
-              index("routes/administration/podcasts/episodes/index/route.tsx"),
-              route(
-                "add-episode",
-                "routes/administration/podcasts/episodes/add-episode/route.tsx"
-              ),
-              route(
-                "edit-episode/:episodeId",
-                "routes/administration/podcasts/episodes/edit-episode/route.tsx"
-              ),
-
-              // Podcast Episode Link Administration
-              route(
-                ":episodeId",
-                "routes/administration/podcasts/episodes/links/splat/route.tsx",
-                [
-                  index(
-                    "routes/administration/podcasts/episodes/links/index/route.tsx"
-                  ),
-                  route(
-                    "add-link",
-                    "routes/administration/podcasts/episodes/links/add-link/route.tsx"
-                  ),
-                  route(
-                    "edit-link/:linkId",
-                    "routes/administration/podcasts/episodes/links/edit-link/route.tsx"
-                  ),
-                ]
-              ),
-            ]
-          ),
-        ]),
-
-        // User Administration
-        route("users", "routes/administration/users/splat/route.tsx", [
-          index("routes/administration/users/index/route.tsx"),
-          route("add-user", "routes/administration/users/add-user/route.tsx"),
-          route(
-            "edit-user/:userId",
-            "routes/administration/users/edit-user/route.tsx"
-          ),
-        ]),
-
-        // Editorial Board Administration
+      layout("routes/website/podcasts/layout/route.tsx", [
+        index("routes/website/podcasts/index/route.tsx"),
         route(
-          "editorial-board",
-          "routes/administration/editorial-board/splat/route.tsx",
+          ":podcastSlug",
+          "routes/website/podcasts/podcast/splat/route.tsx",
           [
-            index("routes/administration/editorial-board/index/route.tsx"),
+            index("routes/website/podcasts/podcast/index/route.tsx"),
             route(
-              "members",
-              "routes/administration/editorial-board/members/splat/route.tsx",
-              [
-                index(
-                  "routes/administration/editorial-board/members/index/route.tsx"
-                ),
-                route(
-                  "add-member",
-                  "routes/administration/editorial-board/members/add-member/route.tsx"
-                ),
-                route(
-                  "edit-member/:memberId",
-                  "routes/administration/editorial-board/members/edit-member/route.tsx"
-                ),
-              ]
-            ),
-            route(
-              "positions",
-              "routes/administration/editorial-board/positions/splat/route.tsx",
-              [
-                index(
-                  "routes/administration/editorial-board/positions/index/route.tsx"
-                ),
-                route(
-                  "add-position",
-                  "routes/administration/editorial-board/positions/add-position/route.tsx"
-                ),
-                route(
-                  "edit-position/:positionId",
-                  "routes/administration/editorial-board/positions/edit-position/route.tsx"
-                ),
-              ]
+              ":episodeSlug",
+              "routes/website/podcasts/podcast/episode/splat/route.tsx",
+              [index("routes/website/podcasts/podcast/episode/index/route.tsx")]
             ),
           ]
         ),
+      ]),
+    ]),
 
-        // Settings Administration
-        route("settings", "routes/administration/settings/splat/route.tsx", [
-          index("routes/administration/settings/index/route.tsx"),
-          route(
-            "profile",
-            "routes/administration/settings/profile/splat/route.tsx",
-            [
-              index("routes/administration/settings/profile/index/route.tsx"),
-              route(
-                "change-password",
-                "routes/administration/settings/profile/change-password/route.tsx"
-              ),
-            ]
-          ),
-        ]),
+    // Archive routes
+    ...prefix("archive", [
+      index("routes/website/archive/index/route.tsx"),
+      route(":fileName", "routes/website/archive/issue-pdf/route.ts"),
+    ]),
+
+    // Editorial Board routes
+    route("editorial-board", "routes/website/editorial-board/route.tsx"),
+
+    // Organization routes
+    route("organization", "routes/website/organization/route.tsx"),
+
+    // Support routes
+    route("support", "routes/website/support/route.tsx"),
+  ]),
+
+  // Administration
+  ...prefix("administration", [
+    // Sign out
+    route("sign-out", "routes/administration/sign-out/route.ts"),
+
+    // Non-authenticated routes
+    layout("routes/administration/__layout-non-authenticated/route.tsx", [
+      // Sign in
+      route("sign-in", "routes/administration/sign-in/route.tsx"),
+    ]),
+
+    // Authenticated routes
+    layout("routes/administration/__layout-authenticated/route.tsx", [
+      // Dashboard
+      index("routes/administration/_index/route.tsx"),
+
+      // Sections
+      layout("routes/administration/__layout-section/route.tsx", [
+        // Archive
+        ...createAdminEntriesSection({
+          name: "archive",
+          entry: "issue",
+          path: "routes/administration/archive",
+          id: "issueId",
+        }),
+
+        // Podcasts
+        ...createAdminEntriesSection(
+          {
+            name: "podcasts",
+            entry: "podcast",
+            path: "routes/administration/podcasts",
+            id: "podcastId",
+          },
+          // Podcast Episodes
+          ...createAdminEntriesSection(
+            {
+              name: "episodes",
+              entry: "episode",
+              path: "routes/administration/podcasts/podcast/episodes",
+              id: "episodeId",
+            },
+            // Episode Links
+            ...createAdminEntriesSection({
+              name: "links",
+              entry: "link",
+              path: "routes/administration/podcasts/podcast/episodes/episode/links",
+              id: "linkId",
+            })
+          )
+        ),
+
+        // Editorial Board
+        ...createAdminIntersection(
+          {
+            name: "editorial-board",
+            path: "routes/administration/editorial-board",
+          },
+          ...createAdminEntriesSection({
+            name: "positions",
+            path: "routes/administration/editorial-board/positions",
+            entry: "position",
+            id: "positionId",
+          }),
+          ...createAdminEntriesSection({
+            name: "members",
+            path: "routes/administration/editorial-board/members",
+            entry: "member",
+            id: "memberId",
+          })
+        ),
+
+        // Users
+        ...createAdminEntriesSection({
+          name: "users",
+          entry: "user",
+          path: "routes/administration/users",
+          id: "userId",
+        }),
+
+        // Authors
+        ...createAdminEntriesSection({
+          name: "authors",
+          entry: "author",
+          path: "routes/administration/authors",
+          id: "authorId",
+        }),
+
+        // Settings
+        ...createAdminIntersection(
+          {
+            name: "settings",
+            path: "routes/administration/settings",
+          },
+          // Profile Settings
+          ...createAdminIntersection(
+            {
+              name: "profile",
+              path: "routes/administration/settings/profile",
+            },
+            route(
+              "change-password",
+              "routes/administration/settings/profile/change-password/route.tsx"
+            )
+          )
+        ),
       ]),
     ]),
   ]),
@@ -199,7 +176,7 @@ export default [
 
   // Resource routes
   ...prefix("resources", [
-    route("issue-cover/:issueId", "routes/resources/issue-cover/route.ts"),
+    route("issue-cover/:id", "routes/resources/issue-cover/route.ts"),
     route(
       "podcast-cover/:podcastId",
       "routes/resources/podcast-cover/route.ts"
@@ -209,6 +186,6 @@ export default [
       "routes/resources/podcast-episode-cover/route.ts"
     ),
     route("user-image/:userId", "routes/resources/user-image/route.ts"),
-    route("env-script", "routes/resources/env-script/route.ts"),
+    route("env.js", "routes/resources/env-script/route.ts"),
   ]),
 ] satisfies RouteConfig

@@ -9,38 +9,43 @@ import {
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
 import { useEffect, useState } from "react"
+import { useNavigation } from "react-router"
 
+import { AdminHeadline } from "~/components/admin-headline"
+import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
 import { Fieldset } from "~/components/fieldset"
 import { FileInput } from "~/components/file-input"
 import { Form } from "~/components/form"
 import { FormActions } from "~/components/form-actions"
-import { Headline } from "~/components/headline"
 import { Input } from "~/components/input"
-import { LinkButton } from "~/components/link-button"
 import { Select } from "~/components/select"
 import { TextArea } from "~/components/text-area"
-import { getFormattedDateString } from "~/utils/get-formatted-date-string"
 import { slugify } from "~/utils/slugify"
 
 import type { Route } from "./+types/route"
 import { schema } from "./_schema"
 
+export { handle } from "./_handle"
+export { action } from "./_action"
+export { loader } from "./_loader"
+export { meta } from "./_meta"
+
 export default function Route({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
+  const { state } = useNavigation()
+
   const [form, fields] = useForm({
     id: "add-podcast",
     constraint: getZodConstraint(schema),
     lastResult: actionData?.submissionResult,
-    onValidate({ formData }) {
-      return parseWithZod(formData, { schema })
-    },
+    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     defaultValue: {
-      authorId: loaderData.session.user.author.id,
-      publishedAt: getFormattedDateString(new Date()),
+      authorId: loaderData.selfAuthorId,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -59,19 +64,30 @@ export default function Route({
     }
   }, [title, isSlugFocused])
 
+  const handleFileChange = (name: string, dirty: boolean) => () => {
+    if (dirty) {
+      form.validate({ name })
+    }
+  }
+
+  const isLoadingOrSubmitting = state !== "idle"
+  const canSubmit = !isLoadingOrSubmitting && form.valid
+
   return (
-    <>
-      <Headline>Přidat podcast</Headline>
+    <AdminPage>
+      <AdminHeadline>Přidat podcast</AdminHeadline>
+
       <Form
-        {...getFormProps(form)}
+        method={"post"}
         encType={"multipart/form-data"}
-        method="post"
+        {...getFormProps(form)}
+        errors={form.errors}
       >
-        <Fieldset legend={"Detaily"}>
+        <Fieldset legend={"Detaily"} disabled={isLoadingOrSubmitting}>
           <Input
             label={"Název"}
-            onChange={(event) => setTitle(event.target.value)}
             placeholder={"Název podcastu"}
+            onChange={(event) => setTitle(event.target.value)}
             value={title}
             errors={fields.title.errors}
             {...getInputProps(fields.title, { type: "text" })}
@@ -79,9 +95,9 @@ export default function Route({
 
           <Input
             label={"Slug"}
+            placeholder={"nazev-podcastu"}
             onChange={(event) => setSlug(slugify(event.target.value))}
             onFocus={() => setIsSlugFocused(true)}
-            placeholder={"slug-podcastu"}
             value={slug}
             errors={fields.slug.errors}
             {...getInputProps(fields.slug, { type: "text" })}
@@ -94,20 +110,19 @@ export default function Route({
             {...getTextareaProps(fields.description)}
           />
 
-          <Input
-            label={"Datum vydání"}
-            errors={fields.publishedAt.errors}
-            {...getInputProps(fields.publishedAt, { type: "date" })}
-          />
-
           <FileInput
             label={"Obálka"}
             accept={"image"}
+            onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
             errors={fields.cover.errors}
             {...getInputProps(fields.cover, { type: "file" })}
           />
         </Fieldset>
-        <Fieldset legend={"Informace o autorovi"}>
+
+        <Fieldset
+          legend={"Informace o autorovi"}
+          disabled={isLoadingOrSubmitting}
+        >
           <Select
             label={"Autor"}
             errors={fields.authorId.errors}
@@ -124,17 +139,14 @@ export default function Route({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button type="submit" variant={"default"}>
+          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
             Přidat
           </Button>
-          <LinkButton to={"/administration/podcasts"}>Zrušit</LinkButton>
+          <AdminLinkButton to={"/administration/podcasts"}>
+            Zrušit
+          </AdminLinkButton>
         </FormActions>
       </Form>
-    </>
+    </AdminPage>
   )
 }
-
-export { handle } from "./_handle"
-export { meta } from "./_meta"
-export { loader } from "./_loader"
-export { action } from "./_action"

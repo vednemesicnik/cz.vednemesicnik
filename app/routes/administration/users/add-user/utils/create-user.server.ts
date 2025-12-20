@@ -3,53 +3,74 @@ import bcrypt from "bcryptjs"
 import { prisma } from "~/utils/db.server"
 import { throwDbError } from "~/utils/throw-db-error.server"
 
-type Data = {
+type DataBase = {
   email: string
   name: string
   password: string
   roleId: string
 }
 
-export const createUser = async ({ email, name, password, roleId }: Data) => {
+type DataWithNewAuthor = DataBase & {
+  authorMode: "new"
+}
+
+type DataWithExistingAuthor = DataBase & {
+  authorMode: "existing"
+  existingAuthorId: string
+}
+
+type Data = DataWithNewAuthor | DataWithExistingAuthor
+
+export const createUser = async (data: Data) => {
   try {
-    await prisma.$transaction(async (prisma) => {
-      const author = await prisma.author.create({
-        data: {
-          name,
-          role: {
-            connect: {
-              name: "author",
+    const user = await prisma.$transaction(async (prisma) => {
+      let authorId: string
+
+      if (data.authorMode === "new") {
+        const author = await prisma.author.create({
+          data: {
+            name: data.name,
+            role: {
+              connect: {
+                name: "contributor",
+              },
             },
           },
-        },
-      })
+        })
+        authorId = author.id
+      } else {
+        authorId = data.existingAuthorId
+      }
 
-      await prisma.user.create({
+      return prisma.user.create({
         data: {
-          email,
-          username: email,
-          name,
+          email: data.email,
+          username: data.email,
+          name: data.name,
           password: {
             create: {
-              hash: bcrypt.hashSync(password, 10),
+              hash: bcrypt.hashSync(data.password, 10),
             },
           },
           role: {
             connect: {
-              id: roleId,
+              id: data.roleId,
             },
           },
           author: {
             connect: {
-              id: author.id,
+              id: authorId,
             },
           },
+        },
+        select: {
+          id: true,
         },
       })
     })
 
-    return { ok: true }
+    return { userId: user.id }
   } catch (error) {
-    throwDbError(error, "Unable to create the user.")
+    return throwDbError(error, "Unable to create the user.")
   }
 }

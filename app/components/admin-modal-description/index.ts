@@ -1,0 +1,1 @@
+export { AdminModalDescription } from "./_component"

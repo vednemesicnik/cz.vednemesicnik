@@ -1,0 +1,29 @@
+.sidebar {
+  grid-area: sidebar;
+  position: fixed;
+  top: var(--admin-header-height);
+  left: 0;
+  bottom: 0;
+  width: var(--admin-sidebar-width);
+  background-color: var(--admin-bg-secondary);
+  border-right: 1px solid var(--admin-border);
+  overflow-y: auto;
+  z-index: var(--admin-z-sidebar);
+}
+
+.nav {
+  padding-block-end: 16px;
+}
+
+.list {
+  display: grid;
+  position: relative;
+  grid-auto-flow: row;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  margin: 0;
+}

@@ -1,4 +1,7 @@
 .label {
-  font-size: 1rem;
-  font-weight: var(--font-weight-medium);
+  color: var(--admin-text-primary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin-block-end: 4px;
 }

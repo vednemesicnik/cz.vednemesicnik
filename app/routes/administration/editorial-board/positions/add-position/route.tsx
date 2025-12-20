@@ -7,19 +7,28 @@ import {
   useForm,
 } from "@conform-to/react"
 import { getZodConstraint, parseWithZod } from "@conform-to/zod"
-import { Form } from "react-router"
+import { useNavigation } from "react-router"
 
+import { AdminHeadline } from "~/components/admin-headline"
+import { AdminLinkButton } from "~/components/admin-link-button"
+import { AdminPage } from "~/components/admin-page"
 import { AuthenticityTokenInput } from "~/components/authenticity-token-input"
 import { Button } from "~/components/button"
-import { Headline } from "~/components/headline"
+import { Fieldset } from "~/components/fieldset"
+import { Form } from "~/components/form"
+import { FormActions } from "~/components/form-actions"
+import { Input } from "~/components/input"
+import { Select } from "~/components/select"
 
 import type { Route } from "./+types/route"
 import { getSchema } from "./_schema"
 
-export default function Route({
+export default function RouteComponent({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
+  const { state } = useNavigation()
+
   const [form, fields] = useForm({
     id: "add-position",
     constraint: getZodConstraint(
@@ -34,7 +43,7 @@ export default function Route({
       key: "",
       pluralLabel: "",
       order: "",
-      authorId: loaderData.session.user.authorId,
+      authorId: loaderData.selfAuthorId,
     },
     shouldDirtyConsider: (field) => {
       return !field.startsWith("csrf")
@@ -43,71 +52,63 @@ export default function Route({
     shouldRevalidate: "onBlur",
   })
 
+  const isLoadingOrSubmitting = state !== "idle"
+  const canSubmit = !isLoadingOrSubmitting && form.valid
+
   return (
-    <>
-      <Headline>Přidat pozici</Headline>
-      <Form {...getFormProps(form)} method="post">
-        <fieldset>
-          <legend>Detaily pozice</legend>
-          <label htmlFor={fields.key.id}>Unikátní klíč v angličtině: </label>
-          <input
+    <AdminPage>
+      <AdminHeadline>Přidat pozici</AdminHeadline>
+
+      <Form method="post" {...getFormProps(form)}>
+        <Fieldset legend={"Detaily pozice"} disabled={isLoadingOrSubmitting}>
+          <Input
+            label={"Unikátní klíč v angličtině"}
             {...getInputProps(fields.key, { type: "text" })}
             placeholder={"editor"}
+            errors={fields.key.errors}
           />
-          {fields.key.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.pluralLabel.id}>
-            Označení v množném čísle:{" "}
-          </label>
-          <input
+
+          <Input
+            label={"Označení v množném čísle"}
             {...getInputProps(fields.pluralLabel, { type: "text" })}
             placeholder={"redaktorky a redaktoři"}
+            errors={fields.pluralLabel.errors}
           />
-          {fields.pluralLabel.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-          <br />
-          <label htmlFor={fields.order.id}>Pořadí: </label>
-          <input
+
+          <Input
+            label={"Pořadí"}
             {...getInputProps(fields.order, { type: "number" })}
             placeholder={"2"}
+            errors={fields.order.errors}
           />
-          {fields.order.errors?.map((error) => {
-            return (
-              <output key={error} style={{ color: "red" }}>
-                {error}
-              </output>
-            )
-          })}
-        </fieldset>
-        <fieldset>
-          <legend>Autor</legend>
-          <label htmlFor={fields.authorId.id}>Autor</label>
-          <select {...getSelectProps(fields.authorId)}>
-            {loaderData.authors.map((author) => {
-              return (
-                <option key={author.id} value={author.id}>
-                  {author.name}
-                </option>
-              )
-            })}
-          </select>
-        </fieldset>
+        </Fieldset>
+
+        <Fieldset legend={"Autor"} disabled={isLoadingOrSubmitting}>
+          <Select
+            label={"Autor"}
+            {...getSelectProps(fields.authorId)}
+            errors={fields.authorId.errors}
+          >
+            {loaderData.authors.map((author) => (
+              <option key={author.id} value={author.id}>
+                {author.name}
+              </option>
+            ))}
+          </Select>
+        </Fieldset>
+
         <AuthenticityTokenInput />
-        <br />
-        <Button type="submit">Přidat pozici</Button>
+
+        <FormActions>
+          <Button type="submit" disabled={!canSubmit} variant={"primary"}>
+            Přidat
+          </Button>
+          <AdminLinkButton to={"/administration/editorial-board/positions"}>
+            Zrušit
+          </AdminLinkButton>
+        </FormActions>
       </Form>
-    </>
+    </AdminPage>
   )
 }
 

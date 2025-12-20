@@ -10,7 +10,7 @@ type Args = {
 
 export async function addPosition({ order, key, pluralLabel, authorId }: Args) {
   try {
-    await prisma.$transaction(async (prisma) => {
+    const position = await prisma.$transaction(async (prisma) => {
       // Update the orders of existing positions
       const positions = await prisma.editorialBoardPosition.findMany({
         where: {
@@ -31,7 +31,7 @@ export async function addPosition({ order, key, pluralLabel, authorId }: Args) {
       }
 
       // Create the new position
-      await prisma.editorialBoardPosition.create({
+      return await prisma.editorialBoardPosition.create({
         data: {
           key,
           pluralLabel,
@@ -43,8 +43,8 @@ export async function addPosition({ order, key, pluralLabel, authorId }: Args) {
       })
     })
 
-    return { ok: true }
+    return { positionId: position.id }
   } catch (error) {
-    throwDbError(error, `Unable to add the editorial board position.`)
+    return throwDbError(error, `Unable to add the editorial board position.`)
   }
 }

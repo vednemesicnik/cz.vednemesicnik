@@ -1,5 +1,7 @@
-import { applyClasses, combineClasses } from "@liborgabrhel/style-utils"
+import { clsx } from "clsx"
 import type { ComponentProps } from "react"
+
+import { BaseButton } from "~/components/base-button"
 
 import styles from "./_styles.module.css"
 
@@ -13,16 +15,15 @@ export const Button = ({
   variant = "primary",
   ...rest
 }: Props) => (
-  <button
-    className={combineClasses(
-      styles.button,
-      applyClasses(styles.primary).if(variant === "primary"),
-      applyClasses(styles.danger).if(variant === "danger"),
-      applyClasses(styles.default).if(variant === "default"),
+  <BaseButton
+    className={clsx(
+      variant === "primary" && styles.primary,
+      variant === "danger" && styles.danger,
+      variant === "default" && styles.default,
       className
     )}
     {...rest}
   >
     {children}
-  </button>
+  </BaseButton>
 )

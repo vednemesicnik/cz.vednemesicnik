@@ -1,10 +1,10 @@
-import { BreadcrumbLink } from "~/components/breadcrumb-link"
 import type { Breadcrumb } from "~/types/breadcrumb"
 
 import styles from "./_styles.module.css"
+import { BreadcrumbLink } from "./components/breadcrumb-link"
 
 type Props = {
-  breadcrumbs: Breadcrumb[]
+  items: Breadcrumb[]
 }
 
 /**
@@ -28,7 +28,7 @@ type Props = {
  *   const matches = useMatches()
  *   const breadcrumbs = getBreadcrumbs(matches)
  *
- *   return <Breadcrumbs breadcrumbs={breadcrumbs} />
+ *   return <Breadcrumbs items={breadcrumbs} />
  * }
  * ```
  *
@@ -36,7 +36,7 @@ type Props = {
  * ```tsx
  * // With explicit breadcrumb data
  * <Breadcrumbs
- *   breadcrumbs={[
+ *   items={[
  *     { label: "Home", path: "/" },
  *     { label: "Administration", path: "/administration" },
  *     { label: "Users", path: "/administration/users" }
@@ -51,22 +51,19 @@ type Props = {
  * - Integrates with React Router for navigation and active state detection
  * - Works with the `getBreadcrumbs()` utility to extract breadcrumbs from route matches
  */
-export const Breadcrumbs = ({ breadcrumbs }: Props) => {
-  const breadcrumbsCount = breadcrumbs.length
+export const Breadcrumbs = ({ items }: Props) => {
+  const breadcrumbsCount = items.length
 
   return (
     <nav className={styles.container}>
       <ul className={styles.list}>
-        {breadcrumbs.map((breadcrumb, index) => {
-          const isCurrentPage = breadcrumbsCount === index + 1
-          const hasSeparator = !isCurrentPage
+        {items.map((breadcrumb, index) => {
+          const isLastItem = breadcrumbsCount === index + 1
+          const hasSeparator = !isLastItem
 
           return (
             <li key={index} className={styles.listItem}>
-              <BreadcrumbLink
-                to={breadcrumb.path}
-                isCurrentPage={isCurrentPage}
-              >
+              <BreadcrumbLink to={breadcrumb.path}>
                 {breadcrumb.label}
               </BreadcrumbLink>
               {hasSeparator && <span>/</span>}

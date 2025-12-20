@@ -15,8 +15,11 @@ This guide outlines the lifecycle of content items with actions (e.g., create, u
 ## Lifecycle Flow
 
 ```plaintext
-Draft → Published → Archived → (back to Draft if Restored)
-                  ↘ (back to Draft if Retracked)
+Draft → Published → Archived
+            ↓           ↓
+         Retract     Restore
+            ↓           ↓
+          Draft ←──────┘
 ```
 
 ---
