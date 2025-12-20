@@ -1,0 +1,8 @@
+.paragraph {
+  @layer component {
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-normal);
+    color: var(--admin-text-secondary);
+    margin: 0;
+  }
+}

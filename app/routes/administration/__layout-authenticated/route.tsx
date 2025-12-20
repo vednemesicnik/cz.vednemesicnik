@@ -9,8 +9,6 @@ import { AdministrationFooter } from "~/components/administration-footer"
 import { AdministrationSidebar } from "~/components/administration-sidebar"
 import { AuthenticityTokenProvider } from "~/components/authenticity-token-provider"
 
-import "~/styles/admin-tokens.css"
-
 import type { Route } from "./+types/route"
 import styles from "./_styles.module.css"
 

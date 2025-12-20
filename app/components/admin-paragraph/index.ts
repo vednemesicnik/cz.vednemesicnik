@@ -1,0 +1,1 @@
+export { AdminParagraph } from "./_component"

@@ -7,7 +7,6 @@ import { AdminHeader } from "~/components/admin-header"
 import { AdministrationContent } from "~/components/administration-content"
 import { AdministrationFooter } from "~/components/administration-footer"
 
-import "~/styles/admin-tokens.css"
 import type { Route } from "./+types/route"
 import styles from "./_styles.module.css"
 

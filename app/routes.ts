@@ -65,110 +65,115 @@ export default [
 
   // Administration
   ...prefix("administration", [
-    // Sign out
-    route("sign-out", "routes/administration/sign-out/route.ts"),
+    layout("routes/administration/__layout/route.tsx", [
+      // Sign out
+      route("sign-out", "routes/administration/sign-out/route.ts"),
 
-    // Non-authenticated routes
-    layout("routes/administration/__layout-non-authenticated/route.tsx", [
-      // Sign in
-      route("sign-in", "routes/administration/sign-in/route.tsx"),
-    ]),
+      // Non-authenticated routes
+      layout("routes/administration/__layout-non-authenticated/route.tsx", [
+        // Sign in
+        route("sign-in", "routes/administration/sign-in/route.tsx"),
+      ]),
 
-    // Authenticated routes
-    layout("routes/administration/__layout-authenticated/route.tsx", [
-      // Dashboard
-      index("routes/administration/_index/route.tsx"),
+      // Authenticated routes
+      layout("routes/administration/__layout-authenticated/route.tsx", [
+        // Dashboard
+        index("routes/administration/_index/route.tsx"),
 
-      // Sections
-      layout("routes/administration/__layout-section/route.tsx", [
-        // Archive
-        ...createAdminEntriesSection({
-          name: "archive",
-          entry: "issue",
-          path: "routes/administration/archive",
-          id: "issueId",
-        }),
+        // Sections
+        layout("routes/administration/__layout-section/route.tsx", [
+          // Archive
+          ...createAdminEntriesSection({
+            name: "archive",
+            entry: "issue",
+            path: "routes/administration/archive",
+            id: "issueId",
+          }),
 
-        // Podcasts
-        ...createAdminEntriesSection(
-          {
-            name: "podcasts",
-            entry: "podcast",
-            path: "routes/administration/podcasts",
-            id: "podcastId",
-          },
-          // Podcast Episodes
+          // Podcasts
           ...createAdminEntriesSection(
             {
-              name: "episodes",
-              entry: "episode",
-              path: "routes/administration/podcasts/podcast/episodes",
-              id: "episodeId",
+              name: "podcasts",
+              entry: "podcast",
+              path: "routes/administration/podcasts",
+              id: "podcastId",
             },
-            // Episode Links
-            ...createAdminEntriesSection({
-              name: "links",
-              entry: "link",
-              path: "routes/administration/podcasts/podcast/episodes/episode/links",
-              id: "linkId",
-            })
-          )
-        ),
+            // Podcast Episodes
+            ...createAdminEntriesSection(
+              {
+                name: "episodes",
+                entry: "episode",
+                path: "routes/administration/podcasts/podcast/episodes",
+                id: "episodeId",
+              },
+              // Episode Links
+              ...createAdminEntriesSection({
+                name: "links",
+                entry: "link",
+                path: "routes/administration/podcasts/podcast/episodes/episode/links",
+                id: "linkId",
+              })
+            )
+          ),
 
-        // Editorial Board
-        ...createAdminIntersection(
-          {
-            name: "editorial-board",
-            path: "routes/administration/editorial-board",
-          },
-          ...createAdminEntriesSection({
-            name: "positions",
-            path: "routes/administration/editorial-board/positions",
-            entry: "position",
-            id: "positionId",
-          }),
-          ...createAdminEntriesSection({
-            name: "members",
-            path: "routes/administration/editorial-board/members",
-            entry: "member",
-            id: "memberId",
-          })
-        ),
-
-        // Users
-        ...createAdminEntriesSection({
-          name: "users",
-          entry: "user",
-          path: "routes/administration/users",
-          id: "userId",
-        }),
-
-        // Authors
-        ...createAdminEntriesSection({
-          name: "authors",
-          entry: "author",
-          path: "routes/administration/authors",
-          id: "authorId",
-        }),
-
-        // Settings
-        ...createAdminIntersection(
-          {
-            name: "settings",
-            path: "routes/administration/settings",
-          },
-          // Profile Settings
+          // Editorial Board
           ...createAdminIntersection(
             {
-              name: "profile",
-              path: "routes/administration/settings/profile",
+              name: "editorial-board",
+              path: "routes/administration/editorial-board",
             },
-            route(
-              "change-password",
-              "routes/administration/settings/profile/change-password/route.tsx"
+            ...createAdminEntriesSection({
+              name: "positions",
+              path: "routes/administration/editorial-board/positions",
+              entry: "position",
+              id: "positionId",
+            }),
+            ...createAdminEntriesSection({
+              name: "members",
+              path: "routes/administration/editorial-board/members",
+              entry: "member",
+              id: "memberId",
+            })
+          ),
+
+          // Users
+          ...createAdminEntriesSection({
+            name: "users",
+            entry: "user",
+            path: "routes/administration/users",
+            id: "userId",
+          }),
+
+          // Authors
+          ...createAdminEntriesSection({
+            name: "authors",
+            entry: "author",
+            path: "routes/administration/authors",
+            id: "authorId",
+          }),
+
+          // Settings
+          ...createAdminIntersection(
+            {
+              name: "settings",
+              path: "routes/administration/settings",
+            },
+            // Profile Settings
+            ...createAdminIntersection(
+              {
+                name: "profile",
+                path: "routes/administration/settings/profile",
+              },
+              route(
+                "change-password",
+                "routes/administration/settings/profile/change-password/route.tsx"
+              )
             )
-          )
-        ),
+          ),
+
+          // Catch-all for non-existent sections
+          route("*", "routes/administration/404/route.tsx"),
+        ]),
       ]),
     ]),
   ]),
