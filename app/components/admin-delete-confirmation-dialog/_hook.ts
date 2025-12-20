@@ -8,6 +8,7 @@ import { FORM_CONFIG } from "~/config/form-config"
 type Options = {
   withRedirect?: boolean
   action: FetcherSubmitOptions["action"]
+  key?: string
 }
 
 export const useAdminDeleteConfirmationDialog = (
@@ -15,7 +16,7 @@ export const useAdminDeleteConfirmationDialog = (
   options: Options
 ) => {
   const [returnValue, setReturnValue] = useState<string>("")
-  const { submit } = useFetcher()
+  const { submit } = useFetcher({ key: options.key })
 
   const authTokenName = FORM_CONFIG.authenticityToken.name
   const authTokenValue = useAuthenticityToken()

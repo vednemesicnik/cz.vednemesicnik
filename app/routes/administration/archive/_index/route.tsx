@@ -18,7 +18,7 @@ import type { Route } from "./+types/route"
 export { loader } from "./_loader"
 export { meta } from "./_meta"
 
-export default function Route({ loaderData }: Route.ComponentProps) {
+export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       <AdminHeadline>Archiv</AdminHeadline>

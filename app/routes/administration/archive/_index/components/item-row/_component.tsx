@@ -1,5 +1,5 @@
 import { useRef } from "react"
-import { href } from "react-router"
+import { href, useFetcher } from "react-router"
 
 import type { ContentState } from "@generated/prisma/enums"
 import { AdminActionButton } from "~/components/admin-action-button"
@@ -33,9 +33,14 @@ export const ItemRow = ({
   canDelete,
 }: Props) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const fetcherKey = `delete-issue-${id}`
+
+  const fetcher = useFetcher({ key: fetcherKey })
+  const isDeleting = fetcher.state !== "idle"
 
   const { openDialog } = useAdminDeleteConfirmationDialog(dialogRef, {
     action: href("/administration/archive/:issueId", { issueId: id }),
+    key: fetcherKey,
   })
 
   return (
@@ -51,6 +56,7 @@ export const ItemRow = ({
               to={href("/administration/archive/:issueId", {
                 issueId: id,
               })}
+              disabled={isDeleting}
             >
               <VisibilityIcon />
               Zobrazit
@@ -61,6 +67,7 @@ export const ItemRow = ({
               to={href("/administration/archive/:issueId/edit-issue", {
                 issueId: id,
               })}
+              disabled={isDeleting}
             >
               <EditIcon />
               Upravit
@@ -68,9 +75,13 @@ export const ItemRow = ({
           )}
           {canDelete && (
             <>
-              <AdminActionButton action={"delete"} onClick={openDialog}>
+              <AdminActionButton
+                action={"delete"}
+                onClick={openDialog}
+                disabled={isDeleting}
+              >
                 <DeleteIcon />
-                Smazat
+                {isDeleting ? "Mažu..." : "Smazat"}
               </AdminActionButton>
               <AdminDeleteConfirmationDialog ref={dialogRef} />
             </>

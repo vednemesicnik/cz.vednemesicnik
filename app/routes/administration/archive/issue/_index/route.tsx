@@ -53,7 +53,17 @@ export default function RouteComponent({
     needsCoordinatorReview,
   } = loaderData
   const { issueId } = params
-  const { Form } = useFetcher()
+
+  const fetcherKey = `issue-action-${issueId}`
+  const fetcher = useFetcher({ key: fetcherKey })
+  const { Form } = fetcher
+
+  const isSubmitting = fetcher.state !== "idle"
+
+  const submittingIntent =
+    fetcher.state !== "idle" && fetcher.formData
+      ? fetcher.formData.get(INTENT_NAME)
+      : null
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
 
@@ -62,6 +72,7 @@ export default function RouteComponent({
     {
       action: href("/administration/archive/:issueId", { issueId }),
       withRedirect: true,
+      key: fetcherKey,
     }
   )
 
@@ -75,6 +86,7 @@ export default function RouteComponent({
             to={href("/administration/archive/:issueId/edit-issue", {
               issueId,
             })}
+            disabled={isSubmitting}
           >
             <EditIcon />
             Upravit
@@ -86,11 +98,14 @@ export default function RouteComponent({
             <AdminActionButton
               type={"submit"}
               action={"review"}
+              disabled={isSubmitting}
               name={INTENT_NAME}
               value={INTENT_VALUE.review}
             >
               <CheckIcon />
-              Schválit
+              {submittingIntent === INTENT_VALUE.review
+                ? "Schvaluji..."
+                : "Schválit"}
             </AdminActionButton>
           </Form>
         )}
@@ -100,7 +115,7 @@ export default function RouteComponent({
             <AdminActionButton
               type={"submit"}
               action={"publish"}
-              disabled={needsCoordinatorReview}
+              disabled={needsCoordinatorReview || isSubmitting}
               title={
                 needsCoordinatorReview
                   ? "Nelze publikovat bez schválení koordinátora"
@@ -110,7 +125,9 @@ export default function RouteComponent({
               value={INTENT_VALUE.publish}
             >
               <ArrowUpward />
-              Zveřejnit
+              {submittingIntent === INTENT_VALUE.publish
+                ? "Zveřejňuji..."
+                : "Zveřejnit"}
             </AdminActionButton>
           </Form>
         )}
@@ -120,11 +137,14 @@ export default function RouteComponent({
             <AdminActionButton
               type={"submit"}
               action={"retract"}
+              disabled={isSubmitting}
               name={INTENT_NAME}
               value={INTENT_VALUE.retract}
             >
               <UndoIcon />
-              Stáhnout z publikace
+              {submittingIntent === INTENT_VALUE.retract
+                ? "Stahuji..."
+                : "Stáhnout z publikace"}
             </AdminActionButton>
           </Form>
         )}
@@ -134,11 +154,14 @@ export default function RouteComponent({
             <AdminActionButton
               type={"submit"}
               action={"archive"}
+              disabled={isSubmitting}
               name={INTENT_NAME}
               value={INTENT_VALUE.archive}
             >
               <ArchiveIcon />
-              Archivovat
+              {submittingIntent === INTENT_VALUE.archive
+                ? "Archivuji..."
+                : "Archivovat"}
             </AdminActionButton>
           </Form>
         )}
@@ -148,18 +171,25 @@ export default function RouteComponent({
             <AdminActionButton
               type={"submit"}
               action={"restore"}
+              disabled={isSubmitting}
               name={INTENT_NAME}
               value={INTENT_VALUE.restore}
             >
               <RefreshIcon />
-              Obnovit
+              {submittingIntent === INTENT_VALUE.restore
+                ? "Obnovuji..."
+                : "Obnovit"}
             </AdminActionButton>
           </Form>
         )}
         {canDelete && (
-          <AdminActionButton action="delete" onClick={openDialog}>
+          <AdminActionButton
+            action="delete"
+            onClick={openDialog}
+            disabled={isSubmitting}
+          >
             <DeleteIcon />
-            Smazat
+            {submittingIntent === INTENT_VALUE.delete ? "Mažu..." : "Smazat"}
           </AdminActionButton>
         )}
       </AdminActionGroup>
