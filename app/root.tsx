@@ -23,6 +23,8 @@ import type { Route } from "./+types/root"
 export const links: LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   { rel: "alternate icon", href: "/favicon.ico" },
+  { rel: "preconnect", href: "https://rsms.me/" },
+  { rel: "stylesheet", href: "https://rsms.me/inter/inter.css" },
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
