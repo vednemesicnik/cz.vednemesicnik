@@ -2,42 +2,47 @@
    Primary Variant (Purple)
    ======================================== */
 .primary {
-  background-color: var(--admin-purple);
+  background-color: var(--lavender-floral);
   color: var(--white);
   border: none;
 
   &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--admin-purple-hover);
+    background-color: var(--tropical-indigo);
   }
 
   &:active:not(:disabled) {
-    background-color: var(--admin-purple-active);
+    background-color: color-mix(
+      in srgb,
+      var(--tropical-indigo) 80%,
+      var(--black)
+    );
   }
 
   &:focus-visible {
-    box-shadow: var(--admin-focus-shadow);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--lavender-floral) 30%, transparent);
     outline: none;
   }
 }
 
 /* ========================================
-   Danger Variant (Red)
+   Danger Variant (Black)
    ======================================== */
 .danger {
-  background-color: var(--admin-danger);
+  background-color: var(--black);
   color: var(--white);
   border: none;
 
   &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--admin-danger-hover);
+    background-color: var(--eerie-black);
   }
 
   &:active:not(:disabled) {
-    background-color: var(--admin-danger-active);
+    background-color: var(--onyx);
   }
 
   &:focus-visible {
-    box-shadow: var(--admin-focus-shadow-danger);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--black) 30%, transparent);
     outline: none;
   }
 }
@@ -47,18 +52,27 @@
    ======================================== */
 .default {
   background-color: transparent;
-  color: var(--admin-text-primary);
-  border: 2px solid var(--admin-border-strong);
+  color: var(--black);
+  border: 2px solid var(--silver);
 
   &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--admin-bg-hover);
-    border-color: var(--admin-purple);
+    background-color: color-mix(
+      in srgb,
+      var(--lavender-floral) 10%,
+      transparent
+    );
+    border-color: var(--lavender-floral);
   }
 
   &:focus-visible {
-    background-color: var(--admin-bg-hover);
-    border-color: var(--admin-purple);
-    box-shadow: var(--admin-focus-shadow);
+    background-color: color-mix(
+      in srgb,
+      var(--lavender-floral) 10%,
+      transparent
+    );
+    border-color: var(--lavender-floral);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--lavender-floral) 30%, transparent);
     outline: none;
   }
 }
