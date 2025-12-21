@@ -10,9 +10,8 @@
 .lowResPicture {
   display: flex;
   position: relative;
-  opacity: 1;
   image-rendering: pixelated;
-  background-clip: padding-box;
+  opacity: 1;
   transition: opacity 0.3s ease-in-out;
 }
 
@@ -31,7 +30,6 @@
 
 .highResPictureLoaded {
   opacity: 1;
-  will-change: opacity;
 }
 
 .image {

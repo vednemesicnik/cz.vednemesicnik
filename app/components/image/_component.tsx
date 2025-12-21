@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 import { createImageSources } from '~/utils/create-image-sources'
 import { useHydrated } from '~/utils/use-hydrated'
@@ -19,13 +19,9 @@ type Props = {
 
 export const Image = ({ src, alt, width, height, className }: Props) => {
   const isHydrated = useHydrated()
-
   const [isHighResImageLoaded, setIsHighResImageLoaded] = useState(false)
-  const [shouldLoadHighRes, setShouldLoadHighRes] = useState(false)
 
-  const containerRef = useRef<HTMLElement>(null)
   const highResImageRef = useRef<HTMLImageElement>(null)
-  const idleCallbackIdRef = useRef<number | null>(null)
 
   const calculatedPlaceholderWidth = Math.max(1, Math.round(width / 10))
   const calculatedPlaceholderHeight = Math.max(1, Math.round(height / 10))
@@ -53,67 +49,28 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
     width,
   })
 
+  // Check if high-res image is already loaded (from cache)
+  useLayoutEffect(() => {
+    if (highResImageRef.current?.complete) {
+      setIsHighResImageLoaded(true)
+    }
+  })
+
   const handleHighResImageLoad = () => {
     setIsHighResImageLoaded(true)
   }
 
-  // Intersection Observer for loading high-res images when visible
-  useEffect(() => {
-    if (!containerRef.current || !isHydrated) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // Use requestIdleCallback to defer high-res loading when browser is idle
-            const callback = () => {
-              setShouldLoadHighRes(true)
-            }
-
-            if ('requestIdleCallback' in window) {
-              idleCallbackIdRef.current = window.requestIdleCallback(callback, {
-                timeout: 2000,
-              })
-            } else {
-              // Fallback for browsers without requestIdleCallback
-              setTimeout(callback, 100)
-            }
-          }
-        })
-      },
-      {
-        rootMargin: '50px', // Start loading 50px before entering viewport
-        threshold: 0.01,
-      },
-    )
-
-    observer.observe(containerRef.current)
-
-    return () => {
-      observer.disconnect()
-      if (idleCallbackIdRef.current && 'cancelIdleCallback' in window) {
-        window.cancelIdleCallback(idleCallbackIdRef.current)
-      }
-    }
-  }, [isHydrated])
-
-  // Check if high-res image is already loaded (from cache)
-  useEffect(() => {
-    if (highResImageRef.current?.complete) {
-      setIsHighResImageLoaded(true)
-    }
-  }, [])
-
   return (
-    <section className={clsx(styles.container, className)} ref={containerRef}>
+    <section className={clsx(styles.container, className)}>
+      {/* Low-res placeholder */}
       <picture
         className={clsx(
           styles.lowResPicture,
           isHighResImageLoaded && styles.lowResPictureHidden,
         )}
       >
-        <source srcSet={avifPlaceholderSrc_1x} type="image/avif" />
-        <source srcSet={webpPlaceholderSrc_1x} type="image/webp" />
+        <source srcSet={avifPlaceholderSrc_1x} type={'image/avif'} />
+        <source srcSet={webpPlaceholderSrc_1x} type={'image/webp'} />
         <img
           alt={alt}
           className={styles.image}
@@ -126,7 +83,8 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
         />
       </picture>
 
-      {isHydrated && shouldLoadHighRes && (
+      {/* High-res image */}
+      {isHydrated && (
         <picture
           className={clsx(
             styles.highResPicture,
