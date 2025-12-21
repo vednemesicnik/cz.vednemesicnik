@@ -212,6 +212,7 @@ Comprehensive project documentation is in the `docs/` directory:
 - `docs/_user-roles-and-permissions.md` - User role details
 - `docs/_author-roles-and-permissions.md` - Author role details
 - `docs/_content-creation-lifecycle.md` - Content states and transitions
+- `docs/_authentication-middleware.md` - Authentication architecture and future middleware migration plan
 - `docs/_deploy-to-fly.md` - Deployment instructions
 - `docs/_manual-database-backup.md` - Database backup procedures
 - `docs/_manual-database-restore.md` - Database restore procedures
