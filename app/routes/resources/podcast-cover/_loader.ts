@@ -1,6 +1,10 @@
 import { prisma } from '~/utils/db.server'
 import { getContentHash } from '~/utils/hash.server'
-import { createImageResponse, getImageParams } from '~/utils/image.server'
+import {
+  checkCacheValidation,
+  createImageResponse,
+  getImageParams,
+} from '~/utils/image.server'
 import { getConvertedImageStream } from '~/utils/sharp.server'
 
 import type { Route } from './+types/route'
@@ -8,6 +12,14 @@ import type { Route } from './+types/route'
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { podcastId } = params
 
+  // Generate ETag from URL (includes all image params)
+  const tag = getContentHash(request.url)
+
+  // Check if client has cached version
+  const cachedResponse = checkCacheValidation(request, tag)
+  if (cachedResponse !== null) return cachedResponse
+
+  // Client doesn't have cached version - generate and return image
   const image = await prisma.podcastCover.findUniqueOrThrow({
     select: { blob: true, contentType: true },
     where: { id: podcastId },
@@ -21,8 +33,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     quality,
     width,
   })
-
-  const tag = getContentHash(request.url)
 
   return createImageResponse(convertedImage, podcastId, tag)
 }

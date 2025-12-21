@@ -83,6 +83,30 @@ function pumpSharpStreamToWebStream(
   })()
 }
 
+/**
+ * Checks if the client has a cached version of the resource using If-None-Match header.
+ * Returns a 304 Not Modified response if the ETag matches, otherwise returns null.
+ */
+export const checkCacheValidation = (
+  request: Request,
+  etag: string,
+): Response | null => {
+  const ifNoneMatch = request.headers.get('If-None-Match')
+
+  if (ifNoneMatch === etag) {
+    // Client has cached version - return 304 Not Modified
+    return new Response(null, {
+      headers: {
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        ETag: etag,
+      },
+      status: 304,
+    })
+  }
+
+  return null
+}
+
 export const createImageResponse = (
   image: {
     stream: Sharp
