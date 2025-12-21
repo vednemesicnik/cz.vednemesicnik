@@ -1,4 +1,3 @@
-import { animated, useSpring } from '@react-spring/web'
 import { clsx } from 'clsx'
 import { useEffect, useRef, useState } from 'react'
 
@@ -21,11 +20,12 @@ type Props = {
 export const Image = ({ src, alt, width, height, className }: Props) => {
   const isHydrated = useHydrated()
 
-  const [isLowResImageLoaded, setIsLowResImageLoaded] = useState(false)
   const [isHighResImageLoaded, setIsHighResImageLoaded] = useState(false)
+  const [shouldLoadHighRes, setShouldLoadHighRes] = useState(false)
 
-  const lowResImageRef = useRef<HTMLImageElement>(null)
+  const containerRef = useRef<HTMLElement>(null)
   const highResImageRef = useRef<HTMLImageElement>(null)
+  const idleCallbackIdRef = useRef<number | null>(null)
 
   const calculatedPlaceholderWidth = Math.max(1, Math.round(width / 10))
   const calculatedPlaceholderHeight = Math.max(1, Math.round(height / 10))
@@ -53,49 +53,64 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
     width,
   })
 
-  const handleLowResImageLoad = () => {
-    setIsLowResImageLoaded(true)
-  }
-
   const handleHighResImageLoad = () => {
     setIsHighResImageLoaded(true)
   }
 
+  // Intersection Observer for loading high-res images when visible
   useEffect(() => {
-    if (lowResImageRef.current) {
-      const lowResImage = lowResImageRef.current
+    if (!containerRef.current || !isHydrated) return
 
-      if (lowResImage.complete) {
-        setIsLowResImageLoaded(true)
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Use requestIdleCallback to defer high-res loading when browser is idle
+            const callback = () => {
+              setShouldLoadHighRes(true)
+            }
+
+            if ('requestIdleCallback' in window) {
+              idleCallbackIdRef.current = window.requestIdleCallback(callback, {
+                timeout: 2000,
+              })
+            } else {
+              // Fallback for browsers without requestIdleCallback
+              setTimeout(callback, 100)
+            }
+          }
+        })
+      },
+      {
+        rootMargin: '50px', // Start loading 50px before entering viewport
+        threshold: 0.01,
+      },
+    )
+
+    observer.observe(containerRef.current)
+
+    return () => {
+      observer.disconnect()
+      if (idleCallbackIdRef.current && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleCallbackIdRef.current)
       }
     }
-  }, [])
+  }, [isHydrated])
 
+  // Check if high-res image is already loaded (from cache)
   useEffect(() => {
-    if (highResImageRef.current) {
-      const highResImage = highResImageRef.current
-
-      if (highResImage.complete) {
-        setIsHighResImageLoaded(true)
-      }
+    if (highResImageRef.current?.complete) {
+      setIsHighResImageLoaded(true)
     }
   }, [])
-
-  const lowResImageSpringStyles = useSpring({
-    from: { opacity: isLowResImageLoaded ? 1 : 0 },
-    opacity: isHighResImageLoaded ? 0 : 1,
-  })
-
-  const highResImageSpringStyles = useSpring({
-    from: { opacity: isHighResImageLoaded ? 1 : 0 },
-    opacity: isHighResImageLoaded ? 1 : 0,
-  })
 
   return (
-    <section className={clsx(styles.container, className)}>
-      <animated.picture
-        className={styles.lowResPicture}
-        style={lowResImageSpringStyles}
+    <section className={clsx(styles.container, className)} ref={containerRef}>
+      <picture
+        className={clsx(
+          styles.lowResPicture,
+          isHighResImageLoaded && styles.lowResPictureHidden,
+        )}
       >
         <source srcSet={avifPlaceholderSrc_1x} type="image/avif" />
         <source srcSet={webpPlaceholderSrc_1x} type="image/webp" />
@@ -103,32 +118,34 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
           alt={alt}
           className={styles.image}
           decoding={'async'}
+          fetchPriority={'low'}
           height={height}
           loading={'lazy'}
-          onLoad={handleLowResImageLoad}
-          ref={lowResImageRef}
           src={jpegPlaceholderSrc_1x}
           width={width}
         />
-      </animated.picture>
+      </picture>
 
-      {isHydrated && (
-        <animated.picture
-          className={styles.highResPicture}
-          style={highResImageSpringStyles}
+      {isHydrated && shouldLoadHighRes && (
+        <picture
+          className={clsx(
+            styles.highResPicture,
+            isHighResImageLoaded && styles.highResPictureLoaded,
+          )}
         >
           <source
             srcSet={`${avifSrc_1x}, ${avifSrc_2x} 2x`}
-            type="image/avif"
+            type={'image/avif'}
           />
           <source
             srcSet={`${webpSrc_1x}, ${webpSrc_2x} 2x`}
-            type="image/webp"
+            type={'image/webp'}
           />
           <img
             alt={alt}
             className={styles.image}
             decoding={'async'}
+            fetchPriority={'low'}
             height={height}
             loading={'lazy'}
             onLoad={handleHighResImageLoad}
@@ -137,7 +154,7 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
             srcSet={`${jpegSrc_1x}, ${jpegSrc_2x} 2x`}
             width={width}
           />
-        </animated.picture>
+        </picture>
       )}
     </section>
   )

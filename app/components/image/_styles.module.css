@@ -13,6 +13,11 @@
   opacity: 1;
   image-rendering: pixelated;
   background-clip: padding-box;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.lowResPictureHidden {
+  opacity: 0;
 }
 
 .highResPicture {
@@ -21,6 +26,12 @@
   top: 0;
   left: 0;
   opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+
+.highResPictureLoaded {
+  opacity: 1;
+  will-change: opacity;
 }
 
 .image {
