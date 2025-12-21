@@ -6,7 +6,7 @@ import { ListItem } from '~/components/list-item'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 
-export default function Route() {
+export default function RouteComponent() {
   return (
     <Page>
       <Headline>Vedneměsíčník, z.&nbsp;s.</Headline>

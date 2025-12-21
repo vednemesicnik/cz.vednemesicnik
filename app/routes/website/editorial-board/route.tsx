@@ -1,15 +1,15 @@
 // noinspection JSUnusedGlobalSymbols
-
 import { Divider } from '~/components/divider'
 import { Group } from '~/components/group'
 import { Headline } from '~/components/headline'
 import { MailHyperlink } from '~/components/mail-hyperlink'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
+import type { Route } from './+types/route'
 
 const EMAIL_ADDRESS = 'redakce@vednemesicnik.cz'
 
-export default function Route({ loaderData }: Route.ComponentProps) {
+export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <Page>
       <Headline>Tak to je naše redakce</Headline>

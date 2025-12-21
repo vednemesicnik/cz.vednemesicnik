@@ -23,12 +23,14 @@ import { Select } from '~/components/select'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 import { schema } from './_schema'
 
+import type { Route } from './+types/route'
+
 export { action } from './_action'
 export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function Route({
+export default function RouteComponent({
   loaderData,
   actionData,
 }: Route.ComponentProps) {

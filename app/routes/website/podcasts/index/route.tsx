@@ -1,5 +1,3 @@
-// noinspection JSUnusedGlobalSymbols
-
 import { ArticleLink } from '~/components/article-link'
 import { ArticleLinkAuthor } from '~/components/article-link-author'
 import { ArticleLinkFooter } from '~/components/article-link-footer'
@@ -17,8 +15,9 @@ import { TileGridItem } from '~/components/tile-grid-item'
 import { sizeConfig } from '~/config/size-config'
 import { getPodcastCoverSrc } from '~/utils/get-podcast-cover-src'
 import { isLast } from '~/utils/is-last'
+import type { Route } from './+types/route'
 
-export default function Route({ loaderData }: Route.ComponentProps) {
+export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { podcasts, episodes } = loaderData
 
   return (

@@ -1,8 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
-
 import { Activity, useRef } from 'react'
 import { Form, href } from 'react-router'
-
 import { AdminActionButton } from '~/components/admin-action-button'
 import { AdminActionGroup } from '~/components/admin-action-group'
 import {
@@ -25,12 +23,16 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import type { Route } from './+types/route'
 
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function Route({ loaderData, params }: Route.ComponentProps) {
+export default function RouteComponent({
+  loaderData,
+  params,
+}: Route.ComponentProps) {
   const {
     link,
     canUpdate,

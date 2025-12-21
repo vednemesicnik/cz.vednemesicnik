@@ -1,5 +1,3 @@
-// noinspection JSUnusedGlobalSymbols
-
 import { Headline } from '~/components/headline'
 import { Hyperlink } from '~/components/hyperlink'
 import { List } from '~/components/list'
@@ -7,8 +5,9 @@ import { ListItem } from '~/components/list-item'
 import { Paragraph } from '~/components/paragraph'
 import { Subheadline } from '~/components/subheadline'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import type { Route } from './+types/route'
 
-export default function Route({ loaderData }: Route.ComponentProps) {
+export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const formattedPublishDate = getFormattedPublishDate(
     loaderData.episode.publishedAt,
   )

@@ -1,5 +1,4 @@
 // noinspection JSUnusedGlobalSymbols
-
 import {
   getFormProps,
   getInputProps,
@@ -8,7 +7,6 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { href, useNavigation } from 'react-router'
-
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
@@ -20,13 +18,14 @@ import { FormActions } from '~/components/form-actions'
 import { Input } from '~/components/input'
 import { Select } from '~/components/select'
 import { schema } from './_schema'
+import type { Route } from './+types/route'
 
 export { action } from './_action'
 export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function Route({
+export default function RouteComponent({
   loaderData,
   actionData,
 }: Route.ComponentProps) {

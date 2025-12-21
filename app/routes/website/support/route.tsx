@@ -1,5 +1,3 @@
-// noinspection JSUnusedGlobalSymbols
-
 import { Headline } from '~/components/headline'
 import { MailHyperlink } from '~/components/mail-hyperlink'
 import { Page } from '~/components/page'
@@ -7,7 +5,7 @@ import { Paragraph } from '~/components/paragraph'
 
 const SUPPORT_EMAIL_ADDRESS = 'podpora@vednemesicnik.cz'
 
-export default function Route() {
+export default function RouteComponent() {
   return (
     <Page>
       <Headline>Jsme tu pro vás</Headline>

@@ -1,22 +1,21 @@
 // noinspection JSUnusedGlobalSymbols
-
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { useEffect, useRef } from 'react'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
-
 import { Button } from '~/components/button'
 import { Form } from '~/components/form'
 import { Input } from '~/components/input'
 import { useHydrated } from '~/utils/use-hydrated'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
+import type { Route } from './+types/route'
 
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function Route({ actionData }: Route.ComponentProps) {
+export default function RouteComponent({ actionData }: Route.ComponentProps) {
   const isHydrated = useHydrated()
   const passwordInputRef = useRef<HTMLInputElement>(null)
 

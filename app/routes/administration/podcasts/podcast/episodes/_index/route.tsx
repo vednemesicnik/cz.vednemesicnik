@@ -1,7 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
-
 import { href } from 'react-router'
-
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
@@ -12,11 +10,12 @@ import {
   TableHeaderCell,
 } from '~/components/admin-table'
 import { ItemRow } from '~/routes/administration/podcasts/podcast/episodes/_index/components/item-row'
+import type { Route } from './+types/route'
 
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function Route({ loaderData }: Route.ComponentProps) {
+export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       <AdminHeadline>Epizody</AdminHeadline>

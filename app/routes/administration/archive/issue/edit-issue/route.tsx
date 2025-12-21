@@ -24,7 +24,9 @@ import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 import { getIssueOrdinalNumber } from '~/utils/get-issue-ordinal-number'
 import { schema } from './_schema'
 
-export default function Route({
+import type { Route } from './+types/route'
+
+export default function RouteComponent({
   loaderData,
   actionData,
 }: Route.ComponentProps) {

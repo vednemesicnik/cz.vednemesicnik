@@ -1,8 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
-
 import { Outlet } from 'react-router'
 
-export default function Route() {
+export default function RouteComponent() {
   return <Outlet />
 }
 

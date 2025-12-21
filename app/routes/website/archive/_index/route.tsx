@@ -1,7 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
-
 import { href, isRouteErrorResponse, Link, useSearchParams } from 'react-router'
-
 import { Headline } from '~/components/headline'
 import { Image } from '~/components/image'
 import { LIMIT_PARAM, LoadMoreContent } from '~/components/load-more-content'
@@ -12,11 +10,12 @@ import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
 import { sizeConfig } from '~/config/size-config'
 import { getIssuePdfSrc } from '~/utils/get-issue-pdf-src'
+import type { Route } from './+types/route'
 
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function Route({ loaderData }: Route.ComponentProps) {
+export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { issues, issuesCount } = loaderData
 
   const [searchParams] = useSearchParams()

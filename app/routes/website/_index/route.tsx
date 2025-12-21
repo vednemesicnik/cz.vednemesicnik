@@ -1,7 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
-
 import { Link } from 'react-router'
-
 import { ArticleLink } from '~/components/article-link'
 import { ArticleLinkAuthor } from '~/components/article-link-author'
 import { ArticleLinkFooter } from '~/components/article-link-footer'
@@ -16,12 +14,13 @@ import { sizeConfig } from '~/config/size-config'
 import { getIssueCoverSrc } from '~/utils/get-issue-cover-src'
 import { getIssuePdfSrc } from '~/utils/get-issue-pdf-src'
 import { getPodcastCoverSrc } from '~/utils/get-podcast-cover-src'
+import type { Route } from './+types/route'
 
 export { links } from './_links'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function Route({ loaderData }: Route.ComponentProps) {
+export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <Page>
       {loaderData.latestArchivedIssues.map((issue) => {
