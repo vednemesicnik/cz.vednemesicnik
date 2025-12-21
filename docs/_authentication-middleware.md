@@ -107,13 +107,15 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   await requireAuthentication(request) // DB query #1
   // ...
 }
-
+```
+```typescript
 // app/routes/administration/users/_index/_loader.ts
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await requireAuthentication(request) // DB query #2
   // ...
 }
-
+```
+```typescript
 // app/routes/administration/settings/_index/_loader.ts
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await requireAuthentication(request) // DB query #3
@@ -151,13 +153,15 @@ Total: 1 database query, shared across all loaders
 // app/routes/administration/__layout-authenticated/route.tsx
 export const middleware: Route.MiddlewareFunction[] = [authMiddleware]
 // Runs ONCE per request → DB query #1 (only query!)
-
+```
+```typescript
 // app/routes/administration/users/_index/_loader.ts
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const session = context.get(authSessionContext) // From memory, no DB query
   // ...
 }
-
+```
+```typescript
 // app/routes/administration/settings/_index/_loader.ts
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const session = context.get(authSessionContext) // From memory, no DB query
@@ -195,13 +199,13 @@ For a typical admin panel with 3-5 nested loaders per route:
 Current route: `/administration/users`
 
 **Before (Loader-Based)**:
-```typescript
+```
 // 3 loaders, 3 DB queries
 Time: ~30ms (3 × 10ms per query)
 ```
 
 **After (Middleware)**:
-```typescript
+```
 // 1 middleware, 1 DB query
 Time: ~10ms (1 × 10ms per query)
 ```
@@ -429,7 +433,8 @@ const userContext = await getUserPermissionContext(request, {
   actions: ['view'],
   entities: ['user'],
 })
-
+```
+```typescript
 // After: Pass session.id instead
 const userContext = await getUserPermissionContext(session.id, {
   actions: ['view'],
