@@ -16,7 +16,7 @@ export const handle = {
     return {
       label: 'Upravit odkaz',
       path: href(
-        '/administration/podcasts/:podcastId/:episodeId/edit-link/:linkId',
+        '/administration/podcasts/:podcastId/episodes/:episodeId/links/:linkId/edit-link',
         {
           episodeId,
           linkId,

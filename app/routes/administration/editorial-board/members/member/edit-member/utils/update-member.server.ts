@@ -25,8 +25,6 @@ export async function updateMember({
       },
       where: { id },
     })
-
-    return { ok: true }
   } catch (error) {
     throwDbError(error, 'Unable to update the editorial board member.')
   }

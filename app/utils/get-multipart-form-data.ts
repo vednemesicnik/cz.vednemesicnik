@@ -16,14 +16,21 @@ function createMemoryUploadHandler(options: Options) {
 
     while (size <= maxPartSize) {
       const { done, value } = await reader.read()
+
       if (done) {
         break
       }
+
       chunks.push(value)
       size += value.length
     }
 
-    return new File(chunks, fileUpload.name, { type: fileUpload.type })
+    // TypeScript infers Uint8Array<ArrayBufferLike> which includes SharedArrayBuffer,
+    // but BlobPart only accepts ArrayBuffer. In runtime, chunks are always Uint8Array
+    // with regular ArrayBuffer, so this assertion is safe.
+    return new File(chunks as BlobPart[], fileUpload.name, {
+      type: fileUpload.type,
+    })
   }
 }
 

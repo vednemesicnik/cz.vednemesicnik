@@ -1,7 +1,5 @@
 import { href } from 'react-router'
-
 import type { Breadcrumb, BreadcrumbMatch } from '~/types/breadcrumb'
-
 import type { Route } from './+types/route'
 
 type Match = BreadcrumbMatch<
@@ -15,10 +13,13 @@ export const handle = {
 
     return {
       label: 'Přidat odkaz',
-      path: href(`/administration/podcasts/:podcastId/:episodeId/add-link`, {
-        episodeId,
-        podcastId,
-      }),
+      path: href(
+        '/administration/podcasts/:podcastId/episodes/:episodeId/links/add-link',
+        {
+          episodeId,
+          podcastId,
+        },
+      ),
     }
   },
 }

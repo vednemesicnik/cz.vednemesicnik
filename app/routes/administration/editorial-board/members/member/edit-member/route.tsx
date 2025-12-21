@@ -35,7 +35,6 @@ export default function RouteComponent({
     defaultValue: {
       authorId: loaderData.editorialBoardMember.authorId,
       fullName: loaderData.editorialBoardMember.fullName,
-      id: loaderData.editorialBoardMember.id,
       positionIds: loaderData.editorialBoardMember.positions.map(
         (position) => position.id,
       ),
@@ -58,8 +57,6 @@ export default function RouteComponent({
       <AdminHeadline>Upravit člena</AdminHeadline>
 
       <Form method="post" {...getFormProps(form)}>
-        <input {...getInputProps(fields.id, { type: 'hidden' })} />
-
         <Fieldset
           disabled={isLoadingOrSubmitting}
           legend={'Informace o členovi'}
