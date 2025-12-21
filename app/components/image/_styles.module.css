@@ -12,11 +12,6 @@
   position: relative;
   image-rendering: pixelated;
   opacity: 1;
-  transition: opacity 0.3s ease-in-out;
-}
-
-.lowResPictureHidden {
-  opacity: 0;
 }
 
 .highResPicture {

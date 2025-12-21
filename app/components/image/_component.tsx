@@ -1,9 +1,8 @@
 import { clsx } from 'clsx'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { createImageSources } from '~/utils/create-image-sources'
 import { useHydrated } from '~/utils/use-hydrated'
-
 import styles from './_styles.module.css'
 
 const DEFAULT_QUALITY = 75
@@ -19,9 +18,10 @@ type Props = {
 
 export const Image = ({ src, alt, width, height, className }: Props) => {
   const isHydrated = useHydrated()
-  const [isHighResImageLoaded, setIsHighResImageLoaded] = useState(false)
-
-  const highResImageRef = useRef<HTMLImageElement>(null)
+  const [isHighResImageLoaded, setIsHighResImageLoaded] = useState(true)
+  const [highResImage, setHighResImage] = useState<HTMLImageElement | null>(
+    null,
+  )
 
   const calculatedPlaceholderWidth = Math.max(1, Math.round(width / 10))
   const calculatedPlaceholderHeight = Math.max(1, Math.round(height / 10))
@@ -49,12 +49,12 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
     width,
   })
 
-  // Check if high-res image is already loaded (from cache)
-  useLayoutEffect(() => {
-    if (highResImageRef.current?.complete) {
-      setIsHighResImageLoaded(true)
+  // Check if image needs loading (not from cache)
+  useEffect(() => {
+    if (highResImage && !highResImage.complete) {
+      setIsHighResImageLoaded(false)
     }
-  })
+  }, [highResImage])
 
   const handleHighResImageLoad = () => {
     setIsHighResImageLoaded(true)
@@ -63,12 +63,7 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
   return (
     <section className={clsx(styles.container, className)}>
       {/* Low-res placeholder */}
-      <picture
-        className={clsx(
-          styles.lowResPicture,
-          isHighResImageLoaded && styles.lowResPictureHidden,
-        )}
-      >
+      <picture className={styles.lowResPicture}>
         <source srcSet={avifPlaceholderSrc_1x} type={'image/avif'} />
         <source srcSet={webpPlaceholderSrc_1x} type={'image/webp'} />
         <img
@@ -107,7 +102,7 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
             height={height}
             loading={'lazy'}
             onLoad={handleHighResImageLoad}
-            ref={highResImageRef}
+            ref={setHighResImage}
             src={jpegSrc_1x}
             srcSet={`${jpegSrc_1x}, ${jpegSrc_2x} 2x`}
             width={width}
