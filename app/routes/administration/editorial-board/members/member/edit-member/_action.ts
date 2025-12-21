@@ -52,7 +52,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     targetAuthorId: currentMember.author.id,
   })
 
-  await updateMember(submission.value)
+  await updateMember({
+    authorId: submission.value.authorId,
+    fullName: submission.value.fullName,
+    id: memberId,
+    positionIds: submission.value.positionIds,
+  })
 
   return redirect(
     href('/administration/editorial-board/members/:memberId', { memberId }),
