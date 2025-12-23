@@ -27,6 +27,7 @@ export function requireAuthorPermission(
   })
 
   if (!hasPermission) {
+    // TODO: add flash message about insufficient permissions
     throw redirect(options.redirectTo ?? '/administration')
   }
 
