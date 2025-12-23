@@ -13,6 +13,11 @@
     "@react-router/serve": "7.11.0",
     "@simplewebauthn/browser": "13.2.2",
     "@simplewebauthn/server": "13.2.2",
+    "@tiptap/extensions": "3.14.0",
+    "@tiptap/pm": "3.14.0",
+    "@tiptap/react": "3.14.0",
+    "@tiptap/starter-kit": "3.14.0",
+    "@tiptap/static-renderer": "3.14.0",
     "bcryptjs": "3.0.3",
     "clsx": "2.1.1",
     "crypto-js": "4.2.0",
@@ -56,7 +61,7 @@
     "node": ">=22"
   },
   "name": "cz.vednemesicnik",
-  "packageManager": "pnpm@10.26.1",
+  "packageManager": "pnpm@10.26.2",
   "private": true,
   "scripts": {
     "app:build": "react-router build",
