@@ -1,0 +1,60 @@
+.tab {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  /* Typography */
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  text-decoration: none;
+
+  /* Spacing */
+  padding-block: 12px;
+  padding-inline: 20px;
+
+  /* Colors */
+  color: var(--admin-text-secondary);
+  background-color: transparent;
+  border: none;
+
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover:not(.tab--active) {
+    color: var(--admin-text-primary);
+    background-color: var(--admin-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--admin-focus-shadow);
+  }
+
+  /* Active state indicator */
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+  }
+}
+
+.tab--active {
+  color: var(--admin-purple);
+  font-weight: var(--font-weight-semibold);
+
+  &::after {
+    background-color: var(--admin-purple);
+  }
+}
