@@ -80,7 +80,7 @@ export const ItemRow = ({
                 onClick={openDialog}
               >
                 <DeleteIcon />
-                {isDeleting ? 'Mažu...' : 'Smazat'}
+                {isDeleting ? 'Maže se...' : 'Smazat'}
               </AdminActionButton>
               <AdminDeleteConfirmationDialog ref={dialogRef} />
             </>

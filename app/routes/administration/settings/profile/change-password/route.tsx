@@ -2,13 +2,12 @@
 
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
-import { useNavigation } from 'react-router'
-
+import { href, useNavigation } from 'react-router'
+import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
@@ -72,10 +71,13 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
+          <AdminButton disabled={!canSubmit} type={'submit'}>
             {isSubmitting ? 'Probíhá změna…' : 'Změnit'}
-          </Button>
-          <AdminLinkButton to={'/administration/settings/profile'}>
+          </AdminButton>
+          <AdminLinkButton
+            disabled={isLoadingOrSubmitting}
+            to={href('/administration/settings/profile')}
+          >
             Zrušit
           </AdminLinkButton>
         </FormActions>

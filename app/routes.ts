@@ -7,7 +7,7 @@ import {
   type RouteConfig,
   route,
 } from '@react-router/dev/routes'
-
+import { createAdminEntriesIntersection } from '../utils/create-admin-entries-intersection'
 import { createAdminEntriesSection } from '../utils/create-admin-entries-section'
 import { createAdminIntersection } from '../utils/create-admin-intersection'
 
@@ -86,6 +86,32 @@ export default [
 
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [
+          // Articles (hlavní sekce s nested routes pro categories a tags)
+          // Articles index (seznam článků)
+          ...createAdminEntriesIntersection(
+            {
+              entry: 'article',
+              id: 'articleId',
+              name: 'articles',
+              path: 'routes/administration/articles',
+            },
+            // Nested: Article Categories
+            ...createAdminEntriesSection({
+              entry: 'category',
+              id: 'categoryId',
+              name: 'categories',
+              path: 'routes/administration/articles/categories',
+            }),
+
+            // Nested: Article Tags
+            ...createAdminEntriesSection({
+              entry: 'tag',
+              id: 'tagId',
+              name: 'tags',
+              path: 'routes/administration/articles/tags',
+            }),
+          ),
+
           // Archive
           ...createAdminEntriesSection({
             entry: 'issue',
@@ -187,6 +213,7 @@ export default [
 
   // Resource routes
   ...prefix('resources', [
+    route('article-image/:imageId', 'routes/resources/article-image/route.ts'),
     route('issue-cover/:id', 'routes/resources/issue-cover/route.ts'),
     route(
       'podcast-cover/:podcastId',

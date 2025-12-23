@@ -8,12 +8,11 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { href, useNavigation } from 'react-router'
-
+import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
@@ -23,13 +22,14 @@ import { Select } from '~/components/select'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 import { getIssueOrdinalNumber } from '~/utils/get-issue-ordinal-number'
 import { schema } from './_schema'
-
 import type { Route } from './+types/route'
 
 export default function RouteComponent({
   loaderData,
   actionData,
+  params,
 }: Route.ComponentProps) {
+  const { issueId } = params
   const { issue } = loaderData
   const { state } = useNavigation()
 
@@ -60,6 +60,7 @@ export default function RouteComponent({
   }
 
   const isLoadingOrSubmitting = state !== 'idle'
+  const isSubmitting = state === 'submitting'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -131,11 +132,12 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
-            Upravit
-          </Button>
+          <AdminButton disabled={!canSubmit} type={'submit'}>
+            {isSubmitting ? 'Upravuje se...' : 'Upravit'}
+          </AdminButton>
           <AdminLinkButton
-            to={href('/administration/archive/:issueId', { issueId: issue.id })}
+            disabled={isLoadingOrSubmitting}
+            to={href('/administration/archive/:issueId', { issueId })}
           >
             Zrušit
           </AdminLinkButton>

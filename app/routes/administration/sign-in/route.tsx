@@ -3,7 +3,7 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { useEffect, useRef } from 'react'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
-import { Button } from '~/components/button'
+import { AdminButton } from '~/components/admin-button'
 import { Form } from '~/components/form'
 import { Input } from '~/components/input'
 import { useHydrated } from '~/utils/use-hydrated'
@@ -74,9 +74,9 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
             placeholder={'••••••••'}
           />
 
-          <Button className={styles.button} type="submit">
+          <AdminButton className={styles.button} type="submit">
             Přihlásit se
-          </Button>
+          </AdminButton>
         </Form>
       </section>
     </div>

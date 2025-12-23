@@ -7,13 +7,13 @@ import {
   useForm,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
-import { useEffect, useState } from 'react'
-import { useNavigation } from 'react-router'
+import { useState } from 'react'
+import { href, useNavigation } from 'react-router'
+import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
@@ -21,6 +21,7 @@ import { FormActions } from '~/components/form-actions'
 import { Input } from '~/components/input'
 import { Select } from '~/components/select'
 import { TextArea } from '~/components/text-area'
+import { useSlug } from '~/utils/permissions/use-slug'
 import { slugify } from '~/utils/slugify'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -52,14 +53,7 @@ export default function RouteComponent({
   })
 
   const [title, setTitle] = useState('')
-  const [slug, setSlug] = useState('')
-  const [isSlugFocused, setIsSlugFocused] = useState(false)
-
-  useEffect(() => {
-    if (!isSlugFocused) {
-      setSlug(slugify(title ?? ''))
-    }
-  }, [title, isSlugFocused])
+  const { slug, setSlug, setIsSlugFocused } = useSlug(title)
 
   const handleFileChange = (name: string, dirty: boolean) => () => {
     if (dirty) {
@@ -68,6 +62,7 @@ export default function RouteComponent({
   }
 
   const isLoadingOrSubmitting = state !== 'idle'
+  const isSubmitting = state === 'submitting'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -93,7 +88,8 @@ export default function RouteComponent({
           <Input
             errors={fields.slug.errors}
             label={'Slug'}
-            onChange={(event) => setSlug(slugify(event.target.value))}
+            onBlur={() => setSlug((value) => slugify(value))}
+            onChange={(event) => setSlug(event.target.value)}
             onFocus={() => setIsSlugFocused(true)}
             placeholder={'nazev-podcastu'}
             value={slug}
@@ -136,10 +132,13 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
-            Přidat
-          </Button>
-          <AdminLinkButton to={'/administration/podcasts'}>
+          <AdminButton disabled={!canSubmit} type={'submit'}>
+            {isSubmitting ? 'Přidává se...' : 'Přidat'}
+          </AdminButton>
+          <AdminLinkButton
+            disabled={isLoadingOrSubmitting}
+            to={href('/administration/podcasts')}
+          >
             Zrušit
           </AdminLinkButton>
         </FormActions>

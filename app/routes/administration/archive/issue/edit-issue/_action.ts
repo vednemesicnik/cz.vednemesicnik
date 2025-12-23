@@ -76,14 +76,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
     releasedAt,
   )
 
-  const convertedCover = cover
-    ? await getConvertedImageStream(cover, {
-        format: 'jpeg',
-        height: 1280,
-        quality: 80,
-        width: 905,
-      })
-    : undefined
+  const convertedCover =
+    cover !== undefined
+      ? await getConvertedImageStream(cover, {
+          format: 'jpeg',
+          height: 1280,
+          quality: 80,
+          width: 905,
+        })
+      : undefined
 
   try {
     await prisma.issue.update({

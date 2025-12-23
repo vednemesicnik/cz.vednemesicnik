@@ -7,13 +7,12 @@ import {
   useForm,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
-import { useNavigation } from 'react-router'
-
+import { href, useNavigation } from 'react-router'
+import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
@@ -46,6 +45,7 @@ export default function RouteComponent({
   })
 
   const isLoadingOrSubmitting = state !== 'idle'
+  const isSubmitting = state === 'submitting'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -97,10 +97,13 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button disabled={!canSubmit} type="submit" variant={'primary'}>
-            Přidat
-          </Button>
-          <AdminLinkButton to={'/administration/editorial-board/members'}>
+          <AdminButton disabled={!canSubmit} type={'submit'}>
+            {isSubmitting ? 'Přidává se...' : 'Přidat'}
+          </AdminButton>
+          <AdminLinkButton
+            disabled={isLoadingOrSubmitting}
+            to={href('/administration/editorial-board/members')}
+          >
             Zrušit
           </AdminLinkButton>
         </FormActions>

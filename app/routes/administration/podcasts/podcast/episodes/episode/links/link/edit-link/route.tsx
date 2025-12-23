@@ -7,11 +7,11 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { href, useNavigation } from 'react-router'
+import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
@@ -28,7 +28,9 @@ export { meta } from './_meta'
 export default function RouteComponent({
   loaderData,
   actionData,
+  params,
 }: Route.ComponentProps) {
+  const { podcastId, episodeId, linkId } = params
   const { state } = useNavigation()
 
   const [form, fields] = useForm({
@@ -52,6 +54,7 @@ export default function RouteComponent({
   })
 
   const isLoadingOrSubmitting = state !== 'idle'
+  const isSubmitting = state === 'submitting'
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
@@ -106,17 +109,14 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <Button disabled={!canSubmit} type={'submit'} variant={'primary'}>
-            Uložit
-          </Button>
+          <AdminButton disabled={!canSubmit} type={'submit'}>
+            {isSubmitting ? 'Ukládá se...' : 'Uložit'}
+          </AdminButton>
           <AdminLinkButton
+            disabled={isLoadingOrSubmitting}
             to={href(
               '/administration/podcasts/:podcastId/episodes/:episodeId/links/:linkId',
-              {
-                episodeId: loaderData.episode.id,
-                linkId: loaderData.link.id,
-                podcastId: loaderData.podcast.id,
-              },
+              { episodeId, linkId, podcastId },
             )}
           >
             Zrušit
