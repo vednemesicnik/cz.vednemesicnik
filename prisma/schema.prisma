@@ -402,7 +402,7 @@ model Article {
   id            String            @id @default(cuid())
   slug          String            @unique
   title         String
-  content       String
+  content       Json
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   publishedAt   DateTime?
@@ -426,8 +426,8 @@ model ArticleImage {
   blob                Bytes
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  articleId           String
   article             Article  @relation("ArticleImage", fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  articleId           String
   featuredInArticle   Article? @relation("FeaturedArticleImage", fields: [featuredInArticleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   featuredInArticleId String?  @unique
 
