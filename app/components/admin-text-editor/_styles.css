@@ -1,0 +1,101 @@
+/* Tiptap Editor Content Styles - Global (not scoped by CSS modules) */
+
+.tiptap {
+  outline: none;
+
+  /* Headings */
+  & h1 {
+    font-size: var(--font-size-heading2);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    margin-block: 24px 16px;
+  }
+
+  & h2 {
+    font-size: var(--font-size-heading3);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    margin-block: 20px 12px;
+  }
+
+  & h3 {
+    font-size: var(--font-size-heading4);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    margin-block: 16px 8px;
+  }
+
+  /* Paragraphs */
+  & p {
+    margin-block: 12px;
+  }
+
+  /* Lists */
+  & ul,
+  & ol {
+    padding-inline-start: 24px;
+    margin-block: 12px;
+  }
+
+  & li {
+    margin-block: 4px;
+  }
+
+  & ul {
+    list-style-type: disc;
+  }
+
+  & ol {
+    list-style-type: decimal;
+  }
+
+  /* Blockquote */
+  & blockquote {
+    border-inline-start: 4px solid var(--admin-border-strong);
+    padding-inline-start: 16px;
+    margin-block: 16px;
+    margin-inline: 0;
+    color: var(--admin-text-secondary);
+    font-style: italic;
+  }
+
+  /* Code */
+  & code {
+    background-color: var(--admin-bg-secondary);
+    color: var(--admin-text-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: var(--font-size-small);
+    font-family: "Courier New", monospace;
+  }
+
+  & pre {
+    background-color: var(--admin-bg-secondary);
+    color: var(--admin-text-primary);
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-block: 16px;
+
+    & code {
+      background-color: transparent;
+      padding: 0;
+    }
+  }
+
+  /* Horizontal Rule */
+  & hr {
+    border: none;
+    border-block-start: 2px solid var(--admin-border);
+    margin-block: 24px;
+  }
+
+  /* Placeholder */
+  & p.is-editor-empty:first-child::before {
+    color: var(--admin-text-tertiary);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+}

@@ -1,20 +1,22 @@
+import { Placeholder } from '@tiptap/extensions'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
-import { useEffect } from 'react'
-
+import { useRef } from 'react'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { Label } from '~/components/label'
+import { createEditorContent } from '~/utils/create-editor-content'
 import styles from './_styles.module.css'
+import './_styles.css'
 import { Toolbar } from './components/toolbar'
 import { ToolbarButton } from './components/toolbar-button'
 
-type Props = ComponentProps<'input'> & {
+type Props = Omit<ComponentProps<'input'>, 'onChange' | 'value'> & {
   label: string
   errors?: string[]
-  defaultValue?: string // JSON string or empty
+  defaultValue?: string // JSON string
   placeholder?: string
 }
 
@@ -29,10 +31,12 @@ export const AdminTextEditor = ({
   type = 'hidden',
   ...rest
 }: Props) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const hasErrors = errors !== undefined && errors.length > 0
 
   const editor = useEditor({
-    content: defaultValue ? JSON.parse(defaultValue) : '',
+    content: createEditorContent(defaultValue),
     editorProps: {
       attributes: {
         class: clsx(styles.editor, hasErrors && styles.editorError),
@@ -44,21 +48,19 @@ export const AdminTextEditor = ({
           levels: [1, 2, 3],
         },
       }),
+      Placeholder.configure({
+        placeholder,
+      }),
     ],
     immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      const input = inputRef.current
+
+      if (input !== null) {
+        input.value = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
+      }
+    },
   })
-
-  // Sync editor content with hidden input
-  useEffect(() => {
-    if (!editor) return
-
-    const hiddenInput = document.querySelector<HTMLInputElement>(
-      `input[name="${name}"]`,
-    )
-    if (hiddenInput) {
-      hiddenInput.value = JSON.stringify(editor.getJSON())
-    }
-  }, [editor?.state.doc, editor, name])
 
   return (
     <section className={styles.container}>
@@ -172,7 +174,15 @@ export const AdminTextEditor = ({
       </div>
 
       {/* Hidden input for form submission */}
-      <input id={id} name={name} required={required} type={type} {...rest} />
+      <input
+        defaultValue={defaultValue}
+        id={id}
+        name={name}
+        ref={inputRef}
+        required={required}
+        type={type}
+        {...rest}
+      />
 
       <ErrorMessageGroup>
         {errors?.map((error, index) => (
