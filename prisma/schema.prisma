@@ -402,7 +402,7 @@ model Article {
   id            String            @id @default(cuid())
   slug          String            @unique
   title         String
-  content       Json
+  content       String
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   publishedAt   DateTime?
