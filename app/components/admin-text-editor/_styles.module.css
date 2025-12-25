@@ -1,0 +1,165 @@
+.container {
+  display: grid;
+  grid-auto-flow: row;
+  gap: 4px;
+  justify-items: start;
+  width: 100%;
+}
+
+.editorWrapper {
+  width: 100%;
+  max-width: 800px;
+  min-height: 254px;
+  border: 2px solid var(--admin-border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition:
+    border-color 150ms ease-out,
+    box-shadow 150ms ease-out;
+
+  /* Focus-within for keyboard navigation */
+  &:focus-within {
+    border-color: var(--admin-purple);
+    box-shadow: var(--admin-focus-shadow);
+  }
+}
+
+/* Error State */
+.editorWrapper:has(.editorError) {
+  border-color: var(--admin-error);
+
+  &:focus-within {
+    border-color: var(--admin-error);
+    box-shadow: var(--admin-focus-shadow-error);
+  }
+}
+
+/* Tiptap Editor Content Styles */
+.editor {
+  /* Colors */
+  color: var(--admin-text-primary);
+  background-color: var(--admin-bg-primary);
+
+  /* Typography */
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-relaxed);
+
+  /* Layout */
+  padding: 16px;
+  min-height: 200px;
+  max-height: 600px;
+  overflow-y: auto;
+
+  /* Focus */
+  outline: none;
+
+  /* Prose styling for editor content */
+  & :global(.tiptap) {
+    outline: none;
+
+    /* Headings */
+    & h1 {
+      font-size: var(--font-size-heading2);
+      font-weight: var(--font-weight-bold);
+      line-height: var(--line-height-tight);
+      margin-block: 24px 16px;
+    }
+
+    & h2 {
+      font-size: var(--font-size-heading3);
+      font-weight: var(--font-weight-bold);
+      line-height: var(--line-height-tight);
+      margin-block: 20px 12px;
+    }
+
+    & h3 {
+      font-size: var(--font-size-heading4);
+      font-weight: var(--font-weight-semibold);
+      line-height: var(--line-height-tight);
+      margin-block: 16px 8px;
+    }
+
+    /* Paragraphs */
+    & p {
+      margin-block: 12px;
+    }
+
+    /* Lists */
+    & ul,
+    & ol {
+      padding-inline-start: 24px;
+      margin-block: 12px;
+    }
+
+    & li {
+      margin-block: 4px;
+    }
+
+    & ul {
+      list-style-type: disc;
+    }
+
+    & ol {
+      list-style-type: decimal;
+    }
+
+    /* Blockquote */
+    & blockquote {
+      border-inline-start: 4px solid var(--admin-border-strong);
+      padding-inline-start: 16px;
+      margin-block: 16px;
+      margin-inline: 0;
+      color: var(--admin-text-secondary);
+      font-style: italic;
+    }
+
+    /* Code */
+    & code {
+      background-color: var(--admin-bg-secondary);
+      color: var(--admin-text-primary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: var(--font-size-small);
+      font-family: "Courier New", monospace;
+    }
+
+    & pre {
+      background-color: var(--admin-bg-secondary);
+      color: var(--admin-text-primary);
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin-block: 16px;
+
+      & code {
+        background-color: transparent;
+        padding: 0;
+      }
+    }
+
+    /* Horizontal Rule */
+    & hr {
+      border: none;
+      border-block-start: 2px solid var(--admin-border);
+      margin-block: 24px;
+    }
+
+    /* Placeholder */
+    &.is-editor-empty:first-child::before {
+      color: var(--admin-text-tertiary);
+      content: attr(data-placeholder);
+      float: left;
+      height: 0;
+      pointer-events: none;
+    }
+  }
+}
+
+/* Disabled State */
+.editor:has(:disabled) {
+  background-color: var(--admin-bg-disabled);
+  color: var(--admin-text-tertiary);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
