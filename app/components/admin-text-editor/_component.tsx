@@ -1,5 +1,5 @@
 import { Placeholder } from '@tiptap/extensions'
-import { EditorContent, useEditor } from '@tiptap/react'
+import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
@@ -68,6 +68,31 @@ export const AdminTextEditor = ({
     },
   })
 
+  const editorState = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      canRedo: editor?.can().redo() ?? false,
+      canSetHardBreak: editor?.can().setHardBreak() ?? false,
+      canToggleBlockquote: editor?.can().toggleBlockquote() ?? false,
+      canToggleBold: editor?.can().toggleBold() ?? false,
+      canToggleBulletList: editor?.can().toggleBulletList() ?? false,
+      canToggleH1: editor?.can().toggleHeading({ level: 1 }) ?? false,
+      canToggleH2: editor?.can().toggleHeading({ level: 2 }) ?? false,
+      canToggleH3: editor?.can().toggleHeading({ level: 3 }) ?? false,
+      canToggleItalic: editor?.can().toggleItalic() ?? false,
+      canToggleOrderedList: editor?.can().toggleOrderedList() ?? false,
+      canUndo: editor?.can().undo() ?? false,
+      isActiveBlockquote: editor?.isActive('blockquote') ?? false,
+      isActiveBold: editor?.isActive('bold') ?? false,
+      isActiveBulletList: editor?.isActive('bulletList') ?? false,
+      isActiveH1: editor?.isActive('heading', { level: 1 }) ?? false,
+      isActiveH2: editor?.isActive('heading', { level: 2 }) ?? false,
+      isActiveH3: editor?.isActive('heading', { level: 3 }) ?? false,
+      isActiveItalic: editor?.isActive('italic') ?? false,
+      isActiveOrderedList: editor?.isActive('orderedList') ?? false,
+    }),
+  })
+
   // Update editor editable state when disabled prop changes
   useEffect(() => {
     if (editor) {
@@ -88,27 +113,28 @@ export const AdminTextEditor = ({
           <>
             <Toolbar>
               <ToolbarButton
-                active={editor.isActive('bold')}
-                disabled={!editor.can().chain().focus().toggleBold().run()}
-                onClick={() => editor.chain().focus().toggleBold().run()}
+                active={editorState?.isActiveBold}
+                disabled={!editorState?.canToggleBold}
+                onClick={() => editor?.chain().focus().toggleBold().run()}
                 title="Tučně (Ctrl+B)"
               >
                 <strong>B</strong>
               </ToolbarButton>
 
               <ToolbarButton
-                active={editor.isActive('italic')}
-                disabled={!editor.can().chain().focus().toggleItalic().run()}
-                onClick={() => editor.chain().focus().toggleItalic().run()}
+                active={editorState?.isActiveItalic}
+                disabled={!editorState?.canToggleItalic}
+                onClick={() => editor?.chain().focus().toggleItalic().run()}
                 title="Kurzíva (Ctrl+I)"
               >
                 <em>I</em>
               </ToolbarButton>
 
               <ToolbarButton
-                active={editor.isActive('heading', { level: 1 })}
+                active={editorState?.isActiveH1}
+                disabled={!editorState?.canToggleH1}
                 onClick={() =>
-                  editor.chain().focus().toggleHeading({ level: 1 }).run()
+                  editor?.chain().focus().toggleHeading({ level: 1 }).run()
                 }
                 title="Nadpis 1"
               >
@@ -116,9 +142,10 @@ export const AdminTextEditor = ({
               </ToolbarButton>
 
               <ToolbarButton
-                active={editor.isActive('heading', { level: 2 })}
+                active={editorState?.isActiveH2}
+                disabled={!editorState?.canToggleH2}
                 onClick={() =>
-                  editor.chain().focus().toggleHeading({ level: 2 }).run()
+                  editor?.chain().focus().toggleHeading({ level: 2 }).run()
                 }
                 title="Nadpis 2"
               >
@@ -126,9 +153,10 @@ export const AdminTextEditor = ({
               </ToolbarButton>
 
               <ToolbarButton
-                active={editor.isActive('heading', { level: 3 })}
+                active={editorState?.isActiveH3}
+                disabled={!editorState?.canToggleH3}
                 onClick={() =>
-                  editor.chain().focus().toggleHeading({ level: 3 }).run()
+                  editor?.chain().focus().toggleHeading({ level: 3 }).run()
                 }
                 title="Nadpis 3"
               >
@@ -136,47 +164,53 @@ export const AdminTextEditor = ({
               </ToolbarButton>
 
               <ToolbarButton
-                active={editor.isActive('bulletList')}
-                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                active={editorState?.isActiveBulletList}
+                disabled={!editorState?.canToggleBulletList}
+                onClick={() => editor?.chain().focus().toggleBulletList().run()}
                 title="Odrážkový seznam"
               >
                 •&nbsp;List
               </ToolbarButton>
 
               <ToolbarButton
-                active={editor.isActive('orderedList')}
-                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                active={editorState?.isActiveOrderedList}
+                disabled={!editorState?.canToggleOrderedList}
+                onClick={() =>
+                  editor?.chain().focus().toggleOrderedList().run()
+                }
                 title="Číslovaný seznam"
               >
                 1.&nbsp;List
               </ToolbarButton>
 
               <ToolbarButton
-                active={editor.isActive('blockquote')}
-                onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                active={editorState?.isActiveBlockquote}
+                disabled={!editorState?.canToggleBlockquote}
+                onClick={() => editor?.chain().focus().toggleBlockquote().run()}
                 title="Citace"
               >
                 "&nbsp;"
               </ToolbarButton>
 
               <ToolbarButton
-                onClick={() => editor.chain().focus().setHardBreak().run()}
+                disabled={!editorState?.canSetHardBreak}
+                onClick={() => editor?.chain().focus().setHardBreak().run()}
                 title="Zalomení řádku"
               >
                 ↵
               </ToolbarButton>
 
               <ToolbarButton
-                disabled={!editor.can().chain().focus().undo().run()}
-                onClick={() => editor.chain().focus().undo().run()}
+                disabled={!editorState?.canUndo}
+                onClick={() => editor?.chain().focus().undo().run()}
                 title="Zpět (Ctrl+Z)"
               >
                 <UndoIcon />
               </ToolbarButton>
 
               <ToolbarButton
-                disabled={!editor.can().chain().focus().redo().run()}
-                onClick={() => editor.chain().focus().redo().run()}
+                disabled={!editorState?.canRedo}
+                onClick={() => editor?.chain().focus().redo().run()}
                 title="Znovu (Ctrl+Y)"
               >
                 <RedoIcon />
@@ -192,13 +226,10 @@ export const AdminTextEditor = ({
           aria-hidden="true"
           className={styles.hiddenInput}
           defaultValue={defaultValue}
+          disabled={disabled}
           id={id}
           name={name}
-          onFocus={() => {
-            if (editor) {
-              editor.commands.focus()
-            }
-          }}
+          onFocus={() => editor?.commands.focus()}
           ref={inputRef}
           required={required}
           tabIndex={-1}
