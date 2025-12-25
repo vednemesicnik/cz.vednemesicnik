@@ -1,37 +1,50 @@
+import type { ContentState } from '@generated/prisma/enums'
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 
 type Options = {
+  articleId: string
   title: string
   slug: string
   content: string
   categoryIds?: string[]
   tagIds?: string[]
   authorId: string
+  state: ContentState
 }
 
-export const createArticle = (
+export const updateArticle = (
   request: Request,
-  { authorId, title, slug, content, categoryIds, tagIds }: Options,
+  {
+    articleId,
+    authorId,
+    title,
+    slug,
+    content,
+    categoryIds,
+    tagIds,
+    state,
+  }: Options,
 ) =>
   withAuthorPermission(request, {
-    action: 'create',
+    action: 'update',
     entity: 'article',
     execute: () =>
-      prisma.article.create({
+      prisma.article.update({
         data: {
           authorId,
           categories: {
-            connect: categoryIds?.map((id) => ({ id })) || [],
+            set: categoryIds?.map((id) => ({ id })) || [],
           },
           content,
           slug,
           tags: {
-            connect: tagIds?.map((id) => ({ id })) || [],
+            set: tagIds?.map((id) => ({ id })) || [],
           },
           title,
         },
         select: { id: true },
+        where: { id: articleId },
       }),
-    target: { authorId, state: 'draft' },
+    target: { authorId, state },
   })

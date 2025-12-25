@@ -21,8 +21,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { Input } from '~/components/input'
 import { Select } from '~/components/select'
-import { useSlug } from '~/utils/permissions/use-slug'
-import { slugify } from '~/utils/slugify'
+import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -53,7 +52,12 @@ export default function RouteComponent({
   })
 
   const [title, setTitle] = useState('')
-  const { slug, setSlug, setIsSlugFocused } = useSlug(title)
+
+  const { handleBlur, handleFocus } = useAutoSlug({
+    fieldName: fields.slug.name,
+    sourceValue: title,
+    updateFieldValue: form.update,
+  })
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
@@ -81,11 +85,9 @@ export default function RouteComponent({
             <Input
               errors={fields.slug.errors}
               label={'Slug'}
-              onBlur={() => setSlug((value) => slugify(value))}
-              onChange={(event) => setSlug(event.target.value)}
-              onFocus={() => setIsSlugFocused(true)}
+              onBlur={handleBlur}
+              onFocus={handleFocus}
               placeholder={'nazev-clanku'}
-              value={slug}
               {...getInputProps(fields.slug, { type: 'text' })}
             />
           </Fieldset>
@@ -95,7 +97,7 @@ export default function RouteComponent({
               disabled={isLoadingOrSubmitting}
               errors={fields.content.errors}
               label={'Obsah článku'}
-              placeholder={'Začněte psát obsah článku...'}
+              placeholder={'Obsah článku...'}
               {...getInputProps(fields.content, { type: 'text' })}
             />
           </Fieldset>

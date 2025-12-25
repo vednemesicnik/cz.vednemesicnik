@@ -1,5 +1,5 @@
+import { ContentState } from '@generated/prisma/enums'
 import { z } from 'zod'
-
 import { isValidJson } from '~/utils/is-valid-json'
 import { slugify } from '~/utils/slugify'
 
@@ -14,6 +14,7 @@ export const schema = z.object({
     .regex(/^\S/, 'Slug nemůže začínat mezerou')
     .regex(/^[^-]/, 'Slug nemůže začínat pomlčkou')
     .transform(slugify),
+  state: z.enum(ContentState),
   tagIds: z.array(z.string()).optional(),
   title: z
     .string({ message: 'Název je povinný' })

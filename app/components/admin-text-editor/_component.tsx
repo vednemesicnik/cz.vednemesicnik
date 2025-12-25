@@ -3,7 +3,7 @@ import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { RedoIcon } from '~/components/icons/redo-icon'
@@ -16,10 +16,13 @@ import { useField } from '@conform-to/react'
 import { Toolbar } from './components/toolbar'
 import { ToolbarButton } from './components/toolbar-button'
 
-type Props = Omit<ComponentProps<'input'>, 'onChange' | 'value'> & {
+type Props = Omit<
+  ComponentProps<'input'>,
+  'onChange' | 'value' | 'defaultValue'
+> & {
+  defaultValue?: string
   label: string
   errors?: string[]
-  defaultValue?: string // JSON string
   placeholder?: string
   className?: string
   disabled?: boolean
@@ -38,8 +41,6 @@ export const AdminTextEditor = ({
   ...rest
 }: Props) => {
   const [_, form] = useField(name)
-
-  const inputRef = useRef<HTMLInputElement>(null)
 
   const hasErrors = errors !== undefined && errors.length > 0
 
@@ -64,7 +65,7 @@ export const AdminTextEditor = ({
     },
     onUpdate: ({ editor }) => {
       const newValue = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
-      inputRef.current?.setAttribute('value', newValue)
+      form.update({ name, value: newValue })
     },
   })
 
@@ -230,7 +231,6 @@ export const AdminTextEditor = ({
           id={id}
           name={name}
           onFocus={() => editor?.commands.focus()}
-          ref={inputRef}
           required={required}
           tabIndex={-1}
           {...rest}

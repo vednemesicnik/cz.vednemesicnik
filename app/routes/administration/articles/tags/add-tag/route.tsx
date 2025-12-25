@@ -20,8 +20,7 @@ import { FormActions } from '~/components/form-actions'
 import { Input } from '~/components/input'
 import { Select } from '~/components/select'
 import { schema } from '~/routes/administration/articles/categories/add-category/_schema'
-import { useSlug } from '~/utils/permissions/use-slug'
-import { slugify } from '~/utils/slugify'
+import { useAutoSlug } from '~/utils/use-auto-slug'
 import type { Route } from './+types/route'
 
 export { action } from './_action'
@@ -51,7 +50,12 @@ export default function RouteComponent({
   })
 
   const [name, setName] = useState('')
-  const { slug, setSlug, setIsSlugFocused } = useSlug(name)
+
+  const { handleBlur, handleFocus } = useAutoSlug({
+    fieldName: fields.slug.name,
+    sourceValue: name,
+    updateFieldValue: form.update,
+  })
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
@@ -74,10 +78,8 @@ export default function RouteComponent({
           <Input
             errors={fields.slug.errors}
             label={'Slug'}
-            onBlur={() => setSlug((value) => slugify(value))}
-            onChange={(event) => setSlug(event.target.value)}
-            onFocus={() => setIsSlugFocused(true)}
-            value={slug}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
             {...getInputProps(fields.slug, { type: 'text' })}
           />
           <Select
