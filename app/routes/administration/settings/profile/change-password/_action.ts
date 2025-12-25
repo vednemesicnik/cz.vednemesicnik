@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { type ActionFunctionArgs, data, redirect } from 'react-router'
 
 import { validateCSRF } from '~/utils/csrf.server'

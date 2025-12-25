@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { AdminButton } from '~/components/admin-button'

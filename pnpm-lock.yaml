@@ -13,7 +13,7 @@ importers:
         version: 1.15.1(react@19.2.3)
       '@conform-to/zod':
         specifier: 1.15.1
-        version: 1.15.1(zod@3.24.4)
+        version: 1.15.1(zod@4.2.1)
       '@epic-web/invariant':
         specifier: 1.0.0
         version: 1.0.0
@@ -91,13 +91,13 @@ importers:
         version: 7.11.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       remix-utils:
         specifier: 7.7.0
-        version: 7.7.0(crypto-js@4.2.0)(react@19.2.3)(zod@3.24.4)
+        version: 7.7.0(crypto-js@4.2.0)(react@19.2.3)(zod@4.2.1)
       sharp:
         specifier: 0.34.5
         version: 0.34.5
       zod:
-        specifier: 3.24.4
-        version: 3.24.4
+        specifier: 4.2.1
+        version: 4.2.1
     devDependencies:
       '@biomejs/biome':
         specifier: 2.3.10
@@ -3637,8 +3637,8 @@ packages:
   zeptomatch@2.0.2:
     resolution: {integrity: sha512-H33jtSKf8Ijtb5BW6wua3G5DhnFjbFML36eFu+VdOoVY4HD9e7ggjqdM6639B+L87rjnR6Y+XeRzBXZdy52B/g==}
 
-  zod@3.24.4:
-    resolution: {integrity: sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg==}
+  zod@4.2.1:
+    resolution: {integrity: sha512-0wZ1IRqGGhMP76gLqz8EyfBXKk0J2qo2+H3fi4mcUP/KtTocoX08nmIAHl1Z2kJIZbZee8KOpBCSNPRgauucjw==}
 
 snapshots:
 
@@ -3911,10 +3911,10 @@ snapshots:
       '@conform-to/dom': 1.15.1
       react: 19.2.3
 
-  '@conform-to/zod@1.15.1(zod@3.24.4)':
+  '@conform-to/zod@1.15.1(zod@4.2.1)':
     dependencies:
       '@conform-to/dom': 1.15.1
-      zod: 3.24.4
+      zod: 4.2.1
 
   '@electric-sql/pglite-socket@0.0.6(@electric-sql/pglite@0.3.2)':
     dependencies:
@@ -6556,13 +6556,13 @@ snapshots:
     dependencies:
       type-fest: 4.41.0
 
-  remix-utils@7.7.0(crypto-js@4.2.0)(react@19.2.3)(zod@3.24.4):
+  remix-utils@7.7.0(crypto-js@4.2.0)(react@19.2.3)(zod@4.2.1):
     dependencies:
       type-fest: 4.41.0
     optionalDependencies:
       crypto-js: 4.2.0
       react: 19.2.3
-      zod: 3.24.4
+      zod: 4.2.1
 
   resolve-pkg-maps@1.0.0: {}
 
@@ -7106,4 +7106,4 @@ snapshots:
     dependencies:
       grammex: 3.1.11
 
-  zod@3.24.4: {}
+  zod@4.2.1: {}
