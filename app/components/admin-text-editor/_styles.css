@@ -1,7 +1,31 @@
 /* Tiptap Editor Content Styles - Global (not scoped by CSS modules) */
 
 .tiptap {
+  /* Colors */
+  color: var(--admin-text-primary);
+  background-color: var(--admin-bg-primary);
+
+  /* Typography */
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-relaxed);
+
+  /* Layout */
+  padding: 16px;
+  min-height: 200px;
+  max-height: 600px;
+  overflow-y: auto;
+
+  /* Focus */
   outline: none;
+
+  /* Disabled State */
+  &[contenteditable="false"] {
+    background-color: var(--admin-bg-disabled);
+    color: var(--admin-text-tertiary);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
 
   /* Headings */
   & h1 {

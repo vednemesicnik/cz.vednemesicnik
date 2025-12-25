@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import {
+  FormProvider,
   getFormProps,
   getInputProps,
   getSelectProps,
@@ -62,95 +63,100 @@ export default function RouteComponent({
     <AdminPage>
       <AdminHeadline>Přidat článek</AdminHeadline>
 
-      <Form method={'post'} {...getFormProps(form)}>
-        <AuthenticityTokenInput />
+      <FormProvider context={form.context}>
+        <Form method={'post'} {...getFormProps(form)}>
+          <AuthenticityTokenInput />
 
-        <Fieldset
-          disabled={isLoadingOrSubmitting}
-          legend={'Základní informace'}
-        >
-          <Input
-            errors={fields.title.errors}
-            label={'Název'}
-            onChange={(event) => setTitle(event.target.value)}
-            {...getInputProps(fields.title, { type: 'text' })}
-          />
-          <Input
-            errors={fields.slug.errors}
-            label={'Slug'}
-            onBlur={() => setSlug((value) => slugify(value))}
-            onChange={(event) => setSlug(event.target.value)}
-            onFocus={() => setIsSlugFocused(true)}
-            value={slug}
-            {...getInputProps(fields.slug, { type: 'text' })}
-          />
-        </Fieldset>
-
-        <Fieldset disabled={isLoadingOrSubmitting} legend={'Obsah'}>
-          <AdminTextEditor
-            errors={fields.content.errors}
-            label={'Obsah článku'}
-            placeholder={'Začněte psát obsah článku...'}
-            {...getInputProps(fields.content, { type: 'hidden' })}
-          />
-        </Fieldset>
-
-        <Fieldset disabled={isLoadingOrSubmitting} legend={'Kategorizace'}>
-          <Select
-            errors={fields.categoryIds.errors}
-            label={'Kategorie (můžete vybrat více)'}
-            multiple
-            {...getSelectProps(fields.categoryIds)}
-          >
-            {loaderData.categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            errors={fields.tagIds.errors}
-            label={'Tagy (můžete vybrat více)'}
-            multiple
-            {...getSelectProps(fields.tagIds)}
-          >
-            {loaderData.tags.map((tag) => (
-              <option key={tag.id} value={tag.id}>
-                {tag.name}
-              </option>
-            ))}
-          </Select>
-        </Fieldset>
-
-        <Fieldset
-          disabled={isLoadingOrSubmitting}
-          legend={'Informace o autorovi'}
-        >
-          <Select
-            errors={fields.authorId.errors}
-            label={'Autor'}
-            {...getSelectProps(fields.authorId)}
-          >
-            {loaderData.authors.map((author) => (
-              <option key={author.id} value={author.id}>
-                {author.name}
-              </option>
-            ))}
-          </Select>
-        </Fieldset>
-
-        <FormActions>
-          <AdminButton disabled={!canSubmit} type={'submit'}>
-            {isSubmitting ? 'Přidává se...' : 'Přidat'}
-          </AdminButton>
-          <AdminLinkButton
+          <Fieldset
             disabled={isLoadingOrSubmitting}
-            to={href('/administration/articles')}
+            legend={'Základní informace'}
           >
-            Zrušit
-          </AdminLinkButton>
-        </FormActions>
-      </Form>
+            <Input
+              errors={fields.title.errors}
+              label={'Název'}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder={'Název článku'}
+              {...getInputProps(fields.title, { type: 'text' })}
+            />
+            <Input
+              errors={fields.slug.errors}
+              label={'Slug'}
+              onBlur={() => setSlug((value) => slugify(value))}
+              onChange={(event) => setSlug(event.target.value)}
+              onFocus={() => setIsSlugFocused(true)}
+              placeholder={'nazev-clanku'}
+              value={slug}
+              {...getInputProps(fields.slug, { type: 'text' })}
+            />
+          </Fieldset>
+
+          <Fieldset disabled={isLoadingOrSubmitting} legend={'Obsah'}>
+            <AdminTextEditor
+              disabled={isLoadingOrSubmitting}
+              errors={fields.content.errors}
+              label={'Obsah článku'}
+              placeholder={'Začněte psát obsah článku...'}
+              {...getInputProps(fields.content, { type: 'text' })}
+            />
+          </Fieldset>
+
+          <Fieldset disabled={isLoadingOrSubmitting} legend={'Kategorizace'}>
+            <Select
+              errors={fields.categoryIds.errors}
+              label={'Kategorie (můžete vybrat více)'}
+              multiple
+              {...getSelectProps(fields.categoryIds)}
+            >
+              {loaderData.categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+            <Select
+              errors={fields.tagIds.errors}
+              label={'Tagy (můžete vybrat více)'}
+              multiple
+              {...getSelectProps(fields.tagIds)}
+            >
+              {loaderData.tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </Select>
+          </Fieldset>
+
+          <Fieldset
+            disabled={isLoadingOrSubmitting}
+            legend={'Informace o autorovi'}
+          >
+            <Select
+              errors={fields.authorId.errors}
+              label={'Autor'}
+              {...getSelectProps(fields.authorId)}
+            >
+              {loaderData.authors.map((author) => (
+                <option key={author.id} value={author.id}>
+                  {author.name}
+                </option>
+              ))}
+            </Select>
+          </Fieldset>
+
+          <FormActions>
+            <AdminButton disabled={!canSubmit} type={'submit'}>
+              {isSubmitting ? 'Přidává se...' : 'Přidat'}
+            </AdminButton>
+            <AdminLinkButton
+              disabled={isLoadingOrSubmitting}
+              to={href('/administration/articles')}
+            >
+              Zrušit
+            </AdminLinkButton>
+          </FormActions>
+        </Form>
+      </FormProvider>
     </AdminPage>
   )
 }

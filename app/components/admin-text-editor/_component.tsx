@@ -3,13 +3,16 @@ import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
+import { RedoIcon } from '~/components/icons/redo-icon'
+import { UndoIcon } from '~/components/icons/undo-icon'
 import { Label } from '~/components/label'
 import { createEditorContent } from '~/utils/create-editor-content'
 import styles from './_styles.module.css'
 import './_styles.css'
+import { useField } from '@conform-to/react'
 import { Toolbar } from './components/toolbar'
 import { ToolbarButton } from './components/toolbar-button'
 
@@ -18,30 +21,31 @@ type Props = Omit<ComponentProps<'input'>, 'onChange' | 'value'> & {
   errors?: string[]
   defaultValue?: string // JSON string
   placeholder?: string
+  className?: string
+  disabled?: boolean
 }
 
 export const AdminTextEditor = ({
   label,
   errors,
   id,
-  name,
+  name = '',
   required,
   defaultValue,
   placeholder = 'Začněte psát...',
-  type = 'hidden',
+  className,
+  disabled = false,
   ...rest
 }: Props) => {
+  const [_, form] = useField(name)
+
   const inputRef = useRef<HTMLInputElement>(null)
 
   const hasErrors = errors !== undefined && errors.length > 0
 
   const editor = useEditor({
     content: createEditorContent(defaultValue),
-    editorProps: {
-      attributes: {
-        class: clsx(styles.editor, hasErrors && styles.editorError),
-      },
-    },
+    editable: !disabled,
     extensions: [
       StarterKit.configure({
         heading: {
@@ -53,22 +57,33 @@ export const AdminTextEditor = ({
       }),
     ],
     immediatelyRender: false,
-    onUpdate: ({ editor }) => {
-      const input = inputRef.current
-
-      if (input !== null) {
-        input.value = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
+    onBlur: () => {
+      if (form.dirty) {
+        form.validate({ name })
       }
+    },
+    onUpdate: ({ editor }) => {
+      const newValue = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
+      inputRef.current?.setAttribute('value', newValue)
     },
   })
 
+  // Update editor editable state when disabled prop changes
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!disabled)
+    }
+  }, [editor, disabled])
+
   return (
-    <section className={styles.container}>
+    <section className={clsx(styles.container, className)}>
       <Label htmlFor={id} required={required}>
         {label}
       </Label>
 
-      <div className={styles.editorWrapper}>
+      <div
+        className={clsx(styles.editorWrapper, hasErrors && styles.editorError)}
+      >
         {editor && (
           <>
             <Toolbar>
@@ -156,7 +171,7 @@ export const AdminTextEditor = ({
                 onClick={() => editor.chain().focus().undo().run()}
                 title="Zpět (Ctrl+Z)"
               >
-                ↶
+                <UndoIcon />
               </ToolbarButton>
 
               <ToolbarButton
@@ -164,25 +179,32 @@ export const AdminTextEditor = ({
                 onClick={() => editor.chain().focus().redo().run()}
                 title="Znovu (Ctrl+Y)"
               >
-                ↷
+                <RedoIcon />
               </ToolbarButton>
             </Toolbar>
 
             <EditorContent editor={editor} />
           </>
         )}
-      </div>
 
-      {/* Hidden input for form submission */}
-      <input
-        defaultValue={defaultValue}
-        id={id}
-        name={name}
-        ref={inputRef}
-        required={required}
-        type={type}
-        {...rest}
-      />
+        {/* Hidden input for form submission and focus management */}
+        <input
+          aria-hidden="true"
+          className={styles.hiddenInput}
+          defaultValue={defaultValue}
+          id={id}
+          name={name}
+          onFocus={() => {
+            if (editor) {
+              editor.commands.focus()
+            }
+          }}
+          ref={inputRef}
+          required={required}
+          tabIndex={-1}
+          {...rest}
+        />
+      </div>
 
       <ErrorMessageGroup>
         {errors?.map((error, index) => (
