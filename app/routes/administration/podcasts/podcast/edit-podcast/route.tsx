@@ -7,9 +7,9 @@ import {
   useForm,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
+import { AdminButtonLink } from '~/components/admin-button-link'
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
@@ -21,6 +21,7 @@ import { FormActions } from '~/components/form-actions'
 import { Input } from '~/components/input'
 import { Select } from '~/components/select'
 import { TextArea } from '~/components/text-area'
+import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -50,12 +51,18 @@ export default function RouteComponent({
     shouldValidate: 'onSubmit',
   })
 
-  const [title, setTitle] = useState(podcast.title)
-  const { handleBlur, handleFocus } = useAutoSlug({
+  const { handleBlur } = useAutoSlug({
     fieldName: fields.slug.name,
-    sourceValue: title,
+    sourceValue: undefined,
     updateFieldValue: form.update,
   })
+
+  const regenerateSlug = () => {
+    form.update({
+      name: fields.slug.name,
+      value: slugify(fields.title.value || ''),
+    })
+  }
 
   const handleFileChange = (name: string, dirty: boolean) => () => {
     if (dirty) {
@@ -82,17 +89,21 @@ export default function RouteComponent({
           <Input
             errors={fields.title.errors}
             label={'Název'}
-            onChange={(event) => setTitle(event.target.value)}
             placeholder={'Název podcastu'}
-            value={title}
             {...getInputProps(fields.title, { type: 'text' })}
           />
 
+          <AdminButtonLink
+            disabled={isLoadingOrSubmitting}
+            onClick={regenerateSlug}
+            type={'button'}
+          >
+            Vygenerovat nový slug
+          </AdminButtonLink>
           <Input
             errors={fields.slug.errors}
             label={'Slug'}
             onBlur={handleBlur}
-            onFocus={handleFocus}
             placeholder={'nazev-podcastu'}
             {...getInputProps(fields.slug, { type: 'text' })}
           />

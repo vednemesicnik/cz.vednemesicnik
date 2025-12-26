@@ -13,7 +13,7 @@ type Options = {
   state: ContentState
 }
 
-export const updateArticle = (
+export const updateArticle = async (
   request: Request,
   {
     articleId,
@@ -34,12 +34,13 @@ export const updateArticle = (
         data: {
           authorId,
           categories: {
-            set: categoryIds?.map((id) => ({ id })) || [],
+            set: categoryIds?.map((id) => ({ id })) ?? [],
           },
           content,
           slug,
+          state,
           tags: {
-            set: tagIds?.map((id) => ({ id })) || [],
+            set: tagIds?.map((id) => ({ id })) ?? [],
           },
           title,
         },

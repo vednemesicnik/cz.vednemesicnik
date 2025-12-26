@@ -7,9 +7,9 @@ import {
   useForm,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
+import { AdminButtonLink } from '~/components/admin-button-link'
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
@@ -19,6 +19,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { Input } from '~/components/input'
 import { Select } from '~/components/select'
+import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -54,13 +55,18 @@ export default function RouteComponent({
     shouldValidate: 'onSubmit',
   })
 
-  const [name, setName] = useState(loaderData.tag.name)
-
-  const { handleBlur, handleFocus } = useAutoSlug({
+  const { handleBlur } = useAutoSlug({
     fieldName: fields.slug.name,
-    sourceValue: name,
+    sourceValue: undefined,
     updateFieldValue: form.update,
   })
+
+  const regenerateSlug = () => {
+    form.update({
+      name: fields.slug.name,
+      value: slugify(fields.name.value || ''),
+    })
+  }
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
@@ -77,16 +83,23 @@ export default function RouteComponent({
           <Input
             errors={fields.name.errors}
             label={'Název'}
-            onChange={(event) => setName(event.target.value)}
             {...getInputProps(fields.name, { type: 'text' })}
           />
+
+          <AdminButtonLink
+            disabled={isLoadingOrSubmitting}
+            onClick={regenerateSlug}
+            type={'button'}
+          >
+            Vygenerovat nový slug
+          </AdminButtonLink>
           <Input
             errors={fields.slug.errors}
             label={'Slug'}
             onBlur={handleBlur}
-            onFocus={handleFocus}
             {...getInputProps(fields.slug, { type: 'text' })}
           />
+
           <Select
             errors={fields.authorId.errors}
             label={'Autor'}

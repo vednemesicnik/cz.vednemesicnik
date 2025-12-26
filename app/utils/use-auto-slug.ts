@@ -3,7 +3,7 @@ import { type FocusEvent, useEffect, useState } from 'react'
 import { slugify } from '~/utils/slugify'
 
 type UseAutoSlugOptions = {
-  sourceValue: string
+  sourceValue: string | undefined
   updateFieldValue: FormMetadata['update']
   fieldName: string
 }
@@ -13,17 +13,20 @@ export const useAutoSlug = ({
   updateFieldValue,
   fieldName,
 }: UseAutoSlugOptions) => {
-  const [isSlugFocused, setIsSlugFocused] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
 
   useEffect(() => {
-    if (!isSlugFocused) {
+    if (isFocused) return
+
+    if (sourceValue !== undefined) {
       updateFieldValue({ name: fieldName, value: slugify(sourceValue) })
     }
-  }, [fieldName, isSlugFocused, updateFieldValue, sourceValue])
+  }, [fieldName, updateFieldValue, sourceValue, isFocused])
 
-  const handleFocus = () => setIsSlugFocused(true)
+  const handleFocus = () => setIsFocused(true)
 
   const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+    setIsFocused(false)
     updateFieldValue({ name: fieldName, value: slugify(event.target.value) })
   }
 

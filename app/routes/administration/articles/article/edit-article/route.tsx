@@ -8,9 +8,9 @@ import {
   useForm,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
+import { AdminButtonLink } from '~/components/admin-button-link'
 import { AdminHeadline } from '~/components/admin-headline'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
@@ -21,6 +21,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { Input } from '~/components/input'
 import { Select } from '~/components/select'
+import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -59,13 +60,18 @@ export default function RouteComponent({
     shouldValidate: 'onSubmit',
   })
 
-  const [title, setTitle] = useState(article.title)
-
-  const { handleBlur, handleFocus } = useAutoSlug({
+  const { handleBlur } = useAutoSlug({
     fieldName: fields.slug.name,
-    sourceValue: title,
+    sourceValue: undefined,
     updateFieldValue: form.update,
   })
+
+  const regenerateSlug = () => {
+    form.update({
+      name: fields.slug.name,
+      value: slugify(fields.title.value || ''),
+    })
+  }
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
@@ -84,39 +90,44 @@ export default function RouteComponent({
             legend={'Základní informace'}
           >
             <Input
+              {...getInputProps(fields.title, { type: 'text' })}
               errors={fields.title.errors}
               label={'Název'}
-              onChange={(event) => setTitle(event.target.value)}
               placeholder={'Název článku'}
-              {...getInputProps(fields.title, { type: 'text' })}
             />
+            <AdminButtonLink
+              disabled={isLoadingOrSubmitting}
+              onClick={regenerateSlug}
+              type="button"
+            >
+              Vygenerovat nový slug
+            </AdminButtonLink>
             <Input
+              {...getInputProps(fields.slug, { type: 'text' })}
               errors={fields.slug.errors}
               label={'Slug'}
               onBlur={handleBlur}
-              onFocus={handleFocus}
               placeholder={'nazev-clanku'}
-              {...getInputProps(fields.slug, { type: 'text' })}
             />
           </Fieldset>
 
           <Fieldset disabled={isLoadingOrSubmitting} legend={'Obsah'}>
             <AdminTextEditor
+              {...getInputProps(fields.content, { type: 'text' })}
               defaultValue={fields.content.defaultValue}
               disabled={isLoadingOrSubmitting}
               errors={fields.content.errors}
               label={'Obsah článku'}
               placeholder={'Obsah článku...'}
-              {...getInputProps(fields.content, { type: 'text' })}
             />
           </Fieldset>
 
           <Fieldset disabled={isLoadingOrSubmitting} legend={'Kategorizace'}>
             <Select
+              {...getSelectProps(fields.categoryIds)}
               errors={fields.categoryIds.errors}
               label={'Kategorie (můžete vybrat více)'}
               multiple
-              {...getSelectProps(fields.categoryIds)}
             >
               {loaderData.categories.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -125,10 +136,10 @@ export default function RouteComponent({
               ))}
             </Select>
             <Select
+              {...getSelectProps(fields.tagIds)}
               errors={fields.tagIds.errors}
               label={'Tagy (můžete vybrat více)'}
               multiple
-              {...getSelectProps(fields.tagIds)}
             >
               {loaderData.tags.map((tag) => (
                 <option key={tag.id} value={tag.id}>
@@ -143,9 +154,9 @@ export default function RouteComponent({
             legend={'Informace o autorovi'}
           >
             <Select
+              {...getSelectProps(fields.authorId)}
               errors={fields.authorId.errors}
               label={'Autor'}
-              {...getSelectProps(fields.authorId)}
             >
               {loaderData.authors.map((author) => (
                 <option key={author.id} value={author.id}>
@@ -154,6 +165,8 @@ export default function RouteComponent({
               ))}
             </Select>
           </Fieldset>
+
+          <input {...getInputProps(fields.state, { type: 'hidden' })} />
 
           <FormActions>
             <AdminButton disabled={!canSubmit} type={'submit'}>
