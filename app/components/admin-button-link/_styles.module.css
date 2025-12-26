@@ -1,0 +1,53 @@
+.buttonLink {
+  @layer variant {
+    /* Reset button styles */
+    display: inline;
+    padding: 0;
+    border: none;
+    background: none;
+
+    /* Typography */
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    line-height: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    /* Link color */
+    color: var(--admin-purple);
+
+    /* Interaction */
+    cursor: pointer;
+    user-select: none;
+
+    /* Transitions */
+    transition:
+      color 150ms ease-out,
+      text-decoration-color 150ms ease-out;
+
+    /* Hover State */
+    &:hover:not(:disabled) {
+      color: var(--admin-purple-hover);
+    }
+
+    /* Active State */
+    &:active:not(:disabled) {
+      color: var(--admin-purple-active);
+    }
+
+    /* Focus State */
+    &:focus-visible {
+      color: var(--admin-purple-hover);
+      outline: 2px solid var(--admin-purple);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+
+    /* Disabled State */
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      text-decoration-color: currentColor;
+    }
+  }
+}
