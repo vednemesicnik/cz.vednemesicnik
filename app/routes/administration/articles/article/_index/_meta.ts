@@ -3,7 +3,7 @@ import type { Route } from './+types/route'
 
 export const meta = ({ loaderData }: Route.MetaArgs) => {
   const title = getPageTitle(
-    `Administrace - Články - Kategorie - ${loaderData?.category.name ?? 'Detail'}`,
+    `Administrace - Články - ${loaderData?.article.title ?? 'Detail'}`,
   )
 
   return [{ title }]
