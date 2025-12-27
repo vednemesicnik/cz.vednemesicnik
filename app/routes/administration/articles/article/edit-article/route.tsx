@@ -121,11 +121,6 @@ export default function RouteComponent({
               defaultValue={fields.content.defaultValue}
               disabled={isLoadingOrSubmitting}
               errors={fields.content.errors}
-              formMeta={{
-                dirty: form.dirty,
-                update: form.update,
-                validate: form.validate,
-              }}
               label={'Obsah článku'}
               placeholder={'Obsah článku...'}
             />

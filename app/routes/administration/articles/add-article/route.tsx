@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import {
+  FormProvider,
   getFormProps,
   getInputProps,
   getSelectProps,
@@ -67,114 +68,111 @@ export default function RouteComponent({
     <AdminPage>
       <AdminHeadline>Přidat článek</AdminHeadline>
 
-      <Form
-        encType={'multipart/form-data'}
-        method={'post'}
-        {...getFormProps(form)}
-      >
-        <AuthenticityTokenInput />
-
-        <Fieldset
-          disabled={isLoadingOrSubmitting}
-          legend={'Základní informace'}
+      <FormProvider context={form.context}>
+        <Form
+          encType={'multipart/form-data'}
+          method={'post'}
+          {...getFormProps(form)}
         >
-          <Input
-            {...getInputProps(fields.title, { type: 'text' })}
-            errors={fields.title.errors}
-            label={'Název'}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder={'Název článku'}
-          />
-          <Input
-            {...getInputProps(fields.slug, { type: 'text' })}
-            errors={fields.slug.errors}
-            label={'Slug'}
-            onBlur={handleBlur}
-            onFocus={handleFocus}
-            placeholder={'nazev-clanku'}
-          />
-        </Fieldset>
+          <AuthenticityTokenInput />
 
-        <Fieldset disabled={isLoadingOrSubmitting} legend={'Obsah'}>
-          <AdminTextEditor
-            {...getInputProps(fields.content, { type: 'text' })}
+          <Fieldset
             disabled={isLoadingOrSubmitting}
-            errors={fields.content.errors}
-            formMeta={{
-              dirty: form.dirty,
-              update: form.update,
-              validate: form.validate,
-            }}
-            label={'Obsah článku'}
-            placeholder={'Obsah článku...'}
-          />
-        </Fieldset>
-
-        <Fieldset disabled={isLoadingOrSubmitting} legend={'Kategorizace'}>
-          <Select
-            errors={fields.categoryIds.errors}
-            label={'Kategorie (můžete vybrat více)'}
-            multiple
-            {...getSelectProps(fields.categoryIds)}
+            legend={'Základní informace'}
           >
-            {loaderData.categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            errors={fields.tagIds.errors}
-            label={'Tagy (můžete vybrat více)'}
-            multiple
-            {...getSelectProps(fields.tagIds)}
-          >
-            {loaderData.tags.map((tag) => (
-              <option key={tag.id} value={tag.id}>
-                {tag.name}
-              </option>
-            ))}
-          </Select>
-        </Fieldset>
+            <Input
+              {...getInputProps(fields.title, { type: 'text' })}
+              errors={fields.title.errors}
+              label={'Název'}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder={'Název článku'}
+            />
+            <Input
+              {...getInputProps(fields.slug, { type: 'text' })}
+              errors={fields.slug.errors}
+              label={'Slug'}
+              onBlur={handleBlur}
+              onFocus={handleFocus}
+              placeholder={'nazev-clanku'}
+            />
+          </Fieldset>
 
-        <Fieldset disabled={isLoadingOrSubmitting} legend={'Obrázky'}>
-          <AdminImagesInput
-            errors={fields.images.errors}
-            featuredIndexName={fields.featuredImageIndex.name}
-            label={'Obrázky článku'}
-            {...getInputProps(fields.images, { type: 'file' })}
-          />
-        </Fieldset>
+          <Fieldset disabled={isLoadingOrSubmitting} legend={'Obsah'}>
+            <AdminTextEditor
+              {...getInputProps(fields.content, { type: 'text' })}
+              disabled={isLoadingOrSubmitting}
+              errors={fields.content.errors}
+              label={'Obsah článku'}
+              placeholder={'Obsah článku...'}
+            />
+          </Fieldset>
 
-        <Fieldset
-          disabled={isLoadingOrSubmitting}
-          legend={'Informace o autorovi'}
-        >
-          <Select
-            {...getSelectProps(fields.authorId)}
-            errors={fields.authorId.errors}
-            label={'Autor'}
-          >
-            {loaderData.authors.map((author) => (
-              <option key={author.id} value={author.id}>
-                {author.name}
-              </option>
-            ))}
-          </Select>
-        </Fieldset>
+          <Fieldset disabled={isLoadingOrSubmitting} legend={'Kategorizace'}>
+            <Select
+              errors={fields.categoryIds.errors}
+              label={'Kategorie (můžete vybrat více)'}
+              multiple
+              {...getSelectProps(fields.categoryIds)}
+            >
+              {loaderData.categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+            <Select
+              errors={fields.tagIds.errors}
+              label={'Tagy (můžete vybrat více)'}
+              multiple
+              {...getSelectProps(fields.tagIds)}
+            >
+              {loaderData.tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </Select>
+          </Fieldset>
 
-        <FormActions>
-          <AdminButton disabled={!canSubmit} type={'submit'}>
-            {isSubmitting ? 'Přidává se...' : 'Přidat'}
-          </AdminButton>
-          <AdminLinkButton
+          <Fieldset disabled={isLoadingOrSubmitting} legend={'Obrázky'}>
+            <AdminImagesInput
+              errors={fields.images.errors}
+              featuredIndexName={fields.featuredImageIndex.name}
+              label={'Obrázky článku'}
+              {...getInputProps(fields.images, { type: 'file' })}
+            />
+          </Fieldset>
+
+          <Fieldset
             disabled={isLoadingOrSubmitting}
-            to={href('/administration/articles')}
+            legend={'Informace o autorovi'}
           >
-            Zrušit
-          </AdminLinkButton>
-        </FormActions>
-      </Form>
+            <Select
+              {...getSelectProps(fields.authorId)}
+              errors={fields.authorId.errors}
+              label={'Autor'}
+            >
+              {loaderData.authors.map((author) => (
+                <option key={author.id} value={author.id}>
+                  {author.name}
+                </option>
+              ))}
+            </Select>
+          </Fieldset>
+
+          <FormActions>
+            <AdminButton disabled={!canSubmit} type={'submit'}>
+              {isSubmitting ? 'Přidává se...' : 'Přidat'}
+            </AdminButton>
+            <AdminLinkButton
+              disabled={isLoadingOrSubmitting}
+              to={href('/administration/articles')}
+            >
+              Zrušit
+            </AdminLinkButton>
+          </FormActions>
+        </Form>
+      </FormProvider>
     </AdminPage>
   )
 }

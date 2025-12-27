@@ -12,7 +12,7 @@ import { Label } from '~/components/label'
 import { createEditorContent } from '~/utils/create-editor-content'
 import styles from './_styles.module.css'
 import './_styles.css'
-import type { FormMetadata } from '@conform-to/react'
+import { useField } from '@conform-to/react'
 import { Toolbar } from './components/toolbar'
 import { ToolbarButton } from './components/toolbar-button'
 
@@ -23,15 +23,9 @@ type Props = Omit<ComponentProps<'input'>, 'onChange' | 'defaultValue'> & {
   placeholder?: string
   className?: string
   disabled?: boolean
-  formMeta: {
-    dirty: FormMetadata['dirty']
-    validate: FormMetadata['validate']
-    update: FormMetadata['update']
-  }
 }
 
 export const AdminTextEditor = ({
-  formMeta,
   label,
   errors,
   id,
@@ -43,6 +37,7 @@ export const AdminTextEditor = ({
   disabled = false,
   ...rest
 }: Props) => {
+  const [_meta, form] = useField(name)
   const hasErrors = errors !== undefined && errors.length > 0
 
   const editor = useEditor({
@@ -60,14 +55,14 @@ export const AdminTextEditor = ({
     ],
     immediatelyRender: false,
     onBlur: ({ editor }) => {
-      if (!disabled && formMeta.dirty && editor.isEditable) {
-        formMeta.validate({ name })
+      if (!disabled && form.dirty && editor.isEditable) {
+        form.validate({ name })
       }
     },
     onUpdate: ({ editor }) => {
       if (!disabled && editor.isEditable) {
         const newValue = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
-        formMeta.update({ name, value: newValue })
+        form.update({ name, value: newValue })
       }
     },
     shouldRerenderOnTransaction: false,
