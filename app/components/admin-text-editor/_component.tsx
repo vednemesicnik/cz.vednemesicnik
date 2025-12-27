@@ -12,23 +12,26 @@ import { Label } from '~/components/label'
 import { createEditorContent } from '~/utils/create-editor-content'
 import styles from './_styles.module.css'
 import './_styles.css'
-import { useField } from '@conform-to/react'
+import type { FormMetadata } from '@conform-to/react'
 import { Toolbar } from './components/toolbar'
 import { ToolbarButton } from './components/toolbar-button'
 
-type Props = Omit<
-  ComponentProps<'input'>,
-  'onChange' | 'value' | 'defaultValue'
-> & {
+type Props = Omit<ComponentProps<'input'>, 'onChange' | 'defaultValue'> & {
   defaultValue?: string
   label: string
   errors?: string[]
   placeholder?: string
   className?: string
   disabled?: boolean
+  formMeta: {
+    dirty: FormMetadata['dirty']
+    validate: FormMetadata['validate']
+    update: FormMetadata['update']
+  }
 }
 
 export const AdminTextEditor = ({
+  formMeta,
   label,
   errors,
   id,
@@ -40,8 +43,6 @@ export const AdminTextEditor = ({
   disabled = false,
   ...rest
 }: Props) => {
-  const [_, form] = useField(name)
-
   const hasErrors = errors !== undefined && errors.length > 0
 
   const editor = useEditor({
@@ -58,15 +59,18 @@ export const AdminTextEditor = ({
       }),
     ],
     immediatelyRender: false,
-    onBlur: () => {
-      if (form.dirty) {
-        form.validate({ name })
+    onBlur: ({ editor }) => {
+      if (!disabled && formMeta.dirty && editor.isEditable) {
+        formMeta.validate({ name })
       }
     },
     onUpdate: ({ editor }) => {
-      const newValue = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
-      form.update({ name, value: newValue })
+      if (!disabled && editor.isEditable) {
+        const newValue = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
+        formMeta.update({ name, value: newValue })
+      }
     },
+    shouldRerenderOnTransaction: false,
   })
 
   const editorState = useEditorState({
@@ -224,6 +228,7 @@ export const AdminTextEditor = ({
 
         {/* Hidden input for form submission and focus management */}
         <input
+          {...rest}
           aria-hidden="true"
           className={styles.hiddenInput}
           defaultValue={defaultValue}
@@ -233,7 +238,6 @@ export const AdminTextEditor = ({
           onFocus={() => editor?.commands.focus()}
           required={required}
           tabIndex={-1}
-          {...rest}
         />
       </div>
 

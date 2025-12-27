@@ -13,11 +13,11 @@ import { AdminDetailItem } from '~/components/admin-detail-item'
 import { AdminDetailList } from '~/components/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin-detail-section'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminImageGallery } from '~/components/admin-image-gallery'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AdminStateBadge } from '~/components/admin-state-badge'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpward } from '~/components/icons/arrow-upward'
 import { CheckIcon } from '~/components/icons/check-icon'
@@ -221,30 +221,21 @@ export default function RouteComponent({
       </AdminDetailSection>
 
       <AdminDetailSection title="Obrázky">
-        <AdminDetailList>
-          <AdminDetailItem label="Hlavní obrázek">
-            {article.hasFeaturedImage && article.featuredImageUrl ? (
-              <Hyperlink href={article.featuredImageUrl}>
-                Zobrazit hlavní obrázek
-              </Hyperlink>
-            ) : (
-              'Žádný hlavní obrázek'
-            )}
-          </AdminDetailItem>
-          <AdminDetailItem label="Galerie obrázků">
-            {article.images.length > 0 ? (
-              <ul>
-                {article.images.map((img, index) => (
-                  <li key={img.id}>
-                    <Hyperlink href={img.url}>Obrázek {index + 1}</Hyperlink>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              'Žádné obrázky v galerii'
-            )}
-          </AdminDetailItem>
-        </AdminDetailList>
+        {article.images.length > 0 ? (
+          <AdminImageGallery
+            featuredImageId={article.featuredImageId}
+            images={article.images.map((img) => ({
+              id: img.id,
+              src: img.url,
+            }))}
+          />
+        ) : (
+          <AdminDetailList>
+            <AdminDetailItem label="Galerie obrázků">
+              Žádné obrázky
+            </AdminDetailItem>
+          </AdminDetailList>
+        )}
       </AdminDetailSection>
 
       <AdminDetailSection title="Metadata">

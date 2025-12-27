@@ -1,0 +1,126 @@
+.container {
+  display: grid;
+  grid-auto-flow: row;
+  gap: 4px;
+  justify-items: start;
+  width: 100%;
+}
+
+.fileArea {
+  display: grid;
+  grid-template-rows: 1fr min-content;
+  border: 2px solid var(--admin-border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 600px;
+  padding: 36px 36px 12px 36px;
+  justify-items: start;
+  background-color: var(--admin-bg-primary);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:focus-within {
+    border-color: var(--admin-purple);
+    box-shadow: var(--admin-focus-shadow);
+  }
+}
+
+.inputArea {
+  display: grid;
+  grid-template-areas: "input";
+  border: 2px dashed var(--admin-border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  width: 100%;
+  height: 300px;
+  max-height: 30dvh;
+  justify-items: stretch;
+  align-items: stretch;
+  background-color: var(--admin-bg-secondary);
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--admin-border-hover);
+  }
+}
+
+.input {
+  grid-area: input;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.inputData {
+  grid-area: input;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  align-items: center;
+  justify-self: center;
+  align-self: center;
+  color: var(--admin-text-tertiary);
+}
+
+.inputDataSet {
+  color: var(--admin-text-primary);
+}
+
+.fileName {
+  font-size: var(--font-size-heading6);
+  font-weight: var(--font-weight-medium);
+  color: inherit;
+}
+
+.fileIcon {
+  width: 48px;
+  height: 48px;
+}
+
+/* Preview section */
+.previewSection {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.imagePreview {
+  display: grid;
+  gap: 8px;
+  border: 2px solid var(--admin-border);
+  border-radius: 8px;
+  padding: 8px;
+  background-color: var(--admin-bg-secondary);
+}
+
+.previewImage {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.featuredLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-base);
+  color: var(--admin-text-primary);
+  cursor: pointer;
+}
+
+.featuredRadio {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}

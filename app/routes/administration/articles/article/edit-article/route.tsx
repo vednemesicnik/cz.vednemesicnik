@@ -82,7 +82,11 @@ export default function RouteComponent({
       <AdminHeadline>Upravit článek</AdminHeadline>
 
       <FormProvider context={form.context}>
-        <Form method={'post'} {...getFormProps(form)}>
+        <Form
+          encType={'multipart/form-data'}
+          method={'post'}
+          {...getFormProps(form)}
+        >
           <AuthenticityTokenInput />
 
           <Fieldset
@@ -117,6 +121,11 @@ export default function RouteComponent({
               defaultValue={fields.content.defaultValue}
               disabled={isLoadingOrSubmitting}
               errors={fields.content.errors}
+              formMeta={{
+                dirty: form.dirty,
+                update: form.update,
+                validate: form.validate,
+              }}
               label={'Obsah článku'}
               placeholder={'Obsah článku...'}
             />

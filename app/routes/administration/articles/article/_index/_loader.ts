@@ -1,5 +1,4 @@
-import { href } from 'react-router'
-
+import { createArticleImageUrl } from '~/utils/create-article-image-url'
 import { prisma } from '~/utils/db.server'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
@@ -188,17 +187,16 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       categories: article.categories,
       content: article.content,
       createdAt: getFormattedPublishDate(article.createdAt),
+      featuredImageId: article.featuredImage?.id,
       featuredImageUrl: article.featuredImage
-        ? href('/resources/article-image/:imageId', {
-            imageId: article.featuredImage.id,
-          })
+        ? createArticleImageUrl(article.featuredImage.id)
         : null,
       hasCoordinatorReview: !!coordinatorReview,
       hasFeaturedImage: !!article.featuredImage,
       id: article.id,
-      images: article.images.map((img) => ({
-        id: img.id,
-        url: href('/resources/article-image/:imageId', { imageId: img.id }),
+      images: article.images.map((image) => ({
+        id: image.id,
+        url: createArticleImageUrl(image.id),
       })),
       publishedAt: getFormattedPublishDate(article.publishedAt),
       reviews: article.reviews.map((review) => ({
