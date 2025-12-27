@@ -1,12 +1,13 @@
 import { z } from 'zod'
 
+import { featuredImageSchema } from '~/config/featured-image-config'
 import { slugify } from '~/utils/slugify'
 
 export const schema = z.object({
   authorId: z.string({ message: 'Autor je povinný' }),
   categoryIds: z.array(z.string()).optional(),
   content: z.string({ message: 'Obsah je povinný' }),
-  featuredImageIndex: z.coerce.number().optional(),
+  featuredImage: featuredImageSchema,
   images: z
     .array(z.instanceof(File))
     .optional()

@@ -31,7 +31,7 @@ export async function action({ request }: Route.ActionArgs) {
     categoryIds,
     tagIds,
     images,
-    featuredImageIndex,
+    featuredImage,
     content,
   } = submission.value
 
@@ -39,7 +39,7 @@ export async function action({ request }: Route.ActionArgs) {
     authorId,
     categoryIds,
     content,
-    featuredImageIndex,
+    featuredImage,
     images,
     slug,
     tagIds,

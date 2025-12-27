@@ -1,62 +1,72 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 
+type PreviewItem = {
+  src: string
+  toDelete: boolean
+}
+
+type FileItem = {
+  file: File
+  toDelete: boolean
+}
+
 type Options = {
-  onBeforeDelete?: (index: number) => void
+  onBeforeToggleDelete?: (index: number) => void
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void
 }
 
-export const useImagesInput = ({ onBeforeDelete, onChange }: Options) => {
-  const [files, setFiles] = useState<File[]>([])
-  const [previews, setPreviews] = useState<string[]>([])
+export const useImagesInput = ({ onBeforeToggleDelete, onChange }: Options) => {
+  const [files, setFiles] = useState<FileItem[]>([])
+  const [previews, setPreviews] = useState<PreviewItem[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || [])
-    const allFiles = [...files, ...selectedFiles]
+    const newFileItems: FileItem[] = selectedFiles.map((file) => ({
+      file,
+      toDelete: false,
+    }))
 
-    // Update state
+    const allFiles = [...files, ...newFileItems]
     setFiles(allFiles)
 
-    // Update input's files using DataTransfer so all files are submitted
-    const dataTransfer = new DataTransfer()
-    for (const file of allFiles) {
-      dataTransfer.items.add(file)
-    }
-    event.target.files = dataTransfer.files
-
     // Create new preview URLs and add to existing ones
-    const newUrls = selectedFiles.map((file) => URL.createObjectURL(file))
-    setPreviews((prev) => [...prev, ...newUrls])
+    const newPreviews: PreviewItem[] = selectedFiles.map((file) => ({
+      src: URL.createObjectURL(file),
+      toDelete: false,
+    }))
+    setPreviews((prev) => [...prev, ...newPreviews])
 
     if (onChange !== undefined) {
       onChange(event)
     }
   }
 
-  const handleDelete = (index: number) => {
-    // Call callback before delete
-    if (onBeforeDelete !== undefined) {
-      onBeforeDelete(index)
+  const handleToggleDelete = (index: number) => () => {
+    // Call callback before toggle
+    if (onBeforeToggleDelete !== undefined) {
+      onBeforeToggleDelete(index)
     }
 
-    // Revoke the preview URL to free memory
-    URL.revokeObjectURL(previews[index])
-
-    // Remove file and preview from state
-    const newFiles = files.filter((_, fileIndex) => fileIndex !== index)
-    const newPreviews = previews.filter(
-      (_, previewIndex) => previewIndex !== index,
+    // Toggle toDelete flag for both files and previews
+    const updatedFiles = files.map((item, i) =>
+      i === index ? { ...item, toDelete: !item.toDelete } : item,
+    )
+    setFiles(updatedFiles)
+    setPreviews((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, toDelete: !item.toDelete } : item,
+      ),
     )
 
-    setFiles(newFiles)
-    setPreviews(newPreviews)
-
-    // Update file input using DataTransfer
+    // Update file input with non-deleted files
     if (fileInputRef.current) {
       const dataTransfer = new DataTransfer()
-      for (const file of newFiles) {
-        dataTransfer.items.add(file)
-      }
+      updatedFiles
+        .filter((item) => !item.toDelete)
+        .forEach((item) => {
+          dataTransfer.items.add(item.file)
+        })
       fileInputRef.current.files = dataTransfer.files
     }
   }
@@ -64,16 +74,19 @@ export const useImagesInput = ({ onBeforeDelete, onChange }: Options) => {
   // Cleanup preview URLs on unmount
   useEffect(() => {
     return () => {
-      previews.forEach((url) => {
-        URL.revokeObjectURL(url)
+      previews.forEach((preview) => {
+        URL.revokeObjectURL(preview.src)
       })
     }
   }, [previews])
 
+  const filesCount = files.filter((item) => !item.toDelete).length
+
   return {
     fileInputRef,
-    handleDelete,
+    filesCount,
     handleFileChange,
+    handleToggleDelete,
     previews,
   }
 }

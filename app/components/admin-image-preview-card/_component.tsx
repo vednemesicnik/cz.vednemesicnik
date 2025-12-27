@@ -1,35 +1,31 @@
 import type { ReactNode } from 'react'
 
-import { AdminButton } from '~/components/admin-button'
-import { DeleteIcon } from '~/components/icons/delete-icon'
-
 import styles from './_styles.module.css'
 
 type Props = {
+  actions: ReactNode
   alt: string
   children: ReactNode
-  onDelete: () => void
   previewUrl: string
+  toDelete?: boolean
 }
 
 export const AdminImagePreviewCard = ({
+  actions,
   alt,
   children,
-  onDelete,
   previewUrl,
+  toDelete = false,
 }: Props) => {
   return (
     <section className={styles.imagePreview}>
-      <AdminButton
-        className={styles.deleteButton}
-        onClick={onDelete}
-        type={'button'}
-        variant={'danger'}
+      <div className={styles.actionsContainer}>{actions}</div>
+      <div
+        className={`${styles.imageContent} ${toDelete ? styles.toDelete : ''}`}
       >
-        <DeleteIcon className={styles.deleteIcon} />
-      </AdminButton>
-      <img alt={alt} className={styles.previewImage} src={previewUrl} />
-      {children}
+        <img alt={alt} className={styles.previewImage} src={previewUrl} />
+        {children}
+      </div>
     </section>
   )
 }

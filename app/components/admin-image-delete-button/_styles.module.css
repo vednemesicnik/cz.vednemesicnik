@@ -1,0 +1,46 @@
+.toggleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 6px;
+  background-color: var(--admin-danger);
+  border: 2px solid transparent;
+  color: var(--admin-button-text);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.toggleButton:hover:not(:disabled) {
+  background-color: var(--admin-danger-hover);
+}
+
+.toggleButton:active:not(:disabled) {
+  background-color: var(--admin-danger-active);
+}
+
+.toggleButton:focus-visible {
+  box-shadow: var(--admin-focus-shadow-danger);
+  outline: none;
+}
+
+.toggleButton.toDelete {
+  background-color: var(--admin-action-restore);
+}
+
+.toggleButton.toDelete:hover:not(:disabled) {
+  background-color: var(--admin-action-restore-hover);
+}
+
+.toggleButton.toDelete:active:not(:disabled) {
+  background-color: var(--admin-action-restore-active);
+}
+
+.toggleButton.toDelete:focus-visible {
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+}

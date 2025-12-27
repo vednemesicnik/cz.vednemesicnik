@@ -1,3 +1,4 @@
+import type { FeaturedImage } from '~/config/featured-image-config'
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 import { getConvertedImageStream } from '~/utils/sharp.server'
@@ -10,7 +11,7 @@ type Options = {
   tagIds?: string[]
   authorId: string
   images?: File[]
-  featuredImageIndex?: number
+  featuredImage: FeaturedImage
 }
 
 export async function createArticle(
@@ -23,9 +24,12 @@ export async function createArticle(
     categoryIds,
     tagIds,
     images,
-    featuredImageIndex,
+    featuredImage,
   }: Options,
 ) {
+  const featuredImageIndex =
+    featuredImage.source === 'new' ? featuredImage.index : undefined
+
   // Process all images
   const processedImages = await Promise.all(
     (images || []).map(async (img, index) => {

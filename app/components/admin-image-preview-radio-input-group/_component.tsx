@@ -1,23 +1,19 @@
-import type { ComponentProps } from 'react'
-import { AdminImagePreviewCard } from '~/components/admin-image-preview-card'
+import type { ReactNode } from 'react'
 import { AdminRadioInputBase } from '~/components/admin-radio-input-base'
+import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import styles from './_styles.module.css'
 
 type Props = {
-  onDelete: (index: number) => void
-  previews: string[]
-} & Pick<ComponentProps<'input'>, 'form' | 'name'>
+  children: ReactNode
+  name: string
+  form: string
+}
 
 export const AdminImagePreviewRadioInputGroup = ({
-  onDelete,
-  previews,
-  name,
   form,
+  name,
+  children,
 }: Props) => {
-  if (previews.length === 0) {
-    return null
-  }
-
   return (
     <section className={styles.previewSection}>
       <AdminRadioInputBase
@@ -25,25 +21,9 @@ export const AdminImagePreviewRadioInputGroup = ({
         form={form}
         label={'Bez hlavního obrázku'}
         name={name}
-        value={''}
+        value={FEATURED_IMAGE_SOURCE.NONE}
       />
-      <section className={styles.previewGrid}>
-        {previews.map((previewUrl, index) => (
-          <AdminImagePreviewCard
-            alt={`Náhled ${index + 1}`}
-            key={previewUrl}
-            onDelete={() => onDelete(index)}
-            previewUrl={previewUrl}
-          >
-            <AdminRadioInputBase
-              form={form}
-              label={'Hlavní obrázek'}
-              name={name}
-              value={index}
-            />
-          </AdminImagePreviewCard>
-        ))}
-      </section>
+      <section className={styles.previewGrid}>{children}</section>
     </section>
   )
 }

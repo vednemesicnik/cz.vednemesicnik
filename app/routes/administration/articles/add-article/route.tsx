@@ -13,9 +13,12 @@ import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminFileInput } from '~/components/admin-file-input'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminImageDeleteButton } from '~/components/admin-image-delete-button'
+import { AdminImagePreviewCard } from '~/components/admin-image-preview-card'
 import { AdminImagePreviewRadioInputGroup } from '~/components/admin-image-preview-radio-input-group'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
+import { AdminRadioInputBase } from '~/components/admin-radio-input-base'
 import { AdminTextEditor } from '~/components/admin-text-editor'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
@@ -23,6 +26,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { Input } from '~/components/input'
 import { Select } from '~/components/select'
+import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import { useImagesInput } from '~/hooks/use-images-input'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
@@ -43,7 +47,6 @@ export default function RouteComponent({
     constraint: getZodConstraint(schema),
     defaultValue: {
       authorId: loaderData.selfAuthorId,
-      featuredImageIndex: '',
     },
     id: 'add-article',
     lastResult: actionData?.submissionResult,
@@ -63,17 +66,23 @@ export default function RouteComponent({
     updateFieldValue: form.update,
   })
 
-  const { fileInputRef, handleFileChange, handleDelete, previews } =
-    useImagesInput({
-      onBeforeDelete: (index) => {
-        if (Number(fields.featuredImageIndex.value) === index) {
-          form.update({
-            name: fields.featuredImageIndex.name,
-            value: '',
-          })
-        }
-      },
-    })
+  const {
+    fileInputRef,
+    filesCount,
+    handleFileChange,
+    handleToggleDelete,
+    previews,
+  } = useImagesInput({
+    onBeforeToggleDelete: (index) => {
+      const currentValue = fields.featuredImage.value
+      if (currentValue === `${FEATURED_IMAGE_SOURCE.NEW}:${index}`) {
+        form.update({
+          name: fields.featuredImage.name,
+          value: FEATURED_IMAGE_SOURCE.NONE,
+        })
+      }
+    },
+  })
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
@@ -153,7 +162,7 @@ export default function RouteComponent({
             <AdminFileInput
               accept={'image/*'}
               errors={fields.images.errors}
-              filesCount={previews.length}
+              filesCount={filesCount}
               label={'Obrázky článku'}
               onFileChange={handleFileChange}
               ref={fileInputRef}
@@ -161,10 +170,32 @@ export default function RouteComponent({
             />
 
             <AdminImagePreviewRadioInputGroup
-              {...getInputProps(fields.featuredImageIndex, { type: 'radio' })}
-              onDelete={handleDelete}
-              previews={previews}
-            />
+              form={fields.featuredImage.formId}
+              name={fields.featuredImage.name}
+            >
+              {previews.map((preview, index) => (
+                <AdminImagePreviewCard
+                  actions={
+                    <AdminImageDeleteButton
+                      onClick={handleToggleDelete(index)}
+                      toDelete={preview.toDelete}
+                    />
+                  }
+                  alt={`Náhled ${index + 1}`}
+                  key={preview.src}
+                  previewUrl={preview.src}
+                  toDelete={preview.toDelete}
+                >
+                  <AdminRadioInputBase
+                    disabled={preview.toDelete}
+                    form={fields.featuredImage.formId}
+                    label={'Hlavní obrázek'}
+                    name={fields.featuredImage.name}
+                    value={`${FEATURED_IMAGE_SOURCE.NEW}:${index}`}
+                  />
+                </AdminImagePreviewCard>
+              ))}
+            </AdminImagePreviewRadioInputGroup>
           </Fieldset>
 
           <Fieldset
