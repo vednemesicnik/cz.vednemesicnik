@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import styles from './_styles.module.css'
 
 type Image = {
@@ -21,22 +22,20 @@ export const AdminImageGallery = ({
   }
 
   return (
-    <section className={className}>
-      <section className={styles.grid}>
-        {images.map((image) => {
-          const isFeatured = image.id === featuredImageId
-          return (
-            <section className={styles.imageWrapper} key={image.id}>
-              <img
-                alt={isFeatured ? 'Hlavní obrázek' : 'Obrázek'}
-                className={styles.image}
-                src={image.src}
-              />
-              {isFeatured && <span className={styles.badge}>Hlavní</span>}
-            </section>
-          )
-        })}
-      </section>
+    <section className={clsx(styles.grid, className)}>
+      {images.map((image) => {
+        const isFeatured = image.id === featuredImageId
+        return (
+          <section className={styles.imageWrapper} key={image.id}>
+            <img
+              alt={isFeatured ? 'Hlavní obrázek' : 'Obrázek'}
+              className={styles.image}
+              src={image.src}
+            />
+            {isFeatured && <span className={styles.badge}>Hlavní</span>}
+          </section>
+        )
+      })}
     </section>
   )
 }
