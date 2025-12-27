@@ -11,8 +11,9 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
+import { AdminFileInput } from '~/components/admin-file-input'
 import { AdminHeadline } from '~/components/admin-headline'
-import { AdminImagesInput } from '~/components/admin-images-input'
+import { AdminImagePreviewRadioInputGroup } from '~/components/admin-image-preview-radio-input-group'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AdminTextEditor } from '~/components/admin-text-editor'
@@ -22,6 +23,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { Input } from '~/components/input'
 import { Select } from '~/components/select'
+import { useImagesInput } from '~/hooks/use-images-input'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -41,6 +43,7 @@ export default function RouteComponent({
     constraint: getZodConstraint(schema),
     defaultValue: {
       authorId: loaderData.selfAuthorId,
+      featuredImageIndex: '',
     },
     id: 'add-article',
     lastResult: actionData?.submissionResult,
@@ -59,6 +62,18 @@ export default function RouteComponent({
     sourceValue: title,
     updateFieldValue: form.update,
   })
+
+  const { fileInputRef, handleFileChange, handleDelete, previews } =
+    useImagesInput({
+      onBeforeDelete: (index) => {
+        if (Number(fields.featuredImageIndex.value) === index) {
+          form.update({
+            name: fields.featuredImageIndex.name,
+            value: '',
+          })
+        }
+      },
+    })
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
@@ -135,11 +150,20 @@ export default function RouteComponent({
           </Fieldset>
 
           <Fieldset disabled={isLoadingOrSubmitting} legend={'Obrázky'}>
-            <AdminImagesInput
+            <AdminFileInput
+              accept={'image/*'}
               errors={fields.images.errors}
-              featuredIndexName={fields.featuredImageIndex.name}
+              filesCount={previews.length}
               label={'Obrázky článku'}
+              onFileChange={handleFileChange}
+              ref={fileInputRef}
               {...getInputProps(fields.images, { type: 'file' })}
+            />
+
+            <AdminImagePreviewRadioInputGroup
+              {...getInputProps(fields.featuredImageIndex, { type: 'radio' })}
+              onDelete={handleDelete}
+              previews={previews}
             />
           </Fieldset>
 

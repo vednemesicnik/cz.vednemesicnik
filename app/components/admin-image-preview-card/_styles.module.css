@@ -1,0 +1,39 @@
+.imagePreview {
+  display: grid;
+  gap: 8px;
+  border: 2px solid var(--admin-border);
+  border-radius: 8px;
+  padding: 8px;
+  background-color: var(--admin-bg-secondary);
+  position: relative;
+}
+
+.previewImage {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.deleteButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  min-width: auto;
+  box-shadow: var(--admin-shadow-md);
+  transition: opacity 0.15s ease;
+  opacity: 0.9;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.deleteIcon {
+  @layer variant {
+    width: 16px;
+    height: 16px;
+  }
+}

@@ -1,36 +1,20 @@
-import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
 
+import { AdminRadioInputBase } from '~/components/admin-radio-input-base'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 
 import styles from './_styles.module.css'
 
-type Props = ComponentProps<'input'> & {
-  label: string
+type Props = Omit<ComponentProps<'input'>, 'type'> & {
   errors?: string[]
+  label: string
 }
 
-export const Radio = ({
-  label,
-  type = 'radio',
-  errors,
-  id,
-  ...rest
-}: Props) => {
-  const hasErrors = errors !== undefined && errors.length > 0
-
+export const Radio = ({ errors, label, ...rest }: Props) => {
   return (
     <section className={styles.container}>
-      <div className={styles.wrapper}>
-        <input className={styles.radio} id={id} type={type} {...rest} />
-        <label
-          className={clsx(styles.label, hasErrors && styles.labelError)}
-          htmlFor={id}
-        >
-          {label}
-        </label>
-      </div>
+      <AdminRadioInputBase errors={errors} label={label} {...rest} />
       <ErrorMessageGroup>
         {errors?.map((error, index) => (
           <ErrorMessage key={index}>{error}</ErrorMessage>
