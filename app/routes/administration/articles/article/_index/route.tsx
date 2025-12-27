@@ -196,10 +196,10 @@ export default function RouteComponent({
 
       <AdminDetailSection title="Základní informace">
         <AdminDetailList>
-          <AdminDetailItem label="Název">{article.title}</AdminDetailItem>
           <AdminDetailItem label="Stav">
             <AdminStateBadge state={article.state} />
           </AdminDetailItem>
+          <AdminDetailItem label="Název">{article.title}</AdminDetailItem>
           <AdminDetailItem label="Slug">{article.slug}</AdminDetailItem>
           <AdminDetailItem label="Autor">{article.author.name}</AdminDetailItem>
         </AdminDetailList>
