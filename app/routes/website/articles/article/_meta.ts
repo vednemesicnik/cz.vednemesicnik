@@ -1,12 +1,12 @@
 import type { Route } from './+types/route'
 
-export const meta = ({ data }: Route.MetaArgs) => {
-  if (!data) {
+export const meta = ({ loaderData }: Route.MetaArgs) => {
+  if (loaderData === undefined) {
     return [{ title: 'Článek nenalezen' }]
   }
 
   return [
-    { title: data.article.title },
-    { name: 'description', content: data.article.title },
+    { title: loaderData.article.title },
+    { content: loaderData.article.title, name: 'description' },
   ]
 }
