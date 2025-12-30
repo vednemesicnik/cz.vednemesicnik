@@ -1,41 +1,43 @@
 .button {
-  /* Layout */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  position: relative;
+  @layer component {
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
 
-  /* Typography */
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1;
+    /* Typography */
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
 
-  /* Spacing */
-  padding-block: 12px;
-  padding-inline: 24px;
-  border-radius: 8px;
+    /* Spacing */
+    padding-block: 12px;
+    padding-inline: 24px;
+    border-radius: 8px;
 
-  /* Interaction */
-  cursor: pointer;
-  user-select: none;
+    /* Interaction */
+    cursor: pointer;
+    user-select: none;
 
-  /* Transitions */
-  transition:
-    background-color 150ms ease-out,
-    color 150ms ease-out,
-    border-color 150ms ease-out,
-    box-shadow 150ms ease-out,
-    transform 150ms ease-out;
+    /* Transitions */
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out,
+      border-color 150ms ease-out,
+      box-shadow 150ms ease-out,
+      transform 150ms ease-out;
 
-  /* Disabled State */
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
+    /* Disabled State */
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
 
-  /* Active State */
-  &:active:not(:disabled) {
-    transform: scale(0.98);
+    /* Active State */
+    &:active:not(:disabled) {
+      transform: scale(0.98);
+    }
   }
 }

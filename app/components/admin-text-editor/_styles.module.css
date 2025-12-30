@@ -1,0 +1,56 @@
+.container {
+  display: grid;
+  grid-auto-flow: row;
+  gap: 4px;
+  justify-items: start;
+  width: 100%;
+}
+
+.editorWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  min-height: 254px;
+  border: 2px solid var(--admin-border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition:
+    border-color 150ms ease-out,
+    box-shadow 150ms ease-out;
+
+  /* Hover State */
+  &:hover:not(:focus-within) {
+    border-color: var(--admin-border-hover);
+  }
+
+  /* Focus-within for keyboard navigation */
+  &:focus-within {
+    border-color: var(--admin-purple);
+    box-shadow: var(--admin-focus-shadow);
+  }
+
+  /* Error State */
+  &.editorError {
+    border-color: var(--admin-error);
+
+    &:focus-within {
+      border-color: var(--admin-error);
+      box-shadow: var(--admin-focus-shadow-error);
+    }
+  }
+}
+
+/* Hidden input for form submission and focus management */
+.hiddenInput {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}

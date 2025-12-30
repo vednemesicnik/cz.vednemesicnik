@@ -6,21 +6,21 @@ import {
   getSelectProps,
   useForm,
 } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
-import { useState } from 'react'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
+import { AdminButtonLink } from '~/components/admin-button-link'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { Select } from '~/components/select'
-import { useSlug } from '~/utils/permissions/use-slug'
 import { slugify } from '~/utils/slugify'
+import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -55,8 +55,18 @@ export default function RouteComponent({
     shouldValidate: 'onSubmit',
   })
 
-  const [name, setName] = useState(loaderData.tag.name)
-  const { slug, setSlug, setIsSlugFocused } = useSlug(name)
+  const { handleBlur } = useAutoSlug({
+    fieldName: fields.slug.name,
+    sourceValue: undefined,
+    updateFieldValue: form.update,
+  })
+
+  const regenerateSlug = () => {
+    form.update({
+      name: fields.slug.name,
+      value: slugify(fields.name.value || ''),
+    })
+  }
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
@@ -70,21 +80,26 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <Fieldset legend={'Základní informace'}>
-          <Input
+          <AdminInput
             errors={fields.name.errors}
             label={'Název'}
-            onChange={(event) => setName(event.target.value)}
             {...getInputProps(fields.name, { type: 'text' })}
           />
-          <Input
+
+          <AdminButtonLink
+            disabled={isLoadingOrSubmitting}
+            onClick={regenerateSlug}
+            type={'button'}
+          >
+            Vygenerovat nový slug
+          </AdminButtonLink>
+          <AdminInput
             errors={fields.slug.errors}
             label={'Slug'}
-            onBlur={() => setSlug((value) => slugify(value))}
-            onChange={(event) => setSlug(event.target.value)}
-            onFocus={() => setIsSlugFocused(true)}
-            value={slug}
+            onBlur={handleBlur}
             {...getInputProps(fields.slug, { type: 'text' })}
           />
+
           <Select
             errors={fields.authorId.errors}
             label={'Autor'}

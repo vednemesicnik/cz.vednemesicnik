@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import bcrypt from 'bcryptjs'
 import { type ActionFunctionArgs, data, redirect } from 'react-router'
 

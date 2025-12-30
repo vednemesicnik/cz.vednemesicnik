@@ -1,0 +1,16 @@
+.toolbar {
+  /* Layout */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+
+  /* Spacing */
+  padding: 8px;
+
+  /* Colors */
+  background-color: var(--admin-bg-secondary);
+  border-bottom: 2px solid var(--admin-border);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}

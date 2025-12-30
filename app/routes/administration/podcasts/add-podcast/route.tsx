@@ -3,26 +3,24 @@ import {
   getFormProps,
   getInputProps,
   getSelectProps,
-  getTextareaProps,
   useForm,
 } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
+import { AdminTextarea } from '~/components/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { Select } from '~/components/select'
-import { TextArea } from '~/components/text-area'
-import { useSlug } from '~/utils/permissions/use-slug'
-import { slugify } from '~/utils/slugify'
+import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -53,7 +51,11 @@ export default function RouteComponent({
   })
 
   const [title, setTitle] = useState('')
-  const { slug, setSlug, setIsSlugFocused } = useSlug(title)
+  const { handleBlur, handleFocus } = useAutoSlug({
+    fieldName: fields.slug.name,
+    sourceValue: title,
+    updateFieldValue: form.update,
+  })
 
   const handleFileChange = (name: string, dirty: boolean) => () => {
     if (dirty) {
@@ -76,7 +78,7 @@ export default function RouteComponent({
         errors={form.errors}
       >
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
-          <Input
+          <AdminInput
             errors={fields.title.errors}
             label={'Název'}
             onChange={(event) => setTitle(event.target.value)}
@@ -85,22 +87,22 @@ export default function RouteComponent({
             {...getInputProps(fields.title, { type: 'text' })}
           />
 
-          <Input
+          <AdminInput
             errors={fields.slug.errors}
             label={'Slug'}
-            onBlur={() => setSlug((value) => slugify(value))}
-            onChange={(event) => setSlug(event.target.value)}
-            onFocus={() => setIsSlugFocused(true)}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
             placeholder={'nazev-podcastu'}
-            value={slug}
             {...getInputProps(fields.slug, { type: 'text' })}
           />
 
-          <TextArea
-            errors={fields.description.errors}
+          <AdminTextarea
+            field={fields.description}
             label={'Popis'}
-            placeholder={'Popis podcastu'}
-            {...getTextareaProps(fields.description)}
+            textareaProps={{
+              placeholder: 'Popis podcastu',
+              rows: 10,
+            }}
           />
 
           <FileInput

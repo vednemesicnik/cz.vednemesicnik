@@ -6,17 +6,17 @@ import {
   getSelectProps,
   useForm,
 } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { Select } from '~/components/select'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -61,7 +61,7 @@ export default function RouteComponent({
           disabled={isLoadingOrSubmitting}
           legend={'Informace o členovi'}
         >
-          <Input
+          <AdminInput
             label={'Celé jméno'}
             {...getInputProps(fields.fullName, { type: 'text' })}
             errors={fields.fullName.errors}

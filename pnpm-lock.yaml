@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@conform-to/react':
-        specifier: 1.5.0
-        version: 1.5.0(react@19.2.3)
+        specifier: 1.15.1
+        version: 1.15.1(react@19.2.3)
       '@conform-to/zod':
-        specifier: 1.5.0
-        version: 1.5.0(zod@3.24.4)
+        specifier: 1.15.1
+        version: 1.15.1(zod@4.2.1)
       '@epic-web/invariant':
         specifier: 1.0.0
         version: 1.0.0
@@ -91,13 +91,13 @@ importers:
         version: 7.11.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       remix-utils:
         specifier: 7.7.0
-        version: 7.7.0(crypto-js@4.2.0)(react@19.2.3)(zod@3.24.4)
+        version: 7.7.0(crypto-js@4.2.0)(react@19.2.3)(zod@4.2.1)
       sharp:
         specifier: 0.34.5
         version: 0.34.5
       zod:
-        specifier: 3.24.4
-        version: 3.24.4
+        specifier: 4.2.1
+        version: 4.2.1
     devDependencies:
       '@biomejs/biome':
         specifier: 2.3.10
@@ -393,18 +393,18 @@ packages:
     peerDependencies:
       storybook: ^0.0.0-0 || ^9.0.0 || ^9.1.0-0 || ^9.2.0-0 || ^10.0.0-0 || ^10.1.0-0 || ^10.2.0-0 || ^10.3.0-0
 
-  '@conform-to/dom@1.5.0':
-    resolution: {integrity: sha512-7cbIjD3SZzidTzQTLqDhcu2FtkB1l/ZwPlv/mlZgBiezyHd//gBoauGygemcOToEqHahRYFLYwovmKqdjTMARA==}
+  '@conform-to/dom@1.15.1':
+    resolution: {integrity: sha512-iqx7Ftp26zygHJq62eXK2Sibc8LVIW28bt7c1uAEsGaa7IsEzjCbNgrWblXcFHohf7vFMDisgF2kv8oS5c9Dmg==}
 
-  '@conform-to/react@1.5.0':
-    resolution: {integrity: sha512-j6fq1UTJ8rLxT4hMZRj9Qyi1lYrALsuno3024/nORYjmqThm2K7wsB1Aaox67SxcR5p4fpva4d8pOkzOSBYN2g==}
+  '@conform-to/react@1.15.1':
+    resolution: {integrity: sha512-cKH5K6MOiuIUPr9b4Z6UU5KYNv3rUmB35OEiY5F0cHvac8uCGFIh7Qjvm2bUrSloh+asAvpK5cZjxTsgYI93yg==}
     peerDependencies:
       react: '>=18'
 
-  '@conform-to/zod@1.5.0':
-    resolution: {integrity: sha512-bk+S0sFSfyVL7UVbHAjComnGq4p4vGMtfyyxFB8116XTnxQVyk88dXhj/ApxPQTktWn+OukDWyz5TQ92t/qo+A==}
+  '@conform-to/zod@1.15.1':
+    resolution: {integrity: sha512-zWx92qADl3xWjnI9E9dW8RarS3orUN9ldfCLTQfHgJHd5dtORFNxYoxj2qsAM9aYm0E3gZ+2EJq750sDTRrZSg==}
     peerDependencies:
-      zod: ^3.21.0
+      zod: ^3.21.0 || ^4.0.0
 
   '@electric-sql/pglite-socket@0.0.6':
     resolution: {integrity: sha512-6RjmgzphIHIBA4NrMGJsjNWK4pu+bCWJlEWlwcxFTVY3WT86dFpKwbZaGWZV6C5Rd7sCk1Z0CI76QEfukLAUXw==}
@@ -3637,8 +3637,8 @@ packages:
   zeptomatch@2.0.2:
     resolution: {integrity: sha512-H33jtSKf8Ijtb5BW6wua3G5DhnFjbFML36eFu+VdOoVY4HD9e7ggjqdM6639B+L87rjnR6Y+XeRzBXZdy52B/g==}
 
-  zod@3.24.4:
-    resolution: {integrity: sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg==}
+  zod@4.2.1:
+    resolution: {integrity: sha512-0wZ1IRqGGhMP76gLqz8EyfBXKk0J2qo2+H3fi4mcUP/KtTocoX08nmIAHl1Z2kJIZbZee8KOpBCSNPRgauucjw==}
 
 snapshots:
 
@@ -3904,17 +3904,17 @@ snapshots:
       - '@chromatic-com/cypress'
       - '@chromatic-com/playwright'
 
-  '@conform-to/dom@1.5.0': {}
+  '@conform-to/dom@1.15.1': {}
 
-  '@conform-to/react@1.5.0(react@19.2.3)':
+  '@conform-to/react@1.15.1(react@19.2.3)':
     dependencies:
-      '@conform-to/dom': 1.5.0
+      '@conform-to/dom': 1.15.1
       react: 19.2.3
 
-  '@conform-to/zod@1.5.0(zod@3.24.4)':
+  '@conform-to/zod@1.15.1(zod@4.2.1)':
     dependencies:
-      '@conform-to/dom': 1.5.0
-      zod: 3.24.4
+      '@conform-to/dom': 1.15.1
+      zod: 4.2.1
 
   '@electric-sql/pglite-socket@0.0.6(@electric-sql/pglite@0.3.2)':
     dependencies:
@@ -6556,13 +6556,13 @@ snapshots:
     dependencies:
       type-fest: 4.41.0
 
-  remix-utils@7.7.0(crypto-js@4.2.0)(react@19.2.3)(zod@3.24.4):
+  remix-utils@7.7.0(crypto-js@4.2.0)(react@19.2.3)(zod@4.2.1):
     dependencies:
       type-fest: 4.41.0
     optionalDependencies:
       crypto-js: 4.2.0
       react: 19.2.3
-      zod: 3.24.4
+      zod: 4.2.1
 
   resolve-pkg-maps@1.0.0: {}
 
@@ -7106,4 +7106,4 @@ snapshots:
     dependencies:
       grammex: 3.1.11
 
-  zod@3.24.4: {}
+  zod@4.2.1: {}

@@ -1,7 +1,7 @@
+import { BulletedList } from '~/components/bulleted-list'
 import { Divider } from '~/components/divider'
 import { Headline } from '~/components/headline'
 import { Hyperlink } from '~/components/hyperlink'
-import { List } from '~/components/list'
 import { ListItem } from '~/components/list-item'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
@@ -31,7 +31,7 @@ export default function RouteComponent() {
       </Paragraph>
       <Divider variant={'secondary'} />
       <Paragraph>Vedneměsíčník vychází za laskavé podpory:</Paragraph>
-      <List>
+      <BulletedList>
         <ListItem>Literární kavárna Měsíc ve dne</ListItem>
         <ListItem>
           <Hyperlink href="https://www.bigy-cb.cz/bigy/">
@@ -43,7 +43,7 @@ export default function RouteComponent() {
             Fokus České Budějovice
           </Hyperlink>
         </ListItem>
-      </List>
+      </BulletedList>
     </Page>
   )
 }

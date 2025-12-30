@@ -25,6 +25,7 @@
   display: grid;
   position: relative;
   grid-auto-flow: row;
+  justify-items: start;
   gap: 8px;
   margin: 0;
   padding: 0;

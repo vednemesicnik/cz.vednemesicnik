@@ -6,22 +6,21 @@ import {
   getSelectProps,
   useForm,
 } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { Select } from '~/components/select'
 import { schema } from '~/routes/administration/articles/categories/add-category/_schema'
-import { useSlug } from '~/utils/permissions/use-slug'
-import { slugify } from '~/utils/slugify'
+import { useAutoSlug } from '~/utils/use-auto-slug'
 import type { Route } from './+types/route'
 
 export { action } from './_action'
@@ -51,7 +50,12 @@ export default function RouteComponent({
   })
 
   const [name, setName] = useState('')
-  const { slug, setSlug, setIsSlugFocused } = useSlug(name)
+
+  const { handleBlur, handleFocus } = useAutoSlug({
+    fieldName: fields.slug.name,
+    sourceValue: name,
+    updateFieldValue: form.update,
+  })
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
@@ -65,19 +69,17 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <Fieldset legend={'Základní informace'}>
-          <Input
+          <AdminInput
             errors={fields.name.errors}
             label={'Název'}
             onChange={(event) => setName(event.target.value)}
             {...getInputProps(fields.name, { type: 'text' })}
           />
-          <Input
+          <AdminInput
             errors={fields.slug.errors}
             label={'Slug'}
-            onBlur={() => setSlug((value) => slugify(value))}
-            onChange={(event) => setSlug(event.target.value)}
-            onFocus={() => setIsSlugFocused(true)}
-            value={slug}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
             {...getInputProps(fields.slug, { type: 'text' })}
           />
           <Select

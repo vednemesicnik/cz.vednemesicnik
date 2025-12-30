@@ -6,17 +6,17 @@ import {
   getSelectProps,
   useForm,
 } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { Select } from '~/components/select'
 import { getSchema } from './_schema'
 import type { Route } from './+types/route'
@@ -60,21 +60,21 @@ export default function RouteComponent({
 
       <Form method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily pozice'}>
-          <Input
+          <AdminInput
             label={'Unikátní klíč v angličtině'}
             {...getInputProps(fields.key, { type: 'text' })}
             errors={fields.key.errors}
             placeholder={'editor'}
           />
 
-          <Input
+          <AdminInput
             label={'Označení v množném čísle'}
             {...getInputProps(fields.pluralLabel, { type: 'text' })}
             errors={fields.pluralLabel.errors}
             placeholder={'redaktorky a redaktoři'}
           />
 
-          <Input
+          <AdminInput
             label={'Pořadí'}
             {...getInputProps(fields.order, { type: 'number' })}
             errors={fields.order.errors}

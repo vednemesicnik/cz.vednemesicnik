@@ -1,0 +1,69 @@
+.button {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  /* Typography */
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+
+  /* Spacing */
+  padding: 8px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 6px;
+
+  /* Colors */
+  background-color: transparent;
+  color: var(--admin-text-secondary);
+  border: none;
+
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+
+  /* Transitions */
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out;
+
+  /* Hover State */
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-bg-hover);
+    color: var(--admin-text-primary);
+  }
+
+  /* Focus Visible State */
+  &:focus-visible {
+    background-color: var(--admin-bg-hover);
+    color: var(--admin-text-primary);
+    box-shadow: var(--admin-focus-shadow);
+    outline: none;
+  }
+
+  /* Active State */
+  &:active:not(:disabled) {
+    background-color: var(--admin-bg-hover);
+    color: var(--admin-purple);
+  }
+
+  /* Disabled State */
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+/* Active/Selected State */
+.button.active {
+  background-color: var(--admin-bg-hover);
+  color: var(--admin-purple);
+
+  &:hover:not(:disabled):not(:focus-visible) {
+    background-color: var(--admin-bg-hover);
+    color: var(--admin-purple);
+  }
+}

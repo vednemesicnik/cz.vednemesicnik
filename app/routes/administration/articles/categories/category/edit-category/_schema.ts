@@ -12,5 +12,5 @@ export const schema = z.object({
     .regex(/^\S/, 'Slug cannot start with a space')
     .regex(/^[^-]/, 'Slug cannot start with a hyphen')
     .transform(slugify),
-  state: z.nativeEnum(ContentState),
+  state: z.enum(ContentState),
 })

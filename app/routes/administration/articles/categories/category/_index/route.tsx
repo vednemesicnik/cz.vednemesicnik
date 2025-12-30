@@ -108,7 +108,7 @@ export default function RouteComponent({
             >
               <CheckIcon />
               {submittingIntent === INTENT_VALUE.review
-                ? 'Schvaluji...'
+                ? 'Schvaluje se...'
                 : 'Schválit'}
             </AdminActionButton>
           </Form>
@@ -130,7 +130,7 @@ export default function RouteComponent({
             >
               <ArrowUpward />
               {submittingIntent === INTENT_VALUE.publish
-                ? 'Zveřejňuji...'
+                ? 'Zveřejňuje se...'
                 : 'Zveřejnit'}
             </AdminActionButton>
           </Form>
@@ -147,7 +147,7 @@ export default function RouteComponent({
             >
               <UndoIcon />
               {submittingIntent === INTENT_VALUE.retract
-                ? 'Stahuji...'
+                ? 'Stahuje se...'
                 : 'Stáhnout z publikace'}
             </AdminActionButton>
           </Form>
@@ -164,7 +164,7 @@ export default function RouteComponent({
             >
               <ArchiveIcon />
               {submittingIntent === INTENT_VALUE.archive
-                ? 'Archivuji...'
+                ? 'Archivuje se...'
                 : 'Archivovat'}
             </AdminActionButton>
           </Form>
@@ -181,7 +181,7 @@ export default function RouteComponent({
             >
               <RefreshIcon />
               {submittingIntent === INTENT_VALUE.restore
-                ? 'Obnovuji...'
+                ? 'Obnovuje se...'
                 : 'Obnovit'}
             </AdminActionButton>
           </Form>
@@ -193,7 +193,7 @@ export default function RouteComponent({
             onClick={openDialog}
           >
             <DeleteIcon />
-            {submittingIntent === INTENT_VALUE.delete ? 'Mažu...' : 'Smazat'}
+            {submittingIntent === INTENT_VALUE.delete ? 'Maže se...' : 'Smazat'}
           </AdminActionButton>
         )}
       </AdminActionGroup>

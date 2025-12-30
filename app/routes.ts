@@ -21,7 +21,10 @@ export default [
     index('routes/website/_index/route.tsx'),
 
     // Articles routes
-    route('articles', 'routes/website/articles/route.tsx'),
+    ...prefix('articles', [
+      index('routes/website/articles/_index/route.tsx'),
+      route(':slug', 'routes/website/articles/article/route.tsx'),
+    ]),
 
     // Podcasts routes
     ...prefix('podcasts', [

@@ -1,11 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { AdminButton } from '~/components/admin-button'
+import { AdminInput } from '~/components/admin-input'
 import { Form } from '~/components/form'
-import { Input } from '~/components/input'
 import { useHydrated } from '~/utils/use-hydrated'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
@@ -59,14 +59,14 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
         >
           <HoneypotInputs />
 
-          <Input
+          <AdminInput
             errors={fields.email.errors}
             label={'E-mail'}
             {...getInputProps(fields.email, { type: 'email' })}
             placeholder={'vas-email@example.com'}
           />
 
-          <Input
+          <AdminInput
             errors={fields.password.errors}
             label={'Heslo'}
             ref={passwordInputRef}

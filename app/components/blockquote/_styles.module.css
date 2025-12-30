@@ -1,0 +1,9 @@
+@layer components {
+  .blockquote {
+    border-inline-start: 4px solid grey;
+    font-style: italic;
+    margin-block-end: 1em;
+    margin-block-start: 0;
+    padding-inline-start: 1em;
+  }
+}

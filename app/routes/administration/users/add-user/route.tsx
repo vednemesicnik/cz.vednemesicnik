@@ -6,19 +6,19 @@ import {
   getSelectProps,
   useForm,
 } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
+import { AdminRadioInput } from '~/components/admin-radio-input'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
-import { Radio } from '~/components/radio'
 import { Select } from '~/components/select'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -60,13 +60,13 @@ export default function RouteComponent({
 
       <Form method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily uživatele'}>
-          <Input
+          <AdminInput
             label="E-mail"
             {...getInputProps(fields.email, { type: 'email' })}
             errors={fields.email.errors}
             placeholder="user@domain.name"
           />
-          <Input
+          <AdminInput
             label="Jméno a příjmení"
             {...getInputProps(fields.name, { type: 'text' })}
             errors={fields.name.errors}
@@ -75,12 +75,12 @@ export default function RouteComponent({
         </Fieldset>
 
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Heslo'}>
-          <Input
+          <AdminInput
             label="Heslo"
             {...getInputProps(fields.password, { type: 'password' })}
             errors={fields.password.errors}
           />
-          <Input
+          <AdminInput
             label="Potvrzení hesla"
             {...getInputProps(fields.passwordConfirmation, {
               type: 'password',
@@ -90,27 +90,23 @@ export default function RouteComponent({
         </Fieldset>
 
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Profil autora'}>
-          <Radio
-            label="Vytvořit nový profil autora"
-            {...getInputProps(fields.authorMode, {
-              type: 'radio',
+          <AdminRadioInput
+            field={fields.authorMode}
+            inputProps={{
+              onChange: (event) =>
+                setAuthorMode(event.currentTarget.value as 'new' | 'existing'),
               value: 'new',
-            })}
-            errors={fields.authorMode.errors}
-            onChange={(e) =>
-              setAuthorMode(e.currentTarget.value as 'new' | 'existing')
-            }
+            }}
+            label={'Vytvořit nový profil autora'}
           />
-          <Radio
-            label="Připojit k existujícímu autorovi"
-            {...getInputProps(fields.authorMode, {
-              type: 'radio',
+          <AdminRadioInput
+            field={fields.authorMode}
+            inputProps={{
+              onChange: (event) =>
+                setAuthorMode(event.currentTarget.value as 'new' | 'existing'),
               value: 'existing',
-            })}
-            errors={fields.authorMode.errors}
-            onChange={(e) =>
-              setAuthorMode(e.currentTarget.value as 'new' | 'existing')
-            }
+            }}
+            label={'Připojit k existujícímu autorovi'}
           />
 
           {authorMode === 'existing' && (

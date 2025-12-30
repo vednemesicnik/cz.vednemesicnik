@@ -15,7 +15,7 @@ export const HomeLink = ({ isInEditMode }: Props) => {
         className={styles.logo}
         variant={isInEditMode ? 'editMode' : 'default'}
       />
-      <h1 className={styles.name}>Vedneměsíčník</h1>
+      <span className={styles.name}>Vedneměsíčník</span>
     </BaseLink>
   )
 }

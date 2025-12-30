@@ -18,12 +18,12 @@ declare global {
 }
 
 export function initEnv() {
-  const parsed = schema.safeParse(process.env)
+  const result = schema.safeParse(process.env)
 
-  if (!parsed.success) {
+  if (!result.success) {
     console.error(
-      '❌ Invalid environment variables:',
-      parsed.error.flatten().fieldErrors,
+      'Invalid environment variables:',
+      z.flattenError(result.error).fieldErrors,
     )
     throw new Error('Invalid environment variables')
   }
