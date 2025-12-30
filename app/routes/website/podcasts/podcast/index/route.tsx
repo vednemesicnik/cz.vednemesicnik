@@ -8,6 +8,8 @@ import { ArticleLinkTitle } from '~/components/article-link-title'
 import { ArticleList } from '~/components/article-list'
 import { ArticleListItem } from '~/components/article-list-item'
 import { Headline } from '~/components/headline'
+import { HeadlineGroup } from '~/components/headline-group'
+import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 import { getPodcastCoverSrc } from '~/utils/get-podcast-cover-src'
 import { isLast } from '~/utils/is-last'
@@ -21,8 +23,10 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
   const podcastCoverSrc = getPodcastCoverSrc(podcast.cover?.id ?? '')
 
   return (
-    <>
-      <Headline>{podcast.title}</Headline>
+    <Page>
+      <HeadlineGroup>
+        <Headline>{podcast.title}</Headline>
+      </HeadlineGroup>
       <Paragraph>{podcast.description}</Paragraph>
 
       <ArticleList className={styles.articleList}>
@@ -43,7 +47,7 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
           )
         })}
       </ArticleList>
-    </>
+    </Page>
   )
 }
 

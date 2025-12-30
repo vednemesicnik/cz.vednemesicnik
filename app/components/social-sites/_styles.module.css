@@ -28,10 +28,17 @@
   font-size: inherit;
   line-height: inherit;
   cursor: pointer;
+  color: var(--footer-text);
+  transition: color var(--transition-fast);
+
+  &:hover {
+    color: var(--link-hover);
+  }
 }
 
 .logo {
-  width: 60px;
-  height: 60px;
-  fill: var(--black);
+  @layer variant {
+    width: 60px;
+    height: 60px;
+  }
 }

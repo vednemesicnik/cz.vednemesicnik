@@ -1,1 +1,1 @@
-export { Group } from './_group'
+export { Group } from './_component'

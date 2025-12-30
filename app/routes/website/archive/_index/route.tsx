@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 import { href, isRouteErrorResponse, Link, useSearchParams } from 'react-router'
 import { Headline } from '~/components/headline'
+import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
 import { LIMIT_PARAM, LoadMoreContent } from '~/components/load-more-content'
 import { Page } from '~/components/page'
@@ -23,7 +24,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <Page>
-      <Headline>Naše čísla pohromadě</Headline>
+      <HeadlineGroup>
+        <Headline>Naše čísla pohromadě</Headline>
+      </HeadlineGroup>
 
       <TileGrid>
         {issues.map((issue) => {

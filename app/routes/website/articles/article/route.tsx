@@ -1,11 +1,13 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { ContentRenderer } from '~/components/content-renderer'
+import { Headline } from '~/components/headline'
+import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
+import { Page } from '~/components/page'
 import { Tile } from '~/components/tile'
 import { TileGrid } from '~/components/tile-grid'
 import { createArticleImageUrl } from '~/utils/create-article-image-url'
-
 import type { Route } from './+types/route'
 
 export { loader } from './_loader'
@@ -20,7 +22,11 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
   )
 
   return (
-    <article>
+    <Page>
+      <HeadlineGroup>
+        <Headline>{article.title}</Headline>
+      </HeadlineGroup>
+
       {article.featuredImage && (
         <Image
           alt={article.featuredImage.altText}
@@ -44,6 +50,6 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
           </Tile>
         ))}
       </TileGrid>
-    </article>
+    </Page>
   )
 }

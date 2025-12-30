@@ -1,0 +1,283 @@
+/**
+ * Public Interface Design Tokens
+ *
+ * Design system for public-facing parts of the student magazine platform.
+ * Inspired by the VDM logo's green-blue theme (#5cffa3, #0068b8).
+ * Supports light/dark modes via light-dark() function.
+ * Typography uses global variables from fonts.css directly.
+ */
+
+:root {
+  @layer base {
+    /* ========================================
+       Colors - Backgrounds
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --bg-primary: light-dark(#ffffff, #0a0a0f);
+    /*noinspection CssInvalidFunction*/
+    --bg-secondary: light-dark(#f8fafb, #121418);
+    /*noinspection CssInvalidFunction*/
+    --bg-tertiary: light-dark(#f0f4f8, #1a1d24);
+    /*noinspection CssInvalidFunction*/
+    --bg-accent: light-dark(#e6fff2, #0d2818);
+    /*noinspection CssInvalidFunction*/
+    --bg-hover: light-dark(#f5f9fc, #1e2229);
+    /*noinspection CssInvalidFunction*/
+    --bg-disabled: light-dark(#f5f5f5, #18181b);
+
+    /* ========================================
+       Colors - Borders
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --border: light-dark(#e5e7eb, #2d3139);
+    /*noinspection CssInvalidFunction*/
+    --border-hover: light-dark(#cbd5e1, #3d424d);
+    /*noinspection CssInvalidFunction*/
+    --border-strong: light-dark(#9ca3af, #52576b);
+    /*noinspection CssInvalidFunction*/
+    --border-accent: light-dark(#8b5cf6, #a78bfa);
+
+    /* ========================================
+       Colors - Text
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --text-primary: light-dark(#111827, #f9fafb);
+    /*noinspection CssInvalidFunction*/
+    --text-secondary: light-dark(#4b5563, #d1d5db);
+    /*noinspection CssInvalidFunction*/
+    --text-tertiary: light-dark(#9ca3af, #9ca3af);
+    /*noinspection CssInvalidFunction*/
+    --text-on-accent: light-dark(#ffffff, #ffffff);
+
+    /* ========================================
+       Colors - Violet/Purple Accent (Primary)
+       Primary UI color for buttons, links, and accents
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --violet: light-dark(#8b5cf6, #a78bfa);
+    /*noinspection CssInvalidFunction*/
+    --violet-hover: light-dark(#7c3aed, #8b5cf6);
+    /*noinspection CssInvalidFunction*/
+    --violet-active: light-dark(#6d28d9, #7c3aed);
+    /*noinspection CssInvalidFunction*/
+    --violet-light: light-dark(#ede9fe, #4c1d95);
+
+    /* ========================================
+       Colors - Emerald/Green Accent (Secondary)
+       Based on logo: light #5cffa3 / dark #34d399
+       Secondary color for accents and highlights
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --emerald: light-dark(#10b981, #34d399);
+    /*noinspection CssInvalidFunction*/
+    --emerald-hover: light-dark(#059669, #10b981);
+    /*noinspection CssInvalidFunction*/
+    --emerald-active: light-dark(#047857, #059669);
+    /*noinspection CssInvalidFunction*/
+    --emerald-light: light-dark(#d1fae5, #064e3b);
+    /*noinspection CssInvalidFunction*/
+    --emerald-bright: light-dark(#5cffa3, #34d399);
+
+    /* ========================================
+       Colors - Semantic
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --success: light-dark(#10b981, #34d399);
+    /*noinspection CssInvalidFunction*/
+    --error: light-dark(#ef4444, #f87171);
+    /*noinspection CssInvalidFunction*/
+    --warning: light-dark(#f59e0b, #fbbf24);
+    /*noinspection CssInvalidFunction*/
+    --info: light-dark(#3b82f6, #60a5fa);
+
+    /* ========================================
+       Colors - Links
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --link: light-dark(#8b5cf6, #a78bfa);
+    /*noinspection CssInvalidFunction*/
+    --link-hover: light-dark(#7c3aed, #8b5cf6);
+    /*noinspection CssInvalidFunction*/
+    --link-visited: light-dark(#6d28d9, #7c3aed);
+
+    /* ========================================
+       Colors - Category/Tag Badges
+       ======================================== */
+    /* Emerald - for nature/environment topics */
+    /*noinspection CssInvalidFunction*/
+    --badge-emerald-bg: light-dark(#d1fae5, #064e3b);
+    /*noinspection CssInvalidFunction*/
+    --badge-emerald-text: light-dark(#065f46, #6ee7b7);
+
+    /* Violet - for technology/innovation topics */
+    /*noinspection CssInvalidFunction*/
+    --badge-violet-bg: light-dark(#ede9fe, #4c1d95);
+    /*noinspection CssInvalidFunction*/
+    --badge-violet-text: light-dark(#6d28d9, #c4b5fd);
+
+    /* Amber - for culture/events topics */
+    /*noinspection CssInvalidFunction*/
+    --badge-amber-bg: light-dark(#fef3c7, #78350f);
+    /*noinspection CssInvalidFunction*/
+    --badge-amber-text: light-dark(#92400e, #fcd34d);
+
+    /* Rose - for opinion/editorial topics */
+    /*noinspection CssInvalidFunction*/
+    --badge-rose-bg: light-dark(#ffe4e6, #881337);
+    /*noinspection CssInvalidFunction*/
+    --badge-rose-text: light-dark(#9f1239, #fda4af);
+
+    /* Purple - for special/featured topics */
+    /*noinspection CssInvalidFunction*/
+    --badge-purple-bg: light-dark(#f3e8ff, #581c87);
+    /*noinspection CssInvalidFunction*/
+    --badge-purple-text: light-dark(#6b21a8, #d8b4fe);
+
+    /* ========================================
+       Colors - Buttons
+       ======================================== */
+    /* Primary button - violet purple */
+    /*noinspection CssInvalidFunction*/
+    --button-primary-bg: light-dark(#8b5cf6, #a78bfa);
+    /*noinspection CssInvalidFunction*/
+    --button-primary-bg-hover: light-dark(#7c3aed, #8b5cf6);
+    /*noinspection CssInvalidFunction*/
+    --button-primary-bg-active: light-dark(#6d28d9, #7c3aed);
+    /*noinspection CssInvalidFunction*/
+    --button-primary-text: light-dark(#ffffff, #ffffff);
+
+    /* Secondary button - emerald green from logo */
+    /*noinspection CssInvalidFunction*/
+    --button-secondary-bg: light-dark(#10b981, #34d399);
+    /*noinspection CssInvalidFunction*/
+    --button-secondary-bg-hover: light-dark(#059669, #10b981);
+    /*noinspection CssInvalidFunction*/
+    --button-secondary-bg-active: light-dark(#047857, #059669);
+    /*noinspection CssInvalidFunction*/
+    --button-secondary-text: light-dark(#ffffff, #ffffff);
+
+    /* Outlined button */
+    /*noinspection CssInvalidFunction*/
+    --button-outlined-border: light-dark(#8b5cf6, #a78bfa);
+    /*noinspection CssInvalidFunction*/
+    --button-outlined-text: light-dark(#7c3aed, #a78bfa);
+    /*noinspection CssInvalidFunction*/
+    --button-outlined-bg-hover: light-dark(#ede9fe, #4c1d95);
+
+    /* Ghost button */
+    /*noinspection CssInvalidFunction*/
+    --button-ghost-text: light-dark(#4b5563, #d1d5db);
+    /*noinspection CssInvalidFunction*/
+    --button-ghost-bg-hover: light-dark(#f3f4f6, #1f2937);
+
+    /* ========================================
+       Shadows
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --shadow-xs: 0 1px 2px 0 light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.2));
+    /*noinspection CssInvalidFunction*/
+    --shadow-sm:
+      0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3)), 0 1px 2px
+      0 light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.2));
+    /*noinspection CssInvalidFunction*/
+    --shadow-md:
+      0 4px 6px -1px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3)), 0 2px
+      4px -1px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.2));
+    /*noinspection CssInvalidFunction*/
+    --shadow-lg:
+      0 10px 15px -3px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)), 0 4px
+      6px -2px light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.2));
+    /*noinspection CssInvalidFunction*/
+    --shadow-xl:
+      0 20px 25px -5px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5)), 0
+      10px 10px -5px light-dark(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.2));
+
+    /* ========================================
+       Focus Shadows
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --focus-shadow: 0 0 0 3px
+      light-dark(rgba(139, 92, 246, 0.3), rgba(167, 139, 250, 0.3));
+    /*noinspection CssInvalidFunction*/
+    --focus-shadow-error: 0 0 0 3px
+      light-dark(rgba(239, 68, 68, 0.3), rgba(248, 113, 113, 0.3));
+
+    /* ========================================
+       Cards & Surfaces
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --card-bg: light-dark(#ffffff, #18181b);
+    /*noinspection CssInvalidFunction*/
+    --card-border: light-dark(#e5e7eb, #27272a);
+    /*noinspection CssInvalidFunction*/
+    --card-shadow: var(--shadow-md);
+
+    /* ========================================
+       Header & Navigation
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --header-bg: light-dark(#ffffff, #0a0a0f);
+    /*noinspection CssInvalidFunction*/
+    --header-border: light-dark(#e5e7eb, #27272a);
+    /*noinspection CssInvalidFunction*/
+    --nav-item-text: light-dark(#4b5563, #d1d5db);
+    /*noinspection CssInvalidFunction*/
+    --nav-item-text-hover: light-dark(#111827, #f9fafb);
+    /*noinspection CssInvalidFunction*/
+    --nav-item-text-active: light-dark(#7c3aed, #a78bfa);
+
+    /* ========================================
+       Footer
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --footer-bg: light-dark(#f8fafb, #121418);
+    /*noinspection CssInvalidFunction*/
+    --footer-text: light-dark(#6b7280, #9ca3af);
+    /*noinspection CssInvalidFunction*/
+    --footer-border: light-dark(#e5e7eb, #2d3139);
+
+    /* ========================================
+       Gradients
+       ======================================== */
+    /*noinspection CssInvalidFunction*/
+    --gradient-violet-emerald: linear-gradient(
+      135deg,
+      light-dark(#8b5cf6, #a78bfa) 0%,
+      light-dark(#7c3aed, #8b5cf6) 25%,
+      light-dark(#10b981, #34d399) 75%,
+      light-dark(#34d399, #6ee7b7) 100%
+    );
+
+    /* ========================================
+       Layout
+       ======================================== */
+    --content-max-width: 940px;
+
+    /* ========================================
+       Z-Index Scale
+       ======================================== */
+    --z-header: 100;
+    --z-nav-dropdown: 200;
+    --z-sidebar: 50;
+    --z-modal: 1000;
+    --z-tooltip: 2000;
+    --z-notification: 3000;
+
+    /* ========================================
+       Transitions
+       ======================================== */
+    --transition-fast: 150ms ease-in-out;
+    --transition-base: 200ms ease-in-out;
+    --transition-slow: 300ms ease-in-out;
+
+    /* ========================================
+       Border Radius
+       ======================================== */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --radius-full: 9999px;
+  }
+}

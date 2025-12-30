@@ -24,6 +24,7 @@
   grid-area: title;
   font-size: var(--font-size-small);
   font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
 }
 
 .list {
@@ -47,6 +48,13 @@
 .link {
   font-size: var(--font-size-small);
   font-weight: var(--font-weight-regular);
+  color: var(--footer-text);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+
+  &:hover {
+    color: var(--link-hover);
+  }
 }
 
 @media all and (max-width: 689px) {

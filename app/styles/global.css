@@ -26,7 +26,6 @@
     margin: 0;
     min-height: 100vh;
     width: 100%;
-    background-color: var(--white);
     color: var(--eerie-black);
 
     @supports (min-width: 100dvh) {

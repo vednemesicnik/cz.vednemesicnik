@@ -1,4 +1,4 @@
-import { Headline } from 'app/components/headline'
+import { Headline } from '~/components/headline'
 import { Hyperlink } from '~/components/hyperlink'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'

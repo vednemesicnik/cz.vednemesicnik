@@ -7,6 +7,6 @@ type Props = {
   className?: string
 }
 
-export const Headline = ({ children, className }: Props) => {
-  return <h1 className={clsx(styles.headline, className)}>{children}</h1>
+export const Paragraph = ({ children, className }: Props) => {
+  return <p className={clsx(styles.paragraph, className)}>{children}</p>
 }

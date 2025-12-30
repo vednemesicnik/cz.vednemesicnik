@@ -12,9 +12,9 @@
   /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-start: light-dark(#0068b8, #0284c7);
   /*noinspection CssInvalidFunction*/
-  --vdm-logo-gradient-mid: light-dark(#43d6a9, #2dd4bf);
+  --vdm-logo-gradient-mid: light-dark(#43d6a9, #14b8a6);
   /*noinspection CssInvalidFunction*/
-  --vdm-logo-gradient-end: light-dark(#5cffa3, #34d399);
+  --vdm-logo-gradient-end: light-dark(#5cffa3, #6ee7b7);
 }
 
 /* Edit mode variant (red/purple theme) */

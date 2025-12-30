@@ -2,6 +2,11 @@
   grid-area: navigation;
   display: grid;
   position: relative;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    justify-items: end;
+  }
 }
 
 .list {
@@ -9,10 +14,14 @@
   position: relative;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 32px;
   justify-content: center;
   align-items: center;
   list-style: none;
   padding: 0;
   margin: 0;
+
+  @media (min-width: 768px) {
+    justify-content: flex-end;
+  }
 }

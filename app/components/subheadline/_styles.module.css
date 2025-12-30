@@ -1,7 +1,7 @@
 .subheadline {
-  font-size: 0.875rem;
+  font-size: var(--font-size-small);
   font-weight: var(--font-weight-regular);
-  color: var(--coral);
+  color: var(--text-secondary);
   margin: 0;
 }
 

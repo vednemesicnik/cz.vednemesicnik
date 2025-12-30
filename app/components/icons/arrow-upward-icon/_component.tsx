@@ -5,7 +5,7 @@ import styles from './_styles.module.css'
 
 type Props = Pick<ComponentProps<'svg'>, 'className'>
 
-export const ArrowUpward = ({ className }: Props) => {
+export const ArrowUpwardIcon = ({ className }: Props) => {
   return (
     <svg
       aria-label={'Ikona šipky nahoru'}

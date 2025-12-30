@@ -19,7 +19,7 @@ import { AdminStateBadge } from '~/components/admin-state-badge'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
-import { ArrowUpward } from '~/components/icons/arrow-upward'
+import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
 import { CheckIcon } from '~/components/icons/check-icon'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
@@ -106,7 +106,7 @@ export default function RouteComponent({
               }
               type="submit"
             >
-              <ArrowUpward />
+              <ArrowUpwardIcon />
               Zveřejnit
             </AdminActionButton>
           </Form>

@@ -1,5 +1,6 @@
 import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
+
 import styles from './_styles.module.css'
 
 type Props = {
@@ -7,6 +8,8 @@ type Props = {
   className?: string
 }
 
-export const Headline = ({ children, className }: Props) => {
-  return <h1 className={clsx(styles.headline, className)}>{children}</h1>
+export const Group = ({ children, className }: Props) => {
+  return (
+    <section className={clsx(styles.container, className)}>{children}</section>
+  )
 }

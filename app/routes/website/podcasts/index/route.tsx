@@ -8,7 +8,9 @@ import { ArticleList } from '~/components/article-list'
 import { ArticleListItem } from '~/components/article-list-item'
 import { BaseLink } from '~/components/base-link'
 import { Headline } from '~/components/headline'
+import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
+import { Page } from '~/components/page'
 import { Tile } from '~/components/tile'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
@@ -21,8 +23,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { podcasts, episodes } = loaderData
 
   return (
-    <>
-      <Headline>Tohle si poslechněte</Headline>
+    <Page>
+      <HeadlineGroup>
+        <Headline>Tohle si poslechněte</Headline>
+      </HeadlineGroup>
 
       <TileGrid>
         {podcasts.map((podcast) => {
@@ -72,7 +76,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           )
         })}
       </ArticleList>
-    </>
+    </Page>
   )
 }
 

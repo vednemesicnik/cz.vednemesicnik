@@ -1,5 +1,6 @@
 import { BulletedList } from '~/components/bulleted-list'
 import { Headline } from '~/components/headline'
+import { HeadlineGroup } from '~/components/headline-group'
 import { Hyperlink } from '~/components/hyperlink'
 import { ListItem } from '~/components/list-item'
 import { Paragraph } from '~/components/paragraph'
@@ -14,10 +15,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Headline marginBottom={false}>{loaderData.episode.title}</Headline>
-      <Subheadline marginBottom={true} marginTop={true}>
-        {formattedPublishDate}
-      </Subheadline>
+      <HeadlineGroup>
+        <Headline>{loaderData.episode.title}</Headline>
+        <Subheadline>{formattedPublishDate}</Subheadline>
+      </HeadlineGroup>
       <Paragraph>{loaderData.episode.description}</Paragraph>
       <BulletedList>
         {loaderData.episode.links.map((link) => (

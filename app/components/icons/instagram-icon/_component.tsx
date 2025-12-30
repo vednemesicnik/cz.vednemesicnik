@@ -1,17 +1,17 @@
-type Props = {
-  className?: string
-}
+import { clsx } from 'clsx'
+import type { ComponentProps } from 'react'
+
+import styles from './_styles.module.css'
+
+type Props = Pick<ComponentProps<'svg'>, 'className'>
 
 export const InstagramIcon = ({ className }: Props) => {
   return (
     <svg
       aria-label={'Ikona Instagramu'}
-      className={className}
-      height={'100%'}
+      className={clsx(styles.icon, className)}
       role={'img'}
-      version={'1.1'}
       viewBox={'0 0 400 400'}
-      width={'100%'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
       <path
@@ -27,5 +27,3 @@ export const InstagramIcon = ({ className }: Props) => {
     </svg>
   )
 }
-
-InstagramIcon.displayName = 'InstagramIcon'
