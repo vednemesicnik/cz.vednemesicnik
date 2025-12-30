@@ -18,7 +18,7 @@ export const useAutoSlug = ({
   useEffect(() => {
     if (isFocused) return
 
-    if (sourceValue !== undefined) {
+    if (sourceValue) {
       updateFieldValue({ name: fieldName, value: slugify(sourceValue) })
     }
   }, [fieldName, updateFieldValue, sourceValue, isFocused])

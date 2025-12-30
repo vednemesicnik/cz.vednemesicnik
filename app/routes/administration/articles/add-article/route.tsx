@@ -47,6 +47,7 @@ export default function RouteComponent({
     constraint: getZodConstraint(schema),
     defaultValue: {
       authorId: loaderData.selfAuthorId,
+      featuredImage: FEATURED_IMAGE_SOURCE.NONE,
     },
     id: 'add-article',
     lastResult: actionData?.submissionResult,

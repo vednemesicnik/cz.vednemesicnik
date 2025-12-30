@@ -46,7 +46,7 @@ export const AdminTextEditor = ({
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [1, 2, 3],
+          levels: [2, 3],
         },
       }),
       Placeholder.configure({
@@ -60,7 +60,7 @@ export const AdminTextEditor = ({
       }
     },
     onUpdate: ({ editor }) => {
-      if (!disabled && editor.isEditable) {
+      if (!disabled && editor.isEditable && editor.isFocused) {
         const newValue = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
         form.update({ name, value: newValue })
       }
@@ -76,7 +76,6 @@ export const AdminTextEditor = ({
       canToggleBlockquote: editor?.can().toggleBlockquote() ?? false,
       canToggleBold: editor?.can().toggleBold() ?? false,
       canToggleBulletList: editor?.can().toggleBulletList() ?? false,
-      canToggleH1: editor?.can().toggleHeading({ level: 1 }) ?? false,
       canToggleH2: editor?.can().toggleHeading({ level: 2 }) ?? false,
       canToggleH3: editor?.can().toggleHeading({ level: 3 }) ?? false,
       canToggleItalic: editor?.can().toggleItalic() ?? false,
@@ -85,7 +84,6 @@ export const AdminTextEditor = ({
       isActiveBlockquote: editor?.isActive('blockquote') ?? false,
       isActiveBold: editor?.isActive('bold') ?? false,
       isActiveBulletList: editor?.isActive('bulletList') ?? false,
-      isActiveH1: editor?.isActive('heading', { level: 1 }) ?? false,
       isActiveH2: editor?.isActive('heading', { level: 2 }) ?? false,
       isActiveH3: editor?.isActive('heading', { level: 3 }) ?? false,
       isActiveItalic: editor?.isActive('italic') ?? false,
@@ -128,17 +126,6 @@ export const AdminTextEditor = ({
                 title="Kurzíva (Ctrl+I)"
               >
                 <em>I</em>
-              </ToolbarButton>
-
-              <ToolbarButton
-                active={editorState?.isActiveH1}
-                disabled={!editorState?.canToggleH1}
-                onClick={() =>
-                  editor?.chain().focus().toggleHeading({ level: 1 }).run()
-                }
-                title="Nadpis 1"
-              >
-                H1
               </ToolbarButton>
 
               <ToolbarButton
