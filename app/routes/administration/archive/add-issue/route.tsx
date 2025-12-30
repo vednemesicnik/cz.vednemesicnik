@@ -10,6 +10,7 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -17,7 +18,6 @@ import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { Select } from '~/components/select'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 import { schema } from './_schema'
@@ -75,14 +75,14 @@ export default function RouteComponent({
           disabled={isLoadingOrSubmitting}
           legend={'Základní informace'}
         >
-          <Input
+          <AdminInput
             label={'Pořadové číslo'}
             {...getInputProps(fields.ordinalNumber, { type: 'number' })}
             errors={fields.ordinalNumber.errors}
             placeholder={'1'}
             step={1}
           />
-          <Input
+          <AdminInput
             label={'Datum vydání'}
             {...getInputProps(fields.releasedAt, { type: 'date' })}
             errors={fields.releasedAt.errors}

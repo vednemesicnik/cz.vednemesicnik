@@ -1,0 +1,36 @@
+.imageFieldFileContainer {
+  @layer route {
+    grid-area: image;
+  }
+}
+
+.imageFieldAltTextInput,
+.imageFieldDescriptionTextarea {
+  @layer route {
+    max-width: 100%;
+  }
+}
+
+.imageFieldAltTextContainer {
+  @layer route {
+    grid-area: altText;
+  }
+}
+
+.imageFieldDescriptionContainer {
+  @layer route {
+    grid-area: description;
+  }
+}
+
+.defaultFieldFeaturedImageContainer {
+  @layer route {
+    margin-block-end: 16px;
+  }
+}
+
+.fieldFeaturedImageContainer {
+  @layer route {
+    grid-area: featuredImage;
+  }
+}

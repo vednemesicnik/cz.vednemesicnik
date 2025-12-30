@@ -19,6 +19,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw new Response('Obrázek nebyl nalezen', { status: 404 })
   }
 
+  console.log('Image updatedAt:', image.updatedAt)
+
   // Generate ETag from URL + updatedAt timestamp (invalidates when image changes)
   const tag = getContentHash(`${request.url}:${image.updatedAt.valueOf()}`)
   const lastModified = image.updatedAt.toUTCString()

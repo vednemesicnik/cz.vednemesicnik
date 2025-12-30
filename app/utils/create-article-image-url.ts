@@ -1,5 +1,7 @@
 import { href } from 'react-router'
 
-export function createArticleImageUrl(imageId: string) {
-  return href('/resources/article-image/:imageId', { imageId })
+export function createArticleImageUrl(imageId: string | undefined = undefined) {
+  return imageId === undefined
+    ? undefined
+    : href('/resources/article-image/:imageId', { imageId })
 }

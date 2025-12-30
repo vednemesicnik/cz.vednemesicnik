@@ -12,18 +12,26 @@ import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminButtonLink } from '~/components/admin-button-link'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminImageInput } from '~/components/admin-image-input'
+import { AdminImageUploadCard } from '~/components/admin-image-upload-card'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
+import { AdminRadioInput } from '~/components/admin-radio-input'
 import { AdminTextEditor } from '~/components/admin-text-editor'
+import { AdminTextarea } from '~/components/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
+import { DeleteIcon } from '~/components/icons/delete-icon'
 import { Select } from '~/components/select'
+import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
+import { createArticleImageUrl } from '~/utils/create-article-image-url'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { action } from './_action'
@@ -45,6 +53,15 @@ export default function RouteComponent({
       authorId: article.authorId,
       categoryIds: article.categoryIds,
       content: article.content,
+      existingImages: article.images.map((image) => ({
+        altText: image.altText,
+        description: image.description,
+        file: undefined,
+        id: image.id,
+      })),
+      featuredImage: article.featuredImageId
+        ? `${FEATURED_IMAGE_SOURCE.EXISTING}:${article.featuredImageId}`
+        : FEATURED_IMAGE_SOURCE.NONE,
       slug: article.slug,
       state: article.state,
       tagIds: article.tagIds,
@@ -59,6 +76,9 @@ export default function RouteComponent({
     shouldRevalidate: 'onBlur',
     shouldValidate: 'onSubmit',
   })
+
+  const existingImages = fields.existingImages.getFieldList()
+  const newImages = fields.images.getFieldList()
 
   const { handleBlur } = useAutoSlug({
     fieldName: fields.slug.name,
@@ -93,7 +113,7 @@ export default function RouteComponent({
             disabled={isLoadingOrSubmitting}
             legend={'Základní informace'}
           >
-            <Input
+            <AdminInput
               {...getInputProps(fields.title, { type: 'text' })}
               errors={fields.title.errors}
               label={'Název'}
@@ -106,7 +126,7 @@ export default function RouteComponent({
             >
               Vygenerovat nový slug
             </AdminButtonLink>
-            <Input
+            <AdminInput
               {...getInputProps(fields.slug, { type: 'text' })}
               errors={fields.slug.errors}
               label={'Slug'}
@@ -151,6 +171,166 @@ export default function RouteComponent({
                 </option>
               ))}
             </Select>
+          </Fieldset>
+
+          <Fieldset disabled={isLoadingOrSubmitting} legend={'Obrázky'}>
+            <AdminRadioInput
+              className={styles.defaultFieldFeaturedImageContainer}
+              field={fields.featuredImage}
+              inputProps={{
+                defaultChecked: !article.featuredImageId,
+                value: FEATURED_IMAGE_SOURCE.NONE,
+              }}
+              label={'Bez hlavního obrázku'}
+            />
+
+            {existingImages.map((image, index) => {
+              const imageFields = image.getFieldset()
+              const imageId = imageFields.id.value
+
+              return (
+                <AdminImageUploadCard
+                  action={
+                    <AdminButton
+                      onClick={() => {
+                        const currentValue = fields.featuredImage.value
+                        if (
+                          currentValue ===
+                          `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`
+                        ) {
+                          form.update({
+                            name: fields.featuredImage.name,
+                            value: FEATURED_IMAGE_SOURCE.NONE,
+                          })
+                        }
+                        form.remove({ index, name: fields.existingImages.name })
+                      }}
+                      type={'button'}
+                      variant={'danger'}
+                    >
+                      <DeleteIcon className={styles.removeIcon} />
+                      Odstranit
+                    </AdminButton>
+                  }
+                  key={image.key}
+                  title={'Existující obrázek'}
+                >
+                  <input
+                    {...getInputProps(imageFields.id, { type: 'hidden' })}
+                  />
+
+                  <AdminImageInput
+                    className={styles.imageFieldFileContainer}
+                    field={imageFields.file}
+                    label={'Obrázek'}
+                    previewUrl={createArticleImageUrl(imageId)}
+                  />
+
+                  <AdminInput
+                    {...getInputProps(imageFields.altText, { type: 'text' })}
+                    className={styles.imageFieldAltTextInput}
+                    containerClassName={styles.imageFieldAltTextContainer}
+                    errors={imageFields.altText.errors}
+                    label={'Alt text'}
+                    placeholder={
+                      'Popis obrázku pro vyhledávače a čtečky obrazovky'
+                    }
+                  />
+
+                  <AdminTextarea
+                    className={styles.imageFieldDescriptionContainer}
+                    field={imageFields.description}
+                    label={'Popis obrázku'}
+                    textareaProps={{
+                      className: styles.imageFieldDescriptionTextarea,
+                      placeholder: 'Popis obrázku...',
+                      rows: 3,
+                    }}
+                  />
+
+                  <AdminRadioInput
+                    className={styles.fieldFeaturedImageContainer}
+                    field={fields.featuredImage}
+                    inputProps={{
+                      value: `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`,
+                    }}
+                    label={'Použít jako hlavní obrázek'}
+                  />
+                </AdminImageUploadCard>
+              )
+            })}
+
+            {newImages.map((image, index) => {
+              const imageFields = image.getFieldset()
+              return (
+                <AdminImageUploadCard
+                  action={
+                    <AdminButton
+                      onClick={() => {
+                        const currentValue = fields.featuredImage.value
+                        if (
+                          currentValue ===
+                          `${FEATURED_IMAGE_SOURCE.NEW}:${index}`
+                        ) {
+                          form.update({
+                            name: fields.featuredImage.name,
+                            value: FEATURED_IMAGE_SOURCE.NONE,
+                          })
+                        }
+                        form.remove({ index, name: fields.images.name })
+                      }}
+                      type={'button'}
+                      variant={'danger'}
+                    >
+                      <DeleteIcon className={styles.removeIcon} />
+                      Odstranit
+                    </AdminButton>
+                  }
+                  key={image.key}
+                  title={'Nový obrázek'}
+                >
+                  <AdminImageInput
+                    className={styles.imageFieldFileContainer}
+                    field={imageFields.file}
+                    label={'Obrázek'}
+                  />
+                  <AdminInput
+                    {...getInputProps(imageFields.altText, { type: 'text' })}
+                    className={styles.imageFieldAltTextInput}
+                    containerClassName={styles.imageFieldAltTextContainer}
+                    errors={imageFields.altText.errors}
+                    label={'Alt text'}
+                    placeholder={
+                      'Popis obrázku pro vyhledávače a čtečky obrazovky'
+                    }
+                  />
+                  <AdminTextarea
+                    className={styles.imageFieldDescriptionContainer}
+                    field={imageFields.description}
+                    label={'Popis obrázku'}
+                    textareaProps={{
+                      className: styles.imageFieldDescriptionTextarea,
+                      placeholder: 'Popis obrázku...',
+                      rows: 3,
+                    }}
+                  />
+                  <AdminRadioInput
+                    className={styles.fieldFeaturedImageContainer}
+                    field={fields.featuredImage}
+                    inputProps={{
+                      value: `${FEATURED_IMAGE_SOURCE.NEW}:${index}`,
+                    }}
+                    label={'Použít jako hlavní obrázek'}
+                  />
+                </AdminImageUploadCard>
+              )
+            })}
+
+            <AdminButton
+              {...form.insert.getButtonProps({ name: fields.images.name })}
+            >
+              Přidat obrázek
+            </AdminButton>
           </Fieldset>
 
           <Fieldset

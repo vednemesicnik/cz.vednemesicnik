@@ -422,6 +422,7 @@ model Article {
 model ArticleImage {
   id                  String   @id @default(cuid())
   altText             String
+  description         String?
   contentType         String
   blob                Bytes
   createdAt           DateTime @default(now())

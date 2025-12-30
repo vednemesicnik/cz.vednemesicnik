@@ -11,13 +11,13 @@ import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminButtonLink } from '~/components/admin-button-link'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { Select } from '~/components/select'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
@@ -80,7 +80,7 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <Fieldset legend={'Základní informace'}>
-          <Input
+          <AdminInput
             errors={fields.name.errors}
             label={'Název'}
             {...getInputProps(fields.name, { type: 'text' })}
@@ -93,7 +93,7 @@ export default function RouteComponent({
           >
             Vygenerovat nový slug
           </AdminButtonLink>
-          <Input
+          <AdminInput
             errors={fields.slug.errors}
             label={'Slug'}
             onBlur={handleBlur}

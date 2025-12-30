@@ -13,11 +13,11 @@ export const featuredImageSchema = z
   .string()
   .default(FEATURED_IMAGE_SOURCE.NONE)
   .transform((value) => {
-    const [source, param] = value.split(':', 2)
+    const [source, parameter] = value.split(':', 2)
 
     switch (source) {
       case FEATURED_IMAGE_SOURCE.NEW: {
-        const index = parseInt(param, 10)
+        const index = parseInt(parameter, 10)
         if (Number.isNaN(index)) {
           throw new Error('Invalid index for new image')
         }
@@ -25,14 +25,12 @@ export const featuredImageSchema = z
       }
 
       case FEATURED_IMAGE_SOURCE.EXISTING: {
-        if (!param) {
+        if (parameter === undefined) {
           throw new Error('Missing id for existing image')
         }
-        return { id: param, source: FEATURED_IMAGE_SOURCE.EXISTING }
+        return { id: parameter, source: FEATURED_IMAGE_SOURCE.EXISTING }
       }
 
-      case FEATURED_IMAGE_SOURCE.NONE:
-      case '':
       default:
         return { source: FEATURED_IMAGE_SOURCE.NONE }
     }

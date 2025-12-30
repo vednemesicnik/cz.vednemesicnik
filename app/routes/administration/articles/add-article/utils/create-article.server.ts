@@ -10,7 +10,7 @@ type Options = {
   categoryIds?: string[]
   tagIds?: string[]
   authorId: string
-  images?: File[]
+  images?: Array<{ file: File; altText: string; description?: string }>
   featuredImage: FeaturedImage
 }
 
@@ -27,35 +27,33 @@ export async function createArticle(
     featuredImage,
   }: Options,
 ) {
-  const featuredImageIndex =
-    featuredImage.source === 'new' ? featuredImage.index : undefined
-
-  // Process all images
-  const processedImages = await Promise.all(
-    (images || []).map(async (img, index) => {
-      const converted = await getConvertedImageStream(img, {
-        format: 'jpeg',
-        height: 1200,
-        quality: 85,
-        width: 1600,
-      })
-      return {
-        altText:
-          index === featuredImageIndex
-            ? `Hlavní obrázek: ${title}`
-            : `Obrázek: ${title}`,
-        blob: Uint8Array.from(await converted.stream.toBuffer()),
-        contentType: converted.contentType,
-      }
-    }),
-  )
-
   // Create article with all images and categories/tags
   const article = await withAuthorPermission(request, {
     action: 'create',
     entity: 'article',
-    execute: () =>
-      prisma.article.create({
+    execute: async () => {
+      const featuredImageIndex =
+        featuredImage.source === 'new' ? featuredImage.index : undefined
+
+      // Process all images
+      const processedImages = await Promise.all(
+        (images || []).map(async ({ file, altText, description }) => {
+          const converted = await getConvertedImageStream(file, {
+            format: 'jpeg',
+            height: 1200,
+            quality: 85,
+            width: 1600,
+          })
+          return {
+            altText,
+            blob: Uint8Array.from(await converted.stream.toBuffer()),
+            contentType: converted.contentType,
+            description: description || null,
+          }
+        }),
+      )
+
+      const createdArticle = await prisma.article.create({
         data: {
           authorId,
           categories: {
@@ -72,17 +70,23 @@ export async function createArticle(
           title,
         },
         select: { id: true, images: { select: { id: true } } },
-      }),
+      })
+
+      // Set featured image if specified
+      if (
+        featuredImageIndex !== undefined &&
+        createdArticle.images[featuredImageIndex]
+      ) {
+        await prisma.articleImage.update({
+          data: { featuredInArticleId: createdArticle.id },
+          where: { id: createdArticle.images[featuredImageIndex].id },
+        })
+      }
+
+      return createdArticle
+    },
     target: { authorId, state: 'draft' },
   })
-
-  // Set featured image if specified
-  if (featuredImageIndex !== undefined && article.images[featuredImageIndex]) {
-    await prisma.articleImage.update({
-      data: { featuredInArticleId: article.id },
-      where: { id: article.images[featuredImageIndex].id },
-    })
-  }
 
   return { articleId: article.id }
 }

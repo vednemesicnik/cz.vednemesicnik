@@ -10,18 +10,31 @@ import styles from './_styles.module.css'
 type Props = ComponentProps<'input'> & {
   label: string
   errors?: string[]
+  containerClassName?: string
 }
 
-export const Input = ({ label, errors, id, required, ...rest }: Props) => {
+export const AdminInput = ({
+  label,
+  errors,
+  id,
+  required,
+  className,
+  containerClassName,
+  ...rest
+}: Props) => {
   const hasErrors = errors !== undefined && errors.length > 0
 
   return (
-    <section className={styles.container}>
+    <section className={clsx(styles.container, containerClassName)}>
       <Label htmlFor={id} required={required}>
         {label}
       </Label>
       <input
-        className={clsx(styles.input, hasErrors && styles.inputError)}
+        className={clsx(
+          styles.input,
+          hasErrors && styles.inputError,
+          className,
+        )}
         id={id}
         required={required}
         {...rest}

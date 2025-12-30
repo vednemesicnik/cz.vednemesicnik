@@ -3,7 +3,6 @@ import {
   getFormProps,
   getInputProps,
   getSelectProps,
-  getTextareaProps,
   useForm,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
@@ -11,16 +10,16 @@ import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminButtonLink } from '~/components/admin-button-link'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
+import { AdminTextarea } from '~/components/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { Select } from '~/components/select'
-import { TextArea } from '~/components/text-area'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
@@ -86,7 +85,7 @@ export default function RouteComponent({
         <input {...getInputProps(fields.id, { type: 'hidden' })} />
 
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
-          <Input
+          <AdminInput
             errors={fields.title.errors}
             label={'Název'}
             placeholder={'Název podcastu'}
@@ -100,7 +99,7 @@ export default function RouteComponent({
           >
             Vygenerovat nový slug
           </AdminButtonLink>
-          <Input
+          <AdminInput
             errors={fields.slug.errors}
             label={'Slug'}
             onBlur={handleBlur}
@@ -108,11 +107,13 @@ export default function RouteComponent({
             {...getInputProps(fields.slug, { type: 'text' })}
           />
 
-          <TextArea
-            errors={fields.description.errors}
+          <AdminTextarea
+            field={fields.description}
             label={'Popis'}
-            placeholder={'Popis podcastu'}
-            {...getTextareaProps(fields.description)}
+            textareaProps={{
+              placeholder: 'Popis podcastu',
+              rows: 10,
+            }}
           />
 
           <input {...getInputProps(fields.coverId, { type: 'hidden' })} />

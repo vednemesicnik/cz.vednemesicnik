@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-
+import { AdminInput } from '~/components/admin-input'
 import { Button } from '~/components/button'
-import { Input } from '~/components/input'
 
 import { Form } from './_component'
 
@@ -41,7 +40,7 @@ type Story = StoryObj<typeof Form>
 export const LoginForm: Story = {
   render: () => (
     <Form method="post">
-      <Input
+      <AdminInput
         id="email"
         label="Email"
         name="email"
@@ -49,7 +48,7 @@ export const LoginForm: Story = {
         required
         type="email"
       />
-      <Input
+      <AdminInput
         id="password"
         label="Password"
         name="password"
@@ -71,7 +70,7 @@ export const LoginForm: Story = {
 export const WithFieldErrors: Story = {
   render: () => (
     <Form method="post">
-      <Input
+      <AdminInput
         errors={['Please enter a valid email address']}
         id="email"
         label="Email"
@@ -79,7 +78,7 @@ export const WithFieldErrors: Story = {
         required
         type="email"
       />
-      <Input
+      <AdminInput
         errors={[
           'Password must be at least 8 characters',
           'Password must contain at least one number',
@@ -110,7 +109,7 @@ export const WithFormErrors: Story = {
       ]}
       method="post"
     >
-      <Input
+      <AdminInput
         id="email"
         label="Email"
         name="email"
@@ -118,7 +117,7 @@ export const WithFormErrors: Story = {
         required
         type="email"
       />
-      <Input
+      <AdminInput
         id="password"
         label="Password"
         name="password"
@@ -140,7 +139,7 @@ export const WithFormErrors: Story = {
 export const RegistrationForm: Story = {
   render: () => (
     <Form method="post">
-      <Input
+      <AdminInput
         id="name"
         label="Full Name"
         name="name"
@@ -148,7 +147,7 @@ export const RegistrationForm: Story = {
         required
         type="text"
       />
-      <Input
+      <AdminInput
         id="email"
         label="Email"
         name="email"
@@ -156,7 +155,7 @@ export const RegistrationForm: Story = {
         required
         type="email"
       />
-      <Input
+      <AdminInput
         id="password"
         label="Password"
         name="password"
@@ -164,7 +163,7 @@ export const RegistrationForm: Story = {
         required
         type="password"
       />
-      <Input
+      <AdminInput
         id="confirm-password"
         label="Confirm Password"
         name="confirmPassword"
@@ -186,7 +185,7 @@ export const RegistrationForm: Story = {
 export const FormWithMultipleActions: Story = {
   render: () => (
     <Form method="post">
-      <Input
+      <AdminInput
         id="username"
         label="Username"
         name="username"
@@ -194,7 +193,7 @@ export const FormWithMultipleActions: Story = {
         required
         type="text"
       />
-      <Input
+      <AdminInput
         id="email"
         label="Email"
         name="email"

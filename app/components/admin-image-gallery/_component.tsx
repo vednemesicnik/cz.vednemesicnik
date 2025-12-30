@@ -1,15 +1,16 @@
 import { clsx } from 'clsx'
+import { Image } from '~/components/image'
 import styles from './_styles.module.css'
 
-type Image = {
+type ImageData = {
   id: string
-  src: string
+  src: string | undefined
 }
 
 type Props = {
   className?: string
   featuredImageId?: string
-  images: Image[]
+  images: ImageData[]
 }
 
 export const AdminImageGallery = ({
@@ -25,12 +26,15 @@ export const AdminImageGallery = ({
     <section className={clsx(styles.grid, className)}>
       {images.map((image) => {
         const isFeatured = image.id === featuredImageId
+        if (!image.src) return null
         return (
           <section className={styles.imageWrapper} key={image.id}>
-            <img
+            <Image
               alt={isFeatured ? 'Hlavní obrázek' : 'Obrázek'}
               className={styles.image}
+              height={120}
               src={image.src}
+              width={160}
             />
             {isFeatured && <span className={styles.badge}>Hlavní</span>}
           </section>

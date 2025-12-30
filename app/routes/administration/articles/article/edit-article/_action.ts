@@ -33,10 +33,9 @@ export async function action({ request, params }: Route.ActionArgs) {
     tagIds,
     authorId,
     state,
-    imagesToDelete,
-    newImages,
-    featuredImageId,
-    newFeaturedImageIndex,
+    existingImages,
+    images,
+    featuredImage,
   } = submission.value
 
   await updateArticle(request, {
@@ -44,10 +43,9 @@ export async function action({ request, params }: Route.ActionArgs) {
     authorId,
     categoryIds,
     content,
-    featuredImageId,
-    imagesToDelete,
-    newFeaturedImageIndex,
-    newImages,
+    existingImages,
+    featuredImage,
+    images,
     slug,
     state,
     tagIds,

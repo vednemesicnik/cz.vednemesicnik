@@ -27,7 +27,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: { id: true },
       },
       images: {
+        orderBy: { createdAt: 'asc' },
         select: {
+          altText: true,
+          description: true,
           id: true,
         },
       },
@@ -86,7 +89,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       categoryIds: article.categories.map((category) => category.id),
       content: article.content,
       featuredImageId: article.featuredImage?.id,
-      images: article.images.map((image) => ({ id: image.id })),
+      images: article.images.map((image) => ({
+        altText: image.altText,
+        description: image.description || '',
+        id: image.id,
+      })),
       slug: article.slug,
       state: article.state,
       tagIds: article.tags.map((tag) => tag.id),

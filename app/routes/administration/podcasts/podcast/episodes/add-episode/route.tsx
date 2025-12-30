@@ -3,7 +3,6 @@ import {
   getFormProps,
   getInputProps,
   getSelectProps,
-  getTextareaProps,
   useForm,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
@@ -11,15 +10,15 @@ import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
+import { AdminTextarea } from '~/components/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { Select } from '~/components/select'
-import { TextArea } from '~/components/text-area'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -71,14 +70,14 @@ export default function RouteComponent({
 
       <Form method={'post'} {...getFormProps(form)} errors={form.errors}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
-          <Input
+          <AdminInput
             errors={fields.number.errors}
             label={'Číslo'}
             placeholder={'Číslo epizody'}
             {...getInputProps(fields.number, { type: 'number' })}
           />
 
-          <Input
+          <AdminInput
             errors={fields.title.errors}
             label={'Název'}
             onChange={(event) => setTitle(event.target.value)}
@@ -87,7 +86,7 @@ export default function RouteComponent({
             {...getInputProps(fields.title, { type: 'text' })}
           />
 
-          <Input
+          <AdminInput
             errors={fields.slug.errors}
             label={'Slug'}
             onBlur={handleBlur}
@@ -96,11 +95,13 @@ export default function RouteComponent({
             {...getInputProps(fields.slug, { type: 'text' })}
           />
 
-          <TextArea
-            errors={fields.description.errors}
+          <AdminTextarea
+            field={fields.description}
             label={'Popis'}
-            placeholder={'Popis epizody'}
-            {...getTextareaProps(fields.description)}
+            textareaProps={{
+              placeholder: 'Popis epizody',
+              rows: 10,
+            }}
           />
         </Fieldset>
 

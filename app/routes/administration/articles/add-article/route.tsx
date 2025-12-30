@@ -11,25 +11,25 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
-import { AdminFileInput } from '~/components/admin-file-input'
 import { AdminHeadline } from '~/components/admin-headline'
-import { AdminImageDeleteButton } from '~/components/admin-image-delete-button'
-import { AdminImagePreviewCard } from '~/components/admin-image-preview-card'
-import { AdminImagePreviewRadioInputGroup } from '~/components/admin-image-preview-radio-input-group'
+import { AdminImageInput } from '~/components/admin-image-input'
+import { AdminImageUploadCard } from '~/components/admin-image-upload-card'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
-import { AdminRadioInputBase } from '~/components/admin-radio-input-base'
+import { AdminRadioInput } from '~/components/admin-radio-input'
 import { AdminTextEditor } from '~/components/admin-text-editor'
+import { AdminTextarea } from '~/components/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
+import { DeleteIcon } from '~/components/icons/delete-icon'
 import { Select } from '~/components/select'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
-import { useImagesInput } from '~/hooks/use-images-input'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { action } from './_action'
@@ -66,23 +66,7 @@ export default function RouteComponent({
     updateFieldValue: form.update,
   })
 
-  const {
-    fileInputRef,
-    filesCount,
-    handleFileChange,
-    handleToggleDelete,
-    previews,
-  } = useImagesInput({
-    onBeforeToggleDelete: (index) => {
-      const currentValue = fields.featuredImage.value
-      if (currentValue === `${FEATURED_IMAGE_SOURCE.NEW}:${index}`) {
-        form.update({
-          name: fields.featuredImage.name,
-          value: FEATURED_IMAGE_SOURCE.NONE,
-        })
-      }
-    },
-  })
+  const images = fields.images.getFieldList()
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
@@ -104,14 +88,14 @@ export default function RouteComponent({
             disabled={isLoadingOrSubmitting}
             legend={'Základní informace'}
           >
-            <Input
+            <AdminInput
               {...getInputProps(fields.title, { type: 'text' })}
               errors={fields.title.errors}
               label={'Název'}
               onChange={(event) => setTitle(event.target.value)}
               placeholder={'Název článku'}
             />
-            <Input
+            <AdminInput
               {...getInputProps(fields.slug, { type: 'text' })}
               errors={fields.slug.errors}
               label={'Slug'}
@@ -159,43 +143,87 @@ export default function RouteComponent({
           </Fieldset>
 
           <Fieldset disabled={isLoadingOrSubmitting} legend={'Obrázky'}>
-            <AdminFileInput
-              accept={'image/*'}
-              errors={fields.images.errors}
-              filesCount={filesCount}
-              label={'Obrázky článku'}
-              onFileChange={handleFileChange}
-              ref={fileInputRef}
-              {...getInputProps(fields.images, { type: 'file' })}
+            <AdminRadioInput
+              className={styles.defaultFieldFeaturedImageContainer}
+              field={fields.featuredImage}
+              inputProps={{
+                defaultChecked: true,
+                value: FEATURED_IMAGE_SOURCE.NONE,
+              }}
+              label={'Bez hlavního obrázku'}
             />
 
-            <AdminImagePreviewRadioInputGroup
-              form={fields.featuredImage.formId}
-              name={fields.featuredImage.name}
-            >
-              {previews.map((preview, index) => (
-                <AdminImagePreviewCard
-                  actions={
-                    <AdminImageDeleteButton
-                      onClick={handleToggleDelete(index)}
-                      toDelete={preview.toDelete}
-                    />
+            {images.map((image, index) => {
+              const imageFields = image.getFieldset()
+              return (
+                <AdminImageUploadCard
+                  action={
+                    <AdminButton
+                      onClick={() => {
+                        const currentValue = fields.featuredImage.value
+                        if (
+                          currentValue ===
+                          `${FEATURED_IMAGE_SOURCE.NEW}:${index}`
+                        ) {
+                          form.update({
+                            name: fields.featuredImage.name,
+                            value: FEATURED_IMAGE_SOURCE.NONE,
+                          })
+                        }
+                        form.remove({ index, name: fields.images.name })
+                      }}
+                      type={'button'}
+                      variant={'danger'}
+                    >
+                      <DeleteIcon className={styles.removeIcon} />
+                      Odstranit
+                    </AdminButton>
                   }
-                  alt={`Náhled ${index + 1}`}
-                  key={preview.src}
-                  previewUrl={preview.src}
-                  toDelete={preview.toDelete}
+                  key={image.key}
+                  title={`Nový obrázek ${index + 1}`}
                 >
-                  <AdminRadioInputBase
-                    disabled={preview.toDelete}
-                    form={fields.featuredImage.formId}
-                    label={'Hlavní obrázek'}
-                    name={fields.featuredImage.name}
-                    value={`${FEATURED_IMAGE_SOURCE.NEW}:${index}`}
+                  <AdminImageInput
+                    className={styles.imageFieldFileContainer}
+                    field={imageFields.file}
+                    label={'Obrázek'}
                   />
-                </AdminImagePreviewCard>
-              ))}
-            </AdminImagePreviewRadioInputGroup>
+                  <AdminInput
+                    className={styles.imageFieldAltTextInput}
+                    containerClassName={styles.imageFieldAltTextContainer}
+                    errors={imageFields.altText.errors}
+                    label={'Alt text'}
+                    placeholder={
+                      'Popis obrázku pro vyhledávače a čtečky obrazovky'
+                    }
+                    {...getInputProps(imageFields.altText, { type: 'text' })}
+                  />
+                  <AdminTextarea
+                    className={styles.imageFieldDescriptionContainer}
+                    field={imageFields.description}
+                    label={'Popis obrázku'}
+                    textareaProps={{
+                      className: styles.imageFieldDescriptionTextarea,
+                      placeholder: 'Popis obrázku...',
+                      rows: 3,
+                    }}
+                  />
+                  <AdminRadioInput
+                    className={styles.fieldFeaturedImageContainer}
+                    field={fields.featuredImage}
+                    inputProps={{
+                      value: `${FEATURED_IMAGE_SOURCE.NEW}:${index}`,
+                    }}
+                    label={'Použít jako hlavní obrázek'}
+                  />
+                </AdminImageUploadCard>
+              )
+            })}
+
+            <AdminButton
+              {...form.insert.getButtonProps({ name: fields.images.name })}
+            >
+              Přidat obrázek
+            </AdminButton>
           </Fieldset>
 
           <Fieldset

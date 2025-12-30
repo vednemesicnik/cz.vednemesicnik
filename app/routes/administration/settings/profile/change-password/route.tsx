@@ -5,13 +5,13 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin-button'
 import { AdminHeadline } from '~/components/admin-headline'
+import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
-import { Input } from '~/components/input'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -51,13 +51,13 @@ export default function RouteComponent({
 
       <Form method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Heslo'}>
-          <Input
+          <AdminInput
             label="Nové heslo"
             {...getInputProps(fields.newPassword, { type: 'password' })}
             autoComplete="new-password"
             errors={fields.newPassword.errors}
           />
-          <Input
+          <AdminInput
             label="Potvrzení nového hesla"
             {...getInputProps(fields.newPasswordConfirmation, {
               type: 'password',

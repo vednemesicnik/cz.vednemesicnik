@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { Input } from './_component'
+import { AdminInput } from './_component'
 
-const meta: Meta<typeof Input> = {
+const meta: Meta<typeof AdminInput> = {
   argTypes: {
     disabled: {
       control: 'boolean',
@@ -27,7 +27,7 @@ const meta: Meta<typeof Input> = {
       options: ['text', 'email', 'password', 'number', 'tel', 'url'],
     },
   },
-  component: Input,
+  component: AdminInput,
   parameters: {
     docs: {
       description: {
@@ -41,7 +41,7 @@ const meta: Meta<typeof Input> = {
 }
 
 export default meta
-type Story = StoryObj<typeof Input>
+type Story = StoryObj<typeof AdminInput>
 
 /**
  * Default text input field with label.

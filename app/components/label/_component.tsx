@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { Activity, type ComponentProps } from 'react'
+import type { ComponentProps } from 'react'
 
 import styles from './_styles.module.css'
 
@@ -20,7 +20,7 @@ export const Label = ({
       htmlFor={htmlFor}
       {...rest}
     >
-      {children} <Activity mode={required ? 'visible' : 'hidden'}>*</Activity>
+      {children} {required && '*'}
     </label>
   )
 }

@@ -3,30 +3,32 @@ import { z } from 'zod'
 import { featuredImageSchema } from '~/config/featured-image-config'
 import { slugify } from '~/utils/slugify'
 
-export const schema = z.object({
-  authorId: z.string({ message: 'Autor je povinný' }),
-  categoryIds: z.array(z.string()).optional(),
-  content: z.string({ message: 'Obsah je povinný' }),
-  featuredImage: featuredImageSchema,
-  images: z
-    .array(z.instanceof(File))
-    .optional()
-    .refine(
-      (files) => !files || files.every((f) => f.type.startsWith('image/')),
-      {
-        message: 'Neplatný formát souboru',
-      },
-    )
-    .refine((files) => !files || files.every((f) => f.size <= 1024 * 5000), {
-      message: 'Maximální velikost souboru je 5000 kB',
+const newImageSchema = z.object({
+  altText: z.string({ error: 'Alt text je povinný' }),
+  description: z.string().optional(),
+  file: z
+    .instanceof(File)
+    .refine((file) => file.type.startsWith('image/'), {
+      error: 'Neplatný formát souboru',
+    })
+    .refine((file) => file.size <= 1024 * 5000, {
+      error: 'Maximální velikost souboru je 5000 kB',
     }),
+})
+
+export const schema = z.object({
+  authorId: z.string({ error: 'Autor je povinný' }),
+  categoryIds: z.array(z.string()).optional(),
+  content: z.string({ error: 'Obsah je povinný' }),
+  featuredImage: featuredImageSchema,
+  images: z.array(newImageSchema).optional(),
   slug: z
-    .string({ message: 'Slug je povinný' })
-    .regex(/^\S/, 'Slug nemůže začínat mezerou')
-    .regex(/^[^-]/, 'Slug nemůže začínat pomlčkou')
+    .string({ error: 'Slug je povinný' })
+    .regex(/^\S/, { error: 'Slug nemůže začínat mezerou' })
+    .regex(/^[^-]/, { error: 'Slug nemůže začínat pomlčkou' })
     .transform(slugify),
   tagIds: z.array(z.string()).optional(),
   title: z
-    .string({ message: 'Název je povinný' })
-    .regex(/^\S/, 'Název nemůže začínat mezerou'),
+    .string({ error: 'Název je povinný' })
+    .regex(/^\S/, { error: 'Název nemůže začínat mezerou' }),
 })
