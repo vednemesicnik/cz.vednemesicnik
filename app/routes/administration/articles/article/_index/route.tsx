@@ -18,6 +18,7 @@ import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AdminStateBadge } from '~/components/admin-state-badge'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpward } from '~/components/icons/arrow-upward'
 import { CheckIcon } from '~/components/icons/check-icon'
@@ -202,6 +203,11 @@ export default function RouteComponent({
           <AdminDetailItem label="Název">{article.title}</AdminDetailItem>
           <AdminDetailItem label="Slug">{article.slug}</AdminDetailItem>
           <AdminDetailItem label="Autor">{article.author.name}</AdminDetailItem>
+          <AdminDetailItem label="Odkaz na článek">
+            <Hyperlink href={href('/articles/:slug', { slug: article.slug })}>
+              /articles/{article.slug}
+            </Hyperlink>
+          </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>
 
