@@ -1,11 +1,16 @@
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
-
 import styles from './_styles.module.css'
 
-type ArticleBlockquoteProps = {
+type Props = {
   children: ReactNode
+  className?: string
 }
 
-export function Blockquote({ children }: ArticleBlockquoteProps) {
-  return <blockquote className={styles.blockquote}>{children}</blockquote>
+export const Blockquote = ({ children, className }: Props) => {
+  return (
+    <figure className={clsx(styles.container, className)}>
+      <blockquote className={styles.blockquote}>{children}</blockquote>
+    </figure>
+  )
 }

@@ -1,5 +1,4 @@
-import { applyClasses, combineClasses } from '@liborgabrhel/style-utils'
-
+import { clsx } from 'clsx'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -9,10 +8,10 @@ type Props = {
 export const Divider = ({ variant = 'primary' }: Props) => {
   return (
     <hr
-      className={combineClasses(
+      className={clsx(
         styles.divider,
-        applyClasses(styles.primary).if(variant === 'primary'),
-        applyClasses(styles.secondary).if(variant === 'secondary'),
+        variant === 'primary' && styles.primary,
+        variant === 'secondary' && styles.secondary,
       )}
     />
   )

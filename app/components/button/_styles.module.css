@@ -1,26 +1,22 @@
 /* ========================================
-   Primary Variant (Purple)
+   Primary Variant (Violet)
    ======================================== */
 .primary {
-  background-color: var(--lavender-floral);
-  color: var(--white);
+  background-color: var(--button-primary-bg);
+  color: var(--button-primary-text);
   border: none;
+  transition: background-color var(--transition-fast);
 
   &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--tropical-indigo);
+    background-color: var(--button-primary-bg-hover);
   }
 
   &:active:not(:disabled) {
-    background-color: color-mix(
-      in srgb,
-      var(--tropical-indigo) 80%,
-      var(--black)
-    );
+    background-color: var(--button-primary-bg-active);
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--lavender-floral) 30%, transparent);
+    box-shadow: var(--focus-shadow);
     outline: none;
   }
 }

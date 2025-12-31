@@ -1,28 +1,12 @@
-import { applyClasses, combineClasses } from '@liborgabrhel/style-utils'
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
-
 import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
-  marginTop?: boolean
-  marginBottom?: boolean
+  className?: string
 }
 
-export const Subheadline = ({
-  children,
-  marginTop = false,
-  marginBottom = false,
-}: Props) => {
-  return (
-    <h3
-      className={combineClasses(
-        styles.subheadline,
-        applyClasses(styles.marginTop).if(marginTop),
-        applyClasses(styles.marginBottom).if(marginBottom),
-      )}
-    >
-      {children}
-    </h3>
-  )
+export const Subheadline = ({ children, className }: Props) => {
+  return <p className={clsx(styles.subheadline, className)}>{children}</p>
 }

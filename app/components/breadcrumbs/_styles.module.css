@@ -3,7 +3,7 @@
   position: relative;
   grid-auto-flow: row;
   width: 100%;
-  margin-bottom: 24px;
+  margin-block-end: 24px;
 }
 
 .list {
@@ -24,8 +24,9 @@
   align-items: center;
   gap: 8px;
   font-size: var(--font-size-small);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   line-height: var(--line-height-normal);
+  color: var(--text-secondary);
 }
 
 @media all and (min-width: 768px) {

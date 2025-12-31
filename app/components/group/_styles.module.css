@@ -1,0 +1,6 @@
+.container {
+  display: grid;
+  position: relative;
+  grid-auto-flow: row;
+  row-gap: 0.5rem;
+}

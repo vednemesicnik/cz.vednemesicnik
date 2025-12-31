@@ -1,7 +1,7 @@
 .headline {
-  font-size: var(--font-size-heading3);
+  font-size: var(--font-size-heading1);
   color: transparent;
-  background-image: var(--rose-pink--coral---gradient);
+  background-image: var(--gradient-violet-emerald);
   background-clip: text;
   background-size: 200% 200%;
   animation: wave-animation 6s ease-in-out infinite;
@@ -16,8 +16,4 @@
   50% {
     background-position: 95% 100%;
   }
-}
-
-.marginBottom {
-  margin-bottom: 2.5rem;
 }

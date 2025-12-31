@@ -1,0 +1,57 @@
+// noinspection JSUnusedGlobalSymbols
+
+import { href } from 'react-router'
+import { ArticleLink } from '~/components/article-link'
+import { ArticleLinkFooter } from '~/components/article-link-footer'
+import { ArticleLinkImage } from '~/components/article-link-image'
+import { ArticleLinkPublishDate } from '~/components/article-link-publish-date'
+import { ArticleLinkTitle } from '~/components/article-link-title'
+import { ArticleList } from '~/components/article-list'
+import { ArticleListItem } from '~/components/article-list-item'
+import { Headline } from '~/components/headline'
+import { HeadlineGroup } from '~/components/headline-group'
+import { Page } from '~/components/page'
+import { Paragraph } from '~/components/paragraph'
+import { isLast } from '~/utils/is-last'
+import styles from './_styles.module.css'
+import type { Route } from './+types/route'
+
+export default function PodcastPage({ loaderData }: Route.ComponentProps) {
+  const { podcast } = loaderData
+
+  const podcastCoverAlt = podcast.cover?.altText ?? ''
+  const podcastCoverSrc = href('/resources/podcast-cover/:coverId', {
+    coverId: podcast.cover?.id ?? '',
+  })
+
+  return (
+    <Page>
+      <HeadlineGroup>
+        <Headline>{podcast.title}</Headline>
+      </HeadlineGroup>
+      <Paragraph>{podcast.description}</Paragraph>
+
+      <ArticleList className={styles.articleList}>
+        {podcast.episodes.map((episode, index) => {
+          return (
+            <ArticleListItem
+              isLast={isLast(index, podcast.episodes.length)}
+              key={episode.id}
+            >
+              <ArticleLink to={`/podcasts/${podcast.slug}/${episode.slug}`}>
+                <ArticleLinkImage alt={podcastCoverAlt} src={podcastCoverSrc} />
+                <ArticleLinkTitle>{`#${episode.number} ${episode.title}`}</ArticleLinkTitle>
+                <ArticleLinkFooter>
+                  <ArticleLinkPublishDate date={episode.publishedAt} />
+                </ArticleLinkFooter>
+              </ArticleLink>
+            </ArticleListItem>
+          )
+        })}
+      </ArticleList>
+    </Page>
+  )
+}
+
+export { loader } from './_loader'
+export { meta } from './_meta'

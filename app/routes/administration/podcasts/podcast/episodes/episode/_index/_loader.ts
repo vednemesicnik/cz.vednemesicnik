@@ -179,8 +179,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     episode: {
       author: episode.author,
       coverUrl: episode.cover
-        ? href('/resources/podcast-episode-cover/:episodeId', {
-            episodeId: episode.cover.id,
+        ? href('/resources/podcast-episode-cover/:coverId', {
+            coverId: episode.cover.id,
           })
         : null,
       createdAt: getFormattedPublishDate(episode.createdAt),

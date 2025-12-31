@@ -1,6 +1,7 @@
 import { BulletedList } from '~/components/bulleted-list'
 import { Divider } from '~/components/divider'
 import { Headline } from '~/components/headline'
+import { HeadlineGroup } from '~/components/headline-group'
 import { Hyperlink } from '~/components/hyperlink'
 import { ListItem } from '~/components/list-item'
 import { Page } from '~/components/page'
@@ -9,7 +10,9 @@ import { Paragraph } from '~/components/paragraph'
 export default function RouteComponent() {
   return (
     <Page>
-      <Headline>Vedneměsíčník, z.&nbsp;s.</Headline>
+      <HeadlineGroup>
+        <Headline>Vedneměsíčník, z.&nbsp;s.</Headline>
+      </HeadlineGroup>
       <Paragraph>
         Spolek Vedneměsíčník, který vznikl v říjnu roku 2010, své cíle realizuje
         především publikováním časopisu Vedneměsíčník, který vychází v množství
@@ -29,7 +32,7 @@ export default function RouteComponent() {
         a kulturních akcí pro středoškolské studenty (literárních večerů a
         autorských čtení).
       </Paragraph>
-      <Divider variant={'secondary'} />
+      <Divider variant={'primary'} />
       <Paragraph>Vedneměsíčník vychází za laskavé podpory:</Paragraph>
       <BulletedList>
         <ListItem>Literární kavárna Měsíc ve dne</ListItem>

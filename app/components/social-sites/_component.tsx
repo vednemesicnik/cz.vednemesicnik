@@ -1,7 +1,8 @@
 import { clsx } from 'clsx'
 
 import { BaseHyperlink } from '~/components/base-hyperlink'
-import { FacebookIcon, InstagramIcon } from '~/components/social-site-icons'
+import { FacebookIcon } from '~/components/icons/facebook-icon'
+import { InstagramIcon } from '~/components/icons/instagram-icon'
 
 import styles from './_styles.module.css'
 

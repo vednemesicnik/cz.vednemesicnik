@@ -7,7 +7,7 @@
   align-items: center;
   justify-items: start;
   text-decoration: none;
-  color: var(--dark-green);
+  color: var(--text-primary);
   font-weight: var(--font-weight-regular);
 }
 

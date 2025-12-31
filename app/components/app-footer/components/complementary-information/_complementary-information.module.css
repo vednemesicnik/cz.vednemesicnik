@@ -29,6 +29,7 @@
   font-size: var(--font-size-note);
   font-weight: var(--font-weight-regular);
   margin: 0;
+  color: var(--footer-text);
 }
 
 @media all and (max-width: 689px) {

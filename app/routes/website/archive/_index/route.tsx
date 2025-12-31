@@ -1,6 +1,8 @@
 // noinspection JSUnusedGlobalSymbols
+
 import { href, isRouteErrorResponse, Link, useSearchParams } from 'react-router'
 import { Headline } from '~/components/headline'
+import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
 import { LIMIT_PARAM, LoadMoreContent } from '~/components/load-more-content'
 import { Page } from '~/components/page'
@@ -9,7 +11,6 @@ import { Tile } from '~/components/tile'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
 import { sizeConfig } from '~/config/size-config'
-import { getIssuePdfSrc } from '~/utils/get-issue-pdf-src'
 import type { Route } from './+types/route'
 
 export { loader } from './_loader'
@@ -23,7 +24,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <Page>
-      <Headline>Naše čísla pohromadě</Headline>
+      <HeadlineGroup>
+        <Headline>Naše čísla pohromadě</Headline>
+      </HeadlineGroup>
 
       <TileGrid>
         {issues.map((issue) => {
@@ -32,8 +35,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           if (cover === null || pdf === null) return null
 
           const coverAlt = cover.altText
-          const coverSrc = href('/resources/issue-cover/:id', { id: cover.id })
-          const pdfSrc = getIssuePdfSrc(pdf.fileName)
+          const coverSrc = href('/resources/issue-cover/:coverId', {
+            coverId: cover.id,
+          })
+          const pdfSrc = href('/archive/:fileName', { fileName: pdf.fileName })
 
           return (
             <TileGridItem key={id}>

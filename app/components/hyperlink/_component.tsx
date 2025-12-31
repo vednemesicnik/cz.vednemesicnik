@@ -1,9 +1,7 @@
 import { clsx } from 'clsx'
 import type { ComponentProps, JSX } from 'react'
-
 import { BaseHyperlink } from '~/components/base-hyperlink'
 import { OpenInNewIcon } from '~/components/icons/open-in-new-icon'
-
 import styles from './_styles.module.css'
 
 type Props = Omit<ComponentProps<'a'>, 'rel' | 'target'>

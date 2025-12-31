@@ -3,7 +3,7 @@ import { prisma } from '~/utils/db.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  const { slug } = params
+  const { articleSlug } = params
 
   const { isAuthenticated } = await getAuthentication(request)
 
@@ -47,7 +47,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       updatedAt: true,
     },
     where: {
-      slug,
+      slug: articleSlug,
       // Authenticated users can see all states (draft, published, archived)
       // Non-authenticated users can only see published articles
       ...(!isAuthenticated && { state: 'published' }),

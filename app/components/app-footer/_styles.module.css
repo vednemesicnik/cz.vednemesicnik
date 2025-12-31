@@ -6,6 +6,8 @@
   grid-template-columns: minmax(auto, var(--page-max-width));
   justify-content: center;
   padding: 40px var(--page-side-padding);
+  background-color: var(--footer-bg);
+  border-top: 1px solid var(--footer-border);
 }
 
 .content {
