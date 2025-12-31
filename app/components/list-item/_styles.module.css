@@ -1,21 +1,19 @@
 .listItem {
-  display: grid;
-  position: relative;
-  align-items: start;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: minmax(1.5rem, auto);
-  font-size: 1.25rem;
-  line-height: 1.5rem;
-  font-weight: var(--font-weight-regular);
-  text-align: start;
-  color: var(--eerie-black);
+  @layer components {
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-block-end: 0.5em;
+  }
 
-  &:before {
-    content: "";
-    display: inline-block;
-    width: 0.5rem;
-    height: 0.5rem;
-    margin: 0.5rem 0.5rem 0.5rem 0;
-    background-image: var(--rose-pink--coral---gradient);
+  &::marker {
+    color: var(--violet);
+  }
+
+  p {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    margin-block: 0;
+    color: inherit;
   }
 }

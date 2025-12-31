@@ -1,20 +1,26 @@
-@layer components {
-  .heading {
+.heading {
+  @layer components {
+    color: var(--text-primary);
     font-weight: var(--font-weight-semibold);
     line-height: var(--line-height-tight);
-    margin-block-end: 0.5em;
-    margin-block-start: 1.5em;
+    margin-block: 1.5em 0.75em;
   }
+}
 
-  .heading1 {
+.heading1 {
+  @layer components {
     font-size: var(--font-size-heading1);
   }
+}
 
-  .heading2 {
+.heading2 {
+  @layer components {
     font-size: var(--font-size-heading2);
   }
+}
 
-  .heading3 {
+.heading3 {
+  @layer components {
     font-size: var(--font-size-heading3);
   }
 }

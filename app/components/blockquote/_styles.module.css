@@ -1,9 +1,26 @@
-@layer components {
-  .blockquote {
-    border-inline-start: 4px solid grey;
-    font-style: italic;
-    margin-block-end: 1em;
-    margin-block-start: 0;
-    padding-inline-start: 1em;
+.container {
+  @layer components {
+    background: var(--bg-accent);
+    border-inline-start: 4px solid var(--border-accent);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    box-shadow: var(--shadow-sm);
+    margin-block: 2rem;
+    margin-inline: 1rem;
+    padding-block: 1rem;
+    padding-inline: 1rem;
+    position: relative;
+    transition: box-shadow var(--transition-base);
+  }
+}
+
+.blockquote {
+  font-style: italic;
+  margin: 0;
+
+  p {
+    color: var(--text-primary);
+    font-size: var(--font-size-heading6);
+    line-height: var(--line-height-normal);
+    margin: 0;
   }
 }

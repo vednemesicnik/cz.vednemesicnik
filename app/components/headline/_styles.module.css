@@ -1,5 +1,5 @@
 .headline {
-  font-size: var(--font-size-heading3);
+  font-size: var(--font-size-heading1);
   color: transparent;
   background-image: var(--gradient-violet-emerald);
   background-clip: text;

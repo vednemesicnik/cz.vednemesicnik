@@ -1,6 +1,7 @@
 .paragraph {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-text);
+  line-height: var(--line-height-normal);
   margin-block: 0 1.25rem;
   color: var(--text-primary);
 }

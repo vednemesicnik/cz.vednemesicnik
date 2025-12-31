@@ -19,7 +19,7 @@
     /*noinspection CssInvalidFunction*/
     --bg-tertiary: light-dark(#f0f4f8, #1a1d24);
     /*noinspection CssInvalidFunction*/
-    --bg-accent: light-dark(#e6fff2, #0d2818);
+    --bg-accent: light-dark(#ede9fe, #4c1d95);
     /*noinspection CssInvalidFunction*/
     --bg-hover: light-dark(#f5f9fc, #1e2229);
     /*noinspection CssInvalidFunction*/
@@ -174,23 +174,25 @@
        Shadows
        ======================================== */
     /*noinspection CssInvalidFunction*/
-    --shadow-xs: 0 1px 2px 0 light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.2));
+    --shadow-xs: 0 1px 2px 0
+      light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.1));
     /*noinspection CssInvalidFunction*/
     --shadow-sm:
-      0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3)), 0 1px 2px
-      0 light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.2));
+      0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.15)), 0
+      1px 2px 0 light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
     /*noinspection CssInvalidFunction*/
     --shadow-md:
-      0 4px 6px -1px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3)), 0 2px
-      4px -1px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.2));
+      0 4px 6px -1px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.2)), 0
+      2px 4px -1px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.12));
     /*noinspection CssInvalidFunction*/
     --shadow-lg:
-      0 10px 15px -3px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)), 0 4px
-      6px -2px light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.2));
+      0 10px 15px -3px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.25)),
+      0 4px 6px -2px light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.15));
     /*noinspection CssInvalidFunction*/
     --shadow-xl:
-      0 20px 25px -5px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5)), 0
-      10px 10px -5px light-dark(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.2));
+      0 20px 25px -5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.3)),
+      0 10px 10px -5px
+      light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.18));
 
     /* ========================================
        Focus Shadows

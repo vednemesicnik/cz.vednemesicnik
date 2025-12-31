@@ -10,7 +10,7 @@ type Props = {
 export const Tile = ({ label, children }: Props) => {
   return (
     <figure className={styles.container}>
-      {children}
+      <div className={styles.card}>{children}</div>
       <figcaption className={styles.label}>{label}</figcaption>
     </figure>
   )
