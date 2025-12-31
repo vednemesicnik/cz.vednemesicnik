@@ -10,6 +10,7 @@ import { TileGrid } from '~/components/tile-grid'
 import { createArticleImageUrl } from '~/utils/create-article-image-url'
 import type { Route } from './+types/route'
 
+export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 

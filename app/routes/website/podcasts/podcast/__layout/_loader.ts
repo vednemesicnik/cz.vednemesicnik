@@ -3,12 +3,12 @@ import { prisma } from '~/utils/db.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ params }: Route.LoaderArgs) => {
-  const { episodeSlug } = params
+  const { podcastSlug } = params
 
-  const podcastEpisode = await prisma.podcastEpisode.findUniqueOrThrow({
+  const podcast = await prisma.podcast.findUniqueOrThrow({
     select: { title: true },
-    where: { slug: episodeSlug },
+    where: { slug: podcastSlug },
   })
 
-  return { podcastEpisode }
+  return { podcast }
 }

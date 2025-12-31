@@ -178,7 +178,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     issue: {
       author: issue.author,
       coverUrl: issue.cover
-        ? href('/resources/issue-cover/:id', { id: issue.cover.id })
+        ? href('/resources/issue-cover/:coverId', { coverId: issue.cover.id })
         : null,
       createdAt: getFormattedPublishDate(issue.createdAt),
       hasCoordinatorReview: !!coordinatorReview,

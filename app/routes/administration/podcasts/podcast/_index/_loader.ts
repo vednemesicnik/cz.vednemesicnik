@@ -173,8 +173,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     podcast: {
       author: podcast.author,
       coverUrl: podcast.cover
-        ? href('/resources/podcast-cover/:podcastId', {
-            podcastId: podcast.cover.id,
+        ? href('/resources/podcast-cover/:coverId', {
+            coverId: podcast.cover.id,
           })
         : null,
       createdAt: getFormattedPublishDate(podcast.createdAt),

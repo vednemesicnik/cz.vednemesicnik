@@ -1,5 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
+import { href } from 'react-router'
 import { ArticleLink } from '~/components/article-link'
 import { ArticleLinkFooter } from '~/components/article-link-footer'
 import { ArticleLinkImage } from '~/components/article-link-image'
@@ -11,7 +12,6 @@ import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
-import { getPodcastCoverSrc } from '~/utils/get-podcast-cover-src'
 import { isLast } from '~/utils/is-last'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -20,7 +20,9 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
   const { podcast } = loaderData
 
   const podcastCoverAlt = podcast.cover?.altText ?? ''
-  const podcastCoverSrc = getPodcastCoverSrc(podcast.cover?.id ?? '')
+  const podcastCoverSrc = href('/resources/podcast-cover/:coverId', {
+    coverId: podcast.cover?.id ?? '',
+  })
 
   return (
     <Page>

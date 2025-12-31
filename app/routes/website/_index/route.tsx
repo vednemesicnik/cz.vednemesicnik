@@ -1,5 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
-import { Link } from 'react-router'
+
+import { href, Link } from 'react-router'
 import { ArticleLink } from '~/components/article-link'
 import { ArticleLinkAuthor } from '~/components/article-link-author'
 import { ArticleLinkFooter } from '~/components/article-link-footer'
@@ -11,9 +12,6 @@ import { Image } from '~/components/image'
 import { Page } from '~/components/page'
 import { Tile } from '~/components/tile'
 import { sizeConfig } from '~/config/size-config'
-import { getIssueCoverSrc } from '~/utils/get-issue-cover-src'
-import { getIssuePdfSrc } from '~/utils/get-issue-pdf-src'
-import { getPodcastCoverSrc } from '~/utils/get-podcast-cover-src'
 import type { Route } from './+types/route'
 
 export { links } from './_links'
@@ -21,12 +19,18 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
+  const { latestArchivedIssues, latestPodcastEpisodes } = loaderData
+
   return (
     <Page>
-      {loaderData.latestArchivedIssues.map((issue) => {
+      {latestArchivedIssues.map((issue) => {
         const coverAlt = issue.cover?.altText ?? ''
-        const coverSrc = getIssueCoverSrc(issue.cover?.id ?? '')
-        const pdfSrc = getIssuePdfSrc(issue.pdf?.fileName ?? '')
+        const coverSrc = href('/resources/issue-cover/:coverId', {
+          coverId: issue.cover?.id ?? '',
+        })
+        const pdfSrc = href('/archive/:fileName', {
+          fileName: issue.pdf?.fileName ?? '',
+        })
 
         return (
           <FeaturedBanner
@@ -47,9 +51,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         )
       })}
 
-      {loaderData.latestPodcastEpisodes.map((episode) => {
+      {latestPodcastEpisodes.map((episode) => {
         const coverAlt = episode.podcast.cover?.altText ?? ''
-        const coverSrc = getPodcastCoverSrc(episode.podcast.cover?.id ?? '')
+        const coverSrc = href('/resources/podcast-cover/:coverId', {
+          coverId: episode.podcast.cover?.id ?? '',
+        })
 
         return (
           <FeaturedBanner

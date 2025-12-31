@@ -1,3 +1,6 @@
+// noinspection JSUnusedGlobalSymbols
+
+import { href } from 'react-router'
 import { ArticleLink } from '~/components/article-link'
 import { ArticleLinkAuthor } from '~/components/article-link-author'
 import { ArticleLinkFooter } from '~/components/article-link-footer'
@@ -15,7 +18,6 @@ import { Tile } from '~/components/tile'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
 import { sizeConfig } from '~/config/size-config'
-import { getPodcastCoverSrc } from '~/utils/get-podcast-cover-src'
 import { isLast } from '~/utils/is-last'
 import type { Route } from './+types/route'
 
@@ -31,7 +33,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <TileGrid>
         {podcasts.map((podcast) => {
           const coverAlt = podcast.cover?.altText ?? ''
-          const coverSrc = getPodcastCoverSrc(podcast.cover?.id ?? '')
+          const coverSrc = href('/resources/podcast-cover/:coverId', {
+            coverId: podcast.cover?.id ?? '',
+          })
 
           return (
             <TileGridItem key={podcast.id}>
@@ -53,7 +57,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <ArticleList>
         {episodes.map((episode, index) => {
           const coverAlt = episode.podcast?.cover?.altText ?? ''
-          const coverSrc = getPodcastCoverSrc(episode.podcast?.cover?.id ?? '')
+          const coverSrc = href('/resources/podcast-cover/:coverId', {
+            coverId: episode.podcast?.cover?.id ?? '',
+          })
 
           return (
             <ArticleListItem

@@ -87,7 +87,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       hasImage: !!user.image,
       id: user.id,
       imageUrl: user.image
-        ? href('/resources/user-image/:userId', { userId: user.image.id })
+        ? href('/resources/user-image/:imageId', { imageId: user.image.id })
         : null,
       name: user.name,
       role: user.role,

@@ -204,7 +204,11 @@ export default function RouteComponent({
           <AdminDetailItem label="Slug">{article.slug}</AdminDetailItem>
           <AdminDetailItem label="Autor">{article.author.name}</AdminDetailItem>
           <AdminDetailItem label="Odkaz na článek">
-            <Hyperlink href={href('/articles/:slug', { slug: article.slug })}>
+            <Hyperlink
+              href={href('/articles/:articleSlug', {
+                articleSlug: article.slug,
+              })}
+            >
               /articles/{article.slug}
             </Hyperlink>
           </AdminDetailItem>

@@ -2,12 +2,8 @@
 
 import type { ComponentProps } from 'react'
 import { href } from 'react-router'
-
 import { SocialSites } from '~/components/social-sites'
-import { getIssueCoverSrc } from '~/utils/get-issue-cover-src'
-import { getPodcastCoverSrc } from '~/utils/get-podcast-cover-src'
 import { getPodcastEpisodeCoverSrc } from '~/utils/get-podcast-episode-cover-src'
-
 import type { Route } from './+types/route'
 import { Content } from './components/content'
 import { Footer } from './components/footer'
@@ -20,7 +16,6 @@ import { SimpleHyperlink } from './components/simple-hyperlink'
 import { SimpleLink } from './components/simple-link'
 import { Subheading } from './components/subheading'
 import { VdmLogoClip } from './components/vdm-logo-clip'
-
 import './styles/global.css'
 
 export { links } from './_links'
@@ -36,7 +31,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     latestIssue !== null && latestIssue.cover !== null
       ? {
           height: 70,
-          src: getIssueCoverSrc(latestIssue.cover.id),
+          src: href('/resources/issue-cover/:coverId', {
+            coverId: latestIssue.cover.id,
+          }),
           width: 50,
         }
       : undefined
@@ -52,7 +49,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           latestPodcastEpisode.podcast.cover !== null
         ? {
             height: 50,
-            src: getPodcastCoverSrc(latestPodcastEpisode.podcast.cover.id),
+            src: href('/resources/podcast-cover/:coverId', {
+              coverId: latestPodcastEpisode.podcast.cover.id,
+            }),
             width: 50,
           }
         : undefined

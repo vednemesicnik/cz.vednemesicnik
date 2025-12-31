@@ -22,30 +22,25 @@ export default [
 
     // Articles routes
     ...prefix('articles', [
-      index('routes/website/articles/_index/route.tsx'),
-      route(':slug', 'routes/website/articles/article/route.tsx'),
+      layout('routes/website/articles/__layout/route.tsx', [
+        index('routes/website/articles/_index/route.tsx'),
+        route(':articleSlug', 'routes/website/articles/article/route.tsx'),
+      ]),
     ]),
 
     // Podcasts routes
     ...prefix('podcasts', [
-      layout('routes/website/podcasts/layout/route.tsx', [
-        index('routes/website/podcasts/index/route.tsx'),
-        route(
-          ':podcastSlug',
-          'routes/website/podcasts/podcast/splat/route.tsx',
-          [
-            index('routes/website/podcasts/podcast/index/route.tsx'),
+      layout('routes/website/podcasts/__layout/route.tsx', [
+        index('routes/website/podcasts/_index/route.tsx'),
+        ...prefix(':podcastSlug', [
+          layout('routes/website/podcasts/podcast/__layout/route.tsx', [
+            index('routes/website/podcasts/podcast/_index/route.tsx'),
             route(
               ':episodeSlug',
-              'routes/website/podcasts/podcast/episode/splat/route.tsx',
-              [
-                index(
-                  'routes/website/podcasts/podcast/episode/index/route.tsx',
-                ),
-              ],
+              'routes/website/podcasts/podcast/episode/route.tsx',
             ),
-          ],
-        ),
+          ]),
+        ]),
       ]),
     ]),
 
@@ -217,16 +212,13 @@ export default [
   // Resource routes
   ...prefix('resources', [
     route('article-image/:imageId', 'routes/resources/article-image/route.ts'),
-    route('issue-cover/:id', 'routes/resources/issue-cover/route.ts'),
+    route('issue-cover/:coverId', 'routes/resources/issue-cover/route.ts'),
+    route('podcast-cover/:coverId', 'routes/resources/podcast-cover/route.ts'),
     route(
-      'podcast-cover/:podcastId',
-      'routes/resources/podcast-cover/route.ts',
-    ),
-    route(
-      'podcast-episode-cover/:episodeId',
+      'podcast-episode-cover/:coverId',
       'routes/resources/podcast-episode-cover/route.ts',
     ),
-    route('user-image/:userId', 'routes/resources/user-image/route.ts'),
+    route('user-image/:imageId', 'routes/resources/user-image/route.ts'),
     route('env.js', 'routes/resources/env-script/route.ts'),
   ]),
 ] satisfies RouteConfig

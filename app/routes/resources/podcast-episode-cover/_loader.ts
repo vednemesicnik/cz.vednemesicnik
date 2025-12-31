@@ -7,12 +7,12 @@ import { getConvertedImageStream } from '~/utils/sharp.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const { episodeId } = params
+  const { coverId } = params
 
   // Fetch updatedAt first for cache validation (avoid loading blob if not needed)
   const cover = await prisma.podcastEpisodeCover.findUnique({
     select: { blob: true, contentType: true, updatedAt: true },
-    where: { id: episodeId },
+    where: { id: coverId },
   })
 
   if (cover === null) {
@@ -37,5 +37,5 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     width,
   })
 
-  return createImageResponse(convertedImage, episodeId, tag, lastModified)
+  return createImageResponse(convertedImage, coverId, tag, lastModified)
 }
