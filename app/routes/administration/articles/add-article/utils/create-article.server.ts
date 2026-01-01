@@ -1,3 +1,4 @@
+import { ARTICLE_IMAGE_CONFIG } from '~/config/article-image-config'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
@@ -39,10 +40,10 @@ export async function createArticle(
       const processedImages = await Promise.all(
         (images || []).map(async ({ file, altText, description }) => {
           const converted = await getConvertedImageStream(file, {
-            format: 'jpeg',
-            height: 1200,
-            quality: 85,
-            width: 1600,
+            format: ARTICLE_IMAGE_CONFIG.format,
+            height: ARTICLE_IMAGE_CONFIG.height,
+            quality: ARTICLE_IMAGE_CONFIG.quality,
+            width: ARTICLE_IMAGE_CONFIG.width,
           })
           return {
             altText,
@@ -77,9 +78,11 @@ export async function createArticle(
         featuredImageIndex !== undefined &&
         createdArticle.images[featuredImageIndex]
       ) {
-        await prisma.articleImage.update({
-          data: { featuredInArticleId: createdArticle.id },
-          where: { id: createdArticle.images[featuredImageIndex].id },
+        await prisma.article.update({
+          data: {
+            featuredImageId: createdArticle.images[featuredImageIndex].id,
+          },
+          where: { id: createdArticle.id },
         })
       }
 

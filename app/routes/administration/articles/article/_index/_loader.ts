@@ -43,11 +43,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       content: true,
       createdAt: true,
-      featuredImage: {
-        select: {
-          id: true,
-        },
-      },
+      featuredImageId: true,
       id: true,
       images: {
         select: {
@@ -187,12 +183,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       categories: article.categories,
       content: article.content,
       createdAt: getFormattedPublishDate(article.createdAt),
-      featuredImageId: article.featuredImage?.id,
-      featuredImageUrl: article.featuredImage
-        ? createArticleImageUrl(article.featuredImage.id)
-        : null,
+      featuredImageId: article.featuredImageId,
       hasCoordinatorReview: !!coordinatorReview,
-      hasFeaturedImage: !!article.featuredImage,
       id: article.id,
       images: article.images.map((image) => ({
         id: image.id,

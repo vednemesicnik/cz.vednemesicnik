@@ -1,5 +1,6 @@
 import type { ContentState } from '@generated/prisma/enums'
 import { createId } from '@paralleldrive/cuid2'
+import { ARTICLE_IMAGE_CONFIG } from '~/config/article-image-config'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import { prisma } from '~/utils/db.server'
@@ -64,10 +65,10 @@ export async function updateArticle(
         const processedImages = await Promise.all(
           images.map(async ({ file, altText, description }) => {
             const converted = await getConvertedImageStream(file, {
-              format: 'jpeg',
-              height: 1200,
-              quality: 85,
-              width: 1600,
+              format: ARTICLE_IMAGE_CONFIG.format,
+              height: ARTICLE_IMAGE_CONFIG.height,
+              quality: ARTICLE_IMAGE_CONFIG.quality,
+              width: ARTICLE_IMAGE_CONFIG.width,
             })
             return {
               altText,
@@ -91,42 +92,17 @@ export async function updateArticle(
         )
       }
 
-      // 3. Clear existing featured image
-      await prisma.articleImage.updateMany({
-        data: { featuredInArticleId: null },
-        where: {
-          articleId,
-          featuredInArticleId: articleId,
-        },
-      })
-
-      // 4. Set new featured image
-      if (featuredImage.source === FEATURED_IMAGE_SOURCE.EXISTING) {
-        await prisma.articleImage.update({
-          data: { featuredInArticleId: articleId },
-          where: { id: featuredImage.id },
-        })
-      } else if (
-        featuredImage.source === FEATURED_IMAGE_SOURCE.NEW &&
-        createdImages[featuredImage.index]
-      ) {
-        await prisma.articleImage.update({
-          data: { featuredInArticleId: articleId },
-          where: { id: createdImages[featuredImage.index].id },
-        })
-      }
-
-      // 5. Update existing images
+      // 3. Update existing images
       if (existingImages?.length !== undefined) {
         await Promise.all(
           existingImages.map(async ({ id, altText, description, file }) => {
             // Check if file replacement is needed
             if (file !== undefined && file.size > 0) {
               const converted = await getConvertedImageStream(file, {
-                format: 'jpeg',
-                height: 1200,
-                quality: 85,
-                width: 1600,
+                format: ARTICLE_IMAGE_CONFIG.format,
+                height: ARTICLE_IMAGE_CONFIG.height,
+                quality: ARTICLE_IMAGE_CONFIG.quality,
+                width: ARTICLE_IMAGE_CONFIG.width,
               })
               return prisma.articleImage.update({
                 data: {
@@ -152,7 +128,18 @@ export async function updateArticle(
         )
       }
 
-      // 6. Update article
+      // 4. Determine featured image ID
+      let featuredImageId: string | null = null
+      if (featuredImage.source === FEATURED_IMAGE_SOURCE.EXISTING) {
+        featuredImageId = featuredImage.id
+      } else if (
+        featuredImage.source === FEATURED_IMAGE_SOURCE.NEW &&
+        createdImages[featuredImage.index]
+      ) {
+        featuredImageId = createdImages[featuredImage.index].id
+      }
+
+      // 5. Update article
       await prisma.article.update({
         data: {
           authorId,
@@ -160,6 +147,7 @@ export async function updateArticle(
             set: categoryIds?.map((id) => ({ id })) ?? [],
           },
           content,
+          featuredImageId,
           slug,
           state,
           tags: {

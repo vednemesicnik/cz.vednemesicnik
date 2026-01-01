@@ -1,12 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href, Link } from 'react-router'
-import { ArticleLink } from '~/components/article-link'
-import { ArticleLinkAuthor } from '~/components/article-link-author'
-import { ArticleLinkFooter } from '~/components/article-link-footer'
-import { ArticleLinkImage } from '~/components/article-link-image'
-import { ArticleLinkPublishDate } from '~/components/article-link-publish-date'
-import { ArticleLinkTitle } from '~/components/article-link-title'
+import { ContentLink } from '~/components/content-link'
+import { ContentLinkAuthor } from '~/components/content-link-author'
+import { ContentLinkFooter } from '~/components/content-link-footer'
+import { ContentLinkImage } from '~/components/content-link-image'
+import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
+import { ContentLinkTitle } from '~/components/content-link-title'
 import { FeaturedBanner } from '~/components/featured-banner'
 import { Image } from '~/components/image'
 import { Page } from '~/components/page'
@@ -62,18 +62,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             key={episode.id}
             title={'Nejnovější podcastová epizoda'}
           >
-            <ArticleLink
+            <ContentLink
               to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
             >
-              <ArticleLinkImage alt={coverAlt} src={coverSrc} />
-              <ArticleLinkTitle>{episode.title}</ArticleLinkTitle>
-              <ArticleLinkFooter>
-                <ArticleLinkAuthor imageAlt={coverAlt} imageSrc={coverSrc}>
+              <ContentLinkImage alt={coverAlt} src={coverSrc} />
+              <ContentLinkTitle>{episode.title}</ContentLinkTitle>
+              <ContentLinkFooter>
+                <ContentLinkAuthor imageAlt={coverAlt} imageSrc={coverSrc}>
                   {episode.podcast.title}
-                </ArticleLinkAuthor>
-                <ArticleLinkPublishDate date={episode.publishedAt} />
-              </ArticleLinkFooter>
-            </ArticleLink>
+                </ContentLinkAuthor>
+                <ContentLinkPublishDate date={episode.publishedAt} />
+              </ContentLinkFooter>
+            </ContentLink>
           </FeaturedBanner>
         )
       })}

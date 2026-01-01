@@ -399,38 +399,38 @@ model EditorialBoardMember {
 }
 
 model Article {
-  id            String            @id @default(cuid())
-  slug          String            @unique
-  title         String
-  content       String
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  publishedAt   DateTime?
-  state         ContentState      @default(draft)
-  author        Author            @relation("ArticleCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  authorId      String
-  featuredImage ArticleImage?     @relation("FeaturedArticleImage")
-  images        ArticleImage[]    @relation("ArticleImage")
-  tags          ArticleTag[]
-  categories    ArticleCategory[]
-  reviews       Review[]          @relation("ArticleReviews")
+  id              String            @id @default(cuid())
+  slug            String            @unique
+  title           String
+  content         String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  publishedAt     DateTime?
+  state           ContentState      @default(draft)
+  author          Author            @relation("ArticleCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId        String
+  images          ArticleImage[]    @relation("ArticleImages")
+  featuredImageId String?
+  featuredImage   ArticleImage?     @relation("ArticleFeaturedImage", fields: [featuredImageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  tags            ArticleTag[]
+  categories      ArticleCategory[]
+  reviews         Review[]          @relation("ArticleReviews")
 
   // non-unique foreign key
   @@index([authorId])
 }
 
 model ArticleImage {
-  id                  String   @id @default(cuid())
-  altText             String
-  description         String?
-  contentType         String
-  blob                Bytes
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  article             Article  @relation("ArticleImage", fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  articleId           String
-  featuredInArticle   Article? @relation("FeaturedArticleImage", fields: [featuredInArticleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  featuredInArticleId String?  @unique
+  id                 String    @id @default(cuid())
+  altText            String
+  description        String?
+  contentType        String
+  blob               Bytes
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  article            Article   @relation("ArticleImages", fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  articleId          String
+  featuredInArticles Article[] @relation("ArticleFeaturedImage")
 
   // non-unique foreign key
   @@index([articleId])

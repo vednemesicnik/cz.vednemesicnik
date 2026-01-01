@@ -1,0 +1,8 @@
+.paragraph {
+  @layer components {
+    color: var(--text-secondary);
+    font-size: var(--font-size-small);
+    margin: 0;
+    flex-shrink: 1;
+  }
+}

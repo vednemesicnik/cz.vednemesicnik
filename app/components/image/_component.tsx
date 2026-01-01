@@ -61,7 +61,7 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
   }
 
   return (
-    <section className={clsx(styles.container, className)}>
+    <div className={clsx(styles.container, className)}>
       {/* Low-res placeholder */}
       <picture className={styles.lowResPicture}>
         <source srcSet={avifPlaceholderSrc_1x} type={'image/avif'} />
@@ -109,6 +109,6 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
           />
         </picture>
       )}
-    </section>
+    </div>
   )
 }

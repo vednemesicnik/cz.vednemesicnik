@@ -1,18 +1,17 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href } from 'react-router'
-import { ArticleLink } from '~/components/article-link'
-import { ArticleLinkFooter } from '~/components/article-link-footer'
-import { ArticleLinkImage } from '~/components/article-link-image'
-import { ArticleLinkPublishDate } from '~/components/article-link-publish-date'
-import { ArticleLinkTitle } from '~/components/article-link-title'
-import { ArticleList } from '~/components/article-list'
-import { ArticleListItem } from '~/components/article-list-item'
+import { ContentLink } from '~/components/content-link'
+import { ContentLinkFooter } from '~/components/content-link-footer'
+import { ContentLinkImage } from '~/components/content-link-image'
+import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
+import { ContentLinkTitle } from '~/components/content-link-title'
+import { ContentList } from '~/components/content-list'
+import { ContentListItem } from '~/components/content-list-item'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
-import { isLast } from '~/utils/is-last'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -31,24 +30,21 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
       </HeadlineGroup>
       <Paragraph>{podcast.description}</Paragraph>
 
-      <ArticleList className={styles.articleList}>
-        {podcast.episodes.map((episode, index) => {
+      <ContentList className={styles.articleList}>
+        {podcast.episodes.map((episode) => {
           return (
-            <ArticleListItem
-              isLast={isLast(index, podcast.episodes.length)}
-              key={episode.id}
-            >
-              <ArticleLink to={`/podcasts/${podcast.slug}/${episode.slug}`}>
-                <ArticleLinkImage alt={podcastCoverAlt} src={podcastCoverSrc} />
-                <ArticleLinkTitle>{`#${episode.number} ${episode.title}`}</ArticleLinkTitle>
-                <ArticleLinkFooter>
-                  <ArticleLinkPublishDate date={episode.publishedAt} />
-                </ArticleLinkFooter>
-              </ArticleLink>
-            </ArticleListItem>
+            <ContentListItem key={episode.id}>
+              <ContentLink to={`/podcasts/${podcast.slug}/${episode.slug}`}>
+                <ContentLinkImage alt={podcastCoverAlt} src={podcastCoverSrc} />
+                <ContentLinkTitle>{`#${episode.number} ${episode.title}`}</ContentLinkTitle>
+                <ContentLinkFooter>
+                  <ContentLinkPublishDate date={episode.publishedAt} />
+                </ContentLinkFooter>
+              </ContentLink>
+            </ContentListItem>
           )
         })}
-      </ArticleList>
+      </ContentList>
     </Page>
   )
 }

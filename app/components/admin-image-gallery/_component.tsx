@@ -9,7 +9,7 @@ type ImageData = {
 
 type Props = {
   className?: string
-  featuredImageId?: string
+  featuredImageId: string | null
   images: ImageData[]
 }
 

@@ -40,9 +40,6 @@
 
   /* Paragraph */
   /*p {*/
-  /*  font-weight: var(--font-weight-text);*/
-  /*  line-height: 1.5;*/
-
   /*  &::selection {*/
   /*    background-color: var(--spring-green);*/
   /*    color: var(--dark-green);*/

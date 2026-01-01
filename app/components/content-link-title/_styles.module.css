@@ -1,0 +1,17 @@
+.title {
+  @layer components {
+    grid-area: title;
+    color: var(--text-primary);
+    font-size: var(--font-size-heading5);
+    font-weight: var(--font-weight-semibold);
+    text-align: center;
+    margin: 0;
+    transition: color var(--transition-base);
+  }
+}
+
+@media (min-width: 768px) {
+  .title {
+    text-align: start;
+  }
+}
