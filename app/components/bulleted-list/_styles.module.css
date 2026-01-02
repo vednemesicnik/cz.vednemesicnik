@@ -1,7 +1,7 @@
 .list {
   @layer components {
     list-style-type: disc;
-    margin-block: 1em 1.5em;
-    padding-inline-start: 1.5em;
+    margin-block: 0.75em 1.25em;
+    padding-inline-start: 1em;
   }
 }

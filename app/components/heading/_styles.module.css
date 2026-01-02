@@ -3,13 +3,7 @@
     color: var(--text-primary);
     font-weight: var(--font-weight-semibold);
     line-height: var(--line-height-tight);
-    margin-block: 1.5em 0.75em;
-  }
-}
-
-.heading1 {
-  @layer components {
-    font-size: var(--font-size-heading1);
+    margin-block: 0.25em 0.75em;
   }
 }
 

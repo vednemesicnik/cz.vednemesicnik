@@ -7,6 +7,6 @@ type Props = {
   className?: string
 }
 
-export const BulletedList = ({ children, className }: Props) => {
-  return <ul className={clsx(styles.list, className)}>{children}</ul>
+export function NumberedList({ children, className }: Props) {
+  return <ol className={clsx(styles.list, className)}>{children}</ol>
 }

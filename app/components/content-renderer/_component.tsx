@@ -5,7 +5,7 @@ import { Blockquote } from '~/components/blockquote'
 import { BulletedList } from '~/components/bulleted-list'
 import { Heading } from '~/components/heading'
 import { ListItem } from '~/components/list-item'
-import { OrderedList } from '~/components/ordered-list'
+import { NumberedList } from '~/components/numbered-list'
 import { Paragraph } from '~/components/paragraph'
 
 type Props = {
@@ -26,7 +26,7 @@ export function ContentRenderer({ content }: Props) {
           <Heading level={node.attrs.level}>{children}</Heading>
         ),
         listItem: ({ children }) => <ListItem>{children}</ListItem>,
-        orderedList: ({ children }) => <OrderedList>{children}</OrderedList>,
+        orderedList: ({ children }) => <NumberedList>{children}</NumberedList>,
         paragraph: ({ children }) => <Paragraph>{children}</Paragraph>,
       },
     },
