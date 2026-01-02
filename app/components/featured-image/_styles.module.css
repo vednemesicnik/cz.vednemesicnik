@@ -1,8 +1,11 @@
 .container {
   @layer component {
+    display: grid;
     position: relative;
+    grid-auto-flow: row;
+    gap: 8px;
     width: 100%;
-    margin-inline: 0;
+    margin-inline: 0 0;
     margin-block: 0 2.5rem;
   }
 }
@@ -14,10 +17,13 @@
 }
 
 .caption {
-  @layer component {
-    font-size: var(--font-size-note);
-    color: var(--text-tertiary);
-    margin-block-start: 0.5rem;
-    text-align: end;
+  @layer variant {
+    & p {
+      color: var(--text-tertiary);
+      font-size: var(--font-size-note);
+      font-weight: var(--font-weight-regular);
+      line-height: var(--line-height-tight);
+      text-align: end;
+    }
   }
 }

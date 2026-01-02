@@ -19,7 +19,6 @@ import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AdminRadioInput } from '~/components/admin-radio-input'
 import { AdminTextEditor } from '~/components/admin-text-editor'
-import { AdminTextarea } from '~/components/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
@@ -137,12 +136,11 @@ export default function RouteComponent({
 
           <Fieldset disabled={isLoadingOrSubmitting} legend={'Obsah'}>
             <AdminTextEditor
-              {...getInputProps(fields.content, { type: 'text' })}
-              defaultValue={fields.content.defaultValue}
-              disabled={isLoadingOrSubmitting}
-              errors={fields.content.errors}
+              field={fields.content}
+              inputProps={{
+                placeholder: 'Obsah článku...',
+              }}
               label={'Obsah článku'}
-              placeholder={'Obsah článku...'}
             />
           </Fieldset>
 
@@ -237,15 +235,14 @@ export default function RouteComponent({
                     }
                   />
 
-                  <AdminTextarea
+                  <AdminTextEditor
                     className={styles.imageFieldDescriptionContainer}
                     field={imageFields.description}
-                    label={'Popis obrázku'}
-                    textareaProps={{
-                      className: styles.imageFieldDescriptionTextarea,
+                    inputProps={{
                       placeholder: 'Popis obrázku...',
-                      rows: 3,
                     }}
+                    label={'Popis obrázku'}
+                    toolbar={['link']}
                   />
 
                   <AdminRadioInput
@@ -304,15 +301,14 @@ export default function RouteComponent({
                       'Popis obrázku pro vyhledávače a čtečky obrazovky'
                     }
                   />
-                  <AdminTextarea
+                  <AdminTextEditor
                     className={styles.imageFieldDescriptionContainer}
                     field={imageFields.description}
-                    label={'Popis obrázku'}
-                    textareaProps={{
-                      className: styles.imageFieldDescriptionTextarea,
+                    inputProps={{
                       placeholder: 'Popis obrázku...',
-                      rows: 3,
                     }}
+                    label={'Popis obrázku'}
+                    toolbar={['link']}
                   />
                   <AdminRadioInput
                     className={styles.fieldFeaturedImageContainer}

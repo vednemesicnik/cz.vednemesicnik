@@ -1,10 +1,11 @@
 import { clsx } from 'clsx'
+import type { ReactNode } from 'react'
 import { Image } from '~/components/image'
 import styles from './_styles.module.css'
 
 type Props = {
   alt: string
-  description?: string | null
+  description?: ReactNode
   src: string
   className?: string
 }

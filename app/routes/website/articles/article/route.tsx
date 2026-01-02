@@ -31,7 +31,9 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
       {article.featuredImage && (
         <FeaturedImage
           alt={article.featuredImage.altText}
-          description={article.featuredImage.description}
+          description={
+            <ContentRenderer content={article.featuredImage.description} />
+          }
           src={createArticleImageUrl(article.featuredImage.id) ?? ''}
         />
       )}
@@ -43,7 +45,7 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
           {article.images.map((image) => (
             <ImageGalleryPreview
               alt={image.altText}
-              description={image.description}
+              description={<ContentRenderer content={image.description} />}
               key={image.id}
               src={createArticleImageUrl(image.id) ?? ''}
             />

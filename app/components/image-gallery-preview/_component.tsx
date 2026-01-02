@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { useRef } from 'react'
+import { type ReactNode, useRef } from 'react'
 import { CloseIcon } from '~/components/icons/close-icon'
 import { Image } from '~/components/image'
 import styles from './_styles.module.css'
@@ -7,7 +7,7 @@ import styles from './_styles.module.css'
 type Props = {
   alt: string
   className?: string
-  description?: string | null
+  description?: ReactNode
   src: string
 }
 
@@ -31,7 +31,7 @@ export const ImageGalleryPreview = ({
     <>
       <div className={clsx(styles.container, className)}>
         <button
-          aria-label={description || alt}
+          aria-label={alt}
           className={styles.button}
           onClick={handleOpen}
           type="button"

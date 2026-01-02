@@ -13,7 +13,7 @@
   }
 
   @layer variant {
-    & > p {
+    & p {
       color: var(--text-primary);
       font-size: var(--font-size-heading6);
       line-height: var(--line-height-normal);

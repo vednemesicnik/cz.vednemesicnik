@@ -6,12 +6,10 @@ import { ErrorMessageGroup } from '~/components/error-message-group'
 import { Label } from '~/components/label'
 import styles from './_styles.module.css'
 
-type TextareaProps = ComponentProps<'textarea'>
-
 type Props<FieldType extends string | undefined = string> = {
   label: string
   className?: string
-  textareaProps: TextareaProps
+  textareaProps: ComponentProps<'textarea'>
   field: FieldMetadata<FieldType>
 }
 

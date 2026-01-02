@@ -12,11 +12,13 @@ import { Paragraph } from '~/components/paragraph'
 import styles from './_styles.module.css'
 
 type Props = {
-  content: string
+  content: string | null
   className?: string
 }
 
 export function ContentRenderer({ content, className }: Props) {
+  if (content === null) return null
+
   const parsedContent: JSONContent = JSON.parse(content)
 
   return (

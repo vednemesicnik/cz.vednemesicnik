@@ -6,5 +6,6 @@
     align-items: start;
     justify-items: start;
     text-align: justify;
+    width: 100%;
   }
 }
