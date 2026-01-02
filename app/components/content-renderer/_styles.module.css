@@ -1,0 +1,10 @@
+.container {
+  @layer component {
+    display: grid;
+    position: relative;
+    grid-auto-flow: row;
+    align-items: start;
+    justify-items: start;
+    text-align: justify;
+  }
+}

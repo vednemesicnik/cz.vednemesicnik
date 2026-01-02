@@ -9,6 +9,7 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-relaxed);
+  text-align: justify;
 
   /* Layout */
   padding: 16px;

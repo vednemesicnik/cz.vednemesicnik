@@ -9,8 +9,8 @@ type Props = {
 
 export const Blockquote = ({ children, className }: Props) => {
   return (
-    <figure className={clsx(styles.container, className)}>
-      <blockquote className={styles.blockquote}>{children}</blockquote>
-    </figure>
+    <blockquote className={clsx(styles.blockquote, className)}>
+      {children}
+    </blockquote>
   )
 }

@@ -1,4 +1,4 @@
-.container {
+.blockquote {
   @layer component {
     background: var(--bg-accent);
     border-inline-start: 4px solid var(--border-accent);
@@ -11,16 +11,13 @@
     position: relative;
     transition: box-shadow var(--transition-base);
   }
-}
 
-.blockquote {
-  font-style: italic;
-  margin: 0;
-
-  p {
-    color: var(--text-primary);
-    font-size: var(--font-size-heading6);
-    line-height: var(--line-height-normal);
-    margin: 0;
+  @layer variant {
+    & > p {
+      color: var(--text-primary);
+      font-size: var(--font-size-heading6);
+      line-height: var(--line-height-normal);
+      font-style: italic;
+    }
   }
 }
