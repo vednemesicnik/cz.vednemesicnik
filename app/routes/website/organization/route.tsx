@@ -1,9 +1,11 @@
-import { BulletedList } from '~/components/bulleted-list'
-import { Divider } from '~/components/divider'
+// noinspection JSUnusedGlobalSymbols
+
+// import { BulletedList } from '~/components/bulleted-list'
+// import { Divider } from '~/components/divider'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
-import { Hyperlink } from '~/components/hyperlink'
-import { ListItem } from '~/components/list-item'
+// import { Hyperlink } from '~/components/hyperlink'
+// import { ListItem } from '~/components/list-item'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 
@@ -32,21 +34,21 @@ export default function RouteComponent() {
         a kulturních akcí pro středoškolské studenty (literárních večerů a
         autorských čtení).
       </Paragraph>
-      <Divider variant={'primary'} />
-      <Paragraph>Vedneměsíčník vychází za laskavé podpory:</Paragraph>
-      <BulletedList>
-        <ListItem>Literární kavárna Měsíc ve dne</ListItem>
-        <ListItem>
-          <Hyperlink href="https://www.bigy-cb.cz/bigy/">
-            Biskupské gymnázium J. N. Neumanna v Č. Budějovicích
-          </Hyperlink>
-        </ListItem>
-        <ListItem>
-          <Hyperlink href="https://www.fokus-cb.cz/">
-            Fokus České Budějovice
-          </Hyperlink>
-        </ListItem>
-      </BulletedList>
+      {/*<Divider variant={'primary'} />*/}
+      {/*<Paragraph>Vedneměsíčník vychází za laskavé podpory:</Paragraph>*/}
+      {/*<BulletedList>*/}
+      {/*  <ListItem>Literární kavárna Měsíc ve dne</ListItem>*/}
+      {/*  <ListItem>*/}
+      {/*    <Hyperlink href="https://www.bigy-cb.cz/bigy/">*/}
+      {/*      Biskupské gymnázium J. N. Neumanna v Č. Budějovicích*/}
+      {/*    </Hyperlink>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem>*/}
+      {/*    <Hyperlink href="https://www.fokus-cb.cz/">*/}
+      {/*      Fokus České Budějovice*/}
+      {/*    </Hyperlink>*/}
+      {/*  </ListItem>*/}
+      {/*</BulletedList>*/}
     </Page>
   )
 }
