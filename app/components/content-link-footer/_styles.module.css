@@ -1,5 +1,5 @@
 .footer {
-  @layer components {
+  @layer component {
     grid-area: details;
     display: flex;
     flex-wrap: wrap;

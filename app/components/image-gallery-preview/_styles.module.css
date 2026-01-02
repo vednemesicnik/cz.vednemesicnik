@@ -1,0 +1,140 @@
+.container {
+  @layer component {
+    display: block;
+    position: relative;
+  }
+}
+
+.button {
+  @layer component {
+    all: unset;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+  }
+}
+
+.imageWrapper {
+  @layer component {
+    aspect-ratio: 3 / 2;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    transition:
+      box-shadow var(--transition-base),
+      transform var(--transition-base),
+      border-color var(--transition-base);
+
+    &:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+      border-color: var(--border-hover);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: var(--card-shadow);
+    }
+  }
+}
+
+.dialog {
+  @layer component {
+    background: transparent;
+    border: none;
+    max-width: 100%;
+    max-height: 100vh;
+    @supports (max-height: 100dvh) {
+      max-height: 100dvh;
+    }
+  }
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+  }
+}
+
+.dialogContent {
+  @layer component {
+    display: grid;
+    grid-template-columns: minmax(auto, 840px);
+    grid-template-rows: auto 1fr;
+    gap: 16px;
+    background: var(--card-bg);
+    border-radius: var(--radius-xl);
+    padding: 32px;
+
+    @media (max-width: 768px) {
+      padding: 16px;
+      border-radius: var(--radius-lg);
+    }
+  }
+}
+
+.dialogHeader {
+  @layer component {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.closeButton {
+  @layer component {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    transition:
+      background-color var(--transition-base),
+      color var(--transition-base);
+
+    &:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    &:active {
+      background: var(--bg-tertiary);
+    }
+  }
+}
+
+.closeIcon {
+  @layer component {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.dialogImageWrapper {
+  @layer component {
+    display: grid;
+    position: relative;
+    grid-auto-flow: row;
+    align-items: center;
+    justify-items: center;
+    gap: 16px;
+    width: 100%;
+    margin: 0;
+  }
+}
+
+.dialogDescription {
+  @layer component {
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+}

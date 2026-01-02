@@ -1,5 +1,5 @@
 .heading {
-  @layer components {
+  @layer component {
     color: var(--text-primary);
     font-weight: var(--font-weight-semibold);
     line-height: var(--line-height-tight);
@@ -8,13 +8,13 @@
 }
 
 .heading2 {
-  @layer components {
+  @layer component {
     font-size: var(--font-size-heading2);
   }
 }
 
 .heading3 {
-  @layer components {
+  @layer component {
     font-size: var(--font-size-heading3);
   }
 }

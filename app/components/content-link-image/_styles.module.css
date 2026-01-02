@@ -1,5 +1,5 @@
 .picture {
-  @layer components {
+  @layer component {
     grid-area: image;
     display: flex;
     position: relative;

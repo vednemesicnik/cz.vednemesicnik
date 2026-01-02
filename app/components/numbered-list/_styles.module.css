@@ -1,5 +1,5 @@
 .list {
-  @layer components {
+  @layer component {
     list-style-type: decimal;
     margin-block: 0.75em 1.25em;
     padding-inline-start: 1em;

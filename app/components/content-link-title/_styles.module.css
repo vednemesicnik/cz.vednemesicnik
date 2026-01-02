@@ -1,5 +1,5 @@
 .title {
-  @layer components {
+  @layer component {
     grid-area: title;
     color: var(--text-primary);
     font-size: var(--font-size-heading5);

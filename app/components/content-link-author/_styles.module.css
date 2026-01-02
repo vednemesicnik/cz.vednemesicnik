@@ -1,5 +1,5 @@
 .container {
-  @layer components {
+  @layer component {
     display: grid;
     position: relative;
     grid-template-columns: 20px 1fr;
@@ -9,7 +9,7 @@
 }
 
 .image {
-  @layer components {
+  @layer component {
     width: 20px;
     height: 20px;
     border-radius: var(--radius-sm);
@@ -18,7 +18,7 @@
 }
 
 .paragraph {
-  @layer components {
+  @layer component {
     color: var(--text-secondary);
     font-size: var(--font-size-small);
     text-align: start;

@@ -1,5 +1,5 @@
 .container {
-  @layer components {
+  @layer component {
     background: var(--bg-accent);
     border-inline-start: 4px solid var(--border-accent);
     border-radius: 0 var(--radius-lg) var(--radius-lg) 0;

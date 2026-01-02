@@ -4,11 +4,10 @@ import { ContentRenderer } from '~/components/content-renderer'
 import { FeaturedImage } from '~/components/featured-image'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
-import { Image } from '~/components/image'
+import { ImageGallery } from '~/components/image-gallery'
+import { ImageGalleryPreview } from '~/components/image-gallery-preview'
 import { Page } from '~/components/page'
 import { Subheadline } from '~/components/subheadline'
-import { Tile } from '~/components/tile'
-import { TileGrid } from '~/components/tile-grid'
 import { createArticleImageUrl } from '~/utils/create-article-image-url'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
 import type { Route } from './+types/route'
@@ -39,18 +38,18 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
 
       <ContentRenderer content={article.content} />
 
-      <TileGrid>
-        {article.images?.map((image) => (
-          <Tile key={image.id} label={image.description || ''}>
-            <Image
+      {article.images && article.images.length > 0 && (
+        <ImageGallery>
+          {article.images.map((image) => (
+            <ImageGalleryPreview
               alt={image.altText}
-              height={165}
+              description={image.description}
+              key={image.id}
               src={createArticleImageUrl(image.id) ?? ''}
-              width={220}
             />
-          </Tile>
-        ))}
-      </TileGrid>
+          ))}
+        </ImageGallery>
+      )}
     </Page>
   )
 }

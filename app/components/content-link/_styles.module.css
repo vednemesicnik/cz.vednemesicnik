@@ -1,5 +1,5 @@
 .link {
-  @layer components {
+  @layer component {
     display: block;
     text-decoration: none;
     color: inherit;
@@ -7,7 +7,7 @@
 }
 
 .article {
-  @layer components {
+  @layer component {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--radius-lg);

@@ -1,5 +1,5 @@
 .listItem {
-  @layer components {
+  @layer component {
     color: var(--text-primary);
     line-height: 1.6;
     margin-block-end: 0.5em;
