@@ -11,9 +11,14 @@ type Props = ComponentProps<'a'>
  * @param {Object} [props.rest] - Additional properties to be passed to the anchor element.
  * @returns {JSX.Element} The rendered anchor element.
  */
-export const BaseHyperlink = ({ children, ...rest }: Props): JSX.Element => {
+export const BaseHyperlink = ({
+  children,
+  rel = 'noopener',
+  target = '_blank',
+  ...rest
+}: Props): JSX.Element => {
   return (
-    <a rel={'noopener noreferrer'} target={'_blank'} {...rest}>
+    <a rel={rel} target={target} {...rest}>
       {children}
     </a>
   )

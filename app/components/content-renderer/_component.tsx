@@ -4,6 +4,7 @@ import { renderToReactElement } from '@tiptap/static-renderer/pm/react'
 import { Blockquote } from '~/components/blockquote'
 import { BulletedList } from '~/components/bulleted-list'
 import { Heading } from '~/components/heading'
+import { Hyperlink } from '~/components/hyperlink'
 import { ListItem } from '~/components/list-item'
 import { NumberedList } from '~/components/numbered-list'
 import { Paragraph } from '~/components/paragraph'
@@ -19,6 +20,17 @@ export function ContentRenderer({ content }: Props) {
     content: parsedContent,
     extensions: [StarterKit],
     options: {
+      markMapping: {
+        link: ({ children, mark }) => (
+          <Hyperlink
+            href={mark.attrs.href}
+            rel={mark.attrs.rel}
+            target={mark.attrs.target}
+          >
+            {children}
+          </Hyperlink>
+        ),
+      },
       nodeMapping: {
         blockquote: ({ children }) => <Blockquote>{children}</Blockquote>,
         bulletList: ({ children }) => <BulletedList>{children}</BulletedList>,

@@ -6,6 +6,7 @@ import type { ComponentProps } from 'react'
 import { useEffect } from 'react'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
+import { LinkIcon } from '~/components/icons/link-icon'
 import { RedoIcon } from '~/components/icons/redo-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { Label } from '~/components/label'
@@ -48,6 +49,15 @@ export const AdminTextEditor = ({
         heading: {
           levels: [2, 3],
         },
+        link: {
+          autolink: true,
+          defaultProtocol: 'https',
+          enableClickSelection: true,
+          HTMLAttributes: { rel: 'noopener', target: '_blank' },
+          linkOnPaste: true,
+          openOnClick: false,
+          protocols: ['mailto', 'tel'],
+        },
       }),
       Placeholder.configure({
         placeholder,
@@ -60,7 +70,7 @@ export const AdminTextEditor = ({
       }
     },
     onUpdate: ({ editor }) => {
-      if (!disabled && editor.isEditable && editor.isFocused) {
+      if (!disabled && editor.isEditable) {
         const newValue = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
         form.update({ name, value: newValue })
       }
@@ -73,6 +83,7 @@ export const AdminTextEditor = ({
     selector: ({ editor }) => ({
       canRedo: editor?.can().redo() ?? false,
       canSetHardBreak: editor?.can().setHardBreak() ?? false,
+      canSetLink: editor?.can().setLink({ href: '' }) ?? false,
       canToggleBlockquote: editor?.can().toggleBlockquote() ?? false,
       canToggleBold: editor?.can().toggleBold() ?? false,
       canToggleBulletList: editor?.can().toggleBulletList() ?? false,
@@ -81,12 +92,14 @@ export const AdminTextEditor = ({
       canToggleItalic: editor?.can().toggleItalic() ?? false,
       canToggleOrderedList: editor?.can().toggleOrderedList() ?? false,
       canUndo: editor?.can().undo() ?? false,
+      canUnsetLink: editor?.can().unsetLink() ?? false,
       isActiveBlockquote: editor?.isActive('blockquote') ?? false,
       isActiveBold: editor?.isActive('bold') ?? false,
       isActiveBulletList: editor?.isActive('bulletList') ?? false,
       isActiveH2: editor?.isActive('heading', { level: 2 }) ?? false,
       isActiveH3: editor?.isActive('heading', { level: 3 }) ?? false,
       isActiveItalic: editor?.isActive('italic') ?? false,
+      isActiveLink: editor?.isActive('link') ?? false,
       isActiveOrderedList: editor?.isActive('orderedList') ?? false,
     }),
   })
@@ -97,6 +110,30 @@ export const AdminTextEditor = ({
       editor.setEditable(!disabled)
     }
   }, [editor, disabled])
+
+  const handleToggleLink = () => {
+    if (!editor) return
+
+    // Get current URL if link is active
+    const previousUrl = editor.getAttributes('link').href || ''
+
+    // Prompt for URL (works for both adding and editing)
+    const url = window.prompt('Zadejte URL:', previousUrl)
+
+    // If cancelled, do nothing
+    if (url === null) {
+      return
+    }
+
+    // If empty string, remove the link
+    if (url === '') {
+      editor.chain().focus().unsetLink().run()
+      return
+    }
+
+    // Set or update the link
+    editor.chain().focus().setLink({ href: url }).run()
+  }
 
   return (
     <section className={clsx(styles.container, className)}>
@@ -126,6 +163,21 @@ export const AdminTextEditor = ({
                 title="Kurzíva (Ctrl+I)"
               >
                 <em>I</em>
+              </ToolbarButton>
+
+              <ToolbarButton
+                active={editorState?.isActiveLink}
+                disabled={
+                  editorState?.isActiveLink
+                    ? !editorState?.canUnsetLink
+                    : !editorState?.canSetLink
+                }
+                onClick={handleToggleLink}
+                title={
+                  editorState?.isActiveLink ? 'Upravit odkaz' : 'Vložit odkaz'
+                }
+              >
+                <LinkIcon />
               </ToolbarButton>
 
               <ToolbarButton

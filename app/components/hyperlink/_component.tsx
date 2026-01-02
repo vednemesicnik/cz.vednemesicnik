@@ -4,7 +4,7 @@ import { BaseHyperlink } from '~/components/base-hyperlink'
 import { OpenInNewIcon } from '~/components/icons/open-in-new-icon'
 import styles from './_styles.module.css'
 
-type Props = Omit<ComponentProps<'a'>, 'rel' | 'target'>
+type Props = ComponentProps<'a'>
 
 /**
  * Hyperlink component renders a `BaseHyperlink` component with optional external link icon.
