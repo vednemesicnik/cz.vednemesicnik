@@ -33,7 +33,7 @@
 
     /* Hover effect */
     &:hover {
-      box-shadow: var(--shadow-lg);
+      box-shadow: var(--shadow-md);
       transform: translateY(-2px);
       border-color: var(--border-hover);
 
@@ -47,18 +47,17 @@
       transform: translateY(0);
       box-shadow: var(--shadow-md);
     }
-  }
-}
 
-@media all and (min-width: 768px) {
-  .article {
-    grid-template-columns: 192px 1fr;
-    grid-template-rows: auto;
-    grid-template-areas:
-      "image title"
-      "image details";
-    justify-items: start;
-    gap: 24px;
-    padding: 24px;
+    @media all and (min-width: 768px) {
+      grid-template-columns: 1fr auto;
+      grid-template-rows: 1fr auto;
+      grid-template-areas:
+        "title image"
+        "details image";
+      justify-items: start;
+      align-items: start;
+      gap: 16px;
+      padding: 24px;
+    }
   }
 }

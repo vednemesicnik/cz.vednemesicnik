@@ -5,13 +5,11 @@
     font-size: var(--font-size-heading5);
     font-weight: var(--font-weight-semibold);
     text-align: center;
-    margin: 0;
+    margin-block: 0;
     transition: color var(--transition-base);
-  }
-}
 
-@media (min-width: 768px) {
-  .title {
-    text-align: start;
+    @media (min-width: 768px) {
+      text-align: start;
+    }
   }
 }

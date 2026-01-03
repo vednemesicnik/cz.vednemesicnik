@@ -1,17 +1,16 @@
-.grid {
+.container {
   display: grid;
   position: relative;
   grid-template-columns: repeat(auto-fit, var(--tile-width));
   justify-content: center;
   grid-gap: var(--tile-gap);
-  margin: 0;
+  margin-block-start: 0;
+  margin-block-end: 40px;
   padding: 0;
   width: 100%;
   list-style: none;
-}
 
-@media (min-width: 768px) {
-  .grid {
+  @media (min-width: 768px) {
     justify-content: start;
   }
 }

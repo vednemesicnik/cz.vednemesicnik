@@ -1,16 +1,18 @@
+import { clsx } from 'clsx'
 import { Image } from '~/components/image'
 import styles from './_styles.module.css'
 
 type Props = {
-  alt: string
-  src: string
+  alt: string | undefined
+  src: string | undefined
+  className?: string
 }
 
-export function ContentLinkImage({ alt, src }: Props) {
+export function ContentLinkImage({ alt, src, className }: Props) {
   return (
     <Image
       alt={alt}
-      className={styles.picture}
+      className={clsx(styles.picture, className)}
       height={108}
       src={src}
       width={192}

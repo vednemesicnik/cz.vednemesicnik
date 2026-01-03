@@ -7,5 +7,5 @@ type Props = {
 }
 
 export function ContentLinkTitle({ children }: Props) {
-  return <h3 className={styles.title}>{children}</h3>
+  return <h2 className={styles.title}>{children}</h2>
 }

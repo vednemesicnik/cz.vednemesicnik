@@ -8,5 +8,5 @@ type Props = {
 }
 
 export const ContentList = ({ children, className }: Props) => {
-  return <ul className={clsx(styles.grid, className)}>{children}</ul>
+  return <ul className={clsx(styles.container, className)}>{children}</ul>
 }

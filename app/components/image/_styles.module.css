@@ -1,8 +1,9 @@
-@layer component {
-  .container {
+.container {
+  @layer component {
     display: flex;
     position: relative;
     overflow: hidden;
+    background: var(--bg-tertiary);
     width: 100%;
   }
 }

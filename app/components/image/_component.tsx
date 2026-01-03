@@ -9,8 +9,8 @@ const DEFAULT_QUALITY = 75
 const DEFAULT_PLACEHOLDER_QUALITY = 25
 
 type Props = {
-  src: string
-  alt: string
+  src: string | undefined
+  alt: string | undefined
   width: number
   height: number
   className?: string
@@ -22,6 +22,17 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
   const [highResImage, setHighResImage] = useState<HTMLImageElement | null>(
     null,
   )
+
+  // Check if image needs loading (not from cache)
+  useEffect(() => {
+    if (highResImage && !highResImage.complete) {
+      setIsHighResImageLoaded(false)
+    }
+  }, [highResImage])
+
+  if (src === undefined) {
+    return <div className={clsx(styles.container, className)} />
+  }
 
   const calculatedPlaceholderWidth = Math.max(1, Math.round(width / 10))
   const calculatedPlaceholderHeight = Math.max(1, Math.round(height / 10))
@@ -48,13 +59,6 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
     quality: DEFAULT_QUALITY,
     width,
   })
-
-  // Check if image needs loading (not from cache)
-  useEffect(() => {
-    if (highResImage && !highResImage.complete) {
-      setIsHighResImageLoaded(false)
-    }
-  }, [highResImage])
 
   const handleHighResImageLoad = () => {
     setIsHighResImageLoaded(true)

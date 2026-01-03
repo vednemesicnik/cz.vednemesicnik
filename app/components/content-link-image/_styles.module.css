@@ -1,11 +1,12 @@
 .picture {
-  @layer component {
+  @layer variant {
     grid-area: image;
     display: flex;
     position: relative;
     border-radius: var(--radius-md);
     overflow: hidden;
-    max-width: 192px;
+    width: 192px;
+    height: 108px;
 
     &::after {
       content: "";
@@ -13,7 +14,7 @@
       position: absolute;
       background-image: var(--gradient-violet-emerald);
       background-size: 200% 200%;
-      opacity: 0.15;
+      opacity: 0.5;
       top: 0;
       left: 0;
       right: 0;
