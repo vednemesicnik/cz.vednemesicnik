@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a student magazine publishing platform built with React Router v7, Prisma ORM, and SQLite. The application serves as a content management system for publishing articles, podcast episodes, and archived magazine issues (PDFs). It features role-based access control for both users and authors with a complex permission system tied to content lifecycle states.
 
+## Code Editing Workflow
+
+**IMPORTANT**: When making changes to files, always use the **Edit tool**. This enables user review and approval of changes through the IDE's diff interface before applying modifications. Never use tools that directly overwrite files without user confirmation.
+
 ## Development Commands
 
 ### Running the Application
