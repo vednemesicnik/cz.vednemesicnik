@@ -1,4 +1,6 @@
+import { clsx } from 'clsx'
 import type { ComponentProps, JSX } from 'react'
+import styles from './_styles.module.css'
 
 type Props = ComponentProps<'a'>
 
@@ -13,12 +15,18 @@ type Props = ComponentProps<'a'>
  */
 export const BaseHyperlink = ({
   children,
+  className,
   rel = 'noopener',
   target = '_blank',
   ...rest
 }: Props): JSX.Element => {
   return (
-    <a rel={rel} target={target} {...rest}>
+    <a
+      className={clsx(styles.link, className)}
+      rel={rel}
+      target={target}
+      {...rest}
+    >
       {children}
     </a>
   )

@@ -22,17 +22,19 @@
 }
 
 .link {
-  display: flex;
-  position: relative;
-  font-weight: var(--font-weight-medium);
-  font-size: inherit;
-  line-height: inherit;
-  cursor: pointer;
-  color: var(--footer-text);
-  transition: color var(--transition-fast);
+  @layer variant {
+    display: flex;
+    position: relative;
+    font-weight: var(--font-weight-medium);
+    font-size: inherit;
+    line-height: inherit;
+    cursor: pointer;
+    color: var(--footer-text);
+    transition: color var(--transition-fast);
 
-  &:hover {
-    color: var(--link-hover);
+    &:hover {
+      color: var(--link-hover);
+    }
   }
 }
 

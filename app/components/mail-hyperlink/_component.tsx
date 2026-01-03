@@ -1,13 +1,11 @@
-import { clsx } from 'clsx'
 import type { ComponentProps, JSX } from 'react'
 
 import { BaseHyperlink } from '~/components/base-hyperlink'
+import { BaseHyperlinkIcon } from '~/components/base-hyperlink-icon'
 import { MailIcon } from '~/components/icons/mail-icon'
 import { appendParameters } from '~/utils/append-parameters'
 
-import styles from './_styles.module.css'
-
-type Props = Omit<ComponentProps<'a'>, 'href'> & {
+type Props = Omit<ComponentProps<'a'>, 'href' | 'rel' | 'target'> & {
   address: string
   subject?: string
   body?: string
@@ -31,7 +29,6 @@ export const MailHyperlink = ({
   subject = '',
   body = '',
   children,
-  className,
   ...rest
 }: Props): JSX.Element => {
   const mailParams = [
@@ -44,17 +41,11 @@ export const MailHyperlink = ({
   const link = appendParameters(`mailto:${address}`, mailParams)
 
   return (
-    <BaseHyperlink
-      className={clsx(styles.link, className)}
-      href={link}
-      rel={undefined}
-      target={undefined}
-      {...rest}
-    >
+    <BaseHyperlink href={link} rel={undefined} target={undefined} {...rest}>
       {children}
-      <span className={styles.iconWrapper}>
+      <BaseHyperlinkIcon>
         <MailIcon />
-      </span>
+      </BaseHyperlinkIcon>
     </BaseHyperlink>
   )
 }
