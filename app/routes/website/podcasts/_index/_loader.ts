@@ -1,6 +1,11 @@
+import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 
-export const loader = async () => {
+import type { Route } from './+types/route'
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const { isAuthenticated } = await getAuthentication(request)
+
   const podcastsPromise = prisma.podcast.findMany({
     orderBy: {
       publishedAt: 'desc',
@@ -17,7 +22,9 @@ export const loader = async () => {
       title: true,
     },
     where: {
-      state: 'published',
+      state: {
+        in: isAuthenticated ? ['published', 'draft'] : ['published'],
+      },
     },
   })
 
@@ -46,7 +53,9 @@ export const loader = async () => {
     },
     take: 10,
     where: {
-      state: 'published',
+      state: {
+        in: isAuthenticated ? ['published', 'draft'] : ['published'],
+      },
     },
   })
 

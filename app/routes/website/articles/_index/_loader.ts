@@ -23,13 +23,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       slug: true,
       title: true,
     },
-    where: isAuthenticated
-      ? {
-          state: { in: ['published', 'draft'] },
-        }
-      : {
-          state: 'published',
-        },
+    where: {
+      state: { in: isAuthenticated ? ['published', 'draft'] : ['published'] },
+    },
   })
 
   return { articles }

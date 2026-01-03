@@ -20,13 +20,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
             fullName: true,
             id: true,
           },
-          where: isAuthenticated
-            ? {
-                state: { in: ['published', 'draft'] },
-              }
-            : {
-                state: 'published',
-              },
+          where: {
+            state: {
+              in: isAuthenticated ? ['published', 'draft'] : ['published'],
+            },
+          },
         },
         pluralLabel: true,
       },

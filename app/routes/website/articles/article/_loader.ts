@@ -48,9 +48,11 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     },
     where: {
       slug: articleSlug,
-      // Authenticated users can see all states (draft, published, archived)
-      // Non-authenticated users can only see published articles
-      ...(!isAuthenticated && { state: 'published' }),
+      state: {
+        in: isAuthenticated
+          ? ['draft', 'published', 'archived']
+          : ['published'],
+      },
     },
   })
 

@@ -1,9 +1,11 @@
+import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 
 import type { Route } from './+types/route'
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
+export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const { episodeSlug } = params
+  const { isAuthenticated } = await getAuthentication(request)
 
   const podcastEpisode = await prisma.podcastEpisode.findUniqueOrThrow({
     select: {
@@ -33,7 +35,14 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
       slug: true,
       title: true,
     },
-    where: { slug: episodeSlug },
+    where: {
+      slug: episodeSlug,
+      state: {
+        in: isAuthenticated
+          ? ['draft', 'published', 'archived']
+          : ['published'],
+      },
+    },
   })
 
   return { podcastEpisode }
