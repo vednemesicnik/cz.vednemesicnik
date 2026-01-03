@@ -8,6 +8,7 @@ import {
   type LinksFunction,
   Meta,
   Outlet,
+  redirect,
   Scripts,
   ScrollRestoration,
 } from 'react-router'
@@ -25,6 +26,21 @@ export const links: LinksFunction = () => [
   { href: 'https://rsms.me/', rel: 'preconnect' },
   { href: 'https://rsms.me/inter/inter.css', rel: 'stylesheet' },
 ]
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url)
+  const baseUrl = new URL(process.env.BASE_URL)
+
+  // Redirect www to non-www if BASE_URL doesn't include www
+  if (url.hostname.startsWith('www.') && !baseUrl.hostname.startsWith('www.')) {
+    url.hostname = baseUrl.hostname
+    url.protocol = baseUrl.protocol
+    url.port = baseUrl.port
+    return redirect(url.toString(), 301)
+  }
+
+  return null
+}
 
 export function Layout({ children }: { children: ReactNode }) {
   return (
