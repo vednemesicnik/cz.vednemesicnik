@@ -2,22 +2,21 @@ import {
   createBreadcrumbStructuredData,
   getBreadcrumbs,
 } from '~/utils/breadcrumbs'
-import { getPageTitle } from '~/utils/get-page-title'
+import { createPageSEO } from '~/utils/create-page-seo'
 import type { Route } from './+types/route'
 
-export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
-  const title = getPageTitle(
-    loaderData !== undefined ? loaderData.article.title : 'Článek nenalezen',
-  )
+export const meta: Route.MetaFunction = ({ loaderData, matches, location }) => {
+  const pageSEO = createPageSEO({
+    description: '', // TODO: add article description here
+    title: loaderData.article.title ?? 'Neznámý článek',
+    url: new URL(location.pathname, ENV.BASE_URL).href,
+  })
+
   const breadcrumbs = getBreadcrumbs(matches)
   const breadcrumbStructuredData = createBreadcrumbStructuredData(
     breadcrumbs,
     ENV.BASE_URL,
   )
 
-  return [
-    { title },
-    { content: '', name: 'description' }, // TODO: add article description here
-    { 'script:ld+json': breadcrumbStructuredData },
-  ]
+  return [...pageSEO, { 'script:ld+json': breadcrumbStructuredData }]
 }

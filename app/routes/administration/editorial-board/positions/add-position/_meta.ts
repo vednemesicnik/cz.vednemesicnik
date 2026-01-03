@@ -1,9 +1,11 @@
-import { getPageTitle } from '~/utils/get-page-title'
+import { createPageTitle } from '~/utils/create-page-title'
 
 import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = () => {
-  const title = getPageTitle('Administrace: Redakce > Pozice - Přidat pozici')
+  const title = createPageTitle(
+    'Administrace: Redakce > Pozice - Přidat pozici',
+  )
 
   return [{ title }]
 }

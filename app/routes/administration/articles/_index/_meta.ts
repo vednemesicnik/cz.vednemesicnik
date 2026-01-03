@@ -1,7 +1,7 @@
-import { getPageTitle } from '~/utils/get-page-title'
+import { createPageTitle } from '~/utils/create-page-title'
 
 export const meta = () => {
-  const title = getPageTitle('Administrace - Články')
+  const title = createPageTitle('Administrace - Články')
 
   return [{ title }]
 }
