@@ -36,7 +36,13 @@ export async function loader({ request }: Route.LoaderArgs) {
     url.hostname = baseUrl.hostname
     url.protocol = baseUrl.protocol
     url.port = baseUrl.port
-    return redirect(url.toString(), 301)
+    return redirect(url.href, 301)
+  }
+
+  // Remove trailing slashes (except for homepage)
+  if (url.pathname !== '/' && url.pathname.endsWith('/')) {
+    url.pathname = url.pathname.replace(/\/$/, '')
+    return redirect(url.href, 301)
   }
 
   return null
