@@ -8,11 +8,11 @@ import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
 import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
+import { Divider } from '~/components/divider'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
-import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export default function PodcastPage({ loaderData }: Route.ComponentProps) {
@@ -30,7 +30,9 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
       </HeadlineGroup>
       <Paragraph>{podcast.description}</Paragraph>
 
-      <ContentList className={styles.articleList}>
+      <Divider variant={'secondary'} />
+
+      <ContentList>
         {podcast.episodes.map((episode) => {
           return (
             <ContentListItem key={episode.id}>
