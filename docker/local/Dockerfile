@@ -47,6 +47,7 @@ RUN pnpm app:build
 # Finally, build the production image with minimal footprint
 FROM base
 
+ENV BASE_URL="http://localhost:8080"
 ENV DATABASE_URL="file:/data/sqlite.db"
 ENV HOST="0.0.0.0"
 ENV PORT="8080"

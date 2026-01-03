@@ -1,10 +1,20 @@
+import {
+  createBreadcrumbStructuredData,
+  getBreadcrumbs,
+} from '~/utils/breadcrumbs'
 import { getPageTitle } from '~/utils/get-page-title'
 import type { Route } from './+types/route'
 
-export const meta: Route.MetaFunction = ({ loaderData }) => {
-  const podcastTitle = loaderData.podcastEpisode.podcast.title ?? '...'
-  const episodeTitle = loaderData.podcastEpisode.title ?? '...'
-  const title = getPageTitle(`Podcasty - ${podcastTitle}: ${episodeTitle}`)
+export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
+  const podcastTitle =
+    loaderData.podcastEpisode.podcast.title ?? 'Neznámý podcast'
+  const episodeTitle = loaderData.podcastEpisode.title ?? 'Neznámá epizoda'
+  const pageTitle = getPageTitle(`Podcasty - ${podcastTitle}: ${episodeTitle}`)
+  const breadcrumbs = getBreadcrumbs(matches)
+  const breadcrumbStructuredData = createBreadcrumbStructuredData(
+    breadcrumbs,
+    ENV.BASE_URL,
+  )
 
-  return [{ title }]
+  return [{ title: pageTitle }, { 'script:ld+json': breadcrumbStructuredData }]
 }
