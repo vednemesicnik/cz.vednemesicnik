@@ -57,10 +57,18 @@ export const publishArticle = (request: Request, options: Options) =>
         )
       }
 
-      await prisma.article.update({
+      const updatedArticle = await prisma.article.update({
         data: { publishedAt: new Date(), state: 'published' },
+        select: { slug: true },
         where: { id: options.id },
       }) // TODO: If published by a Coordinator, auto-approve it
+
+      // Update PageSEO state and publishedAt
+      const pathname = `/articles/${updatedArticle.slug}`
+      await prisma.pageSEO.updateMany({
+        data: { publishedAt: new Date(), state: 'published' },
+        where: { pathname },
+      })
     },
     target: options.target,
   })

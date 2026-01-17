@@ -7,6 +7,7 @@ export const schema = z.object({
   authorId: z.string(),
   categoryIds: z.array(z.string()).optional(),
   content: z.string({ message: 'Obsah je povinný' }),
+  excerpt: z.string().optional(),
   existingImages: z
     .array(
       z.object({

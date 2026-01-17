@@ -217,15 +217,15 @@ export default function RouteComponent({
 
       <AdminDetailSection title="Kategorizace">
         <AdminDetailList>
-          <AdminDetailItem label="Kategorie">
+          <AdminDetailItem label="Rubriky">
             {article.categories.length > 0
               ? article.categories.map((cat) => cat.name).join(', ')
-              : 'Žádné kategorie'}
+              : 'Žádné rubriky'}
           </AdminDetailItem>
-          <AdminDetailItem label="Tagy">
+          <AdminDetailItem label="Štítky">
             {article.tags.length > 0
               ? article.tags.map((tag) => tag.name).join(', ')
-              : 'Žádné tagy'}
+              : 'Žádné štítky'}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>

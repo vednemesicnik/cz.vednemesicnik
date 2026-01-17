@@ -15,9 +15,9 @@ export default function ArticlesLayoutRoute() {
           Články
         </AdminTab>
         <AdminTab to={href('/administration/articles/categories')}>
-          Kategorie
+          Rubriky
         </AdminTab>
-        <AdminTab to={href('/administration/articles/tags')}>Tagy</AdminTab>
+        <AdminTab to={href('/administration/articles/tags')}>Štítky</AdminTab>
       </AdminTabs>
       <Outlet />
     </>

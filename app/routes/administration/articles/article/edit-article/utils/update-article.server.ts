@@ -12,6 +12,7 @@ type Options = {
   authorId: string
   categoryIds?: string[]
   content: string
+  excerpt?: string
   existingImages?: Array<{
     id: string
     altText: string
@@ -33,6 +34,7 @@ export async function updateArticle(
     authorId,
     categoryIds,
     content,
+    excerpt,
     existingImages,
     featuredImage,
     images,
@@ -147,6 +149,7 @@ export async function updateArticle(
             set: categoryIds?.map((id) => ({ id })) ?? [],
           },
           content,
+          excerpt: excerpt || null,
           featuredImageId,
           slug,
           state,
@@ -157,6 +160,37 @@ export async function updateArticle(
         },
         select: { id: true },
         where: { id: articleId },
+      })
+
+      // 6. Update or create PageSEO record for the article
+      const pathname = `/articles/${slug}`
+
+      // Generate og:image and twitter:image URLs if article has featured image
+      let ogImageUrl: string | null = null
+      let twitterImageUrl: string | null = null
+      if (featuredImageId) {
+        ogImageUrl = `/resources/article-image/${featuredImageId}?width=1200&height=630`
+        twitterImageUrl = `/resources/article-image/${featuredImageId}?width=1200&height=630`
+      }
+
+      await prisma.pageSEO.upsert({
+        create: {
+          authorId,
+          description: excerpt || null,
+          ogImageUrl,
+          pathname,
+          state,
+          title,
+          twitterImageUrl,
+        },
+        update: {
+          description: excerpt || null,
+          ogImageUrl,
+          state,
+          title,
+          twitterImageUrl,
+        },
+        where: { pathname },
       })
 
       return { id: articleId }

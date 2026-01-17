@@ -10,10 +10,19 @@ export const archiveArticle = (request: Request, options: Options) =>
   withAuthorPermission(request, {
     action: 'archive',
     entity: 'article',
-    execute: () =>
-      prisma.article.update({
+    execute: async () => {
+      const updatedArticle = await prisma.article.update({
         data: { state: 'archived' },
+        select: { slug: true },
         where: { id: options.id },
-      }),
+      })
+
+      // Update PageSEO state
+      const pathname = `/articles/${updatedArticle.slug}`
+      await prisma.pageSEO.updateMany({
+        data: { state: 'archived' },
+        where: { pathname },
+      })
+    },
     target: options.target,
   })

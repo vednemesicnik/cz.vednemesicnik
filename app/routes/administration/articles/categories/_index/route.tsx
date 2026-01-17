@@ -19,12 +19,12 @@ export { meta } from './_meta'
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
-      <AdminHeadline>Kategorie</AdminHeadline>
+      <AdminHeadline>Rubriky</AdminHeadline>
       {loaderData.canCreate && (
         <AdminLinkButton
           to={href('/administration/articles/categories/add-category')}
         >
-          Přidat kategorii
+          Přidat rubriku
         </AdminLinkButton>
       )}
       <AdminTable>

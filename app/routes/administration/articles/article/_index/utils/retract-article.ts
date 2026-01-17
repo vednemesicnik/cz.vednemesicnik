@@ -10,10 +10,19 @@ export const retractArticle = (request: Request, options: Options) =>
   withAuthorPermission(request, {
     action: 'retract',
     entity: 'article',
-    execute: () =>
-      prisma.article.update({
-        data: { state: 'draft' },
+    execute: async () => {
+      const updatedArticle = await prisma.article.update({
+        data: { publishedAt: null, state: 'draft' },
+        select: { slug: true },
         where: { id: options.id },
-      }),
+      })
+
+      // Update PageSEO state and clear publishedAt
+      const pathname = `/articles/${updatedArticle.slug}`
+      await prisma.pageSEO.updateMany({
+        data: { publishedAt: null, state: 'draft' },
+        where: { pathname },
+      })
+    },
     target: options.target,
   })

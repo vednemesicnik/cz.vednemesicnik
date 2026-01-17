@@ -20,6 +20,7 @@ export const schema = z.object({
   authorId: z.string({ error: 'Autor je povinný' }),
   categoryIds: z.array(z.string()).optional(),
   content: z.string({ error: 'Obsah je povinný' }),
+  excerpt: z.string().optional(),
   featuredImage: featuredImageSchema,
   images: z.array(newImageSchema).optional(),
   slug: z

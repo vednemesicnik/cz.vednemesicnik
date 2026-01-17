@@ -23,6 +23,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: { id: true },
       },
       content: true,
+      excerpt: true,
       featuredImage: {
         select: { id: true },
       },
@@ -88,6 +89,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       authorId: article.authorId,
       categoryIds: article.categories.map((category) => category.id),
       content: article.content,
+      excerpt: article.excerpt || '',
       featuredImageId: article.featuredImage?.id,
       images: article.images.map((image) => ({
         altText: image.altText,

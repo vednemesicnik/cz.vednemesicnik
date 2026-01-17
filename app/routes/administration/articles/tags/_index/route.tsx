@@ -19,10 +19,10 @@ export { meta } from './_meta'
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
-      <AdminHeadline>Tagy</AdminHeadline>
+      <AdminHeadline>Štítky</AdminHeadline>
       {loaderData.canCreate && (
         <AdminLinkButton to={href('/administration/articles/tags/add-tag')}>
-          Přidat tag
+          Přidat štítek
         </AdminLinkButton>
       )}
       <AdminTable>

@@ -33,12 +33,14 @@ export async function action({ request }: Route.ActionArgs) {
     images,
     featuredImage,
     content,
+    excerpt,
   } = submission.value
 
   const { articleId } = await createArticle(request, {
     authorId,
     categoryIds,
     content,
+    excerpt,
     featuredImage,
     images,
     slug,

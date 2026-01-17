@@ -43,7 +43,6 @@ export const AdminTextEditor = ({
   field,
   inputProps: {
     className: inputClassName,
-    required: inputRequired,
     placeholder: inputPlaceholder,
     disabled: inputDisabled = false,
     ...restInputProps
@@ -162,7 +161,7 @@ export const AdminTextEditor = ({
 
   return (
     <section className={clsx(styles.container, className)}>
-      <Label htmlFor={field.id} required={inputRequired}>
+      <Label htmlFor={field.id} required={field.required}>
         {label}
       </Label>
 

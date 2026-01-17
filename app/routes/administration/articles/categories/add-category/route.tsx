@@ -62,7 +62,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Přidat kategorii</AdminHeadline>
+      <AdminHeadline>Přidat rubriku</AdminHeadline>
 
       <Form method={'post'} {...getFormProps(form)}>
         <AuthenticityTokenInput />

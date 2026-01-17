@@ -8,6 +8,7 @@ type Options = {
   title: string
   slug: string
   content: string
+  excerpt?: string
   categoryIds?: string[]
   tagIds?: string[]
   authorId: string
@@ -22,6 +23,7 @@ export async function createArticle(
     title,
     slug,
     content,
+    excerpt,
     categoryIds,
     tagIds,
     images,
@@ -61,6 +63,7 @@ export async function createArticle(
             connect: categoryIds?.map((id) => ({ id })) || [],
           },
           content,
+          excerpt: excerpt || null,
           images: {
             create: processedImages,
           },
@@ -70,21 +73,46 @@ export async function createArticle(
           },
           title,
         },
-        select: { id: true, images: { select: { id: true } } },
+        select: { id: true, images: { select: { id: true } }, state: true },
       })
 
       // Set featured image if specified
+      let finalFeaturedImageId: string | null = null
       if (
         featuredImageIndex !== undefined &&
         createdArticle.images[featuredImageIndex]
       ) {
+        finalFeaturedImageId = createdArticle.images[featuredImageIndex].id
         await prisma.article.update({
           data: {
-            featuredImageId: createdArticle.images[featuredImageIndex].id,
+            featuredImageId: finalFeaturedImageId,
           },
           where: { id: createdArticle.id },
         })
       }
+
+      // Create PageSEO record for the article
+      const pathname = `/articles/${slug}`
+
+      // Generate og:image and twitter:image URLs if article has featured image
+      let ogImageUrl: string | null = null
+      let twitterImageUrl: string | null = null
+      if (finalFeaturedImageId) {
+        ogImageUrl = `/resources/article-image/${finalFeaturedImageId}?width=1200&height=630`
+        twitterImageUrl = `/resources/article-image/${finalFeaturedImageId}?width=1200&height=630`
+      }
+
+      await prisma.pageSEO.create({
+        data: {
+          authorId,
+          description: excerpt || null,
+          ogImageUrl,
+          pathname,
+          state: createdArticle.state,
+          title,
+          twitterImageUrl,
+        },
+      })
 
       return createdArticle
     },

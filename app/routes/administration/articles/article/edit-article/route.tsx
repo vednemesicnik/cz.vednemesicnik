@@ -18,6 +18,7 @@ import { AdminInput } from '~/components/admin-input'
 import { AdminLinkButton } from '~/components/admin-link-button'
 import { AdminPage } from '~/components/admin-page'
 import { AdminRadioInput } from '~/components/admin-radio-input'
+import { AdminTextarea } from '~/components/admin-textarea'
 import { AdminTextEditor } from '~/components/admin-text-editor'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Fieldset } from '~/components/fieldset'
@@ -52,6 +53,7 @@ export default function RouteComponent({
       authorId: article.authorId,
       categoryIds: article.categoryIds,
       content: article.content,
+      excerpt: article.excerpt,
       existingImages: article.images.map((image) => ({
         altText: image.altText,
         description: image.description,
@@ -135,6 +137,13 @@ export default function RouteComponent({
           </Fieldset>
 
           <Fieldset disabled={isLoadingOrSubmitting} legend={'Obsah'}>
+            <AdminTextarea
+              field={fields.excerpt}
+              label={'Výpis článku (excerpt)'}
+              textareaProps={{
+                placeholder: 'Krátký výpis článku pro SEO...',
+              }}
+            />
             <AdminTextEditor
               field={fields.content}
               inputProps={{
@@ -148,7 +157,7 @@ export default function RouteComponent({
             <Select
               {...getSelectProps(fields.categoryIds)}
               errors={fields.categoryIds.errors}
-              label={'Kategorie (můžete vybrat více)'}
+              label={'Rubriky (můžete vybrat více)'}
               multiple
             >
               {loaderData.categories.map((category) => (
@@ -160,7 +169,7 @@ export default function RouteComponent({
             <Select
               {...getSelectProps(fields.tagIds)}
               errors={fields.tagIds.errors}
-              label={'Tagy (můžete vybrat více)'}
+              label={'Štítky (můžete vybrat více)'}
               multiple
             >
               {loaderData.tags.map((tag) => (
