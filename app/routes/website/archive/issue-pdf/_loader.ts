@@ -34,6 +34,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       'Content-Type': pdf.contentType,
       ETag: etag,
       'Last-Modified': lastModified,
+      'X-Robots-Tag': 'noindex, nofollow, noarchive, nosnippet',
     },
   })
 }

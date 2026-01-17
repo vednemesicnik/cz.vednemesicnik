@@ -1,5 +1,8 @@
 User-agent: *
 Disallow: /administration/
+Disallow: /resources/
+Disallow: /health/
+Disallow: /pdf/
 Allow: /
 
 # Sitemap: https://vednemesicnik.cz/sitemap/sitemap-index.xml TODO: Uncomment when ready
