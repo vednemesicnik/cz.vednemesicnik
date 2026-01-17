@@ -50,11 +50,6 @@ export default [
       route(':fileName', 'routes/website/archive/issue-pdf/route.tsx'),
     ]),
 
-    // Issue PDF route for backward compatibility
-    route('pdf/:fileName', 'routes/website/archive/issue-pdf/route.tsx', {
-      id: 'issue-pdf-backward-compatibility',
-    }),
-
     // Editorial Board routes
     route('editorial-board', 'routes/website/editorial-board/route.tsx'),
 
