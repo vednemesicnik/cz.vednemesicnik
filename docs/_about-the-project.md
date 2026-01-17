@@ -35,7 +35,7 @@ The project leverages modern web technologies for scalability and maintainabilit
 
 ### Styling and Animations
 - **Styling**:
-  - `@liborgabrhel/style-utils`
+  - `clsx`
 - **Animations**:
   - `@react-spring/web`
 

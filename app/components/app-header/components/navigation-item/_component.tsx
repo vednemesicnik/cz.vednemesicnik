@@ -1,7 +1,6 @@
-import { applyClasses, combineClasses } from '@liborgabrhel/style-utils'
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router'
-
 import styles from './_styles.module.css'
 
 type Props = {
@@ -12,9 +11,7 @@ type Props = {
 export const NavigationItem = ({ children, to }: Props) => (
   <li className={styles.container}>
     <NavLink
-      className={({ isActive }) =>
-        combineClasses(styles.link, applyClasses(styles.active).if(isActive))
-      }
+      className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
       prefetch={'intent'}
       to={to}
       viewTransition={true}
