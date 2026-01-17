@@ -178,8 +178,8 @@
       light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.06));
     /*noinspection CssInvalidFunction*/
     --shadow-sm:
-      0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.09)), 0
-      1px 2px 0 light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
+      0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.09)),
+      0 1px 2px 0 light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
     /*noinspection CssInvalidFunction*/
     --shadow-md:
       0 4px 6px -1px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.12)),
@@ -187,13 +187,14 @@
     /*noinspection CssInvalidFunction*/
     --shadow-lg:
       0 10px 15px -3px
-      light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.15)), 0 4px 6px -2px
-      light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.09));
+      light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.15)),
+      0 4px 6px -2px light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.09));
     /*noinspection CssInvalidFunction*/
     --shadow-xl:
       0 20px 25px -5px
-      light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.18)), 0 10px 10px
-      -5px light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.11));
+      light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.18)),
+      0 10px 10px -5px
+      light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.11));
 
     /* ========================================
        Focus Shadows
