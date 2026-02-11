@@ -1,6 +1,5 @@
 import type { PrismaClient } from '@generated/prisma/client'
 import type { ContentState } from '@generated/prisma/enums'
-import { users } from '~~/data/users'
 
 import { getIssueCover } from './get-issue-cover'
 import { getIssuePdf } from './get-issue-pdf'
@@ -20,19 +19,16 @@ export type IssuesData = {
   }
 }[]
 
-export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
-  const user = await prisma.user.findUniqueOrThrow({
-    select: { authorId: true },
-    where: { email: users[0].email },
-  })
-
+export const createIssues = async (
+  prisma: PrismaClient,
+  data: IssuesData,
+  authorId: string,
+) => {
   for (const issue of data) {
     await prisma.issue
       .create({
         data: {
-          author: {
-            connect: { id: user.authorId },
-          },
+          authorId: authorId,
           cover: issue.cover
             ? {
                 create: await getIssueCover({

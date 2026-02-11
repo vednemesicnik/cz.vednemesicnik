@@ -23,6 +23,7 @@ export const authorPermissions: AuthorPermissionsData = {
     'issue',
     'editorial_board_position',
     'editorial_board_member',
+    'page_seo',
   ],
   states: ['draft', 'published', 'archived'],
 }

@@ -246,7 +246,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'podcast_episode_link',
         state: 'published',
       },
-      // Issue
+      // Archive Issue
       {
         access: 'any',
         actions: ['view', 'review'],
@@ -271,6 +271,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'issue',
         state: 'published',
       },
+      // Editorial Board Member
       {
         access: 'any',
         actions: ['view', 'review'],
@@ -301,6 +302,7 @@ export const authorRoles: AuthorRolesData = [
     level: 1,
     name: 'coordinator',
     permissions: [
+      // Article
       {
         access: 'any',
         actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
@@ -319,6 +321,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'article',
         state: 'archived',
       },
+      // Article Category
       {
         access: 'any',
         actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
@@ -337,6 +340,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'article_category',
         state: 'archived',
       },
+      // Article Tag
       {
         access: 'any',
         actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
@@ -355,6 +359,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'article_tag',
         state: 'archived',
       },
+      // Podcast
       {
         access: 'any',
         actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
@@ -373,6 +378,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'podcast',
         state: 'archived',
       },
+      // Podcast Episode
       {
         access: 'any',
         actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
@@ -391,6 +397,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'podcast_episode',
         state: 'archived',
       },
+      // Podcast Episode Link
       {
         access: 'any',
         actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
@@ -409,6 +416,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'podcast_episode_link',
         state: 'archived',
       },
+      // Archive Issue
       {
         access: 'any',
         actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
@@ -427,6 +435,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'issue',
         state: 'archived',
       },
+      // Editorial Board Position
       {
         access: 'any',
         actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
@@ -445,6 +454,7 @@ export const authorRoles: AuthorRolesData = [
         entity: 'editorial_board_position',
         state: 'archived',
       },
+      // Editorial Board Member
       {
         access: 'any',
         actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
@@ -461,6 +471,25 @@ export const authorRoles: AuthorRolesData = [
         access: 'any',
         actions: ['view', 'delete', 'restore'],
         entity: 'editorial_board_member',
+        state: 'archived',
+      },
+      // Page SEO
+      {
+        access: 'any',
+        actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
+        entity: 'page_seo',
+        state: 'draft',
+      },
+      {
+        access: 'any',
+        actions: ['view', 'retract', 'archive'],
+        entity: 'page_seo',
+        state: 'published',
+      },
+      {
+        access: 'any',
+        actions: ['view', 'delete', 'restore'],
+        entity: 'page_seo',
         state: 'archived',
       },
     ],

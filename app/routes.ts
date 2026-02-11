@@ -159,6 +159,14 @@ export default [
             }),
           ),
 
+          // Pages SEO
+          ...createAdminEntriesSection({
+            entry: 'page-seo',
+            id: 'pageSEOId',
+            name: 'pages-seo',
+            path: 'routes/administration/pages-seo',
+          }),
+
           // Users
           ...createAdminEntriesSection({
             entry: 'user',
