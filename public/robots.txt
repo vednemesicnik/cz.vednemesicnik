@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /administration/
 Disallow: /resources/
+Disallow: /archive/
 Disallow: /health/
 Allow: /
 
