@@ -31,9 +31,7 @@ export default function RouteComponent() {
         Za účelem podpory studentské tvorby spolek provozuje tyto webové stránky
         a digitální archiv. Obsah stránek (články, PDF soubory, grafika) je
         tvořen nezávislou studentskou redakcí bez redakčního vlivu či předběžné
-        kontroly ze strany spolku. Spolek v této souvislosti vystupuje výhradně
-        jako poskytovatel služby ukládání informací ve smyslu § 5 zákona č.
-        480/2004 Sb.
+        kontroly ze strany spolku.
       </Paragraph>
 
       {/*<Divider variant={'primary'} />*/}
