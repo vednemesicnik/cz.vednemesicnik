@@ -16,22 +16,19 @@ export default function RouteComponent() {
         <Headline>Vedneměsíčník, z.&nbsp;s.</Headline>
       </HeadlineGroup>
       <Paragraph>
-        Spolek Vedneměsíčník, který vznikl v říjnu roku 2010, své cíle realizuje
-        především podporou a sponzorováním studentského časopisu Vedneměsíčník,
-        který vychází zpravidla čtyřikrát do roka. Časopis je šířen bezúplatně
-        jako neziskový projekt pro širokou veřejnost. Každé vydané číslo je
-        následně archivováno pro budoucí generace.
+        Spolek Vedneměsíčník, který vznikl v říjnu roku 2010, podporuje
+        studentskou tvorbu a zajišťuje organizační a technické zázemí pro
+        vydávání studentského časopisu Vedneměsíčník. Časopis vychází zpravidla
+        čtyřikrát ročně a je šířen bezúplatně jako neziskový projekt pro širokou
+        veřejnost.
       </Paragraph>
       <Paragraph>
-        Mezi doplňkové aktivity spolku patří organizování různých společenských
-        a kulturních akcí pro středoškolské studenty (literárních večerů a
-        autorských čtení).
+        Spolek dále pořádá společenské a kulturní akce pro středoškolské
+        studenty, zejména literární večery a autorská čtení.
       </Paragraph>
       <Paragraph>
-        Za účelem podpory studentské tvorby spolek provozuje tyto webové stránky
-        a digitální archiv. Obsah stránek (články, PDF soubory, grafika) je
-        tvořen nezávislou studentskou redakcí bez redakčního vlivu či předběžné
-        kontroly ze strany spolku.
+        Součástí podpory studentské tvorby je také provoz webových stránek a
+        digitálního archivu vydaných čísel časopisu.
       </Paragraph>
 
       {/*<Divider variant={'primary'} />*/}
