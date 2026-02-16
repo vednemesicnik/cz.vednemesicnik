@@ -17,23 +17,25 @@ export default function RouteComponent() {
       </HeadlineGroup>
       <Paragraph>
         Spolek Vedneměsíčník, který vznikl v říjnu roku 2010, své cíle realizuje
-        především publikováním časopisu Vedneměsíčník, který vychází v množství
-        nejvýše čtyř čísel za rok, každé v nákladu cca 500 výtisků.
-      </Paragraph>
-      <Paragraph>
-        Tento časopis je distribuován zdarma zejména v Literární kavárně Měsíc
-        ve dne, na českobudějovických středních školách, v klubech, čajovnách a
-        v kině Kotva.
-      </Paragraph>
-      <Paragraph>
-        Každé číslo je pak archivováno v Jihočeské vědecké knihovně v oddělení
-        regionálního tisku.
+        především podporou a sponzorováním studentského časopisu Vedneměsíčník,
+        který vychází zpravidla čtyřikrát do roka. Časopis je šířen bezúplatně
+        jako neziskový projekt pro širokou veřejnost. Každé vydané číslo je
+        následně archivováno pro budoucí generace.
       </Paragraph>
       <Paragraph>
         Mezi doplňkové aktivity spolku patří organizování různých společenských
         a kulturních akcí pro středoškolské studenty (literárních večerů a
         autorských čtení).
       </Paragraph>
+      <Paragraph>
+        Za účelem podpory studentské tvorby spolek provozuje tyto webové stránky
+        a digitální archiv. Obsah stránek (články, PDF soubory, grafika) je
+        tvořen nezávislou studentskou redakcí bez redakčního vlivu či předběžné
+        kontroly ze strany spolku. Spolek v této souvislosti vystupuje výhradně
+        jako poskytovatel služby ukládání informací ve smyslu § 5 zákona č.
+        480/2004 Sb.
+      </Paragraph>
+
       {/*<Divider variant={'primary'} />*/}
       {/*<Paragraph>Vedneměsíčník vychází za laskavé podpory:</Paragraph>*/}
       {/*<BulletedList>*/}
