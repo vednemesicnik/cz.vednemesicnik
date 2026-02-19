@@ -20,7 +20,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { issues, issuesCount } = loaderData
 
   const [searchParams] = useSearchParams()
-  const limit = Number(searchParams.get(LIMIT_PARAM))
+  const limit = Number(searchParams.get(LIMIT_PARAM) ?? '20')
 
   return (
     <Page>

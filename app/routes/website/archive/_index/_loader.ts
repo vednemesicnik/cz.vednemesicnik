@@ -1,17 +1,11 @@
-import { type LoaderFunctionArgs, redirect } from 'react-router'
-
 import { LIMIT_PARAM } from '~/components/load-more-content'
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import type { Route } from './+types/route'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url)
-  const limit = url.searchParams.get(LIMIT_PARAM)
-
-  if (!limit) {
-    url.searchParams.set(LIMIT_PARAM, '20')
-    throw redirect(url.toString(), { status: 301 })
-  }
+  const limit = Number(url.searchParams.get(LIMIT_PARAM) ?? '20')
 
   const { isAuthenticated } = await getAuthentication(request)
 
@@ -35,7 +29,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         },
       },
     },
-    take: Number(limit),
+    take: limit,
     where: {
       state: {
         in: isAuthenticated ? ['published', 'draft'] : ['published'],
