@@ -9,8 +9,10 @@ import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
+import { Callout } from '~/components/callout'
 import { Hyperlink } from '~/components/hyperlink'
 import { Page } from '~/components/page'
+import { Pagination } from '~/components/pagination'
 import { Paragraph } from '~/components/paragraph'
 import type { Route } from './+types/route'
 
@@ -18,7 +20,7 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { articles } = loaderData
+  const { articles, currentPage, totalPages } = loaderData
 
   return (
     <Page>
@@ -57,10 +59,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         })}
       </ContentList>
 
-      <Paragraph>
-        Všechny naše starší články si můžete přečíst na platformě{' '}
-        <Hyperlink href={'https://medium.com/vednemesicnik'}>Medium</Hyperlink>.
-      </Paragraph>
+      <Pagination currentPage={currentPage} totalPages={totalPages} />
+
+      <Callout>
+        <Paragraph>
+          Všechny naše starší články si můžete přečíst na platformě{' '}
+          <Hyperlink href={'https://medium.com/vednemesicnik'}>
+            Medium
+          </Hyperlink>
+          .
+        </Paragraph>
+      </Callout>
     </Page>
   )
 }
