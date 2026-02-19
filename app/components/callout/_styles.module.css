@@ -1,0 +1,12 @@
+.callout {
+  @layer component {
+    background: light-dark(#eff6ff, #1e3a5f);
+    border-inline-start: 4px solid var(--info);
+    /*border-radius: 0 var(--radius-lg) var(--radius-lg) 0;*/
+    box-shadow: var(--shadow-sm);
+    margin-block: 2rem;
+    padding-block: 1rem;
+    padding-inline: 1rem;
+    width: 100%;
+  }
+}
