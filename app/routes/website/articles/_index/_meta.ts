@@ -1,11 +1,11 @@
-import type { MetaFunction } from 'react-router'
 import {
   createBreadcrumbStructuredData,
   getBreadcrumbs,
 } from '~/utils/breadcrumbs'
 import { createPageTitle } from '~/utils/create-page-title'
+import type { Route } from './+types/route'
 
-export const meta: MetaFunction = ({ matches }) => {
+export const meta: Route.MetaFunction = ({ matches }) => {
   const title = createPageTitle('Články')
   const breadcrumbs = getBreadcrumbs(matches)
   const breadcrumbStructuredData = createBreadcrumbStructuredData(

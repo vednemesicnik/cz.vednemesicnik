@@ -6,6 +6,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const { isAuthenticated } = await getAuthentication(request)
 
   const articles = await prisma.article.findMany({
+    orderBy: {
+      publishedAt: 'desc',
+    },
     select: {
       author: {
         select: {
