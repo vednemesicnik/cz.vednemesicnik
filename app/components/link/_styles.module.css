@@ -1,20 +1,22 @@
 .link {
-  display: inline;
-  font-weight: var(--font-weight-medium);
-  font-size: inherit;
-  line-height: inherit;
-  color: var(--link);
-  text-decoration: underline;
-  text-decoration-color: var(--link);
-  transition: color var(--transition-fast);
+  @layer component {
+    display: inline;
+    font-weight: var(--font-weight-medium);
+    font-size: inherit;
+    line-height: inherit;
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-color: var(--link);
+    transition: color var(--transition-fast);
 
-  &:hover {
-    color: var(--link-hover);
-    text-decoration-color: var(--link-hover);
-  }
+    &:hover {
+      color: var(--link-hover);
+      text-decoration-color: var(--link-hover);
+    }
 
-  &:visited {
-    color: var(--link-visited);
-    text-decoration-color: var(--link-visited);
+    &:visited {
+      color: var(--link-visited);
+      text-decoration-color: var(--link-visited);
+    }
   }
 }
