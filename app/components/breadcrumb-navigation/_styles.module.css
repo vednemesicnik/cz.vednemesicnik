@@ -27,6 +27,10 @@
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-normal);
   color: var(--text-secondary);
+
+  &:not(:first-child)::before {
+    content: "/";
+  }
 }
 
 @media all and (min-width: 768px) {

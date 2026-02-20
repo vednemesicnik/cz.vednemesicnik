@@ -51,26 +51,18 @@ type Props = {
  * - Integrates with React Router for navigation and active state detection
  * - Works with the `getBreadcrumbs()` utility to extract breadcrumbs from route matches
  */
-export const Breadcrumbs = ({ items }: Props) => {
-  const breadcrumbsCount = items.length
-
+export const BreadcrumbNavigation = ({ items }: Props) => {
   return (
-    <nav className={styles.container}>
-      <ul className={styles.list}>
-        {items.map((breadcrumb, index) => {
-          const isLastItem = breadcrumbsCount === index + 1
-          const hasSeparator = !isLastItem
-
-          return (
-            <li className={styles.listItem} key={index}>
-              <BreadcrumbLink to={breadcrumb.path}>
-                {breadcrumb.label}
-              </BreadcrumbLink>
-              {hasSeparator && <span>/</span>}
-            </li>
-          )
-        })}
-      </ul>
+    <nav aria-label={'Breadcrumb'} className={styles.container}>
+      <ol className={styles.list}>
+        {items.map((breadcrumb, index) => (
+          <li className={styles.listItem} key={index}>
+            <BreadcrumbLink to={breadcrumb.path}>
+              {breadcrumb.label}
+            </BreadcrumbLink>
+          </li>
+        ))}
+      </ol>
     </nav>
   )
 }

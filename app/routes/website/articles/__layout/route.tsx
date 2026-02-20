@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { Outlet } from 'react-router'
-import { Breadcrumbs } from '~/components/breadcrumbs'
+import { BreadcrumbNavigation } from '~/components/breadcrumb-navigation'
 import { getBreadcrumbs } from '~/utils/breadcrumbs'
 import type { Route } from './+types/route'
 
@@ -14,7 +14,7 @@ export default function LayoutRouteComponent({
 
   return (
     <>
-      <Breadcrumbs items={breadcrumbs} />
+      <BreadcrumbNavigation items={breadcrumbs} />
       <Outlet />
     </>
   )
