@@ -2,7 +2,9 @@ import { clsx } from 'clsx'
 import { Link } from '~/components/link'
 import styles from './_styles.module.css'
 
-interface Props {
+export const PAGE_PARAM = 'page'
+
+type Props = {
   currentPage: number
   totalPages: number
 }
@@ -18,7 +20,7 @@ export const Pagination = ({ currentPage, totalPages }: Props) => {
           to={
             currentPage - 1 === 1
               ? { search: '' }
-              : { search: `?page=${currentPage - 1}` }
+              : { search: `?${PAGE_PARAM}=${currentPage - 1}` }
           }
         >
           Předchozí
@@ -34,7 +36,7 @@ export const Pagination = ({ currentPage, totalPages }: Props) => {
       {currentPage < totalPages ? (
         <Link
           className={styles.next}
-          to={{ search: `?page=${currentPage + 1}` }}
+          to={{ search: `?${PAGE_PARAM}=${currentPage + 1}` }}
         >
           Další
         </Link>

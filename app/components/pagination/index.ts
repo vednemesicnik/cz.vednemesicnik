@@ -1,1 +1,1 @@
-export { Pagination } from './_component'
+export { PAGE_PARAM, Pagination } from './_component'

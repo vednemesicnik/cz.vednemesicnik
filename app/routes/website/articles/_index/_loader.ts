@@ -1,3 +1,4 @@
+import { PAGE_PARAM } from '~/components/pagination'
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import type { Route } from './+types/route'
@@ -10,7 +11,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url)
   const currentPage = Math.max(
     1,
-    Number(url.searchParams.get('page') ?? '1') || 1,
+    Number(url.searchParams.get(PAGE_PARAM) ?? '1') || 1,
   )
 
   const [articles, totalCount] = await Promise.all([
