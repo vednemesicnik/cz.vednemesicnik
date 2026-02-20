@@ -20,7 +20,7 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { articles, currentPage, totalPages } = loaderData
+  const { articles, currentPage, pageSize, totalCount, totalPages } = loaderData
 
   return (
     <Page>
@@ -59,7 +59,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         })}
       </ContentList>
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} />
+      <Pagination
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        totalPages={totalPages}
+      />
 
       <Callout>
         <Paragraph>

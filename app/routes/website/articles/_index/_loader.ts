@@ -51,5 +51,5 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
-  return { articles, currentPage, totalPages }
+  return { articles, currentPage, pageSize: PAGE_SIZE, totalCount, totalPages }
 }
