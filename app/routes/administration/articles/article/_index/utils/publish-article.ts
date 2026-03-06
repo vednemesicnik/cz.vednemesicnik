@@ -25,6 +25,7 @@ export const publishArticle = (request: Request, options: Options) =>
               },
             },
           },
+          publishedAt: true,
           reviews: {
             select: {
               reviewer: {
@@ -57,8 +58,10 @@ export const publishArticle = (request: Request, options: Options) =>
         )
       }
 
+      const publishedAt = article.publishedAt ?? new Date()
+
       const updatedArticle = await prisma.article.update({
-        data: { publishedAt: new Date(), state: 'published' },
+        data: { publishedAt, state: 'published' },
         select: { slug: true },
         where: { id: options.id },
       }) // TODO: If published by a Coordinator, auto-approve it
@@ -66,7 +69,7 @@ export const publishArticle = (request: Request, options: Options) =>
       // Update PageSEO state and publishedAt
       const pathname = `/articles/${updatedArticle.slug}`
       await prisma.pageSEO.updateMany({
-        data: { publishedAt: new Date(), state: 'published' },
+        data: { publishedAt, state: 'published' },
         where: { pathname },
       })
     },

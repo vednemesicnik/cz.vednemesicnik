@@ -12,15 +12,15 @@ export const restoreArticle = (request: Request, options: Options) =>
     entity: 'article',
     execute: async () => {
       const updatedArticle = await prisma.article.update({
-        data: { publishedAt: null, state: 'draft' },
+        data: { state: 'draft' },
         select: { slug: true },
         where: { id: options.id },
       })
 
-      // Update PageSEO state and clear publishedAt
+      // Update PageSEO state
       const pathname = `/articles/${updatedArticle.slug}`
       await prisma.pageSEO.updateMany({
-        data: { publishedAt: null, state: 'draft' },
+        data: { state: 'draft' },
         where: { pathname },
       })
     },
