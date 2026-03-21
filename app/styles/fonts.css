@@ -20,12 +20,30 @@
     --font-size-note: 0.75rem;
     --font-size-small: 0.875rem;
     --font-size-base: 1rem;
-    --font-size-heading6: calc(var(--font-size-base) * pow(var(--type-scale-ratio), 1));
-    --font-size-heading5: calc(var(--font-size-base) * pow(var(--type-scale-ratio), 2));
-    --font-size-heading4: calc(var(--font-size-base) * pow(var(--type-scale-ratio), 3));
-    --font-size-heading3: calc(var(--font-size-base) * pow(var(--type-scale-ratio), 4));
-    --font-size-heading2: calc(var(--font-size-base) * pow(var(--type-scale-ratio), 5));
-    --font-size-heading1: calc(var(--font-size-base) * pow(var(--type-scale-ratio), 6));
+    --font-size-heading6: calc(
+      var(--font-size-base) *
+      pow(var(--type-scale-ratio), 1)
+    );
+    --font-size-heading5: calc(
+      var(--font-size-base) *
+      pow(var(--type-scale-ratio), 2)
+    );
+    --font-size-heading4: calc(
+      var(--font-size-base) *
+      pow(var(--type-scale-ratio), 3)
+    );
+    --font-size-heading3: calc(
+      var(--font-size-base) *
+      pow(var(--type-scale-ratio), 4)
+    );
+    --font-size-heading2: calc(
+      var(--font-size-base) *
+      pow(var(--type-scale-ratio), 5)
+    );
+    --font-size-heading1: calc(
+      var(--font-size-base) *
+      pow(var(--type-scale-ratio), 6)
+    );
 
     --line-height-tight: 1.25;
     --line-height-normal: 1.5;
