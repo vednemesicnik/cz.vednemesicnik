@@ -4,7 +4,7 @@
     "@conform-to/zod": "1.17.1",
     "@epic-web/invariant": "1.0.0",
     "@epic-web/remember": "1.1.0",
-    "@mjackson/form-data-parser": "0.7.0",
+    "@mjackson/form-data-parser": "0.9.1",
     "@paralleldrive/cuid2": "3.3.0",
     "@prisma/adapter-better-sqlite3": "7.6.0",
     "@prisma/client": "7.6.0",
