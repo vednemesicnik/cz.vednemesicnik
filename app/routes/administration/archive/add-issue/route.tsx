@@ -91,18 +91,18 @@ export default function RouteComponent({
 
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Soubory'}>
           <FileInput
-            accept={'image'}
             errors={fields.cover.errors}
             label={'Obálka'}
             onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
             {...getInputProps(fields.cover, { type: 'file' })}
+            accept={'image'}
           />
           <FileInput
-            accept={'pdf'}
             errors={fields.pdf.errors}
             label={'PDF'}
             onChange={handleFileChange(fields.pdf.name, fields.pdf.dirty)}
             {...getInputProps(fields.pdf, { type: 'file' })}
+            accept={'pdf'}
           />
         </Fieldset>
 
