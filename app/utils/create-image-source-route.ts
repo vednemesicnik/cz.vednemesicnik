@@ -22,10 +22,8 @@ type HasDefinedOptions<Options> = Options extends
   ? true
   : false
 
-type RouteWithSearchParams<
-  Route extends string,
-  Options,
-> = HasDefinedOptions<Options> extends true ? `${Route}?${string}` : Route
+type RouteWithSearchParams<Route extends string, Options> =
+  HasDefinedOptions<Options> extends true ? `${Route}?${string}` : Route
 
 export function createImageSourceRoute<
   Route extends string,
