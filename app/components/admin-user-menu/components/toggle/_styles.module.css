@@ -12,7 +12,7 @@
     background-color 150ms ease-out,
     border-color 150ms ease-out;
   color: var(--admin-text-primary);
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
 }
 

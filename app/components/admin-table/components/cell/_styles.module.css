@@ -1,6 +1,6 @@
 .cell {
   padding: 16px;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   color: var(--admin-text-primary);
   vertical-align: middle;
 }

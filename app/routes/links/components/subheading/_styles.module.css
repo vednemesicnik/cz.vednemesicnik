@@ -1,5 +1,5 @@
 .text {
-  font-size: var(--font-size-note);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-regular);
   text-align: center;
   margin: 0;

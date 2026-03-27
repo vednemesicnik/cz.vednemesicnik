@@ -61,7 +61,7 @@
     color: var(--admin-bg-primary);
 
     /* Typography */
-    font-size: var(--font-size-note);
+    font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -71,7 +71,7 @@
 .date {
   @layer component {
     /* Typography */
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-regular);
     color: var(--admin-text-tertiary);
   }
@@ -80,9 +80,9 @@
 .title {
   @layer component {
     /* Typography */
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-tight);
+    line-height: var(--line-height-md);
     color: var(--admin-text-primary);
   }
 }
@@ -90,7 +90,7 @@
 .author {
   @layer component {
     /* Typography */
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-regular);
     color: var(--admin-text-secondary);
   }

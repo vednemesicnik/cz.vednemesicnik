@@ -8,7 +8,7 @@
     position: relative;
 
     /* Typography */
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-semibold);
     line-height: 1;
     text-decoration: none;

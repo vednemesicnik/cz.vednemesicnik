@@ -1,7 +1,7 @@
 .title {
   @layer component {
     margin: 0;
-    font-size: var(--font-size-heading6);
+    font-size: var(--font-size-lg);
     font-weight: var(--font-weight-semibold);
     color: var(--admin-text-primary);
     line-height: 1.4;

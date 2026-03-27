@@ -91,9 +91,9 @@
     margin: 0;
 
     /* Typography */
-    font-size: var(--font-size-heading5);
+    font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-tight);
+    line-height: var(--line-height-xl);
     color: var(--admin-text-primary);
   }
 }
@@ -104,9 +104,9 @@
     margin: 0;
 
     /* Typography */
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-normal);
+    line-height: var(--line-height-sm);
     color: var(--admin-text-secondary);
   }
 }

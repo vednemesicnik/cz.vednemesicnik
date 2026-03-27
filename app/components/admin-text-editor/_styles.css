@@ -6,9 +6,9 @@
   background-color: var(--admin-bg-primary);
 
   /* Typography */
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-relaxed);
+  line-height: var(--line-height-xs);
 
   /* Layout */
   padding: 16px;
@@ -29,23 +29,23 @@
 
   /* Headings */
   & h1 {
-    font-size: var(--font-size-heading2);
+    font-size: var(--font-size-4xl);
     font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-tight);
+    line-height: var(--line-height-4xl);
     margin-block: 24px 16px;
   }
 
   & h2 {
-    font-size: var(--font-size-heading3);
+    font-size: var(--font-size-3xl);
     font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-tight);
+    line-height: var(--line-height-3xl);
     margin-block: 20px 12px;
   }
 
   & h3 {
-    font-size: var(--font-size-heading4);
+    font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-tight);
+    line-height: var(--line-height-2xl);
     margin-block: 16px 8px;
   }
 
@@ -89,7 +89,7 @@
     color: var(--admin-text-primary);
     padding: 2px 6px;
     border-radius: 4px;
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-sm);
     font-family: "Courier New", monospace;
   }
 

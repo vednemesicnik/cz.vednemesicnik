@@ -17,9 +17,9 @@
 
 .fieldLabel {
   color: var(--admin-text-primary);
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
+  line-height: var(--line-height-sm);
   margin-block-end: 4px;
   align-self: start;
 }
@@ -73,7 +73,7 @@
 }
 
 .placeholderText {
-  font-size: var(--font-size-heading6);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
   color: var(--admin-text-tertiary);
   margin: 0;

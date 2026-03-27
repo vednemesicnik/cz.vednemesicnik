@@ -2,19 +2,19 @@
   @layer component {
     color: var(--text-primary);
     font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-tight);
+    line-height: var(--line-height-4xl);
     margin-block: 0.25em 0.75em;
   }
 }
 
 .heading2 {
   @layer component {
-    font-size: var(--font-size-heading2);
+    font-size: var(--font-size-4xl);
   }
 }
 
 .heading3 {
   @layer component {
-    font-size: var(--font-size-heading3);
+    font-size: var(--font-size-3xl);
   }
 }

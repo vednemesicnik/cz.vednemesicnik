@@ -23,9 +23,9 @@
   position: relative;
   align-items: center;
   gap: 8px;
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-normal);
+  line-height: var(--line-height-sm);
   color: var(--text-secondary);
 
   &:not(:first-child)::before {

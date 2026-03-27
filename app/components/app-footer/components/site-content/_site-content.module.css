@@ -22,7 +22,7 @@
 
 .title {
   grid-area: title;
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
 }
@@ -46,7 +46,7 @@
 }
 
 .link {
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-regular);
   color: var(--footer-text);
   text-decoration: none;

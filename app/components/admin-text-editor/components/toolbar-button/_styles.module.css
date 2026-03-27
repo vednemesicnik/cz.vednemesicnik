@@ -6,7 +6,7 @@
   position: relative;
 
   /* Typography */
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   line-height: 1;
 

@@ -17,9 +17,9 @@
     margin: 0;
 
     /* Typography */
-    font-size: var(--font-size-heading4);
+    font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-tight);
+    line-height: var(--line-height-2xl);
     color: var(--admin-text-primary);
   }
 }

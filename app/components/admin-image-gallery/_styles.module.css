@@ -27,7 +27,7 @@
   padding: 4px 8px;
   background-color: var(--admin-purple);
   color: var(--admin-button-text);
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);

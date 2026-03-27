@@ -37,9 +37,9 @@
 }
 
 .title {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
+  line-height: var(--line-height-md);
   margin: 0;
   color: var(--admin-text-primary);
 }

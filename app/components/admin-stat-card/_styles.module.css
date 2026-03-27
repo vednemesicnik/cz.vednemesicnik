@@ -52,9 +52,9 @@
 .value {
   @layer component {
     /* Typography */
-    font-size: var(--font-size-heading3);
+    font-size: var(--font-size-3xl);
     font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-tight);
+    line-height: var(--line-height-3xl);
     color: var(--admin-text-primary);
   }
 }
@@ -62,9 +62,9 @@
 .label {
   @layer component {
     /* Typography */
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
-    line-height: var(--line-height-normal);
+    line-height: var(--line-height-md);
     color: var(--admin-text-secondary);
   }
 }
@@ -72,9 +72,9 @@
 .subtext {
   @layer component {
     /* Typography */
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-normal);
+    line-height: var(--line-height-sm);
     color: var(--admin-text-tertiary);
   }
 }

@@ -19,7 +19,7 @@
 .paragraph {
   @layer component {
     color: var(--text-secondary);
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-sm);
     text-align: start;
     margin: 0;
   }

@@ -6,7 +6,7 @@
 .link {
   position: relative;
   font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-tight);
+  line-height: var(--line-height-md);
   color: var(--nav-item-text);
   text-transform: uppercase;
   text-decoration: none;

@@ -15,8 +15,8 @@
   @layer variant {
     & p {
       color: var(--text-primary);
-      font-size: var(--font-size-heading6);
-      line-height: var(--line-height-normal);
+      font-size: var(--font-size-lg);
+      line-height: var(--line-height-lg);
       font-style: italic;
     }
   }

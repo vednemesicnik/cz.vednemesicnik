@@ -1,8 +1,8 @@
 .paragraph {
   @layer component {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-lg);
     font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-normal);
+    line-height: var(--line-height-lg);
     margin-block-start: 0;
     margin-block-end: 1.25rem;
     color: var(--text-primary);

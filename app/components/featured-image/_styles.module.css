@@ -20,9 +20,9 @@
   @layer variant {
     & p {
       color: var(--text-tertiary);
-      font-size: var(--font-size-note);
+      font-size: var(--font-size-xs);
       font-weight: var(--font-weight-regular);
-      line-height: var(--line-height-tight);
+      line-height: var(--line-height-xs);
       text-align: end;
     }
   }

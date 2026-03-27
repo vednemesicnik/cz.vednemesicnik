@@ -3,6 +3,6 @@
   grid-auto-flow: row;
   gap: 4px;
   justify-items: start;
-  min-height: var(--font-size-small);
+  min-height: var(--font-size-sm);
   min-width: 100%;
 }

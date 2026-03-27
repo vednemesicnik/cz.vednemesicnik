@@ -10,44 +10,32 @@
   }
 
   :root {
-    --font-size: 18px;
+    --font-size: 16px;
 
     --scale-ratio-major-second: 1.125;
     --scale-ratio-major-third: 1.25;
 
     --type-scale-ratio: var(--scale-ratio-major-second);
 
-    --font-size-note: 0.75rem;
-    --font-size-small: 0.875rem;
-    --font-size-base: 1rem;
-    --font-size-heading6: calc(
-      var(--font-size-base) *
-      pow(var(--type-scale-ratio), 1)
-    );
-    --font-size-heading5: calc(
-      var(--font-size-base) *
-      pow(var(--type-scale-ratio), 2)
-    );
-    --font-size-heading4: calc(
-      var(--font-size-base) *
-      pow(var(--type-scale-ratio), 3)
-    );
-    --font-size-heading3: calc(
-      var(--font-size-base) *
-      pow(var(--type-scale-ratio), 4)
-    );
-    --font-size-heading2: calc(
-      var(--font-size-base) *
-      pow(var(--type-scale-ratio), 5)
-    );
-    --font-size-heading1: calc(
-      var(--font-size-base) *
-      pow(var(--type-scale-ratio), 6)
-    );
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-md: 1rem;
+    --font-size-lg: calc(1rem * pow(var(--type-scale-ratio), 1));
+    --font-size-xl: calc(1rem * pow(var(--type-scale-ratio), 2));
+    --font-size-2xl: calc(1rem * pow(var(--type-scale-ratio), 3));
+    --font-size-3xl: calc(1rem * pow(var(--type-scale-ratio), 4));
+    --font-size-4xl: calc(1rem * pow(var(--type-scale-ratio), 5));
+    --font-size-5xl: calc(1rem * pow(var(--type-scale-ratio), 6));
 
-    --line-height-tight: 1.25;
-    --line-height-normal: 1.5;
-    --line-height-relaxed: 1.75;
+    --line-height-xs: 1.6;
+    --line-height-sm: 1.5;
+    --line-height-md: 1.5;
+    --line-height-lg: 1.5;
+    --line-height-xl: 1.4;
+    --line-height-2xl: 1.35;
+    --line-height-3xl: 1.3;
+    --line-height-4xl: 1.25;
+    --line-height-5xl: 1.2;
 
     --font-weight-regular: 400;
     --font-weight-medium: 500;
@@ -70,7 +58,7 @@
     font-size: var(--font-size);
     font-weight: var(--font-weight-regular);
 
-    line-height: var(--line-height-normal);
+    line-height: var(--line-height-md);
     letter-spacing: var(--letter-spacing-normal);
 
     text-size-adjust: 100%;

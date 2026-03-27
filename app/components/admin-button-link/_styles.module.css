@@ -7,7 +7,7 @@
     background: none;
 
     /* Typography */
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
     line-height: inherit;
     text-decoration: underline;
