@@ -69,6 +69,16 @@ export default function RouteComponent({
 
   const images = fields.images.getFieldList()
 
+  const handleAddImage = () => {
+    if (images.length === 0) {
+      form.update({
+        name: fields.featuredImage.name,
+        value: `${FEATURED_IMAGE_SOURCE.NEW}:0`,
+      })
+    }
+    form.insert({ name: fields.images.name })
+  }
+
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
   const canSubmit = !isLoadingOrSubmitting && form.valid
@@ -229,9 +239,7 @@ export default function RouteComponent({
               )
             })}
 
-            <AdminButton
-              {...form.insert.getButtonProps({ name: fields.images.name })}
-            >
+            <AdminButton onClick={handleAddImage} type={'button'}>
               Přidat obrázek
             </AdminButton>
           </Fieldset>
