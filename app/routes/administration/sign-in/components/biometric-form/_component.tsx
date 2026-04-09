@@ -1,7 +1,7 @@
 import { startRegistration } from '@simplewebauthn/browser'
 import { useEffect } from 'react'
 import { useFetcher, useNavigate } from 'react-router'
-import { HoneypotInputs } from 'remix-utils/honeypot/react'
+import { HoneypotInputs } from '~/components/honeypot-inputs'
 
 import type { action as generateRegistrationOptionsAction } from '~/routes/administration/authentication/generate-registration-options/_action'
 import type { action as verifyRegistrationResponseAction } from '~/routes/administration/authentication/verify-registration-response/_action'

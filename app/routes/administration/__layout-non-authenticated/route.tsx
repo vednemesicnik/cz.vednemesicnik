@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { Outlet } from 'react-router'
-import { HoneypotProvider } from 'remix-utils/honeypot/react'
+import { HoneypotProvider } from '~/components/honeypot-provider'
 
 import { AdminHeader } from '~/components/admin-header'
 import { AdministrationContent } from '~/components/administration-content'

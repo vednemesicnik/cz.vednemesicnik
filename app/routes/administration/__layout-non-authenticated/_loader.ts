@@ -1,7 +1,7 @@
-import { honeypot } from '~/utils/honeypot.server'
+import { getHoneypotInputProps } from '~/utils/honeypot.server'
 
 export const loader = async () => {
-  const honeypotInputProps = honeypot.getInputProps()
+  const honeypotInputProps = getHoneypotInputProps()
 
   return {
     honeypotInputProps,

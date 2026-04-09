@@ -2,7 +2,7 @@ import { createContext, type ReactNode, useContext } from 'react'
 
 // Context
 
-const Context = createContext<string | null>(null)
+const Context = createContext<string | undefined>(undefined)
 
 // Provider
 
@@ -20,7 +20,7 @@ export const AuthenticityTokenProvider = ({ token, children }: Props) => {
 export const useAuthenticityToken = () => {
   const context = useContext(Context)
 
-  if (context === null) {
+  if (context === undefined) {
     throw new Error(
       'useAuthenticityToken must be used within a AuthenticityTokenProvider',
     )

@@ -2,7 +2,7 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
-import { HoneypotInputs } from 'remix-utils/honeypot/react'
+import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { AdminButton } from '~/components/admin-button'
 import { AdminInput } from '~/components/admin-input'
 import { Form } from '~/components/form'
