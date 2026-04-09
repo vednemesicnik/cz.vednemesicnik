@@ -6,23 +6,23 @@ export const HoneypotInputs = () => {
     useHoneypot()
 
   return (
-    <div className={styles.wrap} aria-hidden="true">
+    <div aria-hidden="true" className={styles.wrap}>
       <label htmlFor={nameFieldName}>Please leave this field blank</label>
       <input
+        autoComplete="nope"
+        defaultValue=""
         id={nameFieldName}
         name={nameFieldName}
-        type="text"
-        defaultValue=""
-        autoComplete="nope"
         tabIndex={-1}
+        type="text"
       />
       <input
+        autoComplete="off"
         name={validFromFieldName}
+        readOnly
+        tabIndex={-1}
         type="text"
         value={encryptedValidFrom}
-        readOnly
-        autoComplete="off"
-        tabIndex={-1}
       />
     </div>
   )

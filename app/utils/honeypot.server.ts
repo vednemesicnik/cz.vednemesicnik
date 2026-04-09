@@ -28,9 +28,9 @@ function verifyAndGetTimestamp(signed: string): number | null {
 }
 
 export const getHoneypotInputProps = () => ({
+  encryptedValidFrom: signTimestamp(Date.now()),
   nameFieldName: HONEYPOT_FIELD_NAME,
   validFromFieldName: VALID_FROM_FIELD_NAME,
-  encryptedValidFrom: signTimestamp(Date.now()),
 })
 
 export const checkHoneypot = (formData: FormData) => {
