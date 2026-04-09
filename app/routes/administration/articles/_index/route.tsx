@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableHeaderCell,
 } from '~/components/admin-table'
+import { Pagination } from '~/components/pagination'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 
@@ -17,10 +18,13 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
+  const { articles, canCreate, currentPage, pageSize, totalCount, totalPages } =
+    loaderData
+
   return (
     <AdminPage>
       <AdminHeadline>Články</AdminHeadline>
-      {loaderData.canCreate && (
+      {canCreate && (
         <AdminLinkButton to={href('/administration/articles/add-article')}>
           Přidat článek
         </AdminLinkButton>
@@ -32,7 +36,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <TableHeaderCell>Akce</TableHeaderCell>
         </TableHeader>
         <TableBody>
-          {loaderData.articles.map((article) => (
+          {articles.map((article) => (
             <ItemRow
               canDelete={article.canDelete}
               canEdit={article.canEdit}
@@ -45,6 +49,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           ))}
         </TableBody>
       </AdminTable>
+      <Pagination
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        totalPages={totalPages}
+      />
     </AdminPage>
   )
 }
