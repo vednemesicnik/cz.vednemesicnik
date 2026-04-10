@@ -48,12 +48,12 @@
 .link {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-regular);
-  color: var(--footer-text);
+  color: var(--text-tertiary);
   text-decoration: none;
   transition: color var(--transition-fast);
 
   &:hover {
-    color: var(--link-hover);
+    color: var(--primary-hover);
   }
 }
 

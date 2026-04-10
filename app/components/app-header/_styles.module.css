@@ -9,8 +9,8 @@
   justify-items: center;
   padding: 24px var(--page-side-padding);
   row-gap: 16px;
-  background-color: var(--header-bg);
-  border-bottom: 1px solid var(--header-border);
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
   z-index: var(--z-header);
   backdrop-filter: blur(8px);
 }
