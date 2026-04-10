@@ -1,0 +1,106 @@
+.container {
+  @layer component {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    width: 100%;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+}
+
+.figure {
+  @layer component {
+    margin: 0;
+    width: 100%;
+  }
+}
+
+.image {
+  @layer variant {
+    border-radius: var(--radius-lg);
+    width: 100%;
+  }
+}
+
+.heading {
+  @layer component {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    column-gap: 16px;
+  }
+}
+
+.title {
+  @layer component {
+    color: var(--text-primary);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-4xl);
+    letter-spacing: var(--letter-spacing-tight);
+    margin: 0;
+  }
+}
+
+.meta {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+  }
+}
+
+.authors {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    & li + li::before {
+      content: ", ";
+      white-space: pre;
+    }
+  }
+}
+
+.author {
+  @layer component {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.authorName {
+  @layer component {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    margin: 0;
+  }
+}
+
+.date {
+  @layer component {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+    margin: 0;
+  }
+}
+
+.cta {
+  @layer component {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    justify-self: end;
+    align-self: end;
+    white-space: nowrap;
+  }
+}
