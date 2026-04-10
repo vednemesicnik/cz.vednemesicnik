@@ -6,7 +6,7 @@
   }
 
   &::marker {
-    color: var(--violet);
+    color: var(--primary);
   }
 
   p {

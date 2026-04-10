@@ -33,18 +33,15 @@
     text-decoration: none;
     line-height: 1.5;
     white-space: nowrap;
-    transition:
-      background-color var(--transition-fast),
-      border-color var(--transition-fast),
-      color var(--transition-fast);
+    transition: all var(--transition-fast);
+
+    &:visited {
+      color: var(--text-primary);
+    }
 
     &:hover {
       background-color: var(--bg-hover);
       border-color: var(--border-hover);
-    }
-
-    &:visited {
-      color: var(--text-primary);
     }
   }
 }
@@ -62,9 +59,9 @@
 }
 
 .current {
-  background-color: var(--button-primary-bg);
-  border-color: var(--button-primary-bg);
-  color: var(--button-primary-text);
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-on-accent);
   font-weight: 600;
 }
 

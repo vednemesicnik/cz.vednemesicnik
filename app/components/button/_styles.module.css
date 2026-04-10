@@ -2,17 +2,17 @@
    Primary Variant (Violet)
    ======================================== */
 .primary {
-  background-color: var(--button-primary-bg);
-  color: var(--button-primary-text);
+  background-color: var(--primary);
+  color: var(--text-on-accent);
   border: none;
   transition: background-color var(--transition-fast);
 
   &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--button-primary-bg-hover);
+    background-color: var(--primary-hover);
   }
 
   &:active:not(:disabled) {
-    background-color: var(--button-primary-bg-active);
+    background-color: var(--primary-active);
   }
 
   &:focus-visible {
@@ -48,27 +48,18 @@
    ======================================== */
 .default {
   background-color: transparent;
-  color: var(--black);
-  border: 2px solid var(--silver);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
 
   &:hover:not(:disabled):not(:focus-visible) {
-    background-color: color-mix(
-      in srgb,
-      var(--lavender-floral) 10%,
-      transparent
-    );
-    border-color: var(--lavender-floral);
+    background-color: var(--bg-accent);
+    border-color: var(--border-accent);
   }
 
   &:focus-visible {
-    background-color: color-mix(
-      in srgb,
-      var(--lavender-floral) 10%,
-      transparent
-    );
-    border-color: var(--lavender-floral);
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--lavender-floral) 30%, transparent);
+    background-color: var(--bg-accent);
+    border-color: var(--border-accent);
+    box-shadow: var(--focus-shadow);
     outline: none;
   }
 }

@@ -6,7 +6,7 @@
 }
 
 .primary {
-  background-image: var(--gradient-violet-emerald);
+  background-image: var(--gradient-signature);
   background-size: 200% 200%;
   animation: wave-animation 6s ease-in-out infinite;
 }

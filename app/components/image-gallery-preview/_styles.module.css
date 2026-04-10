@@ -17,10 +17,10 @@
 .imageWrapper {
   @layer component {
     aspect-ratio: 3 / 2;
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--card-shadow);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
     transition:
       box-shadow var(--transition-base),
@@ -35,7 +35,7 @@
 
     &:active {
       transform: translateY(0);
-      box-shadow: var(--card-shadow);
+      box-shadow: var(--shadow-sm);
     }
   }
 }
@@ -63,7 +63,7 @@
     grid-template-columns: minmax(auto, 840px);
     grid-template-rows: auto 1fr;
     gap: 16px;
-    background: var(--card-bg);
+    background: var(--bg-primary);
     border-radius: var(--radius-xl);
     padding: 32px;
 

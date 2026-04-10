@@ -10,10 +10,10 @@
 
 .card {
   @layer component {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--card-shadow);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
     transition: box-shadow var(--transition-base);
 
