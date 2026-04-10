@@ -4,7 +4,7 @@
 .publish {
   @layer variant {
     background-color: var(--action-publish);
-    color: var(--button-text);
+    color: var(--text-on-accent);
     border: 2px solid transparent;
 
     &:hover:not(:disabled):not(:focus-visible) {
@@ -28,7 +28,7 @@
 .retract {
   @layer variant {
     background-color: var(--action-retract);
-    color: var(--button-text);
+    color: var(--text-on-accent);
     border: 2px solid transparent;
 
     &:hover:not(:disabled):not(:focus-visible) {
@@ -52,7 +52,7 @@
 .archive {
   @layer variant {
     background-color: var(--action-archive);
-    color: var(--button-text);
+    color: var(--text-on-accent);
     border: 2px solid transparent;
 
     &:hover:not(:disabled):not(:focus-visible) {
@@ -76,7 +76,7 @@
 .restore {
   @layer variant {
     background-color: var(--action-restore);
-    color: var(--button-text);
+    color: var(--text-on-accent);
     border: 2px solid transparent;
 
     &:hover:not(:disabled):not(:focus-visible) {
@@ -100,7 +100,7 @@
 .delete {
   @layer variant {
     background-color: var(--danger);
-    color: var(--button-text);
+    color: var(--text-on-accent);
     border: 2px solid transparent;
 
     &:hover:not(:disabled):not(:focus-visible) {
@@ -124,7 +124,7 @@
 .review {
   @layer variant {
     background-color: var(--action-review);
-    color: var(--button-text);
+    color: var(--text-on-accent);
     border: 2px solid transparent;
 
     &:hover:not(:disabled):not(:focus-visible) {

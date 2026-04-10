@@ -246,19 +246,3 @@
       light-dark(rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
   }
 }
-
-/* ============================================================
-   COMPONENT TOKENS
-   ============================================================ */
-
-:root {
-  @layer base {
-    /* ========================================
-       Buttons
-       ======================================== */
-    /* Text for buttons with colored backgrounds (primary, danger, actions) */
-    --button-text: var(--text-on-accent);
-    /* Text for secondary/outlined buttons */
-    --button-text-secondary: var(--text-primary);
-  }
-}

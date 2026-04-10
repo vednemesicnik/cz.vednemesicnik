@@ -33,7 +33,7 @@
 .primary {
   @layer variant {
     background-color: var(--violet);
-    color: var(--button-text);
+    color: var(--text-on-accent);
     border: 2px solid transparent;
 
     &:hover:not(:disabled):not(:focus-visible) {
@@ -55,7 +55,7 @@
 .secondary {
   @layer variant {
     background-color: transparent;
-    color: var(--button-text-secondary);
+    color: var(--text-primary);
     border: 2px solid var(--border-strong);
 
     &:hover:not(:disabled):not(:focus-visible) {
@@ -81,7 +81,7 @@
 .danger {
   @layer variant {
     background-color: var(--danger);
-    color: var(--button-text);
+    color: var(--text-on-accent);
     border: 2px solid transparent;
 
     &:hover:not(:disabled):not(:focus-visible) {

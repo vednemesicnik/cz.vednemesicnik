@@ -20,7 +20,7 @@
 
     /* Outlined style */
     background-color: transparent;
-    color: var(--button-text-secondary);
+    color: var(--text-primary);
     border: 2px solid var(--border-strong);
 
     /* Interaction */
