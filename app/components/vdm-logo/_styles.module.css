@@ -7,37 +7,25 @@
 
 /* Default variant (green/blue theme) */
 .default {
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-main: light-dark(#5cffa3, #34d399);
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-start: light-dark(#0068b8, #0284c7);
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-mid: light-dark(#43d6a9, #14b8a6);
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-end: light-dark(#5cffa3, #6ee7b7);
 }
 
 /* Edit mode variant (red/purple theme) */
 .editMode {
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-main: light-dark(#ff5c5c, #f87171);
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-start: light-dark(#9e00b8, #a855f7);
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-mid: light-dark(#d6435d, #fb7185);
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-end: light-dark(#ff5c5c, #f87171);
 }
 
 /* Admin variant (yellow/amber theme - complementary to purple) */
 .admin {
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-main: light-dark(#fbbf24, #fcd34d);
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-start: light-dark(#eab308, #fde047);
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-mid: light-dark(#f59e0b, #fbbf24);
-  /*noinspection CssInvalidFunction*/
   --vdm-logo-gradient-end: light-dark(#fbbf24, #fcd34d);
 }
 

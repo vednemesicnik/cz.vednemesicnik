@@ -11,7 +11,6 @@
   --green-blue: #0068b8ff;
 
   --aquamarine: #99ffc5ff;
-  /*noinspection CssInvalidFunction*/
   --spring-green: light-dark(#5cffa3ff, #5cffa3ff);
   --dark-green: #002912ff;
 
@@ -20,15 +19,12 @@
   --aureolin: #f5e900ff;
 
   --alice-blue: #ebf4ffff;
-  /*noinspection CssInvalidFunction*/
   --ruddy-blue: light-dark(#5ca3ffff, #5ca3ffff);
   --marine-blue: #003e8fff;
 
-  /*noinspection CssInvalidFunction*/
   --rose-pink: light-dark(#ff5cccff, #ff5cccff);
   --pale-purple: #ffebf9ff;
 
-  /*noinspection CssInvalidFunction*/
   --coral: light-dark(#ff7f50ff, #ff7f50ff);
   --seashell: #fff0ebff;
 
