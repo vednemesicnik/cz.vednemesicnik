@@ -43,7 +43,7 @@ export const ArticleHero = ({
         <div className={styles.meta}>
           <ul className={styles.authors}>
             {authors.map((author) => (
-              <li key={author.name} className={styles.author}>
+              <li className={styles.author} key={author.name}>
                 <p className={styles.authorName}>{author.name}</p>
               </li>
             ))}
