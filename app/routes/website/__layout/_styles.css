@@ -1,4 +1,21 @@
 @layer layout {
+  :root {
+    /* ========================================
+     Layout
+     ======================================== */
+    --content-max-width: 940px;
+
+    /* ========================================
+     Z-index
+     ======================================== */
+    --z-header: 100;
+    --z-nav-dropdown: 200;
+    --z-sidebar: 50;
+    --z-modal: 1000;
+    --z-tooltip: 2000;
+    --z-notification: 3000;
+  }
+
   body {
     background-color: var(--bg-primary);
     grid-template-rows: max-content 1fr max-content;

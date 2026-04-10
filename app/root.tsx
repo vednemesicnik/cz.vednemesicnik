@@ -14,7 +14,7 @@ import {
 } from 'react-router'
 
 import '~/styles/global.css'
-import '~/styles/colors.css'
+import '~/styles/primitive-tokens.css'
 import '~/styles/fonts.css'
 import '~/styles/sizes.css'
 
