@@ -1,0 +1,141 @@
+/**
+ * Public Semantic Design Tokens
+ *
+ * Semantic tokens for the public-facing magazine interface.
+ * Supports light/dark modes via light-dark() function.
+ *
+ * Requires primitive-tokens.css to be loaded first.
+ * Imported in app/routes/website/__layout/route.tsx.
+ */
+
+/* ============================================================
+   SEMANTIC TOKENS
+   ============================================================ */
+
+:root {
+  @layer base {
+    /* ========================================
+       Backgrounds
+       ======================================== */
+    --bg-primary: light-dark(
+      var(--color-charcoal-50),
+      var(--color-charcoal-950)
+    );
+    --bg-secondary: light-dark(
+      var(--color-charcoal-100),
+      var(--color-charcoal-900)
+    );
+    --bg-tertiary: light-dark(
+      var(--color-charcoal-200),
+      var(--color-charcoal-800)
+    );
+    --bg-accent: light-dark(var(--color-violet-100), var(--color-violet-900));
+    --bg-hover: light-dark(
+      var(--color-charcoal-300),
+      var(--color-charcoal-700)
+    );
+    --bg-disabled: light-dark(
+      var(--color-charcoal-400),
+      var(--color-charcoal-600)
+    );
+
+    /* ========================================
+       Borders
+       ======================================== */
+    --border: light-dark(var(--color-charcoal-200), var(--color-charcoal-600));
+    --border-hover: light-dark(
+      var(--color-charcoal-300),
+      var(--color-charcoal-500)
+    );
+    --border-strong: light-dark(
+      var(--color-charcoal-400),
+      var(--color-charcoal-400)
+    );
+    --border-accent: light-dark(
+      var(--color-violet-500),
+      var(--color-violet-400)
+    );
+
+    /* ========================================
+       Text
+       ======================================== */
+    --text-primary: light-dark(
+      var(--color-charcoal-950),
+      var(--color-charcoal-50)
+    );
+    --text-secondary: light-dark(
+      var(--color-charcoal-600),
+      var(--color-charcoal-300)
+    );
+    --text-tertiary: light-dark(
+      var(--color-charcoal-500),
+      var(--color-charcoal-400)
+    );
+    --text-on-accent: light-dark(var(--color-white), var(--color-white));
+
+    /* ========================================
+       Primary
+       ======================================== */
+    --primary: light-dark(var(--color-violet-500), var(--color-violet-400));
+    --primary-hover: light-dark(
+      var(--color-violet-600),
+      var(--color-violet-500)
+    );
+    --primary-active: light-dark(
+      var(--color-violet-700),
+      var(--color-violet-300)
+    );
+    --primary-light: light-dark(
+      var(--color-violet-100),
+      var(--color-violet-900)
+    );
+
+    /* ========================================
+       Status
+       ======================================== */
+    --success: light-dark(var(--color-emerald-500), var(--color-emerald-400));
+    --error: light-dark(var(--color-rose-500), var(--color-rose-400));
+    --warning: light-dark(var(--color-amber-500), var(--color-amber-400));
+    --info: light-dark(var(--color-azure-500), var(--color-azure-400));
+
+    /* ========================================
+       Shadows
+       ======================================== */
+    --shadow-xs: 0 1px 2px 0
+      light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.06));
+    --shadow-sm:
+      0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.09)),
+      0 1px 2px 0 light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
+    --shadow-md:
+      0 4px 6px -1px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.12)),
+      0 2px 4px -1px light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.08));
+    --shadow-lg:
+      0 10px 15px -3px
+      light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.15)),
+      0 4px 6px -2px light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.09));
+    --shadow-xl:
+      0 20px 25px -5px
+      light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.18)),
+      0 10px 10px -5px
+      light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.11));
+
+    /* ========================================
+       Focus shadows
+       ======================================== */
+    --focus-shadow: 0 0 0 3px
+      light-dark(rgba(139, 92, 246, 0.3), rgba(167, 139, 250, 0.3));
+    --focus-shadow-error: 0 0 0 3px
+      light-dark(rgba(239, 68, 68, 0.3), rgba(248, 113, 113, 0.3));
+
+    /* ========================================
+       Gradients
+       ======================================== */
+    --gradient-signature: linear-gradient(
+      135deg,
+      light-dark(var(--color-violet-500), var(--color-violet-400)) 0%,
+      light-dark(var(--color-violet-600), var(--color-violet-500)) 25%,
+      light-dark(var(--color-emerald-500), var(--color-emerald-400)) 75%,
+      light-dark(var(--color-emerald-400), var(--color-emerald-300)) 100%
+    );
+  }
+}

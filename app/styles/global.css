@@ -17,6 +17,27 @@
   border: 0;
 }
 
+:root {
+  color-scheme: light dark;
+
+  /* ========================================
+     Transitions
+     ======================================== */
+  --transition-fast: 150ms ease-in-out;
+  --transition-base: 200ms ease-in-out;
+  --transition-slow: 300ms ease-in-out;
+
+  /* ========================================
+     Border Radius
+     ======================================== */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+}
+
 @layer base {
   /* Body */
   body {
