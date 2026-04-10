@@ -1,14 +1,14 @@
 import { useRef } from 'react'
 import { href } from 'react-router'
 
-import { AdminActionButton } from '~/components/admin-action-button'
-import { AdminActionGroup } from '~/components/admin-action-group'
+import { AdminActionButton } from '~/components/admin/admin-action-button'
+import { AdminActionGroup } from '~/components/admin/admin-action-group'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
-} from '~/components/admin-delete-confirmation-dialog'
-import { AdminLinkButton } from '~/components/admin-link-button'
-import { TableCell, TableRow } from '~/components/admin-table'
+} from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminLinkButton } from '~/components/admin/admin-link-button'
+import { TableCell, TableRow } from '~/components/admin/admin-table'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'

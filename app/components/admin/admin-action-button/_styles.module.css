@@ -1,0 +1,143 @@
+/* ========================================
+   Publish Action (Emerald - move to published state)
+   ======================================== */
+.publish {
+  @layer variant {
+    background-color: var(--action-publish);
+    color: var(--button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--action-publish-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--action-publish-active);
+    }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+      outline: none;
+    }
+  }
+}
+
+/* ========================================
+   Retract Action (Amber - move to draft state)
+   ======================================== */
+.retract {
+  @layer variant {
+    background-color: var(--action-retract);
+    color: var(--button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--action-retract-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--action-retract-active);
+    }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+      outline: none;
+    }
+  }
+}
+
+/* ========================================
+   Archive Action (Rose/Red - move to archived state)
+   ======================================== */
+.archive {
+  @layer variant {
+    background-color: var(--action-archive);
+    color: var(--button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--action-archive-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--action-archive-active);
+    }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.3);
+      outline: none;
+    }
+  }
+}
+
+/* ========================================
+   Restore Action (Amber - restore to draft state)
+   ======================================== */
+.restore {
+  @layer variant {
+    background-color: var(--action-restore);
+    color: var(--button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--action-restore-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--action-restore-active);
+    }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+      outline: none;
+    }
+  }
+}
+
+/* ========================================
+   Delete Action (Danger - Red)
+   ======================================== */
+.delete {
+  @layer variant {
+    background-color: var(--danger);
+    color: var(--button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--danger-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--danger-active);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow-danger);
+      outline: none;
+    }
+  }
+}
+
+/* ========================================
+   Review Action (Blue - approve/review action)
+   ======================================== */
+.review {
+  @layer variant {
+    background-color: var(--action-review);
+    color: var(--button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--action-review-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--action-review-active);
+    }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      outline: none;
+    }
+  }
+}

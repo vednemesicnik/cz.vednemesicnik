@@ -1,0 +1,80 @@
+.imageArea {
+  display: grid;
+  grid-auto-flow: row;
+  gap: 4px;
+  width: 300px;
+}
+
+.labelWrapper {
+  display: grid;
+  position: relative;
+  grid-auto-flow: row;
+  gap: 4px;
+  justify-items: start;
+  align-items: start;
+  width: 100%;
+}
+
+.fieldLabel {
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-sm);
+  margin-block-end: 4px;
+  align-self: start;
+}
+
+.dropZone {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  width: 300px;
+  height: 225px;
+  background-color: var(--bg-secondary);
+  transition: border-color 0.15s ease;
+  overflow: hidden;
+}
+
+.dropZone:hover {
+  border-color: var(--border-hover);
+}
+
+.dropZone.dragging {
+  border-color: var(--violet);
+  background-color: var(--bg-tertiary);
+}
+
+.dropZone.dropZoneError {
+  border-color: var(--error);
+}
+
+.fileInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.preview {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: center;
+}
+
+.placeholder {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.placeholderText {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-tertiary);
+  margin: 0;
+}

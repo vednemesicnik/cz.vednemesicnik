@@ -1,7 +1,7 @@
-import { AdminHeadline } from '~/components/admin-headline'
-import { AdminNavigationCard } from '~/components/admin-navigation-card'
-import { AdminNavigationGrid } from '~/components/admin-navigation-grid'
-import { AdminPage } from '~/components/admin-page'
+import { AdminHeadline } from '~/components/admin/admin-headline'
+import { AdminNavigationCard } from '~/components/admin/admin-navigation-card'
+import { AdminNavigationGrid } from '~/components/admin/admin-navigation-grid'
+import { AdminPage } from '~/components/admin/admin-page'
 
 export default function RouteComponent() {
   return (

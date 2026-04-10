@@ -7,12 +7,12 @@
 .layout {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: var(--admin-header-height) 1fr var(--admin-footer-height);
+  grid-template-rows: var(--header-height) 1fr var(--footer-height);
   grid-template-areas:
     "header"
     "content"
     "footer";
   margin: 0;
-  background-color: var(--admin-bg-secondary);
+  background-color: var(--bg-secondary);
   min-height: 100%;
 }

@@ -2,8 +2,8 @@
 
 import { href, Outlet } from 'react-router'
 
-import { AdminTab } from '~/components/admin-tab'
-import { AdminTabs } from '~/components/admin-tabs'
+import { AdminTab } from '~/components/admin/admin-tab'
+import { AdminTabs } from '~/components/admin/admin-tabs'
 
 export { handle } from './_handle'
 

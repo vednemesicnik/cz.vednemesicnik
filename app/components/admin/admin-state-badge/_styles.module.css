@@ -1,0 +1,32 @@
+.badge {
+  @layer component {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.draft {
+  @layer component {
+    background-color: var(--state-draft-bg);
+    color: var(--state-draft-text);
+  }
+}
+
+.published {
+  @layer component {
+    background-color: var(--state-published-bg);
+    color: var(--state-published-text);
+  }
+}
+
+.archived {
+  @layer component {
+    background-color: var(--state-archived-bg);
+    color: var(--state-archived-text);
+  }
+}

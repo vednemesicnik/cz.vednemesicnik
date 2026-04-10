@@ -1,6 +1,6 @@
 import { data } from 'react-router'
 
-import type { AdministrationPanelUser } from '~/components/administration-panel'
+import type { AdministrationPanelUser } from '~/components/admin/administration-panel'
 import { requireAuthentication } from '~/utils/auth.server'
 import { commitCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'

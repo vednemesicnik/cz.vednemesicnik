@@ -1,0 +1,25 @@
+.section {
+  @layer component {
+    display: grid;
+    grid-auto-flow: row;
+    row-gap: 16px;
+    width: 100%;
+  }
+}
+
+.title {
+  @layer component {
+    font-size: 18px;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+  }
+}
+
+.content {
+  @layer component {
+    display: grid;
+    grid-auto-flow: row;
+    row-gap: 12px;
+    width: 100%;
+  }
+}

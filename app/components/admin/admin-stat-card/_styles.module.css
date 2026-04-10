@@ -1,0 +1,80 @@
+.card {
+  @layer component {
+    /* Layout */
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+
+    /* Spacing */
+    padding: 24px;
+    border-radius: 12px;
+
+    /* Colors */
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border);
+  }
+}
+
+.icon {
+  @layer component {
+    /* Layout */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    /* Sizing */
+    width: 56px;
+    height: 56px;
+
+    /* Colors */
+    background-color: var(--violet);
+    color: var(--bg-primary);
+    border-radius: 12px;
+
+    /* Typography */
+    font-size: 28px;
+    line-height: 1;
+  }
+}
+
+.content {
+  @layer component {
+    /* Layout */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+}
+
+.value {
+  @layer component {
+    /* Typography */
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-3xl);
+    color: var(--text-primary);
+  }
+}
+
+.label {
+  @layer component {
+    /* Typography */
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-md);
+    color: var(--text-secondary);
+  }
+}
+
+.subtext {
+  @layer component {
+    /* Typography */
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-sm);
+    color: var(--text-tertiary);
+  }
+}

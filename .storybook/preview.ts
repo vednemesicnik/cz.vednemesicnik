@@ -6,7 +6,8 @@ import '../app/styles/colors.css'
 import '../app/styles/fonts.css'
 import '../app/styles/sizes.css'
 import '../app/styles/global.css'
-import '../app/styles/admin-design-tokens.css'
+import '../app/styles/primitive-tokens.css'
+import '../app/styles/admin-semantic-tokens.css'
 
 // Custom decorator to toggle color-scheme
 const withColorScheme: Decorator = (Story, context) => {

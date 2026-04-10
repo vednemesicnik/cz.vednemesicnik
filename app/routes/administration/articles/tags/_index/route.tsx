@@ -1,15 +1,15 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href } from 'react-router'
-import { AdminHeadline } from '~/components/admin-headline'
-import { AdminLinkButton } from '~/components/admin-link-button'
-import { AdminPage } from '~/components/admin-page'
+import { AdminHeadline } from '~/components/admin/admin-headline'
+import { AdminLinkButton } from '~/components/admin/admin-link-button'
+import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
   TableBody,
   TableHeader,
   TableHeaderCell,
-} from '~/components/admin-table'
+} from '~/components/admin/admin-table'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 

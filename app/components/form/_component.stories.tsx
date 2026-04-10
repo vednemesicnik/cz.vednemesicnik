@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { AdminInput } from '~/components/admin-input'
+import { AdminInput } from '~/components/admin/admin-input'
 import { Button } from '~/components/button'
 
 import { Form } from './_component'

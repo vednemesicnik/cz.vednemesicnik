@@ -3,18 +3,18 @@
 import { useRef } from 'react'
 import { href } from 'react-router'
 
-import { AdminActionButton } from '~/components/admin-action-button'
-import { AdminActionGroup } from '~/components/admin-action-group'
+import { AdminActionButton } from '~/components/admin/admin-action-button'
+import { AdminActionGroup } from '~/components/admin/admin-action-group'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
-} from '~/components/admin-delete-confirmation-dialog'
-import { AdminDetailItem } from '~/components/admin-detail-item'
-import { AdminDetailList } from '~/components/admin-detail-list'
-import { AdminDetailSection } from '~/components/admin-detail-section'
-import { AdminHeadline } from '~/components/admin-headline'
-import { AdminLinkButton } from '~/components/admin-link-button'
-import { AdminPage } from '~/components/admin-page'
+} from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailList } from '~/components/admin/admin-detail-list'
+import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminHeadline } from '~/components/admin/admin-headline'
+import { AdminLinkButton } from '~/components/admin/admin-link-button'
+import { AdminPage } from '~/components/admin/admin-page'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { getAuthorRoleLabel } from '~/utils/role-labels'

@@ -2,9 +2,9 @@
 
 import { isRouteErrorResponse } from 'react-router'
 
-import { AdminHeadline } from '~/components/admin-headline'
-import { AdminPage } from '~/components/admin-page'
-import { AdminParagraph } from '~/components/admin-paragraph'
+import { AdminHeadline } from '~/components/admin/admin-headline'
+import { AdminPage } from '~/components/admin/admin-page'
+import { AdminParagraph } from '~/components/admin/admin-paragraph'
 
 import type { Route } from './+types/route'
 

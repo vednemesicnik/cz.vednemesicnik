@@ -1,0 +1,100 @@
+.button {
+  @layer variant {
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+
+    /* Typography */
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+
+    /* Spacing */
+    padding-block: 12px;
+    padding-inline: 24px;
+    border-radius: 8px;
+
+    /* Interaction */
+    cursor: pointer;
+    user-select: none;
+
+    /* Disabled State */
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+}
+
+/* Primary Variant - Purple */
+.primary {
+  @layer variant {
+    background-color: var(--violet);
+    color: var(--button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--violet-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--violet-active);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+/* Secondary Variant - Outlined */
+.secondary {
+  @layer variant {
+    background-color: transparent;
+    color: var(--button-text-secondary);
+    border: 2px solid var(--border-strong);
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--bg-hover);
+      border-color: var(--violet);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--bg-hover);
+      border-color: var(--violet);
+    }
+
+    &:focus-visible {
+      background-color: var(--bg-hover);
+      border-color: var(--violet);
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+/* Danger Variant - Red */
+.danger {
+  @layer variant {
+    background-color: var(--danger);
+    color: var(--button-text);
+    border: 2px solid transparent;
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--danger-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--danger-active);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow-danger);
+      outline: none;
+    }
+  }
+}

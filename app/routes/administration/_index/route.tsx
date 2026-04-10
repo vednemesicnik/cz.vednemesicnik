@@ -2,12 +2,12 @@
 
 import { href } from 'react-router'
 
-import { AdminHeadline } from '~/components/admin-headline'
-import { AdminNavigationCard } from '~/components/admin-navigation-card'
-import { AdminNavigationGrid } from '~/components/admin-navigation-grid'
-import { AdminPage } from '~/components/admin-page'
-import { AdminPendingItem } from '~/components/admin-pending-item'
-import { AdminStatCard } from '~/components/admin-stat-card'
+import { AdminHeadline } from '~/components/admin/admin-headline'
+import { AdminNavigationCard } from '~/components/admin/admin-navigation-card'
+import { AdminNavigationGrid } from '~/components/admin/admin-navigation-grid'
+import { AdminPage } from '~/components/admin/admin-page'
+import { AdminPendingItem } from '~/components/admin/admin-pending-item'
+import { AdminStatCard } from '~/components/admin/admin-stat-card'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 

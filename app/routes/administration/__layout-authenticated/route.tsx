@@ -1,12 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { Outlet } from 'react-router'
-
-import { AdminHeader } from '~/components/admin-header'
-import { AdminUserMenu } from '~/components/admin-user-menu'
-import { AdministrationContent } from '~/components/administration-content'
-import { AdministrationFooter } from '~/components/administration-footer'
-import { AdministrationSidebar } from '~/components/administration-sidebar'
+import { AdminHeader } from '~/components/admin/admin-header'
+import { AdminUserMenu } from '~/components/admin/admin-user-menu'
+import { AdministrationContent } from '~/components/admin/administration-content'
+import { AdministrationFooter } from '~/components/admin/administration-footer'
+import { AdministrationSidebar } from '~/components/admin/administration-sidebar'
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
