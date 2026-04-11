@@ -27,7 +27,7 @@ export async function action({ request }: Route.ActionArgs) {
   const {
     title,
     slug,
-    authorId,
+    authorIds,
     categoryIds,
     tagIds,
     images,
@@ -37,7 +37,7 @@ export async function action({ request }: Route.ActionArgs) {
   } = submission.value
 
   const { articleId } = await createArticle(request, {
-    authorId,
+    authorIds,
     categoryIds,
     content,
     excerpt,

@@ -17,7 +17,9 @@ const newImageSchema = z.object({
 })
 
 export const schema = z.object({
-  authorId: z.string({ error: 'Autor je povinný' }),
+  authorIds: z
+    .array(z.string())
+    .min(1, { message: 'Alespoň jeden autor je povinný' }),
   categoryIds: z.array(z.string()).optional(),
   content: z.string({ error: 'Obsah je povinný' }),
   excerpt: z.string().optional(),

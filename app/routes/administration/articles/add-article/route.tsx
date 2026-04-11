@@ -46,7 +46,7 @@ export default function RouteComponent({
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
     defaultValue: {
-      authorId: loaderData.selfAuthorId,
+      authorIds: [loaderData.selfAuthorId],
       featuredImage: FEATURED_IMAGE_SOURCE.NONE,
     },
     id: 'add-article',
@@ -246,19 +246,43 @@ export default function RouteComponent({
 
           <Fieldset
             disabled={isLoadingOrSubmitting}
-            legend={'Informace o autorovi'}
+            legend={'Informace o autorech'}
           >
-            <Select
-              {...getSelectProps(fields.authorId)}
-              errors={fields.authorId.errors}
-              label={'Autor'}
+            {fields.authorIds.getFieldList().map((authorField, index) => (
+              <div className={styles.authorRow} key={authorField.key}>
+                <Select
+                  {...getSelectProps(authorField)}
+                  errors={authorField.errors}
+                  label={'Autor'}
+                >
+                  {loaderData.authors.map((author) => (
+                    <option key={author.id} value={author.id}>
+                      {author.name}
+                    </option>
+                  ))}
+                </Select>
+                {index > 0 && (
+                  <AdminButton
+                    {...form.remove.getButtonProps({
+                      name: fields.authorIds.name,
+                      index,
+                    })}
+                    variant={'danger'}
+                  >
+                    <DeleteIcon className={styles.removeIcon} />
+                    Odstranit
+                  </AdminButton>
+                )}
+              </div>
+            ))}
+            <AdminButton
+              {...form.insert.getButtonProps({
+                name: fields.authorIds.name,
+                defaultValue: '',
+              })}
             >
-              {loaderData.authors.map((author) => (
-                <option key={author.id} value={author.id}>
-                  {author.name}
-                </option>
-              ))}
-            </Select>
+              Přidat autora
+            </AdminButton>
           </Fieldset>
 
           <FormActions>

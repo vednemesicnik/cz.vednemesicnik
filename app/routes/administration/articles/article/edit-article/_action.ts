@@ -32,7 +32,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     excerpt,
     categoryIds,
     tagIds,
-    authorId,
+    authorIds,
     state,
     existingImages,
     images,
@@ -41,7 +41,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   await updateArticle(request, {
     articleId,
-    authorId,
+    authorIds,
     categoryIds,
     content,
     excerpt,

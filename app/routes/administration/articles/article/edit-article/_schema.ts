@@ -4,7 +4,7 @@ import { featuredImageSchema } from '~/config/featured-image-config'
 import { slugify } from '~/utils/slugify'
 
 export const schema = z.object({
-  authorId: z.string(),
+  authorIds: z.array(z.string()).min(1, 'Alespoň jeden autor je povinný'),
   categoryIds: z.array(z.string()).optional(),
   content: z.string({ message: 'Obsah je povinný' }),
   excerpt: z.string().optional(),

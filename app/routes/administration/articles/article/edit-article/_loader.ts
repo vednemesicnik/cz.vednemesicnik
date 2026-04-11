@@ -18,7 +18,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   // Load the article
   const article = await prisma.article.findUnique({
     select: {
-      authorId: true,
+      authors: {
+        select: { id: true },
+      },
       categories: {
         select: { id: true },
       },
@@ -54,7 +56,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     entity: 'article',
     redirectTo: href('/administration/articles'),
     state: article.state,
-    targetAuthorId: article.authorId,
+    targetAuthorIds: article.authors.map((author) => author.id),
   })
 
   const [authors, categories, tags] = await Promise.all([
@@ -86,7 +88,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   return {
     article: {
-      authorId: article.authorId,
+      authorIds: article.authors.map((author) => author.id),
       categoryIds: article.categories.map((category) => category.id),
       content: article.content,
       excerpt: article.excerpt || '',

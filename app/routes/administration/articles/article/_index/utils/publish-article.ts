@@ -16,7 +16,7 @@ export const publishArticle = (request: Request, options: Options) =>
       // Get the article with author role and reviews
       const article = await prisma.article.findUniqueOrThrow({
         select: {
-          author: {
+          authors: {
             select: {
               role: {
                 select: {
@@ -43,8 +43,10 @@ export const publishArticle = (request: Request, options: Options) =>
         where: { id: options.id },
       }) // TODO: Could be sent in form data to avoid this query?
 
-      // Check if author is not a Coordinator (level !== 1)
-      const isNotCoordinator = article.author.role.level !== 1
+      // Check if none of the authors is a Coordinator (level !== 1)
+      const isNotCoordinator = article.authors.every(
+        (author) => author.role.level !== 1,
+      )
 
       // If author is not a Coordinator, require Coordinator review
       if (isNotCoordinator) {

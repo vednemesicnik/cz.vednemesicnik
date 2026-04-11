@@ -27,5 +27,5 @@ export const updateTag = (
         select: { id: true },
         where: { id: tagId },
       }),
-    target: { authorId, state },
+    target: { authorIds: [authorId], state },
   })

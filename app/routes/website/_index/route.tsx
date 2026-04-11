@@ -31,7 +31,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       {latestPublishedArticle && (
         <ArticleHero
-          authors={[{ name: latestPublishedArticle.author.name }]}
+          authors={latestPublishedArticle.authors}
           imageAlt={latestPublishedArticle.featuredImage?.altText}
           imageSrc={latestArticleImageSrc}
           publishDate={latestPublishedArticle.publishedAt}

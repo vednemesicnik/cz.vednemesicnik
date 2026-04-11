@@ -1,12 +1,16 @@
+import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import type { Route } from './+types/route'
 
-export const loader = async () => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const { isAuthenticated } = await getAuthentication(request)
+
   const latestPublishedArticle = await prisma.article.findFirst({
     orderBy: {
       publishedAt: 'desc',
     },
     select: {
-      author: {
+      authors: {
         select: {
           name: true,
         },
@@ -22,7 +26,7 @@ export const loader = async () => {
       title: true,
     },
     where: {
-      state: 'published',
+      state: { in: isAuthenticated ? ['published', 'draft'] : ['published'] },
     },
   })
 

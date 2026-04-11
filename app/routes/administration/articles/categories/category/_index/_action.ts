@@ -33,18 +33,23 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     where: { id: categoryId },
   })
 
+  const target = {
+    authorIds: [currentCategory.authorId],
+    state: currentCategory.state,
+  }
+
   switch (intent) {
     case INTENT_VALUE.archive:
       await archiveCategory(request, {
         id: categoryId,
-        target: currentCategory,
+        target,
       })
       break
 
     case INTENT_VALUE.delete:
       await deleteCategory(request, {
         id: categoryId,
-        target: currentCategory,
+        target,
       })
 
       if (withRedirect) {
@@ -55,28 +60,28 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     case INTENT_VALUE.publish:
       await publishCategory(request, {
         id: categoryId,
-        target: currentCategory,
+        target,
       })
       break
 
     case INTENT_VALUE.restore:
       await restoreCategory(request, {
         id: categoryId,
-        target: currentCategory,
+        target,
       })
       break
 
     case INTENT_VALUE.retract:
       await retractCategory(request, {
         id: categoryId,
-        target: currentCategory,
+        target,
       })
       break
 
     case INTENT_VALUE.review:
       await reviewCategory(request, {
         id: categoryId,
-        target: currentCategory,
+        target,
       })
       break
 

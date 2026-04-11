@@ -20,7 +20,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         publishedAt: 'desc',
       },
       select: {
-        author: {
+        authors: {
           select: {
             name: true,
           },

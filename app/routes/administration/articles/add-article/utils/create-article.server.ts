@@ -11,7 +11,7 @@ type Options = {
   excerpt?: string
   categoryIds?: string[]
   tagIds?: string[]
-  authorId: string
+  authorIds: string[]
   images?: Array<{ file: File; altText: string; description?: string }>
   featuredImage: FeaturedImage
 }
@@ -19,7 +19,7 @@ type Options = {
 export async function createArticle(
   request: Request,
   {
-    authorId,
+    authorIds,
     title,
     slug,
     content,
@@ -34,7 +34,7 @@ export async function createArticle(
   const article = await withAuthorPermission(request, {
     action: 'create',
     entity: 'article',
-    execute: async () => {
+    execute: async (context) => {
       const featuredImageIndex =
         featuredImage.source === 'new' ? featuredImage.index : undefined
 
@@ -58,7 +58,9 @@ export async function createArticle(
 
       const createdArticle = await prisma.article.create({
         data: {
-          authorId,
+          authors: {
+            connect: authorIds.map((id) => ({ id })),
+          },
           categories: {
             connect: categoryIds?.map((id) => ({ id })) || [],
           },
@@ -104,7 +106,7 @@ export async function createArticle(
 
       await prisma.pageSEO.create({
         data: {
-          authorId,
+          authorId: context.authorId,
           description: excerpt || null,
           ogImageUrl,
           pathname,
@@ -116,7 +118,7 @@ export async function createArticle(
 
       return createdArticle
     },
-    target: { authorId, state: 'draft' },
+    target: { authorIds, state: 'draft' },
   })
 
   return { articleId: article.id }

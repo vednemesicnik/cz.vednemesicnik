@@ -10,11 +10,13 @@ export async function getPendingArticles(options: GetPendingArticlesOptions) {
   const { currentAuthorId, currentRoleLevel } = options
 
   const where: Prisma.ArticleWhereInput = {
-    author:
+    authors:
       currentRoleLevel === 1
-        ? undefined
-        : { role: { level: { gt: currentRoleLevel } } },
-    authorId: { not: currentAuthorId },
+        ? { none: { id: currentAuthorId } }
+        : {
+            none: { id: currentAuthorId },
+            every: { role: { level: { gt: currentRoleLevel } } },
+          },
     state: 'draft',
   }
 
@@ -22,7 +24,7 @@ export async function getPendingArticles(options: GetPendingArticlesOptions) {
     prisma.article.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
-        author: { select: { name: true } },
+        authors: { select: { name: true } },
         createdAt: true,
         id: true,
         title: true,

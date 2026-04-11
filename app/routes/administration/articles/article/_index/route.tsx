@@ -202,7 +202,9 @@ export default function RouteComponent({
           </AdminDetailItem>
           <AdminDetailItem label="Název">{article.title}</AdminDetailItem>
           <AdminDetailItem label="Slug">{article.slug}</AdminDetailItem>
-          <AdminDetailItem label="Autor">{article.author.name}</AdminDetailItem>
+          <AdminDetailItem label="Autoři">
+            {article.authors.map((author) => author.name).join(', ')}
+          </AdminDetailItem>
           <AdminDetailItem label="Odkaz na článek">
             <Hyperlink
               href={href('/articles/:articleSlug', {

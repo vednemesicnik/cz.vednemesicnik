@@ -29,22 +29,30 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   const withRedirect = formData.get(REDIRECT_NAME) === 'true'
 
   const currentArticle = await prisma.article.findUniqueOrThrow({
-    select: { authorId: true, state: true },
+    select: {
+      authors: { select: { id: true } },
+      state: true,
+    },
     where: { id: articleId },
   })
+
+  const target = {
+    authorIds: currentArticle.authors.map((author) => author.id),
+    state: currentArticle.state,
+  }
 
   switch (intent) {
     case INTENT_VALUE.archive:
       await archiveArticle(request, {
         id: articleId,
-        target: currentArticle,
+        target,
       })
       break
 
     case INTENT_VALUE.delete:
       await deleteArticle(request, {
         id: articleId,
-        target: currentArticle,
+        target,
       })
 
       if (withRedirect) {
@@ -55,28 +63,28 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     case INTENT_VALUE.publish:
       await publishArticle(request, {
         id: articleId,
-        target: currentArticle,
+        target,
       })
       break
 
     case INTENT_VALUE.restore:
       await restoreArticle(request, {
         id: articleId,
-        target: currentArticle,
+        target,
       })
       break
 
     case INTENT_VALUE.retract:
       await retractArticle(request, {
         id: articleId,
-        target: currentArticle,
+        target,
       })
       break
 
     case INTENT_VALUE.review:
       await reviewArticle(request, {
         id: articleId,
-        target: currentArticle,
+        target,
       })
       break
 

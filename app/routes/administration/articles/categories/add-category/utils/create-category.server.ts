@@ -23,5 +23,5 @@ export const createCategory = (
         },
         select: { id: true },
       }),
-    target: { authorId, state: 'draft' },
+    target: { authorIds: [authorId], state: 'draft' },
   })
