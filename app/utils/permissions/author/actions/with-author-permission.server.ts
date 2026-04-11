@@ -15,7 +15,7 @@ import {
 type Options<T> = {
   entity: AuthorPermissionEntity
   action: AuthorPermissionAction
-  target: { authorId: string; state: ContentState }
+  target: { authorIds: string[]; state: ContentState }
   execute: (context: AuthorPermissionContext) => Promise<T>
   errorMessage?: string
 }
@@ -31,11 +31,22 @@ export async function withAuthorPermission<T>(
     entities: [options.entity],
   })
 
+  invariantResponse(
+    options.target.authorIds.length > 0,
+    `Cannot determine permission target: ${options.entity} has no authors.`,
+  )
+
+  const effectiveTargetAuthorId = options.target.authorIds.includes(
+    context.authorId,
+  )
+    ? context.authorId
+    : options.target.authorIds[0]
+
   const { hasPermission } = context.can({
     action: options.action,
     entity: options.entity,
     state: options.target.state,
-    targetAuthorId: options.target.authorId,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   invariantResponse(

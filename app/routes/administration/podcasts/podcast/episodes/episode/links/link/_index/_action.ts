@@ -33,18 +33,23 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     where: { id: linkId },
   })
 
+  const target = {
+    authorIds: [currentLink.authorId],
+    state: currentLink.state,
+  }
+
   switch (intent) {
     case INTENT_VALUE.archive:
       await archiveLink(request, {
         id: linkId,
-        target: currentLink,
+        target,
       })
       break
 
     case INTENT_VALUE.delete:
       await deleteLink(request, {
         id: linkId,
-        target: currentLink,
+        target,
       })
 
       if (withRedirect) {
@@ -63,28 +68,28 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     case INTENT_VALUE.publish:
       await publishLink(request, {
         id: linkId,
-        target: currentLink,
+        target,
       })
       break
 
     case INTENT_VALUE.restore:
       await restoreLink(request, {
         id: linkId,
-        target: currentLink,
+        target,
       })
       break
 
     case INTENT_VALUE.retract:
       await retractLink(request, {
         id: linkId,
-        target: currentLink,
+        target,
       })
       break
 
     case INTENT_VALUE.review:
       await reviewLink(request, {
         id: linkId,
-        target: currentLink,
+        target,
       })
       break
 

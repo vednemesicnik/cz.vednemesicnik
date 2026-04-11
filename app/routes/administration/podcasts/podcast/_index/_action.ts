@@ -33,18 +33,23 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     where: { id: podcastId },
   })
 
+  const target = {
+    authorIds: [currentPodcast.authorId],
+    state: currentPodcast.state,
+  }
+
   switch (intent) {
     case INTENT_VALUE.archive:
       await archivePodcast(request, {
         id: podcastId,
-        target: currentPodcast,
+        target,
       })
       break
 
     case INTENT_VALUE.delete:
       await deletePodcast(request, {
         id: podcastId,
-        target: currentPodcast,
+        target,
       })
 
       if (withRedirect) {
@@ -55,28 +60,28 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     case INTENT_VALUE.publish:
       await publishPodcast(request, {
         id: podcastId,
-        target: currentPodcast,
+        target,
       })
       break
 
     case INTENT_VALUE.restore:
       await restorePodcast(request, {
         id: podcastId,
-        target: currentPodcast,
+        target,
       })
       break
 
     case INTENT_VALUE.retract:
       await retractPodcast(request, {
         id: podcastId,
-        target: currentPodcast,
+        target,
       })
       break
 
     case INTENT_VALUE.review:
       await reviewPodcast(request, {
         id: podcastId,
-        target: currentPodcast,
+        target,
       })
       break
 

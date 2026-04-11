@@ -41,7 +41,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         createdAt: 'desc',
       },
       select: {
-        authorId: true,
+        authors: { select: { id: true } },
         id: true,
         state: true,
         title: true,
@@ -53,19 +53,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
           {
             state: 'draft',
             ...(draftPerms.hasOwn && !draftPerms.hasAny
-              ? { authorId: context.authorId }
+              ? { authors: { some: { id: context.authorId } } }
               : {}),
           },
           {
             state: 'published',
             ...(publishedPerms.hasOwn && !publishedPerms.hasAny
-              ? { authorId: context.authorId }
+              ? { authors: { some: { id: context.authorId } } }
               : {}),
           },
           {
             state: 'archived',
             ...(archivedPerms.hasOwn && !archivedPerms.hasAny
-              ? { authorId: context.authorId }
+              ? { authors: { some: { id: context.authorId } } }
               : {}),
           },
         ],
@@ -77,19 +77,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
           {
             state: 'draft',
             ...(draftPerms.hasOwn && !draftPerms.hasAny
-              ? { authorId: context.authorId }
+              ? { authors: { some: { id: context.authorId } } }
               : {}),
           },
           {
             state: 'published',
             ...(publishedPerms.hasOwn && !publishedPerms.hasAny
-              ? { authorId: context.authorId }
+              ? { authors: { some: { id: context.authorId } } }
               : {}),
           },
           {
             state: 'archived',
             ...(archivedPerms.hasOwn && !archivedPerms.hasAny
-              ? { authorId: context.authorId }
+              ? { authors: { some: { id: context.authorId } } }
               : {}),
           },
         ],
@@ -99,25 +99,40 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   // Compute permissions for each article
   const articles = rawArticles.map((article) => {
+    if (article.authors.length === 0) {
+      return {
+        ...article,
+        canDelete: false,
+        canEdit: false,
+        canView: false,
+      }
+    }
+
+    const effectiveTargetAuthorId = article.authors.some(
+      (a) => a.id === context.authorId,
+    )
+      ? context.authorId
+      : article.authors[0].id
+
     return {
       ...article,
       canDelete: context.can({
         action: 'delete',
         entity: 'article',
         state: article.state,
-        targetAuthorId: article.authorId,
+        targetAuthorId: effectiveTargetAuthorId,
       }).hasPermission,
       canEdit: context.can({
         action: 'update',
         entity: 'article',
         state: article.state,
-        targetAuthorId: article.authorId,
+        targetAuthorId: effectiveTargetAuthorId,
       }).hasPermission,
       canView: context.can({
         action: 'view',
         entity: 'article',
         state: article.state,
-        targetAuthorId: article.authorId,
+        targetAuthorId: effectiveTargetAuthorId,
       }).hasPermission,
     }
   })

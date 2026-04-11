@@ -9,7 +9,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const article = await prisma.article.findUnique({
     select: {
-      author: {
+      authors: {
         select: {
           name: true,
         },

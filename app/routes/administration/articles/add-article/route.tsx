@@ -46,7 +46,7 @@ export default function RouteComponent({
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
     defaultValue: {
-      authorId: loaderData.selfAuthorId,
+      authorIds: [loaderData.selfAuthorId],
       featuredImage: FEATURED_IMAGE_SOURCE.NONE,
     },
     id: 'add-article',
@@ -246,19 +246,44 @@ export default function RouteComponent({
 
           <Fieldset
             disabled={isLoadingOrSubmitting}
-            legend={'Informace o autorovi'}
+            legend={'Informace o autorech'}
           >
-            <Select
-              {...getSelectProps(fields.authorId)}
-              errors={fields.authorId.errors}
-              label={'Autor'}
+            {fields.authorIds.getFieldList().map((authorField, index) => (
+              <div className={styles.authorRow} key={authorField.key}>
+                <Select
+                  {...getSelectProps(authorField)}
+                  errors={authorField.errors}
+                  label={'Autor'}
+                >
+                  <option value={''}>— vyberte autora —</option>
+                  {loaderData.authors.map((author) => (
+                    <option key={author.id} value={author.id}>
+                      {author.name}
+                    </option>
+                  ))}
+                </Select>
+                {index > 0 && (
+                  <AdminButton
+                    {...form.remove.getButtonProps({
+                      index,
+                      name: fields.authorIds.name,
+                    })}
+                    variant={'danger'}
+                  >
+                    <DeleteIcon className={styles.removeIcon} />
+                    Odstranit
+                  </AdminButton>
+                )}
+              </div>
+            ))}
+            <AdminButton
+              {...form.insert.getButtonProps({
+                defaultValue: '',
+                name: fields.authorIds.name,
+              })}
             >
-              {loaderData.authors.map((author) => (
-                <option key={author.id} value={author.id}>
-                  {author.name}
-                </option>
-              ))}
-            </Select>
+              Přidat autora
+            </AdminButton>
           </Fieldset>
 
           <FormActions>

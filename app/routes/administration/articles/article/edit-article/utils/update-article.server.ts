@@ -9,7 +9,7 @@ import { getConvertedImageStream } from '~/utils/sharp.server'
 
 type Options = {
   articleId: string
-  authorId: string
+  authorIds: string[]
   categoryIds?: string[]
   content: string
   excerpt?: string
@@ -31,7 +31,7 @@ export async function updateArticle(
   request: Request,
   {
     articleId,
-    authorId,
+    authorIds,
     categoryIds,
     content,
     excerpt,
@@ -47,7 +47,7 @@ export async function updateArticle(
   await withAuthorPermission(request, {
     action: 'update',
     entity: 'article',
-    execute: async () => {
+    execute: async (context) => {
       // 1. Delete images that are not in existingImages
       const existingImageIds =
         existingImages?.map((existingImage) => existingImage.id) ?? []
@@ -144,7 +144,9 @@ export async function updateArticle(
       // 5. Update article
       await prisma.article.update({
         data: {
-          authorId,
+          authors: {
+            set: authorIds.map((id) => ({ id })),
+          },
           categories: {
             set: categoryIds?.map((id) => ({ id })) ?? [],
           },
@@ -175,7 +177,7 @@ export async function updateArticle(
 
       await prisma.pageSEO.upsert({
         create: {
-          authorId,
+          authorId: context.authorId,
           description: excerpt || null,
           ogImageUrl,
           pathname,
@@ -195,7 +197,7 @@ export async function updateArticle(
 
       return { id: articleId }
     },
-    target: { authorId, state },
+    target: { authorIds, state },
   })
 
   return { id: articleId }

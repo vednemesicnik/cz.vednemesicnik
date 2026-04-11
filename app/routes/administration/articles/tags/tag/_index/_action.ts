@@ -33,18 +33,23 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     where: { id: tagId },
   }) // TODO: authorId and state could be sent in formData to reduce DB calls
 
+  const target = {
+    authorIds: [currentTag.authorId],
+    state: currentTag.state,
+  }
+
   switch (intent) {
     case INTENT_VALUE.archive:
       await archiveTag(request, {
         id: tagId,
-        target: currentTag,
+        target,
       })
       break
 
     case INTENT_VALUE.delete:
       await deleteTag(request, {
         id: tagId,
-        target: currentTag,
+        target,
       })
 
       if (withRedirect) {
@@ -55,28 +60,28 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     case INTENT_VALUE.publish:
       await publishTag(request, {
         id: tagId,
-        target: currentTag,
+        target,
       })
       break
 
     case INTENT_VALUE.restore:
       await restoreTag(request, {
         id: tagId,
-        target: currentTag,
+        target,
       })
       break
 
     case INTENT_VALUE.retract:
       await retractTag(request, {
         id: tagId,
-        target: currentTag,
+        target,
       })
       break
 
     case INTENT_VALUE.review:
       await reviewTag(request, {
         id: tagId,
-        target: currentTag,
+        target,
       })
       break
 

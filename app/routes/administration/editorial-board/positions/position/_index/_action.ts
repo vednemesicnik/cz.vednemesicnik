@@ -35,18 +35,23 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     },
   )
 
+  const target = {
+    authorIds: [currentPosition.authorId],
+    state: currentPosition.state,
+  }
+
   switch (intent) {
     case INTENT_VALUE.archive:
       await archivePosition(request, {
         id: positionId,
-        target: currentPosition,
+        target,
       })
       break
 
     case INTENT_VALUE.delete:
       await deletePosition(request, {
         id: positionId,
-        target: currentPosition,
+        target,
       })
 
       if (withRedirect) {
@@ -57,28 +62,28 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     case INTENT_VALUE.publish:
       await publishPosition(request, {
         id: positionId,
-        target: currentPosition,
+        target,
       })
       break
 
     case INTENT_VALUE.restore:
       await restorePosition(request, {
         id: positionId,
-        target: currentPosition,
+        target,
       })
       break
 
     case INTENT_VALUE.retract:
       await retractPosition(request, {
         id: positionId,
-        target: currentPosition,
+        target,
       })
       break
 
     case INTENT_VALUE.review:
       await reviewPosition(request, {
         id: positionId,
-        target: currentPosition,
+        target,
       })
       break
 

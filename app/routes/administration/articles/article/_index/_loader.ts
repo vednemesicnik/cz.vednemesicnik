@@ -24,7 +24,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const article = await prisma.article.findUnique({
     select: {
-      author: {
+      authors: {
         select: {
           id: true,
           name: true,
@@ -88,12 +88,22 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw new Response('Článek nenalezen', { status: 404 })
   }
 
+  if (article.authors.length === 0) {
+    throw new Response('Článek nemá přiřazeného autora', { status: 500 })
+  }
+
+  const effectiveTargetAuthorId = article.authors.some(
+    (author) => author.id === context.authorId,
+  )
+    ? context.authorId
+    : article.authors[0].id
+
   // Check view permission
   const { hasPermission: canView } = context.can({
     action: 'view',
     entity: 'article',
     state: article.state,
-    targetAuthorId: article.author.id,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   if (!canView) {
@@ -105,7 +115,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'update',
     entity: 'article',
     state: article.state,
-    targetAuthorId: article.author.id,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   // Check delete permission
@@ -113,7 +123,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'delete',
     entity: 'article',
     state: article.state,
-    targetAuthorId: article.author.id,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   // Check publish permission (draft → published)
@@ -121,7 +131,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'publish',
     entity: 'article',
     state: article.state,
-    targetAuthorId: article.author.id,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   // Find Coordinator review (level 1)
@@ -129,8 +139,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     (review) => review.reviewer.role.level === 1,
   )
 
-  // Check if author is not a Coordinator and needs review
-  const isNotCoordinator = article.author.role.level !== 1
+  // Check if no author is a Coordinator and coordinator review is needed
+  const isNotCoordinator = article.authors.every(
+    (author) => author.role.level !== 1,
+  )
   const needsCoordinatorReview = isNotCoordinator && !coordinatorReview
 
   // Check retract permission (published → draft)
@@ -138,7 +150,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'retract',
     entity: 'article',
     state: article.state,
-    targetAuthorId: article.author.id,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   // Check archive permission (published → archived)
@@ -146,7 +158,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'archive',
     entity: 'article',
     state: article.state,
-    targetAuthorId: article.author.id,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   // Check restore permission (archived → draft)
@@ -154,7 +166,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'restore',
     entity: 'article',
     state: article.state,
-    targetAuthorId: article.author.id,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   // Check review permission
@@ -162,14 +174,18 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'review',
     entity: 'article',
     state: article.state,
-    targetAuthorId: article.author.id,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   // Don't show review button if:
-  // 1. Author is Coordinator (level 1) - they don't need reviews
-  // 2. Current user is the author - can't review own content
-  const authorIsCoordinator = article.author.role.level === 1
-  const isOwnContent = article.author.id === context.authorId
+  // 1. All authors are Coordinators (level 1) - they don't need reviews
+  // 2. Current user is one of the authors - can't review own content
+  const authorIsCoordinator = article.authors.every(
+    (author) => author.role.level === 1,
+  )
+  const isOwnContent = article.authors.some(
+    (author) => author.id === context.authorId,
+  )
   const shouldShowReview = canReview && !authorIsCoordinator && !isOwnContent
 
   // Check if current user has already reviewed this article
@@ -179,7 +195,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   return {
     article: {
-      author: article.author,
+      authors: article.authors,
       categories: article.categories,
       content: article.content,
       createdAt: getFormattedPublishDate(article.createdAt),

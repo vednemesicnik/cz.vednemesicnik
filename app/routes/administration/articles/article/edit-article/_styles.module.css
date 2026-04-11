@@ -40,3 +40,20 @@
     height: 16px;
   }
 }
+
+.authorRow {
+  @layer route {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+
+    & > section {
+      flex: 1;
+    }
+
+    & > button {
+      margin-block-end: 20px;
+    }
+  }
+}

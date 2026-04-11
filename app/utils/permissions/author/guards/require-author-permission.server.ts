@@ -12,6 +12,7 @@ type RequireAuthorPermissionOptions = {
   action: AuthorPermissionAction
   state?: ContentState
   targetAuthorId?: string
+  targetAuthorIds?: string[]
   redirectTo?: string
 }
 
@@ -19,11 +20,21 @@ export function requireAuthorPermission(
   context: AuthorPermissionContext,
   options: RequireAuthorPermissionOptions,
 ) {
+  let effectiveTargetAuthorId = options.targetAuthorId
+  if (options.targetAuthorIds !== undefined) {
+    if (options.targetAuthorIds.length === 0) {
+      throw redirect(options.redirectTo ?? '/administration')
+    }
+    effectiveTargetAuthorId = options.targetAuthorIds.includes(context.authorId)
+      ? context.authorId
+      : options.targetAuthorIds[0]
+  }
+
   const { hasPermission, hasOwn, hasAny } = context.can({
     action: options.action,
     entity: options.entity,
     state: options.state,
-    targetAuthorId: options.targetAuthorId,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   if (!hasPermission) {

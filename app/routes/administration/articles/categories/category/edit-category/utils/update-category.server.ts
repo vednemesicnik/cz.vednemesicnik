@@ -27,5 +27,5 @@ export const updateCategory = (
         select: { id: true },
         where: { id: categoryId },
       }),
-    target: { authorId, state },
+    target: { authorIds: [authorId], state },
   })

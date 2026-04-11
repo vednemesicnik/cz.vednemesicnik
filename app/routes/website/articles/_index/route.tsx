@@ -50,7 +50,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 />
                 <ContentLinkTitle>{article.title}</ContentLinkTitle>
                 <ContentLinkFooter>
-                  <ContentLinkAuthor>{article.author.name}</ContentLinkAuthor>
+                  <ContentLinkAuthor>
+                    {article.authors.map((author) => author.name).join(', ')}
+                  </ContentLinkAuthor>
                   <ContentLinkPublishDate date={article.publishedAt} />
                 </ContentLinkFooter>
               </ContentLink>

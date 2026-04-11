@@ -82,7 +82,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <div className={styles.pendingList}>
             {pendingReviewItems.articles.map((article) => (
               <AdminPendingItem
-                author={article.author.name}
+                author={article.authors.map((a) => a.name).join(', ')}
                 date={new Date(article.createdAt)}
                 key={article.id}
                 title={article.title}
