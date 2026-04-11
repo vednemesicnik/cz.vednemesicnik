@@ -22,9 +22,12 @@ export function requireAuthorPermission(
 ) {
   let effectiveTargetAuthorId = options.targetAuthorId
   if (options.targetAuthorIds !== undefined) {
+    if (options.targetAuthorIds.length === 0) {
+      throw redirect(options.redirectTo ?? '/administration')
+    }
     effectiveTargetAuthorId = options.targetAuthorIds.includes(context.authorId)
       ? context.authorId
-      : (options.targetAuthorIds[0] ?? context.authorId)
+      : options.targetAuthorIds[0]
   }
 
   const { hasPermission, hasOwn, hasAny } = context.can({

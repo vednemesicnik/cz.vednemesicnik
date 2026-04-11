@@ -31,11 +31,16 @@ export async function withAuthorPermission<T>(
     entities: [options.entity],
   })
 
+  invariantResponse(
+    options.target.authorIds.length > 0,
+    `Cannot determine permission target: ${options.entity} has no authors.`,
+  )
+
   const effectiveTargetAuthorId = options.target.authorIds.includes(
     context.authorId,
   )
     ? context.authorId
-    : (options.target.authorIds[0] ?? context.authorId)
+    : options.target.authorIds[0]
 
   const { hasPermission } = context.can({
     action: options.action,
