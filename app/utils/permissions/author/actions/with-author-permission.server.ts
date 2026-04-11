@@ -15,7 +15,7 @@ import {
 type Options<T> = {
   entity: AuthorPermissionEntity
   action: AuthorPermissionAction
-  target: { authorId: string; state: ContentState }
+  target: { authorIds: string[]; state: ContentState }
   execute: (context: AuthorPermissionContext) => Promise<T>
   errorMessage?: string
 }
@@ -31,11 +31,17 @@ export async function withAuthorPermission<T>(
     entities: [options.entity],
   })
 
+  const effectiveTargetAuthorId = options.target.authorIds.includes(
+    context.authorId,
+  )
+    ? context.authorId
+    : (options.target.authorIds[0] ?? context.authorId)
+
   const { hasPermission } = context.can({
     action: options.action,
     entity: options.entity,
     state: options.target.state,
-    targetAuthorId: options.target.authorId,
+    targetAuthorId: effectiveTargetAuthorId,
   })
 
   invariantResponse(
