@@ -264,8 +264,8 @@ export default function RouteComponent({
                 {index > 0 && (
                   <AdminButton
                     {...form.remove.getButtonProps({
-                      name: fields.authorIds.name,
                       index,
+                      name: fields.authorIds.name,
                     })}
                     variant={'danger'}
                   >
@@ -277,8 +277,8 @@ export default function RouteComponent({
             ))}
             <AdminButton
               {...form.insert.getButtonProps({
-                name: fields.authorIds.name,
                 defaultValue: '',
+                name: fields.authorIds.name,
               })}
             >
               Přidat autora

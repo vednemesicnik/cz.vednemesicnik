@@ -14,8 +14,8 @@ export async function getPendingArticles(options: GetPendingArticlesOptions) {
       currentRoleLevel === 1
         ? { none: { id: currentAuthorId } }
         : {
-            none: { id: currentAuthorId },
             every: { role: { level: { gt: currentRoleLevel } } },
+            none: { id: currentAuthorId },
           },
     state: 'draft',
   }
