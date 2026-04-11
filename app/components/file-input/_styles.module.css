@@ -9,27 +9,27 @@
 .fileArea {
   display: grid;
   grid-template-rows: 1fr min-content;
-  border: 2px solid var(--admin-border);
+  border: 2px solid var(--border);
   border-radius: 8px;
   width: 100%;
   max-width: 600px;
   padding: 36px 36px 12px 36px;
   justify-items: start;
-  background-color: var(--admin-bg-primary);
+  background-color: var(--bg-primary);
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
 
   &:focus-within {
-    border-color: var(--admin-purple);
-    box-shadow: var(--admin-focus-shadow);
+    border-color: var(--violet);
+    box-shadow: var(--focus-shadow);
   }
 }
 
 .inputArea {
   display: grid;
   grid-template-areas: "input";
-  border: 2px dashed var(--admin-border);
+  border: 2px dashed var(--border);
   border-radius: 8px;
   margin-bottom: 8px;
   width: 100%;
@@ -37,11 +37,11 @@
   max-height: 30dvh;
   justify-items: stretch;
   align-items: stretch;
-  background-color: var(--admin-bg-secondary);
+  background-color: var(--bg-secondary);
   transition: border-color 0.15s ease;
 
   &:hover {
-    border-color: var(--admin-border-hover);
+    border-color: var(--border-hover);
   }
 }
 
@@ -61,11 +61,11 @@
   align-items: center;
   justify-self: center;
   align-self: center;
-  color: var(--admin-text-tertiary);
+  color: var(--text-tertiary);
 }
 
 .inputDataSet {
-  color: var(--admin-text-primary);
+  color: var(--text-primary);
 }
 
 .fileName {
@@ -75,7 +75,7 @@
 }
 
 .fileNameSet {
-  color: var(--admin-text-primary);
+  color: var(--text-primary);
 }
 
 .fileIcon {

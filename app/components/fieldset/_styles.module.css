@@ -1,22 +1,22 @@
 .fieldset {
   position: relative;
   width: 100%;
-  border: 2px solid var(--admin-border);
+  border: 2px solid var(--border);
   border-radius: 8px;
   padding: 16px;
   margin: 0;
-  background-color: var(--admin-bg-primary);
+  background-color: var(--bg-primary);
   transition: border-color 0.15s ease;
 
   &:focus-within {
-    border-color: var(--admin-purple);
+    border-color: var(--violet);
   }
 }
 
 .legend {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
-  color: var(--admin-text-primary);
+  color: var(--text-primary);
   margin: 0;
   padding: 0 8px;
 }

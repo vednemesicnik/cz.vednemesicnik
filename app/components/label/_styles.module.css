@@ -1,5 +1,5 @@
 .label {
-  color: var(--admin-text-primary);
+  color: var(--text-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-sm);
