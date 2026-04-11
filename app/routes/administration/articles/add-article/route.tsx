@@ -255,6 +255,7 @@ export default function RouteComponent({
                   errors={authorField.errors}
                   label={'Autor'}
                 >
+                  <option value={''}>— vyberte autora —</option>
                   {loaderData.authors.map((author) => (
                     <option key={author.id} value={author.id}>
                       {author.name}

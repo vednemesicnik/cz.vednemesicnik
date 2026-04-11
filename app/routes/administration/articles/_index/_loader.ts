@@ -99,11 +99,20 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   // Compute permissions for each article
   const articles = rawArticles.map((article) => {
+    if (article.authors.length === 0) {
+      return {
+        ...article,
+        canDelete: false,
+        canEdit: false,
+        canView: false,
+      }
+    }
+
     const effectiveTargetAuthorId = article.authors.some(
       (a) => a.id === context.authorId,
     )
       ? context.authorId
-      : (article.authors[0]?.id ?? context.authorId)
+      : article.authors[0].id
 
     return {
       ...article,

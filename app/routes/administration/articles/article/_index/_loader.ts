@@ -88,11 +88,15 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw new Response('Článek nenalezen', { status: 404 })
   }
 
+  if (article.authors.length === 0) {
+    throw new Response('Článek nemá přiřazeného autora', { status: 500 })
+  }
+
   const effectiveTargetAuthorId = article.authors.some(
     (author) => author.id === context.authorId,
   )
     ? context.authorId
-    : (article.authors[0]?.id ?? context.authorId)
+    : article.authors[0].id
 
   // Check view permission
   const { hasPermission: canView } = context.can({
@@ -135,7 +139,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     (review) => review.reviewer.role.level === 1,
   )
 
-  // Check if any author is not a Coordinator and needs review
+  // Check if no author is a Coordinator and coordinator review is needed
   const isNotCoordinator = article.authors.every(
     (author) => author.role.level !== 1,
   )

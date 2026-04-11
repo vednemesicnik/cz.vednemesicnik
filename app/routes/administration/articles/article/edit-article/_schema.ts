@@ -4,9 +4,11 @@ import { featuredImageSchema } from '~/config/featured-image-config'
 import { slugify } from '~/utils/slugify'
 
 export const schema = z.object({
-  authorIds: z.array(z.string()).min(1, 'Alespoň jeden autor je povinný'),
+  authorIds: z
+    .array(z.string({ error: 'Vyberte autora' }))
+    .min(1, 'Alespoň jeden autor je povinný'),
   categoryIds: z.array(z.string()).optional(),
-  content: z.string({ message: 'Obsah je povinný' }),
+  content: z.string({ error: 'Obsah je povinný' }),
   excerpt: z.string().optional(),
   existingImages: z
     .array(
@@ -44,13 +46,13 @@ export const schema = z.object({
     )
     .optional(),
   slug: z
-    .string({ message: 'Slug je povinný' })
+    .string({ error: 'Slug je povinný' })
     .regex(/^\S/, 'Slug nemůže začínat mezerou')
     .regex(/^[^-]/, 'Slug nemůže začínat pomlčkou')
     .transform(slugify),
   state: z.enum(ContentState),
   tagIds: z.array(z.string()).optional(),
   title: z
-    .string({ message: 'Název je povinný' })
+    .string({ error: 'Název je povinný' })
     .regex(/^\S/, 'Název nemůže začínat mezerou'),
 })
