@@ -167,7 +167,7 @@ model Author {
   role                    AuthorRole               @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   roleId                  String
   // Created content
-  articles                Article[]                @relation("ArticleCreator")
+  articles                Article[]                @relation("ArticleAuthors")
   articleTags             ArticleTag[]             @relation("ArticleTagCreator")
   articleCategories       ArticleCategory[]        @relation("ArticleCategoryCreator")
   editorialBoardMembers   EditorialBoardMember[]   @relation("EditorialBoardMemberCreator")
@@ -411,17 +411,13 @@ model Article {
   updatedAt       DateTime          @updatedAt
   publishedAt     DateTime?
   state           ContentState      @default(draft)
-  author          Author            @relation("ArticleCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  authorId        String
+  authors         Author[]          @relation("ArticleAuthors")
   images          ArticleImage[]    @relation("ArticleImages")
   featuredImageId String?           @unique
   featuredImage   ArticleImage?     @relation("ArticleFeaturedImage", fields: [featuredImageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   tags            ArticleTag[]
   categories      ArticleCategory[]
   reviews         Review[]          @relation("ArticleReviews")
-
-  // non-unique foreign key
-  @@index([authorId])
 }
 
 model ArticleImage {
