@@ -7,17 +7,6 @@
   align-self: center;
 }
 
-.sponsorSection {
-  display: grid;
-  position: relative;
-  grid-auto-flow: row;
-  row-gap: 8px;
-}
-
-.sponsorLogo {
-  height: 64px;
-}
-
 .operatorSection {
   display: grid;
   position: relative;
@@ -33,11 +22,6 @@
 }
 
 @media all and (max-width: 689px) {
-  .sponsorSection {
-    justify-items: center;
-    text-align: center;
-  }
-
   .descriptionText {
     text-align: center;
   }

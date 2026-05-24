@@ -58,6 +58,14 @@ export default [
 
     // Support routes
     route('support', 'routes/website/support/route.tsx'),
+
+    // Grants routes
+    ...prefix('grants', [
+      layout('routes/website/grants/__layout/route.tsx', [
+        index('routes/website/grants/_index/route.tsx'),
+        route(':grantSlug', 'routes/website/grants/grant/route.tsx'),
+      ]),
+    ]),
   ]),
 
   // Administration

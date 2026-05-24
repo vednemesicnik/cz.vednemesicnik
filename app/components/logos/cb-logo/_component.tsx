@@ -2,7 +2,7 @@ type Props = {
   className?: string
 }
 
-export const SponsorLogo = ({ className }: Props) => {
+export const CbLogo = ({ className }: Props) => {
   return (
     <svg
       aria-label={'Logo České Budějovice'}
@@ -117,3 +117,5 @@ export const SponsorLogo = ({ className }: Props) => {
     </svg>
   )
 }
+
+CbLogo.displayName = 'CbLogo'

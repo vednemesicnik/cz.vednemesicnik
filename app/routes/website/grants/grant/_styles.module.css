@@ -1,0 +1,29 @@
+.sponsorSection {
+  display: grid;
+  grid-auto-flow: row;
+  row-gap: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-block: 1rem;
+}
+
+.sponsorLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+
+.sponsorLogo {
+  height: 40px;
+  width: auto;
+}
+
+.fundingStatement {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
