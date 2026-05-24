@@ -9,7 +9,7 @@ import { ContentListItem } from '~/components/content-list-item'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Page } from '~/components/page'
-import { Paragraph } from '~/components/paragraph'
+import { Subheadline } from '~/components/subheadline'
 import { grants } from '~/data/grants'
 
 export { meta } from './_meta'
@@ -19,12 +19,11 @@ export default function RouteComponent() {
     <Page>
       <HeadlineGroup>
         <Headline>Dotace</Headline>
+        <Subheadline>
+          Přehled projektů, které jsou nebo byly spolufinancovány z veřejných
+          prostředků.
+        </Subheadline>
       </HeadlineGroup>
-
-      <Paragraph>
-        Přehled projektů, které jsou nebo byly spolufinancovány z veřejných
-        prostředků.
-      </Paragraph>
 
       <ContentList>
         {grants.map((grant) => (

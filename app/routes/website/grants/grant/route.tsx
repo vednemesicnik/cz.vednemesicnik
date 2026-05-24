@@ -5,7 +5,6 @@ import { HeadlineGroup } from '~/components/headline-group'
 import { CbLogo } from '~/components/logos/cb-logo'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
-import { Subheadline } from '~/components/subheadline'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -20,7 +19,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <Page>
       <HeadlineGroup>
         <Headline>{grant.name}</Headline>
-        <Subheadline>{grant.year}</Subheadline>
       </HeadlineGroup>
 
       <section className={styles.sponsorSection}>
