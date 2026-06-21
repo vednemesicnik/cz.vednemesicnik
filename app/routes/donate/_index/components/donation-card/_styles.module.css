@@ -1,0 +1,34 @@
+@layer component {
+  .card {
+    display: grid;
+    grid-template-areas:
+      "title"
+      "subtitle"
+      "amount"
+      "payment"
+      "qrcode";
+    grid-template-columns: 1fr;
+    width: 100%;
+    padding: 2rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-7.5rem);
+    margin-block-end: -7.5rem;
+    justify-self: center;
+    align-items: start;
+  }
+
+  @media (width > 640px) {
+    .card {
+      grid-template-areas:
+        "title qrcode"
+        "subtitle qrcode"
+        "amount qrcode"
+        "payment qrcode";
+      grid-template-columns: 2fr 1fr;
+      column-gap: 32px;
+    }
+  }
+}

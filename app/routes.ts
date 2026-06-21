@@ -124,6 +124,15 @@ export default [
     // Where a reader subscribes to the feeds (design 17a)
     route('feeds', 'routes/feeds/_index/route.tsx'),
 
+    // Donate routes
+    ...prefix('donate', [
+      index('routes/donate/_index/route.tsx'),
+      ...prefix('request-confirmation', [
+        index('routes/donate/request-confirmation/_index/route.tsx'),
+        route('sent', 'routes/donate/request-confirmation/sent/route.tsx'),
+      ]),
+    ]),
+
     // Grants routes
     ...prefix('grants', [
       layout('routes/grants/__layout/route.tsx', [
@@ -452,5 +461,10 @@ export default [
     ),
     route('admin-events', 'routes/resources/admin-events/route.ts'),
     route('reader-view', 'routes/resources/reader-view/route.ts'),
+    route('donation-qr-code', 'routes/resources/donation-qr-code/route.ts'),
+    route(
+      'donation-qr-code-download',
+      'routes/resources/donation-qr-code-download/route.ts',
+    ),
   ]),
 ] satisfies RouteConfig

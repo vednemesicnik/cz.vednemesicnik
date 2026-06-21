@@ -1,0 +1,26 @@
+.pageHero {
+  display: grid;
+  position: relative;
+  width: 100%;
+  grid-template-columns: minmax(auto, var(--content-max-width));
+  grid-auto-flow: row;
+  justify-content: center;
+  align-content: start;
+  justify-items: center;
+  text-align: center;
+  padding-inline: var(--page-side-padding);
+  padding-block: 12rem;
+  background: var(--gradient-signature);
+  background-size: 200% 200%;
+  animation: wave-animation 12s ease-in-out infinite;
+}
+
+@keyframes wave-animation {
+  0%,
+  100% {
+    background-position: 5% 100%;
+  }
+  50% {
+    background-position: 95% 100%;
+  }
+}

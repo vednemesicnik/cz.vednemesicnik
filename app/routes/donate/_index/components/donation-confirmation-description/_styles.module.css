@@ -1,0 +1,8 @@
+.description {
+  @layer component {
+    color: var(--text-secondary);
+    margin: 0;
+    padding-block-end: 1rem;
+    text-align: start;
+  }
+}

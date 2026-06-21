@@ -1,0 +1,12 @@
+.donationAmount {
+  @layer component {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-2xl);
+    letter-spacing: var(--letter-spacing-tight);
+    color: var(--text-primary);
+    margin: 0;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+}
