@@ -29,6 +29,8 @@ const schema = z.object({
   [ENV_KEYS.AWS_REGION]: z.string().optional(),
   [ENV_KEYS.AWS_ENDPOINT_URL_S3]: z.string().optional(),
   [ENV_KEYS.BUCKET_NAME]: z.string().optional(),
+  [ENV_KEYS.GAS_DONATION_CONFIRMATION_URL]: z.string(),
+  [ENV_KEYS.GAS_DONATION_CONFIRMATION_SECRET]: z.string(),
 })
 
 declare global {

@@ -107,5 +107,15 @@
     --color-azure-700: #1d4ed8;
     --color-azure-800: #1e40af;
     --color-azure-900: #1e3a8a;
+
+    /* ========================================
+       Radius Scale
+       ======================================== */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-full: 9999px;
   }
 }

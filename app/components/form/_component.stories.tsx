@@ -56,7 +56,7 @@ export const LoginForm: Story = {
         required
         type="password"
       />
-      <Button type="submit" variant="primary">
+      <Button type="submit" variant="filled">
         Sign In
       </Button>
     </Form>
@@ -89,7 +89,7 @@ export const WithFieldErrors: Story = {
         required
         type="password"
       />
-      <Button type="submit" variant="primary">
+      <Button type="submit" variant="filled">
         Sign In
       </Button>
     </Form>
@@ -125,7 +125,7 @@ export const WithFormErrors: Story = {
         required
         type="password"
       />
-      <Button type="submit" variant="primary">
+      <Button type="submit" variant="filled">
         Sign In
       </Button>
     </Form>
@@ -171,7 +171,7 @@ export const RegistrationForm: Story = {
         required
         type="password"
       />
-      <Button type="submit" variant="primary">
+      <Button type="submit" variant="filled">
         Create Account
       </Button>
     </Form>
@@ -202,10 +202,10 @@ export const FormWithMultipleActions: Story = {
         type="email"
       />
       <div style={{ display: 'flex', gap: '12px' }}>
-        <Button type="submit" variant="primary">
+        <Button type="submit" variant="filled">
           Save
         </Button>
-        <Button type="button" variant="default">
+        <Button type="button" variant="outline">
           Cancel
         </Button>
       </div>

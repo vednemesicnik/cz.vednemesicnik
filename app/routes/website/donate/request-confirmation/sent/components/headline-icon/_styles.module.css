@@ -1,0 +1,13 @@
+.headlineIcon {
+  @layer component {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-full);
+    background: var(--bg-success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--success);
+  }
+}

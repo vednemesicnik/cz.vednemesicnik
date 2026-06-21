@@ -1,0 +1,116 @@
+.linkButton {
+  @layer component {
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    /* Typography */
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
+    text-decoration: none;
+
+    /* Spacing — md size (default) */
+    padding-block: 8px;
+    padding-inline: 16px;
+    border-radius: var(--radius-lg);
+
+    /* Outlined primary style */
+    background-color: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+
+    /* Interaction */
+    cursor: pointer;
+    user-select: none;
+
+    /* Transitions */
+    transition:
+      background-color 150ms ease-out,
+      border-color 150ms ease-out,
+      color 150ms ease-out,
+      box-shadow 150ms ease-out,
+      transform 150ms ease-out;
+
+    &:hover:not(:focus-visible) {
+      background-color: var(--primary-light);
+      border-color: var(--primary-hover);
+      color: var(--primary-hover);
+    }
+
+    &:active {
+      border-color: var(--primary-active);
+      color: var(--primary-active);
+      transform: scale(0.98);
+    }
+
+    &:focus-visible {
+      background-color: var(--primary-light);
+      border-color: var(--primary-hover);
+      color: var(--primary-hover);
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+
+    &:visited {
+      color: var(--primary);
+    }
+  }
+}
+
+.sm {
+  @layer component {
+    padding-block: 5px;
+    padding-inline: 10px;
+    font-size: var(--font-size-xs);
+    border-radius: var(--radius-md);
+  }
+}
+
+.lg {
+  @layer component {
+    padding-block: 10px;
+    padding-inline: 20px;
+    font-size: var(--font-size-md);
+    border-radius: var(--radius-xl);
+  }
+}
+
+.filled {
+  @layer component {
+    background-color: var(--primary);
+    color: var(--text-on-accent);
+    border-color: var(--primary);
+
+    &:hover:not(:focus-visible) {
+      background-color: var(--primary-hover);
+      border-color: var(--primary-hover);
+      color: var(--text-on-accent);
+    }
+
+    &:active {
+      background-color: var(--primary-active);
+      border-color: var(--primary-active);
+      color: var(--text-on-accent);
+    }
+
+    &:focus-visible {
+      background-color: var(--primary-hover);
+      border-color: var(--primary-hover);
+      color: var(--text-on-accent);
+    }
+
+    &:visited {
+      color: var(--text-on-accent);
+    }
+  }
+}
+
+.disabled {
+  @layer component {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}

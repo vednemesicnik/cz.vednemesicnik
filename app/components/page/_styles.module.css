@@ -1,0 +1,30 @@
+.page {
+  container-name: page;
+  container-type: inline-size;
+
+  display: grid;
+  position: relative;
+  width: 100%;
+  grid-template-columns: minmax(auto, var(--content-max-width));
+  grid-auto-flow: row;
+  justify-content: center;
+  align-content: start;
+  justify-items: center;
+  text-align: center;
+  padding-inline: var(--page-side-padding);
+  padding-block: calc(var(--page-top-padding) + var(--header-height, 0px))
+    var(--page-bottom-padding);
+}
+
+@media all and (width > 768px) {
+  .page {
+    justify-items: start;
+    text-align: start;
+  }
+}
+
+/* When Page is preceded by a sibling (e.g. PageHero, BreadcrumbNavigation),
+   suppress the top padding — the sibling is responsible for the top spacing. */
+:global(*) + .page {
+  padding-block-start: 0;
+}

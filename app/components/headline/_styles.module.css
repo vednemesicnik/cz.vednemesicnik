@@ -6,6 +6,7 @@
   background-size: 200% 200%;
   animation: wave-animation 6s ease-in-out infinite;
   margin: 0;
+  text-wrap: balance;
 }
 
 @keyframes wave-animation {

@@ -1,65 +1,112 @@
 /* ========================================
-   Primary Variant (Violet)
+   Sizes
    ======================================== */
-.primary {
-  background-color: var(--primary);
-  color: var(--text-on-accent);
-  border: none;
-  transition: background-color var(--transition-fast);
-
-  &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--primary-hover);
+.sm {
+  @layer variant {
+    padding-block: 0.5rem;
+    padding-inline: 1rem;
+    font-size: var(--font-size-sm);
+    gap: 0.25rem;
   }
+}
 
-  &:active:not(:disabled) {
-    background-color: var(--primary-active);
+.md {
+  @layer variant {
+    padding-block: 0.75rem;
+    padding-inline: 1.5rem;
+    font-size: var(--font-size-md);
+    gap: 0.5rem;
   }
+}
 
-  &:focus-visible {
-    box-shadow: var(--focus-shadow);
-    outline: none;
+.lg {
+  @layer variant {
+    padding-block: 0.875rem;
+    padding-inline: 1.75rem;
+    font-size: var(--font-size-md);
+    gap: 0.5rem;
   }
 }
 
 /* ========================================
-   Danger Variant (Black)
+   Filled variant
    ======================================== */
-.danger {
-  background-color: var(--black);
-  color: var(--white);
-  border: none;
+.filled.primary {
+  @layer variant {
+    background-color: var(--primary);
+    color: var(--text-on-accent);
+    border: none;
 
-  &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--eerie-black);
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--primary-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--primary-active);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
   }
+}
 
-  &:active:not(:disabled) {
-    background-color: var(--onyx);
-  }
+.filled.danger {
+  @layer variant {
+    background-color: var(--error);
+    color: var(--text-on-accent);
+    border: none;
 
-  &:focus-visible {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--black) 30%, transparent);
-    outline: none;
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: color-mix(in srgb, var(--error) 85%, black);
+    }
+
+    &:active:not(:disabled) {
+      background-color: color-mix(in srgb, var(--error) 70%, black);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow-error);
+      outline: none;
+    }
   }
 }
 
 /* ========================================
-   Default Variant (Outline)
+   Outline variant
    ======================================== */
-.default {
-  background-color: transparent;
-  color: var(--text-primary);
-  border: 2px solid var(--border);
+.outline.primary {
+  @layer variant {
+    background-color: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
 
-  &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--bg-accent);
-    border-color: var(--border-accent);
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--primary-light);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
   }
+}
 
-  &:focus-visible {
-    background-color: var(--bg-accent);
-    border-color: var(--border-accent);
-    box-shadow: var(--focus-shadow);
-    outline: none;
+.outline.danger {
+  @layer variant {
+    background-color: transparent;
+    color: var(--error);
+    border: 1px solid var(--error);
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--error);
+      color: var(--text-on-accent);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow-error);
+      outline: none;
+    }
   }
 }

@@ -1,5 +1,4 @@
-import type { Decorator, Preview } from '@storybook/react-vite'
-import { useEffect } from 'react'
+import type { Preview } from '@storybook/react-vite'
 
 // Import global styles
 import '../app/styles/colors.css'
@@ -7,18 +6,10 @@ import '../app/styles/fonts.css'
 import '../app/styles/sizes.css'
 import '../app/styles/global.css'
 import '../app/styles/primitive-tokens.css'
-import '../app/styles/admin-semantic-tokens.css'
+// import '../app/styles/admin-semantic-tokens.css'
+import '../app/styles/public-semantic-tokens.css'
 
-// Custom decorator to toggle color-scheme
-const withColorScheme: Decorator = (Story, context) => {
-  const colorScheme = context.globals.colorScheme || 'light'
-
-  useEffect(() => {
-    document.documentElement.style.colorScheme = colorScheme
-  }, [colorScheme])
-
-  return Story()
-}
+import { withColorScheme } from './decorators/with-color-scheme'
 
 const preview: Preview = {
   decorators: [withColorScheme],

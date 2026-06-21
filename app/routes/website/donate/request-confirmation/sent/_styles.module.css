@@ -1,0 +1,42 @@
+.headlineGroup {
+  @layer route {
+    max-width: 640px;
+    justify-self: center;
+    justify-items: center;
+    text-align: center;
+  }
+}
+
+.heading {
+  @layer route {
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-tight);
+    text-wrap: balance;
+  }
+}
+
+.subheadline {
+  @layer route {
+    text-wrap: pretty;
+  }
+}
+
+.note {
+  @layer route {
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
+    color: var(--text-tertiary);
+    margin: 0;
+    max-width: 640px;
+    justify-self: center;
+    text-align: center;
+    text-wrap: balance;
+    margin-block-end: 1.25rem;
+  }
+}
+
+.backButton {
+  @layer route {
+    justify-self: center;
+  }
+}

@@ -1,0 +1,31 @@
+.requestIdBadge {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
+    justify-self: center;
+    margin-block-end: 2rem;
+  }
+}
+
+.label {
+  @layer component {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+  }
+}
+
+.value {
+  @layer component {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+}

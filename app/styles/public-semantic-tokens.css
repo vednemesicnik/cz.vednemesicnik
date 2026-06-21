@@ -30,6 +30,10 @@
       var(--color-charcoal-800)
     );
     --bg-accent: light-dark(var(--color-violet-100), var(--color-violet-900));
+    --bg-success: light-dark(
+      var(--color-emerald-100),
+      var(--color-emerald-900)
+    );
     --bg-hover: light-dark(
       var(--color-charcoal-300),
       var(--color-charcoal-700)
@@ -91,9 +95,22 @@
     );
 
     /* ========================================
+       Secondary
+       ======================================== */
+    --secondary: light-dark(var(--color-emerald-500), var(--color-emerald-400));
+    --secondary-hover: light-dark(
+      var(--color-emerald-600),
+      var(--color-emerald-500)
+    );
+
+    /* ========================================
        Status
        ======================================== */
     --success: light-dark(var(--color-emerald-500), var(--color-emerald-400));
+    --text-success: light-dark(
+      var(--color-emerald-700),
+      var(--color-emerald-300)
+    );
     --error: light-dark(var(--color-rose-500), var(--color-rose-400));
     --warning: light-dark(var(--color-amber-500), var(--color-amber-400));
     --info: light-dark(var(--color-azure-500), var(--color-azure-400));

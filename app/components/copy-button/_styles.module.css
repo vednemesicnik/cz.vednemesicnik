@@ -1,0 +1,82 @@
+.button {
+  @layer component {
+    /* Layout */
+    display: inline-grid;
+    grid-template-areas: "text icon";
+    grid-template-columns: auto min-content;
+    align-items: center;
+    gap: 4px;
+
+    /* Sizing */
+    font-size: inherit;
+    font-weight: inherit;
+    padding: 2px 4px;
+    border-radius: 6px;
+
+    /* Ghost style */
+    background-color: transparent;
+    color: var(--text-primary);
+    border: none;
+
+    /* Interaction */
+    cursor: pointer;
+    user-select: none;
+    vertical-align: middle;
+
+    /* Transitions */
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out,
+      transform 150ms ease-out;
+
+    &:hover:not(:focus-visible) {
+      background-color: var(--bg-accent);
+      color: var(--primary);
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &:focus-visible {
+      background-color: var(--bg-accent);
+      color: var(--primary);
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+.text {
+  @layer component {
+    grid-area: text;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+}
+
+.icon {
+  @layer component {
+    grid-area: icon;
+    opacity: 1;
+    transition: opacity 200ms ease-out;
+  }
+}
+
+.iconHidden {
+  @layer component {
+    opacity: 0;
+  }
+}
+
+.copied {
+  @layer component {
+    background-color: var(--bg-success);
+    color: var(--text-success);
+
+    &:hover:not(:focus-visible) {
+      background-color: var(--bg-success);
+      color: var(--text-success);
+    }
+  }
+}

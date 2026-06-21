@@ -6,22 +6,21 @@ import { BaseButton } from '~/components/base-button'
 import styles from './_styles.module.css'
 
 type Props = ComponentProps<'button'> & {
-  variant?: 'primary' | 'danger' | 'default'
+  color?: 'primary' | 'danger'
+  size?: 'sm' | 'md' | 'lg'
+  variant?: 'filled' | 'outline'
 }
 
 export const Button = ({
   children,
   className,
-  variant = 'primary',
+  color = 'primary',
+  size = 'md',
+  variant = 'filled',
   ...rest
 }: Props) => (
   <BaseButton
-    className={clsx(
-      variant === 'primary' && styles.primary,
-      variant === 'danger' && styles.danger,
-      variant === 'default' && styles.default,
-      className,
-    )}
+    className={clsx(styles[variant], styles[color], styles[size], className)}
     {...rest}
   >
     {children}

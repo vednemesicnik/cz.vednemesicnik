@@ -42,6 +42,11 @@ export const SiteContent = () => {
             Dotace
           </BaseLink>
         </li>
+        <li className={styles.listItem}>
+          <BaseLink className={styles.link} to={href('/donate')}>
+            Darovat
+          </BaseLink>
+        </li>
       </ul>
     </section>
   )

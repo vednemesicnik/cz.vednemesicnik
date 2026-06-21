@@ -1,0 +1,60 @@
+.qrBorder {
+  @layer component {
+    padding: 3px;
+    border-radius: var(--radius-xl);
+    background-image: var(--gradient-signature);
+    background-size: 200% 200%;
+    animation: wave-animation 6s ease-in-out infinite;
+  }
+}
+
+.qrImage {
+  @layer component {
+    display: block;
+    width: 180px;
+    height: 180px;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: calc(var(--radius-xl) - 3px);
+  }
+}
+
+.qrLoader {
+  @layer component {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 180px;
+    height: 180px;
+    background: #ffffff;
+    border-radius: calc(var(--radius-xl) - 3px);
+  }
+}
+
+.spinner {
+  @layer component {
+    display: block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--primary-light);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes wave-animation {
+  0%,
+  100% {
+    background-position: 5% 100%;
+  }
+  50% {
+    background-position: 95% 100%;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

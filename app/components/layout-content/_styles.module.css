@@ -1,0 +1,9 @@
+.container {
+  @layer component {
+    grid-area: body;
+    display: grid;
+    position: relative;
+    width: 100%;
+    align-content: start;
+  }
+}

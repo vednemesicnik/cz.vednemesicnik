@@ -7,7 +7,7 @@
   align-items: center;
   justify-items: start;
   text-decoration: none;
-  color: var(--text-primary);
+  color: var(--app-header-text-primary, var(--text-primary));
   font-weight: var(--font-weight-regular);
 }
 

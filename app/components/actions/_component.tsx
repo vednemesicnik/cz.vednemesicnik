@@ -26,7 +26,7 @@ export const Actions = ({ viewPath, editPath, onDelete }: Props) => {
         </BaseLink>
       )}
       {onDelete && (
-        <Button aria-label="Delete" onClick={onDelete} variant={'danger'}>
+        <Button aria-label="Delete" color="danger" onClick={onDelete}>
           <DeleteIcon />
         </Button>
       )}

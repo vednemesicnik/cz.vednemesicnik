@@ -59,6 +59,18 @@ export default [
     // Support routes
     route('support', 'routes/website/support/route.tsx'),
 
+    // Donate routes
+    ...prefix('donate', [
+      index('routes/website/donate/_index/route.tsx'),
+      ...prefix('request-confirmation', [
+        index('routes/website/donate/request-confirmation/_index/route.tsx'),
+        route(
+          'sent',
+          'routes/website/donate/request-confirmation/sent/route.tsx',
+        ),
+      ]),
+    ]),
+
     // Grants routes
     ...prefix('grants', [
       layout('routes/website/grants/__layout/route.tsx', [
@@ -235,6 +247,11 @@ export default [
     route(
       'user-image/:imageId/:version/:variant',
       'routes/resources/user-image/route.ts',
+    ),
+    route('donation-qr-code', 'routes/resources/donation-qr-code/route.ts'),
+    route(
+      'donation-qr-code-download',
+      'routes/resources/donation-qr-code-download/route.ts',
     ),
     route('env.js', 'routes/resources/env-script/route.ts'),
   ]),

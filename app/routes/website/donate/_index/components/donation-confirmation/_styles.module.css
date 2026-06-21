@@ -1,0 +1,14 @@
+.card {
+  @layer component {
+    display: grid;
+    margin-block-start: 6rem;
+    justify-items: start;
+    width: 100%;
+    gap: 0.75rem;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-sm);
+  }
+}

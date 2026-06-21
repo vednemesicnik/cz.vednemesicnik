@@ -4,10 +4,20 @@ import { Button } from './_component'
 
 const meta: Meta<typeof Button> = {
   argTypes: {
+    color: {
+      control: 'select',
+      description: 'Color scheme: primary (violet) or danger (red)',
+      options: ['primary', 'danger'],
+    },
     disabled: {
       control: 'boolean',
       description:
         'Whether the button is disabled (reduces opacity and prevents interaction)',
+    },
+    size: {
+      control: 'select',
+      description: 'Button size controlling padding and font-size',
+      options: ['sm', 'md', 'lg'],
     },
     type: {
       control: 'select',
@@ -17,8 +27,8 @@ const meta: Meta<typeof Button> = {
     variant: {
       control: 'select',
       description:
-        "Visual style variant: 'primary' for main actions (bright green), 'danger' for destructive actions (red), 'default' for secondary actions (outlined)",
-      options: ['primary', 'danger', 'default'],
+        'Visual style: filled (solid background) or outline (transparent background with border)',
+      options: ['filled', 'outline'],
     },
   },
   component: Button,
@@ -26,7 +36,7 @@ const meta: Meta<typeof Button> = {
     docs: {
       description: {
         component:
-          'Modern button component with three distinct variants. Features smooth transitions, hover effects, subtle scale on click, and focus-visible box-shadow for keyboard navigation (Tab key). Uses form design tokens for consistent styling across all variants.',
+          'Button component with two orthogonal axes: variant (filled | outline) and color (primary | danger). Features smooth transitions, hover effects, subtle scale on click, and focus-visible box-shadow for keyboard navigation.',
       },
     },
   },
@@ -37,70 +47,50 @@ const meta: Meta<typeof Button> = {
 export default meta
 type Story = StoryObj<typeof Button>
 
-/**
- * Primary button variant used for main call-to-action buttons.
- * Use this for the most important action on a page or form.
- */
-export const Primary: Story = {
+export const FilledPrimary: Story = {
   args: {
-    children: 'Primary Button',
-    variant: 'primary',
+    children: 'Odeslat',
+    color: 'primary',
+    variant: 'filled',
   },
 }
 
-/**
- * Danger button variant used for destructive actions.
- * Use this for delete, remove, or other potentially harmful operations.
- */
-export const Danger: Story = {
+export const FilledDanger: Story = {
   args: {
-    children: 'Delete',
-    variant: 'danger',
+    children: 'Smazat',
+    color: 'danger',
+    variant: 'filled',
   },
 }
 
-/**
- * Default button variant used for secondary actions.
- * Use this for cancel, back, or other less prominent actions.
- */
-export const Default: Story = {
+export const OutlinePrimary: Story = {
   args: {
-    children: 'Cancel',
-    variant: 'default',
+    children: '+ Přidat',
+    color: 'primary',
+    variant: 'outline',
   },
 }
 
-/**
- * Disabled state prevents user interaction.
- * The button appears visually muted and cannot be clicked.
- */
+export const OutlineDanger: Story = {
+  args: {
+    children: 'Odebrat',
+    color: 'danger',
+    variant: 'outline',
+  },
+}
+
 export const Disabled: Story = {
   args: {
-    children: 'Disabled Button',
+    children: 'Odesílám…',
     disabled: true,
-    variant: 'primary',
+    variant: 'filled',
   },
 }
 
-/**
- * Submit button for forms.
- * When used inside a form, this will trigger form submission.
- */
 export const FormSubmit: Story = {
   args: {
-    children: 'Submit Form',
+    children: 'Odeslat formulář',
     type: 'submit',
-    variant: 'primary',
-  },
-}
-
-/**
- * Button with longer text content.
- * Shows how the button handles varying content lengths.
- */
-export const LongText: Story = {
-  args: {
-    children: 'This is a button with much longer text content',
-    variant: 'primary',
+    variant: 'filled',
   },
 }

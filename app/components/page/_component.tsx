@@ -6,6 +6,6 @@ type Props = {
   children: ReactNode
 }
 
-export const AppBody = ({ children }: Props) => {
-  return <main className={styles.container}>{children}</main>
+export const Page = ({ children }: Props) => {
+  return <section className={styles.page}>{children}</section>
 }

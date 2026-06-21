@@ -3,6 +3,13 @@
   position: relative;
   grid-auto-flow: row;
   width: 100%;
+  grid-template-columns: minmax(auto, var(--content-max-width));
+  justify-content: center;
+  padding-inline: var(--page-side-padding);
+  padding-block-start: calc(
+    var(--page-top-padding) +
+    var(--header-height, 0px)
+  );
   margin-block-end: 24px;
 }
 

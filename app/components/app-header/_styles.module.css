@@ -1,18 +1,62 @@
+@property --header-bg-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+:root {
+  --header-height: calc(40px + 2 * 1.25rem);
+}
+
 .container {
-  grid-area: header;
   display: grid;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   grid-template-columns: minmax(auto, var(--page-max-width));
   grid-auto-flow: row;
   justify-content: center;
   justify-items: center;
-  padding: 24px var(--page-side-padding);
+  padding: 1.25rem var(--page-side-padding);
   row-gap: 16px;
-  background-color: var(--bg-primary);
-  border-bottom: 1px solid var(--border);
+  background-color: color-mix(
+    in oklab,
+    var(--bg-primary) calc(var(--header-bg-opacity) * 100%),
+    transparent
+  );
+  border-bottom: 1px solid
+    color-mix(
+      in oklab,
+      var(--border) calc(var(--header-bg-opacity) * 100%),
+      transparent
+    );
   z-index: var(--z-header);
   backdrop-filter: blur(8px);
+}
+
+@keyframes header-hero-reveal {
+  from {
+    --app-header-text-primary: var(--color-white);
+    --app-header-text-secondary: rgba(255, 255, 255, 0.75);
+    --header-bg-opacity: 0;
+    backdrop-filter: none;
+  }
+  to {
+    --app-header-text-primary: initial;
+    --app-header-text-secondary: initial;
+    --header-bg-opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+:global(html:has([data-page-hero])) .container {
+  --app-header-text-primary: var(--color-white);
+  --app-header-text-secondary: rgba(255, 255, 255, 0.75);
+  --header-bg-opacity: 0;
+  animation: header-hero-reveal linear both;
+  animation-timeline: scroll(root);
+  animation-range: 0 calc(var(--header-height) * 2);
 }
 
 .content {
