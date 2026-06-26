@@ -1,9 +1,11 @@
 import { randomInt } from 'node:crypto'
 import { parseWithZod } from '@conform-to/zod/v4'
-import { href, replace } from 'react-router'
+import { data, href, replace } from 'react-router'
 import { checkHoneypot } from '~/utils/honeypot.server'
+import { rateLimitContext } from '~/utils/rate-limit.server'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
+import { formatRetryAfter } from './utils/format-retry-after'
 
 const ID_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 const makeRequestId = (year: string) => {
@@ -12,8 +14,21 @@ const makeRequestId = (year: string) => {
   return `${year}-${code}`
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
   const formData = await request.formData()
+
+  const limited = context.get(rateLimitContext)
+  if (limited) {
+    const submission = parseWithZod(formData, { schema })
+    return data(
+      submission.reply({
+        formErrors: [
+          `Příliš mnoho požadavků. Zkuste to prosím ${formatRetryAfter(limited.retryAfter)}.`,
+        ],
+      }),
+      { status: 429 },
+    )
+  }
 
   checkHoneypot(formData)
 
@@ -22,43 +37,43 @@ export async function action({ request }: Route.ActionArgs) {
     return submission.reply()
   }
 
-  const data = submission.value
-  const requestId = makeRequestId(data.year)
+  const formValues = submission.value
+  const requestId = makeRequestId(formValues.year)
 
   const GAS_URL = process.env.GAS_DONATION_CONFIRMATION_URL
   const GAS_SECRET = process.env.GAS_DONATION_CONFIRMATION_SECRET
 
   const donorFields =
-    data.type === 'individual'
+    formValues.type === 'individual'
       ? {
-          dateOfBirth: data.dateOfBirth,
-          firstName: data.firstName,
-          lastName: data.lastName,
+          dateOfBirth: formValues.dateOfBirth,
+          firstName: formValues.firstName,
+          lastName: formValues.lastName,
         }
-      : data.type === 'sole_trader'
+      : formValues.type === 'sole_trader'
         ? {
-            firstName: data.firstName,
-            ico: data.ico,
-            lastName: data.lastName,
+            firstName: formValues.firstName,
+            ico: formValues.ico,
+            lastName: formValues.lastName,
           }
         : {
-            companyName: data.companyName,
-            ico: data.ico,
+            companyName: formValues.companyName,
+            ico: formValues.ico,
           }
 
   const payload = {
-    accounts: data.accounts
+    accounts: formValues.accounts
       .map((account) => account.trim())
       .filter(Boolean)
       .join(','),
-    city: data.address.city,
-    email: data.email,
-    note: data.note ?? '',
+    city: formValues.address.city,
+    email: formValues.email,
+    note: formValues.note ?? '',
     requestId,
     secret: GAS_SECRET,
-    street: data.address.street,
-    type: data.type,
-    zip: data.address.zip.replace(/\s/g, ''),
+    street: formValues.address.street,
+    type: formValues.type,
+    zip: formValues.address.zip.replace(/\s/g, ''),
     ...donorFields,
   }
 
