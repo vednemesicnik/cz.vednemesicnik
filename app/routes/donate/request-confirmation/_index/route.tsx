@@ -132,6 +132,7 @@ export default function RouteComponent({
               <RadioOptionGroup>
                 <RadioOption
                   checked={type.value === 'individual'}
+                  name={fields.type.name}
                   onBlur={type.blur}
                   onChange={() => type.change('individual')}
                   onFocus={type.focus}
@@ -140,6 +141,7 @@ export default function RouteComponent({
                 </RadioOption>
                 <RadioOption
                   checked={type.value === 'sole_trader'}
+                  name={fields.type.name}
                   onBlur={type.blur}
                   onChange={() => type.change('sole_trader')}
                   onFocus={type.focus}
@@ -148,6 +150,7 @@ export default function RouteComponent({
                 </RadioOption>
                 <RadioOption
                   checked={type.value === 'entity'}
+                  name={fields.type.name}
                   onBlur={type.blur}
                   onChange={() => type.change('entity')}
                   onFocus={type.focus}
