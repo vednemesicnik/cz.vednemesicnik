@@ -41,6 +41,7 @@ import { Textarea } from './components/textarea'
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
+export { middleware } from './_middleware'
 
 export default function RouteComponent({
   loaderData,
