@@ -1,7 +1,6 @@
 import { randomInt } from 'node:crypto'
 import { parseWithZod } from '@conform-to/zod/v4'
-import { href, redirect } from 'react-router'
-import { getDonationConfirmationYear } from '~/utils/get-donation-confirmation-year'
+import { href, replace } from 'react-router'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -23,38 +22,49 @@ export async function action({ request }: Route.ActionArgs) {
     return submission.reply()
   }
 
-  const year = String(getDonationConfirmationYear())
-  const requestId = makeRequestId(year)
-  const {
-    street,
-    postalCode,
-    city,
-    country,
-    accounts: accountList,
-    ...rest
-  } = submission.value
-  const postalCodeNormalized = postalCode
-    .replace(/\s/g, '')
-    .replace(/(\d{3})(\d{2})/, '$1 $2')
-  const address = `${street}\n${postalCodeNormalized} ${city}\n${country}`
-  const accounts = accountList
-    .map((account) => account.trim())
-    .filter(Boolean)
-    .join('\n')
+  const data = submission.value
+  const requestId = makeRequestId(data.year)
 
   const GAS_URL = process.env.GAS_DONATION_CONFIRMATION_URL
   const GAS_SECRET = process.env.GAS_DONATION_CONFIRMATION_SECRET
 
+  const donorFields =
+    data.type === 'individual'
+      ? {
+          dateOfBirth: data.dateOfBirth,
+          firstName: data.firstName,
+          lastName: data.lastName,
+        }
+      : data.type === 'sole_trader'
+        ? {
+            firstName: data.firstName,
+            ico: data.ico,
+            lastName: data.lastName,
+          }
+        : {
+            companyName: data.companyName,
+            ico: data.ico,
+          }
+
+  const payload = {
+    accounts: data.accounts
+      .map((account) => account.trim())
+      .filter(Boolean)
+      .join(','),
+    city: data.address.city,
+    email: data.email,
+    note: data.note ?? '',
+    requestId,
+    secret: GAS_SECRET,
+    street: data.address.street,
+    type: data.type,
+    zip: data.address.zip.replace(/\s/g, ''),
+    ...donorFields,
+  }
+
   try {
     const res = await fetch(GAS_URL, {
-      body: JSON.stringify({
-        ...rest,
-        accounts,
-        address,
-        requestId,
-        secret: GAS_SECRET,
-        year,
-      }),
+      body: JSON.stringify(payload),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
     })
@@ -74,5 +84,5 @@ export async function action({ request }: Route.ActionArgs) {
 
   const params = new URLSearchParams({ id: requestId })
 
-  return redirect(`${href('/donate/request-confirmation/sent')}?${params}`)
+  return replace(`${href('/donate/request-confirmation/sent')}?${params}`)
 }
