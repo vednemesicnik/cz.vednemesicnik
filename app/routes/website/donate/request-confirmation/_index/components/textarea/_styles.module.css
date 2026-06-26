@@ -1,0 +1,23 @@
+.textarea {
+  @layer component {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-md);
+    font-family: inherit;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    resize: vertical;
+    min-height: 90px;
+    transition:
+      border-color var(--transition-fast),
+      box-shadow var(--transition-fast);
+
+    &:focus-visible {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}

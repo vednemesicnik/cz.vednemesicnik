@@ -1,9 +1,10 @@
-import { getDonationConfirmationYear } from '~/utils/get-donation-confirmation-year'
 import { getHoneypotInputProps } from '~/utils/honeypot.server'
 
 export function loader() {
-  return {
-    honeypotInputProps: getHoneypotInputProps(),
-    year: getDonationConfirmationYear(),
-  }
+  const honeypotInputProps = getHoneypotInputProps()
+  const requestableYears = [1, 2, 3].map((offset) =>
+    String(new Date().getFullYear() - offset),
+  )
+
+  return { honeypotInputProps, requestableYears }
 }

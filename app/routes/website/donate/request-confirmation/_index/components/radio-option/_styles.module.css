@@ -1,0 +1,60 @@
+.option {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    cursor: pointer;
+    width: fit-content;
+  }
+}
+
+.input {
+  @layer component {
+    appearance: none;
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-full);
+    background: var(--bg-primary);
+    position: relative;
+    cursor: pointer;
+    transition:
+      border-color var(--transition-fast),
+      background var(--transition-fast);
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    &:checked {
+      border-color: var(--primary);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+
+    &:focus-visible {
+      border-color: var(--primary);
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+.label {
+  @layer component {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    user-select: none;
+  }
+}

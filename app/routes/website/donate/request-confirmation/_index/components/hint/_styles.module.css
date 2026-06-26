@@ -1,0 +1,19 @@
+.hint {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+.icon {
+  @layer component {
+    flex-shrink: 0;
+  }
+
+  @layer variant {
+    font-size: var(--font-size-md);
+  }
+}

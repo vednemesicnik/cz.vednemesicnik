@@ -1,0 +1,28 @@
+.alert {
+  @layer component {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    background: light-dark(rgba(244, 63, 94, 0.08), rgba(244, 63, 94, 0.12));
+    border: 1px solid var(--error);
+    border-radius: var(--radius-lg);
+    padding: 0.875rem 1rem;
+    font-size: var(--font-size-sm);
+    color: var(--error);
+  }
+}
+
+.icon {
+  @layer variant {
+    flex-shrink: 0;
+    font-size: var(--font-size-lg);
+  }
+}
+
+.message {
+  @layer component {
+    margin: 0;
+    padding: 0;
+  }
+}
