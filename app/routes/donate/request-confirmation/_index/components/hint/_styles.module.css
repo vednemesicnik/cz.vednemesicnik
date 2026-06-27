@@ -1,7 +1,7 @@
 .hint {
   @layer component {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.25em;
     font-size: var(--font-size-xs);
     color: var(--text-tertiary);
@@ -11,6 +11,7 @@
 .icon {
   @layer component {
     flex-shrink: 0;
+    padding-block-start: 0.0625rem;
   }
 
   @layer variant {

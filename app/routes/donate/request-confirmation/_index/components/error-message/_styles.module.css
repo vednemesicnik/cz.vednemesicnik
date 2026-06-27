@@ -2,7 +2,7 @@
   @layer component {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     gap: 4px;
     color: var(--error);
   }
@@ -17,5 +17,6 @@
 .icon {
   @layer component {
     flex-shrink: 0;
+    padding-block-start: 0.0625rem;
   }
 }
