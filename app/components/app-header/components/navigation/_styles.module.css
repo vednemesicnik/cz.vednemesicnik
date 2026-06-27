@@ -77,37 +77,14 @@
     }
 
     @media (max-width: 767px) {
-      opacity: 0;
-      transform: translateY(-0.5rem);
-      transition:
-        opacity 200ms ease,
-        transform 200ms ease,
-        display 200ms allow-discrete,
-        overlay 200ms allow-discrete;
-
       &:popover-open {
-        opacity: 1;
-        transform: translateY(0);
-
-        @starting-style {
-          opacity: 0;
-          transform: translateY(-0.5rem);
-        }
+        animation: nav-panel-in 200ms ease both;
       }
 
       @media (prefers-reduced-motion: reduce) {
-        transform: none;
-        transition:
-          opacity 100ms ease,
-          display 100ms allow-discrete,
-          overlay 100ms allow-discrete;
-
         &:popover-open {
-          transform: none;
-
-          @starting-style {
-            transform: none;
-          }
+          animation-name: nav-panel-in-reduced;
+          animation-duration: 100ms;
         }
       }
     }
@@ -137,5 +114,18 @@
     gap: 32px;
     justify-content: flex-end;
     align-items: center;
+  }
+}
+
+@keyframes nav-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes nav-panel-in-reduced {
+  from {
+    opacity: 0;
   }
 }
