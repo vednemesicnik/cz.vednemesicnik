@@ -262,4 +262,12 @@
     font-size: var(--font-size-sm);
     user-select: none;
   }
+
+  .deck {
+    view-transition-name: donate-deck;
+  }
+
+  .confirmCta {
+    view-transition-name: confirm-cta;
+  }
 }

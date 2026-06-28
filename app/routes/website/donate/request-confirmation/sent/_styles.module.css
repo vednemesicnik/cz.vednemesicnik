@@ -40,3 +40,9 @@
     justify-self: center;
   }
 }
+
+.deck {
+  @layer route {
+    view-transition-name: donate-deck;
+  }
+}

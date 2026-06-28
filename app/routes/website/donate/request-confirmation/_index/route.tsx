@@ -11,7 +11,7 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
-import { Form, href, useNavigation } from 'react-router'
+import { Form, href, useNavigation, useViewTransitionState } from 'react-router'
 import { Alert } from '~/components/alert'
 import { BackLink } from '~/components/back-link'
 import { Button } from '~/components/button'
@@ -49,6 +49,7 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const { requestableYears, honeypotInputProps } = loaderData
   const nav = useNavigation()
+  const cameFromDonate = useViewTransitionState('/donate/request-confirmation')
   const errorAlertRef = useRef<HTMLDivElement>(null)
 
   const [form, fields] = useForm({
@@ -81,18 +82,20 @@ export default function RouteComponent({
 
   return (
     <HoneypotProvider {...honeypotInputProps}>
-      <Page>
+      <Page className={styles.deck}>
         <BackLink className={styles.backLink} to={href('/donate')}>
           Zpět na darování
         </BackLink>
 
-        <HeadlineGroup>
-          <Headline>Žádost o potvrzení o daru</Headline>
-          <Subheadline>
-            Pokud jste podpořili Vedneměsíčník darem, můžete prostřednictvím
-            tohoto formuláře požádat o vystavení potvrzení pro daňové účely.
-          </Subheadline>
-        </HeadlineGroup>
+        <div className={cameFromDonate ? styles.confirmCta : undefined}>
+          <HeadlineGroup>
+            <Headline>Žádost o potvrzení o daru</Headline>
+            <Subheadline>
+              Pokud jste podpořili Vedneměsíčník darem, můžete prostřednictvím
+              tohoto formuláře požádat o vystavení potvrzení pro daňové účely.
+            </Subheadline>
+          </HeadlineGroup>
+        </div>
 
         <Callout>
           O potvrzení lze požádat až 3 roky zpětně. Ve formuláři vyberte rok, za
@@ -108,7 +111,12 @@ export default function RouteComponent({
             ) : null}
           </div>
 
-          <Form method="post" {...getFormProps(form)} className={styles.form}>
+          <Form
+            method="post"
+            viewTransition
+            {...getFormProps(form)}
+            className={styles.form}
+          >
             <HoneypotInputs />
 
             <FieldGroup>

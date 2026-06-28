@@ -38,6 +38,51 @@
   --radius-full: 9999px;
 }
 
+/* ========================================
+   View transitions — donate flow
+   ======================================== */
+@keyframes donate-deck-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+@keyframes donate-deck-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes success-stamp-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+/* Author animations are gated behind no-preference so the reduced-motion reset
+   below can neutralize them — together with the UA default root cross-fade and
+   morphs — without needing !important to win on specificity. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(donate-deck) {
+    animation: 220ms ease both donate-deck-out;
+  }
+  ::view-transition-new(donate-deck) {
+    animation: 260ms ease both donate-deck-in;
+  }
+  ::view-transition-new(success-stamp) {
+    animation: 300ms ease-out both success-stamp-in;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}
+
 @layer base {
   html {
     container-type: scroll-state;

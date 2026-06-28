@@ -15,6 +15,7 @@
   --app-header-text-secondary: var(--text-secondary);
   --nav-trigger-bg-hover: var(--bg-hover);
 
+  view-transition-name: site-header;
   display: grid;
   position: fixed;
   top: 0;
