@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { CloseIcon } from '~/components/icons/close-icon'
 import { MenuIcon } from '~/components/icons/menu-icon'
 
