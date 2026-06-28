@@ -12,6 +12,7 @@
     padding-block: 12px;
     padding-inline: 16px;
     width: 100%;
+    text-align: start;
 
     /* An outline button on the tint gets its own fill and a 3 : 1 border
        (WCAG 1.4.11, jb81di02); hover and focus stay the Button's. */
