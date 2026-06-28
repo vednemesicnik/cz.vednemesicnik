@@ -5,10 +5,16 @@
 }
 
 :root {
-  --header-height: calc(40px + 2 * 1.25rem);
+  /* Height of the header content row (logo and nav trigger button share this) */
+  --header-content-height: 2.75rem;
+  --header-height: calc(var(--header-content-height) + 2 * 1.25rem);
 }
 
 .container {
+  --app-header-text-primary: var(--text-primary);
+  --app-header-text-secondary: var(--text-secondary);
+  --nav-trigger-bg-hover: var(--bg-hover);
+
   display: grid;
   position: fixed;
   top: 0;
@@ -37,26 +43,33 @@
 
 @keyframes header-hero-reveal {
   from {
-    --app-header-text-primary: var(--color-white);
-    --app-header-text-secondary: rgba(255, 255, 255, 0.75);
+    --app-header-text-primary: var(--text-inverted);
+    --app-header-text-secondary: var(--text-inverted-muted);
     --header-bg-opacity: 0;
+    --nav-trigger-bg-hover: var(--bg-inverted-subtle);
     backdrop-filter: none;
   }
   to {
-    --app-header-text-primary: initial;
-    --app-header-text-secondary: initial;
+    --app-header-text-primary: var(--text-primary);
+    --app-header-text-secondary: var(--text-secondary);
     --header-bg-opacity: 1;
+    --nav-trigger-bg-hover: var(--bg-hover);
     backdrop-filter: blur(8px);
   }
 }
 
-:global(html:has([data-page-hero])) .container {
-  --app-header-text-primary: var(--color-white);
-  --app-header-text-secondary: rgba(255, 255, 255, 0.75);
-  --header-bg-opacity: 0;
-  animation: header-hero-reveal linear both;
-  animation-timeline: scroll(root);
-  animation-range: 0 calc(var(--header-height) * 2);
+/* Decorative effect only — browsers without scroll-driven animations (e.g. Firefox)
+   get the default solid header instead of a potentially stuck transparent one. */
+@supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+  :global(html:has([data-page-hero])) .container {
+    --app-header-text-primary: var(--text-inverted);
+    --app-header-text-secondary: var(--text-inverted-muted);
+    --header-bg-opacity: 0;
+    --nav-trigger-bg-hover: var(--bg-inverted-subtle);
+    animation: header-hero-reveal linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 calc(var(--header-height) * 2);
+  }
 }
 
 .content {
@@ -69,6 +82,7 @@
   width: 100%;
   height: 100%;
   align-items: center;
+  justify-items: start;
 
   @media (min-width: 768px) {
     grid-template-columns: max-content 1fr;
