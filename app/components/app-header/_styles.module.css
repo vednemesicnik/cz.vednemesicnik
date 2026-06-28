@@ -39,6 +39,7 @@
     );
   z-index: var(--z-header);
   backdrop-filter: blur(8px);
+  transition: translate 0.3s ease;
 }
 
 @keyframes header-hero-reveal {
@@ -69,6 +70,35 @@
     animation: header-hero-reveal linear both;
     animation-timeline: scroll(root);
     animation-range: 0 calc(var(--header-height) * 2);
+  }
+}
+
+@container scroll-state((scrolled: bottom) and (scrollable: top)) {
+  .container {
+    translate: 0 -100%; /* scrolling down and not at top → hide */
+  }
+}
+
+@container scroll-state(scrolled: top) {
+  .container {
+    translate: 0 0; /* scrolling up → reveal */
+  }
+}
+
+/* Keep the header visible while the mobile nav popover is open */
+:global(html:has(#primary-navigation:popover-open)) .container {
+  translate: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container {
+    transition: none;
+  }
+
+  @container scroll-state((scrolled: bottom) and (scrollable: top)) {
+    .container {
+      translate: 0; /* never slide away for reduced-motion users */
+    }
   }
 }
 
