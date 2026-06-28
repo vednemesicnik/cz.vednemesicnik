@@ -35,7 +35,7 @@
       var(--color-emerald-900)
     );
     --bg-hover: light-dark(
-      var(--color-charcoal-300),
+      var(--color-charcoal-200),
       var(--color-charcoal-700)
     );
     --bg-disabled: light-dark(
@@ -76,6 +76,21 @@
       var(--color-charcoal-400)
     );
     --text-on-accent: light-dark(var(--color-white), var(--color-white));
+    --text-inverted: var(--color-white);
+    --text-inverted-muted: color-mix(
+      in oklab,
+      var(--color-white) 75%,
+      transparent
+    );
+
+    /* ========================================
+       Inverted surfaces (e.g. hero images)
+       ======================================== */
+    --bg-inverted-subtle: color-mix(
+      in oklab,
+      var(--color-white) 16%,
+      transparent
+    );
 
     /* ========================================
        Primary
