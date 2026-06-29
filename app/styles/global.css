@@ -40,104 +40,46 @@
 
 /* ========================================
    View transitions — donate flow
-   ========================================
-   The deck (page body) descends from the top on every navigation — the same
-   motion forwards and back, so there's no direction to track. setDeckTransition()
-   (app/utils/deck-transition.ts) only stamps <html data-deck-transition="off">
-   to suppress the descend for in-place re-renders (e.g. a server validation
-   error that re-renders the same route), collapsing it to an instant swap. */
-@keyframes deck-out {
+   ======================================== */
+@keyframes donate-deck-out {
   to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+@keyframes donate-deck-in {
+  from {
     opacity: 0;
     transform: translateY(8px);
   }
 }
-@keyframes deck-in {
-  from {
-    opacity: 0;
-    transform: translateY(-24px);
-  }
-}
-
-/* Land like a stamp: start small, overshoot past 1, settle (back-ease). */
 @keyframes success-stamp-in {
   from {
     opacity: 0;
-    transform: scale(0.3);
-  }
-  70% {
-    opacity: 1;
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-/* One-shot emerald ripple behind the stamp. */
-@keyframes success-halo-in {
-  from {
-    opacity: 0.5;
-    transform: scale(0.4);
-  }
-  to {
-    opacity: 0;
-    transform: scale(2);
+    transform: scale(0.6);
   }
 }
 
-/* Pin the chrome: keep header/footer perfectly still across navigations. A
-   named group with no author animation otherwise gets the UA default
-   position/size tween + cross-fade, which slides the fixed header whenever it
-   was mid-hide (scroll-state translate) at snapshot time. Killing the group and
-   plate animations snapshots it in place instead. */
-::view-transition-group(site-header),
-::view-transition-group(site-footer),
-::view-transition-old(site-header),
-::view-transition-new(site-header),
-::view-transition-old(site-footer),
-::view-transition-new(site-footer) {
-  animation: none;
-}
-
-/* Author animations are gated behind no-preference so the reduced-motion block
-   below can collapse them — together with the UA default root cross-fade and
-   morphs — to a single instant frame. */
+/* Author animations are gated behind no-preference so the reduced-motion reset
+   below can neutralize them — together with the UA default root cross-fade and
+   morphs — without needing !important to win on specificity. */
 @media (prefers-reduced-motion: no-preference) {
-  /* Let the group tween the height difference between screens for free. */
-  ::view-transition-group(donate-deck) {
-    animation-duration: 300ms;
-  }
   ::view-transition-old(donate-deck) {
-    animation: 190ms cubic-bezier(0.4, 0, 1, 1) both deck-out;
+    animation: 220ms ease both donate-deck-out;
   }
   ::view-transition-new(donate-deck) {
-    animation: 300ms cubic-bezier(0, 0, 0.2, 1) both deck-in;
+    animation: 260ms ease both donate-deck-in;
   }
-
-  /* In-place re-render (validation error): collapse the descend to an instant
-     swap so it doesn't replay like a full navigation. */
-  html[data-deck-transition="off"]::view-transition-group(donate-deck),
-  html[data-deck-transition="off"]::view-transition-old(donate-deck),
-  html[data-deck-transition="off"]::view-transition-new(donate-deck) {
-    animation-duration: 1ms;
-  }
-
   ::view-transition-new(success-stamp) {
-    animation: 460ms cubic-bezier(0.34, 1.56, 0.6, 1) both success-stamp-in;
-  }
-  ::view-transition-new(success-halo) {
-    animation: 680ms cubic-bezier(0.2, 0.6, 0.3, 1) both success-halo-in;
+    animation: 300ms ease-out both success-stamp-in;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Collapse every transition to a single frame instead of `animation: none`,
-     which would leave the old and new snapshots both painted at full opacity
-     for the duration and flash a double image. 1ms tears them down cleanly. */
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {
-    animation-duration: 1ms;
+    animation: none;
   }
 }
 
