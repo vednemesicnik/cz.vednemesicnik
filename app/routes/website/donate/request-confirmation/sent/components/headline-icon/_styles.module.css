@@ -9,6 +9,5 @@
     justify-content: center;
     font-size: 2rem;
     color: var(--success);
-    view-transition-name: success-stamp;
   }
 }

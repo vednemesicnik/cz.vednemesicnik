@@ -20,7 +20,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { requestId, year } = loaderData
 
   return (
-    <Page className={styles.deck}>
+    <Page>
       <HeadlineGroup className={styles.headlineGroup}>
         <HeadlineIcon>
           <CheckIcon />

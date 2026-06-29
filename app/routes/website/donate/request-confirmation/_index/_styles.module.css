@@ -130,15 +130,3 @@
     justify-self: start;
   }
 }
-
-.deck {
-  @layer route {
-    view-transition-name: donate-deck;
-  }
-}
-
-.confirmCta {
-  @layer route {
-    view-transition-name: confirm-cta;
-  }
-}

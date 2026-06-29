@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { href, useViewTransitionState } from 'react-router'
+import { href } from 'react-router'
 import { CopyButton } from '~/components/copy-button'
 import { DownloadIcon } from '~/components/icons/download-icon'
 import { LinkButton } from '~/components/link-button'
@@ -35,7 +35,6 @@ const PRESET_AMOUNTS = [150, 300, 600, 1200] as const
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { totalDonated } = loaderData
-  const goingToForm = useViewTransitionState('/donate/request-confirmation')
   const formattedTotalDonated = new Intl.NumberFormat('cs-CZ', {
     currency: 'CZK',
     style: 'currency',
@@ -90,7 +89,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </p>
       </PageHero>
 
-      <Page className={styles.deck}>
+      <Page>
         <DonationCard>
           <h2 className={styles.donationTitle}>Vyberte výši daru</h2>
           <p className={styles.donationSubtitle}>
@@ -202,11 +201,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             Následně vystavíme potvrzení o přijatých darech za daný kalendářní
             rok, které můžete použít pro daňové účely.
           </DonationConfirmationDescription>
-          <LinkButton
-            className={goingToForm ? styles.confirmCta : undefined}
-            size="lg"
-            to="/donate/request-confirmation"
-          >
+          <LinkButton size="lg" to="/donate/request-confirmation">
             Požádat o potvrzení
           </LinkButton>
         </DonationConfirmation>

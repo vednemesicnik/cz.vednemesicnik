@@ -1,5 +1,4 @@
 .container {
-  view-transition-name: site-footer;
   grid-area: footer;
   display: grid;
   position: relative;
