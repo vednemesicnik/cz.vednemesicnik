@@ -1,5 +1,14 @@
-.headlineIcon {
+.wrapper {
   @layer component {
+    position: relative;
+    width: 64px;
+    height: 64px;
+  }
+}
+
+.icon {
+  @layer component {
+    position: relative;
     width: 64px;
     height: 64px;
     border-radius: var(--radius-full);
@@ -10,5 +19,16 @@
     font-size: 2rem;
     color: var(--success);
     view-transition-name: success-stamp;
+  }
+}
+
+.halo {
+  @layer component {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-full);
+    background: var(--success);
+    opacity: 0;
+    view-transition-name: success-halo;
   }
 }

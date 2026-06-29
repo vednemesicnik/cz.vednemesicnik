@@ -11,7 +11,7 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
-import { Form, href, useNavigation, useViewTransitionState } from 'react-router'
+import { Form, href, useNavigation } from 'react-router'
 import { Alert } from '~/components/alert'
 import { BackLink } from '~/components/back-link'
 import { Button } from '~/components/button'
@@ -24,6 +24,8 @@ import { AddIcon } from '~/components/icons/add-icon'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { Page } from '~/components/page'
 import { Subheadline } from '~/components/subheadline'
+import { useIsomorphicLayoutEffect } from '~/hooks/use-isomorphic-layout-effect'
+import { setDeckTransition } from '~/utils/deck-transition'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -49,8 +51,15 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const { requestableYears, honeypotInputProps } = loaderData
   const nav = useNavigation()
-  const cameFromDonate = useViewTransitionState('/donate/request-confirmation')
   const errorAlertRef = useRef<HTMLDivElement>(null)
+
+  // A successful submit redirects to /sent. A server validation error instead
+  // re-renders this route in place with actionData; suppress the deck descend so
+  // that in-place update doesn't replay like a navigation. Runs inside React
+  // Router's flushSync, before the new snapshot.
+  useIsomorphicLayoutEffect(() => {
+    if (actionData) setDeckTransition(false)
+  }, [actionData])
 
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
@@ -70,6 +79,7 @@ export default function RouteComponent({
   const type = useInputControl(fields.type)
   const addressFields = fields.address.getFieldset()
   const accountList = fields.accounts.getFieldList()
+  const formProps = getFormProps(form)
 
   useEffect(() => {
     if (form.errors && form.errors.length > 0) {
@@ -83,19 +93,21 @@ export default function RouteComponent({
   return (
     <HoneypotProvider {...honeypotInputProps}>
       <Page className={styles.deck}>
-        <BackLink className={styles.backLink} to={href('/donate')}>
+        <BackLink
+          className={styles.backLink}
+          onClick={() => setDeckTransition(true)}
+          to={href('/donate')}
+        >
           Zpět na darování
         </BackLink>
 
-        <div className={cameFromDonate ? styles.confirmCta : undefined}>
-          <HeadlineGroup>
-            <Headline>Žádost o potvrzení o daru</Headline>
-            <Subheadline>
-              Pokud jste podpořili Vedneměsíčník darem, můžete prostřednictvím
-              tohoto formuláře požádat o vystavení potvrzení pro daňové účely.
-            </Subheadline>
-          </HeadlineGroup>
-        </div>
+        <HeadlineGroup>
+          <Headline>Žádost o potvrzení o daru</Headline>
+          <Subheadline>
+            Pokud jste podpořili Vedneměsíčník darem, můžete prostřednictvím
+            tohoto formuláře požádat o vystavení potvrzení pro daňové účely.
+          </Subheadline>
+        </HeadlineGroup>
 
         <Callout>
           O potvrzení lze požádat až 3 roky zpětně. Ve formuláři vyberte rok, za
@@ -114,8 +126,15 @@ export default function RouteComponent({
           <Form
             method="post"
             viewTransition
-            {...getFormProps(form)}
+            {...formProps}
             className={styles.form}
+            onSubmit={(event) => {
+              // Re-enable the deck descend before Conform validates (a prior
+              // error may have suppressed it), so a valid submit animates into
+              // the success page. An error re-render re-suppresses it above.
+              setDeckTransition(true)
+              formProps.onSubmit(event)
+            }}
           >
             <HoneypotInputs />
 

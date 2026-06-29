@@ -7,11 +7,16 @@ import styles from './_styles.module.css'
 type Props = {
   children: ReactNode
   className?: string
+  onClick?: () => void
   to: string
 }
 
-export const BackLink = ({ children, className, to }: Props) => (
-  <BaseLink className={clsx(styles.backLink, className)} to={to}>
+export const BackLink = ({ children, className, onClick, to }: Props) => (
+  <BaseLink
+    className={clsx(styles.backLink, className)}
+    onClick={onClick}
+    to={to}
+  >
     <ArrowLeftAltIcon />
     {children}
   </BaseLink>

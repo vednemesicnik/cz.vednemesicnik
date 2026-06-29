@@ -266,8 +266,4 @@
   .deck {
     view-transition-name: donate-deck;
   }
-
-  .confirmCta {
-    view-transition-name: confirm-cta;
-  }
 }
