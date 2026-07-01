@@ -1,40 +1,38 @@
 import { clsx } from 'clsx'
 
 import { Image } from '~/components/image'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
 import styles from './_styles.module.css'
 
 type Size = 'small' | 'medium' | 'large'
 
 type Props = {
-  src: string
+  image: ImageSources
   alt: string
   size?: Size
   className?: string
 }
 
-const sizeMap: Record<Size, { width: number; height: number }> = {
-  large: { height: 128, width: 128 },
-  medium: { height: 96, width: 96 },
-  small: { height: 64, width: 64 },
+const sizeMap: Record<Size, number> = {
+  large: 128,
+  medium: 96,
+  small: 64,
 }
 
 export const AdminAvatar = ({
-  src,
+  image,
   alt,
   size = 'medium',
   className,
 }: Props) => {
-  const dimensions = sizeMap[size]
-
   return (
     <div className={clsx(styles.avatar, styles[size], className)}>
       <Image
+        {...image}
         alt={alt}
         className={styles.image}
-        height={dimensions.height}
-        src={src}
-        width={dimensions.width}
+        sizes={`${sizeMap[size]}px`}
       />
     </div>
   )

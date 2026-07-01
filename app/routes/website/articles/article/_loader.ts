@@ -1,5 +1,9 @@
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import type { Route } from './+types/route'
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
@@ -24,16 +28,14 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       createdAt: true,
       featuredImage: {
         select: {
-          altText: true,
+          ...imageSourceSelect,
           description: true,
-          id: true,
         },
       },
       images: {
         select: {
-          altText: true,
+          ...imageSourceSelect,
           description: true,
-          id: true,
         },
       },
       publishedAt: true,
@@ -60,5 +62,21 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     throw new Response('Článek nenalezen', { status: 404 })
   }
 
-  return { article }
+  // Build HTML image sources so the components stay dumb renderers.
+  const featuredImage = article.featuredImage
+    ? {
+        altText: article.featuredImage.altText,
+        description: article.featuredImage.description,
+        sources: createImageSources('article-image', article.featuredImage),
+      }
+    : null
+
+  const images = article.images.map((image) => ({
+    altText: image.altText,
+    description: image.description,
+    id: image.id,
+    sources: createImageSources('article-image', image),
+  }))
+
+  return { article: { ...article, featuredImage, images } }
 }

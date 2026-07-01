@@ -2,32 +2,32 @@ import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 import { Image } from '~/components/image'
 import { sizeConfig } from '~/config/size-config'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
-  imageSrc?: string
+  image?: ImageSources
   imageAlt?: string
   className?: string
 }
 
 export const ContentLinkAuthor = ({
   children,
-  imageSrc,
+  image,
   imageAlt,
   className,
 }: Props) => {
-  const { width, height } = sizeConfig.articleLinkAuthorImage
+  const { width } = sizeConfig.articleLinkAuthorImage
 
   return (
     <div className={clsx(styles.container, className)}>
-      {imageSrc && (
+      {image?.src && (
         <Image
+          {...image}
           alt={imageAlt}
           className={styles.image}
-          height={height}
-          src={imageSrc}
-          width={width}
+          sizes={`${width}px`}
         />
       )}
       <p className={styles.paragraph}>{children}</p>

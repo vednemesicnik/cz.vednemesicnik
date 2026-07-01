@@ -1,6 +1,10 @@
 import { LIMIT_PARAM } from '~/components/load-more-content'
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -15,10 +19,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     },
     select: {
       cover: {
-        select: {
-          altText: true,
-          id: true,
-        },
+        select: imageSourceSelect,
       },
       id: true,
       label: true,
@@ -50,5 +51,15 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     issuesCountPromise,
   ])
 
-  return { issues, issuesCount }
+  const issuesWithSources = issues.map((issue) => ({
+    ...issue,
+    cover: issue.cover
+      ? {
+          altText: issue.cover.altText,
+          sources: createImageSources('issue-cover', issue.cover),
+        }
+      : null,
+  }))
+
+  return { issues: issuesWithSources, issuesCount }
 }

@@ -1,5 +1,9 @@
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 
 import type { Route } from './+types/route'
 
@@ -12,10 +16,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     },
     select: {
       cover: {
-        select: {
-          altText: true,
-          id: true,
-        },
+        select: imageSourceSelect,
       },
       id: true,
       slug: true,
@@ -37,10 +38,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       podcast: {
         select: {
           cover: {
-            select: {
-              altText: true,
-              id: true,
-            },
+            select: imageSourceSelect,
           },
           id: true,
           slug: true,
@@ -64,5 +62,23 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     episodesPromise,
   ])
 
-  return { episodes, podcasts }
+  return {
+    episodes: episodes.map((episode) => ({
+      ...episode,
+      podcast: {
+        ...episode.podcast,
+        cover: {
+          altText: episode.podcast.cover?.altText ?? '',
+          sources: createImageSources('podcast-cover', episode.podcast.cover),
+        },
+      },
+    })),
+    podcasts: podcasts.map((podcast) => ({
+      ...podcast,
+      cover: {
+        altText: podcast.cover?.altText ?? '',
+        sources: createImageSources('podcast-cover', podcast.cover),
+      },
+    })),
+  }
 }

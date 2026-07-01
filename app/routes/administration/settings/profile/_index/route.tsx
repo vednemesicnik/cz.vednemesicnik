@@ -12,20 +12,18 @@ import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { FORM_CONFIG } from '~/config/form-config'
-import { getUserImageSrc } from '~/utils/get-user-image-src'
-
 import type { Route } from './+types/route'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const imageSrc = getUserImageSrc(loaderData.user.image?.id ?? '')
-  const imageAlt = loaderData.user.image?.altText ?? ''
+  const imageSources = loaderData.user.image.sources
+  const imageAlt = loaderData.user.image.altText
 
   return (
     <AdminPage>
       <AdminHeadline>Profil</AdminHeadline>
 
       <AdminDetailSection title="Základní informace">
-        <AdminAvatar alt={imageAlt} size="large" src={imageSrc} />
+        <AdminAvatar alt={imageAlt} image={imageSources} size="large" />
 
         <AdminDetailList>
           <AdminDetailItem label="E-mail">

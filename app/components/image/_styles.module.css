@@ -8,8 +8,7 @@
   }
 }
 
-.lowResPicture {
-  display: flex;
+.lowResImage {
   position: relative;
   image-rendering: pixelated;
   opacity: 1;

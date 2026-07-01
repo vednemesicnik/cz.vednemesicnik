@@ -1,6 +1,10 @@
 import { data, href } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { requireAuthorPermission } from '~/utils/permissions/author/guards/require-author-permission.server'
 import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
@@ -32,9 +36,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       images: {
         orderBy: { createdAt: 'asc' },
         select: {
-          altText: true,
+          ...imageSourceSelect,
           description: true,
-          id: true,
         },
       },
       slug: true,
@@ -97,6 +100,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         altText: image.altText,
         description: image.description || '',
         id: image.id,
+        previewUrl: createImageSources('article-image', image).src,
       })),
       slug: article.slug,
       state: article.state,

@@ -1,6 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
 import { BaseLink } from '~/components/base-link'
 import { ContentLink } from '~/components/content-link'
 import { ContentLinkAuthor } from '~/components/content-link-author'
@@ -31,20 +30,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <TileGrid>
         {podcasts.map((podcast) => {
-          const coverAlt = podcast.cover?.altText ?? ''
-          const coverSrc = href('/resources/podcast-cover/:coverId', {
-            coverId: podcast.cover?.id ?? '',
-          })
-
           return (
             <TileGridItem key={podcast.id}>
               <BaseLink to={`/podcasts/${podcast.slug}`}>
                 <Tile label={podcast.title}>
                   <Image
-                    alt={coverAlt}
-                    height={sizeConfig.podcastCover.height}
-                    src={coverSrc}
-                    width={sizeConfig.podcastCover.width}
+                    {...podcast.cover.sources}
+                    alt={podcast.cover.altText}
+                    sizes={`${sizeConfig.podcastCover.width}px`}
                   />
                 </Tile>
               </BaseLink>
@@ -55,20 +48,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <ContentList>
         {episodes.map((episode) => {
-          const coverAlt = episode.podcast?.cover?.altText ?? ''
-          const coverSrc = href('/resources/podcast-cover/:coverId', {
-            coverId: episode.podcast?.cover?.id ?? '',
-          })
+          const coverAlt = episode.podcast.cover.altText
+          const coverSources = episode.podcast.cover.sources
 
           return (
             <ContentListItem key={episode.id}>
               <ContentLink
                 to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
               >
-                <ContentLinkImage alt={coverAlt} src={coverSrc} />
+                <ContentLinkImage alt={coverAlt} image={coverSources} />
                 <ContentLinkTitle>{episode.title}</ContentLinkTitle>
                 <ContentLinkFooter>
-                  <ContentLinkAuthor imageAlt={coverAlt} imageSrc={coverSrc}>
+                  <ContentLinkAuthor image={coverSources} imageAlt={coverAlt}>
                     {episode.podcast.title}
                   </ContentLinkAuthor>
                   <ContentLinkPublishDate date={episode.publishedAt} />

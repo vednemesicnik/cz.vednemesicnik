@@ -6,9 +6,12 @@ import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
+import {
+  deleteImageVersion,
+  storeImageVariants,
+} from '~/utils/image-store/store-image.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
-import { getConvertedImageStream } from '~/utils/sharp.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -76,15 +79,33 @@ export const action = async ({ request }: Route.ActionArgs) => {
     releasedAt,
   )
 
-  const convertedCover =
-    cover !== undefined
-      ? await getConvertedImageStream(cover, {
-          format: 'jpeg',
-          height: 1280,
-          quality: 80,
-          width: 905,
-        })
-      : undefined
+  // Replace the cover file: store a new version (stable id → cache-busted URL),
+  // remembering the previous version so its files can be removed afterwards.
+  let previousCoverVersion: string | null = null
+  let coverData: {
+    altText: string
+    version?: string
+    intrinsicWidth?: number
+    intrinsicHeight?: number
+    placeholderDataUrl?: string
+  } = { altText: coverAltText }
+
+  if (cover !== undefined) {
+    const previous = await prisma.issueCover.findUnique({
+      select: { version: true },
+      where: { id: coverId },
+    })
+    previousCoverVersion = previous?.version ?? null
+
+    const meta = await storeImageVariants(coverId, cover)
+    coverData = {
+      altText: coverAltText,
+      intrinsicHeight: meta.intrinsicHeight,
+      intrinsicWidth: meta.intrinsicWidth,
+      placeholderDataUrl: meta.placeholderDataUrl,
+      version: meta.version,
+    }
+  }
 
   try {
     await prisma.issue.update({
@@ -92,19 +113,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
         authorId: authorId,
         cover: {
           update: {
-            data:
-              convertedCover !== undefined
-                ? {
-                    altText: coverAltText,
-                    blob: Uint8Array.from(
-                      await convertedCover.stream.toBuffer(),
-                    ),
-                    contentType: convertedCover.contentType,
-                    id: createId(), // New ID forces browser to download new image
-                  }
-                : {
-                    altText: coverAltText,
-                  },
+            data: coverData,
             where: { id: coverId },
           },
         },
@@ -132,6 +141,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
       },
       where: { id: id },
     })
+
+    if (
+      previousCoverVersion &&
+      coverData.version &&
+      previousCoverVersion !== coverData.version
+    ) {
+      await deleteImageVersion(coverId, previousCoverVersion)
+    }
 
     return redirect(href('/administration/archive/:issueId', { issueId: id }))
   } catch (error) {

@@ -1,14 +1,14 @@
 import { parseWithZod } from '@conform-to/zod/v4'
+import { createId } from '@paralleldrive/cuid2'
 import { data, href, redirect } from 'react-router'
-
 import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
+import { storeImageVariants } from '~/utils/image-store/store-image.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
-import { getConvertedImageStream } from '~/utils/sharp.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -49,12 +49,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
     releasedAt,
   )
 
-  const convertedCover = await getConvertedImageStream(cover, {
-    format: 'jpeg',
-    height: 1280,
-    quality: 80,
-    width: 905,
-  })
+  // Cover variants are written to the store before the row is committed; the PDF
+  // stays an in-DB blob (out of scope for the image store).
+  const coverId = createId()
+  const coverMeta = await storeImageVariants(coverId, cover)
 
   try {
     const issue = await prisma.issue.create({
@@ -63,8 +61,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
         cover: {
           create: {
             altText: coverAltText,
-            blob: Uint8Array.from(await convertedCover.stream.toBuffer()),
-            contentType: convertedCover.contentType,
+            id: coverId,
+            intrinsicHeight: coverMeta.intrinsicHeight,
+            intrinsicWidth: coverMeta.intrinsicWidth,
+            placeholderDataUrl: coverMeta.placeholderDataUrl,
+            version: coverMeta.version,
           },
         },
         label: label,

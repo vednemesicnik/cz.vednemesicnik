@@ -1,22 +1,37 @@
 import { clsx } from 'clsx'
 import { useEffect, useState } from 'react'
 
-import { createImageSources } from '~/utils/create-image-sources'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 import { useHydrated } from '~/utils/use-hydrated'
 import styles from './_styles.module.css'
 
-const DEFAULT_QUALITY = 75
-const DEFAULT_PLACEHOLDER_QUALITY = 25
-
-type Props = {
-  src: string | undefined
-  alt: string | undefined
-  width: number
-  height: number
+// HTML-native props: the responsive source strings (`src`, `srcSet`, `avifSrcSet`,
+// `width`, `height`, `placeholder`) come straight from `createImageSources` and are
+// usually spread in — `<Image {...sources} alt sizes />`.
+type Props = Partial<ImageSources> & {
+  alt?: string
+  // Layout hint for picking a width from `srcSet`. Defaults to full viewport
+  // width; pass a tighter value (e.g. "300px", "(min-width: 48rem) 50vw, 100vw")
+  // where the image renders smaller.
+  sizes?: string
   className?: string
+  loading?: 'lazy' | 'eager'
+  fetchPriority?: 'auto' | 'high' | 'low'
 }
 
-export const Image = ({ src, alt, width, height, className }: Props) => {
+export const Image = ({
+  src,
+  srcSet,
+  avifSrcSet,
+  width,
+  height,
+  placeholder,
+  alt = '',
+  sizes = '100vw',
+  className,
+  loading = 'lazy',
+  fetchPriority = 'low',
+}: Props) => {
   const isHydrated = useHydrated()
   const [isHighResImageLoaded, setIsHighResImageLoaded] = useState(true)
   const [highResImage, setHighResImage] = useState<HTMLImageElement | null>(
@@ -34,55 +49,23 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
     return <div className={clsx(styles.container, className)} />
   }
 
-  const calculatedPlaceholderWidth = Math.max(1, Math.round(width / 10))
-  const calculatedPlaceholderHeight = Math.max(1, Math.round(height / 10))
-
-  const {
-    avifSrc_1x: avifPlaceholderSrc_1x,
-    webpSrc_1x: webpPlaceholderSrc_1x,
-    jpegSrc_1x: jpegPlaceholderSrc_1x,
-  } = createImageSources(src, {
-    height: calculatedPlaceholderHeight,
-    quality: DEFAULT_PLACEHOLDER_QUALITY,
-    width: calculatedPlaceholderWidth,
-  })
-
-  const {
-    avifSrc_1x,
-    avifSrc_2x,
-    webpSrc_1x,
-    webpSrc_2x,
-    jpegSrc_1x,
-    jpegSrc_2x,
-  } = createImageSources(src, {
-    height,
-    quality: DEFAULT_QUALITY,
-    width,
-  })
-
   const handleHighResImageLoad = () => {
     setIsHighResImageLoaded(true)
   }
 
   return (
     <div className={clsx(styles.container, className)}>
-      {/* Low-res placeholder */}
-      <picture className={styles.lowResPicture}>
-        <source srcSet={avifPlaceholderSrc_1x} type={'image/avif'} />
-        <source srcSet={webpPlaceholderSrc_1x} type={'image/webp'} />
-        <img
-          alt={alt}
-          className={styles.image}
-          decoding={'async'}
-          fetchPriority={'low'}
-          height={height}
-          loading={'lazy'}
-          src={jpegPlaceholderSrc_1x}
-          width={width}
-        />
-      </picture>
+      {/* Inline LQIP placeholder (data URI → 0 network requests) */}
+      <img
+        alt={alt}
+        className={clsx(styles.image, styles.lowResImage)}
+        decoding={'async'}
+        height={height}
+        src={placeholder}
+        width={width}
+      />
 
-      {/* High-res image */}
+      {/* High-res responsive image */}
       {isHydrated && (
         <picture
           className={clsx(
@@ -90,25 +73,20 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
             isHighResImageLoaded && styles.highResPictureLoaded,
           )}
         >
-          <source
-            srcSet={`${avifSrc_1x}, ${avifSrc_2x} 2x`}
-            type={'image/avif'}
-          />
-          <source
-            srcSet={`${webpSrc_1x}, ${webpSrc_2x} 2x`}
-            type={'image/webp'}
-          />
+          <source sizes={sizes} srcSet={avifSrcSet} type={'image/avif'} />
+          <source sizes={sizes} srcSet={srcSet} type={'image/jpeg'} />
           <img
             alt={alt}
             className={styles.image}
             decoding={'async'}
-            fetchPriority={'low'}
+            fetchPriority={fetchPriority}
             height={height}
-            loading={'lazy'}
+            loading={loading}
             onLoad={handleHighResImageLoad}
             ref={setHighResImage}
-            src={jpegSrc_1x}
-            srcSet={`${jpegSrc_1x}, ${jpegSrc_2x} 2x`}
+            sizes={sizes}
+            src={src}
+            srcSet={srcSet}
             width={width}
           />
         </picture>

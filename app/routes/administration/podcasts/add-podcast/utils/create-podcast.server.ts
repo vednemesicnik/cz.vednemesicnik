@@ -1,5 +1,6 @@
+import { createId } from '@paralleldrive/cuid2'
 import { prisma } from '~/utils/db.server'
-import { getConvertedImageStream } from '~/utils/sharp.server'
+import { storeImageVariants } from '~/utils/image-store/store-image.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -17,12 +18,10 @@ export async function createPodcast({
   cover,
   authorId,
 }: Args) {
-  const convertedCover = await getConvertedImageStream(cover, {
-    format: 'jpeg',
-    height: 1280,
-    quality: 80,
-    width: 1280,
-  })
+  // Generate the cover id up front so its variants can be written to the store
+  // before the row is committed.
+  const coverId = createId()
+  const coverMeta = await storeImageVariants(coverId, cover)
 
   try {
     const podcast = await prisma.podcast.create({
@@ -31,8 +30,11 @@ export async function createPodcast({
         cover: {
           create: {
             altText: `Obálka podcastu ${title}`,
-            blob: Uint8Array.from(await convertedCover.stream.toBuffer()),
-            contentType: convertedCover.contentType,
+            id: coverId,
+            intrinsicHeight: coverMeta.intrinsicHeight,
+            intrinsicWidth: coverMeta.intrinsicWidth,
+            placeholderDataUrl: coverMeta.placeholderDataUrl,
+            version: coverMeta.version,
           },
         },
         description,

@@ -1,6 +1,7 @@
 import { Image } from '~/components/image'
 import { Link } from '~/components/link'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
 import styles from './_styles.module.css'
 
@@ -13,7 +14,7 @@ type Props = {
   to: string
   authors: Author[]
   publishDate: Date | null
-  imageSrc?: string
+  image?: ImageSources
   imageAlt?: string
 }
 
@@ -22,19 +23,18 @@ export const ArticleHero = ({
   to,
   authors,
   publishDate,
-  imageSrc,
+  image,
   imageAlt,
 }: Props) => {
   return (
     <header className={styles.container}>
-      {imageSrc && (
+      {image?.src && (
         <figure className={styles.figure}>
           <Image
+            {...image}
             alt={imageAlt}
             className={styles.image}
-            height={529}
-            src={imageSrc}
-            width={940}
+            sizes={'(min-width: 60rem) 940px, 100vw'}
           />
         </figure>
       )}

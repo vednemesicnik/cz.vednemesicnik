@@ -9,9 +9,10 @@
 /generated/
 
 # Prisma
-/prisma/*.db
-/prisma/*.db-journal
 /prisma/*.sql
+
+# Local data volume (dev): SQLite DB + image store
+/data
 
 /.idea/
 

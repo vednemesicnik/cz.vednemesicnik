@@ -1,8 +1,12 @@
-import { ARTICLE_IMAGE_CONFIG } from '~/config/article-image-config'
+import { createId } from '@paralleldrive/cuid2'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { prisma } from '~/utils/db.server'
+import { buildOgImageUrl } from '~/utils/image-store/image-url'
+import {
+  ensureOgImage,
+  storeImageVariants,
+} from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
-import { getConvertedImageStream } from '~/utils/sharp.server'
 
 type Options = {
   title: string
@@ -38,20 +42,20 @@ export async function createArticle(
       const featuredImageIndex =
         featuredImage.source === 'new' ? featuredImage.index : undefined
 
-      // Process all images
+      // Generate ids up front so variant files can be keyed by id and written to
+      // the store before the row is committed (FS-before-DB ordering).
       const processedImages = await Promise.all(
         (images || []).map(async ({ file, altText, description }) => {
-          const converted = await getConvertedImageStream(file, {
-            format: ARTICLE_IMAGE_CONFIG.format,
-            height: ARTICLE_IMAGE_CONFIG.height,
-            quality: ARTICLE_IMAGE_CONFIG.quality,
-            width: ARTICLE_IMAGE_CONFIG.width,
-          })
+          const id = createId()
+          const meta = await storeImageVariants(id, file)
           return {
             altText,
-            blob: Uint8Array.from(await converted.stream.toBuffer()),
-            contentType: converted.contentType,
             description: description || null,
+            id,
+            intrinsicHeight: meta.intrinsicHeight,
+            intrinsicWidth: meta.intrinsicWidth,
+            placeholderDataUrl: meta.placeholderDataUrl,
+            version: meta.version,
           }
         }),
       )
@@ -75,19 +79,26 @@ export async function createArticle(
           },
           title,
         },
-        select: { id: true, images: { select: { id: true } }, state: true },
+        select: { id: true, state: true },
       })
 
       // Set featured image if specified
-      let finalFeaturedImageId: string | null = null
+      let finalFeaturedImage: { id: string; version: string } | null = null
       if (
         featuredImageIndex !== undefined &&
-        createdArticle.images[featuredImageIndex]
+        processedImages[featuredImageIndex]
       ) {
-        finalFeaturedImageId = createdArticle.images[featuredImageIndex].id
+        const featured = processedImages[featuredImageIndex]
+        finalFeaturedImage = { id: featured.id, version: featured.version }
+        // Derive the OG crop only for the image that is actually featured.
+        await ensureOgImage(
+          featured.id,
+          featured.version,
+          featured.intrinsicWidth,
+        )
         await prisma.article.update({
           data: {
-            featuredImageId: finalFeaturedImageId,
+            featuredImageId: featured.id,
           },
           where: { id: createdArticle.id },
         })
@@ -99,9 +110,13 @@ export async function createArticle(
       // Generate og:image and twitter:image URLs if article has featured image
       let ogImageUrl: string | null = null
       let twitterImageUrl: string | null = null
-      if (finalFeaturedImageId) {
-        ogImageUrl = `/resources/article-image/${finalFeaturedImageId}?width=1200&height=630`
-        twitterImageUrl = `/resources/article-image/${finalFeaturedImageId}?width=1200&height=630`
+      if (finalFeaturedImage) {
+        ogImageUrl = buildOgImageUrl(
+          'article-image',
+          finalFeaturedImage.id,
+          finalFeaturedImage.version,
+        )
+        twitterImageUrl = ogImageUrl
       }
 
       await prisma.pageSEO.create({

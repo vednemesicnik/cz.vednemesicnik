@@ -1,7 +1,8 @@
-import { createId } from '@paralleldrive/cuid2'
-
 import { prisma } from '~/utils/db.server'
-import { getConvertedImageStream } from '~/utils/sharp.server'
+import {
+  deleteImageVersion,
+  storeImageVariants,
+} from '~/utils/image-store/store-image.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -24,14 +25,34 @@ export async function updatePodcast({
   authorId,
 }: Args) {
   const coverAltText = `Obálka podcastu ${title}`
-  const convertedCover = cover
-    ? await getConvertedImageStream(cover, {
-        format: 'jpeg',
-        height: 1280,
-        quality: 80,
-        width: 1280,
-      })
-    : undefined
+
+  // Replace the cover file: store a new version (stable id → cache-busted URL),
+  // remembering the previous version so its files can be removed afterwards.
+  let previousVersion: string | null = null
+  let coverData: {
+    altText: string
+    version?: string
+    intrinsicWidth?: number
+    intrinsicHeight?: number
+    placeholderDataUrl?: string
+  } = { altText: coverAltText }
+
+  if (cover !== undefined) {
+    const previous = await prisma.podcastCover.findUnique({
+      select: { version: true },
+      where: { id: coverId },
+    })
+    previousVersion = previous?.version ?? null
+
+    const meta = await storeImageVariants(coverId, cover)
+    coverData = {
+      altText: coverAltText,
+      intrinsicHeight: meta.intrinsicHeight,
+      intrinsicWidth: meta.intrinsicWidth,
+      placeholderDataUrl: meta.placeholderDataUrl,
+      version: meta.version,
+    }
+  }
 
   try {
     await prisma.podcast.update({
@@ -39,19 +60,7 @@ export async function updatePodcast({
         authorId: authorId,
         cover: {
           update: {
-            data:
-              convertedCover !== undefined
-                ? {
-                    altText: coverAltText,
-                    blob: Uint8Array.from(
-                      await convertedCover.stream.toBuffer(),
-                    ),
-                    contentType: convertedCover.contentType,
-                    id: createId(), // New ID forces browser to download new image
-                  }
-                : {
-                    altText: coverAltText,
-                  },
+            data: coverData,
             where: { id: coverId },
           },
         },
@@ -61,6 +70,14 @@ export async function updatePodcast({
       },
       where: { id },
     })
+
+    if (
+      previousVersion &&
+      coverData.version &&
+      previousVersion !== coverData.version
+    ) {
+      await deleteImageVersion(coverId, previousVersion)
+    }
   } catch (error) {
     throwDbError(error, 'Unable to update the podcast.')
   }

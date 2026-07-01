@@ -18,7 +18,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     email: undefined,
     image: {
       altText: undefined,
-      id: undefined,
+      src: undefined,
     },
     name: undefined,
   }
@@ -44,7 +44,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         email: session.user.email ?? undefined,
         image: {
           altText: undefined,
-          id: undefined,
+          src: undefined,
         },
         name: session.user.name ?? undefined,
       }

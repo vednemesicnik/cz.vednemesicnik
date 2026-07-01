@@ -1,6 +1,10 @@
 import { PAGE_PARAM } from '~/components/pagination'
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import type { Route } from './+types/route'
 
 const PAGE_SIZE = 9
@@ -26,10 +30,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
           },
         },
         featuredImage: {
-          select: {
-            altText: true,
-            id: true,
-          },
+          select: imageSourceSelect,
         },
         id: true,
         publishedAt: true,
@@ -51,5 +52,21 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
-  return { articles, currentPage, pageSize: PAGE_SIZE, totalCount, totalPages }
+  const articlesWithSources = articles.map((article) => ({
+    ...article,
+    featuredImage: article.featuredImage
+      ? {
+          altText: article.featuredImage.altText,
+          sources: createImageSources('article-image', article.featuredImage),
+        }
+      : null,
+  }))
+
+  return {
+    articles: articlesWithSources,
+    currentPage,
+    pageSize: PAGE_SIZE,
+    totalCount,
+    totalPages,
+  }
 }

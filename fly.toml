@@ -12,6 +12,8 @@ primary_region = 'fra'
 
 [env]
   BASE_URL = 'https://vednemesicnik.cz'
+  # Pre-generated image variants live on the mounted volume, next to the SQLite DB.
+  IMAGE_STORE_PATH = '/data/images'
 
 [[mounts]]
   source = 'data'

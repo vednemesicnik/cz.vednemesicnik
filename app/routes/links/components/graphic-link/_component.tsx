@@ -1,16 +1,13 @@
 import { BaseLink } from '~/components/base-link'
 import { Image } from '~/components/image'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
 import styles from './_styles.module.css'
 
 type Props = {
   children: string
   to: string
-  image?: {
-    src: string
-    width: number
-    height: number
-  }
+  image?: ImageSources
 }
 
 export const GraphicLink = ({ children, to, image }: Props) => {
@@ -22,15 +19,14 @@ export const GraphicLink = ({ children, to, image }: Props) => {
       to={to}
     >
       <span className={styles.linkText}>{children}</span>
-      {image !== undefined && (
+      {image?.src !== undefined && (
         <div aria-hidden="true" className={styles.imageFrame}>
           <div className={styles.imageWrapper}>
             <Image
+              {...image}
               alt={''}
               className={styles.image}
-              height={image.height}
-              src={image.src}
-              width={image.width}
+              sizes={'320px'}
             />
           </div>
         </div>
