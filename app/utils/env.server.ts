@@ -9,7 +9,7 @@ const schema = z.object({
   [ENV_KEYS.SESSION_SECRET]: z.string(),
   [ENV_KEYS.HONEYPOT_SECRET]: z.string(),
   // Root path of the on-disk image store (Fly volume in production).
-  [ENV_KEYS.IMAGE_STORE_PATH]: z.string().default('/data/images'),
+  [ENV_KEYS.IMAGE_STORE_PATH]: z.string(),
 })
 
 declare global {
