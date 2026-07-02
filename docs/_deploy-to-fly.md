@@ -23,7 +23,7 @@ fly deploy
 
 Pre-generated image variants are served as static files from `/data/images` on the
 mounted volume (the same volume as the SQLite database). The root directory is set
-via `IMAGE_STORE_PATH` in `fly.toml` (default `/data/images`). No Sharp runs on the
+via the `IMAGE_STORE_PATH` env in `docker/fly/Dockerfile` (`/data/images`). No Sharp runs on the
 read path — the resource routes just stream the ready-made files. Image metadata
 (`version`, dimensions, LQIP) lives in the DB; the images themselves are on the
 volume — SQLite no longer holds image blobs.
