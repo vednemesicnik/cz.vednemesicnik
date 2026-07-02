@@ -75,20 +75,12 @@ export async function updateArticle(
 
       // 2. Process and create new images (variants written before the row commits)
       let createdImages: Array<{ id: string }> = []
-      if (images?.length !== undefined) {
+      if (images?.length) {
         const processedImages = await Promise.all(
           images.map(async ({ file, altText, description }) => {
             const id = createId()
             const meta = await storeImageVariants(id, file)
-            return {
-              altText,
-              description: description || null,
-              id,
-              intrinsicHeight: meta.intrinsicHeight,
-              intrinsicWidth: meta.intrinsicWidth,
-              placeholderDataUrl: meta.placeholderDataUrl,
-              version: meta.version,
-            }
+            return { ...meta, altText, description: description || null, id }
           }),
         )
 
@@ -106,7 +98,7 @@ export async function updateArticle(
       }
 
       // 3. Update existing images
-      if (existingImages?.length !== undefined) {
+      if (existingImages?.length) {
         await Promise.all(
           existingImages.map(async ({ id, altText, description, file }) => {
             // Replace the file: store a new version, then drop the old version's
@@ -119,12 +111,9 @@ export async function updateArticle(
               const meta = await storeImageVariants(id, file)
               await prisma.articleImage.update({
                 data: {
+                  ...meta,
                   altText,
                   description: description || null,
-                  intrinsicHeight: meta.intrinsicHeight,
-                  intrinsicWidth: meta.intrinsicWidth,
-                  placeholderDataUrl: meta.placeholderDataUrl,
-                  version: meta.version,
                 },
                 where: { id },
               })

@@ -98,13 +98,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     previousCoverVersion = previous?.version ?? null
 
     const meta = await storeImageVariants(coverId, cover)
-    coverData = {
-      altText: coverAltText,
-      intrinsicHeight: meta.intrinsicHeight,
-      intrinsicWidth: meta.intrinsicWidth,
-      placeholderDataUrl: meta.placeholderDataUrl,
-      version: meta.version,
-    }
+    coverData = { altText: coverAltText, ...meta }
   }
 
   try {

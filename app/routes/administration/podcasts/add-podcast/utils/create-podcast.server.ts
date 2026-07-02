@@ -29,12 +29,9 @@ export async function createPodcast({
         authorId: authorId,
         cover: {
           create: {
+            ...coverMeta,
             altText: `Obálka podcastu ${title}`,
             id: coverId,
-            intrinsicHeight: coverMeta.intrinsicHeight,
-            intrinsicWidth: coverMeta.intrinsicWidth,
-            placeholderDataUrl: coverMeta.placeholderDataUrl,
-            version: coverMeta.version,
           },
         },
         description,

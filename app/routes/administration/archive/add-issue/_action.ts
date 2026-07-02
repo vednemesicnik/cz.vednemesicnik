@@ -60,12 +60,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
         authorId: authorId,
         cover: {
           create: {
+            ...coverMeta,
             altText: coverAltText,
             id: coverId,
-            intrinsicHeight: coverMeta.intrinsicHeight,
-            intrinsicWidth: coverMeta.intrinsicWidth,
-            placeholderDataUrl: coverMeta.placeholderDataUrl,
-            version: coverMeta.version,
           },
         },
         label: label,

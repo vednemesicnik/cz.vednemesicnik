@@ -45,18 +45,10 @@ export async function createArticle(
       // Generate ids up front so variant files can be keyed by id and written to
       // the store before the row is committed (FS-before-DB ordering).
       const processedImages = await Promise.all(
-        (images || []).map(async ({ file, altText, description }) => {
+        (images ?? []).map(async ({ file, altText, description }) => {
           const id = createId()
           const meta = await storeImageVariants(id, file)
-          return {
-            altText,
-            description: description || null,
-            id,
-            intrinsicHeight: meta.intrinsicHeight,
-            intrinsicWidth: meta.intrinsicWidth,
-            placeholderDataUrl: meta.placeholderDataUrl,
-            version: meta.version,
-          }
+          return { ...meta, altText, description: description || null, id }
         }),
       )
 
