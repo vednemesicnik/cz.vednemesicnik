@@ -49,6 +49,8 @@ FROM base
 
 ENV BASE_URL="http://localhost:8080"
 ENV DATABASE_URL="file:/data/sqlite.db"
+# Pre-generated image variants live on the mounted volume, next to the SQLite DB.
+ENV IMAGE_STORE_PATH="/data/images"
 ENV HOST="0.0.0.0"
 ENV PORT="8080"
 # For WAL support: https://github.com/prisma/prisma-engines/issues/4675#issuecomment-1914383246
