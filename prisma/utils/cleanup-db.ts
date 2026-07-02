@@ -8,13 +8,19 @@ export async function cleanupDb(prisma: PrismaClient) {
     { name: string }[]
   >`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_migrations';`
 
-  await prisma.$transaction([
-    // Disable FK constraints to avoid relation conflicts during deletion
-    prisma.$executeRawUnsafe(`PRAGMA foreign_keys = OFF`),
-    // Delete all rows from each table, preserving table structures
-    ...tables.map(({ name }) =>
-      prisma.$executeRawUnsafe(`DELETE from "${name}"`),
-    ),
-    prisma.$executeRawUnsafe(`PRAGMA foreign_keys = ON`),
-  ])
+  // SQLite ignores `PRAGMA foreign_keys` inside a transaction, so the toggle must
+  // happen outside the `$transaction` below — otherwise FK enforcement stays on and
+  // deleting tables in an arbitrary order violates relations. It is connection-level
+  // and persists across queries on the single better-sqlite3 connection.
+  await prisma.$executeRawUnsafe(`PRAGMA foreign_keys = OFF`)
+  try {
+    await prisma.$transaction(
+      // Delete all rows from each table, preserving table structures
+      tables.map(({ name }) =>
+        prisma.$executeRawUnsafe(`DELETE from "${name}"`),
+      ),
+    )
+  } finally {
+    await prisma.$executeRawUnsafe(`PRAGMA foreign_keys = ON`)
+  }
 }
