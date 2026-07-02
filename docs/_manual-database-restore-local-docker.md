@@ -2,8 +2,8 @@
 
 ## Quick start: test a production database locally
 
-End-to-end flow to boot this branch's image, restore a downloaded production
-backup, and populate the image store. Detailed steps are in the sections below.
+End-to-end flow to boot this branch's image and restore a downloaded production
+backup (database **and** image store). Detailed steps are in the sections below.
 
 ```shell
 # 1) Build & start the container (image from this branch)
@@ -15,19 +15,39 @@ docker exec vdm_app_container gunzip /data/backup.db.gz
 docker exec vdm_app_container sqlite3 /data/sqlite.db ".restore /data/backup.db"
 docker exec vdm_app_container rm /data/backup.db
 
-# 3) Restart so the entrypoint applies migrations to the restored DB
-docker restart vdm_app_container
+# 3) Restore the downloaded image store into the volume
+docker cp cz-vednemesicnik-images-YYYY-MM-DD.tar.gz vdm_app_container:/data/images.tar.gz
+docker exec vdm_app_container sh -c 'rm -rf /data/images && tar -xzf /data/images.tar.gz -C /data && rm /data/images.tar.gz'
 
-# 4) Backfill the image store inside the container → fills /data/images
-docker exec vdm_app_container node /app/build/migrate-images.mjs
+# 4) Restart so the entrypoint applies migrations to the restored DB
+#    (this is where the blob/contentType columns get dropped)
+docker restart vdm_app_container
 
 # 5) Open the app
 open http://localhost:8080
 ```
 
-> Steps 3–4 are required when the restored database predates the image-store
-> rollout — otherwise pages render **without images** (see
-> [Backfilling the image store](#backfilling-the-image-store-after-restoring-a-pre-migration-database)).
+## Testing the VACUUM (reclaim space after the blob drop)
+
+A restored **production** DB still carries the legacy in-DB image blobs. The migration
+applied on restart (step 4) drops the `blob`/`contentType` columns, which frees pages
+*inside* the SQLite file but does **not** shrink the file on disk until a `VACUUM`.
+This is the one-off step from [`_deploy-to-fly.md`](./_deploy-to-fly.md) — test it here
+before running it in production.
+
+```shell
+# Size right after migrations (still bloated — freed pages not yet reclaimed)
+docker exec vdm_app_container ls -lh /data/sqlite.db
+
+# Compact the database
+docker exec vdm_app_container sqlite3 /data/sqlite.db 'VACUUM;'
+
+# Size after VACUUM — should be dramatically smaller
+docker exec vdm_app_container ls -lh /data/sqlite.db
+```
+
+`VACUUM` cannot run inside a migration (SQLite forbids it in a transaction), which is
+why it is a separate manual step. The app keeps working throughout.
 
 ## How to manually restore the database in local Docker environment
 
@@ -52,29 +72,20 @@ docker exec vdm_app_container sqlite3 /data/sqlite.db ".restore /data/backup.db"
 docker exec vdm_app_container rm /data/backup.db
 ```
 
-## Backfilling the image store (after restoring a pre-migration database)
+## How to restore the image store in local Docker environment
 
-A production database taken before the image-store rollout still holds images as
-in-DB `blob` columns. The new read path serves pre-generated files from
-`/data/images` instead, so after restoring such a database you must apply the
-schema migration and run the one-time backfill — otherwise pages render **without
-images** (the app does not crash; image slots are simply empty).
+Images are served from the `/data/images` volume, not the database. A DB-only restore
+renders **empty image slots** (the app does not crash); restore the image archive to
+populate them.
 
-1. Restart the container so the entrypoint re-applies migrations to the restored
-   database (adds the nullable image-store columns).
+1. Upload the image archive to the container.
 ```shell
-docker restart vdm_app_container
+docker cp /path/to/cz-vednemesicnik-images-YYYY-MM-DD.tar.gz vdm_app_container:/data/images.tar.gz
 ```
-2. Run the bundled backfill inside the container. It generates the variant files
-   into `/data/images` and fills the new columns (idempotent — safe to re-run).
+2. Replace the existing `/data/images` directory with the archive contents, then remove the archive. The archive already contains a top-level `images/` folder, so it extracts to `/data/images`.
 ```shell
-docker exec vdm_app_container node /app/build/migrate-images.mjs
-```
-3. Open the app and verify images load.
-```shell
-open http://localhost:8080
+docker exec vdm_app_container sh -c 'rm -rf /data/images && tar -xzf /data/images.tar.gz -C /data && rm /data/images.tar.gz'
 ```
 
-> The backfill is bundled into the image at build time (`build/migrate-images.mjs`).
-> If you changed the app, rebuild first: `docker compose --file
-> docker/local/docker-compose.yml up -d --build`.
+See [`_manual-database-backup.md`](./_manual-database-backup.md) for how to create the
+archive.

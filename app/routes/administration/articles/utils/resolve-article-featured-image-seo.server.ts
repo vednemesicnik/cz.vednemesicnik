@@ -3,7 +3,7 @@ import { buildOgImageUrl } from '~/utils/image-store/image-url'
 import { ensureOgImage } from '~/utils/image-store/store-image.server'
 
 // og:image + twitter:image URLs for an article's PageSEO record. Both are null
-// when the article has no featured image, or the image has not been stored yet.
+// when the article has no featured image.
 export type ArticleFeaturedImageSeo = {
   ogImageUrl: string | null
   twitterImageUrl: string | null
@@ -31,8 +31,7 @@ export async function buildArticleFeaturedImageSeo({
 
 // Resolve the social-card URLs when only the featured image id is known (update
 // path): fetch its version + dimensions, then delegate to
-// `buildArticleFeaturedImageSeo`. Returns nulls when there is no featured image
-// or it has not been stored yet.
+// `buildArticleFeaturedImageSeo`. Returns nulls when there is no featured image.
 export async function resolveArticleFeaturedImageSeo(
   featuredImageId: string | null,
 ): Promise<ArticleFeaturedImageSeo> {
@@ -45,10 +44,7 @@ export async function resolveArticleFeaturedImageSeo(
     where: { id: featuredImageId },
   })
 
-  if (
-    !featuredImageData?.version ||
-    featuredImageData.intrinsicWidth === null
-  ) {
+  if (!featuredImageData) {
     return { ogImageUrl: null, twitterImageUrl: null }
   }
 

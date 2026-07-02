@@ -4,7 +4,7 @@ import { selectVariantWidths } from './select-variant-widths'
 
 // Plain HTML <img>/<picture> source attributes for the <Image> component. Built by
 // `createImageSources` from a DB row so the component stays a dumb, HTML-native
-// renderer. Fields are undefined when the row has no stored image yet.
+// renderer. Fields are undefined when there is no image.
 export type ImageSources = {
   // Fallback URL (largest JPEG) — a real, directly loadable image.
   src: string | undefined
@@ -30,14 +30,14 @@ export const imageSourceSelect = {
   version: true,
 } as const
 
-// Row shape consumed by `createImageSources` (store fields nullable until the row
-// has been migrated/backfilled).
+// Row shape consumed by `createImageSources`. The store fields are always present
+// on a stored row; the row itself is null/undefined when there is no image.
 export type ImageRow = {
   id: string
-  version: string | null
-  intrinsicWidth: number | null
-  intrinsicHeight: number | null
-  placeholderDataUrl: string | null
+  version: string
+  intrinsicWidth: number
+  intrinsicHeight: number
+  placeholderDataUrl: string
 }
 
 const EMPTY_SOURCES: ImageSources = {
@@ -51,19 +51,12 @@ const EMPTY_SOURCES: ImageSources = {
 
 // Build responsive sources from an image row. The browser picks a width from
 // `sizes` + DPR, so there are no 1x/2x variants. Returns empty sources (all
-// undefined) when the row is missing or not yet stored, so <Image> renders an
-// empty placeholder.
+// undefined) when the row is missing, so <Image> renders an empty placeholder.
 export function createImageSources(
   kind: ImageResourceKind,
   row: ImageRow | null | undefined,
 ): ImageSources {
-  if (
-    !row ||
-    row.version === null ||
-    row.intrinsicWidth === null ||
-    row.intrinsicHeight === null ||
-    row.placeholderDataUrl === null
-  ) {
+  if (!row) {
     return EMPTY_SOURCES
   }
 
