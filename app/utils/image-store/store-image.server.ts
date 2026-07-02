@@ -100,3 +100,36 @@ export async function deleteImageVersion(id: string, version: string) {
 export async function deleteImage(id: string) {
   await imageStore.delete([buildImagePrefix(id)])
 }
+
+// Row data for a single cover column, spread into a Prisma `cover.update.data`.
+// The store fields are absent when the cover file is left unchanged (only the
+// alt text is written).
+export type CoverUpdateData = { altText: string } & Partial<StoredImageMeta>
+
+// Prepare a cover replacement for an edit action. When a new `file` is supplied
+// its variants are stored (before the caller commits the row) and the returned
+// `data` carries the fresh version + dimensions; otherwise only `altText` is
+// updated. The returned `cleanup` drops the previous version's files and MUST be
+// called only after the DB update has committed (delete files after DB, never
+// before). It is a no-op when nothing changed.
+export async function prepareCoverReplacement(
+  coverId: string,
+  altText: string,
+  previousVersion: string | null,
+  file: File | undefined,
+): Promise<{ data: CoverUpdateData; cleanup: () => Promise<void> }> {
+  if (file === undefined) {
+    return { cleanup: async () => {}, data: { altText } }
+  }
+
+  const meta = await storeImageVariants(coverId, file)
+
+  return {
+    cleanup: async () => {
+      if (previousVersion && previousVersion !== meta.version) {
+        await deleteImageVersion(coverId, previousVersion)
+      }
+    },
+    data: { altText, ...meta },
+  }
+}

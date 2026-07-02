@@ -1,8 +1,5 @@
 import { prisma } from '~/utils/db.server'
-import {
-  deleteImageVersion,
-  storeImageVariants,
-} from '~/utils/image-store/store-image.server'
+import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -26,27 +23,25 @@ export async function updatePodcast({
 }: Args) {
   const coverAltText = `Obálka podcastu ${title}`
 
-  // Replace the cover file: store a new version (stable id → cache-busted URL),
-  // remembering the previous version so its files can be removed afterwards.
-  let previousVersion: string | null = null
-  let coverData: {
-    altText: string
-    version?: string
-    intrinsicWidth?: number
-    intrinsicHeight?: number
-    placeholderDataUrl?: string
-  } = { altText: coverAltText }
+  // Remember the current cover version so its files can be removed once the new
+  // version is committed (see `prepareCoverReplacement`). Only queried when the
+  // cover is actually being replaced.
+  const previousVersion =
+    cover === undefined
+      ? null
+      : ((
+          await prisma.podcastCover.findUnique({
+            select: { version: true },
+            where: { id: coverId },
+          })
+        )?.version ?? null)
 
-  if (cover !== undefined) {
-    const previous = await prisma.podcastCover.findUnique({
-      select: { version: true },
-      where: { id: coverId },
-    })
-    previousVersion = previous?.version ?? null
-
-    const meta = await storeImageVariants(coverId, cover)
-    coverData = { altText: coverAltText, ...meta }
-  }
+  const { data: coverData, cleanup } = await prepareCoverReplacement(
+    coverId,
+    coverAltText,
+    previousVersion,
+    cover,
+  )
 
   try {
     await prisma.podcast.update({
@@ -65,13 +60,7 @@ export async function updatePodcast({
       where: { id },
     })
 
-    if (
-      previousVersion &&
-      coverData.version &&
-      previousVersion !== coverData.version
-    ) {
-      await deleteImageVersion(coverId, previousVersion)
-    }
+    await cleanup()
   } catch (error) {
     throwDbError(error, 'Unable to update the podcast.')
   }
