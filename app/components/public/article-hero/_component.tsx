@@ -34,6 +34,8 @@ export const ArticleHero = ({
             {...image}
             alt={imageAlt}
             className={styles.image}
+            fetchPriority={'high'}
+            loading={'eager'}
             sizes={'(min-width: 60rem) 940px, 100vw'}
           />
         </figure>
