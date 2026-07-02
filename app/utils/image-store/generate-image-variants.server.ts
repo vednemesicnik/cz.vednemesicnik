@@ -23,6 +23,8 @@ export type GeneratedImage = {
   variants: GeneratedVariant[]
 }
 
+// Copy into a standalone Uint8Array — Sharp's Buffers come from a shared pool, so
+// a view would risk aliasing bytes reused by a later operation.
 const toBytes = (buffer: Buffer) => Uint8Array.from(buffer)
 
 // Runs Sharp once per input to produce the full variant matrix (widths × formats)

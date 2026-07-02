@@ -33,12 +33,14 @@ export const Image = ({
   fetchPriority = 'low',
 }: Props) => {
   const isHydrated = useHydrated()
+  // Start "loaded" so a cache-hit image (already `complete` on mount, before any
+  // onLoad can fire) shows immediately without a fade. The effect below flips it
+  // back to false only for images that still need to fetch.
   const [isHighResImageLoaded, setIsHighResImageLoaded] = useState(true)
   const [highResImage, setHighResImage] = useState<HTMLImageElement | null>(
     null,
   )
 
-  // Check if image needs loading (not from cache)
   useEffect(() => {
     if (highResImage && !highResImage.complete) {
       setIsHighResImageLoaded(false)

@@ -60,17 +60,13 @@ export async function updateArticle(
         select: { id: true },
         where: { articleId, id: { notIn: existingImageIds } },
       })
+      const removedImageIds = removedImages.map(({ id }) => id)
 
       await prisma.articleImage.deleteMany({
-        where: {
-          articleId,
-          id: {
-            notIn: existingImageIds,
-          },
-        },
+        where: { id: { in: removedImageIds } },
       })
 
-      await Promise.all(removedImages.map(({ id }) => deleteImage(id)))
+      await Promise.all(removedImageIds.map((id) => deleteImage(id)))
 
       // 2. Process and create new images (variants written before the row commits)
       let createdImages: Array<{ id: string }> = []
