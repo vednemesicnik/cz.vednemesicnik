@@ -9,73 +9,46 @@ SQLite database is a single file, so it is easy to copy it to another location.
 > well (see [Backing up the image store](#backing-up-the-image-store)). The image
 > files are the only copy of the image data.
 
+> **Why not `fly ssh sftp get`?** The SFTP transfer runs over an extra protocol
+> layer on top of the WireGuard tunnel and is painfully slow. Streaming the backup
+> straight to stdout over `fly ssh console` bypasses that layer and is much faster.
+> Each step below is a single command run from your **local machine** — no separate
+> SSH session, no temporary files left on the volume to clean up afterwards.
+
 ## How to manually back up the database
-1. SSH into console.
+
+`sqlite3 .backup` needs a destination file, so the snapshot is written to a temp
+path inside the container, streamed out gzipped, and the temp file is removed — all
+in one command.
+
 ```shell
-fly ssh console --app cz-vednemesicnik
+fly ssh console --app cz-vednemesicnik \
+  -C "sh -c 'sqlite3 \"\$DATABASE_URL\" \".backup /tmp/backup.db\" && gzip -c /tmp/backup.db && rm -f /tmp/backup.db'" \
+  > cz-vednemesicnik-backup-$(date +%Y-%m-%d).db.gz
 ```
-2. Back up the database file by copying it with the `.backup` command.
-```shell
-sqlite3 $DATABASE_URL ".backup /app/backup.db"
-```
-3. Zip the backup file.
-```shell
-gzip /app/backup.db
-```
-4. Exit the console by pressing `Ctrl`+`D`.
-5. SSH in to the sftp shell.
-```shell
-fly ssh sftp shell --app cz-vednemesicnik
-```
-6. Download the zipped backup file.
-```shell
-get /app/backup.db.gz /path/to/backup.db.gz
-```
-7. Exit the sftp shell by pressing `Ctrl`+`D`.
-8. Rename the downloaded file to include the current date.
-```shell
-mv /path/to/backup.db.gz /path/to/cz-vednemesicnik-backup-$(date +%Y-%m-%d).db.gz
-```
-9. SSH into the console again.
-```shell
-fly ssh console --app cz-vednemesicnik
-```
-10. Delete the zipped backup file from the app directory.
-```shell
-rm /app/backup.db.gz
-```
-11. Exit the console by pressing `Ctrl`+`D`.
+
+The resulting file lands in your current directory, already named with the current
+date.
 
 ## Backing up the image store
 
 The pre-generated image variants live as files under `/data/images` on the volume.
-Back them up as a single compressed archive.
+`tar` streams a compressed archive directly to stdout — nothing is written to the
+volume.
 
-1. SSH into console.
 ```shell
-fly ssh console --app cz-vednemesicnik
+fly ssh console --app cz-vednemesicnik \
+  -C "tar -czf - -C /data images" \
+  > cz-vednemesicnik-images-$(date +%Y-%m-%d).tar.gz
 ```
-2. Create a compressed archive of the image store.
-```shell
-tar -czf /app/images-backup.tar.gz -C /data images
-```
-3. Exit the console by pressing `Ctrl`+`D`.
-4. SSH in to the sftp shell.
-```shell
-fly ssh sftp shell --app cz-vednemesicnik
-```
-5. Download the archive.
-```shell
-get /app/images-backup.tar.gz /path/to/images-backup.tar.gz
-```
-6. Exit the sftp shell by pressing `Ctrl`+`D`.
-7. Rename the downloaded file to include the current date.
-```shell
-mv /path/to/images-backup.tar.gz /path/to/cz-vednemesicnik-images-$(date +%Y-%m-%d).tar.gz
-```
-8. SSH into the console again and delete the archive from the app directory.
-```shell
-fly ssh console --app cz-vednemesicnik
-rm /app/images-backup.tar.gz
-```
-9. Exit the console by pressing `Ctrl`+`D`.
+
+> **Tip:** for repeated image-store backups, `rsync` over `fly proxy` only transfers
+> changed files, making every backup after the first nearly instant:
+>
+> ```shell
+> # in one terminal
+> fly proxy 10022:22 --app cz-vednemesicnik
+>
+> # in another
+> rsync -avz -e "ssh -p 10022" root@localhost:/data/images/ ./images-backup/
+> ```
