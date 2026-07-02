@@ -36,12 +36,12 @@ export async function updatePodcast({
           })
         )?.version ?? null)
 
-  const { data: coverData, cleanup } = await prepareCoverReplacement(
+  const { data: coverData, cleanup } = await prepareCoverReplacement({
+    altText: coverAltText,
     coverId,
-    coverAltText,
+    file: cover,
     previousVersion,
-    cover,
-  )
+  })
 
   try {
     await prisma.podcast.update({

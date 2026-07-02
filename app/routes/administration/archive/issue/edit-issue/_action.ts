@@ -89,12 +89,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
           })
         )?.version ?? null)
 
-  const { data: coverData, cleanup } = await prepareCoverReplacement(
+  const { data: coverData, cleanup } = await prepareCoverReplacement({
+    altText: coverAltText,
     coverId,
-    coverAltText,
-    previousCoverVersion,
-    cover,
-  )
+    file: cover,
+    previousVersion: previousCoverVersion,
+  })
 
   try {
     await prisma.issue.update({

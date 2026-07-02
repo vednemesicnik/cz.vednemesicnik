@@ -1,11 +1,8 @@
 import { createId } from '@paralleldrive/cuid2'
 import type { FeaturedImage } from '~/config/featured-image-config'
+import { buildArticleFeaturedImageSeo } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
 import { prisma } from '~/utils/db.server'
-import { buildOgImageUrl } from '~/utils/image-store/image-url'
-import {
-  ensureOgImage,
-  storeImageVariants,
-} from '~/utils/image-store/store-image.server'
+import { storeImageVariants } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 
 type Options = {
@@ -75,23 +72,14 @@ export async function createArticle(
       })
 
       // Set featured image if specified
-      let finalFeaturedImage: { id: string; version: string } | null = null
-      if (
-        featuredImageIndex !== undefined &&
-        processedImages[featuredImageIndex]
-      ) {
-        const featured = processedImages[featuredImageIndex]
-        finalFeaturedImage = { id: featured.id, version: featured.version }
-        // Derive the OG crop only for the image that is actually featured.
-        await ensureOgImage(
-          featured.id,
-          featured.version,
-          featured.intrinsicWidth,
-        )
+      const featuredImageData =
+        featuredImageIndex === undefined
+          ? null
+          : (processedImages[featuredImageIndex] ?? null)
+
+      if (featuredImageData) {
         await prisma.article.update({
-          data: {
-            featuredImageId: featured.id,
-          },
+          data: { featuredImageId: featuredImageData.id },
           where: { id: createdArticle.id },
         })
       }
@@ -99,17 +87,14 @@ export async function createArticle(
       // Create PageSEO record for the article
       const pathname = `/articles/${slug}`
 
-      // Generate og:image and twitter:image URLs if article has featured image
-      let ogImageUrl: string | null = null
-      let twitterImageUrl: string | null = null
-      if (finalFeaturedImage) {
-        ogImageUrl = buildOgImageUrl(
-          'article-image',
-          finalFeaturedImage.id,
-          finalFeaturedImage.version,
-        )
-        twitterImageUrl = ogImageUrl
-      }
+      // Build the OG URLs straight from the in-memory image metadata (no DB read).
+      const { ogImageUrl, twitterImageUrl } = featuredImageData
+        ? await buildArticleFeaturedImageSeo({
+            imageId: featuredImageData.id,
+            intrinsicWidth: featuredImageData.intrinsicWidth,
+            version: featuredImageData.version,
+          })
+        : { ogImageUrl: null, twitterImageUrl: null }
 
       await prisma.pageSEO.create({
         data: {

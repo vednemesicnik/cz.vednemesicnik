@@ -106,18 +106,28 @@ export async function deleteImage(id: string) {
 // alt text is written).
 export type CoverUpdateData = { altText: string } & Partial<StoredImageMeta>
 
+type PrepareCoverReplacementArgs = {
+  coverId: string
+  altText: string
+  previousVersion: string | null
+  file: File | undefined
+}
+
 // Prepare a cover replacement for an edit action. When a new `file` is supplied
 // its variants are stored (before the caller commits the row) and the returned
 // `data` carries the fresh version + dimensions; otherwise only `altText` is
 // updated. The returned `cleanup` drops the previous version's files and MUST be
 // called only after the DB update has committed (delete files after DB, never
 // before). It is a no-op when nothing changed.
-export async function prepareCoverReplacement(
-  coverId: string,
-  altText: string,
-  previousVersion: string | null,
-  file: File | undefined,
-): Promise<{ data: CoverUpdateData; cleanup: () => Promise<void> }> {
+export async function prepareCoverReplacement({
+  coverId,
+  altText,
+  previousVersion,
+  file,
+}: PrepareCoverReplacementArgs): Promise<{
+  data: CoverUpdateData
+  cleanup: () => Promise<void>
+}> {
   if (file === undefined) {
     return { cleanup: async () => {}, data: { altText } }
   }
