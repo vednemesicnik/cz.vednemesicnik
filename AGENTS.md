@@ -265,6 +265,17 @@ Reference for working with React Router. Load when configuring routes, route mod
 
 Read `.agents/skills/react-router/SKILL.md` — it identifies the project mode and directs you to the correct reference file.
 
+### Prisma
+
+Reference skills for working with Prisma ORM. This project uses **SQLite**, so the CLI and Client API skills are the primary ones; the Postgres/Compute skills rarely apply. Load the relevant `SKILL.md` before acting.
+
+- `.agents/skills/prisma-cli/SKILL.md` — CLI commands (`init`, `generate`, `migrate`, `db`, `studio`, `validate`, `format`).
+- `.agents/skills/prisma-client-api/SKILL.md` — Client API for queries, filters, CRUD, and `$transaction`.
+- `.agents/skills/prisma-database-setup/SKILL.md` — configuring database providers and troubleshooting connections.
+- `.agents/skills/prisma-driver-adapter-implementation/SKILL.md` — required reference when implementing or modifying Prisma v7 driver adapters.
+- `.agents/skills/prisma-upgrade-v7/SKILL.md` — migration guide from Prisma ORM v6 to v7.
+- `.agents/skills/prisma-postgres/SKILL.md`, `.agents/skills/prisma-postgres-setup/SKILL.md`, `.agents/skills/prisma-compute/SKILL.md` — Prisma Postgres and Compute deployment; not used by this project (SQLite).
+
 ## Agent Rules
 
 Mandatory conventions that apply to all tasks. Read the relevant rule file before acting.
