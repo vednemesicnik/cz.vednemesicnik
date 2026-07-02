@@ -2,6 +2,10 @@ import type { LoaderFunctionArgs } from 'react-router'
 
 import { requireAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { sessionId } = await requireAuthentication(request)
@@ -14,10 +18,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           email: true,
           id: true,
           image: {
-            select: {
-              altText: true,
-              id: true,
-            },
+            select: imageSourceSelect,
           },
           name: true,
           sessions: {
@@ -40,5 +41,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     where: { id: sessionId },
   })
 
-  return { currentSession: { id: session.id }, user: session.user }
+  const user = {
+    ...session.user,
+    image: {
+      altText: session.user.image?.altText ?? '',
+      sources: createImageSources('user-image', session.user.image),
+    },
+  }
+
+  return { currentSession: { id: session.id }, user }
 }

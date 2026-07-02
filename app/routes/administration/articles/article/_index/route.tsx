@@ -238,7 +238,7 @@ export default function RouteComponent({
             featuredImageId={article.featuredImageId}
             images={article.images.map((img) => ({
               id: img.id,
-              src: img.url,
+              sources: img.sources,
             }))}
           />
         ) : (

@@ -1,5 +1,9 @@
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 
 import type { Route } from './+types/route'
 
@@ -10,20 +14,11 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const podcast = await prisma.podcast.findUniqueOrThrow({
     select: {
       cover: {
-        select: {
-          altText: true,
-          id: true,
-        },
+        select: imageSourceSelect,
       },
       description: true,
       episodes: {
         select: {
-          cover: {
-            select: {
-              altText: true,
-              id: true,
-            },
-          },
           description: true,
           id: true,
           links: {
@@ -58,5 +53,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     },
   })
 
-  return { podcast }
+  const cover = {
+    altText: podcast.cover?.altText ?? '',
+    sources: createImageSources('podcast-cover', podcast.cover),
+  }
+
+  return { podcast: { ...podcast, cover } }
 }

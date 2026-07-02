@@ -1,24 +1,31 @@
 import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 import { Image } from '~/components/image'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 import styles from './_styles.module.css'
 
 type Props = {
   alt: string
   description?: ReactNode
-  src: string
+  image: ImageSources
   className?: string
 }
 
-export const FeaturedImage = ({ alt, description, src, className }: Props) => {
+export const FeaturedImage = ({
+  alt,
+  description,
+  image,
+  className,
+}: Props) => {
   return (
     <figure className={clsx(styles.container, className)}>
       <Image
+        {...image}
         alt={alt}
         className={styles.image}
-        height={529}
-        src={src}
-        width={940}
+        fetchPriority={'high'}
+        loading={'eager'}
+        sizes={'(min-width: 60rem) 940px, 100vw'}
       />
       {description && (
         <figcaption className={styles.caption}>{description}</figcaption>

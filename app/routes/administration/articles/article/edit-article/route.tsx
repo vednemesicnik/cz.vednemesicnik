@@ -27,7 +27,6 @@ import { FormActions } from '~/components/form-actions'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { Select } from '~/components/select'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
-import { createArticleImageUrl } from '~/utils/create-article-image-url'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
@@ -46,6 +45,11 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const { article } = loaderData
   const { state } = useNavigation()
+
+  // Lookup existing image preview URLs by id (form fieldsets only carry schema fields).
+  const previewUrlById = new Map(
+    article.images.map((image) => [image.id, image.previewUrl]),
+  )
 
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
@@ -230,7 +234,9 @@ export default function RouteComponent({
                     className={styles.imageFieldFileContainer}
                     field={imageFields.file}
                     label={'Obrázek'}
-                    previewUrl={createArticleImageUrl(imageId)}
+                    previewUrl={
+                      imageId ? previewUrlById.get(imageId) : undefined
+                    }
                   />
 
                   <AdminInput

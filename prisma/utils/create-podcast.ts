@@ -2,7 +2,7 @@ import type { PrismaClient } from '@generated/prisma/client'
 import type { ContentState } from '@generated/prisma/enums'
 import { users } from '~~/data/users'
 
-import { getPodcastCover } from './get-podcast-cover'
+import { storeSeedImage } from './store-seed-image'
 
 export type PodcastData = {
   slug: string
@@ -47,7 +47,7 @@ export const createPodcast = async (
         },
         cover: data.cover
           ? {
-              create: await getPodcastCover({
+              create: await storeSeedImage({
                 altText: data.cover.altText,
                 filePath: data.cover.filePath,
               }),

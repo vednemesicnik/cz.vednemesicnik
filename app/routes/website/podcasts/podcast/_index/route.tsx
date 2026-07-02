@@ -1,6 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
 import { ContentLink } from '~/components/content-link'
 import { ContentLinkFooter } from '~/components/content-link-footer'
 import { ContentLinkImage } from '~/components/content-link-image'
@@ -18,10 +17,8 @@ import type { Route } from './+types/route'
 export default function PodcastPage({ loaderData }: Route.ComponentProps) {
   const { podcast } = loaderData
 
-  const podcastCoverAlt = podcast.cover?.altText ?? ''
-  const podcastCoverSrc = href('/resources/podcast-cover/:coverId', {
-    coverId: podcast.cover?.id ?? '',
-  })
+  const podcastCoverAlt = podcast.cover.altText
+  const podcastCoverSources = podcast.cover.sources
 
   return (
     <Page>
@@ -37,7 +34,10 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
           return (
             <ContentListItem key={episode.id}>
               <ContentLink to={`/podcasts/${podcast.slug}/${episode.slug}`}>
-                <ContentLinkImage alt={podcastCoverAlt} src={podcastCoverSrc} />
+                <ContentLinkImage
+                  alt={podcastCoverAlt}
+                  image={podcastCoverSources}
+                />
                 <ContentLinkTitle>{`#${episode.number} ${episode.title}`}</ContentLinkTitle>
                 <ContentLinkFooter>
                   <ContentLinkPublishDate date={episode.publishedAt} />

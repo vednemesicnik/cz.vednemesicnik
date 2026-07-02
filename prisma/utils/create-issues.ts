@@ -2,8 +2,8 @@ import type { PrismaClient } from '@generated/prisma/client'
 import type { ContentState } from '@generated/prisma/enums'
 import { users } from '~~/data/users'
 
-import { getIssueCover } from './get-issue-cover'
 import { getIssuePdf } from './get-issue-pdf'
+import { storeSeedImage } from './store-seed-image'
 
 export type IssuesData = {
   label: string
@@ -35,7 +35,7 @@ export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
           },
           cover: issue.cover
             ? {
-                create: await getIssueCover({
+                create: await storeSeedImage({
                   altText: issue.cover.altText,
                   filePath: issue.cover.filePath,
                 }),

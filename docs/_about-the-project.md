@@ -56,6 +56,7 @@ The project leverages modern web technologies for scalability and maintainabilit
 ## Code and Repository Structure
 The repository is organized as follows:
 - **`app/`**: Core application code, including components, routes, and utilities.
+- **`data/`**: Local dev data volume (git-ignored), mirroring the production Fly volume: the SQLite database (`data/sqlite.db`) and the on-disk image store (`data/images`).
 - **`docker/`**: Docker configuration for containerization.
 - **`docs/`**: Project documentation.
 - **`prisma/`**: Database schema and migration files.

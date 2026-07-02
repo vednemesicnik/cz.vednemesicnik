@@ -1,11 +1,15 @@
 import type { ContentState } from '@generated/prisma/enums'
 import { createId } from '@paralleldrive/cuid2'
-import { ARTICLE_IMAGE_CONFIG } from '~/config/article-image-config'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import { prisma } from '~/utils/db.server'
+import {
+  deleteImage,
+  deleteImageVersion,
+  storeImageVariants,
+} from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
-import { getConvertedImageStream } from '~/utils/sharp.server'
+import { resolveArticleFeaturedImageSeo } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
 
 type Options = {
   articleId: string
@@ -48,36 +52,30 @@ export async function updateArticle(
     action: 'update',
     entity: 'article',
     execute: async (context) => {
-      // 1. Delete images that are not in existingImages
+      // 1. Delete images that are not in existingImages (DB row + store files)
       const existingImageIds =
         existingImages?.map((existingImage) => existingImage.id) ?? []
 
+      const removedImages = await prisma.articleImage.findMany({
+        select: { id: true },
+        where: { articleId, id: { notIn: existingImageIds } },
+      })
+      const removedImageIds = removedImages.map(({ id }) => id)
+
       await prisma.articleImage.deleteMany({
-        where: {
-          articleId,
-          id: {
-            notIn: existingImageIds,
-          },
-        },
+        where: { id: { in: removedImageIds } },
       })
 
-      // 2. Process and create new images
+      await Promise.all(removedImageIds.map((id) => deleteImage(id)))
+
+      // 2. Process and create new images (variants written before the row commits)
       let createdImages: Array<{ id: string }> = []
-      if (images?.length !== undefined) {
+      if (images?.length) {
         const processedImages = await Promise.all(
           images.map(async ({ file, altText, description }) => {
-            const converted = await getConvertedImageStream(file, {
-              format: ARTICLE_IMAGE_CONFIG.format,
-              height: ARTICLE_IMAGE_CONFIG.height,
-              quality: ARTICLE_IMAGE_CONFIG.quality,
-              width: ARTICLE_IMAGE_CONFIG.width,
-            })
-            return {
-              altText,
-              blob: Uint8Array.from(await converted.stream.toBuffer()),
-              contentType: converted.contentType,
-              description: description || null,
-            }
+            const id = createId()
+            const meta = await storeImageVariants(id, file)
+            return { ...meta, altText, description: description || null, id }
           }),
         )
 
@@ -95,31 +93,33 @@ export async function updateArticle(
       }
 
       // 3. Update existing images
-      if (existingImages?.length !== undefined) {
+      if (existingImages?.length) {
         await Promise.all(
           existingImages.map(async ({ id, altText, description, file }) => {
-            // Check if file replacement is needed
+            // Replace the file: store a new version, then drop the old version's
+            // files. The stable id + new version yields a fresh, cache-busted URL.
             if (file !== undefined && file.size > 0) {
-              const converted = await getConvertedImageStream(file, {
-                format: ARTICLE_IMAGE_CONFIG.format,
-                height: ARTICLE_IMAGE_CONFIG.height,
-                quality: ARTICLE_IMAGE_CONFIG.quality,
-                width: ARTICLE_IMAGE_CONFIG.width,
+              const previous = await prisma.articleImage.findUnique({
+                select: { version: true },
+                where: { id },
               })
-              return prisma.articleImage.update({
+              const meta = await storeImageVariants(id, file)
+              await prisma.articleImage.update({
                 data: {
+                  ...meta,
                   altText,
-                  blob: Uint8Array.from(await converted.stream.toBuffer()),
-                  contentType: converted.contentType,
                   description: description || null,
-                  id: createId(), // New ID forces browser to download new image
                 },
                 where: { id },
               })
+              if (previous?.version && previous.version !== meta.version) {
+                await deleteImageVersion(id, previous.version)
+              }
+              return
             }
 
             // Just update metadata
-            return prisma.articleImage.update({
+            await prisma.articleImage.update({
               data: {
                 altText,
                 description: description || null,
@@ -167,13 +167,8 @@ export async function updateArticle(
       // 6. Update or create PageSEO record for the article
       const pathname = `/articles/${slug}`
 
-      // Generate og:image and twitter:image URLs if article has featured image
-      let ogImageUrl: string | null = null
-      let twitterImageUrl: string | null = null
-      if (featuredImageId) {
-        ogImageUrl = `/resources/article-image/${featuredImageId}?width=1200&height=630`
-        twitterImageUrl = `/resources/article-image/${featuredImageId}?width=1200&height=630`
-      }
+      const { ogImageUrl, twitterImageUrl } =
+        await resolveArticleFeaturedImageSeo(featuredImageId)
 
       await prisma.pageSEO.upsert({
         create: {

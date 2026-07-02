@@ -1,4 +1,8 @@
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 
 export const loader = async () => {
   const latestIssue = await prisma.issue.findFirst({
@@ -7,9 +11,7 @@ export const loader = async () => {
     },
     select: {
       cover: {
-        select: {
-          id: true,
-        },
+        select: imageSourceSelect,
       },
       label: true,
       pdf: {
@@ -29,16 +31,12 @@ export const loader = async () => {
     },
     select: {
       cover: {
-        select: {
-          id: true,
-        },
+        select: imageSourceSelect,
       },
       podcast: {
         select: {
           cover: {
-            select: {
-              id: true,
-            },
+            select: imageSourceSelect,
           },
           slug: true,
         },
@@ -51,7 +49,24 @@ export const loader = async () => {
   })
 
   return {
-    latestIssue,
-    latestPodcastEpisode,
+    latestIssue: latestIssue
+      ? {
+          ...latestIssue,
+          coverSources: createImageSources('issue-cover', latestIssue.cover),
+        }
+      : null,
+    latestPodcastEpisode: latestPodcastEpisode
+      ? {
+          ...latestPodcastEpisode,
+          coverSources: createImageSources(
+            'podcast-episode-cover',
+            latestPodcastEpisode.cover,
+          ),
+          podcastCoverSources: createImageSources(
+            'podcast-cover',
+            latestPodcastEpisode.podcast.cover,
+          ),
+        }
+      : null,
   }
 }

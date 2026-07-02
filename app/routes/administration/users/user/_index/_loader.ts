@@ -1,7 +1,9 @@
-import { href } from 'react-router'
-
 import { prisma } from '~/utils/db.server'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
 import type { Route } from './+types/route'
@@ -31,9 +33,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       email: true,
       id: true,
       image: {
-        select: {
-          id: true,
-        },
+        select: imageSourceSelect,
       },
       name: true,
       role: {
@@ -86,9 +86,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       email: user.email,
       hasImage: !!user.image,
       id: user.id,
-      imageUrl: user.image
-        ? href('/resources/user-image/:imageId', { imageId: user.image.id })
-        : null,
+      imageUrl: createImageSources('user-image', user.image).src ?? null,
       name: user.name,
       role: user.role,
       updatedAt: getFormattedPublishDate(user.updatedAt),

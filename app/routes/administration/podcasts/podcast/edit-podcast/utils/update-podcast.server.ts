@@ -1,7 +1,5 @@
-import { createId } from '@paralleldrive/cuid2'
-
 import { prisma } from '~/utils/db.server'
-import { getConvertedImageStream } from '~/utils/sharp.server'
+import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -24,14 +22,26 @@ export async function updatePodcast({
   authorId,
 }: Args) {
   const coverAltText = `Obálka podcastu ${title}`
-  const convertedCover = cover
-    ? await getConvertedImageStream(cover, {
-        format: 'jpeg',
-        height: 1280,
-        quality: 80,
-        width: 1280,
-      })
-    : undefined
+
+  // Remember the current cover version so its files can be removed once the new
+  // version is committed (see `prepareCoverReplacement`). Only queried when the
+  // cover is actually being replaced.
+  const previousVersion =
+    cover === undefined
+      ? null
+      : ((
+          await prisma.podcastCover.findUnique({
+            select: { version: true },
+            where: { id: coverId },
+          })
+        )?.version ?? null)
+
+  const { data: coverData, cleanup } = await prepareCoverReplacement({
+    altText: coverAltText,
+    coverId,
+    file: cover,
+    previousVersion,
+  })
 
   try {
     await prisma.podcast.update({
@@ -39,19 +49,7 @@ export async function updatePodcast({
         authorId: authorId,
         cover: {
           update: {
-            data:
-              convertedCover !== undefined
-                ? {
-                    altText: coverAltText,
-                    blob: Uint8Array.from(
-                      await convertedCover.stream.toBuffer(),
-                    ),
-                    contentType: convertedCover.contentType,
-                    id: createId(), // New ID forces browser to download new image
-                  }
-                : {
-                    altText: coverAltText,
-                  },
+            data: coverData,
             where: { id: coverId },
           },
         },
@@ -61,6 +59,8 @@ export async function updatePodcast({
       },
       where: { id },
     })
+
+    await cleanup()
   } catch (error) {
     throwDbError(error, 'Unable to update the podcast.')
   }

@@ -213,15 +213,29 @@ export default [
   route('links', 'routes/links/route.tsx'),
 
   // Resource routes
+  // Image variants are keyed by row id + version + variant name (e.g. "960.avif"
+  // or "og.jpeg"); version in the path makes `immutable` caching safe.
   ...prefix('resources', [
-    route('article-image/:imageId', 'routes/resources/article-image/route.ts'),
-    route('issue-cover/:coverId', 'routes/resources/issue-cover/route.ts'),
-    route('podcast-cover/:coverId', 'routes/resources/podcast-cover/route.ts'),
     route(
-      'podcast-episode-cover/:coverId',
+      'article-image/:imageId/:version/:variant',
+      'routes/resources/article-image/route.ts',
+    ),
+    route(
+      'issue-cover/:coverId/:version/:variant',
+      'routes/resources/issue-cover/route.ts',
+    ),
+    route(
+      'podcast-cover/:coverId/:version/:variant',
+      'routes/resources/podcast-cover/route.ts',
+    ),
+    route(
+      'podcast-episode-cover/:coverId/:version/:variant',
       'routes/resources/podcast-episode-cover/route.ts',
     ),
-    route('user-image/:imageId', 'routes/resources/user-image/route.ts'),
+    route(
+      'user-image/:imageId/:version/:variant',
+      'routes/resources/user-image/route.ts',
+    ),
     route('env.js', 'routes/resources/env-script/route.ts'),
   ]),
 ] satisfies RouteConfig

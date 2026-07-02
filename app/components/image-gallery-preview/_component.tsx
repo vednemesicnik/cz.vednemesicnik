@@ -2,20 +2,21 @@ import { clsx } from 'clsx'
 import { type ReactNode, useRef } from 'react'
 import { CloseIcon } from '~/components/icons/close-icon'
 import { Image } from '~/components/image'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 import styles from './_styles.module.css'
 
 type Props = {
   alt: string
   className?: string
   description?: ReactNode
-  src: string
+  image: ImageSources
 }
 
 export const ImageGalleryPreview = ({
   alt,
   className,
   description,
-  src,
+  image,
 }: Props) => {
   const dialogRef = useRef<HTMLDialogElement>(null)
 
@@ -37,7 +38,7 @@ export const ImageGalleryPreview = ({
           type="button"
         >
           <div className={styles.imageWrapper}>
-            <Image alt={alt} height={200} src={src} width={300} />
+            <Image {...image} alt={alt} sizes={'300px'} />
           </div>
         </button>
       </div>
@@ -56,7 +57,12 @@ export const ImageGalleryPreview = ({
           </div>
 
           <figure className={styles.dialogImageWrapper}>
-            <Image alt={alt} height={560} src={src} width={840} />
+            <Image
+              {...image}
+              alt={alt}
+              sizes={'(min-width: 56rem) 840px, 100vw'}
+            />
+
             {description && (
               <figcaption className={styles.dialogDescription}>
                 {description}

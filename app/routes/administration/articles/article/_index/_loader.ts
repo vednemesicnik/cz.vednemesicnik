@@ -1,6 +1,9 @@
-import { createArticleImageUrl } from '~/utils/create-article-image-url'
 import { prisma } from '~/utils/db.server'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import type { Route } from './+types/route'
@@ -46,9 +49,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       featuredImageId: true,
       id: true,
       images: {
-        select: {
-          id: true,
-        },
+        select: imageSourceSelect,
       },
       publishedAt: true,
       reviews: {
@@ -204,7 +205,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       id: article.id,
       images: article.images.map((image) => ({
         id: image.id,
-        url: createArticleImageUrl(image.id),
+        sources: createImageSources('article-image', image),
       })),
       publishedAt: getFormattedPublishDate(article.publishedAt),
       reviews: article.reviews.map((review) => ({

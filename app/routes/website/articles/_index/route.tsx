@@ -30,13 +30,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <ContentList>
         {articles.map((article) => {
-          const featuredImageSrc =
-            article.featuredImage?.id !== undefined
-              ? href('/resources/article-image/:imageId', {
-                  imageId: article.featuredImage.id,
-                })
-              : undefined
-
           return (
             <ContentListItem key={article.id}>
               <ContentLink
@@ -46,7 +39,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               >
                 <ContentLinkImage
                   alt={article.featuredImage?.altText}
-                  src={featuredImageSrc}
+                  image={article.featuredImage?.sources}
                 />
                 <ContentLinkTitle>{article.title}</ContentLinkTitle>
                 <ContentLinkFooter>

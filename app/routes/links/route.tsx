@@ -1,9 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { ComponentProps } from 'react'
 import { href } from 'react-router'
 import { SocialSites } from '~/components/social-sites'
-import { getPodcastEpisodeCoverSrc } from '~/utils/get-podcast-episode-cover-src'
 import type { Route } from './+types/route'
 import { Content } from './components/content'
 import { Footer } from './components/footer'
@@ -22,39 +20,19 @@ export { links } from './_links'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-type GraphicLinkImage = ComponentProps<typeof GraphicLink>['image']
-
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { latestIssue, latestPodcastEpisode } = loaderData
 
-  const latestIssueCoverImage: GraphicLinkImage =
-    latestIssue !== null && latestIssue.cover !== null
-      ? {
-          height: 70,
-          src: href('/resources/issue-cover/:coverId', {
-            coverId: latestIssue.cover.id,
-          }),
-          width: 50,
-        }
-      : undefined
+  const latestIssueCoverImage = latestIssue?.coverSources.src
+    ? latestIssue.coverSources
+    : undefined
 
-  const latestEpisodeCoverImage: GraphicLinkImage =
-    latestPodcastEpisode !== null && latestPodcastEpisode.cover !== null
-      ? {
-          height: 50,
-          src: getPodcastEpisodeCoverSrc(latestPodcastEpisode.cover.id),
-          width: 50,
-        }
-      : latestPodcastEpisode !== null &&
-          latestPodcastEpisode.podcast.cover !== null
-        ? {
-            height: 50,
-            src: href('/resources/podcast-cover/:coverId', {
-              coverId: latestPodcastEpisode.podcast.cover.id,
-            }),
-            width: 50,
-          }
-        : undefined
+  // Prefer the episode's own cover, fall back to the podcast cover.
+  const latestEpisodeCoverImage = latestPodcastEpisode?.coverSources.src
+    ? latestPodcastEpisode.coverSources
+    : latestPodcastEpisode?.podcastCoverSources.src
+      ? latestPodcastEpisode.podcastCoverSources
+      : undefined
 
   return (
     <>

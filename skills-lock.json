@@ -1,0 +1,65 @@
+{
+  "skills": {
+    "modern-web-guidance": {
+      "computedHash": "9f4a50b16567d3e146014ca1e36cf31d11a9b28468eebdbbbee06ffe3b08dda8",
+      "skillPath": "skills/modern-web-guidance/SKILL.md",
+      "source": "GoogleChrome/modern-web-guidance",
+      "sourceType": "github"
+    },
+    "prisma-cli": {
+      "computedHash": "1cfdc0011df8699a2ece587f229a1e892df2a9a3eec40b5407492cb4c6570e95",
+      "skillPath": "prisma-cli/SKILL.md",
+      "source": "prisma/skills",
+      "sourceType": "github"
+    },
+    "prisma-client-api": {
+      "computedHash": "0434410e48fb796bbdc3ad0050654bfc9cf72c89b30dbad098ee5c9f655b7f85",
+      "skillPath": "prisma-client-api/SKILL.md",
+      "source": "prisma/skills",
+      "sourceType": "github"
+    },
+    "prisma-compute": {
+      "computedHash": "a1ef67f3d25a197c37df62ba1d0b39a043276f990980cf270585ee7afc545004",
+      "skillPath": "prisma-compute/SKILL.md",
+      "source": "prisma/skills",
+      "sourceType": "github"
+    },
+    "prisma-database-setup": {
+      "computedHash": "46d2dc2f9c968722376bbb6a1a1389c82bd7cceb5973ac1486c54890514b8959",
+      "skillPath": "prisma-database-setup/SKILL.md",
+      "source": "prisma/skills",
+      "sourceType": "github"
+    },
+    "prisma-driver-adapter-implementation": {
+      "computedHash": "2e00b0d05f0da23796f6d44684e19219b74cf993f8a2df6e5b044812f375bbc6",
+      "skillPath": "prisma-driver-adapter-implementation/SKILL.md",
+      "source": "prisma/skills",
+      "sourceType": "github"
+    },
+    "prisma-postgres": {
+      "computedHash": "d090d1206fb6a2dd9f7b9f658d851ccd653132512c53c6e0a164110d9ee80005",
+      "skillPath": "prisma-postgres/SKILL.md",
+      "source": "prisma/skills",
+      "sourceType": "github"
+    },
+    "prisma-postgres-setup": {
+      "computedHash": "5dbcf5a488d7cb7136340b86dcf781d6d92cf793f92c105ef644ac31ccac4d3b",
+      "skillPath": "prisma-postgres-setup/SKILL.md",
+      "source": "prisma/skills",
+      "sourceType": "github"
+    },
+    "prisma-upgrade-v7": {
+      "computedHash": "2e4d54a4c7a0fc2476e81686718a765f5eb2cacfb2fb0822f3109c76bf4a9bb0",
+      "skillPath": "prisma-upgrade-v7/SKILL.md",
+      "source": "prisma/skills",
+      "sourceType": "github"
+    },
+    "react-router": {
+      "computedHash": "ff4d9bc724f0e56a51c453eef5b93caef1c16d3623ac49345d74fc1a5efbc05a",
+      "skillPath": ".agents/skills/react-router/SKILL.md",
+      "source": "remix-run/react-router",
+      "sourceType": "github"
+    }
+  },
+  "version": 1
+}

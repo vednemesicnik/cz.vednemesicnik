@@ -26,6 +26,7 @@
     "app/**/.client/**/*",
     "server/**/*",
     "prisma/**/*",
+    "scripts/**/*",
     ".react-router/types/**/*"
   ]
 }

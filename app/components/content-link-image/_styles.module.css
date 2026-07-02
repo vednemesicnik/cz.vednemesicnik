@@ -8,6 +8,13 @@
     width: 192px;
     height: 108px;
 
+    /* Fixed 16:9 thumbnail box → images must cover the box, not keep their
+       own aspect ratio. Height comes from this flex parent's
+       `align-items: stretch`; we only need to crop with cover. */
+    & img {
+      object-fit: cover;
+    }
+
     &::after {
       content: "";
       display: block;

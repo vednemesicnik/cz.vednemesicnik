@@ -15,13 +15,6 @@ export { meta } from './_meta'
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { latestPublishedArticle } = loaderData
 
-  const latestArticleImageSrc =
-    latestPublishedArticle?.featuredImage?.id !== undefined
-      ? href('/resources/article-image/:imageId', {
-          imageId: latestPublishedArticle.featuredImage.id,
-        })
-      : undefined
-
   return (
     <Page>
       <HeadlineGroup>
@@ -32,8 +25,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       {latestPublishedArticle && (
         <ArticleHero
           authors={latestPublishedArticle.authors}
+          image={latestPublishedArticle.featuredImage?.sources}
           imageAlt={latestPublishedArticle.featuredImage?.altText}
-          imageSrc={latestArticleImageSrc}
           publishDate={latestPublishedArticle.publishedAt}
           title={latestPublishedArticle.title}
           to={href('/articles/:articleSlug', {

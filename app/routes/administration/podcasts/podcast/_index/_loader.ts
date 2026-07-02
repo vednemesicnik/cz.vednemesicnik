@@ -1,7 +1,9 @@
-import { href } from 'react-router'
-
 import { prisma } from '~/utils/db.server'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import type { Route } from './+types/route'
@@ -37,9 +39,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         },
       },
       cover: {
-        select: {
-          id: true,
-        },
+        select: imageSourceSelect,
       },
       createdAt: true,
       description: true,
@@ -172,11 +172,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     needsCoordinatorReview,
     podcast: {
       author: podcast.author,
-      coverUrl: podcast.cover
-        ? href('/resources/podcast-cover/:coverId', {
-            coverId: podcast.cover.id,
-          })
-        : null,
+      coverUrl: createImageSources('podcast-cover', podcast.cover).src ?? null,
       createdAt: getFormattedPublishDate(podcast.createdAt),
       description: podcast.description,
       hasCoordinatorReview: !!coordinatorReview,

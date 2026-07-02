@@ -1,8 +1,9 @@
-import { ARTICLE_IMAGE_CONFIG } from '~/config/article-image-config'
+import { createId } from '@paralleldrive/cuid2'
 import type { FeaturedImage } from '~/config/featured-image-config'
+import { buildArticleFeaturedImageSeo } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
 import { prisma } from '~/utils/db.server'
+import { storeImageVariants } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
-import { getConvertedImageStream } from '~/utils/sharp.server'
 
 type Options = {
   title: string
@@ -38,21 +39,13 @@ export async function createArticle(
       const featuredImageIndex =
         featuredImage.source === 'new' ? featuredImage.index : undefined
 
-      // Process all images
+      // Generate ids up front so variant files can be keyed by id and written to
+      // the store before the row is committed (FS-before-DB ordering).
       const processedImages = await Promise.all(
-        (images || []).map(async ({ file, altText, description }) => {
-          const converted = await getConvertedImageStream(file, {
-            format: ARTICLE_IMAGE_CONFIG.format,
-            height: ARTICLE_IMAGE_CONFIG.height,
-            quality: ARTICLE_IMAGE_CONFIG.quality,
-            width: ARTICLE_IMAGE_CONFIG.width,
-          })
-          return {
-            altText,
-            blob: Uint8Array.from(await converted.stream.toBuffer()),
-            contentType: converted.contentType,
-            description: description || null,
-          }
+        (images ?? []).map(async ({ file, altText, description }) => {
+          const id = createId()
+          const meta = await storeImageVariants(id, file)
+          return { ...meta, altText, description: description || null, id }
         }),
       )
 
@@ -75,20 +68,18 @@ export async function createArticle(
           },
           title,
         },
-        select: { id: true, images: { select: { id: true } }, state: true },
+        select: { id: true, state: true },
       })
 
       // Set featured image if specified
-      let finalFeaturedImageId: string | null = null
-      if (
-        featuredImageIndex !== undefined &&
-        createdArticle.images[featuredImageIndex]
-      ) {
-        finalFeaturedImageId = createdArticle.images[featuredImageIndex].id
+      const featuredImageData =
+        featuredImageIndex === undefined
+          ? null
+          : (processedImages[featuredImageIndex] ?? null)
+
+      if (featuredImageData) {
         await prisma.article.update({
-          data: {
-            featuredImageId: finalFeaturedImageId,
-          },
+          data: { featuredImageId: featuredImageData.id },
           where: { id: createdArticle.id },
         })
       }
@@ -96,13 +87,14 @@ export async function createArticle(
       // Create PageSEO record for the article
       const pathname = `/articles/${slug}`
 
-      // Generate og:image and twitter:image URLs if article has featured image
-      let ogImageUrl: string | null = null
-      let twitterImageUrl: string | null = null
-      if (finalFeaturedImageId) {
-        ogImageUrl = `/resources/article-image/${finalFeaturedImageId}?width=1200&height=630`
-        twitterImageUrl = `/resources/article-image/${finalFeaturedImageId}?width=1200&height=630`
-      }
+      // Build the OG URLs straight from the in-memory image metadata (no DB read).
+      const { ogImageUrl, twitterImageUrl } = featuredImageData
+        ? await buildArticleFeaturedImageSeo({
+            imageId: featuredImageData.id,
+            intrinsicWidth: featuredImageData.intrinsicWidth,
+            version: featuredImageData.version,
+          })
+        : { ogImageUrl: null, twitterImageUrl: null }
 
       await prisma.pageSEO.create({
         data: {

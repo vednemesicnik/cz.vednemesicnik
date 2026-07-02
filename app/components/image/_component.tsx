@@ -1,64 +1,54 @@
 import { clsx } from 'clsx'
 import { useEffect, useState } from 'react'
 
-import { createImageSources } from '~/utils/create-image-sources'
-import { useHydrated } from '~/utils/use-hydrated'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 import styles from './_styles.module.css'
 
-const DEFAULT_QUALITY = 75
-const DEFAULT_PLACEHOLDER_QUALITY = 25
-
-type Props = {
-  src: string | undefined
-  alt: string | undefined
-  width: number
-  height: number
+// HTML-native props: the responsive source strings (`src`, `srcSet`, `avifSrcSet`,
+// `width`, `height`, `placeholder`) come straight from `createImageSources` and are
+// usually spread in — `<Image {...sources} alt sizes />`.
+type Props = Partial<ImageSources> & {
+  alt?: string
+  // Layout hint for picking a width from `srcSet`. Defaults to full viewport
+  // width; pass a tighter value (e.g. "300px", "(min-width: 48rem) 50vw, 100vw")
+  // where the image renders smaller.
+  sizes?: string
   className?: string
+  loading?: 'lazy' | 'eager'
+  fetchPriority?: 'auto' | 'high' | 'low'
 }
 
-export const Image = ({ src, alt, width, height, className }: Props) => {
-  const isHydrated = useHydrated()
+export const Image = ({
+  src,
+  srcSet,
+  avifSrcSet,
+  width,
+  height,
+  placeholder,
+  alt = '',
+  sizes = '100vw',
+  className,
+  loading = 'lazy',
+  fetchPriority = 'low',
+}: Props) => {
+  // Start "loaded" so a cache-hit image (already `complete` on mount, before any
+  // onLoad can fire) shows immediately without a fade. The effect below flips it
+  // back to false only for lazy images that still need to fetch — eager (LCP)
+  // images are never hidden, avoiding a post-hydration flash of the SSR image.
   const [isHighResImageLoaded, setIsHighResImageLoaded] = useState(true)
   const [highResImage, setHighResImage] = useState<HTMLImageElement | null>(
     null,
   )
 
-  // Check if image needs loading (not from cache)
   useEffect(() => {
-    if (highResImage && !highResImage.complete) {
+    if (loading === 'lazy' && highResImage && !highResImage.complete) {
       setIsHighResImageLoaded(false)
     }
-  }, [highResImage])
+  }, [highResImage, loading])
 
   if (src === undefined) {
     return <div className={clsx(styles.container, className)} />
   }
-
-  const calculatedPlaceholderWidth = Math.max(1, Math.round(width / 10))
-  const calculatedPlaceholderHeight = Math.max(1, Math.round(height / 10))
-
-  const {
-    avifSrc_1x: avifPlaceholderSrc_1x,
-    webpSrc_1x: webpPlaceholderSrc_1x,
-    jpegSrc_1x: jpegPlaceholderSrc_1x,
-  } = createImageSources(src, {
-    height: calculatedPlaceholderHeight,
-    quality: DEFAULT_PLACEHOLDER_QUALITY,
-    width: calculatedPlaceholderWidth,
-  })
-
-  const {
-    avifSrc_1x,
-    avifSrc_2x,
-    webpSrc_1x,
-    webpSrc_2x,
-    jpegSrc_1x,
-    jpegSrc_2x,
-  } = createImageSources(src, {
-    height,
-    quality: DEFAULT_QUALITY,
-    width,
-  })
 
   const handleHighResImageLoad = () => {
     setIsHighResImageLoaded(true)
@@ -66,53 +56,44 @@ export const Image = ({ src, alt, width, height, className }: Props) => {
 
   return (
     <div className={clsx(styles.container, className)}>
-      {/* Low-res placeholder */}
-      <picture className={styles.lowResPicture}>
-        <source srcSet={avifPlaceholderSrc_1x} type={'image/avif'} />
-        <source srcSet={webpPlaceholderSrc_1x} type={'image/webp'} />
+      {/* Inline LQIP placeholder (data URI → 0 network requests). Decorative:
+          the real image below carries the alt text, so this one is hidden from
+          assistive tech to avoid a duplicate announcement. */}
+      <img
+        alt={''}
+        aria-hidden
+        className={clsx(styles.image, styles.lowResImage)}
+        decoding={'async'}
+        height={height}
+        src={placeholder}
+        width={width}
+      />
+
+      {/* High-res responsive image — rendered on the server too so the browser's
+          preload scanner can discover and fetch it for LCP (no hydration gate). */}
+      <picture
+        className={clsx(
+          styles.highResPicture,
+          isHighResImageLoaded && styles.highResPictureLoaded,
+        )}
+      >
+        <source sizes={sizes} srcSet={avifSrcSet} type={'image/avif'} />
+        <source sizes={sizes} srcSet={srcSet} type={'image/jpeg'} />
         <img
           alt={alt}
           className={styles.image}
           decoding={'async'}
-          fetchPriority={'low'}
+          fetchPriority={fetchPriority}
           height={height}
-          loading={'lazy'}
-          src={jpegPlaceholderSrc_1x}
+          loading={loading}
+          onLoad={handleHighResImageLoad}
+          ref={setHighResImage}
+          sizes={sizes}
+          src={src}
+          srcSet={srcSet}
           width={width}
         />
       </picture>
-
-      {/* High-res image */}
-      {isHydrated && (
-        <picture
-          className={clsx(
-            styles.highResPicture,
-            isHighResImageLoaded && styles.highResPictureLoaded,
-          )}
-        >
-          <source
-            srcSet={`${avifSrc_1x}, ${avifSrc_2x} 2x`}
-            type={'image/avif'}
-          />
-          <source
-            srcSet={`${webpSrc_1x}, ${webpSrc_2x} 2x`}
-            type={'image/webp'}
-          />
-          <img
-            alt={alt}
-            className={styles.image}
-            decoding={'async'}
-            fetchPriority={'low'}
-            height={height}
-            loading={'lazy'}
-            onLoad={handleHighResImageLoad}
-            ref={setHighResImage}
-            src={jpegSrc_1x}
-            srcSet={`${jpegSrc_1x}, ${jpegSrc_2x} 2x`}
-            width={width}
-          />
-        </picture>
-      )}
     </div>
   )
 }

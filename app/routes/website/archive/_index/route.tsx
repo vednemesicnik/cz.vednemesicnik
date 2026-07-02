@@ -35,9 +35,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           if (cover === null || pdf === null) return null
 
           const coverAlt = cover.altText
-          const coverSrc = href('/resources/issue-cover/:coverId', {
-            coverId: cover.id,
-          })
           const pdfSrc = href('/archive/:fileName', { fileName: pdf.fileName })
 
           return (
@@ -45,10 +42,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               <Link reloadDocument={true} title={label} to={pdfSrc}>
                 <Tile label={label}>
                   <Image
+                    {...cover.sources}
                     alt={coverAlt}
-                    height={sizeConfig.archivedIssueCover.height}
-                    src={coverSrc}
-                    width={sizeConfig.archivedIssueCover.width}
+                    sizes={`${sizeConfig.archivedIssueCover.width}px`}
                   />
                 </Tile>
               </Link>

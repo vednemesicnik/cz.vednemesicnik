@@ -6,9 +6,9 @@ import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
+import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
-import { getConvertedImageStream } from '~/utils/sharp.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -76,15 +76,25 @@ export const action = async ({ request }: Route.ActionArgs) => {
     releasedAt,
   )
 
-  const convertedCover =
-    cover !== undefined
-      ? await getConvertedImageStream(cover, {
-          format: 'jpeg',
-          height: 1280,
-          quality: 80,
-          width: 905,
-        })
-      : undefined
+  // Remember the current cover version so its files can be removed once the new
+  // version is committed (see `prepareCoverReplacement`). Only queried when the
+  // cover is actually being replaced.
+  const previousCoverVersion =
+    cover === undefined
+      ? null
+      : ((
+          await prisma.issueCover.findUnique({
+            select: { version: true },
+            where: { id: coverId },
+          })
+        )?.version ?? null)
+
+  const { data: coverData, cleanup } = await prepareCoverReplacement({
+    altText: coverAltText,
+    coverId,
+    file: cover,
+    previousVersion: previousCoverVersion,
+  })
 
   try {
     await prisma.issue.update({
@@ -92,19 +102,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
         authorId: authorId,
         cover: {
           update: {
-            data:
-              convertedCover !== undefined
-                ? {
-                    altText: coverAltText,
-                    blob: Uint8Array.from(
-                      await convertedCover.stream.toBuffer(),
-                    ),
-                    contentType: convertedCover.contentType,
-                    id: createId(), // New ID forces browser to download new image
-                  }
-                : {
-                    altText: coverAltText,
-                  },
+            data: coverData,
             where: { id: coverId },
           },
         },
@@ -132,6 +130,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
       },
       where: { id: id },
     })
+
+    await cleanup()
 
     return redirect(href('/administration/archive/:issueId', { issueId: id }))
   } catch (error) {
