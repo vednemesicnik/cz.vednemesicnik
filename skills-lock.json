@@ -1,0 +1,17 @@
+{
+  "skills": {
+    "modern-web-guidance": {
+      "computedHash": "9f4a50b16567d3e146014ca1e36cf31d11a9b28468eebdbbbee06ffe3b08dda8",
+      "skillPath": "skills/modern-web-guidance/SKILL.md",
+      "source": "GoogleChrome/modern-web-guidance",
+      "sourceType": "github"
+    },
+    "react-router": {
+      "computedHash": "ff4d9bc724f0e56a51c453eef5b93caef1c16d3623ac49345d74fc1a5efbc05a",
+      "skillPath": ".agents/skills/react-router/SKILL.md",
+      "source": "remix-run/react-router",
+      "sourceType": "github"
+    }
+  },
+  "version": 1
+}
