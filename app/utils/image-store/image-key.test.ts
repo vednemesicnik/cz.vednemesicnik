@@ -7,7 +7,6 @@ import {
 } from '~/config/image-variants-config'
 
 import {
-  OG_VARIANT_NAME,
   buildImagePrefix,
   buildKeyFromVariant,
   buildOgKey,
@@ -15,6 +14,7 @@ import {
   buildVersionPrefix,
   getVariantContentType,
   isValidVariantName,
+  OG_VARIANT_NAME,
 } from './image-key'
 
 const id = 'abcdef123456'
@@ -82,13 +82,21 @@ describe('isValidVariantName', () => {
     }
   })
 
-  test('rejects widths outside the ladder', () => {
-    expect(isValidVariantName('500.avif')).toBe(false)
+  test('accepts widths outside the ladder (small images get an intrinsic-width variant)', () => {
+    expect(isValidVariantName('250.jpeg')).toBe(true)
+    expect(isValidVariantName('500.avif')).toBe(true)
   })
 
   test('rejects unknown formats', () => {
     expect(isValidVariantName('960.webp')).toBe(false)
     expect(isValidVariantName('960.png')).toBe(false)
+  })
+
+  test('rejects non-positive-integer widths', () => {
+    expect(isValidVariantName('0.jpeg')).toBe(false)
+    expect(isValidVariantName('0640.jpeg')).toBe(false)
+    expect(isValidVariantName('-960.jpeg')).toBe(false)
+    expect(isValidVariantName('96.5.jpeg')).toBe(false)
   })
 
   test('rejects traversal and malformed names', () => {

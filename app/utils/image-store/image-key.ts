@@ -2,7 +2,6 @@ import type { ImageVariantFormat } from '~/config/image-variants-config'
 import {
   IMAGE_CONTENT_TYPE,
   IMAGE_VARIANT_FORMATS,
-  IMAGE_VARIANT_WIDTHS,
 } from '~/config/image-variants-config'
 
 // Storage is keyed by the image row `id` (not by content bytes): each row owns its
@@ -45,18 +44,20 @@ export function buildOgKey(id: string, version: string) {
   return `${buildVersionPrefix(id, version)}${OG_VARIANT_NAME}`
 }
 
-// Whitelist of variant file names the read path will serve: the OG crop plus
-// every "<width>.<format>" from the canonical matrix. Rejecting anything else
-// prevents path traversal and unbounded cache keys.
-const VALID_VARIANT_NAMES = new Set<string>([
-  OG_VARIANT_NAME,
-  ...IMAGE_VARIANT_WIDTHS.flatMap((width) =>
-    IMAGE_VARIANT_FORMATS.map((format) => `${width}.${format}`),
-  ),
-])
+// Variant file names the read path will serve: the OG crop plus any
+// "<width>.<format>" where width is a positive integer and format is a delivered
+// format. Widths are not restricted to the canonical ladder because small images
+// (below the smallest ladder step) get a single variant at their intrinsic width
+// (see `selectVariantWidths`), which would otherwise be rejected. Constraining the
+// shape to digits + a known extension still blocks path traversal, and the read
+// path only serves files that actually exist on disk, so unbounded/nonexistent
+// widths simply 404.
+const VARIANT_NAME_PATTERN = new RegExp(
+  `^[1-9][0-9]*\\.(?:${IMAGE_VARIANT_FORMATS.join('|')})$`,
+)
 
 export function isValidVariantName(variant: string) {
-  return VALID_VARIANT_NAMES.has(variant)
+  return variant === OG_VARIANT_NAME || VARIANT_NAME_PATTERN.test(variant)
 }
 
 // Content type for a (validated) variant file name, from its extension.
