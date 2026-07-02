@@ -29,14 +29,11 @@ model User {
 model UserImage {
   id                 String   @id @default(cuid())
   altText            String?
-  // Legacy in-DB blob; being migrated to the on-disk image store (nullable during migration).
-  contentType        String?
-  blob               Bytes?
   // Image store metadata (see app/utils/image-store).
-  version            String?
-  intrinsicWidth     Int?
-  intrinsicHeight    Int?
-  placeholderDataUrl String?
+  version            String
+  intrinsicWidth     Int
+  intrinsicHeight    Int
+  placeholderDataUrl String
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -270,14 +267,11 @@ model Issue {
 model IssueCover {
   id                 String   @id @default(cuid())
   altText            String
-  // Legacy in-DB blob; being migrated to the on-disk image store (nullable during migration).
-  contentType        String?
-  blob               Bytes?
   // Image store metadata (see app/utils/image-store).
-  version            String?
-  intrinsicWidth     Int?
-  intrinsicHeight    Int?
-  placeholderDataUrl String?
+  version            String
+  intrinsicWidth     Int
+  intrinsicHeight    Int
+  placeholderDataUrl String
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   issue              Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -317,14 +311,11 @@ model Podcast {
 model PodcastCover {
   id                 String   @id @default(cuid())
   altText            String
-  // Legacy in-DB blob; being migrated to the on-disk image store (nullable during migration).
-  contentType        String?
-  blob               Bytes?
   // Image store metadata (see app/utils/image-store).
-  version            String?
-  intrinsicWidth     Int?
-  intrinsicHeight    Int?
-  placeholderDataUrl String?
+  version            String
+  intrinsicWidth     Int
+  intrinsicHeight    Int
+  placeholderDataUrl String
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   podcast            Podcast  @relation(fields: [podcastId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -378,14 +369,11 @@ model PodcastEpisodeLink {
 model PodcastEpisodeCover {
   id                 String         @id @default(cuid())
   altText            String
-  // Legacy in-DB blob; being migrated to the on-disk image store (nullable during migration).
-  contentType        String?
-  blob               Bytes?
   // Image store metadata (see app/utils/image-store).
-  version            String?
-  intrinsicWidth     Int?
-  intrinsicHeight    Int?
-  placeholderDataUrl String?
+  version            String
+  intrinsicWidth     Int
+  intrinsicHeight    Int
+  placeholderDataUrl String
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   episode            PodcastEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -449,14 +437,11 @@ model ArticleImage {
   id                 String   @id @default(cuid())
   altText            String
   description        String?
-  // Legacy in-DB blob; being migrated to the on-disk image store (nullable during migration).
-  contentType        String?
-  blob               Bytes?
   // Image store metadata (see app/utils/image-store).
-  version            String?
-  intrinsicWidth     Int?
-  intrinsicHeight    Int?
-  placeholderDataUrl String?
+  version            String
+  intrinsicWidth     Int
+  intrinsicHeight    Int
+  placeholderDataUrl String
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   article            Article  @relation("ArticleImages", fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)

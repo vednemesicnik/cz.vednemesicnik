@@ -24,47 +24,35 @@ fly deploy
 Pre-generated image variants are served as static files from `/data/images` on the
 mounted volume (the same volume as the SQLite database). The root directory is set
 via `IMAGE_STORE_PATH` in `fly.toml` (default `/data/images`). No Sharp runs on the
-read path — the resource routes just stream the ready-made files.
+read path — the resource routes just stream the ready-made files. Image metadata
+(`version`, dimensions, LQIP) lives in the DB; the images themselves are on the
+volume — SQLite no longer holds image blobs.
 
-### One-time backfill (migrating existing in-DB image blobs)
+### Reclaiming space after the blob drop (one-off)
 
-The move from in-DB `blob` columns to the on-disk store is a two-phase migration.
-The schema change that adds the nullable store fields ships and applies
-automatically (`prisma migrate deploy` in the entrypoint). After that first deploy,
-run the backfill **once** to generate the variant files and fill the new columns.
-
-The backfill is bundled into the app build (`build/migrate-images.mjs`, produced by
-`pnpm app:build`) so it runs with plain `node` inside the container — no `tsx` or
-`app/` source needed. Reads `DATABASE_URL` and `IMAGE_STORE_PATH` from the container
-environment (both already set on Fly).
+The migration that dropped the legacy in-DB `blob`/`contentType` columns frees a lot
+of space inside the SQLite file, but SQLite does not return it to the filesystem
+until a `VACUUM`. Run it **once** after that migration has been deployed:
 
 1. SSH into the console.
 ```shell
 fly ssh console --app cz-vednemesicnik
 ```
-2. Run the bundled backfill (idempotent — safe to re-run).
+2. Compact the database, then exit with `Ctrl`+`D`.
 ```shell
-node build/migrate-images.mjs
+sqlite3 /data/sqlite.db 'VACUUM;'
 ```
-3. Verify images serve correctly from the volume (open a few pages, check
-   `/resources/*` responses), then exit with `Ctrl`+`D`.
 
-Only **after** verifying serving works should the second-phase migration that makes
-the store fields required and drops the legacy `blob`/`contentType` columns (plus a
-`VACUUM` to reclaim the space) be applied.
-
-> On a dev machine (with dev deps) the same backfill can be run from TypeScript
-> directly via `pnpm images:migrate` — handy for local testing against a copy of the
-> production database.
+`VACUUM` cannot run inside the migration (SQLite forbids it in a transaction), which
+is why it is a separate manual step.
 
 ### Volume sizing
 
 Each image expands to up to 10 variant files (≤5 widths × avif + jpeg) plus an
-optional OG crop — more files than the single blob it replaces, but the total is
-still small (tens of MB for the current content). Dropping the blobs from SQLite in
-the second phase shrinks the database well below its previous size, so the combined
-footprint on the volume goes **down**. Monitor usage and extend the volume if the
-image store grows:
+optional OG crop — more files than the single blob it replaced, but the total is
+still small (tens of MB for the current content). With the blobs gone from SQLite the
+database is well below its previous size, so the combined footprint on the volume is
+**down**. Monitor usage and extend the volume if the image store grows:
 
 ```shell
 fly volume list --app cz-vednemesicnik
