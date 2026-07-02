@@ -53,6 +53,12 @@ export async function storeImageVariants(
 // Lazily derive the dedicated 1200×630 OG/social crop from the largest stored JPEG
 // variant. Idempotent: only images that actually become featured get an OG file,
 // and re-featuring an existing image works without needing the original bytes.
+//
+// Deliberate quality compromise: we re-encode from the already-compressed JPEG
+// variant (q80), not the original bytes, so the crop is lossy-on-lossy; and when
+// the intrinsic width is < 1200 it is upscaled. This is acceptable — the OG image
+// is only ever shown as a small social-card thumbnail, and keeping the originals
+// around solely for this crop is not worth the storage.
 export async function ensureOgImage(
   id: string,
   version: string,
