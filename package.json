@@ -45,7 +45,7 @@
     "autoprefixer": "10.4.27",
     "cssnano": "7.1.4",
     "lefthook": "2.1.5",
-    "postcss": "8.5.9",
+    "postcss": "8.5.10",
     "postcss-load-config": "6.0.1",
     "storybook": "10.3.5",
     "tsx": "4.22.4",
