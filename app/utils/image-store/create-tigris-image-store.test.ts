@@ -54,7 +54,7 @@ describe('createTigrisImageStore', () => {
     )
   })
 
-  test('put sends PutObject with key, body, content type and immutable cache', async () => {
+  test('put sends PutObject with key, body and content type', async () => {
     send.mockResolvedValue({})
     const store = createTigrisImageStore(config)
     const data = new Uint8Array([1, 2, 3])
@@ -66,7 +66,6 @@ describe('createTigrisImageStore', () => {
     expect(input).toMatchObject({
       Body: data,
       Bucket: 'bucket',
-      CacheControl: 'public, max-age=31536000, immutable',
       ContentType: 'image/avif',
       Key: 'ab/id/v1/960.avif',
     })

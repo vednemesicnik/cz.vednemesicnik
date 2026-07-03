@@ -11,11 +11,6 @@ import {
 
 import type { ImageStore } from './types'
 
-// Long-lived immutable caching for every stored variant. Written onto the object
-// so a future direct-from-bucket delivery path (Cloudflare in front of a public
-// bucket) sends the right header without the app on the path.
-const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable'
-
 // S3 caps a single DeleteObjects request at 1000 keys.
 const DELETE_BATCH_SIZE = 1000
 
@@ -185,11 +180,13 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
     },
 
     async put(key, data, contentType) {
+      // No object-level Cache-Control: images are served through the app read
+      // path (/resources/*, behind Cloudflare), which sets the response header
+      // itself, so the stored object's own cache headers are never used.
       await client.send(
         new PutObjectCommand({
           Body: data,
           Bucket: bucket,
-          CacheControl: IMMUTABLE_CACHE_CONTROL,
           ContentType: contentType,
           Key: key,
         }),

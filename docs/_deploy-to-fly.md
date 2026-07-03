@@ -52,16 +52,14 @@ Set it up once and migrate:
    From the app machine:
    ```shell
    fly ssh console --app cz-vednemesicnik
-   aws s3 sync /data/images "s3://$BUCKET_NAME/" --endpoint-url "$AWS_ENDPOINT_URL_S3" \
-     --cache-control "public, max-age=31536000, immutable"
+   aws s3 sync /data/images "s3://$BUCKET_NAME/" --endpoint-url "$AWS_ENDPOINT_URL_S3"
    ```
    The relative paths under `/data/images` map 1:1 onto the store keys, and `sync`
-   is idempotent. `--cache-control` stamps the same immutable header that the
-   runtime `put()` writes, so migrated objects match freshly-uploaded ones (only
-   relevant for a future direct-from-bucket path — today the app sets the header on
-   the response). If the container has no `aws` CLI, run the bundled fallback
-   `pnpm images:migrate:tigris` (walks the volume and PUTs each file — via the same
-   `put()`, so the header is set — skipping objects that already exist).
+   is idempotent. If the container has no `aws` CLI, run the bundled fallback
+   `pnpm images:migrate:tigris` (walks the volume and PUTs each file, skipping
+   objects that already exist). Object-level cache metadata is not needed: the app
+   serves images through `/resources/*` (behind Cloudflare) and sets `Cache-Control`
+   on the response itself, so the stored object's own headers are never used.
 3. Flip the driver and redeploy. Set it in `fly.toml` `[env]` so the config stays
    the single source of truth, then deploy:
    ```toml
