@@ -1,4 +1,5 @@
 import { prisma } from '~/utils/db.server'
+import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 
 type Options = {
@@ -10,6 +11,16 @@ export const deleteIssue = (request: Request, options: Options) =>
   withAuthorPermission(request, {
     action: 'delete',
     entity: 'issue',
-    execute: () => prisma.issue.delete({ where: { id: options.id } }),
+    execute: () =>
+      deleteRowWithImages(
+        async () => {
+          const issue = await prisma.issue.findUnique({
+            select: { cover: { select: { id: true } } },
+            where: { id: options.id },
+          })
+          return issue?.cover ? [issue.cover.id] : []
+        },
+        () => prisma.issue.delete({ where: { id: options.id } }),
+      ),
     target: options.target,
   })
