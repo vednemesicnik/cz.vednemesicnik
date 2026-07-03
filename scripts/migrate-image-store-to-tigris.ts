@@ -18,7 +18,10 @@ import { join, relative, sep } from 'node:path'
 
 import { createTigrisImageStore } from '../app/utils/image-store/create-tigris-image-store'
 
-const rootDir = process.env.IMAGE_STORE_PATH ?? './data/images'
+// Required, not defaulted: both real run contexts set it (Fly via the Dockerfile
+// ENV, local via .env), and a migration tool should fail loudly rather than guess
+// a path if it is somehow missing.
+const rootDir = process.env.IMAGE_STORE_PATH
 
 // Content type for the two variant extensions the store holds (avif + the jpeg
 // fallback / OG crop). Anything else is filtered out before this is called.
@@ -43,6 +46,13 @@ async function* walk(dir: string): AsyncGenerator<string> {
 }
 
 async function main() {
+  if (!rootDir) {
+    console.error(
+      'IMAGE_STORE_PATH is not set — point it at the image store root (e.g. /data/images on Fly, ./data/images locally).',
+    )
+    process.exit(1)
+  }
+
   try {
     const stats = await stat(rootDir)
     if (!stats.isDirectory()) throw new Error('not a directory')
