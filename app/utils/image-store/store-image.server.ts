@@ -111,14 +111,18 @@ export async function deleteImage(id: string) {
 // Ordering rule (delete files after DB, never before): the store ids are loaded
 // and the DB delete runs first; the store files are wiped only AFTER the delete
 // has committed, so a failed delete never removes files that still have live
-// rows. A no-op when there are no image ids (e.g. the parent has no cover).
+// rows. Every id's prefix goes in a single `delete` call so the backend can
+// batch/limit the removals itself. A no-op when there are no image ids (e.g. the
+// parent has no cover).
 export async function deleteRowWithImages<T>(
   loadImageIds: () => Promise<string[]>,
   deleteRow: () => Promise<T>,
 ): Promise<T> {
   const imageIds = await loadImageIds()
   const result = await deleteRow()
-  await Promise.all(imageIds.map((id) => deleteImage(id)))
+  if (imageIds.length > 0) {
+    await imageStore.delete(imageIds.map((id) => buildImagePrefix(id)))
+  }
   return result
 }
 

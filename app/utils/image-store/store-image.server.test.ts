@@ -38,25 +38,22 @@ describe('deleteRowWithImages', () => {
     const result = await deleteRowWithImages(loadImageIds, deleteRow)
 
     // The DB delete commits before any file is removed (delete files after DB).
-    expect(order).toEqual([
-      'load',
-      'delete-row',
-      'delete-files',
-      'delete-files',
-    ])
+    expect(order).toEqual(['load', 'delete-row', 'delete-files'])
     // The helper is transparent to the delete's return value.
     expect(result).toBe('result')
   })
 
-  test('removes the store prefix for each image id', async () => {
+  test('removes every image prefix in a single batched store call', async () => {
     await deleteRowWithImages(
       async () => ['ab123', 'cd456'],
       async () => undefined,
     )
 
-    expect(storeDelete).toHaveBeenCalledTimes(2)
-    expect(storeDelete).toHaveBeenCalledWith([buildImagePrefix('ab123')])
-    expect(storeDelete).toHaveBeenCalledWith([buildImagePrefix('cd456')])
+    expect(storeDelete).toHaveBeenCalledTimes(1)
+    expect(storeDelete).toHaveBeenCalledWith([
+      buildImagePrefix('ab123'),
+      buildImagePrefix('cd456'),
+    ])
   })
 
   test('is a no-op when there are no image ids', async () => {
