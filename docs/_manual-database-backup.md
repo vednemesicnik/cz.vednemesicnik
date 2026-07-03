@@ -78,17 +78,18 @@ Once `IMAGE_STORE_DRIVER=tigris` is in effect, backups get both simpler and fast
   tunnel. Only the small control command rides the tunnel; the payload takes the
   fast link, and you pull it back over plain HTTPS.
 
-Use a **dedicated backups bucket** (`$BACKUP_BUCKET_NAME`), not the images bucket
-(`$BUCKET_NAME`). The image store wipes its **entire** bucket on seed
-(`imageStore.delete([''])` in `prisma/seed.ts`), so DB backups kept alongside the
-images would be destroyed by a seed/reset. Provision a separate bucket once with a
-second `fly storage create` and expose it as `BACKUP_BUCKET_NAME`.
+Store backups under a sibling prefix in the shared bucket — `s3://$BUCKET_NAME/db/`.
+This is safe next to the images: the image store only ever touches its own `images/`
+prefix — a seed/reset (`imageStore.delete([''])` in `prisma/seed.ts`) wipes just
+`images/`, not the whole bucket — so backups under `db/` are never affected. (A
+dedicated backups bucket is fine too if you want stricter isolation; just adjust the
+paths below.)
 
 ```shell
-# Back up straight into the backups bucket (fast egress off the app machine)
+# Back up into the bucket under db/ (fast egress off the app machine)
 fly ssh console --app cz-vednemesicnik -C "sh -c '\
   sqlite3 \"\$DATABASE_URL\" \".backup /tmp/backup.db\" && gzip -f /tmp/backup.db && \
-  aws s3 cp /tmp/backup.db.gz \"s3://\$BACKUP_BUCKET_NAME/db/backup-\$(date +%F).db.gz\" \
+  aws s3 cp /tmp/backup.db.gz \"s3://\$BUCKET_NAME/db/backup-\$(date +%F).db.gz\" \
     --endpoint-url \"\$AWS_ENDPOINT_URL_S3\" && rm -f /tmp/backup.db.gz'"
 ```
 
@@ -98,14 +99,14 @@ key — don't assume today's date, since the backup may have been taken on a
 different day:
 
 ```shell
-aws s3 ls "s3://$BACKUP_BUCKET_NAME/db/" --endpoint-url https://fly.storage.tigris.dev
-aws s3 cp "s3://$BACKUP_BUCKET_NAME/db/backup-<YYYY-MM-DD>.db.gz" . \
+aws s3 ls "s3://$BUCKET_NAME/db/" --endpoint-url https://fly.storage.tigris.dev
+aws s3 cp "s3://$BUCKET_NAME/db/backup-<YYYY-MM-DD>.db.gz" . \
   --endpoint-url https://fly.storage.tigris.dev
 gzip -t backup-*.db.gz && echo "OK"
 ```
 
-> A separate backups bucket also lets a scheduled job wrap the command above with
-> no risk of the image-store lifecycle ever touching the backups.
+> A scheduled job can wrap the command above; backups under `db/` are isolated from
+> the image-store lifecycle by prefix.
 
 ## Backing up the image store (volume driver)
 
