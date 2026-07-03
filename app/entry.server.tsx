@@ -12,8 +12,8 @@ import { createReadableStreamFromReadable } from '@react-router/node'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
 import {
-  type AppLoadContext,
   type EntryContext,
+  type RouterContextProvider,
   ServerRouter,
 } from 'react-router'
 
@@ -33,7 +33,7 @@ export default function handleRequest(
   // This is ignored, so we can keep it in the template for visibility.  Feel
   // free to delete this parameter in your app if you're not using it!
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _loadContext: AppLoadContext,
+  _loadContext: RouterContextProvider,
 ) {
   return isbot(request.headers.get('user-agent') || '')
     ? handleBotRequest(

@@ -9,8 +9,8 @@
     "@paralleldrive/cuid2": "3.3.0",
     "@prisma/adapter-better-sqlite3": "7.8.0",
     "@prisma/client": "7.8.0",
-    "@react-router/node": "7.15.1",
-    "@react-router/serve": "7.15.1",
+    "@react-router/node": "8.1.0",
+    "@react-router/serve": "8.1.0",
     "@simplewebauthn/browser": "13.3.0",
     "@simplewebauthn/server": "13.3.0",
     "@tiptap/extensions": "3.22.3",
@@ -24,22 +24,22 @@
     "dotenv": "17.4.2",
     "isbot": "5.1.37",
     "prisma": "7.8.0",
-    "react": "19.2.5",
-    "react-dom": "19.2.5",
-    "react-router": "7.15.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-router": "8.1.0",
     "sharp": "0.35.3",
     "zod": "4.3.6"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
-    "@react-router/dev": "7.15.1",
+    "@react-router/dev": "8.1.0",
     "@storybook/addon-a11y": "10.3.5",
     "@storybook/addon-docs": "10.3.5",
     "@storybook/addon-onboarding": "10.3.5",
     "@storybook/addon-vitest": "10.3.5",
     "@storybook/react-vite": "10.3.5",
     "@types/node": "25.5.2",
-    "@types/react": "19.2.14",
+    "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.1",
     "autoprefixer": "10.4.27",
@@ -54,7 +54,7 @@
     "vitest": "4.1.4"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.22.0"
   },
   "name": "cz.vednemesicnik",
   "packageManager": "pnpm@10.33.0",
