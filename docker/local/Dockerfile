@@ -67,6 +67,10 @@ RUN chmod +x /usr/local/bin/seed-owner
 WORKDIR /app
 
 COPY --from=production-deps /app/node_modules /app/node_modules
+# pnpm-workspace.yaml carries verifyDepsBeforeRun: false, which stops pnpm 11
+# from reinstalling the full (dev) dependency tree over the network when the
+# entrypoint runs `pnpm prisma:migrate:deploy` at startup.
+COPY --from=build /app/pnpm-workspace.yaml /app/pnpm-workspace.yaml
 COPY --from=build /app/build /app/build
 COPY --from=build /app/generated /app/generated
 COPY --from=build /app/package.json /app/package.json

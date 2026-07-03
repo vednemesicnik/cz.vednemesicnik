@@ -2,6 +2,13 @@
 # Disabled to preserve pnpm 10 install behavior (no release-age gating in CI/dev).
 minimumReleaseAge: 0
 
+# pnpm 11 defaults this to "install": before running a script it verifies
+# node_modules against the lockfile and reinstalls anything missing. The
+# production Docker image ships a prod-only node_modules on purpose, so at
+# container startup this would wrongly reinstall the full dev dependency tree
+# over the network. Disabled to preserve pnpm 10 behavior (no pre-run check).
+verifyDepsBeforeRun: false
+
 # pnpm 11 replaces `onlyBuiltDependencies` (list) with `allowBuilds` (map).
 allowBuilds:
   '@prisma/engines': true
