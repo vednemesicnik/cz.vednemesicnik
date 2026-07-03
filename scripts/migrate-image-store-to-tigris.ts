@@ -69,6 +69,9 @@ async function main() {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
     bucket: process.env.BUCKET_NAME ?? '',
     endpoint: process.env.AWS_ENDPOINT_URL_S3 ?? '',
+    // Must match the app's store (image-store.server.ts): variants land under the
+    // "images/" namespace so the read path finds them.
+    keyPrefix: 'images/',
     region: process.env.AWS_REGION ?? '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
   })

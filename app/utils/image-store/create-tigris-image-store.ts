@@ -20,6 +20,11 @@ export type TigrisConfig = {
   bucket: string
   accessKeyId: string
   secretAccessKey: string
+  // Optional prefix prepended to every key, so this store occupies a namespace
+  // inside a shared bucket (e.g. "images/") alongside other content (e.g.
+  // "pdfs/"). Defaults to "" (keys at the bucket root). Callers pass unprefixed
+  // keys; the prefix is applied at the S3 boundary and is otherwise invisible.
+  keyPrefix?: string
 }
 
 // A key addresses a prefix (directory) rather than a single object when it ends
@@ -46,7 +51,19 @@ function isNotFound(error: unknown): boolean {
 // the app machine's volume. Serving still streams through the app read path
 // (resource routes), just from the bucket rather than local disk.
 export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
-  const { endpoint, region, bucket, accessKeyId, secretAccessKey } = config
+  const {
+    endpoint,
+    region,
+    bucket,
+    accessKeyId,
+    secretAccessKey,
+    keyPrefix = '',
+  } = config
+
+  // Map a caller-facing key onto its actual object key in the bucket. Prefixing
+  // the empty (whole-store) key yields the namespace prefix itself, so a store
+  // reset wipes only this store's objects, not a sibling namespace's.
+  const resolveKey = (key: string) => `${keyPrefix}${key}`
 
   // Fail loud and early: the Tigris driver is useless without full credentials,
   // and env validation leaves these optional (only required for this driver).
@@ -135,9 +152,12 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
       await Promise.all(
         keys.map((key) =>
           isPrefixKey(key)
-            ? deletePrefix(key)
+            ? deletePrefix(resolveKey(key))
             : client.send(
-                new DeleteObjectCommand({ Bucket: bucket, Key: key }),
+                new DeleteObjectCommand({
+                  Bucket: bucket,
+                  Key: resolveKey(key),
+                }),
               ),
         ),
       )
@@ -150,14 +170,16 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
           new ListObjectsV2Command({
             Bucket: bucket,
             MaxKeys: 1,
-            Prefix: key,
+            Prefix: resolveKey(key),
           }),
         )
         return (response.KeyCount ?? 0) > 0
       }
 
       try {
-        await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }))
+        await client.send(
+          new HeadObjectCommand({ Bucket: bucket, Key: resolveKey(key) }),
+        )
         return true
       } catch (error) {
         if (isNotFound(error)) return false
@@ -168,7 +190,7 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
     async getStream(key) {
       try {
         const response = await client.send(
-          new GetObjectCommand({ Bucket: bucket, Key: key }),
+          new GetObjectCommand({ Bucket: bucket, Key: resolveKey(key) }),
         )
         if (!response.Body) return null
         // On Node the SDK body is a Node Readable, not a web stream, so convert
@@ -190,7 +212,7 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
           Body: data,
           Bucket: bucket,
           ContentType: contentType,
-          Key: key,
+          Key: resolveKey(key),
         }),
       )
     },

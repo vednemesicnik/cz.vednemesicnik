@@ -213,4 +213,61 @@ describe('createTigrisImageStore', () => {
     expect(send).toHaveBeenCalledTimes(1)
     expect(sentCommand(0).__type).toBe('ListObjectsV2')
   })
+
+  describe('keyPrefix', () => {
+    const prefixed = { ...config, keyPrefix: 'images/' }
+
+    test('put prepends the prefix to the object key', async () => {
+      send.mockResolvedValue({})
+      const store = createTigrisImageStore(prefixed)
+
+      await store.put('ab/id/v1/960.avif', new Uint8Array(), 'image/avif')
+
+      expect(sentCommand(0).input).toMatchObject({
+        Key: 'images/ab/id/v1/960.avif',
+      })
+    })
+
+    test('getStream reads the prefixed object key', async () => {
+      send.mockResolvedValue({ Body: { transformToWebStream: () => null } })
+      const store = createTigrisImageStore(prefixed)
+
+      await store.getStream('ab/id/v1/960.avif')
+
+      expect(sentCommand(0).input).toMatchObject({
+        Key: 'images/ab/id/v1/960.avif',
+      })
+    })
+
+    test('exists heads the prefixed object key', async () => {
+      send.mockResolvedValue({})
+      const store = createTigrisImageStore(prefixed)
+
+      await store.exists('ab/id/v1/960.avif')
+
+      const { __type, input } = sentCommand(0)
+      expect(__type).toBe('HeadObject')
+      expect(input).toMatchObject({ Key: 'images/ab/id/v1/960.avif' })
+    })
+
+    test('delete removes the prefixed single object', async () => {
+      send.mockResolvedValue({})
+      const store = createTigrisImageStore(prefixed)
+
+      await store.delete(['ab/id/v1/960.avif'])
+
+      const { __type, input } = sentCommand(0)
+      expect(__type).toBe('DeleteObject')
+      expect(input).toMatchObject({ Key: 'images/ab/id/v1/960.avif' })
+    })
+
+    test('delete of the empty key wipes only the prefix, not the whole bucket', async () => {
+      send.mockResolvedValue({ Contents: [], IsTruncated: false })
+      const store = createTigrisImageStore(prefixed)
+
+      await store.delete([''])
+
+      expect(sentCommand(0).input).toMatchObject({ Prefix: 'images/' })
+    })
+  })
 })

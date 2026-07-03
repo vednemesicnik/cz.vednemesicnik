@@ -15,6 +15,9 @@ function createImageStore(): ImageStore {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
       bucket: process.env.BUCKET_NAME ?? '',
       endpoint: process.env.AWS_ENDPOINT_URL_S3 ?? '',
+      // Images occupy the "images/" namespace of a shared bucket; other content
+      // (e.g. issue PDFs) can live under sibling prefixes in the same bucket.
+      keyPrefix: 'images/',
       region: process.env.AWS_REGION ?? '',
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
     })
