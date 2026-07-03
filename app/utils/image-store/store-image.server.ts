@@ -107,6 +107,27 @@ export async function deleteImage(id: string) {
   await imageStore.delete([buildImagePrefix(id)])
 }
 
+// Delete a row (or rows) and then remove the associated image-store files.
+// Ordering rule (delete files after DB, never before): the store ids are loaded
+// and the DB delete runs first; the store files are wiped only AFTER `deleteRow`
+// resolves, so a rejected delete never removes files that still have live rows.
+// `deleteRow` must therefore be a delete that is already durable once it
+// resolves (a standalone `prisma.*.delete`, not an operation queued inside an
+// interactive `$transaction` callback that commits later). Every id's prefix
+// goes in a single `delete` call so the backend can batch/limit the removals
+// itself. A no-op when there are no image ids (e.g. the parent has no cover).
+export async function deleteRowWithImages<T>(
+  loadImageIds: () => Promise<string[]>,
+  deleteRow: () => Promise<T>,
+): Promise<T> {
+  const imageIds = await loadImageIds()
+  const result = await deleteRow()
+  if (imageIds.length > 0) {
+    await imageStore.delete(imageIds.map((id) => buildImagePrefix(id)))
+  }
+  return result
+}
+
 // Row data for a single cover column, spread into a Prisma `cover.update.data`.
 // The store fields are absent when the cover file is left unchanged (only the
 // alt text is written).
