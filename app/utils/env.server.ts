@@ -8,11 +8,13 @@ const schema = z.object({
   [ENV_KEYS.BASE_URL]: z.string(),
   [ENV_KEYS.SESSION_SECRET]: z.string(),
   [ENV_KEYS.HONEYPOT_SECRET]: z.string(),
-  // Which ImageStore backend to use. Defaults to the on-disk volume; set to
-  // "tigris" to serve variants from the S3-compatible bucket instead.
+  // Which ImageStore backend to use. Optional (not `.default`) because `initEnv`
+  // only validates and does not write parsed values back to `process.env`, so a
+  // default here would make the type claim the key is always present when it may
+  // be undefined. The volume backend is the runtime fallback in image-store.server.ts.
   [ENV_KEYS.IMAGE_STORE_DRIVER]: z
     .enum(['volume', 'tigris'] as const)
-    .default('volume'),
+    .optional(),
   // Root path of the on-disk image store (Fly volume). Used by the volume driver
   // (and local development); ignored by the Tigris driver.
   [ENV_KEYS.IMAGE_STORE_PATH]: z.string(),
