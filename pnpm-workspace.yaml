@@ -10,3 +10,9 @@ allowBuilds:
   lefthook: true
   prisma: true
   sharp: true
+
+# Force a patched hono. It is pulled only by dev/CLI tooling
+# (prisma -> @prisma/dev -> @hono/node-server -> hono), and prisma 7.8.0 (latest)
+# still resolves the vulnerable hono 4.12.9. Remove once prisma ships a fixed hono.
+overrides:
+  hono: 4.12.27
