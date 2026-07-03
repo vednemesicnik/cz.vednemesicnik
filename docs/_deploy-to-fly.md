@@ -28,9 +28,9 @@ read path — the resource routes just stream the ready-made files. Image metada
 (`version`, dimensions, LQIP) lives in the DB; the images themselves are on the
 volume — SQLite no longer holds image blobs.
 
-The backend is selected by `IMAGE_STORE_DRIVER` (`volume` by default, `tigris` for
-object storage — see below). Callers are unchanged: both drivers implement the same
-`ImageStore` interface.
+The backend is selected by `IMAGE_STORE_DRIVER` — a non-secret toggle in `fly.toml`
+`[env]` (`volume` by default, `tigris` for object storage — see below). Callers are
+unchanged: both drivers implement the same `ImageStore` interface.
 
 ### Object storage (Tigris)
 
@@ -58,12 +58,24 @@ Set it up once and migrate:
    is idempotent. If the container has no `aws` CLI, run the bundled fallback
    `pnpm images:migrate:tigris` (walks the volume and PUTs each file, skipping
    objects that already exist).
-3. Flip the driver and redeploy:
-   ```shell
-   fly secrets set IMAGE_STORE_DRIVER=tigris --app cz-vednemesicnik
+3. Flip the driver and redeploy. Set it in `fly.toml` `[env]` so the config stays
+   the single source of truth, then deploy:
+   ```toml
+   # fly.toml
+   [env]
+     IMAGE_STORE_DRIVER = 'tigris'
    ```
-   (Or set `IMAGE_STORE_DRIVER = 'tigris'` in `fly.toml` `[env]`.) Verify images
-   still serve, then the `/data/images` volume directory can be reclaimed.
+   ```shell
+   fly deploy --app cz-vednemesicnik
+   ```
+   Verify images still serve, then the `/data/images` volume directory can be
+   reclaimed.
+
+   > **Why not `fly secrets set`?** A secret *would* take effect — on Fly, secrets
+   > override same-named `[env]` values — but `IMAGE_STORE_DRIVER` is not sensitive,
+   > and a secret would silently contradict the visible `[env]` line (it would still
+   > read `'volume'` while the app runs on Tigris). Keep the toggle in `[env]` and
+   > reserve secrets for real credentials (`AWS_*`, `BUCKET_NAME`, `SESSION_SECRET`, …).
 
 ### Reclaiming space after the blob drop (one-off)
 
