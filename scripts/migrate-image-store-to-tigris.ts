@@ -1,11 +1,14 @@
 #!/usr/bin/env tsx
 // One-off migration of the on-disk (volume) image store into a Tigris bucket.
 //
-// Preferred path is `aws s3 sync $IMAGE_STORE_PATH s3://$BUCKET_NAME/` run from
-// the app machine (fast, native, resumable). This script is the fallback for when
+// Preferred path is `aws s3 sync $IMAGE_STORE_PATH s3://$BUCKET_NAME/
+// --cache-control "public, max-age=31536000, immutable"` run from the app machine
+// (fast, native, resumable). The `--cache-control` flag matches the header that
+// the runtime `put()` writes onto each object. This script is the fallback for when
 // the AWS CLI is not available in the container: it walks the volume directory and
-// PUTs each variant file into the bucket under the same key (the relative path),
-// skipping objects that already exist so it can be re-run safely.
+// PUTs each variant file (via the store's `put`, which sets that same header) under
+// the same key (the relative path), skipping objects that already exist so it can
+// be re-run safely.
 //
 // Run with:  tsx scripts/migrate-image-store-to-tigris.ts   (or: pnpm images:migrate:tigris)
 
