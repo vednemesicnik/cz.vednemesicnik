@@ -20,9 +20,14 @@ import { createTigrisImageStore } from '../app/utils/image-store/create-tigris-i
 
 const rootDir = process.env.IMAGE_STORE_PATH ?? './data/images'
 
-// Content type from the variant file extension (avif or the jpeg fallback/OG crop).
-const contentTypeFor = (path: string) =>
-  path.endsWith('.avif') ? 'image/avif' : 'image/jpeg'
+// Content type for the two variant extensions the store holds (avif + the jpeg
+// fallback / OG crop). Anything else is filtered out before this is called.
+const contentTypeFor = (key: string) =>
+  key.endsWith('.avif') ? 'image/avif' : 'image/jpeg'
+
+// The store only ever contains `.avif` and `.jpeg` variant files.
+const isVariantFile = (key: string) =>
+  key.endsWith('.avif') || key.endsWith('.jpeg')
 
 // Yield every file path under `dir`, recursing into subdirectories.
 async function* walk(dir: string): AsyncGenerator<string> {
@@ -60,6 +65,12 @@ async function main() {
   for await (const filePath of walk(rootDir)) {
     // Store key = path relative to the root, always forward-slashed.
     const key = relative(rootDir, filePath).split(sep).join('/')
+
+    // Don't guess a Content-Type for stray non-variant files; surface and skip them.
+    if (!isVariantFile(key)) {
+      console.warn(`Skipping unexpected file (not an image variant): ${key}`)
+      continue
+    }
 
     if (await store.exists(key)) {
       skipped += 1

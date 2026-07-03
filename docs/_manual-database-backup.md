@@ -78,11 +78,17 @@ Once `IMAGE_STORE_DRIVER=tigris` is in effect, backups get both simpler and fast
   tunnel. Only the small control command rides the tunnel; the payload takes the
   fast link, and you pull it back over plain HTTPS.
 
+Use a **dedicated backups bucket** (`$BACKUP_BUCKET_NAME`), not the images bucket
+(`$BUCKET_NAME`). The image store wipes its **entire** bucket on seed
+(`imageStore.delete([''])` in `prisma/seed.ts`), so DB backups kept alongside the
+images would be destroyed by a seed/reset. Provision a separate bucket once with a
+second `fly storage create` and expose it as `BACKUP_BUCKET_NAME`.
+
 ```shell
-# Back up straight into the bucket (fast egress off the app machine)
+# Back up straight into the backups bucket (fast egress off the app machine)
 fly ssh console --app cz-vednemesicnik -C "sh -c '\
   sqlite3 \"\$DATABASE_URL\" \".backup /tmp/backup.db\" && gzip -f /tmp/backup.db && \
-  aws s3 cp /tmp/backup.db.gz \"s3://\$BUCKET_NAME/db/backup-\$(date +%F).db.gz\" \
+  aws s3 cp /tmp/backup.db.gz \"s3://\$BACKUP_BUCKET_NAME/db/backup-\$(date +%F).db.gz\" \
     --endpoint-url \"\$AWS_ENDPOINT_URL_S3\" && rm -f /tmp/backup.db.gz'"
 ```
 
@@ -90,13 +96,13 @@ Then pull it locally over HTTPS (via the AWS CLI configured with the same Tigris
 credentials, or a temporary presigned URL):
 
 ```shell
-aws s3 cp "s3://$BUCKET_NAME/db/backup-$(date +%F).db.gz" . \
+aws s3 cp "s3://$BACKUP_BUCKET_NAME/db/backup-$(date +%F).db.gz" . \
   --endpoint-url https://fly.storage.tigris.dev
 gzip -t backup-*.db.gz && echo "OK"
 ```
 
-> Consider a dedicated backups bucket (separate from the images bucket) and a
-> scheduled job wrapping the command above.
+> A separate backups bucket also lets a scheduled job wrap the command above with
+> no risk of the image-store lifecycle ever touching the backups.
 
 ## Backing up the image store (volume driver)
 
