@@ -72,13 +72,20 @@ describe('createTigrisImageStore', () => {
     })
   })
 
-  test('getStream returns the object body', async () => {
-    const body = new ReadableStream()
-    send.mockResolvedValue({ Body: body })
+  test('getStream returns the object body as a web stream', async () => {
+    const webStream = new ReadableStream()
+    send.mockResolvedValue({ Body: { transformToWebStream: () => webStream } })
     const store = createTigrisImageStore(config)
 
-    await expect(store.getStream('ab/id/v1/960.avif')).resolves.toBe(body)
+    await expect(store.getStream('ab/id/v1/960.avif')).resolves.toBe(webStream)
     expect(sentCommand(0).__type).toBe('GetObject')
+  })
+
+  test('getStream returns null when the response has no body', async () => {
+    send.mockResolvedValue({ Body: undefined })
+    const store = createTigrisImageStore(config)
+
+    await expect(store.getStream('ab/id/v1/960.avif')).resolves.toBeNull()
   })
 
   test('getStream returns null on a 404', async () => {

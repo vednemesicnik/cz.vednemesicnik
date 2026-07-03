@@ -162,9 +162,11 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
         const response = await client.send(
           new GetObjectCommand({ Bucket: bucket, Key: key }),
         )
-        // In Node 18+ the SDK returns the body as a web ReadableStream, which is
-        // exactly what a Response body expects.
-        return (response.Body as ReadableStream | undefined) ?? null
+        if (!response.Body) return null
+        // On Node the SDK body is a Node Readable, not a web stream, so convert
+        // it — the read path backs a web `Response` with this (the volume driver
+        // does the same via Readable.toWeb).
+        return response.Body.transformToWebStream()
       } catch (error) {
         if (isNotFound(error)) return null
         throw error
