@@ -57,7 +57,7 @@
     "node": ">=22.22.0"
   },
   "name": "cz.vednemesicnik",
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@11.9.0",
   "private": true,
   "scripts": {
     "app:build": "react-router build",
