@@ -111,12 +111,23 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
       const batch: ObjectIdentifier[] = keys
         .slice(i, i + DELETE_BATCH_SIZE)
         .map((Key) => ({ Key }))
-      await client.send(
+      const response = await client.send(
         new DeleteObjectsCommand({
           Bucket: bucket,
           Delete: { Objects: batch, Quiet: true },
         }),
       )
+      // DeleteObjects resolves with HTTP 200 even when individual keys fail
+      // (per-key failures land in `Errors`). Surface them as a throw so a partial
+      // cleanup isn't silently ignored — the volume driver throws on a failed rm.
+      if (response.Errors && response.Errors.length > 0) {
+        const summary = response.Errors.map(
+          (error) => `${error.Key} (${error.Code})`,
+        ).join(', ')
+        throw new Error(
+          `Failed to delete ${response.Errors.length} object(s): ${summary}`,
+        )
+      }
     }
   }
 

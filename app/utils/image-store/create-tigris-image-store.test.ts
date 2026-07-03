@@ -165,6 +165,23 @@ describe('createTigrisImageStore', () => {
     ])
   })
 
+  test('delete throws when DeleteObjects reports per-key failures', async () => {
+    send.mockImplementation((command: { __type: string }) => {
+      if (command.__type === 'ListObjectsV2') {
+        return Promise.resolve({
+          Contents: [{ Key: 'ab/id/v1/320.avif' }],
+          IsTruncated: false,
+        })
+      }
+      return Promise.resolve({
+        Errors: [{ Code: 'AccessDenied', Key: 'ab/id/v1/320.avif' }],
+      })
+    })
+    const store = createTigrisImageStore(config)
+
+    await expect(store.delete(['ab/id/v1/'])).rejects.toThrow(/AccessDenied/)
+  })
+
   test('delete of an empty prefix issues no DeleteObjects request', async () => {
     send.mockResolvedValue({ Contents: [], IsTruncated: false })
     const store = createTigrisImageStore(config)
