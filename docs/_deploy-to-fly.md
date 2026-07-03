@@ -28,6 +28,43 @@ read path — the resource routes just stream the ready-made files. Image metada
 (`version`, dimensions, LQIP) lives in the DB; the images themselves are on the
 volume — SQLite no longer holds image blobs.
 
+The backend is selected by `IMAGE_STORE_DRIVER` (`volume` by default, `tigris` for
+object storage — see below). Callers are unchanged: both drivers implement the same
+`ImageStore` interface.
+
+### Object storage (Tigris)
+
+Tigris (S3-compatible, integrated with Fly) removes the two volume limitations:
+image durability no longer depends on a single machine's volume, and the DB backup
+no longer needs to contain images. The resource routes still stream the files (the
+app stays on the read path), but a cache hit at Cloudflare's edge keeps origin
+traffic rare (URLs are content-versioned + `immutable`).
+
+Set it up once and migrate:
+
+1. Create the bucket. This provisions `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
+   `AWS_REGION`, `AWS_ENDPOINT_URL_S3` and `BUCKET_NAME` as app secrets.
+   ```shell
+   fly storage create --app cz-vednemesicnik
+   ```
+2. Copy the existing variants from the volume into the bucket **before** switching
+   the driver (safe two-phase rollout — the volume keeps serving until you flip).
+   From the app machine:
+   ```shell
+   fly ssh console --app cz-vednemesicnik
+   aws s3 sync /data/images "s3://$BUCKET_NAME/" --endpoint-url "$AWS_ENDPOINT_URL_S3"
+   ```
+   The relative paths under `/data/images` map 1:1 onto the store keys, and `sync`
+   is idempotent. If the container has no `aws` CLI, run the bundled fallback
+   `pnpm images:migrate:tigris` (walks the volume and PUTs each file, skipping
+   objects that already exist).
+3. Flip the driver and redeploy:
+   ```shell
+   fly secrets set IMAGE_STORE_DRIVER=tigris --app cz-vednemesicnik
+   ```
+   (Or set `IMAGE_STORE_DRIVER = 'tigris'` in `fly.toml` `[env]`.) Verify images
+   still serve, then the `/data/images` volume directory can be reclaimed.
+
 ### Reclaiming space after the blob drop (one-off)
 
 The migration that dropped the legacy in-DB `blob`/`contentType` columns frees a lot

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1079.0",
     "@conform-to/react": "1.18.0",
     "@conform-to/zod": "1.18.0",
     "@epic-web/invariant": "1.0.0",
@@ -77,6 +78,7 @@
     "docker:compose:down": "sh ./scripts/docker-compose-down.sh",
     "docker:compose:up": "sh ./scripts/docker-compose-up.sh",
     "generate:static-images": "tsx ./scripts/generate-static-images.ts",
+    "images:migrate:tigris": "tsx ./scripts/migrate-image-store-to-tigris.ts",
     "lefthook:install": "lefthook install",
     "lefthook:pre-commit": "lefthook run pre-commit",
     "lefthook:pre-push": "lefthook run pre-push",
