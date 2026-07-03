@@ -78,57 +78,53 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
     region,
   })
 
-  // Every object key under a given prefix, following pagination.
-  const listKeys = async (prefix: string): Promise<string[]> => {
-    const keys: string[] = []
+  // Remove every object under a prefix (mirrors the volume driver's `rm -r`).
+  // Streamed page-by-page — list one page (capped at the DeleteObjects limit),
+  // delete it, then continue — so memory stays bounded even for the whole-bucket
+  // wipe (empty prefix), rather than buffering every key up front.
+  const deletePrefix = async (prefix: string) => {
     let continuationToken: string | undefined
 
     do {
-      const response = await client.send(
+      const listed = await client.send(
         new ListObjectsV2Command({
           Bucket: bucket,
           ContinuationToken: continuationToken,
+          MaxKeys: DELETE_BATCH_SIZE,
           Prefix: prefix,
         }),
       )
-      for (const object of response.Contents ?? []) {
-        if (object.Key) keys.push(object.Key)
+
+      const objects: ObjectIdentifier[] = (listed.Contents ?? [])
+        .map((object) => object.Key)
+        .filter((key): key is string => key !== undefined)
+        .map((Key) => ({ Key }))
+
+      if (objects.length > 0) {
+        const response = await client.send(
+          new DeleteObjectsCommand({
+            Bucket: bucket,
+            Delete: { Objects: objects, Quiet: true },
+          }),
+        )
+        // DeleteObjects resolves with HTTP 200 even when individual keys fail
+        // (per-key failures land in `Errors`). Surface them as a throw so a
+        // partial cleanup isn't silently ignored — the volume driver throws on
+        // a failed rm.
+        if (response.Errors && response.Errors.length > 0) {
+          const summary = response.Errors.map(
+            (error) => `${error.Key} (${error.Code})`,
+          ).join(', ')
+          throw new Error(
+            `Failed to delete ${response.Errors.length} object(s): ${summary}`,
+          )
+        }
       }
-      continuationToken = response.IsTruncated
-        ? response.NextContinuationToken
+
+      continuationToken = listed.IsTruncated
+        ? listed.NextContinuationToken
         : undefined
     } while (continuationToken)
-
-    return keys
-  }
-
-  // Remove every object under a prefix (mirrors the volume driver's `rm -r`).
-  const deletePrefix = async (prefix: string) => {
-    const keys = await listKeys(prefix)
-    if (keys.length === 0) return
-
-    for (let i = 0; i < keys.length; i += DELETE_BATCH_SIZE) {
-      const batch: ObjectIdentifier[] = keys
-        .slice(i, i + DELETE_BATCH_SIZE)
-        .map((Key) => ({ Key }))
-      const response = await client.send(
-        new DeleteObjectsCommand({
-          Bucket: bucket,
-          Delete: { Objects: batch, Quiet: true },
-        }),
-      )
-      // DeleteObjects resolves with HTTP 200 even when individual keys fail
-      // (per-key failures land in `Errors`). Surface them as a throw so a partial
-      // cleanup isn't silently ignored — the volume driver throws on a failed rm.
-      if (response.Errors && response.Errors.length > 0) {
-        const summary = response.Errors.map(
-          (error) => `${error.Key} (${error.Code})`,
-        ).join(', ')
-        throw new Error(
-          `Failed to delete ${response.Errors.length} object(s): ${summary}`,
-        )
-      }
-    }
   }
 
   return {

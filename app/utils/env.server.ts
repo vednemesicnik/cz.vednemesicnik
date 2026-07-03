@@ -16,8 +16,10 @@ const schema = z.object({
     .enum(['volume', 'tigris'] as const)
     .optional(),
   // Root path of the on-disk image store (Fly volume). Used by the volume driver
-  // (and local development); ignored by the Tigris driver.
-  [ENV_KEYS.IMAGE_STORE_PATH]: z.string(),
+  // (and local development); ignored by the Tigris driver. Optional because the
+  // volume store falls back to `/data/images` and the Tigris driver doesn't use it,
+  // so `IMAGE_STORE_DRIVER=tigris` needn't set an otherwise-unused variable.
+  [ENV_KEYS.IMAGE_STORE_PATH]: z.string().optional(),
   // Tigris/S3 credentials and bucket. Fly sets these automatically for a bucket
   // created via `fly storage create`. Optional here because they are only
   // required when IMAGE_STORE_DRIVER is "tigris"; their presence is enforced at

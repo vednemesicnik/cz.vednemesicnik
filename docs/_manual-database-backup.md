@@ -93,10 +93,13 @@ fly ssh console --app cz-vednemesicnik -C "sh -c '\
 ```
 
 Then pull it locally over HTTPS (via the AWS CLI configured with the same Tigris
-credentials, or a temporary presigned URL):
+credentials, or a temporary presigned URL). List what's there and copy the exact
+key — don't assume today's date, since the backup may have been taken on a
+different day:
 
 ```shell
-aws s3 cp "s3://$BACKUP_BUCKET_NAME/db/backup-$(date +%F).db.gz" . \
+aws s3 ls "s3://$BACKUP_BUCKET_NAME/db/" --endpoint-url https://fly.storage.tigris.dev
+aws s3 cp "s3://$BACKUP_BUCKET_NAME/db/backup-<YYYY-MM-DD>.db.gz" . \
   --endpoint-url https://fly.storage.tigris.dev
 gzip -t backup-*.db.gz && echo "OK"
 ```
