@@ -4,8 +4,8 @@ import { buildImagePrefix } from './image-key'
 import { deleteRowWithImages } from './store-image.server'
 
 // Replace the real store with a spy so the store files are never touched; the
-// helper (and the `deleteImage` it calls) run for real, so the test also covers
-// that the right store prefixes are removed.
+// helper runs for real, so the test also covers that it removes the right store
+// prefixes via `imageStore.delete`.
 const storeDelete = vi.fn(async (_prefixes: string[]) => {})
 
 vi.mock('./image-store.server', () => ({
