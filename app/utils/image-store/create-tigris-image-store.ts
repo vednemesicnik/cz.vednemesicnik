@@ -22,6 +22,11 @@ export type TigrisConfig = {
   secretAccessKey: string
 }
 
+// A key addresses a prefix (directory) rather than a single object when it ends
+// in "/" or is empty. The empty key is the whole store — the volume driver wipes
+// its root the same way (e.g. `imageStore.delete([''])` in prisma/seed.ts).
+const isPrefixKey = (key: string) => key === '' || key.endsWith('/')
+
 // Whether an S3 error means "no such object" (a real 404, not a transport error).
 function isNotFound(error: unknown): boolean {
   if (typeof error !== 'object' || error === null) return false
@@ -128,11 +133,12 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
 
   return {
     async delete(keys) {
-      // A trailing slash denotes a prefix (directory) removed recursively; a
-      // plain key removes a single object — matching the ImageStore contract.
+      // A prefix key (trailing slash, or empty = whole store) is removed
+      // recursively; a plain key removes a single object — matching the
+      // ImageStore contract and the volume driver's `rm`.
       await Promise.all(
         keys.map((key) =>
-          key.endsWith('/')
+          isPrefixKey(key)
             ? deletePrefix(key)
             : client.send(
                 new DeleteObjectCommand({ Bucket: bucket, Key: key }),
@@ -142,8 +148,8 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
     },
 
     async exists(key) {
-      // A trailing slash is a prefix check: at least one object underneath.
-      if (key.endsWith('/')) {
+      // A prefix key is a "any object underneath?" check.
+      if (isPrefixKey(key)) {
         const response = await client.send(
           new ListObjectsV2Command({
             Bucket: bucket,
