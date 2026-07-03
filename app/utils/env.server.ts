@@ -8,8 +8,27 @@ const schema = z.object({
   [ENV_KEYS.BASE_URL]: z.string(),
   [ENV_KEYS.SESSION_SECRET]: z.string(),
   [ENV_KEYS.HONEYPOT_SECRET]: z.string(),
-  // Root path of the on-disk image store (Fly volume in production).
-  [ENV_KEYS.IMAGE_STORE_PATH]: z.string(),
+  // Which ImageStore backend to use. Optional (not `.default`) because `initEnv`
+  // only validates and does not write parsed values back to `process.env`, so a
+  // default here would make the type claim the key is always present when it may
+  // be undefined. The volume backend is the runtime fallback in image-store.server.ts.
+  [ENV_KEYS.IMAGE_STORE_DRIVER]: z
+    .enum(['volume', 'tigris'] as const)
+    .optional(),
+  // Root path of the on-disk image store (Fly volume). Used by the volume driver
+  // (and local development); ignored by the Tigris driver. Optional because the
+  // volume store falls back to `/data/images` and the Tigris driver doesn't use it,
+  // so `IMAGE_STORE_DRIVER=tigris` needn't set an otherwise-unused variable.
+  [ENV_KEYS.IMAGE_STORE_PATH]: z.string().optional(),
+  // Tigris/S3 credentials and bucket. Fly sets these automatically for a bucket
+  // created via `fly storage create`. Optional here because they are only
+  // required when IMAGE_STORE_DRIVER is "tigris"; their presence is enforced at
+  // store construction (see createTigrisImageStore).
+  [ENV_KEYS.AWS_ACCESS_KEY_ID]: z.string().optional(),
+  [ENV_KEYS.AWS_SECRET_ACCESS_KEY]: z.string().optional(),
+  [ENV_KEYS.AWS_REGION]: z.string().optional(),
+  [ENV_KEYS.AWS_ENDPOINT_URL_S3]: z.string().optional(),
+  [ENV_KEYS.BUCKET_NAME]: z.string().optional(),
 })
 
 declare global {

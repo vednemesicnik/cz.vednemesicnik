@@ -3,11 +3,14 @@
 Next to the automatic snapshots, taken by Fly.io every 24 hours, stored for 5 days, it could be useful to manually back up the database to a local machine or another cloud storage. 
 SQLite database is a single file, so it is easy to copy it to another location.
 
-> **Important:** binary image data no longer lives in the database. Pre-generated
-> image variants are stored as files under `/data/images` on the same Fly volume.
-> A database backup alone is **not** a complete backup — back up the image store as
-> well (see [Backing up the image store](#backing-up-the-image-store)). The image
-> files are the only copy of the image data.
+> **Important:** binary image data no longer lives in the database.
+> - **Volume driver (`IMAGE_STORE_DRIVER=volume`):** pre-generated variants are files
+>   under `/data/images` on the same Fly volume and are the only copy of the image
+>   data, so a database backup alone is **not** complete — back up the image store as
+>   well (see [Backing up the image store](#backing-up-the-image-store-volume-driver)).
+> - **Tigris driver (`IMAGE_STORE_DRIVER=tigris`):** the bucket provides image
+>   durability, so a database backup does not need to include images
+>   (see [After migrating to Tigris](#after-migrating-to-tigris)).
 
 Both backups below stream out over a **raw `ssh` session tunnelled through `fly
 proxy`**. This is a clean binary channel over a stable TCP tunnel — unlike streaming
@@ -62,7 +65,50 @@ date. Verify it before trusting it:
 gzip -t cz-vednemesicnik-backup-*.db.gz && echo "OK"
 ```
 
-## Backing up the image store
+## After migrating to Tigris
+
+Once `IMAGE_STORE_DRIVER=tigris` is in effect, backups get both simpler and faster:
+
+- **Images** are durable in the bucket, so there is nothing extra to back up — skip
+  the [image-store `tar`](#backing-up-the-image-store-volume-driver) entirely.
+  (Optional defense-in-depth: keep a periodic offsite/second-region copy of the
+  bucket.)
+- **The database** can be pushed straight into object storage from the app machine,
+  which has fast egress — instead of streaming it down through the slow WireGuard
+  tunnel. Only the small control command rides the tunnel; the payload takes the
+  fast link, and you pull it back over plain HTTPS.
+
+Store backups under a sibling prefix in the shared bucket — `s3://$BUCKET_NAME/db/`.
+This is safe next to the images: the image store only ever touches its own `images/`
+prefix — a seed/reset (`imageStore.delete([''])` in `prisma/seed.ts`) wipes just
+`images/`, not the whole bucket — so backups under `db/` are never affected. (A
+dedicated backups bucket is fine too if you want stricter isolation; just adjust the
+paths below.)
+
+```shell
+# Back up into the bucket under db/ (fast egress off the app machine)
+fly ssh console --app cz-vednemesicnik -C "sh -c '\
+  sqlite3 \"\$DATABASE_URL\" \".backup /tmp/backup.db\" && gzip -f /tmp/backup.db && \
+  aws s3 cp /tmp/backup.db.gz \"s3://\$BUCKET_NAME/db/backup-\$(date +%F).db.gz\" \
+    --endpoint-url \"\$AWS_ENDPOINT_URL_S3\" && rm -f /tmp/backup.db.gz'"
+```
+
+Then pull it locally over HTTPS (via the AWS CLI configured with the same Tigris
+credentials, or a temporary presigned URL). List what's there and copy the exact
+key — don't assume today's date, since the backup may have been taken on a
+different day:
+
+```shell
+aws s3 ls "s3://$BUCKET_NAME/db/" --endpoint-url https://fly.storage.tigris.dev
+aws s3 cp "s3://$BUCKET_NAME/db/backup-<YYYY-MM-DD>.db.gz" . \
+  --endpoint-url https://fly.storage.tigris.dev
+gzip -t backup-*.db.gz && echo "OK"
+```
+
+> A scheduled job can wrap the command above; backups under `db/` are isolated from
+> the image-store lifecycle by prefix.
+
+## Backing up the image store (volume driver)
 
 The pre-generated image variants live as files under `/data/images` on the volume.
 With the [proxy from the setup step](#setup-do-this-once-per-session) running, stream a

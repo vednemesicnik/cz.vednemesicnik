@@ -12,6 +12,10 @@ primary_region = 'fra'
 
 [env]
   BASE_URL = 'https://vednemesicnik.cz'
+  # Image store backend (non-secret toggle). Images are served from the Tigris
+  # bucket (object storage). Set to 'volume' to fall back to the on-disk Fly volume
+  # (see docs/_deploy-to-fly.md → Object storage); change here and `fly deploy`.
+  IMAGE_STORE_DRIVER = 'tigris'
 
 [[mounts]]
   source = 'data'
