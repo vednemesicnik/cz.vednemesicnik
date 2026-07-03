@@ -1,15 +1,19 @@
 #!/usr/bin/env tsx
 // One-off migration of the on-disk (volume) image store into a Tigris bucket.
 //
-// Preferred path is `aws s3 sync $IMAGE_STORE_PATH s3://$BUCKET_NAME/
-// --endpoint-url $AWS_ENDPOINT_URL_S3` run from the app machine (fast, native,
-// resumable; the endpoint is required to target Tigris rather than AWS S3). This
-// script is the fallback for when
-// the AWS CLI is not available in the container: it walks the volume directory and
-// PUTs each variant file into the bucket under the same key (the relative path),
-// skipping objects that already exist so it can be re-run safely.
+// It walks the volume directory and PUTs each variant file into the bucket under
+// the same key (the relative path), skipping objects that already exist so it can
+// be re-run safely.
 //
-// Run with:  tsx scripts/migrate-image-store-to-tigris.ts   (or: pnpm images:migrate:tigris)
+// In production run the pre-bundled build from the app machine (no `tsx`/`app/`
+// source needed in the image — see vite.migrate.config.ts):
+//   pnpm images:migrate:tigris:built        # = node build/migrate-tigris.mjs
+// Locally:
+//   pnpm images:migrate:tigris              # = tsx scripts/migrate-image-store-to-tigris.ts
+//
+// Alternative if the `aws` CLI is available: `aws s3 sync $IMAGE_STORE_PATH
+// s3://$BUCKET_NAME/ --endpoint-url $AWS_ENDPOINT_URL_S3` (the endpoint targets
+// Tigris rather than AWS S3).
 
 import 'dotenv/config'
 

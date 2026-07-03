@@ -49,17 +49,25 @@ Set it up once and migrate:
    ```
 2. Copy the existing variants from the volume into the bucket **before** switching
    the driver (safe two-phase rollout — the volume keeps serving until you flip).
-   From the app machine:
+o   Run it from the app machine so the bytes ride Fly's fast egress to the bucket
+   (not the slow WireGuard tunnel):
    ```shell
    fly ssh console --app cz-vednemesicnik
-   aws s3 sync /data/images "s3://$BUCKET_NAME/" --endpoint-url "$AWS_ENDPOINT_URL_S3"
+   pnpm images:migrate:tigris:built
    ```
-   The relative paths under `/data/images` map 1:1 onto the store keys, and `sync`
-   is idempotent. If the container has no `aws` CLI, run the bundled fallback
-   `pnpm images:migrate:tigris` (walks the volume and PUTs each file, skipping
-   objects that already exist). Object-level cache metadata is not needed: the app
-   serves images through `/resources/*` (behind Cloudflare) and sets `Cache-Control`
-   on the response itself, so the stored object's own headers are never used.
+   `images:migrate:tigris:built` runs `node build/migrate-tigris.mjs` — the migration
+   script pre-bundled into the image by `pnpm app:build` (via `vite.migrate.config.ts`).
+   No `aws` CLI and no `tsx`/`app/` source are needed in the container: the app code it
+   imports is bundled in, only `node_modules` (`@aws-sdk/client-s3`, `dotenv`) stay
+   external. It walks `/data/images`, PUTs each file under the same key (its relative
+   path), and skips objects that already exist, so it is safe to re-run.
+
+   Alternatively, if you have the `aws` CLI available, `aws s3 sync /data/images
+   "s3://$BUCKET_NAME/" --endpoint-url "$AWS_ENDPOINT_URL_S3"` does the same (relative
+   paths map 1:1 onto store keys, `sync` is idempotent). Object-level cache metadata is
+   not needed either way: the app serves images through `/resources/*` (behind
+   Cloudflare) and sets `Cache-Control` on the response itself, so the stored object's
+   own headers are never used.
 3. Flip the driver and redeploy. Set it in `fly.toml` `[env]` so the config stays
    the single source of truth, then deploy:
    ```toml
