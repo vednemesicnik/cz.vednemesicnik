@@ -109,11 +109,13 @@ export async function deleteImage(id: string) {
 
 // Delete a row (or rows) and then remove the associated image-store files.
 // Ordering rule (delete files after DB, never before): the store ids are loaded
-// and the DB delete runs first; the store files are wiped only AFTER the delete
-// has committed, so a failed delete never removes files that still have live
-// rows. Every id's prefix goes in a single `delete` call so the backend can
-// batch/limit the removals itself. A no-op when there are no image ids (e.g. the
-// parent has no cover).
+// and the DB delete runs first; the store files are wiped only AFTER `deleteRow`
+// resolves, so a rejected delete never removes files that still have live rows.
+// `deleteRow` must therefore be a delete that is already durable once it
+// resolves (a standalone `prisma.*.delete`, not an operation queued inside an
+// interactive `$transaction` callback that commits later). Every id's prefix
+// goes in a single `delete` call so the backend can batch/limit the removals
+// itself. A no-op when there are no image ids (e.g. the parent has no cover).
 export async function deleteRowWithImages<T>(
   loadImageIds: () => Promise<string[]>,
   deleteRow: () => Promise<T>,
