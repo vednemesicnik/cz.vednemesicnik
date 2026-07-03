@@ -40,40 +40,18 @@ no longer needs to contain images. The resource routes still stream the files (t
 app stays on the read path), but a cache hit at Cloudflare's edge keeps origin
 traffic rare (URLs are content-versioned + `immutable`).
 
-Set it up once and migrate:
+Set it up once:
 
 1. Create the bucket. This provisions `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
    `AWS_REGION`, `AWS_ENDPOINT_URL_S3` and `BUCKET_NAME` as app secrets.
    ```shell
    fly storage create --app cz-vednemesicnik
    ```
-2. Copy the existing variants from the volume into the bucket **before** switching
-   the driver (safe two-phase rollout — the volume keeps serving until you flip).
-   Run it from the app machine so the bytes ride Fly's fast egress to the bucket
-   (not the slow WireGuard tunnel):
-   ```shell
-   fly ssh console --app cz-vednemesicnik
-   pnpm images:migrate:tigris:built
-   ```
-   `images:migrate:tigris:built` runs `node build/migrate-tigris.mjs` — the migration
-   script pre-bundled into the image by `pnpm app:build` (via `vite.migrate.config.ts`).
-   No `aws` CLI and no `tsx`/`app/` source are needed in the container: the app code it
-   imports is bundled in, only `node_modules` (`@aws-sdk/client-s3`, `dotenv`) stay
-   external. It walks `/data/images` and PUTs each file under the `images/` namespace
-   (`images/<relative path>`, matching the app's `keyPrefix`), skipping objects that
-   already exist so it is safe to re-run.
-
-   The bucket is shared: images live under the `images/` prefix, leaving room for
-   sibling namespaces (e.g. `pdfs/` for issue PDFs) in the same bucket.
-
-   Alternatively, if you have the `aws` CLI available, `aws s3 sync /data/images
-   "s3://$BUCKET_NAME/images/" --endpoint-url "$AWS_ENDPOINT_URL_S3"` does the same
-   (relative paths map 1:1 onto store keys under `images/`, `sync` is idempotent).
-   Object-level cache metadata is not needed either way: the app serves images through
-   `/resources/*` (behind Cloudflare) and sets `Cache-Control` on the response itself,
-   so the stored object's own headers are never used.
-3. Flip the driver and redeploy. Set it in `fly.toml` `[env]` so the config stays
-   the single source of truth, then deploy:
+   The bucket is shared: images live under the `images/` prefix (matching the app's
+   `keyPrefix`), leaving room for sibling namespaces (e.g. `pdfs/` for issue PDFs) in
+   the same bucket.
+2. Select the driver in `fly.toml` `[env]` so the config stays the single source of
+   truth, then deploy:
    ```toml
    # fly.toml
    [env]
@@ -82,8 +60,6 @@ Set it up once and migrate:
    ```shell
    fly deploy --app cz-vednemesicnik
    ```
-   Verify images still serve, then the `/data/images` volume directory can be
-   reclaimed.
 
    > **Why not `fly secrets set`?** A secret *would* take effect — on Fly, secrets
    > override same-named `[env]` values — but `IMAGE_STORE_DRIVER` is not sensitive,
