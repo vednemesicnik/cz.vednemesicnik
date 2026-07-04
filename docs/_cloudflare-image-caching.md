@@ -20,21 +20,30 @@ can then suspend), add a Cache Rule so Cloudflare caches these responses.
 In the Cloudflare dashboard: **Caching → Cache Rules → Create rule**.
 
 - **Rule name:** `Cache image resources`
-- **When incoming requests match:**
-  - Field `URI Path`, operator `starts with`, value `/resources/`
+- **When incoming requests match** (Custom filter expression):
+  ```
+  (starts_with(http.request.uri.path, "/resources/")) and (ends_with(http.request.uri.path, ".avif") or ends_with(http.request.uri.path, ".jpeg"))
+  ```
+  Scoped to the delivered variant extensions (`.avif`, `.jpeg`) so the rule matches
+  only image variants — not other `/resources/*` endpoints such as
+  `/resources/env.js`, which is deliberately `no-cache` and must not be force-cached.
 - **Then:**
   - **Cache eligibility:** `Eligible for cache` (Cache Everything)
-  - **Edge TTL:** `Use cache-control header if present, use default otherwise`
-    (the origin sends a 1-year `immutable` max-age, so responses are held at the
-    edge long-term)
-  - **Browser TTL:** `Respect origin`
+  - **Edge TTL:** `Use cache-control header if present, bypass cache if not`
+    (image variants always send a 1-year `immutable` max-age, so they are held at
+    the edge long-term; a response without a `Cache-Control` header bypasses the
+    cache rather than falling back to a default TTL)
+  - **Browser TTL:** `Respect origin TTL`
 
 Because URLs are content-versioned, there is no purge step in the deploy or edit
 flow — an edited image simply starts being requested under its new version.
 
 ## Notes
 
-- `/resources/*` responses carry no cookies and depend only on the URL, so
+- Image-variant responses carry no cookies and depend only on the URL, so
   `Cache Everything` is safe (no risk of caching per-user content).
+- The rule is scoped by extension (`.avif`/`.jpeg`), so sibling `/resources/*`
+  endpoints are unaffected — e.g. `/resources/env.js` stays dynamic (`no-cache`),
+  while the OG crop `og.jpeg` is a `.jpeg` variant and is included.
 - A `404` for a missing variant is cheap and also cacheable; it only happens for
   URLs that never had a file (e.g. a stale reference), not for valid variants.
