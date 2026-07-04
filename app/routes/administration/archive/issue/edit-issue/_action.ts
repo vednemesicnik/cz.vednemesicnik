@@ -6,7 +6,10 @@ import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
-import { preparePdfReplacement } from '~/utils/pdf-store/store-pdf.server'
+import {
+  deletePdfObject,
+  preparePdfReplacement,
+} from '~/utils/pdf-store/store-pdf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
@@ -137,6 +140,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
     return redirect(href('/administration/archive/:issueId', { issueId: id }))
   } catch (error) {
+    // The post-commit cleanups above use Promise.allSettled and never throw, so
+    // reaching here means the update itself failed — the row still points at the
+    // previous PDF object and the freshly-written replacement (pdfData.id, set only
+    // when a new file was stored) is orphaned. Remove it best-effort before
+    // surfacing the error. The cover's new version is intentionally left to the
+    // store (its content-hash version may equal the still-referenced one).
+    if (pdfData.id) await deletePdfObject(pdfData.id).catch(() => {})
     throwDbError(error, 'Unable to update the archived issue.')
   }
 
