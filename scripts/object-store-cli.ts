@@ -10,7 +10,8 @@
 // path-aliased source, which the minimal prod image doesn't ship. It mirrors the
 // command/config patterns of app/utils/object-store/create-tigris-object-store.ts.
 
-import { readFile } from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 
@@ -154,21 +155,25 @@ async function putObject(
   file: string,
   key: string,
 ) {
-  const body = await readFile(file)
+  // Stream the file rather than buffering it into memory (issue PDFs can be tens
+  // of MB). The SDK needs ContentLength to send a stream body as a single
+  // PutObject, so read the size up front with stat().
+  const { size } = await stat(file)
   const contentType =
     CONTENT_TYPE_BY_EXT[path.extname(file).toLowerCase()] ??
     DEFAULT_CONTENT_TYPE
 
   await client.send(
     new PutObjectCommand({
-      Body: body,
+      Body: createReadStream(file),
       Bucket: bucket,
+      ContentLength: size,
       ContentType: contentType,
       Key: key,
     }),
   )
 
-  console.error(`put ${key} (${body.byteLength} bytes, ${contentType})`)
+  console.error(`put ${key} (${size} bytes, ${contentType})`)
 }
 
 // Remove every object under a prefix, page by page (mirrors the Tigris store's
