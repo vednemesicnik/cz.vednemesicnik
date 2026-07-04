@@ -3,7 +3,10 @@ import { prisma } from '~/utils/db.server'
 import { getContentHash } from '~/utils/hash.server'
 import { buildPdfKey } from '~/utils/pdf-store/pdf-key'
 import { pdfStore } from '~/utils/pdf-store/pdf-store.server'
-import { buildPdfResponse } from '~/utils/pdf-store/serve-pdf.server'
+import {
+  buildPdfResponse,
+  PDF_CACHE_CONTROL,
+} from '~/utils/pdf-store/serve-pdf.server'
 
 import type { Route } from './+types/route'
 
@@ -26,7 +29,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const lastModified = pdf.updatedAt.toUTCString()
 
   // Check if client has cached version (supports both ETag and Last-Modified)
-  const cachedResponse = checkCacheValidation(request, etag, lastModified)
+  const cachedResponse = checkCacheValidation(
+    request,
+    etag,
+    lastModified,
+    PDF_CACHE_CONTROL,
+  )
   if (cachedResponse !== null) return cachedResponse
 
   const meta = { contentType: pdf.contentType, etag, fileName, lastModified }
