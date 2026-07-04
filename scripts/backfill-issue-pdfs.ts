@@ -41,18 +41,19 @@ async function backfill() {
     }
 
     // Load just this row's blob, so only one PDF is held in memory at a time.
-    const { blob } = await prisma.issuePDF.findUniqueOrThrow({
+    const current = await prisma.issuePDF.findUnique({
       select: { blob: true },
       where: { id: row.id },
     })
-    // Narrows the nullable `blob` column for `put`; also guards the unlikely race
-    // where the row was cleared between the id query and this one.
-    if (blob === null) {
+    // The row (or its blob) may have been removed since the id list was taken —
+    // treat that as a skip rather than aborting the whole run. Also narrows the
+    // nullable `blob` column for `put`.
+    if (!current || current.blob === null) {
       skipped++
       continue
     }
 
-    await pdfStore.put(key, blob, PDF_CONTENT_TYPE)
+    await pdfStore.put(key, current.blob, PDF_CONTENT_TYPE)
     console.log(`✓ ${row.fileName} → ${key}`)
     copied++
   }

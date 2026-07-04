@@ -57,15 +57,17 @@ export const action = async ({ request }: Route.ActionArgs) => {
     releasedAt,
   )
 
-  // Cover variants and the PDF are written to their object stores before the row
-  // is committed (files-before-DB); no PDF binary is stored in the DB.
+  // Fresh ids up front so the cover/PDF object keys are known before the writes and
+  // available to the cleanup in the catch.
   const coverId = createId()
-  const coverMeta = await storeImageVariants(coverId, cover)
-
   const pdfId = createId()
-  await storePdf(pdfId, pdf)
 
   try {
+    // Cover variants and the PDF are written to their object stores before the row
+    // is committed (files-before-DB); no PDF binary is stored in the DB.
+    const coverMeta = await storeImageVariants(coverId, cover)
+    await storePdf(pdfId, pdf)
+
     const issue = await prisma.issue.create({
       data: {
         authorId: authorId,
@@ -92,9 +94,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
       href('/administration/archive/:issueId', { issueId: issue.id }),
     )
   } catch (error) {
-    // The cover variants and PDF were written before the row (files-before-DB);
-    // a failed create would leave them orphaned, so remove them best-effort
-    // before surfacing the error.
+    // A store write or the create may have failed partway; remove both objects
+    // best-effort (fresh ids, so deleting them is safe and a no-op when nothing was
+    // written) before surfacing the error.
     await Promise.allSettled([deleteImage(coverId), deletePdfObject(pdfId)])
     throwDbError(error, 'Unable to add the archived issue.')
   }

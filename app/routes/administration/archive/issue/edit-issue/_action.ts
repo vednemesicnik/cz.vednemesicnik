@@ -130,8 +130,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
       where: { id: id },
     })
 
-    await cleanup()
-    await pdfCleanup()
+    // Post-commit, best-effort: run both so a failing store delete can't skip the
+    // other, and a cleanup failure doesn't turn an already-committed update into an
+    // error (it would only leave an orphaned previous object).
+    await Promise.allSettled([cleanup(), pdfCleanup()])
 
     return redirect(href('/administration/archive/:issueId', { issueId: id }))
   } catch (error) {
