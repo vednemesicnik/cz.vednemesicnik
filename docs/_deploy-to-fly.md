@@ -73,17 +73,18 @@ Issue PDFs moved out of the SQLite `IssuePDF.blob` column into the `pdfs/` names
 the same way images did. New uploads already write only to the store; existing PDFs
 are copied over by a one-off, idempotent backfill.
 
-After deploying with `STORE_DRIVER = 'tigris'`, run the backfill once from an
-environment that has the production Tigris credentials (`STORE_DRIVER=tigris`,
-`AWS_*`, `BUCKET_NAME`) and `DATABASE_URL` pointing at a current copy of the
-production SQLite DB (see `_manual-database-backup.md`):
+The backfill is bundled into `build/backfill-issue-pdfs.mjs` by `pnpm app:build` (see
+`vite.backfill.config.ts`), so it ships inside the image — no `tsx` or `app/` source
+needed. After deploying with `STORE_DRIVER = 'tigris'`, run it on the app machine,
+which already has the SQLite volume and the Tigris credentials in its environment:
 
 ```shell
-pnpm backfill:issue-pdfs
+fly ssh console --app cz-vednemesicnik --command 'node /app/build/backfill-issue-pdfs.mjs'
 ```
 
 It reads each row's blob + id and writes the object to `pdfs/<id>.pdf`, skipping any
-object that already exists. Verify a few `/archive/<file>.pdf` links open.
+object that already exists (idempotent — safe to re-run). Verify a few
+`/archive/<file>.pdf` links open.
 
 Dropping the now-unused `IssuePDF.blob` column and the loader's blob fallback, then
 `VACUUM`-ing to reclaim the space, is tracked as a follow-up (issue #108) — do it only

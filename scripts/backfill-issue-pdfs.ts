@@ -4,9 +4,13 @@
 // object already exists — so it is safe to re-run.
 //
 // Run once per environment AFTER the store-writing code is deployed and BEFORE the
-// follow-up migration drops the blob column (issue #108):
+// follow-up migration drops the blob column (issue #108).
 //
-//   pnpm backfill:issue-pdfs
+// In production run the pre-bundled build from the app machine (no `tsx`/`app/`
+// source needed in the image — see vite.backfill.config.ts):
+//   pnpm backfill:issue-pdfs:built      # = node build/backfill-issue-pdfs.mjs
+// Locally:
+//   pnpm backfill:issue-pdfs            # = tsx scripts/backfill-issue-pdfs.ts
 
 import 'dotenv/config'
 
