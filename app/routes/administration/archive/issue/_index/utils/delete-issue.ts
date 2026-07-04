@@ -28,9 +28,11 @@ export const deleteIssue = (request: Request, options: Options) =>
         () => prisma.issue.delete({ where: { id: options.id } }),
       )
 
-      // Remove the PDF object too, after the DB delete is durable.
+      // Remove the PDF object too, after the DB delete is durable. Best-effort:
+      // the row is already gone, so a store-delete failure must not turn a durable
+      // delete into a request failure (it would only leave an orphaned object).
       if (issue?.pdf) {
-        await deletePdfObject(issue.pdf.id)
+        await deletePdfObject(issue.pdf.id).catch(() => {})
       }
     },
     target: options.target,
