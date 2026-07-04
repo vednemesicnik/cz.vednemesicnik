@@ -3,18 +3,18 @@ import { mkdir, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, resolve, sep } from 'node:path'
 import { Readable } from 'node:stream'
 
-import type { ImageStore } from './types'
+import type { ObjectStore } from './types'
 
-// Volume-backed ImageStore: variants live as plain files under `rootDir` on the
-// Fly volume. Serving is a raw file stream — no Sharp on the read path.
-export const createVolumeImageStore = (rootDir: string): ImageStore => {
+// Volume-backed ObjectStore: objects live as plain files under `rootDir` on the
+// Fly volume. Serving is a raw file stream — no transform on the read path.
+export const createVolumeObjectStore = (rootDir: string): ObjectStore => {
   const root = resolve(rootDir)
 
   // Resolve a store key to an absolute path and guard against traversal.
   const toPath = (key: string) => {
     const path = resolve(root, key)
     if (path !== root && !path.startsWith(root + sep)) {
-      throw new Error(`Image store key escapes root directory: ${key}`)
+      throw new Error(`Object store key escapes root directory: ${key}`)
     }
     return path
   }

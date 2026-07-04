@@ -3,14 +3,18 @@
 Next to the automatic snapshots, taken by Fly.io every 24 hours, stored for 5 days, it could be useful to manually back up the database to a local machine or another cloud storage. 
 SQLite database is a single file, so it is easy to copy it to another location.
 
-> **Important:** binary image data no longer lives in the database.
-> - **Volume driver (`IMAGE_STORE_DRIVER=volume`):** pre-generated variants are files
->   under `/data/images` on the same Fly volume and are the only copy of the image
->   data, so a database backup alone is **not** complete — back up the image store as
->   well (see [Backing up the image store](#backing-up-the-image-store-volume-driver)).
-> - **Tigris driver (`IMAGE_STORE_DRIVER=tigris`):** the bucket provides image
->   durability, so a database backup does not need to include images
->   (see [After migrating to Tigris](#after-migrating-to-tigris)).
+> **Important:** image binaries no longer live in the database, and issue PDFs are
+> moving out the same way — new uploads are written only to the store, while existing
+> rows still keep their `IssuePDF.blob` until the follow-up column drop (#108).
+> Backing up the database **and** the object stores covers both states.
+> - **Volume driver (`STORE_DRIVER=volume`):** image variants live under
+>   `/data/images` and store-backed PDFs under `/data/pdfs` on the Fly volume — the
+>   only copy of that data — so a database backup alone is **not** complete; back up
+>   the object stores as well (see
+>   [Backing up the object stores](#backing-up-the-object-stores-volume-driver)).
+> - **Tigris driver (`STORE_DRIVER=tigris`):** the bucket provides durability for
+>   both images (`images/`) and PDFs (`pdfs/`), so a database backup does not need to
+>   include store-backed data (see [After migrating to Tigris](#after-migrating-to-tigris)).
 
 Both backups below stream out over a **raw `ssh` session tunnelled through `fly
 proxy`**. This is a clean binary channel over a stable TCP tunnel — unlike streaming
@@ -67,10 +71,11 @@ gzip -t cz-vednemesicnik-backup-*.db.gz && echo "OK"
 
 ## After migrating to Tigris
 
-Once `IMAGE_STORE_DRIVER=tigris` is in effect, backups get both simpler and faster:
+Once `STORE_DRIVER=tigris` is in effect, backups get both simpler and faster:
 
-- **Images** are durable in the bucket, so there is nothing extra to back up — skip
-  the [image-store `tar`](#backing-up-the-image-store-volume-driver) entirely.
+- **Images and issue PDFs** are durable in the bucket (under `images/` and `pdfs/`),
+  so there is nothing extra to back up — skip the
+  [object-store `tar`](#backing-up-the-object-stores-volume-driver) entirely.
   (Optional defense-in-depth: keep a periodic offsite/second-region copy of the
   bucket.)
 - **The database** can be pushed straight into object storage from the app machine,
@@ -108,16 +113,17 @@ gzip -t backup-*.db.gz && echo "OK"
 > A scheduled job can wrap the command above; backups under `db/` are isolated from
 > the image-store lifecycle by prefix.
 
-## Backing up the image store (volume driver)
+## Backing up the object stores (volume driver)
 
-The pre-generated image variants live as files under `/data/images` on the volume.
-With the [proxy from the setup step](#setup-do-this-once-per-session) running, stream a
-`tar` archive straight down over `ssh`:
+The pre-generated image variants and issue PDFs live as files under `/data/images`
+and `/data/pdfs` on the volume. With the
+[proxy from the setup step](#setup-do-this-once-per-session) running, stream a single
+`tar` archive of both straight down over `ssh`:
 
 ```shell
 ssh -p 10022 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-  root@localhost "tar -czf - -C /data images" \
-  > cz-vednemesicnik-images-$(date +%Y-%m-%d).tar.gz
+  root@localhost "tar -czf - -C /data images pdfs" \
+  > cz-vednemesicnik-stores-$(date +%Y-%m-%d).tar.gz
 ```
 
 Throughput is capped by the WireGuard tunnel (~150 KB/s), so a ~50 MB store takes a
@@ -133,8 +139,8 @@ Verify the archive is complete before trusting it — the important step, since 
 truncated download otherwise looks fine:
 
 ```shell
-gzip -t cz-vednemesicnik-images-*.tar.gz && echo "OK"
-tar -tzf cz-vednemesicnik-images-*.tar.gz | wc -l   # file count sanity check
+gzip -t cz-vednemesicnik-stores-*.tar.gz && echo "OK"
+tar -tzf cz-vednemesicnik-stores-*.tar.gz | wc -l   # file count sanity check
 ```
 
 > **Bit-for-bit paranoia?** Build the archive on the volume, record its checksum, then
@@ -143,13 +149,13 @@ tar -tzf cz-vednemesicnik-images-*.tar.gz | wc -l   # file count sanity check
 > ```shell
 > # on the server: build + print checksum
 > fly ssh console --app cz-vednemesicnik \
->   -C "sh -c 'tar -czf /data/images-backup.tar.gz -C /data images && sha256sum /data/images-backup.tar.gz'"
+>   -C "sh -c 'tar -czf /data/stores-backup.tar.gz -C /data images pdfs && sha256sum /data/stores-backup.tar.gz'"
 >
 > # download over the proxy
 > ssh -p 10022 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
->   root@localhost "cat /data/images-backup.tar.gz" > images.tar.gz
+>   root@localhost "cat /data/stores-backup.tar.gz" > stores.tar.gz
 >
 > # compare locally, then clean up the server
-> shasum -a 256 images.tar.gz
-> fly ssh console --app cz-vednemesicnik -C "rm -f /data/images-backup.tar.gz"
+> shasum -a 256 stores.tar.gz
+> fly ssh console --app cz-vednemesicnik -C "rm -f /data/stores-backup.tar.gz"
 > ```

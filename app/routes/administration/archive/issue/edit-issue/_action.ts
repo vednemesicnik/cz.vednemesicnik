@@ -1,5 +1,4 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { createId } from '@paralleldrive/cuid2'
 import { href, redirect } from 'react-router'
 
 import { validateCSRF } from '~/utils/csrf.server'
@@ -7,6 +6,10 @@ import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
+import {
+  deletePdfObject,
+  preparePdfReplacement,
+} from '~/utils/pdf-store/store-pdf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
@@ -96,6 +99,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
     previousVersion: previousCoverVersion,
   })
 
+  // A new PDF is stored under a fresh id before the row is committed; the previous
+  // object is dropped by `pdfCleanup` only after the update commits. Without a new
+  // file, only the filename changes.
+  const { data: pdfData, cleanup: pdfCleanup } = await preparePdfReplacement({
+    file: pdf,
+    fileName: pdfFileName,
+    pdfId,
+  })
+
   try {
     await prisma.issue.update({
       data: {
@@ -109,17 +121,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
         label: label,
         pdf: {
           update: {
-            data:
-              pdf !== undefined
-                ? {
-                    blob: await pdf.bytes(),
-                    contentType: pdf.type,
-                    fileName: pdfFileName,
-                    id: createId(), // New ID forces browser to download new PDF
-                  }
-                : {
-                    fileName: pdfFileName,
-                  },
+            data: pdfData,
             where: { id: pdfId },
           },
         },
@@ -131,10 +133,20 @@ export const action = async ({ request }: Route.ActionArgs) => {
       where: { id: id },
     })
 
-    await cleanup()
+    // Post-commit, best-effort: run both so a failing store delete can't skip the
+    // other, and a cleanup failure doesn't turn an already-committed update into an
+    // error (it would only leave an orphaned previous object).
+    await Promise.allSettled([cleanup(), pdfCleanup()])
 
     return redirect(href('/administration/archive/:issueId', { issueId: id }))
   } catch (error) {
+    // The post-commit cleanups above use Promise.allSettled and never throw, so
+    // reaching here means the update itself failed — the row still points at the
+    // previous PDF object and the freshly-written replacement (pdfData.id, set only
+    // when a new file was stored) is orphaned. Remove it best-effort before
+    // surfacing the error. The cover's new version is intentionally left to the
+    // store (its content-hash version may equal the still-referenced one).
+    if (pdfData.id) await deletePdfObject(pdfData.id).catch(() => {})
     throwDbError(error, 'Unable to update the archived issue.')
   }
 

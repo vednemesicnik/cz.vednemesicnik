@@ -20,7 +20,7 @@ function getShard(id: string) {
 }
 
 // Directory holding every variant for a given (id, version). Trailing slash marks
-// it as a prefix for `ImageStore.delete`.
+// it as a prefix for `ObjectStore.delete`.
 export function buildVersionPrefix(id: string, version: string) {
   return `${getShard(id)}/${id}/${version}/`
 }

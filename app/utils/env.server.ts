@@ -8,22 +8,22 @@ const schema = z.object({
   [ENV_KEYS.BASE_URL]: z.string(),
   [ENV_KEYS.SESSION_SECRET]: z.string(),
   [ENV_KEYS.HONEYPOT_SECRET]: z.string(),
-  // Which ImageStore backend to use. Optional (not `.default`) because `initEnv`
-  // only validates and does not write parsed values back to `process.env`, so a
-  // default here would make the type claim the key is always present when it may
-  // be undefined. The volume backend is the runtime fallback in image-store.server.ts.
-  [ENV_KEYS.IMAGE_STORE_DRIVER]: z
-    .enum(['volume', 'tigris'] as const)
-    .optional(),
-  // Root path of the on-disk image store (Fly volume). Used by the volume driver
-  // (and local development); ignored by the Tigris driver. Optional because the
-  // volume store falls back to `/data/images` and the Tigris driver doesn't use it,
-  // so `IMAGE_STORE_DRIVER=tigris` needn't set an otherwise-unused variable.
+  // Which object-store backend to use for every store (images, PDFs, …). Optional
+  // (not `.default`) because `initEnv` only validates and does not write parsed
+  // values back to `process.env`, so a default here would make the type claim the
+  // key is always present when it may be undefined. The volume backend is the
+  // runtime fallback in create-object-store.ts.
+  [ENV_KEYS.STORE_DRIVER]: z.enum(['volume', 'tigris'] as const).optional(),
+  // Root paths of the on-disk stores (Fly volume). Used by the volume driver (and
+  // local development); ignored by the Tigris driver. Optional because the volume
+  // stores fall back to `/data/images` and `/data/pdfs` and the Tigris driver
+  // doesn't use them, so `STORE_DRIVER=tigris` needn't set otherwise-unused vars.
   [ENV_KEYS.IMAGE_STORE_PATH]: z.string().optional(),
+  [ENV_KEYS.PDF_STORE_PATH]: z.string().optional(),
   // Tigris/S3 credentials and bucket. Fly sets these automatically for a bucket
   // created via `fly storage create`. Optional here because they are only
-  // required when IMAGE_STORE_DRIVER is "tigris"; their presence is enforced at
-  // store construction (see createTigrisImageStore).
+  // required when STORE_DRIVER is "tigris"; their presence is enforced at store
+  // construction (see createTigrisObjectStore).
   [ENV_KEYS.AWS_ACCESS_KEY_ID]: z.string().optional(),
   [ENV_KEYS.AWS_SECRET_ACCESS_KEY]: z.string().optional(),
   [ENV_KEYS.AWS_REGION]: z.string().optional(),
