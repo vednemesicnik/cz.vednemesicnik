@@ -20,7 +20,9 @@ services:
   # profile (docker compose --profile tigris up), so the default flow is
   # unchanged. Ephemeral — data is lost on container restart.
   s3mock:
-    image: adobe/s3mock
+    # Pinned for reproducibility: this is the version validated with the
+    # COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS pre-create setting below.
+    image: adobe/s3mock:5.1.0
     container_name: vdm_s3mock_container
     profiles: ["tigris"]
     ports:
