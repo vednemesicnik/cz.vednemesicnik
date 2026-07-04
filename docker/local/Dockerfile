@@ -1,5 +1,5 @@
 # Base node image
-FROM node:22-slim AS base
+FROM node:24-slim AS base
 
 # Set node environment
 ENV NODE_ENV=production
