@@ -2,6 +2,7 @@ import type { ContentState } from '@generated/prisma/enums'
 import { createId } from '@paralleldrive/cuid2'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
+import { resolveArticleFeaturedImageSeo } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
 import { prisma } from '~/utils/db.server'
 import {
   deleteImage,
@@ -9,7 +10,6 @@ import {
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
-import { resolveArticleFeaturedImageSeo } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
 
 type Options = {
   articleId: string
