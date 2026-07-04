@@ -4,11 +4,11 @@ Next to the automatic snapshots, taken by Fly.io every 24 hours, stored for 5 da
 SQLite database is a single file, so it is easy to copy it to another location.
 
 > **Important:** binary image data no longer lives in the database.
-> - **Volume driver (`IMAGE_STORE_DRIVER=volume`):** pre-generated variants are files
+> - **Volume driver (`STORE_DRIVER=volume`):** pre-generated variants are files
 >   under `/data/images` on the same Fly volume and are the only copy of the image
 >   data, so a database backup alone is **not** complete — back up the image store as
 >   well (see [Backing up the image store](#backing-up-the-image-store-volume-driver)).
-> - **Tigris driver (`IMAGE_STORE_DRIVER=tigris`):** the bucket provides image
+> - **Tigris driver (`STORE_DRIVER=tigris`):** the bucket provides image
 >   durability, so a database backup does not need to include images
 >   (see [After migrating to Tigris](#after-migrating-to-tigris)).
 
@@ -67,7 +67,7 @@ gzip -t cz-vednemesicnik-backup-*.db.gz && echo "OK"
 
 ## After migrating to Tigris
 
-Once `IMAGE_STORE_DRIVER=tigris` is in effect, backups get both simpler and faster:
+Once `STORE_DRIVER=tigris` is in effect, backups get both simpler and faster:
 
 - **Images** are durable in the bucket, so there is nothing extra to back up — skip
   the [image-store `tar`](#backing-up-the-image-store-volume-driver) entirely.

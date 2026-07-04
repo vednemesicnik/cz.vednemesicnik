@@ -1,11 +1,11 @@
 # Manual database restore
 
 > **Important:** the database references image files by `id` + `version`.
-> - **Volume driver (`IMAGE_STORE_DRIVER=volume`):** restore the image store from the
+> - **Volume driver (`STORE_DRIVER=volume`):** restore the image store from the
 >   matching backup date together with the database, so the stored files line up with
 >   the rows referencing them (see
 >   [Restoring the image store](#restoring-the-image-store-volume-driver)).
-> - **Tigris driver (`IMAGE_STORE_DRIVER=tigris`):** the images live durably in the
+> - **Tigris driver (`STORE_DRIVER=tigris`):** the images live durably in the
 >   bucket and are not restored from a DB backup. Just make sure the restored
 >   database's `id`/`version` values match the objects still present in the bucket
 >   (they do, unless the bucket was independently pruned).
