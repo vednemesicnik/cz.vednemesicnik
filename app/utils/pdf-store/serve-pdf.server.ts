@@ -1,6 +1,5 @@
-// Read path for issue PDFs. Builds the download Response from a body — a store
-// stream, or (transitionally, until the backfill + blob-drop follow-up) the legacy
-// in-DB blob. No Content-Length: the store streams, and the header is optional.
+// Read path for issue PDFs. Builds the download Response from a store stream. No
+// Content-Length: the store streams, and the header is optional.
 //
 // The download URL is stable — the filename does not change when a PDF is
 // re-uploaded to the same issue — so `immutable`/long max-age would let a replaced

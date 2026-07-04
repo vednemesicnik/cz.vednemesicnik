@@ -67,34 +67,19 @@ Set it up once:
    > read `'volume'` while the app runs on Tigris). Keep the toggle in `[env]` and
    > reserve secrets for real credentials (`AWS_*`, `BUCKET_NAME`, `SESSION_SECRET`, …).
 
-### Migrating issue PDFs to the store (one-off)
+### Issue PDFs in the store
 
-Issue PDFs moved out of the SQLite `IssuePDF.blob` column into the `pdfs/` namespace,
-the same way images did. New uploads already write only to the store; existing PDFs
-are copied over by a one-off, idempotent backfill.
-
-The backfill is bundled into `build/backfill-issue-pdfs.mjs` by `pnpm app:build` (see
-`vite.backfill.config.ts`), so it ships inside the image — no `tsx` or `app/` source
-needed. After deploying with `STORE_DRIVER = 'tigris'`, run it on the app machine,
-which already has the SQLite volume and the Tigris credentials in its environment:
-
-```shell
-fly ssh console --app cz-vednemesicnik --command 'node /app/build/backfill-issue-pdfs.mjs'
-```
-
-It reads each row's blob + id and writes the object to `pdfs/<id>.pdf`, skipping any
-object that already exists (idempotent — safe to re-run). Verify a few
-`/archive/<file>.pdf` links open.
-
-Dropping the now-unused `IssuePDF.blob` column and the loader's blob fallback, then
-`VACUUM`-ing to reclaim the space, is tracked as a follow-up (issue #108) — do it only
-after the backfill is verified.
+Issue PDFs live in the `pdfs/` namespace of the object store, the same way images do —
+uploads write only to the store and are served from it. The legacy `IssuePDF.blob`
+SQLite column, a one-off backfill, and the loader's blob fallback existed only to move
+the historical PDFs across; all three were removed once the migration was verified in
+production (issue #108).
 
 ### Reclaiming space after the blob drop (one-off)
 
-The migration that dropped the legacy in-DB `blob`/`contentType` columns frees a lot
-of space inside the SQLite file, but SQLite does not return it to the filesystem
-until a `VACUUM`. Run it **once** after that migration has been deployed:
+The migration that dropped the legacy in-DB `IssuePDF.blob` column frees a lot of space
+inside the SQLite file, but SQLite does not return it to the filesystem until a
+`VACUUM`. Run it **once** after that migration has been deployed:
 
 1. SSH into the console.
 ```shell
