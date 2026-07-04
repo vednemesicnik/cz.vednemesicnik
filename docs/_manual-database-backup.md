@@ -3,10 +3,10 @@
 Next to the automatic snapshots, taken by Fly.io every 24 hours, stored for 5 days, it could be useful to manually back up the database to a local machine or another cloud storage. 
 SQLite database is a single file, so it is easy to copy it to another location.
 
-> **Important:** image binaries no longer live in the database, and issue PDFs are
-> moving out the same way — new uploads are written only to the store, while existing
-> rows still keep their `IssuePDF.blob` until the follow-up column drop (#108).
-> Backing up the database **and** the object stores covers both states.
+> **Important:** neither image binaries nor issue PDFs live in the database anymore —
+> both are written to and served only from the object store. The database holds just
+> the rows that reference them, so a full backup covers the database **and** the object
+> stores.
 > - **Volume driver (`STORE_DRIVER=volume`):** image variants live under
 >   `/data/images` and store-backed PDFs under `/data/pdfs` on the Fly volume — the
 >   only copy of that data — so a database backup alone is **not** complete; back up

@@ -11,11 +11,12 @@ Cache-Control: public, no-cache
 ```
 
 `no-cache` means the response **may** be stored (browser and edge) but must be
-revalidated before reuse. Revalidation is a cheap conditional request against the ETag —
-built from `fileName + updatedAt` (see `PDF_CACHE_CONTROL` and the ETag in
-`app/utils/pdf-store/serve-pdf.server.ts` + `app/routes/website/archive/issue-pdf/_loader.ts`).
-So repeat downloads are `304`s when the PDF is unchanged, and pick up a re-upload
-immediately. Same strategy as the `env.js` resource.
+revalidated before reuse. Revalidation is a cheap conditional request against the ETag,
+which the route loader builds from `fileName + updatedAt`
+(`app/routes/website/archive/issue-pdf/_loader.ts`); the `no-cache` header itself is
+`PDF_CACHE_CONTROL` in `app/utils/pdf-store/serve-pdf.server.ts`. So repeat downloads
+are `304`s when the PDF is unchanged, and pick up a re-upload immediately. Same strategy
+as the `env.js` resource.
 
 ## The problem this rule fixes
 
