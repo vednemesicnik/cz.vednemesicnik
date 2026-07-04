@@ -3,15 +3,18 @@
 Next to the automatic snapshots, taken by Fly.io every 24 hours, stored for 5 days, it could be useful to manually back up the database to a local machine or another cloud storage. 
 SQLite database is a single file, so it is easy to copy it to another location.
 
-> **Important:** binary image and PDF data no longer lives in the database.
-> - **Volume driver (`STORE_DRIVER=volume`):** pre-generated image variants live
->   under `/data/images` and issue PDFs under `/data/pdfs` on the same Fly volume,
->   and are the only copy of that data, so a database backup alone is **not**
->   complete — back up the object stores as well (see
+> **Important:** image binaries no longer live in the database, and issue PDFs are
+> moving out the same way — new uploads are written only to the store, while existing
+> rows still keep their `IssuePDF.blob` until the follow-up column drop (#108).
+> Backing up the database **and** the object stores covers both states.
+> - **Volume driver (`STORE_DRIVER=volume`):** image variants live under
+>   `/data/images` and store-backed PDFs under `/data/pdfs` on the Fly volume — the
+>   only copy of that data — so a database backup alone is **not** complete; back up
+>   the object stores as well (see
 >   [Backing up the object stores](#backing-up-the-object-stores-volume-driver)).
 > - **Tigris driver (`STORE_DRIVER=tigris`):** the bucket provides durability for
 >   both images (`images/`) and PDFs (`pdfs/`), so a database backup does not need to
->   include them (see [After migrating to Tigris](#after-migrating-to-tigris)).
+>   include store-backed data (see [After migrating to Tigris](#after-migrating-to-tigris)).
 
 Both backups below stream out over a **raw `ssh` session tunnelled through `fly
 proxy`**. This is a clean binary channel over a stable TCP tunnel — unlike streaming
