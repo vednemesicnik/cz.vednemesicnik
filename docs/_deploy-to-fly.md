@@ -67,6 +67,31 @@ Set it up once:
    > read `'volume'` while the app runs on Tigris). Keep the toggle in `[env]` and
    > reserve secrets for real credentials (`AWS_*`, `BUCKET_NAME`, `SESSION_SECRET`, …).
 
+### Managing the Tigris bucket over `fly ssh`
+
+The production image ships an `object-store` CLI for ad-hoc bucket operations — no
+one-off scripts. It is a self-contained TypeScript file run via Node 24 native type
+stripping, reusing the already-bundled `@aws-sdk/client-s3`; it reads the same
+`AWS_*` / `BUCKET_NAME` secrets the app uses, so no extra setup is needed.
+
+```shell
+fly ssh console --app cz-vednemesicnik
+```
+
+```shell
+object-store ls                     # list every object in the bucket
+object-store ls images/             # list only the images namespace
+object-store ls pdfs/               # list only the issue-PDF namespace
+object-store stat images/ab/<id>/v1/960.avif   # metadata for one object
+object-store put ./cover.avif images/ab/<id>/v1/960.avif   # upload a file
+object-store rm images/ab/<id>/v1/960.avif      # delete one object
+object-store rm images/ab/<id>/                 # delete a whole "directory" (recursive!)
+object-store --help
+```
+
+> **Caution:** a key ending in `/` deletes **recursively** — `object-store rm images/`
+> would wipe every image variant. Double-check the prefix before running `rm`.
+
 ### Issue PDFs in the store
 
 Issue PDFs live in the `pdfs/` namespace of the object store, the same way images do —

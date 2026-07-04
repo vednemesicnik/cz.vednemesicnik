@@ -15,6 +15,24 @@ services:
       - data:/data
     restart: unless-stopped
 
+  # Local S3-compatible bucket for exercising the tigris store driver and the
+  # object-store CLI without touching production. Only starts with the "tigris"
+  # profile (docker compose --profile tigris up), so the default flow is
+  # unchanged. Ephemeral — data is lost on container restart.
+  s3mock:
+    # Pinned for reproducibility: this is the version validated with the
+    # COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS pre-create setting below.
+    image: adobe/s3mock:5.1.0
+    container_name: vdm_s3mock_container
+    profiles: ["tigris"]
+    ports:
+      - "9090:9090"
+    environment:
+      # adobe/s3mock v3+ (Spring Boot) reads this key; the older `initialBuckets`
+      # is ignored. Comma-separate to pre-create multiple buckets.
+      - COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS=cz-vednemesicnik-storage
+    restart: unless-stopped
+
 volumes:
   data:
     name: vdm_app_data

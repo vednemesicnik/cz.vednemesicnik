@@ -1,5 +1,5 @@
 # Base node image
-FROM node:22-slim AS base
+FROM node:24-slim AS base
 
 # Set node environment
 ENV NODE_ENV=production
@@ -62,6 +62,12 @@ ENV PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK="1"
 ADD scripts/database-cli.sh /usr/local/bin/database-cli
 RUN chmod +x /usr/local/bin/database-cli
 
+# Add shortcut for the object-store CLI (S3/Tigris bucket over `fly ssh`). The
+# CLI is a Node 24 TypeScript file run via native type stripping, reusing the
+# already-bundled @aws-sdk/client-s3 — no extra dependency, no tsx.
+ADD scripts/object-store.sh /usr/local/bin/object-store
+RUN chmod +x /usr/local/bin/object-store
+
 WORKDIR /app
 
 COPY --from=production-deps /app/node_modules /app/node_modules
@@ -76,6 +82,7 @@ COPY --from=build /app/prisma.config.ts /app/prisma.config.ts
 COPY --from=build /app/constants/env.ts /app/constants/env.ts
 COPY --from=build /app/prisma/schema.prisma /app/prisma/schema.prisma
 COPY --from=build /app/prisma/migrations /app/prisma/migrations
+COPY --from=build /app/scripts/object-store-cli.ts /app/scripts/object-store-cli.ts
 COPY --from=build /app/scripts/docker-entry-point-fly.sh /app/scripts/docker-entry-point.sh
 
 ENTRYPOINT [ "/app/scripts/docker-entry-point.sh" ]
