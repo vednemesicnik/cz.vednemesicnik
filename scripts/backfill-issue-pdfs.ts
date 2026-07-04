@@ -44,6 +44,8 @@ async function backfill() {
       select: { blob: true },
       where: { id: row.id },
     })
+    // Narrows the nullable `blob` column for `put`; also guards the unlikely race
+    // where the row was cleared between the id query and this one.
     if (blob === null) {
       skipped++
       continue

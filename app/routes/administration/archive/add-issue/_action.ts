@@ -54,7 +54,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   )
 
   // Cover variants and the PDF are written to their object stores before the row
-  // is committed (files-before-DB); nothing PDF binary stays in the DB.
+  // is committed (files-before-DB); no PDF binary is stored in the DB.
   const coverId = createId()
   const coverMeta = await storeImageVariants(coverId, cover)
 

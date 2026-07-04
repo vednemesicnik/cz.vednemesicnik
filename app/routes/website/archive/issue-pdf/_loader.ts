@@ -13,10 +13,12 @@ import type { Route } from './+types/route'
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { fileName } = params
 
-  // `id` is the object-store key; `blob` is the legacy fallback; `updatedAt` drives
-  // cache validation.
+  // Don't select the (large) blob here — `id` builds the object-store key and
+  // `updatedAt` drives cache validation. The blob is only needed for the legacy
+  // fallback below, and only when the object store misses, so it is loaded lazily
+  // to keep the hot path from pulling hundreds of KB out of SQLite per request.
   const pdf = await prisma.issuePDF.findUnique({
-    select: { blob: true, contentType: true, id: true, updatedAt: true },
+    select: { contentType: true, id: true, updatedAt: true },
     where: { fileName },
   })
 
@@ -39,12 +41,17 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const meta = { contentType: pdf.contentType, etag, fileName, lastModified }
 
-  // Prefer the object store; fall back to the legacy in-DB blob for rows not yet
-  // backfilled (transitional — removed with the blob column in issue #108).
+  // Prefer the object store.
   const stream = await pdfStore.getStream(buildPdfKey(pdf.id))
   if (stream !== null) return buildPdfResponse(stream, meta)
 
-  if (pdf.blob !== null) return buildPdfResponse(pdf.blob, meta)
+  // Store miss → fall back to the legacy in-DB blob, loaded only now, for rows not
+  // yet backfilled (transitional — removed with the blob column in issue #108).
+  const legacy = await prisma.issuePDF.findUnique({
+    select: { blob: true },
+    where: { id: pdf.id },
+  })
+  if (legacy?.blob != null) return buildPdfResponse(legacy.blob, meta)
 
   throw new Response('PDF soubor nebyl nalezen', { status: 404 })
 }
