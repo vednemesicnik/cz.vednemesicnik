@@ -1,10 +1,8 @@
 # Manual database restore
 
 > **Important:** the database references image files by `id` + `version` and issue
-> PDFs by `id`. Image binaries live outside the DB; issue PDFs are transitioning —
-> new ones live only in the store (`IssuePDF.blob` is null), while legacy rows still
-> carry their blob until the follow-up column drop (#108). Restoring the database
-> together with the object stores keeps both in sync.
+> PDFs by `id`. Both image binaries and issue PDFs live outside the DB, in the object
+> store. Restoring the database together with the object stores keeps both in sync.
 > - **Volume driver (`STORE_DRIVER=volume`):** restore the object stores (images and
 >   PDFs) from the matching backup date together with the database, so the stored
 >   files line up with the rows referencing them (see
