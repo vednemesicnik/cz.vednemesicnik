@@ -6,8 +6,11 @@ import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
-import { storeImageVariants } from '~/utils/image-store/store-image.server'
-import { storePdf } from '~/utils/pdf-store/store-pdf.server'
+import {
+  deleteImage,
+  storeImageVariants,
+} from '~/utils/image-store/store-image.server'
+import { deletePdfObject, storePdf } from '~/utils/pdf-store/store-pdf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
@@ -85,6 +88,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
       href('/administration/archive/:issueId', { issueId: issue.id }),
     )
   } catch (error) {
+    // The cover variants and PDF were written before the row (files-before-DB);
+    // a failed create would leave them orphaned, so remove them best-effort
+    // before surfacing the error.
+    await Promise.allSettled([deleteImage(coverId), deletePdfObject(pdfId)])
     throwDbError(error, 'Unable to add the archived issue.')
   }
 

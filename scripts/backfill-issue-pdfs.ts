@@ -19,8 +19,11 @@ import { buildPdfKey } from '~/utils/pdf-store/pdf-key'
 import { pdfStore } from '~/utils/pdf-store/pdf-store.server'
 
 async function backfill() {
+  // Select only ids/names up front (not the blobs), and only rows that still hold
+  // a blob, so memory stays bounded regardless of how many/large the PDFs are.
   const rows = await prisma.issuePDF.findMany({
-    select: { blob: true, fileName: true, id: true },
+    select: { fileName: true, id: true },
+    where: { blob: { not: null } },
   })
 
   let copied = 0
@@ -29,13 +32,6 @@ async function backfill() {
   for (const row of rows) {
     const key = buildPdfKey(row.id)
 
-    // Already store-only (uploaded after the cutover) — nothing to copy.
-    if (row.blob === null) {
-      console.log(`- ${row.fileName}: no blob, skipping`)
-      skipped++
-      continue
-    }
-
     // Idempotent: don't overwrite an object a previous run already wrote.
     if (await pdfStore.exists(key)) {
       console.log(`- ${row.fileName}: object already present, skipping`)
@@ -43,7 +39,17 @@ async function backfill() {
       continue
     }
 
-    await pdfStore.put(key, row.blob, 'application/pdf')
+    // Load just this row's blob, so only one PDF is held in memory at a time.
+    const { blob } = await prisma.issuePDF.findUniqueOrThrow({
+      select: { blob: true },
+      where: { id: row.id },
+    })
+    if (blob === null) {
+      skipped++
+      continue
+    }
+
+    await pdfStore.put(key, blob, 'application/pdf')
     console.log(`✓ ${row.fileName} → ${key}`)
     copied++
   }
