@@ -4,6 +4,7 @@ import { createId } from '@paralleldrive/cuid2'
 
 import { buildPdfKey } from '~/utils/pdf-store/pdf-key'
 import { pdfStore } from '~/utils/pdf-store/pdf-store.server'
+import { PDF_CONTENT_TYPE } from '~/utils/pdf-store/store-pdf.server'
 
 type Args = {
   fileName: string
@@ -28,7 +29,7 @@ export const storeSeedPdf = async ({
 
   const buffer = await readFile(filePath)
   const id = createId()
-  await pdfStore.put(buildPdfKey(id), buffer, 'application/pdf')
+  await pdfStore.put(buildPdfKey(id), buffer, PDF_CONTENT_TYPE)
 
-  return { contentType: 'application/pdf', fileName, id }
+  return { contentType: PDF_CONTENT_TYPE, fileName, id }
 }

@@ -10,7 +10,11 @@ import {
   deleteImage,
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
-import { deletePdfObject, storePdf } from '~/utils/pdf-store/store-pdf.server'
+import {
+  deletePdfObject,
+  PDF_CONTENT_TYPE,
+  storePdf,
+} from '~/utils/pdf-store/store-pdf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
@@ -75,7 +79,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
         label: label,
         pdf: {
           create: {
-            contentType: pdf.type,
+            contentType: PDF_CONTENT_TYPE,
             fileName: pdfFileName,
             id: pdfId,
           },

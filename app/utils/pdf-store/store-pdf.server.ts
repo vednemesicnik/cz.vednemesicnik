@@ -3,7 +3,10 @@ import { createId } from '@paralleldrive/cuid2'
 import { buildPdfKey } from './pdf-key'
 import { pdfStore } from './pdf-store.server'
 
-const PDF_CONTENT_TYPE = 'application/pdf'
+// The stored object and the DB `contentType` metadata are both bound to this one
+// constant, so the object's content type and the download response header can never
+// diverge (uploads are validated to be application/pdf, so this always holds).
+export const PDF_CONTENT_TYPE = 'application/pdf'
 
 // Write a PDF object under its owning row `id`. Called before the row is committed
 // (files-before-DB), mirroring the image store's storeImageVariants.
@@ -57,6 +60,6 @@ export async function preparePdfReplacement({
     cleanup: async () => {
       await deletePdfObject(pdfId)
     },
-    data: { contentType: file.type, fileName, id: newId },
+    data: { contentType: PDF_CONTENT_TYPE, fileName, id: newId },
   }
 }

@@ -17,6 +17,7 @@ import 'dotenv/config'
 import { prisma } from '~/utils/db.server'
 import { buildPdfKey } from '~/utils/pdf-store/pdf-key'
 import { pdfStore } from '~/utils/pdf-store/pdf-store.server'
+import { PDF_CONTENT_TYPE } from '~/utils/pdf-store/store-pdf.server'
 
 async function backfill() {
   // Select only ids/names up front (not the blobs), and only rows that still hold
@@ -51,7 +52,7 @@ async function backfill() {
       continue
     }
 
-    await pdfStore.put(key, blob, 'application/pdf')
+    await pdfStore.put(key, blob, PDF_CONTENT_TYPE)
     console.log(`✓ ${row.fileName} → ${key}`)
     copied++
   }
