@@ -1,5 +1,6 @@
 import { prisma } from '~/utils/db.server'
 import { imageStore } from '~/utils/image-store/image-store.server'
+import { pdfStore } from '~/utils/pdf-store/pdf-store.server'
 import { authorPermissions } from '~~/data/author-permissions'
 import { authorRoles } from '~~/data/author-roles'
 import { userPermissions } from '~~/data/user-permissions'
@@ -30,10 +31,14 @@ async function seed() {
   await cleanupDb(prisma)
   console.timeEnd('🧹 Database has been cleaned up')
 
-  // Image store cleanup 🖼️ (wipe the volume so fresh ids leave no orphaned variants)
+  // Object store cleanup 🖼️📄 (wipe the stores so fresh ids leave no orphans)
   console.time('🖼️ Image store has been cleaned up')
   await imageStore.delete([''])
   console.timeEnd('🖼️ Image store has been cleaned up')
+
+  console.time('📄 PDF store has been cleaned up')
+  await pdfStore.delete([''])
+  console.timeEnd('📄 PDF store has been cleaned up')
 
   // Permissions 🔑
   console.time('🔑 Permissions have been created')

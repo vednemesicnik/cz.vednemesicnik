@@ -1,15 +1,19 @@
 import { checkCacheValidation } from '~/utils/cache.server'
 import { prisma } from '~/utils/db.server'
 import { getContentHash } from '~/utils/hash.server'
+import { buildPdfKey } from '~/utils/pdf-store/pdf-key'
+import { pdfStore } from '~/utils/pdf-store/pdf-store.server'
+import { buildPdfResponse } from '~/utils/pdf-store/serve-pdf.server'
 
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { fileName } = params
 
-  // Fetch PDF with updatedAt for cache validation
+  // `id` is the object-store key; `blob` is the legacy fallback; `updatedAt` drives
+  // cache validation.
   const pdf = await prisma.issuePDF.findUnique({
-    select: { blob: true, contentType: true, fileName: true, updatedAt: true },
+    select: { blob: true, contentType: true, id: true, updatedAt: true },
     where: { fileName },
   })
 
@@ -17,7 +21,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw new Response('PDF soubor nebyl nalezen', { status: 404 })
   }
 
-  // Generate ETag from fileName + updatedAt timestamp (invalidates when PDF changes)
+  // ETag from fileName + updatedAt timestamp (invalidates when the PDF changes)
   const etag = getContentHash(`${fileName}:${pdf.updatedAt.valueOf()}`)
   const lastModified = pdf.updatedAt.toUTCString()
 
@@ -25,16 +29,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const cachedResponse = checkCacheValidation(request, etag, lastModified)
   if (cachedResponse !== null) return cachedResponse
 
-  // Client doesn't have cached version - return PDF
-  return new Response(pdf.blob, {
-    headers: {
-      'Cache-Control': 'public, max-age=31536000, immutable',
-      'Content-Disposition': `inline; filename="${pdf.fileName}"`,
-      'Content-Length': pdf.blob.byteLength.toString(),
-      'Content-Type': pdf.contentType,
-      ETag: etag,
-      'Last-Modified': lastModified,
-      'X-Robots-Tag': 'noindex, nofollow, noarchive, nosnippet',
-    },
-  })
+  const meta = { contentType: pdf.contentType, etag, fileName, lastModified }
+
+  // Prefer the object store; fall back to the legacy in-DB blob for rows not yet
+  // backfilled (transitional — removed with the blob column in issue #108).
+  const stream = await pdfStore.getStream(buildPdfKey(pdf.id))
+  if (stream !== null) return buildPdfResponse(stream, meta)
+
+  if (pdf.blob !== null) return buildPdfResponse(pdf.blob, meta)
+
+  throw new Response('PDF soubor nebyl nalezen', { status: 404 })
 }

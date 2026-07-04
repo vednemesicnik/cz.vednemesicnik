@@ -1,9 +1,10 @@
-// Storage abstraction over pre-generated image variants. Calling code (upload,
-// serving, deletion) never touches the filesystem/object store directly, so the
-// volume implementation can later be swapped for a Tigris/S3 adapter without any
-// change to callers.
+// Storage abstraction over opaque binary objects (image variants, issue PDFs, …).
+// Calling code (upload, serving, deletion) never touches the filesystem/object
+// store directly, so the volume implementation can be swapped for a Tigris/S3
+// adapter without any change to callers. Nothing here is content-type specific —
+// each caller builds its own keys and picks its own namespace prefix.
 
-export type ImageStore = {
+export type ObjectStore = {
   // Write a single object under `key`.
   put: (key: string, data: Uint8Array, contentType: string) => Promise<void>
   // Read a single object as a web stream, or null if it does not exist.

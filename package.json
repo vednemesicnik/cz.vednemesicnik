@@ -65,6 +65,7 @@
     "app:routes:generate": "react-router typegen",
     "app:start": "react-router-serve ./build/server/index.js",
     "app:typecheck": "react-router typegen && tsc",
+    "backfill:issue-pdfs": "tsx ./scripts/backfill-issue-pdfs.ts",
     "biome:check": "biome check",
     "biome:check:fix": "biome check --write",
     "biome:check:push": "biome check --no-errors-on-unmatched --files-ignore-unknown=true",

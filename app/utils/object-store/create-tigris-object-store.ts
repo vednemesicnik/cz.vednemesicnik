@@ -9,7 +9,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3'
 
-import type { ImageStore } from './types'
+import type { ObjectStore } from './types'
 
 // S3 caps a single DeleteObjects request at 1000 keys.
 const DELETE_BATCH_SIZE = 1000
@@ -29,7 +29,7 @@ export type TigrisConfig = {
 
 // A key addresses a prefix (directory) rather than a single object when it ends
 // in "/" or is empty. The empty key is the whole store — the volume driver wipes
-// its root the same way (e.g. `imageStore.delete([''])` in prisma/seed.ts).
+// its root the same way (e.g. `store.delete([''])` in prisma/seed.ts).
 const isPrefixKey = (key: string) => key === '' || key.endsWith('/')
 
 // Whether an S3 error means "no such object" (a real 404, not a transport error).
@@ -46,11 +46,11 @@ function isNotFound(error: unknown): boolean {
   )
 }
 
-// Tigris-backed (S3-compatible) ImageStore: variants live as objects in a bucket
-// instead of files on the Fly volume, so image durability and bandwidth are off
-// the app machine's volume. Serving still streams through the app read path
-// (resource routes), just from the bucket rather than local disk.
-export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
+// Tigris-backed (S3-compatible) ObjectStore: objects live in a bucket instead of
+// files on the Fly volume, so durability and bandwidth are off the app machine's
+// volume. Serving still streams through the app read path (resource / download
+// routes), just from the bucket rather than local disk.
+export const createTigrisObjectStore = (config: TigrisConfig): ObjectStore => {
   const {
     endpoint,
     region,
@@ -81,8 +81,8 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
 
   if (missing.length > 0) {
     throw new Error(
-      `Tigris image store is missing required configuration: ${missing.join(', ')}. ` +
-        `Set these env vars or use IMAGE_STORE_DRIVER=volume.`,
+      `Tigris object store is missing required configuration: ${missing.join(', ')}. ` +
+        `Set these env vars or use STORE_DRIVER=volume.`,
     )
   }
 
@@ -148,7 +148,7 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
     async delete(keys) {
       // A prefix key (trailing slash, or empty = whole store) is removed
       // recursively; a plain key removes a single object — matching the
-      // ImageStore contract and the volume driver's `rm`.
+      // ObjectStore contract and the volume driver's `rm`.
       await Promise.all(
         keys.map((key) =>
           isPrefixKey(key)
@@ -204,9 +204,10 @@ export const createTigrisImageStore = (config: TigrisConfig): ImageStore => {
     },
 
     async put(key, data, contentType) {
-      // No object-level Cache-Control: images are served through the app read
-      // path (/resources/*, behind Cloudflare), which sets the response header
-      // itself, so the stored object's own cache headers are never used.
+      // No object-level Cache-Control: objects are served through the app read
+      // path (resource / download routes, behind Cloudflare), which sets the
+      // response header itself, so the stored object's own cache headers are
+      // never used.
       await client.send(
         new PutObjectCommand({
           Body: data,

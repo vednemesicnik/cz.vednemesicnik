@@ -28,9 +28,10 @@ read path — the resource routes just stream the ready-made files. Image metada
 (`version`, dimensions, LQIP) lives in the DB; the images themselves are on the
 volume — SQLite no longer holds image blobs.
 
-The backend is selected by `IMAGE_STORE_DRIVER` — a non-secret toggle in `fly.toml`
-`[env]` (`volume` by default, `tigris` for object storage — see below). Callers are
-unchanged: both drivers implement the same `ImageStore` interface.
+The backend is selected by `STORE_DRIVER` — a non-secret toggle in `fly.toml`
+`[env]` (`volume` by default, `tigris` for object storage — see below) that governs
+every store (images and issue PDFs). Callers are unchanged: both drivers implement
+the same `ObjectStore` interface.
 
 ### Object storage (Tigris)
 
@@ -47,25 +48,46 @@ Set it up once:
    ```shell
    fly storage create --app cz-vednemesicnik
    ```
-   The bucket is shared: images live under the `images/` prefix (matching the app's
-   `keyPrefix`), leaving room for sibling namespaces (e.g. `pdfs/` for issue PDFs) in
-   the same bucket.
+   The bucket is shared: images live under the `images/` prefix and issue PDFs under
+   `pdfs/` (each store's `keyPrefix`), in the same bucket.
 2. Select the driver in `fly.toml` `[env]` so the config stays the single source of
    truth, then deploy:
    ```toml
    # fly.toml
    [env]
-     IMAGE_STORE_DRIVER = 'tigris'
+     STORE_DRIVER = 'tigris'
    ```
    ```shell
    fly deploy --app cz-vednemesicnik
    ```
 
    > **Why not `fly secrets set`?** A secret *would* take effect — on Fly, secrets
-   > override same-named `[env]` values — but `IMAGE_STORE_DRIVER` is not sensitive,
+   > override same-named `[env]` values — but `STORE_DRIVER` is not sensitive,
    > and a secret would silently contradict the visible `[env]` line (it would still
    > read `'volume'` while the app runs on Tigris). Keep the toggle in `[env]` and
    > reserve secrets for real credentials (`AWS_*`, `BUCKET_NAME`, `SESSION_SECRET`, …).
+
+### Migrating issue PDFs to the store (one-off)
+
+Issue PDFs moved out of the SQLite `IssuePDF.blob` column into the `pdfs/` namespace,
+the same way images did. New uploads already write only to the store; existing PDFs
+are copied over by a one-off, idempotent backfill.
+
+After deploying with `STORE_DRIVER = 'tigris'`, run the backfill once from an
+environment that has the production Tigris credentials (`STORE_DRIVER=tigris`,
+`AWS_*`, `BUCKET_NAME`) and `DATABASE_URL` pointing at a current copy of the
+production SQLite DB (see `_manual-database-backup.md`):
+
+```shell
+pnpm backfill:issue-pdfs
+```
+
+It reads each row's blob + id and writes the object to `pdfs/<id>.pdf`, skipping any
+object that already exists. Verify a few `/archive/<file>.pdf` links open.
+
+Dropping the now-unused `IssuePDF.blob` column and the loader's blob fallback, then
+`VACUUM`-ing to reclaim the space, is tracked as a follow-up (issue #108) — do it only
+after the backfill is verified.
 
 ### Reclaiming space after the blob drop (one-off)
 

@@ -7,6 +7,7 @@ import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { storeImageVariants } from '~/utils/image-store/store-image.server'
+import { storePdf } from '~/utils/pdf-store/store-pdf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
@@ -49,10 +50,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
     releasedAt,
   )
 
-  // Cover variants are written to the store before the row is committed; the PDF
-  // stays an in-DB blob (out of scope for the image store).
+  // Cover variants and the PDF are written to their object stores before the row
+  // is committed (files-before-DB); nothing PDF binary stays in the DB.
   const coverId = createId()
   const coverMeta = await storeImageVariants(coverId, cover)
+
+  const pdfId = createId()
+  await storePdf(pdfId, pdf)
 
   try {
     const issue = await prisma.issue.create({
@@ -68,9 +72,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
         label: label,
         pdf: {
           create: {
-            blob: await pdf.bytes(),
             contentType: pdf.type,
             fileName: pdfFileName,
+            id: pdfId,
           },
         },
         releasedAt: releaseDate,
