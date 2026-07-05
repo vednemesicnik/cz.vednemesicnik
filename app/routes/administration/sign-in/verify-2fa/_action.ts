@@ -92,5 +92,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await deletePendingTwoFactorCookieSession(cookieSession),
   )
 
-  throw redirect('/administration', { headers })
+  // 303 See Other so the browser issues a GET for the destination after this
+  // POST, matching the other redirects in this flow.
+  throw redirect('/administration', { headers, status: 303 })
 }
