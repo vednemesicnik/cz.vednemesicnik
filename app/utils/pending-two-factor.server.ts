@@ -37,7 +37,11 @@ const cookieSessionStorage = createCookieSessionStorage<
   cookie: createCookie('vdm_pending_2fa', {
     httpOnly: true,
     maxAge: 300, // 5 minutes (in seconds)
-    path: '/',
+    // Scope to the sign-in flow only, so this cookie is never sent to public
+    // pages. Uses the parent `/administration/sign-in` (not the exact
+    // verify-2fa route) so it still matches the React Router `.data` request
+    // `/administration/sign-in/verify-2fa.data` under Single Fetch.
+    path: '/administration/sign-in',
     sameSite: 'lax',
     secrets: process.env.SESSION_SECRET?.split(','),
     secure: process.env.NODE_ENV === 'production',
