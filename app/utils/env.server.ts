@@ -29,6 +29,28 @@ const schema = z.object({
   [ENV_KEYS.AWS_REGION]: z.string().optional(),
   [ENV_KEYS.AWS_ENDPOINT_URL_S3]: z.string().optional(),
   [ENV_KEYS.BUCKET_NAME]: z.string().optional(),
+  // Break-glass password sign-in. Disabled by default: the password form is a
+  // last-resort emergency path, gated server-side in the sign-in action.
+  // Optional (not `.default`) because `initEnv` only validates and never writes
+  // parsed values back to `process.env`; keep it `=true` in production until an
+  // alternative sign-in method (magic link / OAuth) ships.
+  [ENV_KEYS.ALLOW_PASSWORD_LOGIN]: z
+    .enum(['true', 'false'] as const)
+    .optional(),
+  // Google OAuth (Workspace SSO) credentials. Prepared for phase 4; optional
+  // because OAuth is not wired up yet and local development doesn't need them.
+  [ENV_KEYS.GOOGLE_CLIENT_ID]: z.string().optional(),
+  [ENV_KEYS.GOOGLE_CLIENT_SECRET]: z.string().optional(),
+  // Google Apps Script web app that sends the magic-link email. Prepared for
+  // phase 3; optional because magic link is not wired up yet.
+  [ENV_KEYS.GAS_MAGIC_LINK_URL]: z.string().optional(),
+  [ENV_KEYS.GAS_MAGIC_LINK_SECRET]: z.string().optional(),
+  // WebAuthn relying-party settings for the passkey flow. Read directly from
+  // process.env by the authentication routes today; validated here so they are
+  // typed on ProcessEnv. Optional because local development falls back gracefully.
+  [ENV_KEYS.RELYING_PARTY_ID]: z.string().optional(),
+  [ENV_KEYS.RELYING_PARTY_NAME]: z.string().optional(),
+  [ENV_KEYS.RELYING_PARTY_ORIGIN]: z.string().optional(),
 })
 
 declare global {
