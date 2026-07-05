@@ -25,16 +25,12 @@ export const findActiveUserByEmail = async (email: string) => {
  * cookie and redirects to the administration. Shared by the passwordless
  * sign-in methods (magic link, OAuth).
  *
- * Throws a redirect on success (so callers can `await` it as the final step).
+ * Always throws: a redirect on success, or a DB error from `createSession`
+ * (which never returns normally on failure). Callers `await` it as the final
+ * step; nothing after the call runs.
  */
 export const signInUser = async (request: Request, userId: string) => {
-  const response = await createSession(userId)
-
-  if (response?.ok !== true) {
-    return { ok: false as const }
-  }
-
-  const { session } = response
+  const { session } = await createSession(userId)
 
   throw redirect('/administration', {
     headers: {

@@ -17,6 +17,6 @@ export const createSession = async (userId: string) => {
       session: { expirationDate: session.expirationDate, id: session.id },
     }
   } catch (error) {
-    throwDbError(error, 'Unable to create the session.')
+    return throwDbError(error, 'Unable to create the session.')
   }
 }
