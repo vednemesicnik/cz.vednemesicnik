@@ -152,6 +152,19 @@ describe('totp.server', () => {
       expect(result).toBeNull()
     })
 
+    test('round-trips a non-numeric charSet', async () => {
+      vi.setSystemTime(new Date('2026-07-05T12:00:00Z'))
+
+      const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
+      const { otp, secret } = await generateTOTP({ charSet, digits: 8 })
+
+      // Every character comes from the configured alphabet.
+      expect(otp).toMatch(/^[A-Z2-7]{8}$/)
+
+      const result = await verifyTOTP({ charSet, digits: 8, otp, secret })
+      expect(result).toEqual({ delta: 0 })
+    })
+
     test('round-trips a non-default algorithm (SHA-256)', async () => {
       vi.setSystemTime(new Date('2026-07-05T12:00:00Z'))
 

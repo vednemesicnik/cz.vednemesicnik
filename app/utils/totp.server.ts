@@ -216,9 +216,11 @@ async function generateHOTP(
   for (let i = 0; i < digits; i++) {
     hotp = charSet.charAt(Number(hotpVal % charSetLength)) + hotp
 
-    // Ensures hotpVal decreases at a fixed rate, independent of charSet length.
-    // 10n is compatible with the TOTP algorithm used by authenticator apps.
-    hotpVal = hotpVal / 10n
+    // Divide by the charSet length (not a fixed 10) so digit extraction is a
+    // consistent base-N conversion for any alphabet. Identical to the upstream
+    // `/ 10n` for the default numeric charSet, so RFC/authenticator output is
+    // unchanged. (Diverges from upstream @epic-web/totp.)
+    hotpVal = hotpVal / charSetLength
   }
 
   return hotp
