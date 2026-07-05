@@ -22,17 +22,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   checkHoneypot(formData)
 
+  const cookieSession = await getPendingTwoFactorCookieSession(request)
+
+  // Any redirect out of the TOTP step clears the pending cookie so no stale
+  // pending user id / attempt counter lingers until it expires.
+  const redirectToSignIn = async () =>
+    redirect('/administration/sign-in', {
+      headers: {
+        'Set-Cookie': await deletePendingTwoFactorCookieSession(cookieSession),
+      },
+      status: 303,
+    })
+
   // Break-glass: the whole password path is gated behind the flag.
   if (process.env.ALLOW_PASSWORD_SIGN_IN !== 'true') {
-    throw redirect('/administration/sign-in', { status: 303 })
+    throw await redirectToSignIn()
   }
 
-  const cookieSession = await getPendingTwoFactorCookieSession(request)
   const userId = getPendingTwoFactorUserId(cookieSession)
 
   // No pending sign-in — restart from the password step.
   if (userId === undefined) {
-    throw redirect('/administration/sign-in', { status: 303 })
+    throw await redirectToSignIn()
   }
 
   const submission = await parseWithZod(formData, { async: true, schema })
@@ -48,12 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Enrollment was removed between steps — drop the pending cookie and restart.
   if (twoFactor === null) {
-    throw redirect('/administration/sign-in', {
-      headers: {
-        'Set-Cookie': await deletePendingTwoFactorCookieSession(cookieSession),
-      },
-      status: 303,
-    })
+    throw await redirectToSignIn()
   }
 
   const result = await verifyTOTP({
@@ -72,13 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const attempts = getPendingTwoFactorAttempts(cookieSession) + 1
 
     if (attempts >= MAX_TWO_FACTOR_ATTEMPTS) {
-      throw redirect('/administration/sign-in', {
-        headers: {
-          'Set-Cookie':
-            await deletePendingTwoFactorCookieSession(cookieSession),
-        },
-        status: 303,
-      })
+      throw await redirectToSignIn()
     }
 
     return data(
