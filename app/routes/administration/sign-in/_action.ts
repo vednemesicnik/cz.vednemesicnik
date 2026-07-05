@@ -5,7 +5,9 @@ import { type ActionFunctionArgs, data, redirect } from 'react-router'
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
+import { setPendingTwoFactorCookieSession } from '~/utils/pending-two-factor.server'
 import { createSession } from '~/utils/session.server'
+import { getUserTwoFactor } from '~/utils/two-factor.server'
 
 import { schema } from './_schema'
 
@@ -75,6 +77,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         status: 400,
       },
     )
+  }
+
+  // Second factor for the break-glass path: if the user has TOTP enrolled, do
+  // not create a session yet — stash the user id in a short-lived cookie and
+  // redirect to the TOTP entry step, which creates the session once verified.
+  const twoFactor = await getUserTwoFactor(user.id)
+
+  if (twoFactor !== null) {
+    throw redirect('/administration/sign-in/verify-2fa', {
+      headers: {
+        'Set-Cookie': await setPendingTwoFactorCookieSession(request, user.id),
+      },
+      status: 303,
+    })
   }
 
   const session = await createSession(user.id)

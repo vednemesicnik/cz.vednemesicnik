@@ -78,6 +78,12 @@ export default [
       layout('routes/administration/__layout-non-authenticated/route.tsx', [
         // Sign in
         route('sign-in', 'routes/administration/sign-in/route.tsx'),
+
+        // Break-glass password second factor (TOTP) entry step
+        route(
+          'sign-in/verify-2fa',
+          'routes/administration/sign-in/verify-2fa/route.tsx',
+        ),
       ]),
 
       // Authenticated routes
@@ -198,6 +204,10 @@ export default [
               route(
                 'change-password',
                 'routes/administration/settings/profile/change-password/route.tsx',
+              ),
+              route(
+                'two-factor',
+                'routes/administration/settings/profile/two-factor/route.tsx',
               ),
             ),
           ),
