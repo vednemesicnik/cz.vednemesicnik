@@ -51,7 +51,7 @@ export default function RouteComponent({
       <section className={styles.card}>
         <h1 className={styles.title}>Přihlášení</h1>
 
-        {loaderData.allowPasswordLogin ? (
+        {loaderData.allowPasswordSignIn ? (
           <>
             <p className={styles.subtitle}>
               Zadejte své přihlašovací údaje pro přístup do administrace

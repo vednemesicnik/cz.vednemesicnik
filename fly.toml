@@ -20,7 +20,7 @@ primary_region = 'fra'
   # Break-glass password sign-in (non-secret toggle). Kept 'true' so the password
   # remains the only working sign-in method until an alternative ships (magic link
   # / OAuth). Flip to 'false' once an alternative is deployed. See issue #112.
-  ALLOW_PASSWORD_LOGIN = 'true'
+  ALLOW_PASSWORD_SIGN_IN = 'true'
 
 [[mounts]]
   source = 'data'

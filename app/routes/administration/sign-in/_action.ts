@@ -17,7 +17,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Break-glass gate: the password is a disabled emergency path. Reject before
   // ever verifying the hash when the flag is off — hiding the UI is not enough,
   // this action is directly POST-able.
-  if (process.env.ALLOW_PASSWORD_LOGIN !== 'true') {
+  if (process.env.ALLOW_PASSWORD_SIGN_IN !== 'true') {
     throw redirect('/administration/sign-in')
   }
 

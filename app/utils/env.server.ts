@@ -34,7 +34,7 @@ const schema = z.object({
   // Optional (not `.default`) because `initEnv` only validates and never writes
   // parsed values back to `process.env`; keep it `=true` in production until an
   // alternative sign-in method (magic link / OAuth) ships.
-  [ENV_KEYS.ALLOW_PASSWORD_LOGIN]: z
+  [ENV_KEYS.ALLOW_PASSWORD_SIGN_IN]: z
     .enum(['true', 'false'] as const)
     .optional(),
   // Google OAuth (Workspace SSO) credentials. Prepared for phase 4; optional

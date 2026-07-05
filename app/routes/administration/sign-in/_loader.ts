@@ -6,5 +6,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUnauthenticated(request)
 
   // Break-glass: only render the password form when the flag is enabled.
-  return { allowPasswordLogin: process.env.ALLOW_PASSWORD_LOGIN === 'true' }
+  return { allowPasswordSignIn: process.env.ALLOW_PASSWORD_SIGN_IN === 'true' }
 }
