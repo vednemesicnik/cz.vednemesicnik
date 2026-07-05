@@ -15,7 +15,10 @@ export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function RouteComponent({ actionData }: Route.ComponentProps) {
+export default function RouteComponent({
+  actionData,
+  loaderData,
+}: Route.ComponentProps) {
   const isHydrated = useHydrated()
   const passwordInputRef = useRef<HTMLInputElement>(null)
 
@@ -47,37 +50,47 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
     <div className={styles.container}>
       <section className={styles.card}>
         <h1 className={styles.title}>Přihlášení</h1>
-        <p className={styles.subtitle}>
-          Zadejte své přihlašovací údaje pro přístup do administrace
-        </p>
 
-        <Form
-          {...getFormProps(form)}
-          className={styles.form}
-          errors={form.errors}
-          method={'post'}
-        >
-          <HoneypotInputs />
+        {loaderData.allowPasswordSignIn ? (
+          <>
+            <p className={styles.subtitle}>
+              Zadejte své přihlašovací údaje pro přístup do administrace
+            </p>
 
-          <AdminInput
-            errors={fields.email.errors}
-            label={'E-mail'}
-            {...getInputProps(fields.email, { type: 'email' })}
-            placeholder={'vas-email@example.com'}
-          />
+            <Form
+              {...getFormProps(form)}
+              className={styles.form}
+              errors={form.errors}
+              method={'post'}
+            >
+              <HoneypotInputs />
 
-          <AdminInput
-            errors={fields.password.errors}
-            label={'Heslo'}
-            ref={passwordInputRef}
-            {...getInputProps(fields.password, { type: 'password' })}
-            placeholder={'••••••••'}
-          />
+              <AdminInput
+                errors={fields.email.errors}
+                label={'E-mail'}
+                {...getInputProps(fields.email, { type: 'email' })}
+                placeholder={'vas-email@example.com'}
+              />
 
-          <AdminButton className={styles.button} type="submit">
-            Přihlásit se
-          </AdminButton>
-        </Form>
+              <AdminInput
+                errors={fields.password.errors}
+                label={'Heslo'}
+                ref={passwordInputRef}
+                {...getInputProps(fields.password, { type: 'password' })}
+                placeholder={'••••••••'}
+              />
+
+              <AdminButton className={styles.button} type="submit">
+                Přihlásit se
+              </AdminButton>
+            </Form>
+          </>
+        ) : (
+          <p className={styles.subtitle}>
+            Přihlášení heslem je momentálně nedostupné. Pokud potřebujete
+            přístup do administrace, kontaktujte prosím správce.
+          </p>
+        )}
       </section>
     </div>
   )

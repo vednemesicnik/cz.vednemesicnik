@@ -5,14 +5,23 @@ import { type ActionFunctionArgs, data, redirect } from 'react-router'
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
+import { createSession } from '~/utils/session.server'
 
 import { schema } from './_schema'
-import { createSession } from './utils/create-session.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
 
   checkHoneypot(formData)
+
+  // Break-glass gate: the password is a disabled emergency path. Reject before
+  // ever verifying the hash when the flag is off — hiding the UI is not enough,
+  // this action is directly POST-able.
+  if (process.env.ALLOW_PASSWORD_SIGN_IN !== 'true') {
+    // 303 See Other: turn this POST rejection into a GET redirect so the client
+    // cannot retry with POST semantics.
+    throw redirect('/administration/sign-in', { status: 303 })
+  }
 
   const submission = await parseWithZod(formData, {
     async: true,
@@ -68,21 +77,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   }
 
-  const response = await createSession(user.id)
+  const session = await createSession(user.id)
 
-  if (response?.ok === true) {
-    const { session } = response
-
-    throw redirect('/administration', {
-      headers: {
-        'Set-Cookie': await setSessionAuthCookieSession(
-          request,
-          session.id,
-          session.expirationDate,
-        ),
-      },
-    })
-  }
-
-  return { submissionResult: null }
+  throw redirect('/administration', {
+    headers: {
+      'Set-Cookie': await setSessionAuthCookieSession(
+        request,
+        session.id,
+        session.expirationDate,
+      ),
+    },
+  })
 }
