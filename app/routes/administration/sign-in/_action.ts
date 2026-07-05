@@ -18,7 +18,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // ever verifying the hash when the flag is off — hiding the UI is not enough,
   // this action is directly POST-able.
   if (process.env.ALLOW_PASSWORD_SIGN_IN !== 'true') {
-    throw redirect('/administration/sign-in')
+    // 303 See Other: turn this POST rejection into a GET redirect so the client
+    // cannot retry with POST semantics.
+    throw redirect('/administration/sign-in', { status: 303 })
   }
 
   const submission = await parseWithZod(formData, {
@@ -75,21 +77,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   }
 
-  const response = await createSession(user.id)
+  const session = await createSession(user.id)
 
-  if (response?.ok === true) {
-    const { session } = response
-
-    throw redirect('/administration', {
-      headers: {
-        'Set-Cookie': await setSessionAuthCookieSession(
-          request,
-          session.id,
-          session.expirationDate,
-        ),
-      },
-    })
-  }
-
-  return { submissionResult: null }
+  throw redirect('/administration', {
+    headers: {
+      'Set-Cookie': await setSessionAuthCookieSession(
+        request,
+        session.id,
+        session.expirationDate,
+      ),
+    },
+  })
 }

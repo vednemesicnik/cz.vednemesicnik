@@ -87,8 +87,8 @@ export default function RouteComponent({
           </>
         ) : (
           <p className={styles.subtitle}>
-            Přihlášení heslem není dostupné. Použijte prosím jinou metodu
-            přihlášení.
+            Přihlášení heslem je momentálně nedostupné. Pokud potřebujete
+            přístup do administrace, kontaktujte prosím správce.
           </p>
         )}
       </section>

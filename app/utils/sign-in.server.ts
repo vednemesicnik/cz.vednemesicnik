@@ -30,7 +30,7 @@ export const findActiveUserByEmail = async (email: string) => {
  * step; nothing after the call runs.
  */
 export const signInUser = async (request: Request, userId: string) => {
-  const { session } = await createSession(userId)
+  const session = await createSession(userId)
 
   throw redirect('/administration', {
     headers: {
