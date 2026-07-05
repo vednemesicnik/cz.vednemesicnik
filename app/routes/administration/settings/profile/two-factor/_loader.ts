@@ -50,7 +50,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Reuse the pending secret across refreshes so a scanned QR stays valid; only
   // generate (and set the cookie) when there is nothing pending yet.
   const cookieSession = await getEnrollmentCookieSession(request)
-  let config = getPendingEnrollment(cookieSession)
+  let config = getPendingEnrollment(cookieSession, context.userId)
   let setCookieHeader: string | undefined
 
   if (config === undefined) {
@@ -62,7 +62,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       period: generated.period,
       secret: generated.secret,
     }
-    setCookieHeader = await setEnrollmentCookieSession(request, config)
+    setCookieHeader = await setEnrollmentCookieSession(
+      request,
+      context.userId,
+      config,
+    )
   }
 
   const otpUri = getTOTPAuthUri({

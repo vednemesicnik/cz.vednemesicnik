@@ -5,8 +5,11 @@ import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import {
   deletePendingTwoFactorCookieSession,
+  getPendingTwoFactorAttempts,
   getPendingTwoFactorCookieSession,
   getPendingTwoFactorUserId,
+  MAX_TWO_FACTOR_ATTEMPTS,
+  setPendingTwoFactorCookieSession,
 } from '~/utils/pending-two-factor.server'
 import { createSession } from '~/utils/session.server'
 import { verifyTOTP } from '~/utils/totp.server'
@@ -63,6 +66,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (result === null) {
+    // Count the failed guess; once the cap is hit, invalidate the pending
+    // cookie so the user must re-enter their password (bounds brute-forcing the
+    // 6-digit code within the cookie lifetime).
+    const attempts = getPendingTwoFactorAttempts(cookieSession) + 1
+
+    if (attempts >= MAX_TWO_FACTOR_ATTEMPTS) {
+      throw redirect('/administration/sign-in', {
+        headers: {
+          'Set-Cookie':
+            await deletePendingTwoFactorCookieSession(cookieSession),
+        },
+        status: 303,
+      })
+    }
+
     return data(
       {
         submissionResult: submission.reply({
@@ -71,7 +89,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           },
         }),
       },
-      { status: 400 },
+      {
+        headers: {
+          'Set-Cookie': await setPendingTwoFactorCookieSession(
+            request,
+            userId,
+            attempts,
+          ),
+        },
+        status: 400,
+      },
     )
   }
 

@@ -53,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const cookieSession = await getEnrollmentCookieSession(request)
-  const config = getPendingEnrollment(cookieSession)
+  const config = getPendingEnrollment(cookieSession, context.userId)
 
   if (config === undefined) {
     return data(

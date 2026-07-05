@@ -53,7 +53,8 @@ describe('totp.server', () => {
       expect(result.period).toBe(30)
       expect(result.algorithm).toBe('SHA-1')
       expect(result.charSet).toBe('0123456789')
-      expect(result.secret.length).toBeGreaterThan(0)
+      // 20 random bytes (160 bits) → 32 base32 chars, no padding.
+      expect(result.secret).toMatch(/^[A-Z2-7]{32}$/)
     })
 
     test('two calls generate different random secrets', async () => {
@@ -129,6 +130,17 @@ describe('totp.server', () => {
 
       const outsideWindow = await verifyTOTP({ otp, secret, window: 0 })
       expect(outsideWindow).toBeNull()
+    })
+
+    test('handles a counter of 0 without going negative (clamped window)', async () => {
+      // At the Unix epoch the counter is 0; window 1 would start at -1, which is
+      // clamped to 0. Generate + verify must still round-trip.
+      vi.setSystemTime(new Date(0))
+
+      const { otp, secret } = await generateTOTP()
+      const result = await verifyTOTP({ otp, secret, window: 1 })
+
+      expect(result).toEqual({ delta: 0 })
     })
 
     test('returns null for a malformed secret', async () => {

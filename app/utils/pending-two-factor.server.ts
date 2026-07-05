@@ -9,9 +9,16 @@ import {
 // creating the real session only once the second factor is verified. Modelled on
 // biometric.server.ts.
 const PENDING_TWO_FACTOR_KEY = 'pendingTwoFactorUserId'
+const ATTEMPTS_KEY = 'attempts'
+
+// Cap on wrong TOTP guesses per pending sign-in before the cookie is invalidated
+// and the user must re-enter the password. Bounds brute-forcing the 6-digit code
+// within the cookie lifetime without relying on an external rate limiter.
+export const MAX_TWO_FACTOR_ATTEMPTS = 5
 
 type PendingTwoFactorCookieData = {
   [PENDING_TWO_FACTOR_KEY]: string
+  [ATTEMPTS_KEY]: number
 }
 
 type PendingTwoFactorCookieFlashData = {
@@ -43,10 +50,12 @@ export const getPendingTwoFactorCookieSession = async (request: Request) =>
 export const setPendingTwoFactorCookieSession = async (
   request: Request,
   userId: string,
+  attempts = 0,
 ) => {
   const cookieSession = await getPendingTwoFactorCookieSession(request)
 
   cookieSession.set(PENDING_TWO_FACTOR_KEY, userId)
+  cookieSession.set(ATTEMPTS_KEY, attempts)
 
   return cookieSessionStorage.commitSession(cookieSession)
 }
@@ -58,3 +67,7 @@ export const deletePendingTwoFactorCookieSession = async (
 export const getPendingTwoFactorUserId = (
   cookieSession: PendingTwoFactorCookieSession,
 ) => cookieSession.get(PENDING_TWO_FACTOR_KEY)
+
+export const getPendingTwoFactorAttempts = (
+  cookieSession: PendingTwoFactorCookieSession,
+) => cookieSession.get(ATTEMPTS_KEY) ?? 0

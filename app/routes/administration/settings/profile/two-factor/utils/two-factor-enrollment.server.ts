@@ -8,11 +8,18 @@ import type { TwoFactorConfig } from '~/utils/two-factor.server'
 
 // Holds the not-yet-confirmed TOTP config between the enrollment loader (which
 // generates the secret + QR) and the action (which verifies the first code and
-// persists it). Short-lived and httpOnly, modelled on biometric.server.ts.
+// persists it). Short-lived and httpOnly, modelled on biometric.server.ts. The
+// config is bound to the user it was generated for so a pending secret is never
+// reused across accounts sharing a browser.
 const PENDING_ENROLLMENT_KEY = 'pendingTwoFactorEnrollment'
 
+type PendingEnrollment = {
+  userId: string
+  config: TwoFactorConfig
+}
+
 type EnrollmentCookieData = {
-  [PENDING_ENROLLMENT_KEY]: TwoFactorConfig
+  [PENDING_ENROLLMENT_KEY]: PendingEnrollment
 }
 
 type EnrollmentCookieFlashData = {
@@ -46,11 +53,12 @@ export const getEnrollmentCookieSession = async (request: Request) =>
 
 export const setEnrollmentCookieSession = async (
   request: Request,
+  userId: string,
   config: TwoFactorConfig,
 ) => {
   const cookieSession = await getEnrollmentCookieSession(request)
 
-  cookieSession.set(PENDING_ENROLLMENT_KEY, config)
+  cookieSession.set(PENDING_ENROLLMENT_KEY, { config, userId })
 
   return cookieSessionStorage.commitSession(cookieSession)
 }
@@ -59,5 +67,16 @@ export const deleteEnrollmentCookieSession = async (
   cookieSession: EnrollmentCookieSession,
 ) => cookieSessionStorage.destroySession(cookieSession)
 
-export const getPendingEnrollment = (cookieSession: EnrollmentCookieSession) =>
-  cookieSession.get(PENDING_ENROLLMENT_KEY)
+// Returns the pending config only when it was generated for the given user.
+export const getPendingEnrollment = (
+  cookieSession: EnrollmentCookieSession,
+  userId: string,
+): TwoFactorConfig | undefined => {
+  const pending = cookieSession.get(PENDING_ENROLLMENT_KEY)
+
+  if (pending === undefined || pending.userId !== userId) {
+    return undefined
+  }
+
+  return pending.config
+}

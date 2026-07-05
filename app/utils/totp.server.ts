@@ -247,7 +247,10 @@ async function verifyHOTP(
     window?: number
   } = {},
 ): Promise<{ delta: number } | null> {
-  for (let i = counter - window; i <= counter + window; ++i) {
+  // Clamp the lower bound to 0: negative counters are not valid for HOTP/TOTP
+  // and would otherwise be coerced into an unintended wrapped counter value.
+  const start = Math.max(0, counter - window)
+  for (let i = start; i <= counter + window; ++i) {
     const candidate = await generateHOTP(secret, {
       algorithm,
       charSet,
@@ -270,7 +273,9 @@ export async function generateTOTP({
   period = DEFAULT_PERIOD,
   digits = DEFAULT_DIGITS,
   algorithm = DEFAULT_ALGORITHM,
-  secret = base32Encode(crypto.getRandomValues(new Uint8Array(10))),
+  // 20 random bytes = 160 bits, matching RFC 4226's recommended secret size
+  // (upstream @epic-web/totp defaults to 10 bytes / 80 bits).
+  secret = base32Encode(crypto.getRandomValues(new Uint8Array(20))),
   charSet = DEFAULT_CHAR_SET,
 }: GenerateTOTPOptions = {}): Promise<TOTPConfig> {
   const otp = await generateHOTP(base32Decode(secret), {
