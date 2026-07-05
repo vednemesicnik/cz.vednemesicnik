@@ -17,6 +17,10 @@ primary_region = 'fra'
   # on-disk Fly volume (see docs/_deploy-to-fly.md → Object storage); change here
   # and `fly deploy`.
   STORE_DRIVER = 'tigris'
+  # Break-glass password sign-in (non-secret toggle). Kept 'true' so the password
+  # remains the only working sign-in method until an alternative ships (magic link
+  # / OAuth). Flip to 'false' once an alternative is deployed. See issue #112.
+  ALLOW_PASSWORD_LOGIN = 'true'
 
 [[mounts]]
   source = 'data'
