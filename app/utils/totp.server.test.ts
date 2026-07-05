@@ -62,6 +62,38 @@ describe('totp.server', () => {
 
       expect(a.secret).not.toBe(b.secret)
     })
+
+    // Regression: the counter for such a far-future time exceeds 2^31-1, which
+    // would be truncated by a bitwise (>>) intToBytes. Generate + verify must
+    // stay consistent.
+    test('round-trips a counter larger than 2^31 (far-future time)', async () => {
+      vi.setSystemTime(new Date(70_000_000_000 * 1000))
+
+      const { otp, secret } = await generateTOTP()
+      const result = await verifyTOTP({ otp, secret })
+
+      expect(result).toEqual({ delta: 0 })
+    })
+
+    // Regression: the digits > 10 branch must wrap on the actual digest length,
+    // not a hard-coded 20, so a non-SHA-1 algorithm reads valid bytes.
+    test('round-trips >10 digits with a non-SHA-1 algorithm (SHA-256)', async () => {
+      vi.setSystemTime(new Date('2026-07-05T12:00:00Z'))
+
+      const { otp, secret } = await generateTOTP({
+        algorithm: 'SHA-256',
+        digits: 12,
+      })
+      expect(otp).toMatch(/^\d{12}$/)
+
+      const result = await verifyTOTP({
+        algorithm: 'SHA-256',
+        digits: 12,
+        otp,
+        secret,
+      })
+      expect(result).toEqual({ delta: 0 })
+    })
   })
 
   describe('verifyTOTP', () => {

@@ -133,9 +133,13 @@ function base32Decode(input: string): Uint8Array<ArrayBuffer> {
  */
 function intToBytes(num: number): Uint8Array<ArrayBuffer> {
   const arr = new Uint8Array(8)
+  // Use arithmetic (not bitwise) stepping: bitwise ops coerce to 32-bit signed
+  // integers, which would truncate counters above 2^31-1. `% 256` / division by
+  // 256 stay correct up to Number.MAX_SAFE_INTEGER. (Diverges from upstream
+  // @epic-web/totp, which uses bitwise shifts.)
   for (let i = 7; i >= 0; i--) {
-    arr[i] = num & 0xff
-    num = num >> 8
+    arr[i] = num % 256
+    num = Math.floor(num / 256)
   }
   return arr
 }
@@ -199,11 +203,12 @@ async function generateHOTP(
       (BigInt(hashBytes[offset + 2]) << 40n) |
       (BigInt(hashBytes[offset + 3]) << 32n) |
       (BigInt(hashBytes[offset + 4]) << 24n) |
-      // We have only 20 hashBytes; if offset is 15 these indexes are out of the
-      // hashBytes, so fall back to the bytes at the start.
-      (BigInt(hashBytes[(offset + 5) % 20]) << 16n) |
-      (BigInt(hashBytes[(offset + 6) % 20]) << 8n) |
-      BigInt(hashBytes[(offset + 7) % 20])
+      // If offset is near the end these indexes overflow the digest, so wrap
+      // back to its start. Wrap on the actual digest length (not a hard-coded
+      // 20) so non-SHA-1 algorithms (SHA-256 → 32 bytes, …) read valid bytes.
+      (BigInt(hashBytes[(offset + 5) % hashBytes.length]) << 16n) |
+      (BigInt(hashBytes[(offset + 6) % hashBytes.length]) << 8n) |
+      BigInt(hashBytes[(offset + 7) % hashBytes.length])
   }
 
   let hotp = ''
