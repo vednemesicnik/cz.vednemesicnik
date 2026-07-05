@@ -5,9 +5,9 @@ import { type ActionFunctionArgs, data, redirect } from 'react-router'
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
+import { createSession } from '~/utils/session.server'
 
 import { schema } from './_schema'
-import { createSession } from './utils/create-session.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()

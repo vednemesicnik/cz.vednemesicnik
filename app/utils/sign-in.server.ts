@@ -1,19 +1,20 @@
 import { redirect } from 'react-router'
 
-import { createSession } from '~/routes/administration/sign-in/utils/create-session.server'
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import { createSession } from '~/utils/session.server'
 
 /**
- * Looks up an existing (active) user by email.
+ * Looks up an existing user by email.
  *
- * "Active" means the account already exists: unknown accounts are rejected,
- * accounts are only created manually / via seed. Shared by the passwordless
+ * The account must already exist: unknown emails are rejected, accounts are
+ * only created manually / via seed. There is no active/enabled state on the
+ * User model, so this is purely an existence check. Shared by the passwordless
  * sign-in methods (magic link, OAuth).
  *
  * @returns the user, or `null` when no account matches the email
  */
-export const findActiveUserByEmail = async (email: string) => {
+export const findExistingUserByEmail = async (email: string) => {
   return prisma.user.findUnique({
     select: { email: true, id: true },
     where: { email },
