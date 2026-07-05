@@ -2,6 +2,7 @@ import { type LoaderFunctionArgs, redirect } from 'react-router'
 
 import { requireUnauthenticated } from '~/utils/auth.server'
 import {
+  deletePendingTwoFactorCookieSession,
   getPendingTwoFactorCookieSession,
   getPendingTwoFactorUserId,
 } from '~/utils/pending-two-factor.server'
@@ -19,7 +20,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = getPendingTwoFactorUserId(cookieSession)
 
   if (userId === undefined) {
-    throw redirect('/administration/sign-in')
+    // Clear any lingering (stale/partial) pending cookie on the way out.
+    throw redirect('/administration/sign-in', {
+      headers: {
+        'Set-Cookie': await deletePendingTwoFactorCookieSession(cookieSession),
+      },
+    })
   }
 
   return null

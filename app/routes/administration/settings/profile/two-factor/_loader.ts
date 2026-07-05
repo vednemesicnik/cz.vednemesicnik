@@ -31,15 +31,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw new Response('Forbidden', { status: 403 })
   }
 
+  // Never cache this page: it carries the enrollment secret and QR.
+  const noStoreHeaders = { 'Cache-Control': 'no-store' }
+
   // Already enrolled — no secret is exposed, only the enabled state.
   const existing = await getUserTwoFactor(context.userId)
   if (existing !== null) {
-    return data({
-      isEnrolled: true as const,
-      qrCodeDataUri: null,
-      secret: null,
-      userId: context.userId,
-    })
+    return data(
+      {
+        isEnrolled: true as const,
+        qrCodeDataUri: null,
+        secret: null,
+        userId: context.userId,
+      },
+      { headers: noStoreHeaders },
+    )
   }
 
   const user = await prisma.user.findUniqueOrThrow({
@@ -90,8 +96,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       secret: config.secret,
       userId: context.userId,
     },
-    setCookieHeader
-      ? { headers: { 'Set-Cookie': setCookieHeader } }
-      : undefined,
+    {
+      headers: setCookieHeader
+        ? { ...noStoreHeaders, 'Set-Cookie': setCookieHeader }
+        : noStoreHeaders,
+    },
   )
 }
