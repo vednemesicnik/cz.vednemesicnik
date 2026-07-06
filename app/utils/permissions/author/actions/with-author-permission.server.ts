@@ -5,7 +5,7 @@ import type {
   AuthorPermissionEntity,
   ContentState,
 } from '@generated/prisma/enums'
-import { requireAuthentication } from '~/utils/auth.server'
+import { requireSession } from '~/utils/auth.server'
 
 import {
   type AuthorPermissionContext,
@@ -24,7 +24,7 @@ export async function withAuthorPermission<T>(
   request: Request,
   options: Options<T>,
 ): Promise<T> {
-  await requireAuthentication(request)
+  await requireSession(request)
 
   const context = await getAuthorPermissionContext(request, {
     actions: [options.action],

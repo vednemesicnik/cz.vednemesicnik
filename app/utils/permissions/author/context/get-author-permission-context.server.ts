@@ -5,7 +5,7 @@ import type {
   ContentState,
 } from '@generated/prisma/enums'
 import { redirect } from 'react-router'
-import { requireAuthentication } from '~/utils/auth.server'
+import { requireSession } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { getAuthorRights } from '~/utils/permissions/core/get-author-rights'
 
@@ -18,7 +18,7 @@ export async function getAuthorPermissionContext(
   request: Request,
   options: GetAuthorPermissionContextOptions,
 ) {
-  const { sessionId } = await requireAuthentication(request)
+  const { sessionId } = await requireSession(request)
 
   const session = await prisma.session.findUniqueOrThrow({
     select: {

@@ -6,7 +6,6 @@ import {
 } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
-import { getRequestPath } from '~/utils/get-request-path'
 
 const SESSION_AUTH_ID_KEY = 'sessionAuthId'
 
@@ -73,30 +72,78 @@ const getSessionFromDatabase = async (sessionAuthId: string) => {
   })
 }
 
-export const requireAuthentication = async (request: Request) => {
-  let session: { id: string } | null = null
+const SIGN_IN_PATH = '/administration/sign-in'
 
+// Loads the current valid session (or null) alongside its cookie session, so the
+// callers below can both read the result and clear the cookie on failure.
+const loadSession = async (request: Request) => {
   const cookieSession = await getSessionAuthCookieSession(request)
   const sessionAuthId = getSessionAuthId(cookieSession)
 
-  if (sessionAuthId !== undefined) {
-    session = await getSessionFromDatabase(sessionAuthId)
-  }
+  const session =
+    sessionAuthId !== undefined
+      ? await getSessionFromDatabase(sessionAuthId)
+      : null
+
+  return { cookieSession, session }
+}
+
+// Bounces to sign-in and clears the (stale) auth cookie. `redirectTo` is an
+// optional return path; `safeRedirect` re-validates it on the way out (see
+// signInUser), so it is only a hint.
+const redirectToSignIn = async (
+  cookieSession: SessionAuthCookieSession,
+  redirectTo?: string,
+) => {
+  const location =
+    redirectTo === undefined
+      ? SIGN_IN_PATH
+      : `${SIGN_IN_PATH}?${new URLSearchParams({ redirectTo })}`
+
+  return redirect(location, {
+    headers: {
+      'Set-Cookie': await deleteSessionAuthCookieSession(cookieSession),
+    },
+  })
+}
+
+/**
+ * Route-level auth guard for loaders/actions. On failure it bounces to sign-in
+ * and preserves where the user was headed via `redirectTo`, so pass React
+ * Router's normalized `url` arg. Bare-`Request` callers behind the authenticated
+ * layout (e.g. permission-context helpers) want `requireSession` instead.
+ */
+export const requireAuthentication = async ({
+  request,
+  url,
+}: {
+  request: Request
+  url: URL
+}) => {
+  const { cookieSession, session } = await loadSession(request)
 
   if (session === null) {
-    // Preserve where the user was headed so sign-in can bounce them back after
-    // authenticating. `getRequestPath` normalizes Single Fetch `.data` loader
-    // URLs back to the real path; `safeRedirect` re-validates it on the way out
-    // (see signInUser), so this is just a hint.
-    const url = new URL(request.url)
-    const signInUrl = new URL('/administration/sign-in', url.origin)
-    signInUrl.searchParams.set('redirectTo', getRequestPath(request))
+    throw await redirectToSignIn(cookieSession, url.pathname + url.search)
+  }
 
-    throw redirect(signInUrl.pathname + signInUrl.search, {
-      headers: {
-        'Set-Cookie': await deleteSessionAuthCookieSession(cookieSession),
-      },
-    })
+  return {
+    isAuthenticated: true,
+    sessionId: session.id,
+  }
+}
+
+/**
+ * Minimal auth guard for callers that only hold a bare `Request` (no route
+ * `url`) and don't need a return path — e.g. the permission-context helpers,
+ * which run behind the authenticated layout guard, and actions where a
+ * `redirectTo` back to a POST endpoint would be meaningless. On failure it
+ * bounces to sign-in without a `redirectTo`.
+ */
+export const requireSession = async (request: Request) => {
+  const { cookieSession, session } = await loadSession(request)
+
+  if (session === null) {
+    throw await redirectToSignIn(cookieSession)
   }
 
   return {
