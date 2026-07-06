@@ -59,10 +59,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     throw failTo('oauth')
   }
 
-  const client = createGoogleOAuthClient()
-
   let payload: TokenPayload | undefined
   try {
+    // Inside the try: createGoogleOAuthClient throws when the Google env is
+    // missing — treat that like any other OAuth failure (bounce + clear cookie)
+    // rather than a 500.
+    const client = createGoogleOAuthClient()
+
     const { tokens } = await client.getToken({ code, codeVerifier })
 
     if (!tokens.id_token) throw new Error('missing id_token')
