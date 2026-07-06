@@ -6,9 +6,13 @@ import { verifyMagicLinkToken } from '~/utils/magic-link.server'
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUnauthenticated(request)
 
-  // Never cache this page: it carries the single-use sign-in token in the URL
-  // and rendered into the confirm form.
-  const noStoreHeaders = { 'Cache-Control': 'no-store' }
+  // This page carries the single-use sign-in token in the URL (and rendered into
+  // the confirm form): never cache it, and suppress the Referer header so the
+  // token can't leak to cross-origin subresources (e.g. the font stylesheet).
+  const noStoreHeaders = {
+    'Cache-Control': 'no-store',
+    'Referrer-Policy': 'no-referrer',
+  }
 
   const url = new URL(request.url)
   const token = url.searchParams.get('token')

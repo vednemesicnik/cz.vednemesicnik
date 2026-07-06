@@ -21,11 +21,14 @@ export type RateLimitStore = {
 function createInMemoryFixedWindowStore(): RateLimitStore {
   const buckets = new Map<string, { count: number; resetAt: number }>()
   let hitsSinceSweep = 0
+  let lastSweep = Date.now()
 
   const sweep = (now: number) => {
     for (const [key, bucket] of buckets) {
       if (now >= bucket.resetAt) buckets.delete(key)
     }
+    hitsSinceSweep = 0
+    lastSweep = now
   }
 
   return {
@@ -40,9 +43,11 @@ function createInMemoryFixedWindowStore(): RateLimitStore {
       bucket.count += 1
       buckets.set(key, bucket)
 
-      if (++hitsSinceSweep >= 1000) {
+      // Sweep on a hit-count OR elapsed-time trigger, so expired buckets can't
+      // accumulate unbounded under low traffic or many one-off keys (a bucket
+      // lives at most `windowMs`, so a time-based sweep bounds the map size).
+      if (++hitsSinceSweep >= 1000 || now - lastSweep >= windowMs) {
         sweep(now)
-        hitsSinceSweep = 0
       }
 
       return {
