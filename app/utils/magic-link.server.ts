@@ -81,7 +81,10 @@ export const verifyMagicLinkToken = async (email: string, token: string) => {
   const verification = await getMagicLinkVerification(email)
 
   if (verification === null) return false
-  if (verification.expiresAt !== null && verification.expiresAt <= new Date()) {
+  // A missing expiry counts as invalid: magic links are always TTL-bounded, and
+  // consumeMagicLinkToken requires `expiresAt > now` — keep the two consistent so
+  // a null-expiry row can't render a "valid" page that can never be consumed.
+  if (verification.expiresAt === null || verification.expiresAt <= new Date()) {
     return false
   }
 

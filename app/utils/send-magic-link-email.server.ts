@@ -7,6 +7,11 @@
  * No-ops when GAS_MAGIC_LINK_URL / GAS_MAGIC_LINK_SECRET are unset (local
  * development), so the flow can be exercised without a live GAS deployment.
  */
+
+// Fail fast if GAS hangs: delivery is best-effort and must not stall the
+// (neutral) sign-in response.
+const GAS_TIMEOUT_MS = 8000
+
 export const sendMagicLinkEmail = async ({
   email,
   link,
@@ -37,6 +42,7 @@ export const sendMagicLinkEmail = async ({
       body: JSON.stringify({ email, link, secret }),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
+      signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
     })
 
     const result = (await response.json().catch(() => ({ ok: false }))) as {
