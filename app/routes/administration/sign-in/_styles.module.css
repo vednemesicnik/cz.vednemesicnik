@@ -49,12 +49,16 @@
 }
 
 .footer {
-  margin-block-start: 24px;
-  text-align: center;
+  @layer route {
+    margin-block-start: 24px;
+    text-align: center;
+  }
 }
 
 .link {
-  font-size: var(--font-size-sm);
-  color: var(--admin-text-link, var(--admin-text-secondary));
-  text-decoration: underline;
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--admin-text-link, var(--admin-text-secondary));
+    text-decoration: underline;
+  }
 }

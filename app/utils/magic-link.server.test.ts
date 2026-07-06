@@ -15,9 +15,32 @@ vi.mock('~/utils/db.server', () => ({
       deleteMany: async ({
         where,
       }: {
-        where: { target: string; type: string }
+        where: {
+          target: string
+          type: string
+          secret?: string
+          expiresAt?: { gt: Date }
+        }
       }) => {
-        rows.delete(keyOf(where.target, where.type))
+        const key = keyOf(where.target, where.type)
+        const row = rows.get(key)
+
+        // Honour the optional secret / expiry filters so the mock reflects the
+        // atomic, single-use delete the real query performs.
+        const secretMatches =
+          where.secret === undefined || row?.secret === where.secret
+        const notExpired =
+          where.expiresAt?.gt === undefined ||
+          (row?.expiresAt !== null &&
+            row !== undefined &&
+            row.expiresAt > where.expiresAt.gt)
+
+        if (row !== undefined && secretMatches && notExpired) {
+          rows.delete(key)
+          return { count: 1 }
+        }
+
+        return { count: 0 }
       },
       findUnique: async ({
         where,
@@ -76,7 +99,16 @@ describe('magic-link token round-trip', () => {
     expect(await consumeMagicLinkToken(EMAIL, token)).toBe(false)
   })
 
-  test('an expired token does not verify', async () => {
+  test('consuming a wrong token does not invalidate the valid link', async () => {
+    const token = await createMagicLinkToken(EMAIL)
+
+    // A wrong token deletes nothing (filtered by secret) …
+    expect(await consumeMagicLinkToken(EMAIL, 'not-the-token')).toBe(false)
+    // … so the real token still works.
+    expect(await consumeMagicLinkToken(EMAIL, token)).toBe(true)
+  })
+
+  test('an expired token cannot be consumed', async () => {
     const token = await createMagicLinkToken(EMAIL)
 
     vi.useFakeTimers()
@@ -84,6 +116,7 @@ describe('magic-link token round-trip', () => {
       // Jump past the 15-minute TTL.
       vi.setSystemTime(new Date(Date.now() + 16 * 60 * 1000))
       expect(await verifyMagicLinkToken(EMAIL, token)).toBe(false)
+      expect(await consumeMagicLinkToken(EMAIL, token)).toBe(false)
     } finally {
       vi.useRealTimers()
     }

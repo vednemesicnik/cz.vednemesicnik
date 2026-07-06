@@ -89,20 +89,28 @@ export const verifyMagicLinkToken = async (email: string, token: string) => {
 }
 
 /**
- * Verifies a token and deletes the row (single-use). Returns whether the token
- * was valid. Called by the verify action right before signing the user in.
+ * Atomically consumes a magic-link token: deletes the row only when it matches
+ * the token's hash and is still unexpired, and returns whether exactly one row
+ * was removed. Deciding on the delete count (rather than a separate read) makes
+ * it single-use under concurrency and stops a wrong token from invalidating a
+ * valid link — the filter by `secret` means a mismatching token deletes nothing.
+ * Called by the verify action right before signing the user in.
  */
 export const consumeMagicLinkToken = async (email: string, token: string) => {
-  const isValid = await verifyMagicLinkToken(email, token)
+  const secret = getContentHash(token)
 
   try {
-    // deleteMany so consuming is idempotent even if the row is already gone.
-    await prisma.verification.deleteMany({
-      where: { target: email, type: MAGIC_LINK_VERIFICATION_TYPE },
+    const { count } = await prisma.verification.deleteMany({
+      where: {
+        expiresAt: { gt: new Date() },
+        secret,
+        target: email,
+        type: MAGIC_LINK_VERIFICATION_TYPE,
+      },
     })
-  } catch (error) {
-    return throwDbError(error, 'Unable to delete the magic-link verification.')
-  }
 
-  return isValid
+    return count === 1
+  } catch (error) {
+    return throwDbError(error, 'Unable to consume the magic-link verification.')
+  }
 }

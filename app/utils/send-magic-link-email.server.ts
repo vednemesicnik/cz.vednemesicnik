@@ -18,9 +18,17 @@ export const sendMagicLinkEmail = async ({
   const secret = process.env.GAS_MAGIC_LINK_SECRET
 
   if (!url || !secret) {
-    console.warn(
-      '[magic-link] GAS_MAGIC_LINK_URL/SECRET not set — skipping email send.',
-    )
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(
+        '[magic-link] GAS_MAGIC_LINK_URL/SECRET not set — skipping email send.',
+      )
+    } else {
+      // Local dev without a GAS deployment: print the link so the sign-in flow
+      // is usable end-to-end without sending a real email.
+      console.info(
+        `[magic-link] GAS not configured — sign-in link for ${email}: ${link}`,
+      )
+    }
     return
   }
 
