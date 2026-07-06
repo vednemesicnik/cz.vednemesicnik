@@ -84,6 +84,18 @@ export default [
           'sign-in/verify-2fa',
           'routes/administration/sign-in/verify-2fa/route.tsx',
         ),
+
+        // Magic-link sign-in: request form
+        route(
+          'auth/magic-link',
+          'routes/administration/auth/magic-link/route.tsx',
+        ),
+
+        // Magic-link sign-in: verify + confirm
+        route(
+          'auth/magic-link/verify',
+          'routes/administration/auth/magic-link/verify/route.tsx',
+        ),
       ]),
 
       // Authenticated routes

@@ -48,6 +48,15 @@
   }
 }
 
+.message {
+  font-size: var(--font-size-sm);
+  color: var(--admin-text-secondary);
+  margin-block-start: 24px;
+  margin-block-end: 0;
+  text-align: center;
+  line-height: 1.6;
+}
+
 .footer {
   margin-block-start: 24px;
   text-align: center;

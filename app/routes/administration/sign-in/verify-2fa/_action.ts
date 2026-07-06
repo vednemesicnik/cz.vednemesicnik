@@ -63,11 +63,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const result = await verifyTOTP({
-    algorithm: twoFactor.algorithm,
-    charSet: twoFactor.charSet,
-    digits: twoFactor.digits,
+    // The OTP columns are nullable on the shared Verification model (magic link
+    // leaves them unset); a 2fa row always has them, so coalesce null → undefined
+    // to satisfy verifyTOTP, which falls back to its defaults.
+    algorithm: twoFactor.algorithm ?? undefined,
+    charSet: twoFactor.charSet ?? undefined,
+    digits: twoFactor.digits ?? undefined,
     otp: submission.value.code,
-    period: twoFactor.period,
+    period: twoFactor.period ?? undefined,
     secret: twoFactor.secret,
   })
 
