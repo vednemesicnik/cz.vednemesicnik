@@ -8,9 +8,12 @@
  * as into a post-sign-in `redirectTo` — would land the browser on the raw data
  * endpoint instead of the page.
  *
- * This mirrors React Router's own internal `getNormalizedPath`
- * (`react-router/dist/.../server-runtime/urls.js`), which is not publicly
- * exported: strip the `.data` suffix (index/root requests use the `/_.data`
+ * Inside a route `loader`/`action`, prefer React Router's built-in normalized
+ * `url` arg (`Route.LoaderArgs["url"]`) — it already has these details removed.
+ * This helper exists for shared server utilities like `requireAuthentication`
+ * that receive a bare `Request` (no route args), where that `url` is out of
+ * scope and RR's own `getNormalizedPath` is not publicly exported. It mirrors
+ * that function: strip the `.data` suffix (index/root requests use the `/_.data`
  * form) and drop the internal `_routes` param.
  */
 export const getRequestPath = (request: Request) => {

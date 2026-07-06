@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the authentication architecture in the application and provides a future implementation plan for migrating from loader-based authentication to React Router v7 middleware.
+This document describes the authentication architecture in the application and provides a future implementation plan for migrating from loader-based authentication to React Router v8 middleware.
 
 ## Current Implementation
 
@@ -66,7 +66,7 @@ export const requireAuthentication = async (request: Request) => {
 
 ### Why Middleware?
 
-React Router v7 introduced **middleware** - functions that run before and after route handlers. Middleware is ideal for cross-cutting concerns like authentication.
+React Router v8 provides **middleware** - functions that run before and after route handlers. Middleware is ideal for cross-cutting concerns like authentication.
 
 ### Benefits of Middleware
 
@@ -535,7 +535,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 
 ## Resources
 
-- [React Router v7 Middleware Documentation](https://reactrouter.com/how-to/middleware)
+- [React Router Middleware Documentation](https://reactrouter.com/how-to/middleware)
 - [React Router Context API](https://reactrouter.com/how-to/context)
 - Current authentication implementation: `app/utils/auth.server.ts`
 - Protected layout: `app/routes/administration/__layout-authenticated/route.tsx`
