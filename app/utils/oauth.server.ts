@@ -100,8 +100,11 @@ const cookieSessionStorage = createCookieSessionStorage<
 >({
   cookie: createCookie('vdm_oauth', {
     httpOnly: true,
-    maxAge: 60 * 10, // 10 minutes — bounds the Google consent round-trip
-    path: '/',
+    maxAge: 300, // 5 minutes — bounds the Google consent round-trip
+    // Scoped to the sign-in subtree (matches vdm_pending_2fa): the cookie is only
+    // read by the callback at /administration/sign-in/google/callback, so it
+    // never travels with public-page requests.
+    path: '/administration/sign-in',
     sameSite: 'lax',
     secrets: process.env.SESSION_SECRET?.split(','),
     secure: process.env.NODE_ENV === 'production',

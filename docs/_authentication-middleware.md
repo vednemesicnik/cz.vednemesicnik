@@ -8,15 +8,18 @@ This document describes the authentication architecture in the application and p
 
 ### Current Approach: Loader-Based Authentication
 
-The application currently uses a **loader-based authentication pattern** where each protected route explicitly calls `requireAuthentication(request)` in its loader function.
+The application currently uses a **loader-based authentication pattern** where each protected route explicitly calls a guard in its loader/action. There are two specialized guards: `requireAuthentication({ request, url })` for route loaders/actions (it uses React Router's normalized `url` arg to preserve `redirectTo`), and `requireSession(request)` for bare-`Request` callers behind the authenticated layout (e.g. permission-context helpers) that don't need a return path.
 
 ```typescript
 // app/routes/administration/__layout-authenticated/_loader.ts
 import { requireAuthentication } from '~/utils/auth.server'
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
-  // Must call requireAuthentication in every protected loader
-  const { isAuthenticated, sessionId } = await requireAuthentication(request)
+export const loader = async ({ request, url }: Route.LoaderArgs) => {
+  // Must call the guard in every protected loader
+  const { isAuthenticated, sessionId } = await requireAuthentication({
+    request,
+    url,
+  })
 
   // ... rest of loader logic
 }
@@ -26,22 +29,32 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 ```typescript
 // app/utils/auth.server.ts
-export const requireAuthentication = async (request: Request) => {
-  let session: { id: string } | null = null
-
-  const cookieSession = await getSessionAuthCookieSession(request)
-  const sessionAuthId = getSessionAuthId(cookieSession)
-
-  if (sessionAuthId !== undefined) {
-    session = await getSessionFromDatabase(sessionAuthId)
-  }
+// Route-level guard: preserves where the user was headed via redirectTo.
+export const requireAuthentication = async ({
+  request,
+  url,
+}: {
+  request: Request
+  url: URL
+}) => {
+  const { cookieSession, session } = await loadSession(request)
 
   if (session === null) {
-    throw redirect('/administration/sign-in', {
-      headers: {
-        'Set-Cookie': await deleteSessionAuthCookieSession(cookieSession),
-      },
-    })
+    throw await redirectToSignIn(cookieSession, url.pathname + url.search)
+  }
+
+  return {
+    isAuthenticated: true,
+    sessionId: session.id,
+  }
+}
+
+// Minimal guard for bare-Request callers (no redirectTo).
+export const requireSession = async (request: Request) => {
+  const { cookieSession, session } = await loadSession(request)
+
+  if (session === null) {
+    throw await redirectToSignIn(cookieSession)
   }
 
   return {
