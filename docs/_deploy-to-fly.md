@@ -19,6 +19,30 @@ fly secrets set SESSION_SECRET=$(openssl rand -hex 32) HONEYPOT_SECRET=$(openssl
 fly deploy
 ```
 
+## Sign-in secrets
+
+Magic-link sign-in needs the Google Apps Script web app credentials (see the
+`SCRIPT__Auth__Magic_Link` repo). `GAS_MAGIC_LINK_SECRET` must equal the script's
+`SHARED_SECRET` property.
+
+```shell
+fly secrets set GAS_MAGIC_LINK_URL="https://script.google.com/macros/s/.../exec" GAS_MAGIC_LINK_SECRET="…" --app cz-vednemesicnik
+```
+
+### Break-glass password (`ALLOW_PASSWORD_SIGN_IN`)
+
+Password sign-in is a last-resort emergency path, disabled by default. It's a Fly
+secret (not `fly.toml`) so it can be flipped with a restart instead of a redeploy.
+Any value other than `true` — including unset — is disabled.
+
+```shell
+# Enable (e.g. magic-link/GAS is down and you need in)
+fly secrets set ALLOW_PASSWORD_SIGN_IN=true --app cz-vednemesicnik
+
+# Disable
+fly secrets unset ALLOW_PASSWORD_SIGN_IN --app cz-vednemesicnik
+```
+
 ## Image store
 
 Pre-generated image variants are served as static files from `/data/images` on the
