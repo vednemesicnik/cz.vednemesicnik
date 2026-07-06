@@ -333,19 +333,21 @@ export async function verifyTOTP({
   charSet = DEFAULT_CHAR_SET,
   window = DEFAULT_WINDOW,
 }: VerifyTOTPOptions): Promise<{ delta: number } | null> {
-  let decodedSecret: Uint8Array<ArrayBuffer>
   try {
-    decodedSecret = base32Decode(secret)
+    const decodedSecret = base32Decode(secret)
+
+    return await verifyHOTP(otp, decodedSecret, {
+      algorithm,
+      charSet,
+      counter: getCounter(period),
+      digits,
+      window,
+    })
   } catch {
-    // If the secret is invalid, treat the verification as failed.
+    // Treat any invalid stored config as a failed verification rather than
+    // throwing: a bad secret (base32), an unsupported algorithm (WebCrypto
+    // NotSupportedError), or an empty charSet (divide by zero) must not turn a
+    // corrupt Verification row into a 500 during sign-in.
     return null
   }
-
-  return verifyHOTP(otp, decodedSecret, {
-    algorithm,
-    charSet,
-    counter: getCounter(period),
-    digits,
-    window,
-  })
 }

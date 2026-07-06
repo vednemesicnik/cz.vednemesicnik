@@ -152,6 +152,26 @@ describe('totp.server', () => {
       expect(result).toBeNull()
     })
 
+    test('returns null (not throws) for an unsupported algorithm', async () => {
+      const result = await verifyTOTP({
+        algorithm: 'SHA-999',
+        otp: '123456',
+        secret: RFC_SECRET,
+      })
+
+      expect(result).toBeNull()
+    })
+
+    test('returns null (not throws) for an empty charSet', async () => {
+      const result = await verifyTOTP({
+        charSet: '',
+        otp: '123456',
+        secret: RFC_SECRET,
+      })
+
+      expect(result).toBeNull()
+    })
+
     test('round-trips a non-numeric charSet', async () => {
       vi.setSystemTime(new Date('2026-07-05T12:00:00Z'))
 
