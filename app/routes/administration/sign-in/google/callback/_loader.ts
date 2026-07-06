@@ -25,10 +25,22 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const cookieSession = await getOAuthCookieSession(request)
   const destroyCookie = await deleteOAuthCookieSession(cookieSession)
 
-  const failTo = (error: 'oauth' | 'domain' | 'account') =>
-    redirect(`/administration/sign-in?error=${error}`, {
+  const storedState = cookieSession.get('state')
+  const storedNonce = cookieSession.get('nonce')
+  const codeVerifier = cookieSession.get('codeVerifier')
+  const redirectTo = cookieSession.get('redirectTo')
+
+  // Preserve the original redirectTo across the error bounce, so retrying sign-in
+  // still returns the user to where they started. (It was sanitized on the way
+  // in; the sign-in loader re-validates it via safeRedirect.)
+  const failTo = (error: 'oauth' | 'domain' | 'account') => {
+    const search = new URLSearchParams({ error })
+    if (redirectTo) search.set('redirectTo', redirectTo)
+
+    return redirect(`/administration/sign-in?${search}`, {
       headers: { 'Set-Cookie': destroyCookie },
     })
+  }
 
   const url = new URL(request.url)
 
@@ -37,11 +49,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   const code = url.searchParams.get('code')
   const state = url.searchParams.get('state')
-
-  const storedState = cookieSession.get('state')
-  const storedNonce = cookieSession.get('nonce')
-  const codeVerifier = cookieSession.get('codeVerifier')
-  const redirectTo = cookieSession.get('redirectTo')
 
   // CSRF: the echoed state must match the one we stored (constant-time).
   if (

@@ -30,29 +30,39 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const { state, nonce, codeVerifier, codeChallenge } =
     createOAuthRequestParams()
 
-  const client = createGoogleOAuthClient()
+  let authUrl: string
+  let cookie: string
+  try {
+    const client = createGoogleOAuthClient()
 
-  const authUrl = client.generateAuthUrl({
-    access_type: 'online',
-    code_challenge: codeChallenge,
-    code_challenge_method: CodeChallengeMethod.S256,
-    // hd optimizes the account picker; the real domain enforcement is the
-    // id_token `hd` claim check in the callback (this param is client-visible).
-    hd: ALLOWED_EMAIL_DOMAIN,
-    nonce,
-    prompt: 'select_account',
-    scope: GOOGLE_OAUTH_SCOPES,
-    state,
-  })
+    authUrl = client.generateAuthUrl({
+      access_type: 'online',
+      code_challenge: codeChallenge,
+      code_challenge_method: CodeChallengeMethod.S256,
+      // hd optimizes the account picker; the real domain enforcement is the
+      // id_token `hd` claim check in the callback (this param is client-visible).
+      hd: ALLOWED_EMAIL_DOMAIN,
+      nonce,
+      prompt: 'select_account',
+      scope: GOOGLE_OAUTH_SCOPES,
+      state,
+    })
 
-  throw redirect(authUrl, {
-    headers: {
-      'Set-Cookie': await setOAuthCookieSession(request, {
-        codeVerifier,
-        nonce,
-        redirectTo,
-        state,
-      }),
-    },
-  })
+    cookie = await setOAuthCookieSession(request, {
+      codeVerifier,
+      nonce,
+      redirectTo,
+      state,
+    })
+  } catch {
+    // Misconfigured/missing Google env must not 500 a user-triggered POST —
+    // bounce back to the chooser (keeping redirectTo) so the other sign-in
+    // methods still work. 303 → the client follows up with a GET.
+    console.error('[google-oauth] failed to start the OAuth flow')
+    const search = new URLSearchParams({ error: 'oauth', redirectTo })
+    throw redirect(`/administration/sign-in?${search}`, { status: 303 })
+  }
+
+  // 303 See Other: this is a POST, so force the client to GET the authorize URL.
+  throw redirect(authUrl, { headers: { 'Set-Cookie': cookie }, status: 303 })
 }
