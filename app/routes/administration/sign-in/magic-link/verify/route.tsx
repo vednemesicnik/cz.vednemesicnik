@@ -1,5 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
-import { Form, Link } from 'react-router'
+import { Form, Link, useNavigation } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
@@ -12,6 +12,9 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
+  const navigation = useNavigation()
+  const isSubmitting = navigation.state !== 'idle'
+
   if (loaderData.status === 'invalid') {
     return (
       <div className={styles.container}>
@@ -51,8 +54,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <input name={'token'} type={'hidden'} value={loaderData.token} />
           <input name={'email'} type={'hidden'} value={loaderData.email} />
 
-          <AdminButton className={styles.button} type="submit">
-            Přihlásit se
+          <AdminButton
+            className={styles.button}
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
           </AdminButton>
         </Form>
       </section>

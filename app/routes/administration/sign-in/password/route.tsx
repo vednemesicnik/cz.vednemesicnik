@@ -2,7 +2,7 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
 import { Form } from '~/components/form'
@@ -18,6 +18,8 @@ export { meta } from './_meta'
 
 export default function RouteComponent({ actionData }: Route.ComponentProps) {
   const isHydrated = useHydrated()
+  const navigation = useNavigation()
+  const isSubmitting = navigation.state !== 'idle'
   const passwordInputRef = useRef<HTMLInputElement>(null)
 
   const [form, fields] = useForm({
@@ -76,8 +78,12 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
             placeholder={'••••••••'}
           />
 
-          <AdminButton className={styles.button} type="submit">
-            Přihlásit se
+          <AdminButton
+            className={styles.button}
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
           </AdminButton>
         </Form>
 
