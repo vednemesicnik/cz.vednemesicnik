@@ -28,7 +28,10 @@ describe('getRequestPath', () => {
     ).toBe('/administration/settings?tab=1')
   })
 
-  test('maps the root index data request back to /', () => {
-    expect(pathOf('https://app.test/_root.data')).toBe('/')
+  test('normalizes index/root .data requests (the /_.data form)', () => {
+    expect(pathOf('https://app.test/_.data')).toBe('/')
+    expect(pathOf('https://app.test/administration/_.data')).toBe(
+      '/administration/',
+    )
   })
 })
