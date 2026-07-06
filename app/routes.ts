@@ -102,6 +102,16 @@ export default [
           'sign-in/magic-link/verify',
           'routes/administration/sign-in/magic-link/verify/route.tsx',
         ),
+
+        // Google OAuth sign-in: start (POST) + callback
+        route(
+          'sign-in/google',
+          'routes/administration/sign-in/google/route.ts',
+        ),
+        route(
+          'sign-in/google/callback',
+          'routes/administration/sign-in/google/callback/route.ts',
+        ),
       ]),
 
       // Authenticated routes

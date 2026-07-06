@@ -83,7 +83,14 @@ export const requireAuthentication = async (request: Request) => {
   }
 
   if (session === null) {
-    throw redirect('/administration/sign-in', {
+    // Preserve where the user was headed so sign-in can bounce them back after
+    // authenticating. Same-origin path + query only; `safeRedirect` re-validates
+    // it on the way out (see signInUser), so this is just a hint.
+    const url = new URL(request.url)
+    const signInUrl = new URL('/administration/sign-in', url.origin)
+    signInUrl.searchParams.set('redirectTo', url.pathname + url.search)
+
+    throw redirect(signInUrl.pathname + signInUrl.search, {
       headers: {
         'Set-Cookie': await deleteSessionAuthCookieSession(cookieSession),
       },
