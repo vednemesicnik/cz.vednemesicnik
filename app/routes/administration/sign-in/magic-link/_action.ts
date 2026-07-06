@@ -57,7 +57,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
         const token = await createMagicLinkToken(email)
 
         const link = new URL(
-          '/administration/auth/magic-link/verify',
+          '/administration/sign-in/magic-link/verify',
           process.env.BASE_URL,
         )
         link.searchParams.set('token', token)

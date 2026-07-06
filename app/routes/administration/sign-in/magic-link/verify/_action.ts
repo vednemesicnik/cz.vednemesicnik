@@ -24,7 +24,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const isValid = await consumeMagicLinkToken(normalizedEmail, token)
 
   if (!isValid) {
-    throw redirect('/administration/auth/magic-link', { status: 303 })
+    throw redirect('/administration/sign-in/magic-link', { status: 303 })
   }
 
   const user = await findExistingUserByEmail(normalizedEmail)

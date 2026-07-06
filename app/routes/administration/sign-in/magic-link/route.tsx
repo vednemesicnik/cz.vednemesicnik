@@ -76,7 +76,7 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
 
         <div className={styles.footer}>
           <Link className={styles.link} to={'/administration/sign-in'}>
-            Zpět na přihlášení heslem
+            Zpět na výběr přihlášení
           </Link>
         </div>
       </section>

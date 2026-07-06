@@ -26,8 +26,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Any redirect out of the TOTP step clears the pending cookie so no stale
   // pending user id / attempt counter lingers until it expires.
-  const redirectToSignIn = async () =>
-    redirect('/administration/sign-in', {
+  const redirectToPassword = async () =>
+    redirect('/administration/sign-in/password', {
       headers: {
         'Set-Cookie': await deletePendingTwoFactorCookieSession(cookieSession),
       },
@@ -36,14 +36,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Break-glass: the whole password path is gated behind the flag.
   if (process.env.ALLOW_PASSWORD_SIGN_IN !== 'true') {
-    throw await redirectToSignIn()
+    throw await redirectToPassword()
   }
 
   const userId = getPendingTwoFactorUserId(cookieSession)
 
   // No pending sign-in — restart from the password step.
   if (userId === undefined) {
-    throw await redirectToSignIn()
+    throw await redirectToPassword()
   }
 
   const submission = await parseWithZod(formData, { async: true, schema })
@@ -59,7 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Enrollment was removed between steps — drop the pending cookie and restart.
   if (twoFactor === null) {
-    throw await redirectToSignIn()
+    throw await redirectToPassword()
   }
 
   const result = await verifyTOTP({
@@ -81,7 +81,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const attempts = getPendingTwoFactorAttempts(cookieSession) + 1
 
     if (attempts >= MAX_TWO_FACTOR_ATTEMPTS) {
-      throw await redirectToSignIn()
+      throw await redirectToPassword()
     }
 
     return data(

@@ -26,7 +26,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <div className={styles.footer}>
             <Link
               className={styles.link}
-              to={'/administration/auth/magic-link'}
+              to={'/administration/sign-in/magic-link'}
             >
               Požádat o nový odkaz
             </Link>

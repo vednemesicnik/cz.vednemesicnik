@@ -15,8 +15,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const clearPendingCookie = () =>
     deletePendingTwoFactorCookieSession(cookieSession)
 
-  const redirectToSignIn = async () =>
-    redirect('/administration/sign-in', {
+  const redirectToPassword = async () =>
+    redirect('/administration/sign-in/password', {
       headers: { 'Set-Cookie': await clearPendingCookie() },
     })
 
@@ -32,14 +32,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // Break-glass: the whole password path is gated behind the flag.
   if (process.env.ALLOW_PASSWORD_SIGN_IN !== 'true') {
-    throw await redirectToSignIn()
+    throw await redirectToPassword()
   }
 
   // Reachable only mid-sign-in, i.e. with a valid pending-2FA cookie.
   const userId = getPendingTwoFactorUserId(cookieSession)
 
   if (userId === undefined) {
-    throw await redirectToSignIn()
+    throw await redirectToPassword()
   }
 
   return null
