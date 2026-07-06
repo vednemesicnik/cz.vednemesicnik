@@ -1,5 +1,6 @@
 import { redirect } from 'react-router'
 
+import { requireUnauthenticated } from '~/utils/auth.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { consumeMagicLinkToken } from '~/utils/magic-link.server'
 import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
@@ -7,6 +8,10 @@ import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
 import type { Route } from './+types/route'
 
 export const action = async ({ request }: Route.ActionArgs) => {
+  // Enforce the auth boundary in the handler, not just the loader: a direct POST
+  // must not let an already-signed-in admin consume a token and swap sessions.
+  await requireUnauthenticated(request)
+
   const formData = await request.formData()
 
   checkHoneypot(formData)

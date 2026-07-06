@@ -74,13 +74,24 @@ export const rateLimitStore: RateLimitStore =
 
 // --- IP -------------------------------------------------------------------
 
-// Fly.io sends the real client IP in Fly-Client-IP; fall back to X-Forwarded-For.
+// Fly.io sets the real client IP in Fly-Client-IP (set by the trusted edge, not
+// forwardable by clients). X-Forwarded-For is client-controlled and therefore
+// spoofable, so only fall back to it outside production (local dev, where there
+// is no Fly-Client-IP). In production a missing Fly-Client-IP collapses to a
+// single "unknown" bucket rather than a per-request spoofable one.
 export function getClientIp(request: Request): string {
-  return (
-    request.headers.get('Fly-Client-IP') ??
-    request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ??
-    'unknown'
-  )
+  const flyClientIp = request.headers.get('Fly-Client-IP')
+  if (flyClientIp) return flyClientIp
+
+  if (process.env.NODE_ENV !== 'production') {
+    const forwardedFor = request.headers
+      .get('X-Forwarded-For')
+      ?.split(',')[0]
+      ?.trim()
+    if (forwardedFor) return forwardedFor
+  }
+
+  return 'unknown'
 }
 
 // --- Context --------------------------------------------------------------

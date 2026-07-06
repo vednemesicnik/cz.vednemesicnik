@@ -2,6 +2,7 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { ALLOWED_EMAIL_DOMAIN } from '@constants/auth'
 import { data } from 'react-router'
 
+import { requireUnauthenticated } from '~/utils/auth.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { createMagicLinkToken } from '~/utils/magic-link.server'
@@ -13,6 +14,10 @@ import { schema } from './_schema'
 import type { Route } from './+types/route'
 
 export const action = async ({ request, context }: Route.ActionArgs) => {
+  // Enforce the auth boundary in the handler, not just the loader: a direct POST
+  // must not let an already-signed-in admin request a link and swap sessions.
+  await requireUnauthenticated(request)
+
   const formData = await request.formData()
 
   // Honeypot first: reject bot/malformed submissions before anything else, so it
