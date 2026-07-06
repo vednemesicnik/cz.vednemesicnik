@@ -15,6 +15,10 @@ import type { Route } from './+types/route'
 export const action = async ({ request, context }: Route.ActionArgs) => {
   const formData = await request.formData()
 
+  // Honeypot first: reject bot/malformed submissions before anything else, so it
+  // runs even for rate-limited requests (consistent with the other form actions).
+  checkHoneypot(formData)
+
   // Rate limited by the middleware (see _middleware.ts): surface an inline error
   // rather than sending. IP-based, so it doesn't leak account existence.
   const limited = context.get(rateLimitContext)
@@ -32,8 +36,6 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       { status: 429 },
     )
   }
-
-  checkHoneypot(formData)
 
   const submission = parseWithZod(formData, { schema })
 
