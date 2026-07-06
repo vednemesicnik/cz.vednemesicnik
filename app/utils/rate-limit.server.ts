@@ -155,11 +155,20 @@ export function createRateLimitMiddleware(
       context.set(rateLimitContext, { retryAfter: resetSeconds })
     }
 
-    // Apply headers to the outgoing response (both success and 429 from action) — single place.
-    const response = await next()
-    if (response instanceof Response) {
-      applyRateLimitHeaders(response.headers, result, resetSeconds)
+    // Apply headers to the outgoing response — the single place for both returned
+    // responses (success, 429 from the action) and thrown ones (redirects, thrown
+    // `data()`), so the RateLimit-* headers are attached consistently either way.
+    try {
+      const response = await next()
+      if (response instanceof Response) {
+        applyRateLimitHeaders(response.headers, result, resetSeconds)
+      }
+      return response
+    } catch (thrown) {
+      if (thrown instanceof Response) {
+        applyRateLimitHeaders(thrown.headers, result, resetSeconds)
+      }
+      throw thrown
     }
-    return response
   }
 }

@@ -50,19 +50,26 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   // account. Every branch returns the same neutral response below — never reveal
   // which check failed (no account enumeration).
   if (email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)) {
-    const user = await findExistingUserByEmail(email)
+    try {
+      const user = await findExistingUserByEmail(email)
 
-    if (user !== null) {
-      const token = await createMagicLinkToken(email)
+      if (user !== null) {
+        const token = await createMagicLinkToken(email)
 
-      const link = new URL(
-        '/administration/auth/magic-link/verify',
-        process.env.BASE_URL,
-      )
-      link.searchParams.set('token', token)
-      link.searchParams.set('email', email)
+        const link = new URL(
+          '/administration/auth/magic-link/verify',
+          process.env.BASE_URL,
+        )
+        link.searchParams.set('token', token)
+        link.searchParams.set('email', email)
 
-      await sendMagicLinkEmail({ email, link: link.href })
+        await sendMagicLinkEmail({ email, link: link.href })
+      }
+    } catch (error) {
+      // Swallow failures (e.g. a DB error from the user lookup / token write):
+      // they must not surface a non-neutral error only for existing accounts,
+      // which would leak account existence. Log and fall through to neutral.
+      console.error('[magic-link] failed to issue sign-in link —', error)
     }
   }
 
