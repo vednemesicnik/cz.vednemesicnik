@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { Link } from 'react-router'
+import { Link, useNavigation } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
@@ -32,6 +32,9 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
     shouldRevalidate: 'onBlur',
     shouldValidate: 'onSubmit',
   })
+
+  const navigation = useNavigation()
+  const isSubmitting = navigation.state !== 'idle'
 
   const sent = actionData?.sent === true
 
@@ -67,8 +70,12 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
                 placeholder={'vas-email@vednemesicnik.cz'}
               />
 
-              <AdminButton className={styles.button} type="submit">
-                Poslat odkaz
+              <AdminButton
+                className={styles.button}
+                disabled={isSubmitting}
+                type="submit"
+              >
+                {isSubmitting ? 'Odesílám…' : 'Poslat odkaz'}
               </AdminButton>
             </Form>
           </>
