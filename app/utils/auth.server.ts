@@ -6,6 +6,7 @@ import {
 } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
+import { getRequestPath } from '~/utils/get-request-path'
 
 const SESSION_AUTH_ID_KEY = 'sessionAuthId'
 
@@ -84,11 +85,12 @@ export const requireAuthentication = async (request: Request) => {
 
   if (session === null) {
     // Preserve where the user was headed so sign-in can bounce them back after
-    // authenticating. Same-origin path + query only; `safeRedirect` re-validates
-    // it on the way out (see signInUser), so this is just a hint.
+    // authenticating. `getRequestPath` normalizes Single Fetch `.data` loader
+    // URLs back to the real path; `safeRedirect` re-validates it on the way out
+    // (see signInUser), so this is just a hint.
     const url = new URL(request.url)
     const signInUrl = new URL('/administration/sign-in', url.origin)
-    signInUrl.searchParams.set('redirectTo', url.pathname + url.search)
+    signInUrl.searchParams.set('redirectTo', getRequestPath(request))
 
     throw redirect(signInUrl.pathname + signInUrl.search, {
       headers: {
