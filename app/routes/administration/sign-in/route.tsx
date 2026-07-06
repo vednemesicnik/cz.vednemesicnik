@@ -1,96 +1,39 @@
 // noinspection JSUnusedGlobalSymbols
-import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { useEffect, useRef } from 'react'
-import { AdminButton } from '~/components/admin/admin-button'
-import { AdminInput } from '~/components/admin/admin-input'
-import { Form } from '~/components/form'
-import { HoneypotInputs } from '~/components/honeypot-inputs'
-import { useHydrated } from '~/utils/use-hydrated'
-import { schema } from './_schema'
+import { Link } from 'react-router'
+
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
-export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function RouteComponent({
-  actionData,
-  loaderData,
-}: Route.ComponentProps) {
-  const isHydrated = useHydrated()
-  const passwordInputRef = useRef<HTMLInputElement>(null)
-
-  const [form, fields] = useForm({
-    constraint: getZodConstraint(schema),
-    defaultNoValidate: isHydrated,
-    id: 'password-sign-in',
-    lastResult: actionData?.submissionResult,
-    onValidate({ formData }) {
-      return parseWithZod(formData, { schema })
-    },
-    shouldRevalidate: 'onBlur',
-    shouldValidate: 'onSubmit',
-  })
-
-  const formErrorsCount = form.errors?.length ?? 0
-  const passwordErrorsCount = fields.password.errors?.length ?? 0
-
-  useEffect(() => {
-    const passwordInput = passwordInputRef.current
-    if (passwordInput === null) return
-
-    if (formErrorsCount > 0 || passwordErrorsCount > 0) {
-      passwordInput.value = ''
-    }
-  }, [formErrorsCount, passwordErrorsCount])
-
+export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <div className={styles.container}>
       <section className={styles.card}>
         <h1 className={styles.title}>Přihlášení</h1>
 
+        <p className={styles.subtitle}>
+          Vyberte způsob přihlášení do administrace
+        </p>
+
+        <Link
+          className={styles.linkButton}
+          to={'/administration/sign-in/magic-link'}
+        >
+          Přihlásit odkazem v e-mailu
+        </Link>
+
         {loaderData.allowPasswordSignIn ? (
-          <>
-            <p className={styles.subtitle}>
-              Zadejte své přihlašovací údaje pro přístup do administrace
-            </p>
-
-            <Form
-              {...getFormProps(form)}
-              className={styles.form}
-              errors={form.errors}
-              method={'post'}
+          <div className={styles.footer}>
+            <Link
+              className={styles.link}
+              to={'/administration/sign-in/password'}
             >
-              <HoneypotInputs />
-
-              <AdminInput
-                errors={fields.email.errors}
-                label={'E-mail'}
-                {...getInputProps(fields.email, { type: 'email' })}
-                placeholder={'vas-email@example.com'}
-              />
-
-              <AdminInput
-                errors={fields.password.errors}
-                label={'Heslo'}
-                ref={passwordInputRef}
-                {...getInputProps(fields.password, { type: 'password' })}
-                placeholder={'••••••••'}
-              />
-
-              <AdminButton className={styles.button} type="submit">
-                Přihlásit se
-              </AdminButton>
-            </Form>
-          </>
-        ) : (
-          <p className={styles.subtitle}>
-            Přihlášení heslem je momentálně nedostupné. Pokud potřebujete
-            přístup do administrace, kontaktujte prosím správce.
-          </p>
-        )}
+              Přihlásit heslem
+            </Link>
+          </div>
+        ) : null}
       </section>
     </div>
   )

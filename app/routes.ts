@@ -76,13 +76,31 @@ export default [
 
       // Non-authenticated routes
       layout('routes/administration/__layout-non-authenticated/route.tsx', [
-        // Sign in
+        // Sign in — method chooser
         route('sign-in', 'routes/administration/sign-in/route.tsx'),
+
+        // Break-glass password sign-in form
+        route(
+          'sign-in/password',
+          'routes/administration/sign-in/password/route.tsx',
+        ),
 
         // Break-glass password second factor (TOTP) entry step
         route(
           'sign-in/verify-2fa',
           'routes/administration/sign-in/verify-2fa/route.tsx',
+        ),
+
+        // Magic-link sign-in: request form
+        route(
+          'sign-in/magic-link',
+          'routes/administration/sign-in/magic-link/route.tsx',
+        ),
+
+        // Magic-link sign-in: verify + confirm
+        route(
+          'sign-in/magic-link/verify',
+          'routes/administration/sign-in/magic-link/verify/route.tsx',
         ),
       ]),
 

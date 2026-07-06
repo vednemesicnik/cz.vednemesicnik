@@ -142,16 +142,16 @@ model Verification {
   type      String
   // The thing we're trying to verify, e.g. a user's email or phone number
   target    String
-  // The secret key used to generate the otp
+  // The secret: the otp seed (TOTP) or the hashed token (magic link)
   secret    String
-  // The algorithm used to generate the otp
-  algorithm String
-  // The number of digits in the otp
-  digits    Int
-  // The number of seconds the otp is valid for
-  period    Int
-  // The valid characters for the otp
-  charSet   String
+  // The algorithm used to generate the otp; null for non-otp types (magic link)
+  algorithm String?
+  // The number of digits in the otp; null for non-otp types (magic link)
+  digits    Int?
+  // The number of seconds the otp is valid for; null for non-otp types (magic link)
+  period    Int?
+  // The valid characters for the otp; null for non-otp types (magic link)
+  charSet   String?
   // When it's safe to delete this verification
   expiresAt DateTime?
   createdAt DateTime  @default(now())

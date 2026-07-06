@@ -7,6 +7,8 @@ export default defineConfig({
     alias: [
       { find: /^~\/(.+)/, replacement: '/app/$1' },
       { find: /^~~\/(.+)/, replacement: '/prisma/$1' },
+      { find: /^@generated\/(.+)/, replacement: '/generated/$1' },
+      { find: /^@constants\/(.+)/, replacement: '/constants/$1' },
     ],
   },
   test: {

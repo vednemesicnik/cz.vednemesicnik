@@ -44,38 +44,26 @@
   }
 }
 
-/* Filled primary link, matching AdminButton's primary variant — the main
-   sign-in method (magic link). */
-.linkButton {
+.form {
   @layer route {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
     margin-block-start: 24px;
-    padding-block: 12px;
-    padding-inline: 24px;
-    border: 2px solid transparent;
-    border-radius: 8px;
-    background-color: var(--violet);
-    color: var(--text-on-accent);
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
-    line-height: 1;
-    text-decoration: none;
+  }
+}
 
-    &:hover:not(:focus-visible) {
-      background-color: var(--violet-hover);
-    }
+.button {
+  @layer route {
+    width: 100%;
+  }
+}
 
-    &:active {
-      background-color: var(--violet-active);
-    }
-
-    &:focus-visible {
-      box-shadow: var(--focus-shadow);
-      outline: none;
-    }
+.message {
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--admin-text-secondary);
+    margin-block-start: 24px;
+    margin-block-end: 0;
+    text-align: center;
+    line-height: 1.6;
   }
 }
 
