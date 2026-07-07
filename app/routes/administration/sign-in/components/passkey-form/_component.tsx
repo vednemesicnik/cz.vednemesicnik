@@ -1,5 +1,5 @@
 import { startAuthentication } from '@simplewebauthn/browser'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import type { action as generateAuthenticationOptionsAction } from '~/routes/administration/sign-in/passkey/generate-authentication-options/_action'
@@ -23,6 +23,10 @@ export const PasskeyForm = () => {
 
   const options = generateAuthenticationOptionsFetcher.data?.options ?? null
 
+  // Tracks the challenge already handed to the authenticator so re-renders
+  // (fetcher state changes before the redirect lands) don't re-run the ceremony.
+  const startedOptionsRef = useRef<typeof options>(null)
+
   // Once the server returns the challenge, run the authenticator ceremony and
   // POST the assertion for verification. A successful verify redirects into the
   // administration (session created server-side), so there is no success branch
@@ -31,6 +35,11 @@ export const PasskeyForm = () => {
     if (options === null) {
       return
     }
+
+    if (startedOptionsRef.current === options) {
+      return
+    }
+    startedOptionsRef.current = options
 
     const authenticate = async () => {
       try {
