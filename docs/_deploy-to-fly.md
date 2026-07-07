@@ -21,6 +21,22 @@ fly deploy
 
 ## Sign-in secrets
 
+The primary sign-in methods (Google OAuth, magic link, passkeys) are **required
+in production** — `initEnv` validates them at boot and fails fast if any secret
+below is missing, so a broken method can't ship silently.
+
+### Google OAuth (Workspace SSO)
+
+From a Web OAuth client in Google Cloud Console. The redirect URI is derived from
+`BASE_URL` (`…/administration/sign-in/google/callback`) and must be registered on
+the client.
+
+```shell
+fly secrets set GOOGLE_CLIENT_ID="…" GOOGLE_CLIENT_SECRET="…" --app cz-vednemesicnik
+```
+
+### Magic-link email (Google Apps Script)
+
 Magic-link sign-in needs the Google Apps Script web app credentials (see the
 `SCRIPT__Auth__Magic_Link` repo). `GAS_MAGIC_LINK_SECRET` must equal the script's
 `SHARED_SECRET` property.
@@ -28,6 +44,30 @@ Magic-link sign-in needs the Google Apps Script web app credentials (see the
 ```shell
 fly secrets set GAS_MAGIC_LINK_URL="https://script.google.com/macros/s/.../exec" GAS_MAGIC_LINK_SECRET="…" --app cz-vednemesicnik
 ```
+
+### Passkeys / WebAuthn (`RELYING_PARTY_*`)
+
+Passkey sign-in needs the relying-party settings. They are **required in
+production** — `initEnv` fails at boot if any is missing (empty values otherwise
+break every passkey ceremony silently).
+
+- `RELYING_PARTY_ID` — the domain only, no scheme or port. Use the registrable
+  domain (`vednemesicnik.cz`) so passkeys work across subdomains.
+- `RELYING_PARTY_ORIGIN` — the exact origin the browser sees (scheme + host +
+  port), no trailing slash. Must match where the admin is actually served.
+- `RELYING_PARTY_NAME` — display name shown in the authenticator prompt.
+
+```shell
+fly secrets set \
+  RELYING_PARTY_ID="vednemesicnik.cz" \
+  RELYING_PARTY_ORIGIN="https://vednemesicnik.cz" \
+  RELYING_PARTY_NAME="Vedneměsíčník" \
+  --app cz-vednemesicnik
+```
+
+> `RELYING_PARTY_ID` must equal the origin's domain or a registrable parent of
+> it. Changing it later invalidates every already-registered passkey, so pick
+> the registrable domain up front.
 
 ### Break-glass password (`ALLOW_PASSWORD_SIGN_IN`)
 
@@ -90,6 +130,12 @@ Set it up once:
    > and a secret would silently contradict the visible `[env]` line (it would still
    > read `'volume'` while the app runs on Tigris). Keep the toggle in `[env]` and
    > reserve secrets for real credentials (`AWS_*`, `BUCKET_NAME`, `SESSION_SECRET`, …).
+
+When `STORE_DRIVER = 'tigris'`, `initEnv` requires all five S3 vars
+(`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_ENDPOINT_URL_S3`,
+`BUCKET_NAME`) and the app refuses to boot if any is missing — so a half-configured
+bucket fails fast at startup rather than on the first image request. The check is
+gated on the driver, not the environment (`tigris` can run locally against s3mock).
 
 ### Managing the Tigris bucket over `fly ssh`
 

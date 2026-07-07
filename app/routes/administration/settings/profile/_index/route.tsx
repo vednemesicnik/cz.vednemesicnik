@@ -44,6 +44,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <AdminLinkButton to="/administration/settings/profile/two-factor">
           Dvoufázové ověření
         </AdminLinkButton>
+
+        <AdminLinkButton to="/administration/settings/profile/passkeys">
+          Passkeys
+        </AdminLinkButton>
       </AdminDetailSection>
 
       {loaderData.user.sessions.length > 0 && (
