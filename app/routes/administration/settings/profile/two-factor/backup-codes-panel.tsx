@@ -1,4 +1,5 @@
 import { AdminButton } from '~/components/admin/admin-button'
+import { downloadTextFile } from '~/utils/download-text-file'
 import { useHydrated } from '~/utils/use-hydrated'
 
 import styles from './backup-codes-panel.module.css'
@@ -21,23 +22,10 @@ const buildFileContents = (codes: string[]) =>
 export const BackupCodesPanel = ({ codes }: Props) => {
   const isHydrated = useHydrated()
 
-  // Client-side Blob download: the plaintext codes exist only in this response,
-  // so there is nothing to re-serve from the server.
-  const handleDownload = () => {
-    const blob = new Blob([buildFileContents(codes)], {
-      type: 'text/plain;charset=utf-8',
-    })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-
-    anchor.download = 'zalozni-kody-vednemesicnik.txt'
-    anchor.href = url
-    anchor.click()
-
-    // Defer revocation so the browser has started the download before the object
-    // URL is released; revoking synchronously can cancel it in some browsers.
-    setTimeout(() => URL.revokeObjectURL(url), 0)
-  }
+  // Plaintext codes exist only in this response, so the download is built
+  // client-side from what is already on the page (see downloadTextFile).
+  const handleDownload = () =>
+    downloadTextFile('zalozni-kody-vednemesicnik.txt', buildFileContents(codes))
 
   return (
     <section className={styles.panel}>

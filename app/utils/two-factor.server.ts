@@ -61,16 +61,18 @@ export const upsertUserTwoFactor = async (
   }
 }
 
-export const deleteUserTwoFactor = async (userId: string) => {
+// Disabling 2FA drops both the enrollment and its backup codes in one
+// transaction, so the two can't fall out of sync on a transient failure.
+// deleteMany keeps it idempotent even if nothing is enrolled.
+export const disableUserTwoFactor = async (userId: string) => {
   try {
-    // deleteMany so disabling is idempotent even if nothing is enrolled.
-    await prisma.verification.deleteMany({
-      where: {
-        target: userId,
-        type: TWO_FACTOR_VERIFICATION_TYPE,
-      },
-    })
+    await prisma.$transaction([
+      prisma.verification.deleteMany({
+        where: { target: userId, type: TWO_FACTOR_VERIFICATION_TYPE },
+      }),
+      prisma.backupCode.deleteMany({ where: { userId } }),
+    ])
   } catch (error) {
-    throwDbError(error, 'Unable to delete the two-factor verification.')
+    throwDbError(error, 'Unable to disable the two-factor verification.')
   }
 }

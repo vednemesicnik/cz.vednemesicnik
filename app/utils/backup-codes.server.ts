@@ -61,12 +61,3 @@ export const countUnusedBackupCodes = async (userId: string) => {
     return throwDbError(error, 'Unable to count the backup codes.')
   }
 }
-
-// Clear all codes when 2FA is disabled (BackupCode cascades only on User delete).
-export const deleteBackupCodes = async (userId: string) => {
-  try {
-    await prisma.backupCode.deleteMany({ where: { userId } })
-  } catch (error) {
-    throwDbError(error, 'Unable to delete the backup codes.')
-  }
-}

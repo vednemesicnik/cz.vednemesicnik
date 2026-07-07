@@ -20,16 +20,20 @@ export const schema = z
       .optional(),
   })
   .superRefine((value, ctx) => {
-    if (value.code === undefined && value.backupCode === undefined) {
-      // Only one field is rendered at a time, so attach the required error to
-      // both — whichever input is visible then shows it (the hidden one's copy
-      // is simply not rendered).
+    const hasCode = value.code !== undefined
+    const hasBackupCode = value.backupCode !== undefined
+
+    // The UI only ever renders one field, so exactly one must be present.
+    // Attach the error to both paths — whichever input is visible then shows it
+    // (the hidden one's copy is simply not rendered). Enforcing this here also
+    // keeps a crafted request that sends both from silently picking a branch.
+    if (hasCode === hasBackupCode) {
+      const message = hasCode
+        ? 'Zadejte pouze jeden kód.'
+        : 'Ověřovací kód musí být vyplněn.'
+
       for (const path of ['code', 'backupCode'] as const) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Ověřovací kód musí být vyplněn.',
-          path: [path],
-        })
+        ctx.addIssue({ code: 'custom', message, path: [path] })
       }
     }
   })

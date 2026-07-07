@@ -2,17 +2,14 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { type ActionFunctionArgs, data, redirect } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
-import {
-  deleteBackupCodes,
-  regenerateBackupCodes,
-} from '~/utils/backup-codes.server'
+import { regenerateBackupCodes } from '~/utils/backup-codes.server'
 import { validateCSRF } from '~/utils/csrf.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
 import { verifyTOTP } from '~/utils/totp.server'
 import {
-  deleteUserTwoFactor,
+  disableUserTwoFactor,
   getUserTwoFactor,
   upsertUserTwoFactor,
 } from '~/utils/two-factor.server'
@@ -44,11 +41,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const intent = formData.get(FORM_CONFIG.intent.name)
 
-  // Disabling 2FA removes the stored Verification row and any backup codes,
-  // which are meaningless without an enrolled second factor.
+  // Disabling 2FA removes the stored Verification row and any backup codes
+  // (atomically), which are meaningless without an enrolled second factor.
   if (intent === FORM_CONFIG.intent.value.delete) {
-    await deleteUserTwoFactor(context.userId)
-    await deleteBackupCodes(context.userId)
+    await disableUserTwoFactor(context.userId)
 
     return redirect('/administration/settings/profile/two-factor')
   }
