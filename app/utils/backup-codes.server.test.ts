@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 type Row = { id: string; codeHash: string; usedAt: Date | null; userId: string }
@@ -65,14 +66,80 @@ vi.mock('~/utils/db.server', () => ({
   },
 }))
 
-const { countUnusedBackupCodes, redeemBackupCode, regenerateBackupCodes } =
-  await import('./backup-codes.server')
+const {
+  BACKUP_CODE_COUNT,
+  canonicalizeBackupCode,
+  countUnusedBackupCodes,
+  createBackupCodeSet,
+  matchBackupCodeHash,
+  redeemBackupCode,
+  regenerateBackupCodes,
+} = await import('./backup-codes.server')
 
 const USER = 'user-1'
 
 beforeEach(() => {
   rows.length = 0
   seq.n = 0
+})
+
+describe('createBackupCodeSet', () => {
+  test('generates the expected number of codes', () => {
+    expect(createBackupCodeSet()).toHaveLength(BACKUP_CODE_COUNT)
+  })
+
+  test('formats every code as xxxx-xxxx from the unambiguous alphabet', () => {
+    for (const { code } of createBackupCodeSet()) {
+      expect(code).toMatch(
+        /^[23456789abcdefghjkmnpqrstuvwxyz]{4}-[23456789abcdefghjkmnpqrstuvwxyz]{4}$/,
+      )
+    }
+  })
+
+  test('produces unique codes', () => {
+    const codes = createBackupCodeSet().map(({ code }) => code)
+    expect(new Set(codes).size).toBe(codes.length)
+  })
+
+  test('each hash verifies against its own code but not another', () => {
+    const [first, second] = createBackupCodeSet()
+
+    expect(
+      bcrypt.compareSync(canonicalizeBackupCode(first.code), first.hash),
+    ).toBe(true)
+    expect(
+      bcrypt.compareSync(canonicalizeBackupCode(second.code), first.hash),
+    ).toBe(false)
+  })
+})
+
+describe('canonicalizeBackupCode', () => {
+  test('lowercases and strips separators', () => {
+    expect(canonicalizeBackupCode('K7M2-9XQP')).toBe('k7m29xqp')
+    expect(canonicalizeBackupCode('  k7m2 9xqp ')).toBe('k7m29xqp')
+  })
+})
+
+describe('matchBackupCodeHash', () => {
+  test('matches a valid code regardless of formatting and rejects others', () => {
+    const set = createBackupCodeSet()
+    const hashes = set.map(({ hash }) => hash)
+    const target = set[2]
+
+    expect(matchBackupCodeHash(target.code, hashes)).toBe(2)
+    // Same code without the dash and upper-cased still matches.
+    expect(
+      matchBackupCodeHash(target.code.replace('-', '').toUpperCase(), hashes),
+    ).toBe(2)
+    expect(matchBackupCodeHash('zzzz-zzzz', hashes)).toBe(-1)
+    // A consumed code dropped from the candidate hashes no longer matches.
+    expect(
+      matchBackupCodeHash(
+        target.code,
+        hashes.filter((hash) => hash !== target.hash),
+      ),
+    ).toBe(-1)
+  })
 })
 
 describe('backup codes persistence', () => {
