@@ -15,6 +15,7 @@ import { FormActions } from '~/components/form-actions'
 import { FORM_CONFIG } from '~/config/form-config'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
+import { BackupCodesPanel } from './backup-codes-panel'
 
 export { action } from './_action'
 export { handle } from './_handle'
@@ -27,10 +28,21 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const { state } = useNavigation()
 
+  // The action returns either a validation result or a one-time set of backup
+  // codes, so narrow before reading each.
+  const submissionResult =
+    actionData && 'submissionResult' in actionData
+      ? actionData.submissionResult
+      : undefined
+  const backupCodes =
+    actionData && 'backupCodes' in actionData
+      ? actionData.backupCodes
+      : undefined
+
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
     id: 'two-factor-enrollment',
-    lastResult: actionData?.submissionResult,
+    lastResult: submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldDirtyConsider: (field) => !field.startsWith('csrf'),
     shouldRevalidate: 'onBlur',
@@ -51,9 +63,26 @@ export default function RouteComponent({
           hesla zadávat i jednorázový kód z autentikační aplikace.
         </p>
 
+        {backupCodes !== undefined && <BackupCodesPanel codes={backupCodes} />}
+
+        <p>
+          Zbývající záložní kódy: {loaderData.unusedBackupCodesCount}
+          {loaderData.unusedBackupCodesCount <= 2 &&
+            ' — doporučujeme vygenerovat nové.'}
+        </p>
+
         <RouterForm method="post">
           <AuthenticityTokenInput />
           <FormActions>
+            <AdminButton
+              disabled={isLoadingOrSubmitting}
+              name={FORM_CONFIG.intent.name}
+              type="submit"
+              value={FORM_CONFIG.intent.value.regenerateBackupCodes}
+              variant="secondary"
+            >
+              Regenerovat záložní kódy
+            </AdminButton>
             <AdminButton
               disabled={isLoadingOrSubmitting}
               name={FORM_CONFIG.intent.name}

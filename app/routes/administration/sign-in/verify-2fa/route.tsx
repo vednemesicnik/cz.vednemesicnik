@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
+import { useState } from 'react'
 import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
 import { Form } from '~/components/form'
@@ -16,6 +17,7 @@ export { meta } from './_meta'
 
 export default function RouteComponent({ actionData }: Route.ComponentProps) {
   const isHydrated = useHydrated()
+  const [useBackupCode, setUseBackupCode] = useState(false)
 
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
@@ -35,7 +37,9 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
         <h1 className={styles.title}>Dvoufázové ověření</h1>
 
         <p className={styles.subtitle}>
-          Zadejte šestimístný kód z vaší autentikační aplikace
+          {useBackupCode
+            ? 'Zadejte jeden ze svých záložních kódů'
+            : 'Zadejte šestimístný kód z vaší autentikační aplikace'}
         </p>
 
         <Form
@@ -46,19 +50,43 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
         >
           <HoneypotInputs />
 
-          <AdminInput
-            errors={fields.code.errors}
-            label={'Ověřovací kód'}
-            {...getInputProps(fields.code, { type: 'text' })}
-            autoComplete={'one-time-code'}
-            inputMode={'numeric'}
-            placeholder={'123456'}
-          />
+          {/* Only the visible field is submitted, so the action branches on
+              whichever of code / backupCode is present. */}
+          {useBackupCode ? (
+            <AdminInput
+              errors={fields.backupCode.errors}
+              label={'Záložní kód'}
+              {...getInputProps(fields.backupCode, { type: 'text' })}
+              autoComplete={'one-time-code'}
+              placeholder={'xxxx-xxxx'}
+            />
+          ) : (
+            <AdminInput
+              errors={fields.code.errors}
+              label={'Ověřovací kód'}
+              {...getInputProps(fields.code, { type: 'text' })}
+              autoComplete={'one-time-code'}
+              inputMode={'numeric'}
+              placeholder={'123456'}
+            />
+          )}
 
           <AdminButton className={styles.button} type="submit">
             Ověřit
           </AdminButton>
         </Form>
+
+        {isHydrated && (
+          <button
+            className={styles.toggle}
+            onClick={() => setUseBackupCode((value) => !value)}
+            type="button"
+          >
+            {useBackupCode
+              ? 'Zpět na kód z aplikace'
+              : 'Nemáte přístup k aplikaci? Použít záložní kód'}
+          </button>
+        )}
       </section>
     </div>
   )

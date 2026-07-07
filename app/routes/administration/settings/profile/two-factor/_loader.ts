@@ -1,6 +1,7 @@
 import QRCode from 'qrcode'
 import { data, type LoaderFunctionArgs } from 'react-router'
 
+import { countUnusedBackupCodes } from '~/utils/backup-codes.server'
 import { prisma } from '~/utils/db.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { generateTOTP, getTOTPAuthUri } from '~/utils/totp.server'
@@ -34,7 +35,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Never cache this page: it carries the enrollment secret and QR.
   const noStoreHeaders = { 'Cache-Control': 'no-store' }
 
-  // Already enrolled — no secret is exposed, only the enabled state.
+  // Already enrolled — no secret is exposed, only the enabled state and the
+  // number of backup codes still available.
   const existing = await getUserTwoFactor(context.userId)
   if (existing !== null) {
     return data(
@@ -42,6 +44,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         isEnrolled: true as const,
         qrCodeDataUri: null,
         secret: null,
+        unusedBackupCodesCount: await countUnusedBackupCodes(context.userId),
         userId: context.userId,
       },
       { headers: noStoreHeaders },
