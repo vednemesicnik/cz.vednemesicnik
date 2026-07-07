@@ -2,9 +2,9 @@
 import { Link } from 'react-router'
 
 import { HoneypotInputs } from '~/components/honeypot-inputs'
-
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { PasskeyForm } from './components/passkey-form'
 
 export { loader } from './_loader'
 export { meta } from './_meta'
@@ -42,6 +42,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             Přihlásit přes Google
           </button>
         </form>
+
+        <PasskeyForm />
 
         <Link
           className={styles.linkButton}

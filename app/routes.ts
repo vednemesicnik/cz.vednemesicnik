@@ -112,6 +112,16 @@ export default [
           'sign-in/google/callback',
           'routes/administration/sign-in/google/callback/route.ts',
         ),
+
+        // Passkey (WebAuthn) sign-in: usernameless/discoverable authentication
+        route(
+          'sign-in/passkey/generate-authentication-options',
+          'routes/administration/sign-in/passkey/generate-authentication-options/route.ts',
+        ),
+        route(
+          'sign-in/passkey/verify-authentication-response',
+          'routes/administration/sign-in/passkey/verify-authentication-response/route.ts',
+        ),
       ]),
 
       // Authenticated routes
@@ -236,6 +246,20 @@ export default [
               route(
                 'two-factor',
                 'routes/administration/settings/profile/two-factor/route.tsx',
+              ),
+
+              // Passkey management + registration ceremony endpoints
+              route(
+                'passkeys',
+                'routes/administration/settings/profile/passkeys/route.tsx',
+              ),
+              route(
+                'passkeys/generate-registration-options',
+                'routes/administration/settings/profile/passkeys/generate-registration-options/route.ts',
+              ),
+              route(
+                'passkeys/verify-registration-response',
+                'routes/administration/settings/profile/passkeys/verify-registration-response/route.ts',
               ),
             ),
           ),
