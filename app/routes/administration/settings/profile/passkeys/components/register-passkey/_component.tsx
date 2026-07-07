@@ -1,5 +1,5 @@
 import { startRegistration } from '@simplewebauthn/browser'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFetcher, useRevalidator } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
@@ -22,12 +22,21 @@ export const RegisterPasskey = () => {
 
   const options = generateRegistrationOptionsFetcher.data?.options ?? null
 
+  // Tracks the challenge already handed to the authenticator so re-renders
+  // (fetcher state changes, revalidation) don't re-run the ceremony.
+  const startedOptionsRef = useRef<typeof options>(null)
+
   // Once the server returns the challenge, run the authenticator ceremony and
   // POST the attestation for verification (which persists the Passkey row).
   useEffect(() => {
     if (options === null) {
       return
     }
+
+    if (startedOptionsRef.current === options) {
+      return
+    }
+    startedOptionsRef.current = options
 
     const register = async () => {
       try {
