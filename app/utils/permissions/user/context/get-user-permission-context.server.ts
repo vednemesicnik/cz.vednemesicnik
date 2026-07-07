@@ -3,7 +3,7 @@ import type {
   UserPermissionAction,
   UserPermissionEntity,
 } from '@generated/prisma/enums'
-import { requireAuthentication } from '~/utils/auth.server'
+import { requireSession } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { getUserRights } from '~/utils/permissions/core/get-user-rights'
 
@@ -16,7 +16,7 @@ export async function getUserPermissionContext(
   request: Request,
   options: GetUserPermissionContextOptions,
 ) {
-  const { sessionId } = await requireAuthentication(request)
+  const { sessionId } = await requireSession(request)
 
   const session = await prisma.session.findUniqueOrThrow({
     select: {

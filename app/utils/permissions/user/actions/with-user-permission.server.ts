@@ -4,7 +4,7 @@ import type {
   UserPermissionAction,
   UserPermissionEntity,
 } from '@generated/prisma/enums'
-import { requireAuthentication } from '~/utils/auth.server'
+import { requireSession } from '~/utils/auth.server'
 
 import {
   getUserPermissionContext,
@@ -26,7 +26,7 @@ export async function withUserPermission<T>(
   request: Request,
   options: Options<T>,
 ): Promise<T> {
-  await requireAuthentication(request)
+  await requireSession(request)
 
   const context = await getUserPermissionContext(request, {
     actions: [options.action],

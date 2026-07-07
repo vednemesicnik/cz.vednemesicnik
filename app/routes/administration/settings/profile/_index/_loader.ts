@@ -7,8 +7,8 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { sessionId } = await requireAuthentication(request)
+export const loader = async ({ request, url }: LoaderFunctionArgs) => {
+  const { sessionId } = await requireAuthentication({ request, url })
 
   const session = await prisma.session.findUniqueOrThrow({
     select: {

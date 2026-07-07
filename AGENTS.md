@@ -4,7 +4,7 @@ Agent guidance for working with code in this repository.
 
 ## Project Overview
 
-This is a student magazine publishing platform built with React Router v7, Prisma ORM, and SQLite. The application serves as a content management system for publishing articles, podcast episodes, and archived magazine issues (PDFs). It features role-based access control for both users and authors with a complex permission system tied to content lifecycle states.
+This is a student magazine publishing platform built with React Router v8, Prisma ORM, and SQLite. The application serves as a content management system for publishing articles, podcast episodes, and archived magazine issues (PDFs). It features role-based access control for both users and authors with a complex permission system tied to content lifecycle states.
 
 ## Code Editing Workflow
 
@@ -71,7 +71,7 @@ pnpm docker:compose:down           # Stop Docker containers
 
 ### Routing Structure
 
-React Router v7 file-based routing with nested layouts:
+React Router v8 file-based routing with nested layouts:
 
 - Public routes: Home, Articles, Editorial Board, Organization, Support, Archive, Podcasts
 - Administration routes: Nested under `/administration` with authentication required

@@ -7,8 +7,8 @@ import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  await requireAuthentication(request)
+export const action = async ({ request, url }: ActionFunctionArgs) => {
+  await requireAuthentication({ request, url })
 
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)

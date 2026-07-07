@@ -79,6 +79,56 @@
   }
 }
 
+.error {
+  @layer route {
+    margin-block-start: 16px;
+    margin-block-end: 0;
+    padding: 12px;
+    border-radius: 8px;
+    background-color: var(--admin-bg-danger, rgba(220, 38, 38, 0.1));
+    color: var(--admin-text-danger, #dc2626);
+    font-size: var(--font-size-sm);
+    text-align: center;
+  }
+}
+
+.googleForm {
+  @layer route {
+    display: grid;
+    margin-block-start: 24px;
+  }
+}
+
+/* Secondary outlined button — visually distinct from the primary magic-link
+   link button below it. */
+.googleButton {
+  @layer route {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding-block: 12px;
+    padding-inline: 24px;
+    border: 2px solid var(--admin-border-primary, var(--violet));
+    border-radius: 8px;
+    background-color: var(--admin-bg-primary);
+    color: var(--admin-text-primary);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover:not(:focus-visible) {
+      background-color: var(--admin-bg-secondary, rgba(0, 0, 0, 0.03));
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
+
 .footer {
   @layer route {
     margin-block-start: 24px;

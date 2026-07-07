@@ -9,10 +9,13 @@ import { getUserPermissionContext } from '~/utils/permissions/user/context/get-u
 
 import type { Route } from './+types/route'
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const [csrfToken, csrfCookie] = await commitCSRF(request)
 
-  const { isAuthenticated, sessionId } = await requireAuthentication(request)
+  const { isAuthenticated, sessionId } = await requireAuthentication({
+    request,
+    url,
+  })
 
   let administrationPanelUser: AdministrationPanelUser = {
     email: undefined,

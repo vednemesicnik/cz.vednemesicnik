@@ -2,6 +2,7 @@ import { redirect } from 'react-router'
 
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { createSession } from '~/utils/session.server'
 
 /**
@@ -23,23 +24,37 @@ export const findExistingUserByEmail = async (email: string) => {
 
 /**
  * Completes a sign-in for the given user: creates a session, sets the auth
- * cookie and redirects to the administration. Shared by the passwordless
+ * cookie and redirects into the administration. Shared by the passwordless
  * sign-in methods (magic link, OAuth).
+ *
+ * `redirectTo` (optional) lets a flow return the user to the page they were
+ * bounced from; it is always run through `safeRedirect`, so an untrusted value
+ * (e.g. carried across the OAuth round-trip) can only point back into this app.
+ *
+ * `headers` (optional) are merged into the redirect response — used by OAuth to
+ * also clear its transient `vdm_oauth` cookie in the same response.
  *
  * Always throws: a redirect on success, or a DB error from `createSession`
  * (which never returns normally on failure). Callers `await` it as the final
  * step; nothing after the call runs.
  */
-export const signInUser = async (request: Request, userId: string) => {
+export const signInUser = async (
+  request: Request,
+  userId: string,
+  redirectTo?: string,
+  headers?: Headers,
+) => {
   const session = await createSession(userId)
 
-  throw redirect('/administration', {
-    headers: {
-      'Set-Cookie': await setSessionAuthCookieSession(
-        request,
-        session.id,
-        session.expirationDate,
-      ),
-    },
-  })
+  const responseHeaders = headers ?? new Headers()
+  responseHeaders.append(
+    'Set-Cookie',
+    await setSessionAuthCookieSession(
+      request,
+      session.id,
+      session.expirationDate,
+    ),
+  )
+
+  throw redirect(safeRedirect(redirectTo), { headers: responseHeaders })
 }
