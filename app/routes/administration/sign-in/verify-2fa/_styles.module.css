@@ -71,5 +71,11 @@
     &:hover {
       color: var(--admin-text-primary);
     }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--admin-focus-shadow);
+      border-radius: 4px;
+    }
   }
 }

@@ -7,7 +7,10 @@ export const schema = z
   .object({
     backupCode: z
       .string()
-      .regex(/^[a-z0-9]{4}-?[a-z0-9]{4}$/i, {
+      // Validate against the canonical form (separators stripped, see
+      // canonicalizeBackupCode) so anything that redeems — with or without the
+      // dash, or transcribed with spaces — also passes validation.
+      .refine((value) => value.replace(/[^a-z0-9]/gi, '').length === 8, {
         message: 'Zadejte platný záložní kód (např. k7m2-9xqp).',
       })
       .optional(),

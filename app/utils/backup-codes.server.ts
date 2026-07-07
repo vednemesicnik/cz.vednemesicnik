@@ -39,12 +39,15 @@ export const redeemBackupCode = async (userId: string, input: string) => {
       return false
     }
 
-    await prisma.backupCode.update({
+    // Conditional update guards against a race: only the request that flips
+    // usedAt from null wins, so a code can never be redeemed twice even under
+    // concurrent sign-in attempts.
+    const result = await prisma.backupCode.updateMany({
       data: { usedAt: new Date() },
-      where: { id: codes[index].id },
+      where: { id: codes[index].id, usedAt: null },
     })
 
-    return true
+    return result.count === 1
   } catch (error) {
     return throwDbError(error, 'Unable to redeem the backup code.')
   }
