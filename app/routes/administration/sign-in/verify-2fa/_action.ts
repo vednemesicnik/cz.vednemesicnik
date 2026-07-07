@@ -108,6 +108,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   }
 
+  // Enrollment must still exist for either factor. If the 2fa row was removed
+  // between steps, restart from the password step regardless of which code was
+  // entered — this also stops a backup code from creating a session after 2FA
+  // was disabled.
+  const twoFactor = await getUserTwoFactor(userId)
+
+  if (twoFactor === null) {
+    throw await redirectToPassword()
+  }
+
   // Backup-code branch: match the entered code against the user's unused codes.
   if (submission.value.backupCode !== undefined) {
     const redeemed = await redeemBackupCode(userId, submission.value.backupCode)
@@ -124,13 +134,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { code } = submission.value
 
   if (code === undefined) {
-    throw await redirectToPassword()
-  }
-
-  const twoFactor = await getUserTwoFactor(userId)
-
-  // Enrollment was removed between steps — drop the pending cookie and restart.
-  if (twoFactor === null) {
     throw await redirectToPassword()
   }
 

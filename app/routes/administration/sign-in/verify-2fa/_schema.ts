@@ -21,10 +21,15 @@ export const schema = z
   })
   .superRefine((value, ctx) => {
     if (value.code === undefined && value.backupCode === undefined) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Ověřovací kód musí být vyplněn.',
-        path: ['code'],
-      })
+      // Only one field is rendered at a time, so attach the required error to
+      // both — whichever input is visible then shows it (the hidden one's copy
+      // is simply not rendered).
+      for (const path of ['code', 'backupCode'] as const) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Ověřovací kód musí být vyplněn.',
+          path: [path],
+        })
+      }
     }
   })

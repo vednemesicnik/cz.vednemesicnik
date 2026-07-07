@@ -34,7 +34,9 @@ export const BackupCodesPanel = ({ codes }: Props) => {
     anchor.href = url
     anchor.click()
 
-    URL.revokeObjectURL(url)
+    // Defer revocation so the browser has started the download before the object
+    // URL is released; revoking synchronously can cancel it in some browsers.
+    setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 
   return (
