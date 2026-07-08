@@ -8,6 +8,7 @@ export const FORM_CONFIG = {
       archive: 'archive',
       delete: 'delete',
       publish: 'publish',
+      regenerateBackupCodes: 'regenerate-backup-codes',
       restore: 'restore',
       retract: 'retract',
       review: 'review',

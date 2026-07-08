@@ -55,3 +55,27 @@
     width: 100%;
   }
 }
+
+.toggle {
+  @layer route {
+    justify-self: center;
+    margin-block-start: 16px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--admin-text-secondary);
+    font-size: var(--font-size-sm);
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--admin-text-primary);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--admin-focus-shadow);
+      border-radius: 4px;
+    }
+  }
+}

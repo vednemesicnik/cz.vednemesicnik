@@ -2,6 +2,7 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { type ActionFunctionArgs, data, redirect } from 'react-router'
 
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
+import { redeemBackupCode } from '~/utils/backup-codes.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import {
   deletePendingTwoFactorCookieSession,
@@ -55,29 +56,33 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   }
 
-  const twoFactor = await getUserTwoFactor(userId)
+  // Second factor verified — create the session and clear the pending cookie.
+  // 303 See Other so the browser issues a GET after this POST, matching the
+  // other redirects in this flow. Shared by the TOTP and backup-code branches.
+  const succeed = async (): Promise<never> => {
+    const session = await createSession(userId)
 
-  // Enrollment was removed between steps — drop the pending cookie and restart.
-  if (twoFactor === null) {
-    throw await redirectToPassword()
+    const headers = new Headers()
+    headers.append(
+      'Set-Cookie',
+      await setSessionAuthCookieSession(
+        request,
+        session.id,
+        session.expirationDate,
+      ),
+    )
+    headers.append(
+      'Set-Cookie',
+      await deletePendingTwoFactorCookieSession(cookieSession),
+    )
+
+    throw redirect('/administration', { headers, status: 303 })
   }
 
-  const result = await verifyTOTP({
-    // The OTP columns are nullable on the shared Verification model (magic link
-    // leaves them unset); a 2fa row always has them, so coalesce null → undefined
-    // to satisfy verifyTOTP, which falls back to its defaults.
-    algorithm: twoFactor.algorithm ?? undefined,
-    charSet: twoFactor.charSet ?? undefined,
-    digits: twoFactor.digits ?? undefined,
-    otp: submission.value.code,
-    period: twoFactor.period ?? undefined,
-    secret: twoFactor.secret,
-  })
-
-  if (result === null) {
-    // Count the failed guess; once the cap is hit, invalidate the pending
-    // cookie so the user must re-enter their password (bounds brute-forcing the
-    // 6-digit code within the cookie lifetime).
+  // Count the failed guess; once the cap is hit, invalidate the pending cookie
+  // so the user must re-enter their password. Covers both TOTP and backup-code
+  // attempts, bounding brute-forcing within the cookie lifetime.
+  const fail = async (field: 'backupCode' | 'code', message: string) => {
     const attempts = getPendingTwoFactorAttempts(cookieSession) + 1
 
     if (attempts >= MAX_TWO_FACTOR_ATTEMPTS) {
@@ -87,9 +92,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return data(
       {
         submissionResult: submission.reply({
-          fieldErrors: {
-            code: ['Kód je nesprávný nebo jeho platnost vypršela.'],
-          },
+          fieldErrors: { [field]: [message] },
         }),
       },
       {
@@ -105,24 +108,50 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   }
 
-  // Second factor verified — now create the session and clear the pending cookie.
-  const session = await createSession(userId)
+  // Enrollment must still exist for either factor. If the 2fa row was removed
+  // between steps, restart from the password step regardless of which code was
+  // entered — this also stops a backup code from creating a session after 2FA
+  // was disabled.
+  const twoFactor = await getUserTwoFactor(userId)
 
-  const headers = new Headers()
-  headers.append(
-    'Set-Cookie',
-    await setSessionAuthCookieSession(
-      request,
-      session.id,
-      session.expirationDate,
-    ),
-  )
-  headers.append(
-    'Set-Cookie',
-    await deletePendingTwoFactorCookieSession(cookieSession),
-  )
+  if (twoFactor === null) {
+    throw await redirectToPassword()
+  }
 
-  // 303 See Other so the browser issues a GET for the destination after this
-  // POST, matching the other redirects in this flow.
-  throw redirect('/administration', { headers, status: 303 })
+  // Backup-code branch: match the entered code against the user's unused codes.
+  if (submission.value.backupCode !== undefined) {
+    const redeemed = await redeemBackupCode(userId, submission.value.backupCode)
+
+    if (!redeemed) {
+      return fail('backupCode', 'Záložní kód je neplatný nebo již byl použit.')
+    }
+
+    return succeed()
+  }
+
+  // The schema guarantees one field is present, so a missing backup code means a
+  // TOTP was submitted.
+  const { code } = submission.value
+
+  if (code === undefined) {
+    throw await redirectToPassword()
+  }
+
+  const result = await verifyTOTP({
+    // The OTP columns are nullable on the shared Verification model (magic link
+    // leaves them unset); a 2fa row always has them, so coalesce null → undefined
+    // to satisfy verifyTOTP, which falls back to its defaults.
+    algorithm: twoFactor.algorithm ?? undefined,
+    charSet: twoFactor.charSet ?? undefined,
+    digits: twoFactor.digits ?? undefined,
+    otp: code,
+    period: twoFactor.period ?? undefined,
+    secret: twoFactor.secret,
+  })
+
+  if (result === null) {
+    return fail('code', 'Kód je nesprávný nebo jeho platnost vypršela.')
+  }
+
+  return succeed()
 }

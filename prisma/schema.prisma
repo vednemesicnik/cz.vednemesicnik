@@ -22,6 +22,7 @@ model User {
   sessions    Session[]
   passkeys    Passkey[]
   connections Connection[]
+  backupCodes BackupCode[]
   author      Author       @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   authorId    String       @unique
 }
@@ -158,6 +159,21 @@ model Verification {
   updatedAt DateTime  @updatedAt
 
   @@unique([target, type])
+}
+
+// Single-use backup (recovery) codes: a fallback second factor for the
+// break-glass password + TOTP flow. One row per code, hashed at rest (bcrypt,
+// like Password.hash); redemption sets usedAt so a code works only once.
+model BackupCode {
+  id        String    @id @default(cuid())
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    String
+
+  // non-unique foreign key
+  @@index([userId])
 }
 
 model Author {

@@ -1,3 +1,4 @@
+import { buildBackupCodeReplacement } from '~/utils/backup-codes.server'
 import { prisma } from '~/utils/db.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
@@ -37,40 +38,49 @@ export const getUserTwoFactor = async (userId: string) => {
   }
 }
 
-export const upsertUserTwoFactor = async (
+// Enable 2FA and issue the initial backup codes in one transaction, so a user
+// can never end up enrolled without codes (or vice versa) on a transient
+// failure. Returns the plaintext codes for a single display.
+export const enableUserTwoFactor = async (
   userId: string,
   config: TwoFactorConfig,
 ) => {
+  const { codes, operations } = buildBackupCodeReplacement(userId)
+
   try {
-    await prisma.verification.upsert({
-      create: {
-        target: userId,
-        type: TWO_FACTOR_VERIFICATION_TYPE,
-        ...config,
-      },
-      update: { ...config },
-      where: {
-        target_type: {
+    await prisma.$transaction([
+      prisma.verification.upsert({
+        create: {
           target: userId,
           type: TWO_FACTOR_VERIFICATION_TYPE,
+          ...config,
         },
-      },
-    })
+        update: { ...config },
+        where: {
+          target_type: { target: userId, type: TWO_FACTOR_VERIFICATION_TYPE },
+        },
+      }),
+      ...operations,
+    ])
   } catch (error) {
-    throwDbError(error, 'Unable to store the two-factor verification.')
+    throwDbError(error, 'Unable to enable the two-factor verification.')
   }
+
+  return codes
 }
 
-export const deleteUserTwoFactor = async (userId: string) => {
+// Disabling 2FA drops both the enrollment and its backup codes in one
+// transaction, so the two can't fall out of sync on a transient failure.
+// deleteMany keeps it idempotent even if nothing is enrolled.
+export const disableUserTwoFactor = async (userId: string) => {
   try {
-    // deleteMany so disabling is idempotent even if nothing is enrolled.
-    await prisma.verification.deleteMany({
-      where: {
-        target: userId,
-        type: TWO_FACTOR_VERIFICATION_TYPE,
-      },
-    })
+    await prisma.$transaction([
+      prisma.verification.deleteMany({
+        where: { target: userId, type: TWO_FACTOR_VERIFICATION_TYPE },
+      }),
+      prisma.backupCode.deleteMany({ where: { userId } }),
+    ])
   } catch (error) {
-    throwDbError(error, 'Unable to delete the two-factor verification.')
+    throwDbError(error, 'Unable to disable the two-factor verification.')
   }
 }
