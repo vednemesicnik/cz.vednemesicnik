@@ -15,6 +15,7 @@ import type { Route } from './+types/route'
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
+export { middleware } from './_middleware'
 
 export default function RouteComponent({ actionData }: Route.ComponentProps) {
   const isHydrated = useHydrated()

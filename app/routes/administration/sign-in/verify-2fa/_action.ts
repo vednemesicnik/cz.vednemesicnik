@@ -1,8 +1,9 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { type ActionFunctionArgs, data, redirect } from 'react-router'
+import { data, redirect } from 'react-router'
 
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { redeemBackupCode } from '~/utils/backup-codes.server'
+import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import {
   deletePendingTwoFactorCookieSession,
@@ -12,13 +13,15 @@ import {
   MAX_TWO_FACTOR_ATTEMPTS,
   setPendingTwoFactorCookieSession,
 } from '~/utils/pending-two-factor.server'
+import { rateLimitContext } from '~/utils/rate-limit.server'
 import { createSession } from '~/utils/session.server'
 import { verifyTOTP } from '~/utils/totp.server'
 import { getUserTwoFactor } from '~/utils/two-factor.server'
 
 import { schema } from './_schema'
+import type { Route } from './+types/route'
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, context }: Route.ActionArgs) => {
   const formData = await request.formData()
 
   checkHoneypot(formData)
@@ -45,6 +48,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // No pending sign-in — restart from the password step.
   if (userId === undefined) {
     throw await redirectToPassword()
+  }
+
+  // Rate limited by the middleware (see _middleware.ts): surface an inline error
+  // before verifying the code, bounding TOTP / backup-code brute-forcing and the
+  // bcrypt cost of failed backup-code attempts per IP. Only relevant on the
+  // enabled break-glass path, so it runs after the gate / pending-session guards.
+  const limited = context.get(rateLimitContext)
+  if (limited) {
+    const submission = await parseWithZod(formData, { async: true, schema })
+    return data(
+      {
+        submissionResult: submission.reply({
+          formErrors: [
+            `Příliš mnoho pokusů. Zkuste to prosím ${formatRetryAfter(limited.retryAfter)}.`,
+          ],
+        }),
+      },
+      { status: 429 },
+    )
   }
 
   const submission = await parseWithZod(formData, { async: true, schema })
