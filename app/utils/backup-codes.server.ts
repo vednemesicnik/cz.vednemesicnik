@@ -56,23 +56,36 @@ export const matchBackupCodeHash = (input: string, hashes: string[]) => {
   return hashes.findIndex((hash) => bcrypt.compareSync(canonical, hash))
 }
 
-// Replace the user's entire set with a fresh one, returning the plaintext codes
-// for a single display. Invalidates all previous codes (used and unused).
-export const regenerateBackupCodes = async (userId: string) => {
+// Generate a fresh set and return the plaintext codes together with the Prisma
+// operations that replace the user's stored codes. The operations are meant to
+// be spread into a `$transaction`, so replacement can be composed atomically
+// with other writes (e.g. enabling 2FA in one transaction).
+export const buildBackupCodeReplacement = (userId: string) => {
   const set = createBackupCodeSet()
 
-  try {
-    await prisma.$transaction([
+  return {
+    codes: set.map(({ code }) => code),
+    operations: [
       prisma.backupCode.deleteMany({ where: { userId } }),
       prisma.backupCode.createMany({
         data: set.map(({ hash }) => ({ codeHash: hash, userId })),
       }),
-    ])
+    ],
+  }
+}
+
+// Replace the user's entire set with a fresh one, returning the plaintext codes
+// for a single display. Invalidates all previous codes (used and unused).
+export const regenerateBackupCodes = async (userId: string) => {
+  const { codes, operations } = buildBackupCodeReplacement(userId)
+
+  try {
+    await prisma.$transaction(operations)
   } catch (error) {
     throwDbError(error, 'Unable to regenerate the backup codes.')
   }
 
-  return set.map(({ code }) => code)
+  return codes
 }
 
 // Try to redeem an entered code against the user's unused codes. On a match the

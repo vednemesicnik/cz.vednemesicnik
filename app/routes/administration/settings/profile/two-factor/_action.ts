@@ -10,8 +10,8 @@ import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-
 import { verifyTOTP } from '~/utils/totp.server'
 import {
   disableUserTwoFactor,
+  enableUserTwoFactor,
   getUserTwoFactor,
-  upsertUserTwoFactor,
 } from '~/utils/two-factor.server'
 
 import { schema } from './_schema'
@@ -110,10 +110,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   }
 
-  await upsertUserTwoFactor(context.userId, config)
-
-  // Issue the initial backup codes so the user can save a fallback right away.
-  const backupCodes = await regenerateBackupCodes(context.userId)
+  // Enable 2FA and issue the initial backup codes atomically, so enrollment and
+  // codes can't fall out of sync on a transient failure.
+  const backupCodes = await enableUserTwoFactor(context.userId, config)
 
   // Stay on the page (the loader revalidates to the enrolled view) and surface
   // the codes once, clearing the now-confirmed enrollment cookie.
