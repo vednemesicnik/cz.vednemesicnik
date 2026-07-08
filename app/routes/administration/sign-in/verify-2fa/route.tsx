@@ -78,6 +78,7 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
 
         {isHydrated && (
           <button
+            aria-pressed={useBackupCode}
             className={styles.toggle}
             onClick={() => setUseBackupCode((value) => !value)}
             type="button"

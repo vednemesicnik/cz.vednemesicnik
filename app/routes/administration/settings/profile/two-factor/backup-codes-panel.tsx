@@ -36,7 +36,8 @@ export const BackupCodesPanel = ({ codes }: Props) => {
         lze při přihlášení použít místo kódu z aplikace, a to jen jednou.
       </p>
 
-      <ul className={styles.codes}>
+      {/* biome-ignore lint/a11y/noRedundantRoles: WebKit drops list semantics when list-style is none; the explicit role restores them for VoiceOver. */}
+      <ul className={styles.codes} role="list">
         {codes.map((code) => (
           <li className={styles.code} key={code}>
             {code}
