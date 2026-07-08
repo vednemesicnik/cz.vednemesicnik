@@ -8,6 +8,7 @@ import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { action } from './_action'
+export { headers } from './_headers'
 export { loader } from './_loader'
 export { meta } from './_meta'
 

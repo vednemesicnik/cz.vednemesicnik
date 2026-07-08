@@ -35,6 +35,28 @@ export default function handleRequest(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _loadContext: RouterContextProvider,
 ) {
+  // Baseline security headers, set once so both the bot and browser paths
+  // inherit them.
+  responseHeaders.set('X-Content-Type-Options', 'nosniff')
+  responseHeaders.set('X-Frame-Options', 'DENY')
+  // frame-ancestors covers browsers that ignore X-Frame-Options; the CSP
+  // sub-issue of #126 will extend this header value with a full policy later.
+  responseHeaders.set('Content-Security-Policy', "frame-ancestors 'none'")
+
+  // Route loaders may set a stricter policy (magic-link verify sends
+  // `no-referrer`) — only fill in the default when none is set.
+  if (!responseHeaders.has('Referrer-Policy')) {
+    responseHeaders.set('Referrer-Policy', 'same-origin')
+  }
+
+  // HSTS is production-only because local dev runs on plain HTTP.
+  if (process.env.NODE_ENV === 'production') {
+    responseHeaders.set(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains',
+    )
+  }
+
   return isbot(request.headers.get('user-agent') || '')
     ? handleBotRequest(
         request,
