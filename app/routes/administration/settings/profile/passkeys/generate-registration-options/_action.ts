@@ -33,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     authenticatorSelection: {
       authenticatorAttachment: 'platform',
       residentKey: 'preferred',
-      userVerification: 'preferred',
+      userVerification: 'required',
     },
     // Block registering an authenticator that is already enrolled.
     excludeCredentials: session.user.passkeys.map((passkey) => ({

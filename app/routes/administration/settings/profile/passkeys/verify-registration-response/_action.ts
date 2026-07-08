@@ -24,6 +24,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     expectedChallenge: biometricChallenge ?? '',
     expectedOrigin: process.env.RELYING_PARTY_ORIGIN ?? '',
     expectedRPID: process.env.RELYING_PARTY_ID ?? '',
+    requireUserVerification: true,
     response: body,
   })
 
