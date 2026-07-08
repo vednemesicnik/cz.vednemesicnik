@@ -146,8 +146,8 @@ describe('backup codes persistence', () => {
   test('regeneration issues a full set of unused codes', async () => {
     const codes = await regenerateBackupCodes(USER)
 
-    expect(codes).toHaveLength(10)
-    expect(await countUnusedBackupCodes(USER)).toBe(10)
+    expect(codes).toHaveLength(BACKUP_CODE_COUNT)
+    expect(await countUnusedBackupCodes(USER)).toBe(BACKUP_CODE_COUNT)
   })
 
   test('a valid code redeems once and is then single-use', async () => {
@@ -158,14 +158,14 @@ describe('backup codes persistence', () => {
     expect(await redeemBackupCode(USER, codes[0])).toBe(false)
     // A different code still works; the count drops accordingly.
     expect(await redeemBackupCode(USER, codes[1])).toBe(true)
-    expect(await countUnusedBackupCodes(USER)).toBe(8)
+    expect(await countUnusedBackupCodes(USER)).toBe(BACKUP_CODE_COUNT - 2)
   })
 
   test('an unknown code does not redeem', async () => {
     await regenerateBackupCodes(USER)
 
     expect(await redeemBackupCode(USER, 'zzzz-zzzz')).toBe(false)
-    expect(await countUnusedBackupCodes(USER)).toBe(10)
+    expect(await countUnusedBackupCodes(USER)).toBe(BACKUP_CODE_COUNT)
   })
 
   test('regeneration invalidates the previous set', async () => {
@@ -174,6 +174,6 @@ describe('backup codes persistence', () => {
 
     expect(await redeemBackupCode(USER, first[0])).toBe(false)
     expect(await redeemBackupCode(USER, second[0])).toBe(true)
-    expect(await countUnusedBackupCodes(USER)).toBe(9)
+    expect(await countUnusedBackupCodes(USER)).toBe(BACKUP_CODE_COUNT - 1)
   })
 })
