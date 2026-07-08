@@ -15,6 +15,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // resident credentials, so the request is not scoped to a specific user.
     allowCredentials: [],
     rpID: process.env.RELYING_PARTY_ID ?? '',
+    userVerification: 'required',
   })
 
   return data(
