@@ -19,6 +19,7 @@ import { BackupCodesPanel } from './backup-codes-panel'
 
 export { action } from './_action'
 export { handle } from './_handle'
+export { headers } from './_headers'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
