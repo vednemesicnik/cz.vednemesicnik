@@ -9,7 +9,7 @@ import { throwDbError } from '~/utils/throw-db-error.server'
 export const BACKUP_CODE_COUNT = 10
 
 // bcrypt cost factor, matching Password.hash.
-const BCRYPT_ROUNDS = 10
+const BCRYPT_ROUNDS = 12
 
 // Unambiguous alphabet — no 0/1 and no i/l/o — so codes are easy to read and
 // transcribe from the downloaded file.

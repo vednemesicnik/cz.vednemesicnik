@@ -48,7 +48,7 @@ export const updateUser = async ({
             ? {
                 password: {
                   update: {
-                    hash: bcrypt.hashSync(password, 10),
+                    hash: bcrypt.hashSync(password, 12),
                   },
                 },
               }

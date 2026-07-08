@@ -53,7 +53,7 @@ export const createUser = async (data: Data) => {
           name: data.name,
           password: {
             create: {
-              hash: bcrypt.hashSync(data.password, 10),
+              hash: bcrypt.hashSync(data.password, 12),
             },
           },
           role: {

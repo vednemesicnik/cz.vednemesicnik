@@ -1,6 +1,10 @@
 import bcrypt from 'bcryptjs'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
+// These tests hash full code sets with real bcrypt at production cost (12),
+// which is deliberately slow; give them more headroom than the 5s default.
+vi.setConfig({ testTimeout: 30_000 })
+
 type Row = { id: string; codeHash: string; usedAt: Date | null; userId: string }
 
 // In-memory stand-in for the BackupCode table. The helpers run for real, so
