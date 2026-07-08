@@ -23,6 +23,10 @@ type Data = DataWithNewAuthor | DataWithExistingAuthor
 
 export const createUser = async (data: Data) => {
   try {
+    // Hash outside the transaction: bcrypt is CPU-bound and would otherwise
+    // hold the SQLite transaction open, increasing lock contention.
+    const passwordHash = bcrypt.hashSync(data.password, 12)
+
     const user = await prisma.$transaction(async (prisma) => {
       let authorId: string
 
@@ -53,7 +57,7 @@ export const createUser = async (data: Data) => {
           name: data.name,
           password: {
             create: {
-              hash: bcrypt.hashSync(data.password, 12),
+              hash: passwordHash,
             },
           },
           role: {

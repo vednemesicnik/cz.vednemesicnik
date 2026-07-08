@@ -37,6 +37,11 @@ export const updateUser = async ({
     throwError('Unable to update the user.')
   }
 
+  // Hash outside the transaction: bcrypt is CPU-bound and would otherwise
+  // hold the SQLite transaction open, increasing lock contention.
+  const passwordHash =
+    password !== undefined ? bcrypt.hashSync(password, 12) : undefined
+
   try {
     await prisma.$transaction(async (prisma) => {
       const updatedUser = await prisma.user.update({
@@ -44,11 +49,11 @@ export const updateUser = async ({
           email,
           name,
           username: email,
-          ...(password !== undefined
+          ...(passwordHash !== undefined
             ? {
                 password: {
                   update: {
-                    hash: bcrypt.hashSync(password, 12),
+                    hash: passwordHash,
                   },
                 },
               }
