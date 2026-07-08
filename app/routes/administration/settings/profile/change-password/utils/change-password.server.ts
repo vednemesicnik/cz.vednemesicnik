@@ -7,7 +7,7 @@ export const changePassword = async (userId: string, newPassword: string) => {
   try {
     await prisma.password.update({
       data: {
-        hash: bcrypt.hashSync(newPassword, 10),
+        hash: bcrypt.hashSync(newPassword, 12),
       },
       where: {
         userId,
