@@ -1,17 +1,20 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import bcrypt from 'bcryptjs'
-import { type ActionFunctionArgs, data, redirect } from 'react-router'
+import { data, redirect } from 'react-router'
 
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { setPendingTwoFactorCookieSession } from '~/utils/pending-two-factor.server'
+import { rateLimitContext } from '~/utils/rate-limit.server'
 import { createSession } from '~/utils/session.server'
 import { getUserTwoFactor } from '~/utils/two-factor.server'
 
 import { schema } from './_schema'
+import type { Route } from './+types/route'
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, context }: Route.ActionArgs) => {
   const formData = await request.formData()
 
   checkHoneypot(formData)
@@ -23,6 +26,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // 303 See Other: turn this POST rejection into a GET redirect so the client
     // cannot retry with POST semantics.
     throw redirect('/administration/sign-in', { status: 303 })
+  }
+
+  // Rate limited by the middleware (see _middleware.ts): surface an inline error
+  // before verifying the password, so brute-forcing is bounded per IP. Only
+  // relevant on the enabled break-glass path, so it runs after the gate above.
+  const limited = context.get(rateLimitContext)
+  if (limited) {
+    const submission = await parseWithZod(formData, { async: true, schema })
+    return data(
+      {
+        authenticationOptions: null,
+        isAuthenticated: false,
+        registrationOptions: null,
+        submissionResult: submission.reply({
+          formErrors: [
+            `Příliš mnoho pokusů. Zkuste to prosím ${formatRetryAfter(limited.retryAfter)}.`,
+          ],
+          hideFields: ['password'],
+        }),
+      },
+      { status: 429 },
+    )
   }
 
   const submission = await parseWithZod(formData, {
