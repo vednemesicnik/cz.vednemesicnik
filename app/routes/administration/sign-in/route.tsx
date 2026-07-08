@@ -43,7 +43,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </button>
         </form>
 
-        <PasskeyForm />
+        <PasskeyForm redirectTo={loaderData.redirectTo} />
 
         <Link
           className={styles.linkButton}

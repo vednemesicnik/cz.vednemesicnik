@@ -5,6 +5,7 @@ import {
   deleteBiometricCookieSession,
   getBiometricChallenge,
   getBiometricCookieSession,
+  getBiometricRedirectTo,
 } from '~/utils/biometric.server'
 import { prisma } from '~/utils/db.server'
 import { signInUser } from '~/utils/sign-in.server'
@@ -14,6 +15,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const biometricCookieSession = await getBiometricCookieSession(request)
   const biometricChallenge = getBiometricChallenge(biometricCookieSession)
+  const redirectTo = getBiometricRedirectTo(biometricCookieSession)
 
   const passkey = await prisma.passkey.findUnique({
     select: {
@@ -62,5 +64,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     'Set-Cookie': await deleteBiometricCookieSession(biometricCookieSession),
   })
 
-  return await signInUser(request, passkey.userId, undefined, headers)
+  return await signInUser(request, passkey.userId, redirectTo, headers)
 }

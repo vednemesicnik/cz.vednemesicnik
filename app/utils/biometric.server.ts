@@ -5,9 +5,11 @@ import {
 } from 'react-router'
 
 const BIOMETRIC_CHALLENGE_KEY = 'biometricChallenge'
+const REDIRECT_TO_KEY = 'redirectTo'
 
 type BiometricCookieData = {
   [BIOMETRIC_CHALLENGE_KEY]: string
+  [REDIRECT_TO_KEY]: string
 }
 
 type BiometricCookieFlashData = {
@@ -39,10 +41,13 @@ export const getBiometricCookieSession = async (request: Request) =>
 export const setBiometricCookieSession = async (
   request: Request,
   biometricChallenge: string,
+  // Only the sign-in ceremony carries a return path; registration omits it.
+  redirectTo = '',
 ) => {
   const cookieSession = await getBiometricCookieSession(request)
 
   cookieSession.set(BIOMETRIC_CHALLENGE_KEY, biometricChallenge)
+  cookieSession.set(REDIRECT_TO_KEY, redirectTo)
 
   return cookieSessionStorage.commitSession(cookieSession)
 }
@@ -53,3 +58,6 @@ export const deleteBiometricCookieSession = async (
 
 export const getBiometricChallenge = (cookieSession: BiometricCookieSession) =>
   cookieSession.get(BIOMETRIC_CHALLENGE_KEY)
+
+export const getBiometricRedirectTo = (cookieSession: BiometricCookieSession) =>
+  cookieSession.get(REDIRECT_TO_KEY)

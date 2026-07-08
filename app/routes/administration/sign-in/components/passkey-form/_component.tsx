@@ -11,7 +11,11 @@ import styles from '../../_styles.module.css'
 const ERROR_MESSAGE =
   'Přihlášení pomocí passkey se nezdařilo. Zkuste to prosím znovu.'
 
-export const PasskeyForm = () => {
+type Props = {
+  redirectTo: string
+}
+
+export const PasskeyForm = ({ redirectTo }: Props) => {
   const { isBiometricSupported } = useBiometric()
 
   const generateAuthenticationOptionsFetcher =
@@ -97,6 +101,7 @@ export const PasskeyForm = () => {
         method={'post'}
         onSubmit={() => setError(null)}
       >
+        <input name={'redirectTo'} type={'hidden'} value={redirectTo} />
         <button
           className={styles.googleButton}
           disabled={isPending}
