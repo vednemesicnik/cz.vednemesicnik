@@ -42,6 +42,12 @@ jobs:
             echo "dev is up to date with main"
             exit 0
           fi
+          # Surface a missing/expired token as a warning rather than a red run
+          # on main — the git checks above don't need it, only the gh calls do.
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::BACKMERGE_TOKEN is not set; skipping back-merge PR"
+            exit 0
+          fi
           open=$(gh pr list --base dev --head main --state open --json number --jq length)
           if [ "$open" -gt 0 ]; then
             echo "back-merge PR already open"
