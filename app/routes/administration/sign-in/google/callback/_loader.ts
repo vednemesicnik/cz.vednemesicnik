@@ -33,7 +33,17 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // Preserve the original redirectTo across the error bounce, so retrying sign-in
   // still returns the user to where they started. (It was sanitized on the way
   // in; the sign-in loader re-validates it via safeRedirect.)
-  const failTo = (error: 'oauth' | 'domain' | 'account') => {
+  // Every failure path funnels through here, so record the audit row once in one
+  // place. `email` is only known past the domain check; earlier OAuth-stage
+  // failures (denied consent, bad state/nonce, token exchange) log without it.
+  const failTo = (error: 'oauth' | 'domain' | 'account', email?: string) => {
+    recordAuthEvent({
+      email,
+      event: 'sign_in_failure',
+      method: 'google',
+      request,
+    })
+
     const search = new URLSearchParams({ error })
     if (redirectTo) search.set('redirectTo', redirectTo)
 
@@ -101,13 +111,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     email === undefined ||
     !email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)
   ) {
-    recordAuthEvent({
-      email,
-      event: 'sign_in_failure',
-      method: 'google',
-      request,
-    })
-    throw failTo('domain')
+    throw failTo('domain', email)
   }
 
   try {
@@ -136,13 +140,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     const user = await findExistingUserByEmail(email)
 
     if (user === null) {
-      recordAuthEvent({
-        email,
-        event: 'sign_in_failure',
-        method: 'google',
-        request,
-      })
-      throw failTo('account')
+      throw failTo('account', email)
     }
 
     await prisma.connection.create({
