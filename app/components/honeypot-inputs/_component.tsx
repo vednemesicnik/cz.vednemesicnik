@@ -9,6 +9,7 @@ export const HoneypotInputs = () => {
     <div aria-hidden="true" className={styles.wrap}>
       <label htmlFor={nameFieldName}>Please leave this field blank</label>
       <input
+        // biome-ignore lint/a11y/useValidAutocomplete: intentional non-standard value to defeat browser autofill on the honeypot field
         autoComplete="nope"
         defaultValue=""
         id={nameFieldName}
