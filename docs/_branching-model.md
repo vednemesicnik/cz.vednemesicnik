@@ -52,6 +52,12 @@ workflows, so the required CI checks would sit as "expected" forever and block t
 merge. The token is scoped to this repo with **Contents: read** and **Pull requests:
 read & write**.
 
+> **Do not enable "Automatically delete head branches".** The back-merge PR's head
+> is `main` itself — with auto-delete on, merging it deletes `main`. The repo keeps
+> `delete_branch_on_merge` **off** for this reason; feature branches are removed
+> explicitly via `gh pr merge --delete-branch` instead. The branch-protection ruleset
+> (#143) should also **restrict deletions** on `main` and `dev` as defense-in-depth.
+
 ## Hotfix procedure
 
 1. Branch off `main` (e.g. `fix/123-...`).
