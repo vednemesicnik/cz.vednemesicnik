@@ -36,6 +36,13 @@ Install Git hooks for code quality automation:
 pnpm lefthook:install              # Install Lefthook Git hooks
 ```
 
+### Branching & Pull Requests
+
+`dev` is the default branch; `main` is production and the only deploy source. Branch
+off `dev` in kebab-case with the issue number (e.g. `feat/155-branching-model-dev`) and
+target `dev` in the PR. Releases (`dev → main`) and hotfixes target `main`. See
+`docs/_branching-model.md` for the full flow and merge-method conventions.
+
 ### Database Management
 
 ```bash
@@ -217,6 +224,7 @@ Comprehensive project documentation is in the `docs/` directory:
 - `docs/_author-roles-and-permissions.md` - Author role details
 - `docs/_content-creation-lifecycle.md` - Content states and transitions
 - `docs/_authentication-middleware.md` - Authentication architecture and future middleware migration plan
+- `docs/_branching-model.md` - Branching model, merge methods, hotfix procedure
 - `docs/_deploy-to-fly.md` - Deployment instructions
 - `docs/_manual-database-backup.md` - Database backup procedures
 - `docs/_manual-database-restore.md` - Database restore procedures
