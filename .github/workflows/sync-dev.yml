@@ -1,0 +1,60 @@
+name: Sync dev
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Serialize runs so two pushes in quick succession can't both create a PR.
+concurrency:
+  group: sync-dev
+  cancel-in-progress: false
+
+jobs:
+  back-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Open back-merge PR if dev is behind main
+        env:
+          # PAT, not GITHUB_TOKEN: PRs opened with the default workflow token do
+          # not trigger pull_request workflows, so the required CI checks (#143)
+          # would sit as "expected" forever and block the merge.
+          GH_TOKEN: ${{ secrets.BACKMERGE_TOKEN }}
+        run: |
+          # checkout only populates the triggering ref (main), so origin/dev is
+          # not present locally even when the branch exists on GitHub. Check the
+          # remote directly: if dev doesn't exist yet (e.g. the merge that first
+          # introduces this workflow, before the branch is created) there's
+          # nothing to sync.
+          if ! git ls-remote --exit-code --heads origin dev >/dev/null 2>&1; then
+            echo "dev branch does not exist yet"
+            exit 0
+          fi
+          # Fetch dev explicitly into a tracking ref so the range below resolves.
+          git fetch --no-tags origin +refs/heads/dev:refs/remotes/origin/dev
+          behind=$(git rev-list --count origin/dev..origin/main)
+          if [ "$behind" -eq 0 ]; then
+            echo "dev is up to date with main"
+            exit 0
+          fi
+          # Surface a *missing* token as a warning rather than a red run on main
+          # (the git checks above don't need it, only the gh calls do). A present
+          # but invalid/expired token is left to fail loudly — a red run is the
+          # signal to renew the PAT before dev silently drifts from main.
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::BACKMERGE_TOKEN is not set; skipping back-merge PR"
+            exit 0
+          fi
+          open=$(gh pr list --base dev --head main --state open --json number --jq length)
+          if [ "$open" -gt 0 ]; then
+            echo "back-merge PR already open"
+            exit 0
+          fi
+          gh pr create --base dev --head main \
+            --title "chore: back-merge main into dev" \
+            --body "Automated back-merge to keep \`dev\` in sync with \`main\`."
