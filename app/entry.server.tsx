@@ -17,6 +17,7 @@ import {
   ServerRouter,
 } from 'react-router'
 
+import { cleanupOldAuthEvents } from '~/utils/auth-event.server'
 import { getEnv, initEnv } from '~/utils/env.server'
 
 // Reject/cancel all pending promises after 5 seconds
@@ -24,6 +25,13 @@ export const streamTimeout = 5000
 
 initEnv()
 global.ENV = getEnv()
+
+// Auth-event retention: prune events past the 90-day window. No cron mechanism
+// exists, so run once at startup and once a day thereafter. min_machines_running
+// keeps a process alive, so the interval fires reliably; .unref() lets the
+// process exit without waiting on it. Fire-and-forget.
+cleanupOldAuthEvents()
+setInterval(cleanupOldAuthEvents, 24 * 60 * 60 * 1000).unref()
 
 export default function handleRequest(
   request: Request,

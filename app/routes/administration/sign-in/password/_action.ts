@@ -1,8 +1,8 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import bcrypt from 'bcryptjs'
 import { data, redirect } from 'react-router'
-
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
+import { recordAuthEvent } from '~/utils/auth-event.server'
 import { prisma } from '~/utils/db.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
@@ -88,6 +88,12 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   }
 
   if (user === null) {
+    recordAuthEvent({
+      email,
+      event: 'sign_in_failure',
+      method: 'password',
+      request,
+    })
     return data(
       {
         authenticationOptions: null,
@@ -119,6 +125,13 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   }
 
   const session = await createSession(user.id)
+
+  recordAuthEvent({
+    event: 'sign_in_success',
+    method: 'password',
+    request,
+    userId: user.id,
+  })
 
   throw redirect('/administration', {
     headers: {

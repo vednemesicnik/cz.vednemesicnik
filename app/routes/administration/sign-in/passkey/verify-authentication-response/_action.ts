@@ -1,6 +1,7 @@
 import { verifyAuthenticationResponse } from '@simplewebauthn/server'
 import { type ActionFunctionArgs, data } from 'react-router'
 
+import { recordAuthEvent } from '~/utils/auth-event.server'
 import {
   deleteBiometricCookieSession,
   getBiometricChallenge,
@@ -29,6 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (passkey === null) {
+    recordAuthEvent({ event: 'sign_in_failure', method: 'passkey', request })
     return data({ status: 'fail', verified: false }, { status: 400 })
   }
 
@@ -47,6 +49,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (!verifiedAuthenticationResponse.verified) {
+    recordAuthEvent({
+      event: 'sign_in_failure',
+      method: 'passkey',
+      request,
+      userId: passkey.userId,
+    })
     return data({ status: 'fail', verified: false }, { status: 400 })
   }
 
@@ -65,5 +73,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     'Set-Cookie': await deleteBiometricCookieSession(biometricCookieSession),
   })
 
-  return await signInUser(request, passkey.userId, redirectTo, headers)
+  return await signInUser(
+    request,
+    passkey.userId,
+    'passkey',
+    redirectTo,
+    headers,
+  )
 }

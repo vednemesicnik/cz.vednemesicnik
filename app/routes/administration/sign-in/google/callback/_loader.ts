@@ -1,8 +1,8 @@
 import { ALLOWED_EMAIL_DOMAIN } from '@constants/auth'
 import type { TokenPayload } from 'google-auth-library'
 import { redirect } from 'react-router'
-
 import { requireUnauthenticated } from '~/utils/auth.server'
+import { recordAuthEvent } from '~/utils/auth-event.server'
 import { prisma } from '~/utils/db.server'
 import {
   createGoogleOAuthClient,
@@ -101,6 +101,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     email === undefined ||
     !email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)
   ) {
+    recordAuthEvent({
+      email,
+      event: 'sign_in_failure',
+      method: 'google',
+      request,
+    })
     throw failTo('domain')
   }
 
@@ -120,6 +126,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       return await signInUser(
         request,
         connection.userId,
+        'google',
         redirectTo,
         new Headers({ 'Set-Cookie': destroyCookie }),
       )
@@ -128,7 +135,15 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     // First OAuth sign-in for an existing account → auto-link via verified email.
     const user = await findExistingUserByEmail(email)
 
-    if (user === null) throw failTo('account')
+    if (user === null) {
+      recordAuthEvent({
+        email,
+        event: 'sign_in_failure',
+        method: 'google',
+        request,
+      })
+      throw failTo('account')
+    }
 
     await prisma.connection.create({
       data: {
@@ -141,6 +156,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     return await signInUser(
       request,
       user.id,
+      'google',
       redirectTo,
       new Headers({ 'Set-Cookie': destroyCookie }),
     )

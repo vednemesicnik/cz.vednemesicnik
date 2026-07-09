@@ -1,6 +1,6 @@
 import { redirect } from 'react-router'
-
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
+import { type AuthMethod, recordAuthEvent } from '~/utils/auth-event.server'
 import { prisma } from '~/utils/db.server'
 import { safeRedirect } from '~/utils/safe-redirect'
 import { createSession } from '~/utils/session.server'
@@ -34,6 +34,9 @@ export const findExistingUserByEmail = async (email: string) => {
  * `headers` (optional) are merged into the redirect response — used by OAuth to
  * also clear its transient `vdm_oauth` cookie in the same response.
  *
+ * `method` identifies the sign-in method for the audit log; the successful
+ * event is recorded here once for every caller.
+ *
  * Always throws: a redirect on success, or a DB error from `createSession`
  * (which never returns normally on failure). Callers `await` it as the final
  * step; nothing after the call runs.
@@ -41,10 +44,13 @@ export const findExistingUserByEmail = async (email: string) => {
 export const signInUser = async (
   request: Request,
   userId: string,
+  method: AuthMethod,
   redirectTo?: string,
   headers?: Headers,
 ) => {
   const session = await createSession(userId)
+
+  recordAuthEvent({ event: 'sign_in_success', method, request, userId })
 
   const responseHeaders = headers ?? new Headers()
   responseHeaders.append(
