@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y openssl sqlite3
 # Install pnpm globally, pinned for reproducible builds. Baked into the shared
 # base stage, so the runtime image has pnpm available offline — the entrypoint
 # runs pnpm at startup. Keep the version in sync with the "packageManager" field
-# in package.json (Corepack still reads that in local dev).
+# in package.json (the project's declared pnpm version).
 RUN npm install -g pnpm@11.9.0
 
 # Install all node_modules, including dev dependencies
