@@ -34,11 +34,14 @@ jobs:
       - run: flyctl deploy --remote-only --wait-timeout 5m
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      - name: Smoke test production /health
+      # Probe the Fly origin directly, not the public vednemesicnik.cz domain:
+      # Cloudflare fronts the public domain and blocks CI runner IPs with 403.
+      # The origin confirms the deployed app booted and serves over TLS.
+      - name: Smoke test Fly origin /health
         run: |
           curl --fail --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 5 \
-            https://vednemesicnik.cz/health
+            https://cz-vednemesicnik.fly.dev/health
       - name: Show app status
         if: always()
         run: flyctl status --app cz-vednemesicnik
