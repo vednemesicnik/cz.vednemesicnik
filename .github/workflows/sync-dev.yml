@@ -7,6 +7,11 @@ on:
 permissions:
   contents: read
 
+# Serialize runs so two pushes in quick succession can't both create a PR.
+concurrency:
+  group: sync-dev
+  cancel-in-progress: false
+
 jobs:
   back-merge:
     runs-on: ubuntu-latest
@@ -21,6 +26,12 @@ jobs:
           # would sit as "expected" forever and block the merge.
           GH_TOKEN: ${{ secrets.BACKMERGE_TOKEN }}
         run: |
+          # dev may not exist yet (e.g. the merge that first introduces this
+          # workflow, before the branch is created). Nothing to sync until then.
+          if ! git show-ref --verify --quiet refs/remotes/origin/dev; then
+            echo "dev branch does not exist yet"
+            exit 0
+          fi
           behind=$(git rev-list --count origin/dev..origin/main)
           if [ "$behind" -eq 0 ]; then
             echo "dev is up to date with main"
