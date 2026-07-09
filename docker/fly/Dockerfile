@@ -1,5 +1,5 @@
 # Base node image
-FROM node:24-slim AS base
+FROM node:26-slim AS base
 
 # Set node environment
 ENV NODE_ENV=production
@@ -7,8 +7,11 @@ ENV NODE_ENV=production
 # Install dependencies for database
 RUN apt-get update && apt-get install -y openssl sqlite3
 
-# Enable pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm globally, pinned for reproducible builds. Baked into the shared
+# base stage, so the runtime image has pnpm available offline — the entrypoint
+# runs pnpm at startup. Keep the version in sync with the "packageManager" field
+# in package.json (the project's declared pnpm version).
+RUN npm install -g pnpm@11.9.0
 
 # Install all node_modules, including dev dependencies
 FROM base AS deps
@@ -63,7 +66,7 @@ ADD scripts/database-cli.sh /usr/local/bin/database-cli
 RUN chmod +x /usr/local/bin/database-cli
 
 # Add shortcut for the object-store CLI (S3/Tigris bucket over `fly ssh`). The
-# CLI is a Node 24 TypeScript file run via native type stripping, reusing the
+# CLI is a Node 26 TypeScript file run via native type stripping, reusing the
 # already-bundled @aws-sdk/client-s3 — no extra dependency, no tsx.
 ADD scripts/object-store.sh /usr/local/bin/object-store
 RUN chmod +x /usr/local/bin/object-store

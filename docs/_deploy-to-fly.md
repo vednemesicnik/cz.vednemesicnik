@@ -140,7 +140,7 @@ gated on the driver, not the environment (`tigris` can run locally against s3moc
 ### Managing the Tigris bucket over `fly ssh`
 
 The production image ships an `object-store` CLI for ad-hoc bucket operations — no
-one-off scripts. It is a self-contained TypeScript file run via Node 24 native type
+one-off scripts. It is a self-contained TypeScript file run via Node 26 native type
 stripping, reusing the already-bundled `@aws-sdk/client-s3`; it reads the same
 `AWS_*` / `BUCKET_NAME` secrets the app uses, so no extra setup is needed.
 
