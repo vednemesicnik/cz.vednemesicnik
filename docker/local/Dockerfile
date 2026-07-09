@@ -7,10 +7,13 @@ ENV NODE_ENV=production
 # Install dependencies for database
 RUN apt-get update && apt-get install -y openssl sqlite3
 
-# Enable pnpm via Corepack. Corepack is no longer bundled with Node (unbundled
-# in the v25 line), so install it explicitly; `corepack enable` then pins pnpm to
-# the version in package.json's "packageManager" field.
-RUN npm install -g corepack@latest && corepack enable
+# Enable pnpm via Corepack. Corepack is no longer bundled with Node (unbundled in
+# the v25 line), so install it explicitly. `corepack install` then caches the pnpm
+# version pinned in package.json's "packageManager" field into the image, so the
+# runtime stage has pnpm available offline — the entrypoint runs pnpm at startup.
+WORKDIR /app
+COPY package.json ./
+RUN npm install -g corepack@latest && corepack enable && corepack install
 
 # Install all node_modules, including dev dependencies
 FROM base AS deps
