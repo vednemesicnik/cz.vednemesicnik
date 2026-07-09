@@ -4,7 +4,7 @@
     "actions": {
       "source": {
         "organizeImports": "on",
-        "recommended": true,
+        "preset": "recommended",
         "useSortedAttributes": "on",
         "useSortedKeys": "on"
       }
@@ -53,7 +53,7 @@
       "correctness": {
         "useExhaustiveDependencies": "error"
       },
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useImportType": "error"
       },
