@@ -1,5 +1,5 @@
 # Base node image
-FROM node:24-slim AS base
+FROM node:26-slim AS base
 
 # Set node environment
 ENV NODE_ENV=production
@@ -7,8 +7,10 @@ ENV NODE_ENV=production
 # Install dependencies for database
 RUN apt-get update && apt-get install -y openssl sqlite3
 
-# Enable pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Enable pnpm via Corepack. Corepack is no longer bundled with Node (unbundled
+# in the v25 line), so install it explicitly; `corepack enable` then pins pnpm to
+# the version in package.json's "packageManager" field.
+RUN npm install -g corepack@latest && corepack enable
 
 # Install all node_modules, including dev dependencies
 FROM base AS deps

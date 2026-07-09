@@ -2,7 +2,7 @@
 
 // object-store CLI — manage the S3/Tigris bucket (images/ and pdfs/) directly
 // from `fly ssh`, instead of writing one-off scripts. Baked into the production
-// image as /usr/local/bin/object-store and run via Node 24 native TypeScript
+// image as /usr/local/bin/object-store and run via Node 26 native TypeScript
 // type stripping (see scripts/object-store.sh) — no tsx.
 //
 // Self-contained on purpose: it imports only @aws-sdk/client-s3 (already a
