@@ -15,14 +15,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const sessionId = getSessionAuthId(sessionAuthCookieSession)
 
   // Resolve the owner for the audit log before the session row is deleted.
-  const session = sessionId
-    ? await prisma.session.findUnique({
+  // Best-effort like the logging itself: a transient DB fault must not break
+  // sign-out, so fall back to an unset userId instead of throwing.
+  let userId: string | undefined
+  if (sessionId) {
+    try {
+      const session = await prisma.session.findUnique({
         select: { userId: true },
         where: { id: sessionId },
       })
-    : null
+      userId = session?.userId
+    } catch (error) {
+      console.error('Failed to resolve session owner for sign-out event', error)
+    }
+  }
 
-  recordAuthEvent({ event: 'sign_out', request, userId: session?.userId })
+  recordAuthEvent({ event: 'sign_out', request, userId })
 
   deleteSession(sessionId)
 
