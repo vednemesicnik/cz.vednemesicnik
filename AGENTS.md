@@ -223,7 +223,7 @@ Comprehensive project documentation is in the `docs/` directory:
 
 ## Environment
 
-Node.js >= 22 required. Environment variables should be in `.env` (see `.env.example`).
+Node.js >= 24.18.0 required (see `engines.node` in `package.json`; `.nvmrc` pins the major to `24`). Environment variables should be in `.env` (see `.env.example`).
 
 ## Agent Skills
 
