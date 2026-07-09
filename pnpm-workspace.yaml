@@ -21,5 +21,11 @@ allowBuilds:
 # Force a patched hono. It is pulled only by dev/CLI tooling
 # (prisma -> @prisma/dev -> @hono/node-server -> hono), and prisma 7.8.0 (latest)
 # still resolves the vulnerable hono 4.12.9. Remove once prisma ships a fixed hono.
+#
+# Pin better-sqlite3 to a release with Node 26 ABI (147) prebuilds. The adapter
+# (@prisma/adapter-better-sqlite3) allows ^12.6.0, but the lockfile resolved
+# 12.8.0, which ships no Node 26 prebuild and fails to compile in the slim Docker
+# image. Remove once the adapter's default resolves to >= 12.11.1.
 overrides:
   hono: 4.12.27
+  better-sqlite3: 12.11.1
