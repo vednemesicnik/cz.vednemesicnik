@@ -19,6 +19,45 @@ fly secrets set SESSION_SECRET=$(openssl rand -hex 32) HONEYPOT_SECRET=$(openssl
 fly deploy
 ```
 
+## Continuous deployment (CI/CD)
+
+Deploys are automated: merging a PR to `main` triggers
+`.github/workflows/deploy.yml`, which first runs the full CI suite (via
+`workflow_call` on `ci.yml`) and then deploys with `flyctl deploy` only if all
+checks pass. Per the [branching model](./_branching-model.md), `main` is only
+updated by release PRs (`dev → main`) and hotfix PRs — so every deploy
+corresponds to a release, and day-to-day merges into `dev` never deploy.
+
+Deploys run under a GitHub **`production` environment** (visible in the repo's
+Deployments), queue rather than run in parallel (`concurrency: deploy-production`,
+`cancel-in-progress: false`), and wait for the `/health` check in `fly.toml`
+before reporting success. Migrations run via the container entrypoint
+(`scripts/docker-entry-point-fly.sh` → `pnpm prisma:migrate:deploy`), not the
+workflow.
+
+### One-time setup
+
+1. Create an **app-scoped** deploy token — never a personal `fly auth token`,
+   which has full account access:
+   ```shell
+   fly tokens create deploy -a cz-vednemesicnik
+   ```
+2. In GitHub: Settings → Environments → **New environment** `production`.
+3. Add the token as an environment secret named `FLY_API_TOKEN` **on the
+   `production` environment** (not a repo-wide secret), so only the deploy job
+   can read it:
+   ```shell
+   gh secret set FLY_API_TOKEN --env production
+   ```
+
+### Manual deploy (fallback)
+
+The manual path still works if you ever need it (token expired, CI down):
+
+```shell
+fly deploy --app cz-vednemesicnik
+```
+
 ## Sign-in secrets
 
 The primary sign-in methods (Google OAuth, magic link, passkeys) are **required
