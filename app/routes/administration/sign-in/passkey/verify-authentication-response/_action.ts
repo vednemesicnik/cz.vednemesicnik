@@ -34,19 +34,38 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return data({ status: 'fail', verified: false }, { status: 400 })
   }
 
-  const verifiedAuthenticationResponse = await verifyAuthenticationResponse({
-    credential: {
-      counter: Number(passkey.credentialCounter),
-      id: passkey.credentialId,
-      publicKey: passkey.credentialPublicKey,
-      transports: JSON.parse(passkey.credentialTransports),
-    },
-    expectedChallenge: biometricChallenge ?? '',
-    expectedOrigin: process.env.RELYING_PARTY_ORIGIN ?? '',
-    expectedRPID: process.env.RELYING_PARTY_ID ?? '',
-    requireUserVerification: true,
-    response: body,
-  })
+  let verifiedAuthenticationResponse: Awaited<
+    ReturnType<typeof verifyAuthenticationResponse>
+  >
+  try {
+    verifiedAuthenticationResponse = await verifyAuthenticationResponse({
+      credential: {
+        counter: Number(passkey.credentialCounter),
+        id: passkey.credentialId,
+        publicKey: passkey.credentialPublicKey,
+        transports: JSON.parse(passkey.credentialTransports),
+      },
+      expectedChallenge: biometricChallenge ?? '',
+      expectedOrigin: process.env.RELYING_PARTY_ORIGIN ?? '',
+      expectedRPID: process.env.RELYING_PARTY_ID ?? '',
+      requireUserVerification: true,
+      response: body,
+    })
+  } catch (error) {
+    // A malformed client payload / unexpected WebAuthn response throws here;
+    // treat it as a failed attempt rather than a 500 so it is audited too.
+    console.error(
+      '[passkey] authentication response verification failed',
+      error,
+    )
+    recordAuthEvent({
+      event: 'sign_in_failure',
+      method: 'passkey',
+      request,
+      userId: passkey.userId,
+    })
+    return data({ status: 'fail', verified: false }, { status: 400 })
+  }
 
   if (!verifiedAuthenticationResponse.verified) {
     recordAuthEvent({
