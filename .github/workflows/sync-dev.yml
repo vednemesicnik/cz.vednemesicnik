@@ -26,12 +26,17 @@ jobs:
           # would sit as "expected" forever and block the merge.
           GH_TOKEN: ${{ secrets.BACKMERGE_TOKEN }}
         run: |
-          # dev may not exist yet (e.g. the merge that first introduces this
-          # workflow, before the branch is created). Nothing to sync until then.
-          if ! git show-ref --verify --quiet refs/remotes/origin/dev; then
+          # checkout only populates the triggering ref (main), so origin/dev is
+          # not present locally even when the branch exists on GitHub. Check the
+          # remote directly: if dev doesn't exist yet (e.g. the merge that first
+          # introduces this workflow, before the branch is created) there's
+          # nothing to sync.
+          if ! git ls-remote --exit-code --heads origin dev >/dev/null 2>&1; then
             echo "dev branch does not exist yet"
             exit 0
           fi
+          # Fetch dev explicitly into a tracking ref so the range below resolves.
+          git fetch --no-tags origin +refs/heads/dev:refs/remotes/origin/dev
           behind=$(git rev-list --count origin/dev..origin/main)
           if [ "$behind" -eq 0 ]; then
             echo "dev is up to date with main"
