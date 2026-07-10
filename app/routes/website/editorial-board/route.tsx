@@ -29,7 +29,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         editorialBoard.positions.map((position) => {
           return (
-            <Group key={position.label}>
+            <Group key={`${position.order}-${position.label}`}>
               <GroupName>{position.label}</GroupName>
               <Paragraph>
                 {position.members.length === 0

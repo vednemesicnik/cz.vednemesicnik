@@ -12,6 +12,7 @@
  * (local development): logs a line and returns `null`.
  */
 
+import { randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { remember } from '@epic-web/remember'
@@ -119,11 +120,18 @@ const writeSnapshot = async (data: EditorialBoardData): Promise<void> => {
   }
 
   // Best-effort: a persistence failure must never surface into the page.
+  // Write to a unique temp file and rename over the target so a crash mid-write
+  // can't leave a truncated snapshot and lose the last-good fallback (rename is
+  // atomic on the same filesystem).
+  const tempPath = `${snapshotPath}.${randomUUID()}.tmp`
+
   try {
     await fs.mkdir(path.dirname(snapshotPath), { recursive: true })
-    await fs.writeFile(snapshotPath, JSON.stringify(data), 'utf8')
+    await fs.writeFile(tempPath, JSON.stringify(data), 'utf8')
+    await fs.rename(tempPath, snapshotPath)
   } catch (error) {
     console.error('[editorial-board] snapshot write failed —', error)
+    await fs.rm(tempPath, { force: true }).catch(() => {})
   }
 }
 
