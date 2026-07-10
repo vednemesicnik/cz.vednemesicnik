@@ -1,3 +1,5 @@
+import { remember } from '@epic-web/remember'
+
 import { prisma } from '~/utils/db.server'
 import { getClientIp } from '~/utils/rate-limit.server'
 
@@ -25,6 +27,9 @@ type RecordAuthEventArgs = {
 
 // Retention window for auth events (see cleanupOldAuthEvents).
 const RETENTION_DAYS = 90
+
+// How often the retention loop prunes once running (see startAuthEventRetention).
+const RETENTION_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000
 
 /**
  * Writes an authentication audit event. Fire-and-forget: a logging failure must
@@ -55,8 +60,8 @@ export const recordAuthEvent = ({
 }
 
 /**
- * Deletes auth events older than the retention window. Fire-and-forget; called
- * on server startup and on a daily interval (see entry.server.tsx).
+ * Deletes auth events older than the retention window. Fire-and-forget; driven
+ * by startAuthEventRetention.
  */
 export const cleanupOldAuthEvents = (): void => {
   const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000)
@@ -66,4 +71,22 @@ export const cleanupOldAuthEvents = (): void => {
     .catch((error: unknown) => {
       console.error('Failed to clean up old auth events', error)
     })
+}
+
+/**
+ * Starts the retention loop: prune once now, then daily. No cron mechanism
+ * exists, so this runs in-process; min_machines_running keeps a process alive so
+ * the interval fires reliably, and .unref() lets the process exit without
+ * waiting on it. remember() guards against duplicate registration when the
+ * calling module is re-evaluated (e.g. dev HMR), so exactly one interval exists
+ * per process. Called once from entry.server.
+ */
+export const startAuthEventRetention = (): void => {
+  remember('authEventRetention', () => {
+    cleanupOldAuthEvents()
+    return setInterval(
+      cleanupOldAuthEvents,
+      RETENTION_CLEANUP_INTERVAL_MS,
+    ).unref()
+  })
 }

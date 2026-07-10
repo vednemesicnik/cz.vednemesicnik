@@ -7,7 +7,6 @@
  */
 
 import { PassThrough } from 'node:stream'
-import { remember } from '@epic-web/remember'
 import { createReadableStreamFromReadable } from '@react-router/node'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
@@ -17,7 +16,7 @@ import {
   ServerRouter,
 } from 'react-router'
 
-import { cleanupOldAuthEvents } from '~/utils/auth-event.server'
+import { startAuthEventRetention } from '~/utils/auth-event.server'
 import { getEnv, initEnv } from '~/utils/env.server'
 
 // Reject/cancel all pending promises after 5 seconds
@@ -26,16 +25,8 @@ export const streamTimeout = 5000
 initEnv()
 global.ENV = getEnv()
 
-// Auth-event retention: prune events past the 90-day window. No cron mechanism
-// exists, so run once at startup and once a day thereafter. min_machines_running
-// keeps a process alive, so the interval fires reliably; .unref() lets the
-// process exit without waiting on it. Fire-and-forget. remember() guards against
-// re-registration when this module is re-evaluated (e.g. dev HMR) so exactly one
-// interval exists per process.
-remember('authEventRetention', () => {
-  cleanupOldAuthEvents()
-  return setInterval(cleanupOldAuthEvents, 24 * 60 * 60 * 1000).unref()
-})
+// Prune auth events past the retention window, once at startup and daily after.
+startAuthEventRetention()
 
 export default function handleRequest(
   request: Request,
