@@ -145,8 +145,8 @@ instead of crashing.
 - A bad secret or any internal failure returns `{ "ok": false }`. Apps Script's
   `ContentService` always answers HTTP 200, so `ok` is the only error signal.
 
-Smoke-test the deployment. Read the secret from an env var so it never lands in your
-shell history (a leading space also keeps the `read` line out of history in most
+Smoke-test the deployment. Read the secret into a shell variable so it never lands in
+your shell history (a leading space also keeps the `read` line out of history in most
 shells):
 
 ```shell
