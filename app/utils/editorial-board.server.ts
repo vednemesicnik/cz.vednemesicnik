@@ -1,0 +1,188 @@
+/**
+ * Reads the editorial-board contacts from the Google Apps Script web app (see
+ * the SCRIPT__Editorial_Board__Contacts repo). Mirrors the magic-link helper:
+ * a secret-protected POST that never throws into the loader — every failure
+ * mode resolves to `null`, and the /redakce page renders a fallback message.
+ *
+ * Resilience layers, in order: fresh in-memory cache (TTL ~10 min) → stale
+ * in-memory cache → last-good JSON snapshot on disk (survives restarts). A
+ * Google outage or a broken sheet keeps serving the last good data.
+ *
+ * No-ops when GAS_EDITORIAL_BOARD_URL / GAS_EDITORIAL_BOARD_SECRET are unset
+ * (local development): logs a line and returns `null`.
+ */
+
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { remember } from '@epic-web/remember'
+import { z } from 'zod'
+
+// Fail fast if GAS hangs: a slow fetch must not stall the page render.
+const GAS_TIMEOUT_MS = 8000
+
+// Low-churn data (changes a few times a year), so a generous TTL is fine.
+const CACHE_TTL_MS = 10 * 60 * 1000
+
+const SNAPSHOT_FILE_NAME = 'editorial-board-snapshot.json'
+
+const positionSchema = z.object({
+  label: z.string(),
+  members: z.array(z.string()),
+  order: z.number(),
+})
+
+// The endpoint always answers HTTP 200 (GAS ContentService), so `ok: true` is
+// the only success signal; `{ ok: false }` and anything malformed are failures.
+const responseSchema = z.object({
+  ok: z.literal(true),
+  positions: z.array(positionSchema),
+})
+
+// The persisted snapshot stores just the payload (no `ok` wrapper).
+const snapshotSchema = z.object({
+  positions: z.array(positionSchema),
+})
+
+export type EditorialBoardPosition = z.infer<typeof positionSchema>
+export type EditorialBoardData = z.infer<typeof snapshotSchema>
+
+type CacheEntry = { data: EditorialBoardData; fetchedAt: number }
+
+// Absolute path of the snapshot, next to the SQLite DB file. Derived from
+// DATABASE_URL (e.g. "file:./data/sqlite.db" → "./data/…json"). Returns null
+// when DATABASE_URL is unset so snapshot persistence is skipped rather than
+// throwing.
+const getSnapshotPath = (): string | null => {
+  const databaseUrl = process.env.DATABASE_URL
+
+  if (!databaseUrl) {
+    return null
+  }
+
+  const dbFilePath = databaseUrl.replace(/^file:/, '')
+
+  return path.join(path.dirname(dbFilePath), SNAPSHOT_FILE_NAME)
+}
+
+const fetchFromGas = async (
+  url: string,
+  secret: string,
+): Promise<EditorialBoardData | null> => {
+  try {
+    const response = await fetch(url, {
+      body: JSON.stringify({ secret }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
+    })
+
+    const json = await response.json().catch(() => null)
+    const parsed = responseSchema.safeParse(json)
+
+    if (!response.ok || !parsed.success) {
+      console.error(
+        `[editorial-board] GAS fetch failed — status ${response.status}, valid ${parsed.success}.`,
+      )
+      return null
+    }
+
+    return { positions: parsed.data.positions }
+  } catch (error) {
+    console.error('[editorial-board] GAS request threw —', error)
+    return null
+  }
+}
+
+const readSnapshot = async (): Promise<EditorialBoardData | null> => {
+  const snapshotPath = getSnapshotPath()
+
+  if (!snapshotPath) {
+    return null
+  }
+
+  try {
+    const raw = await fs.readFile(snapshotPath, 'utf8')
+    const parsed = snapshotSchema.safeParse(JSON.parse(raw))
+
+    return parsed.success ? parsed.data : null
+  } catch {
+    // No snapshot yet (cold start) or unreadable — nothing to fall back to.
+    return null
+  }
+}
+
+const writeSnapshot = async (data: EditorialBoardData): Promise<void> => {
+  const snapshotPath = getSnapshotPath()
+
+  if (!snapshotPath) {
+    return
+  }
+
+  // Best-effort: a persistence failure must never surface into the page.
+  try {
+    await fs.mkdir(path.dirname(snapshotPath), { recursive: true })
+    await fs.writeFile(snapshotPath, JSON.stringify(data), 'utf8')
+  } catch (error) {
+    console.error('[editorial-board] snapshot write failed —', error)
+  }
+}
+
+export const createEditorialBoardSource = () => {
+  let cache: CacheEntry | null = null
+
+  const getEditorialBoard = async (): Promise<EditorialBoardData | null> => {
+    const now = Date.now()
+
+    if (cache && now - cache.fetchedAt < CACHE_TTL_MS) {
+      return cache.data
+    }
+
+    const url = process.env.GAS_EDITORIAL_BOARD_URL
+    const secret = process.env.GAS_EDITORIAL_BOARD_SECRET
+
+    if (!url || !secret) {
+      if (process.env.NODE_ENV === 'production') {
+        console.warn(
+          '[editorial-board] GAS_EDITORIAL_BOARD_URL/SECRET not set — serving fallback.',
+        )
+      } else {
+        console.info(
+          '[editorial-board] GAS not configured — /redakce will show the fallback message.',
+        )
+      }
+      return null
+    }
+
+    const fetched = await fetchFromGas(url, secret)
+
+    if (fetched) {
+      cache = { data: fetched, fetchedAt: now }
+      await writeSnapshot(fetched)
+      return fetched
+    }
+
+    // Fetch failed: serve the best available stale data (in-memory, else the
+    // on-disk snapshot). Refresh the TTL so an outage doesn't make every
+    // request re-attempt the slow fetch — bounded staleness of one TTL after
+    // Google recovers.
+    const stale = cache?.data ?? (await readSnapshot())
+
+    if (stale) {
+      cache = { data: stale, fetchedAt: now }
+      return stale
+    }
+
+    return null
+  }
+
+  return { getEditorialBoard }
+}
+
+// Single instance shared across requests (and preserved over dev HMR reloads,
+// like the Prisma client) so the cache actually persists.
+const editorialBoardSource = remember(
+  'editorialBoardSource',
+  createEditorialBoardSource,
+)
+
+export const getEditorialBoard = editorialBoardSource.getEditorialBoard

@@ -48,6 +48,12 @@ const schema = z
     // superRefine below).
     [ENV_KEYS.GAS_MAGIC_LINK_URL]: z.string().optional(),
     [ENV_KEYS.GAS_MAGIC_LINK_SECRET]: z.string().optional(),
+    // Google Apps Script web app that serves the editorial-board contacts (see
+    // the SCRIPT__Editorial_Board__Contacts repo). Optional locally (the /redakce
+    // page renders a fallback message), required in production (see the
+    // superRefine below).
+    [ENV_KEYS.GAS_EDITORIAL_BOARD_URL]: z.string().optional(),
+    [ENV_KEYS.GAS_EDITORIAL_BOARD_SECRET]: z.string().optional(),
     // WebAuthn relying-party settings for the passkey flow. Optional in the shape
     // so local development falls back gracefully, but required in production (see
     // the superRefine below) — an empty rpID/origin makes every passkey ceremony
@@ -88,6 +94,9 @@ const schema = z
           // Magic-link email (Google Apps Script)
           ENV_KEYS.GAS_MAGIC_LINK_URL,
           ENV_KEYS.GAS_MAGIC_LINK_SECRET,
+          // Editorial-board contacts (Google Apps Script)
+          ENV_KEYS.GAS_EDITORIAL_BOARD_URL,
+          ENV_KEYS.GAS_EDITORIAL_BOARD_SECRET,
           // Passkey / WebAuthn relying party
           ENV_KEYS.RELYING_PARTY_ID,
           ENV_KEYS.RELYING_PARTY_NAME,

@@ -1,41 +1,9 @@
-import { getAuthentication } from '~/utils/auth.server'
-import { prisma } from '~/utils/db.server'
-import type { Route } from './+types/route'
+import { getEditorialBoard } from '~/utils/editorial-board.server'
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { isAuthenticated } = await getAuthentication(request)
+export const loader = async () => {
+  // `null` when GAS is unconfigured or every resilience layer is exhausted; the
+  // route renders a fallback message in that case.
+  const editorialBoard = await getEditorialBoard()
 
-  const editorialBoardMemberPositions =
-    await prisma.editorialBoardPosition.findMany({
-      orderBy: {
-        order: 'asc',
-      },
-      select: {
-        id: true,
-        members: {
-          orderBy: {
-            createdAt: 'asc',
-          },
-          select: {
-            fullName: true,
-            id: true,
-          },
-          where: {
-            state: {
-              in: isAuthenticated ? ['published', 'draft'] : ['published'],
-            },
-          },
-        },
-        pluralLabel: true,
-      },
-      where: isAuthenticated
-        ? {
-            state: { in: ['published', 'draft'] },
-          }
-        : {
-            state: 'published',
-          },
-    })
-
-  return { editorialBoardMemberPositions }
+  return { editorialBoard }
 }
