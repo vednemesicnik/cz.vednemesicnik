@@ -1,6 +1,6 @@
 import { redirect } from 'react-router'
-
 import { requireUnauthenticated } from '~/utils/auth.server'
+import { recordAuthEvent } from '~/utils/auth-event.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { consumeMagicLinkToken } from '~/utils/magic-link.server'
 import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
@@ -29,6 +29,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const isValid = await consumeMagicLinkToken(normalizedEmail, token)
 
   if (!isValid) {
+    recordAuthEvent({
+      email: normalizedEmail,
+      event: 'sign_in_failure',
+      method: 'magic_link',
+      request,
+    })
     throw redirect('/administration/sign-in/magic-link', { status: 303 })
   }
 
@@ -36,9 +42,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   // The account may have been removed between request and click.
   if (user === null) {
+    recordAuthEvent({
+      email: normalizedEmail,
+      event: 'sign_in_failure',
+      method: 'magic_link',
+      request,
+    })
     throw redirect('/administration/sign-in', { status: 303 })
   }
 
   // Always throws: a redirect to /administration on success.
-  return await signInUser(request, user.id)
+  return await signInUser(request, user.id, 'magic_link')
 }

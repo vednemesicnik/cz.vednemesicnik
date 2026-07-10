@@ -1,8 +1,8 @@
 import { ALLOWED_EMAIL_DOMAIN } from '@constants/auth'
 import type { TokenPayload } from 'google-auth-library'
 import { redirect } from 'react-router'
-
 import { requireUnauthenticated } from '~/utils/auth.server'
+import { recordAuthEvent } from '~/utils/auth-event.server'
 import { prisma } from '~/utils/db.server'
 import {
   createGoogleOAuthClient,
@@ -33,7 +33,17 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // Preserve the original redirectTo across the error bounce, so retrying sign-in
   // still returns the user to where they started. (It was sanitized on the way
   // in; the sign-in loader re-validates it via safeRedirect.)
-  const failTo = (error: 'oauth' | 'domain' | 'account') => {
+  // Every failure path funnels through here, so record the audit row once in one
+  // place. `email` is only known past the domain check; earlier OAuth-stage
+  // failures (denied consent, bad state/nonce, token exchange) log without it.
+  const failTo = (error: 'oauth' | 'domain' | 'account', email?: string) => {
+    recordAuthEvent({
+      email,
+      event: 'sign_in_failure',
+      method: 'google',
+      request,
+    })
+
     const search = new URLSearchParams({ error })
     if (redirectTo) search.set('redirectTo', redirectTo)
 
@@ -101,7 +111,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     email === undefined ||
     !email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)
   ) {
-    throw failTo('domain')
+    throw failTo('domain', email)
   }
 
   try {
@@ -120,6 +130,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       return await signInUser(
         request,
         connection.userId,
+        'google',
         redirectTo,
         new Headers({ 'Set-Cookie': destroyCookie }),
       )
@@ -128,7 +139,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     // First OAuth sign-in for an existing account → auto-link via verified email.
     const user = await findExistingUserByEmail(email)
 
-    if (user === null) throw failTo('account')
+    if (user === null) {
+      throw failTo('account', email)
+    }
 
     await prisma.connection.create({
       data: {
@@ -141,6 +154,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     return await signInUser(
       request,
       user.id,
+      'google',
       redirectTo,
       new Headers({ 'Set-Cookie': destroyCookie }),
     )
