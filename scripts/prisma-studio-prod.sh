@@ -14,14 +14,29 @@
 APP="${FLY_APP:-cz-vednemesicnik}"
 PORT="${PORT:-5555}"
 
+# PORT is interpolated into a remotely executed shell command, so reject anything
+# non-numeric before it can break quoting or inject.
+case "$PORT" in
+  '' | *[!0-9]*) echo "PORT must be a number (1–65535), got '$PORT'." >&2; exit 1 ;;
+esac
+if [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
+  echo "PORT must be between 1 and 65535, got '$PORT'." >&2
+  exit 1
+fi
+
 cleanup() {
   # Stop the local proxy and the ssh session…
   [ -n "$STUDIO_PID" ] && kill "$STUDIO_PID" 2>/dev/null || true
-  # …then make sure Studio is really gone on the machine, TTY or not.
-  fly ssh console --app "$APP" -C "pkill -f 'prisma studio'" >/dev/null 2>&1 || true
+  # …then make sure Studio is really gone on the machine, TTY or not. Scope the
+  # match to this port so we don't kill another admin's Studio session.
+  fly ssh console --app "$APP" -C "pkill -f 'prisma studio --port $PORT'" >/dev/null 2>&1 || true
   echo "🧹 Stopped Prisma Studio and closed the tunnel."
 }
-trap cleanup EXIT INT TERM
+# `0` (not EXIT) is the portable exit-trap condition for POSIX /bin/sh (dash);
+# INT/TERM re-exit so cleanup runs exactly once, on the way out.
+trap cleanup 0
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 echo "🚀 Starting Prisma Studio on $APP (port $PORT, not publicly exposed)…"
 fly ssh console --app "$APP" -C \

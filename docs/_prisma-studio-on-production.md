@@ -12,9 +12,9 @@ is gone.
 
 > **Warning:** this is the live production database with no undo. Take a
 > [manual backup](_manual-database-backup.md) before making any writes, and know the
-> [restore procedure](_manual-database-restore.md). Concurrent access next to the
-> running app is safe (the database runs in WAL journal mode), but every edit is
-> instant on production.
+> [restore procedure](_manual-database-restore.md). SQLite has a single writer, so
+> editing next to the running app can briefly block writes on either side — keep the
+> session short, and remember every edit is instant on production.
 
 ## Prerequisites
 
