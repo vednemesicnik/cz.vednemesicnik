@@ -1,16 +1,22 @@
 # Editorial board from a Google Sheet
 
-The editorial board (redakce) shown on `/redakce` is sourced from a **private Google
-Sheet**, not the database. The chief editors edit the sheet directly — no
-administration sign-in — and the app reads the public subset (names + role labels of
-active members) through a **Google Apps Script web app protected by a shared secret**.
-This is the same pattern as the magic-link email (`SCRIPT__Auth__Magic_Link`): no
-Google Cloud project, no service account, the sheet stays private.
+The editorial board (redakce) shown on `/redakce` is moving to a **private Google
+Sheet** as its source of truth, replacing the database. The chief editors edit the
+sheet directly — no administration sign-in — and the app reads the public subset
+(names + role labels of active members) through a **Google Apps Script web app
+protected by a shared secret**. This is the same pattern as the magic-link email
+(`SCRIPT__Auth__Magic_Link`): no Google Cloud project, no service account, the sheet
+stays private.
 
-The script that powers the endpoint lives in its own repo,
+> **Status:** this describes the setup once wired up. The `/redakce` loader still
+> reads from the database today; it switches to the endpoint in a later step
+> ([#198](https://github.com/vednemesicnik/cz.vednemesicnik/issues/198)), and the DB
+> models are removed after that ([#199](https://github.com/vednemesicnik/cz.vednemesicnik/issues/199)).
+
+The script that powers the endpoint lives in its own **private** repo,
 [`vednemesicnik/SCRIPT__Editorial_Board__Contacts`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Contacts)
-(`Config.gs`, `Api.gs`, `Sort.gs`, `Setup.gs`). This guide is the one-time setup for
-the spreadsheet and its bound script.
+(`Config.gs`, `Api.gs`, `Sort.gs`, `Setup.gs`) — the link 404s without access. This
+guide is the one-time setup for the spreadsheet and its bound script.
 
 > **Note:** the spreadsheet doubles as the internal contact directory (e-mail, phone,
 > notes). The endpoint **never** reads those columns — it returns only names and role
