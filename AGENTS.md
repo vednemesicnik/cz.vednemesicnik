@@ -228,6 +228,7 @@ Comprehensive project documentation is in the `docs/` directory:
 - `docs/_deploy-to-fly.md` - Deployment instructions
 - `docs/_manual-database-backup.md` - Database backup procedures
 - `docs/_manual-database-restore.md` - Database restore procedures
+- `docs/_prisma-studio-on-production.md` - Running Prisma Studio against the production database over a Fly tunnel
 
 ## Environment
 
