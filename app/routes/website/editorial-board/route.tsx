@@ -13,6 +13,8 @@ import type { Route } from './+types/route'
 const EMAIL_ADDRESS = 'redakce@vednemesicnik.cz'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
+  const { editorialBoard } = loaderData
+
   return (
     <Page>
       <HeadlineGroup>
@@ -20,18 +22,24 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <Subheadline>Prosím, seznamte se. Je nás hodně.</Subheadline>
       </HeadlineGroup>
 
-      {loaderData.editorialBoardMemberPositions.map((position) => {
-        return (
-          <Group key={position.id}>
-            <GroupName>{position.pluralLabel}</GroupName>
-            <Paragraph>
-              {position.members.length === 0
-                ? '...'
-                : position.members.map((member) => member.fullName).join(', ')}
-            </Paragraph>
-          </Group>
-        )
-      })}
+      {editorialBoard === null ? (
+        <Paragraph>
+          Seznam redakce se teď nepodařilo načíst. Zkuste to prosím později.
+        </Paragraph>
+      ) : (
+        editorialBoard.positions.map((position) => {
+          return (
+            <Group key={`${position.order}-${position.label}`}>
+              <GroupName>{position.label}</GroupName>
+              <Paragraph>
+                {position.members.length === 0
+                  ? '...'
+                  : position.members.join(', ')}
+              </Paragraph>
+            </Group>
+          )
+        })
+      )}
 
       <Divider variant={'primary'} />
 

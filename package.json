@@ -94,6 +94,7 @@
     "prisma:migrate:reset": "prisma migrate reset",
     "prisma:studio": "prisma studio",
     "prisma:studio:prod": "sh ./scripts/prisma-studio-prod.sh",
+    "secret:generate": "sh ./scripts/generate-secret.sh",
     "sql:generate": "sh ./scripts/sql-generate.sh",
     "storybook": "storybook dev -p 6006",
     "test": "vitest run"
