@@ -85,8 +85,13 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   // failed attempt against a known account is worth correlating by userId.
   const existingUserId = user?.id
 
-  if (user !== null && user.password !== null) {
-    const isValid = await bcrypt.compare(password, user.password.hash)
+  if (user !== null) {
+    // An account without a password hash (e.g. OAuth/passkey-only) must not be
+    // signed in via this path: treat a missing hash as an invalid attempt
+    // instead of skipping the check and authenticating with any password.
+    const isValid =
+      user.password !== null &&
+      (await bcrypt.compare(password, user.password.hash))
 
     user = isValid ? user : null
   }
