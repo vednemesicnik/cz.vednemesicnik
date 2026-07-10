@@ -1,7 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { data, redirect } from 'react-router'
-
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
+import { recordAuthEvent } from '~/utils/auth-event.server'
 import { redeemBackupCode } from '~/utils/backup-codes.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
@@ -81,8 +81,12 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   // Second factor verified — create the session and clear the pending cookie.
   // 303 See Other so the browser issues a GET after this POST, matching the
   // other redirects in this flow. Shared by the TOTP and backup-code branches.
-  const succeed = async (): Promise<never> => {
+  const succeed = async (
+    method: 'two_factor' | 'backup_code',
+  ): Promise<never> => {
     const session = await createSession(userId)
+
+    recordAuthEvent({ event: 'sign_in_success', method, request, userId })
 
     const headers = new Headers()
     headers.append(
@@ -105,6 +109,13 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   // so the user must re-enter their password. Covers both TOTP and backup-code
   // attempts, bounding brute-forcing within the cookie lifetime.
   const fail = async (field: 'backupCode' | 'code', message: string) => {
+    recordAuthEvent({
+      event: 'two_factor_failure',
+      method: field === 'backupCode' ? 'backup_code' : 'two_factor',
+      request,
+      userId,
+    })
+
     const attempts = getPendingTwoFactorAttempts(cookieSession) + 1
 
     if (attempts >= MAX_TWO_FACTOR_ATTEMPTS) {
@@ -148,7 +159,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       return fail('backupCode', 'Záložní kód je neplatný nebo již byl použit.')
     }
 
-    return succeed()
+    return succeed('backup_code')
   }
 
   // The schema guarantees one field is present, so a missing backup code means a
@@ -175,5 +186,5 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     return fail('code', 'Kód je nesprávný nebo jeho platnost vypršela.')
   }
 
-  return succeed()
+  return succeed('two_factor')
 }

@@ -572,3 +572,19 @@ model Review {
 enum ReviewState {
   approved
 }
+
+// Authentication audit log. Deliberately has no relation to User so events
+// survive account deletion. `method` is nullable because sign-out has none.
+model AuthEvent {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  event     String // "sign_in_success" | "sign_in_failure" | "two_factor_failure" | "sign_out"
+  method    String? // "password" | "magic_link" | "google" | "passkey" | "two_factor" | "backup_code"
+  userId    String? // set when the user is known
+  email     String? // submitted email on failures where no user exists
+  ipAddress String?
+  userAgent String?
+
+  @@index([createdAt])
+  @@index([userId])
+}

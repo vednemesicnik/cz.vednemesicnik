@@ -1,6 +1,7 @@
 import { verifyAuthenticationResponse } from '@simplewebauthn/server'
 import { type ActionFunctionArgs, data } from 'react-router'
 
+import { recordAuthEvent } from '~/utils/auth-event.server'
 import {
   deleteBiometricCookieSession,
   getBiometricChallenge,
@@ -29,24 +30,50 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (passkey === null) {
+    recordAuthEvent({ event: 'sign_in_failure', method: 'passkey', request })
     return data({ status: 'fail', verified: false }, { status: 400 })
   }
 
-  const verifiedAuthenticationResponse = await verifyAuthenticationResponse({
-    credential: {
-      counter: Number(passkey.credentialCounter),
-      id: passkey.credentialId,
-      publicKey: passkey.credentialPublicKey,
-      transports: JSON.parse(passkey.credentialTransports),
-    },
-    expectedChallenge: biometricChallenge ?? '',
-    expectedOrigin: process.env.RELYING_PARTY_ORIGIN ?? '',
-    expectedRPID: process.env.RELYING_PARTY_ID ?? '',
-    requireUserVerification: true,
-    response: body,
-  })
+  let verifiedAuthenticationResponse: Awaited<
+    ReturnType<typeof verifyAuthenticationResponse>
+  >
+  try {
+    verifiedAuthenticationResponse = await verifyAuthenticationResponse({
+      credential: {
+        counter: Number(passkey.credentialCounter),
+        id: passkey.credentialId,
+        publicKey: passkey.credentialPublicKey,
+        transports: JSON.parse(passkey.credentialTransports),
+      },
+      expectedChallenge: biometricChallenge ?? '',
+      expectedOrigin: process.env.RELYING_PARTY_ORIGIN ?? '',
+      expectedRPID: process.env.RELYING_PARTY_ID ?? '',
+      requireUserVerification: true,
+      response: body,
+    })
+  } catch (error) {
+    // A malformed client payload / unexpected WebAuthn response throws here;
+    // treat it as a failed attempt rather than a 500 so it is audited too.
+    console.error(
+      '[passkey] authentication response verification failed',
+      error,
+    )
+    recordAuthEvent({
+      event: 'sign_in_failure',
+      method: 'passkey',
+      request,
+      userId: passkey.userId,
+    })
+    return data({ status: 'fail', verified: false }, { status: 400 })
+  }
 
   if (!verifiedAuthenticationResponse.verified) {
+    recordAuthEvent({
+      event: 'sign_in_failure',
+      method: 'passkey',
+      request,
+      userId: passkey.userId,
+    })
     return data({ status: 'fail', verified: false }, { status: 400 })
   }
 
@@ -65,5 +92,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     'Set-Cookie': await deleteBiometricCookieSession(biometricCookieSession),
   })
 
-  return await signInUser(request, passkey.userId, redirectTo, headers)
+  return await signInUser(
+    request,
+    passkey.userId,
+    'passkey',
+    redirectTo,
+    headers,
+  )
 }

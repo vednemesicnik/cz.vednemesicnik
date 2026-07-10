@@ -29,7 +29,7 @@ jobs:
       name: production
       url: https://vednemesicnik.cz
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: superfly/flyctl-actions/setup-flyctl@1.6
       - run: flyctl deploy --remote-only --wait-timeout 5m
         env:

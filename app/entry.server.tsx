@@ -7,7 +7,6 @@
  */
 
 import { PassThrough } from 'node:stream'
-
 import { createReadableStreamFromReadable } from '@react-router/node'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
@@ -17,6 +16,7 @@ import {
   ServerRouter,
 } from 'react-router'
 
+import { startAuthEventRetention } from '~/utils/auth-event.server'
 import { getEnv, initEnv } from '~/utils/env.server'
 
 // Reject/cancel all pending promises after 5 seconds
@@ -24,6 +24,9 @@ export const streamTimeout = 5000
 
 initEnv()
 global.ENV = getEnv()
+
+// Prune auth events past the retention window, once at startup and daily after.
+startAuthEventRetention()
 
 export default function handleRequest(
   request: Request,

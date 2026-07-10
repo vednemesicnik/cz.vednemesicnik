@@ -1,8 +1,8 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import bcrypt from 'bcryptjs'
 import { data, redirect } from 'react-router'
-
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
+import { recordAuthEvent } from '~/utils/auth-event.server'
 import { prisma } from '~/utils/db.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
@@ -81,13 +81,29 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     where: { email },
   })
 
-  if (user !== null && user.password !== null) {
-    const isValid = await bcrypt.compare(password, user.password.hash)
+  // Capture the id up front: `user` is nulled on a wrong password below, but a
+  // failed attempt against a known account is worth correlating by userId.
+  const existingUserId = user?.id
+
+  if (user !== null) {
+    // An account without a password hash (e.g. OAuth/passkey-only) must not be
+    // signed in via this path: treat a missing hash as an invalid attempt
+    // instead of skipping the check and authenticating with any password.
+    const isValid =
+      user.password !== null &&
+      (await bcrypt.compare(password, user.password.hash))
 
     user = isValid ? user : null
   }
 
   if (user === null) {
+    recordAuthEvent({
+      email,
+      event: 'sign_in_failure',
+      method: 'password',
+      request,
+      userId: existingUserId,
+    })
     return data(
       {
         authenticationOptions: null,
@@ -119,6 +135,13 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   }
 
   const session = await createSession(user.id)
+
+  recordAuthEvent({
+    event: 'sign_in_success',
+    method: 'password',
+    request,
+    userId: user.id,
+  })
 
   throw redirect('/administration', {
     headers: {
