@@ -81,6 +81,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     where: { email },
   })
 
+  // Capture the id up front: `user` is nulled on a wrong password below, but a
+  // failed attempt against a known account is worth correlating by userId.
+  const existingUserId = user?.id
+
   if (user !== null && user.password !== null) {
     const isValid = await bcrypt.compare(password, user.password.hash)
 
@@ -93,6 +97,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       event: 'sign_in_failure',
       method: 'password',
       request,
+      userId: existingUserId,
     })
     return data(
       {

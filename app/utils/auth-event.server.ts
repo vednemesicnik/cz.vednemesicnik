@@ -4,12 +4,6 @@ import { remember } from '@epic-web/remember'
 import { prisma } from '~/utils/db.server'
 import { getClientIp } from '~/utils/rate-limit.server'
 
-export type AuthEventName =
-  | 'sign_in_success'
-  | 'sign_in_failure'
-  | 'two_factor_failure'
-  | 'sign_out'
-
 export type AuthMethod =
   | 'password'
   | 'magic_link'
@@ -18,13 +12,21 @@ export type AuthMethod =
   | 'two_factor'
   | 'backup_code'
 
-type RecordAuthEventArgs = {
+type AuthEventBase = {
   request: Request
-  event: AuthEventName
-  method?: AuthMethod
   userId?: string
   email?: string
 }
+
+// Discriminated on `event`: the sign-in events require a `method` (a row without
+// one is incomplete), while `sign_out` has no method. This makes an incomplete
+// call a compile-time error rather than a silent bad row.
+type RecordAuthEventArgs =
+  | (AuthEventBase & {
+      event: 'sign_in_success' | 'sign_in_failure' | 'two_factor_failure'
+      method: AuthMethod
+    })
+  | (AuthEventBase & { event: 'sign_out'; method?: never })
 
 // Retention window for auth events (see cleanupOldAuthEvents).
 const RETENTION_DAYS = 90
