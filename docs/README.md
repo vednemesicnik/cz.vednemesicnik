@@ -14,3 +14,4 @@ This is the documentation for the project.
 - [Deploy to Fly.io](_deploy-to-fly.md)
 - [Manual Database Backup](_manual-database-backup.md)
 - [Manual Database Restore](_manual-database-restore.md)
+- [Editorial Board from a Google Sheet](_editorial-board-google-sheet.md)
