@@ -93,6 +93,7 @@
     "prisma:migrate:dev-init": "prisma migrate dev --name init --create-only",
     "prisma:migrate:reset": "prisma migrate reset",
     "prisma:studio": "prisma studio",
+    "prisma:studio:prod": "sh ./scripts/prisma-studio-prod.sh",
     "sql:generate": "sh ./scripts/sql-generate.sh",
     "storybook": "storybook dev -p 6006",
     "test": "vitest run"

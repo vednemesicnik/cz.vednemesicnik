@@ -25,6 +25,21 @@ same setup as the [backup doc](_manual-database-backup.md#setup-do-this-once-per
 fly ssh issue --agent -o <your-org-slug>
 ```
 
+## Quick start
+
+```shell
+pnpm prisma:studio:prod
+```
+
+This runs [`scripts/prisma-studio-prod.sh`](../scripts/prisma-studio-prod.sh),
+which starts Studio on the machine, opens the tunnel, and prints
+<http://localhost:5555>. Press `Ctrl+C` once to tear everything down — it also
+runs a remote `pkill` so Studio never orphans on the machine. Override defaults
+with `FLY_APP=… PORT=… pnpm prisma:studio:prod`.
+
+The manual steps below are the same thing done by hand — useful for
+understanding what the script does or when you need finer control.
+
 ## 1. Start Studio on the machine (leave running)
 
 ```shell
