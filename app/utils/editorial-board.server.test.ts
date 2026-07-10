@@ -9,12 +9,8 @@ const GAS_SECRET = 'test-secret'
 const CACHE_TTL_MS = 10 * 60 * 1000
 
 const positions = [
-  {
-    label: 'šéfredaktorky',
-    members: ['Lucie Procházková', 'Patricie Horová'],
-    order: 1,
-  },
-  { label: 'redaktoři', members: [], order: 2 },
+  { label: 'Role A', members: ['Member One', 'Member Two'], order: 1 },
+  { label: 'Role B', members: [], order: 2 },
 ]
 
 const validResponse = { ok: true, positions }
