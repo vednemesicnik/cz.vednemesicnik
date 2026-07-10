@@ -25,7 +25,7 @@ if [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
 fi
 
 cleanup() {
-  # Stop the local proxy and the ssh session…
+  # Stop the backgrounded ssh session (the foreground proxy is already exiting)…
   [ -n "$STUDIO_PID" ] && kill "$STUDIO_PID" 2>/dev/null || true
   # …then make sure Studio is really gone on the machine, TTY or not. Scope the
   # match to this port so we don't kill another admin's Studio session.
@@ -45,6 +45,15 @@ STUDIO_PID=$!
 
 # Give Studio a moment to bind before the proxy forwards to it.
 sleep 3
+
+# The ssh command is backgrounded, so under `set -e` a failed start (auth error,
+# wrong app) wouldn't stop us — we'd proxy to a dead port. Bail out instead.
+if ! kill -0 "$STUDIO_PID" 2>/dev/null; then
+  status=0
+  wait "$STUDIO_PID" || status=$?
+  echo "Studio failed to start on $APP (fly ssh exited $status)." >&2
+  exit 1
+fi
 
 echo "🔌 Tunnel open → http://localhost:$PORT  (Ctrl+C to stop)"
 fly proxy "$PORT:$PORT" --app "$APP"
