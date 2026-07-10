@@ -47,7 +47,7 @@ refers to the machine, not your laptop — that's what the tunnel is for).
 ## 2. Open the tunnel (second terminal, leave running)
 
 ```shell
-fly proxy 5555 --app cz-vednemesicnik
+fly proxy 5555:5555 --app cz-vednemesicnik
 ```
 
 Then open <http://localhost:5555> in your browser.
