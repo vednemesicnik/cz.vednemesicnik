@@ -58,7 +58,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   let permissions = {
     canViewArticles: false,
     canViewAuthors: false,
-    canViewEditorialBoard: false,
     canViewIssues: false,
     canViewPodcasts: false,
     canViewUsers: false,
@@ -69,13 +68,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       const [authorContext, userContext] = await Promise.all([
         getAuthorPermissionContext(request, {
           actions: ['view'],
-          entities: [
-            'article',
-            'podcast',
-            'issue',
-            'editorial_board_position',
-            'editorial_board_member',
-          ],
+          entities: ['article', 'podcast', 'issue'],
         }),
         getUserPermissionContext(request, {
           actions: ['view'],
@@ -93,15 +86,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           entity: 'author',
           targetUserId: userContext.userId,
         }).hasPermission,
-        canViewEditorialBoard:
-          authorContext.can({
-            action: 'view',
-            entity: 'editorial_board_position',
-          }).hasPermission ||
-          authorContext.can({
-            action: 'view',
-            entity: 'editorial_board_member',
-          }).hasPermission,
         canViewIssues: authorContext.can({ action: 'view', entity: 'issue' })
           .hasPermission,
         canViewPodcasts: authorContext.can({

@@ -47,11 +47,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       to: '/administration/archive',
       visible: permissions.canViewIssues,
     },
-    {
-      label: 'Redakce',
-      to: '/administration/editorial-board',
-      visible: permissions.canViewEditorialBoard,
-    },
     { label: 'Nastavení', to: '/administration/settings', visible: true },
   ]
 
