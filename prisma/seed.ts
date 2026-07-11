@@ -10,14 +10,10 @@ import { createAuthorRoles } from '~~/utils/create-author-roles'
 import { createUserPermissions } from '~~/utils/create-user-permissions'
 import { createUserRoles } from '~~/utils/create-user-roles'
 
-import { editorialBoardMembers } from './data/editorial-board-members'
-import { editorialBoardPositions } from './data/editorial-board-postions'
 import { issues } from './data/issues'
 import { podcastData } from './data/podcast'
 import { users } from './data/users'
 import { cleanupDb } from './utils/cleanup-db'
-import { createEditorialBoardMembers } from './utils/create-editorial-board-members'
-import { createEditorialBoardPositions } from './utils/create-editorial-board-positions'
 import { createIssues } from './utils/create-issues'
 import { createPodcast } from './utils/create-podcast'
 import { createUsers } from './utils/create-users'
@@ -61,16 +57,6 @@ async function seed() {
   console.time('🗞️ Archive issues have been created')
   await createIssues(prisma, issues)
   console.timeEnd('🗞️ Archive issues have been created')
-
-  // Editorial board member positions 🪑
-  console.time('🪑 Member positions have been created')
-  await createEditorialBoardPositions(prisma, editorialBoardPositions)
-  console.timeEnd('🪑 Member positions have been created')
-
-  // Editorial board members 🧑‍💼
-  console.time('🧑‍💼 Editorial board members have been created')
-  await createEditorialBoardMembers(prisma, editorialBoardMembers)
-  console.timeEnd('🧑‍💼 Editorial board members have been created')
 
   // Podcast 🎙
   console.time('🎙️ Podcast has been created')

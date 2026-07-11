@@ -95,7 +95,6 @@ SQLite database with Prisma ORM. Key entities:
 - **Article**: Blog posts with featured images, tags, and categories
 - **Podcast/PodcastEpisode**: Podcast management with episodes and links
 - **Issue**: Magazine issues with PDF and cover images
-- **EditorialBoard**: Positions and members
 
 All content entities (Article, Podcast, PodcastEpisode, Issue, etc.) support three states: `draft`, `published`, `archived`.
 
