@@ -93,18 +93,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw new Response('Článek nemá přiřazeného autora', { status: 500 })
   }
 
-  const effectiveTargetAuthorId = article.authors.some(
-    (author) => author.id === context.authorId,
-  )
-    ? context.authorId
-    : article.authors[0].id
+  const targetAuthorIds = article.authors.map((author) => author.id)
 
   // Check view permission
   const { hasPermission: canView } = context.can({
     action: 'view',
     entity: 'article',
     state: article.state,
-    targetAuthorId: effectiveTargetAuthorId,
+    targetAuthorIds,
   })
 
   if (!canView) {
@@ -116,7 +112,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'update',
     entity: 'article',
     state: article.state,
-    targetAuthorId: effectiveTargetAuthorId,
+    targetAuthorIds,
   })
 
   // Check delete permission
@@ -124,7 +120,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'delete',
     entity: 'article',
     state: article.state,
-    targetAuthorId: effectiveTargetAuthorId,
+    targetAuthorIds,
   })
 
   // Check publish permission (draft → published)
@@ -132,7 +128,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'publish',
     entity: 'article',
     state: article.state,
-    targetAuthorId: effectiveTargetAuthorId,
+    targetAuthorIds,
   })
 
   // Find Coordinator review (level 1)
@@ -151,7 +147,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'retract',
     entity: 'article',
     state: article.state,
-    targetAuthorId: effectiveTargetAuthorId,
+    targetAuthorIds,
   })
 
   // Check archive permission (published → archived)
@@ -159,7 +155,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'archive',
     entity: 'article',
     state: article.state,
-    targetAuthorId: effectiveTargetAuthorId,
+    targetAuthorIds,
   })
 
   // Check restore permission (archived → draft)
@@ -167,7 +163,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'restore',
     entity: 'article',
     state: article.state,
-    targetAuthorId: effectiveTargetAuthorId,
+    targetAuthorIds,
   })
 
   // Check review permission
@@ -175,7 +171,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'review',
     entity: 'article',
     state: article.state,
-    targetAuthorId: effectiveTargetAuthorId,
+    targetAuthorIds,
   })
 
   // Don't show review button if:

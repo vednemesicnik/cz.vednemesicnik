@@ -15,70 +15,40 @@ type Permissions = {
 }[]
 
 type Options = {
-  access?: Access[]
-  actions?: Action[]
-  entities?: Entity[]
+  action: Action
+  entity: Entity
   ownId?: string
   targetId?: string
 }
 
+type Rights = {
+  hasOwn: boolean
+  hasAny: boolean
+}
+
 /**
- * Determines the rights for given user permissions based on specified options.
- * Options could be omitted when the permissions are already filtered by database query.
+ * Evaluates a role's user permissions for a single action + entity and returns
+ * named rights. Permissions are expected to be pre-filtered by the database query.
  *
- * @param {Permissions} permissions - The list of permissions to evaluate.
- * @param {Options} [options] - Optional parameters to filter the permissions.
- * @param {Access[]} [options.access=["*"]] - The accesses to consider.
- * @param {Action[]} [options.actions=["*"]] - The actions to consider.
- * @param {Entity[]} [options.entities=["*"]] - The entities to consider.
- * @param {string} [options.ownId] - The ID of the person who is modifying the entity (used for "own" access level).
- * @param {string} [options.targetId] - The ID of the person whose entity is being modified (used for "own" access level).
- * @returns {boolean[][][]} A 3D array where each sub-array corresponds to the access levels for a specific action and entity, indicating whether the access level is permitted.
- *
- * @example
- * const [[[ hasUpdateAnyAuthorRight ]]] = getUserRights(permissions, { entities: ["author"], actions: ["update"], access: ["any"] })
+ * - `hasAny` is granted when a matching row has `access: 'any'`.
+ * - `hasOwn` is granted when a matching row has `access: 'own'` and the current
+ *   user is the target (`ownId === targetId`).
  */
 export const getUserRights = (
   permissions: Permissions,
-  options?: Options,
-): boolean[][][] => {
-  const {
-    access = ['*'],
-    actions = ['*'],
-    entities = ['*'],
-    ownId,
-    targetId,
-  } = options ?? {}
+  options: Options,
+): Rights => {
+  const { action, entity, ownId, targetId } = options
 
-  return entities.map((entity) => {
-    return actions.map((action) => {
-      return access.map((access) => {
-        let filteredPermissions = permissions
+  const matches = permissions.filter(
+    (permission) =>
+      permission.entity === entity && permission.action === action,
+  )
 
-        if (entity !== '*') {
-          filteredPermissions = filteredPermissions.filter(
-            (permission) => entity === permission.entity,
-          )
-        }
+  const hasAny = matches.some((permission) => permission.access === 'any')
+  const hasOwn = matches.some(
+    (permission) => permission.access === 'own' && ownId === targetId,
+  )
 
-        if (action !== '*') {
-          filteredPermissions = filteredPermissions.filter(
-            (permission) => action === permission.action,
-          )
-        }
-
-        if (access !== '*') {
-          filteredPermissions = filteredPermissions.filter((permission) => {
-            if (access === 'own') {
-              return access === permission.access && ownId === targetId
-            } else {
-              return access === permission.access
-            }
-          })
-        }
-
-        return filteredPermissions.length > 0
-      })
-    })
-  })
+  return { hasAny, hasOwn }
 }

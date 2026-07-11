@@ -46,7 +46,7 @@ export async function action({ request }: Route.ActionArgs) {
     entity: 'podcast_episode',
     errorMessage: 'You do not have permission to update this episode.',
     state: existingEpisode.state,
-    targetAuthorId: existingEpisode.authorId,
+    targetAuthorIds: [existingEpisode.authorId],
   })
 
   // Check permission to assign the SELECTED author
@@ -56,7 +56,7 @@ export async function action({ request }: Route.ActionArgs) {
     errorMessage:
       'You do not have permission to assign this author to the episode.',
     state: existingEpisode.state,
-    targetAuthorId: authorId,
+    targetAuthorIds: [authorId],
   })
 
   await updateEpisode({

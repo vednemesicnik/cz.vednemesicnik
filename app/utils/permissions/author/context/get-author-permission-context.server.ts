@@ -1,5 +1,4 @@
 import type {
-  AuthorPermissionAccess,
   AuthorPermissionAction,
   AuthorPermissionEntity,
   ContentState,
@@ -73,32 +72,18 @@ export async function getAuthorPermissionContext(
     can: (config: {
       entity: AuthorPermissionEntity
       action: AuthorPermissionAction
-      access?: AuthorPermissionAccess[]
       state?: ContentState
-      targetAuthorId?: string
+      targetAuthorIds?: string[]
     }) => {
-      const access = config.access ?? ['own', 'any']
-      const states = config.state ? [config.state] : ['*']
-      const targetAuthorId = config.targetAuthorId ?? author.id
+      const targetAuthorIds = config.targetAuthorIds ?? [author.id]
 
-      const result = getAuthorRights(author.role.permissions, {
-        access,
-        actions: [config.action],
-        entities: [config.entity],
+      const { hasOwn, hasAny } = getAuthorRights(author.role.permissions, {
+        action: config.action,
+        entity: config.entity,
         ownId: author.id,
-        states,
-        targetId: targetAuthorId,
+        state: config.state,
+        targetAuthorIds,
       })
-
-      // Result structure: [entity][action][access][state]
-      // [0] = first entity (we only pass 1)
-      // [0][0] = first action (we only pass 1)
-      // [0][0][0] = "own" access (first in access array)
-      // [0][0][1] = "any" access (second in access array)
-      // [0][0][0][0] = first state for "own" (we only pass 1)
-      // [0][0][1][0] = first state for "any" (we only pass 1)
-      const hasOwn = result[0][0][0][0]
-      const hasAny = result[0][0][1][0]
 
       return {
         hasAny,

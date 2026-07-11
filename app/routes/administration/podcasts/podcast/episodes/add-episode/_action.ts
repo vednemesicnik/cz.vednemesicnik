@@ -32,7 +32,7 @@ export async function action({ request }: Route.ActionArgs) {
     action: 'create',
     entity: 'podcast_episode',
     state: 'draft',
-    targetAuthorId: authorId,
+    targetAuthorIds: [authorId],
   })
 
   const { episodeId } = await createEpisode(submission.value)

@@ -46,7 +46,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     action: 'update',
     entity: 'podcast_episode_link',
     state: episode.state,
-    targetAuthorId: link.authorId,
+    targetAuthorIds: [link.authorId],
   })
 
   const { label, url } = submission.value

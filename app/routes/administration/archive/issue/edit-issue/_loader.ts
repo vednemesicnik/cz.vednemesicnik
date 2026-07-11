@@ -45,7 +45,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     entity: 'issue',
     redirectTo: href('/administration/archive/:issueId', { issueId: issue.id }),
     state: issue.state,
-    targetAuthorId: issue.authorId,
+    targetAuthorIds: [issue.authorId],
   })
 
   const authors = await getAuthorsByPermission(

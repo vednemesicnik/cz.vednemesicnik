@@ -33,7 +33,7 @@ export async function action({ request }: Route.ActionArgs) {
     action: 'create',
     entity: 'podcast_episode_link',
     state: 'draft',
-    targetAuthorId: authorId,
+    targetAuthorIds: [authorId],
   })
 
   const { linkId } = await createLink(submission.value)

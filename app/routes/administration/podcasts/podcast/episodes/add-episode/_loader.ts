@@ -14,7 +14,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'create',
     entity: 'podcast_episode',
     state: 'draft',
-    targetAuthorId: context.authorId,
+    targetAuthorIds: [context.authorId],
   })
 
   const { podcastId } = params

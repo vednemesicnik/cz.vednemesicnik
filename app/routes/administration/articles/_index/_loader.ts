@@ -108,11 +108,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       }
     }
 
-    const effectiveTargetAuthorId = article.authors.some(
-      (a) => a.id === context.authorId,
-    )
-      ? context.authorId
-      : article.authors[0].id
+    const targetAuthorIds = article.authors.map((a) => a.id)
 
     return {
       ...article,
@@ -120,19 +116,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         action: 'delete',
         entity: 'article',
         state: article.state,
-        targetAuthorId: effectiveTargetAuthorId,
+        targetAuthorIds,
       }).hasPermission,
       canEdit: context.can({
         action: 'update',
         entity: 'article',
         state: article.state,
-        targetAuthorId: effectiveTargetAuthorId,
+        targetAuthorIds,
       }).hasPermission,
       canView: context.can({
         action: 'view',
         entity: 'article',
         state: article.state,
-        targetAuthorId: effectiveTargetAuthorId,
+        targetAuthorIds,
       }).hasPermission,
     }
   })
@@ -145,7 +141,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       action: 'create',
       entity: 'article',
       state: 'draft',
-      targetAuthorId: context.authorId,
+      targetAuthorIds: [context.authorId],
     }).hasPermission,
     currentPage,
     pageSize: PAGE_SIZE,
