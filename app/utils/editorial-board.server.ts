@@ -49,16 +49,17 @@ export type EditorialBoardData = z.infer<typeof snapshotSchema>
 
 type CacheEntry = { data: EditorialBoardData; fetchedAt: number }
 
-// Czech collation for member names — built once and reused. Node ships full ICU,
-// so this yields correct Czech ordering (č/ř/š/ž), which GAS's limited Intl can't
-// guarantee; the endpoint therefore returns members in sheet order and we sort
-// here. `collator.compare` is already bound, so it can be passed straight to sort.
-const memberCollator = new Intl.Collator('cs')
+// Czech collation for member names, resolved once at module scope. Node ships
+// full ICU, so this yields correct Czech ordering (č/ř/š/ž), which GAS's limited
+// Intl can't guarantee; the endpoint returns members in sheet order and we sort
+// here. `Intl.Collator#compare` is a bound function, cached here to avoid
+// re-reading it per position.
+const compareMembers = new Intl.Collator('cs').compare
 
 const sortMembers = (data: EditorialBoardData): EditorialBoardData => ({
   positions: data.positions.map((position) => ({
     ...position,
-    members: [...position.members].sort(memberCollator.compare),
+    members: [...position.members].sort(compareMembers),
   })),
 })
 
