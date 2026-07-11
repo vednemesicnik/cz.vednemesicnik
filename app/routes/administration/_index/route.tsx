@@ -20,8 +20,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     canViewArticles,
     canViewPodcasts,
     canViewIssues,
-    canViewEditorialBoardPositions,
-    canViewEditorialBoardMembers,
   } = permissions
 
   const hasDisplayedPendingItems =
@@ -30,9 +28,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     pendingReviewItems.podcastEpisodes.length > 0 ||
     pendingReviewItems.issues.length > 0 ||
     pendingReviewItems.articleCategories.length > 0 ||
-    pendingReviewItems.articleTags.length > 0 ||
-    pendingReviewItems.editorialBoardMembers.length > 0 ||
-    pendingReviewItems.editorialBoardPositions.length > 0
+    pendingReviewItems.articleTags.length > 0
 
   return (
     <AdminPage>
@@ -150,33 +146,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 type="Štítek"
               />
             ))}
-            {pendingReviewItems.editorialBoardMembers.map((member) => (
-              <AdminPendingItem
-                author={member.author.name}
-                date={new Date(member.createdAt)}
-                key={member.id}
-                title={member.fullName}
-                to={href('/administration/editorial-board/members/:memberId', {
-                  memberId: member.id,
-                })}
-                type="Člen redakce"
-              />
-            ))}
-            {pendingReviewItems.editorialBoardPositions.map((position) => (
-              <AdminPendingItem
-                author={position.author.name}
-                date={new Date(position.createdAt)}
-                key={position.id}
-                title={position.key}
-                to={href(
-                  '/administration/editorial-board/positions/:positionId',
-                  {
-                    positionId: position.id,
-                  },
-                )}
-                type="Pozice"
-              />
-            ))}
           </div>
         </section>
       )}
@@ -223,14 +192,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               icon="📰"
               title="Archiv"
               to={href('/administration/archive')}
-            />
-          )}
-          {(canViewEditorialBoardPositions || canViewEditorialBoardMembers) && (
-            <AdminNavigationCard
-              description="Správa členů a pozic redakce"
-              icon="👔"
-              title="Redakce"
-              to={href('/administration/editorial-board')}
             />
           )}
           <AdminNavigationCard

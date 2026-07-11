@@ -7,8 +7,6 @@ import { getUserPermissionContext } from '~/utils/permissions/user/context/get-u
 import { getPendingArticleCategories } from './utils/get-pending-article-categories.server'
 import { getPendingArticleTags } from './utils/get-pending-article-tags.server'
 import { getPendingArticles } from './utils/get-pending-articles.server'
-import { getPendingEditorialBoardMembers } from './utils/get-pending-editorial-board-members.server'
-import { getPendingEditorialBoardPositions } from './utils/get-pending-editorial-board-positions.server'
 import { getPendingIssues } from './utils/get-pending-issues.server'
 import { getPendingPodcastEpisodes } from './utils/get-pending-podcast-episodes.server'
 import { getPendingPodcasts } from './utils/get-pending-podcasts.server'
@@ -25,8 +23,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         'podcast',
         'podcast_episode',
         'issue',
-        'editorial_board_position',
-        'editorial_board_member',
       ],
     }),
     getUserPermissionContext(request, {
@@ -75,18 +71,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     state: 'draft',
   }).hasAny
 
-  const canViewEditorialBoardMemberDrafts = authorContext.can({
-    action: 'view',
-    entity: 'editorial_board_member',
-    state: 'draft',
-  }).hasAny
-
-  const canViewEditorialBoardPositionDrafts = authorContext.can({
-    action: 'view',
-    entity: 'editorial_board_position',
-    state: 'draft',
-  }).hasAny
-
   // Fetch draft content created by other authors (for review)
   const pendingOptions = { currentAuthorId, currentRoleLevel }
 
@@ -99,8 +83,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     draftIssues,
     draftArticleCategories,
     draftArticleTags,
-    draftEditorialBoardMembers,
-    draftEditorialBoardPositions,
   ] = await Promise.all([
     canViewArticleDrafts
       ? getPendingArticles(pendingOptions)
@@ -119,12 +101,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       : Promise.resolve(emptyResult),
     canViewArticleTagDrafts
       ? getPendingArticleTags(pendingOptions)
-      : Promise.resolve(emptyResult),
-    canViewEditorialBoardMemberDrafts
-      ? getPendingEditorialBoardMembers(pendingOptions)
-      : Promise.resolve(emptyResult),
-    canViewEditorialBoardPositionDrafts
-      ? getPendingEditorialBoardPositions(pendingOptions)
       : Promise.resolve(emptyResult),
   ])
 
@@ -155,16 +131,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     draftPodcastEpisodes.count +
     draftIssues.count +
     draftArticleCategories.count +
-    draftArticleTags.count +
-    draftEditorialBoardMembers.count +
-    draftEditorialBoardPositions.count
+    draftArticleTags.count
 
   const pendingReviewItems = {
     articleCategories: draftArticleCategories.items,
     articles: draftArticles.items,
     articleTags: draftArticleTags.items,
-    editorialBoardMembers: draftEditorialBoardMembers.items,
-    editorialBoardPositions: draftEditorialBoardPositions.items,
     issues: draftIssues.items,
     podcastEpisodes: draftPodcastEpisodes.items,
     podcasts: draftPodcasts.items,
@@ -197,14 +169,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       action: 'view',
       entity: 'author',
       targetUserId: userContext.userId,
-    }).hasPermission,
-    canViewEditorialBoardMembers: authorContext.can({
-      action: 'view',
-      entity: 'editorial_board_member',
-    }).hasPermission,
-    canViewEditorialBoardPositions: authorContext.can({
-      action: 'view',
-      entity: 'editorial_board_position',
     }).hasPermission,
     canViewIssues: authorContext.can({ action: 'view', entity: 'issue' })
       .hasPermission,

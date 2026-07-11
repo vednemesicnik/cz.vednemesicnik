@@ -191,26 +191,6 @@ export default [
             ),
           ),
 
-          // Editorial Board
-          ...createAdminIntersection(
-            {
-              name: 'editorial-board',
-              path: 'routes/administration/editorial-board',
-            },
-            ...createAdminEntriesSection({
-              entry: 'position',
-              id: 'positionId',
-              name: 'positions',
-              path: 'routes/administration/editorial-board/positions',
-            }),
-            ...createAdminEntriesSection({
-              entry: 'member',
-              id: 'memberId',
-              name: 'members',
-              path: 'routes/administration/editorial-board/members',
-            }),
-          ),
-
           // Users
           ...createAdminEntriesSection({
             entry: 'user',
