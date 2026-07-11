@@ -40,19 +40,21 @@ have to add them by hand.
 
 `setupSpreadsheet()` builds the whole structure: both sheets with the canonical
 headers, frozen and formatted header rows, the `Role` dropdown on `Kontakty`, the
-`Aktivní` checkbox column, conditional formatting that greys out inactive members, the
-hidden `_pořadí role` sort helper, protection on the `Role` sheet, and it removes the
-leftover default sheet and any excess columns. It is safe to re-run and never deletes
-member rows.
+`Aktivní` checkbox column, conditional formatting that colour-codes rows by state
+(pastel green when active, pastel red when inactive, with a solid colour on the
+`Aktivní` cell), protection on the `Role` sheet, and it removes the leftover default
+sheet and any excess columns. It is safe to re-run and never deletes member rows.
 
 ### Two manual steps the script can't do
 
-Apps Script has no API for either, so do these once in the UI on `Kontakty!B` (`Role`):
+The Sheets API exposes neither setting ([googleapis #2676](https://github.com/googleapis/google-api-python-client/issues/2676)),
+so do these once in the UI on `Kontakty!B` (`Role`) — **Data ▸ Data validation ▸** the
+rule:
 
-- **Multi-select** — open the column's data-validation settings and enable multiple
-  selections, so a member can hold several roles (they then appear in each section on
-  the web).
-- **Chip colors** — open the dropdown editor and pick a color per role option.
+- **Multi-select** — switch the dropdown **Display style** to **Chip**, then enable
+  **Allow multiple selections**. The toggle stays greyed out until the dropdown is
+  chip-style. A member can then hold several roles and appears in each section on the web.
+- **Chip colors** — pick a color per role option in the same dropdown editor.
 
 ## 3. Reference: sheet design
 
@@ -78,14 +80,16 @@ reordered (within each sheet) without breaking the endpoint.
 | D      | `E-mail`       | text              | internal only — never returned by the endpoint               |
 | E      | `Telefon`      | text              | internal only — never returned by the endpoint               |
 | F      | `Poznámka`     | text              | internal only — never returned by the endpoint               |
-| G      | `_pořadí role` | hidden formula    | `=IFERROR(VLOOKUP(…;Role!A:C;3;0);999)` — sort helper        |
 
 Behaviour built by the script:
 
-- Conditional formatting greys a row when it has a name but `Aktivní` is unchecked, so
-  inactive members visually sink.
-- `Sort.gs` (`onEdit`) re-sorts on any `Role`/`Aktivní` change: active first, then role
-  order (the hidden helper), then name.
+- Conditional formatting colour-codes each named row by state — pastel green when active,
+  pastel red when inactive — with a solid green/red fill on the `Aktivní` cell. (The rules
+  combine their conditions with `*` rather than `AND(…,…)`: `whenFormulaSatisfied` doesn't
+  localise the argument separator, so a comma breaks the rule in a Czech-locale sheet.)
+- `Sort.gs` (`onEdit`) re-sorts on any `Aktivní` change so active members float to the
+  top. Section grouping and per-section name ordering are done in the endpoint/app, so a
+  member with several role chips needs no single sort position in the sheet.
 
 ## 4. Set the shared secret
 
@@ -140,8 +144,10 @@ instead of crashing.
 }
 ```
 
-- `positions` are sorted by `order`; roles with no active members are included with an
-  empty `members` array (the page renders "..." for them).
+- `positions` are sorted by `order`; `members` are returned in sheet row order and the
+  app sorts them by name with Czech ICU collation (`Intl.Collator('cs')` — Node has full
+  ICU, GAS doesn't). Roles with no active members are included with an empty `members`
+  array (the page renders "..." for them).
 - A bad secret or any internal failure returns `{ "ok": false }`. Apps Script's
   `ContentService` always answers HTTP 200, so `ok` is the only error signal.
 

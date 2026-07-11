@@ -49,6 +49,20 @@ export type EditorialBoardData = z.infer<typeof snapshotSchema>
 
 type CacheEntry = { data: EditorialBoardData; fetchedAt: number }
 
+// Czech collation for member names, resolved once at module scope. Node ships
+// full ICU, so this yields correct Czech ordering (č/ř/š/ž), which GAS's limited
+// Intl can't guarantee; the endpoint returns members in sheet order and we sort
+// here. `Intl.Collator#compare` is a bound function, cached here to avoid
+// re-reading it per position.
+const compareMembers = new Intl.Collator('cs').compare
+
+const sortMembers = (data: EditorialBoardData): EditorialBoardData => ({
+  positions: data.positions.map((position) => ({
+    ...position,
+    members: [...position.members].sort(compareMembers),
+  })),
+})
+
 // Absolute path of the snapshot, next to the SQLite DB file. Derived from
 // DATABASE_URL (e.g. "file:./data/sqlite.db" → "./data/…json"). Returns null
 // when DATABASE_URL is unset so snapshot persistence is skipped rather than
@@ -87,7 +101,7 @@ const fetchFromGas = async (
       return null
     }
 
-    return { positions: parsed.data.positions }
+    return sortMembers({ positions: parsed.data.positions })
   } catch (error) {
     console.error('[editorial-board] GAS request threw —', error)
     return null
@@ -105,7 +119,7 @@ const readSnapshot = async (): Promise<EditorialBoardData | null> => {
     const raw = await fs.readFile(snapshotPath, 'utf8')
     const parsed = snapshotSchema.safeParse(JSON.parse(raw))
 
-    return parsed.success ? parsed.data : null
+    return parsed.success ? sortMembers(parsed.data) : null
   } catch {
     // No snapshot yet (cold start) or unreadable — nothing to fall back to.
     return null

@@ -69,6 +69,32 @@ describe('getEditorialBoard', () => {
     expect(JSON.parse(init.body)).toEqual({ secret: GAS_SECRET })
   })
 
+  test('orders each section members by Czech collation', async () => {
+    // Sheet order, mixing diacritics: cs collation must place Č after C and Ž
+    // last — a naive code-unit sort would order Č/Ž after all ASCII letters.
+    const unordered = {
+      ok: true,
+      positions: [
+        {
+          label: 'Role A',
+          members: ['Žák', 'Dvořák', 'Čáp', 'Cimrman'],
+          order: 1,
+        },
+      ],
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(unordered)))
+
+    const { getEditorialBoard } = createEditorialBoardSource()
+    const result = await getEditorialBoard()
+
+    expect(result?.positions[0].members).toEqual([
+      'Cimrman',
+      'Čáp',
+      'Dvořák',
+      'Žák',
+    ])
+  })
+
   test('rejects an { ok: false } response as a failure', async () => {
     vi.stubGlobal(
       'fetch',
