@@ -68,19 +68,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         action: 'delete',
         entity: 'article_tag',
         state: tag.state,
-        targetAuthorId: tag.authorId,
+        targetAuthorIds: [tag.authorId],
       }).hasPermission,
       canEdit: context.can({
         action: 'update',
         entity: 'article_tag',
         state: tag.state,
-        targetAuthorId: tag.authorId,
+        targetAuthorIds: [tag.authorId],
       }).hasPermission,
       canView: context.can({
         action: 'view',
         entity: 'article_tag',
         state: tag.state,
-        targetAuthorId: tag.authorId,
+        targetAuthorIds: [tag.authorId],
       }).hasPermission,
     }
   })
@@ -90,7 +90,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       action: 'create',
       entity: 'article_tag',
       state: 'draft',
-      targetAuthorId: context.authorId,
+      targetAuthorIds: [context.authorId],
     }).hasPermission,
     tags,
   }

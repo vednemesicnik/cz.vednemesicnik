@@ -36,7 +36,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       categoryId: category.id,
     }),
     state: category.state,
-    targetAuthorId: category.authorId,
+    targetAuthorIds: [category.authorId],
   })
 
   const authors = await getAuthorsByPermission(

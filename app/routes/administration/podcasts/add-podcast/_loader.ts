@@ -17,7 +17,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     entity: 'podcast',
     redirectTo: href('/administration/podcasts'),
     state: 'draft',
-    targetAuthorId: context.authorId,
+    targetAuthorIds: [context.authorId],
   })
 
   const authors = await getAuthorsByPermission(

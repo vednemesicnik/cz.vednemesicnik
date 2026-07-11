@@ -69,7 +69,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'view',
     entity: 'podcast_episode_link',
     state: link.state,
-    targetAuthorId: link.authorId,
+    targetAuthorIds: [link.authorId],
   }).hasPermission
 
   if (!canView) {
@@ -81,7 +81,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'review',
     entity: 'podcast_episode_link',
     state: link.state,
-    targetAuthorId: link.authorId,
+    targetAuthorIds: [link.authorId],
   })
 
   // Don't show review button if:
@@ -110,38 +110,38 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       action: 'archive',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canDelete: context.can({
       action: 'delete',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canPublish: context.can({
       action: 'publish',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canRestore: context.can({
       action: 'restore',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canRetract: context.can({
       action: 'retract',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canReview: shouldShowReview,
     canUpdate: context.can({
       action: 'update',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     hasReviewed,
     link: {

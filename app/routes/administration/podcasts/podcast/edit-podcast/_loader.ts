@@ -42,7 +42,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       podcastId: podcast.id,
     }),
     state: podcast.state,
-    targetAuthorId: podcast.authorId,
+    targetAuthorIds: [podcast.authorId],
   })
 
   const authors = await getAuthorsByPermission(

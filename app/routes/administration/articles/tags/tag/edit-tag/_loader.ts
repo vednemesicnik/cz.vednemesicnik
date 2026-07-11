@@ -38,7 +38,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     entity: 'article_tag',
     redirectTo: href('/administration/articles/tags/:tagId', { tagId }),
     state: tag.state,
-    targetAuthorId: tag.authorId,
+    targetAuthorIds: [tag.authorId],
   })
 
   const authors = await getAuthorsByPermission(

@@ -28,28 +28,18 @@ export function useAuthorPermission(options: UseAuthorPermissionOptions) {
     can: (config: {
       entity: AuthorPermissionEntity
       action: AuthorPermissionAction
-      access?: AuthorPermissionAccess[]
       state?: ContentState
-      targetAuthorId?: string
+      targetAuthorIds?: string[]
     }): { hasOwn: boolean; hasAny: boolean; hasPermission: boolean } => {
-      const access = config.access ?? ['own', 'any']
-      const states = config.state ? [config.state] : ['*']
+      const targetAuthorIds = config.targetAuthorIds ?? [authorId]
 
-      const rights = getAuthorRights(permissions, {
-        access,
-        actions: [config.action],
-        entities: [config.entity],
+      const { hasOwn, hasAny } = getAuthorRights(permissions, {
+        action: config.action,
+        entity: config.entity,
         ownId: authorId,
-        states,
-        targetId: config.targetAuthorId,
+        state: config.state,
+        targetAuthorIds,
       })
-
-      // rights structure: [entities][actions][access][states]
-      // With 1 entity, 1 action, 2 access levels, 1 state:
-      // rights[0][0][0][0] = hasOwn (for the first access level, typically "own")
-      // rights[0][0][1][0] = hasAny (for the second access level, typically "any")
-      const hasOwn = rights[0]?.[0]?.[0]?.[0] ?? false
-      const hasAny = rights[0]?.[0]?.[1]?.[0] ?? false
 
       return {
         hasAny,

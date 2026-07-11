@@ -84,7 +84,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'view',
     entity: 'podcast_episode',
     state: episode.state,
-    targetAuthorId: episode.author.id,
+    targetAuthorIds: [episode.author.id],
   })
 
   if (!canView) {
@@ -96,7 +96,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'update',
     entity: 'podcast_episode',
     state: episode.state,
-    targetAuthorId: episode.author.id,
+    targetAuthorIds: [episode.author.id],
   })
 
   // Check delete permission
@@ -104,7 +104,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'delete',
     entity: 'podcast_episode',
     state: episode.state,
-    targetAuthorId: episode.author.id,
+    targetAuthorIds: [episode.author.id],
   })
 
   // Check publish permission (draft → published)
@@ -112,7 +112,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'publish',
     entity: 'podcast_episode',
     state: episode.state,
-    targetAuthorId: episode.author.id,
+    targetAuthorIds: [episode.author.id],
   })
 
   // Find Coordinator review (level 1)
@@ -129,7 +129,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'retract',
     entity: 'podcast_episode',
     state: episode.state,
-    targetAuthorId: episode.author.id,
+    targetAuthorIds: [episode.author.id],
   })
 
   // Check archive permission (published → archived)
@@ -137,7 +137,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'archive',
     entity: 'podcast_episode',
     state: episode.state,
-    targetAuthorId: episode.author.id,
+    targetAuthorIds: [episode.author.id],
   })
 
   // Check restore permission (archived → draft)
@@ -145,7 +145,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'restore',
     entity: 'podcast_episode',
     state: episode.state,
-    targetAuthorId: episode.author.id,
+    targetAuthorIds: [episode.author.id],
   })
 
   // Check review permission
@@ -153,7 +153,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'review',
     entity: 'podcast_episode',
     state: episode.state,
-    targetAuthorId: episode.author.id,
+    targetAuthorIds: [episode.author.id],
   })
 
   // Don't show review button if:
