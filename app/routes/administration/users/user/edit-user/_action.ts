@@ -63,6 +63,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   invariantResponse(
     !(isEditingSelf && isOwner && isChangingRole),
     'Owner nemůže změnit svou vlastní roli. V systému musí vždy existovat alespoň jeden Owner.',
+    { status: 403 },
+  )
+
+  // Single-owner policy: the Owner role originates from the seed and is unique.
+  // Reject changing the Owner's role away from owner, and reject promoting
+  // anyone else to owner — even for an Owner actor via a direct POST.
+  invariantResponse(
+    !(isOwner && newRole.name !== 'owner'),
+    'Roli Owner nelze změnit. V systému musí vždy existovat právě jeden Owner.',
+    { status: 403 },
+  )
+
+  invariantResponse(
+    !(!isOwner && newRole.name === 'owner'),
+    'Roli Owner nelze přiřadit. V systému může existovat pouze jeden Owner.',
+    { status: 403 },
   )
 
   // Check if user can update this user with their current role

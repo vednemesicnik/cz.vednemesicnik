@@ -45,8 +45,8 @@ export async function withAuthorPermission<T>(
 
   invariantResponse(
     hasPermission,
-    options.errorMessage ??
-      `You do not have permission to ${options.action} this ${options.entity}.`,
+    options.errorMessage ?? 'Nemáte oprávnění k této akci.',
+    { status: 403 },
   )
 
   return options.execute(context)

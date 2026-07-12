@@ -104,7 +104,7 @@ All content entities (Article, Podcast, PodcastEpisode, Issue, etc.) support thr
 
 - **Member** (level 3): Can view/update own account and author profile
 - **Administrator** (level 2): Full access to users and authors except Owner accounts
-- **Owner** (level 1): Full system control including Owner role assignment
+- **Owner** (level 1): Full system control; exactly one Owner (from seed), and the Owner role cannot be assigned (single-owner policy)
 
 #### Author Roles (content management)
 

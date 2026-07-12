@@ -1,4 +1,3 @@
-import type { UserRoleName } from '@generated/prisma/enums'
 import bcrypt from 'bcryptjs'
 import { prisma } from '~/utils/db.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
@@ -20,20 +19,14 @@ export const updateUser = async ({
   userId,
 }: Data) => {
   const userToUpdate = await prisma.user.findUnique({
-    select: {
-      role: {
-        select: {
-          name: true,
-        },
-      },
-    },
+    select: { id: true },
     where: { id: userId },
   })
 
-  const owner: UserRoleName = 'owner'
-
-  // Owner cannot be updated
-  if (userToUpdate === null || userToUpdate.role.name === owner) {
+  // Role changes (including the single-owner policy) are enforced in the action,
+  // where both the current and the target role are available. Here we only
+  // guard against updating a non-existent user.
+  if (userToUpdate === null) {
     throwError('Unable to update the user.')
   }
 

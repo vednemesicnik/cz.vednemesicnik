@@ -17,7 +17,7 @@ This documentation outlines the permissions and actions available to users in th
 
 The **level** field establishes a hierarchical authority structure for role assignment and access control:
 
-- **Level 1 (Owner)**: Highest authority - can assign any role including Owner
+- **Level 1 (Owner)**: Highest authority - can assign Administrator and Member roles; the Owner role cannot be assigned to anyone (single-owner policy)
 - **Level 2 (Administrator)**: Mid-level authority - can assign Administrator and Member roles, but NOT Owner
 - **Level 3 (Member)**: Entry level - cannot assign roles to others
 
@@ -29,7 +29,8 @@ When assigning roles, users can only assign roles with a level greater than or e
 **Examples:**
 - ✅ Administrator (level 2) can assign Administrator (level 2) or Member (level 3) roles
 - ❌ Administrator (level 2) CANNOT assign Owner (level 1) role
-- ✅ Owner (level 1) can assign any role (all levels ≥ 1)
+- ✅ Owner (level 1) can assign Administrator (level 2) or Member (level 3) roles
+- ❌ Owner (level 1) CANNOT assign the Owner role — the system has exactly one Owner (single-owner policy)
 - ❌ Member (level 3) cannot assign any roles (no administrative access)
 
 ### 👤 User Entity Permissions
@@ -42,9 +43,9 @@ When assigning roles, users can only assign roles with a level greater than or e
 |                   | update     | any        | Administrators can update accounts for all roles except for owners. |
 |                   | delete     | any        | Administrators can delete accounts for all roles except for owners. |
 | **Owner**         | view       | any        | Owners can view all user accounts.                                  |
-|                   | create     | any        | Owners can create accounts for all roles, including other owners.   |
-|                   | update     | any        | Owners can update any user account.                                 |
-|                   | delete     | any        | Owners can delete any user account, including other owners.         |
+|                   | create     | any        | Owners can create accounts for Administrator and Member roles; the Owner role cannot be assigned (single-owner policy). |
+|                   | update     | any        | Owners can update any user account (including the Owner profile), but the Owner's role cannot be changed. |
+|                   | delete     | any        | Owners can delete any user account except the sole Owner account.   |
 
 ### ✍️ Author Entity Permissions
 | **Role**          | **Action** | **Access** | **Notes**                                                |
@@ -109,9 +110,11 @@ When assigning roles, users can only assign roles with a level greater than or e
 
 - **Capabilities**:
   - Full control over all actions and entities in the system.
-  - Can assign **User roles** with level ≥ 1: Owner, Administrator, Member (all roles).
+  - Can assign **User roles** Administrator and Member; the Owner role cannot be assigned (single-owner policy).
   - Can assign **Author roles**: Coordinator, Creator, Contributor.
-  - Can create, view, update, and delete any user account or author profile.
+  - Can create, view, update, and delete user accounts and author profiles.
 - **Restrictions**:
-  - Limited to one active **Owner** at a time.
+  - Exactly one **Owner** exists, created from the database seed.
+  - The Owner role cannot be assigned to anyone, nor changed away from the Owner account (enforced server-side).
+  - The sole Owner account cannot be deleted.
 
