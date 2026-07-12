@@ -75,13 +75,14 @@ Draft → Published → Archived
 
 ## Publish Gating: Review Requirement
 
-Publishing a draft is additionally gated by the review policy. A draft cannot move
-`Draft → Published` while **every** author's role is below the approver level
-(`APPROVER_ROLE_LEVEL`, currently level 1 = Coordinator — so Contributor and Creator are
-below it) **and** no **approving review** exists — a `Review` from a reviewer whose role is
-at the approver level (currently only Coordinator). If any author is at the approver level
-(e.g. a Coordinator co-author on a multi-author article), no review is required.
-Single-author content has one author, so the rule reduces to that author's role.
+Publishing a draft is additionally gated by the review policy. Role levels are inverted
+(lower number = higher authority). A draft cannot move `Draft → Published` while **every**
+author's role is outside the approver level — i.e. `level > APPROVER_ROLE_LEVEL` (with
+`APPROVER_ROLE_LEVEL = 1` = Coordinator, that means Creator and Contributor) — **and** no
+**approving review** exists (a `Review` from a reviewer with `level <= APPROVER_ROLE_LEVEL`,
+currently only Coordinator). If any author is at the approver level (`level <=
+APPROVER_ROLE_LEVEL`, e.g. a Coordinator co-author on a multi-author article), no review is
+required. Single-author content has one author, so the rule reduces to that author's role.
 
 - A Creator may submit a review (the `review` permission), but it is a **pre-review** that
   helps the Coordinator; it does not satisfy the requirement. A Coordinator review still

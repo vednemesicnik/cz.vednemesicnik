@@ -1,9 +1,11 @@
 type RoleLevel = { level: number }
 
 /**
- * Content-axis approver threshold: roles at this level or above (currently only
- * coordinator, level 1) publish without review, and their approving review
- * unlocks publishing for content authored by lower roles.
+ * Content-axis approver threshold. Role levels are inverted (lower number =
+ * higher authority), so an approver is any role with `level <=
+ * APPROVER_ROLE_LEVEL` — currently only coordinator (level 1). Approver roles
+ * publish without review, and their review unlocks publishing for content
+ * authored by lower roles (higher level numbers).
  */
 export const APPROVER_ROLE_LEVEL = 1
 

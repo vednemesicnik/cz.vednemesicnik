@@ -31,9 +31,10 @@ Two independent concepts govern the review workflow; do not conflate them:
   Coordinator (see the permission table). A Creator's review is a **pre-review that
   assists the Coordinator**: the Creator vets the content so the Coordinator doesn't have
   to go through everything and only needs to confirm it.
-- **Approver level** — a role at `APPROVER_ROLE_LEVEL` or above (currently only Coordinator,
-  level 1) publishes without review, and *its* review is what unlocks publishing for content
-  authored by lower roles. The threshold is the constant `APPROVER_ROLE_LEVEL` in
+- **Approver level** — role levels are inverted (lower number = higher authority), so an
+  approver is any role with `level <= APPROVER_ROLE_LEVEL` — currently only Coordinator
+  (level 1). Such a role publishes without review, and *its* review unlocks publishing for
+  content authored by lower roles (higher level numbers). The threshold constant lives in
   `app/utils/permissions/author/review-policy.ts`.
 
 Consequences:
