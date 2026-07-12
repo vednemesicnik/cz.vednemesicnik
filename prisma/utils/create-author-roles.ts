@@ -10,6 +10,7 @@ import type {
 export type AuthorRolesData = {
   name: AuthorRoleName
   level: number
+  publishRequiresReview: boolean
   permissions: {
     entity: AuthorPermissionEntity
     access: AuthorPermissionAccess
@@ -40,6 +41,7 @@ export const createAuthorRoles = async (
               },
             }),
           },
+          publishRequiresReview: role.publishRequiresReview,
         },
       })
       .catch((error) => {

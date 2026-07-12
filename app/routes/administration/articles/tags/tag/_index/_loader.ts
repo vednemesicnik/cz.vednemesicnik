@@ -1,6 +1,10 @@
 import { prisma } from '~/utils/db.server'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import {
+  canPublishWithoutReview,
+  needsReviewToPublish,
+} from '~/utils/permissions/author/review-policy'
 
 import type { Route } from './+types/route'
 
@@ -15,7 +19,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           name: true,
           role: {
             select: {
-              level: true,
+              publishRequiresReview: true,
             },
           },
         },
@@ -34,8 +38,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               name: true,
               role: {
                 select: {
-                  level: true,
                   name: true,
+                  publishRequiresReview: true,
                 },
               },
             },
@@ -104,14 +108,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorIds: [tag.author.id],
   })
 
-  // Find Coordinator review (level 1)
-  const coordinatorReview = tag.reviews.find(
-    (review) => review.reviewer.role.level === 1,
+  // Whether an approving review exists and whether one is still needed to publish.
+  const hasApprovingReview = tag.reviews.some((review) =>
+    canPublishWithoutReview(review.reviewer.role),
   )
-
-  // Check if author is not a Coordinator and needs review
-  const isNotCoordinator = tag.author.role.level !== 1
-  const needsCoordinatorReview = isNotCoordinator && !coordinatorReview
+  const needsReview = needsReviewToPublish({
+    authors: [tag.author],
+    reviews: tag.reviews,
+  })
 
   // Check retract permission (published → draft)
   const { hasPermission: canRetract } = context.can({
@@ -146,11 +150,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   })
 
   // Don't show review button if:
-  // 1. Author is Coordinator (level 1) - they don't need reviews
+  // 1. Author can publish without review - they don't need reviews
   // 2. Current user is the author - can't review own content
-  const authorIsCoordinator = tag.author.role.level === 1
+  const authorCanPublishWithoutReview = canPublishWithoutReview(tag.author.role)
   const isOwnContent = tag.author.id === context.authorId
-  const shouldShowReview = canReview && !authorIsCoordinator && !isOwnContent
+  const shouldShowReview =
+    canReview && !authorCanPublishWithoutReview && !isOwnContent
 
   // Check if current user has already reviewed this tag
   const hasReviewed = tag.reviews.some(
@@ -166,11 +171,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     canReview: shouldShowReview,
     canUpdate,
     hasReviewed,
-    needsCoordinatorReview,
+    needsReview,
     tag: {
       author: tag.author,
       createdAt: getFormattedPublishDate(tag.createdAt),
-      hasCoordinatorReview: !!coordinatorReview,
+      hasApprovingReview,
       id: tag.id,
       name: tag.name,
       publishedAt: getFormattedPublishDate(tag.publishedAt),
@@ -180,7 +185,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         reviewer: {
           id: review.reviewer.id,
           name: review.reviewer.name,
-          roleLevel: review.reviewer.role.level,
           roleName: review.reviewer.role.name,
         },
         state: review.state,

@@ -25,6 +25,7 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
 
@@ -46,7 +47,7 @@ export default function RouteComponent({
     canRestore,
     canReview,
     hasReviewed,
-    needsCoordinatorReview,
+    needsReview,
   } = loaderData
   const { podcastId } = params
 
@@ -98,9 +99,9 @@ export default function RouteComponent({
             <input name="intent" type="hidden" value="publish" />
             <AdminActionButton
               action="publish"
-              disabled={needsCoordinatorReview}
+              disabled={needsReview}
               title={
-                needsCoordinatorReview
+                needsReview
                   ? 'Nelze publikovat bez schválení koordinátora'
                   : undefined
               }
@@ -198,14 +199,14 @@ export default function RouteComponent({
             {podcast.reviews.map((review) => (
               <AdminDetailItem
                 key={review.id}
-                label={`${review.reviewer.name} (${review.reviewer.roleName === 'coordinator' ? 'Koordinátor' : 'Tvůrce'})`}
+                label={`${review.reviewer.name} (${getAuthorRoleLabel(review.reviewer.roleName)})`}
               >
                 {review.createdAt}
               </AdminDetailItem>
             ))}
           </Activity>
           <AdminDetailItem label="Schváleno koordinátorem">
-            {podcast.hasCoordinatorReview ? 'Ano' : 'Ne'}
+            {podcast.hasApprovingReview ? 'Ano' : 'Ne'}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>

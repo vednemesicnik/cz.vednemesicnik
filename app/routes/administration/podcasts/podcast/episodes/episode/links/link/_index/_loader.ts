@@ -1,6 +1,10 @@
 import { prisma } from '~/utils/db.server'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import {
+  canPublishWithoutReview,
+  needsReviewToPublish,
+} from '~/utils/permissions/author/review-policy'
 
 import type { Route } from './+types/route'
 
@@ -28,7 +32,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           name: true,
           role: {
             select: {
-              name: true,
+              publishRequiresReview: true,
             },
           },
         },
@@ -51,6 +55,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               role: {
                 select: {
                   name: true,
+                  publishRequiresReview: true,
                 },
               },
             },
@@ -85,25 +90,28 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   })
 
   // Don't show review button if:
-  // 1. Author is Coordinator (level 1) - they don't need reviews
+  // 1. Author can publish without review - they don't need reviews
   // 2. Current user is the author - can't review own content
-  const authorIsCoordinator = link.author.role.name === 'coordinator'
+  const authorCanPublishWithoutReview = canPublishWithoutReview(
+    link.author.role,
+  )
   const isOwnContent = link.authorId === context.authorId
-  const shouldShowReview = canReview && !authorIsCoordinator && !isOwnContent
+  const shouldShowReview =
+    canReview && !authorCanPublishWithoutReview && !isOwnContent
 
   // Check if current user has already reviewed this link
   const hasReviewed = link.reviews.some(
     (review) => review.reviewer.name === context.authorId,
   )
 
-  // Check if link has coordinator review
-  const hasCoordinatorReview = link.reviews.some(
-    (review) => review.reviewer.role.name === 'coordinator',
+  // Whether an approving review exists and whether one is still needed to publish.
+  const hasApprovingReview = link.reviews.some((review) =>
+    canPublishWithoutReview(review.reviewer.role),
   )
-
-  // Check if coordinator review is needed (creator trying to publish)
-  const needsCoordinatorReview =
-    link.author.role.name === 'creator' && !hasCoordinatorReview
+  const needsReview = needsReviewToPublish({
+    authors: [link.author],
+    reviews: link.reviews,
+  })
 
   return {
     canArchive: context.can({
@@ -147,6 +155,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     link: {
       author: link.author,
       createdAt: getFormattedPublishDate(link.createdAt),
+      hasApprovingReview,
       id: link.id,
       label: link.label,
       publishedAt: getFormattedPublishDate(link.publishedAt),
@@ -159,6 +168,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       updatedAt: getFormattedPublishDate(link.updatedAt),
       url: link.url,
     },
-    needsCoordinatorReview,
+    needsReview,
   }
 }

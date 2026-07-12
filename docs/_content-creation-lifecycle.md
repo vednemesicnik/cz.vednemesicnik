@@ -70,3 +70,22 @@ Draft → Published → Archived
 **Published**: Can be viewed, updated, retracted, archived.
 
 **Archived**: Can be viewed, updated, deleted and restored.
+
+---
+
+## Publish Gating: Review Requirement
+
+Publishing a draft is additionally gated by the review policy. Content authored by a role
+whose `AuthorRole.publishRequiresReview` is `true` (currently Contributor and Creator)
+cannot move `Draft → Published` until an **approving review** exists — a `Review` from a
+reviewer whose role has `publishRequiresReview: false` (currently only Coordinator).
+
+- A Creator may submit a review (the `review` permission), but it is a **pre-review** that
+  helps the Coordinator; it does not satisfy the requirement. A Coordinator review still
+  has the final say.
+- A Coordinator publishing their own draft needs no review (`publishRequiresReview: false`).
+
+The requirement is enforced both in the detail loaders (disabling the publish button, via
+`needsReviewToPublish`) and in the `publish-*` actions (server-side guard). See
+`app/utils/permissions/author/review-policy.ts` and
+[_author-roles-and-permissions.md](./_author-roles-and-permissions.md).
