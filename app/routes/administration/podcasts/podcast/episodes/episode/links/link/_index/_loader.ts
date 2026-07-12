@@ -51,6 +51,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           id: true,
           reviewer: {
             select: {
+              id: true,
               name: true,
               role: {
                 select: {
@@ -101,7 +102,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // Check if current user has already reviewed this link
   const hasReviewed = link.reviews.some(
-    (review) => review.reviewer.name === context.authorId,
+    (review) => review.reviewer.id === context.authorId,
   )
 
   // Whether an approving review exists and whether one is still needed to publish.
