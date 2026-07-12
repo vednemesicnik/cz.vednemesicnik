@@ -1,5 +1,3 @@
-import { href } from 'react-router'
-
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { requireAuthorPermission } from '~/utils/permissions/author/guards/require-author-permission.server'
 import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
@@ -15,7 +13,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   requireAuthorPermission(context, {
     action: 'create',
     entity: 'article_tag',
-    redirectTo: href('/administration/articles/tags'),
     state: 'draft',
     targetAuthorIds: [context.authorId],
   })

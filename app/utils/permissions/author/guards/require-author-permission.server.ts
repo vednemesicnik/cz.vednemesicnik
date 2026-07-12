@@ -5,7 +5,6 @@ import type {
   AuthorPermissionEntity,
   ContentState,
 } from '@generated/prisma/enums'
-import { redirect } from 'react-router'
 
 import type { AuthorPermissionContext } from '../context/get-author-permission-context.server'
 
@@ -14,7 +13,6 @@ type RequireAuthorPermissionOptions = {
   action: AuthorPermissionAction
   state?: ContentState
   targetAuthorIds?: string[]
-  redirectTo?: string
 }
 
 export function requireAuthorPermission(
@@ -35,10 +33,9 @@ export function requireAuthorPermission(
     targetAuthorIds: options.targetAuthorIds,
   })
 
-  if (!hasPermission) {
-    // TODO: add flash message about insufficient permissions
-    throw redirect(options.redirectTo ?? '/administration')
-  }
+  invariantResponse(hasPermission, 'Nemáte oprávnění k této akci.', {
+    status: 403,
+  })
 
   return { hasAny, hasOwn }
 }

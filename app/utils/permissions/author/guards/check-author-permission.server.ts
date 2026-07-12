@@ -29,8 +29,8 @@ export function checkAuthorPermission(
 
   invariantResponse(
     hasPermission,
-    options.errorMessage ??
-      `You do not have permission to ${options.action} this ${options.entity}.`,
+    options.errorMessage ?? 'Nemáte oprávnění k této akci.',
+    { status: 403 },
   )
 
   return { hasAny, hasOwn }
