@@ -2,6 +2,7 @@ import { invariantResponse } from '@epic-web/invariant'
 
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
+import { needsReviewToPublish } from '~/utils/permissions/author/review-policy'
 
 type Options = {
   id: string
@@ -43,22 +44,13 @@ export const publishArticle = (request: Request, options: Options) =>
         where: { id: options.id },
       }) // TODO: Could be sent in form data to avoid this query?
 
-      // Check if none of the authors is a Coordinator (level !== 1)
-      const isNotCoordinator = article.authors.every(
-        (author) => author.role.level !== 1,
+      invariantResponse(
+        !needsReviewToPublish({
+          authors: article.authors,
+          reviews: article.reviews,
+        }),
+        'Nelze publikovat bez schválení koordinátora',
       )
-
-      // If author is not a Coordinator, require Coordinator review
-      if (isNotCoordinator) {
-        const hasCoordinatorReview = article.reviews.some(
-          (review) => review.reviewer.role.level === 1,
-        )
-
-        invariantResponse(
-          hasCoordinatorReview,
-          'Nelze publikovat bez schválení koordinátora',
-        )
-      }
 
       const publishedAt = article.publishedAt ?? new Date()
 
