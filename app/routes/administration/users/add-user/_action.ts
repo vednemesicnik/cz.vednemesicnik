@@ -1,4 +1,5 @@
 import { parseWithZod } from '@conform-to/zod/v4'
+import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
 import { validateCSRF } from '~/utils/csrf.server'
@@ -33,9 +34,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Get the target role to check hierarchy
   const targetRole = await prisma.userRole.findUniqueOrThrow({
-    select: { level: true },
+    select: { level: true, name: true },
     where: { id: submission.value.roleId },
   })
+
+  // Single-owner policy: the Owner role originates from the seed and is unique,
+  // so a new user can never be created with it — even by an Owner actor.
+  invariantResponse(
+    targetRole.name !== 'owner',
+    'Roli Owner nelze přiřadit. V systému může existovat pouze jeden Owner.',
+    { status: 403 },
+  )
 
   // Check if user can create users with the specified role
   checkUserPermission(context, {
