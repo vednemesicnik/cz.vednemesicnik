@@ -7,6 +7,11 @@ import { getClientIp } from '~/utils/rate-limit.server'
 
 export type { AuthMethod }
 
+// Split the generated enum so the union below stays in sync with the schema:
+// sign-in events carry a `method`, `sign_out` doesn't.
+type SignOutEvent = Extract<AuthLogEvent, 'sign_out'>
+type SignInEvent = Exclude<AuthLogEvent, SignOutEvent>
+
 type AuthLogBase = {
   request: Request
   userId?: string
@@ -17,11 +22,8 @@ type AuthLogBase = {
 // one is incomplete), while `sign_out` has no method. This makes an incomplete
 // call a compile-time error rather than a silent bad row.
 type RecordAuthLogArgs =
-  | (AuthLogBase & {
-      event: Exclude<AuthLogEvent, 'sign_out'>
-      method: AuthMethod
-    })
-  | (AuthLogBase & { event: 'sign_out'; method?: never })
+  | (AuthLogBase & { event: SignInEvent; method: AuthMethod })
+  | (AuthLogBase & { event: SignOutEvent; method?: never })
 
 // Retention window for auth logs (see cleanupOldAuthLogs).
 const RETENTION_DAYS = 90
