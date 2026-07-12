@@ -200,15 +200,14 @@ model Author {
 }
 
 model AuthorRole {
-  id                    String             @id @default(cuid())
-  name                  AuthorRoleName     @unique
-  level                 Int
-  description           String             @default("")
-  publishRequiresReview Boolean            @default(true)
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  authors               Author[]
-  permissions           AuthorPermission[]
+  id          String             @id @default(cuid())
+  name        AuthorRoleName     @unique
+  level       Int
+  description String             @default("")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  authors     Author[]
+  permissions AuthorPermission[]
 }
 
 enum AuthorRoleName {

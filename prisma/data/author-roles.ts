@@ -90,7 +90,6 @@ export const authorRoles: AuthorRolesData = [
         state: 'published',
       },
     ],
-    publishRequiresReview: true,
   },
   {
     level: 2,
@@ -273,7 +272,6 @@ export const authorRoles: AuthorRolesData = [
         state: 'published',
       },
     ],
-    publishRequiresReview: true,
   },
   {
     level: 1,
@@ -406,6 +404,5 @@ export const authorRoles: AuthorRolesData = [
         state: 'archived',
       },
     ],
-    publishRequiresReview: false,
   },
 ]

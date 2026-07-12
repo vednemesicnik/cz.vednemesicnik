@@ -21,7 +21,7 @@ export const publishArticle = (request: Request, options: Options) =>
             select: {
               role: {
                 select: {
-                  publishRequiresReview: true,
+                  level: true,
                 },
               },
             },
@@ -33,7 +33,7 @@ export const publishArticle = (request: Request, options: Options) =>
                 select: {
                   role: {
                     select: {
-                      publishRequiresReview: true,
+                      level: true,
                     },
                   },
                 },

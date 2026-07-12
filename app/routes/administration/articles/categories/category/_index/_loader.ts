@@ -33,7 +33,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           name: true,
           role: {
             select: {
-              publishRequiresReview: true,
+              level: true,
             },
           },
         },
@@ -52,8 +52,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               name: true,
               role: {
                 select: {
+                  level: true,
                   name: true,
-                  publishRequiresReview: true,
                 },
               },
             },

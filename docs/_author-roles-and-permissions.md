@@ -12,18 +12,18 @@ This document describes access rights and actions available for different roles 
 
 ### Role Level Hierarchy
 
-The **level** field expresses a role's relative rank (for ordering/display only):
+The **level** field expresses a role's authority rank (lower number = higher authority):
 
 - **Level 1 (Coordinator)**: Highest authority - full access to all content in all states
 - **Level 2 (Creator)**: Mid-level authority - access to own content across states
 - **Level 3 (Contributor)**: Entry level - limited to own draft content
 
-Lower level numbers indicate higher authority. The `level` field is used only for
-ordering and display (e.g. sorting roles, assignable-role bounds). Content access is
-decided by the permission catalog (the table below), **not** by comparing levels — no part
-of the content workflow branches on a role's level or name.
+`level` drives role ordering/display (sorting, assignable-role bounds) and, on the content
+axis, identifies the **approver** for the publish-review gate (see below). Content CRUD
+access itself is decided by the permission catalog (the table below), not by comparing
+levels.
 
-## Review Policy: `publishRequiresReview`
+## Review Policy: the approver level
 
 Two independent concepts govern the review workflow; do not conflate them:
 
@@ -31,27 +31,27 @@ Two independent concepts govern the review workflow; do not conflate them:
   Coordinator (see the permission table). A Creator's review is a **pre-review that
   assists the Coordinator**: the Creator vets the content so the Coordinator doesn't have
   to go through everything and only needs to confirm it.
-- **`publishRequiresReview` flag** (a boolean on `AuthorRole`) — "content authored by this
-  role needs an approving review before it can be published." A review from a role whose
-  `publishRequiresReview` is `false` is what satisfies that requirement.
+- **Approver level** — a role at `APPROVER_ROLE_LEVEL` or above (currently only Coordinator,
+  level 1) publishes without review, and *its* review is what unlocks publishing for content
+  authored by lower roles. The threshold is the constant `APPROVER_ROLE_LEVEL` in
+  `app/utils/permissions/author/review-policy.ts`.
 
-Current values: Coordinator `false`; Creator and Contributor `true`. Consequences:
+Consequences:
 
-- Content cannot be published while **every** author's role requires review and no
-  approving review exists. In practice: a Contributor/Creator draft needs a **Coordinator**
-  review first; a Creator's own pre-review does **not** unlock publishing — the Coordinator
-  still has the final say.
-- If any author is exempt (e.g. a Coordinator co-author on a multi-author article),
-  publishing is allowed without a review. Single-author content (tags, categories,
+- Content cannot be published while **every** author's role is below the approver level and
+  no approver-level review exists. In practice: a Contributor/Creator draft needs a
+  **Coordinator** review first; a Creator's own pre-review does **not** unlock publishing —
+  the Coordinator still has the final say.
+- If any author is at the approver level (e.g. a Coordinator co-author on a multi-author
+  article), publishing is allowed without a review. Single-author content (tags, categories,
   podcasts, episodes, links, issues) has exactly one author, so the rule reduces to "that
   author's role".
 - A Coordinator can publish their own content without any review.
 
-Because the rule lives in data rather than in a hardcoded role name/level, a future custom
-role can become an approver simply by setting `publishRequiresReview: false` — no code
-change. The helpers `canPublishWithoutReview` / `needsReviewToPublish` in
+The helpers `canPublishWithoutReview` / `needsReviewToPublish` in
 `app/utils/permissions/author/review-policy.ts` encode this and are used by every content
-detail loader and `publish-*` action.
+detail loader and `publish-*` action. If the gate ever needs to become configurable, it
+belongs in the permission catalog (a future `approve` action), not on the role.
 
 ## Permissions Overview
 
@@ -93,9 +93,9 @@ detail loader and `publish-*` action.
 - Can publish, retract, and archive **their own content only**.
 - **Can submit reviews** (the `review` permission) — a pre-review that helps the Coordinator,
   who then only needs to confirm it.
-- **Publishing own content requires review**: because Creator has `publishRequiresReview: true`,
-  a Creator can only publish their own draft once an approving **Coordinator** review exists.
-  A Creator's own review does not satisfy this.
+- **Publishing own content requires review**: because Creator (level 2) is below the
+  approver level, a Creator can only publish their own draft once an approving **Coordinator**
+  review exists. A Creator's own review does not satisfy this.
 - **Cannot publish Contributor content** — only helps the Coordinator by pre-reviewing it.
 
 ### **Coordinator**
@@ -103,7 +103,7 @@ detail loader and `publish-*` action.
 - Can create, update, and delete any content in Draft and Archived states.
 - Can publish, retract, and archive any content from any author.
 - Can restore archived content to draft state.
-- **Can review any content.** Because Coordinator has `publishRequiresReview: false`, a
+- **Can review any content.** Because Coordinator is at the approver level (level 1), a
   Coordinator review is the one that unlocks publishing for Contributor/Creator content.
 - **No review requirement for own content**: can publish their own content without review.
 - **Final publishing authority**: publishes Contributor and Creator content once reviewed.
