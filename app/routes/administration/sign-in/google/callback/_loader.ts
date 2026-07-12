@@ -2,7 +2,7 @@ import { ALLOWED_EMAIL_DOMAIN } from '@constants/auth'
 import type { TokenPayload } from 'google-auth-library'
 import { redirect } from 'react-router'
 import { requireUnauthenticated } from '~/utils/auth.server'
-import { recordAuthEvent } from '~/utils/auth-event.server'
+import { recordAuthLog } from '~/utils/auth-log.server'
 import { prisma } from '~/utils/db.server'
 import {
   createGoogleOAuthClient,
@@ -37,7 +37,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // place. `email` is only known past the domain check; earlier OAuth-stage
   // failures (denied consent, bad state/nonce, token exchange) log without it.
   const failTo = (error: 'oauth' | 'domain' | 'account', email?: string) => {
-    recordAuthEvent({
+    recordAuthLog({
       email,
       event: 'sign_in_failure',
       method: 'google',

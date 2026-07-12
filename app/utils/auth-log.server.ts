@@ -1,18 +1,13 @@
 import { setInterval } from 'node:timers'
 import { remember } from '@epic-web/remember'
 
+import type { AuthLogEvent, AuthMethod } from '@generated/prisma/enums'
 import { prisma } from '~/utils/db.server'
 import { getClientIp } from '~/utils/rate-limit.server'
 
-export type AuthMethod =
-  | 'password'
-  | 'magic_link'
-  | 'google'
-  | 'passkey'
-  | 'two_factor'
-  | 'backup_code'
+export type { AuthMethod }
 
-type AuthEventBase = {
+type AuthLogBase = {
   request: Request
   userId?: string
   email?: string
@@ -21,32 +16,32 @@ type AuthEventBase = {
 // Discriminated on `event`: the sign-in events require a `method` (a row without
 // one is incomplete), while `sign_out` has no method. This makes an incomplete
 // call a compile-time error rather than a silent bad row.
-type RecordAuthEventArgs =
-  | (AuthEventBase & {
-      event: 'sign_in_success' | 'sign_in_failure' | 'two_factor_failure'
+type RecordAuthLogArgs =
+  | (AuthLogBase & {
+      event: Exclude<AuthLogEvent, 'sign_out'>
       method: AuthMethod
     })
-  | (AuthEventBase & { event: 'sign_out'; method?: never })
+  | (AuthLogBase & { event: 'sign_out'; method?: never })
 
-// Retention window for auth events (see cleanupOldAuthEvents).
+// Retention window for auth logs (see cleanupOldAuthLogs).
 const RETENTION_DAYS = 90
 
-// How often the retention loop prunes once running (see startAuthEventRetention).
+// How often the retention loop prunes once running (see startAuthLogRetention).
 const RETENTION_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000
 
 /**
- * Writes an authentication audit event. Fire-and-forget: a logging failure must
+ * Writes an authentication log entry. Fire-and-forget: a logging failure must
  * never break sign-in / sign-out, so the Prisma call is not awaited and any
  * error is only console.error-ed.
  */
-export const recordAuthEvent = ({
+export const recordAuthLog = ({
   request,
   event,
   method,
   userId,
   email,
-}: RecordAuthEventArgs): void => {
-  void prisma.authEvent
+}: RecordAuthLogArgs): void => {
+  void prisma.authLog
     .create({
       data: {
         email,
@@ -58,21 +53,21 @@ export const recordAuthEvent = ({
       },
     })
     .catch((error: unknown) => {
-      console.error('Failed to record auth event', error)
+      console.error('Failed to record auth log', error)
     })
 }
 
 /**
- * Deletes auth events older than the retention window. Fire-and-forget; driven
- * by startAuthEventRetention.
+ * Deletes auth logs older than the retention window. Fire-and-forget; driven by
+ * startAuthLogRetention.
  */
-export const cleanupOldAuthEvents = (): void => {
+export const cleanupOldAuthLogs = (): void => {
   const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000)
 
-  void prisma.authEvent
+  void prisma.authLog
     .deleteMany({ where: { createdAt: { lt: cutoff } } })
     .catch((error: unknown) => {
-      console.error('Failed to clean up old auth events', error)
+      console.error('Failed to clean up old auth logs', error)
     })
 }
 
@@ -84,11 +79,11 @@ export const cleanupOldAuthEvents = (): void => {
  * calling module is re-evaluated (e.g. dev HMR), so exactly one interval exists
  * per process. Called once from entry.server.
  */
-export const startAuthEventRetention = (): void => {
-  remember('authEventRetention', () => {
-    cleanupOldAuthEvents()
+export const startAuthLogRetention = (): void => {
+  remember('authLogRetention', () => {
+    cleanupOldAuthLogs()
     return setInterval(
-      cleanupOldAuthEvents,
+      cleanupOldAuthLogs,
       RETENTION_CLEANUP_INTERVAL_MS,
     ).unref()
   })

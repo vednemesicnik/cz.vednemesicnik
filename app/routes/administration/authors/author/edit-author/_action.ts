@@ -1,6 +1,10 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
+import {
+  formatRoleChangeDetail,
+  recordAuditLog,
+} from '~/utils/audit-log.server'
 import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
@@ -31,13 +35,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     entities: ['author'],
   })
 
-  // Get the author to check ownership
-  const author = await prisma.author.findUniqueOrThrow({
-    select: {
-      user: { select: { id: true } },
-    },
-    where: { id: submission.value.authorId },
-  })
+  // Get the author (ownership check) and the new role, to audit role changes
+  const [author, newRole] = await Promise.all([
+    prisma.author.findUniqueOrThrow({
+      select: {
+        role: { select: { name: true } },
+        user: { select: { id: true } },
+      },
+      where: { id: submission.value.authorId },
+    }),
+    prisma.authorRole.findUniqueOrThrow({
+      select: { name: true },
+      where: { id: submission.value.roleId },
+    }),
+  ])
 
   // Check if user can update this author
   checkUserPermission(context, {
@@ -47,6 +58,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   await updateAuthor(submission.value)
+
+  if (author.role.name !== newRole.name) {
+    recordAuditLog({
+      actorId: context.userId,
+      detail: formatRoleChangeDetail(author.role.name, newRole.name),
+      event: 'author_role_changed',
+      request,
+      targetId: submission.value.authorId,
+    })
+  }
 
   return redirect(
     href('/administration/authors/:authorId', {

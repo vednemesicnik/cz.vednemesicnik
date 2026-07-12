@@ -16,7 +16,7 @@ import {
   ServerRouter,
 } from 'react-router'
 
-import { startAuthEventRetention } from '~/utils/auth-event.server'
+import { startAuthLogRetention } from '~/utils/auth-log.server'
 import { getEnv, initEnv } from '~/utils/env.server'
 
 // Reject/cancel all pending promises after 5 seconds
@@ -26,7 +26,7 @@ initEnv()
 global.ENV = getEnv()
 
 // Prune auth events past the retention window, once at startup and daily after.
-startAuthEventRetention()
+startAuthLogRetention()
 
 export default function handleRequest(
   request: Request,
