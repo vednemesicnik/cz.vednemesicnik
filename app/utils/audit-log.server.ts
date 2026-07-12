@@ -1,7 +1,16 @@
+import type { AuditLogEvent } from '@generated/prisma/enums'
 import { prisma } from '~/utils/db.server'
 import { getClientIp } from '~/utils/rate-limit.server'
 
 export { formatRoleChangeDetail } from '~/utils/format-role-change-detail'
+
+// Split the generated enum so the union below stays in sync with the schema: a
+// role-change event carries a `detail`, the rest don't.
+type RoleChangeEvent = Extract<
+  AuditLogEvent,
+  'user_role_changed' | 'author_role_changed'
+>
+type SimpleEvent = Exclude<AuditLogEvent, RoleChangeEvent>
 
 type AuditLogBase = {
   request: Request
@@ -13,11 +22,8 @@ type AuditLogBase = {
 // change, while create/delete carry none. This makes an incomplete call a
 // compile-time error rather than a silent bad row.
 type RecordAuditLogArgs =
-  | (AuditLogBase & { event: 'user_created' | 'user_deleted'; detail?: never })
-  | (AuditLogBase & {
-      event: 'user_role_changed' | 'author_role_changed'
-      detail: string
-    })
+  | (AuditLogBase & { event: SimpleEvent; detail?: never })
+  | (AuditLogBase & { event: RoleChangeEvent; detail: string })
 
 /**
  * Writes an administrative audit log entry. Fire-and-forget: a logging failure

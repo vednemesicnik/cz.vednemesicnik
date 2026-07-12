@@ -35,20 +35,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     entities: ['author'],
   })
 
-  // Get the author (ownership check) and the new role, to audit role changes
-  const [author, newRole] = await Promise.all([
-    prisma.author.findUniqueOrThrow({
-      select: {
-        role: { select: { name: true } },
-        user: { select: { id: true } },
-      },
-      where: { id: submission.value.authorId },
-    }),
-    prisma.authorRole.findUniqueOrThrow({
-      select: { name: true },
-      where: { id: submission.value.roleId },
-    }),
-  ])
+  // Get the author to check ownership; keep the current role to audit changes.
+  const author = await prisma.author.findUniqueOrThrow({
+    select: {
+      role: { select: { id: true, name: true } },
+      user: { select: { id: true } },
+    },
+    where: { id: submission.value.authorId },
+  })
 
   // Check if user can update this author
   checkUserPermission(context, {
@@ -59,7 +53,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   await updateAuthor(submission.value)
 
-  if (author.role.name !== newRole.name) {
+  // Audit only an actual role change. The new role is looked up after
+  // updateAuthor has already validated roleId, so a tampered id can't surface as
+  // a premature 500 here.
+  if (author.role.id !== submission.value.roleId) {
+    const newRole = await prisma.authorRole.findUniqueOrThrow({
+      select: { name: true },
+      where: { id: submission.value.roleId },
+    })
+
     recordAuditLog({
       actorId: context.userId,
       detail: formatRoleChangeDetail(author.role.name, newRole.name),
