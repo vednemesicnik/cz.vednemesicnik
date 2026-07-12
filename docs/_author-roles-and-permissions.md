@@ -12,7 +12,7 @@ This document describes access rights and actions available for different roles 
 
 ### Role Level Hierarchy
 
-The **level** field establishes a hierarchical authority structure for access control:
+The **level** field expresses a role's relative rank (for ordering/display only):
 
 - **Level 1 (Coordinator)**: Highest authority - full access to all content in all states
 - **Level 2 (Creator)**: Mid-level authority - access to own content across states
@@ -37,9 +37,14 @@ Two independent concepts govern the review workflow; do not conflate them:
 
 Current values: Coordinator `false`; Creator and Contributor `true`. Consequences:
 
-- Content authored by a Contributor or Creator cannot be published until a **Coordinator**
-  review exists. A Creator's own pre-review does **not** unlock publishing — the
-  Coordinator still has the final say.
+- Content cannot be published while **every** author's role requires review and no
+  approving review exists. In practice: a Contributor/Creator draft needs a **Coordinator**
+  review first; a Creator's own pre-review does **not** unlock publishing — the Coordinator
+  still has the final say.
+- If any author is exempt (e.g. a Coordinator co-author on a multi-author article),
+  publishing is allowed without a review. Single-author content (tags, categories,
+  podcasts, episodes, links, issues) has exactly one author, so the rule reduces to "that
+  author's role".
 - A Coordinator can publish their own content without any review.
 
 Because the rule lives in data rather than in a hardcoded role name/level, a future custom
