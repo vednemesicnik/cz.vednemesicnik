@@ -1,7 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { data, redirect } from 'react-router'
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
-import { recordAuthEvent } from '~/utils/auth-event.server'
+import { recordAuthLog } from '~/utils/auth-log.server'
 import { redeemBackupCode } from '~/utils/backup-codes.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
@@ -86,7 +86,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   ): Promise<never> => {
     const session = await createSession(userId)
 
-    recordAuthEvent({ event: 'sign_in_success', method, request, userId })
+    recordAuthLog({ event: 'sign_in_success', method, request, userId })
 
     const headers = new Headers()
     headers.append(
@@ -109,7 +109,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   // so the user must re-enter their password. Covers both TOTP and backup-code
   // attempts, bounding brute-forcing within the cookie lifetime.
   const fail = async (field: 'backupCode' | 'code', message: string) => {
-    recordAuthEvent({
+    recordAuthLog({
       event: 'two_factor_failure',
       method: field === 'backupCode' ? 'backup_code' : 'two_factor',
       request,

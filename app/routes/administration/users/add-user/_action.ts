@@ -2,6 +2,7 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
+import { recordAuditLog } from '~/utils/audit-log.server'
 import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
@@ -54,6 +55,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   const { userId } = await createUser(submission.value)
+
+  recordAuditLog({
+    actorId: context.userId,
+    event: 'user_created',
+    request,
+    targetId: userId,
+  })
 
   return redirect(href('/administration/users/:userId', { userId }))
 }

@@ -529,13 +529,29 @@ enum ReviewState {
   approved
 }
 
-// Authentication audit log. Deliberately has no relation to User so events
-// survive account deletion. `method` is nullable because sign-out has none.
-model AuthEvent {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  event     String // "sign_in_success" | "sign_in_failure" | "two_factor_failure" | "sign_out"
-  method    String? // "password" | "magic_link" | "google" | "passkey" | "two_factor" | "backup_code"
+enum AuthLogEvent {
+  sign_in_success
+  sign_in_failure
+  two_factor_failure
+  sign_out
+}
+
+enum AuthMethod {
+  password
+  magic_link
+  google
+  passkey
+  two_factor
+  backup_code
+}
+
+// Authentication log. Deliberately has no relation to User so events survive
+// account deletion. `method` is nullable because sign-out has none.
+model AuthLog {
+  id        String       @id @default(cuid())
+  createdAt DateTime     @default(now())
+  event     AuthLogEvent
+  method    AuthMethod? // null for sign-out
   userId    String? // set when the user is known
   email     String? // submitted email on failures where no user exists
   ipAddress String?
@@ -543,4 +559,28 @@ model AuthEvent {
 
   @@index([createdAt])
   @@index([userId])
+}
+
+enum AuditLogEvent {
+  user_created
+  user_deleted
+  user_role_changed
+  author_role_changed
+}
+
+// Administrative audit log (user management, role changes). Deliberately has no
+// relation to User so records survive account deletion. No retention pruning:
+// volume is tiny and the forensic value is permanent.
+model AuditLog {
+  id        String        @id @default(cuid())
+  createdAt DateTime      @default(now())
+  event     AuditLogEvent
+  actorId   String // user id of the administrator performing the action
+  targetId  String // user id (or author id for author_role_changed) of the affected account
+  detail    String? // e.g. "role: member → administrator"
+  ipAddress String?
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([targetId])
 }

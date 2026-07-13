@@ -1,6 +1,6 @@
 import { redirect } from 'react-router'
 import { requireUnauthenticated } from '~/utils/auth.server'
-import { recordAuthEvent } from '~/utils/auth-event.server'
+import { recordAuthLog } from '~/utils/auth-log.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { consumeMagicLinkToken } from '~/utils/magic-link.server'
 import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
@@ -29,7 +29,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const isValid = await consumeMagicLinkToken(normalizedEmail, token)
 
   if (!isValid) {
-    recordAuthEvent({
+    recordAuthLog({
       email: normalizedEmail,
       event: 'sign_in_failure',
       method: 'magic_link',
@@ -42,7 +42,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   // The account may have been removed between request and click.
   if (user === null) {
-    recordAuthEvent({
+    recordAuthLog({
       email: normalizedEmail,
       event: 'sign_in_failure',
       method: 'magic_link',
