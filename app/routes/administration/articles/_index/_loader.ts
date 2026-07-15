@@ -39,9 +39,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // States the current role may view, scoped to own content where access is `own`.
   const viewableStates = buildViewableStateFilters(
     [
-      { state: 'draft', rights: draftPerms },
-      { state: 'published', rights: publishedPerms },
-      { state: 'archived', rights: archivedPerms },
+      { rights: draftPerms, state: 'draft' },
+      { rights: publishedPerms, state: 'published' },
+      { rights: archivedPerms, state: 'archived' },
     ],
     { authors: { some: { id: context.authorId } } },
   )

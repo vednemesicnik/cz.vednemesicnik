@@ -40,9 +40,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     where: {
       OR: buildViewableStateFilters(
         [
-          { state: 'draft', rights: draftPerms },
-          { state: 'published', rights: publishedPerms },
-          { state: 'archived', rights: archivedPerms },
+          { rights: draftPerms, state: 'draft' },
+          { rights: publishedPerms, state: 'published' },
+          { rights: archivedPerms, state: 'archived' },
         ],
         { authorId: context.authorId },
       ),
