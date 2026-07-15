@@ -84,10 +84,10 @@ belongs in the permission catalog (a future `approve` action), not on the role.
 ## Role Descriptions
 
 ### **Contributor**
-- Can view and manage their own content in Draft and Published states.
+- Can view their own content in Draft and Published states (Published is view-only).
 - Can **view their own Archived content** (read-only) — archiving withdraws content
   from circulation, it does not hide it from its own author.
-- Can create, update, and delete their own drafts.
+- Can create, update, and delete their own drafts (Draft is the only editable state).
 - **Cannot publish, retract, archive, or restore content** - these actions require Creator or Coordinator intervention.
 - **Cannot review content**.
 
