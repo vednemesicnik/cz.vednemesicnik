@@ -1,5 +1,6 @@
 import { PAGE_PARAM } from '~/components/pagination'
 import { prisma } from '~/utils/db.server'
+import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import type { Route } from './+types/route'
@@ -35,6 +36,16 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     Number(url.searchParams.get(PAGE_PARAM) ?? '1') || 1,
   )
 
+  // States the current role may view, scoped to own content where access is `own`.
+  const viewableStates = buildViewableStateFilters(
+    [
+      { state: 'draft', rights: draftPerms },
+      { state: 'published', rights: publishedPerms },
+      { state: 'archived', rights: archivedPerms },
+    ],
+    { authors: { some: { id: context.authorId } } },
+  )
+
   const [rawArticles, totalCount] = await Promise.all([
     prisma.article.findMany({
       orderBy: {
@@ -48,52 +59,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       },
       skip: (currentPage - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      where: {
-        OR: [
-          {
-            state: 'draft',
-            ...(draftPerms.hasOwn && !draftPerms.hasAny
-              ? { authors: { some: { id: context.authorId } } }
-              : {}),
-          },
-          {
-            state: 'published',
-            ...(publishedPerms.hasOwn && !publishedPerms.hasAny
-              ? { authors: { some: { id: context.authorId } } }
-              : {}),
-          },
-          {
-            state: 'archived',
-            ...(archivedPerms.hasOwn && !archivedPerms.hasAny
-              ? { authors: { some: { id: context.authorId } } }
-              : {}),
-          },
-        ],
-      },
+      where: { OR: viewableStates },
     }),
     prisma.article.count({
-      where: {
-        OR: [
-          {
-            state: 'draft',
-            ...(draftPerms.hasOwn && !draftPerms.hasAny
-              ? { authors: { some: { id: context.authorId } } }
-              : {}),
-          },
-          {
-            state: 'published',
-            ...(publishedPerms.hasOwn && !publishedPerms.hasAny
-              ? { authors: { some: { id: context.authorId } } }
-              : {}),
-          },
-          {
-            state: 'archived',
-            ...(archivedPerms.hasOwn && !archivedPerms.hasAny
-              ? { authors: { some: { id: context.authorId } } }
-              : {}),
-          },
-        ],
-      },
+      where: { OR: viewableStates },
     }),
   ])
 
