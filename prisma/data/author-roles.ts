@@ -19,6 +19,12 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         access: 'own',
+        actions: ['view'],
+        entity: 'article',
+        state: 'archived',
+      },
+      {
+        access: 'own',
         actions: ['view', 'create', 'update', 'delete'],
         entity: 'article_category',
         state: 'draft',
@@ -28,6 +34,12 @@ export const authorRoles: AuthorRolesData = [
         actions: ['view'],
         entity: 'article_category',
         state: 'published',
+      },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'article_category',
+        state: 'archived',
       },
       {
         access: 'own',
@@ -43,6 +55,12 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         access: 'own',
+        actions: ['view'],
+        entity: 'article_tag',
+        state: 'archived',
+      },
+      {
+        access: 'own',
         actions: ['view', 'create', 'update', 'delete'],
         entity: 'podcast',
         state: 'draft',
@@ -52,6 +70,12 @@ export const authorRoles: AuthorRolesData = [
         actions: ['view'],
         entity: 'podcast',
         state: 'published',
+      },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'podcast',
+        state: 'archived',
       },
       {
         access: 'own',
@@ -67,6 +91,12 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         access: 'own',
+        actions: ['view'],
+        entity: 'podcast_episode',
+        state: 'archived',
+      },
+      {
+        access: 'own',
         actions: ['view', 'create', 'update', 'delete'],
         entity: 'podcast_episode_link',
         state: 'draft',
@@ -79,6 +109,12 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         access: 'own',
+        actions: ['view'],
+        entity: 'podcast_episode_link',
+        state: 'archived',
+      },
+      {
+        access: 'own',
         actions: ['view', 'create', 'update', 'delete'],
         entity: 'issue',
         state: 'draft',
@@ -88,6 +124,12 @@ export const authorRoles: AuthorRolesData = [
         actions: ['view'],
         entity: 'issue',
         state: 'published',
+      },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'issue',
+        state: 'archived',
       },
     ],
   },
@@ -121,6 +163,12 @@ export const authorRoles: AuthorRolesData = [
         entity: 'article',
         state: 'published',
       },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'article',
+        state: 'archived',
+      },
       // Article Category
       {
         access: 'any',
@@ -145,6 +193,12 @@ export const authorRoles: AuthorRolesData = [
         actions: ['retract', 'archive'],
         entity: 'article_category',
         state: 'published',
+      },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'article_category',
+        state: 'archived',
       },
       // Article Tag
       {
@@ -171,6 +225,12 @@ export const authorRoles: AuthorRolesData = [
         entity: 'article_tag',
         state: 'published',
       },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'article_tag',
+        state: 'archived',
+      },
       // Podcast
       {
         access: 'any',
@@ -195,6 +255,12 @@ export const authorRoles: AuthorRolesData = [
         actions: ['retract', 'archive'],
         entity: 'podcast',
         state: 'published',
+      },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'podcast',
+        state: 'archived',
       },
       // Podcast Episode
       {
@@ -221,6 +287,12 @@ export const authorRoles: AuthorRolesData = [
         entity: 'podcast_episode',
         state: 'published',
       },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'podcast_episode',
+        state: 'archived',
+      },
       // Podcast Episode Link
       {
         access: 'any',
@@ -246,6 +318,12 @@ export const authorRoles: AuthorRolesData = [
         entity: 'podcast_episode_link',
         state: 'published',
       },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'podcast_episode_link',
+        state: 'archived',
+      },
       // Issue
       {
         access: 'any',
@@ -270,6 +348,12 @@ export const authorRoles: AuthorRolesData = [
         actions: ['retract', 'archive'],
         entity: 'issue',
         state: 'published',
+      },
+      {
+        access: 'own',
+        actions: ['view'],
+        entity: 'issue',
+        state: 'archived',
       },
     ],
   },

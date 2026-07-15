@@ -58,11 +58,12 @@ belongs in the permission catalog (a future `approve` action), not on the role.
 
 | **Role**        | **Action** | **Access** | **State**                  | 📝 Article | 📂 Article Category | 🏷️ Article Tag | 🎙️ Podcast | 📻 Podcast Episode | 🔗 Podcast Episode Link | 🗞 Issue |
 |-----------------|------------|------------|----------------------------|------------|---------------------|-----------------|-------------|--------------------|-------------------------|----------|
-| **Contributor** | View       | Own        | Draft, Published           | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
+| **Contributor** | View       | Own        | Draft, Published, Archived | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
 |                 | Create     | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
 |                 | Update     | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
 |                 | Delete     | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
 | **Creator**     | View       | Any        | Draft, Published           | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
+|                 | View       | Own        | Archived                   | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
 |                 | Create     | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
 |                 | Update     | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
 |                 | Delete     | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅                       | ✅        |
@@ -83,13 +84,17 @@ belongs in the permission catalog (a future `approve` action), not on the role.
 ## Role Descriptions
 
 ### **Contributor**
-- Can view and manage their own content in Draft and Published states.
-- Can create, update, and delete their own drafts.
+- Can view their own content in Draft and Published states (Published is view-only).
+- Can **view their own Archived content** (read-only) — archiving withdraws content
+  from circulation, it does not hide it from its own author.
+- Can create, update, and delete their own drafts (Draft is the only editable state).
 - **Cannot publish, retract, archive, or restore content** - these actions require Creator or Coordinator intervention.
 - **Cannot review content**.
 
 ### **Creator**
 - Can **view any Draft and Published content** from all authors (broad visibility for editorial oversight).
+- Can **view their own Archived content** (read-only) — but **not** other authors' archived
+  content; the archive stays a Coordinator zone.
 - Can create, update, and delete their own drafts.
 - Can publish, retract, and archive **their own content only**.
 - **Can submit reviews** (the `review` permission) — a pre-review that helps the Coordinator,
