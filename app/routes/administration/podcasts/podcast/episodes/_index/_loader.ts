@@ -1,4 +1,5 @@
 import { prisma } from '~/utils/db.server'
+import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import type { Route } from './+types/route'
@@ -40,26 +41,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           title: true,
         },
         where: {
-          OR: [
-            {
-              state: 'draft',
-              ...(draftPerms.hasOwn && !draftPerms.hasAny
-                ? { authorId: context.authorId }
-                : {}),
-            },
-            {
-              state: 'published',
-              ...(publishedPerms.hasOwn && !publishedPerms.hasAny
-                ? { authorId: context.authorId }
-                : {}),
-            },
-            {
-              state: 'archived',
-              ...(archivedPerms.hasOwn && !archivedPerms.hasAny
-                ? { authorId: context.authorId }
-                : {}),
-            },
-          ],
+          OR: buildViewableStateFilters(
+            [
+              { rights: draftPerms, state: 'draft' },
+              { rights: publishedPerms, state: 'published' },
+              { rights: archivedPerms, state: 'archived' },
+            ],
+            { authorId: context.authorId },
+          ),
         },
       },
       id: true,
