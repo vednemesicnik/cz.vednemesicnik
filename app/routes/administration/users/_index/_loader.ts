@@ -10,21 +10,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   })
 
   // Check view permission - check if user can view at least themselves
-  const viewOwnPerms = context.can({
-    access: ['own'],
+  const viewPerms = context.can({
     action: 'view',
     entity: 'user',
     targetUserId: context.userId,
   })
 
-  const viewAnyPerms = context.can({
-    access: ['any'],
-    action: 'view',
-    entity: 'user',
-  })
-
   // If user has no view permissions at all (neither own nor any), they shouldn't access this page
-  if (!viewOwnPerms.hasPermission && !viewAnyPerms.hasPermission) {
+  if (!viewPerms.hasOwn && !viewPerms.hasAny) {
     throw new Response('Forbidden', { status: 403 })
   }
 
@@ -46,34 +39,31 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
       username: true,
     },
-    where:
-      viewOwnPerms.hasPermission && !viewAnyPerms.hasPermission
-        ? { id: context.userId }
-        : {},
+    where: viewPerms.hasOwn && !viewPerms.hasAny ? { id: context.userId } : {},
   })
 
   // Compute permissions for each user
   const users = rawUsers.map((user) => {
     return {
       ...user,
-      canDelete:
-        context.can({
-          action: 'delete',
-          entity: 'user',
-          targetUserId: user.id,
-        }).hasPermission && user.role.level >= context.roleLevel,
-      canUpdate:
-        context.can({
-          action: 'update',
-          entity: 'user',
-          targetUserId: user.id,
-        }).hasPermission && user.role.level >= context.roleLevel,
-      canView:
-        context.can({
-          action: 'view',
-          entity: 'user',
-          targetUserId: user.id,
-        }).hasPermission && user.role.level >= context.roleLevel,
+      canDelete: context.can({
+        action: 'delete',
+        entity: 'user',
+        targetUserId: user.id,
+        targetUserRoleLevel: user.role.level,
+      }).hasPermission,
+      canUpdate: context.can({
+        action: 'update',
+        entity: 'user',
+        targetUserId: user.id,
+        targetUserRoleLevel: user.role.level,
+      }).hasPermission,
+      canView: context.can({
+        action: 'view',
+        entity: 'user',
+        targetUserId: user.id,
+        targetUserRoleLevel: user.role.level,
+      }).hasPermission,
     }
   })
 

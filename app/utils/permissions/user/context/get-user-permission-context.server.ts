@@ -1,5 +1,4 @@
 import type {
-  UserPermissionAccess,
   UserPermissionAction,
   UserPermissionEntity,
 } from '@generated/prisma/enums'
@@ -61,27 +60,15 @@ export async function getUserPermissionContext(
     can: (config: {
       entity: UserPermissionEntity
       action: UserPermissionAction
-      access?: UserPermissionAccess[]
       targetUserId?: string
       targetUserRoleLevel?: number
     }) => {
-      const access = config.access ?? ['own', 'any']
-
-      const result = getUserRights(user.role.permissions, {
-        access,
-        actions: [config.action],
-        entities: [config.entity],
+      const { hasOwn, hasAny } = getUserRights(user.role.permissions, {
+        action: config.action,
+        entity: config.entity,
         ownId: user.id,
         targetId: config.targetUserId,
       })
-
-      // Result structure: [entity][action][access]
-      // [0] = first entity (we only pass 1)
-      // [0][0] = first action (we only pass 1)
-      // [0][0][0] = "own" access (first in access array)
-      // [0][0][1] = "any" access (second in access array)
-      const hasOwn = result[0][0][0]
-      const hasAny = result[0][0][1]
 
       // Role hierarchy protection: Users can only modify accounts with level >= their level
       // Administrators (level 2) cannot modify Owner accounts (level 1)

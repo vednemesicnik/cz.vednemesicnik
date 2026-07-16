@@ -1,4 +1,5 @@
 import { prisma } from '~/utils/db.server'
+import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import type { Route } from './+types/route'
@@ -37,26 +38,14 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       state: true,
     },
     where: {
-      OR: [
-        {
-          state: 'draft',
-          ...(draftPerms.hasOwn && !draftPerms.hasAny
-            ? { authorId: context.authorId }
-            : {}),
-        },
-        {
-          state: 'published',
-          ...(publishedPerms.hasOwn && !publishedPerms.hasAny
-            ? { authorId: context.authorId }
-            : {}),
-        },
-        {
-          state: 'archived',
-          ...(archivedPerms.hasOwn && !archivedPerms.hasAny
-            ? { authorId: context.authorId }
-            : {}),
-        },
-      ],
+      OR: buildViewableStateFilters(
+        [
+          { rights: draftPerms, state: 'draft' },
+          { rights: publishedPerms, state: 'published' },
+          { rights: archivedPerms, state: 'archived' },
+        ],
+        { authorId: context.authorId },
+      ),
     },
   })
 
@@ -68,19 +57,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         action: 'delete',
         entity: 'issue',
         state: issue.state,
-        targetAuthorId: issue.authorId,
+        targetAuthorIds: [issue.authorId],
       }).hasPermission,
       canEdit: context.can({
         action: 'update',
         entity: 'issue',
         state: issue.state,
-        targetAuthorId: issue.authorId,
+        targetAuthorIds: [issue.authorId],
       }).hasPermission,
       canView: context.can({
         action: 'view',
         entity: 'issue',
         state: issue.state,
-        targetAuthorId: issue.authorId,
+        targetAuthorIds: [issue.authorId],
       }).hasPermission,
     }
   })
@@ -90,7 +79,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       action: 'create',
       entity: 'issue',
       state: 'draft',
-      targetAuthorId: context.authorId,
+      targetAuthorIds: [context.authorId],
     }).hasPermission,
     issues,
   }

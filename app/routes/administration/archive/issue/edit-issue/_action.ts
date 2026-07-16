@@ -61,7 +61,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     entity: 'issue',
     errorMessage: 'You do not have permission to update this issue.',
     state: existingIssue.state,
-    targetAuthorId: existingIssue.authorId,
+    targetAuthorIds: [existingIssue.authorId],
   })
 
   // Check permission to assign the SELECTED author
@@ -71,7 +71,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     errorMessage:
       'You do not have permission to assign this author to the issue.',
     state: existingIssue.state,
-    targetAuthorId: authorId,
+    targetAuthorIds: [authorId],
   })
 
   const { label, releaseDate, coverAltText, pdfFileName } = getIssueData(

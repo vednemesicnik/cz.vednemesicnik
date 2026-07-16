@@ -2,6 +2,7 @@ import { invariantResponse } from '@epic-web/invariant'
 
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
+import { needsReviewToPublish } from '~/utils/permissions/author/review-policy'
 
 type Options = {
   id: string
@@ -42,20 +43,13 @@ export const publishCategory = (request: Request, options: Options) =>
         where: { id: options.id },
       })
 
-      // Check if author is not a Coordinator (level !== 1)
-      const isNotCoordinator = category.author.role.level !== 1
-
-      // If author is not a Coordinator, require Coordinator review
-      if (isNotCoordinator) {
-        const hasCoordinatorReview = category.reviews.some(
-          (review) => review.reviewer.role.level === 1,
-        )
-
-        invariantResponse(
-          hasCoordinatorReview,
-          'Nelze publikovat bez schválení koordinátora',
-        )
-      }
+      invariantResponse(
+        !needsReviewToPublish({
+          authors: [category.author],
+          reviews: category.reviews,
+        }),
+        'Nelze publikovat bez schválení koordinátora',
+      )
 
       await prisma.articleCategory.update({
         data: { publishedAt: new Date(), state: 'published' },

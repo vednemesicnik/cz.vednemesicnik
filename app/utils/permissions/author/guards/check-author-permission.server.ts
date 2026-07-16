@@ -12,7 +12,7 @@ type CheckAuthorPermissionOptions = {
   entity: AuthorPermissionEntity
   action: AuthorPermissionAction
   state?: ContentState
-  targetAuthorId?: string
+  targetAuthorIds?: string[]
   errorMessage?: string
 }
 
@@ -24,13 +24,13 @@ export function checkAuthorPermission(
     action: options.action,
     entity: options.entity,
     state: options.state,
-    targetAuthorId: options.targetAuthorId,
+    targetAuthorIds: options.targetAuthorIds,
   })
 
   invariantResponse(
     hasPermission,
-    options.errorMessage ??
-      `You do not have permission to ${options.action} this ${options.entity}.`,
+    options.errorMessage ?? 'Nemáte oprávnění k této akci.',
+    { status: 403 },
   )
 
   return { hasAny, hasOwn }

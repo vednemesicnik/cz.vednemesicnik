@@ -54,7 +54,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'update',
     entity: 'podcast_episode_link',
     state: episode.state,
-    targetAuthorId: link.authorId,
+    targetAuthorIds: [link.authorId],
   })
 
   return {

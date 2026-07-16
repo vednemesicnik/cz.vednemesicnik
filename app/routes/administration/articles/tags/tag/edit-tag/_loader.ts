@@ -1,4 +1,3 @@
-import { href } from 'react-router'
 import { prisma } from '~/utils/db.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { requireAuthorPermission } from '~/utils/permissions/author/guards/require-author-permission.server'
@@ -36,9 +35,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   requireAuthorPermission(context, {
     action: 'update',
     entity: 'article_tag',
-    redirectTo: href('/administration/articles/tags/:tagId', { tagId }),
     state: tag.state,
-    targetAuthorId: tag.authorId,
+    targetAuthorIds: [tag.authorId],
   })
 
   const authors = await getAuthorsByPermission(

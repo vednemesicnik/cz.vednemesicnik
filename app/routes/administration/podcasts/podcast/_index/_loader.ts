@@ -5,6 +5,10 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import {
+  canPublishWithoutReview,
+  needsReviewToPublish,
+} from '~/utils/permissions/author/review-policy'
 
 import type { Route } from './+types/route'
 
@@ -76,7 +80,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'view',
     entity: 'podcast',
     state: podcast.state,
-    targetAuthorId: podcast.author.id,
+    targetAuthorIds: [podcast.author.id],
   })
 
   if (!canView) {
@@ -88,7 +92,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'update',
     entity: 'podcast',
     state: podcast.state,
-    targetAuthorId: podcast.author.id,
+    targetAuthorIds: [podcast.author.id],
   })
 
   // Check delete permission
@@ -96,7 +100,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'delete',
     entity: 'podcast',
     state: podcast.state,
-    targetAuthorId: podcast.author.id,
+    targetAuthorIds: [podcast.author.id],
   })
 
   // Check publish permission (draft → published)
@@ -104,24 +108,24 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'publish',
     entity: 'podcast',
     state: podcast.state,
-    targetAuthorId: podcast.author.id,
+    targetAuthorIds: [podcast.author.id],
   })
 
-  // Find Coordinator review (level 1)
-  const coordinatorReview = podcast.reviews.find(
-    (review) => review.reviewer.role.level === 1,
+  // Whether an approving review exists and whether one is still needed to publish.
+  const hasApprovingReview = podcast.reviews.some((review) =>
+    canPublishWithoutReview(review.reviewer.role),
   )
-
-  // Check if author is not a Coordinator and needs review
-  const isNotCoordinator = podcast.author.role.level !== 1
-  const needsCoordinatorReview = isNotCoordinator && !coordinatorReview
+  const needsReview = needsReviewToPublish({
+    authors: [podcast.author],
+    reviews: podcast.reviews,
+  })
 
   // Check retract permission (published → draft)
   const { hasPermission: canRetract } = context.can({
     action: 'retract',
     entity: 'podcast',
     state: podcast.state,
-    targetAuthorId: podcast.author.id,
+    targetAuthorIds: [podcast.author.id],
   })
 
   // Check archive permission (published → archived)
@@ -129,7 +133,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'archive',
     entity: 'podcast',
     state: podcast.state,
-    targetAuthorId: podcast.author.id,
+    targetAuthorIds: [podcast.author.id],
   })
 
   // Check restore permission (archived → draft)
@@ -137,7 +141,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'restore',
     entity: 'podcast',
     state: podcast.state,
-    targetAuthorId: podcast.author.id,
+    targetAuthorIds: [podcast.author.id],
   })
 
   // Check review permission
@@ -145,15 +149,18 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'review',
     entity: 'podcast',
     state: podcast.state,
-    targetAuthorId: podcast.author.id,
+    targetAuthorIds: [podcast.author.id],
   })
 
   // Don't show review button if:
-  // 1. Author is Coordinator (level 1) - they don't need reviews
+  // 1. Author can publish without review - they don't need reviews
   // 2. Current user is the author - can't review own content
-  const authorIsCoordinator = podcast.author.role.level === 1
+  const authorCanPublishWithoutReview = canPublishWithoutReview(
+    podcast.author.role,
+  )
   const isOwnContent = podcast.author.id === context.authorId
-  const shouldShowReview = canReview && !authorIsCoordinator && !isOwnContent
+  const shouldShowReview =
+    canReview && !authorCanPublishWithoutReview && !isOwnContent
 
   // Check if current user has already reviewed this podcast
   const hasReviewed = podcast.reviews.some(
@@ -169,13 +176,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     canReview: shouldShowReview,
     canUpdate,
     hasReviewed,
-    needsCoordinatorReview,
+    needsReview,
     podcast: {
       author: podcast.author,
       coverUrl: createImageSources('podcast-cover', podcast.cover).src ?? null,
       createdAt: getFormattedPublishDate(podcast.createdAt),
       description: podcast.description,
-      hasCoordinatorReview: !!coordinatorReview,
+      hasApprovingReview,
       hasCover: !!podcast.cover,
       id: podcast.id,
       publishedAt: getFormattedPublishDate(podcast.publishedAt),
@@ -185,7 +192,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         reviewer: {
           id: review.reviewer.id,
           name: review.reviewer.name,
-          roleLevel: review.reviewer.role.level,
           roleName: review.reviewer.role.name,
         },
         state: review.state,

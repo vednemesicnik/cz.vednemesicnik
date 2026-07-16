@@ -70,3 +70,26 @@ Draft → Published → Archived
 **Published**: Can be viewed, updated, retracted, archived.
 
 **Archived**: Can be viewed, updated, deleted and restored.
+
+---
+
+## Publish Gating: Review Requirement
+
+Publishing a draft is additionally gated by the review policy. Role levels are inverted
+(lower number = higher authority). A draft cannot move `Draft → Published` while **every**
+author's role is outside the approver level — i.e. `level > APPROVER_ROLE_LEVEL` (with
+`APPROVER_ROLE_LEVEL = 1` = Coordinator, that means Creator and Contributor) — **and** no
+**approving review** exists (a `Review` from a reviewer with `level <= APPROVER_ROLE_LEVEL`,
+currently only Coordinator). If any author is at the approver level (`level <=
+APPROVER_ROLE_LEVEL`, e.g. a Coordinator co-author on a multi-author article), no review is
+required. Single-author content has one author, so the rule reduces to that author's role.
+
+- A Creator may submit a review (the `review` permission), but it is a **pre-review** that
+  helps the Coordinator; it does not satisfy the requirement. A Coordinator review still
+  has the final say.
+- A Coordinator publishing their own draft needs no review (it is at the approver level).
+
+The requirement is enforced both in the detail loaders (disabling the publish button, via
+`needsReviewToPublish`) and in the `publish-*` actions (server-side guard). See
+`app/utils/permissions/author/review-policy.ts` and
+[_author-roles-and-permissions.md](./_author-roles-and-permissions.md).

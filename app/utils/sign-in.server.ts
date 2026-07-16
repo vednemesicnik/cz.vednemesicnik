@@ -1,6 +1,6 @@
 import { redirect } from 'react-router'
 import { setSessionAuthCookieSession } from '~/utils/auth.server'
-import { type AuthMethod, recordAuthEvent } from '~/utils/auth-event.server'
+import { type AuthMethod, recordAuthLog } from '~/utils/auth-log.server'
 import { prisma } from '~/utils/db.server'
 import { safeRedirect } from '~/utils/safe-redirect'
 import { createSession } from '~/utils/session.server'
@@ -50,7 +50,7 @@ export const signInUser = async (
 ) => {
   const session = await createSession(userId)
 
-  recordAuthEvent({ event: 'sign_in_success', method, request, userId })
+  recordAuthLog({ event: 'sign_in_success', method, request, userId })
 
   const responseHeaders = headers ?? new Headers()
   responseHeaders.append(

@@ -11,10 +11,10 @@ import type { UserPermissionContext } from '../../user/context/get-user-permissi
  */
 export async function getAssignableAuthorRoles(
   context: UserPermissionContext,
-  targetAuthorId: string,
+  authorId: string,
 ) {
   // Member can only see their own current role (cannot change it)
-  if (context.roleName === 'member' && context.authorId === targetAuthorId) {
+  if (context.roleName === 'member' && context.authorId === authorId) {
     const author = await prisma.author.findUnique({
       select: {
         role: {
@@ -25,7 +25,7 @@ export async function getAssignableAuthorRoles(
           },
         },
       },
-      where: { id: targetAuthorId },
+      where: { id: authorId },
     })
 
     return author ? [author.role] : []

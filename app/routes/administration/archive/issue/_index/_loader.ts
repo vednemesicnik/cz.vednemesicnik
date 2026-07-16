@@ -7,6 +7,10 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import {
+  canPublishWithoutReview,
+  needsReviewToPublish,
+} from '~/utils/permissions/author/review-policy'
 
 import type { Route } from './+types/route'
 
@@ -84,7 +88,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'view',
     entity: 'issue',
     state: issue.state,
-    targetAuthorId: issue.author.id,
+    targetAuthorIds: [issue.author.id],
   })
 
   if (!canView) {
@@ -96,7 +100,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'update',
     entity: 'issue',
     state: issue.state,
-    targetAuthorId: issue.author.id,
+    targetAuthorIds: [issue.author.id],
   })
 
   // Check delete permission
@@ -104,7 +108,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'delete',
     entity: 'issue',
     state: issue.state,
-    targetAuthorId: issue.author.id,
+    targetAuthorIds: [issue.author.id],
   })
 
   // Check publish permission (draft → published)
@@ -112,24 +116,24 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'publish',
     entity: 'issue',
     state: issue.state,
-    targetAuthorId: issue.author.id,
+    targetAuthorIds: [issue.author.id],
   })
 
-  // Find Coordinator review (level 1)
-  const coordinatorReview = issue.reviews.find(
-    (review) => review.reviewer.role.level === 1,
+  // Whether an approving review exists and whether one is still needed to publish.
+  const hasApprovingReview = issue.reviews.some((review) =>
+    canPublishWithoutReview(review.reviewer.role),
   )
-
-  // Check if author is not a Coordinator and needs review
-  const isNotCoordinator = issue.author.role.level !== 1
-  const needsCoordinatorReview = isNotCoordinator && !coordinatorReview
+  const needsReview = needsReviewToPublish({
+    authors: [issue.author],
+    reviews: issue.reviews,
+  })
 
   // Check retract permission (published → draft)
   const { hasPermission: canRetract } = context.can({
     action: 'retract',
     entity: 'issue',
     state: issue.state,
-    targetAuthorId: issue.author.id,
+    targetAuthorIds: [issue.author.id],
   })
 
   // Check archive permission (published → archived)
@@ -137,7 +141,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'archive',
     entity: 'issue',
     state: issue.state,
-    targetAuthorId: issue.author.id,
+    targetAuthorIds: [issue.author.id],
   })
 
   // Check restore permission (archived → draft)
@@ -145,7 +149,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'restore',
     entity: 'issue',
     state: issue.state,
-    targetAuthorId: issue.author.id,
+    targetAuthorIds: [issue.author.id],
   })
 
   // Check review permission
@@ -153,15 +157,18 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'review',
     entity: 'issue',
     state: issue.state,
-    targetAuthorId: issue.author.id,
+    targetAuthorIds: [issue.author.id],
   })
 
   // Don't show review button if:
-  // 1. Author is Coordinator (level 1) - they don't need reviews
+  // 1. Author can publish without review - they don't need reviews
   // 2. Current user is the author - can't review own content
-  const authorIsCoordinator = issue.author.role.level === 1
+  const authorCanPublishWithoutReview = canPublishWithoutReview(
+    issue.author.role,
+  )
   const isOwnContent = issue.author.id === context.authorId
-  const shouldShowReview = canReview && !authorIsCoordinator && !isOwnContent
+  const shouldShowReview =
+    canReview && !authorCanPublishWithoutReview && !isOwnContent
 
   // Check if current user has already reviewed this issue
   const hasReviewed = issue.reviews.some(
@@ -181,7 +188,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       author: issue.author,
       coverUrl: createImageSources('issue-cover', issue.cover).src ?? null,
       createdAt: getFormattedPublishDate(issue.createdAt),
-      hasCoordinatorReview: !!coordinatorReview,
+      hasApprovingReview,
       hasCover: !!issue.cover,
       id: issue.id,
       label: issue.label,
@@ -197,7 +204,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         reviewer: {
           id: review.reviewer.id,
           name: review.reviewer.name,
-          roleLevel: review.reviewer.role.level,
           roleName: review.reviewer.role.name,
         },
         state: review.state,
@@ -205,6 +211,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       state: issue.state,
       updatedAt: getFormattedPublishDate(issue.updatedAt),
     },
-    needsCoordinatorReview,
+    needsReview,
   }
 }

@@ -1,6 +1,10 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
+import {
+  formatRoleChangeDetail,
+  recordAuditLog,
+} from '~/utils/audit-log.server'
 import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
@@ -31,9 +35,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     entities: ['author'],
   })
 
-  // Get the author to check ownership
+  // Get the author to check ownership; keep the current role to audit changes.
   const author = await prisma.author.findUniqueOrThrow({
     select: {
+      role: { select: { id: true, name: true } },
       user: { select: { id: true } },
     },
     where: { id: submission.value.authorId },
@@ -47,6 +52,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   await updateAuthor(submission.value)
+
+  // Audit only an actual role change. The new role is looked up after
+  // updateAuthor has already validated roleId, so a tampered id can't surface as
+  // a premature 500 here.
+  if (author.role.id !== submission.value.roleId) {
+    const newRole = await prisma.authorRole.findUniqueOrThrow({
+      select: { name: true },
+      where: { id: submission.value.roleId },
+    })
+
+    recordAuditLog({
+      actorId: context.userId,
+      detail: formatRoleChangeDetail(author.role.name, newRole.name),
+      event: 'author_role_changed',
+      request,
+      targetId: submission.value.authorId,
+    })
+  }
 
   return redirect(
     href('/administration/authors/:authorId', {

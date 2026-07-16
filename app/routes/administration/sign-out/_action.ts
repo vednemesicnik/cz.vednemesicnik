@@ -4,7 +4,7 @@ import {
   getSessionAuthCookieSession,
   getSessionAuthId,
 } from '~/utils/auth.server'
-import { recordAuthEvent } from '~/utils/auth-event.server'
+import { recordAuthLog } from '~/utils/auth-log.server'
 import { prisma } from '~/utils/db.server'
 import { redirectBack } from '~/utils/redirect-back'
 
@@ -31,7 +31,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       console.error('Failed to resolve session owner for sign-out event', error)
     }
 
-    recordAuthEvent({ event: 'sign_out', request, userId })
+    recordAuthLog({ event: 'sign_out', request, userId })
 
     deleteSession(sessionId)
   }

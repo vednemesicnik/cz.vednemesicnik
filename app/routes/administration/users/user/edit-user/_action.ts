@@ -2,6 +2,10 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
+import {
+  formatRoleChangeDetail,
+  recordAuditLog,
+} from '~/utils/audit-log.server'
 import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
@@ -63,6 +67,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   invariantResponse(
     !(isEditingSelf && isOwner && isChangingRole),
     'Owner nemůže změnit svou vlastní roli. V systému musí vždy existovat alespoň jeden Owner.',
+    { status: 403 },
+  )
+
+  // Single-owner policy: the Owner role originates from the seed and is unique.
+  // Reject changing the Owner's role away from owner, and reject promoting
+  // anyone else to owner — even for an Owner actor via a direct POST.
+  invariantResponse(
+    !(isOwner && newRole.name !== 'owner'),
+    'Roli Owner nelze změnit. V systému musí vždy existovat právě jeden Owner.',
+    { status: 403 },
+  )
+
+  invariantResponse(
+    !(!isOwner && newRole.name === 'owner'),
+    'Roli Owner nelze přiřadit. V systému může existovat pouze jeden Owner.',
+    { status: 403 },
   )
 
   // Check if user can update this user with their current role
@@ -82,6 +102,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   await updateUser(submission.value)
+
+  if (isChangingRole) {
+    recordAuditLog({
+      actorId: context.userId,
+      detail: formatRoleChangeDetail(targetUser.role.name, newRole.name),
+      event: 'user_role_changed',
+      request,
+      targetId: targetUser.id,
+    })
+  }
 
   return redirect(
     href('/administration/users/:userId', { userId: submission.value.userId }),

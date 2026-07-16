@@ -104,7 +104,7 @@ All content entities (Article, Podcast, PodcastEpisode, Issue, etc.) support thr
 
 - **Member** (level 3): Can view/update own account and author profile
 - **Administrator** (level 2): Full access to users and authors except Owner accounts
-- **Owner** (level 1): Full system control including Owner role assignment
+- **Owner** (level 1): Full system control; exactly one Owner (from seed), and the Owner role cannot be assigned (single-owner policy)
 
 #### Author Roles (content management)
 
@@ -114,8 +114,8 @@ All content entities (Article, Podcast, PodcastEpisode, Issue, etc.) support thr
 
 Permissions are checked via:
 
-- `app/utils/get-user-rights.ts` - System permissions (User/Author entities)
-- `app/utils/get-author-rights.ts` - Content permissions (articles, podcasts, issues, etc.)
+- `app/utils/permissions/user/context/get-user-permission-context.server.ts` - System permissions (User/Author entities)
+- `app/utils/permissions/author/context/get-author-permission-context.server.ts` - Content permissions (articles, podcasts, issues, etc.)
 
 Permissions use `action` (view, create, update, delete, publish, retract, archive, restore), `entity` (user, author, article, etc.), `access` (own, any), and `state` (draft, published, archived) fields.
 
@@ -184,17 +184,37 @@ Forms use Conform (@conform-to/react + @conform-to/zod) with Zod validation:
 
 ### Permission Checks
 
-Always check permissions before rendering UI or processing actions:
+Always check permissions before rendering UI or processing actions. Build a
+permission context from the request, then call `can()` for a single
+action + entity; it returns `{ hasOwn, hasAny, hasPermission }`.
 
 ```typescript
-import { getUserRights } from "~/utils/get-user-rights"
-import { getAuthorRights } from "~/utils/get-author-rights"
+import { getUserPermissionContext } from "~/utils/permissions/user/context/get-user-permission-context.server"
+import { getAuthorPermissionContext } from "~/utils/permissions/author/context/get-author-permission-context.server"
 
-// Check if user can update their profile
-const canUpdate = getUserRights(userRole).user.update.own
+// System axis: can the current user update this account?
+const userContext = await getUserPermissionContext(request, {
+  actions: ["update"],
+  entities: ["user"],
+})
+const canUpdateUser = userContext.can({
+  action: "update",
+  entity: "user",
+  targetUserId: user.id,
+  targetUserRoleLevel: user.role.level,
+}).hasPermission
 
-// Check if author can publish their draft article
-const canPublish = getAuthorRights(authorRole).article.publish.own.draft
+// Content axis: can the current author publish this draft article?
+const authorContext = await getAuthorPermissionContext(request, {
+  actions: ["publish"],
+  entities: ["article"],
+})
+const canPublish = authorContext.can({
+  action: "publish",
+  entity: "article",
+  state: "draft",
+  targetAuthorIds: article.authors.map((author) => author.id),
+}).hasPermission
 ```
 
 ### Content State Management

@@ -71,6 +71,7 @@
     "biome:check": "biome check",
     "biome:check:fix": "biome check --write",
     "biome:check:push": "biome check --no-errors-on-unmatched --files-ignore-unknown=true",
+    "biome:check:staged": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
     "biome:format": "biome format",
     "biome:format:fix": "biome format --write",
     "biome:format:staged": "biome format --write --no-errors-on-unmatched",

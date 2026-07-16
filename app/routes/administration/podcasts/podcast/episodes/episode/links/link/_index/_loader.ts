@@ -1,6 +1,10 @@
 import { prisma } from '~/utils/db.server'
 import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import {
+  canPublishWithoutReview,
+  needsReviewToPublish,
+} from '~/utils/permissions/author/review-policy'
 
 import type { Route } from './+types/route'
 
@@ -28,7 +32,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           name: true,
           role: {
             select: {
-              name: true,
+              level: true,
             },
           },
         },
@@ -47,9 +51,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           id: true,
           reviewer: {
             select: {
+              id: true,
               name: true,
               role: {
                 select: {
+                  level: true,
                   name: true,
                 },
               },
@@ -69,7 +75,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'view',
     entity: 'podcast_episode_link',
     state: link.state,
-    targetAuthorId: link.authorId,
+    targetAuthorIds: [link.authorId],
   }).hasPermission
 
   if (!canView) {
@@ -81,72 +87,76 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     action: 'review',
     entity: 'podcast_episode_link',
     state: link.state,
-    targetAuthorId: link.authorId,
+    targetAuthorIds: [link.authorId],
   })
 
   // Don't show review button if:
-  // 1. Author is Coordinator (level 1) - they don't need reviews
+  // 1. Author can publish without review - they don't need reviews
   // 2. Current user is the author - can't review own content
-  const authorIsCoordinator = link.author.role.name === 'coordinator'
+  const authorCanPublishWithoutReview = canPublishWithoutReview(
+    link.author.role,
+  )
   const isOwnContent = link.authorId === context.authorId
-  const shouldShowReview = canReview && !authorIsCoordinator && !isOwnContent
+  const shouldShowReview =
+    canReview && !authorCanPublishWithoutReview && !isOwnContent
 
   // Check if current user has already reviewed this link
   const hasReviewed = link.reviews.some(
-    (review) => review.reviewer.name === context.authorId,
+    (review) => review.reviewer.id === context.authorId,
   )
 
-  // Check if link has coordinator review
-  const hasCoordinatorReview = link.reviews.some(
-    (review) => review.reviewer.role.name === 'coordinator',
+  // Whether an approving review exists and whether one is still needed to publish.
+  const hasApprovingReview = link.reviews.some((review) =>
+    canPublishWithoutReview(review.reviewer.role),
   )
-
-  // Check if coordinator review is needed (creator trying to publish)
-  const needsCoordinatorReview =
-    link.author.role.name === 'creator' && !hasCoordinatorReview
+  const needsReview = needsReviewToPublish({
+    authors: [link.author],
+    reviews: link.reviews,
+  })
 
   return {
     canArchive: context.can({
       action: 'archive',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canDelete: context.can({
       action: 'delete',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canPublish: context.can({
       action: 'publish',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canRestore: context.can({
       action: 'restore',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canRetract: context.can({
       action: 'retract',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     canReview: shouldShowReview,
     canUpdate: context.can({
       action: 'update',
       entity: 'podcast_episode_link',
       state: link.state,
-      targetAuthorId: link.authorId,
+      targetAuthorIds: [link.authorId],
     }).hasPermission,
     hasReviewed,
     link: {
       author: link.author,
       createdAt: getFormattedPublishDate(link.createdAt),
+      hasApprovingReview,
       id: link.id,
       label: link.label,
       publishedAt: getFormattedPublishDate(link.publishedAt),
@@ -159,6 +169,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       updatedAt: getFormattedPublishDate(link.updatedAt),
       url: link.url,
     },
-    needsCoordinatorReview,
+    needsReview,
   }
 }

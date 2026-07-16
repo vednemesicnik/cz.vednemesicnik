@@ -18,81 +18,48 @@ type Permissions = {
 }[]
 
 type Options = {
-  access?: Access[]
-  actions?: Action[]
-  entities?: Entity[]
-  states?: State[]
+  action: Action
+  entity: Entity
+  state?: State
   ownId?: string
-  targetId?: string
+  targetAuthorIds?: string[]
+}
+
+type Rights = {
+  hasOwn: boolean
+  hasAny: boolean
 }
 
 /**
- * Determines the rights for given permissions based on specified options.
- * Options could be omitted when the permissions are already filtered by database query.
+ * Evaluates a role's author permissions for a single action + entity and returns
+ * named rights. Permissions are expected to be pre-filtered by the database query.
  *
- * @param {Permissions} permissions - The list of permissions to evaluate.
- * @param {Options} [options] - Optional parameters to filter the permissions.
- * @param {Access[]} [options.access=["*"]] - The access levels to consider.
- * @param {Action[]} [options.actions=["*"]] - The actions to consider.
- * @param {Entity[]} [options.entities=["*"]] - The entities to consider.
- * @param {State[]} [options.states=["*"]] - The states to consider.
- * @param {string} [options.ownId] - The ID of the author who is modifying the entity (used for "own" access level).
- * @param {string} [options.targetId] - The ID of the author whose entity is being modified (used for "own" access level).
- * @returns {boolean[][][][]} A 4D array where each sub-array corresponds to the states for a specific action and entity, indicating whether the state is permitted.
- *
- * @example
- * const [[[[hasArticleUpdateAnyDraftRight]]]] = getRights(permissions, { entities: ["article"], actions: ["update"], access: ["any"], states: ["draft"] })
+ * - An omitted `state` matches any state.
+ * - `hasAny` is granted when a matching row has `access: 'any'`.
+ * - `hasOwn` is granted when a matching row has `access: 'own'` and the current
+ *   author is one of the target authors (`targetAuthorIds.includes(ownId)`) —
+ *   i.e. "own applies when I am one of the authors".
  */
 export const getAuthorRights = (
   permissions: Permissions,
-  options?: Options,
-): boolean[][][][] => {
-  const {
-    access = ['any'],
-    actions = ['*'],
-    entities = ['*'],
-    states = ['*'],
-    ownId,
-    targetId,
-  } = options ?? {}
+  options: Options,
+): Rights => {
+  const { action, entity, state, ownId, targetAuthorIds } = options
 
-  return entities.map((entity) => {
-    return actions.map((action) => {
-      return access.map((access) => {
-        return states.map((state) => {
-          let filteredPermissions = permissions
+  const matches = permissions.filter(
+    (permission) =>
+      permission.entity === entity &&
+      permission.action === action &&
+      (state === undefined || permission.state === state),
+  )
 
-          if (entity !== '*') {
-            filteredPermissions = filteredPermissions.filter(
-              (permission) => entity === permission.entity,
-            )
-          }
+  const isOwn =
+    ownId !== undefined && (targetAuthorIds?.includes(ownId) ?? false)
 
-          if (action !== '*') {
-            filteredPermissions = filteredPermissions.filter(
-              (permission) => action === permission.action,
-            )
-          }
+  const hasAny = matches.some((permission) => permission.access === 'any')
+  const hasOwn = matches.some(
+    (permission) => permission.access === 'own' && isOwn,
+  )
 
-          if (access !== '*') {
-            filteredPermissions = filteredPermissions.filter((permission) => {
-              if (access === 'own') {
-                return access === permission.access && ownId === targetId
-              } else {
-                return access === permission.access
-              }
-            })
-          }
-
-          if (state !== '*') {
-            filteredPermissions = filteredPermissions.filter(
-              (permission) => state === permission.state,
-            )
-          }
-
-          return filteredPermissions.length > 0
-        })
-      })
-    })
-  })
+  return { hasAny, hasOwn }
 }

@@ -49,7 +49,7 @@ export default function RouteComponent({
     canRestore,
     canReview,
     hasReviewed,
-    needsCoordinatorReview,
+    needsReview,
   } = loaderData
   const { tagId } = params
 
@@ -115,10 +115,10 @@ export default function RouteComponent({
             <AuthenticityTokenInput />
             <AdminActionButton
               action={'publish'}
-              disabled={needsCoordinatorReview || isSubmitting}
+              disabled={needsReview || isSubmitting}
               name={INTENT_NAME}
               title={
-                needsCoordinatorReview
+                needsReview
                   ? 'Nelze publikovat bez schválení koordinátora'
                   : undefined
               }
@@ -233,7 +233,7 @@ export default function RouteComponent({
             ))}
           </Activity>
           <AdminDetailItem label="Schváleno koordinátorem">
-            {tag.hasCoordinatorReview ? 'Ano' : 'Ne'}
+            {tag.hasApprovingReview ? 'Ano' : 'Ne'}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>

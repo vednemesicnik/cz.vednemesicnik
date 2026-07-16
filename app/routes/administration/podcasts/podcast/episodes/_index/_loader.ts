@@ -1,4 +1,5 @@
 import { prisma } from '~/utils/db.server'
+import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import type { Route } from './+types/route'
@@ -40,26 +41,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           title: true,
         },
         where: {
-          OR: [
-            {
-              state: 'draft',
-              ...(draftPerms.hasOwn && !draftPerms.hasAny
-                ? { authorId: context.authorId }
-                : {}),
-            },
-            {
-              state: 'published',
-              ...(publishedPerms.hasOwn && !publishedPerms.hasAny
-                ? { authorId: context.authorId }
-                : {}),
-            },
-            {
-              state: 'archived',
-              ...(archivedPerms.hasOwn && !archivedPerms.hasAny
-                ? { authorId: context.authorId }
-                : {}),
-            },
-          ],
+          OR: buildViewableStateFilters(
+            [
+              { rights: draftPerms, state: 'draft' },
+              { rights: publishedPerms, state: 'published' },
+              { rights: archivedPerms, state: 'archived' },
+            ],
+            { authorId: context.authorId },
+          ),
         },
       },
       id: true,
@@ -76,19 +65,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         action: 'delete',
         entity: 'podcast_episode',
         state: episode.state,
-        targetAuthorId: episode.authorId,
+        targetAuthorIds: [episode.authorId],
       }).hasPermission,
       canEdit: context.can({
         action: 'update',
         entity: 'podcast_episode',
         state: episode.state,
-        targetAuthorId: episode.authorId,
+        targetAuthorIds: [episode.authorId],
       }).hasPermission,
       canView: context.can({
         action: 'view',
         entity: 'podcast_episode',
         state: episode.state,
-        targetAuthorId: episode.authorId,
+        targetAuthorIds: [episode.authorId],
       }).hasPermission,
     }
   })
@@ -98,7 +87,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       action: 'create',
       entity: 'podcast_episode',
       state: 'draft',
-      targetAuthorId: context.authorId,
+      targetAuthorIds: [context.authorId],
     }).hasPermission,
     podcast: {
       ...podcast,

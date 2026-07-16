@@ -1,4 +1,4 @@
-import { data, href } from 'react-router'
+import { data } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
 import {
@@ -57,7 +57,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   requireAuthorPermission(context, {
     action: 'update',
     entity: 'article',
-    redirectTo: href('/administration/articles'),
     state: article.state,
     targetAuthorIds: article.authors.map((author) => author.id),
   })

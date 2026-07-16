@@ -49,7 +49,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     action: 'create',
     entity: 'issue',
     state: 'draft',
-    targetAuthorId: authorId,
+    targetAuthorIds: [authorId],
   })
 
   const { releaseDate, label, pdfFileName, coverAltText } = getIssueData(

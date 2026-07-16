@@ -1,7 +1,7 @@
 import { verifyAuthenticationResponse } from '@simplewebauthn/server'
 import { type ActionFunctionArgs, data } from 'react-router'
 
-import { recordAuthEvent } from '~/utils/auth-event.server'
+import { recordAuthLog } from '~/utils/auth-log.server'
 import {
   deleteBiometricCookieSession,
   getBiometricChallenge,
@@ -30,7 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   if (passkey === null) {
-    recordAuthEvent({ event: 'sign_in_failure', method: 'passkey', request })
+    recordAuthLog({ event: 'sign_in_failure', method: 'passkey', request })
     return data({ status: 'fail', verified: false }, { status: 400 })
   }
 
@@ -58,7 +58,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       '[passkey] authentication response verification failed',
       error,
     )
-    recordAuthEvent({
+    recordAuthLog({
       event: 'sign_in_failure',
       method: 'passkey',
       request,
@@ -68,7 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (!verifiedAuthenticationResponse.verified) {
-    recordAuthEvent({
+    recordAuthLog({
       event: 'sign_in_failure',
       method: 'passkey',
       request,

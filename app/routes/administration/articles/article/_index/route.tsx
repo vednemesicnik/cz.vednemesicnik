@@ -27,6 +27,7 @@ import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { FORM_CONFIG } from '~/config/form-config'
+import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
 
@@ -51,7 +52,7 @@ export default function RouteComponent({
     canRestore,
     canReview,
     hasReviewed,
-    needsCoordinatorReview,
+    needsReview,
   } = loaderData
   const { articleId } = params
 
@@ -115,10 +116,10 @@ export default function RouteComponent({
             <AuthenticityTokenInput />
             <AdminActionButton
               action={'publish'}
-              disabled={needsCoordinatorReview || isSubmitting}
+              disabled={needsReview || isSubmitting}
               name={INTENT_NAME}
               title={
-                needsCoordinatorReview
+                needsReview
                   ? 'Nelze publikovat bez schválení koordinátora'
                   : undefined
               }
@@ -272,14 +273,14 @@ export default function RouteComponent({
             {article.reviews.map((review) => (
               <AdminDetailItem
                 key={review.id}
-                label={`${review.reviewer.name} (${review.reviewer.roleName === 'coordinator' ? 'Koordinátor' : 'Tvůrce'})`}
+                label={`${review.reviewer.name} (${getAuthorRoleLabel(review.reviewer.roleName)})`}
               >
                 {review.createdAt}
               </AdminDetailItem>
             ))}
           </Activity>
           <AdminDetailItem label="Schváleno koordinátorem">
-            {article.hasCoordinatorReview ? 'Ano' : 'Ne'}
+            {article.hasApprovingReview ? 'Ano' : 'Ne'}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>
