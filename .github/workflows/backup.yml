@@ -26,4 +26,8 @@ jobs:
       - name: Back up database to the bucket
         run: sh ./scripts/backup-database.sh
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          # flyctl reads FLY_API_TOKEN; the value comes from a dedicated backup
+          # secret rather than deploy.yml's production-environment token, which is
+          # gated to `main`. The quarterly `schedule` runs on the default branch
+          # (dev), so it needs a token available outside the production environment.
+          FLY_API_TOKEN: ${{ secrets.FLY_BACKUP_TOKEN }}
