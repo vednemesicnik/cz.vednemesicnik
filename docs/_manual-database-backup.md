@@ -130,7 +130,7 @@ You can also run it manually (needs the fly CLI and an SSH cert from the setup s
 
 Automated keys carry a full timestamp — `db/backup-<YYYY-MM-DD-HHMMSS>.db.gz`, with
 a `-pre-migration` suffix for the deploy-time ones (e.g.
-`backup-2026-07-16-030112-pre-migration.db.gz`). So when locating a backup, `ls` the
+`db/backup-2026-07-16-030112-pre-migration.db.gz`). So when locating a backup, `ls` the
 prefix and copy the exact key rather than assuming the date-only form the manual
 command above produces.
 
