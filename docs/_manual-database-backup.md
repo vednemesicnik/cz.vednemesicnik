@@ -130,6 +130,11 @@ workflows call it:
   push touches `prisma/migrations/**`. Migrations apply at machine startup, so this
   captures the old schema first; a failed backup blocks the deploy.
 
+Both workflows authenticate with a dedicated `FLY_BACKUP_TOKEN` repo secret (an
+app-scoped Fly token, e.g. `fly tokens create deploy -a cz-vednemesicnik`) — not
+deploy.yml's production-environment token, which is gated to `main` and so is
+unavailable to the quarterly `schedule` run that fires on the default branch.
+
 You can also run it manually (needs the fly CLI and an SSH cert from the setup step):
 `pnpm db:backup`.
 
