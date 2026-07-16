@@ -31,6 +31,25 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: superfly/flyctl-actions/setup-flyctl@1.6
+      # Migrations run at machine startup (docker-entry-point-fly.sh), so back up
+      # the still-running old machine BEFORE deploying when this push ships new
+      # migrations. base: main is required — the repo default branch is dev, so
+      # without it paths-filter diffs against merge-base(dev, main), which is empty
+      # at a dev→main release merge and would skip the backup every release. With
+      # base pointing at the pushed branch, it diffs against the previous main tip.
+      - uses: dorny/paths-filter@v4
+        id: changes
+        with:
+          base: main
+          filters: |
+            migrations:
+              - 'prisma/migrations/**'
+      - name: Pre-migration database backup
+        if: steps.changes.outputs.migrations == 'true'
+        # No continue-on-error: a failed backup must block the deploy.
+        run: sh ./scripts/backup-database.sh -pre-migration
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - run: flyctl deploy --remote-only --wait-timeout 5m
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

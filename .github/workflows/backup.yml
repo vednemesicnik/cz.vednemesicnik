@@ -1,0 +1,29 @@
+name: Database backup
+
+# Quarterly offsite backup of the production database to the Tigris bucket
+# (db/ prefix), plus on-demand runs. Pre-migration backups live in deploy.yml.
+# Both call scripts/backup-database.sh. See docs/_manual-database-backup.md.
+on:
+  schedule:
+    # 03:00 UTC on the 1st of Jan/Apr/Jul/Oct.
+    - cron: "0 3 1 1,4,7,10 *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A running backup is never cancelled; overlapping triggers queue.
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: superfly/flyctl-actions/setup-flyctl@1.6
+      - name: Back up database to the bucket
+        run: sh ./scripts/backup-database.sh
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

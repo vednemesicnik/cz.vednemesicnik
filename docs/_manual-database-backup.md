@@ -110,8 +110,34 @@ aws s3 cp "s3://$BUCKET_NAME/db/backup-<YYYY-MM-DD>.db.gz" . \
 gzip -t backup-*.db.gz && echo "OK"
 ```
 
-> A scheduled job can wrap the command above; backups under `db/` are isolated from
-> the image-store lifecycle by prefix.
+### Automated backups
+
+The command above is now automated by `scripts/backup-database.sh`, which runs the
+same steps on the machine — except it uses the in-image `object-store` CLI (see
+[`scripts/object-store-cli.ts`](../scripts/object-store-cli.ts), baked in as
+`/usr/local/bin/object-store`) for the upload rather than the `aws` binary, which the
+production image does not ship. Two workflows call it:
+
+- **Quarterly** — [`.github/workflows/backup.yml`](../.github/workflows/backup.yml)
+  runs on a cron (1st of Jan/Apr/Jul/Oct) and on `workflow_dispatch`.
+- **Pre-migration** — [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
+  backs up (with a `-pre-migration` key suffix) before `flyctl deploy` whenever the
+  push touches `prisma/migrations/**`. Migrations apply at machine startup, so this
+  captures the old schema first; a failed backup blocks the deploy.
+
+You can also run it manually (needs the fly CLI and an SSH cert from the setup step):
+`pnpm db:backup`.
+
+Automated keys carry a full timestamp — `db/backup-<YYYY-MM-DD-HHMMSS>.db.gz`, with
+a `-pre-migration` suffix for the deploy-time ones (e.g.
+`backup-2026-07-16-030112-pre-migration.db.gz`). So when locating a backup, `ls` the
+prefix and copy the exact key rather than assuming the date-only form the manual
+command above produces.
+
+**Retention:** the script prunes `db/` backups older than **2 years** after each
+successful upload — a handful of objects at a time, so everything within the window is
+kept. Backups under `db/` are isolated from the image-store lifecycle by prefix. To
+restore one, see [`_manual-database-restore.md`](./_manual-database-restore.md).
 
 ## Backing up the object stores (volume driver)
 
