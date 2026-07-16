@@ -19,13 +19,12 @@ pre-push:
 pre-commit:
   parallel: true
   commands:
-    format:
-      run: pnpm biome:format:staged {staged_files}
+    # `biome check` = formatter + linter + assists (incl. useSortedKeys) in one
+    # pass, so auto-fixable assists are applied and staged at commit time instead
+    # of only surfacing as a hard failure at the pre-push gate.
+    check:
+      run: pnpm biome:check:staged {staged_files}
       glob: "*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc,md,css}"
-      stage_fixed: true
-    lint:
-      run: pnpm biome:lint:staged {staged_files}
-      glob: "*.{js,ts,cjs,mjs,jsx,tsx}"
       stage_fixed: true
     prisma-format:
       run: pnpm prisma:format
