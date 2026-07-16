@@ -79,6 +79,7 @@
     "biome:lint:fix": "biome lint --write",
     "biome:lint:staged": "biome lint --write --no-errors-on-unmatched",
     "build-storybook": "storybook build",
+    "db:backup": "sh ./scripts/backup-database.sh",
     "docker:compose:down": "sh ./scripts/docker-compose-down.sh",
     "docker:compose:up": "sh ./scripts/docker-compose-up.sh",
     "generate:static-images": "tsx ./scripts/generate-static-images.ts",

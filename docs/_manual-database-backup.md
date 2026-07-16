@@ -90,18 +90,23 @@ prefix — a seed/reset (`imageStore.delete([''])` in `prisma/seed.ts`) wipes ju
 dedicated backups bucket is fine too if you want stricter isolation; just adjust the
 paths below.)
 
+The upload runs on the machine with the in-image `object-store` CLI
+(`/usr/local/bin/object-store`, over `@aws-sdk`) — the production image ships no
+`aws` binary. It reads `$BUCKET_NAME` and the Tigris credentials from the machine
+environment, so you pass just the `db/…` key (no `s3://` URL or endpoint flag):
+
 ```shell
 # Back up into the bucket under db/ (fast egress off the app machine)
 fly ssh console --app cz-vednemesicnik -C "sh -c '\
   sqlite3 \"\$DATABASE_URL\" \".backup /tmp/backup.db\" && gzip -f /tmp/backup.db && \
-  aws s3 cp /tmp/backup.db.gz \"s3://\$BUCKET_NAME/db/backup-\$(date +%F).db.gz\" \
-    --endpoint-url \"\$AWS_ENDPOINT_URL_S3\" && rm -f /tmp/backup.db.gz'"
+  object-store put /tmp/backup.db.gz \"db/backup-\$(date +%F).db.gz\" && \
+  rm -f /tmp/backup.db.gz'"
 ```
 
-Then pull it locally over HTTPS (via the AWS CLI configured with the same Tigris
-credentials, or a temporary presigned URL). List what's there and copy the exact
-key — don't assume today's date, since the backup may have been taken on a
-different day:
+Then pull it locally over HTTPS. `object-store` lives only on the app machine, so
+from your workstation use the AWS CLI configured with the same Tigris credentials (or
+a temporary presigned URL). List what's there and copy the exact key — don't assume
+today's date, since the backup may have been taken on a different day:
 
 ```shell
 aws s3 ls "s3://$BUCKET_NAME/db/" --endpoint-url https://fly.storage.tigris.dev
@@ -110,8 +115,34 @@ aws s3 cp "s3://$BUCKET_NAME/db/backup-<YYYY-MM-DD>.db.gz" . \
 gzip -t backup-*.db.gz && echo "OK"
 ```
 
-> A scheduled job can wrap the command above; backups under `db/` are isolated from
-> the image-store lifecycle by prefix.
+### Automated backups
+
+The command above is now automated by `scripts/backup-database.sh`, which runs the
+same steps on the machine (the same `object-store` upload — see
+[`scripts/object-store-cli.ts`](../scripts/object-store-cli.ts)) and adds a
+`gzip -t` integrity check, an upload verification, and retention pruning. Two
+workflows call it:
+
+- **Quarterly** — [`.github/workflows/backup.yml`](../.github/workflows/backup.yml)
+  runs on a cron (1st of Jan/Apr/Jul/Oct) and on `workflow_dispatch`.
+- **Pre-migration** — [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
+  backs up (with a `-pre-migration` key suffix) before `flyctl deploy` whenever the
+  push touches `prisma/migrations/**`. Migrations apply at machine startup, so this
+  captures the old schema first; a failed backup blocks the deploy.
+
+You can also run it manually (needs the fly CLI and an SSH cert from the setup step):
+`pnpm db:backup`.
+
+Automated keys carry a full timestamp — `db/backup-<YYYY-MM-DD-HHMMSS>.db.gz`, with
+a `-pre-migration` suffix for the deploy-time ones (e.g.
+`db/backup-2026-07-16-030112-pre-migration.db.gz`). So when locating a backup, `ls` the
+prefix and copy the exact key rather than assuming the date-only form the manual
+command above produces.
+
+**Retention:** the script prunes `db/` backups older than **2 years** after each
+successful upload — a handful of objects at a time, so everything within the window is
+kept. Backups under `db/` are isolated from the image-store lifecycle by prefix. To
+restore one, see [`_manual-database-restore.md`](./_manual-database-restore.md).
 
 ## Backing up the object stores (volume driver)
 
