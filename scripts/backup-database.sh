@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 # Backs up the production SQLite database to the Tigris bucket under db/.
 # Runs the whole payload on the app machine (fast egress) over `fly ssh console`:
@@ -13,6 +13,10 @@
 # Env: FLY_APP (default cz-vednemesicnik), FLY_API_TOKEN (for CI; flyctl reads it).
 #
 # See docs/_manual-database-backup.md and the callers backup.yml / deploy.yml.
+
+# Callers invoke this as `sh ./scripts/backup-database.sh`, which ignores shebang
+# flags, so enable errexit here in the body rather than on the shebang.
+set -e
 
 SUFFIX="${1:-}"
 
@@ -63,9 +67,12 @@ echo BACKUP_OK'
 echo "Backing up $FLY_APP database to the bucket under db/ (suffix: '${SUFFIX:-none}')…"
 
 # Capture so we can both surface the machine output and assert the success marker.
-# `|| STATUS=…` keeps `sh -e` from aborting before we can report a useful error.
-STATUS=0
-OUTPUT=$(flyctl ssh console --app "$FLY_APP" -C "sh -c '$REMOTE_SCRIPT'" 2>&1) || STATUS=$?
+# Disable errexit only around the flyctl call so we always reach the marker check
+# and can print the machine output even when flyctl exits non-zero.
+set +e
+OUTPUT=$(flyctl ssh console --app "$FLY_APP" -C "sh -c '$REMOTE_SCRIPT'" 2>&1)
+STATUS=$?
+set -e
 printf '%s\n' "$OUTPUT"
 
 case "$OUTPUT" in
