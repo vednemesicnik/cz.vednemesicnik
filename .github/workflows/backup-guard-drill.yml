@@ -1,0 +1,46 @@
+name: Backup guard drill
+
+# Manually-triggered safety drill for deploy.yml's guard: a failed pre-migration
+# backup MUST block the deploy (deploy.yml's backup step has no continue-on-error,
+# so a non-zero exit fails the job and flyctl deploy never runs). This drill runs
+# the real scripts/backup-database.sh against a nonexistent Fly app so the backup
+# fails organically — without touching production — then asserts the deploy would
+# be skipped. The run is green iff the guard is healthy. See issue #228.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: superfly/flyctl-actions/setup-flyctl@1.6
+      - name: Pre-migration database backup (simulated failure)
+        id: backup
+        # Drill-only: continue-on-error lets the job inspect the outcome and assert
+        # on it. deploy.yml deliberately has NO continue-on-error — that is exactly
+        # the property this drill stands in for; do not copy this flag there.
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          # Valid token + a nonexistent app: flyctl authenticates but can't reach a
+          # machine, so the remote payload never prints BACKUP_OK and the script's
+          # marker check exits 1. Mirrors a real backup failure (e.g. wrong bucket)
+          # without contacting the production machine or its database.
+          FLY_APP: nonexistent-app-for-drill
+          FLY_API_TOKEN: ${{ secrets.FLY_BACKUP_TOKEN }}
+        run: sh ./scripts/backup-database.sh -pre-migration
+      - name: Deploy stand-in (must be skipped on backup failure)
+        if: steps.backup.outcome == 'success'
+        run: echo "flyctl deploy would run here"
+      - name: Assert the guard blocked the deploy
+        run: |
+          if [ "${{ steps.backup.outcome }}" = "success" ]; then
+            echo "::error::Simulated backup exited 0 — deploy.yml's guard would NOT block the deploy."
+            exit 1
+          fi
+          echo "✅ Backup failed as expected; the deploy stand-in was skipped."
+          echo "deploy.yml's flyctl deploy (no continue-on-error) would likewise be skipped."
