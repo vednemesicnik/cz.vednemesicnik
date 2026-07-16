@@ -149,6 +149,27 @@ successful upload — a handful of objects at a time, so everything within the w
 kept. Backups under `db/` are isolated from the image-store lifecycle by prefix. To
 restore one, see [`_manual-database-restore.md`](./_manual-database-restore.md).
 
+### Backup guard drill
+
+`deploy.yml`'s pre-migration backup step has no `continue-on-error`, so a failed
+backup fails the `deploy` job and `flyctl deploy` never runs — a schema-changing
+release can't ship without first backing up the old schema. The
+[`.github/workflows/backup-guard-drill.yml`](../.github/workflows/backup-guard-drill.yml)
+workflow proves that guard on demand: it runs the real `scripts/backup-database.sh`
+against a nonexistent Fly app (so the backup fails organically — no production
+contact), then asserts the deploy would be skipped.
+
+Run it from **Actions → "Backup guard drill" → Run workflow**, or:
+
+```shell
+gh workflow run backup-guard-drill.yml --ref dev
+```
+
+A **green** run means the guard is healthy (backup failed → deploy stand-in skipped).
+A red run means a backup failure would _not_ block a deploy — investigate before the
+next migration release. This is the standing check for issue #228's "a simulated
+backup failure fails the deploy job" criterion.
+
 ## Backing up the object stores (volume driver)
 
 The pre-generated image variants and issue PDFs live as files under `/data/images`
