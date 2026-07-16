@@ -90,18 +90,23 @@ prefix — a seed/reset (`imageStore.delete([''])` in `prisma/seed.ts`) wipes ju
 dedicated backups bucket is fine too if you want stricter isolation; just adjust the
 paths below.)
 
+The upload runs on the machine with the in-image `object-store` CLI
+(`/usr/local/bin/object-store`, over `@aws-sdk`) — the production image ships no
+`aws` binary. It reads `$BUCKET_NAME` and the Tigris credentials from the machine
+environment, so you pass just the `db/…` key (no `s3://` URL or endpoint flag):
+
 ```shell
 # Back up into the bucket under db/ (fast egress off the app machine)
 fly ssh console --app cz-vednemesicnik -C "sh -c '\
   sqlite3 \"\$DATABASE_URL\" \".backup /tmp/backup.db\" && gzip -f /tmp/backup.db && \
-  aws s3 cp /tmp/backup.db.gz \"s3://\$BUCKET_NAME/db/backup-\$(date +%F).db.gz\" \
-    --endpoint-url \"\$AWS_ENDPOINT_URL_S3\" && rm -f /tmp/backup.db.gz'"
+  object-store put /tmp/backup.db.gz \"db/backup-\$(date +%F).db.gz\" && \
+  rm -f /tmp/backup.db.gz'"
 ```
 
-Then pull it locally over HTTPS (via the AWS CLI configured with the same Tigris
-credentials, or a temporary presigned URL). List what's there and copy the exact
-key — don't assume today's date, since the backup may have been taken on a
-different day:
+Then pull it locally over HTTPS. `object-store` lives only on the app machine, so
+from your workstation use the AWS CLI configured with the same Tigris credentials (or
+a temporary presigned URL). List what's there and copy the exact key — don't assume
+today's date, since the backup may have been taken on a different day:
 
 ```shell
 aws s3 ls "s3://$BUCKET_NAME/db/" --endpoint-url https://fly.storage.tigris.dev
@@ -113,10 +118,10 @@ gzip -t backup-*.db.gz && echo "OK"
 ### Automated backups
 
 The command above is now automated by `scripts/backup-database.sh`, which runs the
-same steps on the machine — except it uses the in-image `object-store` CLI (see
-[`scripts/object-store-cli.ts`](../scripts/object-store-cli.ts), baked in as
-`/usr/local/bin/object-store`) for the upload rather than the `aws` binary, which the
-production image does not ship. Two workflows call it:
+same steps on the machine (the same `object-store` upload — see
+[`scripts/object-store-cli.ts`](../scripts/object-store-cli.ts)) and adds a
+`gzip -t` integrity check, an upload verification, and retention pruning. Two
+workflows call it:
 
 - **Quarterly** — [`.github/workflows/backup.yml`](../.github/workflows/backup.yml)
   runs on a cron (1st of Jan/Apr/Jul/Oct) and on `workflow_dispatch`.
