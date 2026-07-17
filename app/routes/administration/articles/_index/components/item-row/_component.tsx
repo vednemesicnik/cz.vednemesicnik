@@ -9,7 +9,11 @@ import {
 } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminStateBadge } from '~/components/admin/admin-state-badge'
-import { TableCell, TableRow } from '~/components/admin/admin-table'
+import {
+  TableCell,
+  TableRow,
+  TableSelectionCell,
+} from '~/components/admin/admin-table'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
@@ -21,6 +25,8 @@ type Props = {
   canView: boolean
   canEdit: boolean
   canDelete: boolean
+  selected: boolean
+  onSelect: () => void
 }
 
 export const ItemRow = ({
@@ -30,6 +36,8 @@ export const ItemRow = ({
   canView,
   canEdit,
   canDelete,
+  selected,
+  onSelect,
 }: Props) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const fetcherKey = `delete-article-${id}`
@@ -46,11 +54,17 @@ export const ItemRow = ({
 
   return (
     <TableRow>
+      <TableSelectionCell
+        checked={selected}
+        disabled={!canDelete}
+        label={`Vybrat článek ${title}`}
+        onChange={onSelect}
+      />
       <TableCell>{title}</TableCell>
       <TableCell>
         <AdminStateBadge state={state} />
       </TableCell>
-      <TableCell>
+      <TableCell variant={'actions'}>
         <AdminActionGroup>
           {canView && (
             <AdminLinkButton

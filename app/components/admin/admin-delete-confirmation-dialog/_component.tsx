@@ -14,10 +14,11 @@ type Props = {
 }
 
 export const AdminDeleteConfirmationDialog = ({ ref }: Props) => {
-  const dialog = ref.current
-
-  const handleDecline = () => dialog?.close(DIALOG_RETURN_VALUE.decline)
-  const handleAccept = () => dialog?.close(DIALOG_RETURN_VALUE.accept)
+  // Read ref.current inside the handlers, not during render: the <dialog> is
+  // attached in the commit phase, so at render time ref.current is still null
+  // and a captured value would never close the dialog.
+  const handleDecline = () => ref.current?.close(DIALOG_RETURN_VALUE.decline)
+  const handleAccept = () => ref.current?.close(DIALOG_RETURN_VALUE.accept)
 
   return (
     <AdminDialog ref={ref}>
