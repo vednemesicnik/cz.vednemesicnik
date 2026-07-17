@@ -1,9 +1,22 @@
-import type { LoaderFunctionArgs } from 'react-router'
+import type { Prisma } from '@generated/prisma/client'
 
+import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+import type { Route } from './+types/route'
+import { SORT_KEYS, type SortKey } from './sort'
+
+const ORDER_BY: Record<
+  SortKey,
+  (order: SortOrder) => Prisma.UserOrderByWithRelationInput
+> = {
+  createdAt: (order) => ({ createdAt: order }),
+  email: (order) => ({ email: order }),
+  name: (order) => ({ name: order }),
+}
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
   const context = await getUserPermissionContext(request, {
     actions: ['view', 'create', 'update', 'delete'],
     entities: ['user'],
@@ -21,12 +34,29 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw new Response('Forbidden', { status: 403 })
   }
 
+  const { order, q, sort } = parseAdminListParams(request, {
+    defaultOrder: 'desc',
+    defaultSort: 'createdAt',
+    sortKeys: SORT_KEYS,
+  })
+
+  const permissionWhere =
+    viewPerms.hasOwn && !viewPerms.hasAny ? { id: context.userId } : {}
+
+  // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
+  // match case-sensitively (accepted limitation).
+  const searchWhere =
+    q === ''
+      ? []
+      : [{ OR: [{ email: { contains: q } }, { name: { contains: q } }] }]
+
+  const where = { AND: [permissionWhere, ...searchWhere] }
+
   // Fetch users based on permissions
   const rawUsers = await prisma.user.findMany({
-    orderBy: {
-      name: 'asc',
-    },
+    orderBy: ORDER_BY[sort](order),
     select: {
+      createdAt: true,
       email: true,
       id: true,
       name: true,
@@ -37,9 +67,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           name: true,
         },
       },
-      username: true,
     },
-    where: viewPerms.hasOwn && !viewPerms.hasAny ? { id: context.userId } : {},
+    where,
   })
 
   // Compute permissions for each user
@@ -73,6 +102,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       entity: 'user',
       targetUserId: context.userId,
     }).hasPermission,
+    q,
     users,
   }
 }
