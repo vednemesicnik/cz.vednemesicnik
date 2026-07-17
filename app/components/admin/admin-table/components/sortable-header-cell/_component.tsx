@@ -19,19 +19,31 @@ type Props = {
   // The loader's default sort key; renders this column as active (aria-sort +
   // indicator) when no `sort` param is present. Toggling back to it clears params.
   defaultSort?: string
+  // The loader's default order, used only when this is the default column and no
+  // `order` param is present, so the UI matches the real default (e.g. `desc`).
+  defaultOrder?: SortOrder
 }
 
 export const TableSortableHeaderCell = ({
   children,
   sortKey,
   defaultSort,
+  defaultOrder,
 }: Props) => {
   const [searchParams] = useSearchParams()
 
-  const activeSort = searchParams.get(SORT_PARAM) ?? defaultSort
-  const isActive = activeSort === sortKey
+  const rawSort = searchParams.get(SORT_PARAM)
+  const rawOrder = searchParams.get(ORDER_PARAM)
+
+  const isActive = (rawSort ?? defaultSort) === sortKey
+  // Explicit sort → read the order param; implicit default column → the loader's
+  // default order.
   const order: SortOrder =
-    searchParams.get(ORDER_PARAM) === 'desc' ? 'desc' : 'asc'
+    rawSort === null
+      ? (defaultOrder ?? 'asc')
+      : rawOrder === 'desc'
+        ? 'desc'
+        : 'asc'
 
   const search = buildSortSearch(searchParams.toString(), sortKey)
 
@@ -44,13 +56,16 @@ export const TableSortableHeaderCell = ({
     >
       <Link className={styles.link} preventScrollReset={true} to={{ search }}>
         {children}
-        <ArrowUpwardIcon
-          className={clsx(
-            styles.icon,
-            isActive && styles.iconActive,
-            isActive && order === 'desc' && styles.iconDesc,
-          )}
-        />
+        {/* Decorative: sort state is already conveyed by aria-sort. */}
+        <span aria-hidden={true} className={styles.iconWrapper}>
+          <ArrowUpwardIcon
+            className={clsx(
+              styles.icon,
+              isActive && styles.iconActive,
+              isActive && order === 'desc' && styles.iconDesc,
+            )}
+          />
+        </span>
       </Link>
     </th>
   )

@@ -2,11 +2,8 @@ import { Form, useLocation, useSearchParams } from 'react-router'
 
 import { SearchIcon } from '~/components/icons/search-icon'
 import { Link } from '~/components/link'
-import {
-  ORDER_PARAM,
-  SEARCH_PARAM,
-  SORT_PARAM,
-} from '~/utils/admin-list-params'
+import { PAGE_PARAM } from '~/components/pagination'
+import { SEARCH_PARAM } from '~/utils/admin-list-params'
 
 import styles from './_styles.module.css'
 
@@ -19,24 +16,27 @@ export const AdminTableSearch = ({ defaultValue, placeholder }: Props) => {
   const { pathname } = useLocation()
   const [searchParams] = useSearchParams()
 
-  const sort = searchParams.get(SORT_PARAM)
-  const order = searchParams.get(ORDER_PARAM)
+  // Preserve every current param except `q` (the search input owns it) and
+  // `page` (searching/clearing resets to page 1), so sort and any future filters
+  // survive a submit or a clear.
+  const preserved = new URLSearchParams(searchParams)
+  preserved.delete(SEARCH_PARAM)
+  preserved.delete(PAGE_PARAM)
 
-  // Keep the current sort/order but drop `q` and `page` when clearing the search.
-  const clearParams = new URLSearchParams()
-  if (sort !== null) clearParams.set(SORT_PARAM, sort)
-  if (order !== null) clearParams.set(ORDER_PARAM, order)
-  const clearSearch = clearParams.toString()
+  const preservedEntries = [...preserved.entries()]
+  const preservedSearch = preserved.toString()
 
   return (
     <Form className={styles.form} method={'get'}>
-      {/* Preserve current sort on GET submit; `page` is omitted to reset to page 1. */}
-      {sort !== null && (
-        <input name={SORT_PARAM} type={'hidden'} value={sort} />
-      )}
-      {order !== null && (
-        <input name={ORDER_PARAM} type={'hidden'} value={order} />
-      )}
+      {/* Carry the preserved params on GET submit so a search doesn't drop them. */}
+      {preservedEntries.map(([name, value], index) => (
+        <input
+          key={`${name}-${index}`}
+          name={name}
+          type={'hidden'}
+          value={value}
+        />
+      ))}
 
       <div className={styles.field}>
         <span aria-hidden={true} className={styles.icon}>
@@ -61,7 +61,10 @@ export const AdminTableSearch = ({ defaultValue, placeholder }: Props) => {
       {defaultValue !== '' && (
         <Link
           className={styles.clear}
-          to={{ pathname, search: clearSearch ? `?${clearSearch}` : '' }}
+          to={{
+            pathname,
+            search: preservedSearch ? `?${preservedSearch}` : '',
+          }}
         >
           Zrušit
         </Link>

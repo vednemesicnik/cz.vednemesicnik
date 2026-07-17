@@ -42,6 +42,13 @@
   }
 }
 
+.iconWrapper {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
 .icon {
   @layer component {
     /* Inactive: hidden until the header is hovered/focused, so sortability is

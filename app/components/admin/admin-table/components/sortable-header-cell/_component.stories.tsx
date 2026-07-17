@@ -31,10 +31,10 @@ const withTableAt = (search: string, children: ReactNode) => (
 )
 
 /**
- * No `sort` param and no `defaultSort`: the column is inactive. The indicator
- * stays hidden until the header is hovered or focused.
+ * Default interactive state: no `sort` param and no `defaultSort`, so the column
+ * is inactive and the indicator stays hidden until the header is hovered/focused.
  */
-export const Inactive: Story = {
+export const Playground: Story = {
   render: () =>
     withTableAt(
       '',
