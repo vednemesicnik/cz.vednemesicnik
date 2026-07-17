@@ -10,12 +10,15 @@ import { SORT_KEYS, type SortKey } from './sort'
 
 const PAGE_SIZE = 20
 
+// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
+// equal values keep a deterministic order (matters most here — the list is
+// paginated, so unstable ordering could shuffle items across pages).
 const ORDER_BY: Record<
   SortKey,
-  (order: SortOrder) => Prisma.ArticleOrderByWithRelationInput
+  (order: SortOrder) => Prisma.ArticleOrderByWithRelationInput[]
 > = {
-  createdAt: (order) => ({ createdAt: order }),
-  title: (order) => ({ title: order }),
+  createdAt: (order) => [{ createdAt: order }],
+  title: (order) => [{ title: order }, { createdAt: 'desc' }],
 }
 
 export const loader = async ({ request }: Route.LoaderArgs) => {

@@ -8,12 +8,14 @@ import { getAuthorPermissionContext } from '~/utils/permissions/author/context/g
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
 
+// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
+// equal values keep a deterministic order across reloads.
 const ORDER_BY: Record<
   SortKey,
-  (order: SortOrder) => Prisma.IssueOrderByWithRelationInput
+  (order: SortOrder) => Prisma.IssueOrderByWithRelationInput[]
 > = {
-  createdAt: (order) => ({ createdAt: order }),
-  label: (order) => ({ label: order }),
+  createdAt: (order) => [{ createdAt: order }],
+  label: (order) => [{ label: order }, { createdAt: 'desc' }],
 }
 
 export const loader = async ({ request }: Route.LoaderArgs) => {

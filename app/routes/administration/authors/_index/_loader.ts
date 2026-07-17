@@ -7,14 +7,16 @@ import { getUserPermissionContext } from '~/utils/permissions/user/context/get-u
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
 
+// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
+// equal values keep a deterministic order across reloads.
 const ORDER_BY: Record<
   SortKey,
-  (order: SortOrder) => Prisma.AuthorOrderByWithRelationInput
+  (order: SortOrder) => Prisma.AuthorOrderByWithRelationInput[]
 > = {
-  createdAt: (order) => ({ createdAt: order }),
-  email: (order) => ({ user: { email: order } }),
-  name: (order) => ({ name: order }),
-  role: (order) => ({ role: { level: order } }),
+  createdAt: (order) => [{ createdAt: order }],
+  email: (order) => [{ user: { email: order } }, { createdAt: 'desc' }],
+  name: (order) => [{ name: order }, { createdAt: 'desc' }],
+  role: (order) => [{ role: { level: order } }, { createdAt: 'desc' }],
 }
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
