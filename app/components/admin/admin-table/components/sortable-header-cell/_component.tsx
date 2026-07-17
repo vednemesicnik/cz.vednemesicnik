@@ -36,14 +36,12 @@ export const TableSortableHeaderCell = ({
   const rawOrder = searchParams.get(ORDER_PARAM)
 
   const isActive = (rawSort ?? defaultSort) === sortKey
-  // Explicit sort → read the order param; implicit default column → the loader's
-  // default order.
+  // Mirror parseAdminListParams: a valid order param wins, otherwise fall back to
+  // the loader's default order — so aria-sort/arrow can't disagree with the loader.
   const order: SortOrder =
-    rawSort === null
-      ? (defaultOrder ?? 'asc')
-      : rawOrder === 'desc'
-        ? 'desc'
-        : 'asc'
+    rawOrder === 'asc' || rawOrder === 'desc'
+      ? rawOrder
+      : (defaultOrder ?? 'asc')
 
   const search = buildSortSearch(searchParams.toString(), sortKey)
 
