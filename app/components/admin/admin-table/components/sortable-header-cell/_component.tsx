@@ -22,6 +22,10 @@ type Props = {
   // The loader's default order, used as the fallback whenever the `order` param is
   // missing/invalid (mirrors parseAdminListParams) so the UI matches the loader.
   defaultOrder?: SortOrder
+  // Optional allowlist of valid sort keys (the same one passed to
+  // parseAdminListParams). When given, an unknown `sort` value is treated as
+  // missing so the default column stays active, matching the loader.
+  sortKeys?: readonly string[]
 }
 
 export const TableSortableHeaderCell = ({
@@ -29,12 +33,19 @@ export const TableSortableHeaderCell = ({
   sortKey,
   defaultSort,
   defaultOrder,
+  sortKeys,
 }: Props) => {
   const [searchParams] = useSearchParams()
 
-  // Treat an empty value (e.g. `?sort=`) as missing, matching the loader's
-  // fallback to defaultSort.
-  const rawSort = searchParams.get(SORT_PARAM) || undefined
+  // Treat an empty (`?sort=`) or unknown (`?sort=evil`, when an allowlist is
+  // given) value as missing, matching the loader's fallback to defaultSort.
+  const sortParam = searchParams.get(SORT_PARAM) || undefined
+  const rawSort =
+    sortParam !== undefined && sortKeys !== undefined
+      ? sortKeys.includes(sortParam)
+        ? sortParam
+        : undefined
+      : sortParam
   const rawOrder = searchParams.get(ORDER_PARAM)
 
   const isActive = (rawSort ?? defaultSort) === sortKey
