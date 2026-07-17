@@ -37,7 +37,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     throw new Response('Forbidden', { status: 403 })
   }
 
-  const { order, q, sort } = parseAdminListParams(request, {
+  const { order, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'createdAt',
     sortKeys: SORT_KEYS,
@@ -49,9 +49,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
   // match case-sensitively (accepted limitation).
   const searchWhere =
-    q === ''
+    query === ''
       ? []
-      : [{ OR: [{ email: { contains: q } }, { name: { contains: q } }] }]
+      : [
+          {
+            OR: [{ email: { contains: query } }, { name: { contains: query } }],
+          },
+        ]
 
   const where = { AND: [permissionWhere, ...searchWhere] }
 
@@ -105,7 +109,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       entity: 'user',
       targetUserId: context.userId,
     }).hasPermission,
-    q,
+    query,
     users,
   }
 }

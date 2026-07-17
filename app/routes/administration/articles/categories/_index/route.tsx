@@ -30,7 +30,7 @@ export { meta } from './_meta'
 const COLUMN_COUNT = 5
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { canCreate, categories, q } = loaderData
+  const { canCreate, categories, query } = loaderData
 
   const pending = useAdminListPending()
 
@@ -50,7 +50,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminLinkButton>
       )}
       <AdminTableToolbar>
-        <AdminTableSearch defaultValue={q} placeholder={'Hledat rubriky…'} />
+        <AdminTableSearch
+          defaultValue={query}
+          placeholder={'Hledat rubriky…'}
+        />
         <AdminBulkActionsBar
           action={href('/administration/articles/categories')}
           onDone={selection.clear}
@@ -87,7 +90,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {categories.length === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {q === '' ? 'Žádné rubriky' : `Nic nenalezeno pro „${q}“`}
+              {query === '' ? 'Žádné rubriky' : `Nic nenalezeno pro „${query}“`}
             </TableEmptyRow>
           ) : (
             categories.map((category) => (

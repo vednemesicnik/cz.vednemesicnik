@@ -43,7 +43,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     state: 'archived',
   })
 
-  const { order, q, sort } = parseAdminListParams(request, {
+  const { order, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'createdAt',
     sortKeys: SORT_KEYS,
@@ -64,7 +64,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   // findMany. SQLite `contains` is case-insensitive for ASCII only; Czech
   // diacritics match case-sensitively (accepted limitation).
   const episodesWhere = {
-    AND: [permissionWhere, ...(q === '' ? [] : [{ title: { contains: q } }])],
+    AND: [
+      permissionWhere,
+      ...(query === '' ? [] : [{ title: { contains: query } }]),
+    ],
   }
 
   const podcast = await prisma.podcast.findUniqueOrThrow({
@@ -122,6 +125,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       ...podcast,
       episodes,
     },
-    q,
+    query,
   }
 }

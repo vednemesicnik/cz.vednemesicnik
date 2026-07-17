@@ -30,7 +30,7 @@ export { meta } from './_meta'
 const COLUMN_COUNT = 5
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { canCreate, podcasts, q } = loaderData
+  const { canCreate, podcasts, query } = loaderData
 
   const pending = useAdminListPending()
 
@@ -48,7 +48,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminLinkButton>
       )}
       <AdminTableToolbar>
-        <AdminTableSearch defaultValue={q} placeholder={'Hledat podcasty…'} />
+        <AdminTableSearch
+          defaultValue={query}
+          placeholder={'Hledat podcasty…'}
+        />
         <AdminBulkActionsBar
           action={href('/administration/podcasts')}
           onDone={selection.clear}
@@ -85,7 +88,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {podcasts.length === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {q === '' ? 'Žádné podcasty' : `Nic nenalezeno pro „${q}“`}
+              {query === ''
+                ? 'Žádné podcasty'
+                : `Nic nenalezeno pro „${query}“`}
             </TableEmptyRow>
           ) : (
             podcasts.map((podcast) => (

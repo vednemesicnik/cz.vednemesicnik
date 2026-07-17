@@ -27,7 +27,7 @@ export { meta } from './_meta'
 const COLUMN_COUNT = 5
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { canCreate, q, users } = loaderData
+  const { canCreate, query, users } = loaderData
 
   const pending = useAdminListPending()
 
@@ -40,7 +40,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminLinkButton>
       )}
       <AdminTableToolbar>
-        <AdminTableSearch defaultValue={q} placeholder={'Hledat uživatele…'} />
+        <AdminTableSearch
+          defaultValue={query}
+          placeholder={'Hledat uživatele…'}
+        />
       </AdminTableToolbar>
       <AdminTable pending={pending} stickyHeader={true}>
         <TableHeader>
@@ -81,7 +84,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {users.length === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {q === '' ? 'Žádní uživatelé' : `Nic nenalezeno pro „${q}“`}
+              {query === ''
+                ? 'Žádní uživatelé'
+                : `Nic nenalezeno pro „${query}“`}
             </TableEmptyRow>
           ) : (
             users.map((user) => (

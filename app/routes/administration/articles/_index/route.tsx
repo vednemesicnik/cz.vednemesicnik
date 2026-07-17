@@ -36,7 +36,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     canCreate,
     currentPage,
     pageSize,
-    q,
+    query,
     totalCount,
     totalPages,
   } = loaderData
@@ -57,7 +57,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminLinkButton>
       )}
       <AdminTableToolbar>
-        <AdminTableSearch defaultValue={q} placeholder={'Hledat články…'} />
+        <AdminTableSearch defaultValue={query} placeholder={'Hledat články…'} />
         <AdminBulkActionsBar
           action={href('/administration/articles')}
           onDone={selection.clear}
@@ -94,7 +94,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {articles.length === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {q === '' ? 'Žádné články' : `Nic nenalezeno pro „${q}“`}
+              {query === '' ? 'Žádné články' : `Nic nenalezeno pro „${query}“`}
             </TableEmptyRow>
           ) : (
             articles.map((article) => (

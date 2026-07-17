@@ -41,7 +41,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     state: 'archived',
   })
 
-  const { order, q, sort } = parseAdminListParams(request, {
+  const { order, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'createdAt',
     sortKeys: SORT_KEYS,
@@ -61,7 +61,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
   // match case-sensitively (accepted limitation).
   const where = {
-    AND: [permissionWhere, ...(q === '' ? [] : [{ label: { contains: q } }])],
+    AND: [
+      permissionWhere,
+      ...(query === '' ? [] : [{ label: { contains: query } }]),
+    ],
   }
 
   const rawIssues = await prisma.issue.findMany({
@@ -109,6 +112,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       targetAuthorIds: [context.authorId],
     }).hasPermission,
     issues,
-    q,
+    query,
   }
 }

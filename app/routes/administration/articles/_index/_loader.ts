@@ -44,7 +44,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     state: 'archived',
   })
 
-  const { order, page, q, sort } = parseAdminListParams(request, {
+  const { order, page, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'createdAt',
     sortKeys: SORT_KEYS,
@@ -64,7 +64,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // follow-up; the AND composition already leaves room for it.
   const permissionWhere = { OR: viewableStates }
   const where = {
-    AND: [permissionWhere, ...(q === '' ? [] : [{ title: { contains: q } }])],
+    AND: [
+      permissionWhere,
+      ...(query === '' ? [] : [{ title: { contains: query } }]),
+    ],
   }
 
   const [rawArticles, totalCount] = await Promise.all([
@@ -132,7 +135,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     }).hasPermission,
     currentPage: page,
     pageSize: PAGE_SIZE,
-    q,
+    query,
     totalCount,
     totalPages,
   }

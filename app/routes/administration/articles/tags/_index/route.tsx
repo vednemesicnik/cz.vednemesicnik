@@ -30,7 +30,7 @@ export { meta } from './_meta'
 const COLUMN_COUNT = 5
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { canCreate, q, tags } = loaderData
+  const { canCreate, query, tags } = loaderData
 
   const pending = useAdminListPending()
 
@@ -46,7 +46,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminLinkButton>
       )}
       <AdminTableToolbar>
-        <AdminTableSearch defaultValue={q} placeholder={'Hledat štítky…'} />
+        <AdminTableSearch defaultValue={query} placeholder={'Hledat štítky…'} />
         <AdminBulkActionsBar
           action={href('/administration/articles/tags')}
           onDone={selection.clear}
@@ -83,7 +83,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {tags.length === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {q === '' ? 'Žádné štítky' : `Nic nenalezeno pro „${q}“`}
+              {query === '' ? 'Žádné štítky' : `Nic nenalezeno pro „${query}“`}
             </TableEmptyRow>
           ) : (
             tags.map((tag) => (

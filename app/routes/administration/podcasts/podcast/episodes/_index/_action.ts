@@ -14,6 +14,9 @@ const MAX_SELECTION = 20
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const { podcastId } = params
+  // Guard the scope key: a missing podcastId would make Prisma drop the filter
+  // and let the action reach episodes across all podcasts.
+  invariantResponse(podcastId, 'Missing podcast id')
 
   const formData = await request.formData()
   await validateCSRF(formData, request.headers)

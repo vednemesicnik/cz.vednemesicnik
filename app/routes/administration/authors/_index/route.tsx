@@ -31,7 +31,7 @@ export { meta } from './_meta'
 const COLUMN_COUNT = 6
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { authors, canCreate, q } = loaderData
+  const { authors, canCreate, query } = loaderData
 
   const pending = useAdminListPending()
 
@@ -49,7 +49,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminLinkButton>
       )}
       <AdminTableToolbar>
-        <AdminTableSearch defaultValue={q} placeholder={'Hledat autory…'} />
+        <AdminTableSearch defaultValue={query} placeholder={'Hledat autory…'} />
         <AdminBulkActionsBar
           action={href('/administration/authors')}
           onDone={selection.clear}
@@ -101,7 +101,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {authors.length === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {q === '' ? 'Žádní autoři' : `Nic nenalezeno pro „${q}“`}
+              {query === '' ? 'Žádní autoři' : `Nic nenalezeno pro „${query}“`}
             </TableEmptyRow>
           ) : (
             authors.map((author) => (
