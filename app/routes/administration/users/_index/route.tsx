@@ -60,7 +60,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           >
             Jméno
           </TableSortableHeaderCell>
-          <TableHeaderCell>Role</TableHeaderCell>
+          <TableSortableHeaderCell
+            defaultOrder={'desc'}
+            defaultSort={'createdAt'}
+            sortKey={'role'}
+            sortKeys={SORT_KEYS}
+          >
+            Role
+          </TableSortableHeaderCell>
           <TableSortableHeaderCell
             defaultOrder={'desc'}
             defaultSort={'createdAt'}
