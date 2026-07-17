@@ -47,16 +47,23 @@ export const TableSortableHeaderCell = ({
         : undefined
       : sortParam
   const rawOrder = searchParams.get(ORDER_PARAM)
+  const orderParamValid = rawOrder === 'asc' || rawOrder === 'desc'
 
   const isActive = (rawSort ?? defaultSort) === sortKey
   // Mirror parseAdminListParams: a valid order param wins, otherwise fall back to
   // the loader's default order — so aria-sort/arrow can't disagree with the loader.
-  const order: SortOrder =
-    rawOrder === 'asc' || rawOrder === 'desc'
-      ? rawOrder
-      : (defaultOrder ?? 'asc')
+  const order: SortOrder = orderParamValid ? rawOrder : (defaultOrder ?? 'asc')
 
-  const search = buildSortSearch(searchParams.toString(), sortKey)
+  // When this column is the explicit active sort but the order param is
+  // missing/invalid, normalize it to the effective order so the toggle cycle
+  // (asc → desc → clear) matches what the user sees. The default column active
+  // via `defaultSort` (no sort param) is left untouched so its first click still
+  // sets an explicit order.
+  const searchToToggle = new URLSearchParams(searchParams)
+  if (rawSort === sortKey && !orderParamValid) {
+    searchToToggle.set(ORDER_PARAM, order)
+  }
+  const search = buildSortSearch(searchToToggle.toString(), sortKey)
 
   return (
     <th
