@@ -92,9 +92,29 @@
   }
 }
 
+/* Fully defines the link look so the shared Link base styles (underline,
+   --primary color, visited/hover) don't leak through. `variant` layer overrides
+   the base component layer regardless of import order. */
 .clear {
-  @layer component {
+  @layer variant {
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     color: var(--text-secondary);
+    text-decoration: none;
+
+    &:visited {
+      color: var(--text-secondary);
+    }
+
+    &:hover {
+      color: var(--text-primary);
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+      border-radius: 4px;
+    }
   }
 }
