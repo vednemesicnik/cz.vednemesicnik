@@ -24,21 +24,26 @@ export const AdminBulkActionsBar = ({ action, selectedIds, onDone }: Props) => {
     selectedIds,
   })
 
-  if (selectedIds.length === 0) return null
-
   return (
-    <section aria-label={'Hromadné akce'} className={styles.bar}>
-      <span className={styles.count}>Vybráno: {selectedIds.length}</span>
-      <AdminActionButton
-        action={'delete'}
-        disabled={isSubmitting}
-        onClick={openDialog}
-        type={'button'}
-      >
-        <DeleteIcon />
-        {isSubmitting ? 'Maže se...' : 'Smazat vybrané'}
-      </AdminActionButton>
+    <>
+      {selectedIds.length > 0 && (
+        <section aria-label={'Hromadné akce'} className={styles.bar}>
+          <span className={styles.count}>Vybráno: {selectedIds.length}</span>
+          <AdminActionButton
+            action={'delete'}
+            disabled={isSubmitting}
+            onClick={openDialog}
+            type={'button'}
+          >
+            <DeleteIcon />
+            {isSubmitting ? 'Maže se...' : 'Smazat vybrané'}
+          </AdminActionButton>
+        </section>
+      )}
+      {/* Keep the dialog mounted even with no selection: the hook attaches its
+          `close` listener on mount, so a dialog that only appears on selection
+          would never wire up and confirm would never submit. */}
       <AdminDeleteConfirmationDialog ref={dialogRef} />
-    </section>
+    </>
   )
 }

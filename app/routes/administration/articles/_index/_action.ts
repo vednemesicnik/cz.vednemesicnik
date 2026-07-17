@@ -45,5 +45,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
     })
   }
 
-  return { deletedCount: articles.length }
+  // App convention: the bulk-delete hook clears the selection only on an
+  // explicit success. A denied item throws inside deleteArticle before we get
+  // here, so the selection stays for retry.
+  return { status: 'success' as const }
 }
