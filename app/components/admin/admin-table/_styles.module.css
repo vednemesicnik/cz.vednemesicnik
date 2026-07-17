@@ -33,6 +33,8 @@
     border-collapse: separate;
     border-spacing: 0;
     background-color: var(--bg-primary);
+    /* On the base so both the fade-in and fade-out (class removal) animate */
+    transition: opacity 0.15s ease;
   }
 }
 
@@ -40,7 +42,6 @@
   @layer component {
     opacity: 0.5;
     pointer-events: none;
-    transition: opacity 0.15s ease;
   }
 }
 
