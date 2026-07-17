@@ -1,0 +1,30 @@
+.headerCell {
+  @layer component {
+    /* Narrow column that hugs the first content column (reduced end padding). */
+    width: 1%;
+    white-space: nowrap;
+    padding: 12px 8px 12px 24px;
+    text-align: left;
+    /* Opaque background + separator on the cell so both stay put while the
+       header is sticky (border-collapse: separate ignores borders on thead). */
+    background-color: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-strong);
+  }
+}
+
+.checkbox {
+  @layer component {
+    display: block;
+    accent-color: var(--violet);
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}

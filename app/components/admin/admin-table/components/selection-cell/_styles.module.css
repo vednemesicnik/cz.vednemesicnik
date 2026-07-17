@@ -1,0 +1,35 @@
+.cell {
+  @layer component {
+    /* Narrow column that hugs the first content column (reduced end padding). */
+    width: 1%;
+    white-space: nowrap;
+    padding: 16px 8px 16px 24px;
+    vertical-align: middle;
+    /* Row separator (border-collapse: separate keeps it attached to sticky cells) */
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+/* Drop the separator under the last body row */
+:where(tr:last-child) .cell {
+  @layer component {
+    border-bottom: none;
+  }
+}
+
+.checkbox {
+  @layer component {
+    display: block;
+    accent-color: var(--violet);
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
