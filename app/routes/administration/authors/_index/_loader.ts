@@ -12,7 +12,9 @@ const ORDER_BY: Record<
   (order: SortOrder) => Prisma.AuthorOrderByWithRelationInput
 > = {
   createdAt: (order) => ({ createdAt: order }),
+  email: (order) => ({ user: { email: order } }),
   name: (order) => ({ name: order }),
+  role: (order) => ({ role: { name: order } }),
 }
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
