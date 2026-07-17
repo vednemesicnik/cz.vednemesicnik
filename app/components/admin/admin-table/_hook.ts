@@ -15,6 +15,7 @@ export const useAdminTableSelection = (selectableIds: string[]) => {
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const selectedIds = getSelectedIds(selected, selectableIds)
+  const selectedIdSet = new Set(selectedIds)
 
   const allSelected =
     selectedIds.length > 0 && selectedIds.length === selectableIds.length
@@ -32,7 +33,9 @@ export const useAdminTableSelection = (selectableIds: string[]) => {
     setSelected(new Set())
   }, [])
 
-  const isSelected = useCallback((id: string) => selected.has(id), [selected])
+  // Reflect the pruned selection, not the raw set: a rendered-but-non-selectable
+  // row (e.g. canDelete flipped false) must not show as checked.
+  const isSelected = (id: string) => selectedIdSet.has(id)
 
   return {
     allSelected,
