@@ -69,6 +69,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       orderBy: ORDER_BY[sort](order),
       select: {
         authors: { select: { id: true } },
+        createdAt: true,
         id: true,
         state: true,
         title: true,

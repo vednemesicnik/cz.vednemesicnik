@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href, useLocation, useNavigation } from 'react-router'
+import { href } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
@@ -18,6 +18,7 @@ import {
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { Pagination } from '~/components/pagination'
+import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
@@ -26,8 +27,8 @@ export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-// selection + title + state + actions
-const COLUMN_COUNT = 4
+// selection + title + state + createdAt + actions
+const COLUMN_COUNT = 5
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
@@ -40,12 +41,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     totalPages,
   } = loaderData
 
-  const navigation = useNavigation()
-  const location = useLocation()
-  // Covers pagination/sort/search — those only change the query string.
-  const pending =
-    navigation.state === 'loading' &&
-    navigation.location?.pathname === location.pathname
+  const pending = useAdminListPending()
 
   const deletableIds = articles
     .filter((article) => article.canDelete)
@@ -85,6 +81,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             Název
           </TableSortableHeaderCell>
           <TableHeaderCell>Stav</TableHeaderCell>
+          <TableSortableHeaderCell
+            defaultOrder={'desc'}
+            defaultSort={'createdAt'}
+            sortKey={'createdAt'}
+            sortKeys={SORT_KEYS}
+          >
+            Vytvořeno
+          </TableSortableHeaderCell>
           <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
         </TableHeader>
         <TableBody>
@@ -98,6 +102,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 canDelete={article.canDelete}
                 canEdit={article.canEdit}
                 canView={article.canView}
+                createdAt={article.createdAt}
                 id={article.id}
                 key={article.id}
                 onSelect={() => selection.toggle(article.id)}
