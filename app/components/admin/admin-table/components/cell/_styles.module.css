@@ -1,14 +1,40 @@
 .cell {
-  padding: 16px;
-  font-size: var(--font-size-md);
-  color: var(--text-primary);
-  vertical-align: middle;
+  @layer component {
+    padding: 16px;
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+    vertical-align: middle;
+    font-variant-numeric: tabular-nums;
+    /* Row separator (border-collapse: separate keeps it attached to sticky cells) */
+    border-bottom: 1px solid var(--border);
+
+    &:first-child {
+      padding-left: 24px;
+    }
+
+    &:last-child {
+      padding-right: 24px;
+    }
+  }
 }
 
-.cell:first-child {
-  padding-left: 24px;
+/* Drop the separator under the last body row */
+:where(tr:last-child) .cell {
+  @layer component {
+    border-bottom: none;
+  }
 }
 
-.cell:last-child {
-  padding-right: 24px;
+.alignRight {
+  @layer variant {
+    text-align: right;
+  }
+}
+
+.actions {
+  @layer variant {
+    text-align: right;
+    width: 1%;
+    white-space: nowrap;
+  }
 }

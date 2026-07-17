@@ -1,0 +1,9 @@
+.cell {
+  @layer component {
+    padding-block: 48px;
+    padding-inline: 24px;
+    text-align: center;
+    font-size: var(--font-size-md);
+    color: var(--text-secondary);
+  }
+}

@@ -1,12 +1,11 @@
 .row {
-  border-bottom: 1px solid var(--border);
-  transition: background-color 0.15s ease;
-}
+  @layer component {
+    transition: background-color 0.15s ease;
 
-.row:hover {
-  background-color: var(--bg-hover);
-}
-
-.row:last-child {
-  border-bottom: none;
+    /* Row separators live on td/th (border-collapse: separate keeps them
+       attached to sticky header cells); hover stays on the row. */
+    &:hover {
+      background-color: var(--bg-hover);
+    }
+  }
 }
