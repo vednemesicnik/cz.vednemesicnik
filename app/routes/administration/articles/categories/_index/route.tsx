@@ -73,7 +73,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           >
             Název
           </TableSortableHeaderCell>
-          <TableHeaderCell>Stav</TableHeaderCell>
           <TableSortableHeaderCell
             defaultOrder={'desc'}
             defaultSort={'createdAt'}
@@ -82,6 +81,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           >
             Vytvořeno
           </TableSortableHeaderCell>
+          <TableHeaderCell>Stav</TableHeaderCell>
           <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
         </TableHeader>
         <TableBody>

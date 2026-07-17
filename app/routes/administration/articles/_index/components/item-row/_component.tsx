@@ -64,10 +64,10 @@ export const ItemRow = ({
         onChange={onSelect}
       />
       <TableCell>{title}</TableCell>
+      <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell>
         <AdminStateBadge state={state} />
       </TableCell>
-      <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell variant={'actions'}>
         <AdminActionGroup>
           {canView && (
