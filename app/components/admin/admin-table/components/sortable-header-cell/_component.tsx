@@ -19,8 +19,8 @@ type Props = {
   // The loader's default sort key; renders this column as active (aria-sort +
   // indicator) when no `sort` param is present. Toggling back to it clears params.
   defaultSort?: string
-  // The loader's default order, used only when this is the default column and no
-  // `order` param is present, so the UI matches the real default (e.g. `desc`).
+  // The loader's default order, used as the fallback whenever the `order` param is
+  // missing/invalid (mirrors parseAdminListParams) so the UI matches the loader.
   defaultOrder?: SortOrder
 }
 
