@@ -32,7 +32,9 @@ export const TableSortableHeaderCell = ({
 }: Props) => {
   const [searchParams] = useSearchParams()
 
-  const rawSort = searchParams.get(SORT_PARAM)
+  // Treat an empty value (e.g. `?sort=`) as missing, matching the loader's
+  // fallback to defaultSort.
+  const rawSort = searchParams.get(SORT_PARAM) || undefined
   const rawOrder = searchParams.get(ORDER_PARAM)
 
   const isActive = (rawSort ?? defaultSort) === sortKey
