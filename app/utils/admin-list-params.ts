@@ -48,7 +48,6 @@ export const parseAdminListParams = <TSortKey extends string>(
 export const buildSortSearch = (
   currentSearch: string,
   sortKey: string,
-  _options?: { defaultSort?: string },
 ): string => {
   const params = new URLSearchParams(currentSearch)
 
@@ -58,11 +57,12 @@ export const buildSortSearch = (
   if (currentSort !== sortKey) {
     params.set(SORT_PARAM, sortKey)
     params.set(ORDER_PARAM, 'asc')
-  } else if (currentOrder === 'asc') {
-    params.set(ORDER_PARAM, 'desc')
-  } else {
+  } else if (currentOrder === 'desc') {
     params.delete(SORT_PARAM)
     params.delete(ORDER_PARAM)
+  } else {
+    // Active sort in the asc state (or a missing/invalid order) -> advance to desc.
+    params.set(ORDER_PARAM, 'desc')
   }
 
   params.delete(PAGE_PARAM)

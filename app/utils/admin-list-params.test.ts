@@ -91,6 +91,12 @@ describe('buildSortSearch', () => {
     expect(buildSortSearch('?sort=title&order=desc', 'title')).toBe('')
   })
 
+  test('active key with missing order -> advances to desc', () => {
+    expect(buildSortSearch('?sort=title', 'title')).toBe(
+      '?sort=title&order=desc',
+    )
+  })
+
   test('switching to a different key resets to asc', () => {
     expect(buildSortSearch('?sort=title&order=desc', 'createdAt')).toBe(
       '?sort=createdAt&order=asc',
