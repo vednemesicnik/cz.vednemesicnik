@@ -20,22 +20,22 @@ export const deleteArticle = (request: Request, options: Options) =>
           })
           return images.map((image) => image.id)
         },
-        async () => {
+        () =>
           // PageSEO is a standalone row keyed by pathname (no FK back to the
           // article), so it must be removed explicitly — otherwise its unique
-          // pathname blocks recreating an article with the same slug.
-          const { slug } = await prisma.article.findUniqueOrThrow({
-            select: { slug: true },
-            where: { id: options.id },
-          })
-
-          return prisma.$transaction(async (tx) => {
+          // pathname blocks recreating an article with the same slug. Read the
+          // slug and delete both rows in one transaction so nothing can change
+          // between the read and the deletes.
+          prisma.$transaction(async (tx) => {
+            const { slug } = await tx.article.findUniqueOrThrow({
+              select: { slug: true },
+              where: { id: options.id },
+            })
             await tx.pageSEO.deleteMany({
               where: { pathname: `/articles/${slug}` },
             })
             return tx.article.delete({ where: { id: options.id } })
-          })
-        },
+          }),
       ),
     target: options.target,
   })
