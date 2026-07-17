@@ -14,7 +14,7 @@ const ORDER_BY: Record<
   createdAt: (order) => ({ createdAt: order }),
   email: (order) => ({ user: { email: order } }),
   name: (order) => ({ name: order }),
-  role: (order) => ({ role: { name: order } }),
+  role: (order) => ({ role: { level: order } }),
 }
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
