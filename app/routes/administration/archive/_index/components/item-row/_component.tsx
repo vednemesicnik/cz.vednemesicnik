@@ -9,27 +9,38 @@ import {
 } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminStateBadge } from '~/components/admin/admin-state-badge'
-import { TableCell, TableRow } from '~/components/admin/admin-table'
+import {
+  TableCell,
+  TableRow,
+  TableSelectionCell,
+} from '~/components/admin/admin-table'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
+import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 
 type Props = {
   id: string
   label: string
   state: ContentState
+  createdAt: Date
   canView: boolean
   canEdit: boolean
   canDelete: boolean
+  selected: boolean
+  onSelect: () => void
 }
 
 export const ItemRow = ({
   id,
   label,
   state,
+  createdAt,
   canView,
   canEdit,
   canDelete,
+  selected,
+  onSelect,
 }: Props) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const fetcherKey = `delete-issue-${id}`
@@ -44,11 +55,18 @@ export const ItemRow = ({
 
   return (
     <TableRow>
+      <TableSelectionCell
+        checked={selected}
+        disabled={!canDelete}
+        label={`Vybrat číslo ${label}`}
+        onChange={onSelect}
+      />
       <TableCell>{label}</TableCell>
+      <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell>
         <AdminStateBadge state={state} />
       </TableCell>
-      <TableCell>
+      <TableCell variant={'actions'}>
         <AdminActionGroup>
           {canView && (
             <AdminLinkButton

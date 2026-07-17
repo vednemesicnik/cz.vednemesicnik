@@ -1,8 +1,20 @@
+import type { Prisma } from '@generated/prisma/client'
+
+import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import type { Route } from './+types/route'
+import { SORT_KEYS, type SortKey } from './sort'
+
+const ORDER_BY: Record<
+  SortKey,
+  (order: SortOrder) => Prisma.IssueOrderByWithRelationInput
+> = {
+  createdAt: (order) => ({ createdAt: order }),
+  label: (order) => ({ label: order }),
+}
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
@@ -27,26 +39,39 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     state: 'archived',
   })
 
+  const { order, q, sort } = parseAdminListParams(request, {
+    defaultOrder: 'desc',
+    defaultSort: 'createdAt',
+    sortKeys: SORT_KEYS,
+  })
+
+  const permissionWhere = {
+    OR: buildViewableStateFilters(
+      [
+        { rights: draftPerms, state: 'draft' },
+        { rights: publishedPerms, state: 'published' },
+        { rights: archivedPerms, state: 'archived' },
+      ],
+      { authorId: context.authorId },
+    ),
+  }
+
+  // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
+  // match case-sensitively (accepted limitation).
+  const where = {
+    AND: [permissionWhere, ...(q === '' ? [] : [{ label: { contains: q } }])],
+  }
+
   const rawIssues = await prisma.issue.findMany({
-    orderBy: {
-      releasedAt: 'desc',
-    },
+    orderBy: ORDER_BY[sort](order),
     select: {
       authorId: true,
+      createdAt: true,
       id: true,
       label: true,
       state: true,
     },
-    where: {
-      OR: buildViewableStateFilters(
-        [
-          { rights: draftPerms, state: 'draft' },
-          { rights: publishedPerms, state: 'published' },
-          { rights: archivedPerms, state: 'archived' },
-        ],
-        { authorId: context.authorId },
-      ),
-    },
+    where,
   })
 
   // Compute permissions for each issue
@@ -82,5 +107,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       targetAuthorIds: [context.authorId],
     }).hasPermission,
     issues,
+    q,
   }
 }
