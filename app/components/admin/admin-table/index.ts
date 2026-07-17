@@ -1,6 +1,7 @@
 export { AdminTable } from './_component'
 export { TableBody } from './components/body'
 export { TableCell } from './components/cell'
+export { TableEmptyRow } from './components/empty-row'
 export { TableHeader } from './components/header'
 export { TableHeaderCell } from './components/header-cell'
 export { TableRow } from './components/row'

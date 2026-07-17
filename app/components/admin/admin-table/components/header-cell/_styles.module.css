@@ -1,17 +1,37 @@
 .headerCell {
-  padding: 12px 16px;
-  text-align: left;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  @layer component {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    /* Opaque background + separator on the cell so both stay put while the
+       header is sticky (border-collapse: separate ignores borders on thead). */
+    background-color: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-strong);
+
+    &:first-child {
+      padding-left: 24px;
+    }
+
+    &:last-child {
+      padding-right: 24px;
+    }
+  }
 }
 
-.headerCell:first-child {
-  padding-left: 24px;
+.alignRight {
+  @layer variant {
+    text-align: right;
+  }
 }
 
-.headerCell:last-child {
-  padding-right: 24px;
+.actions {
+  @layer variant {
+    text-align: right;
+    width: 1%;
+    white-space: nowrap;
+  }
 }

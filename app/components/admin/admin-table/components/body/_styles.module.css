@@ -1,3 +1,14 @@
 .body {
-  background-color: var(--bg-primary);
+  @layer component {
+    background-color: var(--bg-primary);
+
+    /* Zebra striping. :where() keeps specificity low so the row hover wins. */
+    & :where(tr:nth-child(even)) {
+      background-color: color-mix(
+        in oklab,
+        var(--bg-secondary) 50%,
+        var(--bg-primary)
+      );
+    }
+  }
 }

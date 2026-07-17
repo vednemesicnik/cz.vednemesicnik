@@ -1,9 +1,72 @@
+.scrollArea {
+  @layer component {
+    position: relative;
+    width: 100%;
+    /* scroll horizontally on narrow viewports; clip vertically to the radius */
+    overflow-x: auto;
+    overflow-y: hidden;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+/*
+ * A sticky thead sticks to the nearest scroll container. Because the table sits
+ * in an overflow-x: auto wrapper, it can never stick to page scroll — so
+ * stickyHeader turns the wrapper into the vertical scroll context: long lists
+ * scroll inside it while the header stays pinned and the pagination below stays
+ * visible.
+ */
+.stickyArea {
+  @layer component {
+    max-block-size: calc(100dvh - var(--header-height, 64px) - 48px);
+    overflow: auto;
+  }
+}
+
 .table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  @layer component {
+    width: 100%;
+    /* separate (not collapse) so borders stay attached to sticky header cells */
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: var(--bg-primary);
+    /* On the base so both the fade-in and fade-out (class removal) animate */
+    transition: opacity 0.15s ease;
+  }
+}
+
+.pending {
+  @layer component {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.spinner {
+  @layer component {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: 32px;
+    block-size: 32px;
+    margin-block-start: -16px;
+    margin-inline-start: -16px;
+    border: 3px solid var(--border);
+    border-top-color: var(--violet);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
