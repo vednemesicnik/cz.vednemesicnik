@@ -19,9 +19,18 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const intent = formData.get(INTENT_NAME)
   invariantResponse(intent === INTENT_VALUE.bulkDelete, 'Invalid intent')
 
-  const ids = formData
-    .getAll('ids')
-    .filter((id): id is string => typeof id === 'string')
+  // Trim, drop empty values, and de-duplicate before the size guard so forged
+  // `ids=` fields and repeated ids can't slip past validation or cause no-op /
+  // repeated deletes.
+  const ids = [
+    ...new Set(
+      formData
+        .getAll('ids')
+        .filter((id): id is string => typeof id === 'string')
+        .map((id) => id.trim())
+        .filter((id) => id !== ''),
+    ),
+  ]
   invariantResponse(
     ids.length > 0 && ids.length <= MAX_SELECTION,
     'Invalid selection size',

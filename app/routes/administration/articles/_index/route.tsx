@@ -90,7 +90,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {articles.length === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {q === '' ? 'Žádné články' : `Nic nenalezeno pro „${q}"`}
+              {q === '' ? 'Žádné články' : `Nic nenalezeno pro „${q}“`}
             </TableEmptyRow>
           ) : (
             articles.map((article) => (
