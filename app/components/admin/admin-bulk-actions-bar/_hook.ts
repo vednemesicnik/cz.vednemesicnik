@@ -14,12 +14,18 @@ type Options = {
   onDone: () => void
 }
 
+// The bulk-delete action (#219) signals success with this payload. Failures
+// follow the app convention `data({ status: 'fail' }, { status: 400 })`, whose
+// body is still non-null — so onDone must gate on an explicit success rather
+// than on the mere presence of data.
+type BulkDeleteResult = { status: 'success' | 'fail' }
+
 export const useAdminBulkDelete = (
   dialogRef: RefObject<HTMLDialogElement | null>,
   { action, selectedIds, onDone }: Options,
 ) => {
   const [returnValue, setReturnValue] = useState<string>('')
-  const fetcher = useFetcher()
+  const fetcher = useFetcher<BulkDeleteResult>()
   const isSubmitting = fetcher.state !== 'idle'
 
   const authTokenName = FORM_CONFIG.authenticityToken.name
@@ -58,8 +64,8 @@ export const useAdminBulkDelete = (
     selectedIds,
   ])
 
-  // Fire onDone once the submit round-trips back to idle with the action's data
-  // (the reference route revalidates without redirecting, so data is present).
+  // Fire onDone only once the submit round-trips back to idle with an explicit
+  // success payload. On failure the rows stay selected so the user can retry.
   const wasSubmittingRef = useRef(false)
   useEffect(() => {
     if (fetcher.state !== 'idle') {
@@ -68,7 +74,7 @@ export const useAdminBulkDelete = (
     }
     if (wasSubmittingRef.current) {
       wasSubmittingRef.current = false
-      if (fetcher.data != null) onDone()
+      if (fetcher.data?.status === 'success') onDone()
     }
   }, [fetcher.state, fetcher.data, onDone])
 
