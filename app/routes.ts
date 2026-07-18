@@ -16,29 +16,26 @@ export default [
   route('health', 'routes/health/route.ts'),
 
   // Website
-  layout('routes/website/__layout/route.tsx', [
+  layout('routes/__layout/route.tsx', [
     // Home route
-    index('routes/website/_index/route.tsx'),
+    index('routes/_index/route.tsx'),
 
     // Articles routes
     ...prefix('articles', [
-      layout('routes/website/articles/__layout/route.tsx', [
-        index('routes/website/articles/_index/route.tsx'),
-        route(':articleSlug', 'routes/website/articles/article/route.tsx'),
+      layout('routes/articles/__layout/route.tsx', [
+        index('routes/articles/_index/route.tsx'),
+        route(':articleSlug', 'routes/articles/article/route.tsx'),
       ]),
     ]),
 
     // Podcasts routes
     ...prefix('podcasts', [
-      layout('routes/website/podcasts/__layout/route.tsx', [
-        index('routes/website/podcasts/_index/route.tsx'),
+      layout('routes/podcasts/__layout/route.tsx', [
+        index('routes/podcasts/_index/route.tsx'),
         ...prefix(':podcastSlug', [
-          layout('routes/website/podcasts/podcast/__layout/route.tsx', [
-            index('routes/website/podcasts/podcast/_index/route.tsx'),
-            route(
-              ':episodeSlug',
-              'routes/website/podcasts/podcast/episode/route.tsx',
-            ),
+          layout('routes/podcasts/podcast/__layout/route.tsx', [
+            index('routes/podcasts/podcast/_index/route.tsx'),
+            route(':episodeSlug', 'routes/podcasts/podcast/episode/route.tsx'),
           ]),
         ]),
       ]),
@@ -46,24 +43,24 @@ export default [
 
     // Archive routes
     ...prefix('archive', [
-      index('routes/website/archive/_index/route.tsx'),
-      route(':fileName', 'routes/website/archive/issue-pdf/route.tsx'),
+      index('routes/archive/_index/route.tsx'),
+      route(':fileName', 'routes/archive/issue-pdf/route.tsx'),
     ]),
 
     // Editorial Board routes
-    route('editorial-board', 'routes/website/editorial-board/route.tsx'),
+    route('editorial-board', 'routes/editorial-board/route.tsx'),
 
     // Organization routes
-    route('organization', 'routes/website/organization/route.tsx'),
+    route('organization', 'routes/organization/route.tsx'),
 
     // Support routes
-    route('support', 'routes/website/support/route.tsx'),
+    route('support', 'routes/support/route.tsx'),
 
     // Grants routes
     ...prefix('grants', [
-      layout('routes/website/grants/__layout/route.tsx', [
-        index('routes/website/grants/_index/route.tsx'),
-        route(':grantSlug', 'routes/website/grants/grant/route.tsx'),
+      layout('routes/grants/__layout/route.tsx', [
+        index('routes/grants/_index/route.tsx'),
+        route(':grantSlug', 'routes/grants/grant/route.tsx'),
       ]),
     ]),
   ]),

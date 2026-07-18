@@ -1,0 +1,82 @@
+.headerCell {
+  @layer component {
+    padding: 0;
+    text-align: left;
+    /* Opaque background + separator on the cell so both stay put while the
+       header is sticky (border-collapse: separate ignores borders on thead). */
+    background-color: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-strong);
+  }
+}
+
+.link {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 16px;
+    width: 100%;
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+
+    .headerCell:first-child & {
+      padding-left: 24px;
+    }
+
+    .headerCell:last-child & {
+      padding-right: 24px;
+    }
+
+    &:hover {
+      color: var(--violet);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+.iconWrapper {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.icon {
+  @layer component {
+    /* Inactive: hidden until the header is hovered/focused, so sortability is
+       discoverable without cluttering every column. */
+    opacity: 0;
+    transition: opacity 150ms ease-out;
+
+    .link:hover &,
+    .link:focus-visible & {
+      opacity: 0.5;
+    }
+  }
+}
+
+.iconActive {
+  @layer variant {
+    opacity: 1;
+    color: var(--violet);
+
+    .link:hover &,
+    .link:focus-visible & {
+      opacity: 1;
+    }
+  }
+}
+
+.iconDesc {
+  @layer variant {
+    transform: rotate(180deg);
+  }
+}

@@ -1,9 +1,25 @@
-import type { LoaderFunctionArgs } from 'react-router'
+import type { Prisma } from '@generated/prisma/client'
 
+import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+import type { Route } from './+types/route'
+import { SORT_KEYS, type SortKey } from './sort'
+
+// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
+// equal values keep a deterministic order across reloads.
+const ORDER_BY: Record<
+  SortKey,
+  (order: SortOrder) => Prisma.AuthorOrderByWithRelationInput[]
+> = {
+  createdAt: (order) => [{ createdAt: order }],
+  email: (order) => [{ user: { email: order } }, { createdAt: 'desc' }],
+  name: (order) => [{ name: order }, { createdAt: 'desc' }],
+  role: (order) => [{ role: { level: order } }, { createdAt: 'desc' }],
+}
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
   const context = await getUserPermissionContext(request, {
     actions: ['view', 'create', 'update', 'delete'],
     entities: ['author'],
@@ -22,14 +38,32 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw new Response('Forbidden', { status: 403 })
   }
 
-  // Fetch authors based on permissions
-  // If user only has "own" permission, filter to only their author profile
+  const { order, query, sort } = parseAdminListParams(request, {
+    defaultOrder: 'desc',
+    defaultSort: 'createdAt',
+    sortKeys: SORT_KEYS,
+  })
+
+  // If user only has "own" permission, filter to only their author profile.
+  const permissionWhere =
+    viewPerms.hasOwn && !viewPerms.hasAny
+      ? { user: { id: context.userId } }
+      : {}
+
+  // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
+  // match case-sensitively (accepted limitation).
+  const where = {
+    AND: [
+      permissionWhere,
+      ...(query === '' ? [] : [{ name: { contains: query } }]),
+    ],
+  }
+
   const rawAuthors = await prisma.author.findMany({
-    orderBy: {
-      name: 'asc',
-    },
+    orderBy: ORDER_BY[sort](order),
     select: {
       bio: true,
+      createdAt: true,
       id: true,
       name: true,
       role: {
@@ -46,10 +80,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         },
       },
     },
-    where:
-      viewPerms.hasOwn && !viewPerms.hasAny
-        ? { user: { id: context.userId } }
-        : {},
+    where,
   })
 
   // Compute permissions for each author
@@ -88,5 +119,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {
     authors,
     canCreate: createPerms.hasAny, // Only "any" access can create new authors
+    query,
   }
 }

@@ -1,0 +1,23 @@
+.bar {
+  @layer component {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: 100%;
+    padding: 12px 16px;
+    margin-block-end: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+}
+
+.count {
+  @layer component {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+}

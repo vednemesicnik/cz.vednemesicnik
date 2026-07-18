@@ -1,8 +1,22 @@
+import type { Prisma } from '@generated/prisma/client'
+
+import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import type { Route } from './+types/route'
+import { SORT_KEYS, type SortKey } from './sort'
+
+// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
+// equal values keep a deterministic order across reloads.
+const ORDER_BY: Record<
+  SortKey,
+  (order: SortOrder) => Prisma.PodcastEpisodeOrderByWithRelationInput[]
+> = {
+  createdAt: (order) => [{ createdAt: order }],
+  title: (order) => [{ title: order }, { createdAt: 'desc' }],
+}
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
@@ -29,27 +43,45 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     state: 'archived',
   })
 
+  const { order, query, sort } = parseAdminListParams(request, {
+    defaultOrder: 'desc',
+    defaultSort: 'createdAt',
+    sortKeys: SORT_KEYS,
+  })
+
+  const permissionWhere = {
+    OR: buildViewableStateFilters(
+      [
+        { rights: draftPerms, state: 'draft' },
+        { rights: publishedPerms, state: 'published' },
+        { rights: archivedPerms, state: 'archived' },
+      ],
+      { authorId: context.authorId },
+    ),
+  }
+
+  // Search and sort apply to the nested episodes include, not a top-level
+  // findMany. SQLite `contains` is case-insensitive for ASCII only; Czech
+  // diacritics match case-sensitively (accepted limitation).
+  const episodesWhere = {
+    AND: [
+      permissionWhere,
+      ...(query === '' ? [] : [{ title: { contains: query } }]),
+    ],
+  }
+
   const podcast = await prisma.podcast.findUniqueOrThrow({
     select: {
       episodes: {
-        orderBy: { publishedAt: 'desc' },
+        orderBy: ORDER_BY[sort](order),
         select: {
           authorId: true,
+          createdAt: true,
           id: true,
-          publishedAt: true,
           state: true,
           title: true,
         },
-        where: {
-          OR: buildViewableStateFilters(
-            [
-              { rights: draftPerms, state: 'draft' },
-              { rights: publishedPerms, state: 'published' },
-              { rights: archivedPerms, state: 'archived' },
-            ],
-            { authorId: context.authorId },
-          ),
-        },
+        where: episodesWhere,
       },
       id: true,
       title: true,
@@ -93,5 +125,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       ...podcast,
       episodes,
     },
+    query,
   }
 }

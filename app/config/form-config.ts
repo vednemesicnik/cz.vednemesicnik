@@ -6,6 +6,7 @@ export const FORM_CONFIG = {
     name: 'intent',
     value: {
       archive: 'archive',
+      bulkDelete: 'bulk-delete',
       delete: 'delete',
       publish: 'publish',
       regenerateBackupCodes: 'regenerate-backup-codes',

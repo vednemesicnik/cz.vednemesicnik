@@ -1,4 +1,5 @@
 import { clsx } from 'clsx'
+import { useSearchParams } from 'react-router'
 import { KeyboardArrowLeftIcon } from '~/components/icons/keyboard-arrow-left-icon'
 import { KeyboardArrowRightIcon } from '~/components/icons/keyboard-arrow-right-icon'
 import { Link } from '~/components/link'
@@ -11,10 +12,6 @@ type Props = {
   pageSize: number
   totalCount: number
   totalPages: number
-}
-
-function getPageLink(page: number) {
-  return page === 1 ? { search: '' } : { search: `?${PAGE_PARAM}=${page}` }
 }
 
 function getPageNumbers(
@@ -49,7 +46,23 @@ export const Pagination = ({
   totalCount,
   totalPages,
 }: Props) => {
+  const [searchParams] = useSearchParams()
+
   if (totalPages <= 1) return null
+
+  // Preserve unrelated query params (q, sort, order, ...) when changing pages.
+  const getPageLink = (page: number) => {
+    const params = new URLSearchParams(searchParams)
+
+    if (page === 1) {
+      params.delete(PAGE_PARAM)
+    } else {
+      params.set(PAGE_PARAM, String(page))
+    }
+
+    const search = params.toString()
+    return { search: search ? `?${search}` : '' }
+  }
 
   const pageNumbers = getPageNumbers(currentPage, totalPages)
   const startItem = (currentPage - 1) * pageSize + 1
