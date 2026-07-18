@@ -59,6 +59,17 @@ read & write**.
 > automatically while `main`/`dev` survive. #143 folds this deletion rule into the
 > fuller branch-protection ruleset.
 
+## Release procedure
+
+1. Create the release PR with the named template:
+
+       gh pr create --base main --head dev --template release.md
+
+   The template lives at `.github/PULL_REQUEST_TEMPLATE/release.md` and is opt-in — it
+   only appears when named, so feature/fix PRs targeting `dev` stay template-free.
+2. Fill in Summary / What ships / Deploy expectation.
+3. Merge with a **merge commit** (never squash — see [Merge methods](#merge-methods)).
+
 ## Hotfix procedure
 
 1. Branch off `main` (e.g. `fix/123-...`).
