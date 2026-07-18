@@ -15,6 +15,11 @@ export const assertCanSetPublishedAt = (
     { status: 403 },
   )
   invariantResponse(
+    !Number.isNaN(publishedAt.getTime()),
+    'Neplatné datum publikace.',
+    { status: 400 },
+  )
+  invariantResponse(
     publishedAt.getTime() <= Date.now(),
     'Datum publikace nemůže být v budoucnosti.',
     { status: 400 },
