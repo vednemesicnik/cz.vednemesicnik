@@ -68,16 +68,24 @@ read & write**.
      --title "release: $(date +%F) — <theme>"
    ```
 
-   The template lives at `.github/PULL_REQUEST_TEMPLATE/release.md` and is opt-in — it
-   only appears when named, so feature/fix PRs targeting `dev` stay template-free. The
-   template fills the PR body only; set the title yourself (e.g. `release: 2026-07-18 —
-   admin tables & lists rollout`).
+   The template lives at `.github/PULL_REQUEST_TEMPLATE/release.md`. Feature/fix PRs
+   targeting `dev` get the **default** template (`.github/pull_request_template.md`)
+   automatically; `release.md` and `hotfix.md` are **named opt-in** templates that
+   override the default when passed with `--template`. The template fills the PR body
+   only; set the title yourself (e.g. `release: 2026-07-18 — admin tables & lists
+   rollout`).
 2. Fill in Summary / What ships / Deploy expectation.
 3. Merge with a **merge commit** (never squash — see [Merge methods](#merge-methods)).
 
 ## Hotfix procedure
 
 1. Branch off `main` (e.g. `fix/123-...`).
-2. PR into `main`, squash merge. This deploys.
+2. Create the hotfix PR with the named template and a `fix:` title:
+
+   ```bash
+   gh pr create --base main --template hotfix.md --title "fix: …"
+   ```
+
+   Squash merge into `main`. This deploys.
 3. The push to `main` triggers `sync-dev.yml`, which opens a back-merge PR `main → dev`.
    Merge it (merge commit) to carry the fix back into `dev`.
