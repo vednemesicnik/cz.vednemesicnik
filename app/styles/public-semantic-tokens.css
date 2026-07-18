@@ -5,7 +5,7 @@
  * Supports light/dark modes via light-dark() function.
  *
  * Requires primitive-tokens.css to be loaded first.
- * Imported in app/routes/website/__layout/route.tsx.
+ * Imported in app/routes/__layout/route.tsx.
  */
 
 /* ============================================================
