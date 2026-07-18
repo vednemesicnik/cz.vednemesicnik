@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import { type RefObject, useId } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
@@ -51,12 +51,19 @@ export const AdminPublishDateDialog = ({
 }: Props) => {
   const fetcher = useFetcher({ key: fetcherKey })
 
+  // Unique per instance so the label/input association holds when both the
+  // backdated-publish and change-date dialogs are on the page at once.
+  const inputId = useId()
+
   const now = toLocalDateTimeValue(new Date())
 
   // Read ref.current inside the handlers, not during render: the <dialog> is
   // attached in the commit phase, so at render time ref.current is still null.
   const handleCancel = () => ref.current?.close()
-  const handleConfirm = () => ref.current?.close()
+  // Close on submit rather than the confirm button's click, so submitting with
+  // Enter from the date field closes the dialog too. Invalid values (a future
+  // date past max) block native submit, so the dialog stays open as expected.
+  const handleSubmit = () => ref.current?.close()
 
   return (
     <AdminDialog ref={ref}>
@@ -64,7 +71,12 @@ export const AdminPublishDateDialog = ({
         <AdminModalTitle>{title}</AdminModalTitle>
         <AdminModalDescription>{description}</AdminModalDescription>
 
-        <fetcher.Form action={action} className={styles.form} method={'post'}>
+        <fetcher.Form
+          action={action}
+          className={styles.form}
+          method={'post'}
+          onSubmit={handleSubmit}
+        >
           <AuthenticityTokenInput />
           <input
             name={FORM_CONFIG.intent.name}
@@ -74,7 +86,7 @@ export const AdminPublishDateDialog = ({
 
           <AdminInput
             defaultValue={defaultValue ?? now}
-            id={'publishedAt'}
+            id={inputId}
             label={'Datum publikace'}
             max={now}
             name={'publishedAt'}
@@ -90,9 +102,7 @@ export const AdminPublishDateDialog = ({
             >
               Zrušit
             </AdminButton>
-            <AdminButton onClick={handleConfirm} type={'submit'}>
-              {confirmLabel}
-            </AdminButton>
+            <AdminButton type={'submit'}>{confirmLabel}</AdminButton>
           </AdminModalActions>
         </fetcher.Form>
       </AdminModalContent>
