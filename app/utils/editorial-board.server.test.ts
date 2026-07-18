@@ -226,6 +226,7 @@ describe('getEditorialBoard', () => {
     // Expiry serves stale immediately; the streamed refresh then resolves to null.
     const { current, refreshed } = await getEditorialBoard()
     expect(current).toEqual({ positions })
+    expect(refreshed).not.toBeNull() // a refresh was streamed (not the no-op null)
     expect(await refreshed).toBeNull()
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
@@ -340,6 +341,7 @@ describe('getEditorialBoard', () => {
 
     const { current, refreshed } = await getEditorialBoard() // background fetch #2
     expect(current).toEqual({ positions })
+    expect(refreshed).not.toBeNull() // a refresh was streamed (not the no-op null)
     expect(await refreshed).toBeNull() // failed refresh resolves to null, bumps TTL
     expect(fetchMock).toHaveBeenCalledTimes(2)
 
