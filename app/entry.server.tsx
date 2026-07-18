@@ -19,8 +19,10 @@ import {
 import { startAuthLogRetention } from '~/utils/auth-log.server'
 import { getEnv, initEnv } from '~/utils/env.server'
 
-// Reject/cancel all pending promises after 5 seconds
-export const streamTimeout = 5000
+// Reject/cancel all pending promises after 10 seconds. Kept comfortably above
+// the editorial-board GAS_TIMEOUT_MS (8s) so a streamed background refresh isn't
+// cut off before a slow GAS fetch settles (the renderer abort is +1s on top).
+export const streamTimeout = 10000
 
 initEnv()
 global.ENV = getEnv()

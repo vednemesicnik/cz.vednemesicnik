@@ -51,6 +51,16 @@ export type EditorialBoardData = z.infer<typeof snapshotSchema>
 
 type CacheEntry = { data: EditorialBoardData; fetchedAt: number }
 
+// The loader gets the immediately-servable data plus, when it kicked off a
+// background refresh, the shared promise of the fresh GAS data. React Router
+// streams `refreshed` so the page can re-render once it settles. `refreshed` is
+// `null` whenever no refresh was started (fresh cache, unconfigured, or the
+// cold-start awaited fetch).
+export type EditorialBoardResult = {
+  current: EditorialBoardData | null
+  refreshed: Promise<EditorialBoardData | null> | null
+}
+
 // Czech collation for member names, resolved once at module scope. Node ships
 // full ICU, so this yields correct Czech ordering (č/ř/š/ž), which GAS's limited
 // Intl can't guarantee; the endpoint returns members in sheet order and we sort
@@ -153,39 +163,61 @@ const writeSnapshot = async (data: EditorialBoardData): Promise<void> => {
 
 export const createEditorialBoardSource = () => {
   let cache: CacheEntry | null = null
-  let refreshPromise: Promise<void> | null = null
+  let refreshPromise: Promise<EditorialBoardData | null> | null = null
 
-  const reloadFromGas = async (url: string, secret: string): Promise<void> => {
+  // Reloads from GAS, returning the fresh data on success and `null` on failure.
+  // Keeps updating the cache / snapshot on success and bumping the TTL on
+  // failure — the refresh semantics are unchanged; it just reports the outcome.
+  const reloadFromGas = async (
+    url: string,
+    secret: string,
+  ): Promise<EditorialBoardData | null> => {
+    const startedAt = Date.now()
     const fetched = await fetchFromGas(url, secret)
 
     if (fetched) {
       cache = { data: fetched, fetchedAt: Date.now() }
       await writeSnapshot(fetched)
-    } else if (cache) {
+      // A successful refresh is otherwise silent; log it so production
+      // (short-lived `fly logs`) can confirm refreshes actually complete.
+      console.info(`[editorial-board] refreshed in ${Date.now() - startedAt}ms`)
+      return fetched
+    }
+
+    if (cache) {
       // Google outage: bump the TTL so we don't re-fetch on every request —
       // next attempt after one TTL (preserves today's bounded-retry behavior).
       cache = { ...cache, fetchedAt: Date.now() }
     }
+
+    return null
   }
 
-  // Fire-and-forget reload. Deduped (one in-flight fetch at a time) and never
-  // rejects, so callers can serve stale data without awaiting it.
-  const refreshInBackground = (url: string, secret: string): void => {
-    if (refreshPromise) return // a refresh is already in flight — dedup
+  // Deduped background reload: returns the shared in-flight promise so
+  // concurrent visitors and the loader all await a single GAS fetch. Never
+  // rejects — resolves to `null` on any failure — so callers can serve stale
+  // data and stream the promise without a try/catch.
+  const refreshInBackground = (
+    url: string,
+    secret: string,
+  ): Promise<EditorialBoardData | null> => {
+    if (refreshPromise) return refreshPromise // a refresh is already in flight
 
     refreshPromise = reloadFromGas(url, secret)
-      .catch(() => {}) // fetchFromGas never throws, but guard against any surprise
+      .catch(() => null) // fetchFromGas never throws, but guard against surprises
       .finally(() => {
         refreshPromise = null
       })
+
+    return refreshPromise
   }
 
-  const getEditorialBoard = async (): Promise<EditorialBoardData | null> => {
+  const getEditorialBoard = async (): Promise<EditorialBoardResult> => {
     const now = Date.now()
 
-    // 1. Fresh cache → immediate.
+    // 1. Fresh cache → immediate, no refresh.
     if (cache && now - cache.fetchedAt < CACHE_TTL_MS) {
-      return cache.data
+      return { current: cache.data, refreshed: null }
     }
 
     const url = process.env.GAS_EDITORIAL_BOARD_URL
@@ -202,23 +234,24 @@ export const createEditorialBoardSource = () => {
           '[editorial-board] GAS not configured — /redakce will show the fallback message.',
         )
       }
-      return null
+      return { current: null, refreshed: null }
     }
 
-    // 2. Stale in-memory cache → serve immediately, refresh in the background.
+    // 2. Stale in-memory cache → serve immediately, stream the background refresh.
     if (cache) {
-      refreshInBackground(url, secret)
-      return cache.data
+      return {
+        current: cache.data,
+        refreshed: refreshInBackground(url, secret),
+      }
     }
 
     // 3. Cold start → fast local snapshot read. Seed the cache as stale
-    //    (fetchedAt: 0), serve immediately, refresh in the background.
+    //    (fetchedAt: 0), serve immediately, stream the background refresh.
     const snapshot = await readSnapshot()
 
     if (snapshot) {
       cache = { data: snapshot, fetchedAt: 0 }
-      refreshInBackground(url, secret)
-      return snapshot
+      return { current: snapshot, refreshed: refreshInBackground(url, secret) }
     }
 
     // 4. Nothing at all (first run, no snapshot) → awaited fetch. Stamp the
@@ -229,10 +262,10 @@ export const createEditorialBoardSource = () => {
     if (fetched) {
       cache = { data: fetched, fetchedAt: Date.now() }
       await writeSnapshot(fetched)
-      return fetched
+      return { current: fetched, refreshed: null }
     }
 
-    return null
+    return { current: null, refreshed: null }
   }
 
   return { getEditorialBoard }
