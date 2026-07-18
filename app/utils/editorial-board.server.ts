@@ -219,11 +219,13 @@ export const createEditorialBoardSource = () => {
       return snapshot
     }
 
-    // 4. Nothing at all (first run, no snapshot) → awaited fetch.
+    // 4. Nothing at all (first run, no snapshot) → awaited fetch. Stamp the
+    //    cache from the fetch completion time, not the request start — a slow
+    //    fetch (up to the timeout) must not make the entry expire early.
     const fetched = await fetchFromGas(url, secret)
 
     if (fetched) {
-      cache = { data: fetched, fetchedAt: now }
+      cache = { data: fetched, fetchedAt: Date.now() }
       await writeSnapshot(fetched)
       return fetched
     }
