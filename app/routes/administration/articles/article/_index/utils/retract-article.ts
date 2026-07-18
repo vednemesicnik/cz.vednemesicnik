@@ -11,16 +11,18 @@ export const retractArticle = (request: Request, options: Options) =>
     action: 'retract',
     entity: 'article',
     execute: async () => {
+      // Null publishedAt on retract so drafts have no date until (re)published,
+      // matching the other retract utils (tag, category, issue, podcast, …).
       const updatedArticle = await prisma.article.update({
-        data: { state: 'draft' },
+        data: { publishedAt: null, state: 'draft' },
         select: { slug: true },
         where: { id: options.id },
       })
 
-      // Update PageSEO state
+      // Update PageSEO state and publishedAt
       const pathname = `/articles/${updatedArticle.slug}`
       await prisma.pageSEO.updateMany({
-        data: { state: 'draft' },
+        data: { publishedAt: null, state: 'draft' },
         where: { pathname },
       })
     },
