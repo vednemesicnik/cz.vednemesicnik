@@ -29,26 +29,33 @@
        UA's `[popover]:not(:popover-open){display:none}` rule is absent, so the
        menu would render in flow. Hide by default and only reveal when open. */
     display: none;
-    margin: 0;
-    margin-block-start: 4px;
     padding: 4px;
     min-width: max-content;
     background-color: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: 4px;
     box-shadow: var(--shadow-lg);
-
-    /* Anchor to the chevron (implicit anchor via popovertarget). Browsers
-       without anchor positioning fall back to the centred popover default. */
-    inset: auto;
-    position-area: block-end span-inline-start;
-    position-try-fallbacks: flip-block, flip-inline;
   }
 }
 
 .menu:popover-open {
   @layer component {
     display: block;
+  }
+}
+
+/* Anchor the menu to the chevron (implicit anchor via popovertarget). Guarded by
+   @supports so browsers with Popover but no anchor positioning (e.g. Firefox)
+   keep the UA's centred-popover fallback instead of the overridden insets. */
+@supports (position-area: block-end) {
+  .menu {
+    @layer component {
+      inset: auto;
+      margin: 0;
+      margin-block-start: 4px;
+      position-area: block-end span-inline-start;
+      position-try-fallbacks: flip-block, flip-inline;
+    }
   }
 }
 
