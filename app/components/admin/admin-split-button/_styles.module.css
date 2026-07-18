@@ -25,6 +25,10 @@
 
 .menu {
   @layer component {
+    /* Without Popover API support the [popover] attribute is ignored and the
+       UA's `[popover]:not(:popover-open){display:none}` rule is absent, so the
+       menu would render in flow. Hide by default and only reveal when open. */
+    display: none;
     margin: 0;
     margin-block-start: 4px;
     padding: 4px;
@@ -39,6 +43,12 @@
     inset: auto;
     position-area: block-end span-inline-start;
     position-try-fallbacks: flip-block, flip-inline;
+  }
+}
+
+.menu:popover-open {
+  @layer component {
+    display: block;
   }
 }
 

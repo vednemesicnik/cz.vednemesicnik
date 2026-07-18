@@ -22,6 +22,11 @@ type Props = {
   options: Option[]
   selectedId: string
   onSelect: (id: string) => void
+  // Disables the chevron segment too, so both segments can be locked together
+  // (e.g. while submitting); the parent disables the main segment via children.
+  disabled?: boolean
+  title?: string
+  chevronAriaLabel?: string
 }
 
 export const AdminSplitButton = ({
@@ -30,6 +35,9 @@ export const AdminSplitButton = ({
   options,
   selectedId,
   onSelect,
+  disabled,
+  title,
+  chevronAriaLabel = 'Další možnosti publikace',
 }: Props) => {
   const menuRef = useRef<HTMLDivElement>(null)
   // useId() contains colons, which are invalid in an id/anchor context.
@@ -37,7 +45,8 @@ export const AdminSplitButton = ({
 
   const handleSelect = (id: string) => {
     onSelect(id)
-    menuRef.current?.hidePopover()
+    // Guard the method too: it is undefined where the Popover API is absent.
+    menuRef.current?.hidePopover?.()
   }
 
   return (
@@ -46,9 +55,11 @@ export const AdminSplitButton = ({
 
       <AdminActionButton
         action={action}
-        aria-label={'Další možnosti publikace'}
+        aria-label={chevronAriaLabel}
         className={styles.chevron}
+        disabled={disabled}
         popoverTarget={menuId}
+        title={title}
         type={'button'}
       >
         <ArrowDropDownIcon />
