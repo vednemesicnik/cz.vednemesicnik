@@ -8,7 +8,6 @@
 ## Changes
 
 <!-- One bullet per notable change. -->
--
 
 Closes #<issue>
 
