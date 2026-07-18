@@ -1,4 +1,4 @@
-import { type RefObject, useId } from 'react'
+import { type RefObject, useEffect, useId, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
@@ -55,7 +55,30 @@ export const AdminPublishDateDialog = ({
   // backdated-publish and change-date dialogs are on the page at once.
   const inputId = useId()
 
-  const now = toLocalDateTimeValue(new Date())
+  // Recompute "now" each time the dialog opens (via the `open` attribute) so the
+  // max and default stay current on long-lived pages. `openCount` bumps on every
+  // open to remount the input, which re-applies its default/max — a mounted
+  // input keeps its value otherwise. <dialog> has no open event, hence the
+  // MutationObserver.
+  const [now, setNow] = useState(() => toLocalDateTimeValue(new Date()))
+  const [openCount, setOpenCount] = useState(0)
+
+  useEffect(() => {
+    const dialog = ref.current
+
+    if (dialog === null) return
+
+    const observer = new MutationObserver(() => {
+      if (dialog.open) {
+        setNow(toLocalDateTimeValue(new Date()))
+        setOpenCount((count) => count + 1)
+      }
+    })
+
+    observer.observe(dialog, { attributeFilter: ['open'], attributes: true })
+
+    return () => observer.disconnect()
+  }, [ref])
 
   // Read ref.current inside the handlers, not during render: the <dialog> is
   // attached in the commit phase, so at render time ref.current is still null.
@@ -87,6 +110,7 @@ export const AdminPublishDateDialog = ({
           <AdminInput
             defaultValue={defaultValue ?? now}
             id={inputId}
+            key={openCount}
             label={'Datum publikace'}
             max={now}
             name={'publishedAt'}
