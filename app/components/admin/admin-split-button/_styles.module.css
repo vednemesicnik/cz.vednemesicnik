@@ -1,0 +1,84 @@
+.splitButton {
+  @layer component {
+    display: inline-flex;
+    align-items: stretch;
+  }
+}
+
+/* Join the two segments: the main segment loses its inline-end corners. */
+.splitButton > :first-child {
+  @layer variant {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+}
+
+/* Chevron segment: narrow, square inline-start corners, subtle divider. */
+.chevron {
+  @layer variant {
+    padding-inline: 10px;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.15);
+  }
+}
+
+.menu {
+  @layer component {
+    margin: 0;
+    margin-block-start: 4px;
+    padding: 4px;
+    min-width: max-content;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+
+    /* Anchor to the chevron (implicit anchor via popovertarget). Browsers
+       without anchor positioning fall back to the centred popover default. */
+    inset: auto;
+    position-area: block-end span-inline-start;
+    position-try-fallbacks: flip-block, flip-inline;
+  }
+}
+
+.menuItem {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding-block: 8px;
+    padding-inline: 12px;
+    border: none;
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--bg-hover);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+.check {
+  @layer component {
+    flex-shrink: 0;
+    color: var(--violet);
+  }
+}
+
+.checkHidden {
+  @layer component {
+    visibility: hidden;
+  }
+}
