@@ -55,7 +55,7 @@ Place `@layer` **inside** the selector. This is required so that IDEs can naviga
 Plain CSS files that style global HTML elements (`:root`, `body`, `*`) use `@layer` on the outside, because there is no class selector to navigate to.
 
 ```css
-/* app/routes/website/__layout/_styles.css */
+/* app/routes/__layout/_styles.css */
 @layer layout {
   :root {
     --content-max-width: 940px;
