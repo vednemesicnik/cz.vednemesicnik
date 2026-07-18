@@ -13,9 +13,11 @@ gh pr create --base main --head dev --template release.md \
   --title "release: $(date +%F) — <theme>"
 ```
 
-- Template: `.github/PULL_REQUEST_TEMPLATE/release.md`. It is opt-in (named), so
-  feature/fix PRs targeting `dev` stay template-free — never move it to a repo-root
-  `PULL_REQUEST_TEMPLATE.md`, which would apply to every PR.
+- Template: `.github/PULL_REQUEST_TEMPLATE/release.md`. It is a **named opt-in**
+  template that overrides the default when passed with `--template`. GitHub prefills the
+  default template (`.github/pull_request_template.md`, for feature/fix → `dev`) on every
+  manually opened PR; `release.md` and `hotfix.md` are the named opt-in overrides. Keep
+  `release.md` named — never rename it to the repo-root default.
 - Title convention: `release: <date> — <theme>` (e.g.
   `release: 2026-07-18 — admin tables & lists rollout`).
 
