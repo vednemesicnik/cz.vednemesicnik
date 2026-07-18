@@ -61,12 +61,15 @@ read & write**.
 
 ## Release procedure
 
-1. Create the release PR with the named template:
+1. Create the release PR with the named template and a `release:` title:
 
-       gh pr create --base main --head dev --template release.md
+       gh pr create --base main --head dev --template release.md \
+         --title "release: $(date +%F) — <theme>"
 
    The template lives at `.github/PULL_REQUEST_TEMPLATE/release.md` and is opt-in — it
-   only appears when named, so feature/fix PRs targeting `dev` stay template-free.
+   only appears when named, so feature/fix PRs targeting `dev` stay template-free. The
+   template fills the PR body only; set the title yourself (e.g. `release: 2026-07-18 —
+   admin tables & lists rollout`).
 2. Fill in Summary / What ships / Deploy expectation.
 3. Merge with a **merge commit** (never squash — see [Merge methods](#merge-methods)).
 
