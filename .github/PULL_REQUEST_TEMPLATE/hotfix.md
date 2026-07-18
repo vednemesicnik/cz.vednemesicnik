@@ -7,7 +7,6 @@
 ## Fix
 
 <!-- What the fix does. -->
--
 
 ## Deploy expectation
 
