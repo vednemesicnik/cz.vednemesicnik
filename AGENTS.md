@@ -259,7 +259,7 @@ Skills are split into two categories. Load only the skills that apply to your cu
 
 ### General Guidance
 
-Project-specific conventions and guidelines for recurring tasks. Load when writing or updating story files (`.stories.tsx`) or when writing or editing any `.module.css` or `.css` file.
+Project-specific conventions and guidelines for recurring tasks. Load when writing or updating story files (`.stories.tsx`), when writing or editing any `.module.css` or `.css` file, or when cutting a release (`dev → main` PR).
 
 Read `.agents/skills/general-guidance/SKILL.md` — it lists the covered domains and directs you to the correct reference file.
 

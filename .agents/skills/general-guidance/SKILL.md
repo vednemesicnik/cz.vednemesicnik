@@ -6,6 +6,7 @@ description: |
   Trigger immediately for:
   - Storybook: Writing or updating any story file (`.stories.tsx`) for any component — even a "simple" one.
   - CSS layers: Writing or editing any `.module.css` or `.css` file in this project — even a small change.
+  - Release PR: Cutting a release — opening or preparing a `dev → main` pull request.
 
   DO NOT trigger for:
   - Modern web APIs, HTML/CSS patterns, or frontend best practices — use modern-web-guidance instead.
@@ -20,5 +21,6 @@ Project conventions and guidelines for recurring tasks. Before starting work in 
 
 | Topic                                                            | File                       |
 |:-----------------------------------------------------------------|:---------------------------|
-| Story location, naming, structure (Playground, Overview, scenes) | `references/storybook.md`  |
-| CSS layer system — which layer to use, syntax rules, IDE pattern | `references/css-layers.md` |
+| Story location, naming, structure (Playground, Overview, scenes) | `references/storybook.md`   |
+| CSS layer system — which layer to use, syntax rules, IDE pattern | `references/css-layers.md`  |
+| Release PR — `gh` command, title convention, merge method, backup | `references/release-pr.md`  |
