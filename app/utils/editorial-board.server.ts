@@ -155,23 +155,25 @@ export const createEditorialBoardSource = () => {
   let cache: CacheEntry | null = null
   let refreshPromise: Promise<void> | null = null
 
-  // Fire-and-forget reload from Google. Deduped (one in-flight fetch at a time)
-  // and never rejects, so callers can serve stale data without awaiting it.
+  const reloadFromGas = async (url: string, secret: string): Promise<void> => {
+    const fetched = await fetchFromGas(url, secret)
+
+    if (fetched) {
+      cache = { data: fetched, fetchedAt: Date.now() }
+      await writeSnapshot(fetched)
+    } else if (cache) {
+      // Google outage: bump the TTL so we don't re-fetch on every request —
+      // next attempt after one TTL (preserves today's bounded-retry behavior).
+      cache = { ...cache, fetchedAt: Date.now() }
+    }
+  }
+
+  // Fire-and-forget reload. Deduped (one in-flight fetch at a time) and never
+  // rejects, so callers can serve stale data without awaiting it.
   const refreshInBackground = (url: string, secret: string): void => {
     if (refreshPromise) return // a refresh is already in flight — dedup
 
-    refreshPromise = (async () => {
-      const fetched = await fetchFromGas(url, secret)
-
-      if (fetched) {
-        cache = { data: fetched, fetchedAt: Date.now() }
-        await writeSnapshot(fetched)
-      } else if (cache) {
-        // Google outage: bump the TTL so we don't re-fetch on every request —
-        // next attempt after one TTL (preserves today's bounded-retry behavior).
-        cache = { ...cache, fetchedAt: Date.now() }
-      }
-    })()
+    refreshPromise = reloadFromGas(url, secret)
       .catch(() => {}) // fetchFromGas never throws, but guard against any surprise
       .finally(() => {
         refreshPromise = null
