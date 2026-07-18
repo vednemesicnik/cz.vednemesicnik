@@ -20,7 +20,7 @@ type ParseOptions<TSortKey extends string> = {
 export const parseAdminListParams = <TSortKey extends string>(
   request: Request,
   options: ParseOptions<TSortKey>,
-): { q: string; sort: TSortKey; order: SortOrder; page: number } => {
+): { query: string; sort: TSortKey; order: SortOrder; page: number } => {
   const url = new URL(request.url)
 
   const rawSort = url.searchParams.get(SORT_PARAM)
@@ -34,11 +34,11 @@ export const parseAdminListParams = <TSortKey extends string>(
       ? rawOrder
       : (options.defaultOrder ?? 'asc')
 
-  const q = (url.searchParams.get(SEARCH_PARAM) ?? '').trim()
+  const query = (url.searchParams.get(SEARCH_PARAM) ?? '').trim()
 
   const page = Math.max(1, Number(url.searchParams.get(PAGE_PARAM) ?? '1') || 1)
 
-  return { order, page, q, sort }
+  return { order, page, query, sort }
 }
 
 // Builds the next search string for a sortable header link. Toggle cycle for a given

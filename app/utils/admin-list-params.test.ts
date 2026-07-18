@@ -46,11 +46,11 @@ describe('parseAdminListParams', () => {
   })
 
   test('should trim the q value', () => {
-    expect(parse('?q=%20%20hello%20%20').q).toBe('hello')
+    expect(parse('?q=%20%20hello%20%20').query).toBe('hello')
   })
 
   test('should default q to an empty string when absent', () => {
-    expect(parse('').q).toBe('')
+    expect(parse('').query).toBe('')
   })
 
   test('should clamp page: missing -> 1', () => {

@@ -331,3 +331,9 @@ Read `.agents/rules/typescript-conventions/RULE.md` before acting.
 Applies when writing any stateful object (store, registry, cache, manager) or considering a class.
 
 Read `.agents/rules/functional-style/RULE.md` before acting.
+
+### Naming (no abbreviations)
+
+Applies when naming any variable, function parameter, function, or callback argument.
+
+Read `.agents/rules/naming-no-abbreviations/RULE.md` before acting.

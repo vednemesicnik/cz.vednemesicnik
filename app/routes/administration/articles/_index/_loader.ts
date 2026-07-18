@@ -10,12 +10,15 @@ import { SORT_KEYS, type SortKey } from './sort'
 
 const PAGE_SIZE = 20
 
+// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
+// equal values keep a deterministic order (matters most here — the list is
+// paginated, so unstable ordering could shuffle items across pages).
 const ORDER_BY: Record<
   SortKey,
-  (order: SortOrder) => Prisma.ArticleOrderByWithRelationInput
+  (order: SortOrder) => Prisma.ArticleOrderByWithRelationInput[]
 > = {
-  createdAt: (order) => ({ createdAt: order }),
-  title: (order) => ({ title: order }),
+  createdAt: (order) => [{ createdAt: order }],
+  title: (order) => [{ title: order }, { createdAt: 'desc' }],
 }
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -41,7 +44,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     state: 'archived',
   })
 
-  const { order, page, q, sort } = parseAdminListParams(request, {
+  const { order, page, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'createdAt',
     sortKeys: SORT_KEYS,
@@ -61,7 +64,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // follow-up; the AND composition already leaves room for it.
   const permissionWhere = { OR: viewableStates }
   const where = {
-    AND: [permissionWhere, ...(q === '' ? [] : [{ title: { contains: q } }])],
+    AND: [
+      permissionWhere,
+      ...(query === '' ? [] : [{ title: { contains: query } }]),
+    ],
   }
 
   const [rawArticles, totalCount] = await Promise.all([
@@ -69,6 +75,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       orderBy: ORDER_BY[sort](order),
       select: {
         authors: { select: { id: true } },
+        createdAt: true,
         id: true,
         state: true,
         title: true,
@@ -128,7 +135,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     }).hasPermission,
     currentPage: page,
     pageSize: PAGE_SIZE,
-    q,
+    query,
     totalCount,
     totalPages,
   }

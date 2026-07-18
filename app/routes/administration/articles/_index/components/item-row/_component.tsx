@@ -17,11 +17,13 @@ import {
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
+import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 
 type Props = {
   id: string
   title: string
   state: ContentState
+  createdAt: Date
   canView: boolean
   canEdit: boolean
   canDelete: boolean
@@ -33,6 +35,7 @@ export const ItemRow = ({
   id,
   title,
   state,
+  createdAt,
   canView,
   canEdit,
   canDelete,
@@ -61,6 +64,7 @@ export const ItemRow = ({
         onChange={onSelect}
       />
       <TableCell>{title}</TableCell>
+      <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell>
         <AdminStateBadge state={state} />
       </TableCell>
