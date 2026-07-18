@@ -4,9 +4,11 @@
  * a secret-protected POST that never throws into the loader — every failure
  * mode resolves to `null`, and the /redakce page renders a fallback message.
  *
- * Resilience layers, in order: fresh in-memory cache (TTL ~10 min) → stale
- * in-memory cache → last-good JSON snapshot on disk (survives restarts). A
- * Google outage or a broken sheet keeps serving the last good data.
+ * Stale-while-revalidate: a fresh in-memory cache (TTL ~10 min) is served
+ * directly; a stale cache or a last-good JSON snapshot on disk (survives
+ * restarts) is served immediately while a background refresh reloads from
+ * Google. Only the very first run with no snapshot awaits the fetch. A Google
+ * outage or a broken sheet keeps serving the last good data.
  *
  * No-ops when GAS_EDITORIAL_BOARD_URL / GAS_EDITORIAL_BOARD_SECRET are unset
  * (local development): logs a line and returns `null`.
@@ -151,10 +153,35 @@ const writeSnapshot = async (data: EditorialBoardData): Promise<void> => {
 
 export const createEditorialBoardSource = () => {
   let cache: CacheEntry | null = null
+  let refreshPromise: Promise<void> | null = null
+
+  // Fire-and-forget reload from Google. Deduped (one in-flight fetch at a time)
+  // and never rejects, so callers can serve stale data without awaiting it.
+  const refreshInBackground = (url: string, secret: string): void => {
+    if (refreshPromise) return // a refresh is already in flight — dedup
+
+    refreshPromise = (async () => {
+      const fetched = await fetchFromGas(url, secret)
+
+      if (fetched) {
+        cache = { data: fetched, fetchedAt: Date.now() }
+        await writeSnapshot(fetched)
+      } else if (cache) {
+        // Google outage: bump the TTL so we don't re-fetch on every request —
+        // next attempt after one TTL (preserves today's bounded-retry behavior).
+        cache = { ...cache, fetchedAt: Date.now() }
+      }
+    })()
+      .catch(() => {}) // fetchFromGas never throws, but guard against any surprise
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
 
   const getEditorialBoard = async (): Promise<EditorialBoardData | null> => {
     const now = Date.now()
 
+    // 1. Fresh cache → immediate.
     if (cache && now - cache.fetchedAt < CACHE_TTL_MS) {
       return cache.data
     }
@@ -162,6 +189,7 @@ export const createEditorialBoardSource = () => {
     const url = process.env.GAS_EDITORIAL_BOARD_URL
     const secret = process.env.GAS_EDITORIAL_BOARD_SECRET
 
+    // GAS not configured → serve the fallback (log + null).
     if (!url || !secret) {
       if (process.env.NODE_ENV === 'production') {
         console.warn(
@@ -175,23 +203,29 @@ export const createEditorialBoardSource = () => {
       return null
     }
 
+    // 2. Stale in-memory cache → serve immediately, refresh in the background.
+    if (cache) {
+      refreshInBackground(url, secret)
+      return cache.data
+    }
+
+    // 3. Cold start → fast local snapshot read. Seed the cache as stale
+    //    (fetchedAt: 0), serve immediately, refresh in the background.
+    const snapshot = await readSnapshot()
+
+    if (snapshot) {
+      cache = { data: snapshot, fetchedAt: 0 }
+      refreshInBackground(url, secret)
+      return snapshot
+    }
+
+    // 4. Nothing at all (first run, no snapshot) → awaited fetch.
     const fetched = await fetchFromGas(url, secret)
 
     if (fetched) {
       cache = { data: fetched, fetchedAt: now }
       await writeSnapshot(fetched)
       return fetched
-    }
-
-    // Fetch failed: serve the best available stale data (in-memory, else the
-    // on-disk snapshot). Refresh the TTL so an outage doesn't make every
-    // request re-attempt the slow fetch — bounded staleness of one TTL after
-    // Google recovers.
-    const stale = cache?.data ?? (await readSnapshot())
-
-    if (stale) {
-      cache = { data: stale, fetchedAt: now }
-      return stale
     }
 
     return null
