@@ -9,7 +9,7 @@
 
 <!-- One bullet per notable change. -->
 
-Closes #<issue>
+Closes #NNN
 
 ## Checks
 
