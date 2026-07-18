@@ -20,9 +20,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   const [articles, totalCount] = await Promise.all([
     prisma.article.findMany({
-      orderBy: {
-        publishedAt: 'desc',
-      },
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
       select: {
         authors: {
           select: {
