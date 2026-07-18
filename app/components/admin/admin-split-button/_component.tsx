@@ -76,18 +76,23 @@ export const AdminSplitButton = ({
 
           return (
             <button
-              aria-current={isSelected}
+              aria-pressed={isSelected}
               className={styles.menuItem}
               key={option.id}
               onClick={() => handleSelect(option.id)}
               type={'button'}
             >
-              <CheckIcon
+              {/* Decorative: aria-pressed already conveys the selected state,
+                  so hide the check (which has its own accessible name) from AT. */}
+              <span
+                aria-hidden={'true'}
                 className={clsx(
                   styles.check,
                   !isSelected && styles.checkHidden,
                 )}
-              />
+              >
+                <CheckIcon />
+              </span>
               {option.label}
             </button>
           )
