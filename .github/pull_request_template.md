@@ -1,4 +1,5 @@
-<!-- Feature/fix PR: → dev. See docs/_branching-model.md -->
+<!-- Default template, for feature/fix → dev. Hotfix → main: use --template hotfix.md.
+     See docs/_branching-model.md -->
 
 ## Summary
 

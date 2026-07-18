@@ -17,8 +17,10 @@
 No Prisma migration in this hotfix, so the `Pre-migration database backup` step
 should be **skipped**.
 
-<!-- After merge, the push to `main` triggers `sync-dev.yml`, which opens a
-     back-merge PR `main → dev`. Merge it (merge commit) to carry the fix into dev. -->
+## After merge
+
+The push to `main` triggers `sync-dev.yml`, which opens a back-merge PR `main → dev`.
+Merge it (merge commit) to carry the fix into `dev`.
 
 ## Merge method
 

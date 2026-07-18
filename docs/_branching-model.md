@@ -68,12 +68,12 @@ read & write**.
      --title "release: $(date +%F) — <theme>"
    ```
 
-   The template lives at `.github/PULL_REQUEST_TEMPLATE/release.md`. Feature/fix PRs
-   targeting `dev` get the **default** template (`.github/pull_request_template.md`)
-   automatically; `release.md` and `hotfix.md` are **named opt-in** templates that
-   override the default when passed with `--template`. The template fills the PR body
-   only; set the title yourself (e.g. `release: 2026-07-18 — admin tables & lists
-   rollout`).
+   The template lives at `.github/PULL_REQUEST_TEMPLATE/release.md`. GitHub prefills the
+   **default** template (`.github/pull_request_template.md`) on every manually opened PR
+   regardless of base branch — it's written for the common case, feature/fix → `dev`.
+   `release.md` and `hotfix.md` are **named opt-in** templates that override the default
+   when passed with `--template`. The template fills the PR body only; set the title
+   yourself (e.g. `release: 2026-07-18 — admin tables & lists rollout`).
 2. Fill in Summary / What ships / Deploy expectation.
 3. Merge with a **merge commit** (never squash — see [Merge methods](#merge-methods)).
 
