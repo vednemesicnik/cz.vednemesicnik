@@ -7,6 +7,7 @@ import { prisma } from '~/utils/db.server'
 
 import type { Route } from './+types/route'
 import { archiveArticle } from './utils/archive-article'
+import { changeArticlePublishedAt } from './utils/change-article-published-at'
 import { deleteArticle } from './utils/delete-article'
 import { publishArticle } from './utils/publish-article'
 import { restoreArticle } from './utils/restore-article'
@@ -60,12 +61,32 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       }
       break
 
-    case INTENT_VALUE.publish:
+    case INTENT_VALUE.publish: {
+      const publishedAtValue = formData.get('publishedAt')
       await publishArticle(request, {
         id: articleId,
+        publishedAt:
+          typeof publishedAtValue === 'string' && publishedAtValue !== ''
+            ? new Date(publishedAtValue)
+            : undefined,
         target,
       })
       break
+    }
+
+    case INTENT_VALUE.changePublishedAt: {
+      const publishedAtValue = formData.get('publishedAt')
+      invariantResponse(
+        typeof publishedAtValue === 'string' && publishedAtValue !== '',
+        'Missing publishedAt',
+      )
+      await changeArticlePublishedAt(request, {
+        id: articleId,
+        publishedAt: new Date(publishedAtValue),
+        target,
+      })
+      break
+    }
 
     case INTENT_VALUE.restore:
       await restoreArticle(request, {
