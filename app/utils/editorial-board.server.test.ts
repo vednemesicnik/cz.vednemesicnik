@@ -22,6 +22,29 @@ const jsonResponse = (json: unknown, status = 200) => ({
   status,
 })
 
+// A promise whose resolution is controlled by the test — used to keep a
+// background fetch pending while asserting that stale data is served without it.
+type Deferred<Value> = {
+  promise: Promise<Value>
+  resolve: (value: Value) => void
+}
+
+const createDeferred = <Value>(): Deferred<Value> => {
+  let resolve!: (value: Value) => void
+  const promise = new Promise<Value>((resolvePromise) => {
+    resolve = resolvePromise
+  })
+  return { promise, resolve }
+}
+
+// Drains the microtask queue so a fire-and-forget background refresh can settle
+// (update the cache / bump the TTL) before the following assertion runs.
+const flushMicrotasks = async () => {
+  for (let iteration = 0; iteration < 10; iteration += 1) {
+    await Promise.resolve()
+  }
+}
+
 let tmpDir: string
 let originalDatabaseUrl: string | undefined
 
@@ -41,7 +64,14 @@ beforeEach(async () => {
 afterEach(async () => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
-  await fs.rm(tmpDir, { force: true, recursive: true })
+  // A fire-and-forget background refresh may still be writing a snapshot into
+  // tmpDir as the test ends; retry the removal so that race can't fail cleanup.
+  await fs.rm(tmpDir, {
+    force: true,
+    maxRetries: 10,
+    recursive: true,
+    retryDelay: 20,
+  })
 
   if (originalDatabaseUrl === undefined) {
     delete process.env.DATABASE_URL
@@ -138,7 +168,7 @@ describe('getEditorialBoard', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
-  test('serves the stale in-memory value when a later fetch fails', async () => {
+  test('keeps the stale in-memory value when the background refresh fails', async () => {
     vi.useFakeTimers()
     const fetchMock = vi
       .fn()
@@ -151,11 +181,12 @@ describe('getEditorialBoard', () => {
     await getEditorialBoard()
     vi.advanceTimersByTime(CACHE_TTL_MS)
 
+    // Expiry serves stale immediately; the background refresh fetch then fails.
     expect(await getEditorialBoard()).toEqual({ positions })
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
-  test('reads the disk snapshot on a fresh instance when the fetch fails', async () => {
+  test('serves the disk snapshot on a fresh instance', async () => {
     // First instance fetches successfully → writes the snapshot to disk.
     vi.stubGlobal(
       'fetch',
@@ -163,13 +194,109 @@ describe('getEditorialBoard', () => {
     )
     await createEditorialBoardSource().getEditorialBoard()
 
-    // A fresh instance (empty in-memory cache) with a failing fetch falls back
-    // to the persisted snapshot.
+    // A fresh instance (empty in-memory cache) serves the persisted snapshot
+    // immediately, even while its background refresh fetch fails.
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('GAS down')))
 
     expect(await createEditorialBoardSource().getEditorialBoard()).toEqual({
       positions,
     })
+  })
+
+  test('serves stale data immediately on expiry while the fetch is still pending, then updates from the background refresh', async () => {
+    vi.useFakeTimers()
+    const deferred = createDeferred<ReturnType<typeof jsonResponse>>()
+    const newPositions = [
+      { label: 'Role C', members: ['Someone New'], order: 1 },
+    ]
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(validResponse))
+      .mockReturnValueOnce(deferred.promise)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { getEditorialBoard } = createEditorialBoardSource()
+
+    await getEditorialBoard() // prime the cache
+    vi.advanceTimersByTime(CACHE_TTL_MS)
+
+    // The refresh fetch never resolves here, yet stale data is returned at once.
+    expect(await getEditorialBoard()).toEqual({ positions })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+
+    // Once the background fetch resolves, a later call reflects the new data.
+    deferred.resolve(jsonResponse({ ok: true, positions: newPositions }))
+    await flushMicrotasks()
+
+    expect(await getEditorialBoard()).toEqual({ positions: newPositions })
+  })
+
+  test('serves the disk snapshot on cold start without waiting for the fetch', async () => {
+    // First instance fetches successfully → writes the snapshot to disk.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse(validResponse)),
+    )
+    await createEditorialBoardSource().getEditorialBoard()
+
+    // Fresh instance with a fetch that never resolves: the snapshot is served
+    // immediately and a background refresh was still started.
+    const deferred = createDeferred<ReturnType<typeof jsonResponse>>()
+    const fetchMock = vi.fn().mockReturnValue(deferred.promise)
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await createEditorialBoardSource().getEditorialBoard()).toEqual({
+      positions,
+    })
+    expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
+  test('concurrent requests after expiry trigger exactly one GAS fetch', async () => {
+    vi.useFakeTimers()
+    const deferred = createDeferred<ReturnType<typeof jsonResponse>>()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(validResponse))
+      .mockReturnValueOnce(deferred.promise)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { getEditorialBoard } = createEditorialBoardSource()
+
+    await getEditorialBoard() // prime the cache
+    vi.advanceTimersByTime(CACHE_TTL_MS)
+
+    const [first, second] = await Promise.all([
+      getEditorialBoard(),
+      getEditorialBoard(),
+    ])
+
+    expect(first).toEqual({ positions })
+    expect(second).toEqual({ positions })
+    // One prime fetch + a single deduped background refresh.
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  test('does not re-fetch on the request after a failed background refresh (TTL bumped)', async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(validResponse))
+      .mockRejectedValue(new Error('GAS down'))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { getEditorialBoard } = createEditorialBoardSource()
+
+    await getEditorialBoard() // prime (fetch #1)
+    vi.advanceTimersByTime(CACHE_TTL_MS)
+
+    expect(await getEditorialBoard()).toEqual({ positions }) // background fetch #2
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+
+    await flushMicrotasks() // let the failed refresh bump the TTL
+
+    // The TTL was bumped, so an immediate follow-up hits the fresh cache.
+    expect(await getEditorialBoard()).toEqual({ positions })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   test('returns null and never fetches when the env vars are unset', async () => {
