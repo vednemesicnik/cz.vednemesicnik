@@ -4,15 +4,39 @@
  * For more information, see https://remix.run/file-conventions/entry.client
  */
 
+import * as Sentry from '@sentry/react-router'
 import { StrictMode, startTransition } from 'react'
 import { hydrateRoot } from 'react-dom/client'
+import { isRouteErrorResponse } from 'react-router'
 import { HydratedRouter } from 'react-router/dom'
+
+// Gate on the DSN so the SDK stays fully inert (no init side effects) when unset.
+if (window.ENV?.SENTRY_DSN) {
+  Sentry.init({
+    beforeSend(event) {
+      // Belt-and-suspenders: never ship cookies in a client event.
+      if (event.request) delete event.request.cookies
+      return event
+    },
+    dsn: window.ENV.SENTRY_DSN,
+    sendDefaultPii: false,
+    tracesSampleRate: 0, // error capture only, no performance tracing
+  })
+}
+
+// Report client-side middleware/loader/action/render errors once per error (RR
+// calls onError a single time, unlike the re-rendering ErrorBoundary).
+const handleError: (error: unknown) => void = (error) => {
+  // Thrown Responses (403/404/429) are intentional control flow, not failures.
+  if (isRouteErrorResponse(error) || error instanceof Response) return
+  Sentry.captureException(error)
+}
 
 startTransition(() => {
   hydrateRoot(
     document,
     <StrictMode>
-      <HydratedRouter />
+      <HydratedRouter onError={handleError} />
     </StrictMode>,
   )
 })

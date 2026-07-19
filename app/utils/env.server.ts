@@ -61,6 +61,11 @@ const schema = z
     [ENV_KEYS.RELYING_PARTY_ID]: z.string().optional(),
     [ENV_KEYS.RELYING_PARTY_NAME]: z.string().optional(),
     [ENV_KEYS.RELYING_PARTY_ORIGIN]: z.string().optional(),
+    // Sentry ingest DSN (public key). Optional and never required: when absent the
+    // SDK stays inert, so local development needs nothing. Read directly from
+    // process.env by instrument.server.mjs on the server and exposed to the client
+    // via getEnv below.
+    [ENV_KEYS.SENTRY_DSN]: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     // Require each key to be present and non-empty, attributing the failure to its
@@ -162,6 +167,8 @@ export function getEnv() {
   return {
     BASE_URL: process.env.BASE_URL,
     MODE: process.env.NODE_ENV,
+    // Public ingest key — safe for the client; read by the client Sentry init.
+    SENTRY_DSN: process.env.SENTRY_DSN,
   }
 }
 

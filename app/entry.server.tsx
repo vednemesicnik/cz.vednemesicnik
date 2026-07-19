@@ -8,10 +8,13 @@
 
 import { PassThrough } from 'node:stream'
 import { createReadableStreamFromReadable } from '@react-router/node'
+import * as Sentry from '@sentry/react-router'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
 import {
   type EntryContext,
+  type HandleErrorFunction,
+  isRouteErrorResponse,
   type RouterContextProvider,
   ServerRouter,
 } from 'react-router'
@@ -29,6 +32,19 @@ global.ENV = getEnv()
 
 // Prune auth events past the retention window, once at startup and daily after.
 startAuthLogRetention()
+
+// Report unhandled server errors to Sentry, keeping Fly logs as the fallback.
+export const handleError: HandleErrorFunction = (error, { request }) => {
+  // Thrown Responses (403/404/429, redirects) and route error responses are
+  // intentional control flow, not failures — don't report them.
+  if (isRouteErrorResponse(error) || error instanceof Response) return
+
+  // Client navigated away / request cancelled — not actionable.
+  if (request.signal.aborted) return
+
+  Sentry.captureException(error) // report to Sentry…
+  console.error(error) // …and keep Fly logs as the fallback
+}
 
 export default function handleRequest(
   request: Request,
