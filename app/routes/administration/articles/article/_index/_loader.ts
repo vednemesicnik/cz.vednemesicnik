@@ -6,6 +6,7 @@ import {
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import {
+  APPROVER_ROLE_LEVEL,
   canPublishWithoutReview,
   needsReviewToPublish,
 } from '~/utils/permissions/author/review-policy'
@@ -208,6 +209,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         sources: createImageSources('article-image', image),
       })),
       publishedAt: getFormattedPublishDate(article.publishedAt),
+      // Raw instant seeding the change-date dialog's picker. Prisma hydrates the
+      // column into a Date; toISOString() serializes that instant to a string for
+      // the client, which converts it to/from the browser's local time — so the
+      // default and the submitted value stay in the editor's timezone. undefined
+      // for drafts (optional chaining already yields undefined when null).
+      publishedAtISO: article.publishedAt?.toISOString(),
       reviews: article.reviews.map((review) => ({
         createdAt: getFormattedPublishDate(review.createdAt),
         id: review.id,
@@ -225,8 +232,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       updatedAt: getFormattedPublishDate(article.updatedAt),
     },
     canArchive,
+    canChangePublishedAt:
+      article.state === 'published' && context.roleLevel <= APPROVER_ROLE_LEVEL,
     canDelete,
     canPublish,
+    canPublishBackdated: canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
     canRestore,
     canRetract,
     canReview: shouldShowReview,

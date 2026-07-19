@@ -1,4 +1,11 @@
-import { type RefObject, useEffect, useId, useState } from 'react'
+import {
+  type RefObject,
+  type SubmitEvent,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
@@ -21,8 +28,9 @@ type Props = {
   title: string
   description: string
   confirmLabel: string
-  // Initial datetime-local value (YYYY-MM-DDTHH:mm); defaults to now.
-  defaultValue?: string
+  // Initial value as an ISO/UTC instant; the picker shows it in local time.
+  // Defaults to now when omitted.
+  defaultPublishedAt?: string
 }
 
 // datetime-local expects local wall-clock time as YYYY-MM-DDTHH:mm. toISOString
@@ -47,13 +55,17 @@ export const AdminPublishDateDialog = ({
   title,
   description,
   confirmLabel,
-  defaultValue,
+  defaultPublishedAt,
 }: Props) => {
   const fetcher = useFetcher({ key: fetcherKey })
 
   // Unique per instance so the label/input association holds when both the
   // backdated-publish and change-date dialogs are on the page at once.
   const inputId = useId()
+
+  // Carries the timezone-correct instant submitted to the server; filled from the
+  // picker on submit (see handleSubmit).
+  const publishedAtRef = useRef<HTMLInputElement>(null)
 
   // Recompute "now" each time the dialog opens (via the `open` attribute) so the
   // max and default stay current on long-lived pages. `openCount` bumps on every
@@ -80,13 +92,33 @@ export const AdminPublishDateDialog = ({
     return () => observer.disconnect()
   }, [ref])
 
+  // Local (browser-timezone) default shown in the picker, derived from the ISO
+  // instant so it round-trips with the value submitted below.
+  const defaultLocal = defaultPublishedAt
+    ? toLocalDateTimeValue(new Date(defaultPublishedAt))
+    : now
+
   // Read ref.current inside the handlers, not during render: the <dialog> is
   // attached in the commit phase, so at render time ref.current is still null.
   const handleCancel = () => ref.current?.close()
   // Close on submit rather than the confirm button's click, so submitting with
   // Enter from the date field closes the dialog too. Invalid values (a future
   // date past max) block native submit, so the dialog stays open as expected.
-  const handleSubmit = () => ref.current?.close()
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    const local = new FormData(event.currentTarget).get('publishedAtLocal')
+    if (publishedAtRef.current && typeof local === 'string' && local !== '') {
+      // datetime-local only has minute precision. When the picker is left at its
+      // seeded default, send the original instant verbatim so submitting an
+      // unchanged date doesn't silently zero the seconds of an already-set value.
+      // Otherwise the value is zoneless; new Date() reads it in the browser's
+      // timezone, so toISOString() is the correct UTC instant to store.
+      publishedAtRef.current.value =
+        defaultPublishedAt && local === defaultLocal
+          ? defaultPublishedAt
+          : new Date(local).toISOString()
+    }
+    ref.current?.close()
+  }
 
   return (
     <AdminDialog ref={ref}>
@@ -106,14 +138,16 @@ export const AdminPublishDateDialog = ({
             type={'hidden'}
             value={intent}
           />
+          {/* Timezone-correct instant sent to the server; set in handleSubmit. */}
+          <input name={'publishedAt'} ref={publishedAtRef} type={'hidden'} />
 
           <AdminInput
-            defaultValue={defaultValue ?? now}
+            defaultValue={defaultLocal}
             id={inputId}
             key={openCount}
             label={'Datum publikace'}
             max={now}
-            name={'publishedAt'}
+            name={'publishedAtLocal'}
             required
             type={'datetime-local'}
           />

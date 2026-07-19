@@ -67,10 +67,11 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 /**
- * Backdated publish (draft article): publishes with a chosen past date so the
- * article lands at the matching spot in the public listing.
+ * Interactive base case (controls enabled). Backdated publish on a draft article:
+ * publishes with a chosen past date so the article lands at the matching spot in
+ * the public listing.
  */
-export const BackdatedPublish: Story = {
+export const Playground: Story = {
   args: {
     action: '/administration/articles/example',
     confirmLabel: 'Zveřejnit',
@@ -90,6 +91,8 @@ export const ChangePublishDate: Story = {
   args: {
     action: '/administration/articles/example',
     confirmLabel: 'Změnit datum',
+    // ISO/UTC instant; the picker seeds it converted to the browser's local time.
+    defaultPublishedAt: '2026-05-15T07:00:00.000Z',
     description:
       'Skutečně si přejete změnit datum vydání? Článek se přeřadí ve výpisu a změní se datum publikace v metadatech pro vyhledávače. Akce je určena k opravě chyb.',
     fetcherKey: 'change-published-at',
