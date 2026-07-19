@@ -375,7 +375,7 @@ export default function RouteComponent({
       <AdminPublishDateDialog
         action={href('/administration/articles/:articleId', { articleId })}
         confirmLabel={'Změnit datum'}
-        defaultValue={article.publishedAtInputValue}
+        defaultPublishedAt={article.publishedAtISO}
         description={
           'Skutečně si přejete změnit datum vydání? Článek se přeřadí ve výpisu a změní se datum publikace v metadatech pro vyhledávače. Akce je určena k opravě chyb.'
         }

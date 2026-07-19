@@ -13,28 +13,6 @@ import {
 
 import type { Route } from './+types/route'
 
-// YYYY-MM-DDTHH:mm for a datetime-local input, in the publication's timezone.
-// The server runs UTC while the dialog computes its own now/max in the browser's
-// local time, so anchoring on Europe/Prague keeps the seeded default consistent
-// for Czech admins regardless of server TZ. Assembled from formatToParts so the
-// result never depends on the locale's date/time separator (comma, space, NBSP).
-const toPublishedAtInputValue = (date: Date): string => {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    hour: '2-digit',
-    hourCycle: 'h23',
-    minute: '2-digit',
-    month: '2-digit',
-    timeZone: 'Europe/Prague',
-    year: 'numeric',
-  }).formatToParts(date)
-
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? ''
-
-  return `${value('year')}-${value('month')}-${value('day')}T${value('hour')}:${value('minute')}`
-}
-
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { articleId } = params
 
@@ -231,11 +209,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         sources: createImageSources('article-image', image),
       })),
       publishedAt: getFormattedPublishDate(article.publishedAt),
-      // Machine-readable seed for the change-date dialog's datetime-local input
-      // (the display-formatted publishedAt above is not usable there).
-      publishedAtInputValue: article.publishedAt
-        ? toPublishedAtInputValue(article.publishedAt)
-        : undefined,
+      // Raw instant (ISO/UTC) seeding the change-date dialog's picker. The dialog
+      // converts it to/from the browser's local time, so the input default and the
+      // submitted value stay in the editor's timezone regardless of server TZ.
+      publishedAtISO: article.publishedAt?.toISOString() ?? undefined,
       reviews: article.reviews.map((review) => ({
         createdAt: getFormattedPublishDate(review.createdAt),
         id: review.id,
