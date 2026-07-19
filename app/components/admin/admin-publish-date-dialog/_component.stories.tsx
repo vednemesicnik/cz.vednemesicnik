@@ -67,10 +67,11 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 /**
- * Backdated publish (draft article): publishes with a chosen past date so the
- * article lands at the matching spot in the public listing.
+ * Interactive base case (controls enabled). Backdated publish on a draft article:
+ * publishes with a chosen past date so the article lands at the matching spot in
+ * the public listing.
  */
-export const BackdatedPublish: Story = {
+export const Playground: Story = {
   args: {
     action: '/administration/articles/example',
     confirmLabel: 'Zveřejnit',
