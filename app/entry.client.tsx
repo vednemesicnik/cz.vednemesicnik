@@ -14,8 +14,20 @@ import { HydratedRouter } from 'react-router/dom'
 if (window.ENV?.SENTRY_DSN) {
   Sentry.init({
     beforeSend(event) {
-      // Belt-and-suspenders: never ship cookies in a client event.
-      if (event.request) delete event.request.cookies
+      // Belt-and-suspenders: strip cookies and auth headers even if an
+      // integration attaches them (mirrors the server instrument hook).
+      if (event.request) {
+        delete event.request.cookies
+
+        const headers = event.request.headers
+        if (headers) {
+          delete headers.cookie
+          delete headers.Cookie
+          delete headers.authorization
+          delete headers.Authorization
+        }
+      }
+
       return event
     },
     dsn: window.ENV.SENTRY_DSN,
