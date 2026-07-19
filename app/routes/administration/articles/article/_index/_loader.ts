@@ -6,11 +6,29 @@ import {
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import {
+  APPROVER_ROLE_LEVEL,
   canPublishWithoutReview,
   needsReviewToPublish,
 } from '~/utils/permissions/author/review-policy'
 
 import type { Route } from './+types/route'
+
+// YYYY-MM-DDTHH:mm for a datetime-local input, in the publication's timezone.
+// The server runs UTC while the dialog computes its own now/max in the browser's
+// local time, so anchoring on Europe/Prague keeps the seeded default consistent
+// for Czech admins regardless of server TZ. sv-SE yields ISO-ordered fields.
+const toPublishedAtInputValue = (date: Date): string =>
+  new Intl.DateTimeFormat('sv-SE', {
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+    minute: '2-digit',
+    month: '2-digit',
+    timeZone: 'Europe/Prague',
+    year: 'numeric',
+  })
+    .format(date)
+    .replace(' ', 'T')
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { articleId } = params
@@ -208,6 +226,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         sources: createImageSources('article-image', image),
       })),
       publishedAt: getFormattedPublishDate(article.publishedAt),
+      // Machine-readable seed for the change-date dialog's datetime-local input
+      // (the display-formatted publishedAt above is not usable there).
+      publishedAtInputValue: article.publishedAt
+        ? toPublishedAtInputValue(article.publishedAt)
+        : undefined,
       reviews: article.reviews.map((review) => ({
         createdAt: getFormattedPublishDate(review.createdAt),
         id: review.id,
@@ -225,8 +248,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       updatedAt: getFormattedPublishDate(article.updatedAt),
     },
     canArchive,
+    canChangePublishedAt:
+      article.state === 'published' && context.roleLevel <= APPROVER_ROLE_LEVEL,
     canDelete,
     canPublish,
+    canPublishBackdated: canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
     canRestore,
     canRetract,
     canReview: shouldShowReview,

@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef } from 'react'
+import { Activity, useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -16,11 +16,14 @@ import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminImageGallery } from '~/components/admin/admin-image-gallery'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminPublishDateDialog } from '~/components/admin/admin-publish-date-dialog'
+import { AdminSplitButton } from '~/components/admin/admin-split-button'
 import { AdminStateBadge } from '~/components/admin/admin-state-badge'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
+import { CalendarIcon } from '~/components/icons/calendar-icon'
 import { CheckIcon } from '~/components/icons/check-icon'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
@@ -47,6 +50,8 @@ export default function RouteComponent({
     canUpdate,
     canDelete,
     canPublish,
+    canPublishBackdated,
+    canChangePublishedAt,
     canRetract,
     canArchive,
     canRestore,
@@ -55,6 +60,11 @@ export default function RouteComponent({
     needsReview,
   } = loaderData
   const { articleId } = params
+
+  // Selected mode of the draft publish split button (Coordinators only).
+  const [publishMode, setPublishMode] = useState<
+    'publish' | 'publish-backdated'
+  >('publish')
 
   const fetcherKey = `article-action-${articleId}`
   const fetcher = useFetcher({ key: fetcherKey })
@@ -67,7 +77,13 @@ export default function RouteComponent({
       ? fetcher.formData.get(INTENT_NAME)
       : null
 
+  const publishDisabledTitle = needsReview
+    ? 'Nelze publikovat bez schválení koordinátora'
+    : undefined
+
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
+  const backdatedPublishDialogRef = useRef<HTMLDialogElement>(null)
+  const changePublishedAtDialogRef = useRef<HTMLDialogElement>(null)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
@@ -111,28 +127,68 @@ export default function RouteComponent({
             </AdminActionButton>
           </Form>
         )}
-        {canPublish && (
-          <Form method="post">
-            <AuthenticityTokenInput />
-            <AdminActionButton
-              action={'publish'}
-              disabled={needsReview || isSubmitting}
-              name={INTENT_NAME}
-              title={
-                needsReview
-                  ? 'Nelze publikovat bez schválení koordinátora'
-                  : undefined
-              }
-              type={'submit'}
-              value={INTENT_VALUE.publish}
-            >
-              <ArrowUpwardIcon />
-              {submittingIntent === INTENT_VALUE.publish
-                ? 'Zveřejňuje se...'
-                : 'Zveřejnit'}
-            </AdminActionButton>
-          </Form>
-        )}
+        {canPublish &&
+          (canPublishBackdated ? (
+            <Form method="post">
+              <AuthenticityTokenInput />
+              <AdminSplitButton
+                action={'publish'}
+                disabled={isSubmitting}
+                onSelect={(id) => setPublishMode(id as typeof publishMode)}
+                options={[
+                  { id: 'publish', label: 'Zveřejnit' },
+                  { id: 'publish-backdated', label: 'Zveřejnit zpětně' },
+                ]}
+                selectedId={publishMode}
+              >
+                {publishMode === 'publish' ? (
+                  <AdminActionButton
+                    action={'publish'}
+                    disabled={needsReview || isSubmitting}
+                    name={INTENT_NAME}
+                    title={publishDisabledTitle}
+                    type={'submit'}
+                    value={INTENT_VALUE.publish}
+                  >
+                    <ArrowUpwardIcon />
+                    {submittingIntent === INTENT_VALUE.publish
+                      ? 'Zveřejňuje se...'
+                      : 'Zveřejnit'}
+                  </AdminActionButton>
+                ) : (
+                  <AdminActionButton
+                    action={'publish'}
+                    disabled={needsReview || isSubmitting}
+                    onClick={() =>
+                      backdatedPublishDialogRef.current?.showModal()
+                    }
+                    title={publishDisabledTitle}
+                    type={'button'}
+                  >
+                    <ArrowUpwardIcon />
+                    Zveřejnit zpětně
+                  </AdminActionButton>
+                )}
+              </AdminSplitButton>
+            </Form>
+          ) : (
+            <Form method="post">
+              <AuthenticityTokenInput />
+              <AdminActionButton
+                action={'publish'}
+                disabled={needsReview || isSubmitting}
+                name={INTENT_NAME}
+                title={publishDisabledTitle}
+                type={'submit'}
+                value={INTENT_VALUE.publish}
+              >
+                <ArrowUpwardIcon />
+                {submittingIntent === INTENT_VALUE.publish
+                  ? 'Zveřejňuje se...'
+                  : 'Zveřejnit'}
+              </AdminActionButton>
+            </Form>
+          ))}
         {canRetract && (
           <Form method="post">
             <AuthenticityTokenInput />
@@ -149,6 +205,17 @@ export default function RouteComponent({
                 : 'Stáhnout z publikace'}
             </AdminActionButton>
           </Form>
+        )}
+        {canChangePublishedAt && (
+          <AdminActionButton
+            action={'publish'}
+            disabled={isSubmitting}
+            onClick={() => changePublishedAtDialogRef.current?.showModal()}
+            type={'button'}
+          >
+            <CalendarIcon />
+            Změnit datum vydání
+          </AdminActionButton>
         )}
         {canArchive && (
           <Form method="post">
@@ -286,6 +353,31 @@ export default function RouteComponent({
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+
+      <AdminPublishDateDialog
+        action={href('/administration/articles/:articleId', { articleId })}
+        confirmLabel={'Zveřejnit'}
+        description={
+          'Článek bude publikován se zvoleným datem v minulosti a zařadí se tak na odpovídající místo ve výpisu článků.'
+        }
+        fetcherKey={fetcherKey}
+        intent={INTENT_VALUE.publish}
+        ref={backdatedPublishDialogRef}
+        title={'Zveřejnit zpětně'}
+      />
+
+      <AdminPublishDateDialog
+        action={href('/administration/articles/:articleId', { articleId })}
+        confirmLabel={'Změnit datum'}
+        defaultValue={article.publishedAtInputValue}
+        description={
+          'Skutečně si přejete změnit datum vydání? Článek se přeřadí ve výpisu a změní se datum publikace v metadatech pro vyhledávače. Akce je určena k opravě chyb.'
+        }
+        fetcherKey={fetcherKey}
+        intent={INTENT_VALUE.changePublishedAt}
+        ref={changePublishedAtDialogRef}
+        title={'Změnit datum vydání'}
+      />
     </AdminPage>
   )
 }
