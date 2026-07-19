@@ -105,12 +105,17 @@ export const AdminPublishDateDialog = ({
   // Enter from the date field closes the dialog too. Invalid values (a future
   // date past max) block native submit, so the dialog stays open as expected.
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
-    // The datetime-local value is zoneless; new Date() reads it in the browser's
-    // timezone, so toISOString() is the correct UTC instant for the server to
-    // store. This keeps storage in UTC while the editor works in local time.
     const local = new FormData(event.currentTarget).get('publishedAtLocal')
     if (publishedAtRef.current && typeof local === 'string' && local !== '') {
-      publishedAtRef.current.value = new Date(local).toISOString()
+      // datetime-local only has minute precision. When the picker is left at its
+      // seeded default, send the original instant verbatim so submitting an
+      // unchanged date doesn't silently zero the seconds of an already-set value.
+      // Otherwise the value is zoneless; new Date() reads it in the browser's
+      // timezone, so toISOString() is the correct UTC instant to store.
+      publishedAtRef.current.value =
+        defaultPublishedAt && local === defaultLocal
+          ? defaultPublishedAt
+          : new Date(local).toISOString()
     }
     ref.current?.close()
   }
