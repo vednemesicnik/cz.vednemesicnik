@@ -37,6 +37,12 @@ import type { Route } from './+types/route'
 const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
 
+const PUBLISH_MODES = ['publish', 'publish-backdated'] as const
+type PublishMode = (typeof PUBLISH_MODES)[number]
+
+const isPublishMode = (id: string): id is PublishMode =>
+  (PUBLISH_MODES as readonly string[]).includes(id)
+
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
@@ -62,9 +68,7 @@ export default function RouteComponent({
   const { articleId } = params
 
   // Selected mode of the draft publish split button (Coordinators only).
-  const [publishMode, setPublishMode] = useState<
-    'publish' | 'publish-backdated'
-  >('publish')
+  const [publishMode, setPublishMode] = useState<PublishMode>('publish')
 
   const fetcherKey = `article-action-${articleId}`
   const fetcher = useFetcher({ key: fetcherKey })
@@ -134,7 +138,9 @@ export default function RouteComponent({
               <AdminSplitButton
                 action={'publish'}
                 disabled={isSubmitting}
-                onSelect={(id) => setPublishMode(id as typeof publishMode)}
+                onSelect={(id) => {
+                  if (isPublishMode(id)) setPublishMode(id)
+                }}
                 options={[
                   { id: 'publish', label: 'Zveřejnit' },
                   { id: 'publish-backdated', label: 'Zveřejnit zpětně' },

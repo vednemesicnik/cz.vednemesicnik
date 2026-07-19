@@ -16,19 +16,24 @@ import type { Route } from './+types/route'
 // YYYY-MM-DDTHH:mm for a datetime-local input, in the publication's timezone.
 // The server runs UTC while the dialog computes its own now/max in the browser's
 // local time, so anchoring on Europe/Prague keeps the seeded default consistent
-// for Czech admins regardless of server TZ. sv-SE yields ISO-ordered fields.
-const toPublishedAtInputValue = (date: Date): string =>
-  new Intl.DateTimeFormat('sv-SE', {
+// for Czech admins regardless of server TZ. Assembled from formatToParts so the
+// result never depends on the locale's date/time separator (comma, space, NBSP).
+const toPublishedAtInputValue = (date: Date): string => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',
     hour: '2-digit',
-    hour12: false,
+    hourCycle: 'h23',
     minute: '2-digit',
     month: '2-digit',
     timeZone: 'Europe/Prague',
     year: 'numeric',
-  })
-    .format(date)
-    .replace(' ', 'T')
+  }).formatToParts(date)
+
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? ''
+
+  return `${value('year')}-${value('month')}-${value('day')}T${value('hour')}:${value('minute')}`
+}
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { articleId } = params
