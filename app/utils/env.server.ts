@@ -61,10 +61,8 @@ const schema = z
     [ENV_KEYS.RELYING_PARTY_ID]: z.string().optional(),
     [ENV_KEYS.RELYING_PARTY_NAME]: z.string().optional(),
     [ENV_KEYS.RELYING_PARTY_ORIGIN]: z.string().optional(),
-    // Sentry ingest DSN (public key). Optional and never required: when absent the
-    // SDK stays inert, so local development needs nothing. Read directly from
-    // process.env by instrument.server.mjs on the server and exposed to the client
-    // via getEnv below.
+    // Sentry ingest DSN (public key). Optional — absent → SDK stays inert. Read on
+    // the server by instrument.server.ts and exposed to the client via getEnv below.
     [ENV_KEYS.SENTRY_DSN]: z.string().optional(),
   })
   .superRefine((env, ctx) => {
