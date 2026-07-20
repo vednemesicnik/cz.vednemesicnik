@@ -81,6 +81,9 @@ COPY --from=build /app/pnpm-workspace.yaml /app/pnpm-workspace.yaml
 COPY --from=build /app/build /app/build
 COPY --from=build /app/generated /app/generated
 COPY --from=build /app/package.json /app/package.json
+# Sentry server instrumentation, loaded via NODE_OPTIONS --import in `app:start`.
+# Must exist in the runtime image or the server crashes on boot (ERR_MODULE_NOT_FOUND).
+COPY --from=build /app/instrument.server.mjs /app/instrument.server.mjs
 COPY --from=build /app/prisma.config.ts /app/prisma.config.ts
 COPY --from=build /app/constants/env.ts /app/constants/env.ts
 COPY --from=build /app/prisma/schema.prisma /app/prisma/schema.prisma
