@@ -35,6 +35,13 @@ FROM base AS build
 # Set DATABASE_URL for Prisma generation
 ENV DATABASE_URL="file:/data/sqlite.db"
 
+# Sentry org/project are non-secret build-time inputs for source-map upload. Only
+# the auth token is a secret (mounted below); these two just identify the target.
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
+ENV SENTRY_ORG=$SENTRY_ORG
+ENV SENTRY_PROJECT=$SENTRY_PROJECT
+
 WORKDIR /app
 
 COPY --from=deps /app/node_modules /app/node_modules
@@ -44,8 +51,12 @@ ADD . .
 # Run the Prisma type generator
 RUN pnpm prisma:generate
 
-# Run the build
-RUN pnpm app:build
+# Run the build. SENTRY_AUTH_TOKEN is mounted as a BuildKit build secret and
+# exposed to this step only (never baked into a layer). required=false so a
+# token-less build still succeeds — the vite/RR config then skips Sentry entirely,
+# generating and uploading nothing.
+RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN,required=false \
+    pnpm app:build
 
 # Finally, build the production image with minimal footprint
 FROM base

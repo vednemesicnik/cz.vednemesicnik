@@ -50,6 +50,37 @@ workflow.
    gh secret set FLY_API_TOKEN --env production
    ```
 
+### Sentry source-map upload (build-time)
+
+Production stack traces are symbolicated against the original TypeScript because the
+deploy build uploads source maps to Sentry. This is a **build-time** step, distinct
+from the runtime `SENTRY_DSN` (a Fly secret that gates the SDK at runtime).
+
+The build runs inside the Fly remote Docker builder (`flyctl deploy --remote-only`),
+so the auth token reaches it as a **BuildKit build secret** — never baked into an
+image layer, never a Fly runtime secret. `docker/fly/Dockerfile` mounts it for the
+`pnpm app:build` step only (`required=false`); `docker/local/Dockerfile` is untouched,
+so local images never upload. When the token is absent the Sentry Vite plugin is not
+wired at all, so `pnpm app:build` is unchanged (no maps generated, no upload).
+
+The plugin uploads the maps keyed by injected debug IDs and then deletes every `.map`
+from the deployed assets, so source maps are never served publicly.
+
+One-time setup:
+
+1. Create a Sentry **auth token** with scopes `project:releases` and `project:write`
+   (Sentry → Settings → Auth Tokens; region `de`).
+2. Add it as a GitHub Actions secret and the org/project slugs as repo variables — the
+   deploy workflow passes them via `--build-secret` / `--build-arg`:
+   ```shell
+   gh secret set SENTRY_AUTH_TOKEN --env production
+   gh variable set SENTRY_ORG --body "<org-slug>"
+   gh variable set SENTRY_PROJECT --body "<project-slug>"
+   ```
+
+If the secret/variables are unset, deploys still succeed — they just ship without
+source maps (unsymbolicated traces), never failing the build.
+
 ### Manual deploy (fallback)
 
 The manual path still works if you ever need it (token expired, CI down):
