@@ -69,17 +69,6 @@ export default function RouteComponent({
       <AdminHeadline>{episode.title}</AdminHeadline>
 
       <AdminActionGroup>
-        <AdminLinkButton
-          to={href(
-            '/administration/podcasts/:podcastId/episodes/:episodeId/links',
-            {
-              episodeId,
-              podcastId,
-            },
-          )}
-        >
-          Zobrazit odkazy
-        </AdminLinkButton>
         {canUpdate && (
           <AdminLinkButton
             to={href(
@@ -201,6 +190,20 @@ export default function RouteComponent({
               'Žádná obálka'
             )}
           </AdminDetailItem>
+        </AdminDetailList>
+      </AdminDetailSection>
+
+      <AdminDetailSection title="Odkazy">
+        <AdminDetailList>
+          {episode.links.length > 0 ? (
+            episode.links.map((link) => (
+              <AdminDetailItem key={link.id} label={link.label}>
+                <Hyperlink href={link.url}>{link.url}</Hyperlink>
+              </AdminDetailItem>
+            ))
+          ) : (
+            <AdminDetailItem label="Odkazy">Žádné odkazy</AdminDetailItem>
+          )}
         </AdminDetailList>
       </AdminDetailSection>
 

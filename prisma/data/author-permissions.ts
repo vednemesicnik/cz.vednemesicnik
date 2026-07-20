@@ -19,7 +19,6 @@ export const authorPermissions: AuthorPermissionsData = {
     'article_tag',
     'podcast',
     'podcast_episode',
-    'podcast_episode_link',
     'issue',
   ],
   states: ['draft', 'published', 'archived'],

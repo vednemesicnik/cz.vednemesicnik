@@ -13,6 +13,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       authorId: true,
       description: true,
       id: true,
+      links: {
+        orderBy: { order: 'asc' },
+        select: { label: true, url: true },
+      },
       number: true,
       slug: true,
       state: true,

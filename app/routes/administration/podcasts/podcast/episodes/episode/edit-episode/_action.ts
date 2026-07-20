@@ -22,8 +22,16 @@ export async function action({ request }: Route.ActionArgs) {
     return { submissionResult: submission.reply() }
   }
 
-  const { episodeId, podcastId, number, title, slug, description, authorId } =
-    submission.value
+  const {
+    episodeId,
+    podcastId,
+    number,
+    title,
+    slug,
+    description,
+    authorId,
+    links,
+  } = submission.value
 
   // Get permission context
   const context = await getAuthorPermissionContext(request, {
@@ -63,6 +71,7 @@ export async function action({ request }: Route.ActionArgs) {
     authorId,
     description,
     id: episodeId,
+    links,
     number,
     slug,
     title,
