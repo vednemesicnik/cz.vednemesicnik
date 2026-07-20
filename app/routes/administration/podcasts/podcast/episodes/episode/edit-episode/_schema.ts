@@ -9,7 +9,6 @@ export const schema = z.object({
   links: z
     .array(
       z.object({
-        id: z.string().optional(),
         label: z.string({ message: 'Label is required' }),
         url: z
           .string({ message: 'URL is required' })

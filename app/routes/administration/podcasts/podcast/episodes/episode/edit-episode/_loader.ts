@@ -15,7 +15,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       id: true,
       links: {
         orderBy: { order: 'asc' },
-        select: { id: true, label: true, url: true },
+        select: { label: true, url: true },
       },
       number: true,
       slug: true,

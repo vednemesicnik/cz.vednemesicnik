@@ -47,7 +47,6 @@ export default function RouteComponent({
       description: loaderData.episode.description,
       episodeId: loaderData.episode.id,
       links: loaderData.episode.links.map((link) => ({
-        id: link.id,
         label: link.label,
         url: link.url,
       })),
@@ -159,9 +158,6 @@ export default function RouteComponent({
 
               return (
                 <div className={styles.linkRow} key={link.key}>
-                  <input
-                    {...getInputProps(linkFields.id, { type: 'hidden' })}
-                  />
                   <AdminInput
                     {...getInputProps(linkFields.label, { type: 'text' })}
                     errors={linkFields.label.errors}
