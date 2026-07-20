@@ -42,8 +42,10 @@ export const handleError: HandleErrorFunction = (error, { request }) => {
   // Client navigated away / request cancelled — not actionable.
   if (request.signal.aborted) return
 
-  Sentry.captureException(error) // report to Sentry…
-  console.error(error) // …and keep Fly logs as the fallback
+  // Report only when Sentry is configured (matches the instrument's gate); the SDK
+  // is never initialized without a DSN, so this stays fully inert when unset.
+  if (process.env.SENTRY_DSN) Sentry.captureException(error)
+  console.error(error) // Fly logs remain the fallback
 }
 
 export default function handleRequest(

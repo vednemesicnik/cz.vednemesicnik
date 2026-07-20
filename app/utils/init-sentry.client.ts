@@ -33,6 +33,8 @@ export function initSentryClient() {
 // Report a client-side router error to Sentry once per error (via HydratedRouter's
 // onError), skipping intentional thrown Responses (403/404/429).
 export function reportClientErrorToSentry(error: unknown) {
+  // Nothing to do when Sentry isn't configured (matches initSentryClient's gate).
+  if (!window.ENV?.SENTRY_DSN) return
   if (isRouteErrorResponse(error) || error instanceof Response) return
   Sentry.captureException(error)
 }
