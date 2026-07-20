@@ -9,8 +9,11 @@ FROM node:26-slim AS base
 # Set node environment
 ENV NODE_ENV=production
 
-# Install dependencies for database
-RUN apt-get update && apt-get install -y openssl sqlite3
+# Install system dependencies: openssl + sqlite3 for the database, and
+# ca-certificates so CLI tools with their own TLS stack (notably sentry-cli, which
+# uploads source maps during the build) can verify HTTPS certificates. node:26-slim
+# ships without CA certs; Node's bundled store covers the app but not sentry-cli.
+RUN apt-get update && apt-get install -y ca-certificates openssl sqlite3
 
 # Install pnpm globally, pinned for reproducible builds. Baked into the shared
 # base stage, so the runtime image has pnpm available offline — the entrypoint
