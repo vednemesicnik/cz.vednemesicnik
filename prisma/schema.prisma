@@ -272,6 +272,9 @@ model Issue {
 
   // non-unique foreign key
   @@index([authorId])
+  // content-state query paths (own-access filtering, public list ordering)
+  @@index([state, authorId])
+  @@index([state, releasedAt])
 }
 
 model IssueCover {
@@ -315,6 +318,9 @@ model Podcast {
 
   // non-unique foreign key
   @@index([authorId])
+  // content-state query paths (own-access filtering, public list ordering)
+  @@index([state, authorId])
+  @@index([state, publishedAt])
 }
 
 model PodcastCover {
@@ -354,6 +360,9 @@ model PodcastEpisode {
   // non-unique foreign key
   @@index([podcastId])
   @@index([authorId])
+  // content-state query paths (own-access filtering, public list ordering)
+  @@index([state, authorId])
+  @@index([state, publishedAt])
 }
 
 model PodcastEpisodeLink {
@@ -401,6 +410,9 @@ model Article {
   tags            ArticleTag[]
   categories      ArticleCategory[]
   reviews         Review[]          @relation("ArticleReviews")
+
+  // content-state query path (public list ordering; authors are M:N, no authorId FK)
+  @@index([state, publishedAt])
 }
 
 model ArticleImage {
@@ -437,6 +449,8 @@ model ArticleTag {
 
   // non-unique foreign key
   @@index([authorId])
+  // content-state query path (own-access filtering)
+  @@index([state, authorId])
 }
 
 model ArticleCategory {
@@ -454,6 +468,8 @@ model ArticleCategory {
 
   // non-unique foreign key
   @@index([authorId])
+  // content-state query path (own-access filtering)
+  @@index([state, authorId])
 }
 
 model PageSEO {
@@ -474,6 +490,8 @@ model PageSEO {
 
   // non-unique foreign key
   @@index([authorId])
+  // content-state query path (own-access filtering)
+  @@index([state, authorId])
 }
 
 enum ContentState {
