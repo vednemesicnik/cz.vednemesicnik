@@ -171,21 +171,12 @@ export default [
               path: 'routes/administration/podcasts',
             },
             // Podcast Episodes
-            ...createAdminEntriesSection(
-              {
-                entry: 'episode',
-                id: 'episodeId',
-                name: 'episodes',
-                path: 'routes/administration/podcasts/podcast/episodes',
-              },
-              // Episode Links
-              ...createAdminEntriesSection({
-                entry: 'link',
-                id: 'linkId',
-                name: 'links',
-                path: 'routes/administration/podcasts/podcast/episodes/episode/links',
-              }),
-            ),
+            ...createAdminEntriesSection({
+              entry: 'episode',
+              id: 'episodeId',
+              name: 'episodes',
+              path: 'routes/administration/podcasts/podcast/episodes',
+            }),
           ),
 
           // Users

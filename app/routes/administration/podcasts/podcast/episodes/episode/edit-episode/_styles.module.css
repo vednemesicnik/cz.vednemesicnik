@@ -1,0 +1,23 @@
+.removeIcon {
+  @layer route {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.linkRow {
+  @layer route {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+
+    & > section {
+      flex: 1;
+    }
+
+    & > button {
+      margin-block-end: 20px;
+    }
+  }
+}

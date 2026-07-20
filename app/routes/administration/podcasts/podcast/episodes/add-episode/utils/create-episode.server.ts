@@ -8,6 +8,7 @@ type Args = {
   description: string
   podcastId: string
   authorId: string
+  links?: { label: string; url: string }[]
 }
 
 export async function createEpisode({
@@ -17,6 +18,7 @@ export async function createEpisode({
   description,
   podcastId,
   authorId,
+  links = [],
 }: Args) {
   try {
     const episode = await prisma.podcastEpisode.create({
@@ -25,6 +27,13 @@ export async function createEpisode({
           connect: { id: authorId },
         },
         description,
+        links: {
+          create: links.map((link, index) => ({
+            label: link.label,
+            order: index,
+            url: link.url,
+          })),
+        },
         number,
         podcast: {
           connect: { id: podcastId },

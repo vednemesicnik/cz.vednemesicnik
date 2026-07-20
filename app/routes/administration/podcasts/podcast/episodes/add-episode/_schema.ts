@@ -5,6 +5,16 @@ import { slugify } from '~/utils/slugify'
 export const schema = z.object({
   authorId: z.string(),
   description: z.string({ message: 'Description is required' }),
+  links: z
+    .array(
+      z.object({
+        label: z.string({ message: 'Label is required' }),
+        url: z
+          .string({ message: 'URL is required' })
+          .url({ message: 'URL is not valid' }),
+      }),
+    )
+    .optional(),
   number: z
     .number({ message: '' + 'Episode number is required' })
     .int({ message: 'Episode number must be an integer' })
