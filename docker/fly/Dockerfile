@@ -51,11 +51,13 @@ ADD . .
 # Run the Prisma type generator
 RUN pnpm prisma:generate
 
-# Run the build. SENTRY_AUTH_TOKEN is mounted as a BuildKit build secret and
-# exposed to this step only (never baked into a layer). required=false so a
-# token-less build still succeeds — the vite/RR config then skips Sentry entirely,
-# generating and uploading nothing.
-RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN,required=false \
+# Run the build. SENTRY_AUTH_TOKEN is mounted as a BuildKit build secret and read
+# from its file into the environment for this step only (never baked into a layer).
+# The file-read form is used instead of the mount's `env=` key, which Fly's Depot
+# builder rejects. The secret is optional: absent → the var is empty and the vite/RR
+# config skips Sentry entirely, so a token-less build still succeeds.
+RUN --mount=type=secret,id=sentry_auth_token \
+    SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
     pnpm app:build
 
 # Finally, build the production image with minimal footprint
