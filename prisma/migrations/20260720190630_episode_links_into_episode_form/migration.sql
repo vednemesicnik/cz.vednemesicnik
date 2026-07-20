@@ -22,7 +22,11 @@ CREATE TABLE "new_PodcastEpisodeLink" (
     "episodeId" TEXT NOT NULL,
     CONSTRAINT "PodcastEpisodeLink_episodeId_fkey" FOREIGN KEY ("episodeId") REFERENCES "PodcastEpisode" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
-INSERT INTO "new_PodcastEpisodeLink" ("createdAt", "episodeId", "id", "label", "updatedAt", "url") SELECT "createdAt", "episodeId", "id", "label", "updatedAt", "url" FROM "PodcastEpisodeLink";
+INSERT INTO "new_PodcastEpisodeLink" ("createdAt", "episodeId", "id", "label", "order", "updatedAt", "url")
+SELECT "createdAt", "episodeId", "id", "label",
+    ROW_NUMBER() OVER (PARTITION BY "episodeId" ORDER BY "createdAt", "id") - 1 AS "order",
+    "updatedAt", "url"
+FROM "PodcastEpisodeLink";
 DROP TABLE "PodcastEpisodeLink";
 ALTER TABLE "new_PodcastEpisodeLink" RENAME TO "PodcastEpisodeLink";
 CREATE INDEX "PodcastEpisodeLink_episodeId_idx" ON "PodcastEpisodeLink"("episodeId");

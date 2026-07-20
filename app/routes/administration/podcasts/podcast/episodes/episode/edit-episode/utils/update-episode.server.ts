@@ -21,24 +21,31 @@ export async function updateEpisode({
   links = [],
 }: Args) {
   try {
-    await prisma.podcastEpisode.update({
-      data: {
-        authorId,
-        description,
-        // Links inherit the episode's lifecycle; replace the whole set on save.
-        links: {
-          create: links.map((link, index) => ({
-            label: link.label,
-            order: index,
-            url: link.url,
-          })),
-          deleteMany: {},
+    // Links inherit the episode's lifecycle, so replace the whole set on save.
+    // Delete then recreate in an explicit transaction rather than a nested
+    // deleteMany + create, whose execution order Prisma does not guarantee.
+    await prisma.$transaction(async (transaction) => {
+      await transaction.podcastEpisodeLink.deleteMany({
+        where: { episodeId: id },
+      })
+
+      await transaction.podcastEpisode.update({
+        data: {
+          authorId,
+          description,
+          links: {
+            create: links.map((link, index) => ({
+              label: link.label,
+              order: index,
+              url: link.url,
+            })),
+          },
+          number,
+          slug,
+          title,
         },
-        number,
-        slug,
-        title,
-      },
-      where: { id },
+        where: { id },
+      })
     })
   } catch (error) {
     throwDbError(error, 'Unable to update the episode.')
