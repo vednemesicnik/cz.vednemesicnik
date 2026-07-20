@@ -1,8 +1,10 @@
 // Server-side Sentry initialization. Loaded before the app via
-// NODE_OPTIONS='--import ./instrument.server.mjs' (see package.json scripts) so the
-// SDK is active before any request is handled. Reads SENTRY_DSN directly from
-// process.env because this runs ahead of the app's Zod validation; Fly injects
-// secrets as real env vars at process start.
+// NODE_OPTIONS='--import ./instrument.server.mjs' in the `app:start` script (the
+// production entrypoint) so the SDK is active before any request is handled. Not
+// wired into `app:dev` — Sentry is production-only, so local development never
+// reports server-side. Reads SENTRY_DSN directly from process.env because this
+// runs ahead of the app's Zod validation; Fly injects secrets as real env vars at
+// process start.
 
 import * as Sentry from '@sentry/react-router'
 
