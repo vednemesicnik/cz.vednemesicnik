@@ -68,14 +68,15 @@ from the deployed assets, so source maps are never served publicly.
 
 One-time setup:
 
-1. Create a Sentry **auth token** with scopes `project:releases` and `project:write`
-   (Sentry → Settings → Auth Tokens; region `de`).
-2. Add it as a GitHub Actions secret and the org/project slugs as repo variables — the
-   deploy workflow passes them via `--build-secret` / `--build-arg`:
+1. Create a Sentry **Organization Auth Token** with the `org:ci` scope (covers source
+   map upload and release creation) — Sentry → Settings → Auth Tokens; region `de`.
+2. Add it as a GitHub Actions secret and the org/project slugs as variables, all on the
+   `production` environment (like `FLY_API_TOKEN`, so only the deploy job reads them).
+   The deploy workflow passes them via `--build-secret` / `--build-arg`:
    ```shell
    gh secret set SENTRY_AUTH_TOKEN --env production
-   gh variable set SENTRY_ORG --body "<org-slug>"
-   gh variable set SENTRY_PROJECT --body "<project-slug>"
+   gh variable set SENTRY_ORG --env production --body "<org-slug>"
+   gh variable set SENTRY_PROJECT --env production --body "<project-slug>"
    ```
 
 If the secret/variables are unset, deploys still succeed — they just ship without
