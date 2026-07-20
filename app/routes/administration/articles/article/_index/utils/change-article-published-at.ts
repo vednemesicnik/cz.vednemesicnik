@@ -1,28 +1,33 @@
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 
+import { assertCanSetPublishedAt } from './assert-can-set-published-at'
+
 type Options = {
   id: string
+  publishedAt: Date
   target: Parameters<typeof withAuthorPermission>[1]['target']
 }
 
-export const retractArticle = (request: Request, options: Options) =>
+export const changeArticlePublishedAt = (request: Request, options: Options) =>
   withAuthorPermission(request, {
+    // Closest existing grant over a published article; there is no
+    // `update published` row, and the level gate below narrows it further.
     action: 'retract',
     entity: 'article',
-    execute: async () => {
-      // Null publishedAt on retract so drafts have no date until (re)published,
-      // matching the other retract utils (tag, category, issue, podcast, …).
+    execute: async (context) => {
+      assertCanSetPublishedAt(context, options.publishedAt)
+
       const updatedArticle = await prisma.article.update({
-        data: { publishedAt: null, state: 'draft' },
+        data: { publishedAt: options.publishedAt },
         select: { slug: true },
         where: { id: options.id },
       })
 
-      // Update PageSEO state and publishedAt
+      // Keep SEO metadata (article:published_time) in sync
       const pathname = `/articles/${updatedArticle.slug}`
       await prisma.pageSEO.updateMany({
-        data: { publishedAt: null, state: 'draft' },
+        data: { publishedAt: options.publishedAt },
         where: { pathname },
       })
     },

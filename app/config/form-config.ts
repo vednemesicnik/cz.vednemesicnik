@@ -7,6 +7,7 @@ export const FORM_CONFIG = {
     value: {
       archive: 'archive',
       bulkDelete: 'bulk-delete',
+      changePublishedAt: 'change-published-at',
       delete: 'delete',
       publish: 'publish',
       regenerateBackupCodes: 'regenerate-backup-codes',

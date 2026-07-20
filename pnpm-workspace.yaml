@@ -12,6 +12,7 @@ verifyDepsBeforeRun: false
 # pnpm 11 replaces `onlyBuiltDependencies` (list) with `allowBuilds` (map).
 allowBuilds:
   '@prisma/engines': true
+  '@sentry/cli': false
   better-sqlite3: true
   esbuild: true
   lefthook: true
