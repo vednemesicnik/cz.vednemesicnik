@@ -1,3 +1,8 @@
+# syntax=docker/dockerfile:1
+# Pin the Dockerfile frontend so every builder (incl. Fly's Depot) uses the same
+# feature set — notably the `env=` secret-mount target below — instead of the
+# builder's default, which may be older and reject newer keys.
+
 # Base node image
 FROM node:26-slim AS base
 
@@ -51,13 +56,12 @@ ADD . .
 # Run the Prisma type generator
 RUN pnpm prisma:generate
 
-# Run the build. SENTRY_AUTH_TOKEN is mounted as a BuildKit build secret and read
-# from its file into the environment for this step only (never baked into a layer).
-# The file-read form is used instead of the mount's `env=` key, which Fly's Depot
-# builder rejects. The secret is optional: absent → the var is empty and the vite/RR
-# config skips Sentry entirely, so a token-less build still succeeds.
-RUN --mount=type=secret,id=sentry_auth_token \
-    SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
+# Run the build. SENTRY_AUTH_TOKEN is mounted as a BuildKit build secret and exposed
+# to this step only (never baked into a layer). The `env=` target needs the pinned
+# frontend (see the `# syntax` directive at the top). The secret is optional: absent
+# → the var is empty and the vite/RR config skips Sentry entirely, so a token-less
+# build still succeeds.
+RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
     pnpm app:build
 
 # Finally, build the production image with minimal footprint
