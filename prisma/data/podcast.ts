@@ -14,8 +14,6 @@ export const podcastData: PodcastData = {
       links: [
         {
           label: 'Poslechněte si na Spotify',
-          publishedAt: new Date('2023-04-07'),
-          state: 'published',
           url: 'https://open.spotify.com/episode/1bvkvOUpQaeI5aWGV54lMw?si=m_d5aVnpTK6VjfqEpW0Agw',
         },
       ],
@@ -31,8 +29,6 @@ export const podcastData: PodcastData = {
       links: [
         {
           label: 'Poslechněte si na Spotify',
-          publishedAt: new Date('2023-05-08'),
-          state: 'published',
           url: 'https://open.spotify.com/episode/0RAPF7NiAWs30LRrRjeNjM?si=B2PtiyxJS2SAnZyJ2lv45g',
         },
       ],

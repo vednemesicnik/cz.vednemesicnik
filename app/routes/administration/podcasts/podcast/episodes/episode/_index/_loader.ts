@@ -48,6 +48,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       createdAt: true,
       description: true,
       id: true,
+      links: {
+        orderBy: { order: 'asc' },
+        select: { id: true, label: true, url: true },
+      },
       number: true,
       podcast: {
         select: {
@@ -192,6 +196,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       hasApprovingReview,
       hasCover: !!episode.cover,
       id: episode.id,
+      links: episode.links,
       number: episode.number,
       podcast: episode.podcast,
       publishedAt: getFormattedPublishDate(episode.publishedAt),

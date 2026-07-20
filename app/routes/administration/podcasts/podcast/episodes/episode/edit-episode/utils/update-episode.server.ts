@@ -8,6 +8,7 @@ type Args = {
   slug: string
   description: string
   authorId: string
+  links?: { label: string; url: string }[]
 }
 
 export async function updateEpisode({
@@ -17,12 +18,22 @@ export async function updateEpisode({
   slug,
   description,
   authorId,
+  links = [],
 }: Args) {
   try {
     await prisma.podcastEpisode.update({
       data: {
         authorId,
         description,
+        // Links inherit the episode's lifecycle; replace the whole set on save.
+        links: {
+          create: links.map((link, index) => ({
+            label: link.label,
+            order: index,
+            url: link.url,
+          })),
+          deleteMany: {},
+        },
         number,
         slug,
         title,

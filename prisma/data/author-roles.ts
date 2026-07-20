@@ -98,24 +98,6 @@ export const authorRoles: AuthorRolesData = [
       {
         access: 'own',
         actions: ['view', 'create', 'update', 'delete'],
-        entity: 'podcast_episode_link',
-        state: 'draft',
-      },
-      {
-        access: 'own',
-        actions: ['view'],
-        entity: 'podcast_episode_link',
-        state: 'published',
-      },
-      {
-        access: 'own',
-        actions: ['view'],
-        entity: 'podcast_episode_link',
-        state: 'archived',
-      },
-      {
-        access: 'own',
-        actions: ['view', 'create', 'update', 'delete'],
         entity: 'issue',
         state: 'draft',
       },
@@ -293,37 +275,6 @@ export const authorRoles: AuthorRolesData = [
         entity: 'podcast_episode',
         state: 'archived',
       },
-      // Podcast Episode Link
-      {
-        access: 'any',
-        actions: ['view', 'review'],
-        entity: 'podcast_episode_link',
-        state: 'draft',
-      },
-      {
-        access: 'any',
-        actions: ['view'],
-        entity: 'podcast_episode_link',
-        state: 'published',
-      },
-      {
-        access: 'own',
-        actions: ['create', 'update', 'delete', 'publish'],
-        entity: 'podcast_episode_link',
-        state: 'draft',
-      },
-      {
-        access: 'own',
-        actions: ['retract', 'archive'],
-        entity: 'podcast_episode_link',
-        state: 'published',
-      },
-      {
-        access: 'own',
-        actions: ['view'],
-        entity: 'podcast_episode_link',
-        state: 'archived',
-      },
       // Issue
       {
         access: 'any',
@@ -449,24 +400,6 @@ export const authorRoles: AuthorRolesData = [
         access: 'any',
         actions: ['view', 'delete', 'restore'],
         entity: 'podcast_episode',
-        state: 'archived',
-      },
-      {
-        access: 'any',
-        actions: ['view', 'create', 'update', 'delete', 'publish', 'review'],
-        entity: 'podcast_episode_link',
-        state: 'draft',
-      },
-      {
-        access: 'any',
-        actions: ['view', 'retract', 'archive'],
-        entity: 'podcast_episode_link',
-        state: 'published',
-      },
-      {
-        access: 'any',
-        actions: ['view', 'delete', 'restore'],
-        entity: 'podcast_episode_link',
         state: 'archived',
       },
       {

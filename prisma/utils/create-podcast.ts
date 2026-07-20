@@ -20,8 +20,6 @@ export type PodcastData = {
     links: {
       label: string
       url: string
-      publishedAt: Date
-      state: ContentState
     }[]
   }[]
   cover?: {
@@ -61,13 +59,9 @@ export const createPodcast = async (
             },
             description: episode.description,
             links: {
-              create: episode.links.map((link) => ({
-                author: {
-                  connect: { id: user.authorId },
-                },
+              create: episode.links.map((link, index) => ({
                 label: link.label,
-                publishedAt: link.publishedAt,
-                state: link.state,
+                order: index,
                 url: link.url,
               })),
             },
