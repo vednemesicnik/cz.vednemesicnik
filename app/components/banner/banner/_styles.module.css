@@ -26,19 +26,3 @@
     border-inline-start-color: var(--warning);
   }
 }
-
-.content {
-  @layer component {
-    grid-area: content;
-  }
-}
-
-.actions {
-  @layer component {
-    grid-area: actions;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-self: end;
-  }
-}
