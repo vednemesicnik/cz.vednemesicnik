@@ -38,6 +38,8 @@ export const useUnsavedChangesGuard = ({ isDirty, onLeave }: Params) => {
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault()
+      // Some browsers only show the native prompt when returnValue is also set.
+      event.returnValue = ''
     }
     const handlePageHide = () => {
       onLeaveRef.current()

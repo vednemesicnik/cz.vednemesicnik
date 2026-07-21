@@ -22,35 +22,6 @@ const isExpired = (savedAt: string) => {
   return Number.isNaN(timestamp) || Date.now() - timestamp > ttlMilliseconds
 }
 
-export const readArticleBackup = (key: string): ArticleBackup | null => {
-  if (typeof window === 'undefined') return null
-
-  try {
-    const raw = window.localStorage.getItem(key)
-    if (raw === null) return null
-
-    const backup = JSON.parse(raw) as ArticleBackup
-    if (isExpired(backup.savedAt)) {
-      window.localStorage.removeItem(key)
-      return null
-    }
-
-    return backup
-  } catch {
-    return null
-  }
-}
-
-export const clearArticleBackup = (key: string) => {
-  if (typeof window === 'undefined') return
-
-  try {
-    window.localStorage.removeItem(key)
-  } catch {
-    // Best-effort: ignore storage failures.
-  }
-}
-
 // Remove stale backups left behind by drafts that were published, deleted, or
 // abandoned elsewhere, so localStorage doesn't accumulate them indefinitely.
 export const pruneArticleBackups = () => {
@@ -76,6 +47,38 @@ export const pruneArticleBackups = () => {
 
     // Collect first, then remove: removing during index iteration reshuffles keys.
     for (const key of staleKeys) window.localStorage.removeItem(key)
+  } catch {
+    // Best-effort: ignore storage failures.
+  }
+}
+
+export const readArticleBackup = (key: string): ArticleBackup | null => {
+  if (typeof window === 'undefined') return null
+
+  // Reading happens on form mount — a good moment to clear stale backups too.
+  pruneArticleBackups()
+
+  try {
+    const raw = window.localStorage.getItem(key)
+    if (raw === null) return null
+
+    const backup = JSON.parse(raw) as ArticleBackup
+    if (isExpired(backup.savedAt)) {
+      window.localStorage.removeItem(key)
+      return null
+    }
+
+    return backup
+  } catch {
+    return null
+  }
+}
+
+export const clearArticleBackup = (key: string) => {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.removeItem(key)
   } catch {
     // Best-effort: ignore storage failures.
   }
