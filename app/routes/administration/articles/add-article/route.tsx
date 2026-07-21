@@ -32,6 +32,7 @@ import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import {
   clearArticleBackup,
   getArticleBackupKey,
+  sanitizeArticleBackupValue,
   writeArticleBackup,
 } from '~/utils/article-backup'
 import { useAutoSlug } from '~/utils/use-auto-slug'
@@ -77,12 +78,9 @@ export default function RouteComponent({
   })
 
   const writeBackup = () => {
-    // Exclude the CSRF token — it doesn't belong in localStorage and the form
-    // renders a fresh one anyway (mirrors shouldDirtyConsider).
-    const { csrf: _csrf, ...value } = form.value as Record<string, unknown>
     writeArticleBackup(backupKey, {
       savedAt: new Date().toISOString(),
-      value,
+      value: sanitizeArticleBackupValue(form.value as Record<string, unknown>),
     })
   }
 

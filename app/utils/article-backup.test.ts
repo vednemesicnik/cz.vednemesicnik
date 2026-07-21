@@ -6,6 +6,7 @@ import {
   getArticleBackupKey,
   pruneArticleBackups,
   readArticleBackup,
+  sanitizeArticleBackupValue,
   writeArticleBackup,
 } from './article-backup'
 
@@ -129,6 +130,32 @@ describe('pruneArticleBackups', () => {
     })
 
     expect(storage.getItem(getArticleBackupKey('stale'))).toBeNull()
+  })
+})
+
+describe('sanitizeArticleBackupValue', () => {
+  it('drops the csrf token', () => {
+    const result = sanitizeArticleBackupValue({ csrf: 'token', title: 'A' })
+    expect(result).toEqual({ title: 'A' })
+  })
+
+  it('strips file fields from images and existingImages', () => {
+    const result = sanitizeArticleBackupValue({
+      existingImages: [{ altText: 'y', file: new File([], 'b.png'), id: '1' }],
+      images: [{ altText: 'x', description: 'd', file: new File([], 'a.png') }],
+      title: 'A',
+    })
+
+    expect(result).toEqual({
+      existingImages: [{ altText: 'y', id: '1' }],
+      images: [{ altText: 'x', description: 'd' }],
+      title: 'A',
+    })
+  })
+
+  it('leaves values without image lists untouched', () => {
+    const result = sanitizeArticleBackupValue({ slug: 'a', title: 'A' })
+    expect(result).toEqual({ slug: 'a', title: 'A' })
   })
 })
 

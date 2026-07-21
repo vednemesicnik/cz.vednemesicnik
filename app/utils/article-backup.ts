@@ -22,6 +22,35 @@ const isExpired = (savedAt: string) => {
   return Number.isNaN(timestamp) || Date.now() - timestamp > ttlMilliseconds
 }
 
+const stripFileFields = (list: unknown) => {
+  if (!Array.isArray(list)) return list
+
+  return list.map((item) => {
+    if (item === null || typeof item !== 'object') return item
+    // File objects don't survive JSON — drop them so a restore never feeds a
+    // non-File value back into Conform (which would fail the instanceof File
+    // check on submit). Selected images are re-picked after a restore.
+    const { file: _file, ...rest } = item as Record<string, unknown>
+    return rest
+  })
+}
+
+// Prepares a form value for storage: drops data that can't be round-tripped
+// through localStorage — the CSRF token (the form renders a fresh one) and image
+// File objects on the images / existingImages field lists.
+export const sanitizeArticleBackupValue = (
+  value: Record<string, unknown>,
+): Record<string, unknown> => {
+  const { csrf: _csrf, ...rest } = value
+
+  if (rest.images !== undefined) rest.images = stripFileFields(rest.images)
+  if (rest.existingImages !== undefined) {
+    rest.existingImages = stripFileFields(rest.existingImages)
+  }
+
+  return rest
+}
+
 // Remove stale backups left behind by drafts that were published, deleted, or
 // abandoned elsewhere, so localStorage doesn't accumulate them indefinitely.
 export const pruneArticleBackups = () => {
