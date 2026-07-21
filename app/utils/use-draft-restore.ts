@@ -20,17 +20,20 @@ export const useDraftRestore = <TValue extends Record<string, unknown>>({
   baseFormId,
   baseDefaultValue,
 }: Params<TValue>) => {
-  // Read after mount to avoid a hydration mismatch: SSR and the first client
-  // render both use the base defaults; the banner appears a tick later.
   const [backup, setBackup] = useState<ArticleBackup | null>(null)
-  useEffect(() => {
-    setBackup(readArticleBackup(backupKey))
-  }, [backupKey])
-
   const [restoredValue, setRestoredValue] = useState<Record<
     string,
     unknown
   > | null>(null)
+
+  // Read after mount to avoid a hydration mismatch: SSR and the first client
+  // render both use the base defaults; the banner appears a tick later. Also
+  // re-runs when backupKey changes (e.g. navigating between edit pages that
+  // reuse this component) so a previous article's restored draft can't leak.
+  useEffect(() => {
+    setBackup(readArticleBackup(backupKey))
+    setRestoredValue(null)
+  }, [backupKey])
 
   const restore = () => {
     if (backup === null) return
