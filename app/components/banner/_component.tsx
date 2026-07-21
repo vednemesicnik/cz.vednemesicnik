@@ -5,21 +5,25 @@ import styles from './_styles.module.css'
 
 type Variant = 'info' | 'warning'
 
-type Props = {
+type BannerProps = {
   children: ReactNode
-  actions?: ReactNode
   variant?: Variant
   className?: string
 }
 
-// A notice with an optional row of action buttons. Unlike Callout (plain
-// informative text), Banner is meant to prompt the user to do something.
+type SlotProps = {
+  children: ReactNode
+  className?: string
+}
+
+// A notice with an optional row of action buttons. Composable via the
+// BannerContent / BannerActions slots — each carries its own grid-area, so
+// children land in place regardless of order and stack on narrow screens.
 export const Banner = ({
   children,
-  actions,
   variant = 'info',
   className,
-}: Props) => {
+}: BannerProps) => {
   return (
     <aside
       className={clsx(
@@ -29,8 +33,15 @@ export const Banner = ({
       )}
       role={'status'}
     >
-      <div className={styles.message}>{children}</div>
-      {actions !== undefined && <div className={styles.actions}>{actions}</div>}
+      {children}
     </aside>
   )
+}
+
+export const BannerContent = ({ children, className }: SlotProps) => {
+  return <div className={clsx(styles.content, className)}>{children}</div>
+}
+
+export const BannerActions = ({ children, className }: SlotProps) => {
+  return <div className={clsx(styles.actions, className)}>{children}</div>
 }

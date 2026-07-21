@@ -1,9 +1,9 @@
 .banner {
   @layer component {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "content actions";
     align-items: center;
-    justify-content: space-between;
     gap: 1rem;
     background: light-dark(#eff6ff, #1e3a5f);
     border-inline-start: 4px solid var(--info);
@@ -12,6 +12,11 @@
     padding-block: 1rem;
     padding-inline: 1rem;
     width: 100%;
+
+    @media (max-width: 40rem) {
+      grid-template-columns: 1fr;
+      grid-template-areas: "content" "actions";
+    }
   }
 }
 
@@ -22,16 +27,18 @@
   }
 }
 
-.message {
+.content {
   @layer component {
-    flex: 1 1 20rem;
+    grid-area: content;
   }
 }
 
 .actions {
   @layer component {
+    grid-area: actions;
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    justify-self: end;
   }
 }

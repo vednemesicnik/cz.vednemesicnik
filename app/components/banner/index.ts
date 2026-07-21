@@ -1,1 +1,1 @@
-export { Banner } from './_component'
+export { Banner, BannerActions, BannerContent } from './_component'
