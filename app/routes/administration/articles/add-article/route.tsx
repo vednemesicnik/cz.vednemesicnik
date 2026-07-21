@@ -8,13 +8,15 @@ import {
   useForm,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin/admin-button'
+import { AdminDraftRestoreBanner } from '~/components/admin/admin-draft-restore-banner'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminImageInput } from '~/components/admin/admin-image-input'
 import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
 import { AdminInput } from '~/components/admin/admin-input'
+import { AdminLeaveConfirmationDialog } from '~/components/admin/admin-leave-confirmation-dialog'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminRadioInput } from '~/components/admin/admin-radio-input'
@@ -27,7 +29,14 @@ import { FormActions } from '~/components/form-actions'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { Select } from '~/components/select'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
+import {
+  clearArticleBackup,
+  getArticleBackupKey,
+  writeArticleBackup,
+} from '~/utils/article-backup'
 import { useAutoSlug } from '~/utils/use-auto-slug'
+import { useDraftRestore } from '~/utils/use-draft-restore'
+import { useUnsavedChangesGuard } from '~/utils/use-unsaved-changes-guard'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -43,13 +52,21 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const { state } = useNavigation()
 
-  const [form, fields] = useForm({
-    constraint: getZodConstraint(schema),
-    defaultValue: {
+  const backupKey = getArticleBackupKey()
+
+  const { backup, defaultValue, formId, restore, discard } = useDraftRestore({
+    backupKey,
+    baseDefaultValue: {
       authorIds: [loaderData.selfAuthorId],
       featuredImage: FEATURED_IMAGE_SOURCE.NONE,
     },
-    id: 'add-article',
+    baseFormId: 'add-article',
+  })
+
+  const [form, fields] = useForm({
+    constraint: getZodConstraint(schema),
+    defaultValue,
+    id: formId,
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldDirtyConsider: (field) => {
@@ -58,6 +75,38 @@ export default function RouteComponent({
     shouldRevalidate: 'onBlur',
     shouldValidate: 'onSubmit',
   })
+
+  const writeBackup = () => {
+    // Exclude the CSRF token — it doesn't belong in localStorage and the form
+    // renders a fresh one anyway (mirrors shouldDirtyConsider).
+    const { csrf: _csrf, ...value } = form.value as Record<string, unknown>
+    writeArticleBackup(backupKey, {
+      savedAt: new Date().toISOString(),
+      value,
+    })
+  }
+
+  const { blocker, markSubmitting } = useUnsavedChangesGuard({
+    isDirty: form.dirty,
+    onLeave: writeBackup,
+  })
+
+  const { onSubmit: conformOnSubmit, ...formProps } = getFormProps(form)
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    conformOnSubmit(event)
+    // Only a valid submit navigates; clear the backup and exempt the redirect
+    // from the guard. An invalid submit is prevented by Conform, so skip both.
+    if (!event.defaultPrevented) {
+      markSubmitting()
+      clearArticleBackup(backupKey)
+    }
+  }
+
+  const handleConfirmLeave = () => {
+    writeBackup()
+    blocker.proceed?.()
+  }
 
   const [title, setTitle] = useState('')
 
@@ -87,11 +136,25 @@ export default function RouteComponent({
     <AdminPage>
       <AdminHeadline>Přidat článek</AdminHeadline>
 
+      {backup !== null && (
+        <AdminDraftRestoreBanner
+          onDiscard={discard}
+          onRestore={restore}
+          savedAt={backup.savedAt}
+        />
+      )}
+
+      <AdminLeaveConfirmationDialog
+        blocker={blocker}
+        onConfirmLeave={handleConfirmLeave}
+      />
+
       <FormProvider context={form.context}>
         <Form
           encType={'multipart/form-data'}
           method={'post'}
-          {...getFormProps(form)}
+          {...formProps}
+          onSubmit={handleSubmit}
         >
           <AuthenticityTokenInput />
 
@@ -131,6 +194,7 @@ export default function RouteComponent({
                 disabled: isLoadingOrSubmitting,
                 placeholder: 'Obsah článku...',
               }}
+              key={form.key}
               label={'Obsah článku'}
             />
           </Fieldset>
