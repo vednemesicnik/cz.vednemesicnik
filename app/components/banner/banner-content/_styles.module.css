@@ -1,0 +1,5 @@
+.content {
+  @layer component {
+    grid-area: content;
+  }
+}
