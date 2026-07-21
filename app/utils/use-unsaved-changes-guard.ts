@@ -43,17 +43,20 @@ export const useUnsavedChangesGuard = ({
 
   // Clear the backup only once our submit is actually navigating away to another
   // route (a successful redirect). A server validation error / expired session
-  // revalidates to the same path, so the backup is kept.
+  // revalidates to the same path, so the backup is kept. Clearing the flag makes
+  // this fire once per submit even if the loading phase re-renders.
+  const pendingPathname = navigation.location?.pathname
   useEffect(() => {
     if (
       isSubmittingRef.current &&
       navigation.state === 'loading' &&
-      navigation.location !== undefined &&
-      navigation.location.pathname !== location.pathname
+      pendingPathname !== undefined &&
+      pendingPathname !== location.pathname
     ) {
+      isSubmittingRef.current = false
       onSubmittedAwayRef.current()
     }
-  }, [navigation, location.pathname])
+  }, [navigation.state, pendingPathname, location.pathname])
 
   useEffect(() => {
     if (!isDirty) return
