@@ -87,18 +87,18 @@ export default function RouteComponent({
   const { blocker, markSubmitting } = useUnsavedChangesGuard({
     isDirty: form.dirty,
     onLeave: writeBackup,
+    // Cleared only when the submit actually redirects away (success), so a
+    // server error / expired session keeps the backup.
+    onSubmittedAway: () => clearArticleBackup(backupKey),
   })
 
   const { onSubmit: conformOnSubmit, ...formProps } = getFormProps(form)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     conformOnSubmit(event)
-    // Only a valid submit navigates; clear the backup and exempt the redirect
-    // from the guard. An invalid submit is prevented by Conform, so skip both.
-    if (!event.defaultPrevented) {
-      markSubmitting()
-      clearArticleBackup(backupKey)
-    }
+    // Exempt our own submission's redirect from the guard. An invalid submit is
+    // prevented by Conform, so skip it.
+    if (!event.defaultPrevented) markSubmitting()
   }
 
   const handleConfirmLeave = () => {

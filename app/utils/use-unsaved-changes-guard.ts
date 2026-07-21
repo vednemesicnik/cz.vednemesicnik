@@ -1,26 +1,34 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { useBlocker, useNavigation } from 'react-router'
+import { useBlocker, useLocation, useNavigation } from 'react-router'
 
 type Params = {
   isDirty: boolean
   onLeave: () => void
+  onSubmittedAway: () => void
 }
 
 // Guards a dirty form against silent data loss: a native prompt on real document
 // unload (tab close / reload) and an in-app navigation blocker whose dialog the
 // caller renders from the returned `blocker`. `onLeave` runs a save-on-leave
-// backup and is invoked on pagehide (and by the caller on a confirmed leave).
-export const useUnsavedChangesGuard = ({ isDirty, onLeave }: Params) => {
+// backup (pagehide + confirmed leave); `onSubmittedAway` runs once our own
+// submit actually redirects away, i.e. on success.
+export const useUnsavedChangesGuard = ({
+  isDirty,
+  onLeave,
+  onSubmittedAway,
+}: Params) => {
   const navigation = useNavigation()
+  const location = useLocation()
 
-  // Keep the latest onLeave without re-registering the unload listeners on every
-  // keystroke (onLeave closes over the changing form value).
+  // Keep the latest callbacks without re-registering listeners/effects on every
+  // keystroke (they close over the changing form value).
   const onLeaveRef = useRef(onLeave)
   onLeaveRef.current = onLeave
+  const onSubmittedAwayRef = useRef(onSubmittedAway)
+  onSubmittedAwayRef.current = onSubmittedAway
 
-  // Exempts our own submission from the in-app blocker so the post-submit
-  // redirect isn't caught. Only consulted by the blocker — the native unload
-  // events don't fire on client-side navigations.
+  // Marks our own submission so the in-app blocker lets its redirect through and
+  // so the backup is cleared only when that redirect actually leaves the route.
   const isSubmittingRef = useRef(false)
   const markSubmitting = useCallback(() => {
     isSubmittingRef.current = true
@@ -32,6 +40,20 @@ export const useUnsavedChangesGuard = ({ isDirty, onLeave }: Params) => {
   useEffect(() => {
     if (navigation.state === 'idle') isSubmittingRef.current = false
   }, [navigation.state])
+
+  // Clear the backup only once our submit is actually navigating away to another
+  // route (a successful redirect). A server validation error / expired session
+  // revalidates to the same path, so the backup is kept.
+  useEffect(() => {
+    if (
+      isSubmittingRef.current &&
+      navigation.state === 'loading' &&
+      navigation.location !== undefined &&
+      navigation.location.pathname !== location.pathname
+    ) {
+      onSubmittedAwayRef.current()
+    }
+  }, [navigation, location.pathname])
 
   useEffect(() => {
     if (!isDirty) return
