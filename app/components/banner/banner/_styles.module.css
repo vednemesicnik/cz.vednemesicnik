@@ -1,0 +1,28 @@
+.banner {
+  @layer component {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "content actions";
+    align-items: center;
+    gap: 1rem;
+    background: light-dark(#eff6ff, #1e3a5f);
+    border-inline-start: 4px solid var(--info);
+    box-shadow: var(--shadow-sm);
+    margin-block: 2rem;
+    padding-block: 1rem;
+    padding-inline: 1rem;
+    width: 100%;
+
+    @media (max-width: 40rem) {
+      grid-template-columns: 1fr;
+      grid-template-areas: "content" "actions";
+    }
+  }
+}
+
+.banner.warning {
+  @layer variant {
+    background: light-dark(#fffbeb, #423206);
+    border-inline-start-color: var(--warning);
+  }
+}

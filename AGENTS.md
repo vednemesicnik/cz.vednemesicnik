@@ -337,3 +337,9 @@ Read `.agents/rules/functional-style/RULE.md` before acting.
 Applies when naming any variable, function parameter, function, or callback argument.
 
 Read `.agents/rules/naming-no-abbreviations/RULE.md` before acting.
+
+### Self-Review Before PR
+
+Applies when opening a pull request or requesting an automated/Copilot review.
+
+Read `.agents/rules/self-review-before-pr/RULE.md` before acting.
