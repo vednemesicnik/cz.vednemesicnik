@@ -2,9 +2,10 @@ type FormatDateOptions = {
   locale?: string // default 'cs-CZ' — future i18n passes the URL-derived locale
 }
 
-// Publication dates are editorial data: every reader sees the day the editor picked,
-// so formatting is fixed to the site's civil time (Europe/Prague), independent of the
-// server's and the visitor's timezone.
+// All displayed dates are formatted in the site's civil time (Europe/Prague),
+// independent of the server's and the visitor's timezone, so the shown day is stable
+// everywhere. This matters most for editorial publication dates, where the reader must
+// see the exact day the editor picked.
 export const formatDate = (
   date: Date | null,
   options?: FormatDateOptions,
