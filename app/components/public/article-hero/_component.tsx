@@ -51,9 +51,11 @@ export const ArticleHero = ({
             ))}
           </ul>
           <p className={styles.date}>
-            <time dateTime={publishDate.iso ?? undefined}>
-              {publishDate.formatted}
-            </time>
+            {publishDate.iso ? (
+              <time dateTime={publishDate.iso}>{publishDate.formatted}</time>
+            ) : (
+              publishDate.formatted
+            )}
           </p>
         </div>
         <Link className={styles.cta} to={to}>

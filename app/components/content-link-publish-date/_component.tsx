@@ -9,7 +9,11 @@ type Props = {
 export const ContentLinkPublishDate = ({ date }: Props) => {
   return (
     <p className={styles.paragraph}>
-      <time dateTime={date.iso ?? undefined}>{date.formatted}</time>
+      {date.iso ? (
+        <time dateTime={date.iso}>{date.formatted}</time>
+      ) : (
+        date.formatted
+      )}
     </p>
   )
 }

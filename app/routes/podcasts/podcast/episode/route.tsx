@@ -22,9 +22,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <HeadlineGroup>
         <Headline>{podcastEpisode.title}</Headline>
         <Subheadline>
-          <time dateTime={podcastEpisode.publishedAt.iso ?? undefined}>
-            {podcastEpisode.publishedAt.formatted}
-          </time>
+          {podcastEpisode.publishedAt.iso ? (
+            <time dateTime={podcastEpisode.publishedAt.iso}>
+              {podcastEpisode.publishedAt.formatted}
+            </time>
+          ) : (
+            podcastEpisode.publishedAt.formatted
+          )}
         </Subheadline>
       </HeadlineGroup>
       <Paragraph>{podcastEpisode.description}</Paragraph>

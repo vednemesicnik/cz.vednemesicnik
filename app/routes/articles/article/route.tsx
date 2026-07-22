@@ -23,9 +23,13 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
         <Headline>{article.title}</Headline>
         <Subheadline>
           {article.authors.map((author) => author.name).join(', ')} ·{' '}
-          <time dateTime={article.publishedAt.iso ?? undefined}>
-            {article.publishedAt.formatted}
-          </time>
+          {article.publishedAt.iso ? (
+            <time dateTime={article.publishedAt.iso}>
+              {article.publishedAt.formatted}
+            </time>
+          ) : (
+            article.publishedAt.formatted
+          )}
         </Subheadline>
       </HeadlineGroup>
 
