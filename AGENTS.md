@@ -304,6 +304,12 @@ Reference skills for working with Prisma ORM. This project uses **SQLite**, so t
 - `.agents/skills/prisma-upgrade-v7/SKILL.md` — migration guide from Prisma ORM v6 to v7.
 - `.agents/skills/prisma-postgres/SKILL.md`, `.agents/skills/prisma-postgres-setup/SKILL.md`, `.agents/skills/prisma-compute/SKILL.md` — Prisma Postgres and Compute deployment; not used by this project (SQLite).
 
+### Pull Request Workflow
+
+Reference for the end-to-end PR lifecycle. Load when opening a pull request, requesting or acting on a Copilot review, resolving review threads, or choosing a merge method.
+
+Read `.agents/skills/pull-request-workflow/SKILL.md`. Run the `self-review-before-pr` rule first; see `docs/_branching-model.md` for the full branching/merge policy.
+
 ## Agent Rules
 
 Mandatory conventions that apply to all tasks. Read the relevant rule file before acting.
