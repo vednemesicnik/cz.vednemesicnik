@@ -70,10 +70,13 @@ For **each** review round:
    ```
 6. **Re-request** Copilot (step's command above).
 7. **Verify** before declaring clean — resolve *all* open threads and confirm zero
-   remain:
+   remain. Fetch the max page (100) and assert the result isn't truncated, so the
+   count can't silently undercount on a large PR:
    ```sh
-   gh api graphql -f query='{ repository(owner:"<owner>",name:"<repo>"){ pullRequest(number:<n>){ reviewThreads(first:50){ nodes { isResolved } } } } }' \
-     --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved==false)] | length'
+   gh api graphql -f query='{ repository(owner:"<owner>",name:"<repo>"){ pullRequest(number:<n>){ reviewThreads(first:100){ totalCount pageInfo { hasNextPage } nodes { isResolved } } } } }' \
+     --jq '.data.repository.pullRequest.reviewThreads
+           | if .pageInfo.hasNextPage then "PAGINATE: >100 threads (\(.totalCount))"
+             else "unresolved=\([.nodes[] | select(.isResolved==false)] | length)" end'
    ```
 
 Copilot's login is `copilot-pull-request-reviewer[bot]` in REST but appears as
