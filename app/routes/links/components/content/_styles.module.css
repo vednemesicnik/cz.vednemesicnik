@@ -1,8 +1,10 @@
 .container {
-  display: grid;
-  position: relative;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto;
-  background-color: var(--color-white);
-  padding: 16px;
+  @layer route {
+    display: grid;
+    position: relative;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    background-color: var(--color-white);
+    padding: 16px;
+  }
 }
