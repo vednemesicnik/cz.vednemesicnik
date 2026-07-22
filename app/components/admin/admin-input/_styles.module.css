@@ -1,9 +1,11 @@
 .container {
-  display: grid;
-  grid-auto-flow: row;
-  gap: 4px;
-  justify-items: start;
-  width: 100%;
+  @layer component {
+    display: grid;
+    grid-auto-flow: row;
+    gap: 4px;
+    justify-items: start;
+    width: 100%;
+  }
 }
 
 .input {
@@ -38,7 +40,7 @@
 
     /* Focus Visible State (keyboard navigation only) */
     &:focus-visible {
-      border-color: var(--violet);
+      border-color: var(--primary);
       box-shadow: var(--focus-shadow);
       outline: none;
     }
@@ -60,10 +62,12 @@
 
 /* Error State */
 .input.inputError {
-  border-color: var(--error);
-
-  &:focus-visible {
+  @layer component {
     border-color: var(--error);
-    box-shadow: var(--focus-shadow-error);
+
+    &:focus-visible {
+      border-color: var(--error);
+      box-shadow: var(--focus-shadow-error);
+    }
   }
 }

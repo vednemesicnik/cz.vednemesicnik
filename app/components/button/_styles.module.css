@@ -2,44 +2,48 @@
    Primary Variant (Violet)
    ======================================== */
 .primary {
-  background-color: var(--primary);
-  color: var(--text-on-accent);
-  border: none;
-  transition: background-color var(--transition-fast);
+  @layer variant {
+    background-color: var(--primary);
+    color: var(--text-on-accent);
+    border: none;
+    transition: background-color var(--transition-fast);
 
-  &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--primary-hover);
-  }
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--primary-hover);
+    }
 
-  &:active:not(:disabled) {
-    background-color: var(--primary-active);
-  }
+    &:active:not(:disabled) {
+      background-color: var(--primary-active);
+    }
 
-  &:focus-visible {
-    box-shadow: var(--focus-shadow);
-    outline: none;
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
   }
 }
 
 /* ========================================
-   Danger Variant (Black)
+   Danger Variant (Rose)
    ======================================== */
 .danger {
-  background-color: var(--black);
-  color: var(--white);
-  border: none;
+  @layer variant {
+    background-color: var(--danger);
+    color: var(--danger-text);
+    border: none;
 
-  &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--eerie-black);
-  }
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--danger-hover);
+    }
 
-  &:active:not(:disabled) {
-    background-color: var(--onyx);
-  }
+    &:active:not(:disabled) {
+      background-color: var(--danger-active);
+    }
 
-  &:focus-visible {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--black) 30%, transparent);
-    outline: none;
+    &:focus-visible {
+      box-shadow: var(--focus-shadow-danger);
+      outline: none;
+    }
   }
 }
 
@@ -47,19 +51,21 @@
    Default Variant (Outline)
    ======================================== */
 .default {
-  background-color: transparent;
-  color: var(--text-primary);
-  border: 2px solid var(--border);
+  @layer variant {
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 2px solid var(--border);
 
-  &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--bg-accent);
-    border-color: var(--border-accent);
-  }
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--bg-accent);
+      border-color: var(--border-accent);
+    }
 
-  &:focus-visible {
-    background-color: var(--bg-accent);
-    border-color: var(--border-accent);
-    box-shadow: var(--focus-shadow);
-    outline: none;
+    &:focus-visible {
+      background-color: var(--bg-accent);
+      border-color: var(--border-accent);
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
   }
 }

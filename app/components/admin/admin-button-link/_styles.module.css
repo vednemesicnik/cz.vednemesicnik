@@ -14,7 +14,7 @@
     text-underline-offset: 2px;
 
     /* Link color */
-    color: var(--violet);
+    color: var(--primary);
 
     /* Interaction */
     cursor: pointer;
@@ -27,18 +27,18 @@
 
     /* Hover State */
     &:hover:not(:disabled) {
-      color: var(--violet-hover);
+      color: var(--primary-hover);
     }
 
     /* Active State */
     &:active:not(:disabled) {
-      color: var(--violet-active);
+      color: var(--primary-active);
     }
 
     /* Focus State */
     &:focus-visible {
-      color: var(--violet-hover);
-      outline: 2px solid var(--violet);
+      color: var(--primary-hover);
+      outline: 2px solid var(--primary);
       outline-offset: 2px;
       border-radius: 2px;
     }

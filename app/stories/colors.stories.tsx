@@ -2,250 +2,134 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-type ColorToken = {
-  name: string
-  light: string
-  dark: string
-}
-
-type ColorGroup = {
+type TokenGroup = {
   title: string
   description?: string
-  tokens: ColorToken[]
+  tokens: string[]
 }
 
-const COLOR_GROUPS: ColorGroup[] = [
+/**
+ * Public theme semantic tokens, as defined on :root in
+ * app/styles/semantic-tokens.css. Swatches are rendered live via var(--token),
+ * so they never drift from the stylesheet.
+ */
+const TOKEN_GROUPS: TokenGroup[] = [
   {
     description: 'Základní povrchy stránek a sekcí.',
     title: 'Pozadí',
     tokens: [
-      { dark: '#0a0a0f', light: '#ffffff', name: 'bg-primary' },
-      { dark: '#121418', light: '#f8fafb', name: 'bg-secondary' },
-      { dark: '#1a1d24', light: '#f0f4f8', name: 'bg-tertiary' },
-      { dark: '#4c1d95', light: '#ede9fe', name: 'bg-accent' },
-      { dark: '#1e2229', light: '#f5f9fc', name: 'bg-hover' },
-      { dark: '#18181b', light: '#f5f5f5', name: 'bg-disabled' },
+      'bg-primary',
+      'bg-secondary',
+      'bg-tertiary',
+      'bg-accent',
+      'bg-hover',
+      'bg-disabled',
     ],
   },
   {
     description: 'Ohraničení prvků v různých stavech.',
     title: 'Ohraničení',
-    tokens: [
-      { dark: '#2d3139', light: '#e5e7eb', name: 'border' },
-      { dark: '#3d424d', light: '#cbd5e1', name: 'border-hover' },
-      { dark: '#52576b', light: '#9ca3af', name: 'border-strong' },
-      { dark: '#a78bfa', light: '#8b5cf6', name: 'border-accent' },
-    ],
+    tokens: ['border', 'border-hover', 'border-strong', 'border-accent'],
   },
   {
     description: 'Barvy textu pro různé úrovně důležitosti.',
     title: 'Text',
     tokens: [
-      { dark: '#f9fafb', light: '#111827', name: 'text-primary' },
-      { dark: '#d1d5db', light: '#4b5563', name: 'text-secondary' },
-      { dark: '#9ca3af', light: '#9ca3af', name: 'text-tertiary' },
-      { dark: '#ffffff', light: '#ffffff', name: 'text-on-accent' },
+      'text-primary',
+      'text-secondary',
+      'text-tertiary',
+      'text-on-accent',
     ],
   },
   {
-    description:
-      'Primární UI barva pro tlačítka, odkazy a akcenty. Violet/Purple.',
-    title: 'Violet (primární)',
-    tokens: [
-      { dark: '#a78bfa', light: '#8b5cf6', name: 'violet' },
-      { dark: '#8b5cf6', light: '#7c3aed', name: 'violet-hover' },
-      { dark: '#7c3aed', light: '#6d28d9', name: 'violet-active' },
-      { dark: '#4c1d95', light: '#ede9fe', name: 'violet-light' },
-    ],
+    description: 'Primární akcent pro tlačítka, odkazy a zvýraznění (violet).',
+    title: 'Primární',
+    tokens: ['primary', 'primary-hover', 'primary-active', 'primary-light'],
   },
   {
-    description:
-      'Sekundární barva inspirovaná logem VDM (#5cffa3). Emerald/Green.',
-    title: 'Emerald (sekundární)',
-    tokens: [
-      { dark: '#34d399', light: '#10b981', name: 'emerald' },
-      { dark: '#10b981', light: '#059669', name: 'emerald-hover' },
-      { dark: '#059669', light: '#047857', name: 'emerald-active' },
-      { dark: '#064e3b', light: '#d1fae5', name: 'emerald-light' },
-      { dark: '#34d399', light: '#5cffa3', name: 'emerald-bright' },
-    ],
+    description: 'Sekundární akcent (amber).',
+    title: 'Sekundární',
+    tokens: ['secondary', 'secondary-hover', 'secondary-active'],
   },
   {
     description: 'Stavové barvy pro zpětnou vazbu uživateli.',
-    title: 'Sémantické',
-    tokens: [
-      { dark: '#34d399', light: '#10b981', name: 'success' },
-      { dark: '#f87171', light: '#ef4444', name: 'error' },
-      { dark: '#fbbf24', light: '#f59e0b', name: 'warning' },
-      { dark: '#60a5fa', light: '#3b82f6', name: 'info' },
-    ],
+    title: 'Stavové',
+    tokens: ['success', 'error', 'warning', 'info'],
   },
   {
-    description: 'Barvy odkazů včetně stavů.',
-    title: 'Odkazy',
-    tokens: [
-      { dark: '#a78bfa', light: '#8b5cf6', name: 'link' },
-      { dark: '#8b5cf6', light: '#7c3aed', name: 'link-hover' },
-      { dark: '#7c3aed', light: '#6d28d9', name: 'link-visited' },
-    ],
-  },
-  {
-    description: 'Barvy odznaků pro kategorie a tagy článků.',
-    title: 'Odznaky (badges)',
-    tokens: [
-      { dark: '#064e3b', light: '#d1fae5', name: 'badge-emerald-bg' },
-      { dark: '#6ee7b7', light: '#065f46', name: 'badge-emerald-text' },
-      { dark: '#4c1d95', light: '#ede9fe', name: 'badge-violet-bg' },
-      { dark: '#c4b5fd', light: '#6d28d9', name: 'badge-violet-text' },
-      { dark: '#78350f', light: '#fef3c7', name: 'badge-amber-bg' },
-      { dark: '#fcd34d', light: '#92400e', name: 'badge-amber-text' },
-      { dark: '#881337', light: '#ffe4e6', name: 'badge-rose-bg' },
-      { dark: '#fda4af', light: '#9f1239', name: 'badge-rose-text' },
-      { dark: '#581c87', light: '#f3e8ff', name: 'badge-violet-bg' },
-      { dark: '#d8b4fe', light: '#6b21a8', name: 'badge-violet-text' },
-    ],
-  },
-  {
-    description: 'Barvy tlačítek pro všechny varianty.',
-    title: 'Tlačítka',
-    tokens: [
-      { dark: '#a78bfa', light: '#8b5cf6', name: 'button-primary-bg' },
-      { dark: '#8b5cf6', light: '#7c3aed', name: 'button-primary-bg-hover' },
-      { dark: '#7c3aed', light: '#6d28d9', name: 'button-primary-bg-active' },
-      { dark: '#ffffff', light: '#ffffff', name: 'button-primary-text' },
-      { dark: '#34d399', light: '#10b981', name: 'button-secondary-bg' },
-      { dark: '#10b981', light: '#059669', name: 'button-secondary-bg-hover' },
-      { dark: '#059669', light: '#047857', name: 'button-secondary-bg-active' },
-      { dark: '#ffffff', light: '#ffffff', name: 'button-secondary-text' },
-      { dark: '#a78bfa', light: '#8b5cf6', name: 'button-outlined-border' },
-      { dark: '#a78bfa', light: '#7c3aed', name: 'button-outlined-text' },
-      { dark: '#4c1d95', light: '#ede9fe', name: 'button-outlined-bg-hover' },
-      { dark: '#d1d5db', light: '#4b5563', name: 'button-ghost-text' },
-      { dark: '#1f2937', light: '#f3f4f6', name: 'button-ghost-bg-hover' },
-    ],
-  },
-  {
-    description: 'Barvy pro navigaci, header, footer a karty.',
-    title: 'Komponenty',
-    tokens: [
-      { dark: '#18181b', light: '#ffffff', name: 'card-bg' },
-      { dark: '#27272a', light: '#e5e7eb', name: 'card-border' },
-      { dark: '#0a0a0f', light: '#ffffff', name: 'header-bg' },
-      { dark: '#27272a', light: '#e5e7eb', name: 'header-border' },
-      { dark: '#d1d5db', light: '#4b5563', name: 'nav-item-text' },
-      { dark: '#f9fafb', light: '#111827', name: 'nav-item-text-hover' },
-      { dark: '#a78bfa', light: '#7c3aed', name: 'nav-item-text-active' },
-      { dark: '#121418', light: '#f8fafb', name: 'footer-bg' },
-      { dark: '#9ca3af', light: '#6b7280', name: 'footer-text' },
-      { dark: '#2d3139', light: '#e5e7eb', name: 'footer-border' },
-    ],
+    description: 'Povrchy chybových hlášení (např. přihlašovací formulář).',
+    title: 'Chybové povrchy',
+    tokens: ['error-bg', 'error-text'],
   },
 ]
 
-type Props = {
-  colorScheme: 'light' | 'dark'
-}
-
-function isLight(hex: string): boolean {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return r * 0.299 + g * 0.587 + b * 0.114 > 160
-}
-
-function ColorSwatch({
-  token,
-  colorScheme,
-}: {
-  token: ColorToken
-  colorScheme: 'light' | 'dark'
-}) {
-  const value = colorScheme === 'light' ? token.light : token.dark
-  const textColor = isLight(value) ? '#1f2937' : '#f9fafb'
-
+/**
+ * A single token rendered as a split swatch: the left half resolves the
+ * token in light color-scheme, the right half in dark. Because light-dark()
+ * resolves per element, both values are shown live from the same var().
+ */
+function Swatch({ token }: { token: string }) {
   return (
     <div
       style={{
-        alignItems: 'center',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
-        width: '120px',
+        width: '150px',
       }}
     >
       <div
         style={{
-          alignItems: 'center',
-          backgroundColor: value,
-          border: '1px solid rgba(128,128,128,0.2)',
-          borderRadius: '50%',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+          border: '1px solid rgba(128, 128, 128, 0.25)',
+          borderRadius: '8px',
           display: 'flex',
-          height: '72px',
-          justifyContent: 'center',
-          width: '72px',
+          height: '64px',
+          overflow: 'hidden',
         }}
       >
-        <span
-          style={{
-            color: textColor,
-            fontFamily: 'monospace',
-            fontSize: '9px',
-            fontWeight: 700,
-            textAlign: 'center',
-          }}
-        >
-          {value}
-        </span>
-      </div>
-
-      <div style={{ textAlign: 'center' }}>
         <div
           style={{
-            color: '#7c3aed',
-            fontFamily: 'monospace',
-            fontSize: '11px',
-            fontWeight: 700,
-            lineHeight: '1.4',
-            wordBreak: 'break-all',
+            background: `var(--${token})`,
+            colorScheme: 'light',
+            flex: 1,
           }}
-        >
-          --{token.name}
-        </div>
+          title="light"
+        />
         <div
           style={{
-            color: '#9ca3af',
-            fontFamily: 'monospace',
-            fontSize: '10px',
-            marginTop: '2px',
+            background: `var(--${token})`,
+            colorScheme: 'dark',
+            flex: 1,
           }}
-        >
-          {colorScheme === 'light' ? '☀︎ light' : '☾ dark'}
-        </div>
+          title="dark"
+        />
       </div>
+      <code
+        style={{
+          color: 'var(--text-secondary)',
+          fontSize: '11px',
+          wordBreak: 'break-all',
+        }}
+      >
+        --{token}
+      </code>
     </div>
   )
 }
 
-function ColorGroup({
-  group,
-  colorScheme,
-}: {
-  group: ColorGroup
-  colorScheme: 'light' | 'dark'
-}) {
+function TokenGroupBlock({ group }: { group: TokenGroup }) {
   return (
     <div style={{ marginBottom: '40px' }}>
       <div
         style={{
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid var(--border)',
           marginBottom: '20px',
           paddingBottom: '10px',
         }}
       >
         <h2
           style={{
-            color: '#111827',
+            color: 'var(--text-primary)',
             fontSize: '15px',
             fontWeight: 700,
             margin: '0 0 4px',
@@ -254,96 +138,117 @@ function ColorGroup({
           {group.title}
         </h2>
         {group.description && (
-          <p style={{ color: '#6b7280', fontSize: '12px', margin: 0 }}>
+          <p
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: '12px',
+              margin: 0,
+            }}
+          >
             {group.description}
           </p>
         )}
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '24px',
-        }}
-      >
-        {group.tokens.map((token, index) => (
-          <ColorSwatch
-            colorScheme={colorScheme}
-            key={`${token.name}-${index}`}
-            token={token}
-          />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
+        {group.tokens.map((token) => (
+          <Swatch key={token} token={token} />
         ))}
       </div>
     </div>
   )
 }
 
-function ColorPalette({ colorScheme }: Props) {
+function ColorPalette() {
   return (
     <div
       style={{
+        background: 'var(--bg-primary)',
         fontFamily: 'var(--font-family, Inter), sans-serif',
-        maxWidth: '900px',
+        minHeight: '100%',
         padding: '32px',
       }}
     >
       <div
         style={{
-          borderBottom: '2px solid #111827',
+          borderBottom: '2px solid var(--text-primary)',
           marginBottom: '32px',
           paddingBottom: '16px',
         }}
       >
         <h1
           style={{
-            color: '#111827',
+            color: 'var(--text-primary)',
             fontSize: '20px',
             fontWeight: 700,
             marginBottom: '6px',
           }}
         >
-          Barevná paleta
+          Barevná paleta — veřejný web
         </h1>
-        <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>
-          Design tokeny z <code>design-tokens.css</code>. Každá barva podporuje
-          světlý i tmavý režim přes CSS funkci{' '}
-          <code>light-dark(light, dark)</code>.
+        <p
+          style={{
+            color: 'var(--text-secondary)',
+            fontSize: '13px',
+            margin: 0,
+          }}
+        >
+          Sémantické tokeny z <code>semantic-tokens.css</code> (téma{' '}
+          <code>:root</code>). Každý vzorek je vykreslen živě přes{' '}
+          <code>var(--token)</code>; levá polovina = světlý režim, pravá = tmavý
+          (<code>light-dark()</code>).
         </p>
       </div>
 
-      {COLOR_GROUPS.map((group) => (
-        <ColorGroup colorScheme={colorScheme} group={group} key={group.title} />
+      {TOKEN_GROUPS.map((group) => (
+        <TokenGroupBlock group={group} key={group.title} />
       ))}
+
+      <div style={{ marginBottom: '40px' }}>
+        <h2
+          style={{
+            color: 'var(--text-primary)',
+            fontSize: '15px',
+            fontWeight: 700,
+            margin: '0 0 16px',
+          }}
+        >
+          Gradient
+        </h2>
+        <div
+          style={{
+            background: 'var(--gradient-signature)',
+            borderRadius: '8px',
+            height: '80px',
+            width: '100%',
+          }}
+        />
+        <code
+          style={{
+            color: 'var(--text-secondary)',
+            display: 'block',
+            fontSize: '11px',
+            marginTop: '8px',
+          }}
+        >
+          --gradient-signature
+        </code>
+      </div>
     </div>
   )
 }
 
-const meta: Meta<Props> = {
-  argTypes: {
-    colorScheme: {
-      control: 'select',
-      description: 'Barevné schéma (světlý / tmavý režim)',
-      options: ['light', 'dark'],
-      table: {
-        defaultValue: { summary: 'light' },
-        type: { summary: 'light | dark' },
-      },
-    },
-  },
+const meta: Meta<typeof ColorPalette> = {
+  component: ColorPalette,
   parameters: {
-    controls: {
-      disableSaveFromUI: true,
-    },
     docs: {
       description: {
         component:
-          'Přehled barevné palety projektu. Barvy jsou organizovány do skupin dle účelu. Přepněte barevné schéma pro zobrazení světlých nebo tmavých hodnot.',
+          'Přehled sémantických barevných tokenů veřejného webu. Vzorky se čtou živě z CSS proměnných, takže vždy odpovídají stylesheetu.',
       },
     },
     layout: 'fullscreen',
   },
-  render: (args) => <ColorPalette {...args} />,
   tags: ['autodocs'],
   title: 'Design System/Colors',
 }
@@ -351,13 +256,4 @@ const meta: Meta<Props> = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/**
- * Celá barevná paleta design systému.
- * Barvy využívají CSS funkci light-dark() pro automatické přizpůsobení světlému
- * nebo tmavému režimu. Pomocí ovládacího prvku výše přepínejte mezi hodnotami.
- */
-export const Palette: Story = {
-  args: {
-    colorScheme: 'light',
-  },
-}
+export const Palette: Story = {}

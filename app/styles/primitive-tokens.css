@@ -2,7 +2,7 @@
  * Primitive Design Tokens
  *
  * Raw named color values with no semantic meaning.
- * Referenced by public-tokens.css and admin-tokens.css.
+ * Referenced by semantic-tokens.css.
  * Never reference primitive tokens directly in components.
  *
  * Imported in root.tsx — available everywhere.

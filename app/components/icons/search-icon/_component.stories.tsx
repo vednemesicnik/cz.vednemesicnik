@@ -22,7 +22,7 @@ type Story = StoryObj<typeof meta>
  */
 export const Playground: Story = {
   render: () => (
-    <span style={{ color: 'var(--violet)', fontSize: '2rem' }}>
+    <span style={{ color: 'var(--primary)', fontSize: '2rem' }}>
       <SearchIcon />
     </span>
   ),

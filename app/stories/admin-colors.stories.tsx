@@ -2,283 +2,147 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-type ColorToken = {
-  name: string
-  light: string
-  dark: string
-}
-
-type ColorGroup = {
+type TokenGroup = {
   title: string
   description?: string
-  tokens: ColorToken[]
+  tokens: string[]
 }
 
-const COLOR_GROUPS: ColorGroup[] = [
+/**
+ * Administration theme tokens. The neutral/accent groups are the shades
+ * overridden under [data-theme='admin']; the state/action/danger groups are
+ * admin-only tokens defined on :root. All are rendered live via var(--token)
+ * inside a data-theme="admin" wrapper, so they never drift from the stylesheet.
+ */
+const TOKEN_GROUPS: TokenGroup[] = [
   {
-    description: 'Základní povrchy administračního rozhraní.',
+    description: 'Základní povrchy administrace (midnight).',
     title: 'Pozadí',
     tokens: [
-      { dark: '#0f0f1a', light: '#ffffff', name: 'admin-bg-primary' },
-      { dark: '#1a1a2e', light: '#f8fafc', name: 'admin-bg-secondary' },
-      { dark: '#2d2d44', light: '#f1f5f9', name: 'admin-bg-tertiary' },
-      { dark: '#372554', light: '#f3f0ff', name: 'admin-bg-hover' },
-      { dark: '#0f0f1a', light: '#f8f9fa', name: 'admin-bg-disabled' },
+      'bg-primary',
+      'bg-secondary',
+      'bg-tertiary',
+      'bg-hover',
+      'bg-disabled',
     ],
   },
   {
     description: 'Ohraničení prvků v různých stavech.',
     title: 'Ohraničení',
-    tokens: [
-      { dark: '#3d3d52', light: '#cbd5e1', name: 'admin-border' },
-      { dark: '#52526b', light: '#94a3b8', name: 'admin-border-hover' },
-      { dark: '#64748b', light: '#cbd5e1', name: 'admin-border-strong' },
-    ],
+    tokens: ['border', 'border-hover', 'border-strong'],
   },
   {
     description: 'Barvy textu pro různé úrovně důležitosti.',
     title: 'Text',
-    tokens: [
-      { dark: '#f1f5f9', light: '#0f172a', name: 'admin-text-primary' },
-      { dark: '#cbd5e1', light: '#64748b', name: 'admin-text-secondary' },
-      { dark: '#94a3b8', light: '#94a3b8', name: 'admin-text-tertiary' },
-    ],
+    tokens: ['text-primary', 'text-secondary', 'text-tertiary'],
   },
   {
-    description: 'Primární UI barva administrace. Purple.',
-    title: 'Purple (primární)',
-    tokens: [
-      { dark: '#8b5cf6', light: '#7c3aed', name: 'admin-purple' },
-      { dark: '#7c3aed', light: '#6d28d9', name: 'admin-purple-hover' },
-      { dark: '#6d28d9', light: '#5b21b6', name: 'admin-purple-active' },
-    ],
+    description: 'Primární akcent administrace (sytější violet).',
+    title: 'Primární',
+    tokens: ['primary', 'primary-hover', 'primary-active'],
   },
   {
-    description: 'Sekundární barva administrace. Amber.',
-    title: 'Amber (sekundární)',
-    tokens: [
-      { dark: '#fbbf24', light: '#f59e0b', name: 'admin-amber' },
-      { dark: '#f59e0b', light: '#d97706', name: 'admin-amber-hover' },
-      { dark: '#d97706', light: '#b45309', name: 'admin-amber-active' },
-    ],
+    description: 'Stavové barvy pro zpětnou vazbu a chybové povrchy.',
+    title: 'Stavové',
+    tokens: ['success', 'error', 'warning', 'error-bg', 'error-text'],
   },
   {
-    description: 'Stavové barvy pro zpětnou vazbu uživateli.',
-    title: 'Sémantické',
-    tokens: [
-      { dark: '#34d399', light: '#10b981', name: 'admin-success' },
-      { dark: '#fb7185', light: '#e11d48', name: 'admin-error' },
-      { dark: '#fdba74', light: '#fb923c', name: 'admin-warning' },
-    ],
-  },
-  {
-    description:
-      'Barvy odznaků pro stavy obsahu: koncept, publikováno, archivováno.',
+    description: 'Odznaky stavů obsahu (koncept / publikováno / archivováno).',
     title: 'Stavy obsahu',
     tokens: [
-      { dark: '#78350f', light: '#fef3c7', name: 'admin-state-draft-bg' },
-      { dark: '#fcd34d', light: '#92400e', name: 'admin-state-draft-text' },
-      {
-        dark: '#064e3b',
-        light: '#d1fae5',
-        name: 'admin-state-published-bg',
-      },
-      {
-        dark: '#6ee7b7',
-        light: '#065f46',
-        name: 'admin-state-published-text',
-      },
-      { dark: '#7f1d1d', light: '#fee2e2', name: 'admin-state-archived-bg' },
-      {
-        dark: '#fca5a5',
-        light: '#991b1b',
-        name: 'admin-state-archived-text',
-      },
+      'state-draft-bg',
+      'state-draft-text',
+      'state-published-bg',
+      'state-published-text',
+      'state-archived-bg',
+      'state-archived-text',
     ],
   },
   {
-    description:
-      'Barvy akčních tlačítek pro přechody stavů obsahu (publikovat, stáhnout, archivovat, obnovit, přezkoumat).',
-    title: 'Akční tlačítka',
+    description: 'Barvy akcí v životním cyklu obsahu.',
+    title: 'Akce',
     tokens: [
-      { dark: '#059669', light: '#10b981', name: 'admin-action-publish' },
-      {
-        dark: '#047857',
-        light: '#059669',
-        name: 'admin-action-publish-hover',
-      },
-      {
-        dark: '#065f46',
-        light: '#047857',
-        name: 'admin-action-publish-active',
-      },
-      { dark: '#d97706', light: '#f59e0b', name: 'admin-action-retract' },
-      {
-        dark: '#b45309',
-        light: '#d97706',
-        name: 'admin-action-retract-hover',
-      },
-      {
-        dark: '#92400e',
-        light: '#b45309',
-        name: 'admin-action-retract-active',
-      },
-      { dark: '#e11d48', light: '#f43f5e', name: 'admin-action-archive' },
-      {
-        dark: '#be123c',
-        light: '#e11d48',
-        name: 'admin-action-archive-hover',
-      },
-      {
-        dark: '#9f1239',
-        light: '#be123c',
-        name: 'admin-action-archive-active',
-      },
-      { dark: '#d97706', light: '#f59e0b', name: 'admin-action-restore' },
-      {
-        dark: '#b45309',
-        light: '#d97706',
-        name: 'admin-action-restore-hover',
-      },
-      {
-        dark: '#92400e',
-        light: '#b45309',
-        name: 'admin-action-restore-active',
-      },
-      { dark: '#2563eb', light: '#3b82f6', name: 'admin-action-review' },
-      {
-        dark: '#1d4ed8',
-        light: '#2563eb',
-        name: 'admin-action-review-hover',
-      },
-      {
-        dark: '#1e40af',
-        light: '#1d4ed8',
-        name: 'admin-action-review-active',
-      },
+      'action-publish',
+      'action-retract',
+      'action-archive',
+      'action-restore',
+      'action-review',
     ],
   },
   {
-    description: 'Nebezpečné akce (smazání, nenávratné operace).',
+    description: 'Destruktivní akce (mazání).',
     title: 'Danger',
-    tokens: [
-      { dark: '#dc2626', light: '#ef4444', name: 'admin-danger' },
-      { dark: '#b91c1c', light: '#dc2626', name: 'admin-danger-hover' },
-      { dark: '#991b1b', light: '#b91c1c', name: 'admin-danger-active' },
-      { dark: '#ffffff', light: '#ffffff', name: 'admin-button-text' },
-      {
-        dark: '#f1f5f9',
-        light: '#0f172a',
-        name: 'admin-button-text-secondary',
-      },
-    ],
+    tokens: ['danger', 'danger-hover', 'danger-active', 'danger-text'],
   },
 ]
 
-type Props = {
-  colorScheme: 'light' | 'dark'
-}
-
-function isLight(hex: string): boolean {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return r * 0.299 + g * 0.587 + b * 0.114 > 160
-}
-
-function ColorSwatch({
-  token,
-  colorScheme,
-}: {
-  token: ColorToken
-  colorScheme: 'light' | 'dark'
-}) {
-  const value = colorScheme === 'light' ? token.light : token.dark
-  const textColor = isLight(value) ? '#1f2937' : '#f9fafb'
-
+/**
+ * A single token rendered as a split swatch: the left half resolves the
+ * token in light color-scheme, the right half in dark. Because light-dark()
+ * resolves per element, both values are shown live from the same var().
+ */
+function Swatch({ token }: { token: string }) {
   return (
     <div
       style={{
-        alignItems: 'center',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
-        width: '120px',
+        width: '150px',
       }}
     >
       <div
         style={{
-          alignItems: 'center',
-          backgroundColor: value,
-          border: '1px solid rgba(128,128,128,0.2)',
-          borderRadius: '50%',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+          border: '1px solid rgba(128, 128, 128, 0.25)',
+          borderRadius: '8px',
           display: 'flex',
-          height: '72px',
-          justifyContent: 'center',
-          width: '72px',
+          height: '64px',
+          overflow: 'hidden',
         }}
       >
-        <span
-          style={{
-            color: textColor,
-            fontFamily: 'monospace',
-            fontSize: '9px',
-            fontWeight: 700,
-            textAlign: 'center',
-          }}
-        >
-          {value}
-        </span>
-      </div>
-
-      <div style={{ textAlign: 'center' }}>
         <div
           style={{
-            color: '#7c3aed',
-            fontFamily: 'monospace',
-            fontSize: '11px',
-            fontWeight: 700,
-            lineHeight: '1.4',
-            wordBreak: 'break-all',
+            background: `var(--${token})`,
+            colorScheme: 'light',
+            flex: 1,
           }}
-        >
-          --{token.name}
-        </div>
+          title="light"
+        />
         <div
           style={{
-            color: '#9ca3af',
-            fontFamily: 'monospace',
-            fontSize: '10px',
-            marginTop: '2px',
+            background: `var(--${token})`,
+            colorScheme: 'dark',
+            flex: 1,
           }}
-        >
-          {colorScheme === 'light' ? '☀︎ light' : '☾ dark'}
-        </div>
+          title="dark"
+        />
       </div>
+      <code
+        style={{
+          color: 'var(--text-secondary)',
+          fontSize: '11px',
+          wordBreak: 'break-all',
+        }}
+      >
+        --{token}
+      </code>
     </div>
   )
 }
 
-function ColorGroup({
-  group,
-  colorScheme,
-}: {
-  group: ColorGroup
-  colorScheme: 'light' | 'dark'
-}) {
+function TokenGroupBlock({ group }: { group: TokenGroup }) {
   return (
     <div style={{ marginBottom: '40px' }}>
       <div
         style={{
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid var(--border)',
           marginBottom: '20px',
           paddingBottom: '10px',
         }}
       >
         <h2
           style={{
-            color: '#111827',
+            color: 'var(--text-primary)',
             fontSize: '15px',
             fontWeight: 700,
             margin: '0 0 4px',
@@ -287,96 +151,87 @@ function ColorGroup({
           {group.title}
         </h2>
         {group.description && (
-          <p style={{ color: '#6b7280', fontSize: '12px', margin: 0 }}>
+          <p
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: '12px',
+              margin: 0,
+            }}
+          >
             {group.description}
           </p>
         )}
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '24px',
-        }}
-      >
-        {group.tokens.map((token, index) => (
-          <ColorSwatch
-            colorScheme={colorScheme}
-            key={`${token.name}-${index}`}
-            token={token}
-          />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
+        {group.tokens.map((token) => (
+          <Swatch key={token} token={token} />
         ))}
       </div>
     </div>
   )
 }
 
-function AdminColorPalette({ colorScheme }: Props) {
+function AdminColorPalette() {
   return (
     <div
+      data-theme="admin"
       style={{
+        background: 'var(--bg-primary)',
         fontFamily: 'var(--font-family, Inter), sans-serif',
-        maxWidth: '900px',
+        minHeight: '100%',
         padding: '32px',
       }}
     >
       <div
         style={{
-          borderBottom: '2px solid #111827',
+          borderBottom: '2px solid var(--text-primary)',
           marginBottom: '32px',
           paddingBottom: '16px',
         }}
       >
         <h1
           style={{
-            color: '#111827',
+            color: 'var(--text-primary)',
             fontSize: '20px',
             fontWeight: 700,
             marginBottom: '6px',
           }}
         >
-          Barevná paleta — Administrace
+          Barevná paleta — administrace
         </h1>
-        <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>
-          Design tokeny z <code>admin-design-tokens.css</code>. Každá barva
-          podporuje světlý i tmavý režim přes CSS funkci{' '}
-          <code>light-dark(light, dark)</code>.
+        <p
+          style={{
+            color: 'var(--text-secondary)',
+            fontSize: '13px',
+            margin: 0,
+          }}
+        >
+          Sémantické tokeny z <code>semantic-tokens.css</code> (téma{' '}
+          <code>[data-theme=&apos;admin&apos;]</code>). Každý vzorek je
+          vykreslen živě přes <code>var(--token)</code>; levá polovina = světlý
+          režim, pravá = tmavý (<code>light-dark()</code>).
         </p>
       </div>
 
-      {COLOR_GROUPS.map((group) => (
-        <ColorGroup colorScheme={colorScheme} group={group} key={group.title} />
+      {TOKEN_GROUPS.map((group) => (
+        <TokenGroupBlock group={group} key={group.title} />
       ))}
     </div>
   )
 }
 
-const meta: Meta<Props> = {
-  argTypes: {
-    colorScheme: {
-      control: 'select',
-      description: 'Barevné schéma (světlý / tmavý režim)',
-      options: ['light', 'dark'],
-      table: {
-        defaultValue: { summary: 'light' },
-        type: { summary: 'light | dark' },
-      },
-    },
-  },
+const meta: Meta<typeof AdminColorPalette> = {
+  component: AdminColorPalette,
   parameters: {
-    controls: {
-      disableSaveFromUI: true,
-    },
     docs: {
       description: {
         component:
-          'Přehled barevné palety administračního rozhraní. Barvy jsou organizovány do skupin dle účelu včetně stavů obsahu a akčních tlačítek. Přepněte barevné schéma pro zobrazení světlých nebo tmavých hodnot.',
+          'Přehled sémantických barevných tokenů administrace. Vzorky se čtou živě z CSS proměnných uvnitř data-theme="admin", takže vždy odpovídají stylesheetu.',
       },
     },
     layout: 'fullscreen',
   },
-  render: (args) => <AdminColorPalette {...args} />,
   tags: ['autodocs'],
   title: 'Design System/Admin Colors',
 }
@@ -384,13 +239,4 @@ const meta: Meta<Props> = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/**
- * Celá barevná paleta administračního design systému.
- * Zahrnuje stavové barvy obsahu (koncept/publikováno/archivováno)
- * a akční tlačítka pro přechody mezi stavy.
- */
-export const Palette: Story = {
-  args: {
-    colorScheme: 'light',
-  },
-}
+export const Palette: Story = {}

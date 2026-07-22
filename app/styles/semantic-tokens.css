@@ -1,0 +1,386 @@
+/**
+ * Semantic Design Tokens
+ *
+ * Single source of semantic tokens for both interfaces:
+ *   :root                   → public-facing magazine theme (charcoal neutrals)
+ *   [data-theme='admin']    → administration CMS theme (midnight neutrals)
+ *
+ * The admin block overrides only the tokens whose shades differ; everything
+ * else is inherited from :root. Theme is switched by the data-theme attribute
+ * on <html> (set in app/root.tsx). Light/dark is handled via light-dark().
+ *
+ * Requires primitive-tokens.css to be loaded first.
+ * Imported globally in app/root.tsx.
+ */
+
+/* ============================================================
+   PUBLIC THEME (default)
+   ============================================================ */
+
+:root {
+  @layer base {
+    /* ========================================
+       Backgrounds
+       ======================================== */
+    --bg-primary: light-dark(
+      var(--color-charcoal-50),
+      var(--color-charcoal-950)
+    );
+    --bg-secondary: light-dark(
+      var(--color-charcoal-100),
+      var(--color-charcoal-900)
+    );
+    --bg-tertiary: light-dark(
+      var(--color-charcoal-200),
+      var(--color-charcoal-800)
+    );
+    --bg-accent: light-dark(var(--color-violet-100), var(--color-violet-900));
+    --bg-hover: light-dark(
+      var(--color-charcoal-300),
+      var(--color-charcoal-700)
+    );
+    --bg-disabled: light-dark(
+      var(--color-charcoal-400),
+      var(--color-charcoal-600)
+    );
+
+    /* ========================================
+       Borders
+       ======================================== */
+    --border: light-dark(var(--color-charcoal-200), var(--color-charcoal-600));
+    --border-hover: light-dark(
+      var(--color-charcoal-300),
+      var(--color-charcoal-500)
+    );
+    --border-strong: light-dark(
+      var(--color-charcoal-400),
+      var(--color-charcoal-400)
+    );
+    --border-accent: light-dark(
+      var(--color-violet-500),
+      var(--color-violet-400)
+    );
+
+    /* ========================================
+       Text
+       ======================================== */
+    --text-primary: light-dark(
+      var(--color-charcoal-950),
+      var(--color-charcoal-50)
+    );
+    --text-secondary: light-dark(
+      var(--color-charcoal-600),
+      var(--color-charcoal-300)
+    );
+    --text-tertiary: light-dark(
+      var(--color-charcoal-500),
+      var(--color-charcoal-400)
+    );
+    --text-on-accent: light-dark(var(--color-white), var(--color-white));
+
+    /* ========================================
+       Primary (accent)
+       ======================================== */
+    --primary: light-dark(var(--color-violet-500), var(--color-violet-400));
+    --primary-hover: light-dark(
+      var(--color-violet-600),
+      var(--color-violet-500)
+    );
+    --primary-active: light-dark(
+      var(--color-violet-700),
+      var(--color-violet-300)
+    );
+    --primary-light: light-dark(
+      var(--color-violet-100),
+      var(--color-violet-900)
+    );
+
+    /* ========================================
+       Secondary (accent — amber)
+       ======================================== */
+    --secondary: light-dark(var(--color-amber-500), var(--color-amber-400));
+    --secondary-hover: light-dark(
+      var(--color-amber-600),
+      var(--color-amber-500)
+    );
+    --secondary-active: light-dark(
+      var(--color-amber-700),
+      var(--color-amber-600)
+    );
+
+    /* ========================================
+       Status
+       ======================================== */
+    --success: light-dark(var(--color-emerald-500), var(--color-emerald-400));
+    --error: light-dark(var(--color-rose-500), var(--color-rose-400));
+    --warning: light-dark(var(--color-amber-500), var(--color-amber-400));
+    --info: light-dark(var(--color-azure-500), var(--color-azure-400));
+
+    /* Error surfaces (sign-in error boxes) */
+    --error-bg: light-dark(var(--color-rose-100), var(--color-rose-900));
+    --error-text: light-dark(var(--color-rose-700), var(--color-rose-300));
+
+    /* ========================================
+       Content states (admin)
+       ======================================== */
+    /* Draft — Amber (work in progress) */
+    --state-draft-bg: light-dark(
+      var(--color-amber-100),
+      var(--color-amber-900)
+    );
+    --state-draft-text: light-dark(
+      var(--color-amber-800),
+      var(--color-amber-300)
+    );
+
+    /* Published — Emerald (active) */
+    --state-published-bg: light-dark(
+      var(--color-emerald-100),
+      var(--color-emerald-900)
+    );
+    --state-published-text: light-dark(
+      var(--color-emerald-800),
+      var(--color-emerald-300)
+    );
+
+    /* Archived — Rose (inactive) */
+    --state-archived-bg: light-dark(
+      var(--color-rose-100),
+      var(--color-rose-900)
+    );
+    --state-archived-text: light-dark(
+      var(--color-rose-800),
+      var(--color-rose-300)
+    );
+
+    /* ========================================
+       Action colors (admin)
+       ======================================== */
+    /* Publish — Emerald (move to published) */
+    --action-publish: light-dark(
+      var(--color-emerald-500),
+      var(--color-emerald-600)
+    );
+    --action-publish-hover: light-dark(
+      var(--color-emerald-600),
+      var(--color-emerald-700)
+    );
+    --action-publish-active: light-dark(
+      var(--color-emerald-700),
+      var(--color-emerald-800)
+    );
+
+    /* Retract — Amber (move to draft) */
+    --action-retract: light-dark(
+      var(--color-amber-500),
+      var(--color-amber-600)
+    );
+    --action-retract-hover: light-dark(
+      var(--color-amber-600),
+      var(--color-amber-700)
+    );
+    --action-retract-active: light-dark(
+      var(--color-amber-700),
+      var(--color-amber-800)
+    );
+
+    /* Archive — Rose (move to archived) */
+    --action-archive: light-dark(var(--color-rose-500), var(--color-rose-600));
+    --action-archive-hover: light-dark(
+      var(--color-rose-600),
+      var(--color-rose-700)
+    );
+    --action-archive-active: light-dark(
+      var(--color-rose-700),
+      var(--color-rose-800)
+    );
+
+    /* Restore — Amber (restore to draft) */
+    --action-restore: light-dark(
+      var(--color-amber-500),
+      var(--color-amber-600)
+    );
+    --action-restore-hover: light-dark(
+      var(--color-amber-600),
+      var(--color-amber-700)
+    );
+    --action-restore-active: light-dark(
+      var(--color-amber-700),
+      var(--color-amber-800)
+    );
+
+    /* Review — Azure (approve/review content) */
+    --action-review: light-dark(var(--color-azure-500), var(--color-azure-600));
+    --action-review-hover: light-dark(
+      var(--color-azure-600),
+      var(--color-azure-700)
+    );
+    --action-review-active: light-dark(
+      var(--color-azure-700),
+      var(--color-azure-800)
+    );
+
+    /* Action button text
+       Emerald and amber are perceptually bright in both modes → always need dark text.
+       Rose and azure are dark enough for white text in dark mode. */
+    --action-publish-text: var(--color-charcoal-950);
+    --action-retract-text: var(--color-charcoal-950);
+    --action-restore-text: var(--color-charcoal-950);
+    --action-archive-text: light-dark(
+      var(--color-charcoal-950),
+      var(--color-white)
+    );
+    --action-review-text: light-dark(
+      var(--color-charcoal-950),
+      var(--color-white)
+    );
+
+    /* ========================================
+       Danger
+       ======================================== */
+    --danger: light-dark(var(--color-rose-500), var(--color-rose-600));
+    --danger-hover: light-dark(var(--color-rose-600), var(--color-rose-700));
+    --danger-active: light-dark(var(--color-rose-700), var(--color-rose-800));
+    --danger-text: light-dark(var(--color-charcoal-950), var(--color-white));
+
+    /* ========================================
+       Shadows
+       ======================================== */
+    --shadow-xs: 0 1px 2px 0
+      light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.06));
+    --shadow-sm:
+      0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.09)),
+      0 1px 2px 0 light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
+    --shadow-md:
+      0 4px 6px -1px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.12)),
+      0 2px 4px -1px light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.08));
+    --shadow-lg:
+      0 10px 15px -3px
+      light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.15)),
+      0 4px 6px -2px light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.09));
+    --shadow-xl:
+      0 20px 25px -5px
+      light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.18)),
+      0 10px 10px -5px
+      light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.11));
+
+    /* ========================================
+       Focus shadows
+       ======================================== */
+    --focus-shadow: 0 0 0 3px
+      light-dark(rgba(139, 92, 246, 0.3), rgba(167, 139, 250, 0.3));
+    --focus-shadow-error: 0 0 0 3px
+      light-dark(rgba(239, 68, 68, 0.3), rgba(248, 113, 113, 0.3));
+    --focus-shadow-danger: 0 0 0 3px
+      light-dark(rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+
+    /* ========================================
+       Gradients
+       ======================================== */
+    --gradient-signature: linear-gradient(
+      135deg,
+      light-dark(var(--color-violet-500), var(--color-violet-400)) 0%,
+      light-dark(var(--color-violet-600), var(--color-violet-500)) 25%,
+      light-dark(var(--color-emerald-500), var(--color-emerald-400)) 75%,
+      light-dark(var(--color-emerald-400), var(--color-emerald-300)) 100%
+    );
+  }
+}
+
+/* ============================================================
+   ADMIN THEME — only the shades that differ from the public theme
+   ============================================================ */
+
+[data-theme="admin"] {
+  @layer base {
+    /* ========================================
+       Backgrounds (midnight)
+       ======================================== */
+    --bg-primary: light-dark(
+      var(--color-midnight-50),
+      var(--color-midnight-950)
+    );
+    --bg-secondary: light-dark(
+      var(--color-midnight-100),
+      var(--color-midnight-900)
+    );
+    --bg-tertiary: light-dark(
+      var(--color-midnight-200),
+      var(--color-midnight-800)
+    );
+    --bg-hover: light-dark(
+      var(--color-midnight-300),
+      var(--color-midnight-700)
+    );
+    --bg-disabled: light-dark(
+      var(--color-midnight-400),
+      var(--color-midnight-600)
+    );
+
+    /* ========================================
+       Borders (midnight)
+       ======================================== */
+    --border: light-dark(var(--color-midnight-300), var(--color-midnight-600));
+    --border-hover: light-dark(
+      var(--color-midnight-400),
+      var(--color-midnight-500)
+    );
+    --border-strong: light-dark(
+      var(--color-midnight-300),
+      var(--color-midnight-500)
+    );
+
+    /* ========================================
+       Text (midnight)
+       ======================================== */
+    --text-primary: light-dark(
+      var(--color-midnight-900),
+      var(--color-midnight-100)
+    );
+    --text-secondary: light-dark(
+      var(--color-midnight-500),
+      var(--color-midnight-300)
+    );
+    --text-tertiary: light-dark(
+      var(--color-midnight-500),
+      var(--color-midnight-400)
+    );
+
+    /* ========================================
+       Primary (accent — deeper violet)
+       ======================================== */
+    --primary: light-dark(var(--color-violet-600), var(--color-violet-500));
+    --primary-hover: light-dark(
+      var(--color-violet-700),
+      var(--color-violet-600)
+    );
+    --primary-active: light-dark(
+      var(--color-violet-800),
+      var(--color-violet-700)
+    );
+
+    /* ========================================
+       Status
+       ======================================== */
+    --error: light-dark(var(--color-rose-600), var(--color-rose-400));
+
+    /* ========================================
+       Shadows (solid black instead of white glow)
+       ======================================== */
+    --shadow-sm: 0 1px 2px 0 light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.3));
+    --shadow-md:
+      0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)),
+      0 1px 2px 0 light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3));
+    --shadow-lg:
+      0 4px 6px -1px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)),
+      0 2px 4px -1px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3));
+
+    /* ========================================
+       Focus shadows
+       ======================================== */
+    --focus-shadow: 0 0 0 3px
+      light-dark(rgba(124, 58, 237, 0.3), rgba(139, 92, 246, 0.3));
+    --focus-shadow-error: 0 0 0 3px
+      light-dark(rgba(225, 29, 72, 0.25), rgba(251, 113, 133, 0.25));
+  }
+}
