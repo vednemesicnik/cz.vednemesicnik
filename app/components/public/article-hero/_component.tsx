@@ -1,6 +1,6 @@
 import { Image } from '~/components/image'
 import { Link } from '~/components/link'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import type { FormattedDate } from '~/utils/format-date'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
 import styles from './_styles.module.css'
@@ -13,7 +13,7 @@ type Props = {
   title: string
   to: string
   authors: Author[]
-  publishDate: Date | null
+  publishDate: FormattedDate
   image?: ImageSources
   imageAlt?: string
 }
@@ -50,7 +50,13 @@ export const ArticleHero = ({
               </li>
             ))}
           </ul>
-          <p className={styles.date}>{getFormattedPublishDate(publishDate)}</p>
+          <p className={styles.date}>
+            {publishDate.iso ? (
+              <time dateTime={publishDate.iso}>{publishDate.formatted}</time>
+            ) : (
+              publishDate.formatted
+            )}
+          </p>
         </div>
         <Link className={styles.cta} to={to}>
           Přečíst článek →

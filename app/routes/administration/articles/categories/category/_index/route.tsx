@@ -211,14 +211,14 @@ export default function RouteComponent({
       <AdminDetailSection title="Metadata">
         <AdminDetailList>
           <AdminDetailItem label="Vytvořeno">
-            {category.createdAt}
+            {category.createdAt.formatted}
           </AdminDetailItem>
           <AdminDetailItem label="Aktualizováno">
-            {category.updatedAt}
+            {category.updatedAt.formatted}
           </AdminDetailItem>
-          {category.publishedAt && (
+          {category.publishedAt.iso && (
             <AdminDetailItem label="Publikováno">
-              {category.publishedAt}
+              {category.publishedAt.formatted}
             </AdminDetailItem>
           )}
           <AdminDetailItem label="Autor">
@@ -235,7 +235,7 @@ export default function RouteComponent({
                 key={review.id}
                 label={`${review.reviewer.name} (${review.reviewer.roleName})`}
               >
-                {review.createdAt}
+                {review.createdAt.formatted}
               </AdminDetailItem>
             ))}
           </Activity>

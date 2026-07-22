@@ -1,5 +1,5 @@
 import { prisma } from '~/utils/db.server'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { createFormattedDate } from '~/utils/format-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import {
   canPublishWithoutReview,
@@ -174,13 +174,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     canUpdate,
     category: {
       author: category.author,
-      createdAt: getFormattedPublishDate(category.createdAt),
+      createdAt: createFormattedDate(category.createdAt),
       hasApprovingReview,
       id: category.id,
       name: category.name,
-      publishedAt: getFormattedPublishDate(category.publishedAt),
+      publishedAt: createFormattedDate(category.publishedAt),
       reviews: category.reviews.map((review) => ({
-        createdAt: getFormattedPublishDate(review.createdAt),
+        createdAt: createFormattedDate(review.createdAt),
         id: review.id,
         reviewer: {
           id: review.reviewer.id,
@@ -191,7 +191,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       })),
       slug: category.slug,
       state: category.state,
-      updatedAt: getFormattedPublishDate(category.updatedAt),
+      updatedAt: createFormattedDate(category.updatedAt),
     },
     hasReviewed,
     needsReview,

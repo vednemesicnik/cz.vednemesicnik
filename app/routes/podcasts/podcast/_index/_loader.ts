@@ -1,5 +1,6 @@
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
@@ -58,5 +59,14 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     sources: createImageSources('podcast-cover', podcast.cover),
   }
 
-  return { podcast: { ...podcast, cover } }
+  return {
+    podcast: {
+      ...podcast,
+      cover,
+      episodes: podcast.episodes.map((episode) => ({
+        ...episode,
+        publishedAt: createFormattedDate(episode.publishedAt),
+      })),
+    },
+  }
 }

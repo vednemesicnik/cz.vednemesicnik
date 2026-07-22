@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
+import { createFormattedDate } from '~/utils/format-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
@@ -133,13 +134,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     draftArticleCategories.count +
     draftArticleTags.count
 
+  // Pending items cross the loader boundary with their createdAt as a FormattedDate.
+  const withFormattedCreatedAt = <Item extends { createdAt: Date }>(
+    item: Item,
+  ) => ({
+    ...item,
+    createdAt: createFormattedDate(item.createdAt),
+  })
+
   const pendingReviewItems = {
-    articleCategories: draftArticleCategories.items,
-    articles: draftArticles.items,
-    articleTags: draftArticleTags.items,
-    issues: draftIssues.items,
-    podcastEpisodes: draftPodcastEpisodes.items,
-    podcasts: draftPodcasts.items,
+    articleCategories: draftArticleCategories.items.map(withFormattedCreatedAt),
+    articles: draftArticles.items.map(withFormattedCreatedAt),
+    articleTags: draftArticleTags.items.map(withFormattedCreatedAt),
+    issues: draftIssues.items.map(withFormattedCreatedAt),
+    podcastEpisodes: draftPodcastEpisodes.items.map(withFormattedCreatedAt),
+    podcasts: draftPodcasts.items.map(withFormattedCreatedAt),
     totalCount: totalPendingCount,
   }
 

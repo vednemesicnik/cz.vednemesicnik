@@ -1,7 +1,7 @@
 import { href } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
@@ -187,7 +187,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     issue: {
       author: issue.author,
       coverUrl: createImageSources('issue-cover', issue.cover).src ?? null,
-      createdAt: getFormattedPublishDate(issue.createdAt),
+      createdAt: createFormattedDate(issue.createdAt),
       hasApprovingReview,
       hasCover: !!issue.cover,
       id: issue.id,
@@ -196,10 +196,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       pdfUrl: issue.pdf
         ? href('/archive/:fileName', { fileName: issue.pdf.fileName })
         : null,
-      publishedAt: getFormattedPublishDate(issue.publishedAt),
-      releasedAt: getFormattedPublishDate(issue.releasedAt),
+      publishedAt: createFormattedDate(issue.publishedAt),
+      releasedAt: createFormattedDate(issue.releasedAt),
       reviews: issue.reviews.map((review) => ({
-        createdAt: getFormattedPublishDate(review.createdAt),
+        createdAt: createFormattedDate(review.createdAt),
         id: review.id,
         reviewer: {
           id: review.reviewer.id,
@@ -209,7 +209,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         state: review.state,
       })),
       state: issue.state,
-      updatedAt: getFormattedPublishDate(issue.updatedAt),
+      updatedAt: createFormattedDate(issue.updatedAt),
     },
     needsReview,
   }

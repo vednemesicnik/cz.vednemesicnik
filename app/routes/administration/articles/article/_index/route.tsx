@@ -327,14 +327,14 @@ export default function RouteComponent({
       <AdminDetailSection title="Metadata">
         <AdminDetailList>
           <AdminDetailItem label="Vytvořeno">
-            {article.createdAt}
+            {article.createdAt.formatted}
           </AdminDetailItem>
           <AdminDetailItem label="Aktualizováno">
-            {article.updatedAt}
+            {article.updatedAt.formatted}
           </AdminDetailItem>
-          {article.publishedAt && (
+          {article.publishedAt.iso && (
             <AdminDetailItem label="Datum publikování">
-              {article.publishedAt}
+              {article.publishedAt.formatted}
             </AdminDetailItem>
           )}
         </AdminDetailList>
@@ -348,7 +348,7 @@ export default function RouteComponent({
                 key={review.id}
                 label={`${review.reviewer.name} (${getAuthorRoleLabel(review.reviewer.roleName)})`}
               >
-                {review.createdAt}
+                {review.createdAt.formatted}
               </AdminDetailItem>
             ))}
           </Activity>
@@ -375,7 +375,7 @@ export default function RouteComponent({
       <AdminPublishDateDialog
         action={href('/administration/articles/:articleId', { articleId })}
         confirmLabel={'Změnit datum'}
-        defaultPublishedAt={article.publishedAtISO}
+        defaultPublishedAt={article.publishedAt.iso ?? undefined}
         description={
           'Skutečně si přejete změnit datum vydání? Článek se přeřadí ve výpisu a změní se datum publikace v metadatech pro vyhledávače. Akce je určena k opravě chyb.'
         }

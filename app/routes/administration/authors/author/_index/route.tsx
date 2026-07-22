@@ -97,10 +97,10 @@ export default function RouteComponent({
       <AdminDetailSection title="Metadata">
         <AdminDetailList>
           <AdminDetailItem label="Vytvořeno">
-            {author.createdAt}
+            {author.createdAt.formatted}
           </AdminDetailItem>
           <AdminDetailItem label="Naposledy upraveno">
-            {author.updatedAt}
+            {author.updatedAt.formatted}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>

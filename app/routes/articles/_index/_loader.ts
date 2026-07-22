@@ -1,6 +1,7 @@
 import { PAGE_PARAM } from '~/components/pagination'
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
@@ -58,6 +59,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
           sources: createImageSources('article-image', article.featuredImage),
         }
       : null,
+    publishedAt: createFormattedDate(article.publishedAt),
   }))
 
   return {
