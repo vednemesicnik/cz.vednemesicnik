@@ -1,5 +1,6 @@
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import { createFormattedDate } from '~/utils/format-date'
 
 import type { Route } from './+types/route'
 
@@ -46,5 +47,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     },
   })
 
-  return { podcastEpisode }
+  return {
+    podcastEpisode: {
+      ...podcastEpisode,
+      publishedAt: createFormattedDate(podcastEpisode.publishedAt),
+    },
+  }
 }

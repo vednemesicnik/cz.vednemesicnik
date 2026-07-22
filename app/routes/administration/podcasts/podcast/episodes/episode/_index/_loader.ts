@@ -1,5 +1,5 @@
 import { prisma } from '~/utils/db.server'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
@@ -191,7 +191,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       author: episode.author,
       coverUrl:
         createImageSources('podcast-episode-cover', episode.cover).src ?? null,
-      createdAt: getFormattedPublishDate(episode.createdAt),
+      createdAt: createFormattedDate(episode.createdAt),
       description: episode.description,
       hasApprovingReview,
       hasCover: !!episode.cover,
@@ -199,9 +199,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       links: episode.links,
       number: episode.number,
       podcast: episode.podcast,
-      publishedAt: getFormattedPublishDate(episode.publishedAt),
+      publishedAt: createFormattedDate(episode.publishedAt),
       reviews: episode.reviews.map((review) => ({
-        createdAt: getFormattedPublishDate(review.createdAt),
+        createdAt: createFormattedDate(review.createdAt),
         id: review.id,
         reviewer: {
           id: review.reviewer.id,
@@ -213,7 +213,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       slug: episode.slug,
       state: episode.state,
       title: episode.title,
-      updatedAt: getFormattedPublishDate(episode.updatedAt),
+      updatedAt: createFormattedDate(episode.updatedAt),
     },
     hasReviewed,
     needsReview,

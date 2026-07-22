@@ -202,11 +202,11 @@ export default function RouteComponent({
             <AdminStateBadge state={issue.state} />
           </AdminDetailItem>
           <AdminDetailItem label="Datum vydání">
-            {issue.releasedAt}
+            {issue.releasedAt.formatted}
           </AdminDetailItem>
-          {issue.publishedAt && (
+          {issue.publishedAt.iso && (
             <AdminDetailItem label="Datum publikování">
-              {issue.publishedAt}
+              {issue.publishedAt.formatted}
             </AdminDetailItem>
           )}
           <AdminDetailItem label="Autor">{issue.author.name}</AdminDetailItem>
@@ -234,9 +234,11 @@ export default function RouteComponent({
 
       <AdminDetailSection title="Metadata">
         <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">{issue.createdAt}</AdminDetailItem>
+          <AdminDetailItem label="Vytvořeno">
+            {issue.createdAt.formatted}
+          </AdminDetailItem>
           <AdminDetailItem label="Aktualizováno">
-            {issue.updatedAt}
+            {issue.updatedAt.formatted}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>
@@ -249,7 +251,7 @@ export default function RouteComponent({
                 key={review.id}
                 label={`${review.reviewer.name} (${getAuthorRoleLabel(review.reviewer.roleName)})`}
               >
-                {review.createdAt}
+                {review.createdAt.formatted}
               </AdminDetailItem>
             ))}
           </Activity>

@@ -79,7 +79,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.articles.map((article) => (
               <AdminPendingItem
                 author={article.authors.map((a) => a.name).join(', ')}
-                date={new Date(article.createdAt)}
+                date={article.createdAt}
                 key={article.id}
                 title={article.title}
                 to={`/administration/articles/article/${article.id}`}
@@ -89,7 +89,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.podcasts.map((podcast) => (
               <AdminPendingItem
                 author={podcast.author.name}
-                date={new Date(podcast.createdAt)}
+                date={podcast.createdAt}
                 key={podcast.id}
                 title={podcast.title}
                 to={href('/administration/podcasts/:podcastId', {
@@ -101,7 +101,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.podcastEpisodes.map((episode) => (
               <AdminPendingItem
                 author={episode.author.name}
-                date={new Date(episode.createdAt)}
+                date={episode.createdAt}
                 key={episode.id}
                 title={`${episode.podcast.title} - ${episode.title}`}
                 to={href(
@@ -117,7 +117,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.issues.map((issue) => (
               <AdminPendingItem
                 author={issue.author.name}
-                date={new Date(issue.createdAt)}
+                date={issue.createdAt}
                 key={issue.id}
                 title={issue.label}
                 to={href('/administration/archive/:issueId', {
@@ -129,7 +129,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.articleCategories.map((category) => (
               <AdminPendingItem
                 author={category.author.name}
-                date={new Date(category.createdAt)}
+                date={category.createdAt}
                 key={category.id}
                 title={category.name}
                 to={`/administration/article-categories/category/${category.id}`}
@@ -139,7 +139,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.articleTags.map((tag) => (
               <AdminPendingItem
                 author={tag.author.name}
-                date={new Date(tag.createdAt)}
+                date={tag.createdAt}
                 key={tag.id}
                 title={tag.name}
                 to={`/administration/article-tags/tag/${tag.id}`}

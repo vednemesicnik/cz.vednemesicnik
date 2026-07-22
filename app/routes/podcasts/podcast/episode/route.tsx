@@ -8,7 +8,6 @@ import { ListItem } from '~/components/list-item'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 import { Subheadline } from '~/components/subheadline'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
 import type { Route } from './+types/route'
 
 export { handle } from './_handle'
@@ -18,15 +17,19 @@ export { meta } from './_meta'
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { podcastEpisode } = loaderData
 
-  const formattedPublishDate = getFormattedPublishDate(
-    podcastEpisode.publishedAt,
-  )
-
   return (
     <Page>
       <HeadlineGroup>
         <Headline>{podcastEpisode.title}</Headline>
-        <Subheadline>{formattedPublishDate}</Subheadline>
+        <Subheadline>
+          {podcastEpisode.publishedAt.iso ? (
+            <time dateTime={podcastEpisode.publishedAt.iso}>
+              {podcastEpisode.publishedAt.formatted}
+            </time>
+          ) : (
+            podcastEpisode.publishedAt.formatted
+          )}
+        </Subheadline>
       </HeadlineGroup>
       <Paragraph>{podcastEpisode.description}</Paragraph>
       <BulletedList>

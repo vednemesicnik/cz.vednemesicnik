@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { createFormattedDate } from '~/utils/format-date'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -32,7 +32,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return {
     passkeys: passkeys.map((passkey) => ({
-      createdAt: getFormattedPublishDate(passkey.createdAt),
+      createdAt: createFormattedDate(passkey.createdAt),
       deviceType: passkey.credentialDeviceType,
       id: passkey.id,
     })),
