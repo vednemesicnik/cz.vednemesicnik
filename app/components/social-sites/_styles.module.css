@@ -1,24 +1,30 @@
 .container {
-  display: grid;
-  position: relative;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
+  @layer component {
+    display: grid;
+    position: relative;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+  }
 }
 
 .list {
-  display: grid;
-  position: relative;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  @layer component {
+    display: grid;
+    position: relative;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 .list_item {
-  display: flex;
-  position: relative;
-  margin: 0;
+  @layer component {
+    display: flex;
+    position: relative;
+    margin: 0;
+  }
 }
 
 .link {
