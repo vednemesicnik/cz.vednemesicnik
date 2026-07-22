@@ -27,7 +27,11 @@ export const AdminPendingItem = ({
       <div className={styles.header}>
         <span className={styles.type}>{type}</span>
         <span className={styles.date}>
-          <time dateTime={date.iso ?? undefined}>{date.formatted}</time>
+          {date.iso ? (
+            <time dateTime={date.iso}>{date.formatted}</time>
+          ) : (
+            date.formatted
+          )}
         </span>
       </div>
       <div className={styles.title}>{title}</div>
