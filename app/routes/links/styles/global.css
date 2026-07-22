@@ -6,7 +6,7 @@
     align-content: center;
     grid-template-columns: minmax(auto, 580px);
     grid-template-rows: min-content;
-    background-image: var(--rose-pink--coral---gradient);
+    background-image: var(--gradient-signature);
     background-size: 200% 200%;
     animation: wave-animation 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     padding-inline: 16px;

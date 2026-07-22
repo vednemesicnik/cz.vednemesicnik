@@ -91,7 +91,7 @@
   @layer component {
     display: inline-flex;
     flex-shrink: 0;
-    color: var(--violet);
+    color: var(--primary);
   }
 }
 

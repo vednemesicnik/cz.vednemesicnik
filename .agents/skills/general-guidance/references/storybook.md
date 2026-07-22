@@ -77,12 +77,10 @@ export const ErrorState: Story = {
 ## CSS imports
 
 Storybook preview (`/.storybook/preview.ts`) imports:
-- `~/styles/colors.css`
 - `~/styles/fonts.css`
 - `~/styles/sizes.css`
 - `~/styles/global.css`
 - `~/styles/primitive-tokens.css`
-- `~/styles/admin-semantic-tokens.css`
-- `~/styles/public-semantic-tokens.css`
+- `~/styles/semantic-tokens.css`
 
-Public website components require `public-semantic-tokens.css`, admin components require `admin-semantic-tokens.css`.
+`semantic-tokens.css` provides both themes: public tokens on `:root`, admin overrides under `[data-theme='admin']`. The preview exposes a `theme` toolbar (public/admin) that toggles `data-theme` on `<html>`; admin components/stories should render under the admin theme.

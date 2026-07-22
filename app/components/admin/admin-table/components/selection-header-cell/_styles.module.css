@@ -15,7 +15,7 @@
 .checkbox {
   @layer component {
     display: block;
-    accent-color: var(--violet);
+    accent-color: var(--primary);
     cursor: pointer;
 
     &:disabled {

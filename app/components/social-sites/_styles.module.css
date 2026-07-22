@@ -1,35 +1,41 @@
 .container {
-  display: grid;
-  position: relative;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
+  @layer component {
+    display: grid;
+    position: relative;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+  }
 }
 
 .list {
-  display: grid;
-  position: relative;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  @layer component {
+    display: grid;
+    position: relative;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 .list_item {
-  display: flex;
-  position: relative;
-  margin: 0;
+  @layer component {
+    display: flex;
+    position: relative;
+    margin: 0;
+  }
 }
 
 .link {
-  @layer variant {
+  @layer component {
     display: flex;
     position: relative;
     font-weight: var(--font-weight-medium);
     font-size: inherit;
     line-height: inherit;
     cursor: pointer;
-    color: var(--footer-text);
+    color: var(--text-tertiary);
     transition: color var(--transition-fast);
 
     &:hover {
@@ -39,7 +45,7 @@
 }
 
 .logo {
-  @layer variant {
+  @layer component {
     width: 60px;
     height: 60px;
   }
