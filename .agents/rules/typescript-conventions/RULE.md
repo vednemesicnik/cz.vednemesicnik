@@ -54,6 +54,7 @@ type FormattedDate = {
 /**
  * Builds the {@link FormattedDate} that carries a date across the loader → UI boundary.
  *
+ * @param date - The date to format, or `null` for a not-yet-set value.
  * @param options - Optional `locale`, forwarded to {@link formatDate}.
  * @returns `iso` — the machine value that seeds date pickers and `<time dateTime>`, or
  *   `null` for a null date; `formatted` — the display value, `'...'` for null.
