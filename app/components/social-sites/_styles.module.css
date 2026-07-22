@@ -28,7 +28,7 @@
 }
 
 .link {
-  @layer variant {
+  @layer component {
     display: flex;
     position: relative;
     font-weight: var(--font-weight-medium);
@@ -45,7 +45,7 @@
 }
 
 .logo {
-  @layer variant {
+  @layer component {
     width: 60px;
     height: 60px;
   }
