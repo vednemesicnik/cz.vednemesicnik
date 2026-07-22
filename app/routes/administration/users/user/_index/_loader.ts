@@ -1,5 +1,5 @@
 import { prisma } from '~/utils/db.server'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
@@ -82,14 +82,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     canUpdate,
     user: {
       author: user.author,
-      createdAt: getFormattedPublishDate(user.createdAt),
+      createdAt: createFormattedDate(user.createdAt),
       email: user.email,
       hasImage: !!user.image,
       id: user.id,
       imageUrl: createImageSources('user-image', user.image).src ?? null,
       name: user.name,
       role: user.role,
-      updatedAt: getFormattedPublishDate(user.updatedAt),
+      updatedAt: createFormattedDate(user.updatedAt),
       username: user.username,
     },
   }

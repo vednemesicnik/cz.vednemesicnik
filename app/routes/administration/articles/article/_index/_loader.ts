@@ -1,5 +1,5 @@
 import { prisma } from '~/utils/db.server'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
@@ -200,7 +200,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       authors: article.authors,
       categories: article.categories,
       content: article.content,
-      createdAt: getFormattedPublishDate(article.createdAt),
+      createdAt: createFormattedDate(article.createdAt),
       featuredImageId: article.featuredImageId,
       hasApprovingReview,
       id: article.id,
@@ -208,15 +208,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         id: image.id,
         sources: createImageSources('article-image', image),
       })),
-      publishedAt: getFormattedPublishDate(article.publishedAt),
-      // Raw instant seeding the change-date dialog's picker. Prisma hydrates the
-      // column into a Date; toISOString() serializes that instant to a string for
-      // the client, which converts it to/from the browser's local time — so the
-      // default and the submitted value stay in the editor's timezone. undefined
-      // for drafts (optional chaining already yields undefined when null).
-      publishedAtISO: article.publishedAt?.toISOString(),
+      // FormattedDate carries the raw instant in `.iso`, which seeds the
+      // change-date dialog's picker (the browser converts it to/from local time,
+      // keeping the default and submitted value in the editor's timezone).
+      publishedAt: createFormattedDate(article.publishedAt),
       reviews: article.reviews.map((review) => ({
-        createdAt: getFormattedPublishDate(review.createdAt),
+        createdAt: createFormattedDate(review.createdAt),
         id: review.id,
         reviewer: {
           id: review.reviewer.id,
@@ -229,7 +226,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       state: article.state,
       tags: article.tags,
       title: article.title,
-      updatedAt: getFormattedPublishDate(article.updatedAt),
+      updatedAt: createFormattedDate(article.updatedAt),
     },
     canArchive,
     canChangePublishedAt:

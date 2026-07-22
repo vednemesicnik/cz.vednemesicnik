@@ -1,5 +1,5 @@
 import { prisma } from '~/utils/db.server'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
+import { createFormattedDate } from '~/utils/format-date'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
 import type { Route } from './+types/route'
@@ -68,11 +68,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   return {
     author: {
       bio: author.bio,
-      createdAt: getFormattedPublishDate(author.createdAt),
+      createdAt: createFormattedDate(author.createdAt),
       id: author.id,
       name: author.name,
       role: author.role,
-      updatedAt: getFormattedPublishDate(author.updatedAt),
+      updatedAt: createFormattedDate(author.updatedAt),
       user: author.user,
     },
     // Can only delete authors without linked User (onDelete: Restrict in schema)

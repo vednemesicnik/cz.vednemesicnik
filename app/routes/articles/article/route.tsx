@@ -8,7 +8,6 @@ import { ImageGallery } from '~/components/image-gallery'
 import { ImageGalleryPreview } from '~/components/image-gallery-preview'
 import { Page } from '~/components/page'
 import { Subheadline } from '~/components/subheadline'
-import { getFormattedPublishDate } from '~/utils/get-formatted-publish-date'
 import type { Route } from './+types/route'
 
 export { handle } from './_handle'
@@ -24,7 +23,9 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
         <Headline>{article.title}</Headline>
         <Subheadline>
           {article.authors.map((author) => author.name).join(', ')} ·{' '}
-          {getFormattedPublishDate(article.publishedAt)}
+          <time dateTime={article.publishedAt.iso ?? undefined}>
+            {article.publishedAt.formatted}
+          </time>
         </Subheadline>
       </HeadlineGroup>
 

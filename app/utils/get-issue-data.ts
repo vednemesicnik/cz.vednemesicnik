@@ -3,6 +3,7 @@ export const getIssueData = (ordinalNumber: string, releasedAt: string) => {
   const year = releaseDate.getFullYear()
   const monthYear = releaseDate.toLocaleDateString('cs-CZ', {
     month: 'long',
+    timeZone: 'Europe/Prague',
     year: 'numeric',
   })
 

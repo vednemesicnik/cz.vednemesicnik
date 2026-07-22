@@ -161,9 +161,9 @@ export default function RouteComponent({
               {podcast.description}
             </AdminDetailItem>
           )}
-          {podcast.publishedAt && (
+          {podcast.publishedAt.iso && (
             <AdminDetailItem label="Datum publikování">
-              {podcast.publishedAt}
+              {podcast.publishedAt.formatted}
             </AdminDetailItem>
           )}
           <AdminDetailItem label="Autor">{podcast.author.name}</AdminDetailItem>
@@ -185,10 +185,10 @@ export default function RouteComponent({
       <AdminDetailSection title="Metadata">
         <AdminDetailList>
           <AdminDetailItem label="Vytvořeno">
-            {podcast.createdAt}
+            {podcast.createdAt.formatted}
           </AdminDetailItem>
           <AdminDetailItem label="Aktualizováno">
-            {podcast.updatedAt}
+            {podcast.updatedAt.formatted}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>
@@ -201,7 +201,7 @@ export default function RouteComponent({
                 key={review.id}
                 label={`${review.reviewer.name} (${getAuthorRoleLabel(review.reviewer.roleName)})`}
               >
-                {review.createdAt}
+                {review.createdAt.formatted}
               </AdminDetailItem>
             ))}
           </Activity>

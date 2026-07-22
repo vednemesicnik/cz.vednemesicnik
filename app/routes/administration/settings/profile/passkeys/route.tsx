@@ -47,7 +47,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   {deviceTypeLabels[passkey.deviceType] ?? passkey.deviceType}
                 </AdminDetailItem>
                 <AdminDetailItem label="Přidáno">
-                  {passkey.createdAt}
+                  {passkey.createdAt.formatted}
                 </AdminDetailItem>
               </AdminDetailList>
 
