@@ -46,7 +46,7 @@
     box-shadow 0.15s ease;
 
   &:hover {
-    color: var(--violet);
+    color: var(--primary);
   }
 
   &:focus-visible {

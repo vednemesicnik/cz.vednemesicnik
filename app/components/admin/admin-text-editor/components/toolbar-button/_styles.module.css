@@ -47,7 +47,7 @@
   /* Active State */
   &:active:not(:disabled) {
     background-color: var(--bg-hover);
-    color: var(--violet);
+    color: var(--primary);
   }
 
   /* Disabled State */
@@ -60,10 +60,10 @@
 /* Active/Selected State */
 .button.active {
   background-color: var(--bg-hover);
-  color: var(--violet);
+  color: var(--primary);
 
   &:hover:not(:disabled):not(:focus-visible) {
     background-color: var(--bg-hover);
-    color: var(--violet);
+    color: var(--primary);
   }
 }

@@ -21,7 +21,7 @@
     box-shadow 0.15s ease;
 
   &:focus-within {
-    border-color: var(--violet);
+    border-color: var(--primary);
     box-shadow: var(--focus-shadow);
   }
 }

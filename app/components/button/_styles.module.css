@@ -22,23 +22,23 @@
 }
 
 /* ========================================
-   Danger Variant (Black)
+   Danger Variant (Rose)
    ======================================== */
 .danger {
-  background-color: var(--black);
-  color: var(--white);
+  background-color: var(--danger);
+  color: var(--danger-text);
   border: none;
 
   &:hover:not(:disabled):not(:focus-visible) {
-    background-color: var(--eerie-black);
+    background-color: var(--danger-hover);
   }
 
   &:active:not(:disabled) {
-    background-color: var(--onyx);
+    background-color: var(--danger-active);
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--black) 30%, transparent);
+    box-shadow: var(--focus-shadow-danger);
     outline: none;
   }
 }

@@ -42,7 +42,7 @@
 }
 
 .dropZone.dragging {
-  border-color: var(--violet);
+  border-color: var(--primary);
   background-color: var(--bg-tertiary);
 }
 

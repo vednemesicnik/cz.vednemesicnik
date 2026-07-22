@@ -10,7 +10,7 @@
   grid-template-columns: 1fr;
   grid-template-rows: repeat(2, max-content);
   justify-items: center;
-  background-image: var(--rose-pink--coral---gradient);
+  background-image: var(--gradient-signature);
   width: 100%;
   row-gap: 24px;
   padding: 24px;
@@ -22,14 +22,14 @@
   }
 
   & .title {
-    color: var(--pale-purple);
+    color: var(--text-on-accent);
   }
 
   &:nth-of-type(odd) {
-    background-image: var(--ruddy-blue--spring-green---gradient);
+    background-image: var(--gradient-signature);
 
     & .title {
-      color: var(--alice-blue);
+      color: var(--text-on-accent);
     }
   }
 }

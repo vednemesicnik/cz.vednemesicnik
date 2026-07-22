@@ -1,5 +1,5 @@
 .linkText {
-  color: var(--white);
+  color: var(--color-white);
   text-align: center;
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-sm);
@@ -34,7 +34,7 @@
     cursor: pointer;
     padding: 0 16px;
     border-radius: 8px;
-    background-color: var(--black);
+    background-color: var(--color-black);
     min-height: 44px;
     text-decoration: none;
     transition: all 250ms ease-in-out;
@@ -42,8 +42,8 @@
 
     &:focus-visible {
       box-shadow:
-        0 0 0 2px var(--white),
-        0 0 0 4px var(--rose-pink);
+        0 0 0 2px var(--color-white),
+        0 0 0 4px var(--primary);
       outline: none;
     }
   }

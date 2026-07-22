@@ -29,13 +29,13 @@
 
   &:focus-visible {
     outline: none;
-    border-color: var(--violet);
+    border-color: var(--primary);
     box-shadow: var(--focus-shadow);
   }
 
   &:checked {
-    border-color: var(--violet);
-    background-color: var(--violet);
+    border-color: var(--primary);
+    background-color: var(--primary);
   }
 
   &:checked::before {

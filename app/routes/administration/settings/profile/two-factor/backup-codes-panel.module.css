@@ -3,8 +3,8 @@
     display: grid;
     gap: 12px;
     justify-items: start;
-    background-color: var(--admin-bg-secondary);
-    border: 1px solid var(--admin-border);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 20px;
     margin-block: 16px;
@@ -15,7 +15,7 @@
   @layer route {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
-    color: var(--admin-text-primary);
+    color: var(--text-primary);
     margin: 0;
   }
 }
@@ -23,7 +23,7 @@
 .warning {
   @layer route {
     font-size: var(--font-size-sm);
-    color: var(--admin-warning);
+    color: var(--warning);
     margin: 0;
   }
 }
@@ -45,6 +45,6 @@
     font-family: ui-monospace, monospace;
     font-size: var(--font-size-md);
     letter-spacing: 0.05em;
-    color: var(--admin-text-primary);
+    color: var(--text-primary);
   }
 }

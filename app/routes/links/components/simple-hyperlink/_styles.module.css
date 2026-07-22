@@ -6,8 +6,8 @@
   align-items: center;
   padding: 8px 16px;
   border-radius: 8px;
-  background-color: var(--black);
-  color: var(--white);
+  background-color: var(--color-black);
+  color: var(--color-white);
   text-decoration: none;
   text-align: center;
   font-weight: var(--font-weight-medium);
@@ -17,8 +17,8 @@
 
   &:focus-visible {
     box-shadow:
-      0 0 0 2px var(--white),
-      0 0 0 4px var(--rose-pink);
+      0 0 0 2px var(--color-white),
+      0 0 0 4px var(--primary);
     outline: none;
   }
 }

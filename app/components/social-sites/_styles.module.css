@@ -29,7 +29,7 @@
     font-size: inherit;
     line-height: inherit;
     cursor: pointer;
-    color: var(--footer-text);
+    color: var(--text-tertiary);
     transition: color var(--transition-fast);
 
     &:hover {

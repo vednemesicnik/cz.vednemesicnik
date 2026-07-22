@@ -38,7 +38,7 @@
     /* Hover State */
     &:hover:not(:focus-visible) {
       background-color: var(--bg-hover);
-      border-color: var(--violet);
+      border-color: var(--primary);
     }
 
     /* Active State */
@@ -49,7 +49,7 @@
     /* Focus State */
     &:focus-visible {
       background-color: var(--bg-hover);
-      border-color: var(--violet);
+      border-color: var(--primary);
       box-shadow: var(--focus-shadow);
       outline: none;
     }

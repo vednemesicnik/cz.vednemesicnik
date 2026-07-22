@@ -15,7 +15,7 @@
     grid-auto-flow: row;
     width: 100%;
     max-width: 420px;
-    background-color: var(--admin-bg-primary);
+    background-color: var(--bg-primary);
     border-radius: 8px;
     box-shadow:
       0 10px 15px -3px rgba(0, 0, 0, 0.1),
@@ -28,7 +28,7 @@
   @layer route {
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-bold);
-    color: var(--admin-text-primary);
+    color: var(--text-primary);
     text-align: center;
     margin: 0;
   }
@@ -37,7 +37,7 @@
 .subtitle {
   @layer route {
     font-size: var(--font-size-sm);
-    color: var(--admin-text-secondary);
+    color: var(--text-secondary);
     margin-block-start: 8px;
     margin-block-end: 0;
     text-align: center;
@@ -57,7 +57,7 @@
     padding-inline: 24px;
     border: 2px solid transparent;
     border-radius: 8px;
-    background-color: var(--violet);
+    background-color: var(--primary);
     color: var(--text-on-accent);
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-semibold);
@@ -65,11 +65,11 @@
     text-decoration: none;
 
     &:hover:not(:focus-visible) {
-      background-color: var(--violet-hover);
+      background-color: var(--primary-hover);
     }
 
     &:active {
-      background-color: var(--violet-active);
+      background-color: var(--primary-active);
     }
 
     &:focus-visible {
@@ -85,8 +85,8 @@
     margin-block-end: 0;
     padding: 12px;
     border-radius: 8px;
-    background-color: var(--admin-bg-danger, rgba(220, 38, 38, 0.1));
-    color: var(--admin-text-danger, #dc2626);
+    background-color: var(--error-bg);
+    color: var(--error-text);
     font-size: var(--font-size-sm);
     text-align: center;
   }
@@ -109,17 +109,17 @@
     width: 100%;
     padding-block: 12px;
     padding-inline: 24px;
-    border: 2px solid var(--admin-border-primary, var(--violet));
+    border: 2px solid var(--primary);
     border-radius: 8px;
-    background-color: var(--admin-bg-primary);
-    color: var(--admin-text-primary);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-semibold);
     line-height: 1;
     cursor: pointer;
 
     &:hover:not(:focus-visible) {
-      background-color: var(--admin-bg-secondary, rgba(0, 0, 0, 0.03));
+      background-color: var(--bg-secondary);
     }
 
     &:focus-visible {
@@ -139,7 +139,7 @@
 .link {
   @layer route {
     font-size: var(--font-size-sm);
-    color: var(--admin-text-link, var(--admin-text-secondary));
+    color: var(--primary);
     text-decoration: underline;
   }
 }

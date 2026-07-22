@@ -51,10 +51,10 @@
 }
 
 .tab--active {
-  color: var(--violet);
+  color: var(--primary);
   font-weight: var(--font-weight-semibold);
 
   &::after {
-    background-color: var(--violet);
+    background-color: var(--primary);
   }
 }
