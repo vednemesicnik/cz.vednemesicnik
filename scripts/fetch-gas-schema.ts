@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import 'dotenv/config'
 
+import { execFileSync } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
@@ -78,6 +79,15 @@ const fetchSchema = async (name: GasEndpointName): Promise<void> => {
   const target = schemaPath(name)
   await fs.mkdir(path.dirname(target), { recursive: true })
   await fs.writeFile(target, `${JSON.stringify(schema, null, 2)}\n`)
+
+  // Normalize to the repo's Biome format (what the pre-commit hook applies,
+  // including sorted keys) so the committed schema matches it: re-fetching an
+  // unchanged contract then yields no diff instead of key-order churn.
+  execFileSync(
+    path.join(process.cwd(), 'node_modules', '.bin', 'biome'),
+    ['check', '--write', '--files-ignore-unknown=true', target],
+    { stdio: 'ignore' },
+  )
 
   console.info(`Wrote ${name} response schema to ${target}`)
 }
