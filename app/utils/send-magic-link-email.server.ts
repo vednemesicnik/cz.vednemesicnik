@@ -2,7 +2,7 @@
  * Sends the magic-link sign-in email through the Google Apps Script web app
  * (see the SCRIPT__Auth__Magic_Link repo). Best-effort: the sign-in request
  * action returns the same neutral response whether or not delivery succeeds, so
- * this never throws — failures are logged and swallowed.
+ * this never throws — failures are logged, reported to Sentry, and swallowed.
  *
  * No-ops when GAS_MAGIC_LINK_URL / GAS_MAGIC_LINK_SECRET are unset (local
  * development), so the flow can be exercised without a live GAS deployment.
@@ -12,6 +12,7 @@ import type {
   SignInMagicLinkRequest,
   SignInMagicLinkResponse,
 } from '@generated/magic-link/response'
+import * as Sentry from '@sentry/react-router'
 
 import { postGasRequest } from './post-gas-request.server'
 
@@ -50,13 +51,29 @@ export const sendMagicLinkEmail = async ({
       // data is null when the body isn't JSON (e.g. a GAS HTML error page);
       // otherwise narrow to the failure branch for the error / mailerError.
       const failure = data?.ok === false ? data : undefined
-      console.error(
+      const message =
         `[magic-link] GAS send failed — status ${status}, ` +
-          `ok ${data?.ok ?? '—'}, error ${failure?.error ?? '—'}, ` +
-          `mailerError ${failure?.mailerError ?? '—'}.`,
-      )
+        `ok ${data?.ok ?? '—'}, error ${failure?.error ?? '—'}, ` +
+        `mailerError ${failure?.mailerError ?? '—'}.`
+
+      console.error(message)
+
+      // Fly logs are short-lived (~5 min); report to Sentry so send failures
+      // stay diagnosable. Best-effort still: no throw, nothing surfaced.
+      if (process.env.SENTRY_DSN) {
+        Sentry.captureMessage(message, {
+          extra: {
+            error: failure?.error,
+            mailerError: failure?.mailerError,
+            ok: data?.ok,
+            status,
+          },
+          level: 'error',
+        })
+      }
     }
   } catch (error) {
     console.error('[magic-link] GAS request threw —', error)
+    if (process.env.SENTRY_DSN) Sentry.captureException(error)
   }
 }
