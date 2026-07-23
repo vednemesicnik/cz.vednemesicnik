@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import 'dotenv/config'
 
+import { execFileSync } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
@@ -26,7 +27,7 @@ const FETCH_TIMEOUT_MS = 15000
 const schemaPath = (name: string): string =>
   path.join(process.cwd(), 'schemas', name, 'response.schema.json')
 
-const fetchSchema = async (name: GasEndpointName): Promise<void> => {
+const fetchSchema = async (name: GasEndpointName): Promise<string> => {
   const { urlEnvironmentVariable } = GAS_ENDPOINTS[name]
   const url = process.env[urlEnvironmentVariable]
 
@@ -80,6 +81,34 @@ const fetchSchema = async (name: GasEndpointName): Promise<void> => {
   await fs.writeFile(target, `${JSON.stringify(schema, null, 2)}\n`)
 
   console.info(`Wrote ${name} response schema to ${target}`)
+
+  return target
+}
+
+/**
+ * Normalizes the written schemas to the repo's Biome format (what the
+ * pre-commit hook applies, including sorted keys) so the committed files match
+ * it — re-fetching an unchanged contract then yields no diff instead of
+ * key-order churn. Runs Biome once over all files; surfaces its stderr on
+ * failure so a formatting error is diagnosable.
+ */
+const formatSchemas = (targets: string[]): void => {
+  if (targets.length === 0) {
+    return
+  }
+
+  try {
+    execFileSync(
+      path.join(process.cwd(), 'node_modules', '.bin', 'biome'),
+      ['check', '--write', '--files-ignore-unknown=true', ...targets],
+      { stdio: ['ignore', 'ignore', 'pipe'] },
+    )
+  } catch (error) {
+    const stderr = (error as { stderr?: Buffer }).stderr?.toString().trim()
+    throw new Error(
+      `Biome failed to format the fetched schema(s)${stderr ? `:\n${stderr}` : '.'}`,
+    )
+  }
 }
 
 const resolveNames = (): GasEndpointName[] => {
@@ -102,9 +131,13 @@ const resolveNames = (): GasEndpointName[] => {
 }
 
 const main = async (): Promise<void> => {
+  const targets: string[] = []
+
   for (const name of resolveNames()) {
-    await fetchSchema(name)
+    targets.push(await fetchSchema(name))
   }
+
+  formatSchemas(targets)
 }
 
 main().catch((error) => {
