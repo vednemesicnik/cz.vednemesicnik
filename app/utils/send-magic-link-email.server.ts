@@ -13,15 +13,7 @@ import type {
   SignInMagicLinkResponse,
 } from '@generated/magic-link/response'
 
-// The failure branch of the response contract, carrying error / mailerError.
-type SignInMagicLinkErrorResponse = Extract<
-  SignInMagicLinkResponse,
-  { ok: false }
->
-
-// Fail fast if GAS hangs: delivery is best-effort and must not stall the
-// (neutral) sign-in response.
-const GAS_TIMEOUT_MS = 8000
+import { postGasRequest } from './post-gas-request.server'
 
 export const sendMagicLinkEmail = async ({
   email,
@@ -49,30 +41,19 @@ export const sendMagicLinkEmail = async ({
   }
 
   try {
-    const response = await fetch(url, {
-      body: JSON.stringify({
-        email,
-        link,
-        secret,
-      } satisfies SignInMagicLinkRequest),
-      headers: { 'Content-Type': 'application/json' },
-      method: 'POST',
-      signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
-    })
+    const { ok, status, data } = await postGasRequest<SignInMagicLinkResponse>(
+      url,
+      { email, link, secret } satisfies SignInMagicLinkRequest,
+    )
 
-    // The parse fallback ({ ok: false }) is intentionally not a full contract
-    // member, so keep the shape loose while deriving error / mailerError from
-    // the generated contract.
-    const result = (await response.json().catch(() => ({ ok: false }))) as {
-      ok?: boolean
-      error?: SignInMagicLinkErrorResponse['error']
-      mailerError?: SignInMagicLinkErrorResponse['mailerError']
-    }
-
-    if (!response.ok || !result.ok) {
+    if (!ok || data?.ok !== true) {
+      // data is null when the body isn't JSON (e.g. a GAS HTML error page);
+      // otherwise narrow to the failure branch for the error / mailerError.
+      const failure = data?.ok === false ? data : undefined
       console.error(
-        `[magic-link] GAS send failed — status ${response.status}, ok ${result.ok}, ` +
-          `error ${result.error ?? '—'}, mailerError ${result.mailerError ?? '—'}.`,
+        `[magic-link] GAS send failed — status ${status}, ` +
+          `ok ${data?.ok ?? '—'}, error ${failure?.error ?? '—'}, ` +
+          `mailerError ${failure?.mailerError ?? '—'}.`,
       )
     }
   } catch (error) {
