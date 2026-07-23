@@ -110,7 +110,7 @@ fly secrets set GOOGLE_CLIENT_ID="…" GOOGLE_CLIENT_SECRET="…" --app cz-vedne
 
 Magic-link sign-in needs the Google Apps Script web app credentials (see the
 `SCRIPT__Auth__Magic_Link` repo). `GAS_MAGIC_LINK_SECRET` must equal the script's
-`SHARED_SECRET` property.
+`OWN_SECRET` property.
 
 ```shell
 fly secrets set GAS_MAGIC_LINK_URL="https://script.google.com/macros/s/.../exec" GAS_MAGIC_LINK_SECRET="…" --app cz-vednemesicnik

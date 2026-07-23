@@ -40,6 +40,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:generate
+      - run: pnpm gas:types:generate
       - run: pnpm app:typecheck
 
   test:
@@ -55,6 +56,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:generate
+      - run: pnpm gas:types:generate
       - run: pnpm test
 
   build:
@@ -70,6 +72,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:generate
+      - run: pnpm gas:types:generate
       - run: pnpm app:build
 
   docker-build:
@@ -117,4 +120,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:generate
+      - run: pnpm gas:types:generate
       - run: pnpm build-storybook

@@ -59,6 +59,9 @@ ADD . .
 # Run the Prisma type generator
 RUN pnpm prisma:generate
 
+# Generate the GAS response types from the committed schemas (offline)
+RUN pnpm gas:types:generate
+
 # Run the build. SENTRY_AUTH_TOKEN is mounted as a BuildKit build secret and exposed
 # to this step only (never baked into a layer). The `env=` target needs the pinned
 # frontend (see the `# syntax` directive at the top). The secret is optional: absent
