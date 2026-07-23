@@ -60,14 +60,18 @@ export const sendMagicLinkEmail = async ({
 
       // Fly logs are short-lived (~5 min); report to Sentry so send failures
       // stay diagnosable. Best-effort still: no throw, nothing surfaced.
+      // A stable message + fingerprint groups every failure into one issue, so
+      // a sustained outage is a single issue (with the varying detail in
+      // `extra`), not one per sign-in attempt.
       if (process.env.SENTRY_DSN) {
-        Sentry.captureMessage(message, {
+        Sentry.captureMessage('[magic-link] GAS send failed', {
           extra: {
             error: failure?.error,
             mailerError: failure?.mailerError,
             ok: data?.ok,
             status,
           },
+          fingerprint: ['magic-link', 'gas-send-failed'],
           level: 'error',
         })
       }

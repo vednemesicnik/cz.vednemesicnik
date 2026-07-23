@@ -52,6 +52,29 @@ const fetchSchema = async (name: GasEndpointName): Promise<void> => {
     throw new Error(`${name} doGet did not return a JSON object.`)
   }
 
+  // Guard against a valid-JSON non-schema (e.g. a GAS error payload like
+  // `{ ok: false, error: … }`) being committed as the contract, which would
+  // otherwise silently generate empty types. Require at least one JSON Schema
+  // keyword at the root.
+  const schemaKeywords = [
+    '$schema',
+    '$defs',
+    'definitions',
+    'properties',
+    'type',
+    'oneOf',
+    'anyOf',
+    'allOf',
+    '$ref',
+  ]
+
+  if (!schemaKeywords.some((keyword) => keyword in schema)) {
+    throw new Error(
+      `${name} doGet did not return a JSON Schema (no schema keywords). ` +
+        `Got keys: ${Object.keys(schema).join(', ') || '(none)'}.`,
+    )
+  }
+
   const target = schemaPath(name)
   await fs.mkdir(path.dirname(target), { recursive: true })
   await fs.writeFile(target, `${JSON.stringify(schema, null, 2)}\n`)
