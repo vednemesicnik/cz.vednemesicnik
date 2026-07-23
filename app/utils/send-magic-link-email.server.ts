@@ -2,15 +2,19 @@
  * Sends the magic-link sign-in email through the Google Apps Script web app
  * (see the SCRIPT__Auth__Magic_Link repo). Best-effort: the sign-in request
  * action returns the same neutral response whether or not delivery succeeds, so
- * this never throws — failures are logged and swallowed.
+ * this never throws — failures are logged, reported to Sentry, and swallowed.
  *
  * No-ops when GAS_MAGIC_LINK_URL / GAS_MAGIC_LINK_SECRET are unset (local
  * development), so the flow can be exercised without a live GAS deployment.
  */
 
-// Fail fast if GAS hangs: delivery is best-effort and must not stall the
-// (neutral) sign-in response.
-const GAS_TIMEOUT_MS = 8000
+import type {
+  SignInMagicLinkRequest,
+  SignInMagicLinkResponse,
+} from '@generated/magic-link/response'
+import * as Sentry from '@sentry/react-router'
+
+import { postGasRequest } from './post-gas-request.server'
 
 export const sendMagicLinkEmail = async ({
   email,
@@ -38,23 +42,42 @@ export const sendMagicLinkEmail = async ({
   }
 
   try {
-    const response = await fetch(url, {
-      body: JSON.stringify({ email, link, secret }),
-      headers: { 'Content-Type': 'application/json' },
-      method: 'POST',
-      signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
-    })
+    const { ok, status, data } = await postGasRequest<SignInMagicLinkResponse>(
+      url,
+      { email, link, secret } satisfies SignInMagicLinkRequest,
+    )
 
-    const result = (await response.json().catch(() => ({ ok: false }))) as {
-      ok?: boolean
-    }
+    if (!ok || data?.ok !== true) {
+      // data is null when the body isn't JSON (e.g. a GAS HTML error page);
+      // otherwise narrow to the failure branch for the error / mailerError.
+      const failure = data?.ok === false ? data : undefined
+      const message =
+        `[magic-link] GAS send failed — status ${status}, ` +
+        `ok ${data?.ok ?? '—'}, error ${failure?.error ?? '—'}, ` +
+        `mailerError ${failure?.mailerError ?? '—'}.`
 
-    if (!response.ok || !result.ok) {
-      console.error(
-        `[magic-link] GAS send failed — status ${response.status}, ok ${result.ok}.`,
-      )
+      console.error(message)
+
+      // Fly logs are short-lived (~5 min); report to Sentry so send failures
+      // stay diagnosable. Best-effort still: no throw, nothing surfaced.
+      // A stable message + fingerprint groups every failure into one issue, so
+      // a sustained outage is a single issue (with the varying detail in
+      // `extra`), not one per sign-in attempt.
+      if (process.env.SENTRY_DSN) {
+        Sentry.captureMessage('[magic-link] GAS send failed', {
+          extra: {
+            error: failure?.error,
+            mailerError: failure?.mailerError,
+            ok: data?.ok,
+            status,
+          },
+          fingerprint: ['magic-link', 'gas-send-failed'],
+          level: 'error',
+        })
+      }
     }
   } catch (error) {
     console.error('[magic-link] GAS request threw —', error)
+    if (process.env.SENTRY_DSN) Sentry.captureException(error)
   }
 }

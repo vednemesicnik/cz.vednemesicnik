@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "SignInMagicLinkRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "description": "Recipient address; must be on the vednemesicnik.cz domain.",
+          "type": "string"
+        },
+        "link": {
+          "description": "The sign-in verify URL. Must be an https link on the configured origin whose path is the verify route (/administration/sign-in/magic-link/verify).",
+          "type": "string"
+        },
+        "secret": {
+          "description": "Shared secret; checked against Script Property OWN_SECRET.",
+          "type": "string"
+        }
+      },
+      "required": ["secret", "email", "link"],
+      "type": "object"
+    },
+    "SignInMagicLinkResponse": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ok": {
+              "const": true
+            }
+          },
+          "required": ["ok"],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "error": {
+              "enum": [
+                "server_misconfigured",
+                "invalid_request",
+                "unauthorized",
+                "missing_fields",
+                "email_not_allowed",
+                "link_not_allowed",
+                "mailer_send_failed",
+                "server_error"
+              ],
+              "type": "string"
+            },
+            "mailerError": {
+              "description": "Present only when error is \"mailer_send_failed\": the underlying reason the delegated send failed.",
+              "enum": [
+                "unauthorized",
+                "invalid_request",
+                "missing_fields",
+                "invalid_recipient",
+                "too_many_recipients",
+                "attachment_too_large",
+                "server_error",
+                "unreachable",
+                "bad_response"
+              ],
+              "type": "string"
+            },
+            "ok": {
+              "const": false
+            }
+          },
+          "required": ["ok", "error"],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "description": "Contract for the Vedneměsíčník administration magic-link web app. POST a SignInMagicLinkRequest to send a sign-in link; the response is a SignInMagicLinkResponse. The send is delegated to the Mailer, whose reason is surfaced in mailerError when error is \"mailer_send_failed\".",
+  "title": "MagicLink"
+}
