@@ -47,11 +47,14 @@ export const sendMagicLinkEmail = async ({
 
     const result = (await response.json().catch(() => ({ ok: false }))) as {
       ok?: boolean
+      error?: string
+      mailerError?: string
     }
 
     if (!response.ok || !result.ok) {
       console.error(
-        `[magic-link] GAS send failed — status ${response.status}, ok ${result.ok}.`,
+        `[magic-link] GAS send failed — status ${response.status}, ok ${result.ok}, ` +
+          `error ${result.error ?? '—'}, mailerError ${result.mailerError ?? '—'}.`,
       )
     }
   } catch (error) {
