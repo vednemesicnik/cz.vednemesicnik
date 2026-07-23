@@ -1,3 +1,5 @@
+import { ENV_KEYS } from './env'
+
 /**
  * Registry of Google Apps Script web apps whose JSON-Schema contracts are
  * turned into TypeScript types. Each app's `doGet` must return its JSON Schema.
@@ -8,10 +10,10 @@
  *
  * The key is the folder name used under both `schemas/` and `generated/`.
  */
-export const gasEndpoints = {
+export const GAS_ENDPOINTS = {
   'magic-link': {
-    urlEnvironmentVariable: 'GAS_MAGIC_LINK_URL',
+    urlEnvironmentVariable: ENV_KEYS.GAS_MAGIC_LINK_URL,
   },
 } as const
 
-export type GasEndpointName = keyof typeof gasEndpoints
+export type GasEndpointName = keyof typeof GAS_ENDPOINTS

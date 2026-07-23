@@ -4,7 +4,7 @@ import 'dotenv/config'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { type GasEndpointName, gasEndpoints } from './gas-endpoints'
+import { GAS_ENDPOINTS, type GasEndpointName } from '@constants/gas-endpoints'
 
 /**
  * Downloads the JSON-Schema response contract from a Google Apps Script web app
@@ -18,7 +18,7 @@ import { type GasEndpointName, gasEndpoints } from './gas-endpoints'
  *
  * Usage: `pnpm gas:schema:fetch [name...]` — no argument fetches every
  * registered endpoint. Each endpoint's URL comes from its configured
- * environment variable (see `gas-endpoints.ts`).
+ * environment variable (see `constants/gas-endpoints.ts`).
  */
 
 const FETCH_TIMEOUT_MS = 15000
@@ -27,7 +27,7 @@ const schemaPath = (name: string): string =>
   path.join(process.cwd(), 'schemas', name, 'response.schema.json')
 
 const fetchSchema = async (name: GasEndpointName): Promise<void> => {
-  const { urlEnvironmentVariable } = gasEndpoints[name]
+  const { urlEnvironmentVariable } = GAS_ENDPOINTS[name]
   const url = process.env[urlEnvironmentVariable]
 
   if (!url) {
@@ -83,7 +83,7 @@ const fetchSchema = async (name: GasEndpointName): Promise<void> => {
 }
 
 const resolveNames = (): GasEndpointName[] => {
-  const registered = Object.keys(gasEndpoints) as GasEndpointName[]
+  const registered = Object.keys(GAS_ENDPOINTS) as GasEndpointName[]
   const requested = process.argv.slice(2)
 
   if (requested.length === 0) {

@@ -81,7 +81,7 @@ pnpm gas:types:generate            # Generate types from the committed schemas (
 
 On a fresh checkout, run `pnpm gas:types:generate` (like `pnpm prisma:generate`)
 before `pnpm app:typecheck`, otherwise the `@generated/<name>/response` imports
-won't resolve. Endpoints are registered in `scripts/gas-endpoints.ts`.
+won't resolve. Endpoints are registered in `constants/gas-endpoints.ts`.
 
 ## Architecture
 

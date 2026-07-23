@@ -1,10 +1,8 @@
 #!/usr/bin/env tsx
 import fs from 'node:fs/promises'
 import path from 'node:path'
-
+import { GAS_ENDPOINTS, type GasEndpointName } from '@constants/gas-endpoints'
 import { compileFromFile } from 'json-schema-to-typescript'
-
-import { type GasEndpointName, gasEndpoints } from './gas-endpoints'
 
 /**
  * Generates TypeScript types from every committed GAS response schema
@@ -40,7 +38,7 @@ const generateTypes = async (name: GasEndpointName): Promise<void> => {
 }
 
 const main = async (): Promise<void> => {
-  for (const name of Object.keys(gasEndpoints) as GasEndpointName[]) {
+  for (const name of Object.keys(GAS_ENDPOINTS) as GasEndpointName[]) {
     await generateTypes(name)
   }
 }
