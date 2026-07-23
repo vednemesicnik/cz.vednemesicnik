@@ -8,6 +8,17 @@
  * development), so the flow can be exercised without a live GAS deployment.
  */
 
+import type {
+  SignInMagicLinkRequest,
+  SignInMagicLinkResponse,
+} from '@generated/magic-link/response'
+
+// The failure branch of the response contract, carrying error / mailerError.
+type SignInMagicLinkErrorResponse = Extract<
+  SignInMagicLinkResponse,
+  { ok: false }
+>
+
 // Fail fast if GAS hangs: delivery is best-effort and must not stall the
 // (neutral) sign-in response.
 const GAS_TIMEOUT_MS = 8000
@@ -39,16 +50,23 @@ export const sendMagicLinkEmail = async ({
 
   try {
     const response = await fetch(url, {
-      body: JSON.stringify({ email, link, secret }),
+      body: JSON.stringify({
+        email,
+        link,
+        secret,
+      } satisfies SignInMagicLinkRequest),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
       signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
     })
 
+    // The parse fallback ({ ok: false }) is intentionally not a full contract
+    // member, so keep the shape loose while deriving error / mailerError from
+    // the generated contract.
     const result = (await response.json().catch(() => ({ ok: false }))) as {
       ok?: boolean
-      error?: string
-      mailerError?: string
+      error?: SignInMagicLinkErrorResponse['error']
+      mailerError?: SignInMagicLinkErrorResponse['mailerError']
     }
 
     if (!response.ok || !result.ok) {
