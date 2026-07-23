@@ -67,6 +67,22 @@ pnpm docker:compose:up             # Start Docker containers
 pnpm docker:compose:down           # Stop Docker containers
 ```
 
+### Google Apps Script Contracts
+
+The Google Apps Script web apps expose their JSON-Schema response contract via
+`doGet`. The committed schema under `schemas/<name>/` is the source of truth;
+types are generated into the gitignored `generated/<name>/` (regenerated in
+CI/Docker, like the Prisma client).
+
+```bash
+pnpm gas:schema:fetch [name]       # Download each web app's doGet JSON Schema (network)
+pnpm gas:types:generate            # Generate types from the committed schemas (offline)
+```
+
+On a fresh checkout, run `pnpm gas:types:generate` (like `pnpm prisma:generate`)
+before `pnpm app:typecheck`, otherwise the `@generated/<name>/response` imports
+won't resolve. Endpoints are registered in `scripts/gas-endpoints.ts`.
+
 ## Architecture
 
 ### Path Aliases
