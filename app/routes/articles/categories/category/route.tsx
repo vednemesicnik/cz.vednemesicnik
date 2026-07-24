@@ -28,7 +28,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <Headline>Rubrika: {category.name}</Headline>
       </HeadlineGroup>
 
-      {articles.length > 0 ? (
+      {totalCount > 0 ? (
         <ContentList>
           {articles.map((article) => {
             return (
