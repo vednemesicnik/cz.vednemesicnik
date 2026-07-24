@@ -42,11 +42,13 @@ type ContractSuccessResponse = Extract<
   { ok: true }
 >
 
+type ContractPosition = ContractSuccessResponse['positions'][number]
+
 const positionSchema = z.object({
   label: z.string(),
   members: z.array(z.string()),
   order: z.number(),
-})
+}) satisfies z.ZodType<ContractPosition>
 
 // The endpoint always answers HTTP 200 (GAS ContentService), so `ok: true` is
 // the only success signal; `{ ok: false }` and anything malformed are failures.
