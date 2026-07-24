@@ -108,11 +108,13 @@ const getSnapshotPath = (): string | null => {
   return path.join(path.dirname(dbFilePath), SNAPSHOT_FILE_NAME)
 }
 
-// Stable fingerprint shared by every GAS failure path so a sustained outage
-// collapses into a single Sentry issue (with the per-occurrence detail in
-// `extra`) instead of one issue per refresh attempt. Fly logs are short-lived
-// (~5 min), so failures are reported to Sentry to stay diagnosable.
-const GAS_FAILURE_FINGERPRINT = ['editorial-board', 'gas-fetch-failed']
+// Stable fingerprints so each GAS failure mode collapses into a single Sentry
+// issue (with the per-occurrence detail in `extra`) instead of one issue per
+// refresh attempt. A failed/invalid response and a thrown request are kept
+// distinct so a code error never hides inside a GAS-outage issue. Fly logs are
+// short-lived (~5 min), so failures are reported to Sentry to stay diagnosable.
+const GAS_RESPONSE_FAILURE_FINGERPRINT = ['editorial-board', 'gas-fetch-failed']
+const GAS_REQUEST_THREW_FINGERPRINT = ['editorial-board', 'gas-request-threw']
 
 const fetchFromGas = async (
   url: string,
@@ -134,7 +136,7 @@ const fetchFromGas = async (
       if (process.env.SENTRY_DSN) {
         Sentry.captureMessage('[editorial-board] GAS fetch failed', {
           extra: { status, valid: parsed.success },
-          fingerprint: GAS_FAILURE_FINGERPRINT,
+          fingerprint: GAS_RESPONSE_FAILURE_FINGERPRINT,
           level: 'error',
         })
       }
@@ -146,7 +148,9 @@ const fetchFromGas = async (
   } catch (error) {
     console.error('[editorial-board] GAS request threw —', error)
     if (process.env.SENTRY_DSN) {
-      Sentry.captureException(error, { fingerprint: GAS_FAILURE_FINGERPRINT })
+      Sentry.captureException(error, {
+        fingerprint: GAS_REQUEST_THREW_FINGERPRINT,
+      })
     }
     return null
   }
