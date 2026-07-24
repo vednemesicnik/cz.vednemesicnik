@@ -63,6 +63,24 @@ const responseSchema = z.object({
 // GAS code we don't recognize yet still reaches Sentry instead of being dropped.
 const failureSchema = z.object({ error: z.string(), ok: z.literal(false) })
 
+type ContractErrorCode = Extract<
+  EditorialBoardContactsResponse,
+  { ok: false }
+>['error']
+
+// Known failure codes from the generated contract, keyed for an exhaustive,
+// exact compile-time tie: adding or removing a code in the contract fails
+// `pnpm app:typecheck` until this record matches. Used to bound the Sentry
+// fingerprint to a fixed set of issues — the loose `error` above still reaches
+// Sentry via `extra`, but only a recognized code feeds the fingerprint so an
+// unexpected/high-cardinality value can't mint an issue per occurrence.
+const KNOWN_GAS_ERROR_CODES: Record<ContractErrorCode, true> = {
+  invalid_request: true,
+  server_error: true,
+  server_misconfigured: true,
+  unauthorized: true,
+}
+
 // The persisted snapshot stores just the payload (no `ok` wrapper).
 const snapshotSchema = z.object({
   positions: z.array(positionSchema),
@@ -141,17 +159,22 @@ const fetchFromGas = async (
       const failure = failureSchema.safeParse(data)
       const gasError = failure.success ? failure.data.error : null
 
+      // Only a recognized code feeds the fingerprint, so an unexpected value
+      // can't fan out into one Sentry issue per occurrence; the raw `gasError`
+      // is still reported in `extra`.
+      const fingerprintCode =
+        gasError && Object.hasOwn(KNOWN_GAS_ERROR_CODES, gasError)
+          ? gasError
+          : 'other'
+
       console.error(
         `[editorial-board] GAS fetch failed — status ${status}, error ${gasError ?? 'unknown'}.`,
       )
 
       if (process.env.SENTRY_DSN) {
         Sentry.captureMessage('[editorial-board] GAS fetch failed', {
-          extra: { gasError, status, valid: parsed.success },
-          fingerprint: [
-            ...GAS_RESPONSE_FAILURE_FINGERPRINT,
-            gasError ?? 'unknown',
-          ],
+          extra: { gasError, status },
+          fingerprint: [...GAS_RESPONSE_FAILURE_FINGERPRINT, fingerprintCode],
           level: 'error',
         })
       }
