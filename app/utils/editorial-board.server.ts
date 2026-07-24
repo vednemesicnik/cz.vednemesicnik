@@ -22,6 +22,7 @@ import type {
   EditorialBoardContactsRequest,
   EditorialBoardContactsResponse,
 } from '@generated/editorial-board/response'
+import * as Sentry from '@sentry/react-router'
 import { z } from 'zod'
 
 import { postGasRequest } from './post-gas-request.server'
@@ -107,6 +108,12 @@ const getSnapshotPath = (): string | null => {
   return path.join(path.dirname(dbFilePath), SNAPSHOT_FILE_NAME)
 }
 
+// Stable fingerprint shared by every GAS failure path so a sustained outage
+// collapses into a single Sentry issue (with the per-occurrence detail in
+// `extra`) instead of one issue per refresh attempt. Fly logs are short-lived
+// (~5 min), so failures are reported to Sentry to stay diagnosable.
+const GAS_FAILURE_FINGERPRINT = ['editorial-board', 'gas-fetch-failed']
+
 const fetchFromGas = async (
   url: string,
   secret: string,
@@ -123,12 +130,24 @@ const fetchFromGas = async (
       console.error(
         `[editorial-board] GAS fetch failed — status ${status}, valid ${parsed.success}.`,
       )
+
+      if (process.env.SENTRY_DSN) {
+        Sentry.captureMessage('[editorial-board] GAS fetch failed', {
+          extra: { status, valid: parsed.success },
+          fingerprint: GAS_FAILURE_FINGERPRINT,
+          level: 'error',
+        })
+      }
+
       return null
     }
 
     return sortMembers({ positions: parsed.data.positions })
   } catch (error) {
     console.error('[editorial-board] GAS request threw —', error)
+    if (process.env.SENTRY_DSN) {
+      Sentry.captureException(error, { fingerprint: GAS_FAILURE_FINGERPRINT })
+    }
     return null
   }
 }
