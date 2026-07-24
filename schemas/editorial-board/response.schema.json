@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "EditorialBoardContactsRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "secret": {
+          "description": "Shared secret; checked against Script Property OWN_SECRET.",
+          "type": "string"
+        }
+      },
+      "required": ["secret"],
+      "type": "object"
+    },
+    "EditorialBoardContactsResponse": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ok": {
+              "const": true
+            },
+            "positions": {
+              "description": "Every role from the `Role` sheet, ordered by `Pořadí` (ascending), with the names of its active members. Roles with no active members are included with an empty `members` array.",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "label": {
+                    "description": "The role label shown on the web (`Označení na webu`).",
+                    "type": "string"
+                  },
+                  "members": {
+                    "description": "Active members holding this role, in sheet row order. The app sorts them by name with Czech ICU collation.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "order": {
+                    "description": "Sort key (`Pořadí`); positions are ordered by it, ascending.",
+                    "type": "number"
+                  }
+                },
+                "required": ["label", "order", "members"],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": ["ok", "positions"],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "error": {
+              "description": "Failure reason. The browser ignores it (any failure shows the fallback); the server-side loader forwards it to Sentry.",
+              "enum": [
+                "server_misconfigured",
+                "invalid_request",
+                "unauthorized",
+                "server_error"
+              ],
+              "type": "string"
+            },
+            "ok": {
+              "const": false
+            }
+          },
+          "required": ["ok", "error"],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "description": "Contract for the Vedneměsíčník editorial-board (redakce) contacts web app. POST an EditorialBoardContactsRequest to read the public subset of the editorial board; the response is an EditorialBoardContactsResponse. Only active members and only their name and role label are exposed — the e-mail, phone and note columns are never read into the response.",
+  "title": "EditorialBoardContacts"
+}

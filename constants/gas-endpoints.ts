@@ -11,6 +11,9 @@ import { ENV_KEYS } from './env'
  * The key is the folder name used under both `schemas/` and `generated/`.
  */
 export const GAS_ENDPOINTS = {
+  'editorial-board': {
+    urlEnvironmentVariable: ENV_KEYS.GAS_EDITORIAL_BOARD_URL,
+  },
   'magic-link': {
     urlEnvironmentVariable: ENV_KEYS.GAS_MAGIC_LINK_URL,
   },

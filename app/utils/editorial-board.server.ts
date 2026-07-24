@@ -18,28 +18,68 @@ import { randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { remember } from '@epic-web/remember'
+import type {
+  EditorialBoardContactsRequest,
+  EditorialBoardContactsResponse,
+} from '@generated/editorial-board/response'
+import * as Sentry from '@sentry/react-router'
 import { z } from 'zod'
 
-// Fail fast if GAS hangs: a slow fetch must not stall the page render.
-const GAS_TIMEOUT_MS = 8000
+import { postGasRequest } from './post-gas-request.server'
 
 // Low-churn data (changes a few times a year), so a generous TTL is fine.
 const CACHE_TTL_MS = 10 * 60 * 1000
 
 const SNAPSHOT_FILE_NAME = 'editorial-board-snapshot.json'
 
+// Success branch of the generated GAS contract (schemas/editorial-board). The
+// zod parser below validates the GAS response at runtime; pinning it to this
+// type via `satisfies` keeps the contract the source of truth: if the contract
+// gains or retypes a field the zod schema no longer matches, `pnpm app:typecheck`
+// fails. (The reverse — the contract dropping a field zod still parses — is not
+// caught, since the parsed value stays assignable with an excess property.)
+type ContractSuccessResponse = Extract<
+  EditorialBoardContactsResponse,
+  { ok: true }
+>
+
+type ContractPosition = ContractSuccessResponse['positions'][number]
+
 const positionSchema = z.object({
   label: z.string(),
   members: z.array(z.string()),
   order: z.number(),
-})
+}) satisfies z.ZodType<ContractPosition>
 
 // The endpoint always answers HTTP 200 (GAS ContentService), so `ok: true` is
 // the only success signal; `{ ok: false }` and anything malformed are failures.
 const responseSchema = z.object({
   ok: z.literal(true),
   positions: z.array(positionSchema),
-})
+}) satisfies z.ZodType<ContractSuccessResponse>
+
+// Failure branch. We pull `error` out only for diagnostics (it's forwarded to
+// Sentry), so keep it loose — a plain `z.string()`, not the contract enum — so a
+// GAS code we don't recognize yet still reaches Sentry instead of being dropped.
+const failureSchema = z.object({ error: z.string(), ok: z.literal(false) })
+
+type ContractErrorCode = Extract<
+  EditorialBoardContactsResponse,
+  { ok: false }
+>['error']
+
+// Known failure codes from the generated contract, keyed for an exhaustive,
+// exact compile-time tie: adding or removing a code in the contract fails
+// `pnpm app:typecheck` until this record matches. Used to bound the Sentry
+// fingerprint to a fixed set of issues — the loose `error` above still reaches
+// Sentry via `extra`, but only a recognized code feeds the fingerprint so an
+// unexpected/high-cardinality value can't mint an issue per occurrence.
+const KNOWN_GAS_ERROR_CODES: Record<ContractErrorCode, true> = {
+  invalid_request: true,
+  server_error: true,
+  server_misconfigured: true,
+  unauthorized: true,
+}
 
 // The persisted snapshot stores just the payload (no `ok` wrapper).
 const snapshotSchema = z.object({
@@ -91,31 +131,65 @@ const getSnapshotPath = (): string | null => {
   return path.join(path.dirname(dbFilePath), SNAPSHOT_FILE_NAME)
 }
 
+// Stable fingerprints so GAS failures collapse into a few Sentry issues (with the
+// per-occurrence detail in `extra`) instead of one issue per refresh attempt. A
+// response failure is further split by the GAS `error` code (appended below) so a
+// broken sheet (`server_error`) doesn't hide inside a stale-secret (`unauthorized`)
+// issue; a thrown request is kept separate so a code error never hides inside a
+// GAS-outage issue. Fly logs are short-lived (~5 min), so failures are reported to
+// Sentry to stay diagnosable.
+const GAS_RESPONSE_FAILURE_FINGERPRINT = ['editorial-board', 'gas-fetch-failed']
+const GAS_REQUEST_THREW_FINGERPRINT = ['editorial-board', 'gas-request-threw']
+
 const fetchFromGas = async (
   url: string,
   secret: string,
 ): Promise<EditorialBoardData | null> => {
   try {
-    const response = await fetch(url, {
-      body: JSON.stringify({ secret }),
-      headers: { 'Content-Type': 'application/json' },
-      method: 'POST',
-      signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
-    })
+    const { ok, status, data } =
+      await postGasRequest<EditorialBoardContactsResponse>(url, {
+        secret,
+      } satisfies EditorialBoardContactsRequest)
 
-    const json = await response.json().catch(() => null)
-    const parsed = responseSchema.safeParse(json)
+    const parsed = responseSchema.safeParse(data)
 
-    if (!response.ok || !parsed.success) {
+    if (!ok || !parsed.success) {
+      // Pull the GAS `error` code out of the failure body for diagnostics. Absent
+      // when GAS returned a non-JSON error page (data null) or a shape without it.
+      const failure = failureSchema.safeParse(data)
+      const gasError = failure.success ? failure.data.error : null
+
+      // Only a recognized code feeds the fingerprint, so an unexpected value
+      // can't fan out into one Sentry issue per occurrence; the raw `gasError`
+      // is still reported in `extra`.
+      const fingerprintCode =
+        gasError && Object.hasOwn(KNOWN_GAS_ERROR_CODES, gasError)
+          ? gasError
+          : 'other'
+
       console.error(
-        `[editorial-board] GAS fetch failed — status ${response.status}, valid ${parsed.success}.`,
+        `[editorial-board] GAS fetch failed — status ${status}, error ${gasError ?? 'unknown'}.`,
       )
+
+      if (process.env.SENTRY_DSN) {
+        Sentry.captureMessage('[editorial-board] GAS fetch failed', {
+          extra: { gasError, status },
+          fingerprint: [...GAS_RESPONSE_FAILURE_FINGERPRINT, fingerprintCode],
+          level: 'error',
+        })
+      }
+
       return null
     }
 
     return sortMembers({ positions: parsed.data.positions })
   } catch (error) {
     console.error('[editorial-board] GAS request threw —', error)
+    if (process.env.SENTRY_DSN) {
+      Sentry.captureException(error, {
+        fingerprint: GAS_REQUEST_THREW_FINGERPRINT,
+      })
+    }
     return null
   }
 }
