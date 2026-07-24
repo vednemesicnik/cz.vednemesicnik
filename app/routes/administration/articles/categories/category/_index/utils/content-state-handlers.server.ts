@@ -50,5 +50,4 @@ export const categoryContentStateHandlers = createContentStateHandlers({
       reviews: category.reviews,
     }
   },
-  restore: { clearPublishedAt: true },
 })

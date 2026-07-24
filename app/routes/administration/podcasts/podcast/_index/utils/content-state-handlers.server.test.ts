@@ -37,20 +37,20 @@ beforeEach(() => {
 })
 
 describe('podcastContentStateHandlers — review clearing on draft transitions', () => {
-  test('retract clears all reviews and moves to draft', async () => {
+  test('retract clears all reviews and moves to draft, keeping the date', async () => {
     await podcastContentStateHandlers.retract(request, { id: 'p1', target })
 
     expect(podcastUpdateMock).toHaveBeenCalledWith({
-      data: { publishedAt: null, reviews: { deleteMany: {} }, state: 'draft' },
+      data: { reviews: { deleteMany: {} }, state: 'draft' },
       where: { id: 'p1' },
     })
   })
 
-  test('restore clears all reviews and moves to draft', async () => {
+  test('restore clears all reviews and moves to draft, keeping the date', async () => {
     await podcastContentStateHandlers.restore(request, { id: 'p1', target })
 
     expect(podcastUpdateMock).toHaveBeenCalledWith({
-      data: { publishedAt: null, reviews: { deleteMany: {} }, state: 'draft' },
+      data: { reviews: { deleteMany: {} }, state: 'draft' },
       where: { id: 'p1' },
     })
   })

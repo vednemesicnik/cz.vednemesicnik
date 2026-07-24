@@ -67,22 +67,12 @@ export type ContentStateHandlersConfig = {
   /** Delete the row and any entity-specific dependents (images, PDF, PageSEO). */
   deleteRow: (id: string, context: AuthorPermissionContext) => Promise<void>
   /**
-   * Publish-date behavior. Defaults to "always now" (tag, category, podcast,
-   * episode, issue). The article opts into preserving an existing date and
-   * accepting an approver-supplied backdate.
+   * Whether an approver may supply a backdated publish date on publish (and via
+   * change-published-at). Only entities with a publish-date UI enable it. The
+   * stored `publishedAt` is always preserved regardless — a "first published"
+   * date that survives retract, restore, and re-publish.
    */
-  publishDate?: {
-    preserveExisting?: boolean
-    allowBackdating?: boolean
-  }
-  /**
-   * Restore (archived → draft) publish-date behavior. The article keeps its
-   * stored publish date; every other entity clears it so a draft carries no
-   * date until it is (re)published.
-   */
-  restore?: {
-    clearPublishedAt?: boolean
-  }
+  allowBackdating?: boolean
 }
 
 type TransitionOptions = {
@@ -132,7 +122,7 @@ export const createContentStateHandlers = (
         )
 
         // Ignore any client-supplied date unless the entity allows backdating.
-        const requestedPublishedAt = config.publishDate?.allowBackdating
+        const requestedPublishedAt = config.allowBackdating
           ? options.publishedAt
           : undefined
 
@@ -140,12 +130,10 @@ export const createContentStateHandlers = (
           assertCanSetPublishedAt(context, requestedPublishedAt)
         }
 
-        const preservedPublishedAt = config.publishDate?.preserveExisting
-          ? publishState.publishedAt
-          : null
-
+        // Preserve the stored "first published" date on re-publish; fall back to
+        // now on the first publish (no stored date yet).
         const publishedAt =
-          requestedPublishedAt ?? preservedPublishedAt ?? new Date()
+          requestedPublishedAt ?? publishState.publishedAt ?? new Date()
 
         await config.applyState(options.id, { publishedAt, state: 'published' })
 
@@ -159,13 +147,13 @@ export const createContentStateHandlers = (
       target: options.target,
     })
 
+  // Retract and restore both return to draft and wipe reviews (via applyState),
+  // but keep the stored "first published" date so re-publishing preserves it.
   const retract = (request: Request, options: TransitionOptions) =>
     withAuthorPermission(request, {
       action: 'retract',
       entity,
-      // Null publishedAt on retract so drafts carry no date until (re)published.
-      execute: () =>
-        config.applyState(options.id, { publishedAt: null, state: 'draft' }),
+      execute: () => config.applyState(options.id, { state: 'draft' }),
       target: options.target,
     })
 
@@ -181,13 +169,7 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'restore',
       entity,
-      execute: () =>
-        config.applyState(
-          options.id,
-          config.restore?.clearPublishedAt
-            ? { publishedAt: null, state: 'draft' }
-            : { state: 'draft' },
-        ),
+      execute: () => config.applyState(options.id, { state: 'draft' }),
       target: options.target,
     })
 

@@ -13,6 +13,7 @@ const buildPathname = (slug: string) => `/articles/${slug}`
  * every transition onto its standalone PageSEO row.
  */
 export const articleContentStateHandlers = createContentStateHandlers({
+  allowBackdating: true,
   applyState: async (id, data) => {
     const updatedArticle = await prisma.article.update({
       // Retract/restore also wipe reviews; PageSEO has no reviews to clear.
@@ -89,5 +90,4 @@ export const articleContentStateHandlers = createContentStateHandlers({
       reviews: article.reviews,
     }
   },
-  publishDate: { allowBackdating: true, preserveExisting: true },
 })

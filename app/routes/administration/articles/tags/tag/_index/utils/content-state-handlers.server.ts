@@ -50,5 +50,4 @@ export const tagContentStateHandlers = createContentStateHandlers({
       reviews: tag.reviews,
     }
   },
-  restore: { clearPublishedAt: true },
 })

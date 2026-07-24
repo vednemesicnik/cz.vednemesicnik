@@ -7,6 +7,7 @@ import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 
 /** Episode state-transition handlers: single author, cover image cleanup on delete. */
 export const episodeContentStateHandlers = createContentStateHandlers({
+  allowBackdating: true,
   applyState: async (id, data) => {
     await prisma.podcastEpisode.update({
       data: clearReviewsOnDraft(data),
@@ -60,5 +61,4 @@ export const episodeContentStateHandlers = createContentStateHandlers({
       reviews: episode.reviews,
     }
   },
-  restore: { clearPublishedAt: true },
 })

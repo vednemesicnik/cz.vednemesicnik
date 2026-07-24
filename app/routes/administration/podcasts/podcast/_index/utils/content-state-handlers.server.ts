@@ -60,5 +60,4 @@ export const podcastContentStateHandlers = createContentStateHandlers({
       reviews: podcast.reviews,
     }
   },
-  restore: { clearPublishedAt: true },
 })
