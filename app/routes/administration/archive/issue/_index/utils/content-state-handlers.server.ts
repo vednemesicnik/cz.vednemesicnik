@@ -6,7 +6,15 @@ import { deletePdfObject } from '~/utils/pdf-store/store-pdf.server'
 /** Issue state-transition handlers: single author, cover image and PDF cleanup on delete. */
 export const issueContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
-    await prisma.issue.update({ data, where: { id } })
+    // Retract/restore clear all reviews so a draft must be re-approved before
+    // it can be published again (matches the pre-factory issue behavior).
+    await prisma.issue.update({
+      data:
+        data.state === 'draft'
+          ? { ...data, reviews: { deleteMany: {} } }
+          : data,
+      where: { id },
+    })
   },
 
   deleteRow: async (id) => {
@@ -50,6 +58,7 @@ export const issueContentStateHandlers = createContentStateHandlers({
     const issue = await prisma.issue.findUniqueOrThrow({
       select: {
         author: { select: { role: { select: { level: true } } } },
+        publishedAt: true,
         reviews: {
           select: {
             reviewer: { select: { role: { select: { level: true } } } },
@@ -61,7 +70,7 @@ export const issueContentStateHandlers = createContentStateHandlers({
 
     return {
       authors: [issue.author],
-      publishedAt: null,
+      publishedAt: issue.publishedAt,
       reviews: issue.reviews,
     }
   },

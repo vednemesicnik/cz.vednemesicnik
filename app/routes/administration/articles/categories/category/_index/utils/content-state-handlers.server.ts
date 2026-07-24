@@ -28,6 +28,7 @@ export const categoryContentStateHandlers = createContentStateHandlers({
     const category = await prisma.articleCategory.findUniqueOrThrow({
       select: {
         author: { select: { role: { select: { level: true } } } },
+        publishedAt: true,
         reviews: {
           select: {
             reviewer: { select: { role: { select: { level: true } } } },
@@ -39,7 +40,7 @@ export const categoryContentStateHandlers = createContentStateHandlers({
 
     return {
       authors: [category.author],
-      publishedAt: null,
+      publishedAt: category.publishedAt,
       reviews: category.reviews,
     }
   },

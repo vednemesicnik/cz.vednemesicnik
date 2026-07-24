@@ -5,7 +5,15 @@ import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 /** Podcast state-transition handlers: single author, cover image cleanup on delete. */
 export const podcastContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
-    await prisma.podcast.update({ data, where: { id } })
+    // Retract/restore clear all reviews so a draft must be re-approved before
+    // it can be published again (matches the pre-factory podcast behavior).
+    await prisma.podcast.update({
+      data:
+        data.state === 'draft'
+          ? { ...data, reviews: { deleteMany: {} } }
+          : data,
+      where: { id },
+    })
   },
 
   deleteRow: async (id) => {
@@ -38,6 +46,7 @@ export const podcastContentStateHandlers = createContentStateHandlers({
     const podcast = await prisma.podcast.findUniqueOrThrow({
       select: {
         author: { select: { role: { select: { level: true } } } },
+        publishedAt: true,
         reviews: {
           select: {
             reviewer: { select: { role: { select: { level: true } } } },
@@ -49,7 +58,7 @@ export const podcastContentStateHandlers = createContentStateHandlers({
 
     return {
       authors: [podcast.author],
-      publishedAt: null,
+      publishedAt: podcast.publishedAt,
       reviews: podcast.reviews,
     }
   },

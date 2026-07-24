@@ -28,6 +28,7 @@ export const tagContentStateHandlers = createContentStateHandlers({
     const tag = await prisma.articleTag.findUniqueOrThrow({
       select: {
         author: { select: { role: { select: { level: true } } } },
+        publishedAt: true,
         reviews: {
           select: {
             reviewer: { select: { role: { select: { level: true } } } },
@@ -39,7 +40,7 @@ export const tagContentStateHandlers = createContentStateHandlers({
 
     return {
       authors: [tag.author],
-      publishedAt: null,
+      publishedAt: tag.publishedAt,
       reviews: tag.reviews,
     }
   },
