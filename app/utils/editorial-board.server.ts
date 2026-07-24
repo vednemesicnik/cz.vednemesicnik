@@ -31,6 +31,17 @@ const CACHE_TTL_MS = 10 * 60 * 1000
 
 const SNAPSHOT_FILE_NAME = 'editorial-board-snapshot.json'
 
+// Success branch of the generated GAS contract (schemas/editorial-board). The
+// zod parser below validates the GAS response at runtime; pinning it to this
+// type via `satisfies` keeps the contract the source of truth: if the contract
+// gains or retypes a field the zod schema no longer matches, `pnpm app:typecheck`
+// fails. (The reverse — the contract dropping a field zod still parses — is not
+// caught, since the parsed value stays assignable with an excess property.)
+type ContractSuccessResponse = Extract<
+  EditorialBoardContactsResponse,
+  { ok: true }
+>
+
 const positionSchema = z.object({
   label: z.string(),
   members: z.array(z.string()),
@@ -42,18 +53,7 @@ const positionSchema = z.object({
 const responseSchema = z.object({
   ok: z.literal(true),
   positions: z.array(positionSchema),
-})
-
-// Success branch of the generated GAS contract (schemas/editorial-board). The
-// zod parser above is the runtime validator; binding its output to this type
-// (see fetchFromGas) keeps the contract the source of truth: if the contract
-// gains or retypes a field the zod schema no longer matches, `pnpm app:typecheck`
-// fails. (The reverse — the contract dropping a field zod still parses — is not
-// caught, since the parsed value stays assignable with an excess property.)
-type ContractSuccessResponse = Extract<
-  EditorialBoardContactsResponse,
-  { ok: true }
->
+}) satisfies z.ZodType<ContractSuccessResponse>
 
 // The persisted snapshot stores just the payload (no `ok` wrapper).
 const snapshotSchema = z.object({
@@ -124,11 +124,7 @@ const fetchFromGas = async (
       return null
     }
 
-    // Anchor the zod-parsed shape to the generated GAS contract's success
-    // branch: the contract is the source of truth, so a drift fails typecheck.
-    const contractData: ContractSuccessResponse = parsed.data
-
-    return sortMembers({ positions: contractData.positions })
+    return sortMembers({ positions: parsed.data.positions })
   } catch (error) {
     console.error('[editorial-board] GAS request threw —', error)
     return null
