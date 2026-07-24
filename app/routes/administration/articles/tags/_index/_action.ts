@@ -3,7 +3,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { FORM_CONFIG } from '~/config/form-config'
 import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
-import { deleteTag } from '../tag/_index/utils/delete-tag'
+import { tagContentStateHandlers } from '../tag/_index/utils/content-state-handlers.server'
 import type { Route } from './+types/route'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
@@ -45,7 +45,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   // atomic across items — the UI only offers deletable rows; the per-item
   // check is defense in depth.
   for (const tag of tags) {
-    await deleteTag(request, {
+    await tagContentStateHandlers.delete(request, {
       id: tag.id,
       target: { authorIds: [tag.authorId], state: tag.state },
     })
