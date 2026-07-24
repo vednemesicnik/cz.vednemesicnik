@@ -111,6 +111,27 @@ describe('createContentStateHandlers — review gate', () => {
   })
 })
 
+describe('createContentStateHandlers — approver auto-approve', () => {
+  test('records an approving review when an approver publishes', async () => {
+    const config = createConfig({
+      loadPublishState: vi.fn().mockResolvedValue({
+        authors: [{ role: { level: APPROVER } }],
+        publishedAt: null,
+        reviews: [],
+      }),
+    })
+    const handlers = createContentStateHandlers(config)
+    runAs(APPROVER, 'coordinator-1')
+
+    await handlers.publish(request, { id: 'a1', target })
+
+    expect(config.ensureApprovingReview).toHaveBeenCalledWith(
+      'a1',
+      'coordinator-1',
+    )
+  })
+})
+
 describe('createContentStateHandlers — publish date', () => {
   test('preserves the existing date when configured to', async () => {
     const existing = new Date('2024-01-01T00:00:00.000Z')

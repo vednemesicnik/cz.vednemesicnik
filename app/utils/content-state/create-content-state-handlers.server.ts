@@ -6,7 +6,10 @@ import type {
 } from '@generated/prisma/enums'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { needsReviewToPublish } from '~/utils/permissions/author/review-policy'
+import {
+  APPROVER_ROLE_LEVEL,
+  needsReviewToPublish,
+} from '~/utils/permissions/author/review-policy'
 
 import { assertCanSetPublishedAt } from './assert-can-set-published-at'
 
@@ -125,6 +128,13 @@ export const createContentStateHandlers = (
           requestedPublishedAt ?? preservedPublishedAt ?? new Date()
 
         await config.applyState(options.id, { publishedAt, state: 'published' })
+
+        // Auto-approve when an approver publishes: their publishing act is the
+        // approval, so record it once (idempotent) to satisfy the review gate
+        // for lower-role co-authors and future re-publishes.
+        if (context.roleLevel <= APPROVER_ROLE_LEVEL) {
+          await config.ensureApprovingReview(options.id, context.authorId)
+        }
       },
       target: options.target,
     })
