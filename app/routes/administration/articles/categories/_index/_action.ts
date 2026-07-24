@@ -3,7 +3,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { FORM_CONFIG } from '~/config/form-config'
 import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
-import { deleteCategory } from '../category/_index/utils/delete-category'
+import { categoryContentStateHandlers } from '../category/_index/utils/content-state-handlers.server'
 import type { Route } from './+types/route'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
@@ -45,7 +45,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   // atomic across items — the UI only offers deletable rows; the per-item
   // check is defense in depth.
   for (const category of categories) {
-    await deleteCategory(request, {
+    await categoryContentStateHandlers.delete(request, {
       id: category.id,
       target: { authorIds: [category.authorId], state: category.state },
     })
