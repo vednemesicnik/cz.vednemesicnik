@@ -92,7 +92,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
         </TableHeader>
         <TableBody>
-          {articles.length === 0 ? (
+          {totalCount === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
               {query === '' ? 'Žádné články' : `Nic nenalezeno pro „${query}“`}
             </TableEmptyRow>
