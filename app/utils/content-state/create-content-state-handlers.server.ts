@@ -39,6 +39,18 @@ export type StateTransitionData = {
 }
 
 /**
+ * Adds a full review wipe to any transition that moves an entity into `draft`
+ * (retract or restore), so returning to draft always requires a fresh approver
+ * review before the content can be published again.
+ *
+ * Apply this to the entity row's own `update` only — never to the mirrored
+ * PageSEO `updateMany`, which rejects nested relation writes.
+ */
+export const clearReviewsOnDraft = <Data extends StateTransitionData>(
+  data: Data,
+) => (data.state === 'draft' ? { ...data, reviews: { deleteMany: {} } } : data)
+
+/**
  * Per-entity configuration for {@link createContentStateHandlers}. The callbacks
  * carry the entity-specific Prisma work (model, review FK, delete side effects),
  * while the factory owns the cross-cutting logic (permission wrapping, review

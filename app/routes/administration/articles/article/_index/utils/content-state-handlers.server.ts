@@ -1,4 +1,7 @@
-import { createContentStateHandlers } from '~/utils/content-state/create-content-state-handlers.server'
+import {
+  clearReviewsOnDraft,
+  createContentStateHandlers,
+} from '~/utils/content-state/create-content-state-handlers.server'
 import { prisma } from '~/utils/db.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 
@@ -12,7 +15,8 @@ const buildPathname = (slug: string) => `/articles/${slug}`
 export const articleContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
     const updatedArticle = await prisma.article.update({
-      data,
+      // Retract/restore also wipe reviews; PageSEO has no reviews to clear.
+      data: clearReviewsOnDraft(data),
       select: { slug: true },
       where: { id },
     })

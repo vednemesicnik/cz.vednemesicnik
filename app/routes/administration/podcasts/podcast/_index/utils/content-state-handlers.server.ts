@@ -1,17 +1,15 @@
-import { createContentStateHandlers } from '~/utils/content-state/create-content-state-handlers.server'
+import {
+  clearReviewsOnDraft,
+  createContentStateHandlers,
+} from '~/utils/content-state/create-content-state-handlers.server'
 import { prisma } from '~/utils/db.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 
 /** Podcast state-transition handlers: single author, cover image cleanup on delete. */
 export const podcastContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
-    // Retract/restore clear all reviews so a draft must be re-approved before
-    // it can be published again (matches the pre-factory podcast behavior).
     await prisma.podcast.update({
-      data:
-        data.state === 'draft'
-          ? { ...data, reviews: { deleteMany: {} } }
-          : data,
+      data: clearReviewsOnDraft(data),
       where: { id },
     })
   },

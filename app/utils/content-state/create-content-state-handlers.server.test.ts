@@ -4,6 +4,7 @@ import type { AuthorPermissionContext } from '~/utils/permissions/author/context
 
 import {
   type ContentStateHandlersConfig,
+  clearReviewsOnDraft,
   createContentStateHandlers,
   type PermissionTarget,
   type StateTransitionData,
@@ -364,5 +365,26 @@ describe('createContentStateHandlers — permission wiring', () => {
     expect(options.entity).toBe('article')
     expect(options.action).toBe('archive')
     expect(options.target).toEqual(target)
+  })
+})
+
+describe('clearReviewsOnDraft', () => {
+  test('adds a review wipe when the transition targets draft', () => {
+    expect(clearReviewsOnDraft({ publishedAt: null, state: 'draft' })).toEqual({
+      publishedAt: null,
+      reviews: { deleteMany: {} },
+      state: 'draft',
+    })
+  })
+
+  test('leaves non-draft transitions untouched', () => {
+    expect(clearReviewsOnDraft({ state: 'archived' })).toEqual({
+      state: 'archived',
+    })
+    const publishedData = {
+      publishedAt: new Date(0),
+      state: 'published' as const,
+    }
+    expect(clearReviewsOnDraft(publishedData)).not.toHaveProperty('reviews')
   })
 })
