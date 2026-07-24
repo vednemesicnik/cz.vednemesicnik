@@ -63,6 +63,14 @@ export type ContentStateHandlersConfig = {
     preserveExisting?: boolean
     allowBackdating?: boolean
   }
+  /**
+   * Restore (archived → draft) publish-date behavior. The article keeps its
+   * stored publish date; every other entity clears it so a draft carries no
+   * date until it is (re)published.
+   */
+  restore?: {
+    clearPublishedAt?: boolean
+  }
 }
 
 type TransitionOptions = {
@@ -161,7 +169,13 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'restore',
       entity,
-      execute: () => config.applyState(options.id, { state: 'draft' }),
+      execute: () =>
+        config.applyState(
+          options.id,
+          config.restore?.clearPublishedAt
+            ? { publishedAt: null, state: 'draft' }
+            : { state: 'draft' },
+        ),
       target: options.target,
     })
 

@@ -269,7 +269,7 @@ describe('createContentStateHandlers — transition matrix', () => {
     expect(config.applyState).toHaveBeenCalledWith('a1', { state: 'archived' })
   })
 
-  test('restore moves to draft without touching the publish date', async () => {
+  test('restore moves to draft without touching the publish date by default', async () => {
     const config = createConfig()
     const handlers = createContentStateHandlers(config)
     runAs(CONTRIBUTOR)
@@ -280,6 +280,19 @@ describe('createContentStateHandlers — transition matrix', () => {
       .calls[0][1]
     expect(data).toEqual({ state: 'draft' })
     expect(data).not.toHaveProperty('publishedAt')
+  })
+
+  test('restore clears the publish date when configured to', async () => {
+    const config = createConfig({ restore: { clearPublishedAt: true } })
+    const handlers = createContentStateHandlers(config)
+    runAs(CONTRIBUTOR)
+
+    await handlers.restore(request, { id: 'a1', target })
+
+    expect(config.applyState).toHaveBeenCalledWith('a1', {
+      publishedAt: null,
+      state: 'draft',
+    })
   })
 
   test('review records an approving review by the current author', async () => {
