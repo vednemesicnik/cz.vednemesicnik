@@ -18,6 +18,10 @@ import { randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { remember } from '@epic-web/remember'
+import type {
+  EditorialBoardContactsRequest,
+  EditorialBoardContactsResponse,
+} from '@generated/editorial-board/response'
 import { z } from 'zod'
 
 // Fail fast if GAS hangs: a slow fetch must not stall the page render.
@@ -40,6 +44,17 @@ const responseSchema = z.object({
   ok: z.literal(true),
   positions: z.array(positionSchema),
 })
+
+// Success branch of the generated GAS contract (schemas/editorial-board). The
+// zod parser above is the runtime validator; binding its output to this type
+// (see fetchFromGas) keeps the contract the source of truth: if the contract
+// gains or retypes a field the zod schema no longer matches, `pnpm app:typecheck`
+// fails. (The reverse — the contract dropping a field zod still parses — is not
+// caught, since the parsed value stays assignable with an excess property.)
+type ContractSuccessResponse = Extract<
+  EditorialBoardContactsResponse,
+  { ok: true }
+>
 
 // The persisted snapshot stores just the payload (no `ok` wrapper).
 const snapshotSchema = z.object({
@@ -97,7 +112,7 @@ const fetchFromGas = async (
 ): Promise<EditorialBoardData | null> => {
   try {
     const response = await fetch(url, {
-      body: JSON.stringify({ secret }),
+      body: JSON.stringify({ secret } satisfies EditorialBoardContactsRequest),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
       signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
@@ -113,7 +128,11 @@ const fetchFromGas = async (
       return null
     }
 
-    return sortMembers({ positions: parsed.data.positions })
+    // Anchor the zod-parsed shape to the generated GAS contract's success
+    // branch: the contract is the source of truth, so a drift fails typecheck.
+    const contractData: ContractSuccessResponse = parsed.data
+
+    return sortMembers({ positions: contractData.positions })
   } catch (error) {
     console.error('[editorial-board] GAS request threw —', error)
     return null
