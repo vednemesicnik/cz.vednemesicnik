@@ -53,13 +53,13 @@ describe('articleContentStateHandlers — retract review clearing', () => {
     await articleContentStateHandlers.retract(request, { id: 'a1', target })
 
     expect(articleUpdateMock).toHaveBeenCalledWith({
-      data: { publishedAt: null, reviews: { deleteMany: {} }, state: 'draft' },
+      data: { reviews: { deleteMany: {} }, state: 'draft' },
       select: { slug: true },
       where: { id: 'a1' },
     })
 
     const pageSeoData = pageSeoUpdateManyMock.mock.calls[0][0].data
-    expect(pageSeoData).toEqual({ publishedAt: null, state: 'draft' })
+    expect(pageSeoData).toEqual({ state: 'draft' })
     expect(pageSeoData).not.toHaveProperty('reviews')
   })
 })

@@ -8,11 +8,12 @@ import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 const buildPathname = (slug: string) => `/articles/${slug}`
 
 /**
- * Article state-transition handlers. The article is the only entity that
- * preserves an existing publish date, accepts an approver backdate, and mirrors
- * every transition onto its standalone PageSEO row.
+ * Article state-transition handlers. The article is the only entity that mirrors
+ * every transition onto its standalone PageSEO row, and it accepts an approver
+ * backdate on publish.
  */
 export const articleContentStateHandlers = createContentStateHandlers({
+  allowBackdating: true,
   applyState: async (id, data) => {
     const updatedArticle = await prisma.article.update({
       // Retract/restore also wipe reviews; PageSEO has no reviews to clear.
@@ -89,5 +90,4 @@ export const articleContentStateHandlers = createContentStateHandlers({
       reviews: article.reviews,
     }
   },
-  publishDate: { allowBackdating: true, preserveExisting: true },
 })

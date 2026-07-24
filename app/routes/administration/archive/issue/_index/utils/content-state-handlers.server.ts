@@ -72,5 +72,4 @@ export const issueContentStateHandlers = createContentStateHandlers({
       reviews: issue.reviews,
     }
   },
-  restore: { clearPublishedAt: true },
 })

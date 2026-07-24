@@ -134,7 +134,7 @@ describe('createContentStateHandlers — approver auto-approve', () => {
 })
 
 describe('createContentStateHandlers — publish date', () => {
-  test('preserves the existing date when configured to', async () => {
+  test('preserves the stored date on re-publish', async () => {
     const existing = new Date('2024-01-01T00:00:00.000Z')
     const config = createConfig({
       loadPublishState: vi.fn().mockResolvedValue({
@@ -142,7 +142,6 @@ describe('createContentStateHandlers — publish date', () => {
         publishedAt: existing,
         reviews: [],
       }),
-      publishDate: { preserveExisting: true },
     })
     const handlers = createContentStateHandlers(config)
     runAs(APPROVER)
@@ -155,12 +154,11 @@ describe('createContentStateHandlers — publish date', () => {
     })
   })
 
-  test('defaults to now, ignoring a stored date, when not preserving', async () => {
-    const existing = new Date('2020-01-01T00:00:00.000Z')
+  test('defaults to now on the first publish (no stored date)', async () => {
     const config = createConfig({
       loadPublishState: vi.fn().mockResolvedValue({
         authors: [{ role: { level: APPROVER } }],
-        publishedAt: existing,
+        publishedAt: null,
         reviews: [],
       }),
     })
@@ -170,8 +168,8 @@ describe('createContentStateHandlers — publish date', () => {
     await handlers.publish(request, { id: 'a1', target })
 
     const data = vi.mocked(config.applyState).mock.calls[0][1]
-    expect(data.publishedAt).not.toEqual(existing)
-    expect(data.publishedAt?.getTime()).toBeGreaterThan(existing.getTime())
+    expect(data.publishedAt).toBeInstanceOf(Date)
+    expect(data.publishedAt?.getTime()).toBeGreaterThan(Date.now() - 5000)
   })
 
   test('ignores a client backdate when backdating is not allowed', async () => {
@@ -199,12 +197,12 @@ describe('createContentStateHandlers — publish date', () => {
   test('uses an approver backdate when backdating is allowed', async () => {
     const backdate = new Date('2024-06-01T00:00:00.000Z')
     const config = createConfig({
+      allowBackdating: true,
       loadPublishState: vi.fn().mockResolvedValue({
         authors: [{ role: { level: APPROVER } }],
         publishedAt: null,
         reviews: [],
       }),
-      publishDate: { allowBackdating: true, preserveExisting: true },
     })
     const handlers = createContentStateHandlers(config)
     runAs(APPROVER)
@@ -224,12 +222,12 @@ describe('createContentStateHandlers — publish date', () => {
   test('rejects a backdate from a non-approver', async () => {
     const backdate = new Date('2024-06-01T00:00:00.000Z')
     const config = createConfig({
+      allowBackdating: true,
       loadPublishState: vi.fn().mockResolvedValue({
         authors: [{ role: { level: CONTRIBUTOR } }],
         publishedAt: null,
         reviews: [{ reviewer: { role: { level: APPROVER } } }],
       }),
-      publishDate: { allowBackdating: true, preserveExisting: true },
     })
     const handlers = createContentStateHandlers(config)
     runAs(CONTRIBUTOR)
@@ -246,17 +244,17 @@ describe('createContentStateHandlers — publish date', () => {
 })
 
 describe('createContentStateHandlers — transition matrix', () => {
-  test('retract nulls the publish date and moves to draft', async () => {
+  test('retract moves to draft and keeps the publish date', async () => {
     const config = createConfig()
     const handlers = createContentStateHandlers(config)
     runAs(CONTRIBUTOR)
 
     await handlers.retract(request, { id: 'a1', target })
 
-    expect(config.applyState).toHaveBeenCalledWith('a1', {
-      publishedAt: null,
-      state: 'draft',
-    })
+    const data: StateTransitionData = vi.mocked(config.applyState).mock
+      .calls[0][1]
+    expect(data).toEqual({ state: 'draft' })
+    expect(data).not.toHaveProperty('publishedAt')
     expect(lastWrapperOptions().action).toBe('retract')
   })
 
@@ -270,7 +268,7 @@ describe('createContentStateHandlers — transition matrix', () => {
     expect(config.applyState).toHaveBeenCalledWith('a1', { state: 'archived' })
   })
 
-  test('restore moves to draft without touching the publish date by default', async () => {
+  test('restore moves to draft and keeps the publish date', async () => {
     const config = createConfig()
     const handlers = createContentStateHandlers(config)
     runAs(CONTRIBUTOR)
@@ -281,19 +279,6 @@ describe('createContentStateHandlers — transition matrix', () => {
       .calls[0][1]
     expect(data).toEqual({ state: 'draft' })
     expect(data).not.toHaveProperty('publishedAt')
-  })
-
-  test('restore clears the publish date when configured to', async () => {
-    const config = createConfig({ restore: { clearPublishedAt: true } })
-    const handlers = createContentStateHandlers(config)
-    runAs(CONTRIBUTOR)
-
-    await handlers.restore(request, { id: 'a1', target })
-
-    expect(config.applyState).toHaveBeenCalledWith('a1', {
-      publishedAt: null,
-      state: 'draft',
-    })
   })
 
   test('review records an approving review by the current author', async () => {
