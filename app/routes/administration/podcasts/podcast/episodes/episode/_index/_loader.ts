@@ -6,6 +6,7 @@ import {
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import {
+  APPROVER_ROLE_LEVEL,
   canPublishWithoutReview,
   needsReviewToPublish,
 } from '~/utils/permissions/author/review-policy'
@@ -181,8 +182,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   return {
     canArchive,
+    canChangePublishedAt:
+      episode.state === 'published' && context.roleLevel <= APPROVER_ROLE_LEVEL,
     canDelete,
     canPublish,
+    canPublishBackdated: canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
     canRestore,
     canRetract,
     canReview: shouldShowReview,
