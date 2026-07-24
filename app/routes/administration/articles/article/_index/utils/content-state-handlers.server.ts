@@ -8,9 +8,9 @@ import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 const buildPathname = (slug: string) => `/articles/${slug}`
 
 /**
- * Article state-transition handlers. The article is the only entity that
- * preserves an existing publish date, accepts an approver backdate, and mirrors
- * every transition onto its standalone PageSEO row.
+ * Article state-transition handlers. The article is the only entity that mirrors
+ * every transition onto its standalone PageSEO row, and it accepts an approver
+ * backdate on publish.
  */
 export const articleContentStateHandlers = createContentStateHandlers({
   allowBackdating: true,

@@ -26,5 +26,6 @@ export const action = ({ request, params }: Route.ActionArgs) => {
         state: currentEpisode.state,
       }
     },
+    supportsChangePublishedAt: true,
   })
 }
