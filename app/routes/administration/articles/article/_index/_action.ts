@@ -1,115 +1,29 @@
-import { invariantResponse } from '@epic-web/invariant'
-import { href, redirect } from 'react-router'
+import { href } from 'react-router'
 
-import { FORM_CONFIG } from '~/config/form-config'
-import { validateCSRF } from '~/utils/csrf.server'
+import { runContentStateAction } from '~/utils/content-state/create-content-state-action.server'
 import { prisma } from '~/utils/db.server'
 
 import type { Route } from './+types/route'
-import { archiveArticle } from './utils/archive-article'
-import { changeArticlePublishedAt } from './utils/change-article-published-at'
-import { deleteArticle } from './utils/delete-article'
-import { publishArticle } from './utils/publish-article'
-import { restoreArticle } from './utils/restore-article'
-import { retractArticle } from './utils/retract-article'
-import { reviewArticle } from './utils/review-article'
+import { articleContentStateHandlers } from './utils/content-state-handlers.server'
 
-const INTENT_NAME = FORM_CONFIG.intent.name
-const INTENT_VALUE = FORM_CONFIG.intent.value
-const REDIRECT_NAME = FORM_CONFIG.redirect.name
-
-export const action = async ({ request, params }: Route.ActionArgs) => {
+export const action = ({ request, params }: Route.ActionArgs) => {
   const { articleId } = params
 
-  const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
-
-  const intent = formData.get(INTENT_NAME)
-  invariantResponse(typeof intent === 'string', 'Missing intent')
-
-  const withRedirect = formData.get(REDIRECT_NAME) === 'true'
-
-  const currentArticle = await prisma.article.findUniqueOrThrow({
-    select: {
-      authors: { select: { id: true } },
-      state: true,
-    },
-    where: { id: articleId },
-  })
-
-  const target = {
-    authorIds: currentArticle.authors.map((author) => author.id),
-    state: currentArticle.state,
-  }
-
-  switch (intent) {
-    case INTENT_VALUE.archive:
-      await archiveArticle(request, {
-        id: articleId,
-        target,
-      })
-      break
-
-    case INTENT_VALUE.delete:
-      await deleteArticle(request, {
-        id: articleId,
-        target,
+  return runContentStateAction(request, {
+    deleteRedirectTo: href('/administration/articles'),
+    handlers: articleContentStateHandlers,
+    id: articleId,
+    loadTarget: async () => {
+      const currentArticle = await prisma.article.findUniqueOrThrow({
+        select: { authors: { select: { id: true } }, state: true },
+        where: { id: articleId },
       })
 
-      if (withRedirect) {
-        throw redirect(href('/administration/articles'))
+      return {
+        authorIds: currentArticle.authors.map((author) => author.id),
+        state: currentArticle.state,
       }
-      break
-
-    case INTENT_VALUE.publish: {
-      const publishedAtValue = formData.get('publishedAt')
-      await publishArticle(request, {
-        id: articleId,
-        publishedAt:
-          typeof publishedAtValue === 'string' && publishedAtValue !== ''
-            ? new Date(publishedAtValue)
-            : undefined,
-        target,
-      })
-      break
-    }
-
-    case INTENT_VALUE.changePublishedAt: {
-      const publishedAtValue = formData.get('publishedAt')
-      invariantResponse(
-        typeof publishedAtValue === 'string' && publishedAtValue !== '',
-        'Missing publishedAt',
-      )
-      await changeArticlePublishedAt(request, {
-        id: articleId,
-        publishedAt: new Date(publishedAtValue),
-        target,
-      })
-      break
-    }
-
-    case INTENT_VALUE.restore:
-      await restoreArticle(request, {
-        id: articleId,
-        target,
-      })
-      break
-
-    case INTENT_VALUE.retract:
-      await retractArticle(request, {
-        id: articleId,
-        target,
-      })
-      break
-
-    case INTENT_VALUE.review:
-      await reviewArticle(request, {
-        id: articleId,
-        target,
-      })
-      break
-
-    default:
-      throw new Error(`Invalid intent: ${intent}`)
-  }
+    },
+    supportsChangePublishedAt: true,
+  })
 }
