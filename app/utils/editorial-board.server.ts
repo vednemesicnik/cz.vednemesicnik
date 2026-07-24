@@ -58,6 +58,11 @@ const responseSchema = z.object({
   positions: z.array(positionSchema),
 }) satisfies z.ZodType<ContractSuccessResponse>
 
+// Failure branch. We pull `error` out only for diagnostics (it's forwarded to
+// Sentry), so keep it loose — a plain `z.string()`, not the contract enum — so a
+// GAS code we don't recognize yet still reaches Sentry instead of being dropped.
+const failureSchema = z.object({ error: z.string(), ok: z.literal(false) })
+
 // The persisted snapshot stores just the payload (no `ok` wrapper).
 const snapshotSchema = z.object({
   positions: z.array(positionSchema),
@@ -108,11 +113,13 @@ const getSnapshotPath = (): string | null => {
   return path.join(path.dirname(dbFilePath), SNAPSHOT_FILE_NAME)
 }
 
-// Stable fingerprints so each GAS failure mode collapses into a single Sentry
-// issue (with the per-occurrence detail in `extra`) instead of one issue per
-// refresh attempt. A failed/invalid response and a thrown request are kept
-// distinct so a code error never hides inside a GAS-outage issue. Fly logs are
-// short-lived (~5 min), so failures are reported to Sentry to stay diagnosable.
+// Stable fingerprints so GAS failures collapse into a few Sentry issues (with the
+// per-occurrence detail in `extra`) instead of one issue per refresh attempt. A
+// response failure is further split by the GAS `error` code (appended below) so a
+// broken sheet (`server_error`) doesn't hide inside a stale-secret (`unauthorized`)
+// issue; a thrown request is kept separate so a code error never hides inside a
+// GAS-outage issue. Fly logs are short-lived (~5 min), so failures are reported to
+// Sentry to stay diagnosable.
 const GAS_RESPONSE_FAILURE_FINGERPRINT = ['editorial-board', 'gas-fetch-failed']
 const GAS_REQUEST_THREW_FINGERPRINT = ['editorial-board', 'gas-request-threw']
 
@@ -129,14 +136,22 @@ const fetchFromGas = async (
     const parsed = responseSchema.safeParse(data)
 
     if (!ok || !parsed.success) {
+      // Pull the GAS `error` code out of the failure body for diagnostics. Absent
+      // when GAS returned a non-JSON error page (data null) or a shape without it.
+      const failure = failureSchema.safeParse(data)
+      const gasError = failure.success ? failure.data.error : null
+
       console.error(
-        `[editorial-board] GAS fetch failed — status ${status}, valid ${parsed.success}.`,
+        `[editorial-board] GAS fetch failed — status ${status}, error ${gasError ?? 'unknown'}.`,
       )
 
       if (process.env.SENTRY_DSN) {
         Sentry.captureMessage('[editorial-board] GAS fetch failed', {
-          extra: { status, valid: parsed.success },
-          fingerprint: GAS_RESPONSE_FAILURE_FINGERPRINT,
+          extra: { gasError, status, valid: parsed.success },
+          fingerprint: [
+            ...GAS_RESPONSE_FAILURE_FINGERPRINT,
+            gasError ?? 'unknown',
+          ],
           level: 'error',
         })
       }

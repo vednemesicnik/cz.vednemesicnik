@@ -5,7 +5,7 @@
       "additionalProperties": false,
       "properties": {
         "secret": {
-          "description": "Shared secret; checked against Script Property SHARED_SECRET.",
+          "description": "Shared secret; checked against Script Property OWN_SECRET.",
           "type": "string"
         }
       },
@@ -53,11 +53,21 @@
         {
           "additionalProperties": false,
           "properties": {
+            "error": {
+              "description": "Failure reason. The browser ignores it (any failure shows the fallback); the server-side loader forwards it to Sentry.",
+              "enum": [
+                "server_misconfigured",
+                "invalid_request",
+                "unauthorized",
+                "server_error"
+              ],
+              "type": "string"
+            },
             "ok": {
               "const": false
             }
           },
-          "required": ["ok"],
+          "required": ["ok", "error"],
           "type": "object"
         }
       ]
