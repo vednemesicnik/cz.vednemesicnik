@@ -24,8 +24,7 @@ import type {
 } from '@generated/editorial-board/response'
 import { z } from 'zod'
 
-// Fail fast if GAS hangs: a slow fetch must not stall the page render.
-const GAS_TIMEOUT_MS = 8000
+import { postGasRequest } from './post-gas-request.server'
 
 // Low-churn data (changes a few times a year), so a generous TTL is fine.
 const CACHE_TTL_MS = 10 * 60 * 1000
@@ -111,19 +110,16 @@ const fetchFromGas = async (
   secret: string,
 ): Promise<EditorialBoardData | null> => {
   try {
-    const response = await fetch(url, {
-      body: JSON.stringify({ secret } satisfies EditorialBoardContactsRequest),
-      headers: { 'Content-Type': 'application/json' },
-      method: 'POST',
-      signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
-    })
+    const { ok, status, data } =
+      await postGasRequest<EditorialBoardContactsResponse>(url, {
+        secret,
+      } satisfies EditorialBoardContactsRequest)
 
-    const json = await response.json().catch(() => null)
-    const parsed = responseSchema.safeParse(json)
+    const parsed = responseSchema.safeParse(data)
 
-    if (!response.ok || !parsed.success) {
+    if (!ok || !parsed.success) {
       console.error(
-        `[editorial-board] GAS fetch failed — status ${response.status}, valid ${parsed.success}.`,
+        `[editorial-board] GAS fetch failed — status ${status}, valid ${parsed.success}.`,
       )
       return null
     }
