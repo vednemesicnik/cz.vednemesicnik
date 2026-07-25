@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import { useCallback, useId, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
@@ -32,6 +32,7 @@ export const AdminSavedFilters = ({
   sharedFilters,
   tableKey,
 }: Props) => {
+  const { pathname } = useLocation()
   const menuRef = useRef<HTMLDivElement>(null)
   // useId() contains colons, which are invalid in an id/anchor context.
   const menuId = `admin-saved-filters-menu-${useId().replace(/:/g, '')}`
@@ -72,6 +73,14 @@ export const AdminSavedFilters = ({
   }
 
   const hasCurrentQuery = currentQuery !== ''
+
+  // A default preset is re-applied the moment the URL runs out of list params, so
+  // clearing it has to say "explicitly unfiltered". Without a default there is
+  // nothing to suppress, and the plain path keeps the URL clean.
+  const hasDefaultFilter = ownFilters.some((filter) => filter.isDefault)
+  const resetTarget = hasDefaultFilter
+    ? `?${FILTER_PRESET_PARAM}=${FILTER_PRESET_NONE}`
+    : pathname
 
   return (
     <div className={styles.savedFilters}>
@@ -130,10 +139,7 @@ export const AdminSavedFilters = ({
         )}
 
         <div className={styles.footer}>
-          <Link
-            className={styles.reset}
-            to={`?${FILTER_PRESET_PARAM}=${FILTER_PRESET_NONE}`}
-          >
+          <Link className={styles.reset} to={resetTarget}>
             Zrušit filtry
           </Link>
           {/* Spelled out rather than put in a `title`: a disabled button takes no
