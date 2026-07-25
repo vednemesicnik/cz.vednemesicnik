@@ -120,6 +120,22 @@
     --error-bg: light-dark(var(--color-rose-100), var(--color-rose-900));
     --error-text: light-dark(var(--color-rose-700), var(--color-rose-300));
 
+    /* Category / tag badges (public taxonomy) */
+    --badge-bg: light-dark(var(--color-emerald-100), var(--color-emerald-900));
+    /* Hover keeps the fill and shifts it (darker in light, lighter in dark). */
+    --badge-bg-hover: light-dark(
+      var(--color-emerald-300),
+      var(--color-emerald-800)
+    );
+    --badge-text: light-dark(
+      var(--color-emerald-800),
+      var(--color-emerald-300)
+    );
+    --badge-border: light-dark(
+      var(--color-emerald-300),
+      var(--color-emerald-700)
+    );
+
     /* ========================================
        Content states (admin)
        ======================================== */
