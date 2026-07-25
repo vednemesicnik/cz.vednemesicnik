@@ -40,6 +40,13 @@ describe('parseAdminListFilters', () => {
     })
   })
 
+  test('should drop a role that is not a seeded role name', () => {
+    expect(parse('?role=superuser', 'users')).toEqual({})
+    // The two role enums are disjoint, so one table's role never applies to the other.
+    expect(parse('?role=coordinator', 'users')).toEqual({})
+    expect(parse('?role=administrator', 'authors')).toEqual({})
+  })
+
   test('should parse the state filter for the remaining content tables', () => {
     expect(parse('?state=published', 'archive')).toEqual({
       state: 'published',

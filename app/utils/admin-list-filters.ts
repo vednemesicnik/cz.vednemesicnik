@@ -1,4 +1,9 @@
-import { ContentState, type FilterTable } from '@generated/prisma/enums'
+import {
+  AuthorRoleName,
+  ContentState,
+  type FilterTable,
+  UserRoleName,
+} from '@generated/prisma/enums'
 import { z } from 'zod'
 
 import { PAGE_PARAM } from '~/components/pagination'
@@ -28,8 +33,13 @@ const stateFilter = z.enum(ContentState).optional()
 // instead of being kept as an empty string.
 const slugFilter = z.string().min(1).optional()
 
+// Roles are seeded, never created at runtime, so the filter can be validated
+// against the enum itself — which keeps a stale value out of the URL the same
+// way `state` does, without a data-driven staleness check.
+const userRoleFilter = z.enum(UserRoleName).optional()
+const authorRoleFilter = z.enum(AuthorRoleName).optional()
+
 const contentStateOnly = z.object({ state: stateFilter })
-const roleOnly = z.object({ role: slugFilter })
 
 // Central registry: the saved-filters backend has to validate a stored query
 // string for an arbitrary table, so the lookup is keyed by table, not by route.
@@ -45,10 +55,10 @@ export const ADMIN_LIST_FILTER_SCHEMAS = {
     state: stateFilter,
     tag: slugFilter,
   }),
-  authors: roleOnly,
+  authors: z.object({ role: authorRoleFilter }),
   podcast_episodes: contentStateOnly,
   podcasts: contentStateOnly,
-  users: roleOnly,
+  users: z.object({ role: userRoleFilter }),
 } satisfies Record<AdminListTableKey, z.ZodObject>
 
 const getFilterKeys = (tableKey: AdminListTableKey): string[] =>
