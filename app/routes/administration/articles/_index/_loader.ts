@@ -1,5 +1,6 @@
 import type { Prisma } from '@generated/prisma/client'
 
+import { parseAdminListFilters } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
@@ -50,6 +51,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     sortKeys: SORT_KEYS,
   })
 
+  const filters = parseAdminListFilters(request, 'articles')
+
   // States the current role may view, scoped to own content where access is `own`.
   const viewableStates = buildViewableStateFilters(
     [
@@ -60,32 +63,70 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     { authors: { some: { id: context.authorId } } },
   )
 
-  // Shared by findMany and count. `state` filter (?state=) is a documented
-  // follow-up; the AND composition already leaves room for it.
-  const permissionWhere = { OR: viewableStates }
-  const where = {
+  const permissionWhere: Prisma.ArticleWhereInput = { OR: viewableStates }
+
+  // Field filters are ANDed with the permission clause, so they only ever narrow
+  // what the role may view — `?state=draft` still yields own drafts only.
+  const filterConditions: Prisma.ArticleWhereInput[] = [
+    ...(filters.state === undefined ? [] : [{ state: filters.state }]),
+    ...(filters.category === undefined
+      ? []
+      : [{ categories: { some: { slug: filters.category } } }]),
+    ...(filters.tag === undefined
+      ? []
+      : [{ tags: { some: { slug: filters.tag } } }]),
+    // Authors are many-to-many, there is no authorId on Article — hence the id.
+    ...(filters.author === undefined
+      ? []
+      : [{ authors: { some: { id: filters.author } } }]),
+  ]
+
+  // Shared by findMany and count, so totals and page counts follow the filters.
+  const where: Prisma.ArticleWhereInput = {
     AND: [
       permissionWhere,
       ...(query === '' ? [] : [{ title: { contains: query } }]),
+      ...filterConditions,
     ],
   }
 
-  const [rawArticles, totalCount] = await Promise.all([
-    prisma.article.findMany({
-      orderBy: ORDER_BY[sort](order),
-      select: {
-        authors: { select: { id: true } },
-        createdAt: true,
-        id: true,
-        state: true,
-        title: true,
-      },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      where,
-    }),
-    prisma.article.count({ where }),
-  ])
+  // Filter options are scoped by the permission clause alone, not by `where`:
+  // the selects offer exactly the values that can yield rows, and they don't
+  // shrink as the other filters are applied.
+  const withViewableArticle = { articles: { some: permissionWhere } }
+
+  const [rawArticles, totalCount, authors, categories, tags] =
+    await Promise.all([
+      prisma.article.findMany({
+        orderBy: ORDER_BY[sort](order),
+        select: {
+          authors: { select: { id: true } },
+          createdAt: true,
+          id: true,
+          state: true,
+          title: true,
+        },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        where,
+      }),
+      prisma.article.count({ where }),
+      prisma.author.findMany({
+        orderBy: { name: 'asc' },
+        select: { id: true, name: true },
+        where: withViewableArticle,
+      }),
+      prisma.articleCategory.findMany({
+        orderBy: { name: 'asc' },
+        select: { name: true, slug: true },
+        where: withViewableArticle,
+      }),
+      prisma.articleTag.findMany({
+        orderBy: { name: 'asc' },
+        select: { name: true, slug: true },
+        where: withViewableArticle,
+      }),
+    ])
 
   // Compute permissions for each article
   const articles = rawArticles.map((article) => {
@@ -127,15 +168,25 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return {
     articles,
+    authorOptions: authors.map((author) => ({
+      label: author.name,
+      value: author.id,
+    })),
     canCreate: context.can({
       action: 'create',
       entity: 'article',
       state: 'draft',
       targetAuthorIds: [context.authorId],
     }).hasPermission,
+    categoryOptions: categories.map((category) => ({
+      label: category.name,
+      value: category.slug,
+    })),
     currentPage: page,
+    filters,
     pageSize: PAGE_SIZE,
     query,
+    tagOptions: tags.map((tag) => ({ label: tag.name, value: tag.slug })),
     totalCount,
     totalPages,
   }
