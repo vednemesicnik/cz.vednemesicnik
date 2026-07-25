@@ -23,20 +23,27 @@ const queryField = z.string().max(500)
 // validation, so these must be submitted by real checkboxes.
 const checkboxField = z.boolean().optional()
 
+// The two intents driven by a Conform form are exported on their own: `useForm`
+// needs a single object schema to infer field names from, and the client must
+// validate against the very same rules the action applies.
+export const createFilterSchema = z.object({
+  intent: z.literal(INTENT_VALUE.createFilter),
+  isDefault: checkboxField,
+  isShared: checkboxField,
+  name: nameField,
+  query: queryField,
+  tableKey: z.enum(FilterTable),
+})
+
+export const renameFilterSchema = z.object({
+  id: idField,
+  intent: z.literal(INTENT_VALUE.renameFilter),
+  name: nameField,
+})
+
 export const schema = z.discriminatedUnion('intent', [
-  z.object({
-    intent: z.literal(INTENT_VALUE.createFilter),
-    isDefault: checkboxField,
-    isShared: checkboxField,
-    name: nameField,
-    query: queryField,
-    tableKey: z.enum(FilterTable),
-  }),
-  z.object({
-    id: idField,
-    intent: z.literal(INTENT_VALUE.renameFilter),
-    name: nameField,
-  }),
+  createFilterSchema,
+  renameFilterSchema,
   z.object({
     id: idField,
     intent: z.literal(INTENT_VALUE.overwriteFilter),

@@ -1,0 +1,152 @@
+.row {
+  @layer component {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-block: 4px;
+    padding-inline: 4px;
+    border-radius: 4px;
+
+    &:hover {
+      background-color: var(--bg-hover);
+    }
+  }
+}
+
+.apply {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding-block: 4px;
+    padding-inline: 8px;
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    text-decoration: none;
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+.applyActive {
+  @layer variant {
+    color: var(--primary);
+    font-weight: 600;
+  }
+}
+
+.name {
+  @layer component {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.badge {
+  @layer component {
+    flex-shrink: 0;
+    padding-block: 2px;
+    padding-inline: 6px;
+    border-radius: 999px;
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+  }
+}
+
+.actions {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+}
+
+.toggle {
+  @layer component {
+    padding-block: 4px;
+    padding-inline: 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+}
+
+.toggleOn {
+  @layer variant {
+    border-color: var(--primary);
+    background-color: var(--primary);
+    color: var(--bg-primary);
+  }
+}
+
+.iconButton {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+}
+
+.icon {
+  @layer component {
+    display: inline-flex;
+  }
+}
+
+.iconButtonDanger {
+  @layer variant {
+    &:hover:not(:disabled) {
+      color: var(--danger);
+    }
+  }
+}
