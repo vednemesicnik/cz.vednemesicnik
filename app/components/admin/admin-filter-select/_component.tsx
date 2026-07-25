@@ -1,5 +1,11 @@
 import { clsx } from 'clsx'
-import { type ChangeEvent, type ComponentProps, useId } from 'react'
+import {
+  type ChangeEvent,
+  type ComponentProps,
+  useEffect,
+  useId,
+  useRef,
+} from 'react'
 
 import styles from './_styles.module.css'
 
@@ -18,6 +24,7 @@ type Props = Omit<ComponentProps<'select'>, 'children'> & {
 export const AdminFilterSelect = ({
   label,
   options,
+  defaultValue,
   id,
   className,
   onChange,
@@ -25,6 +32,24 @@ export const AdminFilterSelect = ({
 }: Props) => {
   const generatedId = useId()
   const selectId = id ?? generatedId
+  const selectRef = useRef<HTMLSelectElement>(null)
+
+  // The select is uncontrolled, so React writes `defaultValue` into the DOM on
+  // mount only — applying a saved filter, clearing one, or going back navigates
+  // client-side without remounting and would leave the previous option shown.
+  // Resynced by hand rather than through a `key`, which would remount the select
+  // and drop focus right after its own auto-submit.
+  useEffect(() => {
+    const select = selectRef.current
+
+    if (select === null) return
+
+    const value = String(defaultValue ?? '')
+
+    if (select.value !== value) {
+      select.value = value
+    }
+  }, [defaultValue])
 
   const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
     onChange?.(event)
@@ -40,8 +65,10 @@ export const AdminFilterSelect = ({
       </label>
       <select
         className={clsx(styles.select, className)}
+        defaultValue={defaultValue}
         id={selectId}
         onChange={handleChange}
+        ref={selectRef}
         {...rest}
       >
         {/* Empty value = filter off; parsing and serialization both drop it. */}
