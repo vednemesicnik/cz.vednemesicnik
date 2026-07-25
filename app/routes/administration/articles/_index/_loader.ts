@@ -94,10 +94,13 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ],
   }
 
-  // Filter options are scoped by the permission clause alone, not by `where`:
-  // the selects offer exactly the values that can yield rows, and they don't
-  // shrink as the other filters are applied.
-  const withViewableArticle = { articles: { some: permissionWhere } }
+  // Filter options are deliberately NOT permission-scoped: they must be the same
+  // for everyone so a filter URL can be shared without side effects. Scoping them
+  // per viewer would make a value the viewer cannot see anywhere count as stale
+  // and silently reset. Permissions still apply to the rows — an option a role
+  // cannot see simply yields an empty list. `some: {}` only drops values with no
+  // article at all, which could never match anything.
+  const withAnyArticle = { articles: { some: {} } }
 
   const [rawArticles, totalCount, authors, categories, tags] =
     await Promise.all([
@@ -118,17 +121,17 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       prisma.author.findMany({
         orderBy: { name: 'asc' },
         select: { id: true, name: true },
-        where: withViewableArticle,
+        where: withAnyArticle,
       }),
       prisma.articleCategory.findMany({
         orderBy: { name: 'asc' },
         select: { name: true, slug: true },
-        where: withViewableArticle,
+        where: withAnyArticle,
       }),
       prisma.articleTag.findMany({
         orderBy: { name: 'asc' },
         select: { name: true, slug: true },
-        where: withViewableArticle,
+        where: withAnyArticle,
       }),
     ])
 
