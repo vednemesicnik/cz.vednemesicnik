@@ -8,7 +8,6 @@ import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 import type { Route } from './+types/route'
 
-export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
@@ -26,7 +25,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {categories.map((category) => (
             <ListItem key={category.id}>
               <Link
-                to={href('/articles/category/:slug', { slug: category.slug })}
+                to={href('/articles/categories/:slug', {
+                  slug: category.slug,
+                })}
               >
                 {category.name}
               </Link>{' '}

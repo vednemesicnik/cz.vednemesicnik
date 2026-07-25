@@ -9,7 +9,9 @@ type Match = BreadcrumbMatch<
 
 export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
-    const path = href('/articles/category/:slug', { slug: match.params.slug })
+    const path = href('/articles/categories/:slug', {
+      slug: match.params.slug,
+    })
     const label = match.loaderData?.category.name ?? 'Neznámá rubrika'
 
     return { label, path }
