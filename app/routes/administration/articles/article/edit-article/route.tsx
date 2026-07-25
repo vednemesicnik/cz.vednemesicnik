@@ -8,7 +8,7 @@ import {
   useForm,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import type { FormEvent } from 'react'
+import type { SubmitEvent } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButton } from '~/components/admin/admin-button'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
@@ -118,7 +118,7 @@ export default function RouteComponent({
 
   const { onSubmit: conformOnSubmit, ...formProps } = getFormProps(form)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     conformOnSubmit(event)
     // Exempt our own submission's redirect from the guard. An invalid submit is
     // prevented by Conform, so skip it.

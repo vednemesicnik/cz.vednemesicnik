@@ -4,5 +4,20 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
+    /* Claims a full row in the wrapping toolbar — the selects never fit next to
+       the search field, so they get their own line instead of breaking mid-set. */
+    width: 100%;
+  }
+}
+
+/* The selects auto-submit on change, so the button is only the no-JS fallback.
+   It stays in the DOM (just hidden) to remain the form's default button.
+   `variant` layer so it wins over the button's own component styles regardless
+   of import order; browsers without `scripting` support keep showing it. */
+.submit {
+  @layer variant {
+    @media (scripting: enabled) {
+      display: none;
+    }
   }
 }

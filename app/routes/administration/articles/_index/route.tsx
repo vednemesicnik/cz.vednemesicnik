@@ -1,7 +1,8 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
+import { href, useSearchParams } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
+import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
@@ -15,9 +16,12 @@ import {
   TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
+import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { Pagination } from '~/components/pagination'
+import { contentStateConfig } from '~/config/content-state-config'
+import { getPreservedFilterParams } from '~/utils/admin-list-filters'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
@@ -30,18 +34,42 @@ export { meta } from './_meta'
 // selection + title + state + createdAt + actions
 const COLUMN_COUNT = 5
 
+const STATE_OPTIONS = contentStateConfig.states.map((state) => ({
+  label: contentStateConfig.selectMap[state],
+  value: state,
+}))
+
+// An active filter takes precedence over the search term: with both narrowing
+// the list, the filter is the more likely cause of an empty result.
+const getEmptyMessage = (hasActiveFilters: boolean, query: string) => {
+  if (hasActiveFilters) {
+    return 'Žádné výsledky pro zvolené filtry.'
+  }
+
+  return query === '' ? 'Žádné články' : `Nic nenalezeno pro „${query}“`
+}
+
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
     articles,
+    authorOptions,
     canCreate,
+    categoryOptions,
     currentPage,
+    filters,
     pageSize,
     query,
+    tagOptions,
     totalCount,
     totalPages,
   } = loaderData
 
+  const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
+
+  const hasActiveFilters = Object.values(filters).some(
+    (value) => value !== undefined,
+  )
 
   const deletableIds = articles
     .filter((article) => article.canDelete)
@@ -63,6 +91,34 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
         />
+        <AdminTableFilters
+          preservedParams={getPreservedFilterParams(searchParams, 'articles')}
+        >
+          <AdminFilterSelect
+            defaultValue={filters.state ?? ''}
+            label={'Stav'}
+            name={'state'}
+            options={STATE_OPTIONS}
+          />
+          <AdminFilterSelect
+            defaultValue={filters.category ?? ''}
+            label={'Kategorie'}
+            name={'category'}
+            options={categoryOptions}
+          />
+          <AdminFilterSelect
+            defaultValue={filters.tag ?? ''}
+            label={'Štítek'}
+            name={'tag'}
+            options={tagOptions}
+          />
+          <AdminFilterSelect
+            defaultValue={filters.author ?? ''}
+            label={'Autor'}
+            name={'author'}
+            options={authorOptions}
+          />
+        </AdminTableFilters>
       </AdminTableToolbar>
       <AdminTable pending={pending} stickyHeader={true}>
         <TableHeader>
@@ -94,7 +150,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {totalCount === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {query === '' ? 'Žádné články' : `Nic nenalezeno pro „${query}“`}
+              {getEmptyMessage(hasActiveFilters, query)}
             </TableEmptyRow>
           ) : (
             articles.map((article) => (

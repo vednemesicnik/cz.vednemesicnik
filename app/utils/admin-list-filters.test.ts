@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import {
   type AdminListTableKey,
+  buildStaleFilterRedirect,
   extractAdminListFilterSearch,
   getPreservedFilterParams,
   parseAdminListFilters,
@@ -99,6 +100,44 @@ describe('extractAdminListFilterSearch', () => {
   test('should return an empty string when nothing is valid', () => {
     expect(extractAdminListFilterSearch('', 'articles')).toBe('')
     expect(extractAdminListFilterSearch('?q=foo&sort=title', 'users')).toBe('')
+  })
+})
+
+describe('buildStaleFilterRedirect', () => {
+  const categoryOptions = [{ value: 'rozhovory' }, { value: 'skola' }]
+
+  const redirectFor = (search: string) =>
+    buildStaleFilterRedirect(
+      new URL(`https://x/administration/articles${search}`),
+      { category: categoryOptions },
+    )
+
+  test('should return null when the value is still offered', () => {
+    expect(redirectFor('?category=rozhovory')).toBe(null)
+  })
+
+  test('should return null when the param is absent or empty', () => {
+    expect(redirectFor('')).toBe(null)
+    expect(redirectFor('?category=')).toBe(null)
+  })
+
+  test('should strip a value that is no longer offered', () => {
+    expect(redirectFor('?category=zaniklo')).toBe('/administration/articles')
+  })
+
+  test('should keep the remaining params and drop the page', () => {
+    expect(redirectFor('?q=foo&category=zaniklo&state=draft&page=3')).toBe(
+      '/administration/articles?q=foo&state=draft',
+    )
+  })
+
+  test('should strip every stale param at once', () => {
+    expect(
+      buildStaleFilterRedirect(
+        new URL('https://x/administration/articles?category=zaniklo&tag=pryc'),
+        { category: categoryOptions, tag: [{ value: 'skola' }] },
+      ),
+    ).toBe('/administration/articles')
   })
 })
 
