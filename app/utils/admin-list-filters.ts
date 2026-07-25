@@ -2,11 +2,25 @@ import { ContentState, type FilterTable } from '@generated/prisma/enums'
 import { z } from 'zod'
 
 import { PAGE_PARAM } from '~/components/pagination'
+import {
+  ORDER_PARAM,
+  SEARCH_PARAM,
+  SORT_PARAM,
+} from '~/utils/admin-list-params'
 
 // Aliased to the Prisma enum backing `Filter.tableKey` so the saved-filters
 // column and the registry below cannot drift apart: adding a table on only one
 // side breaks the `satisfies` check on `ADMIN_LIST_FILTER_SCHEMAS`.
 export type AdminListTableKey = FilterTable
+
+// Marks which saved filter the current list state came from: it highlights the
+// preset in the menu and picks the target of an overwrite. Navigation state, not
+// a filter value — stored queries never contain it.
+export const FILTER_PRESET_PARAM = 'filter'
+
+// "Explicitly unfiltered": suppresses the default-filter redirect, which would
+// otherwise re-apply the default preset the moment the URL runs out of params.
+export const FILTER_PRESET_NONE = 'none'
 
 const stateFilter = z.enum(ContentState).optional()
 
@@ -142,6 +156,32 @@ export const validateFilterQuery = (
 }
 
 /**
+ * Tells whether the URL already carries any state of the list — a table filter, the
+ * search term, the sort, the page, or the preset marker. Used to decide whether a
+ * visit is "bare" enough for the default preset to apply: any explicit param means
+ * the user (or a shared link) asked for something specific, which always wins.
+ *
+ * @param searchParams - The current URL search params.
+ * @param tableKey - Which admin table's filter params count as list state.
+ * @returns `true` when at least one list param is present.
+ */
+export const hasAdminListParams = (
+  searchParams: URLSearchParams,
+  tableKey: AdminListTableKey,
+): boolean => {
+  const listParams = [
+    ...getFilterKeys(tableKey),
+    FILTER_PRESET_PARAM,
+    ORDER_PARAM,
+    PAGE_PARAM,
+    SEARCH_PARAM,
+    SORT_PARAM,
+  ]
+
+  return listParams.some((param) => searchParams.has(param))
+}
+
+/**
  * Builds the redirect target that strips filter params whose value is no longer
  * offered — a deleted category, an author that lost its last visible article.
  * Left in place, such a value keeps narrowing the list while its select, having
@@ -207,6 +247,15 @@ export const getPreservedFilterParams = (
   }
 
   preserved.delete(PAGE_PARAM)
+
+  // Editing a select means the list no longer matches the preset it came from, so
+  // the marker degrades to "explicitly unfiltered" instead of falsely highlighting
+  // that preset — and, once every select is cleared, instead of leaving a bare URL
+  // that the default-filter redirect would immediately fill back in. Only rewritten
+  // when already present, so tables the user has no preset for keep clean URLs.
+  if (preserved.has(FILTER_PRESET_PARAM)) {
+    preserved.set(FILTER_PRESET_PARAM, FILTER_PRESET_NONE)
+  }
 
   return [...preserved.entries()]
 }

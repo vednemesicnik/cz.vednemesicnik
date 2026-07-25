@@ -5,6 +5,7 @@ import {
   buildStaleFilterRedirect,
   extractAdminListFilterSearch,
   getPreservedFilterParams,
+  hasAdminListParams,
   parseAdminListFilters,
   validateFilterQuery,
 } from '~/utils/admin-list-filters'
@@ -101,6 +102,13 @@ describe('extractAdminListFilterSearch', () => {
   test('should return an empty string when nothing is valid', () => {
     expect(extractAdminListFilterSearch('', 'articles')).toBe('')
     expect(extractAdminListFilterSearch('?q=foo&sort=title', 'users')).toBe('')
+  })
+
+  test('should ignore the preset marker', () => {
+    expect(
+      extractAdminListFilterSearch('?state=draft&filter=abc123', 'articles'),
+    ).toBe('state=draft')
+    expect(extractAdminListFilterSearch('?filter=none', 'articles')).toBe('')
   })
 })
 
@@ -211,5 +219,45 @@ describe('getPreservedFilterParams', () => {
 
   test('should return an empty array when nothing is preserved', () => {
     expect(preserved('?state=draft&page=2', 'articles')).toEqual([])
+  })
+
+  test('should degrade the preset marker to none', () => {
+    expect(preserved('?state=draft&filter=abc123', 'articles')).toEqual([
+      ['filter', 'none'],
+    ])
+  })
+
+  test('should not add a preset marker when there is none', () => {
+    expect(preserved('?state=draft&q=foo', 'articles')).toEqual([['q', 'foo']])
+  })
+})
+
+describe('hasAdminListParams', () => {
+  const hasParams = (search: string, tableKey: AdminListTableKey) =>
+    hasAdminListParams(new URLSearchParams(search), tableKey)
+
+  test.each([
+    ['?state=draft'],
+    ['?q=foo'],
+    ['?sort=title'],
+    ['?order=asc'],
+    ['?page=2'],
+    ['?filter=abc123'],
+    ['?filter=none'],
+  ])('should detect list state in %s', (search) => {
+    expect(hasParams(search, 'articles')).toBe(true)
+  })
+
+  test('should return false for a bare URL', () => {
+    expect(hasParams('', 'articles')).toBe(false)
+  })
+
+  test('should ignore a filter param of a different table', () => {
+    expect(hasParams('?category=rozhovory', 'users')).toBe(false)
+  })
+
+  test('should detect an empty value as list state', () => {
+    // `?state=` is what an explicitly cleared select submits — still explicit.
+    expect(hasParams('?state=', 'articles')).toBe(true)
   })
 })

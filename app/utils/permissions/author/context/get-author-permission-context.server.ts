@@ -17,7 +17,7 @@ export async function getAuthorPermissionContext(
   request: Request,
   options: GetAuthorPermissionContextOptions,
 ) {
-  const { sessionId } = await requireSession(request)
+  const { sessionId, userId } = await requireSession(request)
 
   const session = await prisma.session.findUniqueOrThrow({
     select: {
@@ -94,6 +94,10 @@ export async function getAuthorPermissionContext(
     permissions: author.role.permissions,
     roleLevel: author.role.level,
     roleName: author.role.name,
+    // Content permissions hang off the author, but rows owned by the person behind
+    // it — saved filters — are keyed by user; exposing it here saves list loaders a
+    // second session round trip.
+    userId,
   }
 }
 

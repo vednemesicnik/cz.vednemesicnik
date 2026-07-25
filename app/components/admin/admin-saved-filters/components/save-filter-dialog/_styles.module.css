@@ -1,0 +1,31 @@
+.form {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: min(320px, 80vw);
+  }
+}
+
+.checkboxes {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+.checkbox {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    & input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+  }
+}
