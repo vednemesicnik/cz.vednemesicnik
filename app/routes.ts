@@ -24,13 +24,18 @@ export default [
     ...prefix('articles', [
       layout('routes/articles/__layout/route.tsx', [
         index('routes/articles/_index/route.tsx'),
-        route('categories', 'routes/articles/categories/_index/route.tsx'),
-        route('tags', 'routes/articles/tags/_index/route.tsx'),
-        route(
-          'category/:slug',
-          'routes/articles/categories/category/route.tsx',
-        ),
-        route('tag/:slug', 'routes/articles/tags/tag/route.tsx'),
+        ...prefix('categories', [
+          layout('routes/articles/categories/__layout/route.tsx', [
+            index('routes/articles/categories/_index/route.tsx'),
+            route(':slug', 'routes/articles/categories/category/route.tsx'),
+          ]),
+        ]),
+        ...prefix('tags', [
+          layout('routes/articles/tags/__layout/route.tsx', [
+            index('routes/articles/tags/_index/route.tsx'),
+            route(':slug', 'routes/articles/tags/tag/route.tsx'),
+          ]),
+        ]),
         route(':articleSlug', 'routes/articles/article/route.tsx'),
       ]),
     ]),

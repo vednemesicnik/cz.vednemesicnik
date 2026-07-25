@@ -1,8 +1,7 @@
 import { href } from 'react-router'
-import { Badge } from '~/components/badge'
-import { BadgeList } from '~/components/badge-list'
 import { ContentLink } from '~/components/content-link'
 import { ContentLinkAuthor } from '~/components/content-link-author'
+import { ContentLinkCategories } from '~/components/content-link-categories'
 import { ContentLinkFooter } from '~/components/content-link-footer'
 import { ContentLinkImage } from '~/components/content-link-image'
 import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
@@ -46,27 +45,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   />
                   <ContentLinkTitle>{article.title}</ContentLinkTitle>
                   <ContentLinkFooter>
+                    <ContentLinkCategories categories={article.categories} />
                     <ContentLinkAuthor>
                       {article.authors.map((author) => author.name).join(', ')}
                     </ContentLinkAuthor>
                     <ContentLinkPublishDate date={article.publishedAt} />
                   </ContentLinkFooter>
                 </ContentLink>
-
-                {article.categories.length > 0 && (
-                  <BadgeList>
-                    {article.categories.map((category) => (
-                      <Badge
-                        key={category.slug}
-                        to={href('/articles/category/:slug', {
-                          slug: category.slug,
-                        })}
-                      >
-                        {category.name}
-                      </Badge>
-                    ))}
-                  </BadgeList>
-                )}
               </ContentListItem>
             )
           })}

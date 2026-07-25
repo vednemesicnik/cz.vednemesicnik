@@ -27,7 +27,7 @@ type Story = StoryObj<typeof meta>
 export const Playground: Story = {
   args: {
     children: 'Reportáže',
-    to: '/articles/category/reportaze',
+    to: '/articles/categories/reportaze',
     variant: 'filled',
   },
 }
@@ -36,10 +36,10 @@ export const Overview: Story = {
   parameters: { controls: { disable: true } },
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-      <Badge to={'/articles/category/reportaze'} variant={'filled'}>
+      <Badge to={'/articles/categories/reportaze'} variant={'filled'}>
         Reportáže
       </Badge>
-      <Badge to={'/articles/tag/kultura'} variant={'outlined'}>
+      <Badge to={'/articles/tags/kultura'} variant={'outlined'}>
         Kultura
       </Badge>
     </div>

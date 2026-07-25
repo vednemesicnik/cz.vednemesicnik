@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import type { ReactNode } from 'react'
+import { Children, type ReactNode } from 'react'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -8,10 +8,17 @@ type Props = {
 }
 
 /**
- * A flex-wrapping container for a row of {@link Badge} links (article
- * categories or tags). Keeps spacing consistent across the article detail and
- * the listing cards.
+ * A flex-wrapping list of {@link Badge} items (article categories or tags).
+ * Renders a real `ul`/`li` list for accessibility and wraps each child in an
+ * `li` itself, so call sites can pass badges directly. Keeps spacing consistent
+ * across the article detail and the listing cards.
  */
 export const BadgeList = ({ children, className }: Props) => {
-  return <div className={clsx(styles.list, className)}>{children}</div>
+  return (
+    <ul className={clsx(styles.list, className)}>
+      {Children.map(children, (child) => (
+        <li className={styles.item}>{child}</li>
+      ))}
+    </ul>
+  )
 }

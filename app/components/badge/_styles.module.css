@@ -3,25 +3,18 @@
     display: inline-flex;
     align-items: center;
     padding-block: 0.25rem;
-    padding-inline: 0.625rem;
+    padding-inline: 0.75rem;
     border: 1px solid transparent;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-full);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
-    line-height: 1;
+    line-height: 1.4;
     white-space: nowrap;
     text-decoration: none;
     transition: all var(--transition-fast);
 
-    /* Tag-like cut corners where supported; the plain radius above is the
-       progressive-enhancement fallback for browsers without corner-shape. */
-    @supports (corner-shape: bevel) {
-      border-radius: var(--radius-lg);
-      corner-shape: bevel;
-    }
-
     &:focus-visible {
-      outline: 2px solid var(--primary);
+      outline: 2px solid var(--badge-text);
       outline-offset: 2px;
     }
   }
@@ -29,24 +22,23 @@
 
 .filled {
   @layer variant {
-    background-color: var(--primary);
-    color: var(--text-on-accent);
+    background-color: var(--badge-bg);
+    color: var(--badge-text);
 
-    &:hover {
-      background-color: var(--primary-hover);
+    /* Only links (not the static span on cards) react to hover. */
+    &:is(a):hover {
+      background-color: var(--badge-bg-hover);
     }
   }
 }
 
 .outlined {
   @layer variant {
-    border-color: var(--border-accent);
-    color: var(--primary);
+    border-color: var(--badge-border);
+    color: var(--badge-text);
 
-    &:hover {
-      background-color: var(--bg-accent);
-      border-color: var(--primary-hover);
-      color: var(--primary-hover);
+    &:is(a):hover {
+      background-color: var(--badge-bg);
     }
   }
 }

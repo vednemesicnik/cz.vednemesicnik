@@ -8,7 +8,6 @@ import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 import type { Route } from './+types/route'
 
-export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
@@ -25,7 +24,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <BulletedList>
           {tags.map((tag) => (
             <ListItem key={tag.id}>
-              <Link to={href('/articles/tag/:slug', { slug: tag.slug })}>
+              <Link to={href('/articles/tags/:slug', { slug: tag.slug })}>
                 {tag.name}
               </Link>{' '}
               ({tag.articleCount})

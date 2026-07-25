@@ -9,7 +9,7 @@ type Match = BreadcrumbMatch<
 
 export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
-    const path = href('/articles/tag/:slug', { slug: match.params.slug })
+    const path = href('/articles/tags/:slug', { slug: match.params.slug })
     const label = match.loaderData?.tag.name ?? 'Neznámý štítek'
 
     return { label, path }

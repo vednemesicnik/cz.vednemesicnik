@@ -41,7 +41,9 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
           {article.categories.map((category) => (
             <Badge
               key={category.slug}
-              to={href('/articles/category/:slug', { slug: category.slug })}
+              to={href('/articles/categories/:slug', {
+                slug: category.slug,
+              })}
             >
               {category.name}
             </Badge>
@@ -79,7 +81,7 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
           {article.tags.map((tag) => (
             <Badge
               key={tag.slug}
-              to={href('/articles/tag/:slug', { slug: tag.slug })}
+              to={href('/articles/tags/:slug', { slug: tag.slug })}
               variant={'outlined'}
             >
               {tag.name}

@@ -4,5 +4,20 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    /* Claim a full row inside the card footer (a flex parent), so a group of
+       badges wraps onto its own line above the author/date. Ignored in grid/
+       block parents such as the article detail page. */
+    flex-basis: 100%;
+    margin-block-end: 0.75rem;
+  }
+}
+
+.item {
+  @layer component {
+    display: inline-flex;
   }
 }

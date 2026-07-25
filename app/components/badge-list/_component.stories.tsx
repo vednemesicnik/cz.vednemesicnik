@@ -28,9 +28,9 @@ type Story = StoryObj<typeof meta>
 export const Playground: Story = {
   render: () => (
     <BadgeList>
-      <Badge to={'/articles/category/reportaze'}>Reportáže</Badge>
-      <Badge to={'/articles/category/rozhovory'}>Rozhovory</Badge>
-      <Badge to={'/articles/tag/kultura'} variant={'outlined'}>
+      <Badge to={'/articles/categories/reportaze'}>Reportáže</Badge>
+      <Badge to={'/articles/categories/rozhovory'}>Rozhovory</Badge>
+      <Badge to={'/articles/tags/kultura'} variant={'outlined'}>
         Kultura
       </Badge>
     </BadgeList>
