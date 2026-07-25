@@ -1,17 +1,12 @@
-import { ContentState } from '@generated/prisma/enums'
+import { ContentState, type FilterTable } from '@generated/prisma/enums'
 import { z } from 'zod'
 
 import { PAGE_PARAM } from '~/components/pagination'
 
-export type AdminListTableKey =
-  | 'archive'
-  | 'article_categories'
-  | 'article_tags'
-  | 'articles'
-  | 'authors'
-  | 'podcast_episodes'
-  | 'podcasts'
-  | 'users'
+// Aliased to the Prisma enum backing `Filter.tableKey` so the saved-filters
+// column and the registry below cannot drift apart: adding a table on only one
+// side breaks the `satisfies` check on `ADMIN_LIST_FILTER_SCHEMAS`.
+export type AdminListTableKey = FilterTable
 
 const stateFilter = z.enum(ContentState).optional()
 
@@ -118,6 +113,30 @@ export const extractAdminListFilterSearch = (
   }
 
   return canonical.toString()
+}
+
+/**
+ * Validates a stored or submitted saved-filter query against the table's schema.
+ * Rejects a snapshot that carries nothing usable, so an empty filter is never saved
+ * and a stored string is never applied without being re-checked.
+ *
+ * @param query - A search string, with or without the leading `?`.
+ * @param tableKey - Which admin table's schema to validate against.
+ * @returns The canonical query string, or `null` when nothing valid remains.
+ */
+export const validateFilterQuery = (
+  query: string,
+  tableKey: AdminListTableKey,
+): string | null => {
+  // SQLite stores enums as plain TEXT with no CHECK constraint, so a row written
+  // before a table key was retired can still hand us an unknown key.
+  if (!(tableKey in ADMIN_LIST_FILTER_SCHEMAS)) {
+    return null
+  }
+
+  const search = extractAdminListFilterSearch(query, tableKey)
+
+  return search === '' ? null : search
 }
 
 /**

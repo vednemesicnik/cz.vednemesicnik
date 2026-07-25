@@ -6,6 +6,7 @@ import {
   extractAdminListFilterSearch,
   getPreservedFilterParams,
   parseAdminListFilters,
+  validateFilterQuery,
 } from '~/utils/admin-list-filters'
 
 const parse = (search: string, tableKey: AdminListTableKey) =>
@@ -100,6 +101,39 @@ describe('extractAdminListFilterSearch', () => {
   test('should return an empty string when nothing is valid', () => {
     expect(extractAdminListFilterSearch('', 'articles')).toBe('')
     expect(extractAdminListFilterSearch('?q=foo&sort=title', 'users')).toBe('')
+  })
+})
+
+describe('validateFilterQuery', () => {
+  test('should return the canonical form of a valid query', () => {
+    expect(validateFilterQuery('?tag=skola&state=draft', 'articles')).toBe(
+      'state=draft&tag=skola',
+    )
+  })
+
+  test('should keep the valid params of a partially valid query', () => {
+    expect(validateFilterQuery('?state=sideways&tag=skola', 'articles')).toBe(
+      'tag=skola',
+    )
+  })
+
+  test('should drop params that are not filters of the table', () => {
+    expect(
+      validateFilterQuery('?q=foo&sort=title&page=2&state=draft', 'articles'),
+    ).toBe('state=draft')
+  })
+
+  test('should return null when nothing valid remains', () => {
+    expect(validateFilterQuery('', 'articles')).toBe(null)
+    expect(validateFilterQuery('?state=&category=', 'articles')).toBe(null)
+    expect(validateFilterQuery('?q=foo&page=2', 'articles')).toBe(null)
+    expect(validateFilterQuery('?category=rozhovory', 'users')).toBe(null)
+  })
+
+  test('should return null for a table key that is no longer in the registry', () => {
+    expect(
+      validateFilterQuery('?state=draft', 'retired_table' as AdminListTableKey),
+    ).toBe(null)
   })
 })
 
