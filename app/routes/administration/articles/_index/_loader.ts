@@ -1,6 +1,10 @@
 import type { Prisma } from '@generated/prisma/client'
+import { redirect } from 'react-router'
 
-import { parseAdminListFilters } from '~/utils/admin-list-filters'
+import {
+  buildStaleFilterRedirect,
+  parseAdminListFilters,
+} from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
@@ -22,7 +26,7 @@ const ORDER_BY: Record<
   title: (order) => [{ title: order }, { createdAt: 'desc' }],
 }
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
     actions: ['view', 'create', 'update', 'delete'],
     entities: ['article'],
@@ -128,6 +132,28 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       }),
     ])
 
+  const authorOptions = authors.map((author) => ({
+    label: author.name,
+    value: author.id,
+  }))
+  const categoryOptions = categories.map((category) => ({
+    label: category.name,
+    value: category.slug,
+  }))
+  const tagOptions = tags.map((tag) => ({ label: tag.name, value: tag.slug }))
+
+  // `state` is enum-backed, so the schema already validates it; the rest is
+  // data-driven and can go stale between two visits.
+  const staleFilterRedirect = buildStaleFilterRedirect(url, {
+    author: authorOptions,
+    category: categoryOptions,
+    tag: tagOptions,
+  })
+
+  if (staleFilterRedirect !== null) {
+    throw redirect(staleFilterRedirect)
+  }
+
   // Compute permissions for each article
   const articles = rawArticles.map((article) => {
     if (article.authors.length === 0) {
@@ -168,25 +194,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return {
     articles,
-    authorOptions: authors.map((author) => ({
-      label: author.name,
-      value: author.id,
-    })),
+    authorOptions,
     canCreate: context.can({
       action: 'create',
       entity: 'article',
       state: 'draft',
       targetAuthorIds: [context.authorId],
     }).hasPermission,
-    categoryOptions: categories.map((category) => ({
-      label: category.name,
-      value: category.slug,
-    })),
+    categoryOptions,
     currentPage: page,
     filters,
     pageSize: PAGE_SIZE,
     query,
-    tagOptions: tags.map((tag) => ({ label: tag.name, value: tag.slug })),
+    tagOptions,
     totalCount,
     totalPages,
   }

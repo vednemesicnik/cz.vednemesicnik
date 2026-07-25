@@ -121,6 +121,52 @@ export const extractAdminListFilterSearch = (
 }
 
 /**
+ * Builds the redirect target that strips filter params whose value is no longer
+ * offered — a deleted category, an author that lost its last visible article.
+ * Left in place, such a value keeps narrowing the list while its select, having
+ * no matching option, falls back to "Vše". Pass only the data-driven params;
+ * enum-backed ones like `state` are already covered by the schema.
+ *
+ * @param url - The request's normalized URL (React Router's `url` loader arg).
+ * @param optionsByParam - The offered options, keyed by filter param name.
+ * @returns The path to redirect to, or `null` when every value is still offered.
+ */
+export const buildStaleFilterRedirect = (
+  url: URL,
+  optionsByParam: Record<string, { value: string }[]>,
+): string | null => {
+  const staleParams = Object.entries(optionsByParam)
+    .filter(([param, options]) => {
+      const value = url.searchParams.get(param)
+
+      // An empty value is the "Vše" option, which the parser drops anyway.
+      return (
+        value !== null &&
+        value !== '' &&
+        !options.some((option) => option.value === value)
+      )
+    })
+    .map(([param]) => param)
+
+  if (staleParams.length === 0) {
+    return null
+  }
+
+  const searchParams = new URLSearchParams(url.searchParams)
+
+  for (const param of staleParams) {
+    searchParams.delete(param)
+  }
+
+  // The result set widens, so the current page may no longer exist.
+  searchParams.delete(PAGE_PARAM)
+
+  const search = searchParams.toString()
+
+  return search === '' ? url.pathname : `${url.pathname}?${search}`
+}
+
+/**
  * Collects the params a filter submit has to carry over as hidden inputs — everything
  * except the table's own filter params (the form owns those) and `page` (changing a
  * filter resets pagination). Mirrors how `AdminTableSearch` preserves params.
