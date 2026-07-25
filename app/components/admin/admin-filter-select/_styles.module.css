@@ -29,10 +29,12 @@
     font-weight: var(--font-weight-regular);
     line-height: var(--line-height-md);
 
-    /* Layout */
+    /* Layout — min-width keeps the control from resizing as the selected
+       option changes, while still growing for long category or tag names. */
     padding-block: 10px;
     padding-inline: 16px;
     border-radius: 8px;
+    min-width: 160px;
     max-width: 100%;
     cursor: pointer;
 
