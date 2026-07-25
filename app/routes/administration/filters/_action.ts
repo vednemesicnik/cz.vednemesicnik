@@ -141,6 +141,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case INTENT_VALUE.toggleSharedFilter:
       await setSharedFilter({ filterId: filter.id, isShared: !filter.isShared })
       break
+
+    default: {
+      // An intent added to the schema but not handled here would otherwise fall
+      // through and report success without mutating anything.
+      const unhandledIntent: never = payload
+
+      throw new Error(
+        `Unhandled filter intent: ${JSON.stringify(unhandledIntent)}`,
+      )
+    }
   }
 
   return data({ submissionResult: submission.reply() })
