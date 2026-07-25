@@ -8,7 +8,9 @@ type Option = {
   label: string
 }
 
-type Props = ComponentProps<'select'> & {
+// `children` is omitted: the component owns the options, including the leading
+// empty one, so a passed child would be silently dropped.
+type Props = Omit<ComponentProps<'select'>, 'children'> & {
   label: string
   options: Option[]
 }
