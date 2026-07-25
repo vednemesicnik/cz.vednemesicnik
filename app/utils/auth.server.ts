@@ -62,6 +62,7 @@ const getSessionFromDatabase = async (sessionAuthId: string) => {
   return prisma.session.findUnique({
     select: {
       id: true,
+      userId: true,
     },
     where: {
       expirationDate: {
@@ -129,6 +130,7 @@ export const requireAuthentication = async ({
   return {
     isAuthenticated: true,
     sessionId: session.id,
+    userId: session.userId,
   }
 }
 
@@ -137,7 +139,9 @@ export const requireAuthentication = async ({
  * `url`) and don't need a return path — e.g. the permission-context helpers,
  * which run behind the authenticated layout guard, and actions where a
  * `redirectTo` back to a POST endpoint would be meaningless. On failure it
- * bounces to sign-in without a `redirectTo`.
+ * bounces to sign-in without a `redirectTo`. `userId` comes from the session row
+ * that is loaded anyway, for actions gated by ownership rather than by a
+ * permission entity.
  */
 export const requireSession = async (request: Request) => {
   const { cookieSession, session } = await loadSession(request)
@@ -149,6 +153,7 @@ export const requireSession = async (request: Request) => {
   return {
     isAuthenticated: true,
     sessionId: session.id,
+    userId: session.userId,
   }
 }
 
