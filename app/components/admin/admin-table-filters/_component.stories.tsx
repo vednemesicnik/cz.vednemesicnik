@@ -38,7 +38,9 @@ const withRouterAt = (search: string, children: ReactElement) => {
 }
 
 /**
- * No other params in the URL, so no hidden inputs are rendered.
+ * No other params in the URL, so no hidden inputs are rendered. The "Filtrovat"
+ * button is in the DOM but hidden — with scripting available the selects submit
+ * on change, so it only shows as the no-JS fallback.
  */
 export const Playground: Story = {
   render: () =>

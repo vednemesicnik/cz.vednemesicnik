@@ -143,7 +143,9 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const tagOptions = tags.map((tag) => ({ label: tag.name, value: tag.slug }))
 
   // `state` is enum-backed, so the schema already validates it; the rest is
-  // data-driven and can go stale between two visits.
+  // data-driven and can go stale between two visits. Checked after the queries
+  // so the common path stays a single round trip — a stale value is rare and
+  // costs one extra request.
   const staleFilterRedirect = buildStaleFilterRedirect(url, {
     author: authorOptions,
     category: categoryOptions,

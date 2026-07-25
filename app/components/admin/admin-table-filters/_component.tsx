@@ -14,21 +14,21 @@ export const AdminTableFilters = ({ children, preservedParams }: Props) => {
   const submit = useSubmit()
 
   // A native GET submit serializes every select, so the ones left on "Vše"
-  // would litter the URL with `?category=&tag=`. Submitting the cleaned form
-  // data keeps the URL to the filters that are actually set. Without JS the
-  // native submit still works — the parser drops the empty values server-side.
+  // would litter the URL with `?category=&tag=`. Submitting only the values that
+  // are set keeps the URL clean. Without JS the native submit still works — the
+  // parser drops the empty values server-side.
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const formData = new FormData(event.currentTarget)
+    const searchParams = new URLSearchParams()
 
-    for (const [name, value] of [...formData.entries()]) {
-      if (value === '') {
-        formData.delete(name)
+    for (const [name, value] of new FormData(event.currentTarget).entries()) {
+      if (typeof value === 'string' && value !== '') {
+        searchParams.append(name, value)
       }
     }
 
-    void submit(formData, { method: 'get' })
+    void submit(searchParams, { method: 'get' })
   }
 
   return (
