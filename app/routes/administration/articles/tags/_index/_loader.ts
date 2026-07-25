@@ -1,12 +1,20 @@
 import type { Prisma } from '@generated/prisma/client'
 
+import {
+  extractAdminListFilterSearch,
+  FILTER_PRESET_PARAM,
+  parseAdminListFilters,
+} from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
+
+const TABLE_KEY = 'article_tags'
 
 // Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
 // equal values keep a deterministic order across reloads.
@@ -18,10 +26,18 @@ const ORDER_BY: Record<
   name: (order) => [{ name: order }, { createdAt: 'desc' }],
 }
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
     actions: ['view', 'create', 'update', 'delete'],
     entities: ['article_tag'],
+  })
+
+  // Before any query: a bare visit with a default preset never renders this list,
+  // it redirects to the preset's own URL.
+  await resolveDefaultFilter({
+    tableKey: TABLE_KEY,
+    url,
+    userId: context.userId,
   })
 
   // Check view permissions for each state
@@ -47,6 +63,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     sortKeys: SORT_KEYS,
   })
 
+  const filters = parseAdminListFilters(request, TABLE_KEY)
+
   const permissionWhere = {
     OR: buildViewableStateFilters(
       [
@@ -59,25 +77,76 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   }
 
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
-  // match case-sensitively (accepted limitation).
+  // match case-sensitively (accepted limitation). The field filter is ANDed with
+  // the permission clause, so it only ever narrows what the role may view.
   const where = {
     AND: [
       permissionWhere,
       ...(query === '' ? [] : [{ name: { contains: query } }]),
+      ...(filters.state === undefined ? [] : [{ state: filters.state }]),
     ],
   }
 
-  const rawTags = await prisma.articleTag.findMany({
-    orderBy: ORDER_BY[sort](order),
-    select: {
-      authorId: true,
-      createdAt: true,
-      id: true,
-      name: true,
-      state: true,
-    },
-    where,
-  })
+  const [rawTags, ownFilters, rawSharedFilters] = await Promise.all([
+    prisma.articleTag.findMany({
+      orderBy: ORDER_BY[sort](order),
+      select: {
+        authorId: true,
+        createdAt: true,
+        id: true,
+        name: true,
+        state: true,
+      },
+      where,
+    }),
+    prisma.filter.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        isDefault: true,
+        isShared: true,
+        name: true,
+        query: true,
+      },
+      where: { tableKey: TABLE_KEY, userId: context.userId },
+    }),
+    // Someone else's shared presets: apply-only, and labelled with their owner —
+    // the unique index is per user, so two people can publish the same name.
+    prisma.filter.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        query: true,
+        user: { select: { name: true, username: true } },
+      },
+      where: {
+        isShared: true,
+        NOT: { userId: context.userId },
+        tableKey: TABLE_KEY,
+      },
+    }),
+  ])
+
+  // `User.name` is optional; the username is unique and always set, so it keeps the
+  // owner label unambiguous when two people share a preset of the same name.
+  const sharedFilters = rawSharedFilters.map((filter) => ({
+    id: filter.id,
+    name: filter.name,
+    ownerName: filter.user.name ?? filter.user.username,
+    query: filter.query,
+  }))
+
+  // A preset the viewer cannot see (deleted, unshared, or someone else's private one)
+  // leaves the menu unhighlighted instead of pointing at nothing.
+  const requestedFilterId = url.searchParams.get(FILTER_PRESET_PARAM)
+  const activeFilterId =
+    requestedFilterId !== null &&
+    [...ownFilters, ...sharedFilters].some(
+      (filter) => filter.id === requestedFilterId,
+    )
+      ? requestedFilterId
+      : null
 
   // Compute permissions for each tag
   const tags = rawTags.map((tag) => {
@@ -105,13 +174,20 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   })
 
   return {
+    activeFilterId,
     canCreate: context.can({
       action: 'create',
       entity: 'article_tag',
       state: 'draft',
       targetAuthorIds: [context.authorId],
     }).hasPermission,
+    // Canonical snapshot of what the selects currently hold — what a save or an
+    // overwrite stores, and what tells the menu there is anything worth saving.
+    currentFilterQuery: extractAdminListFilterSearch(url.search, TABLE_KEY),
+    filters,
+    ownFilters,
     query,
+    sharedFilters,
     tags,
   }
 }
