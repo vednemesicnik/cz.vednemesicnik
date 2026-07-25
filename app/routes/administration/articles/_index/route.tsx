@@ -6,6 +6,7 @@ import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminSavedFilters } from '~/components/admin/admin-saved-filters'
 import {
   AdminTable,
   TableBody,
@@ -51,14 +52,18 @@ const getEmptyMessage = (hasActiveFilters: boolean, query: string) => {
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
+    activeFilterId,
     articles,
     authorOptions,
     canCreate,
     categoryOptions,
+    currentFilterQuery,
     currentPage,
     filters,
+    ownFilters,
     pageSize,
     query,
+    sharedFilters,
     tagOptions,
     totalCount,
     totalPages,
@@ -119,6 +124,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             options={authorOptions}
           />
         </AdminTableFilters>
+        {/* Sibling of the filter form, never a child: its rows submit their own
+            forms, which cannot be nested inside another one. */}
+        <AdminSavedFilters
+          activeFilterId={activeFilterId}
+          currentQuery={currentFilterQuery}
+          ownFilters={ownFilters}
+          sharedFilters={sharedFilters}
+          tableKey={'articles'}
+        />
       </AdminTableToolbar>
       <AdminTable pending={pending} stickyHeader={true}>
         <TableHeader>
