@@ -1,12 +1,9 @@
 import type { Prisma } from '@generated/prisma/client'
 
-import {
-  extractAdminListFilterSearch,
-  FILTER_PRESET_PARAM,
-  parseAdminListFilters,
-} from '~/utils/admin-list-filters'
+import { parseAdminListFilters } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
+import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
@@ -87,7 +84,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ],
   }
 
-  const [rawPodcasts, ownFilters, rawSharedFilters] = await Promise.all([
+  const [rawPodcasts, savedFilters] = await Promise.all([
     prisma.podcast.findMany({
       orderBy: ORDER_BY[sort](order),
       select: {
@@ -99,54 +96,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       },
       where,
     }),
-    prisma.filter.findMany({
-      orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        isDefault: true,
-        isShared: true,
-        name: true,
-        query: true,
-      },
-      where: { tableKey: TABLE_KEY, userId: context.userId },
-    }),
-    // Someone else's shared presets: apply-only, and labelled with their owner —
-    // the unique index is per user, so two people can publish the same name.
-    prisma.filter.findMany({
-      orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        name: true,
-        query: true,
-        user: { select: { name: true, username: true } },
-      },
-      where: {
-        isShared: true,
-        NOT: { userId: context.userId },
-        tableKey: TABLE_KEY,
-      },
-    }),
+    loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
   ])
-
-  // `User.name` is optional; the username is unique and always set, so it keeps the
-  // owner label unambiguous when two people share a preset of the same name.
-  const sharedFilters = rawSharedFilters.map((filter) => ({
-    id: filter.id,
-    name: filter.name,
-    ownerName: filter.user.name ?? filter.user.username,
-    query: filter.query,
-  }))
-
-  // A preset the viewer cannot see (deleted, unshared, or someone else's private one)
-  // leaves the menu unhighlighted instead of pointing at nothing.
-  const requestedFilterId = url.searchParams.get(FILTER_PRESET_PARAM)
-  const activeFilterId =
-    requestedFilterId !== null &&
-    [...ownFilters, ...sharedFilters].some(
-      (filter) => filter.id === requestedFilterId,
-    )
-      ? requestedFilterId
-      : null
 
   // Compute permissions for each podcast
   const podcasts = rawPodcasts.map((podcast) => {
@@ -174,20 +125,15 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   })
 
   return {
-    activeFilterId,
+    ...savedFilters,
     canCreate: context.can({
       action: 'create',
       entity: 'podcast',
       state: 'draft',
       targetAuthorIds: [context.authorId],
     }).hasPermission,
-    // Canonical snapshot of what the selects currently hold — what a save or an
-    // overwrite stores, and what tells the menu there is anything worth saving.
-    currentFilterQuery: extractAdminListFilterSearch(url.search, TABLE_KEY),
     filters,
-    ownFilters,
     podcasts,
     query,
-    sharedFilters,
   }
 }
