@@ -55,7 +55,7 @@ export const useFilterDialog = (
 
     wasSubmittingRef.current = false
 
-    if (fetcher.data?.submissionResult.status === 'success') {
+    if (fetcher.data?.submissionResult?.status === 'success') {
       dialogRef.current?.close()
     }
   }, [fetcher.data, fetcher.state])
@@ -128,8 +128,15 @@ export const useDeleteFilterConfirmation = (
 
   const openDialog = useCallback(
     (filterId: string) => {
+      const dialog = dialogRef.current
+
+      if (dialog === null) return
+
       setPendingFilterId(filterId)
-      dialogRef.current?.showModal()
+      // Closing with Esc leaves `returnValue` untouched, so a previous accept
+      // would still be there and would delete this row without a confirmation.
+      dialog.returnValue = ''
+      dialog.showModal()
     },
     [dialogRef],
   )

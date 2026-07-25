@@ -136,14 +136,14 @@ export const AdminSavedFilters = ({
           >
             Zrušit filtry
           </Link>
+          {/* Spelled out rather than put in a `title`: a disabled button takes no
+              pointer events, so its tooltip never shows. */}
+          {!hasCurrentQuery && (
+            <p className={styles.hint}>Nejprve nastavte alespoň jeden filtr.</p>
+          )}
           <AdminButton
             disabled={!hasCurrentQuery}
             onClick={handleSave}
-            title={
-              hasCurrentQuery
-                ? undefined
-                : 'Nejprve nastavte alespoň jeden filtr'
-            }
             type={'button'}
           >
             Uložit aktuální filtr
