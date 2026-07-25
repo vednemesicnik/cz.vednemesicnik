@@ -129,8 +129,10 @@ export const validateFilterQuery = (
   tableKey: AdminListTableKey,
 ): string | null => {
   // SQLite stores enums as plain TEXT with no CHECK constraint, so a row written
-  // before a table key was retired can still hand us an unknown key.
-  if (!(tableKey in ADMIN_LIST_FILTER_SCHEMAS)) {
+  // before a table key was retired can still hand us an unknown key. `hasOwn`
+  // rather than `in`, which would also accept prototype keys like `constructor`
+  // and then blow up on the missing schema.
+  if (!Object.hasOwn(ADMIN_LIST_FILTER_SCHEMAS, tableKey)) {
     return null
   }
 

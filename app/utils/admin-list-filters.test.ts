@@ -135,6 +135,12 @@ describe('validateFilterQuery', () => {
       validateFilterQuery('?state=draft', 'retired_table' as AdminListTableKey),
     ).toBe(null)
   })
+
+  test('should return null for a prototype key rather than throwing', () => {
+    expect(
+      validateFilterQuery('?state=draft', 'constructor' as AdminListTableKey),
+    ).toBe(null)
+  })
 })
 
 describe('buildStaleFilterRedirect', () => {
