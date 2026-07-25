@@ -1,5 +1,8 @@
 // noinspection JSUnusedGlobalSymbols
 
+import { href } from 'react-router'
+import { Badge } from '~/components/badge'
+import { BadgeList } from '~/components/badge-list'
 import { ContentRenderer } from '~/components/content-renderer'
 import { FeaturedImage } from '~/components/featured-image'
 import { Headline } from '~/components/headline'
@@ -33,6 +36,19 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
         </Subheadline>
       </HeadlineGroup>
 
+      {article.categories.length > 0 && (
+        <BadgeList>
+          {article.categories.map((category) => (
+            <Badge
+              key={category.slug}
+              to={href('/articles/category/:slug', { slug: category.slug })}
+            >
+              {category.name}
+            </Badge>
+          ))}
+        </BadgeList>
+      )}
+
       {article.featuredImage && (
         <FeaturedImage
           alt={article.featuredImage.altText}
@@ -56,6 +72,20 @@ export default function ArticleRoute({ loaderData }: Route.ComponentProps) {
             />
           ))}
         </ImageGallery>
+      )}
+
+      {article.tags.length > 0 && (
+        <BadgeList>
+          {article.tags.map((tag) => (
+            <Badge
+              key={tag.slug}
+              to={href('/articles/tag/:slug', { slug: tag.slug })}
+              variant={'outlined'}
+            >
+              {tag.name}
+            </Badge>
+          ))}
+        </BadgeList>
       )}
     </Page>
   )

@@ -50,6 +50,12 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
             name: true,
           },
         },
+        categories: {
+          select: {
+            name: true,
+            slug: true,
+          },
+        },
         featuredImage: {
           select: imageSourceSelect,
         },

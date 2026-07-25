@@ -1,0 +1,52 @@
+.badge {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    padding-block: 0.25rem;
+    padding-inline: 0.625rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+
+    /* Tag-like cut corners where supported; the plain radius above is the
+       progressive-enhancement fallback for browsers without corner-shape. */
+    @supports (corner-shape: bevel) {
+      border-radius: var(--radius-lg);
+      corner-shape: bevel;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.filled {
+  @layer variant {
+    background-color: var(--primary);
+    color: var(--text-on-accent);
+
+    &:hover {
+      background-color: var(--primary-hover);
+    }
+  }
+}
+
+.outlined {
+  @layer variant {
+    border-color: var(--border-accent);
+    color: var(--primary);
+
+    &:hover {
+      background-color: var(--bg-accent);
+      border-color: var(--primary-hover);
+      color: var(--primary-hover);
+    }
+  }
+}
