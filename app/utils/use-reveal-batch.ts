@@ -14,7 +14,9 @@ export const useRevealBatchStart = (limit: number) => {
   const [renderedLimit, setRenderedLimit] = useState(limit)
   const [batchStart, setBatchStart] = useState(0)
 
-  if (renderedLimit !== limit) {
+  // A non-finite limit (`?limit=abc`) never compares equal to itself, which
+  // would set state on every render and never settle.
+  if (Number.isFinite(limit) && renderedLimit !== limit) {
     setRenderedLimit(limit)
     setBatchStart(limit > renderedLimit ? renderedLimit : 0)
   }
