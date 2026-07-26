@@ -80,13 +80,24 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
   }
 
   // Search, sort and the field filter apply to the nested episodes include, not a
-  // top-level findMany. SQLite `contains` is case-insensitive for ASCII only; Czech
-  // diacritics match case-sensitively (accepted limitation). The filter is ANDed
-  // with the permission clause, so it only ever narrows what the role may view.
+  // top-level findMany. Search matches the title or the slug — the slug is the
+  // unique handle and is what a public URL exposes. SQLite `contains` is
+  // case-insensitive for ASCII only; Czech diacritics match case-sensitively
+  // (accepted limitation). The filter is ANDed with the permission clause, so it
+  // only ever narrows what the role may view.
   const episodesWhere = {
     AND: [
       permissionWhere,
-      ...(query === '' ? [] : [{ title: { contains: query } }]),
+      ...(query === ''
+        ? []
+        : [
+            {
+              OR: [
+                { title: { contains: query } },
+                { slug: { contains: query } },
+              ],
+            },
+          ]),
       ...(filters.state === undefined ? [] : [{ state: filters.state }]),
     ],
   }

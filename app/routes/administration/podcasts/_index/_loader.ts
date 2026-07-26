@@ -73,13 +73,24 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ),
   }
 
-  // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
-  // match case-sensitively (accepted limitation). The field filter is ANDed with
-  // the permission clause, so it only ever narrows what the role may view.
+  // Search matches the title or the slug — the slug is the unique handle and is
+  // what a public URL exposes. SQLite `contains` is case-insensitive for ASCII
+  // only; Czech diacritics match case-sensitively (accepted limitation). The
+  // field filter is ANDed with the permission clause, so it only ever narrows
+  // what the role may view.
   const where = {
     AND: [
       permissionWhere,
-      ...(query === '' ? [] : [{ title: { contains: query } }]),
+      ...(query === ''
+        ? []
+        : [
+            {
+              OR: [
+                { title: { contains: query } },
+                { slug: { contains: query } },
+              ],
+            },
+          ]),
       ...(filters.state === undefined ? [] : [{ state: filters.state }]),
     ],
   }
