@@ -1,11 +1,16 @@
 import type { Prisma } from '@generated/prisma/client'
 
+import { parseAdminListFilters } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
+import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
+
+const TABLE_KEY = 'users'
 
 // Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
 // equal values keep a deterministic order across reloads.
@@ -19,10 +24,18 @@ const ORDER_BY: Record<
   role: (order) => [{ role: { level: order } }, { createdAt: 'desc' }],
 }
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const context = await getUserPermissionContext(request, {
     actions: ['view', 'create', 'update', 'delete'],
     entities: ['user'],
+  })
+
+  // Before any query: a bare visit with a default preset never renders this list,
+  // it redirects to the preset's own URL.
+  await resolveDefaultFilter({
+    tableKey: TABLE_KEY,
+    url,
+    userId: context.userId,
   })
 
   // Check view permission - check if user can view at least themselves
@@ -43,6 +56,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     sortKeys: SORT_KEYS,
   })
 
+  const filters = parseAdminListFilters(request, TABLE_KEY)
+
   const permissionWhere =
     viewPerms.hasOwn && !viewPerms.hasAny ? { id: context.userId } : {}
 
@@ -57,26 +72,37 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
           },
         ]
 
-  const where = { AND: [permissionWhere, ...searchWhere] }
+  // The role filter is ANDed with the permission clause, so it only ever narrows
+  // what the viewer may see — a member still gets their own account at most.
+  const where = {
+    AND: [
+      permissionWhere,
+      ...searchWhere,
+      ...(filters.role === undefined ? [] : [{ role: { name: filters.role } }]),
+    ],
+  }
 
   // Fetch users based on permissions
-  const rawUsers = await prisma.user.findMany({
-    orderBy: ORDER_BY[sort](order),
-    select: {
-      createdAt: true,
-      email: true,
-      id: true,
-      name: true,
-      role: {
-        select: {
-          id: true,
-          level: true,
-          name: true,
+  const [rawUsers, savedFilters] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: ORDER_BY[sort](order),
+      select: {
+        createdAt: true,
+        email: true,
+        id: true,
+        name: true,
+        role: {
+          select: {
+            id: true,
+            level: true,
+            name: true,
+          },
         },
       },
-    },
-    where,
-  })
+      where,
+    }),
+    loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
+  ])
 
   // Compute permissions for each user
   const users = rawUsers.map((user) => {
@@ -104,11 +130,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   })
 
   return {
+    ...savedFilters,
     canCreate: context.can({
       action: 'create',
       entity: 'user',
       targetUserId: context.userId,
     }).hasPermission,
+    filters,
     query,
     users,
   }

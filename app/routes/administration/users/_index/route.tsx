@@ -1,9 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
+import { href, useSearchParams } from 'react-router'
+import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminSavedFilters } from '~/components/admin/admin-saved-filters'
 import {
   AdminTable,
   TableBody,
@@ -12,8 +14,12 @@ import {
   TableHeaderCell,
   TableSortableHeaderCell,
 } from '~/components/admin/admin-table'
+import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
+import { USER_ROLE_OPTIONS } from '~/utils/admin-filter-options'
+import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
+import { getPreservedFilterParams } from '~/utils/admin-list-filters'
 import { getUserRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import type { Route } from './+types/route'
@@ -27,9 +33,23 @@ export { meta } from './_meta'
 const COLUMN_COUNT = 5
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { canCreate, query, users } = loaderData
+  const {
+    activeFilterId,
+    canCreate,
+    currentFilterQuery,
+    filters,
+    ownFilters,
+    query,
+    sharedFilters,
+    users,
+  } = loaderData
 
+  const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
+
+  const hasActiveFilters = Object.values(filters).some(
+    (value) => value !== undefined,
+  )
 
   return (
     <AdminPage>
@@ -43,6 +63,25 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <AdminTableSearch
           defaultValue={query}
           placeholder={'Hledat uživatele…'}
+        />
+        <AdminTableFilters
+          preservedParams={getPreservedFilterParams(searchParams, 'users')}
+        >
+          <AdminFilterSelect
+            defaultValue={filters.role ?? ''}
+            label={'Role'}
+            name={'role'}
+            options={USER_ROLE_OPTIONS}
+          />
+        </AdminTableFilters>
+        {/* Sibling of the filter form, never a child: its rows submit their own
+            forms, which cannot be nested inside another one. */}
+        <AdminSavedFilters
+          activeFilterId={activeFilterId}
+          currentQuery={currentFilterQuery}
+          ownFilters={ownFilters}
+          sharedFilters={sharedFilters}
+          tableKey={'users'}
         />
       </AdminTableToolbar>
       <AdminTable pending={pending} stickyHeader={true}>
@@ -84,9 +123,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {users.length === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {query === ''
-                ? 'Žádní uživatelé'
-                : `Nic nenalezeno pro „${query}“`}
+              {getAdminListEmptyMessage({
+                emptyLabel: 'Žádní uživatelé',
+                hasActiveFilters,
+                query,
+              })}
             </TableEmptyRow>
           ) : (
             users.map((user) => (

@@ -3,12 +3,11 @@ import { redirect } from 'react-router'
 
 import {
   buildStaleFilterRedirect,
-  extractAdminListFilterSearch,
-  FILTER_PRESET_PARAM,
   parseAdminListFilters,
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
+import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
@@ -115,72 +114,39 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // article at all, which could never match anything.
   const withAnyArticle = { articles: { some: {} } }
 
-  const [
-    rawArticles,
-    totalCount,
-    authors,
-    categories,
-    tags,
-    ownFilters,
-    rawSharedFilters,
-  ] = await Promise.all([
-    prisma.article.findMany({
-      orderBy: ORDER_BY[sort](order),
-      select: {
-        authors: { select: { id: true } },
-        createdAt: true,
-        id: true,
-        state: true,
-        title: true,
-      },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      where,
-    }),
-    prisma.article.count({ where }),
-    prisma.author.findMany({
-      orderBy: { name: 'asc' },
-      select: { id: true, name: true },
-      where: withAnyArticle,
-    }),
-    prisma.articleCategory.findMany({
-      orderBy: { name: 'asc' },
-      select: { name: true, slug: true },
-      where: withAnyArticle,
-    }),
-    prisma.articleTag.findMany({
-      orderBy: { name: 'asc' },
-      select: { name: true, slug: true },
-      where: withAnyArticle,
-    }),
-    prisma.filter.findMany({
-      orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        isDefault: true,
-        isShared: true,
-        name: true,
-        query: true,
-      },
-      where: { tableKey: TABLE_KEY, userId: context.userId },
-    }),
-    // Someone else's shared presets: apply-only, and labelled with their owner —
-    // the unique index is per user, so two people can publish the same name.
-    prisma.filter.findMany({
-      orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        name: true,
-        query: true,
-        user: { select: { name: true, username: true } },
-      },
-      where: {
-        isShared: true,
-        NOT: { userId: context.userId },
-        tableKey: TABLE_KEY,
-      },
-    }),
-  ])
+  const [rawArticles, totalCount, authors, categories, tags, savedFilters] =
+    await Promise.all([
+      prisma.article.findMany({
+        orderBy: ORDER_BY[sort](order),
+        select: {
+          authors: { select: { id: true } },
+          createdAt: true,
+          id: true,
+          state: true,
+          title: true,
+        },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        where,
+      }),
+      prisma.article.count({ where }),
+      prisma.author.findMany({
+        orderBy: { name: 'asc' },
+        select: { id: true, name: true },
+        where: withAnyArticle,
+      }),
+      prisma.articleCategory.findMany({
+        orderBy: { name: 'asc' },
+        select: { name: true, slug: true },
+        where: withAnyArticle,
+      }),
+      prisma.articleTag.findMany({
+        orderBy: { name: 'asc' },
+        select: { name: true, slug: true },
+        where: withAnyArticle,
+      }),
+      loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
+    ])
 
   const authorOptions = authors.map((author) => ({
     label: author.name,
@@ -205,26 +171,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   if (staleFilterRedirect !== null) {
     throw redirect(staleFilterRedirect)
   }
-
-  // `User.name` is optional; the username is unique and always set, so it keeps the
-  // owner label unambiguous when two people share a preset of the same name.
-  const sharedFilters = rawSharedFilters.map((filter) => ({
-    id: filter.id,
-    name: filter.name,
-    ownerName: filter.user.name ?? filter.user.username,
-    query: filter.query,
-  }))
-
-  // A preset the viewer cannot see (deleted, unshared, or someone else's private one)
-  // leaves the menu unhighlighted instead of pointing at nothing.
-  const requestedFilterId = url.searchParams.get(FILTER_PRESET_PARAM)
-  const activeFilterId =
-    requestedFilterId !== null &&
-    [...ownFilters, ...sharedFilters].some(
-      (filter) => filter.id === requestedFilterId,
-    )
-      ? requestedFilterId
-      : null
 
   // Compute permissions for each article
   const articles = rawArticles.map((article) => {
@@ -265,7 +211,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   return {
-    activeFilterId,
+    ...savedFilters,
     articles,
     authorOptions,
     canCreate: context.can({
@@ -275,15 +221,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       targetAuthorIds: [context.authorId],
     }).hasPermission,
     categoryOptions,
-    // Canonical snapshot of what the selects currently hold — what a save or an
-    // overwrite stores, and what tells the menu there is anything worth saving.
-    currentFilterQuery: extractAdminListFilterSearch(url.search, TABLE_KEY),
     currentPage: page,
     filters,
-    ownFilters,
     pageSize: PAGE_SIZE,
     query,
-    sharedFilters,
     tagOptions,
     totalCount,
     totalPages,

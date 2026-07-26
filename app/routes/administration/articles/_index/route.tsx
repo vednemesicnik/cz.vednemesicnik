@@ -21,7 +21,8 @@ import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { Pagination } from '~/components/pagination'
-import { contentStateConfig } from '~/config/content-state-config'
+import { CONTENT_STATE_OPTIONS } from '~/utils/admin-filter-options'
+import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import type { Route } from './+types/route'
@@ -34,21 +35,6 @@ export { meta } from './_meta'
 
 // selection + title + state + createdAt + actions
 const COLUMN_COUNT = 5
-
-const STATE_OPTIONS = contentStateConfig.states.map((state) => ({
-  label: contentStateConfig.selectMap[state],
-  value: state,
-}))
-
-// An active filter takes precedence over the search term: with both narrowing
-// the list, the filter is the more likely cause of an empty result.
-const getEmptyMessage = (hasActiveFilters: boolean, query: string) => {
-  if (hasActiveFilters) {
-    return 'Žádné výsledky pro zvolené filtry.'
-  }
-
-  return query === '' ? 'Žádné články' : `Nic nenalezeno pro „${query}“`
-}
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
@@ -103,7 +89,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             defaultValue={filters.state ?? ''}
             label={'Stav'}
             name={'state'}
-            options={STATE_OPTIONS}
+            options={CONTENT_STATE_OPTIONS}
           />
           <AdminFilterSelect
             defaultValue={filters.category ?? ''}
@@ -164,7 +150,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {totalCount === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {getEmptyMessage(hasActiveFilters, query)}
+              {getAdminListEmptyMessage({
+                emptyLabel: 'Žádné články',
+                hasActiveFilters,
+                query,
+              })}
             </TableEmptyRow>
           ) : (
             articles.map((article) => (

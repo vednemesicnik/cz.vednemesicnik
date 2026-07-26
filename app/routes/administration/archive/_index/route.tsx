@@ -1,10 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
+import { href, useSearchParams } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
+import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminSavedFilters } from '~/components/admin/admin-saved-filters'
 import {
   AdminTable,
   TableBody,
@@ -15,8 +17,12 @@ import {
   TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
+import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
+import { CONTENT_STATE_OPTIONS } from '~/utils/admin-filter-options'
+import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
+import { getPreservedFilterParams } from '~/utils/admin-list-filters'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
@@ -30,9 +36,23 @@ export { meta } from './_meta'
 const COLUMN_COUNT = 5
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { canCreate, issues, query } = loaderData
+  const {
+    activeFilterId,
+    canCreate,
+    currentFilterQuery,
+    filters,
+    issues,
+    ownFilters,
+    query,
+    sharedFilters,
+  } = loaderData
 
+  const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
+
+  const hasActiveFilters = Object.values(filters).some(
+    (value) => value !== undefined,
+  )
 
   const deletableIds = issues
     .filter((issue) => issue.canDelete)
@@ -53,6 +73,25 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           action={href('/administration/archive')}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
+        />
+        <AdminTableFilters
+          preservedParams={getPreservedFilterParams(searchParams, 'archive')}
+        >
+          <AdminFilterSelect
+            defaultValue={filters.state ?? ''}
+            label={'Stav'}
+            name={'state'}
+            options={CONTENT_STATE_OPTIONS}
+          />
+        </AdminTableFilters>
+        {/* Sibling of the filter form, never a child: its rows submit their own
+            forms, which cannot be nested inside another one. */}
+        <AdminSavedFilters
+          activeFilterId={activeFilterId}
+          currentQuery={currentFilterQuery}
+          ownFilters={ownFilters}
+          sharedFilters={sharedFilters}
+          tableKey={'archive'}
         />
       </AdminTableToolbar>
       <AdminTable pending={pending} stickyHeader={true}>
@@ -85,7 +124,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {issues.length === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {query === '' ? 'Žádná čísla' : `Nic nenalezeno pro „${query}“`}
+              {getAdminListEmptyMessage({
+                emptyLabel: 'Žádná čísla',
+                hasActiveFilters,
+                query,
+              })}
             </TableEmptyRow>
           ) : (
             issues.map((issue) => (
