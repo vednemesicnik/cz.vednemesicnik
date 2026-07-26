@@ -8,8 +8,13 @@
     /* Chained entry fade, by default following the tile's position in the grid.
        A tile at `opacity: 0` is not an LCP candidate, so the cap keeps the whole
        chain inside the LCP budget. */
+    --tile-enter-step: 30ms;
+    --tile-enter-delay-cap: 330ms;
     animation: tile-enter 400ms ease-out backwards;
-    animation-delay: min(calc((sibling-index() - 1) * 30ms), 330ms);
+    animation-delay: min(
+      calc((sibling-index() - 1) * var(--tile-enter-step)),
+      var(--tile-enter-delay-cap)
+    );
 
     & a {
       text-decoration: none;
@@ -27,7 +32,10 @@
    custom property, so the index has to come in as one. */
 .staggerFromIndex {
   @layer variant {
-    animation-delay: min(calc(var(--tile-enter-index) * 30ms), 330ms);
+    animation-delay: min(
+      calc(var(--tile-enter-index, 0) * var(--tile-enter-step)),
+      var(--tile-enter-delay-cap)
+    );
   }
 }
 

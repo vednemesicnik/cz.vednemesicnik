@@ -1,20 +1,9 @@
 import { Form, useNavigation } from 'react-router'
 
 import { Button } from '~/components/button'
+import { LIMIT_PARAM } from '~/config/load-more-config'
 
 import style from './_load-more-content.module.css'
-
-export const LIMIT_PARAM = 'limit'
-
-/**
- * Items rendered per page — also the size of each "load more" batch.
- *
- * Kept low on purpose: tiles enter with a staggered fade, and a tile at
- * `opacity: 0` is not an LCP candidate, so the whole stagger window is paid in
- * LCP. It doubles as the number of tiles a page chains on load — anything past
- * it renders below the fold and is left to reveal on scroll.
- */
-export const PAGE_SIZE = 12
 
 type Props = {
   action: string

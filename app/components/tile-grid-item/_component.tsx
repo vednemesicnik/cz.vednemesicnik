@@ -3,20 +3,22 @@ import type { CSSProperties, ReactNode } from 'react'
 
 import styles from './_styles.module.css'
 
-type Props = {
+/**
+ * How the tile enters. `"stagger"` (the default) fades it in as part of a
+ * chain, `"scroll"` waits until it scrolls into view, and `"none"` is for tiles
+ * an earlier render already revealed.
+ *
+ * `staggerIndex` overrides the tile's position in the chain — pass it for
+ * appended items so their chain starts over instead of continuing from the
+ * items already on the page. It only means anything while chaining, so the
+ * other two modes reject it.
+ */
+type RevealProps =
+  | { reveal?: 'stagger'; staggerIndex?: number }
+  | { reveal: 'scroll' | 'none'; staggerIndex?: never }
+
+type Props = RevealProps & {
   children: ReactNode
-  /**
-   * How the tile enters. `"stagger"` (the default) fades it in as part of a
-   * chain, `"scroll"` waits until it scrolls into view, and `"none"` is for
-   * tiles an earlier render already revealed.
-   */
-  reveal?: 'stagger' | 'scroll' | 'none'
-  /**
-   * Position in the chain, overriding the tile's position in the grid. Pass it
-   * for appended items so their chain starts over instead of continuing from
-   * the items already on the page. Only used with `reveal="stagger"`.
-   */
-  staggerIndex?: number
 }
 
 export function TileGridItem({
