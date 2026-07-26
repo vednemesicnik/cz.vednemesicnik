@@ -1,4 +1,4 @@
-import { LIMIT_PARAM } from '~/components/load-more-content'
+import { LIMIT_PARAM, PAGE_SIZE } from '~/components/load-more-content'
 import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import {
@@ -9,7 +9,7 @@ import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url)
-  const limit = Number(url.searchParams.get(LIMIT_PARAM) ?? '20')
+  const limit = Number(url.searchParams.get(LIMIT_PARAM) ?? String(PAGE_SIZE))
 
   const { isAuthenticated } = await getAuthentication(request)
 
