@@ -98,8 +98,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   ]
 
   // Shared by findMany and count, so totals and page counts follow the filters.
-  // Search matches the title or the slug — the slug is the unique handle and is
-  // what a public URL exposes.
+  // The query matches the title or the slug — public URLs expose the slug.
   const where: Prisma.ArticleWhereInput = {
     AND: [
       permissionWhere,
