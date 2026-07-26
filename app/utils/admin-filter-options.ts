@@ -1,16 +1,13 @@
-import type { AuthorRoleName, UserRoleName } from '@generated/prisma/enums'
+import { AuthorRoleName, UserRoleName } from '@generated/prisma/enums'
 
 import { contentStateConfig } from '~/config/content-state-config'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 
-// Ordered by role level, most privileged first, so the select reads the same way
-// as the role columns in the lists.
-const USER_ROLE_NAMES: UserRoleName[] = ['owner', 'administrator', 'member']
-const AUTHOR_ROLE_NAMES: AuthorRoleName[] = [
-  'coordinator',
-  'creator',
-  'contributor',
-]
+// Taken from the Prisma enums so a role added to the schema cannot be missing
+// from the filter. Both are declared by role level, most privileged first, which
+// is the order the select should read in.
+const USER_ROLE_NAMES = Object.values(UserRoleName)
+const AUTHOR_ROLE_NAMES = Object.values(AuthorRoleName)
 
 /**
  * Options for the content-state filter select, shared by every admin list whose
