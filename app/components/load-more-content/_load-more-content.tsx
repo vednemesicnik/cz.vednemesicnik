@@ -1,10 +1,9 @@
 import { Form, useNavigation } from 'react-router'
 
 import { Button } from '~/components/button'
+import { LIMIT_PARAM } from '~/config/load-more-config'
 
 import style from './_load-more-content.module.css'
-
-export const LIMIT_PARAM = 'limit'
 
 type Props = {
   action: string

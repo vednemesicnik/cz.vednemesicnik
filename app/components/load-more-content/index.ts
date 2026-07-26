@@ -1,1 +1,1 @@
-export { LIMIT_PARAM, LoadMoreContent } from './_load-more-content'
+export { LoadMoreContent } from './_load-more-content'
