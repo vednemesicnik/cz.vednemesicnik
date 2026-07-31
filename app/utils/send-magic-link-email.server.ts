@@ -4,17 +4,26 @@
  * action returns the same neutral response whether or not delivery succeeds, so
  * this never throws — failures are logged, reported to Sentry, and swallowed.
  *
+ * The request is **signed** rather than carrying the secret in its body, so
+ * GAS_MAGIC_LINK_SECRET is a signing key and never travels — see
+ * `sign-gas-request.server.ts`. The value itself did not change and nothing had to
+ * be rotated. The Apps Script side accepts both shapes for one release, so this can
+ * deploy and be reverted on its own; that matters here, because a mistake on this
+ * path locks administrators out rather than merely failing a request.
+ *
  * No-ops when GAS_MAGIC_LINK_URL / GAS_MAGIC_LINK_SECRET are unset (local
  * development), so the flow can be exercised without a live GAS deployment.
  */
 
 import type {
+  Envelope,
   SignInMagicLinkRequest,
   SignInMagicLinkResponse,
 } from '@generated/magic-link/response'
 import * as Sentry from '@sentry/react-router'
 
 import { postGasRequest } from './post-gas-request.server'
+import { signGasRequest } from './sign-gas-request.server'
 
 export const sendMagicLinkEmail = async ({
   email,
@@ -44,7 +53,12 @@ export const sendMagicLinkEmail = async ({
   try {
     const { ok, status, data } = await postGasRequest<SignInMagicLinkResponse>(
       url,
-      { email, link, secret } satisfies SignInMagicLinkRequest,
+      // `satisfies Envelope` ties the envelope this builds to the shape the script
+      // publishes, so the two cannot drift apart without the build saying so.
+      signGasRequest(secret, {
+        email,
+        link,
+      } satisfies SignInMagicLinkRequest) satisfies Envelope,
     )
 
     if (!ok || data?.ok !== true) {
