@@ -138,6 +138,11 @@ export default [
         // Dashboard
         index('routes/administration/_index/route.tsx'),
 
+        // Saved list filters — action-only endpoint submitted by fetchers from
+        // the admin list toolbars. Guards itself: the layout loader does not run
+        // before a child action.
+        route('filters', 'routes/administration/filters/route.ts'),
+
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [
           // Articles (hlavní sekce s nested routes pro categories a tags)

@@ -1,10 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
+import { href, useSearchParams } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
+import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminSavedFilters } from '~/components/admin/admin-saved-filters'
 import {
   AdminTable,
   TableBody,
@@ -15,9 +17,13 @@ import {
   TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
+import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { Pagination } from '~/components/pagination'
+import { CONTENT_STATE_OPTIONS } from '~/utils/admin-filter-options'
+import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
+import { getPreservedFilterParams } from '~/utils/admin-list-filters'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
@@ -32,16 +38,29 @@ const COLUMN_COUNT = 5
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
+    activeFilterId,
     articles,
+    authorOptions,
     canCreate,
+    categoryOptions,
+    currentFilterQuery,
     currentPage,
+    filters,
+    ownFilters,
     pageSize,
     query,
+    sharedFilters,
+    tagOptions,
     totalCount,
     totalPages,
   } = loaderData
 
+  const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
+
+  const hasActiveFilters = Object.values(filters).some(
+    (value) => value !== undefined,
+  )
 
   const deletableIds = articles
     .filter((article) => article.canDelete)
@@ -62,6 +81,43 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           action={href('/administration/articles')}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
+        />
+        <AdminTableFilters
+          preservedParams={getPreservedFilterParams(searchParams, 'articles')}
+        >
+          <AdminFilterSelect
+            defaultValue={filters.state ?? ''}
+            label={'Stav'}
+            name={'state'}
+            options={CONTENT_STATE_OPTIONS}
+          />
+          <AdminFilterSelect
+            defaultValue={filters.category ?? ''}
+            label={'Kategorie'}
+            name={'category'}
+            options={categoryOptions}
+          />
+          <AdminFilterSelect
+            defaultValue={filters.tag ?? ''}
+            label={'Štítek'}
+            name={'tag'}
+            options={tagOptions}
+          />
+          <AdminFilterSelect
+            defaultValue={filters.author ?? ''}
+            label={'Autor'}
+            name={'author'}
+            options={authorOptions}
+          />
+        </AdminTableFilters>
+        {/* Sibling of the filter form, never a child: its rows submit their own
+            forms, which cannot be nested inside another one. */}
+        <AdminSavedFilters
+          activeFilterId={activeFilterId}
+          currentQuery={currentFilterQuery}
+          ownFilters={ownFilters}
+          sharedFilters={sharedFilters}
+          tableKey={'articles'}
         />
       </AdminTableToolbar>
       <AdminTable pending={pending} stickyHeader={true}>
@@ -94,7 +150,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <TableBody>
           {totalCount === 0 ? (
             <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {query === '' ? 'Žádné články' : `Nic nenalezeno pro „${query}“`}
+              {getAdminListEmptyMessage({
+                emptyLabel: 'Žádné články',
+                hasActiveFilters,
+                query,
+              })}
             </TableEmptyRow>
           ) : (
             articles.map((article) => (

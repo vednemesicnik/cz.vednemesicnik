@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto'
+
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sendMagicLinkEmail } from './send-magic-link-email.server'
 
@@ -120,5 +122,33 @@ describe('sendMagicLinkEmail', () => {
 
     expect(fetchMock).not.toHaveBeenCalled()
     expect(console.error).not.toHaveBeenCalled()
+  })
+
+  test('posts a signed envelope and never the secret itself', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await sendMagicLinkEmail(recipient)
+
+    const [, requestInit] = fetchMock.mock.calls[0]
+    const sentBody = requestInit.body as string
+
+    // The whole point of the change: nothing that logs this request has logged a
+    // usable credential.
+    expect(sentBody).not.toContain('test-secret')
+
+    const envelope = JSON.parse(sentBody)
+    expect(Object.keys(envelope).sort()).toEqual([
+      'payload',
+      'signature',
+      'timestamp',
+    ])
+    expect(JSON.parse(envelope.payload)).toEqual(recipient)
+
+    // Verified the way Toolkit.verifySignature does it on the other side.
+    const expected = createHmac('sha256', 'test-secret')
+      .update(`${envelope.timestamp}.${envelope.payload}`)
+      .digest('hex')
+    expect(envelope.signature).toBe(expected)
   })
 })

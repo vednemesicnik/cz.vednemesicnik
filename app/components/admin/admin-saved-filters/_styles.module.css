@@ -1,0 +1,173 @@
+.savedFilters {
+  @layer component {
+    display: inline-flex;
+  }
+}
+
+.menu {
+  @layer component {
+    /* Without Popover API support the [popover] attribute is ignored and the
+       UA's `[popover]:not(:popover-open){display:none}` rule is absent, so the
+       menu would render in flow. Hide by default and only reveal when open. */
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    width: max-content;
+    max-width: min(480px, 90vw);
+    padding: 12px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+.menu:popover-open {
+  @layer component {
+    display: flex;
+  }
+}
+
+/* Anchor the menu to the trigger (implicit anchor via popovertarget). Guarded by
+   @supports so browsers with Popover but no anchor positioning (e.g. Firefox)
+   keep the UA's centred-popover fallback instead of the overridden insets. */
+@supports (position-area: block-end) {
+  .menu {
+    @layer component {
+      inset: auto;
+      margin: 0;
+      margin-block-start: 4px;
+      position-area: block-end span-inline-end;
+      position-try-fallbacks: flip-block, flip-inline;
+    }
+  }
+}
+
+.section {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+.sectionTitle {
+  @layer component {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+}
+
+.list {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.empty {
+  @layer component {
+    margin: 0;
+    padding-block: 4px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.sharedRow {
+  @layer component {
+    display: flex;
+    border-radius: 4px;
+
+    &:hover {
+      background-color: var(--bg-hover);
+    }
+  }
+}
+
+.apply {
+  @layer component {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding-block: 8px;
+    padding-inline: 8px;
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    text-decoration: none;
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+.applyActive {
+  @layer variant {
+    color: var(--primary);
+    font-weight: 600;
+  }
+}
+
+.name {
+  @layer component {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.owner {
+  @layer component {
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 400;
+  }
+}
+
+.footer {
+  @layer component {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block-start: 12px;
+    border-block-start: 1px solid var(--border);
+  }
+}
+
+.hint {
+  @layer component {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    text-align: end;
+  }
+}
+
+.reset {
+  @layer component {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}

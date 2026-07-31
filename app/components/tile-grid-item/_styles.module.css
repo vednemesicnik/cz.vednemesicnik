@@ -1,11 +1,70 @@
 .container {
-  display: grid;
-  position: relative;
-  grid-auto-flow: row;
-  grid-auto-rows: min-content;
-  grid-template-columns: var(--tile-width);
+  @layer component {
+    display: grid;
+    position: relative;
+    grid-auto-flow: row;
+    grid-auto-rows: min-content;
+    grid-template-columns: var(--tile-width);
+    /* Chained entry fade, by default following the tile's position in the grid.
+       A tile at `opacity: 0` is not an LCP candidate, so the cap keeps the whole
+       chain inside the LCP budget. */
+    --tile-enter-step: 30ms;
+    --tile-enter-delay-cap: 330ms;
+    animation: tile-enter 400ms ease-out backwards;
+    animation-delay: min(
+      calc((sibling-index() - 1) * var(--tile-enter-step)),
+      var(--tile-enter-delay-cap)
+    );
 
-  & a {
-    text-decoration: none;
+    & a {
+      text-decoration: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+}
+
+/* For a list that appends items: the chain position comes from the caller, so
+   each appended batch starts over instead of continuing from the items already
+   on the page. `sibling-index()` cannot be used here — it is invalid inside a
+   custom property, so the index has to come in as one. */
+.staggerFromIndex {
+  @layer variant {
+    animation-delay: min(
+      calc(var(--tile-enter-index, 0) * var(--tile-enter-step)),
+      var(--tile-enter-delay-cap)
+    );
+  }
+}
+
+/* For tiles that are off-screen when they render — their delay would fire
+   unseen and they would just be there once scrolled to. */
+.scrollRevealed {
+  @layer variant {
+    @media (prefers-reduced-motion: no-preference) {
+      @supports ((animation-timeline: view()) and (animation-range: entry)) {
+        animation-duration: auto;
+        animation-timing-function: linear;
+        animation-delay: 0s;
+        animation-timeline: view();
+        animation-range: entry 0% entry 60%;
+      }
+    }
+  }
+}
+
+/* For tiles that were already revealed by an earlier render. */
+.revealed {
+  @layer variant {
+    animation: none;
+  }
+}
+
+@keyframes tile-enter {
+  from {
+    opacity: 0;
+    translate: 0 12px;
   }
 }

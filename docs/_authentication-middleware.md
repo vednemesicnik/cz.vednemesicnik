@@ -46,6 +46,7 @@ export const requireAuthentication = async ({
   return {
     isAuthenticated: true,
     sessionId: session.id,
+    userId: session.userId,
   }
 }
 
@@ -60,6 +61,7 @@ export const requireSession = async (request: Request) => {
   return {
     isAuthenticated: true,
     sessionId: session.id,
+    userId: session.userId,
   }
 }
 ```

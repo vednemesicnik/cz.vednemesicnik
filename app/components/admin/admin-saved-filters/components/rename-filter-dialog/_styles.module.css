@@ -1,0 +1,8 @@
+.form {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: min(320px, 80vw);
+  }
+}

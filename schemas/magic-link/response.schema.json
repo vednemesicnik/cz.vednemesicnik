@@ -1,6 +1,27 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "Envelope": {
+      "additionalProperties": false,
+      "description": "How a request should travel. `payload` is a SignInMagicLinkRequest serialised to a string, and it is signed as that exact string — never re-serialised, so the signature does not depend on JSON key order agreeing between the two ends. OWN_SECRET is the signing key and never leaves either end.",
+      "properties": {
+        "payload": {
+          "description": "JSON of SignInMagicLinkRequest.",
+          "type": "string"
+        },
+        "signature": {
+          "description": "Lower-case hex HMAC-SHA256(OWN_SECRET, `${timestamp}.${payload}`).",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "timestamp": {
+          "description": "Unix seconds. Inside the signature, so it cannot be adjusted.",
+          "type": "integer"
+        }
+      },
+      "required": ["timestamp", "payload", "signature"],
+      "type": "object"
+    },
     "SignInMagicLinkRequest": {
       "additionalProperties": false,
       "properties": {
@@ -13,11 +34,11 @@
           "type": "string"
         },
         "secret": {
-          "description": "Shared secret; checked against Script Property OWN_SECRET.",
+          "description": "DEPRECATED, and accepted for one release only. Send an Envelope instead: a secret in the body is a working credential for anything that logs a request. Set only when posting the unsigned legacy shape.",
           "type": "string"
         }
       },
-      "required": ["secret", "email", "link"],
+      "required": ["email", "link"],
       "type": "object"
     },
     "SignInMagicLinkResponse": {
@@ -40,6 +61,7 @@
                 "server_misconfigured",
                 "invalid_request",
                 "unauthorized",
+                "stale_timestamp",
                 "missing_fields",
                 "email_not_allowed",
                 "link_not_allowed",
@@ -52,6 +74,7 @@
               "description": "Present only when error is \"mailer_send_failed\": the underlying reason the delegated send failed.",
               "enum": [
                 "unauthorized",
+                "stale_timestamp",
                 "invalid_request",
                 "missing_fields",
                 "invalid_recipient",
