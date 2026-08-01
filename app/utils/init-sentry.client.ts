@@ -24,7 +24,12 @@ export function initSentryClient() {
 
       return event
     },
+    // Meta's in-app browsers inject an `iabjs://` script that throws on an
+    // already-released JS↔Java bridge; paired with `ignoreErrors` below to drop the
+    // noise. Both need the default eventFilters integration to stay enabled.
+    denyUrls: [/iabjs:\/\//],
     dsn: window.ENV.SENTRY_DSN,
+    ignoreErrors: ['Java object is gone', 'Error invoking postMessage'],
     sendDefaultPii: false,
     tracesSampleRate: 0, // error capture only, no performance tracing
   })
