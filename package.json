@@ -50,7 +50,7 @@
     "cssnano": "8.0.2",
     "json-schema-to-typescript": "15.0.4",
     "lefthook": "2.1.10",
-    "postcss": "8.5.16",
+    "postcss": "8.5.18",
     "postcss-load-config": "6.0.1",
     "storybook": "10.4.6",
     "tsx": "4.23.0",
