@@ -6,7 +6,7 @@ to it and reads the answers back.
 
 | What                  | Id                                     | Holds                                                                  |
 | --------------------- | -------------------------------------- | ---------------------------------------------------------------------- |
-| **App project**       | `60d13daa-be98-47ec-95e1-e8913a86fef4` | Screens (`22 Seznam článků.dc.html`, …), `07 · Stavy a akce obsahu`, `30 · Adresy a routování`, `questions/`, `uploads/podklady/` |
+| **App project**       | `60d13daa-be98-47ec-95e1-e8913a86fef4` | Screens (`22 Seznam článků.dc.html` first; `07 · Stavy a akce obsahu`, `30 · Adresy a routování` and the rest planned), `questions/`, `uploads/podklady/` |
 | **Design system**     | `4b484003-4984-46c4-86cc-a96eee9e4b4a` | Tokens and **components** (`components/`, `tokens/`, `guidelines/`)     |
 
 The app project loads the design system as `_ds/cz-vednemesicnik-design-system-4b484003-…/`.

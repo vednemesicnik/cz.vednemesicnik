@@ -145,12 +145,12 @@ session can act on.
    branch — step by step, with the user.
 3. **Merge by direction** (`docs/_branching-model.md`):
 
-   | direction               | command                                 |
-   | ----------------------- | --------------------------------------- |
+   | direction               | command                                    |
+   | ----------------------- | ------------------------------------------ |
    | feature / fix → `dev`   | `gh pr merge <n> --squash --delete-branch` |
    | hotfix → `main`         | `gh pr merge <n> --squash --delete-branch` |
-   | release `dev → main`    | `gh pr merge <n> --merge` — never delete |
-   | back-merge `main → dev` | `gh pr merge <n> --merge` — never delete |
+   | release `dev → main`    | `gh pr merge <n> --merge` — never delete   |
+   | back-merge `main → dev` | `gh pr merge <n> --merge` — never delete   |
 
    The back-merge's head **is `main`** — deleting it would delete production. Before a squash,
    make sure the PR title is a Conventional Commit (`gh pr edit <n> --title`); after the merge

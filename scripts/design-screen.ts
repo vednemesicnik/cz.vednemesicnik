@@ -21,7 +21,7 @@ import { readFile } from 'node:fs/promises'
  * `<section id="22a">` with the anchor in a badge `<span>` and the screen's
  * name in the next `<span>`; its notes are the paragraphs that open with a
  * `<strong>` lead. The billing project's documents use `<div class="dv-opt">`
- * screens with `<p class="dv-note">` notes. See `docs/design-project.md`.
+ * screens with `<p class="dv-note">` notes. See `docs/_design-project.md`.
  */
 
 export type Screen = {
