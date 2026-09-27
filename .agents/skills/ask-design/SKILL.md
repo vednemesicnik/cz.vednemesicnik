@@ -55,10 +55,16 @@ A question earns its place only if a different answer would change the code. Eac
 - **Varianty** — the realistic answers and what each costs.
 - **Co bych čekal** — a recommendation, marked as mine.
 
-**Product decisions are Libor's, not yours and not design's.** When the code and the drawing
-disagree on behaviour — a state that does not exist, an action that is removed, a data-model
-assumption — ask him (`AskUserQuestion`) before writing it up, and restate his decision **in his
-words**. Do not widen it into its implications and do not put your inference in his mouth.
+**Product decisions are Libor's to make — and yours to propose.** When the code and the drawing
+disagree on behaviour — a state that does not exist, an action that is removed, a permission, a
+data-model assumption — do not hand him a neutral list. **Take a position**: put your
+recommendation first (`AskUserQuestion`, marked _(Doporučeno)_), with the reason in one or two
+sentences, and let him confirm or overrule. Then write the decision up as his, without widening
+it into implications he did not state.
+
+**UX decisions are design's, not his.** Layout, which action is primary, dialog or toast, where
+a sentence sits, how a state is shown — answer those from the code's facts and leave the call to
+the design chat. Do not bring them to Libor, and do not settle them in the question either.
 
 ## 3. Write it up
 
