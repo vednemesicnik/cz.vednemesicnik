@@ -193,6 +193,11 @@ const main = async (): Promise<void> => {
 
   const wantsNotes = rest.includes('--notes')
   const wantsHtml = rest.includes('--html')
+  if (wantsNotes && wantsHtml) {
+    console.error('Use either --notes or --html, not both.')
+    process.exitCode = 1
+    return
+  }
   const identifiers = rest.filter((argument) => !argument.startsWith('--'))
   const screens = screensIn(documentFrom(await readFile(file, 'utf8')))
 
