@@ -5,8 +5,8 @@ import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import { resolveArticleFeaturedImageSeo } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
 import { prisma } from '~/utils/db.server'
 import {
-  deleteImage,
   deleteImageVersion,
+  deleteRowWithImages,
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
@@ -52,7 +52,8 @@ export async function updateArticle(
     action: 'update',
     entity: 'article',
     execute: async (context) => {
-      // 1. Delete images that are not in existingImages (DB row + store files)
+      // 1. Find images no longer in the form. Look them up before new images
+      // are created (those aren't in existingImages either); delete them last.
       const existingImageIds =
         existingImages?.map((existingImage) => existingImage.id) ?? []
 
@@ -61,12 +62,6 @@ export async function updateArticle(
         where: { articleId, id: { notIn: existingImageIds } },
       })
       const removedImageIds = removedImages.map(({ id }) => id)
-
-      await prisma.articleImage.deleteMany({
-        where: { id: { in: removedImageIds } },
-      })
-
-      await Promise.all(removedImageIds.map((id) => deleteImage(id)))
 
       // 2. Process and create new images (variants written before the row commits)
       let createdImages: Array<{ id: string }> = []
@@ -141,54 +136,63 @@ export async function updateArticle(
         featuredImageId = createdImages[featuredImage.index].id
       }
 
-      // 5. Update article
-      await prisma.article.update({
-        data: {
-          authors: {
-            set: authorIds.map((id) => ({ id })),
-          },
-          categories: {
-            set: categoryIds?.map((id) => ({ id })) ?? [],
-          },
-          content,
-          excerpt: excerpt || null,
-          featuredImageId,
-          slug,
-          state,
-          tags: {
-            set: tagIds?.map((id) => ({ id })) ?? [],
-          },
-          title,
-        },
-        select: { id: true },
-        where: { id: articleId },
-      })
-
-      // 6. Update or create PageSEO record for the article
       const pathname = `/articles/${slug}`
 
       const { ogImageUrl, twitterImageUrl } =
         await resolveArticleFeaturedImageSeo(featuredImageId)
 
-      await prisma.pageSEO.upsert({
-        create: {
-          authorId: context.authorId,
-          description: excerpt || null,
-          ogImageUrl,
-          pathname,
-          state,
-          title,
-          twitterImageUrl,
-        },
-        update: {
-          description: excerpt || null,
-          ogImageUrl,
-          state,
-          title,
-          twitterImageUrl,
-        },
-        where: { pathname },
-      })
+      // 5. In one transaction: delete removed image rows, update the article
+      // and its PageSEO record. Removed images' store files go only after it
+      // commits, so a failed save keeps them.
+      await deleteRowWithImages(
+        async () => removedImageIds,
+        () =>
+          prisma.$transaction([
+            prisma.articleImage.deleteMany({
+              where: { id: { in: removedImageIds } },
+            }),
+            prisma.article.update({
+              data: {
+                authors: {
+                  set: authorIds.map((id) => ({ id })),
+                },
+                categories: {
+                  set: categoryIds?.map((id) => ({ id })) ?? [],
+                },
+                content,
+                excerpt: excerpt || null,
+                featuredImageId,
+                slug,
+                state,
+                tags: {
+                  set: tagIds?.map((id) => ({ id })) ?? [],
+                },
+                title,
+              },
+              select: { id: true },
+              where: { id: articleId },
+            }),
+            prisma.pageSEO.upsert({
+              create: {
+                authorId: context.authorId,
+                description: excerpt || null,
+                ogImageUrl,
+                pathname,
+                state,
+                title,
+                twitterImageUrl,
+              },
+              update: {
+                description: excerpt || null,
+                ogImageUrl,
+                state,
+                title,
+                twitterImageUrl,
+              },
+              where: { pathname },
+            }),
+          ]),
+      )
 
       return { id: articleId }
     },
