@@ -264,6 +264,8 @@ Comprehensive project documentation is in the `docs/` directory:
 - `docs/_manual-database-backup.md` - Database backup procedures
 - `docs/_manual-database-restore.md` - Database restore procedures
 - `docs/_prisma-studio-on-production.md` - Running Prisma Studio against the production database over a Fly tunnel
+- `docs/_design-project.md` - The Claude Design project and design system (ids, documents, `questions/`), and reading a screen with `pnpm design:screen`
+- `docs/_copy-context.md` - Context the copywriter gets in every `/ask-copy` thread: terms, content states, roles, voice (Czech)
 
 ## Environment
 
@@ -325,6 +327,26 @@ Reference skills for working with Prisma ORM. This project uses **SQLite**, so t
 Reference for the end-to-end PR lifecycle. Load when opening a pull request, requesting or acting on a Copilot review, resolving review threads, or choosing a merge method.
 
 Read `.agents/skills/pull-request-workflow/SKILL.md`. Run the `self-review-before-pr` rule first; see `docs/_branching-model.md` for the full branching/merge policy.
+
+### Issue Pipeline
+
+From an idea to a merged PR, one issue per context window:
+`/discover-idea` → `/review-idea` → `/plan-issue` → `/implement-issue` → `/ship-issue` → `/next-issue`.
+
+- `.agents/skills/discover-idea/SKILL.md` — sweep one area for evidenced gaps (design vs. app, unbuilt design answers, disagreements); weighs nothing.
+- `.agents/skills/review-idea/SKILL.md` — weigh a proposal before it becomes an issue; a well-argued no is a result.
+- `.agents/skills/plan-issue/SKILL.md` — plan-mode implementation plan, saved to `~/.claude/plans/plan-issue-<n>-<slug>.md`.
+- `.agents/skills/implement-issue/SKILL.md` — execute the approved plan on a feature branch; stops before the PR.
+- `.agents/skills/review-implementation/SKILL.md` — the pre-PR review on its own (report-only).
+- `.agents/skills/ship-issue/SKILL.md` — review, PR, Copilot loop, green CI, then ask and merge.
+- `.agents/skills/next-issue/SKILL.md` — after the merge: aftermath, handoff, pick the next issue.
+
+### Design and Copy
+
+Loops for decisions this repository does not own. Load when a screen, component or token needs a decision from the Claude Design project, when a design document comes back with open questions, or when user-facing Czech needs a copywriter.
+
+- `.agents/skills/ask-design/SKILL.md` — put a question to the Claude Design project, read the answer back (`check`), retire settled questions (`tidy`). See `docs/_design-project.md`.
+- `.agents/skills/ask-copy/SKILL.md` — take strings through the copywriter in the shared room (`vdm-dev-exchange` in `.mcp.json`). Every thread opens with the whole of `docs/_copy-context.md`.
 
 ## Agent Rules
 
