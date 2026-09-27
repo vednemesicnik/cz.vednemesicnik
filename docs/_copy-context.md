@@ -31,7 +31,7 @@ který případ jde; když to neříká, je to chyba otázky — zeptej se.
 Tohle jsou **jména věcí**, které mají v aplikaci svou obrazovku nebo svůj sloupec. Synonymum je
 rozpojí.
 
-- **článek** — příspěvek na webu. Ne „příspěvek", ne „post".
+- **článek** — příspěvek na webu. Ne „příspěvek“, ne „post“.
 - **rubrika** — tematické zařazení článku. Článek jich může mít **víc**.
 - **štítek** — volnější označení článku; článek jich má obvykle víc.
 - **podcast** / **epizoda** — podcast je pořad, epizoda jeden díl.
@@ -78,8 +78,8 @@ nedělá**. Poznají se jen podle modelu:
 - **Schvaluje jen Koordinátor.** Obsah autora s nižší rolí — Přispěvatele i Tvůrce — jde
   zveřejnit až po schválení Koordinátorem. Věta, která Tvůrci slibuje, že zveřejní sám, nebo
   že schválit může kdokoli z redakce, je nepravda.
-- **Krok „odeslat ke schválení" zatím neexistuje.** Čekající obsah je dnes každý koncept autora
-  s nižší rolí. Věta, která mluví o „odeslaném" konceptu, popisuje budoucí aplikaci.
+- **Krok „odeslat ke schválení“ zatím neexistuje.** Čekající obsah je dnes každý koncept autora
+  s nižší rolí. Věta, která mluví o „odeslaném“ konceptu, popisuje budoucí aplikaci.
 - **Smazat jde jen koncept.** Publikovaný a archivovaný obsah se nemaže, jen stahuje nebo
   archivuje.
 - **Publikovaný obsah nejde upravit na místě** — nejdřív se stáhne z publikace do konceptu.
@@ -104,7 +104,7 @@ V obou:
 
 - Datum na webu `21. července 2026`. Seznamy v administraci ho dnes ukazují jako `2026-07-21`;
   nový návrh přechází na `21. 7. 2026`. Do formuláře se zadává `dd.mm.rrrr`.
-- Pomlčka ve větě je `—` s mezerami, ne spojovník. Uvozovky české „…".
+- Pomlčka ve větě je `—` s mezerami, ne spojovník. Uvozovky české „…“.
 - Měna `Kč` za částkou s mezerou: `500 Kč`.
 
 ## Co v otázce nikdy nebude
