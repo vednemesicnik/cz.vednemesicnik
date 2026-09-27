@@ -60,7 +60,7 @@ over saved results by the newest `mtime`, not by the path inside the file.
     "topic": "22 · Seznam článků: otevřené otázky, schvalování, hromadné akce, rubriky",
     "asked": "2026-09-27",
     "for": [409],
-    "answered": "2026-09-28",
+    "answered": "2026-09-27",
     "names": [226],
     "wroteTo": [
       { "doc": "22 Seznam článků.dc.html", "screen": "22c", "witness": "potvrzuje dialogem" }
