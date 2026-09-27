@@ -2,11 +2,14 @@ import type { ContentState } from '@generated/prisma/enums'
 import { createId } from '@paralleldrive/cuid2'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
-import { resolveArticleFeaturedImageSeo } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
+import {
+  buildArticleFeaturedImageSeo,
+  resolveArticleFeaturedImageSeo,
+} from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
 import { prisma } from '~/utils/db.server'
 import {
-  deleteImage,
-  deleteImageVersion,
+  deleteRowWithImages,
+  prepareCoverReplacement,
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
@@ -52,7 +55,7 @@ export async function updateArticle(
     action: 'update',
     entity: 'article',
     execute: async (context) => {
-      // 1. Delete images that are not in existingImages (DB row + store files)
+      // 1. Find images no longer in the form; their rows and files go last.
       const existingImageIds =
         existingImages?.map((existingImage) => existingImage.id) ?? []
 
@@ -62,73 +65,40 @@ export async function updateArticle(
       })
       const removedImageIds = removedImages.map(({ id }) => id)
 
-      await prisma.articleImage.deleteMany({
-        where: { id: { in: removedImageIds } },
+      // 2. Store new images' variants (files before the rows commit)
+      const newImages = await Promise.all(
+        (images ?? []).map(async ({ file, altText, description }) => {
+          const id = createId()
+          const meta = await storeImageVariants(id, file)
+          return { ...meta, altText, description: description || null, id }
+        }),
+      )
+
+      // 3. Store replaced files of existing images; the previous version's
+      // files are dropped only after the transaction commits.
+      const previousVersions = await prisma.articleImage.findMany({
+        select: { id: true, version: true },
+        where: { id: { in: existingImageIds } },
       })
-
-      await Promise.all(removedImageIds.map((id) => deleteImage(id)))
-
-      // 2. Process and create new images (variants written before the row commits)
-      let createdImages: Array<{ id: string }> = []
-      if (images?.length) {
-        const processedImages = await Promise.all(
-          images.map(async ({ file, altText, description }) => {
-            const id = createId()
-            const meta = await storeImageVariants(id, file)
-            return { ...meta, altText, description: description || null, id }
-          }),
-        )
-
-        createdImages = await prisma.$transaction(
-          processedImages.map((imageData) =>
-            prisma.articleImage.create({
-              data: {
-                ...imageData,
-                articleId,
-              },
-              select: { id: true },
-            }),
-          ),
-        )
-      }
-
-      // 3. Update existing images
-      if (existingImages?.length) {
-        await Promise.all(
-          existingImages.map(async ({ id, altText, description, file }) => {
-            // Replace the file: store a new version, then drop the old version's
-            // files. The stable id + new version yields a fresh, cache-busted URL.
-            if (file !== undefined && file.size > 0) {
-              const previous = await prisma.articleImage.findUnique({
-                select: { version: true },
-                where: { id },
-              })
-              const meta = await storeImageVariants(id, file)
-              await prisma.articleImage.update({
-                data: {
-                  ...meta,
-                  altText,
-                  description: description || null,
-                },
-                where: { id },
-              })
-              if (previous?.version && previous.version !== meta.version) {
-                await deleteImageVersion(id, previous.version)
-              }
-              return
-            }
-
-            // Just update metadata
-            await prisma.articleImage.update({
-              data: {
-                altText,
-                description: description || null,
-              },
-              where: { id },
+      const updatedImages = await Promise.all(
+        (existingImages ?? []).map(
+          async ({ id, altText, description, file }) => {
+            const { data, cleanup } = await prepareCoverReplacement({
+              altText,
+              coverId: id,
+              file: file !== undefined && file.size > 0 ? file : undefined,
+              previousVersion:
+                previousVersions.find((previous) => previous.id === id)
+                  ?.version ?? null,
             })
-          }),
-        )
-      }
+            return {
+              cleanup,
+              data: { ...data, description: description || null },
+              id,
+            }
+          },
+        ),
+      )
 
       // 4. Determine featured image ID
       let featuredImageId: string | null = null
@@ -136,59 +106,99 @@ export async function updateArticle(
         featuredImageId = featuredImage.id
       } else if (
         featuredImage.source === FEATURED_IMAGE_SOURCE.NEW &&
-        createdImages[featuredImage.index]
+        newImages[featuredImage.index]
       ) {
-        featuredImageId = createdImages[featuredImage.index].id
+        featuredImageId = newImages[featuredImage.index].id
       }
 
-      // 5. Update article
-      await prisma.article.update({
-        data: {
-          authors: {
-            set: authorIds.map((id) => ({ id })),
-          },
-          categories: {
-            set: categoryIds?.map((id) => ({ id })) ?? [],
-          },
-          content,
-          excerpt: excerpt || null,
-          featuredImageId,
-          slug,
-          state,
-          tags: {
-            set: tagIds?.map((id) => ({ id })) ?? [],
-          },
-          title,
-        },
-        select: { id: true },
-        where: { id: articleId },
-      })
-
-      // 6. Update or create PageSEO record for the article
-      const pathname = `/articles/${slug}`
+      // A new or replaced featured image isn't in the DB yet: build its SEO
+      // URLs from the stored metadata instead of reading the row.
+      const storedImages = [
+        ...newImages,
+        ...updatedImages.flatMap(({ id, data: { version, intrinsicWidth } }) =>
+          version !== undefined && intrinsicWidth !== undefined
+            ? [{ id, intrinsicWidth, version }]
+            : [],
+        ),
+      ]
+      const pendingFeaturedImage = storedImages.find(
+        (image) => image.id === featuredImageId,
+      )
 
       const { ogImageUrl, twitterImageUrl } =
-        await resolveArticleFeaturedImageSeo(featuredImageId)
+        pendingFeaturedImage !== undefined
+          ? await buildArticleFeaturedImageSeo({
+              imageId: pendingFeaturedImage.id,
+              intrinsicWidth: pendingFeaturedImage.intrinsicWidth,
+              version: pendingFeaturedImage.version,
+            })
+          : await resolveArticleFeaturedImageSeo(featuredImageId)
 
-      await prisma.pageSEO.upsert({
-        create: {
-          authorId: context.authorId,
-          description: excerpt || null,
-          ogImageUrl,
-          pathname,
-          state,
-          title,
-          twitterImageUrl,
-        },
-        update: {
-          description: excerpt || null,
-          ogImageUrl,
-          state,
-          title,
-          twitterImageUrl,
-        },
-        where: { pathname },
-      })
+      const pathname = `/articles/${slug}`
+
+      // 5. In one transaction: all image rows, the article and its PageSEO
+      // record. Store files of removed images and of replaced versions go only
+      // after it commits, so a failed save leaves everything as it was.
+      await deleteRowWithImages(
+        async () => removedImageIds,
+        () =>
+          prisma.$transaction([
+            prisma.articleImage.deleteMany({
+              where: { id: { in: removedImageIds } },
+            }),
+            ...newImages.map((imageData) =>
+              prisma.articleImage.create({
+                data: { ...imageData, articleId },
+                select: { id: true },
+              }),
+            ),
+            ...updatedImages.map(({ id, data }) =>
+              prisma.articleImage.update({ data, where: { id } }),
+            ),
+            prisma.article.update({
+              data: {
+                authors: {
+                  set: authorIds.map((id) => ({ id })),
+                },
+                categories: {
+                  set: categoryIds?.map((id) => ({ id })) ?? [],
+                },
+                content,
+                excerpt: excerpt || null,
+                featuredImageId,
+                slug,
+                state,
+                tags: {
+                  set: tagIds?.map((id) => ({ id })) ?? [],
+                },
+                title,
+              },
+              select: { id: true },
+              where: { id: articleId },
+            }),
+            prisma.pageSEO.upsert({
+              create: {
+                authorId: context.authorId,
+                description: excerpt || null,
+                ogImageUrl,
+                pathname,
+                state,
+                title,
+                twitterImageUrl,
+              },
+              update: {
+                description: excerpt || null,
+                ogImageUrl,
+                state,
+                title,
+                twitterImageUrl,
+              },
+              where: { pathname },
+            }),
+          ]),
+      )
+
+      await Promise.all(updatedImages.map(({ cleanup }) => cleanup()))
 
       return { id: articleId }
     },
