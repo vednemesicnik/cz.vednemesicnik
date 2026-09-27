@@ -20,8 +20,11 @@ user-facing string this branch adds or changes. `check` means the answer is back
 The copywriter is a chat **in the shared room** (`vdm-dev-exchange` in `.mcp.json`; the server is
 `../vdm-dev-exchange-mcp`, the room `../dev-exchange-room`), and a question travels as a
 **thread**: `ask_open` with `kind: "copy"` starts it, `ask_reply` carries every turn, `ask_read`
-reads it back. The server must be running and `VDM_EXCHANGE_CLAUDE_TOKEN` set; without the
-`ask_*` tools this loop cannot run — say so and stop.
+reads it back. The server must be running, and the token of the `claude-code` participant must be
+in the gitignored `.claude/settings.local.json` as
+`{ "env": { "VDM_EXCHANGE_CLAUDE_TOKEN": "…" }, "enabledMcpjsonServers": ["vdm-dev-exchange"] }`
+— Claude Code does not read `.env` for `.mcp.json`. Without the `ask_*` tools this loop cannot
+run — say so and stop.
 
 **The copywriter has `ask_*` and nothing else. It cannot read any file** — not in this repository,
 not in the room. A prompt that names a file buys a round trip in which it asks for the content.
