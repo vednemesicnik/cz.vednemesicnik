@@ -4,6 +4,9 @@ import type { Config } from '@react-router/dev/config'
 import { sentryOnBuildEnd } from '@sentry/react-router'
 
 export default {
+  // Behind the Fly proxy react-router-serve sees `http://` (no `trust proxy`), so
+  // RR's action origin check would reject the browser's `https://` Origin.
+  allowedActionOrigins: ['vednemesicnik.cz'],
   buildEnd: async (args) => {
     // Same build-time gate as vite.config: upload only when fully configured
     // (token + org + project). Partial/absent config → no-op, so token-less
