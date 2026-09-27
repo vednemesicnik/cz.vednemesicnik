@@ -39,5 +39,6 @@ export const getMultipartFormData = async (request: Request) => {
     maxPartSize: MAX_FILE_SIZE,
   })
 
-  return parseFormData(request, uploadHandler)
+  // The parser defaults to a 2 MB per-file limit; align it with ours.
+  return parseFormData(request, { maxFileSize: MAX_FILE_SIZE }, uploadHandler)
 }
