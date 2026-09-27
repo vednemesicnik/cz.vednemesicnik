@@ -55,7 +55,7 @@ stavů jsou `Koncept` · `Publikováno` · `Archivováno`.
 
 Akce, jak je dnes nese administrace: `Schválit` · `Zveřejnit` (a `Zveřejnit zpětně` s dřívějším
 datem) · `Stáhnout z publikace` (vrátí do konceptu) · `Archivovat` · `Obnovit` (z archivu zpět
-do konceptu) · `Smazat` (jen koncept).
+do konceptu, jen Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinátor).
 
 Pozor na dvojici **Zveřejnit / Publikováno**: tlačítko a stav dnes používají jiné slovo pro
 tentýž čin. Je to známá nesrovnalost, ne dva různé kroky.
@@ -80,9 +80,13 @@ nedělá**. Poznají se jen podle modelu:
   že schválit může kdokoli z redakce, je nepravda.
 - **Krok „odeslat ke schválení“ zatím neexistuje.** Čekající obsah je dnes každý koncept autora
   s nižší rolí. Věta, která mluví o „odeslaném“ konceptu, popisuje budoucí aplikaci.
-- **Smazat jde jen koncept.** Publikovaný a archivovaný obsah se nemaže, jen stahuje nebo
-  archivuje.
+- **Publikovaný obsah se nemaže.** Smazat jde koncept, a archivovaný obsah jen Koordinátor.
+  Publikovaný se nejdřív stáhne nebo archivuje.
 - **Publikovaný obsah nejde upravit na místě** — nejdřív se stáhne z publikace do konceptu.
+- **Datum vydání nastaví jen Koordinátor, a nikdy do budoucnosti.** Nic se neplánuje: publikovaný
+  článek je na webu hned. Věta, která slibuje „naplánované zveřejnění“, je nepravda.
+- **Přihlášený vidí na webu i koncept a archivovaný článek** — jako náhled. Nepřihlášený čtenář
+  vidí jen publikované.
 - **Číslo nenese články.** Viz termíny.
 
 ## Hlas
