@@ -1,15 +1,21 @@
-import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import {
+  getWebContentVisibility,
+  ownByAuthor,
+} from '~/utils/permissions/author/get-web-content-visibility.server'
 
 import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { isAuthenticated } = await getAuthentication(request)
+  const visibility = await getWebContentVisibility(request, [
+    'podcast',
+    'podcast_episode',
+  ])
 
   const podcastsPromise = prisma.podcast.findMany({
     orderBy: {
@@ -23,11 +29,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       slug: true,
       title: true,
     },
-    where: {
-      state: {
-        in: isAuthenticated ? ['published', 'draft'] : ['published'],
-      },
-    },
+    where: visibility.where('podcast', ownByAuthor),
   })
 
   const episodesPromise = prisma.podcastEpisode.findMany({
@@ -51,11 +53,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       title: true,
     },
     take: 10,
-    where: {
-      state: {
-        in: isAuthenticated ? ['published', 'draft'] : ['published'],
-      },
-    },
+    where: visibility.where('podcast_episode', ownByAuthor),
   })
 
   const [podcasts, episodes] = await Promise.all([

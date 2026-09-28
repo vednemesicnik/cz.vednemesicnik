@@ -1,12 +1,15 @@
-import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
+import {
+  getWebContentVisibility,
+  ownByAuthor,
+} from '~/utils/permissions/author/get-web-content-visibility.server'
 
 import type { Route } from './+types/route'
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const { episodeSlug } = params
-  const { isAuthenticated } = await getAuthentication(request)
+  const visibility = await getWebContentVisibility(request, ['podcast_episode'])
 
   const podcastEpisode = await prisma.podcastEpisode.findUniqueOrThrow({
     select: {
@@ -39,11 +42,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     },
     where: {
       slug: episodeSlug,
-      state: {
-        in: isAuthenticated
-          ? ['draft', 'published', 'archived']
-          : ['published'],
-      },
+      ...visibility.where('podcast_episode', ownByAuthor, [
+        'draft',
+        'archived',
+      ]),
     },
   })
 

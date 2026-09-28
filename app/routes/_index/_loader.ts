@@ -1,14 +1,17 @@
-import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import {
+  getWebContentVisibility,
+  ownArticle,
+} from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { isAuthenticated } = await getAuthentication(request)
+  const visibility = await getWebContentVisibility(request, ['article'])
 
   const latestPublishedArticle = await prisma.article.findFirst({
     orderBy: {
@@ -27,9 +30,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       slug: true,
       title: true,
     },
-    where: {
-      state: { in: isAuthenticated ? ['published', 'draft'] : ['published'] },
-    },
+    where: visibility.where('article', ownArticle),
   })
 
   if (!latestPublishedArticle) {
