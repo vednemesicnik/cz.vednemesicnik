@@ -1,17 +1,21 @@
 import { PAGE_PARAM } from '~/components/pagination'
-import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import {
+  getWebContentVisibility,
+  ownArticle,
+} from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 const PAGE_SIZE = 9
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { isAuthenticated } = await getAuthentication(request)
+  const visibility = await getWebContentVisibility(request, ['article'])
+  const visibleArticles = visibility.where('article', ownArticle)
 
   const url = new URL(request.url)
   const currentPage = Math.max(
@@ -44,14 +48,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       },
       skip: (currentPage - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      where: {
-        state: { in: isAuthenticated ? ['published', 'draft'] : ['published'] },
-      },
+      where: visibleArticles,
     }),
     prisma.article.count({
-      where: {
-        state: { in: isAuthenticated ? ['published', 'draft'] : ['published'] },
-      },
+      where: visibleArticles,
     }),
   ])
 

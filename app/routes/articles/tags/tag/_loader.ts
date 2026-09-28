@@ -1,12 +1,15 @@
-import type { ContentState } from '@generated/prisma/enums'
 import { PAGE_PARAM } from '~/components/pagination'
-import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import {
+  getWebContentVisibility,
+  ownArticle,
+  ownByAuthor,
+} from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 const PAGE_SIZE = 9
@@ -14,16 +17,14 @@ const PAGE_SIZE = 9
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const { slug } = params
 
-  const { isAuthenticated } = await getAuthentication(request)
-
-  // Anonymous visitors see published content; authenticated users also see drafts.
-  const visibleStates: ContentState[] = isAuthenticated
-    ? ['published', 'draft']
-    : ['published']
+  const visibility = await getWebContentVisibility(request, [
+    'article',
+    'article_tag',
+  ])
 
   const tag = await prisma.articleTag.findUnique({
     select: { name: true, slug: true },
-    where: { slug, state: { in: visibleStates } },
+    where: { slug, ...visibility.where('article_tag', ownByAuthor) },
   })
 
   if (!tag) {
@@ -37,7 +38,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   )
 
   const where = {
-    state: { in: visibleStates },
+    ...visibility.where('article', ownArticle),
     tags: { some: { slug } },
   }
 

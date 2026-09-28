@@ -1,16 +1,19 @@
-import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import {
+  getWebContentVisibility,
+  ownArticle,
+} from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const { articleSlug } = params
 
-  const { isAuthenticated } = await getAuthentication(request)
+  const visibility = await getWebContentVisibility(request, ['article'])
 
   const article = await prisma.article.findUnique({
     select: {
@@ -51,11 +54,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     },
     where: {
       slug: articleSlug,
-      state: {
-        in: isAuthenticated
-          ? ['draft', 'published', 'archived']
-          : ['published'],
-      },
+      ...visibility.where('article', ownArticle, ['draft', 'archived']),
     },
   })
 

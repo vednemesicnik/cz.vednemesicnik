@@ -1,27 +1,30 @@
-import type { ContentState } from '@generated/prisma/enums'
-import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
+import {
+  getWebContentVisibility,
+  ownArticle,
+  ownByAuthor,
+} from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { isAuthenticated } = await getAuthentication(request)
-
-  // Anonymous visitors see published taxonomies; authenticated users also see drafts.
-  const visibleStates: ContentState[] = isAuthenticated
-    ? ['published', 'draft']
-    : ['published']
+  const visibility = await getWebContentVisibility(request, [
+    'article',
+    'article_tag',
+  ])
 
   const tags = await prisma.articleTag.findMany({
     orderBy: { name: 'asc' },
     select: {
       _count: {
-        select: { articles: { where: { state: { in: visibleStates } } } },
+        select: {
+          articles: { where: visibility.where('article', ownArticle) },
+        },
       },
       id: true,
       name: true,
       slug: true,
     },
-    where: { state: { in: visibleStates } },
+    where: visibility.where('article_tag', ownByAuthor),
   })
 
   // Hide taxonomies whose visible article count is zero.
