@@ -10,8 +10,11 @@ import {
   getBiometricCookieSession,
 } from '~/utils/biometric.server'
 import { prisma } from '~/utils/db.server'
+import { assertRecentAuthentication } from '~/utils/recent-authentication.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  await assertRecentAuthentication(request)
+
   const sessionAuthCookieSession = await getSessionAuthCookieSession(request)
   const sessionAuthId = getSessionAuthId(sessionAuthCookieSession)
 
