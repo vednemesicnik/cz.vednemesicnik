@@ -85,8 +85,8 @@ nedělá**. Poznají se jen podle modelu:
 - **Publikovaný obsah nejde upravit na místě** — nejdřív se stáhne z publikace do konceptu.
 - **Datum vydání nastaví jen Koordinátor, a nikdy do budoucnosti.** Nic se neplánuje: publikovaný
   článek je na webu hned. Věta, která slibuje „naplánované zveřejnění“, je nepravda.
-- **Přihlášený vidí na webu i koncept a archivovaný článek** — jako náhled. Nepřihlášený čtenář
-  vidí jen publikované.
+- **Přihlášený vidí na webu i koncept a archivovaný článek** — jako náhled, dnes každý přihlášený
+  bez ohledu na roli a nijak odlišený od publikovaného. Nepřihlášený čtenář vidí jen publikované.
 - **Číslo nenese články.** Viz termíny.
 
 ## Nový návrh administrace (rozhodnuto, zatím nepostaveno)
@@ -113,6 +113,14 @@ o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše to
 - **Publikovaná rubrika a štítek se neupravují** stejně jako článek: nejdřív se stáhnou.
 - **Číslo** (tištěné, v Archivu) nemá datum vydání. Tvoří ho rok, pořadí v roce, název bez roku
   (`zima` → zobrazeně `zima 2026`) a vzácně doplněk pro dotisk vedle čísla.
+
+Týká se to i veřejného webu:
+
+- **Náhled konceptu na webu zůstává, ale je vidět, že je to koncept.** Vidí ho jen ten, kdo daný
+  obsah vidí v administraci: Přispěvatel jen vlastní koncepty, Tvůrce a Koordinátor jakékoli. Pro
+  ostatní je cizí koncept, jako pro čtenáře, stránka, která neexistuje.
+- **Přejmenovaný publikovaný obsah se přesměruje** ze staré adresy na novou. Věta na chybové
+  stránce, že se obsah „možná přejmenoval“, je proto nepravda.
 
 ## Hlas
 
