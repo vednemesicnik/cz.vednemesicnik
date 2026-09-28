@@ -7,17 +7,27 @@ import {
   buildPdfResponse,
   PDF_CACHE_CONTROL,
 } from '~/utils/pdf-store/serve-pdf.server'
+import {
+  getWebContentVisibility,
+  ownByAuthor,
+} from '~/utils/permissions/author/get-web-content-visibility.server'
 
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { fileName } = params
 
+  const visibility = await getWebContentVisibility(request, ['issue'])
+
   // `id` builds the object-store key, `updatedAt` drives cache validation, and
   // `contentType` sets the response header — the PDF bytes live in the object store.
+  // Only the PDF of an issue the web may show: published, or previewed by rights.
   const pdf = await prisma.issuePDF.findUnique({
     select: { contentType: true, id: true, updatedAt: true },
-    where: { fileName },
+    where: {
+      fileName,
+      issue: visibility.where('issue', ownByAuthor, ['draft', 'archived']),
+    },
   })
 
   if (pdf === null) {
