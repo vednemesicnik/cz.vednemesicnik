@@ -58,7 +58,7 @@ export const handleError: HandleErrorFunction = (error, { request }) => {
 const isBotOriginCheckError = (error: unknown, request: Request) =>
   error instanceof Error &&
   error.message.includes('does not match `origin` header') &&
-  isbot(request.headers.get('user-agent'))
+  isbot(request.headers.get('user-agent') || '')
 
 export default function handleRequest(
   request: Request,
