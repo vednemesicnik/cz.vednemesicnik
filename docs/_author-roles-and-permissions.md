@@ -127,8 +127,9 @@ today's code. In the target model:
   approval, like the Contributor's.
 - **Approving is its own action**, separate from publishing, so the Coordinator can approve
   texts ahead and publish them later in the order they should appear on the web.
-- The approver level (`APPROVER_ROLE_LEVEL`) and `needsReviewToPublish` simplify accordingly:
-  a Coordinator's publish is itself the approval.
+- `needsReviewToPublish` gating goes away, since only the Coordinator can publish at all.
+  The approval stays an explicit step recorded as a `Review` (**Approve**, or **Approve and
+  publish** in one go); a Coordinator may also publish a never-submitted draft directly.
 
 The full lifecycle is in
 [_content-creation-lifecycle.md](./_content-creation-lifecycle.md#decided-for-the-redesign-not-implemented-yet).
