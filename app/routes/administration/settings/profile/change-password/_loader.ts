@@ -1,8 +1,11 @@
 import type { LoaderFunctionArgs } from 'react-router'
 
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { requireRecentAuthentication } from '~/utils/recent-authentication.server'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, url }: LoaderFunctionArgs) => {
+  await requireRecentAuthentication({ request, url })
+
   const context = await getUserPermissionContext(request, {
     actions: ['update'],
     entities: ['user'],

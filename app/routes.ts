@@ -232,6 +232,11 @@ export default [
                 'two-factor',
                 'routes/administration/settings/profile/two-factor/route.tsx',
               ),
+              // Fresh sign-in before changing sign-in methods
+              route(
+                'verify-identity',
+                'routes/administration/settings/profile/verify-identity/route.tsx',
+              ),
 
               // Passkey management + registration ceremony endpoints
               route(
