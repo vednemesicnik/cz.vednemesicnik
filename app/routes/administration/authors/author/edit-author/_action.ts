@@ -1,4 +1,5 @@
 import { parseWithZod } from '@conform-to/zod/v4'
+import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
 import {
@@ -8,6 +9,7 @@ import {
 import { validateCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
+import { canChangeAuthorRole } from '~/utils/permissions/author/guards/can-change-author-role.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
 
@@ -51,12 +53,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     targetUserId: author.user?.id,
   })
 
+  const isChangingRole = author.role.id !== submission.value.roleId
+
+  // Updating one's own author profile doesn't allow changing its role.
+  invariantResponse(
+    !isChangingRole || canChangeAuthorRole(context),
+    'Roli autora nemůžete změnit.',
+    { status: 403 },
+  )
+
   await updateAuthor(submission.value)
 
   // Audit only an actual role change. The new role is looked up after
   // updateAuthor has already validated roleId, so a tampered id can't surface as
   // a premature 500 here.
-  if (author.role.id !== submission.value.roleId) {
+  if (isChangingRole) {
     const newRole = await prisma.authorRole.findUniqueOrThrow({
       select: { name: true },
       where: { id: submission.value.roleId },
