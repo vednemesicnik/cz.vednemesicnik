@@ -44,9 +44,21 @@ export const handleError: HandleErrorFunction = (error, { request }) => {
 
   // Report only when Sentry is configured (matches the instrument's gate); the SDK
   // is never initialized without a DSN, so this stays fully inert when unset.
-  if (process.env.SENTRY_DSN) Sentry.captureException(error)
+  if (process.env.SENTRY_DSN && !isBotOriginCheckError(error, request)) {
+    Sentry.captureException(error)
+  }
   console.error(error) // Fly logs remain the fallback
 }
+
+/**
+ * Whether the error is RR's action origin check rejecting a bot (e.g. WordPress
+ * scanners POSTing to `www`). Browsers still report it — it's the signal of a
+ * proxy/origin misconfiguration (#406).
+ */
+const isBotOriginCheckError = (error: unknown, request: Request) =>
+  error instanceof Error &&
+  error.message.includes('does not match `origin` header') &&
+  isbot(request.headers.get('user-agent'))
 
 export default function handleRequest(
   request: Request,
