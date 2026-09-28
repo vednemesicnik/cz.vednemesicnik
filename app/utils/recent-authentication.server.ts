@@ -4,13 +4,20 @@ import { requireAuthentication, requireSession } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import { isRecentAuthentication } from '~/utils/recent-authentication'
 
-const isSessionRecent = async (sessionId: string) => {
-  const session = await prisma.session.findUniqueOrThrow({
+/**
+ * Whether the session was signed in recently. A session deleted meanwhile
+ * (signed out in another tab) counts as not recent rather than an error.
+ *
+ * @param sessionId - The session to check.
+ * @returns `true` when the session exists and is recent.
+ */
+export const isSessionRecent = async (sessionId: string) => {
+  const session = await prisma.session.findUnique({
     select: { createdAt: true },
     where: { id: sessionId },
   })
 
-  return isRecentAuthentication(session.createdAt)
+  return session !== null && isRecentAuthentication(session.createdAt)
 }
 
 /**
