@@ -15,7 +15,7 @@ Vedneměsíčník, z. s. Na webu jsou články, podcasty s epizodami, archiv ti�
 stránka redakce, spolku, podpory a dotací. V administraci redakce obsah píše, schvaluje,
 zveřejňuje a archivuje.
 
-Jádro časopisu jsou **články**. Tištěná čísla vycházejí zřídka, pár do roka, a **podcast byl
+Jádro časopisu jsou **články**. Tištěná čísla vycházejí zřídka, párkrát do roka, a **podcast byl
 vždycky vedlejší a dnes skoro nežije**. Text, který staví na poslechu nebo slibuje pravidelnost
 („každý měsíc“), je nepravda.
 
