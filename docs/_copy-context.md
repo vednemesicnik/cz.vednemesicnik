@@ -15,9 +15,10 @@ Vedneměsíčník, z. s. Na webu jsou články, podcasty s epizodami, archiv ti�
 stránka redakce, spolku, podpory a dotací. V administraci redakce obsah píše, schvaluje,
 zveřejňuje a archivuje.
 
-Jádro časopisu jsou **články**. Tištěná čísla vycházejí zřídka, párkrát do roka, a **podcast byl
-vždycky vedlejší a dnes skoro nežije**. Text, který staví na poslechu nebo slibuje pravidelnost
-(„každý měsíc“), je nepravda.
+Jádro časopisu jsou **články na webu**. Tištěné číslo vychází párkrát do roka a nese **tytéž
+články**, které už vyšly na webu. **Archiv** je proto záznam toho, co se vytisklo, ne další čtení
+navíc. **Podcast byl vždycky vedlejší a dnes skoro nežije.** Text, který staví na poslechu, slibuje
+v čísle obsah, který na webu není, nebo slibuje pravidelnost („každý měsíc“), je nepravda.
 
 **Jméno** vzniklo jako hříčka na název kavárny, která už neexistuje. Na webu se původ jména
 nevysvětluje a hesla na něm nestaví. Na tištěném záhlaví stálo pod jménem heslo **Studentské
@@ -44,8 +45,9 @@ rozpojí.
 - **rubrika** — tematické zařazení článku. Článek jich může mít **víc**.
 - **štítek** — volnější označení článku; článek jich má obvykle víc.
 - **podcast** / **epizoda** — podcast je pořad, epizoda jeden díl.
-- **číslo** — **tištěné** číslo časopisu v PDF, v sekci **Archiv**. Není to skupina článků na
-  webu a články k číslům nepatří. V aplikaci se dnes pro totéž píše i **vydání** (*Datum
+- **číslo** — **tištěné** číslo časopisu v PDF, v sekci **Archiv**. Obsahem jsou tytéž články
+  jako na webu, aplikace je ale s číslem nepropojuje: není to skupina článků na webu a články
+  k číslům nepatří. V aplikaci se dnes pro totéž píše i **vydání** (*Datum
   vydání*, *Správa vydání časopisu*) — to je nesjednocené, ne dva různé pojmy.
 - **Archiv** (sekce) vs. **archivováno** (stav) — dvě různé věci. *Archiv* jsou tištěná čísla;
   *archivovaný* je obsah stažený z oběhu. Věta, která je smíchá, je nepravda.
