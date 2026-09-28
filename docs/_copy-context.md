@@ -15,6 +15,16 @@ Vedneměsíčník, z. s. Na webu jsou články, podcasty s epizodami, archiv ti�
 stránka redakce, spolku, podpory a dotací. V administraci redakce obsah píše, schvaluje,
 zveřejňuje a archivuje.
 
+Jádro časopisu jsou **články na webu**. Tištěné číslo vychází párkrát do roka a nese **tytéž
+články**, které už vyšly na webu. **Archiv** je proto záznam toho, co se vytisklo, ne další čtení
+navíc. **Podcast byl vždycky vedlejší a dnes skoro nežije.** Text, který staví na poslechu, slibuje
+v čísle obsah, který na webu není, nebo slibuje pravidelnost („každý měsíc“), je nepravda.
+
+**Jméno** vzniklo jako hříčka na název kavárny, která už neexistuje. Na webu se původ jména
+nevysvětluje a hesla na něm nestaví. Na tištěném záhlaví stálo pod jménem heslo **Studentské
+nekritické noviny**. Je to kus historie časopisu, ne nápad z webu, a na úvodu webu pod jménem
+zůstává.
+
 Texty nečte jeden druh člověka:
 
 | Kde                 | Kdo to čte                          | Jaký je to text                                   |
@@ -35,8 +45,9 @@ rozpojí.
 - **rubrika** — tematické zařazení článku. Článek jich může mít **víc**.
 - **štítek** — volnější označení článku; článek jich má obvykle víc.
 - **podcast** / **epizoda** — podcast je pořad, epizoda jeden díl.
-- **číslo** — **tištěné** číslo časopisu v PDF, v sekci **Archiv**. Není to skupina článků na
-  webu a články k číslům nepatří. V aplikaci se dnes pro totéž píše i **vydání** (*Datum
+- **číslo** — **tištěné** číslo časopisu v PDF, v sekci **Archiv**. Obsahem jsou tytéž články
+  jako na webu, aplikace je ale s číslem nepropojuje: není to skupina článků na webu a články
+  k číslům nepatří. V aplikaci se dnes pro totéž píše i **vydání** (*Datum
   vydání*, *Správa vydání časopisu*) — to je nesjednocené, ne dva různé pojmy.
 - **Archiv** (sekce) vs. **archivováno** (stav) — dvě různé věci. *Archiv* jsou tištěná čísla;
   *archivovaný* je obsah stažený z oběhu. Věta, která je smíchá, je nepravda.
@@ -127,10 +138,15 @@ Týká se to i veřejného webu:
 **Administrace** mluví neosobně a vyká: `Zadejte šestimístný kód z vaší autentikační aplikace`.
 Nemá já, neomlouvá se. Chybová věta říká, co udělat; důvod patří za pomlčku.
 
-**Veřejný web** má hlas redakce: mluví za *my* a čtenáři dnes **vyká** (`Jsme tu pro vás`,
-`Máte nějaký nápad nebo nám chcete něco sdělit?`). Výjimkou je heslo úvodní stránky, které
-**tyká**: `Čti, poslouchej a objevuj`. Jestli má web tykat, nebo vykat, rozhodnuté není — když na
-tom otázka stojí, řekni, co bys volil, a proč.
+**Veřejný web** má hlas redakce: mluví za *my* a čtenáři **vyká** (`Jsme tu pro vás`,
+`Máte nějaký nápad nebo nám chcete něco sdělit?`). Vyká **všude**, bez výjimky (rozhodnuto
+28. 9. 2026). Dnešní heslo úvodu `Čti, poslouchej a objevuj` je jediné tykání a odchází: úvod
+nového návrhu nese jen jméno a pod ním `Studentské nekritické noviny`.
+
+Web **nesmí znít jako text od AI**. Prozrazuje to věta ve dvou půlkách spojená pomlčkou,
+výčet obsahu jako popis produktu, obecná sebevědomá hesla, která by pasovala na jakýkoli časopis,
+a slova jako *najdete tu*. Lepší je obyčejná čeština s trochou nadhledu, jak by psal člověk
+z redakce.
 
 V obou:
 
