@@ -26,20 +26,26 @@ Draft → Published → Archived
 
 ## Role-Based Default Actions in Each State
 
-| **Role**        | **Action** | **Draft**                | **Published**                       | **Archived**                      |
-|-----------------|------------|--------------------------|-------------------------------------|-----------------------------------|
-| **Contributor** | **View**   | ✅ Can view own drafts.   | ❌ Cannot view published content.    | ❌ Cannot view archived content.   |
-|                 | **Create** | ✅ Can create own drafts. | ❌ Cannot create published content.  | ❌ Cannot create archived content. |
-|                 | **Update** | ✅ Can update own drafts. | ❌ Cannot update published content.  | ❌ Cannot update archived content. |
-|                 | **Delete** | ✅ Can delete own drafts. | ❌ Cannot delete published content.  | ❌ Cannot delete archived content. |
-| **Creator**     | **View**   | ✅ Can view own drafts.   | ✅ Can view own published content.   | ❌ Cannot view archived content.   |
-|                 | **Create** | ✅ Can create own drafts. | ❌ Cannot create published content.  | ❌ Cannot create archived content. |
-|                 | **Update** | ✅ Can update own drafts. | ✅ Can update own published content. | ❌ Cannot update archived content. |
-|                 | **Delete** | ✅ Can delete own drafts. | ❌ Cannot delete published content.  | ❌ Cannot delete archived content. |
-| **Coordinator** | **View**   | ✅ Can view any draft.    | ✅ Can view any published content.   | ✅ Can view any archived content.  |
-|                 | **Create** | ✅ Can create any draft.  | ✅ Can create any published content. | ❌ Cannot create archived content. |
-|                 | **Update** | ✅ Can update any draft.  | ✅ Can update any published content. | ✅ Can update archived content.    |
-|                 | **Delete** | ✅ Can delete any draft.  | ❌ Cannot delete published content.  | ✅ Can delete archived content.    |
+Matches the seeded permission catalog (`prisma/data/author-roles.ts`); the full matrix is in
+[_author-roles-and-permissions.md](./_author-roles-and-permissions.md).
+
+| **Role**        | **Action** | **Draft**                 | **Published**                     | **Archived**                       |
+|-----------------|------------|---------------------------|-----------------------------------|------------------------------------|
+| **Contributor** | **View**   | ✅ Own drafts.             | ✅ Own published content.          | ✅ Own archived content.            |
+|                 | **Create** | ✅ Own drafts.             | -                                 | -                                  |
+|                 | **Update** | ✅ Own drafts.             | ❌ Published content is read-only. | ❌ Archived content is read-only.   |
+|                 | **Delete** | ✅ Own drafts.             | ❌ Cannot delete published content.| ❌ Cannot delete archived content.  |
+| **Creator**     | **View**   | ✅ Any draft.              | ✅ Any published content.          | ✅ Own archived content only.       |
+|                 | **Create** | ✅ Own drafts.             | -                                 | -                                  |
+|                 | **Update** | ✅ Own drafts.             | ❌ Published content is read-only. | ❌ Archived content is read-only.   |
+|                 | **Delete** | ✅ Own drafts.             | ❌ Cannot delete published content.| ❌ Cannot delete archived content.  |
+| **Coordinator** | **View**   | ✅ Any draft.              | ✅ Any published content.          | ✅ Any archived content.            |
+|                 | **Create** | ✅ Any draft.              | -                                 | -                                  |
+|                 | **Update** | ✅ Any draft.              | ❌ Published content is read-only. | ❌ Archived content is read-only.   |
+|                 | **Delete** | ✅ Any draft.              | ❌ Cannot delete published content.| ✅ Any archived content.            |
+
+Nobody edits published or archived content in place: it is retracted (or restored) to a draft
+first.
 
 ---
 
@@ -67,9 +73,9 @@ Draft → Published → Archived
 
 **Draft**: Can be viewed, created, updated, deleted and published.
 
-**Published**: Can be viewed, updated, retracted, archived.
+**Published**: Can be viewed, retracted and archived. It is not edited in place.
 
-**Archived**: Can be viewed, updated, deleted and restored.
+**Archived**: Can be viewed, deleted (Coordinator) and restored (Coordinator). It is not edited in place.
 
 ---
 
@@ -93,3 +99,32 @@ The requirement is enforced both in the detail loaders (disabling the publish bu
 `needsReviewToPublish`) and in the `publish-*` actions (server-side guard). See
 `app/utils/permissions/author/review-policy.ts` and
 [_author-roles-and-permissions.md](./_author-roles-and-permissions.md).
+
+---
+
+## Decided for the redesign (not implemented yet)
+
+Decided on 28 Sep 2026 in the design project (`07 Stavy a akce obsahu`, questions `dj753f0j`
+and `gbsczekj`, see [_design-project.md](./_design-project.md)). Everything above still
+describes today's code; this is the target.
+
+- **Submitted for approval is a flag, not a state.** `ContentState` stays
+  `draft` · `published` · `archived`. The author submits a finished draft
+  (**Odeslat ke schválení**), which sets `submittedAt`. The UI shows it as
+  *Čeká na schválení*; a submitted draft with an approving review shows as *Schváleno*.
+- **Approving and publishing are two steps, both Coordinator-only.** On a submitted draft the
+  Coordinator either **approves** it (stays off the web, recorded as a `Review`) or **approves
+  and publishes** it in one step. An approved draft then has **Publikovat**. A Coordinator may
+  still publish a draft that was never submitted.
+- **Approving first exists for ordering on the web.** The web sorts by `publishedAt`
+  (descending) and an edition's order comes from it (#243), so the Coordinator approves texts
+  as they come and publishes them later, in the order they should stand.
+- **Taking back wipes the approval.** The author's **Vzít zpět** and the Coordinator's
+  **Vrátit k úpravám** return the item to an unsubmitted draft and delete its reviews.
+  A Coordinator's own small fix of an approved text keeps the approval.
+- **Bulk publish gives every item its own time**, in the order the confirmation dialog shows
+  (top = newest): the top item gets the moment of confirmation, each next one second earlier.
+- **Changing the publish date takes a time as well** (Coordinator only, never in the future),
+  so a forgotten article can be placed between two already published ones.
+- **Creators neither approve nor publish** — not even their own content. Their `review`
+  permission on others' drafts goes away.

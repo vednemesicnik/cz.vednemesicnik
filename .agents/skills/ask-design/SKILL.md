@@ -127,6 +127,9 @@ It asks that a dated note the answer adds to a document cite the decision as
 `Rozhodnuto ⟨datum⟩ (<code>)` or `(#n)` — **without the path**, so `tidy` can retire the pair
 later without leaving a citation that points at nothing.
 
+It says once that **the wording in the drawings is a draft**: the copywriter goes through it after
+the screen settles (step 7), so design draws the words it needs and does not polish them.
+
 **It asks design to split a document before it gets too large to render.** Past roughly 100 kB
 as `get_file` returns it, a `.dc.html` stops drawing and shows its source instead. When the
 document the answer will write into is past that, the prompt says how large it is and asks for
@@ -162,6 +165,27 @@ script cannot find is a finding: report it instead of indexing it.
 
 When the answer needs corrections or decisions before design continues, they go back as
 `questions/<code>-reply.md` through steps 3–5, not as a chat message.
+
+### What design drew goes through copy
+
+A designer writes the words on a screen while solving the layout — a hint that explains a vague
+label instead of a better label, a confirmation that says less than the app does. **Every string
+a drawing adds or changes goes to the copywriter (`/ask-copy`) before it is implemented.** What
+`check` decides is how much:
+
+- **A new screen or document** — once it has no open questions, all of its user-facing strings:
+  labels, buttons, hints, empty states, errors, confirmations, toasts.
+- **An answer that rewrote screens** — only the strings it added or changed; quote them from the
+  newest copy, not from the answer.
+- **An answer that changed no wording** — nothing; say so in the report.
+- **A screen still waiting on a `reply`** — not yet; its words may change again.
+
+Give the copywriter the facts from this side — what the app will do, who sees the string, when —
+and say which points of `docs/_copy-context.md` the drawing no longer matches, since a redesign
+draws the future app. The wording copy settles goes back to design as a new question through
+steps 3–5, so the drawing carries it; implementation takes the words from the drawing.
+
+The report of `check` ends with the strings now due for copy, or with why there are none.
 
 Implementing the answer is its own piece of work, on a branch with a PR.
 
