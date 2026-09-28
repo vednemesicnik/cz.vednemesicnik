@@ -89,6 +89,31 @@ nedělá**. Poznají se jen podle modelu:
   vidí jen publikované.
 - **Číslo nenese články.** Viz termíny.
 
+## Nový návrh administrace (rozhodnuto, zatím nepostaveno)
+
+Administrace se překresluje. Otázka vždycky řekne, jestli jde o texty dnešní aplikace, nebo
+o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše tohle (rozhodnuto 27.–28. 9. 2026):
+
+- **Odeslat ke schválení existuje.** Autor hotový koncept odešle. Štítky jsou pak `Koncept` ·
+  `Čeká na schválení` · `Schváleno` · `Publikováno` · `Archivováno`. V datech zůstávají tři stavy,
+  čekání a schválení jsou příznaky konceptu; v rozhraní se ale ukazují jako štítky.
+- **Schvaluje i publikuje jen Koordinátor, a jsou to dva kroky.** U čekajícího textu má
+  `Schválit` (text zůstane mimo web) a `Schválit a publikovat…`; u schváleného pak `Publikovat…`.
+  Schválit zvlášť existuje kvůli **pořadí na webu**: web řadí podle data publikace, Koordinátor
+  texty schválí, jak přicházejí, a publikuje je pohromadě v pořadí, v jakém mají stát.
+- **Tvůrce ani Přispěvatel neschvalují ani nepublikují**, ani vlastní text. Jejich cesta končí
+  odesláním ke schválení. Věta, která Tvůrci slibuje, že publikuje sám, je v novém návrhu nepravda.
+- **`Vzít zpět`** (autor) a **`Vrátit k úpravám`** (Koordinátor) vrátí text do konceptu a smažou
+  schválení.
+- **Tlačítko je `Publikovat`, ne `Zveřejnit`** — sjednocuje se se stavem `Publikováno`.
+- **Hromadné publikování má pořadí**, které jde před potvrzením změnit; jak ho dialog ukazuje
+  shora dolů, tak budou texty stát na webu.
+- **Datum vydání umí i čas** (jen Koordinátor, nikdy do budoucnosti) — kvůli zařazení
+  zapomenutého článku mezi dva vydané.
+- **Publikovaná rubrika a štítek se neupravují** stejně jako článek: nejdřív se stáhnou.
+- **Číslo** (tištěné, v Archivu) nemá datum vydání. Tvoří ho rok, pořadí v roce, název bez roku
+  (`zima` → zobrazeně `zima 2026`) a vzácně doplněk pro dotisk vedle čísla.
+
 ## Hlas
 
 **Administrace** mluví neosobně a vyká: `Zadejte šestimístný kód z vaší autentikační aplikace`.
