@@ -61,7 +61,7 @@ export default function RouteComponent({
 
         <p>
           Dvoufázové ověření je aktivní. Při přihlášení heslem budete kromě
-          hesla zadávat i jednorázový kód z autentikační aplikace.
+          hesla zadávat i jednorázový kód z ověřovací aplikace.
         </p>
 
         {backupCodes !== undefined && <BackupCodesPanel codes={backupCodes} />}
@@ -110,14 +110,14 @@ export default function RouteComponent({
       <AdminHeadline>Dvoufázové ověření</AdminHeadline>
 
       <p>
-        Naskenujte QR kód v autentikační aplikaci (např. Google Authenticator,
+        Naskenujte QR kód v ověřovací aplikaci (např. Google Authenticator,
         1Password, Authy) a zadejte vygenerovaný šestimístný kód pro dokončení
         nastavení.
       </p>
 
       {loaderData.qrCodeDataUri !== null && (
         <img
-          alt="QR kód pro autentikační aplikaci"
+          alt="QR kód pro ověřovací aplikaci"
           height={200}
           src={loaderData.qrCodeDataUri}
           width={200}

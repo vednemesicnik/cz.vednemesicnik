@@ -40,7 +40,7 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
         <p className={styles.subtitle}>
           {useBackupCode
             ? 'Zadejte jeden ze svých záložních kódů'
-            : 'Zadejte šestimístný kód z vaší autentikační aplikace'}
+            : 'Zadejte šestimístný kód z vaší ověřovací aplikace'}
         </p>
 
         <Form
