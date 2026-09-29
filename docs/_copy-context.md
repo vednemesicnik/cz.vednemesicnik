@@ -134,6 +134,23 @@ Týká se to i veřejného webu:
 - **Přejmenovaný publikovaný obsah se přesměruje** ze staré adresy na novou. Věta na chybové
   stránce, že se obsah „možná přejmenoval“, je proto nepravda.
 
+## Přihlášení do administrace
+
+- **Přihlásit se jde jen adresou `@vednemesicnik.cz`.** Doménu vlastní spolek, ne škola: je to
+  redakční účet Google, ne „školní“.
+- **Hlavní cesty jsou Google, passkey a odkaz v e‑mailu.** Odkaz platí 15 minut a jen jednou,
+  nový nahradí předchozí. Samo otevření odkazu nepřihlásí nic, přihlásí až potvrzení na stránce.
+- **Heslo je nouzová cesta a v provozu je vypnuté.** Věta, která heslo nabízí jako běžnou cestu
+  nebo jako záchranu při ztrátě telefonu, je nepravda.
+- **Dvoufázové ověření je nepovinné** a ptá se jen po hesle. Google, passkey ani odkaz ho
+  nechtějí. Aplikace pro kódy je **ověřovací aplikace**, ne *autentikační*.
+- **Přihlášení drží prohlížeč, ne zařízení.** Jiný prohlížeč téhož počítače, prohlížeč uvnitř
+  poštovní aplikace i anonymní okno jsou jiné přihlášení. Věta „na tomto zařízení“ tam, kde jde
+  o prohlížeč, je nepravda.
+- Změna hesla, dvoufázového ověření nebo passkey chce přihlášení z posledních 10 minut, jinak
+  se člověk musí znovu ověřit.
+- **Uživatelská role**, ne *role účtu*.
+
 ## Dary a formuláře na webu (rozhodnuto 28.–29. 9. 2026)
 
 - **Dar se posílá převodem.** Platební brána není, web nic neplatí: dárce zaplatí podle QR kódu
@@ -152,7 +169,7 @@ Týká se to i veřejného webu:
 
 ## Hlas
 
-**Administrace** mluví neosobně a vyká: `Zadejte šestimístný kód z vaší autentikační aplikace`.
+**Administrace** mluví neosobně a vyká: `Zadejte šestimístný kód z ověřovací aplikace`.
 Nemá já, neomlouvá se. Chybová věta říká, co udělat; důvod patří za pomlčku.
 
 **Veřejný web** má hlas redakce: mluví za *my* a čtenáři **vyká** (`Jsme tu pro vás`,
