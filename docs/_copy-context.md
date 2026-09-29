@@ -15,7 +15,8 @@ Vedneměsíčník, z. s. Na webu jsou články, podcasty s epizodami, archiv ti�
 stránka redakce, spolku, podpory a dotací. V administraci redakce obsah píše, schvaluje,
 zveřejňuje a archivuje.
 
-Jádro časopisu jsou **články na webu**. Tištěné číslo vychází párkrát do roka a nese **tytéž
+Jádro časopisu jsou **články na webu**. Tištěné číslo vychází **zpravidla čtyřikrát ročně** —
+redakci dělají studenti, takže někdy vyjdou jen tři, jindy i pět — a nese **tytéž
 články**, které už vyšly na webu. **Archiv** je proto záznam toho, co se vytisklo, ne další čtení
 navíc. **Podcast byl vždycky vedlejší a dnes skoro nežije.** Text, který staví na poslechu, slibuje
 v čísle obsah, který na webu není, nebo slibuje pravidelnost („každý měsíc“), je nepravda.
@@ -133,6 +134,22 @@ Týká se to i veřejného webu:
 - **Přejmenovaný publikovaný obsah se přesměruje** ze staré adresy na novou. Věta na chybové
   stránce, že se obsah „možná přejmenoval“, je proto nepravda.
 
+## Dary a formuláře na webu (rozhodnuto 28.–29. 9. 2026)
+
+- **Dar se posílá převodem.** Platební brána není, web nic neplatí: dárce zaplatí podle QR kódu
+  nebo platebních údajů. **Transparentní účet nebude** a web nikdy neukáže, kolik se vybralo.
+- **Dary a dotace platí tisk i web**, akce jen možná. Věta, která dar váže jen k tisku („každý
+  dar pomůže vydat další číslo“), nebo slibuje akce jako jistotu, je nepravda.
+- **Potvrzení o daru** vystaví spolek na žádost. Údaje ze žádosti se drží jen do vystavení
+  a odeslání potvrzení; kdo potvrzení ztratí, požádá znovu.
+- **Web nemá stránku o zpracování osobních údajů.** Každý formulář nese vlastní odstavec nad
+  tlačítkem, který musí obstát sám, a žádné zaškrtávací pole. Odkaz typu *Jak s údaji
+  zacházíme* nemá kam vést. Pro dotazy k údajům bude jedna společná adresa, zatím nevybraná.
+- **Přihláška do spolku**: členem se člověk stane až **schválením vedením spolku**, ne odesláním
+  ani e‑mailem. Neschválená přihláška se po 12 měsících od podání smaže, schválená zůstává.
+- **Přihláška do redakce**: nic nesmí slibovat, že se někdo ozve, ani lhůtu. O přijetí
+  rozhoduje šéfredakce.
+
 ## Hlas
 
 **Administrace** mluví neosobně a vyká: `Zadejte šestimístný kód z vaší autentikační aplikace`.
@@ -156,7 +173,8 @@ V obou:
 ## Formáty a typografie
 
 - Datum na webu `21. července 2026`. Seznamy v administraci ho dnes ukazují jako `2026-07-21`;
-  nový návrh přechází na `21. 7. 2026`. Do formuláře se zadává `dd.mm.rrrr`.
+  nový návrh přechází na `21. 7. 2026`. Do formulářů webu se datum píše den, měsíc, rok
+  s tečkami; projde `14. 5. 1990` i `14.05.1990`, takže příklad se píše čtenářsky.
 - Pomlčka ve větě je `—` s mezerami, ne spojovník. Uvozovky české „…“.
 - Měna `Kč` za částkou s mezerou: `500 Kč`.
 
