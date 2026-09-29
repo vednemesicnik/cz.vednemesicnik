@@ -51,18 +51,15 @@ export const requireRecentAuthentication = async ({
 }
 
 /**
- * Guard for fetch endpoints (passkey registration) that change sign-in
- * methods: a session signed in too long ago gets a 403 instead of a redirect.
+ * Check for fetch endpoints (passkey registration) that change sign-in
+ * methods. A fetcher cannot follow a redirect to the identity check, so the
+ * caller answers a stale session with a status the page can show.
  *
  * @param request - The incoming request.
- * @returns The session, like `requireSession`.
+ * @returns `true` when the request's session was signed in recently.
  */
-export const assertRecentAuthentication = async (request: Request) => {
-  const authentication = await requireSession(request)
+export const isRequestRecentlyAuthenticated = async (request: Request) => {
+  const { sessionId } = await requireSession(request)
 
-  if (!(await isSessionRecent(authentication.sessionId))) {
-    throw new Response('Pro tuto změnu se znovu přihlaste.', { status: 403 })
-  }
-
-  return authentication
+  return isSessionRecent(sessionId)
 }
