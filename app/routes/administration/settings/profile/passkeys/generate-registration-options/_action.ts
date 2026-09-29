@@ -7,10 +7,12 @@ import {
 } from '~/utils/auth.server'
 import { setBiometricCookieSession } from '~/utils/biometric.server'
 import { prisma } from '~/utils/db.server'
-import { assertRecentAuthentication } from '~/utils/recent-authentication.server'
+import { isRequestRecentlyAuthenticated } from '~/utils/recent-authentication.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await assertRecentAuthentication(request)
+  if (!(await isRequestRecentlyAuthenticated(request))) {
+    return data({ status: 'reauthenticate' as const }, { status: 403 })
+  }
 
   const sessionAuthCookieSession = await getSessionAuthCookieSession(request)
   const sessionAuthId = getSessionAuthId(sessionAuthCookieSession)
@@ -51,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return data(
     {
       options,
-      status: 'success',
+      status: 'success' as const,
     },
     {
       headers: {

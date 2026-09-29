@@ -24,8 +24,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <AdminPage>
       <AdminHeadline>Ověřte, že jste to vy</AdminHeadline>
       <AdminParagraph>
-        Než změníte přihlášení, přihlaste se znovu jednou z cest, kterými se
-        přihlašujete.
+        Před změnou způsobu přihlášení se přihlaste znovu. Pokračováním se
+        nejprve odhlásíte.
+      </AdminParagraph>
+      <AdminParagraph>
+        Po přihlášení odkazem v e-mailu otevřete z Přehledu Nastavení a potom
+        Profil.
       </AdminParagraph>
 
       <Form method="post">
@@ -34,7 +38,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
         <FormActions>
           <AdminButton disabled={isSubmitting} type={'submit'}>
-            Přihlásit se znovu
+            Odhlásit a přihlásit znovu
           </AdminButton>
           <AdminLinkButton
             disabled={isSubmitting}
