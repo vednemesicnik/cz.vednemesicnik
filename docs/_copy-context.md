@@ -175,7 +175,8 @@ Týká se to i veřejného webu:
   a odeslání potvrzení; kdo potvrzení ztratí, požádá znovu.
 - **Web nemá stránku o zpracování osobních údajů.** Každý formulář nese vlastní odstavec nad
   tlačítkem, který musí obstát sám, a žádné zaškrtávací pole. Odkaz typu *Jak s údaji
-  zacházíme* nemá kam vést. Pro dotazy k údajům bude jedna společná adresa, zatím nevybraná.
+  zacházíme* nemá kam vést. Dotazy k údajům jdou na jednu společnou adresu
+  `udaje@vednemesicnik.cz` (rozhodnuto 2. 10. 2026).
 - **Přihláška do spolku**: členem se člověk stane až **schválením vedením spolku**, ne odesláním
   ani e‑mailem. Neschválená přihláška se po 12 měsících od podání smaže, schválená zůstává.
 - **Přihláška do redakce**: nic nesmí slibovat, že se někdo ozve, ani lhůtu. O přijetí
@@ -222,7 +223,9 @@ V obou:
 
 Žádná skutečná data. Jména, e‑maily a tituly článků v příkladech jsou vymyšlené, e‑maily končí na
 `priklad.cz`. Výjimka jsou účty administrace: pozvat jde jen adresu `@vednemesicnik.cz`, takže
-ukázka účtu stojí na této doméně, s vymyšleným jménem. Když uvidíš něco, co vypadá jako
+ukázka účtu stojí na této doméně, s vymyšleným jménem. Skutečné jsou jen veřejné kontakty spolku,
+které web ukazuje nebo ukazovat bude: `podpora@`, `redakce@`, `dary@` a `udaje@vednemesicnik.cz`. Jmenují
+schránky podle tématu, česky a bez diakritiky. Když uvidíš něco jiného, co vypadá jako
 skutečný záznam, **je to nález** — řekni to.
 
 ## Jak má vypadat odpověď
