@@ -222,7 +222,8 @@ V obou:
 
 Žádná skutečná data. Jména, e‑maily a tituly článků v příkladech jsou vymyšlené, e‑maily končí na
 `priklad.cz`. Výjimka jsou účty administrace: pozvat jde jen adresu `@vednemesicnik.cz`, takže
-ukázka účtu stojí na této doméně, s vymyšleným jménem. Když uvidíš něco, co vypadá jako skutečný záznam, **je to nález** — řekni to.
+ukázka účtu stojí na této doméně, s vymyšleným jménem. Když uvidíš něco, co vypadá jako
+skutečný záznam, **je to nález** — řekni to.
 
 ## Jak má vypadat odpověď
 
