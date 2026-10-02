@@ -49,7 +49,8 @@ rozpojí.
 - **číslo** — **tištěné** číslo časopisu v PDF, v sekci **Archiv**. Obsahem jsou tytéž články
   jako na webu, aplikace je ale s číslem nepropojuje: není to skupina článků na webu a články
   k číslům nepatří. V aplikaci se dnes pro totéž píše i **vydání** (*Datum
-  vydání*, *Správa vydání časopisu*) — to je nesjednocené, ne dva různé pojmy.
+  vydání*, *Správa vydání časopisu*) — to je nesjednocené, ne dva různé pojmy. Nový návrh
+  *vydání* u článku ani epizody nepoužívá: jejich datum je **datum publikace**.
 - **Archiv** (sekce) vs. **archivováno** (stav) — dvě různé věci. *Archiv* jsou tištěná čísla;
   *archivovaný* je obsah stažený z oběhu. Věta, která je smíchá, je nepravda.
 - **autor** vs. **uživatel** — *uživatel* je účet, kterým se přihlašuje do administrace; *autor*
@@ -97,8 +98,9 @@ nedělá**. Poznají se jen podle modelu:
 - **Publikovaný obsah nejde upravit na místě** — nejdřív se stáhne z publikace do konceptu.
 - **Datum vydání nastaví jen Koordinátor, a nikdy do budoucnosti.** Nic se neplánuje: publikovaný
   článek je na webu hned. Věta, která slibuje „naplánované zveřejnění“, je nepravda.
-- **Přihlášený vidí na webu i koncept a archivovaný článek** — jako náhled, dnes každý přihlášený
-  bez ohledu na roli a nijak odlišený od publikovaného. Nepřihlášený čtenář vidí jen publikované.
+- **Na webu vidí koncept a archivovaný článek jen ten, kdo ho vidí v administraci** — jako
+  náhled, dnes nijak odlišený od publikovaného. Přispěvatel jen vlastní, Tvůrce jakýkoli koncept
+  a vlastní archivovaný, Koordinátor všechno. Nepřihlášený čtenář vidí jen publikované.
 - **Číslo nenese články.** Viz termíny.
 
 ## Nový návrh administrace (rozhodnuto, zatím nepostaveno)
@@ -115,13 +117,23 @@ o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše to
   texty schválí, jak přicházejí, a publikuje je pohromadě v pořadí, v jakém mají stát.
 - **Tvůrce ani Přispěvatel neschvalují ani nepublikují**, ani vlastní text. Jejich cesta končí
   odesláním ke schválení. Věta, která Tvůrci slibuje, že publikuje sám, je v novém návrhu nepravda.
-- **`Vzít zpět`** (autor) a **`Vrátit k úpravám`** (Koordinátor) vrátí text do konceptu a smažou
-  schválení.
+- **`Vzít zpět do konceptu`** (autor) a **`Vrátit k úpravám`** (Koordinátor) vrátí text do
+  konceptu a smažou schválení. Archivovaný obsah vrací **`Obnovit jako koncept`**.
+- **`Stáhnout z publikace`** vrátí článek jako koncept neodeslaný a neschválený. Koordinátor ho
+  smí publikovat rovnou, bez nového schválení; věta „vrátí se až po novém schválení“ je nepravda.
 - **Tlačítko je `Publikovat`, ne `Zveřejnit`** — sjednocuje se se stavem `Publikováno`.
 - **Hromadné publikování má pořadí**, které jde před potvrzením změnit; jak ho dialog ukazuje
   shora dolů, tak budou texty stát na webu.
-- **Datum vydání umí i čas** (jen Koordinátor, nikdy do budoucnosti) — kvůli zařazení
-  zapomenutého článku mezi dva vydané.
+- **Datum publikace**, ne *datum vydání* (*vydání* je tištěné číslo). Umí i čas (jen Koordinátor,
+  nikdy do budoucnosti) — kvůli zařazení zapomenutého článku mezi dva vydané.
+- **Článek může mít víc autorů** a každý z nich ho má za vlastní: upraví ho, odešle i vezme zpět.
+  Věta s jedním autorem v jednotném čísle (*autor článek neodeslal*) je pro spoluautorství
+  nepravda.
+- **Přispěvatel má místo fronty `Ke schválení` pilulku `Odeslané`**: jsou v ní jeho čekající
+  i schválené články. Nic neschvaluje, jen čeká.
+- **Editor článku se ukládá sám** a drží **zámek**: článek upravuje vždy jen jedna záložka jednoho
+  člověka, Koordinátor smí úpravu převzít. Posledních pár vteřin psaní se při převzetí může
+  ztratit; věta, že se „nic neztratí“, je nepravda.
 - **Publikovaná rubrika a štítek se neupravují** stejně jako článek: nejdřív se stáhnou.
 - **Číslo** (tištěné, v Archivu) nemá datum vydání. Tvoří ho rok, pořadí v roce, název bez roku
   (`zima` → zobrazeně `zima 2026`) a vzácně doplněk pro dotisk vedle čísla.
@@ -170,7 +182,14 @@ Týká se to i veřejného webu:
 ## Hlas
 
 **Administrace** mluví neosobně a vyká: `Zadejte šestimístný kód z ověřovací aplikace`.
-Nemá já, neomlouvá se. Chybová věta říká, co udělat; důvod patří za pomlčku.
+Nemá já ani my, neomlouvá se. Chybová věta říká, co udělat; důvod patří za pomlčku.
+
+- **Jména dosazuje aplikace jen v 1. pádě a bez rodové shody** — skloňovat je neumí a rod
+  člověka nezná. Ne *od Anny Dvořákové* ani *úpravu převzala*, ale `Autoři: Anna Dvořáková`
+  a `Úpravu přebírá Marie Horáková`.
+- **Názvy rolí velkým písmenem i ve větě**: `Schválit může Koordinátor.` Slovo *autor* je malým,
+  autor článku není role.
+- **Slova z návrhu do rozhraní nepatří**: *dlaždice*, *fronta*, *krok 2 ze 3*.
 
 **Veřejný web** má hlas redakce: mluví za *my* a čtenáři **vyká** (`Jsme tu pro vás`,
 `Máte nějaký nápad nebo nám chcete něco sdělit?`). Vyká **všude**, bez výjimky (rozhodnuto
@@ -190,7 +209,8 @@ V obou:
 ## Formáty a typografie
 
 - Datum na webu `21. července 2026`. Seznamy v administraci ho dnes ukazují jako `2026-07-21`;
-  nový návrh přechází na `21. 7. 2026`. Do formulářů webu se datum píše den, měsíc, rok
+  nový návrh přechází na `21. 7. 2026`, **vždy s rokem**, i na mobilu. Čas uložení `uloženo dnes
+  v 14:02`, starší `uloženo 25. 9. 2026 v 14:02`. Do formulářů webu se datum píše den, měsíc, rok
   s tečkami; projde `14. 5. 1990` i `14.05.1990`, takže příklad se píše čtenářsky.
 - Pomlčka ve větě je `—` s mezerami, ne spojovník. Uvozovky české „…“.
 - Měna `Kč` za částkou s mezerou: `500 Kč`.
