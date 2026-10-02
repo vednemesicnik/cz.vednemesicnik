@@ -57,7 +57,9 @@ rozpojí.
 - **autor** vs. **uživatel** — *uživatel* je účet, kterým se přihlašuje do administrace; *autor*
   je jméno, pod kterým se obsah publikuje. Každý uživatel má autora, ale role mají zvlášť.
 - **redakce** — lidé, kteří časopis dělají (stránka *Redakce* na webu).
-- **spolek** — Vedneměsíčník, z. s., právnická osoba za časopisem.
+- **spolek** — Vedneměsíčník, z. s., právnická osoba za časopisem. Spolek **nejsou studenti**:
+  jsou to lidé, kteří studenty jsou nebo byli a studenty podporují. Časopis tvoří **nezávislá
+  studentská redakce**, do obsahu spolek redakčně nezasahuje a předem ho nekontroluje.
 
 Když ti některý z termínů přijde špatný, **řekni to a pojmenuj ho**. Nevyměňuj ho potichu —
 přejmenování termínu je změna aplikace na všech místech naráz.
@@ -203,6 +205,10 @@ Nemá já ani my, neomlouvá se. Chybová věta říká, co udělat; důvod pat�
 `Máte nějaký nápad nebo nám chcete něco sdělit?`). Vyká **všude**, bez výjimky (rozhodnuto
 28. 9. 2026). Dnešní heslo úvodu `Čti, poslouchej a objevuj` je jediné tykání a odchází: úvod
 nového návrhu nese jen jméno a pod ním `Studentské nekritické noviny`.
+
+Výjimkou je stránka **O spolku**: tam mluví za *my* **spolek** a o redakci se píše ve třetí osobě
+(rozhodnuto 2. 10. 2026). Text o spolku nemá stavět na tom, co se může změnit: odkud studenti
+jsou, kolikrát ročně číslo vychází, jaké akce spolek pořádá.
 
 Web **nesmí znít jako text od AI**. Prozrazuje to věta ve dvou půlkách spojená pomlčkou,
 výčet obsahu jako popis produktu, obecná sebevědomá hesla, která by pasovala na jakýkoli časopis,
