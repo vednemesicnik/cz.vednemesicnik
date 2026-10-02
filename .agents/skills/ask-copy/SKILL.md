@@ -50,7 +50,8 @@ by `ask_close` as the very next call, with a resolution naming where the wording
 branch's PR, or the `/ask-design` question that now carries it.
 
 **Read the folder before writing.** `ask_reply` reports turns that landed while you composed one
-turn too late. `ls ../dev-exchange-room/.ask/copy/<thread>/` says whose the last file is; `cat`
+turn too late. The thread's folder is named by date and topic, not by code, and `.ask` is
+hidden: `ls ../dev-exchange-room/.ask/copy/*<topic-slug>*/` says whose the last file is; `cat`
 the turns you have not seen instead of `ask_read`-ing the whole thread again.
 
 ## 1. Collect the strings
@@ -113,7 +114,9 @@ LC_ALL=cs_CZ.UTF-8 pbcopy < tmp/copy/join-room.md
 LC_ALL=cs_CZ.UTF-8 pbpaste | grep <thread-id>
 ```
 
-Then report what went out and **call `ask_wait` on the thread**.
+Then report what went out and **ask the user to confirm the paste** with `AskUserQuestion`
+(thread code and topic in the question): a plain report does not reach someone working on
+something else, a question does. Once confirmed, **call `ask_wait` on the thread**.
 
 ## 6. `check` — what comes back is a proposal, not a decision
 

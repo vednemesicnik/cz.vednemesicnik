@@ -145,8 +145,11 @@ LC_CTYPE=UTF-8 pbpaste | head -1
 
 ## 6. Report
 
-Where the files landed, what is on the clipboard, one line per question. Then stop — the design
-chat is a separate conversation and this one does not wait for it.
+Where the files landed, what is on the clipboard, one line per question. Then **ask the user to
+confirm the paste** with `AskUserQuestion` (code and topic in the question) — a plain report does
+not reach someone working on something else, a question does. A `reply` handed over the same way
+gets the same question. Then stop — the design chat is a separate conversation and this one does
+not wait for it.
 
 ## 7. `check` — read the answer back
 
