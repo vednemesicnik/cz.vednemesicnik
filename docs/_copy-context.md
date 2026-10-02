@@ -181,6 +181,10 @@ Týká se to i veřejného webu:
   ani e‑mailem. Neschválená přihláška se po 12 měsících od podání smaže, schválená zůstává.
 - **Přihláška do redakce**: nic nesmí slibovat, že se někdo ozve, ani lhůtu. O přijetí
   rozhoduje šéfredakce.
+- **Obě přihlášky jsou skryté.** Web na ně nikde neodkazuje a vyhledávače je neindexují. Do
+  redakce vede QR kód z letáku, do spolku odkaz od vedení. Kdo by chtěl do spolku, napíše na
+  `clenstvi@vednemesicnik.cz` (rozhodnuto 2. 10. 2026). Věta, která na webu zve
+  k vyplnění přihlášky, je nepravda.
 
 ## Hlas
 
@@ -224,7 +228,7 @@ V obou:
 Žádná skutečná data. Jména, e‑maily a tituly článků v příkladech jsou vymyšlené, e‑maily končí na
 `priklad.cz`. Výjimka jsou účty administrace: pozvat jde jen adresu `@vednemesicnik.cz`, takže
 ukázka účtu stojí na této doméně, s vymyšleným jménem. Skutečné jsou jen veřejné kontakty spolku,
-které web ukazuje nebo ukazovat bude: `podpora@`, `redakce@`, `dary@` a `udaje@vednemesicnik.cz`. Jmenují
+které web ukazuje nebo ukazovat bude: `podpora@`, `redakce@`, `dary@`, `udaje@` a `clenstvi@vednemesicnik.cz`. Jmenují
 schránky podle tématu, česky a bez diakritiky. Když uvidíš něco jiného, co vypadá jako
 skutečný záznam, **je to nález** — řekni to.
 
