@@ -45,7 +45,8 @@ rozpojí.
 - **článek** — příspěvek na webu. Ne „příspěvek“, ne „post“.
 - **rubrika** — tematické zařazení článku. Článek jich může mít **víc**.
 - **štítek** — volnější označení článku; článek jich má obvykle víc.
-- **podcast** / **epizoda** — podcast je pořad, epizoda jeden díl.
+- **podcast** / **epizoda** — podcast je pořad, epizoda jeden díl. V rozhraní jen *podcast*,
+  ne *pořad*.
 - **číslo** — **tištěné** číslo časopisu v PDF, v sekci **Archiv**. Obsahem jsou tytéž články
   jako na webu, aplikace je ale s číslem nepropojuje: není to skupina článků na webu a články
   k číslům nepatří. V aplikaci se dnes pro totéž píše i **vydání** (*Datum
@@ -136,7 +137,8 @@ o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše to
   ztratit; věta, že se „nic neztratí“, je nepravda.
 - **Publikovaná rubrika a štítek se neupravují** stejně jako článek: nejdřív se stáhnou.
 - **Číslo** (tištěné, v Archivu) nemá datum vydání. Tvoří ho rok, pořadí v roce, název bez roku
-  (`zima` → zobrazeně `zima 2026`) a vzácně doplněk pro dotisk vedle čísla.
+  (`zima` → zobrazeně `zima 2026`) a vzácně doplněk: samostatně vytištěná část, která se do
+  čísla nevešla (ne dotisk).
 
 Týká se to i veřejného webu:
 
@@ -186,7 +188,8 @@ Nemá já ani my, neomlouvá se. Chybová věta říká, co udělat; důvod pat�
 
 - **Jména dosazuje aplikace jen v 1. pádě a bez rodové shody** — skloňovat je neumí a rod
   člověka nezná. Ne *od Anny Dvořákové* ani *úpravu převzala*, ale `Autoři: Anna Dvořáková`
-  a `Úpravu přebírá Marie Horáková`.
+  a `Úpravu přebírá Marie Horáková`. Jméno je jeden řetězec, křestní zvlášť aplikace nezná:
+  ne *Jakub bude…*, ale věta bez jména nebo `Jakub Novák` celé.
 - **Názvy rolí velkým písmenem i ve větě**: `Schválit může Koordinátor.` Slovo *autor* je malým,
   autor článku není role.
 - **Slova z návrhu do rozhraní nepatří**: *dlaždice*, *fronta*, *krok 2 ze 3*.
@@ -218,7 +221,8 @@ V obou:
 ## Co v otázce nikdy nebude
 
 Žádná skutečná data. Jména, e‑maily a tituly článků v příkladech jsou vymyšlené, e‑maily končí na
-`priklad.cz`. Když uvidíš něco, co vypadá jako skutečný záznam, **je to nález** — řekni to.
+`priklad.cz`. Výjimka jsou účty administrace: pozvat jde jen adresu `@vednemesicnik.cz`, takže
+ukázka účtu stojí na této doméně, s vymyšleným jménem. Když uvidíš něco, co vypadá jako skutečný záznam, **je to nález** — řekni to.
 
 ## Jak má vypadat odpověď
 
