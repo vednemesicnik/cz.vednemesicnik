@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Outlet } from 'react-router'
+import { Outlet, type ShouldRevalidateFunction } from 'react-router'
 import { AdminHeader } from '~/components/admin/admin-header'
 import { AdminUserMenu } from '~/components/admin/admin-user-menu'
 import { AdministrationContent } from '~/components/admin/administration-content'
@@ -13,6 +13,13 @@ import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { loader } from './_loader'
+
+// A 403 action may be a refused form token (design 30h): reload the layout so its
+// loader reissues the token and the form's second press goes through.
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  actionStatus,
+  defaultShouldRevalidate,
+}) => actionStatus === 403 || defaultShouldRevalidate
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const user = {

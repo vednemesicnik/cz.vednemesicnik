@@ -58,7 +58,7 @@ export default function RouteComponent({
     <AdminPage>
       <AdminHeadline>Přidat uživatele</AdminHeadline>
 
-      <Form method="post" {...getFormProps(form)}>
+      <Form errors={form.errors} method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily uživatele'}>
           <AdminInput
             label="E-mail"

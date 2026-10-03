@@ -1,7 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { href, redirect } from 'react-router'
 
-import { validateCSRF } from '~/utils/csrf.server'
+import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
@@ -18,7 +18,8 @@ import type { Route } from './+types/route'
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await getMultipartFormData(request)
-  await validateCSRF(formData, request.headers)
+  const csrfFailure = await checkCSRF(formData, request)
+  if (csrfFailure !== null) return csrfFailure
 
   const submission = await parseWithZod(formData, {
     async: true,

@@ -6,7 +6,7 @@ import {
   requireSession,
 } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
-import { validateCSRF } from '~/utils/csrf.server'
+import { requireCSRF } from '~/utils/csrf.server'
 import { safeRedirect } from '~/utils/safe-redirect'
 
 import { deleteSession } from '../../../sign-out/utils/delete-session.server'
@@ -16,7 +16,7 @@ import type { Route } from './+types/route'
 // `redirectTo` with a fresh session that may change sign-in methods.
 export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  await requireCSRF(formData, request)
 
   const { sessionId, userId } = await requireSession(request)
 

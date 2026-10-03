@@ -1,7 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
-import { validateCSRF } from '~/utils/csrf.server'
+import { checkCSRF } from '~/utils/csrf.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
@@ -11,7 +11,8 @@ import { createAuthor } from './utils/create-author.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  const csrfFailure = await checkCSRF(formData, request)
+  if (csrfFailure !== null) return csrfFailure
 
   const submission = await parseWithZod(formData, {
     async: true,

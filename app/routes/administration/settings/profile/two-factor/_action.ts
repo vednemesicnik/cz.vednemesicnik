@@ -3,7 +3,7 @@ import { type ActionFunctionArgs, data, redirect } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
 import { regenerateBackupCodes } from '~/utils/backup-codes.server'
-import { validateCSRF } from '~/utils/csrf.server'
+import { checkCSRF } from '~/utils/csrf.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
@@ -29,7 +29,8 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
   await requireRecentAuthentication({ request, url })
 
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  const csrfFailure = await checkCSRF(formData, request)
+  if (csrfFailure !== null) return csrfFailure
 
   const context = await getUserPermissionContext(request, {
     actions: ['update'],

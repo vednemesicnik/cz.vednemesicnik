@@ -7,12 +7,12 @@ import { runContentStateAction } from './create-content-state-action.server'
 import type { ContentStateHandlers } from './create-content-state-handlers.server'
 
 // CSRF is validated elsewhere; make it a no-op so these tests focus on dispatch.
-const { validateCSRFMock } = vi.hoisted(() => ({
-  validateCSRFMock: vi.fn().mockResolvedValue(undefined),
+const { requireCSRFMock } = vi.hoisted(() => ({
+  requireCSRFMock: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('~/utils/csrf.server', () => ({
-  validateCSRF: validateCSRFMock,
+  requireCSRF: requireCSRFMock,
 }))
 
 const INTENT_NAME = FORM_CONFIG.intent.name

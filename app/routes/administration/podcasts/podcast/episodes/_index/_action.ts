@@ -1,7 +1,7 @@
 import { invariantResponse } from '@epic-web/invariant'
 
 import { FORM_CONFIG } from '~/config/form-config'
-import { validateCSRF } from '~/utils/csrf.server'
+import { requireCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { episodeContentStateHandlers } from '../episode/_index/utils/content-state-handlers.server'
 import type { Route } from './+types/route'
@@ -19,7 +19,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   invariantResponse(podcastId, 'Missing podcast id')
 
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  await requireCSRF(formData, request)
 
   const intent = formData.get(INTENT_NAME)
   invariantResponse(intent === INTENT_VALUE.bulkDelete, 'Invalid intent')

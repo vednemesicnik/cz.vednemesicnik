@@ -6,6 +6,7 @@ import {
 } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
+import { getRefererPath } from '~/utils/get-referer-path'
 
 const SESSION_AUTH_ID_KEY = 'sessionAuthId'
 
@@ -148,6 +149,28 @@ export const requireSession = async (request: Request) => {
 
   if (session === null) {
     throw await redirectToSignIn(cookieSession)
+  }
+
+  return {
+    isAuthenticated: true,
+    sessionId: session.id,
+    userId: session.userId,
+  }
+}
+
+/**
+ * Auth guard for administration actions, run before the CSRF token is checked
+ * (design 30h): a session that ran out leads to sign-in, with the page the form was
+ * submitted from as the way back, instead of failing on the token.
+ *
+ * @param request - The submitted request.
+ * @returns The session ids.
+ */
+export const requireActionSession = async (request: Request) => {
+  const { cookieSession, session } = await loadSession(request)
+
+  if (session === null) {
+    throw await redirectToSignIn(cookieSession, getRefererPath(request))
   }
 
   return {
