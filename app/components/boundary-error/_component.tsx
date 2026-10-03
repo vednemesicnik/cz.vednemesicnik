@@ -39,7 +39,9 @@ export const BoundaryError = ({ error, kind }: Props) => {
         <Headline>{view.title}</Headline>
       </HeadlineGroup>
       <Paragraph>{view.sentence}</Paragraph>
-      {view.unexpected && <BoundaryDiagnostics error={error} />}
+      {view.unexpected && (
+        <BoundaryDiagnostics className={styles.diagnostics} error={error} />
+      )}
 
       <div className={styles.actions}>
         {view.actions.map((action, index) => (

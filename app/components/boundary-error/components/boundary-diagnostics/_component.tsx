@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { isRouteErrorResponse } from 'react-router'
 
 import { getErrorMessage } from '~/utils/get-error-message'
@@ -6,6 +7,7 @@ import styles from './_styles.module.css'
 
 type Props = {
   error: unknown
+  className?: string
 }
 
 const getDiagnosticMessage = (error: unknown) => {
@@ -21,13 +23,13 @@ const getDiagnosticMessage = (error: unknown) => {
 
 // Development only (design 30g): production HTML never carries a message or stack —
 // the server log has them.
-export const BoundaryDiagnostics = ({ error }: Props) => {
+export const BoundaryDiagnostics = ({ error, className }: Props) => {
   if (!import.meta.env.DEV) return null
 
   const stack = error instanceof Error ? error.stack : undefined
 
   return (
-    <pre className={styles.diagnostics}>
+    <pre className={clsx(styles.diagnostics, className)}>
       {getDiagnosticMessage(error)}
       {stack !== undefined && `\n\n${stack}`}
     </pre>
