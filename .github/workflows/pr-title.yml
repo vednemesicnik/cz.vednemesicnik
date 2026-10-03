@@ -1,0 +1,55 @@
+name: PR title
+
+# A feature or fix PR into dev is squashed with the PR title as the commit subject, so the
+# title is what lands in dev's history — whatever the branch's own commits say.
+#
+# A workflow of its own so that `edited` (a title fix) re-runs only this check, not the
+# whole CI. No checkout and no third-party action: the title is in the event payload, and
+# it reaches the script through `env` because a title is text anyone opening a PR writes.
+
+on:
+  pull_request:
+    branches: [main, dev]
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: The title is the squash subject, so it reads like one
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
+
+          # A release (dev → main) is titled `release: <date> — <theme>` and lands as a
+          # merge commit (docs/_branching-model.md).
+          if [[ "$BASE" == main ]]; then
+            types="${types}|release"
+          fi
+
+          pattern="^(${types})(\([a-z0-9,/-]+\))?!?: .+"
+
+          if [[ "$TITLE" =~ $pattern ]]; then
+            echo "$TITLE"
+            exit 0
+          fi
+
+          echo "The PR title is not a Conventional Commit subject:"
+          echo
+          echo "    $TITLE"
+          echo
+          echo "The title lands in ${BASE}'s history (as the squash subject, or as the release"
+          echo "merge's title), so it has to read like a commit, e.g."
+          echo "'feat(administration): section error boundary'."
+          echo "Types: ${types//|/, }."
+          exit 1
