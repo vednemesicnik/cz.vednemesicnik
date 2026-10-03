@@ -1,3 +1,4 @@
+import { data } from 'react-router'
 import { PAGE_PARAM } from '~/components/pagination'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
@@ -28,7 +29,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   })
 
   if (!category) {
-    throw new Response('Rubrika nenalezena', { status: 404 })
+    throw data(null, { status: 404 })
   }
 
   const url = new URL(request.url)
