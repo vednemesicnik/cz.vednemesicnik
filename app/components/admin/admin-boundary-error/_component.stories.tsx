@@ -3,6 +3,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
+import {
+  adminUsersSectionDeniedData,
+  getAdminEditDeniedData,
+} from '~/components/boundary-error/utils/boundary-copy'
 import { createRouteErrorResponse } from '~/components/boundary-error/utils/create-route-error-response'
 
 import { AdminBoundaryError } from './_component'
@@ -94,32 +98,44 @@ export const NotFoundAddress: Story = {
   parameters: { pathname: '/administration/nope' },
 }
 
-/** 403 with a reason the server composed (design 30d). */
-export const ForbiddenWithReason: Story = {
+/** 403 for an edit of published content, composed by the server (design 30d). */
+export const ForbiddenEditPublished: Story = {
   args: {
-    error: createRouteErrorResponse(403, {
-      actions: [
-        { href: '/administration/articles/a1', label: 'Zobrazit článek' },
-        { href: '/administration/articles', label: 'Na články' },
-      ],
-      cause: 'permission',
-      reason:
-        'Upravovat lze až po stažení z publikace — článek je publikovaný.',
-      title: 'Článek „Kdo píše maturitní otázky“ teď upravit nejde',
-    }),
+    error: createRouteErrorResponse(
+      403,
+      getAdminEditDeniedData({
+        kind: 'article',
+        reason: 'published',
+        recordHref: '/administration/articles/a1',
+        title: 'Kdo píše maturitní otázky',
+      }),
+    ),
   },
   parameters: { pathname: '/administration/articles/a1/edit-article' },
+}
+
+/** 403 for someone else's draft (design 30d). */
+export const ForbiddenEditForeignDraft: Story = {
+  args: {
+    error: createRouteErrorResponse(
+      403,
+      getAdminEditDeniedData({
+        kind: 'category',
+        reason: 'foreign-draft',
+        recordHref: '/administration/articles/categories/c1',
+        title: 'Knihovna',
+      }),
+    ),
+  },
+  parameters: {
+    pathname: '/administration/articles/categories/c1/edit-category',
+  },
 }
 
 /** 403 for a section the user has no access to (design 30d). */
 export const ForbiddenSection: Story = {
   args: {
-    error: createRouteErrorResponse(403, {
-      actions: [{ href: '/administration', label: 'Na přehled' }],
-      cause: 'permission',
-      reason: 'Účty spravuje Administrátor nebo Vlastník.',
-      title: 'Do sekce Uživatelé nemáte přístup',
-    }),
+    error: createRouteErrorResponse(403, adminUsersSectionDeniedData),
   },
   parameters: { pathname: '/administration/users' },
 }
