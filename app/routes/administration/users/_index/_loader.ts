@@ -1,5 +1,7 @@
 import type { Prisma } from '@generated/prisma/client'
+import { data } from 'react-router'
 
+import { adminUsersSectionDeniedData } from '~/components/boundary-error/utils/boundary-copy'
 import { parseAdminListFilters } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
@@ -47,7 +49,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   // If user has no view permissions at all (neither own nor any), they shouldn't access this page
   if (!viewPerms.hasOwn && !viewPerms.hasAny) {
-    throw new Response('Forbidden', { status: 403 })
+    throw data(adminUsersSectionDeniedData, { status: 403 })
   }
 
   const { order, query, sort } = parseAdminListParams(request, {
