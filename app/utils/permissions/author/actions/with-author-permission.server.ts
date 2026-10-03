@@ -1,10 +1,10 @@
 import { invariantResponse } from '@epic-web/invariant'
-
 import type {
   AuthorPermissionAction,
   AuthorPermissionEntity,
   ContentState,
 } from '@generated/prisma/enums'
+import { data } from 'react-router'
 import { requireSession } from '~/utils/auth.server'
 
 import {
@@ -17,7 +17,6 @@ type Options<T> = {
   action: AuthorPermissionAction
   target: { authorIds: string[]; state: ContentState }
   execute: (context: AuthorPermissionContext) => Promise<T>
-  errorMessage?: string
 }
 
 export async function withAuthorPermission<T>(
@@ -43,11 +42,10 @@ export async function withAuthorPermission<T>(
     targetAuthorIds: options.target.authorIds,
   })
 
-  invariantResponse(
-    hasPermission,
-    options.errorMessage ?? 'Nemáte oprávnění k této akci.',
-    { status: 403 },
-  )
+  // The generic denial (design 30h): no composed reason.
+  if (!hasPermission) {
+    throw data(null, { status: 403 })
+  }
 
   return options.execute(context)
 }

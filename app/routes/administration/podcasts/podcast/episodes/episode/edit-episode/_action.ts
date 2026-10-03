@@ -52,7 +52,6 @@ export async function action({ request }: Route.ActionArgs) {
   checkAuthorPermission(context, {
     action: 'update',
     entity: 'podcast_episode',
-    errorMessage: 'You do not have permission to update this episode.',
     state: existingEpisode.state,
     targetAuthorIds: [existingEpisode.authorId],
   })
@@ -61,8 +60,6 @@ export async function action({ request }: Route.ActionArgs) {
   checkAuthorPermission(context, {
     action: 'update',
     entity: 'podcast_episode',
-    errorMessage:
-      'You do not have permission to assign this author to the episode.',
     state: existingEpisode.state,
     targetAuthorIds: [authorId],
   })

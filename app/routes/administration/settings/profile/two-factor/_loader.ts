@@ -32,7 +32,7 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
   }).hasPermission
 
   if (!canUpdate) {
-    throw new Response('Forbidden', { status: 403 })
+    throw data(null, { status: 403 })
   }
 
   // Never cache this page: it carries the enrollment secret and QR.

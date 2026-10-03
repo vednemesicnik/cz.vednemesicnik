@@ -59,7 +59,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
   checkAuthorPermission(context, {
     action: 'update',
     entity: 'issue',
-    errorMessage: 'You do not have permission to update this issue.',
     state: existingIssue.state,
     targetAuthorIds: [existingIssue.authorId],
   })
@@ -68,8 +67,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
   checkAuthorPermission(context, {
     action: 'update',
     entity: 'issue',
-    errorMessage:
-      'You do not have permission to assign this author to the issue.',
     state: existingIssue.state,
     targetAuthorIds: [authorId],
   })

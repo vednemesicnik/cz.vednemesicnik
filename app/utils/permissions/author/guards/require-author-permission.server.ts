@@ -1,10 +1,10 @@
 import { invariantResponse } from '@epic-web/invariant'
-
 import type {
   AuthorPermissionAction,
   AuthorPermissionEntity,
   ContentState,
 } from '@generated/prisma/enums'
+import { data } from 'react-router'
 
 import type { AuthorPermissionContext } from '../context/get-author-permission-context.server'
 
@@ -33,9 +33,10 @@ export function requireAuthorPermission(
     targetAuthorIds: options.targetAuthorIds,
   })
 
-  invariantResponse(hasPermission, 'Nemáte oprávnění k této akci.', {
-    status: 403,
-  })
+  // The generic denial (design 30h): no composed reason.
+  if (!hasPermission) {
+    throw data(null, { status: 403 })
+  }
 
   return { hasAny, hasOwn }
 }

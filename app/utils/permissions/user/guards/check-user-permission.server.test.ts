@@ -10,7 +10,7 @@ const makeContext = (result: CanResult) =>
   ({ can: () => result }) as unknown as UserPermissionContext
 
 describe('checkUserPermission', () => {
-  test('throws a 403 Response with a Czech message when denied', async () => {
+  test('throws the generic 403 when denied', () => {
     const context = makeContext({
       hasAny: false,
       hasOwn: false,
@@ -21,31 +21,7 @@ describe('checkUserPermission', () => {
       checkUserPermission(context, { action: 'update', entity: 'user' })
       expect.unreachable('checkUserPermission should have thrown')
     } catch (error) {
-      expect(error).toBeInstanceOf(Response)
-      const response = error as Response
-      expect(response.status).toBe(403)
-      expect(await response.text()).toBe('Nemáte oprávnění k této akci.')
-    }
-  })
-
-  test('uses a custom error message when provided', async () => {
-    const context = makeContext({
-      hasAny: false,
-      hasOwn: false,
-      hasPermission: false,
-    })
-
-    try {
-      checkUserPermission(context, {
-        action: 'update',
-        entity: 'user',
-        errorMessage: 'Roli Owner nelze přiřadit.',
-      })
-      expect.unreachable('checkUserPermission should have thrown')
-    } catch (error) {
-      const response = error as Response
-      expect(response.status).toBe(403)
-      expect(await response.text()).toBe('Roli Owner nelze přiřadit.')
+      expect(error).toMatchObject({ data: null, init: { status: 403 } })
     }
   })
 

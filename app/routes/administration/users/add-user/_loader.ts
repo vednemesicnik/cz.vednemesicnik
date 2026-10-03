@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from 'react-router'
+import { data } from 'react-router'
 
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { getAssignableRoles } from '~/utils/permissions/user/queries/get-assignable-roles.server'
@@ -20,7 +21,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // If user cannot create users, they shouldn't access this page
   if (!canCreate) {
-    throw new Response('Forbidden', { status: 403 })
+    throw data(null, { status: 403 })
   }
 
   const [roles, authorsWithoutUser] = await Promise.all([

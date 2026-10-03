@@ -1,5 +1,4 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
@@ -91,9 +90,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // both the ownership guard and the fields the mutations need.
   const filter = await getOwnedFilter({ filterId: payload.id, userId })
 
-  invariantResponse(filter !== null, 'Nemáte oprávnění k této akci.', {
-    status: 403,
-  })
+  if (filter === null) {
+    throw data(null, { status: 403 })
+  }
 
   switch (payload.intent) {
     case INTENT_VALUE.renameFilter: {

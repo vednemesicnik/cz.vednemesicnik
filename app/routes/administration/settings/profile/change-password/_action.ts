@@ -37,9 +37,7 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
 
   // Verify that the user is changing their own password
   if (userId !== context.userId) {
-    throw new Response('Forbidden: You can only change your own password', {
-      status: 403,
-    })
+    throw data(null, { status: 403 })
   }
 
   // Check permission to update own user account

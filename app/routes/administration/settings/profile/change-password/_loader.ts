@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from 'react-router'
+import { data } from 'react-router'
 
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { requireRecentAuthentication } from '~/utils/recent-authentication.server'
@@ -19,7 +20,7 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
   }).hasPermission
 
   if (!canUpdate) {
-    throw new Response('Forbidden', { status: 403 })
+    throw data(null, { status: 403 })
   }
 
   return { userId: context.userId }
