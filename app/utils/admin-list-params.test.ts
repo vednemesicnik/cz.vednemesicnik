@@ -69,6 +69,10 @@ describe('parseAdminListParams', () => {
     expect(parse('?page=abc').page).toBe(1)
   })
 
+  test('should clamp page: fractional -> 1', () => {
+    expect(parse('?page=1.5').page).toBe(1)
+  })
+
   test('should keep a valid page', () => {
     expect(parse('?page=3').page).toBe(3)
   })
