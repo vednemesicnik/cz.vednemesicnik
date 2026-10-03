@@ -1,7 +1,7 @@
 import { invariantResponse } from '@epic-web/invariant'
 
 import { FORM_CONFIG } from '~/config/form-config'
-import { validateCSRF } from '~/utils/csrf.server'
+import { requireCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { deleteAuthor } from '../author/_index/utils/delete-author'
 import type { Route } from './+types/route'
@@ -14,7 +14,7 @@ const MAX_SELECTION = 20
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  await requireCSRF(formData, request)
 
   const intent = formData.get(INTENT_NAME)
   invariantResponse(intent === INTENT_VALUE.bulkDelete, 'Invalid intent')

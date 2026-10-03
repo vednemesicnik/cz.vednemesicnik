@@ -1,18 +1,18 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href, isRouteErrorResponse, Link, useSearchParams } from 'react-router'
+import { href, Link, useSearchParams } from 'react-router'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
 import { LoadMoreContent } from '~/components/load-more-content'
 import { Page } from '~/components/page'
-import { Paragraph } from '~/components/paragraph'
 import { Tile } from '~/components/tile'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
 import { LIMIT_PARAM, LIMIT_STEP } from '~/config/load-more-config'
 import { sizeConfig } from '~/config/size-config'
 import { getRevealProps } from '~/utils/get-reveal-props'
+import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 import { useRevealBatchStart } from '~/utils/use-reveal-batch-start'
 import type { Route } from './+types/route'
 
@@ -32,7 +32,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { issues, issuesCount } = loaderData
 
   const [searchParams] = useSearchParams()
-  const limit = Number(searchParams.get(LIMIT_PARAM) ?? String(LIMIT_STEP))
+  const limit = parsePositiveIntegerParam(searchParams, LIMIT_PARAM, LIMIT_STEP)
   const revealBatchStart = useRevealBatchStart(limit)
 
   // Filtered up front: the reveal chain and the cover priority below are keyed
@@ -84,39 +84,4 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       )}
     </Page>
   )
-}
-
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  if (isRouteErrorResponse(error)) {
-    return (
-      <Page>
-        <Headline>Naše čísla pohromadě</Headline>
-        <Paragraph>Při hledání čísel v databázi se něco pokazilo.</Paragraph>
-        <code>
-          Chyba: {error.status} - {error.statusText}
-          <br />
-          Detail: {error.data}
-        </code>
-      </Page>
-    )
-  } else if (error instanceof Error) {
-    return (
-      <Page>
-        <Headline>Naše čísla pohromadě</Headline>
-        <Paragraph>Při hledání čísel v databázi se něco pokazilo.</Paragraph>
-        <code>
-          {error.message}
-          <br />
-          {error.stack}
-        </code>
-      </Page>
-    )
-  } else {
-    return (
-      <Page>
-        <Headline>Naše čísla pohromadě</Headline>
-        <Paragraph>Něco se pokazilo.</Paragraph>
-      </Page>
-    )
-  }
 }

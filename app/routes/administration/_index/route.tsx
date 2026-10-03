@@ -2,6 +2,7 @@
 
 import { href } from 'react-router'
 
+import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminNavigationCard } from '~/components/admin/admin-navigation-card'
 import { AdminNavigationGrid } from '~/components/admin/admin-navigation-grid'
@@ -82,7 +83,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 date={article.createdAt}
                 key={article.id}
                 title={article.title}
-                to={`/administration/articles/article/${article.id}`}
+                to={href('/administration/articles/:articleId', {
+                  articleId: article.id,
+                })}
                 type="Článek"
               />
             ))}
@@ -132,7 +135,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 date={category.createdAt}
                 key={category.id}
                 title={category.name}
-                to={`/administration/article-categories/category/${category.id}`}
+                to={href('/administration/articles/categories/:categoryId', {
+                  categoryId: category.id,
+                })}
                 type="Kategorie"
               />
             ))}
@@ -142,7 +147,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 date={tag.createdAt}
                 key={tag.id}
                 title={tag.name}
-                to={`/administration/article-tags/tag/${tag.id}`}
+                to={href('/administration/articles/tags/:tagId', {
+                  tagId: tag.id,
+                })}
                 type="Štítek"
               />
             ))}
@@ -167,7 +174,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               description="Správa autorů obsahu"
               icon="✍️"
               title="Autoři"
-              to={'/administration/authors'}
+              to={href('/administration/authors')}
             />
           )}
           {canViewArticles && (
@@ -175,7 +182,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               description="Správa článků a blogových příspěvků"
               icon="📝"
               title="Články"
-              to={'/administration/articles'}
+              to={href('/administration/articles')}
             />
           )}
           {canViewPodcasts && (
@@ -208,3 +215,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
 export { loader } from './_loader'
 export { meta } from './_meta'
+
+// The dashboard sits outside the section layout; its own boundary keeps the sidebar.
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return <AdminBoundaryError error={error} />
+}

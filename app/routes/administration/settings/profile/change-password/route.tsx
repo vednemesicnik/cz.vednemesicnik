@@ -49,7 +49,7 @@ export default function RouteComponent({
     <AdminPage>
       <AdminHeadline>Změnit heslo</AdminHeadline>
 
-      <Form method="post" {...getFormProps(form)}>
+      <Form errors={form.errors} method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Heslo'}>
           <AdminInput
             label="Nové heslo"

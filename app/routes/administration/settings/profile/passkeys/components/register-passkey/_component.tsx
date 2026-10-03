@@ -1,13 +1,27 @@
 import { startRegistration } from '@simplewebauthn/browser'
 import { useEffect, useRef, useState } from 'react'
-import { useFetcher, useRevalidator } from 'react-router'
+import { href, Link, useFetcher, useRevalidator } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
 import type { action as generateRegistrationOptionsAction } from '~/routes/administration/settings/profile/passkeys/generate-registration-options/_action'
 import type { action as verifyRegistrationResponseAction } from '~/routes/administration/settings/profile/passkeys/verify-registration-response/_action'
 import { useBiometric } from '~/utils/use-biometric'
 
-const ERROR_MESSAGE = 'Registrace passkey se nezdařila. Zkuste to prosím znovu.'
+import {
+  getRegistrationProblem,
+  type RegistrationProblem,
+} from './get-registration-problem'
+
+const PROBLEM_MESSAGES: Record<RegistrationProblem, string> = {
+  'already-registered':
+    'Použijte stávající passkey — toto zařízení už má passkey k tomuto účtu.',
+  failed: 'Zkuste passkey přidat znovu — přidání se nepovedlo.',
+  reauthenticate: 'Před přidáním passkey se znovu ověřte.',
+}
+
+const VERIFY_IDENTITY_URL = `${href('/administration/settings/profile/verify-identity')}?${new URLSearchParams(
+  { redirectTo: href('/administration/settings/profile/passkeys') },
+)}`
 
 export const RegisterPasskey = () => {
   const { isBiometricSupported } = useBiometric()
@@ -18,9 +32,13 @@ export const RegisterPasskey = () => {
   const verifyRegistrationResponseFetcher =
     useFetcher<typeof verifyRegistrationResponseAction>()
 
-  const [error, setError] = useState<string | null>(null)
+  const [problem, setProblem] = useState<RegistrationProblem | null>(null)
 
-  const options = generateRegistrationOptionsFetcher.data?.options ?? null
+  const generatedData = generateRegistrationOptionsFetcher.data
+  const options =
+    generatedData !== undefined && 'options' in generatedData
+      ? generatedData.options
+      : null
 
   // Tracks the challenge already handed to the authenticator so re-renders
   // (fetcher state changes, revalidation) don't re-run the ceremony.
@@ -53,18 +71,16 @@ export const RegisterPasskey = () => {
             method: 'POST',
           },
         )
-      } catch {
-        // User dismissed the prompt or the authenticator is already enrolled.
-        setError(ERROR_MESSAGE)
+      } catch (error) {
+        setProblem(getRegistrationProblem(error))
       }
     }
 
     void register()
   }, [options, verifyRegistrationResponseFetcher])
 
-  const isVerified = verifyRegistrationResponseFetcher.data?.verified === true
-  const isVerifyFailed =
-    verifyRegistrationResponseFetcher.data?.verified === false
+  const verifiedData = verifyRegistrationResponseFetcher.data
+  const isVerified = verifiedData?.verified === true
 
   // Refresh the list once the new passkey is stored.
   useEffect(() => {
@@ -73,14 +89,25 @@ export const RegisterPasskey = () => {
     }
   }, [isVerified, revalidator])
 
+  // The session aged past the recent-authentication window on this page.
   useEffect(() => {
-    if (isVerifyFailed) {
-      setError(ERROR_MESSAGE)
+    if (generatedData?.status === 'reauthenticate') {
+      setProblem('reauthenticate')
     }
-  }, [isVerifyFailed])
+  }, [generatedData])
+
+  useEffect(() => {
+    if (verifiedData === undefined || verifiedData.verified) {
+      return
+    }
+
+    setProblem(
+      verifiedData.status === 'reauthenticate' ? 'reauthenticate' : 'failed',
+    )
+  }, [verifiedData])
 
   if (!isBiometricSupported) {
-    return <p>Toto zařízení nepodporuje passkeys (platform authenticator).</p>
+    return <p>Na tomto zařízení nelze přidat passkey. Zkuste jiné zařízení.</p>
   }
 
   const GenerateRegistrationOptionsForm =
@@ -97,14 +124,24 @@ export const RegisterPasskey = () => {
           '/administration/settings/profile/passkeys/generate-registration-options'
         }
         method={'post'}
-        onSubmit={() => setError(null)}
+        onSubmit={() => setProblem(null)}
       >
         <AdminButton disabled={isPending} type={'submit'}>
           Přidat passkey
         </AdminButton>
       </GenerateRegistrationOptionsForm>
 
-      {error !== null ? <p role={'alert'}>{error}</p> : null}
+      {problem !== null ? (
+        <p role={'alert'}>
+          {PROBLEM_MESSAGES[problem]}
+          {problem === 'reauthenticate' ? (
+            <>
+              {' '}
+              <Link to={VERIFY_IDENTITY_URL}>Ověřit</Link>
+            </>
+          ) : null}
+        </p>
+      ) : null}
     </>
   )
 }

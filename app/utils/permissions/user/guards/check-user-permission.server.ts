@@ -1,9 +1,8 @@
-import { invariantResponse } from '@epic-web/invariant'
-
 import type {
   UserPermissionAction,
   UserPermissionEntity,
 } from '@generated/prisma/enums'
+import { data } from 'react-router'
 
 import type { UserPermissionContext } from '../context/get-user-permission-context.server'
 
@@ -12,7 +11,6 @@ type CheckUserPermissionOptions = {
   action: UserPermissionAction
   targetUserId?: string
   targetUserRoleLevel?: number
-  errorMessage?: string
 }
 
 export function checkUserPermission(
@@ -26,11 +24,10 @@ export function checkUserPermission(
     targetUserRoleLevel: options.targetUserRoleLevel,
   })
 
-  invariantResponse(
-    hasPermission,
-    options.errorMessage ?? 'Nemáte oprávnění k této akci.',
-    { status: 403 },
-  )
+  // The generic denial (design 30h): no composed reason.
+  if (!hasPermission) {
+    throw data(null, { status: 403 })
+  }
 
   return { hasAny, hasOwn }
 }

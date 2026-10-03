@@ -4,6 +4,7 @@ import { data, type LoaderFunctionArgs } from 'react-router'
 import { countUnusedBackupCodes } from '~/utils/backup-codes.server'
 import { prisma } from '~/utils/db.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { requireRecentAuthentication } from '~/utils/recent-authentication.server'
 import { generateTOTP, getTOTPAuthUri } from '~/utils/totp.server'
 import { getUserTwoFactor } from '~/utils/two-factor.server'
 
@@ -16,7 +17,9 @@ import {
 // Issuer shown in the authenticator app (kept in sync with the site name).
 const TWO_FACTOR_ISSUER = 'Vedneměsíčník'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, url }: LoaderFunctionArgs) => {
+  await requireRecentAuthentication({ request, url })
+
   const context = await getUserPermissionContext(request, {
     actions: ['update'],
     entities: ['user'],
@@ -29,7 +32,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }).hasPermission
 
   if (!canUpdate) {
-    throw new Response('Forbidden', { status: 403 })
+    throw data(null, { status: 403 })
   }
 
   // Never cache this page: it carries the enrollment secret and QR.

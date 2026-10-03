@@ -1,17 +1,26 @@
 import { LIMIT_PARAM, LIMIT_STEP } from '~/config/load-more-config'
-import { getAuthentication } from '~/utils/auth.server'
 import { prisma } from '~/utils/db.server'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
+import {
+  getWebContentVisibility,
+  ownByAuthor,
+} from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url)
-  const limit = Number(url.searchParams.get(LIMIT_PARAM) ?? String(LIMIT_STEP))
+  const limit = parsePositiveIntegerParam(
+    url.searchParams,
+    LIMIT_PARAM,
+    LIMIT_STEP,
+  )
 
-  const { isAuthenticated } = await getAuthentication(request)
+  const visibility = await getWebContentVisibility(request, ['issue'])
+  const visibleIssues = visibility.where('issue', ownByAuthor)
 
   const issuesPromise = prisma.issue.findMany({
     orderBy: {
@@ -31,19 +40,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       },
     },
     take: limit,
-    where: {
-      state: {
-        in: isAuthenticated ? ['published', 'draft'] : ['published'],
-      },
-    },
+    where: visibleIssues,
   })
 
   const issuesCountPromise = prisma.issue.count({
-    where: {
-      state: {
-        in: isAuthenticated ? ['published', 'draft'] : ['published'],
-      },
-    },
+    where: visibleIssues,
   })
 
   const [issues, issuesCount] = await Promise.all([

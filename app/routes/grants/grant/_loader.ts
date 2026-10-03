@@ -1,3 +1,4 @@
+import { data } from 'react-router'
 import { getGrantBySlug } from '~/data/grants'
 import type { Route } from './+types/route'
 
@@ -6,7 +7,7 @@ export const loader = ({ params }: Route.LoaderArgs) => {
   const grant = getGrantBySlug(grantSlug)
 
   if (!grant) {
-    throw new Response('Projekt nenalezen', { status: 404 })
+    throw data(null, { status: 404 })
   }
 
   return { grant }

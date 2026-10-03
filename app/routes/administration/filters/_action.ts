@@ -1,11 +1,10 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
 import { validateFilterQuery } from '~/utils/admin-list-filters'
 import { requireSession } from '~/utils/auth.server'
-import { validateCSRF } from '~/utils/csrf.server'
+import { checkCSRF, requireCSRF } from '~/utils/csrf.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 
 import { schema } from './_schema'
@@ -28,7 +27,20 @@ const LIMIT_REACHED_ERROR = 'Dosáhli jste maximálního počtu uložených filt
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+
+  // Saving and renaming happen in a dialog that stays open and shows the token
+  // message; the rest are one-click row actions (design 30h).
+  const intent = formData.get(FORM_CONFIG.intent.name)
+
+  if (
+    intent === INTENT_VALUE.createFilter ||
+    intent === INTENT_VALUE.renameFilter
+  ) {
+    const csrfFailure = await checkCSRF(formData, request)
+    if (csrfFailure !== null) return csrfFailure
+  } else {
+    await requireCSRF(formData, request)
+  }
 
   const submission = await parseWithZod(formData, { async: true, schema })
 
@@ -91,9 +103,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // both the ownership guard and the fields the mutations need.
   const filter = await getOwnedFilter({ filterId: payload.id, userId })
 
-  invariantResponse(filter !== null, 'Nemáte oprávnění k této akci.', {
-    status: 403,
-  })
+  if (filter === null) {
+    throw data(null, { status: 403 })
+  }
 
   switch (payload.intent) {
     case INTENT_VALUE.renameFilter: {

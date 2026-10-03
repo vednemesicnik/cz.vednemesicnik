@@ -1,3 +1,5 @@
+import { data } from 'react-router'
+
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -83,8 +85,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorIds: [podcast.author.id],
   })
 
+  // A record the person may not see is a 404, like a deleted one (design 30e).
   if (!canView) {
-    throw new Response('Forbidden', { status: 403 })
+    throw data(null, { status: 404 })
   }
 
   // Check update permission

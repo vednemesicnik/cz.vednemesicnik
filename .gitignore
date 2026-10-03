@@ -26,3 +26,6 @@
 /.claude
 *storybook.log
 storybook-static
+
+# Scratch drafts (/ask-copy questions and the join prompt)
+/tmp/

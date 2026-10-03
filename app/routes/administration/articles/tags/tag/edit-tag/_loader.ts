@@ -1,6 +1,6 @@
 import { prisma } from '~/utils/db.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { requireAuthorPermission } from '~/utils/permissions/author/guards/require-author-permission.server'
+import { requireContentUpdatePermission } from '~/utils/permissions/author/guards/require-content-update-permission.server'
 import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
 import type { Route } from './+types/route'
 
@@ -28,15 +28,16 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   }
 
   const context = await getAuthorPermissionContext(request, {
-    actions: ['update'],
+    actions: ['view', 'update'],
     entities: ['article_tag'],
   })
 
-  requireAuthorPermission(context, {
-    action: 'update',
-    entity: 'article_tag',
+  requireContentUpdatePermission(context, {
+    authorIds: [tag.authorId],
+    id: tagId,
+    kind: 'tag',
     state: tag.state,
-    targetAuthorIds: [tag.authorId],
+    title: tag.name,
   })
 
   const authors = await getAuthorsByPermission(

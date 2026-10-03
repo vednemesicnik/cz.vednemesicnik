@@ -37,6 +37,9 @@ and permanently diverge the two branches.
 | hotfix → `main` | squash |
 | back-merge `main → dev` | **merge commit** |
 
+A squash lands the PR title as the commit subject, so every PR title is a Conventional
+Commit; `.github/workflows/pr-title.yml` checks it (and allows `release:` into `main`).
+
 ## Automated back-merge
 
 `.github/workflows/sync-dev.yml` runs on every push to `main`. If `dev` is behind, it

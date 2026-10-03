@@ -1,4 +1,5 @@
 import type { Prisma } from '@generated/prisma/client'
+import { data } from 'react-router'
 
 import { parseAdminListFilters } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
@@ -48,7 +49,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   // If user has no view permissions at all, they shouldn't access this page
   if (!viewPerms.hasPermission) {
-    throw new Response('Forbidden', { status: 403 })
+    throw data(null, { status: 403 })
   }
 
   const { order, query, sort } = parseAdminListParams(request, {

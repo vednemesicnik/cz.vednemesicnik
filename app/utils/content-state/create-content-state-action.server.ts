@@ -2,7 +2,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { redirect } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
-import { validateCSRF } from '~/utils/csrf.server'
+import { requireCSRF } from '~/utils/csrf.server'
 
 import type {
   ContentStateHandlers,
@@ -40,7 +40,7 @@ export const runContentStateAction = async (
   const { handlers, id } = options
 
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  await requireCSRF(formData, request)
 
   const intent = formData.get(INTENT_NAME)
   invariantResponse(typeof intent === 'string', 'Missing intent')

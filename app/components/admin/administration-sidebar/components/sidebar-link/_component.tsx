@@ -4,9 +4,17 @@ import { NavLink, useMatch } from 'react-router'
 
 import styles from './_styles.module.css'
 
-type Props = ComponentProps<typeof NavLink>
+type Props = ComponentProps<typeof NavLink> & {
+  highlightsActive?: boolean
+}
 
-export const SidebarLink = ({ children, to, end = false, ...rest }: Props) => {
+export const SidebarLink = ({
+  children,
+  to,
+  end = false,
+  highlightsActive = true,
+  ...rest
+}: Props) => {
   const pattern = typeof to === 'string' ? to : (to.pathname ?? '')
   const match = useMatch(pattern)
   const isCurrentPage = match !== null
@@ -15,7 +23,7 @@ export const SidebarLink = ({ children, to, end = false, ...rest }: Props) => {
     <NavLink
       aria-current={isCurrentPage ? 'page' : undefined}
       className={({ isActive }) =>
-        clsx(styles.link, isActive && styles.linkActive)
+        clsx(styles.link, isActive && highlightsActive && styles.linkActive)
       }
       end={end}
       prefetch={'intent'}

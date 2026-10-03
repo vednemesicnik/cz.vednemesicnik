@@ -3,7 +3,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
 import { recordAuditLog } from '~/utils/audit-log.server'
-import { validateCSRF } from '~/utils/csrf.server'
+import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
@@ -14,7 +14,8 @@ import { createUser } from './utils/create-user.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  const csrfFailure = await checkCSRF(formData, request)
+  if (csrfFailure !== null) return csrfFailure
 
   const submission = await parseWithZod(formData, {
     async: true,

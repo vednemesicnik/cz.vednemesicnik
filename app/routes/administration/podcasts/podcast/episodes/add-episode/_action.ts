@@ -1,7 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { href, redirect } from 'react-router'
 
-import { validateCSRF } from '~/utils/csrf.server'
+import { checkCSRF } from '~/utils/csrf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { schema } from './_schema'
@@ -10,7 +10,8 @@ import { createEpisode } from './utils/create-episode.server'
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  const csrfFailure = await checkCSRF(formData, request)
+  if (csrfFailure !== null) return csrfFailure
 
   const submission = await parseWithZod(formData, {
     async: true,

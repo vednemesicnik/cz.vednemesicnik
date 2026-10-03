@@ -1,3 +1,5 @@
+import { data } from 'react-router'
+
 import { prisma } from '~/utils/db.server'
 
 import type { Route } from './+types/route'
@@ -10,7 +12,11 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
     where: { id: tagId },
   })
 
+  if (tag === null) {
+    throw data(null, { status: 404 })
+  }
+
   return {
-    tagName: tag?.name,
+    tagName: tag.name,
   }
 }

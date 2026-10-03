@@ -75,6 +75,9 @@ export default [
         route(':grantSlug', 'routes/grants/grant/route.tsx'),
       ]),
     ]),
+
+    // Unknown website addresses
+    route('*', 'routes/404/route.tsx'),
   ]),
 
   // Administration
@@ -231,6 +234,11 @@ export default [
               route(
                 'two-factor',
                 'routes/administration/settings/profile/two-factor/route.tsx',
+              ),
+              // Fresh sign-in before changing sign-in methods
+              route(
+                'verify-identity',
+                'routes/administration/settings/profile/verify-identity/route.tsx',
               ),
 
               // Passkey management + registration ceremony endpoints

@@ -1,9 +1,8 @@
-import { invariantResponse } from '@epic-web/invariant'
-
 import type {
   UserPermissionAction,
   UserPermissionEntity,
 } from '@generated/prisma/enums'
+import { data } from 'react-router'
 import { requireSession } from '~/utils/auth.server'
 
 import {
@@ -19,7 +18,6 @@ type Options<T> = {
     roleLevel?: number
   }
   execute: (context: UserPermissionContext) => Promise<T>
-  errorMessage?: string
 }
 
 export async function withUserPermission<T>(
@@ -40,11 +38,10 @@ export async function withUserPermission<T>(
     targetUserRoleLevel: options.target.roleLevel,
   })
 
-  invariantResponse(
-    hasPermission,
-    options.errorMessage ?? 'Nemáte oprávnění k této akci.',
-    { status: 403 },
-  )
+  // The generic denial (design 30h): no composed reason.
+  if (!hasPermission) {
+    throw data(null, { status: 403 })
+  }
 
   return options.execute(context)
 }

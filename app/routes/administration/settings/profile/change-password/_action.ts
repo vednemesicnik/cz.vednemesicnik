@@ -1,17 +1,21 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { type ActionFunctionArgs, data, redirect } from 'react-router'
 
-import { validateCSRF } from '~/utils/csrf.server'
+import { checkCSRF } from '~/utils/csrf.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
+import { requireRecentAuthentication } from '~/utils/recent-authentication.server'
 
 import { schema } from './_schema'
 import { changePassword } from './utils/change-password.server'
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, url }: ActionFunctionArgs) => {
+  await requireRecentAuthentication({ request, url })
+
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  const csrfFailure = await checkCSRF(formData, request)
+  if (csrfFailure !== null) return csrfFailure
 
   const submission = await parseWithZod(formData, {
     async: true,
@@ -34,9 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Verify that the user is changing their own password
   if (userId !== context.userId) {
-    throw new Response('Forbidden: You can only change your own password', {
-      status: 403,
-    })
+    throw data(null, { status: 403 })
   }
 
   // Check permission to update own user account
