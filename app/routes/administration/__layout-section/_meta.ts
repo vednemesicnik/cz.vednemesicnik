@@ -9,6 +9,6 @@ import type { Route } from './+types/route'
  * @returns The page title for an error, otherwise nothing.
  */
 export const meta: Route.MetaFunction = ({ error, location }) =>
-  error === undefined
+  error === null || error === undefined
     ? []
     : [{ title: getAdminBoundaryPageTitle(error, location) }]

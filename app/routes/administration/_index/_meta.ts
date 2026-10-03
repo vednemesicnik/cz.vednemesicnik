@@ -5,7 +5,7 @@ import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = ({ error, location }) => {
   const title =
-    error === undefined
+    error === null || error === undefined
       ? createPageTitle('Administrace - Přehled')
       : getAdminBoundaryPageTitle(error, location)
 
