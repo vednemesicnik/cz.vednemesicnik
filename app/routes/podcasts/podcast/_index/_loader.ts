@@ -1,3 +1,5 @@
+import { data } from 'react-router'
+
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -18,7 +20,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     'podcast_episode',
   ])
 
-  const podcast = await prisma.podcast.findUniqueOrThrow({
+  const podcast = await prisma.podcast.findUnique({
     select: {
       cover: {
         select: imageSourceSelect,
@@ -51,6 +53,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       ...visibility.where('podcast', ownByAuthor, ['draft', 'archived']),
     },
   })
+
+  if (podcast === null) {
+    throw data(null, { status: 404 })
+  }
 
   const cover = {
     altText: podcast.cover?.altText ?? '',
