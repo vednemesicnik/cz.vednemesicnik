@@ -14,49 +14,57 @@ describe('resolveWebsiteBoundary', () => {
     [
       'article',
       'Tenhle článek jsme nenašli',
+      'Článek nenalezen',
       'Zkontrolujte adresu nebo zkuste jiný článek.',
       ['Všechny články', 'Na úvod'],
     ],
     [
       'category',
       'Tuhle rubriku jsme nenašli',
+      'Rubrika nenalezena',
       'Zkontrolujte adresu nebo si vyberte ze všech článků.',
       ['Všechny články'],
     ],
     [
       'tag',
       'Tenhle štítek jsme nenašli',
+      'Štítek nenalezen',
       'Zkontrolujte adresu nebo si vyberte ze všech článků.',
       ['Všechny články'],
     ],
     [
       'podcast',
       'Tenhle podcast jsme nenašli',
+      'Podcast nenalezen',
       'Zkontrolujte adresu nebo zkuste jiný podcast.',
       ['Všechny podcasty'],
     ],
     [
       'episode',
       'Tuhle epizodu jsme nenašli',
+      'Epizoda nenalezena',
       'Zkontrolujte adresu nebo si vyberte z podcastů.',
       ['Všechny podcasty'],
     ],
     [
       'issue',
       'Tohle číslo jsme nenašli',
+      'Číslo nenalezeno',
       'Zkontrolujte adresu nebo si vyberte jiné číslo v Archivu.',
       ['Archiv'],
     ],
     [
       null,
       'Tuhle stránku jsme nenašli',
+      'Stránka nenalezena',
       'Zkontrolujte adresu nebo pokračujte z úvodu.',
       ['Na úvod'],
     ],
-  ] as const)('404 %s', (kind, title, sentence, labels) => {
+  ] as const)('404 %s', (kind, title, pageTitle, sentence, labels) => {
     const view = resolveWebsiteBoundary(notFound, kind, currentHref)
 
     expect(view.title).toBe(title)
+    expect(view.pageTitle).toBe(pageTitle)
     expect(view.sentence).toBe(sentence)
     expect(view.actions.map((action) => action.label)).toEqual(labels)
     expect(view.unexpected).toBe(false)
@@ -69,6 +77,7 @@ describe('resolveWebsiteBoundary', () => {
       currentHref,
     )
 
+    expect(view.pageTitle).toBe('Epizoda nenalezena')
     expect(view.sentence).toBe(
       'Zkontrolujte adresu nebo si prohlédněte další epizody podcastu.',
     )
@@ -101,6 +110,7 @@ describe('resolveWebsiteBoundary', () => {
         { href: currentHref, label: 'Zkusit znovu', reload: true },
         { href: '/', label: 'Na úvod' },
       ],
+      pageTitle: 'Chyba načítání',
       sentence: 'Chyba je na naší straně. Zkuste stránku načíst znovu.',
       title: 'Tady se něco pokazilo',
       unexpected: true,
