@@ -15,10 +15,10 @@ Vedneměsíčník, z. s. Na webu jsou články, podcasty s epizodami, archiv ti�
 stránka redakce, spolku, podpory a dotací. V administraci redakce obsah píše, schvaluje,
 zveřejňuje a archivuje.
 
-Jádro časopisu jsou **články na webu**. Tištěné číslo vychází **zpravidla čtyřikrát ročně** —
-redakci dělají studenti, takže někdy vyjdou jen tři, jindy i pět — a nese **tytéž
-články**, které už vyšly na webu. **Archiv** je proto záznam toho, co se vytisklo, ne další čtení
-navíc. **Podcast byl vždycky vedlejší a dnes skoro nežije.** Text, který staví na poslechu, slibuje
+Pro čtenáře je hlavní **tištěné číslo**, studenti ho čtou nejraději. Vychází **zpravidla
+čtyřikrát ročně** — redakci dělají studenti, takže někdy vyjdou jen tři, jindy i pět. **Web ho
+doplňuje**: nese tytéž články a občas i další, které v čísle nejsou (rozhodnuto 3. 10. 2026).
+**Archiv** je proto záznam toho, co se vytisklo, ne další čtení navíc. **Podcast byl vždycky vedlejší a dnes skoro nežije.** Text, který staví na poslechu, slibuje
 v čísle obsah, který na webu není, nebo slibuje pravidelnost („každý měsíc“), je nepravda.
 
 **Jméno** vzniklo jako hříčka na název kavárny, která už neexistuje. Na webu se původ jména
@@ -208,9 +208,10 @@ Nemá já ani my, neomlouvá se. Chybová věta říká, co udělat; důvod pat�
 28. 9. 2026). Dnešní heslo úvodu `Čti, poslouchej a objevuj` je jediné tykání a odchází: úvod
 nového návrhu nese jen jméno a pod ním `Studentské nekritické noviny`.
 
-Výjimkou je stránka **O spolku**: tam mluví za *my* **spolek** a o redakci se píše ve třetí osobě
-(rozhodnuto 2. 10. 2026). Text o spolku nemá stavět na tom, co se může změnit: odkud studenti
-jsou, kolikrát ročně číslo vychází, jaké akce spolek pořádá.
+Výjimkou je stránka **O spolku**: text o spolku je ve **třetí osobě** (*Spolek Vedneměsíčník
+vydává…*), za *my* mluví jen výzvy pod ním (`Napište nám`, `Podpořte nás`). Text napsala redakce
+a prošel beze změny (rozhodnuto 3. 10. 2026). Fakta v něm jsou stálá: České Budějovice, střední
+školy a gymnázia (rozlišené schválně), akce spolku. Nezávislost redakce stránka nezmiňuje.
 
 Web **nesmí znít jako text od AI**. Prozrazuje to věta ve dvou půlkách spojená pomlčkou,
 výčet obsahu jako popis produktu, obecná sebevědomá hesla, která by pasovala na jakýkoli časopis,
