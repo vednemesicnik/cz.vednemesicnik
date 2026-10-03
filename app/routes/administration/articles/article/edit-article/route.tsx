@@ -170,6 +170,7 @@ export default function RouteComponent({
       <FormProvider context={form.context}>
         <Form
           encType={'multipart/form-data'}
+          errors={form.errors}
           method={'post'}
           {...formProps}
           onSubmit={handleSubmit}

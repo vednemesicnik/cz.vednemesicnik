@@ -10,7 +10,7 @@ const makeContext = (result: CanResult) =>
   ({ can: () => result }) as unknown as AuthorPermissionContext
 
 describe('checkAuthorPermission', () => {
-  test('throws a 403 Response with a Czech message when denied', async () => {
+  test('throws the generic 403 when denied', () => {
     const context = makeContext({
       hasAny: false,
       hasOwn: false,
@@ -21,10 +21,7 @@ describe('checkAuthorPermission', () => {
       checkAuthorPermission(context, { action: 'update', entity: 'article' })
       expect.unreachable('checkAuthorPermission should have thrown')
     } catch (error) {
-      expect(error).toBeInstanceOf(Response)
-      const response = error as Response
-      expect(response.status).toBe(403)
-      expect(await response.text()).toBe('Nemáte oprávnění k této akci.')
+      expect(error).toMatchObject({ data: null, init: { status: 403 } })
     }
   })
 

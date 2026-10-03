@@ -1,3 +1,5 @@
+import { data } from 'react-router'
+
 import { prisma } from '~/utils/db.server'
 import type { Route } from './+types/route'
 
@@ -13,6 +15,10 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
       id: articleId,
     },
   })
+
+  if (article === null) {
+    throw data(null, { status: 404 })
+  }
 
   return { article }
 }

@@ -6,7 +6,7 @@ import {
   formatRoleChangeDetail,
   recordAuditLog,
 } from '~/utils/audit-log.server'
-import { validateCSRF } from '~/utils/csrf.server'
+import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { canChangeAuthorRole } from '~/utils/permissions/author/guards/can-change-author-role.server'
@@ -18,7 +18,8 @@ import { updateAuthor } from './utils/update-author.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  const csrfFailure = await checkCSRF(formData, request)
+  if (csrfFailure !== null) return csrfFailure
 
   const submission = await parseWithZod(formData, {
     async: true,

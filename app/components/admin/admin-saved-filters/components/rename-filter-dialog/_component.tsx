@@ -14,6 +14,8 @@ import type {
   OwnFilter,
 } from '~/components/admin/admin-saved-filters/_types'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { ErrorMessage } from '~/components/error-message'
+import { ErrorMessageGroup } from '~/components/error-message-group'
 import { FORM_CONFIG } from '~/config/form-config'
 import { renameFilterSchema } from '~/routes/administration/filters/_schema'
 
@@ -68,6 +70,12 @@ export const RenameFilterDialog = ({ filter, onClose }: Props) => {
             label={'Název'}
             {...getInputProps(fields.name, { type: 'text' })}
           />
+
+          <ErrorMessageGroup>
+            {form.errors?.map((error) => (
+              <ErrorMessage key={error}>{error}</ErrorMessage>
+            ))}
+          </ErrorMessageGroup>
 
           <AdminModalActions>
             <AdminButton

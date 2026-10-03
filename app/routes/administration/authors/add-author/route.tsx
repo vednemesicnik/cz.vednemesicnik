@@ -54,7 +54,7 @@ export default function RouteComponent({
     <AdminPage>
       <AdminHeadline>Přidat autora</AdminHeadline>
 
-      <Form method="post" {...getFormProps(form)}>
+      <Form errors={form.errors} method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily autora'}>
           <AdminInput
             label="Jméno"

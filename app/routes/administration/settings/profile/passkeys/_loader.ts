@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from 'react-router'
+import { data } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
@@ -20,7 +21,7 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
   }).hasPermission
 
   if (!canUpdate) {
-    throw new Response('Forbidden', { status: 403 })
+    throw data(null, { status: 403 })
   }
 
   const passkeys = await prisma.passkey.findMany({

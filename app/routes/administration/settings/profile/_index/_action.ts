@@ -3,7 +3,7 @@ import type { ActionFunctionArgs } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
 import { requireAuthentication } from '~/utils/auth.server'
-import { validateCSRF } from '~/utils/csrf.server'
+import { requireCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
@@ -11,7 +11,7 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
   await requireAuthentication({ request, url })
 
   const formData = await request.formData()
-  await validateCSRF(formData, request.headers)
+  await requireCSRF(formData, request)
 
   const intent = formData.get(FORM_CONFIG.intent.name)
   invariantResponse(

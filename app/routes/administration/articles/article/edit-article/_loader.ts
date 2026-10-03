@@ -6,7 +6,7 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { requireAuthorPermission } from '~/utils/permissions/author/guards/require-author-permission.server'
+import { requireContentUpdatePermission } from '~/utils/permissions/author/guards/require-content-update-permission.server'
 import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
 
 import type { Route } from './+types/route'
@@ -15,7 +15,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { articleId } = params
 
   const context = await getAuthorPermissionContext(request, {
-    actions: ['update'],
+    actions: ['view', 'update'],
     entities: ['article'],
   })
 
@@ -54,11 +54,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data('Article not found', { status: 404 })
   }
 
-  requireAuthorPermission(context, {
-    action: 'update',
-    entity: 'article',
+  requireContentUpdatePermission(context, {
+    authorIds: article.authors.map((author) => author.id),
+    id: articleId,
+    kind: 'article',
     state: article.state,
-    targetAuthorIds: article.authors.map((author) => author.id),
+    title: article.title,
   })
 
   const [authors, categories, tags] = await Promise.all([

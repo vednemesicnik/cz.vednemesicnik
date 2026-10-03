@@ -180,6 +180,9 @@ Session-based authentication with multiple methods:
 Session management in `app/utils/auth.server.ts` using cookie-based sessions.
 
 CSRF protection via `app/utils/csrf.server.ts` and honeypot via `app/utils/honeypot.server.ts`.
+Administration actions check the session before the token (design 30h): `checkCSRF` for a
+form that stays on screen (returns the form message as data; the layout revalidates and
+reissues the token), `requireCSRF` for one-click actions (throws the 403 token marker).
 
 ### Form Handling
 

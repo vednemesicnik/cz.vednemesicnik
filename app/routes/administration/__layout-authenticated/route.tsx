@@ -1,16 +1,25 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Outlet } from 'react-router'
+import { Outlet, type ShouldRevalidateFunction } from 'react-router'
 import { AdminHeader } from '~/components/admin/admin-header'
 import { AdminUserMenu } from '~/components/admin/admin-user-menu'
 import { AdministrationContent } from '~/components/admin/administration-content'
 import { AdministrationFooter } from '~/components/admin/administration-footer'
 import { AdministrationSidebar } from '~/components/admin/administration-sidebar'
+import { SidebarHighlightProvider } from '~/components/admin/sidebar-highlight-provider'
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
+import { RootBoundaryError } from '~/components/root-boundary-error'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { loader } from './_loader'
+
+// A 403 action may be a refused form token (design 30h): reload the layout so its
+// loader reissues the token and the form's second press goes through.
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  actionStatus,
+  defaultShouldRevalidate,
+}) => actionStatus === 403 || defaultShouldRevalidate
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const user = {
@@ -52,16 +61,23 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AuthenticityTokenProvider token={loaderData.csrfToken}>
-      <div className={styles.layout}>
-        <AdminHeader>
-          <AdminUserMenu userEmail={user.email} userName={user.name} />
-        </AdminHeader>
-        <AdministrationSidebar navigationItems={navigationItems} />
-        <AdministrationContent className={styles.page}>
-          <Outlet />
-        </AdministrationContent>
-        <AdministrationFooter />
-      </div>
+      <SidebarHighlightProvider>
+        <div className={styles.layout}>
+          <AdminHeader>
+            <AdminUserMenu userEmail={user.email} userName={user.name} />
+          </AdminHeader>
+          <AdministrationSidebar navigationItems={navigationItems} />
+          <AdministrationContent className={styles.page}>
+            <Outlet />
+          </AdministrationContent>
+          <AdministrationFooter />
+        </div>
+      </SidebarHighlightProvider>
     </AuthenticityTokenProvider>
   )
+}
+
+// The layout's own loader failed, so nothing it provides can render (design 30g, root).
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return <RootBoundaryError error={error} />
 }

@@ -101,11 +101,13 @@ export const SaveFilterDialog = ({
           </div>
 
           {/* The snapshot is a hidden field, so its errors (an unusable filter)
-              would have nowhere to surface. */}
+              would have nowhere to surface; nor would a refused form token. */}
           <ErrorMessageGroup>
-            {fields.query.errors?.map((error) => (
-              <ErrorMessage key={error}>{error}</ErrorMessage>
-            ))}
+            {[...(fields.query.errors ?? []), ...(form.errors ?? [])].map(
+              (error) => (
+                <ErrorMessage key={error}>{error}</ErrorMessage>
+              ),
+            )}
           </ErrorMessageGroup>
 
           <AdminModalActions>

@@ -8,7 +8,7 @@ This document describes the authentication architecture in the application and p
 
 ### Current Approach: Loader-Based Authentication
 
-The application currently uses a **loader-based authentication pattern** where each protected route explicitly calls a guard in its loader/action. There are two specialized guards: `requireAuthentication({ request, url })` for route loaders/actions (it uses React Router's normalized `url` arg to preserve `redirectTo`), and `requireSession(request)` for bare-`Request` callers behind the authenticated layout (e.g. permission-context helpers) that don't need a return path.
+The application currently uses a **loader-based authentication pattern** where each protected route explicitly calls a guard in its loader/action. There are two specialized guards: `requireAuthentication({ request, url })` for route loaders/actions (it uses React Router's normalized `url` arg to preserve `redirectTo`), and `requireSession(request)` for bare-`Request` callers behind the authenticated layout (e.g. permission-context helpers) that don't need a return path. Administration actions get a third, `requireActionSession(request)`, which `checkCSRF`/`requireCSRF` call before the token so an expired session leads to sign-in with the submitting page (from `Referer`) as `redirectTo`.
 
 ```typescript
 // app/routes/administration/__layout-authenticated/_loader.ts

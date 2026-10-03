@@ -13,7 +13,8 @@ import type { Route } from './+types/route'
  * @returns The page title for an error, otherwise nothing.
  */
 export const meta: Route.MetaFunction = ({ error, location }) => {
-  if (error === undefined) return []
+  // `Meta` passes `null`, not `undefined`, when nothing failed.
+  if (error === null || error === undefined) return []
 
   const { pathname, search } = location
   const view = resolveWebsiteBoundary(

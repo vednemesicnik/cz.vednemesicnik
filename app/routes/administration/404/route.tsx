@@ -4,7 +4,6 @@ import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
 
 import type { Route } from './+types/route'
 
-export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
