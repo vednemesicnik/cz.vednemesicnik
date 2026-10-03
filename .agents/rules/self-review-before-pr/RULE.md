@@ -22,7 +22,7 @@ billed, slow Copilot round-trip avoided.
 ## How
 
 Read every changed hunk and check it against the checklist below. Fix what you
-find, then re-run `pnpm app:typecheck`, `pnpm test`, and `biome check` before
+find, then re-run `pnpm app:typecheck`, `pnpm test`, and `pnpm biome:check` before
 pushing.
 
 ## Checklist

@@ -23,9 +23,9 @@ You are the gate between an idea and an issue. Nothing here writes code, and the
 valuable outcome is a well-argued no** — an issue that should not exist costs a plan, an
 implementation, a review and a revert before anybody notices.
 
-The questions below come from a post-mortem in the billing app (its #159): an issue written from
-a design answer, planned, built in full, reversed three times in an afternoon and closed as _not
-planned_. Every question is one that would have stopped it on the first pass.
+The questions below come from an issue that was written from a design answer, planned, built in
+full, reversed three times in an afternoon and closed as _not planned_. Every question is one that
+would have stopped it on the first pass.
 
 ### Phase 0 — Understand what is actually proposed
 

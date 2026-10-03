@@ -8,7 +8,7 @@ This is a student magazine publishing platform built with React Router v8, Prism
 
 ## Code Editing Workflow
 
-**IMPORTANT**: When making changes to files, always use the **Edit tool**. This enables user review and approval of changes through the IDE's diff interface before applying modifications. Never use tools that directly overwrite files without user confirmation.
+Change existing files with the Edit tool, so every change reaches the user as a reviewable diff in the IDE; use Write only for new files.
 
 ## Development Commands
 
@@ -26,7 +26,12 @@ pnpm app:start                     # Run production build
 pnpm app:typecheck                 # Run TypeScript type checking and generate React Router types
 pnpm app:routes:generate           # Generate React Router type definitions
 pnpm test                          # Run Vitest tests (non-watch mode)
+pnpm biome:check                   # Lint and format check (Biome)
 ```
+
+The formatter is Biome: format with `pnpm exec biome check --write <files>`. Prettier is
+installed only as a transitive dependency; running it rewrites files into a style the
+repository doesn't use.
 
 ### Git Hooks
 
@@ -40,8 +45,9 @@ pnpm lefthook:install              # Install Lefthook Git hooks
 
 `dev` is the default branch; `main` is production and the only deploy source. Branch
 off `dev` in kebab-case with the issue number (e.g. `feat/155-branching-model-dev`) and
-target `dev` in the PR. Releases (`dev → main`) and hotfixes target `main`. See
-`docs/_branching-model.md` for the full flow and merge-method conventions.
+target `dev` in the PR. A small follow-up goes straight to a PR without an issue, on a
+branch without a number (e.g. `ci/pr-title-check`). Releases (`dev → main`) and hotfixes
+target `main`. See `docs/_branching-model.md` for the full flow and merge-method conventions.
 
 ### Database Management
 
@@ -125,7 +131,7 @@ All content entities (Article, Podcast, PodcastEpisode, Issue, etc.) support thr
 #### Author Roles (content management)
 
 - **Contributor** (level 3): Can create/edit/view/delete own draft content
-- **Creator** (level 2): Can publish, retract, and archive own content
+- **Creator** (level 2): Can publish own content once a Coordinator has approved it, and retract and archive own published content
 - **Coordinator** (level 1): Full access to all content in all states
 
 Permissions are checked via:
@@ -152,12 +158,14 @@ Archived content can be restored to draft (Coordinator only).
 - `app/utils/` - Server and client utilities
 - `app/styles/` - Global CSS: primitive tokens (`primitive-tokens.css`), semantic tokens with public/admin themes (`semantic-tokens.css`), fonts, sizes, global styles
 
-Components use CSS modules with the pattern `ComponentName/ComponentName.tsx` and `ComponentName/ComponentName.css`.
+Each component lives in its own kebab-case directory: `_component.tsx`, `_styles.module.css` and `index.ts`, with stories in `_component.stories.tsx` (see `.agents/skills/general-guidance/references/storybook.md`).
 
 ### Image Handling
 
-Images are stored as `Bytes` in SQLite and served via resource routes:
+Images live in an object store under the `images/` prefix — a volume or Tigris, picked by
+`STORE_DRIVER` — as pre-generated variants, and are served via resource routes:
 
+- `/resources/article-image/…`
 - `/resources/issue-cover/:issueId`
 - `/resources/podcast-cover/:podcastId`
 - `/resources/podcast-episode-cover/:episodeId`
@@ -165,17 +173,15 @@ Images are stored as `Bytes` in SQLite and served via resource routes:
 
 Utilities:
 
-- `app/utils/image.server.ts` - Image processing
+- `app/utils/image-store/` - the image store, variant generation, serving and responsive sources (`create-image-sources.ts`)
 - `app/utils/sharp.server.ts` - Sharp image transformations
-- `app/utils/create-image-sources.ts` - Responsive image source generation
 
 ### Authentication
 
 Session-based authentication with multiple methods:
 
-- Password (bcrypt hashed)
-- Passkeys (WebAuthn via @simplewebauthn)
-- OAuth connections
+- Magic link by e-mail, Google (OAuth) and passkeys (WebAuthn via @simplewebauthn) — the main paths
+- Password (bcrypt hashed) — an emergency path, off unless `ALLOW_PASSWORD_SIGN_IN` is set
 
 Session management in `app/utils/auth.server.ts` using cookie-based sessions.
 
@@ -276,7 +282,7 @@ Node.js >= 26.0.0 required (see `engines.node` in `package.json`; `.nvmrc` pins 
 
 ## Agent Skills
 
-Skills are split into two categories. Load only the skills that apply to your current task.
+Load only the skills that apply to your current task.
 
 ### General Guidance
 

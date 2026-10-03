@@ -25,7 +25,9 @@ body in **English**; write review-thread replies in the **language of the thread
 
 ## 1. Branch & commit
 
-- Branch off `dev`, kebab-case, **with the issue number**: `feat/290-format-dates`.
+- Branch off `dev`, kebab-case, **with the issue number**: `feat/290-format-dates`. A small
+  follow-up without an issue goes straight to a PR, on a branch without a number
+  (`ci/pr-title-check`).
 - Every commit is a **Conventional Commit** — including review fix-ups
   (`fix:`, `refactor:`, `docs:`, `style:`, …), never `Address review: …`.
 - Review fixes are **normal append-only commits**. Never `--force`, `reset`, or
