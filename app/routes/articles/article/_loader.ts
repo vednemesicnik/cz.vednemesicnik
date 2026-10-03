@@ -1,3 +1,4 @@
+import { data } from 'react-router'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -59,7 +60,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   })
 
   if (!article) {
-    throw new Response('Článek nenalezen', { status: 404 })
+    throw data(null, { status: 404 })
   }
 
   // Build HTML image sources so the components stay dumb renderers.

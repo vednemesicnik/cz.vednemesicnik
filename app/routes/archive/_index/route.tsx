@@ -1,12 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href, isRouteErrorResponse, Link, useSearchParams } from 'react-router'
+import { href, Link, useSearchParams } from 'react-router'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
 import { LoadMoreContent } from '~/components/load-more-content'
 import { Page } from '~/components/page'
-import { Paragraph } from '~/components/paragraph'
 import { Tile } from '~/components/tile'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
@@ -84,39 +83,4 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       )}
     </Page>
   )
-}
-
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  if (isRouteErrorResponse(error)) {
-    return (
-      <Page>
-        <Headline>Naše čísla pohromadě</Headline>
-        <Paragraph>Při hledání čísel v databázi se něco pokazilo.</Paragraph>
-        <code>
-          Chyba: {error.status} - {error.statusText}
-          <br />
-          Detail: {error.data}
-        </code>
-      </Page>
-    )
-  } else if (error instanceof Error) {
-    return (
-      <Page>
-        <Headline>Naše čísla pohromadě</Headline>
-        <Paragraph>Při hledání čísel v databázi se něco pokazilo.</Paragraph>
-        <code>
-          {error.message}
-          <br />
-          {error.stack}
-        </code>
-      </Page>
-    )
-  } else {
-    return (
-      <Page>
-        <Headline>Naše čísla pohromadě</Headline>
-        <Paragraph>Něco se pokazilo.</Paragraph>
-      </Page>
-    )
-  }
 }

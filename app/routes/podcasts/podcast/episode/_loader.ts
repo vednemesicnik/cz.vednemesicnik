@@ -1,3 +1,6 @@
+import { data, href } from 'react-router'
+
+import type { NotFoundEpisodeData } from '~/components/boundary-error'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -8,10 +11,18 @@ import {
 import type { Route } from './+types/route'
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  const { episodeSlug } = params
-  const visibility = await getWebContentVisibility(request, ['podcast_episode'])
+  const { podcastSlug, episodeSlug } = params
+  const visibility = await getWebContentVisibility(request, [
+    'podcast',
+    'podcast_episode',
+  ])
 
-  const podcastEpisode = await prisma.podcastEpisode.findUniqueOrThrow({
+  const podcastWhere = {
+    slug: podcastSlug,
+    ...visibility.where('podcast', ownByAuthor, ['draft', 'archived']),
+  }
+
+  const podcastEpisode = await prisma.podcastEpisode.findUnique({
     select: {
       cover: {
         select: {
@@ -41,6 +52,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       title: true,
     },
     where: {
+      podcast: podcastWhere,
       slug: episodeSlug,
       ...visibility.where('podcast_episode', ownByAuthor, [
         'draft',
@@ -48,6 +60,26 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       ]),
     },
   })
+
+  if (podcastEpisode === null) {
+    // Design 30f offers `Na podcast` only when the podcast itself can be shown.
+    const podcast = await prisma.podcast.findUnique({
+      select: { slug: true },
+      where: podcastWhere,
+    })
+
+    if (podcast === null) {
+      throw data(null, { status: 404 })
+    }
+
+    const notFoundData: NotFoundEpisodeData = {
+      podcastHref: href('/podcasts/:podcastSlug', {
+        podcastSlug: podcast.slug,
+      }),
+    }
+
+    throw data(notFoundData, { status: 404 })
+  }
 
   return {
     podcastEpisode: {

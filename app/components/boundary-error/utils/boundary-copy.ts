@@ -3,7 +3,8 @@ import { href } from 'react-router'
 import type { ContentKind } from './content-kind'
 
 // The only place with boundary copy. Every string is quoted from design 30d–30h
-// (copy approved in x24ele6l, 6788p8tk, 2g2tvjrw) — do not reword.
+// (copy approved in x24ele6l, 6788p8tk, 2g2tvjrw) — do not reword. Website page
+// titles aren't drawn; they come from the copywriter (dh5c0tn6).
 
 export type BoundaryAction = {
   label: string
@@ -16,6 +17,8 @@ export type BoundaryCopy = {
   sentence: string
   actions: BoundaryAction[]
   links?: BoundaryAction[]
+  /** Document title without the site name; set on the website copy only. */
+  pageTitle?: string
 }
 
 const websiteActions = {
@@ -30,26 +33,31 @@ type WebsiteNotFoundKind = Exclude<ContentKind, 'author' | 'user' | 'episode'>
 const websiteNotFound: Record<WebsiteNotFoundKind, BoundaryCopy> = {
   article: {
     actions: [websiteActions.allArticles, websiteActions.home],
+    pageTitle: 'Článek nenalezen',
     sentence: 'Zkontrolujte adresu nebo zkuste jiný článek.',
     title: 'Tenhle článek jsme nenašli',
   },
   category: {
     actions: [websiteActions.allArticles],
+    pageTitle: 'Rubrika nenalezena',
     sentence: 'Zkontrolujte adresu nebo si vyberte ze všech článků.',
     title: 'Tuhle rubriku jsme nenašli',
   },
   issue: {
     actions: [websiteActions.archive],
+    pageTitle: 'Číslo nenalezeno',
     sentence: 'Zkontrolujte adresu nebo si vyberte jiné číslo v Archivu.',
     title: 'Tohle číslo jsme nenašli',
   },
   podcast: {
     actions: [websiteActions.allPodcasts],
+    pageTitle: 'Podcast nenalezen',
     sentence: 'Zkontrolujte adresu nebo zkuste jiný podcast.',
     title: 'Tenhle podcast jsme nenašli',
   },
   tag: {
     actions: [websiteActions.allArticles],
+    pageTitle: 'Štítek nenalezen',
     sentence: 'Zkontrolujte adresu nebo si vyberte ze všech článků.',
     title: 'Tenhle štítek jsme nenašli',
   },
@@ -62,6 +70,7 @@ const websiteNotFoundPage: BoundaryCopy = {
     { href: href('/podcasts'), label: 'Podcasty' },
     { href: href('/archive'), label: 'Archiv' },
   ],
+  pageTitle: 'Stránka nenalezena',
   sentence: 'Zkontrolujte adresu nebo pokračujte z úvodu.',
   title: 'Tuhle stránku jsme nenašli',
 }
@@ -82,6 +91,7 @@ export const getWebsiteNotFoundCopy = (
     return podcastHref === undefined
       ? {
           actions: [websiteActions.allPodcasts],
+          pageTitle: 'Epizoda nenalezena',
           sentence: 'Zkontrolujte adresu nebo si vyberte z podcastů.',
           title: 'Tuhle epizodu jsme nenašli',
         }
@@ -90,6 +100,7 @@ export const getWebsiteNotFoundCopy = (
             websiteActions.allPodcasts,
             { href: podcastHref, label: 'Na podcast' },
           ],
+          pageTitle: 'Epizoda nenalezena',
           sentence:
             'Zkontrolujte adresu nebo si prohlédněte další epizody podcastu.',
           title: 'Tuhle epizodu jsme nenašli',
@@ -116,6 +127,7 @@ export const getWebsiteUnexpectedCopy = (
     { href: currentHref, label: 'Zkusit znovu', reload: true },
     websiteActions.home,
   ],
+  pageTitle: 'Chyba načítání',
   sentence: 'Chyba je na naší straně. Zkuste stránku načíst znovu.',
   title: 'Tady se něco pokazilo',
 })

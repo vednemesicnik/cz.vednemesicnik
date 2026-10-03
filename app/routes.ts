@@ -75,6 +75,9 @@ export default [
         route(':grantSlug', 'routes/grants/grant/route.tsx'),
       ]),
     ]),
+
+    // Unknown website addresses
+    route('*', 'routes/404/route.tsx'),
   ]),
 
   // Administration
