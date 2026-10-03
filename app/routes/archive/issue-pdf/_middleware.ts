@@ -14,7 +14,17 @@ import {
 
 import type { Route } from './+types/route'
 
-export const loader = async ({ request, params }: Route.LoaderArgs) => {
+/**
+ * Serves the issue PDF without calling `next()`. A missing PDF calls `next()` instead,
+ * so the route loader throws the 404 and the website layout boundary renders it
+ * (design 30f). Thrown here, it would skip the loaders and reach the root boundary.
+ *
+ * @returns The PDF, a 304 when the client's copy is current, or the 404 page.
+ */
+const serveIssuePdf: Route.MiddlewareFunction = async (
+  { request, params },
+  next,
+) => {
   const { fileName } = params
 
   const visibility = await getWebContentVisibility(request, ['issue'])
@@ -30,9 +40,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     },
   })
 
-  if (pdf === null) {
-    throw new Response('PDF soubor nebyl nalezen', { status: 404 })
-  }
+  if (pdf === null) return next()
 
   // ETag from fileName + updatedAt timestamp (invalidates when the PDF changes)
   const etag = getContentHash(`${fileName}:${pdf.updatedAt.valueOf()}`)
@@ -50,9 +58,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const meta = { contentType: pdf.contentType, etag, fileName, lastModified }
 
   const stream = await pdfStore.getStream(buildPdfKey(pdf.id))
-  if (stream === null) {
-    throw new Response('PDF soubor nebyl nalezen', { status: 404 })
-  }
+  if (stream === null) return next()
 
   return buildPdfResponse(stream, meta)
 }
+
+export const middleware: Route.MiddlewareFunction[] = [serveIssuePdf]
