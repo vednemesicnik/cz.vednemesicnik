@@ -54,6 +54,8 @@ rozpojí.
   *vydání* u článku ani epizody nepoužívá: jejich datum je **datum publikace**.
 - **Archiv** (sekce) vs. **archivováno** (stav) — dvě různé věci. *Archiv* jsou tištěná čísla;
   *archivovaný* je obsah stažený z oběhu. Věta, která je smíchá, je nepravda.
+  Velké *A* jen jako jméno v menu a v nadpisu; v běžném textu malé: `tištěná čísla jsou
+  v archivu` (rozhodnuto 2. 10. 2026).
 - **autor** vs. **uživatel** — *uživatel* je účet, kterým se přihlašuje do administrace; *autor*
   je jméno, pod kterým se obsah publikuje. Každý uživatel má autora, ale role mají zvlášť.
 - **redakce** — lidé, kteří časopis dělají (stránka *Redakce* na webu).
@@ -138,7 +140,7 @@ o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše to
   člověka, Koordinátor smí úpravu převzít. Posledních pár vteřin psaní se při převzetí může
   ztratit; věta, že se „nic neztratí“, je nepravda.
 - **Publikovaná rubrika a štítek se neupravují** stejně jako článek: nejdřív se stáhnou.
-- **Číslo** (tištěné, v Archivu) nemá datum vydání. Tvoří ho rok, pořadí v roce, název bez roku
+- **Číslo** (tištěné, v archivu) nemá datum vydání. Tvoří ho rok, pořadí v roce, název bez roku
   (`zima` → zobrazeně `zima 2026`) a vzácně doplněk: samostatně vytištěná část, která se do
   čísla nevešla (ne dotisk).
 
