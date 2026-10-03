@@ -1,10 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { isRouteErrorResponse } from 'react-router'
-
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminPage } from '~/components/admin/admin-page'
-import { AdminParagraph } from '~/components/admin/admin-paragraph'
+import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
 
 import type { Route } from './+types/route'
 
@@ -13,24 +9,7 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  if (isRouteErrorResponse(error)) {
-    return (
-      <AdminPage>
-        <AdminHeadline>
-          {error.status} – {error.statusText}
-        </AdminHeadline>
-        <AdminParagraph>{error.data}</AdminParagraph>
-      </AdminPage>
-    )
-  } else {
-    return (
-      <AdminPage>
-        <AdminHeadline>Jejda, něco se pokazilo</AdminHeadline>
-        <AdminParagraph>
-          Narazili jsme na neočekávanou chybu. Zkuste to prosím znovu, nebo se
-          obraťte na technickou podporu, pokud problém přetrvává.
-        </AdminParagraph>
-      </AdminPage>
-    )
-  }
+  // The catch-all is always an address that doesn't exist, even under a record
+  // (`/administration/articles/a1/nope`), so it never takes the record copy.
+  return <AdminBoundaryError error={error} kind={null} />
 }

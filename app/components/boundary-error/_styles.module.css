@@ -1,0 +1,72 @@
+.diagnostics {
+  @layer variant {
+    margin-block-start: 1.25rem;
+  }
+}
+
+.actions {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-block-start: 2rem;
+  }
+}
+
+.action {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: 12px;
+    padding-inline: 24px;
+    border-radius: 8px;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+    text-decoration: none;
+    transition:
+      background-color var(--transition-fast),
+      border-color var(--transition-fast);
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}
+
+.primary {
+  @layer variant {
+    border: 2px solid var(--primary);
+    background-color: var(--primary);
+    color: var(--text-on-accent);
+
+    &:hover {
+      border-color: var(--primary-hover);
+      background-color: var(--primary-hover);
+    }
+  }
+}
+
+.secondary {
+  @layer variant {
+    border: 2px solid var(--border);
+    background-color: transparent;
+    color: var(--text-primary);
+
+    &:hover {
+      border-color: var(--border-accent);
+      background-color: var(--bg-accent);
+    }
+  }
+}
+
+.links {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-block-start: 1.5rem;
+  }
+}
