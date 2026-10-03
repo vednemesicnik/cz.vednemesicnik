@@ -73,7 +73,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     }
 
     const notFoundData: NotFoundEpisodeData = {
-      podcastHref: href('/podcasts/:podcastSlug', { podcastSlug }),
+      podcastHref: href('/podcasts/:podcastSlug', {
+        podcastSlug: podcast.slug,
+      }),
     }
 
     throw data(notFoundData, { status: 404 })
