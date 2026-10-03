@@ -48,7 +48,8 @@ jobs:
           echo
           echo "    $TITLE"
           echo
-          echo "Squashing this PR writes that line into dev's history, so it has to read like"
-          echo "a commit, e.g. 'feat(administration): section error boundary'."
+          echo "The title lands in ${BASE}'s history (as the squash subject, or as the release"
+          echo "merge's title), so it has to read like a commit, e.g."
+          echo "'feat(administration): section error boundary'."
           echo "Types: ${types//|/, }."
           exit 1
