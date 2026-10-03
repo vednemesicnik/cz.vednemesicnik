@@ -28,6 +28,7 @@ const issueToken = async () => {
 const buildSubmission = (cookie: string | null, bodyToken?: string) => {
   const formData = new FormData()
   formData.append('name', 'Kultura')
+  formData.append('newPassword', 'secret-value')
   if (bodyToken !== undefined) formData.append(TOKEN_NAME, bodyToken)
 
   const headers = new Headers({
@@ -138,5 +139,11 @@ describe('checkCSRF', () => {
       initialValue: { name: 'Kultura' },
       status: 'error',
     })
+    expect(result?.data.submissionResult.initialValue).not.toHaveProperty(
+      'newPassword',
+    )
+    expect(result?.data.submissionResult.initialValue).not.toHaveProperty(
+      TOKEN_NAME,
+    )
   })
 })

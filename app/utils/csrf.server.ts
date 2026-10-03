@@ -161,7 +161,7 @@ export const requireCSRF = async (formData: FormData, request: Request) => {
  * Guards an action whose form stays on screen and shows its result (design 30h).
  * Checks the session first, then the token. An invalid token isn't thrown: the
  * returned reply puts `Stiskněte stejné tlačítko znovu — nic se neprovedlo.` on the
- * form and keeps the submitted values. The authenticated layout revalidates after a
+ * form and keeps the submitted values, except the token and passwords. The authenticated layout revalidates after a
  * 403, so the form gets a fresh token and the second press goes through.
  *
  * @param formData - The submitted form data.
@@ -174,11 +174,17 @@ export const checkCSRF = async (formData: FormData, request: Request) => {
   if (await isValidCSRF(formData, request.headers)) return null
 
   const submission = parseWithZod(formData, { schema: z.object({}) })
+  // The refused token and any password don't travel back with the kept values.
+  const hiddenFields = [...new Set(formData.keys())].filter(
+    (name) =>
+      name === FORM_CONFIG.authenticityToken.name || /password/i.test(name),
+  )
 
   return data(
     {
       submissionResult: submission.reply({
         formErrors: [adminCsrfFormMessage],
+        hideFields: hiddenFields,
       }),
     },
     { status: 403 },
