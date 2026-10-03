@@ -12,6 +12,7 @@ const forbiddenDataSchema = z.discriminatedUnion('cause', [
   z.object({
     actions: z.array(z.object({ href: z.string(), label: z.string() })),
     cause: z.literal('permission'),
+    pageTitle: z.string().optional(),
     reason: z.string(),
     title: z.string(),
   }),

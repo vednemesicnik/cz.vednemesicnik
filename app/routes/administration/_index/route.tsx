@@ -2,6 +2,7 @@
 
 import { href } from 'react-router'
 
+import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminNavigationCard } from '~/components/admin/admin-navigation-card'
 import { AdminNavigationGrid } from '~/components/admin/admin-navigation-grid'
@@ -214,3 +215,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
 export { loader } from './_loader'
 export { meta } from './_meta'
+
+// The dashboard sits outside the section layout; its own boundary keeps the sidebar.
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return <AdminBoundaryError error={error} />
+}

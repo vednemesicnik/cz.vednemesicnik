@@ -84,6 +84,7 @@ export const resolveAdminBoundary = (
       return {
         actions: forbiddenData.actions,
         highlightsSection: true,
+        pageTitle: forbiddenData.pageTitle,
         sentence: forbiddenData.reason,
         title: forbiddenData.title,
         unexpected: false,

@@ -4,30 +4,16 @@ import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
+import { useHighlightSidebarSection } from '~/components/admin/sidebar-highlight-provider'
 import { BoundaryDiagnostics } from '~/components/boundary-error/components/boundary-diagnostics'
-import {
-  type AdminContentKindMatch,
-  type ContentKind,
-  getAdminContentKind,
-} from '~/components/boundary-error/utils/content-kind'
-import { resolveAdminBoundary } from '~/components/boundary-error/utils/resolve-boundary'
+import type { ContentKind } from '~/components/boundary-error/utils/content-kind'
 
 import styles from './_styles.module.css'
+import { resolveAdminBoundaryView } from './utils/resolve-admin-boundary-view'
 
 type Props = {
   error: unknown
   kind?: ContentKind | null
-}
-
-const getMatch = (
-  pathname: string,
-  kind: ContentKind | null | undefined,
-): AdminContentKindMatch | null => {
-  const match = getAdminContentKind(pathname)
-
-  if (kind === undefined) return match
-  if (kind === null) return null
-  return { kind, podcastId: match?.podcastId }
 }
 
 /**
@@ -39,12 +25,10 @@ const getMatch = (
  *   a 404 as an address that doesn't exist.
  */
 export const AdminBoundaryError = ({ error, kind }: Props) => {
-  const { pathname, search } = useLocation()
-  const view = resolveAdminBoundary(
-    error,
-    getMatch(pathname, kind),
-    pathname + search,
-  )
+  const location = useLocation()
+  const view = resolveAdminBoundaryView(error, location, kind)
+
+  useHighlightSidebarSection(view.highlightsSection)
 
   return (
     <AdminPage>

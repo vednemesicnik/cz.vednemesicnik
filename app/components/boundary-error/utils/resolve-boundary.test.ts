@@ -158,6 +158,7 @@ describe('resolveAdminBoundary', () => {
     expect(view).toEqual({
       actions: [{ href, label }],
       highlightsSection: true,
+      pageTitle: title,
       sentence: 'Zkontrolujte adresu nebo přejděte na přehled.',
       title,
       unexpected: false,
@@ -181,6 +182,7 @@ describe('resolveAdminBoundary', () => {
     expect(resolveAdminBoundary(notFound, null, currentHref)).toEqual({
       actions: [{ href: '/administration', label: 'Na přehled' }],
       highlightsSection: false,
+      pageTitle: 'Stránka nenalezena',
       sentence: 'Zkontrolujte adresu nebo pokračujte z přehledu.',
       title: 'Stránka v administraci není',
       unexpected: false,
@@ -233,6 +235,7 @@ describe('resolveAdminBoundary', () => {
         },
       ],
       highlightsSection: true,
+      pageTitle: 'Akce se neprovedla',
       sentence: 'Načtěte stránku znovu a akci zopakujte.',
       title: 'Akce se neprovedla',
       unexpected: false,
@@ -265,6 +268,7 @@ describe('resolveAdminBoundary', () => {
     expect(view).toEqual({
       actions: [{ href: '/administration', label: 'Na přehled' }],
       highlightsSection: false,
+      pageTitle: 'Akci nelze provést',
       sentence: 'Přejděte na přehled.',
       title: 'Akci nelze provést',
       unexpected: false,
@@ -280,6 +284,7 @@ describe('resolveAdminBoundary', () => {
     expect(resolveAdminBoundary(error, null, currentHref)).toEqual({
       actions: [{ href: currentHref, label: 'Zkusit znovu', reload: true }],
       highlightsSection: true,
+      pageTitle: 'Chyba načítání',
       sentence: 'Zkuste stránku načíst znovu.',
       title: 'Stránku se nepodařilo načíst',
       unexpected: true,
