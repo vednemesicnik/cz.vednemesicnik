@@ -6,6 +6,7 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 import {
   getWebContentVisibility,
   ownArticle,
@@ -33,10 +34,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   }
 
   const url = new URL(request.url)
-  const currentPage = Math.max(
-    1,
-    Number(url.searchParams.get(PAGE_PARAM) ?? '1') || 1,
-  )
+  const currentPage = parsePositiveIntegerParam(url.searchParams, PAGE_PARAM, 1)
 
   const where = {
     ...visibility.where('article', ownArticle),

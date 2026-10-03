@@ -1,4 +1,5 @@
 import { PAGE_PARAM } from '~/components/pagination'
+import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 
 export const SORT_PARAM = 'sort'
 export const ORDER_PARAM = 'order'
@@ -36,7 +37,7 @@ export const parseAdminListParams = <TSortKey extends string>(
 
   const query = (url.searchParams.get(SEARCH_PARAM) ?? '').trim()
 
-  const page = Math.max(1, Number(url.searchParams.get(PAGE_PARAM) ?? '1') || 1)
+  const page = parsePositiveIntegerParam(url.searchParams, PAGE_PARAM, 1)
 
   return { order, page, query, sort }
 }

@@ -12,6 +12,7 @@ import { TileGridItem } from '~/components/tile-grid-item'
 import { LIMIT_PARAM, LIMIT_STEP } from '~/config/load-more-config'
 import { sizeConfig } from '~/config/size-config'
 import { getRevealProps } from '~/utils/get-reveal-props'
+import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 import { useRevealBatchStart } from '~/utils/use-reveal-batch-start'
 import type { Route } from './+types/route'
 
@@ -31,7 +32,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { issues, issuesCount } = loaderData
 
   const [searchParams] = useSearchParams()
-  const limit = Number(searchParams.get(LIMIT_PARAM) ?? String(LIMIT_STEP))
+  const limit = parsePositiveIntegerParam(searchParams, LIMIT_PARAM, LIMIT_STEP)
   const revealBatchStart = useRevealBatchStart(limit)
 
   // Filtered up front: the reveal chain and the cover priority below are keyed
