@@ -21,8 +21,13 @@ const getDiagnosticMessage = (error: unknown) => {
   return `${status}: ${data}`
 }
 
-// Development only (design 30g): production HTML never carries a message or stack —
-// the server log has them.
+/**
+ * Error message and stack under a boundary's sentence, in development only
+ * (design 30g). Production HTML never carries them — the server log has them.
+ *
+ * @param error - The error handed to the boundary.
+ * @param className - Placement override from the rendering boundary.
+ */
 export const BoundaryDiagnostics = ({ error, className }: Props) => {
   if (!import.meta.env.DEV) return null
 
