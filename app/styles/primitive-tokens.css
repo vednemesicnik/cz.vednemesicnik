@@ -16,7 +16,7 @@
     --color-white: #ffffff;
     --color-black: #000000;
 
-    /* Charcoal — unified cool-neutral scale (public interface)
+    /* Charcoal — cool-neutral scale for the public web and the administration
        Tints  50–300: light backgrounds, dark mode text
        Shades 600–950: dark backgrounds, light mode text
        Middle 400–500: borders, tertiary text, disabled states */
@@ -31,22 +31,6 @@
     --color-charcoal-800: #1a1d24;
     --color-charcoal-900: #121418;
     --color-charcoal-950: #0a0a0f;
-
-    /* Midnight — violet-tinted neutral scale (admin interface)
-       Tints  50–300: light backgrounds, dark mode text
-       Shades 600–950: dark backgrounds, light mode text
-       Middle 400–500: borders, tertiary text, disabled states */
-    --color-midnight-50: #f5f5fc;
-    --color-midnight-100: #eaeaf5;
-    --color-midnight-200: #d4d4e4;
-    --color-midnight-300: #b2b2c8;
-    --color-midnight-400: #8787a0;
-    --color-midnight-500: #52526b;
-    --color-midnight-600: #3d3d52;
-    --color-midnight-700: #372554;
-    --color-midnight-800: #2d2d44;
-    --color-midnight-900: #1a1a2e;
-    --color-midnight-950: #0f0f1a;
 
     /* Accent ramps run 50–950 like charcoal; step 200 is not used. */
 

@@ -24,7 +24,7 @@ const COLOR_FAMILIES: ColorFamily[] = [
   },
   {
     description:
-      'Sjednocená chladná neutrální škála pro veřejné rozhraní. Světlé tóny (50–300) pro pozadí a text v tmavém režimu, tmavé tóny (600–950) pro pozadí v tmavém režimu a text ve světlém režimu, střední tóny (400–500) pro ohraničení, terciární text a disabled stavy.',
+      'Chladná neutrální škála pro veřejný web i administraci. Světlé tóny (50–300) pro pozadí a text v tmavém režimu, tmavé tóny (600–950) pro pozadí v tmavém režimu a text ve světlém režimu, střední tóny (400–500) pro ohraničení, terciární text a disabled stavy.',
     title: 'Charcoal',
     tokens: [
       { name: 'color-charcoal-50', value: '#f8fafb' },
@@ -38,24 +38,6 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-charcoal-800', value: '#1a1d24' },
       { name: 'color-charcoal-900', value: '#121418' },
       { name: 'color-charcoal-950', value: '#0a0a0f' },
-    ],
-  },
-  {
-    description:
-      'Fialově zbarvená neutrální škála pro administrátorské rozhraní. Stejné rozložení tónů jako Charcoal.',
-    title: 'Midnight',
-    tokens: [
-      { name: 'color-midnight-50', value: '#f5f5fc' },
-      { name: 'color-midnight-100', value: '#eaeaf5' },
-      { name: 'color-midnight-200', value: '#d4d4e4' },
-      { name: 'color-midnight-300', value: '#b2b2c8' },
-      { name: 'color-midnight-400', value: '#8787a0' },
-      { name: 'color-midnight-500', value: '#52526b' },
-      { name: 'color-midnight-600', value: '#3d3d52' },
-      { name: 'color-midnight-700', value: '#372554' },
-      { name: 'color-midnight-800', value: '#2d2d44' },
-      { name: 'color-midnight-900', value: '#1a1a2e' },
-      { name: 'color-midnight-950', value: '#0f0f1a' },
     ],
   },
   {
@@ -287,8 +269,8 @@ function PrimitiveTokens() {
         <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>
           Surové pojmenované hodnoty barev z <code>primitive-tokens.css</code>.
           Tyto tokeny nemají sémantický význam a jsou referencovány z{' '}
-          <code>public-tokens.css</code> a <code>admin-tokens.css</code>. V
-          komponentách je nikdy nepoužívej přímo.
+          <code>semantic-tokens.css</code>. V komponentách je nikdy nepoužívej
+          přímo.
         </p>
       </div>
 
@@ -305,7 +287,7 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          'Přehled primitivních barevných tokenů. Jedná se o surové hodnoty bez sémantického významu — základ pro public a admin tokeny.',
+          'Přehled primitivních barevných tokenů. Jedná se o surové hodnoty bez sémantického významu — základ pro sémantické tokeny.',
       },
     },
     layout: 'fullscreen',
@@ -321,6 +303,6 @@ type Story = StoryObj<typeof meta>
 /**
  * Kompletní přehled všech primitivních barevných tokenů.
  * Tyto tokeny tvoří základ design systému a jsou dále referencovány
- * sémantickými tokeny ve veřejném a administrátorském rozhraní.
+ * sémantickými tokeny.
  */
 export const Colors: Story = {}
