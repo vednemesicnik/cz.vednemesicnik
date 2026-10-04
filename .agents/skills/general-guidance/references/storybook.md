@@ -83,4 +83,4 @@ Storybook preview (`/.storybook/preview.ts`) imports:
 - `~/styles/primitive-tokens.css`
 - `~/styles/semantic-tokens.css`
 
-`semantic-tokens.css` provides both themes: public tokens on `:root`, admin overrides under `[data-theme='admin']`. The preview exposes a `theme` toolbar (public/admin) that toggles `data-theme` on `<html>`; admin components/stories should render under the admin theme.
+`semantic-tokens.css` is one role map for the public web and the administration, light/dark via `light-dark()`. The preview's `Color Scheme` toolbar switches `color-scheme` on `<html>`.
