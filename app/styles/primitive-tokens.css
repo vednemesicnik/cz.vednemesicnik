@@ -48,9 +48,12 @@
     --color-midnight-900: #1a1a2e;
     --color-midnight-950: #0f0f1a;
 
+    /* Accent ramps run 50–950 like charcoal; step 200 is not used. */
+
     /* ========================================
        Violet
        ======================================== */
+    --color-violet-50: #f5f3ff;
     --color-violet-100: #ede9fe;
     --color-violet-300: #c4b5fd;
     --color-violet-400: #a78bfa;
@@ -59,10 +62,12 @@
     --color-violet-700: #6d28d9;
     --color-violet-800: #5b21b6;
     --color-violet-900: #4c1d95;
+    --color-violet-950: #2e1065;
 
     /* ========================================
        Emerald
        ======================================== */
+    --color-emerald-50: #ecfdf5;
     --color-emerald-100: #d1fae5;
     --color-emerald-300: #6ee7b7;
     --color-emerald-400: #34d399;
@@ -71,10 +76,12 @@
     --color-emerald-700: #047857;
     --color-emerald-800: #065f46;
     --color-emerald-900: #064e3b;
+    --color-emerald-950: #022c22;
 
     /* ========================================
        Amber
        ======================================== */
+    --color-amber-50: #fffbeb;
     --color-amber-100: #fef3c7;
     --color-amber-300: #fcd34d;
     --color-amber-400: #fbbf24;
@@ -83,10 +90,12 @@
     --color-amber-700: #b45309;
     --color-amber-800: #92400e;
     --color-amber-900: #78350f;
+    --color-amber-950: #451a03;
 
     /* ========================================
        Rose
        ======================================== */
+    --color-rose-50: #fff1f2;
     --color-rose-100: #ffe4e6;
     --color-rose-300: #fda4af;
     --color-rose-400: #fb7185;
@@ -95,10 +104,12 @@
     --color-rose-700: #be123c;
     --color-rose-800: #9f1239;
     --color-rose-900: #881337;
+    --color-rose-950: #4c0519;
 
     /* ========================================
        Azure
        ======================================== */
+    --color-azure-50: #eff6ff;
     --color-azure-100: #dbeafe;
     --color-azure-300: #93c5fd;
     --color-azure-400: #60a5fa;
@@ -107,5 +118,6 @@
     --color-azure-700: #1d4ed8;
     --color-azure-800: #1e40af;
     --color-azure-900: #1e3a8a;
+    --color-azure-950: #172554;
   }
 }

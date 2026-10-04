@@ -62,6 +62,7 @@ const COLOR_FAMILIES: ColorFamily[] = [
     description: 'Primární UI barva pro tlačítka, odkazy a akcenty.',
     title: 'Violet',
     tokens: [
+      { name: 'color-violet-50', value: '#f5f3ff' },
       { name: 'color-violet-100', value: '#ede9fe' },
       { name: 'color-violet-300', value: '#c4b5fd' },
       { name: 'color-violet-400', value: '#a78bfa' },
@@ -70,6 +71,7 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-violet-700', value: '#6d28d9' },
       { name: 'color-violet-800', value: '#5b21b6' },
       { name: 'color-violet-900', value: '#4c1d95' },
+      { name: 'color-violet-950', value: '#2e1065' },
     ],
   },
   {
@@ -77,6 +79,7 @@ const COLOR_FAMILIES: ColorFamily[] = [
       'Sekundární barva inspirovaná logem VDM (#5cffa3). Použita pro akcenty a odznaky.',
     title: 'Emerald',
     tokens: [
+      { name: 'color-emerald-50', value: '#ecfdf5' },
       { name: 'color-emerald-100', value: '#d1fae5' },
       { name: 'color-emerald-300', value: '#6ee7b7' },
       { name: 'color-emerald-400', value: '#34d399' },
@@ -85,12 +88,14 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-emerald-700', value: '#047857' },
       { name: 'color-emerald-800', value: '#065f46' },
       { name: 'color-emerald-900', value: '#064e3b' },
+      { name: 'color-emerald-950', value: '#022c22' },
     ],
   },
   {
     description: 'Použita pro warning stavy a odznaky.',
     title: 'Amber',
     tokens: [
+      { name: 'color-amber-50', value: '#fffbeb' },
       { name: 'color-amber-100', value: '#fef3c7' },
       { name: 'color-amber-300', value: '#fcd34d' },
       { name: 'color-amber-400', value: '#fbbf24' },
@@ -99,12 +104,14 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-amber-700', value: '#b45309' },
       { name: 'color-amber-800', value: '#92400e' },
       { name: 'color-amber-900', value: '#78350f' },
+      { name: 'color-amber-950', value: '#451a03' },
     ],
   },
   {
     description: 'Použita pro error stavy a odznaky.',
     title: 'Rose',
     tokens: [
+      { name: 'color-rose-50', value: '#fff1f2' },
       { name: 'color-rose-100', value: '#ffe4e6' },
       { name: 'color-rose-300', value: '#fda4af' },
       { name: 'color-rose-400', value: '#fb7185' },
@@ -113,12 +120,14 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-rose-700', value: '#be123c' },
       { name: 'color-rose-800', value: '#9f1239' },
       { name: 'color-rose-900', value: '#881337' },
+      { name: 'color-rose-950', value: '#4c0519' },
     ],
   },
   {
     description: 'Použita pro info stavy.',
     title: 'Azure',
     tokens: [
+      { name: 'color-azure-50', value: '#eff6ff' },
       { name: 'color-azure-100', value: '#dbeafe' },
       { name: 'color-azure-300', value: '#93c5fd' },
       { name: 'color-azure-400', value: '#60a5fa' },
@@ -127,6 +136,7 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-azure-700', value: '#1d4ed8' },
       { name: 'color-azure-800', value: '#1e40af' },
       { name: 'color-azure-900', value: '#1e3a8a' },
+      { name: 'color-azure-950', value: '#172554' },
     ],
   },
 ]
