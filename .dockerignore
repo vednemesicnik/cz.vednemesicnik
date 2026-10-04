@@ -37,3 +37,7 @@ fly.toml
 
 # Ignore cache files
 .cache
+
+# Ignore agent tooling (local Claude Code settings, skills)
+.claude
+.agents
