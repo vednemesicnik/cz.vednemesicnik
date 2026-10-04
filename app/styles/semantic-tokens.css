@@ -3,9 +3,10 @@
  *
  * The roles components consume — one map for the public web and the
  * administration, mirroring tokens/semantic.css of the design system role
- * for role. Every role is light-dark(<light>, <dark>) with exactly the design
- * system's two values, built from primitives; the active value follows
- * color-scheme (global.css). An alpha value is color-mix() of a primitive.
+ * for role. Each role carries exactly the design system's light and dark
+ * value as light-dark(<light>, <dark>) built from primitives (transparent and
+ * the pre-redesign aliases aside); the active value follows color-scheme
+ * (global.css). An alpha value is color-mix() of a primitive.
  *
  * Requires primitive-tokens.css to be loaded first.
  * Imported globally in app/root.tsx.
