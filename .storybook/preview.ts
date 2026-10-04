@@ -19,23 +19,8 @@ const withColorScheme: Decorator = (Story, context) => {
   return Story()
 }
 
-// Custom decorator to toggle the public/admin theme (data-theme on <html>)
-const withTheme: Decorator = (Story, context) => {
-  const theme = context.globals.theme || 'public'
-
-  useEffect(() => {
-    if (theme === 'admin') {
-      document.documentElement.dataset.theme = 'admin'
-    } else {
-      delete document.documentElement.dataset.theme
-    }
-  }, [theme])
-
-  return Story()
-}
-
 const preview: Preview = {
-  decorators: [withColorScheme, withTheme],
+  decorators: [withColorScheme],
 
   globalTypes: {
     colorScheme: {
@@ -49,19 +34,6 @@ const preview: Preview = {
           { icon: 'moon', title: 'Dark', value: 'dark' },
         ],
         title: 'Color Scheme',
-      },
-    },
-    theme: {
-      defaultValue: 'public',
-      description: 'Interface theme (public website / administration)',
-      toolbar: {
-        dynamicTitle: true,
-        icon: 'paintbrush',
-        items: [
-          { title: 'Public', value: 'public' },
-          { title: 'Admin', value: 'admin' },
-        ],
-        title: 'Theme',
       },
     },
   },

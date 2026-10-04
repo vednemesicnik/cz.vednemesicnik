@@ -10,7 +10,6 @@ import {
   redirect,
   Scripts,
   ScrollRestoration,
-  useLocation,
 } from 'react-router'
 
 import '~/styles/global.css'
@@ -53,14 +52,12 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { pathname } = useLocation()
-  const theme = pathname.startsWith('/administration') ? 'admin' : undefined
-
   return (
-    <html data-theme={theme} lang="cs-CZ">
+    <html lang="cs-CZ">
       <head>
         <meta charSet="utf-8" />
         <meta content="width=device-width, initial-scale=1" name="viewport" />
+        <meta content="light dark" name="color-scheme" />
         <Meta />
         <Links />
       </head>

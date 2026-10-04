@@ -24,7 +24,7 @@ const COLOR_FAMILIES: ColorFamily[] = [
   },
   {
     description:
-      'Sjednocená chladná neutrální škála pro veřejné rozhraní. Světlé tóny (50–300) pro pozadí a text v tmavém režimu, tmavé tóny (600–950) pro pozadí v tmavém režimu a text ve světlém režimu, střední tóny (400–500) pro ohraničení, terciární text a disabled stavy.',
+      'Chladná neutrální škála pro veřejný web i administraci. Světlé tóny (50–300) pro pozadí a text v tmavém režimu, tmavé tóny (600–950) pro pozadí v tmavém režimu a text ve světlém režimu, střední tóny (400–500) pro ohraničení, terciární text a disabled stavy.',
     title: 'Charcoal',
     tokens: [
       { name: 'color-charcoal-50', value: '#f8fafb' },
@@ -41,27 +41,10 @@ const COLOR_FAMILIES: ColorFamily[] = [
     ],
   },
   {
-    description:
-      'Fialově zbarvená neutrální škála pro administrátorské rozhraní. Stejné rozložení tónů jako Charcoal.',
-    title: 'Midnight',
-    tokens: [
-      { name: 'color-midnight-50', value: '#f5f5fc' },
-      { name: 'color-midnight-100', value: '#eaeaf5' },
-      { name: 'color-midnight-200', value: '#d4d4e4' },
-      { name: 'color-midnight-300', value: '#b2b2c8' },
-      { name: 'color-midnight-400', value: '#8787a0' },
-      { name: 'color-midnight-500', value: '#52526b' },
-      { name: 'color-midnight-600', value: '#3d3d52' },
-      { name: 'color-midnight-700', value: '#372554' },
-      { name: 'color-midnight-800', value: '#2d2d44' },
-      { name: 'color-midnight-900', value: '#1a1a2e' },
-      { name: 'color-midnight-950', value: '#0f0f1a' },
-    ],
-  },
-  {
     description: 'Primární UI barva pro tlačítka, odkazy a akcenty.',
     title: 'Violet',
     tokens: [
+      { name: 'color-violet-50', value: '#f5f3ff' },
       { name: 'color-violet-100', value: '#ede9fe' },
       { name: 'color-violet-300', value: '#c4b5fd' },
       { name: 'color-violet-400', value: '#a78bfa' },
@@ -70,6 +53,7 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-violet-700', value: '#6d28d9' },
       { name: 'color-violet-800', value: '#5b21b6' },
       { name: 'color-violet-900', value: '#4c1d95' },
+      { name: 'color-violet-950', value: '#2e1065' },
     ],
   },
   {
@@ -77,6 +61,7 @@ const COLOR_FAMILIES: ColorFamily[] = [
       'Sekundární barva inspirovaná logem VDM (#5cffa3). Použita pro akcenty a odznaky.',
     title: 'Emerald',
     tokens: [
+      { name: 'color-emerald-50', value: '#ecfdf5' },
       { name: 'color-emerald-100', value: '#d1fae5' },
       { name: 'color-emerald-300', value: '#6ee7b7' },
       { name: 'color-emerald-400', value: '#34d399' },
@@ -85,12 +70,14 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-emerald-700', value: '#047857' },
       { name: 'color-emerald-800', value: '#065f46' },
       { name: 'color-emerald-900', value: '#064e3b' },
+      { name: 'color-emerald-950', value: '#022c22' },
     ],
   },
   {
     description: 'Použita pro warning stavy a odznaky.',
     title: 'Amber',
     tokens: [
+      { name: 'color-amber-50', value: '#fffbeb' },
       { name: 'color-amber-100', value: '#fef3c7' },
       { name: 'color-amber-300', value: '#fcd34d' },
       { name: 'color-amber-400', value: '#fbbf24' },
@@ -99,12 +86,14 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-amber-700', value: '#b45309' },
       { name: 'color-amber-800', value: '#92400e' },
       { name: 'color-amber-900', value: '#78350f' },
+      { name: 'color-amber-950', value: '#451a03' },
     ],
   },
   {
     description: 'Použita pro error stavy a odznaky.',
     title: 'Rose',
     tokens: [
+      { name: 'color-rose-50', value: '#fff1f2' },
       { name: 'color-rose-100', value: '#ffe4e6' },
       { name: 'color-rose-300', value: '#fda4af' },
       { name: 'color-rose-400', value: '#fb7185' },
@@ -113,12 +102,14 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-rose-700', value: '#be123c' },
       { name: 'color-rose-800', value: '#9f1239' },
       { name: 'color-rose-900', value: '#881337' },
+      { name: 'color-rose-950', value: '#4c0519' },
     ],
   },
   {
     description: 'Použita pro info stavy.',
     title: 'Azure',
     tokens: [
+      { name: 'color-azure-50', value: '#eff6ff' },
       { name: 'color-azure-100', value: '#dbeafe' },
       { name: 'color-azure-300', value: '#93c5fd' },
       { name: 'color-azure-400', value: '#60a5fa' },
@@ -127,6 +118,7 @@ const COLOR_FAMILIES: ColorFamily[] = [
       { name: 'color-azure-700', value: '#1d4ed8' },
       { name: 'color-azure-800', value: '#1e40af' },
       { name: 'color-azure-900', value: '#1e3a8a' },
+      { name: 'color-azure-950', value: '#172554' },
     ],
   },
 ]
@@ -277,8 +269,8 @@ function PrimitiveTokens() {
         <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>
           Surové pojmenované hodnoty barev z <code>primitive-tokens.css</code>.
           Tyto tokeny nemají sémantický význam a jsou referencovány z{' '}
-          <code>public-tokens.css</code> a <code>admin-tokens.css</code>. V
-          komponentách je nikdy nepoužívej přímo.
+          <code>semantic-tokens.css</code>. V komponentách je nikdy nepoužívej
+          přímo.
         </p>
       </div>
 
@@ -295,7 +287,7 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          'Přehled primitivních barevných tokenů. Jedná se o surové hodnoty bez sémantického významu — základ pro public a admin tokeny.',
+          'Přehled primitivních barevných tokenů. Jedná se o surové hodnoty bez sémantického významu — základ pro sémantické tokeny.',
       },
     },
     layout: 'fullscreen',
@@ -311,6 +303,6 @@ type Story = StoryObj<typeof meta>
 /**
  * Kompletní přehled všech primitivních barevných tokenů.
  * Tyto tokeny tvoří základ design systému a jsou dále referencovány
- * sémantickými tokeny ve veřejném a administrátorském rozhraní.
+ * sémantickými tokeny.
  */
 export const Colors: Story = {}
