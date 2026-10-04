@@ -9,6 +9,7 @@
 
     @media all and (min-width: 480px) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 28px;
     }
 
     @media all and (min-width: 690px) {
@@ -23,6 +24,19 @@
     position: relative;
     grid-auto-rows: max-content;
     row-gap: 12px;
+
+    /* Two columns (design 10f): the longest column on the left, the rest stacked on the right */
+    @media all and (min-width: 480px) {
+      &:first-child {
+        grid-row: span 3;
+      }
+    }
+
+    @media all and (min-width: 690px) {
+      &:first-child {
+        grid-row: auto;
+      }
+    }
   }
 }
 
