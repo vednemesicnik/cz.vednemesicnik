@@ -156,7 +156,7 @@ Archived content can be restored to draft (Coordinator only).
 - `app/components/` - Reusable UI components (each with its own directory containing component file and CSS module)
 - `app/routes/` - Route-specific components organized by route path
 - `app/utils/` - Server and client utilities
-- `app/styles/` - Global CSS: primitive tokens (`primitive-tokens.css`), semantic tokens with public/admin themes (`semantic-tokens.css`), fonts, sizes, global styles
+- `app/styles/` - Global CSS: primitive tokens (`primitive-tokens.css`), semantic tokens — one role map, light/dark via `light-dark()` (`semantic-tokens.css`), fonts, sizes, global styles
 
 Each component lives in its own kebab-case directory: `_component.tsx`, `_styles.module.css` and `index.ts`, with stories in `_component.stories.tsx` (see `.agents/skills/general-guidance/references/storybook.md`).
 
