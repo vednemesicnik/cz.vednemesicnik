@@ -5,4 +5,4 @@ Disallow: /archive/
 Disallow: /health/
 Allow: /
 
-# Sitemap: https://vednemesicnik.cz/sitemap/sitemap-index.xml TODO: Uncomment when ready
+Sitemap: https://vednemesicnik.cz/sitemap.xml

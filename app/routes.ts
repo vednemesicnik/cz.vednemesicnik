@@ -15,6 +15,9 @@ export default [
   // Health check route
   route('health', 'routes/health/route.ts'),
 
+  // Sitemap of public pages for crawlers (linked from public/robots.txt)
+  route('sitemap.xml', 'routes/sitemap/route.ts'),
+
   // Website
   layout('routes/__layout/route.tsx', [
     // Home route
