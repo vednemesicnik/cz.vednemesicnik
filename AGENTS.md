@@ -47,13 +47,14 @@ Claude Code discovers project skills only in `.claude/skills/`, which is gitigno
 skills live in `.agents/skills/` and are linked in one symlink per skill:
 
 ```bash
-pnpm claude:skills:link            # Link .agents/skills/* into .claude/skills (runs on pnpm install)
+pnpm claude:skills:link            # Link .agents/skills/* into .claude/skills
 ```
 
-The `prepare` script runs it on every `pnpm install`. It is idempotent, removes links to
-deleted skills, and never replaces a real file or directory in `.claude/skills`, so
-personal skills can sit next to the linked ones. In a Claude Code cloud environment, have
-the setup script run `pnpm install` (or `pnpm claude:skills:link`).
+Run it after cloning and after a pull that adds a skill; in a Claude Code cloud
+environment, have the setup script run it. It is idempotent, removes links to deleted
+skills, and never replaces a real file or directory in `.claude/skills`, so personal
+skills can sit next to the linked ones. Git worktrees under `.claude/worktrees/` pick up
+the main checkout's links.
 
 ### Branching & Pull Requests
 
@@ -297,7 +298,7 @@ Node.js >= 26.0.0 required (see `engines.node` in `package.json`; `.nvmrc` pins 
 ## Agent Skills
 
 Load only the skills that apply to your current task. They live in `.agents/skills/`;
-`pnpm install` links them into `.claude/skills/` so Claude Code can invoke them as slash
+`pnpm claude:skills:link` links them into `.claude/skills/` so Claude Code can invoke them as slash
 commands (see [Claude Code Skills](#claude-code-skills)).
 
 ### General Guidance

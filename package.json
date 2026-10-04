@@ -93,7 +93,6 @@
     "lefthook:install": "lefthook install",
     "lefthook:pre-commit": "lefthook run pre-commit",
     "lefthook:pre-push": "lefthook run pre-push",
-    "prepare": "[ ! -f ./scripts/link-claude-skills.sh ] || sh ./scripts/link-claude-skills.sh",
     "prisma:db:push": "prisma db push",
     "prisma:db:seed": "prisma db seed",
     "prisma:format": "prisma format",
