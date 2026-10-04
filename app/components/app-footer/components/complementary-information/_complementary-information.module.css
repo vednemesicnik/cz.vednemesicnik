@@ -1,28 +1,28 @@
 .container {
-  display: grid;
-  position: relative;
-  grid-auto-flow: row;
-  row-gap: 8px;
-  grid-area: description;
-  align-self: center;
+  @layer component {
+    display: grid;
+    position: relative;
+    grid-auto-flow: row;
+    row-gap: 8px;
+    grid-area: description;
+    align-self: center;
+  }
 }
 
 .operatorSection {
-  display: grid;
-  position: relative;
-  grid-auto-flow: row;
-  row-gap: 8px;
+  @layer component {
+    display: grid;
+    position: relative;
+    grid-auto-flow: row;
+    row-gap: 8px;
+  }
 }
 
 .descriptionText {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  margin: 0;
-  color: var(--text-tertiary);
-}
-
-@media all and (max-width: 689px) {
-  .descriptionText {
-    text-align: center;
+  @layer component {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-regular);
+    margin: 0;
+    color: var(--text-tertiary);
   }
 }

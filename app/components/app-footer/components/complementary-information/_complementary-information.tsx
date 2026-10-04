@@ -7,8 +7,7 @@ export const ComplementaryInformation = () => {
       <section className={styles.operatorSection}>
         <h3 className={'screen-reader-only'}>Provozovatel</h3>
         <p className={styles.descriptionText}>
-          Webové stránky provozuje Vedneměsíčník,&nbsp;z.&nbsp;s.
-          IČO:&nbsp;22851356
+          Web provozuje Vedneměsíčník,&nbsp;z.&nbsp;s. · IČO:&nbsp;22851356
         </p>
       </section>
     </section>
