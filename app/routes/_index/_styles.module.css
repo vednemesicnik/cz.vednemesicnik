@@ -13,7 +13,7 @@
     font-size: min(44px, 100cqi / 7);
     line-height: 1.1;
 
-    @media (width > 768px) {
+    @media (width >= 768px) {
       --wordmark-letter-spacing: -0.03em;
 
       font-size: 76px;

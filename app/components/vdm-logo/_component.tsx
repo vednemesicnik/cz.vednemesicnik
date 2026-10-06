@@ -1,4 +1,5 @@
 import { clsx } from 'clsx'
+import { useId } from 'react'
 
 import styles from './_styles.module.css'
 
@@ -9,6 +10,10 @@ type Props = {
 }
 
 export const VdmLogo = ({ className, variant = 'default' }: Props) => {
+  // Each logo needs its own ids: the header and the open menu render one each.
+  const clipId = useId()
+  const gradientId = useId()
+
   return (
     <svg
       aria-label={'Logo VDM'}
@@ -24,12 +29,12 @@ export const VdmLogo = ({ className, variant = 'default' }: Props) => {
       width={'100%'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
-      <clipPath id={'_clip1'}>
+      <clipPath id={clipId}>
         <rect height={'1000'} width={'1000'} x={'0'} y={'0'} />
       </clipPath>
-      <g clipPath={'url(#_clip1)'}>
+      <g clipPath={`url(#${clipId})`}>
         <rect
-          className={styles.gradientRect}
+          fill={`url(#${gradientId})`}
           height={'696'}
           width={'168'}
           x={'608'}
@@ -50,7 +55,7 @@ export const VdmLogo = ({ className, variant = 'default' }: Props) => {
         <linearGradient
           gradientTransform={'matrix(576,-696,696,576,200,848)'}
           gradientUnits={'userSpaceOnUse'}
-          id={'logo_linear_gradient'}
+          id={gradientId}
           x1={'0'}
           x2={'1'}
           y1={'0'}

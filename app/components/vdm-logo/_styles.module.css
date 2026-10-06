@@ -22,10 +22,6 @@
 }
 
 /* SVG element styles */
-.gradientRect {
-  fill: url(#logo_linear_gradient);
-}
-
 .mainPath {
   fill: var(--vdm-logo-main);
 }

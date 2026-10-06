@@ -6,12 +6,23 @@
     align-items: center;
     justify-items: start;
     text-decoration: none;
+
+    &:focus-visible {
+      border-radius: var(--radius-sm);
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
   }
 }
 
 .logo {
   @layer component {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
+
+    @media (width >= 768px) {
+      width: 40px;
+      height: 40px;
+    }
   }
 }
