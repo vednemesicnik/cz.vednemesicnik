@@ -1,0 +1,120 @@
+/* 0 → 1 while a letter turns: an integer rounds at the midpoint, so the slice of the
+   mirrored gradient takes over when the letter stands edge-on. */
+@property --wordmark-mirror {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+
+/* Today's headline wave: the gradient drifts between 5 % and 95 % of its width. */
+@property --wordmark-wave {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.05;
+}
+
+.wordmark {
+  @layer component {
+    --wordmark-letter-spacing: -0.02em;
+
+    display: inline-flex;
+    margin: 0;
+    font-weight: var(--font-weight-bold);
+    line-height: 1.1;
+    letter-spacing: var(--wordmark-letter-spacing);
+  }
+}
+
+.letters {
+  @layer component {
+    /* The box the gradient is laid over, as the whole name's headline had it:
+       200 % of the name in both directions. */
+    --name-width: calc(
+      var(--name-advance) *
+      1em +
+      13 *
+      var(--wordmark-letter-spacing)
+    );
+    --name-height: 1.1em;
+
+    display: inline-flex;
+    animation: wordmark-wave 6s ease-in-out infinite;
+  }
+}
+
+.letter {
+  @layer component {
+    /* The letter's padding box in the name's coordinates; padding and the negative
+       margin give accents and the tight spacing room (design 10e, wibae16n). */
+    --letter-x: calc(
+      var(--advance-before) *
+      1em +
+      var(--position) *
+      var(--wordmark-letter-spacing) -
+      0.1em
+    );
+    --letter-y: -0.2em;
+    --letter-width: calc(
+      var(--advance) *
+      1em +
+      var(--wordmark-letter-spacing) +
+      0.2em
+    );
+
+    display: inline-block;
+    padding: 0.2em 0.1em 0;
+    margin: -0.2em -0.1em 0;
+    color: transparent;
+    background-image: var(--gradient-signature), var(--gradient-signature-flip);
+    background-repeat: no-repeat;
+    background-clip: text;
+    background-size:
+      calc((1 - var(--wordmark-mirror)) * 2 * var(--name-width))
+      calc(2 * var(--name-height)),
+      calc(var(--wordmark-mirror) * 2 * var(--name-width))
+      calc(2 * var(--name-height));
+    background-position:
+      calc(-1 * (var(--wordmark-wave) * var(--name-width) + var(--letter-x)))
+      calc(-1 * (var(--name-height) + var(--letter-y))),
+      calc(
+        var(--letter-x) +
+        var(--letter-width) +
+        var(--wordmark-wave) *
+        var(--name-width) -
+        2 *
+        var(--name-width)
+      )
+      calc(-1 * (var(--name-height) + var(--letter-y)));
+  }
+}
+
+.mirroredLetter {
+  @layer component {
+    --wordmark-mirror: 1;
+
+    rotate: y 180deg;
+    backface-visibility: visible;
+    transition-property: rotate, --wordmark-mirror;
+    transition-duration: 300ms;
+    transition-timing-function: ease-in-out;
+    transition-delay: calc(var(--flip-index) * 100ms);
+
+    /* Upright until the turn; no transition into this state. */
+    [data-pending] & {
+      --wordmark-mirror: 0;
+
+      rotate: none;
+      transition: none;
+    }
+  }
+}
+
+@keyframes wordmark-wave {
+  0%,
+  100% {
+    --wordmark-wave: 0.05;
+  }
+  50% {
+    --wordmark-wave: 0.95;
+  }
+}
