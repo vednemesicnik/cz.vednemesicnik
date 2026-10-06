@@ -3,19 +3,11 @@ import { VdmLogo } from '~/components/vdm-logo'
 
 import styles from './_styles.module.css'
 
-type Props = {
-  children?: never
-  isInEditMode: boolean
-}
-
-export const HomeLink = ({ isInEditMode }: Props) => {
+export const HomeLink = () => {
   return (
     <BaseLink className={styles.link} to={'/'}>
-      <VdmLogo
-        className={styles.logo}
-        variant={isInEditMode ? 'editMode' : 'default'}
-      />
-      <span className={styles.name}>Vedneměsíčník</span>
+      <VdmLogo className={styles.logo} />
+      <span className={'screen-reader-only'}>Vedneměsíčník</span>
     </BaseLink>
   )
 }

@@ -13,14 +13,6 @@
   --vdm-logo-gradient-end: light-dark(#5cffa3, #6ee7b7);
 }
 
-/* Edit mode variant (red/purple theme) */
-.editMode {
-  --vdm-logo-main: light-dark(#ff5c5c, #f87171);
-  --vdm-logo-gradient-start: light-dark(#9e00b8, #a855f7);
-  --vdm-logo-gradient-mid: light-dark(#d6435d, #fb7185);
-  --vdm-logo-gradient-end: light-dark(#ff5c5c, #f87171);
-}
-
 /* Admin variant (yellow/amber theme - complementary to purple) */
 .admin {
   --vdm-logo-main: light-dark(#fbbf24, #fcd34d);

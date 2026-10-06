@@ -13,10 +13,9 @@ import type { Route } from './+types/route'
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const visibility = await getWebContentVisibility(request, ['article'])
 
-  const latestPublishedArticle = await prisma.article.findFirst({
-    orderBy: {
-      publishedAt: 'desc',
-    },
+  // The latest article and five more (design 10a).
+  const articles = await prisma.article.findMany({
+    orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
     select: {
       authors: {
         select: {
@@ -26,32 +25,28 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       featuredImage: {
         select: imageSourceSelect,
       },
+      id: true,
       publishedAt: true,
       slug: true,
       title: true,
     },
+    take: 6,
     where: visibility.where('article', ownArticle),
   })
 
-  if (!latestPublishedArticle) {
-    return { latestPublishedArticle: null }
-  }
-
-  const featuredImage = latestPublishedArticle.featuredImage
-    ? {
-        altText: latestPublishedArticle.featuredImage.altText,
-        sources: createImageSources(
-          'article-image',
-          latestPublishedArticle.featuredImage,
-        ),
-      }
-    : null
+  const articlesWithSources = articles.map((article) => ({
+    ...article,
+    featuredImage: article.featuredImage
+      ? {
+          altText: article.featuredImage.altText,
+          sources: createImageSources('article-image', article.featuredImage),
+        }
+      : null,
+    publishedAt: createFormattedDate(article.publishedAt),
+  }))
 
   return {
-    latestPublishedArticle: {
-      ...latestPublishedArticle,
-      featuredImage,
-      publishedAt: createFormattedDate(latestPublishedArticle.publishedAt),
-    },
+    latestArticle: articlesWithSources[0] ?? null,
+    moreArticles: articlesWithSources.slice(1),
   }
 }

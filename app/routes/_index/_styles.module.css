@@ -1,0 +1,68 @@
+.masthead {
+  @layer route {
+    /* A rule separates the masthead from the content, like a printed front page. */
+    padding-block-end: 32px;
+    border-block-end: 1px solid var(--border);
+  }
+}
+
+.name {
+  @layer route {
+    /* Shrinks below the drawn size so the name never overflows a narrow phone
+       (design 10e, wibae16n); the name is about 7 em wide. */
+    font-size: min(44px, 100cqi / 7);
+    line-height: 1.1;
+
+    @media (width > 768px) {
+      --wordmark-letter-spacing: -0.03em;
+
+      font-size: 76px;
+    }
+  }
+}
+
+.moreArticles {
+  @layer route {
+    /* One link in the reading order after the list; on wider screens it moves up
+       beside the heading (design 10a, 10b). */
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "heading"
+      "list"
+      "all";
+    row-gap: 16px;
+    width: 100%;
+    text-align: start;
+
+    @media (width >= 640px) {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "heading all"
+        "list list";
+      align-items: baseline;
+      column-gap: 16px;
+    }
+  }
+}
+
+.moreArticlesHeading {
+  @layer route {
+    grid-area: heading;
+    margin: 0;
+  }
+}
+
+.moreArticlesList {
+  @layer route {
+    grid-area: list;
+    margin-block-end: 0;
+  }
+}
+
+.allArticles {
+  @layer route {
+    grid-area: all;
+    justify-self: start;
+  }
+}
