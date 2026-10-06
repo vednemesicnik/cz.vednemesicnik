@@ -1,27 +1,133 @@
 .container {
-  grid-area: navigation;
-  display: grid;
-  position: relative;
-  width: 100%;
-
-  @media (min-width: 768px) {
+  @layer component {
+    grid-area: navigation;
+    display: grid;
+    position: relative;
     justify-items: end;
+    width: 100%;
   }
 }
 
+/* The inline row from 768 px; below it the items move behind Menu (design 10b, qgr43icu). */
 .list {
-  display: flex;
-  position: relative;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 32px;
-  justify-content: center;
-  align-items: center;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
-  @media (min-width: 768px) {
+  @layer component {
+    display: none;
+    position: relative;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 32px;
     justify-content: flex-end;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    @media (width >= 768px) {
+      display: flex;
+    }
+  }
+}
+
+.menuButton {
+  @layer component {
+    /* The negative margin keeps the word on the content edge (10b) while the focus
+       ring gets room on both sides. */
+    margin-inline-end: -12px;
+    padding: 12px;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 13px;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    cursor: pointer;
+
+    &:focus-visible {
+      border-radius: var(--radius-sm);
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+
+    @media (width >= 768px) {
+      display: none;
+    }
+  }
+}
+
+/* Full screen over the page; the header row repeats with Zavřít in place of Menu. */
+.menu {
+  @layer component {
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+
+    @media (prefers-reduced-motion: no-preference) {
+      &[open] {
+        animation: menu-in var(--transition-base);
+      }
+    }
+  }
+}
+
+.menuHeader {
+  @layer component {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px var(--page-side-padding);
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+.menuList {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 8px var(--page-side-padding);
+    list-style: none;
+
+    & li {
+      display: block;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Like Menu, the negative margin keeps the text on the content edge and
+       gives the focus ring room on both sides. */
+    & a {
+      display: block;
+      margin-inline: -12px;
+      padding: 16px 12px;
+      font-size: 20px;
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: 0.04em;
+      color: var(--text-primary);
+
+      &::after {
+        display: none;
+      }
+    }
+  }
+}
+
+/* The page under the open menu does not scroll. */
+:global(html):has(.menu[open]) {
+  @layer component {
+    overflow: hidden;
+  }
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
   }
 }

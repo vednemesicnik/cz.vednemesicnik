@@ -39,6 +39,11 @@
 }
 
 @layer base {
+  /* Lets the header query the page's scroll direction (app-header). */
+  html {
+    container-type: scroll-state;
+  }
+
   /* Body */
   body {
     display: grid;
