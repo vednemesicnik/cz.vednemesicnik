@@ -1,0 +1,7 @@
+.list {
+  @layer variant {
+    /* The footer's row gap spaces the line, not the list's own margin. */
+    gap: 6px;
+    margin-block-end: 0;
+  }
+}
