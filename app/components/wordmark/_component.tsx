@@ -128,7 +128,12 @@ export const Wordmark = ({
         <span
           aria-hidden
           className={styles.letters}
-          style={{ '--name-advance': nameAdvance } as CSSProperties}
+          style={
+            {
+              '--letter-count': letters.length,
+              '--name-advance': nameAdvance,
+            } as CSSProperties
+          }
         >
           {letters.map((letter) => (
             <span

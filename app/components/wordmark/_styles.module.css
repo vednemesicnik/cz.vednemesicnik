@@ -32,7 +32,7 @@
     --name-width: calc(
       var(--name-advance) *
       1em +
-      13 *
+      var(--letter-count) *
       var(--wordmark-letter-spacing)
     );
     --name-height: 1.1em;
