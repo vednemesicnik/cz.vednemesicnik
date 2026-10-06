@@ -53,7 +53,6 @@ const readShouldTurn = () => {
 const subscribe = () => () => {}
 
 type Props = {
-  as?: 'h1' | 'p' | 'span'
   animate?: boolean
   className?: string
 }
@@ -70,19 +69,17 @@ type Props = {
  * letters one after another; the session flag is shared with the other pages that
  * turn the name.
  *
- * Use it only where the name stands alone as the brand, never for „Vedneměsíčník,
- * z. s." or the name inside a sentence. Size it with `font-size` and
- * `--wordmark-letter-spacing` on `className`.
+ * It renders a `span`, so the element around it gives it its meaning and size —
+ * `<Headline><VdmWordmark /></Headline>` for a page's main heading. A parent that
+ * paints its own text gradient (`Headline`) has it switched off, so the letters
+ * paint alone. Set `--wordmark-letter-spacing` on the parent to change the spacing.
  *
- * @param as - The element, `span` by default; `h1` for a page's main heading.
+ * Use it only where the name stands alone as the brand, never for „Vedneměsíčník,
+ * z. s." or the name inside a sentence.
+ *
  * @param animate - Turn „měsíčník" once per session.
  */
-export const Wordmark = ({
-  as = 'span',
-  animate = false,
-  className,
-}: Props) => {
-  const Element = as
+export const VdmWordmark = ({ animate = false, className }: Props) => {
   const shouldTurn = useSyncExternalStore(
     subscribe,
     () => animate && readShouldTurn(),
@@ -119,7 +116,7 @@ export const Wordmark = ({
 
   return (
     <>
-      <Element
+      <span
         className={clsx(styles.wordmark, className)}
         data-pending={isPending ? '' : undefined}
         suppressHydrationWarning
@@ -157,7 +154,7 @@ export const Wordmark = ({
             </span>
           ))}
         </span>
-      </Element>
+      </span>
       {animate && (
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: a static script, no user input

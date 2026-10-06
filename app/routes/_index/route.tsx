@@ -11,11 +11,12 @@ import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
 import { Heading } from '~/components/heading'
+import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Link } from '~/components/link'
 import { Page } from '~/components/page'
 import { Subheadline } from '~/components/subheadline'
-import { Wordmark } from '~/components/wordmark'
+import { VdmWordmark } from '~/components/vdm-wordmark'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -30,7 +31,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <Page>
       <HeadlineGroup className={styles.masthead}>
-        <Wordmark animate as={'h1'} className={styles.name} />
+        <Headline className={styles.name}>
+          <VdmWordmark animate />
+        </Headline>
         <Subheadline>Studentské nekritické noviny</Subheadline>
       </HeadlineGroup>
 

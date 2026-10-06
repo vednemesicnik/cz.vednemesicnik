@@ -11,6 +11,7 @@
     /* Shrinks below the drawn size so the name never overflows a narrow phone
        (design 10e, wibae16n); the name is about 7 em wide. */
     font-size: min(44px, 100cqi / 7);
+    line-height: 1.1;
 
     @media (width > 768px) {
       --wordmark-letter-spacing: -0.03em;
