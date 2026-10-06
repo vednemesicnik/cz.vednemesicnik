@@ -129,6 +129,7 @@ export const VdmWordmark = ({ animate = false, className }: Props) => {
       <span
         className={clsx(styles.wordmark, className)}
         data-pending={isPending ? '' : undefined}
+        data-turning={shouldTurn || hasTurned ? '' : undefined}
         suppressHydrationWarning
       >
         <span className={'screen-reader-only'}>{NAME}</span>
