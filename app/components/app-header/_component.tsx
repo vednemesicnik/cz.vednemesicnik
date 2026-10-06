@@ -7,15 +7,14 @@ import styles from './_styles.module.css'
 
 type Props = {
   children?: ReactNode
-  isInEditMode?: boolean
 }
 
-export const AppHeader = ({ children, isInEditMode = false }: Props) => {
+export const AppHeader = ({ children }: Props) => {
   return (
     <header className={styles.container}>
       {children}
       <section className={styles.content}>
-        <HomeLink isInEditMode={isInEditMode} />
+        <HomeLink />
         <Navigation>
           <NavigationItem to={href('/articles')}>Články</NavigationItem>
           <NavigationItem to={href('/podcasts')}>Podcasty</NavigationItem>

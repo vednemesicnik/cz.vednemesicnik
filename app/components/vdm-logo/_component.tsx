@@ -5,7 +5,7 @@ import styles from './_styles.module.css'
 type Props = {
   children?: never
   className?: string
-  variant?: 'default' | 'editMode' | 'admin'
+  variant?: 'default' | 'admin'
 }
 
 export const VdmLogo = ({ className, variant = 'default' }: Props) => {
@@ -15,7 +15,6 @@ export const VdmLogo = ({ className, variant = 'default' }: Props) => {
       className={clsx(
         styles.svg,
         variant === 'default' && styles.default,
-        variant === 'editMode' && styles.editMode,
         variant === 'admin' && styles.admin,
         className,
       )}
