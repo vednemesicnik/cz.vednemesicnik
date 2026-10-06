@@ -37,7 +37,7 @@
       transform: translateY(-2px);
       border-color: var(--border-hover);
 
-      & h3 {
+      & :is(h2, h3) {
         color: var(--primary-hover);
       }
     }

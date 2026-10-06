@@ -1,0 +1,57 @@
+.frontPage {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: 100%;
+
+    @media (width > 768px) {
+      gap: 56px;
+    }
+  }
+}
+
+.moreArticles {
+  @layer route {
+    /* One link in the reading order after the list; on wider screens it moves up
+       beside the heading (design 10a, 10b). */
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "heading"
+      "list"
+      "all";
+    row-gap: 16px;
+    text-align: start;
+
+    @media (width >= 640px) {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "heading all"
+        "list list";
+      align-items: baseline;
+      column-gap: 16px;
+    }
+  }
+}
+
+.moreArticlesHeading {
+  @layer route {
+    grid-area: heading;
+    margin: 0;
+  }
+}
+
+.moreArticlesList {
+  @layer route {
+    grid-area: list;
+    margin-block-end: 0;
+  }
+}
+
+.allArticles {
+  @layer route {
+    grid-area: all;
+    justify-self: start;
+  }
+}
