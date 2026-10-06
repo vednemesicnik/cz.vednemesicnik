@@ -8,16 +8,10 @@
 
 .name {
   @layer route {
-    /* Shrinks below the drawn size so the name never overflows a narrow phone
-       (design 10e, wibae16n); the name is about 7 em wide. */
-    font-size: min(44px, 100cqi / 7);
-    line-height: 1.1;
-
-    @media (width >= 768px) {
-      --wordmark-letter-spacing: -0.03em;
-
-      font-size: 76px;
-    }
+    /* The front page's masthead: only the size differs from the headline
+       (design 10e, vkjflc75). It shrinks so the name never overflows a narrow
+       phone (wibae16n); the name is 7.16 em wide. */
+    --headline-font-size: min(var(--masthead-font-size), 100cqi / 7.2);
   }
 }
 

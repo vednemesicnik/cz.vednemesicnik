@@ -1,6 +1,8 @@
 .headline {
   @layer component {
-    font-size: var(--font-size-5xl);
+    font-size: var(--headline-font-size);
+    line-height: var(--headline-line-height);
+    letter-spacing: var(--headline-letter-spacing);
     color: transparent;
     background-image: var(--gradient-signature);
     background-clip: text;
