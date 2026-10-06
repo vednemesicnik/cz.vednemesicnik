@@ -83,17 +83,27 @@
   @layer component {
     --wordmark-mirror: 1;
 
-    rotate: y 180deg;
-    backface-visibility: visible;
-    transition-property: rotate, --wordmark-mirror;
-    transition-duration: 300ms;
-    transition-timing-function: ease-in-out;
-    transition-delay: calc(var(--flip-index) * 100ms);
+    /* A flat mirror, drawn as scaleX(-1) in 10e: Safari paints a 3D-turned
+       letter differently in a view transition's snapshot, so the letters
+       shifted once the transition to the home page ended. */
+    scale: -1 1;
+
+    /* Turning this visit: the letters turn about the vertical axis instead. */
+    [data-turning] & {
+      scale: none;
+      rotate: y 180deg;
+      backface-visibility: visible;
+      transition-property: rotate, --wordmark-mirror;
+      transition-duration: 300ms;
+      transition-timing-function: ease-in-out;
+      transition-delay: calc(var(--flip-index) * 100ms);
+    }
 
     /* Upright until the turn; no transition into this state. */
     [data-pending] & {
       --wordmark-mirror: 0;
 
+      scale: none;
       rotate: none;
       transition: none;
     }
