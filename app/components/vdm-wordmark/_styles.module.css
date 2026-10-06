@@ -15,13 +15,20 @@
 
 .wordmark {
   @layer component {
-    --wordmark-letter-spacing: -0.02em;
+    /* A parent sets --wordmark-letter-spacing to change the spacing. */
+    --letter-spacing: var(--wordmark-letter-spacing, -0.02em);
 
-    display: inline-flex;
-    margin: 0;
     font-weight: var(--font-weight-bold);
-    line-height: 1.1;
-    letter-spacing: var(--wordmark-letter-spacing);
+    letter-spacing: var(--letter-spacing);
+  }
+}
+
+/* The letters paint the gradient themselves; a parent that paints its own text
+   gradient (Headline) would show the upright letters through the mirrored ones. */
+:has(> .wordmark) {
+  @layer variant {
+    background-image: none;
+    animation: none;
   }
 }
 
@@ -33,11 +40,12 @@
       var(--name-advance) *
       1em +
       var(--letter-count) *
-      var(--wordmark-letter-spacing)
+      var(--letter-spacing)
     );
     --name-height: 1.1em;
 
     display: inline-flex;
+    vertical-align: top;
     animation: wordmark-wave 6s ease-in-out infinite;
   }
 }
@@ -50,16 +58,11 @@
       var(--advance-before) *
       1em +
       var(--position) *
-      var(--wordmark-letter-spacing) -
+      var(--letter-spacing) -
       0.1em
     );
     --letter-y: -0.2em;
-    --letter-width: calc(
-      var(--advance) *
-      1em +
-      var(--wordmark-letter-spacing) +
-      0.2em
-    );
+    --letter-width: calc(var(--advance) * 1em + var(--letter-spacing) + 0.2em);
 
     display: inline-block;
     padding: 0.2em 0.1em 0;

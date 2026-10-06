@@ -1,12 +1,22 @@
-.frontPage {
+.masthead {
   @layer route {
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-    width: 100%;
+    /* A rule separates the masthead from the content, like a printed front page. */
+    padding-block-end: 32px;
+    border-block-end: 1px solid var(--border);
+  }
+}
+
+.name {
+  @layer route {
+    /* Shrinks below the drawn size so the name never overflows a narrow phone
+       (design 10e, wibae16n); the name is about 7 em wide. */
+    font-size: min(44px, 100cqi / 7);
+    line-height: 1.1;
 
     @media (width > 768px) {
-      gap: 56px;
+      --wordmark-letter-spacing: -0.03em;
+
+      font-size: 76px;
     }
   }
 }
@@ -22,6 +32,7 @@
       "list"
       "all";
     row-gap: 16px;
+    width: 100%;
     text-align: start;
 
     @media (width >= 640px) {

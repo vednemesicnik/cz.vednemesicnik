@@ -2,15 +2,17 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { Wordmark } from './_component'
+import { Headline } from '~/components/headline'
 
-const meta: Meta<typeof Wordmark> = {
-  component: Wordmark,
+import { VdmWordmark } from './_component'
+
+const meta: Meta<typeof VdmWordmark> = {
+  component: VdmWordmark,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  title: 'Components/Wordmark',
+  title: 'Components/VdmWordmark',
 }
 
 export default meta
@@ -21,28 +23,28 @@ type Story = StoryObj<typeof meta>
 export const Playground: Story = {
   args: {
     animate: true,
-    as: 'span',
   },
   render: (args) => (
-    <div style={{ fontSize: '76px' }}>
-      <Wordmark {...args} />
-    </div>
+    <Headline>
+      <VdmWordmark {...args} />
+    </Headline>
   ),
 }
 
+// The element around it gives it its meaning and size.
 export const Overview: Story = {
   parameters: { controls: { disable: true } },
   render: () => (
     <div style={{ display: 'grid', gap: '24px', justifyItems: 'start' }}>
-      <div style={{ fontSize: '76px' }}>
-        <Wordmark />
-      </div>
-      <div style={{ fontSize: '44px' }}>
-        <Wordmark />
-      </div>
-      <div style={{ fontSize: '24px' }}>
-        <Wordmark />
-      </div>
+      <Headline>
+        <VdmWordmark />
+      </Headline>
+      <p style={{ fontSize: '24px', margin: 0 }}>
+        <VdmWordmark />
+      </p>
+      <span style={{ fontSize: '16px' }}>
+        <VdmWordmark />
+      </span>
     </div>
   ),
 }
