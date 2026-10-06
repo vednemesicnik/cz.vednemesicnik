@@ -41,6 +41,21 @@ Install Git hooks for code quality automation:
 pnpm lefthook:install              # Install Lefthook Git hooks
 ```
 
+### Claude Code Skills
+
+Claude Code discovers project skills only in `.claude/skills/`, which is gitignored. The
+skills live in `.agents/skills/` and are linked in one symlink per skill:
+
+```bash
+pnpm claude:skills:link            # Link .agents/skills/* into .claude/skills
+```
+
+Run it after cloning and after a pull that adds a skill; in a Claude Code cloud
+environment, have the setup script run it. It is idempotent, removes links to deleted
+skills, and never replaces a real file or directory in `.claude/skills`, so personal
+skills can sit next to the linked ones. Git worktrees under `.claude/worktrees/` pick up
+the main checkout's links.
+
 ### Branching & Pull Requests
 
 `dev` is the default branch; `main` is production and the only deploy source. Branch
@@ -282,7 +297,9 @@ Node.js >= 26.0.0 required (see `engines.node` in `package.json`; `.nvmrc` pins 
 
 ## Agent Skills
 
-Load only the skills that apply to your current task.
+Load only the skills that apply to your current task. They live in `.agents/skills/`;
+`pnpm claude:skills:link` links them into `.claude/skills/` so Claude Code can invoke them as slash
+commands (see [Claude Code Skills](#claude-code-skills)).
 
 ### General Guidance
 
