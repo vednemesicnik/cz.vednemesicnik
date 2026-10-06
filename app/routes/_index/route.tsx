@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href } from 'react-router'
+import { ArticleHero } from '~/components/article-hero'
 import { ContentLink } from '~/components/content-link'
 import { ContentLinkAuthor } from '~/components/content-link-author'
 import { ContentLinkFooter } from '~/components/content-link-footer'
@@ -10,10 +11,11 @@ import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
 import { Heading } from '~/components/heading'
+import { HeadlineGroup } from '~/components/headline-group'
 import { Link } from '~/components/link'
 import { Page } from '~/components/page'
-import { ArticleHero } from '~/components/public/article-hero'
-import { Masthead } from '~/components/public/masthead'
+import { Subheadline } from '~/components/subheadline'
+import { Wordmark } from '~/components/wordmark'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -27,60 +29,57 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <Page>
-      <div className={styles.frontPage}>
-        <Masthead />
+      <HeadlineGroup className={styles.masthead}>
+        <Wordmark animate as={'h1'} className={styles.name} />
+        <Subheadline>Studentské nekritické noviny</Subheadline>
+      </HeadlineGroup>
 
-        {latestArticle && (
-          <ArticleHero
-            authors={latestArticle.authors}
-            image={latestArticle.featuredImage?.sources}
-            imageAlt={latestArticle.featuredImage?.altText}
-            publishDate={latestArticle.publishedAt}
-            title={latestArticle.title}
-            to={href('/articles/:articleSlug', {
-              articleSlug: latestArticle.slug,
-            })}
-          />
-        )}
+      {latestArticle && (
+        <ArticleHero
+          authors={latestArticle.authors}
+          image={latestArticle.featuredImage?.sources}
+          imageAlt={latestArticle.featuredImage?.altText}
+          publishDate={latestArticle.publishedAt}
+          title={latestArticle.title}
+          to={href('/articles/:articleSlug', {
+            articleSlug: latestArticle.slug,
+          })}
+        />
+      )}
 
-        {moreArticles.length > 0 && (
-          <section className={styles.moreArticles}>
-            <Heading className={styles.moreArticlesHeading} level={2}>
-              Další články
-            </Heading>
-            <ContentList className={styles.moreArticlesList}>
-              {moreArticles.map((article) => (
-                <ContentListItem key={article.id}>
-                  <ContentLink
-                    to={href('/articles/:articleSlug', {
-                      articleSlug: article.slug,
-                    })}
-                  >
-                    <ContentLinkImage
-                      alt={article.featuredImage?.altText}
-                      image={article.featuredImage?.sources}
-                    />
-                    <ContentLinkTitle level={3}>
-                      {article.title}
-                    </ContentLinkTitle>
-                    <ContentLinkFooter>
-                      <ContentLinkAuthor>
-                        {article.authors
-                          .map((author) => author.name)
-                          .join(', ')}
-                      </ContentLinkAuthor>
-                      <ContentLinkPublishDate date={article.publishedAt} />
-                    </ContentLinkFooter>
-                  </ContentLink>
-                </ContentListItem>
-              ))}
-            </ContentList>
-            <Link className={styles.allArticles} to={href('/articles')}>
-              Všechny články →
-            </Link>
-          </section>
-        )}
-      </div>
+      {moreArticles.length > 0 && (
+        <section className={styles.moreArticles}>
+          <Heading className={styles.moreArticlesHeading} level={2}>
+            Další články
+          </Heading>
+          <ContentList className={styles.moreArticlesList}>
+            {moreArticles.map((article) => (
+              <ContentListItem key={article.id}>
+                <ContentLink
+                  to={href('/articles/:articleSlug', {
+                    articleSlug: article.slug,
+                  })}
+                >
+                  <ContentLinkImage
+                    alt={article.featuredImage?.altText}
+                    image={article.featuredImage?.sources}
+                  />
+                  <ContentLinkTitle level={3}>{article.title}</ContentLinkTitle>
+                  <ContentLinkFooter>
+                    <ContentLinkAuthor>
+                      {article.authors.map((author) => author.name).join(', ')}
+                    </ContentLinkAuthor>
+                    <ContentLinkPublishDate date={article.publishedAt} />
+                  </ContentLinkFooter>
+                </ContentLink>
+              </ContentListItem>
+            ))}
+          </ContentList>
+          <Link className={styles.allArticles} to={href('/articles')}>
+            Všechny články →
+          </Link>
+        </section>
+      )}
     </Page>
   )
 }
