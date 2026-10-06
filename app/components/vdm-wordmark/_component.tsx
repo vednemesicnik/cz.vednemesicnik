@@ -82,7 +82,7 @@ type Props = {
  * It renders a `span`, so the element around it gives it its meaning and size —
  * `<Headline><VdmWordmark /></Headline>` for a page's main heading. A parent that
  * paints its own text gradient (`Headline`) has it switched off, so the letters
- * paint alone. Set `--wordmark-letter-spacing` on the parent to change the spacing.
+ * paint alone. It has the headline's line height and inherits its letter spacing.
  *
  * Use it only where the name stands alone as the brand, never for „Vedneměsíčník,
  * z. s." or the name inside a sentence.
@@ -135,12 +135,7 @@ export const VdmWordmark = ({ animate = false, className }: Props) => {
         <span
           aria-hidden
           className={styles.letters}
-          style={
-            {
-              '--letter-count': letters.length,
-              '--name-advance': nameAdvance,
-            } as CSSProperties
-          }
+          style={{ '--name-advance': nameAdvance } as CSSProperties}
         >
           {letters.map((letter) => (
             <span

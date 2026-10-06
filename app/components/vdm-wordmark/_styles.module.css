@@ -13,13 +13,12 @@
   initial-value: 0.05;
 }
 
+/* The name inherits the letter spacing of where it stands, 0 in Headline
+   (design vkjflc75); the gradient slices assume that 0. */
 .wordmark {
   @layer component {
-    /* A parent sets --wordmark-letter-spacing to change the spacing. */
-    --letter-spacing: var(--wordmark-letter-spacing, -0.02em);
-
     font-weight: var(--font-weight-bold);
-    letter-spacing: var(--letter-spacing);
+    line-height: var(--headline-line-height);
   }
 }
 
@@ -36,13 +35,8 @@
   @layer component {
     /* The box the gradient is laid over, as the whole name's headline had it:
        200 % of the name in both directions. */
-    --name-width: calc(
-      var(--name-advance) *
-      1em +
-      var(--letter-count) *
-      var(--letter-spacing)
-    );
-    --name-height: 1.1em;
+    --name-width: calc(var(--name-advance) * 1em);
+    --name-height: calc(var(--headline-line-height) * 1em);
 
     display: inline-flex;
     vertical-align: top;
@@ -53,16 +47,10 @@
 .letter {
   @layer component {
     /* The letter's padding box in the name's coordinates; padding and the negative
-       margin give accents and the tight spacing room (design 10e, wibae16n). */
-    --letter-x: calc(
-      var(--advance-before) *
-      1em +
-      var(--position) *
-      var(--letter-spacing) -
-      0.1em
-    );
+       margin give accents and overhangs room (design 10e, wibae16n). */
+    --letter-x: calc(var(--advance-before) * 1em - 0.1em);
     --letter-y: -0.2em;
-    --letter-width: calc(var(--advance) * 1em + var(--letter-spacing) + 0.2em);
+    --letter-width: calc(var(--advance) * 1em + 0.2em);
 
     display: inline-block;
     padding: 0.2em 0.1em 0;

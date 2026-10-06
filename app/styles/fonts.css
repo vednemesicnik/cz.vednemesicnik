@@ -45,6 +45,17 @@
     --letter-spacing-tight: -0.025em;
     --letter-spacing-normal: 0;
     --letter-spacing-wide: 0.025em;
+
+    /* Page headline — one set on every page (design vkjflc75). Large sizes get
+       tighter through Inter's display cut, not through negative tracking. */
+    --headline-font-size: var(--font-size-5xl);
+    --headline-line-height: var(--line-height-5xl);
+    --headline-letter-spacing: var(--letter-spacing-normal);
+    /* The magazine name on the home page: one scale step above the headline. */
+    --masthead-font-size: calc(
+      var(--font-size-5xl) *
+      var(--scale-ratio-major-third)
+    );
   }
 
   @media (min-width: 768px) {
