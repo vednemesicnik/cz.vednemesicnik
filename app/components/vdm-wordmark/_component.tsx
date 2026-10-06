@@ -20,7 +20,8 @@ const ADVANCES = [
 
 // Shared by every page that turns the name (home, /links, sign-in).
 const SESSION_KEY = 'vdm-wordmark-turned'
-const FLIP_DELAY = 400
+// Long enough to read the name upright before it turns.
+const FLIP_DELAY = 1200
 
 const sumAdvances = (advances: number[]) =>
   Number(advances.reduce((sum, advance) => sum + advance, 0).toFixed(4))
@@ -52,6 +53,15 @@ const readShouldTurn = () => {
 
 const subscribe = () => () => {}
 
+// Resolves once the whole page has loaded, images included; at once after a
+// client-side navigation, where the load event is long past.
+const waitForPageLoad = () =>
+  document.readyState === 'complete'
+    ? Promise.resolve()
+    : new Promise<void>((resolve) => {
+        window.addEventListener('load', () => resolve(), { once: true })
+      })
+
 type Props = {
   animate?: boolean
   className?: string
@@ -65,9 +75,9 @@ type Props = {
  *
  * The mirrored name is the server-rendered state, so it shows as it is without
  * JavaScript, with reduced motion, and on a repeat visit. With `animate`, the first
- * visit of the session starts upright and, 400 ms after the font loads, turns the
- * letters one after another; the session flag is shared with the other pages that
- * turn the name.
+ * visit of the session starts upright and, 1.2 s after the page and the font have
+ * loaded, turns the letters one after another; the session flag is shared with the
+ * other pages that turn the name.
  *
  * It renders a `span`, so the element around it gives it its meaning and size —
  * `<Headline><VdmWordmark /></Headline>` for a page's main heading. A parent that
@@ -94,7 +104,7 @@ export const VdmWordmark = ({ animate = false, className }: Props) => {
     let timeout: ReturnType<typeof setTimeout> | undefined
     let isCancelled = false
 
-    document.fonts.ready.then(() => {
+    Promise.all([waitForPageLoad(), document.fonts.ready]).then(() => {
       if (isCancelled) return
 
       timeout = setTimeout(() => {
