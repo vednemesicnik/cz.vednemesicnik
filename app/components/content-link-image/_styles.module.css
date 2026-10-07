@@ -5,12 +5,12 @@
     position: relative;
     border-radius: var(--radius-md);
     overflow: hidden;
+    /* 16:9 at every size: the full row width when stacked, 192 × 108 beside the text. */
     width: 100%;
-    height: 160px;
+    aspect-ratio: 16 / 9;
 
     @media (width >= 640px) {
       width: 192px;
-      height: 108px;
     }
 
     /* The signature-gradient veil; the row's hover lightens it. */

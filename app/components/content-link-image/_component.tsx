@@ -14,8 +14,8 @@ type Props = {
 const { width } = sizeConfig.articleLinkImage
 
 /**
- * The row's thumbnail: 192 × 108 beside the text, full width × 160 px when the row
- * stacks below 640 px, under the signature-gradient veil.
+ * The row's thumbnail in a 16:9 frame: 192 × 108 beside the text, the full row width
+ * when the row stacks below 640 px, under the signature-gradient veil.
  *
  * @param shape - `wide` (default) crops the image to the frame; `square` shows a
  *   square cover (podcast episode) whole on the gradient (design vhn58g3f).
@@ -51,7 +51,7 @@ export function ContentLinkImage({
         className={isSquare ? styles.squareImage : styles.wideImage}
         sizes={
           isSquare
-            ? '(width < 640px) 160px, 108px'
+            ? '(width < 640px) 56vw, 108px'
             : `(width < 640px) 100vw, ${width}px`
         }
       />
