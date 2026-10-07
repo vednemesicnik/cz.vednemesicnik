@@ -23,7 +23,7 @@ export function ContentLinkTitle({ children, level = 2, number }: Props) {
         <>
           <span className={styles.number}>
             <span aria-hidden>#{number}</span>
-            <span className={styles.visuallyHidden}>Epizoda {number}</span>
+            <span className={'screen-reader-only'}>Epizoda {number}</span>
           </span>{' '}
         </>
       )}
