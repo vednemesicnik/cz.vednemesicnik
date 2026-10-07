@@ -26,15 +26,25 @@
   }
 }
 
-/* A photo fills the frame and is cropped around its middle. The variant layer
-   overrides the Image container's own size. */
-.wideImage {
+/* The Image fills the frame. Its unlayered `height: auto` on the img beats any
+   layered `height`, so min- and max-height pin the img to the frame instead. */
+.wideImage,
+.squareImage {
   @layer variant {
     height: 100%;
-    align-items: center;
 
-    & picture {
-      align-items: center;
+    & img {
+      min-height: 100%;
+      max-height: 100%;
+    }
+  }
+}
+
+/* A photo covers the frame, cropped around its middle, at any width. */
+.wideImage {
+  @layer variant {
+    & img {
+      object-fit: cover;
     }
   }
 }
@@ -42,17 +52,17 @@
 /* A square cover sits whole in the same frame, on the gradient (design vhn58g3f). */
 .square {
   @layer variant {
-    justify-content: center;
     background-image: var(--gradient-signature);
   }
 }
 
 .squareImage {
   @layer variant {
-    flex: none;
-    width: auto;
-    height: 100%;
-    aspect-ratio: 1;
+    background: none;
+
+    & img {
+      object-fit: contain;
+    }
   }
 }
 
