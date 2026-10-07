@@ -10,7 +10,7 @@ type Props = {
 }
 
 /**
- * The square cover of a {@link MediaContentLink}: 108 × 108 left of the text, 80 × 80
+ * The square cover of a `MediaContentLink`: 108 × 108 left of the text, 80 × 80
  * below 640 px, whole and without the veil. A non-square cover is cropped to the
  * centre square (design aec7mifb).
  *

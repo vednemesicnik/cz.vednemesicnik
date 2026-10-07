@@ -11,8 +11,8 @@ type Props = {
 
 /**
  * The card for media with a square cover, such as a podcast episode: the
- * {@link ContentLinkCover} on the left, beside the text at every width (design 13e,
- * aec7mifb). Articles use {@link PostContentLink}.
+ * `ContentLinkCover` on the left, beside the text at every width (design 13e,
+ * aec7mifb). Articles use `PostContentLink`.
  */
 export const MediaContentLink = ({ children, to }: Props) => {
   return (
