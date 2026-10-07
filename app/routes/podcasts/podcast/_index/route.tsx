@@ -1,7 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { ContentLinkFooter } from '~/components/content-link-footer'
-import { ContentLinkImage } from '~/components/content-link-image'
 import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
 import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
@@ -9,16 +8,13 @@ import { ContentListItem } from '~/components/content-list-item'
 import { Divider } from '~/components/divider'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
+import { MediaContentLink } from '~/components/media-content-link'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
-import { PostContentLink } from '~/components/post-content-link'
 import type { Route } from './+types/route'
 
 export default function PodcastPage({ loaderData }: Route.ComponentProps) {
   const { podcast } = loaderData
-
-  const podcastCoverAlt = podcast.cover.altText
-  const podcastCoverSources = podcast.cover.sources
 
   return (
     <Page>
@@ -33,19 +29,16 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
         {podcast.episodes.map((episode) => {
           return (
             <ContentListItem key={episode.id}>
-              <PostContentLink to={`/podcasts/${podcast.slug}/${episode.slug}`}>
-                <ContentLinkImage
-                  alt={podcastCoverAlt}
-                  image={podcastCoverSources}
-                  shape={'square'}
-                />
+              <MediaContentLink
+                to={`/podcasts/${podcast.slug}/${episode.slug}`}
+              >
                 <ContentLinkTitle number={episode.number}>
                   {episode.title}
                 </ContentLinkTitle>
                 <ContentLinkFooter>
                   <ContentLinkPublishDate date={episode.publishedAt} />
                 </ContentLinkFooter>
-              </PostContentLink>
+              </MediaContentLink>
             </ContentListItem>
           )
         })}

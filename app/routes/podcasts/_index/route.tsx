@@ -2,8 +2,8 @@
 
 import { BaseLink } from '~/components/base-link'
 import { ContentLinkAuthor } from '~/components/content-link-author'
+import { ContentLinkCover } from '~/components/content-link-cover'
 import { ContentLinkFooter } from '~/components/content-link-footer'
-import { ContentLinkImage } from '~/components/content-link-image'
 import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
 import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
@@ -11,8 +11,8 @@ import { ContentListItem } from '~/components/content-list-item'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
+import { MediaContentLink } from '~/components/media-content-link'
 import { Page } from '~/components/page'
-import { PostContentLink } from '~/components/post-content-link'
 import { Tile } from '~/components/tile'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
@@ -53,20 +53,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
           return (
             <ContentListItem key={episode.id}>
-              <PostContentLink
+              <MediaContentLink
                 to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
               >
-                <ContentLinkImage
-                  alt={coverAlt}
-                  image={coverSources}
-                  shape={'square'}
-                />
-                <ContentLinkTitle>{episode.title}</ContentLinkTitle>
+                <ContentLinkCover alt={coverAlt} image={coverSources} />
+                <ContentLinkTitle number={episode.number}>
+                  {episode.title}
+                </ContentLinkTitle>
                 <ContentLinkFooter>
                   <ContentLinkAuthor>{episode.podcast.title}</ContentLinkAuthor>
                   <ContentLinkPublishDate date={episode.publishedAt} />
                 </ContentLinkFooter>
-              </PostContentLink>
+              </MediaContentLink>
             </ContentListItem>
           )
         })}
