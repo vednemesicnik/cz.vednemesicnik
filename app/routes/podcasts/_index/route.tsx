@@ -1,7 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { BaseLink } from '~/components/base-link'
-import { ContentLink } from '~/components/content-link'
 import { ContentLinkAuthor } from '~/components/content-link-author'
 import { ContentLinkFooter } from '~/components/content-link-footer'
 import { ContentLinkImage } from '~/components/content-link-image'
@@ -13,6 +12,7 @@ import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
 import { Page } from '~/components/page'
+import { PostContentLink } from '~/components/post-content-link'
 import { Tile } from '~/components/tile'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
@@ -53,7 +53,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
           return (
             <ContentListItem key={episode.id}>
-              <ContentLink
+              <PostContentLink
                 to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
               >
                 <ContentLinkImage
@@ -66,7 +66,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   <ContentLinkAuthor>{episode.podcast.title}</ContentLinkAuthor>
                   <ContentLinkPublishDate date={episode.publishedAt} />
                 </ContentLinkFooter>
-              </ContentLink>
+              </PostContentLink>
             </ContentListItem>
           )
         })}

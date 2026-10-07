@@ -13,7 +13,7 @@ import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
-import { ContentLink } from './_component'
+import { PostContentLink } from './_component'
 
 const createStaticSources = (
   src: string,
@@ -30,20 +30,10 @@ const createStaticSources = (
 
 const photo = createStaticSources('/images/article-link-image.jpeg', 96, 54)
 
-// A square podcast cover with the show name on it, so the story shows that the
-// whole cover stays visible.
-const squareCover = createStaticSources(
-  `data:image/svg+xml,${encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#1f2937"/><text x="200" y="215" font-family="sans-serif" font-size="56" font-weight="700" fill="#fff" text-anchor="middle">KABINET</text></svg>',
-  )}`,
-  400,
-  400,
-)
-
 const publishDate = { formatted: '24. září 2026', iso: '2026-09-24' }
 
-const meta: Meta<typeof ContentLink> = {
-  component: ContentLink,
+const meta: Meta<typeof PostContentLink> = {
+  component: PostContentLink,
   decorators: [
     (Story) => (
       <MemoryRouter>
@@ -57,7 +47,7 @@ const meta: Meta<typeof ContentLink> = {
     layout: 'padded',
   },
   tags: ['autodocs'],
-  title: 'Components/ContentLink',
+  title: 'Components/PostContentLink',
 }
 
 export default meta
@@ -90,7 +80,7 @@ export const Overview: Story = {
   render: () => (
     <ContentList>
       <ContentListItem>
-        <ContentLink to={'/articles/maturita'}>
+        <PostContentLink to={'/articles/maturita'}>
           <ContentLinkImage alt={undefined} />
           <ContentLinkTitle>
             Maturita z pohledu těch, kdo ji teprve čekají
@@ -99,10 +89,10 @@ export const Overview: Story = {
             <ContentLinkAuthor>Marie Horáková</ContentLinkAuthor>
             <ContentLinkPublishDate date={publishDate} />
           </ContentLinkFooter>
-        </ContentLink>
+        </PostContentLink>
       </ContentListItem>
       <ContentListItem>
-        <ContentLink to={'/articles/kavarny'}>
+        <PostContentLink to={'/articles/kavarny'}>
           <ContentLinkImage alt={'Ilustrační fotografie'} image={photo} />
           <ContentLinkTitle>
             Sedm kaváren, kde se dá učit do večera
@@ -114,32 +104,17 @@ export const Overview: Story = {
             <ContentLinkAuthor>Tomáš Beneš</ContentLinkAuthor>
             <ContentLinkPublishDate date={publishDate} />
           </ContentLinkFooter>
-        </ContentLink>
+        </PostContentLink>
       </ContentListItem>
       <ContentListItem>
-        <ContentLink to={'/podcasts/kabinet/o-cem-se-mluvi-ve-sborovne'}>
-          <ContentLinkImage
-            alt={'Obálka pořadu Kabinet'}
-            image={squareCover}
-            shape={'square'}
-          />
-          <ContentLinkTitle number={13}>
-            O čem se mluví ve sborovně
-          </ContentLinkTitle>
-          <ContentLinkFooter>
-            <ContentLinkPublishDate date={publishDate} />
-          </ContentLinkFooter>
-        </ContentLink>
-      </ContentListItem>
-      <ContentListItem>
-        <ContentLink to={'/grants/vednemesicnik-2026'}>
+        <PostContentLink to={'/grants/vednemesicnik-2026'}>
           <ContentLinkTitle>Vedneměsíčník 2026</ContentLinkTitle>
           <ContentLinkFooter>
             <ContentLinkAuthor>
               Statutární město České Budějovice
             </ContentLinkAuthor>
           </ContentLinkFooter>
-        </ContentLink>
+        </PostContentLink>
       </ContentListItem>
     </ContentList>
   ),

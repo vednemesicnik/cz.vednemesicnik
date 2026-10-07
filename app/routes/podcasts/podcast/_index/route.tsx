@@ -1,6 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { ContentLink } from '~/components/content-link'
 import { ContentLinkFooter } from '~/components/content-link-footer'
 import { ContentLinkImage } from '~/components/content-link-image'
 import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
@@ -12,6 +11,7 @@ import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
+import { PostContentLink } from '~/components/post-content-link'
 import type { Route } from './+types/route'
 
 export default function PodcastPage({ loaderData }: Route.ComponentProps) {
@@ -33,7 +33,7 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
         {podcast.episodes.map((episode) => {
           return (
             <ContentListItem key={episode.id}>
-              <ContentLink to={`/podcasts/${podcast.slug}/${episode.slug}`}>
+              <PostContentLink to={`/podcasts/${podcast.slug}/${episode.slug}`}>
                 <ContentLinkImage
                   alt={podcastCoverAlt}
                   image={podcastCoverSources}
@@ -45,7 +45,7 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
                 <ContentLinkFooter>
                   <ContentLinkPublishDate date={episode.publishedAt} />
                 </ContentLinkFooter>
-              </ContentLink>
+              </PostContentLink>
             </ContentListItem>
           )
         })}
