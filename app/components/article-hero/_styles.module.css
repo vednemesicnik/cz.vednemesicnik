@@ -55,16 +55,6 @@
   }
 }
 
-.imageFallback {
-  @layer component {
-    /* No featured image: the full signature gradient in the same area (design 10c). */
-    aspect-ratio: 16 / 9;
-    width: 100%;
-    background-image: var(--gradient-signature);
-    border-radius: var(--radius-lg);
-  }
-}
-
 .heading {
   @layer component {
     display: grid;

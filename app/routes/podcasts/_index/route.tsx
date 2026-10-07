@@ -56,12 +56,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               <ContentLink
                 to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
               >
-                <ContentLinkImage alt={coverAlt} image={coverSources} />
+                <ContentLinkImage
+                  alt={coverAlt}
+                  image={coverSources}
+                  shape={'square'}
+                />
                 <ContentLinkTitle>{episode.title}</ContentLinkTitle>
                 <ContentLinkFooter>
-                  <ContentLinkAuthor image={coverSources} imageAlt={coverAlt}>
-                    {episode.podcast.title}
-                  </ContentLinkAuthor>
+                  <ContentLinkAuthor>{episode.podcast.title}</ContentLinkAuthor>
                   <ContentLinkPublishDate date={episode.publishedAt} />
                 </ContentLinkFooter>
               </ContentLink>

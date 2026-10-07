@@ -37,8 +37,11 @@ export default function PodcastPage({ loaderData }: Route.ComponentProps) {
                 <ContentLinkImage
                   alt={podcastCoverAlt}
                   image={podcastCoverSources}
+                  shape={'square'}
                 />
-                <ContentLinkTitle>{`#${episode.number} ${episode.title}`}</ContentLinkTitle>
+                <ContentLinkTitle number={episode.number}>
+                  {episode.title}
+                </ContentLinkTitle>
                 <ContentLinkFooter>
                   <ContentLinkPublishDate date={episode.publishedAt} />
                 </ContentLinkFooter>

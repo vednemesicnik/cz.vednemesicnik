@@ -6,13 +6,6 @@ export const sizeConfig = {
     placeholderWidth: 22,
     width: 220,
   },
-  // aspect ratio 1:1
-  articleLinkAuthorImage: {
-    height: 20,
-    placeholderHeight: 2,
-    placeholderWidth: 2,
-    width: 20,
-  },
   // aspect ratio 16:9
   articleLinkImage: {
     height: 108,

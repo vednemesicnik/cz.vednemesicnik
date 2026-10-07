@@ -18,46 +18,54 @@
       transform var(--transition-base),
       border-color var(--transition-base);
 
+    /* Stacked and left-aligned on phones, like every card on the page
+       (design 10b, 11d; vhn58g3f). */
     display: grid;
     position: relative;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
     grid-template-areas:
       "image"
       "title"
       "details";
-    justify-items: center;
-    align-items: center;
+    justify-items: stretch;
     gap: 16px;
     padding: 16px;
+    text-align: start;
 
-    /* Hover effect */
     &:hover {
       box-shadow: var(--shadow-md);
       transform: translateY(-2px);
       border-color: var(--border-hover);
+      /* Read by the image's veil, which lightens with the whole row. */
+      --content-link-veil-opacity: 0.2;
 
       & :is(h2, h3) {
         color: var(--primary-hover);
       }
     }
 
-    /* Active effect */
     &:active {
       transform: translateY(0);
       box-shadow: var(--shadow-md);
     }
 
-    @media all and (min-width: 768px) {
+    @media (width >= 640px) {
       grid-template-columns: 1fr auto;
       grid-template-rows: 1fr auto;
       grid-template-areas:
         "title image"
         "details image";
-      justify-items: start;
       align-items: start;
-      gap: 16px;
       padding: 24px;
+    }
+
+    /* A row without an image has no image area; title and details run full width
+       (design 15g, 0q3rezo1). */
+    &:not(:has(> [data-content-link-image])) {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "title"
+        "details";
     }
   }
 }
