@@ -6,7 +6,7 @@
   }
 }
 
-/* The card look matches media-content-link; keep the two in sync. */
+/* The card look matches post-content-link; keep the two in sync. */
 .article {
   @layer component {
     background: var(--bg-primary);
@@ -19,16 +19,15 @@
       transform var(--transition-base),
       border-color var(--transition-base);
 
-    /* Stacked and left-aligned on phones, like every card on the page
-       (design 10b, 11d; vhn58g3f). */
+    /* The cover stays beside the text on phones too, so the list stays a list
+       (design 13e, aec7mifb). */
     display: grid;
     position: relative;
-    grid-template-columns: 1fr;
+    grid-template-columns: 80px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
     grid-template-areas:
-      "image"
-      "title"
-      "details";
-    justify-items: stretch;
+      "cover title"
+      "cover details";
     gap: 16px;
     padding: 16px;
     text-align: start;
@@ -37,8 +36,6 @@
       box-shadow: var(--shadow-md);
       transform: translateY(-2px);
       border-color: var(--border-hover);
-      /* Read by the image's veil, which lightens with the whole row. */
-      --content-link-veil-opacity: 0.2;
 
       & :is(h2, h3) {
         color: var(--primary-hover);
@@ -51,19 +48,15 @@
     }
 
     @media (width >= 640px) {
-      grid-template-columns: 1fr auto;
-      grid-template-rows: 1fr auto;
-      grid-template-areas:
-        "title image"
-        "details image";
-      align-items: start;
+      grid-template-columns: 108px minmax(0, 1fr);
       padding: 24px;
     }
 
-    /* A row without an image has no image area; title and details run full width
-       (design 15g, 0q3rezo1). */
-    &:not(:has(> [data-content-link-image])) {
-      grid-template-columns: 1fr;
+    /* A card without a cover has no cover area; title and details run full width
+       (design 13b, 0q3rezo1). */
+    &:not(:has(> [data-content-link-cover])) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto auto;
       grid-template-areas:
         "title"
         "details";
