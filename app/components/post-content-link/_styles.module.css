@@ -6,6 +6,7 @@
   }
 }
 
+/* The card look matches media-content-link; keep the two in sync. */
 .article {
   @layer component {
     background: var(--bg-primary);

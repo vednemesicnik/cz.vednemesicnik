@@ -38,6 +38,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     },
     select: {
       id: true,
+      number: true,
       podcast: {
         select: {
           cover: {

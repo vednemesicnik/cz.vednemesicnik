@@ -9,7 +9,7 @@ type Props = {
   to: string
 }
 
-export const ContentLink = ({ children, to }: Props) => {
+export const PostContentLink = ({ children, to }: Props) => {
   return (
     <BaseLink className={styles.link} to={to}>
       <article className={styles.article}>{children}</article>
