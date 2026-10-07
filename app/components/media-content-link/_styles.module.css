@@ -1,0 +1,65 @@
+.link {
+  @layer component {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
+/* The card look matches post-content-link; keep the two in sync. */
+.article {
+  @layer component {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition:
+      box-shadow var(--transition-base),
+      transform var(--transition-base),
+      border-color var(--transition-base);
+
+    /* The cover stays beside the text on phones too, so the list stays a list
+       (design 13e, aec7mifb). */
+    display: grid;
+    position: relative;
+    grid-template-columns: 80px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "cover title"
+      "cover details";
+    gap: 16px;
+    padding: 16px;
+    text-align: start;
+
+    &:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: var(--border-hover);
+
+      & :is(h2, h3) {
+        color: var(--primary-hover);
+      }
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: var(--shadow-md);
+    }
+
+    @media (width >= 640px) {
+      grid-template-columns: 108px minmax(0, 1fr);
+      padding: 24px;
+    }
+
+    /* A card without a cover has no cover area; title and details run full width
+       (design 13b, 0q3rezo1). */
+    &:not(:has(> [data-content-link-cover])) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      grid-template-areas:
+        "title"
+        "details";
+    }
+  }
+}

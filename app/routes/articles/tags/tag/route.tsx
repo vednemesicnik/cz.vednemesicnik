@@ -1,8 +1,7 @@
 import { href } from 'react-router'
 import { Badge } from '~/components/badge'
-import { BadgeList } from '~/components/badge-list'
-import { ContentLink } from '~/components/content-link'
 import { ContentLinkAuthor } from '~/components/content-link-author'
+import { ContentLinkCategories } from '~/components/content-link-categories'
 import { ContentLinkFooter } from '~/components/content-link-footer'
 import { ContentLinkImage } from '~/components/content-link-image'
 import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
@@ -14,6 +13,7 @@ import { HeadlineGroup } from '~/components/headline-group'
 import { Page } from '~/components/page'
 import { Pagination } from '~/components/pagination'
 import { Paragraph } from '~/components/paragraph'
+import { PostContentLink } from '~/components/post-content-link'
 import type { Route } from './+types/route'
 
 export { handle } from './_handle'
@@ -35,7 +35,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {articles.map((article) => {
             return (
               <ContentListItem key={article.id}>
-                <ContentLink
+                <PostContentLink
                   to={href('/articles/:articleSlug', {
                     articleSlug: article.slug,
                   })}
@@ -47,18 +47,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   <ContentLinkTitle>{article.title}</ContentLinkTitle>
                   <ContentLinkFooter>
                     {article.categories.length > 0 && (
-                      <BadgeList>
+                      <ContentLinkCategories>
                         {article.categories.map((category) => (
                           <Badge key={category.slug}>{category.name}</Badge>
                         ))}
-                      </BadgeList>
+                      </ContentLinkCategories>
                     )}
                     <ContentLinkAuthor>
                       {article.authors.map((author) => author.name).join(', ')}
                     </ContentLinkAuthor>
                     <ContentLinkPublishDate date={article.publishedAt} />
                   </ContentLinkFooter>
-                </ContentLink>
+                </PostContentLink>
               </ContentListItem>
             )
           })}

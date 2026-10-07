@@ -2,7 +2,6 @@
 
 import { href } from 'react-router'
 import { ArticleHero } from '~/components/article-hero'
-import { ContentLink } from '~/components/content-link'
 import { ContentLinkAuthor } from '~/components/content-link-author'
 import { ContentLinkFooter } from '~/components/content-link-footer'
 import { ContentLinkImage } from '~/components/content-link-image'
@@ -15,6 +14,7 @@ import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Link } from '~/components/link'
 import { Page } from '~/components/page'
+import { PostContentLink } from '~/components/post-content-link'
 import { Subheadline } from '~/components/subheadline'
 import { VdmWordmark } from '~/components/vdm-wordmark'
 import styles from './_styles.module.css'
@@ -58,7 +58,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <ContentList className={styles.moreArticlesList}>
             {moreArticles.map((article) => (
               <ContentListItem key={article.id}>
-                <ContentLink
+                <PostContentLink
                   to={href('/articles/:articleSlug', {
                     articleSlug: article.slug,
                   })}
@@ -74,7 +74,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     </ContentLinkAuthor>
                     <ContentLinkPublishDate date={article.publishedAt} />
                   </ContentLinkFooter>
-                </ContentLink>
+                </PostContentLink>
               </ContentListItem>
             ))}
           </ContentList>

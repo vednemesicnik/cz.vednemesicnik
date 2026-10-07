@@ -1,25 +1,8 @@
-.container {
-  @layer component {
-    display: grid;
-    position: relative;
-    grid-template-columns: auto 1fr;
-    gap: 8px;
-    align-items: center;
-  }
-}
-
-.image {
-  @layer component {
-    width: 20px;
-    height: 20px;
-    border-radius: var(--radius-sm);
-  }
-}
-
 .paragraph {
   @layer component {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     text-align: start;
     margin: 0;
   }
