@@ -65,14 +65,3 @@
     }
   }
 }
-
-/* No image: the full signature gradient, no veil (design 10c). */
-.fallback {
-  @layer variant {
-    background-image: var(--gradient-signature);
-
-    &::after {
-      content: none;
-    }
-  }
-}

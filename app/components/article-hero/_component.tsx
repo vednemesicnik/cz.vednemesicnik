@@ -29,7 +29,8 @@ export const ArticleHero = ({
   return (
     <BaseLink className={styles.link} to={to}>
       <article className={styles.container}>
-        {image?.src ? (
+        {/* No image, no image area: the same as the article page (design 0q3rezo1). */}
+        {image?.src && (
           <figure className={styles.figure}>
             <Image
               {...image}
@@ -40,8 +41,6 @@ export const ArticleHero = ({
               sizes={'(min-width: 60rem) 940px, 100vw'}
             />
           </figure>
-        ) : (
-          <div aria-hidden className={styles.imageFallback} />
         )}
         <div className={styles.heading}>
           <h2 className={styles.title}>{title}</h2>

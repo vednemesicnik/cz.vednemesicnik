@@ -19,7 +19,8 @@ const { width } = sizeConfig.articleLinkImage
  *
  * @param shape - `wide` (default) crops the image to the frame; `square` shows a
  *   square cover (podcast episode) whole on the gradient (design vhn58g3f).
- * @returns The image, or the full signature gradient when there is none (design 10c).
+ * @returns The framed image, or nothing when there is none: the row then has no image
+ *   area, the same as the page it opens (design 0q3rezo1).
  */
 export function ContentLinkImage({
   alt,
@@ -27,19 +28,13 @@ export function ContentLinkImage({
   shape = 'wide',
   className,
 }: Props) {
-  // `data-content-link-image` lets the row drop its image area when there is no frame.
   if (image?.src === undefined) {
-    return (
-      <div
-        aria-hidden
-        className={clsx(styles.frame, styles.fallback, className)}
-        data-content-link-image
-      />
-    )
+    return null
   }
 
   const isSquare = shape === 'square'
 
+  // `data-content-link-image` tells the row it has an image area.
   return (
     <div
       className={clsx(styles.frame, isSquare && styles.square, className)}
