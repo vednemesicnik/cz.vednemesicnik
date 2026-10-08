@@ -1,13 +1,16 @@
 .wrapper {
   @layer component {
-    display: inline-flex;
-    align-items: center;
-    font-size: inherit;
-    line-height: inherit;
-    margin-left: 2px;
+    /* Inline, not an atomic inline-flex: a line may break before an atomic box (even after
+       U+2060), whereas inline padding stays glued to the last word of the link */
+    display: inline;
+    position: relative;
+    padding-inline-start: calc(1em + 2px);
 
-    &:before {
-      content: "\200B"; /* Zero-width space to keep the height of the line-height */
+    & > svg {
+      position: absolute;
+      inset-inline-end: 0;
+      inset-block-start: 50%;
+      translate: 0 -50%;
     }
   }
 }

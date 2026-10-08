@@ -8,7 +8,7 @@
     text-decoration: underline;
     text-decoration-color: var(--primary);
     transition: all var(--transition-fast);
-    white-space: nowrap;
+    overflow-wrap: anywhere;
 
     &:visited {
       color: var(--primary-active);
