@@ -11,13 +11,20 @@ import { HeadlineGroup } from '~/components/headline-group'
 import { MediaContentLink } from '~/components/media-content-link'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
+import { ParentLink } from '~/components/parent-link'
+import { getParentBreadcrumb } from '~/utils/breadcrumbs'
 import type { Route } from './+types/route'
 
-export default function PodcastPage({ loaderData }: Route.ComponentProps) {
+export default function PodcastPage({
+  loaderData,
+  matches,
+}: Route.ComponentProps) {
   const { podcast } = loaderData
+  const parent = getParentBreadcrumb(matches)
 
   return (
     <Page>
+      {parent && <ParentLink to={parent.path}>{parent.label}</ParentLink>}
       <HeadlineGroup>
         <Headline>{podcast.title}</Headline>
       </HeadlineGroup>
