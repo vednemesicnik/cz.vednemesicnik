@@ -26,15 +26,23 @@ describe('groupLinkRuns', () => {
     expect(
       describeRuns([
         { text: 'Viz ', type: 'text' },
-        { marks: [link('https://a.cz')], text: 'odkaz s ', type: 'text' },
-        { marks: [bold, link('https://a.cz')], text: 'tučnou', type: 'text' },
-        { marks: [link('https://a.cz')], text: ' částí', type: 'text' },
+        {
+          marks: [link('https://priklad.cz/a')],
+          text: 'odkaz s ',
+          type: 'text',
+        },
+        {
+          marks: [bold, link('https://priklad.cz/a')],
+          text: 'tučnou',
+          type: 'text',
+        },
+        { marks: [link('https://priklad.cz/a')], text: ' částí', type: 'text' },
         { text: '.', type: 'text' },
       ]),
     ).toEqual([
       { href: null, nodes: [{ marks: [], text: 'Viz ' }] },
       {
-        href: 'https://a.cz',
+        href: 'https://priklad.cz/a',
         nodes: [
           { marks: [], text: 'odkaz s ' },
           { marks: ['bold'], text: 'tučnou' },
@@ -48,20 +56,20 @@ describe('groupLinkRuns', () => {
   test('adjacent links with different attributes stay separate runs', () => {
     expect(
       describeRuns([
-        { marks: [link('https://a.cz')], text: 'první', type: 'text' },
-        { marks: [link('https://b.cz')], text: 'druhý', type: 'text' },
+        { marks: [link('https://priklad.cz/a')], text: 'první', type: 'text' },
+        { marks: [link('https://priklad.cz/b')], text: 'druhý', type: 'text' },
       ]).map((run) => run.href),
-    ).toEqual(['https://a.cz', 'https://b.cz'])
+    ).toEqual(['https://priklad.cz/a', 'https://priklad.cz/b'])
   })
 
   test('the same link interrupted by plain text is two runs', () => {
     expect(
       describeRuns([
-        { marks: [link('https://a.cz')], text: 'první', type: 'text' },
+        { marks: [link('https://priklad.cz/a')], text: 'první', type: 'text' },
         { text: ' a ', type: 'text' },
-        { marks: [link('https://a.cz')], text: 'druhý', type: 'text' },
+        { marks: [link('https://priklad.cz/a')], text: 'druhý', type: 'text' },
       ]).map((run) => run.href),
-    ).toEqual(['https://a.cz', null, 'https://a.cz'])
+    ).toEqual(['https://priklad.cz/a', null, 'https://priklad.cz/a'])
   })
 
   test('unlinked inline nodes form one run', () => {
