@@ -5,7 +5,21 @@
     grid-auto-flow: row;
     align-items: start;
     justify-items: start;
-    text-align: justify;
+    text-wrap: pretty;
     width: 100%;
+  }
+}
+
+/* In-text headings structure the article, they don't compete with its
+   headline (design 12a). */
+.heading2 {
+  @layer variant {
+    font-size: var(--font-size-2xl);
+  }
+}
+
+.heading3 {
+  @layer variant {
+    font-size: var(--font-size-xl);
   }
 }
