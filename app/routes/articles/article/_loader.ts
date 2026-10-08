@@ -45,6 +45,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         },
       },
       images: {
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
         select: {
           ...imageSourceSelect,
           description: true,
@@ -80,7 +81,18 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       }
     : null
 
-  const images = article.images.map((image) => ({
+  // The featured image opens the gallery: the reader sees it whole only there
+  // (design 12a, f5f51mnv).
+  const galleryImages = article.featuredImage
+    ? [
+        article.featuredImage,
+        ...article.images.filter(
+          (image) => image.id !== article.featuredImage?.id,
+        ),
+      ]
+    : article.images
+
+  const images = galleryImages.map((image) => ({
     altText: image.altText,
     description: image.description,
     id: image.id,

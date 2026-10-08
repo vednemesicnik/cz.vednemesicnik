@@ -1,18 +1,16 @@
+/* Tiles clearly smaller than the featured image above: four per row (about 220 px),
+   three below 640 px (about 110 px). A single tile stays in the first column
+   (design 12a/12b, f5f51mnv). */
 .grid {
   @layer component {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
     width: 100%;
-    margin-block: 24px;
 
-    @media (min-width: 640px) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    @media (min-width: 768px) {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
+    @media (width >= 640px) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
     }
   }
 }
