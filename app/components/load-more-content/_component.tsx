@@ -3,7 +3,7 @@ import { Form, useNavigation } from 'react-router'
 import { Button } from '~/components/button'
 import { LIMIT_PARAM } from '~/config/load-more-config'
 
-import style from './_load-more-content.module.css'
+import style from './_styles.module.css'
 
 type Props = {
   action: string
