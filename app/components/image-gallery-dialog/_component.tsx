@@ -61,7 +61,8 @@ export const ImageGalleryDialog = ({
 
   const count = images.length
   const hasPaging = count > 1
-  const image = images[index] ?? images[0]
+  const currentIndex = index < count ? index : 0
+  const image = images[currentIndex]
 
   useEffect(() => {
     const dialog = ref.current
@@ -87,8 +88,8 @@ export const ImageGalleryDialog = ({
     return () => dialog.removeEventListener('click', handleClick)
   }, [ref])
 
-  const showPrevious = () => onIndexChange((index - 1 + count) % count)
-  const showNext = () => onIndexChange((index + 1) % count)
+  const showPrevious = () => onIndexChange((currentIndex - 1 + count) % count)
+  const showNext = () => onIndexChange((currentIndex + 1) % count)
   const handleClose = () => ref.current?.close()
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
@@ -148,7 +149,7 @@ export const ImageGalleryDialog = ({
         <div className={styles.panel}>
           <div className={styles.header}>
             <span aria-live={'polite'} className={styles.counter}>
-              {index + 1} z {count}
+              {currentIndex + 1} z {count}
             </span>
             <button
               aria-label={'Zavřít galerii'}

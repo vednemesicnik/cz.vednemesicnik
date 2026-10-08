@@ -23,6 +23,7 @@ export { meta } from './_meta'
 export default function ArticleRoute({
   loaderData,
   matches,
+  params,
 }: Route.ComponentProps) {
   const { article } = loaderData
   const parent = getParentBreadcrumb(matches)
@@ -78,6 +79,8 @@ export default function ArticleRoute({
           <h2 className={styles.galleryHeading} id={galleryHeadingId}>
             Galerie
           </h2>
+          {/* Keyed by article: the route component is reused across articles, and
+              an open dialog or its index must not carry over to the next one. */}
           <ImageGallery
             images={article.images.map((image) => ({
               alt: image.altText,
@@ -87,6 +90,7 @@ export default function ArticleRoute({
               id: image.id,
               sources: image.sources,
             }))}
+            key={params.articleSlug}
           />
         </section>
       )}
