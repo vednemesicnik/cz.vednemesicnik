@@ -1,10 +1,15 @@
 .wrapper {
   @layer component {
     /* Inline, not an atomic inline-flex: a line may break before an atomic box (even after
-       U+2060), whereas inline padding stays glued to the last word of the link */
+       U+2060). The combining grapheme joiner joins the link's last letter, so not even
+       overflow-wrap: anywhere breaks before it, and its end padding holds the icon's room */
     display: inline;
     position: relative;
-    padding-inline-start: calc(1em + 2px);
+
+    &::before {
+      content: "\34F";
+      padding-inline-end: calc(1em + 2px);
+    }
 
     & > svg {
       position: absolute;
