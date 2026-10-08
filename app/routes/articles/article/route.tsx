@@ -1,5 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
+import { useId } from 'react'
 import { href } from 'react-router'
 import { Badge } from '~/components/badge'
 import { BadgeList } from '~/components/badge-list'
@@ -8,7 +9,6 @@ import { FeaturedImage } from '~/components/featured-image'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { ImageGallery } from '~/components/image-gallery'
-import { ImageGalleryPreview } from '~/components/image-gallery-preview'
 import { Page } from '~/components/page'
 import { ParentLink } from '~/components/parent-link'
 import { Subheadline } from '~/components/subheadline'
@@ -26,6 +26,7 @@ export default function ArticleRoute({
 }: Route.ComponentProps) {
   const { article } = loaderData
   const parent = getParentBreadcrumb(matches)
+  const galleryHeadingId = useId()
 
   return (
     <Page alignment={'start'}>
@@ -72,17 +73,22 @@ export default function ArticleRoute({
 
       <ContentRenderer className={styles.text} content={article.content} />
 
-      {article.images && article.images.length > 0 && (
-        <ImageGallery>
-          {article.images.map((image) => (
-            <ImageGalleryPreview
-              alt={image.altText}
-              description={<ContentRenderer content={image.description} />}
-              image={image.sources}
-              key={image.id}
-            />
-          ))}
-        </ImageGallery>
+      {article.images.length > 0 && (
+        <section aria-labelledby={galleryHeadingId} className={styles.gallery}>
+          <h2 className={styles.galleryHeading} id={galleryHeadingId}>
+            Galerie
+          </h2>
+          <ImageGallery
+            images={article.images.map((image) => ({
+              alt: image.altText,
+              description: image.description ? (
+                <ContentRenderer content={image.description} />
+              ) : undefined,
+              id: image.id,
+              sources: image.sources,
+            }))}
+          />
+        </section>
       )}
 
       {article.tags.length > 0 && (

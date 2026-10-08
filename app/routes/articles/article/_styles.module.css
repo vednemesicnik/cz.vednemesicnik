@@ -6,6 +6,35 @@
   }
 }
 
+.gallery {
+  @layer route {
+    /* Ruled off from the text with a heading in the Štítky label style, so the
+       repeated featured image reads as the start of a gallery (design 12a/12b,
+       f5f51mnv). */
+    display: grid;
+    row-gap: 0.75rem;
+    width: 100%;
+    margin-block-start: 2.5rem;
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--border);
+
+    @media (width >= 640px) {
+      row-gap: 1rem;
+      padding-block-start: 1.5rem;
+    }
+  }
+}
+
+.galleryHeading {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+}
+
 .tags {
   @layer route {
     /* Ruled off from the gallery above, with the label beside the badges
