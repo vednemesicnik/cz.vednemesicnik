@@ -319,7 +319,7 @@ A search tool for modern web development best practices. **Execute first** for a
 
 ```sh
 # Step 1: search for relevant use cases
-npx -y modern-web-guidance@latest search "<query>" --skill-version 2026_05_16-c5e7870
+npx -y modern-web-guidance@latest search "<query>" --skill-version 2026_09_04-7de96777
 
 # Step 2: retrieve the full guide by id from step 1
 npx -y modern-web-guidance@latest retrieve "<id>"
