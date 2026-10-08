@@ -21,14 +21,14 @@ type Props = {
   className?: string
 }
 
-type LinkProps = {
+type ContentLinkProps = {
   mark: Mark
   children?: ReactNode
 }
 
 // A new tab and the icon only for links leaving the site (design 12a); the
 // stored target is ignored.
-const Link = ({ mark, children }: LinkProps) =>
+const ContentLink = ({ mark, children }: ContentLinkProps) =>
   isExternalHref(mark.attrs.href) ? (
     <Hyperlink href={mark.attrs.href} rel={mark.attrs.rel} target={'_blank'}>
       {children}
@@ -56,9 +56,9 @@ const renderTextblockContent = ({ node, renderElement }: TextblockProps) =>
     return run.link === null ? (
       children
     ) : (
-      <Link key={`link-${index}`} mark={run.link}>
+      <ContentLink key={`link-${index}`} mark={run.link}>
         {children}
-      </Link>
+      </ContentLink>
     )
   })
 
@@ -74,7 +74,9 @@ export function ContentRenderer({ content, className }: Props) {
         extensions: [StarterKit],
         options: {
           markMapping: {
-            link: ({ children, mark }) => <Link mark={mark}>{children}</Link>,
+            link: ({ children, mark }) => (
+              <ContentLink mark={mark}>{children}</ContentLink>
+            ),
           },
           nodeMapping: {
             blockquote: ({ children }) => <Blockquote>{children}</Blockquote>,
