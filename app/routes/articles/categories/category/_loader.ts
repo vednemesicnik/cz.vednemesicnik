@@ -55,6 +55,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
             name: true,
             slug: true,
           },
+          where: visibility.where('article_category', ownByAuthor),
         },
         featuredImage: {
           select: imageSourceSelect,

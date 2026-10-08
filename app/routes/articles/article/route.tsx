@@ -13,6 +13,7 @@ import { Page } from '~/components/page'
 import { ParentLink } from '~/components/parent-link'
 import { Subheadline } from '~/components/subheadline'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { handle } from './_handle'
@@ -27,21 +28,8 @@ export default function ArticleRoute({
   const parent = getParentBreadcrumb(matches)
 
   return (
-    <Page>
+    <Page alignment={'start'}>
       {parent && <ParentLink to={parent.path}>{parent.label}</ParentLink>}
-      <HeadlineGroup>
-        <Headline>{article.title}</Headline>
-        <Subheadline>
-          {article.authors.map((author) => author.name).join(', ')} ·{' '}
-          {article.publishedAt.iso ? (
-            <time dateTime={article.publishedAt.iso}>
-              {article.publishedAt.formatted}
-            </time>
-          ) : (
-            article.publishedAt.formatted
-          )}
-        </Subheadline>
-      </HeadlineGroup>
 
       {article.categories.length > 0 && (
         <BadgeList>
@@ -58,6 +46,20 @@ export default function ArticleRoute({
         </BadgeList>
       )}
 
+      <HeadlineGroup>
+        <Headline>{article.title}</Headline>
+        <Subheadline>
+          {article.authors.map((author) => author.name).join(', ')} ·{' '}
+          {article.publishedAt.iso ? (
+            <time dateTime={article.publishedAt.iso}>
+              {article.publishedAt.formatted}
+            </time>
+          ) : (
+            article.publishedAt.formatted
+          )}
+        </Subheadline>
+      </HeadlineGroup>
+
       {article.featuredImage && (
         <FeaturedImage
           alt={article.featuredImage.altText}
@@ -68,7 +70,7 @@ export default function ArticleRoute({
         />
       )}
 
-      <ContentRenderer content={article.content} />
+      <ContentRenderer className={styles.text} content={article.content} />
 
       {article.images && article.images.length > 0 && (
         <ImageGallery>
@@ -84,17 +86,20 @@ export default function ArticleRoute({
       )}
 
       {article.tags.length > 0 && (
-        <BadgeList>
-          {article.tags.map((tag) => (
-            <Badge
-              key={tag.slug}
-              to={href('/articles/tags/:slug', { slug: tag.slug })}
-              variant={'outlined'}
-            >
-              {tag.name}
-            </Badge>
-          ))}
-        </BadgeList>
+        <footer className={styles.tags}>
+          <span className={styles.tagsLabel}>Štítky</span>
+          <BadgeList className={styles.tagList}>
+            {article.tags.map((tag) => (
+              <Badge
+                key={tag.slug}
+                to={href('/articles/tags/:slug', { slug: tag.slug })}
+                variant={'outlined'}
+              >
+                {tag.name}
+              </Badge>
+            ))}
+          </BadgeList>
+        </footer>
       )}
     </Page>
   )

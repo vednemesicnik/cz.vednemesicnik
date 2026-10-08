@@ -8,13 +8,18 @@ import {
 import {
   getWebContentVisibility,
   ownArticle,
+  ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const { articleSlug } = params
 
-  const visibility = await getWebContentVisibility(request, ['article'])
+  const visibility = await getWebContentVisibility(request, [
+    'article',
+    'article_category',
+    'article_tag',
+  ])
 
   const article = await prisma.article.findUnique({
     select: {
@@ -23,11 +28,13 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
           name: true,
         },
       },
+      // Only taxonomy whose own page opens for this reader (design 25d).
       categories: {
         select: {
           name: true,
           slug: true,
         },
+        where: visibility.where('article_category', ownByAuthor),
       },
       content: true,
       createdAt: true,
@@ -49,6 +56,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
           name: true,
           slug: true,
         },
+        where: visibility.where('article_tag', ownByAuthor),
       },
       title: true,
       updatedAt: true,
