@@ -13,19 +13,26 @@ import { HeadlineGroup } from '~/components/headline-group'
 import { Page } from '~/components/page'
 import { Pagination } from '~/components/pagination'
 import { Paragraph } from '~/components/paragraph'
+import { ParentLink } from '~/components/parent-link'
 import { PostContentLink } from '~/components/post-content-link'
+import { getParentBreadcrumb } from '~/utils/breadcrumbs'
 import type { Route } from './+types/route'
 
 export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-export default function RouteComponent({ loaderData }: Route.ComponentProps) {
+export default function RouteComponent({
+  loaderData,
+  matches,
+}: Route.ComponentProps) {
   const { articles, category, currentPage, pageSize, totalCount, totalPages } =
     loaderData
+  const parent = getParentBreadcrumb(matches)
 
   return (
     <Page>
+      {parent && <ParentLink to={parent.path}>{parent.label}</ParentLink>}
       <HeadlineGroup>
         <Headline>Rubrika: {category.name}</Headline>
       </HeadlineGroup>
