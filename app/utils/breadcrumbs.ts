@@ -58,6 +58,18 @@ export function getBreadcrumbs(matches: unknown[]): Breadcrumb[] {
 }
 
 /**
+ * Returns the parent of the current page: the second-to-last breadcrumb of the trail.
+ *
+ * @param matches - Array of React Router UIMatch objects
+ * @returns The parent breadcrumb, or `undefined` on a top-level page
+ */
+export function getParentBreadcrumb(
+  matches: unknown[],
+): Breadcrumb | undefined {
+  return getBreadcrumbs(matches).at(-2)
+}
+
+/**
  * Generates Schema.org BreadcrumbList structured data for SEO.
  *
  * Creates JSON-LD structured data that helps search engines understand your site's

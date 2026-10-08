@@ -1,0 +1,27 @@
+.link {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    box-sizing: border-box;
+    /* 44 px hit area; the negative block margin keeps the visual spacing,
+       and the end margin leaves a 12 px gap to the headline. */
+    min-height: 44px;
+    margin-block: -10px 2px;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--link-strong);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      text-decoration-thickness: 2px;
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
