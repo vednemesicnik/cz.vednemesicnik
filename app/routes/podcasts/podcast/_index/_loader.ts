@@ -71,9 +71,6 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         ...episode,
         publishedAt: createFormattedDate(episode.publishedAt),
       })),
-      // The cover uncropped: covers get no OG crop, and a 1200×630 one would
-      // cut square art.
-      ogImageUrl: cover.sources.src ?? null,
     },
   }
 }

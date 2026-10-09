@@ -4,10 +4,6 @@ import type { NotFoundEpisodeData } from '~/components/boundary-error'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
-  createImageSources,
-  imageSourceSelect,
-} from '~/utils/image-store/create-image-sources'
-import {
   getWebContentVisibility,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
@@ -47,9 +43,6 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       number: true,
       podcast: {
         select: {
-          cover: {
-            select: imageSourceSelect,
-          },
           id: true,
           title: true,
         },
@@ -91,10 +84,6 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   return {
     podcastEpisode: {
       ...podcastEpisode,
-      // Episodes share their podcast's cover: nothing uploads an episode cover.
-      ogImageUrl:
-        createImageSources('podcast-cover', podcastEpisode.podcast.cover).src ??
-        null,
       publishedAt: createFormattedDate(podcastEpisode.publishedAt),
     },
   }
