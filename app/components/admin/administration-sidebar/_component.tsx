@@ -31,7 +31,8 @@ type Props = {
 
 /**
  * The administration sidebar (design 22a, design system `AdminSidebar`): the brand on
- * top, content sections, people below a rule and the signed-in user at the bottom.
+ * top, content sections, people below a rule and the signed-in user at the bottom,
+ * with Nastavení (the account's own settings, 29a) and sign-out under the name.
  * Callers pass only the items the user may see.
  */
 export const AdministrationSidebar = ({
@@ -89,6 +90,13 @@ export const AdministrationSidebar = ({
             )}
           </span>
         </div>
+        <SidebarLink
+          className={styles.accountLink}
+          highlightsActive={highlightsSection}
+          to={href('/administration/settings')}
+        >
+          Nastavení
+        </SidebarLink>
         <Form action={href('/administration/sign-out')} method={'post'}>
           <button className={styles.footLink} type={'submit'}>
             Odhlásit se
