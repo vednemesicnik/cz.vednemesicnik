@@ -57,7 +57,7 @@ export const AdministrationSidebar = ({
   return (
     <aside className={styles.sidebar}>
       <BaseLink className={styles.brand} to={href('/administration')}>
-        <VdmLogo className={styles.logo} variant={'admin'} />
+        <VdmLogo className={styles.logo} />
         <span className={styles.brandText}>
           <VdmWordmark className={styles.name} tone={'text'} />
           <span className={styles.product}>Administrace</span>
