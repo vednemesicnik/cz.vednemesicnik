@@ -1,13 +1,14 @@
 import { href } from 'react-router'
-import { BulletedList } from '~/components/bulleted-list'
+import { BaseLink } from '~/components/base-link'
+import { EmptyState } from '~/components/empty-state'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
-import { Link } from '~/components/link'
-import { ListItem } from '~/components/list-item'
+import { LinkStrip } from '~/components/link-strip'
 import { Page } from '~/components/page'
-import { Paragraph } from '~/components/paragraph'
 import { ParentLink } from '~/components/parent-link'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
+import { formatArticleCount } from '~/utils/format-article-count'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { loader } from './_loader'
@@ -17,7 +18,7 @@ export default function RouteComponent({
   loaderData,
   matches,
 }: Route.ComponentProps) {
-  const { categories } = loaderData
+  const { categories, tagLinks } = loaderData
   const parent = getParentBreadcrumb(matches)
 
   return (
@@ -28,22 +29,69 @@ export default function RouteComponent({
       </HeadlineGroup>
 
       {categories.length > 0 ? (
-        <BulletedList>
+        <ul className={styles.cards}>
           {categories.map((category) => (
-            <ListItem key={category.id}>
-              <Link
-                to={href('/articles/categories/:slug', {
-                  slug: category.slug,
-                })}
-              >
-                {category.name}
-              </Link>{' '}
-              ({category.articleCount})
-            </ListItem>
+            <li className={styles.card} key={category.id}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>
+                  <BaseLink
+                    className={styles.cardTitleLink}
+                    to={href('/articles/categories/:slug', {
+                      slug: category.slug,
+                    })}
+                  >
+                    {category.name}
+                  </BaseLink>
+                </h2>
+                <span className={styles.cardCount}>
+                  {formatArticleCount(category.articleCount)}
+                </span>
+              </div>
+              <ul className={styles.latest}>
+                {category.latestArticles.map((article) => (
+                  <li className={styles.latestItem} key={article.id}>
+                    <BaseLink
+                      className={styles.latestTitle}
+                      to={href('/articles/:articleSlug', {
+                        articleSlug: article.slug,
+                      })}
+                    >
+                      {article.title}
+                    </BaseLink>
+                    {article.publishedAt.iso ? (
+                      <time
+                        className={styles.latestDate}
+                        dateTime={article.publishedAt.iso}
+                      >
+                        {article.publishedAt.formatted}
+                      </time>
+                    ) : (
+                      <span className={styles.latestDate}>
+                        {article.publishedAt.formatted}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </li>
           ))}
-        </BulletedList>
+        </ul>
       ) : (
-        <Paragraph>Zatím zde nejsou žádné rubriky.</Paragraph>
+        <EmptyState link={{ label: 'Všechny články', to: href('/articles') }}>
+          Rubriky se tu zobrazí, až v nich bude něco ke čtení.
+        </EmptyState>
+      )}
+
+      {tagLinks.length > 0 && (
+        <LinkStrip
+          links={tagLinks.map((tag) => ({
+            label: tag.name,
+            to: href('/articles/tags/:slug', { slug: tag.slug }),
+          }))}
+          more={{ label: 'Všechny štítky', to: href('/articles/tags') }}
+        >
+          Články mají i štítky, třeba
+        </LinkStrip>
       )}
     </Page>
   )

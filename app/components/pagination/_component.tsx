@@ -1,14 +1,13 @@
 import { clsx } from 'clsx'
 import { useSearchParams } from 'react-router'
-import { KeyboardArrowLeftIcon } from '~/components/icons/keyboard-arrow-left-icon'
-import { KeyboardArrowRightIcon } from '~/components/icons/keyboard-arrow-right-icon'
-import { Link } from '~/components/link'
+import { BaseLink } from '~/components/base-link'
 import styles from './_styles.module.css'
 
 export const PAGE_PARAM = 'page'
 
 type Props = {
   currentPage: number
+  noun: string
   pageSize: number
   totalCount: number
   totalPages: number
@@ -40,8 +39,16 @@ function getPageNumbers(
   return pages
 }
 
+/**
+ * Numbered pagination over `?page=` (design 11a, 11d). Below 640 px the page
+ * numbers give way to "Stránka 2 z 6" between Předchozí and Další.
+ *
+ * @param noun - What the list counts, in the genitive plural ("článků"); it ends the summary "1–9 z 52 článků".
+ * @returns The pagination, or nothing when everything fits on one page
+ */
 export const Pagination = ({
   currentPage,
+  noun,
   pageSize,
   totalCount,
   totalPages,
@@ -73,88 +80,73 @@ export const Pagination = ({
       <ul className={styles.list}>
         <li>
           {currentPage > 1 ? (
-            <Link
+            <BaseLink
               aria-label={'Předchozí stránka'}
-              className={styles.item}
+              className={clsx(styles.item, styles.step)}
+              rel={'prev'}
               to={getPageLink(currentPage - 1)}
             >
-              <span aria-hidden={true} className={styles.itemIcon}>
-                <KeyboardArrowLeftIcon />
-              </span>
-              <span aria-hidden={true} className={styles.itemLabel}>
-                Zpět
-              </span>
-            </Link>
+              <span aria-hidden={true}>‹ Předchozí</span>
+            </BaseLink>
           ) : (
-            <span className={clsx(styles.item, styles.disabled)}>
-              <span className={styles.srOnly}>Předchozí stránka</span>
-              <span aria-hidden={true} className={styles.itemIcon}>
-                <KeyboardArrowLeftIcon />
-              </span>
-              <span aria-hidden={true} className={styles.itemLabel}>
-                Zpět
-              </span>
+            <span className={clsx(styles.item, styles.step, styles.disabled)}>
+              <span className={'screen-reader-only'}>Předchozí stránka</span>
+              <span aria-hidden={true}>‹ Předchozí</span>
             </span>
           )}
+        </li>
+        <li className={styles.compact}>
+          Stránka {currentPage} z {totalPages}
         </li>
         {pageNumbers.map((page, index) =>
           page === 'ellipsis' ? (
             <li
               aria-hidden={true}
-              className={styles.ellipsis}
+              className={clsx(styles.ellipsis, styles.number)}
               key={`ellipsis-${index}`}
             >
               …
             </li>
           ) : page === currentPage ? (
-            <li key={page}>
+            <li className={styles.number} key={page}>
               <span
                 aria-current={'page'}
                 className={clsx(styles.item, styles.current)}
               >
-                <span className={styles.srOnly}>Stránka </span>
+                <span className={'screen-reader-only'}>Stránka </span>
                 {page}
               </span>
             </li>
           ) : (
-            <li key={page}>
-              <Link className={styles.item} to={getPageLink(page)}>
-                <span className={styles.srOnly}>Stránka </span>
+            <li className={styles.number} key={page}>
+              <BaseLink className={styles.item} to={getPageLink(page)}>
+                <span className={'screen-reader-only'}>Stránka </span>
                 {page}
-              </Link>
+              </BaseLink>
             </li>
           ),
         )}
         <li>
           {currentPage < totalPages ? (
-            <Link
+            <BaseLink
               aria-label={'Další stránka'}
-              className={styles.item}
+              className={clsx(styles.item, styles.step)}
+              rel={'next'}
               to={getPageLink(currentPage + 1)}
             >
-              <span aria-hidden={true} className={styles.itemLabel}>
-                Další
-              </span>
-              <span aria-hidden={true} className={styles.itemIcon}>
-                <KeyboardArrowRightIcon />
-              </span>
-            </Link>
+              <span aria-hidden={true}>Další ›</span>
+            </BaseLink>
           ) : (
-            <span className={clsx(styles.item, styles.disabled)}>
-              <span className={styles.srOnly}>Další stránka</span>
-              <span aria-hidden={true} className={styles.itemLabel}>
-                Další
-              </span>
-              <span aria-hidden={true} className={styles.itemIcon}>
-                <KeyboardArrowRightIcon />
-              </span>
+            <span className={clsx(styles.item, styles.step, styles.disabled)}>
+              <span className={'screen-reader-only'}>Další stránka</span>
+              <span aria-hidden={true}>Další ›</span>
             </span>
           )}
         </li>
       </ul>
       <p aria-live={'polite'} className={styles.summary}>
         {startItem.toLocaleString('cs-CZ')}–{endItem.toLocaleString('cs-CZ')} z{' '}
-        {totalCount.toLocaleString('cs-CZ')}
+        {totalCount.toLocaleString('cs-CZ')} {noun}
       </p>
     </nav>
   )

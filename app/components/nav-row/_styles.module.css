@@ -1,0 +1,79 @@
+.row {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 20px;
+    width: 100%;
+    font-size: var(--font-size-md);
+    line-height: 1.5;
+
+    /* One sideways-scrolling row; it runs past the page gutter so the cut-off
+       pill at the right edge hints at more (11d). */
+    @media (width < 768px) {
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 8px;
+      box-sizing: content-box;
+      margin-inline-end: calc(-1 * var(--page-side-padding));
+      padding-inline-end: var(--page-side-padding);
+      overflow-x: auto;
+      scrollbar-width: none;
+      white-space: nowrap;
+    }
+  }
+}
+
+.label {
+  @layer component {
+    color: var(--text-secondary);
+
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}
+
+.item {
+  @layer component {
+    color: var(--link-strong);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      text-decoration-thickness: 2px;
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--focus-shadow);
+    }
+
+    @media (width < 768px) {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      box-sizing: border-box;
+      min-height: 44px;
+      padding-inline: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      text-decoration: none;
+
+      &:hover {
+        border-color: var(--border-hover);
+      }
+
+      &:focus-visible {
+        border-radius: var(--radius-full);
+      }
+    }
+  }
+}
+
+.more {
+  @layer variant {
+    color: var(--text-secondary);
+  }
+}
