@@ -42,7 +42,7 @@ export default function RouteComponent({
                     <span aria-hidden={true} className={styles.count}>
                       {tag.articleCount.toLocaleString('cs-CZ')}
                     </span>
-                    <span className={styles.srOnly}>
+                    <span className={'screen-reader-only'}>
                       {formatArticleCount(tag.articleCount)}
                     </span>
                   </li>

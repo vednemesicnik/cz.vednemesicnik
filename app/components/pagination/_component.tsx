@@ -90,7 +90,7 @@ export const Pagination = ({
             </BaseLink>
           ) : (
             <span className={clsx(styles.item, styles.step, styles.disabled)}>
-              <span className={styles.srOnly}>Předchozí stránka</span>
+              <span className={'screen-reader-only'}>Předchozí stránka</span>
               <span aria-hidden={true}>‹ Předchozí</span>
             </span>
           )}
@@ -113,14 +113,14 @@ export const Pagination = ({
                 aria-current={'page'}
                 className={clsx(styles.item, styles.current)}
               >
-                <span className={styles.srOnly}>Stránka </span>
+                <span className={'screen-reader-only'}>Stránka </span>
                 {page}
               </span>
             </li>
           ) : (
             <li className={styles.number} key={page}>
               <BaseLink className={styles.item} to={getPageLink(page)}>
-                <span className={styles.srOnly}>Stránka </span>
+                <span className={'screen-reader-only'}>Stránka </span>
                 {page}
               </BaseLink>
             </li>
@@ -138,7 +138,7 @@ export const Pagination = ({
             </BaseLink>
           ) : (
             <span className={clsx(styles.item, styles.step, styles.disabled)}>
-              <span className={styles.srOnly}>Další stránka</span>
+              <span className={'screen-reader-only'}>Další stránka</span>
               <span aria-hidden={true}>Další ›</span>
             </span>
           )}
