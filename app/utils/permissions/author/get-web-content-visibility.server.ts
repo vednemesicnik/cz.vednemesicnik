@@ -47,6 +47,11 @@ export const getWebContentVisibility = async (
   }
 }
 
+/** What {@link getWebContentVisibility} resolves to, for helpers that take it. */
+export type WebContentVisibility = Awaited<
+  ReturnType<typeof getWebContentVisibility>
+>
+
 /** "Mine" predicate for articles, which have many authors. */
 export const ownArticle = (authorId: string) => ({
   authors: { some: { id: authorId } },

@@ -1,6 +1,5 @@
 import { href } from 'react-router'
 import { Badge } from '~/components/badge'
-import { Callout } from '~/components/callout'
 import { ContentLinkAuthor } from '~/components/content-link-author'
 import { ContentLinkCategories } from '~/components/content-link-categories'
 import { ContentLinkFooter } from '~/components/content-link-footer'
@@ -9,51 +8,84 @@ import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
 import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
+import { EmptyState } from '~/components/empty-state'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
-import { Hyperlink } from '~/components/hyperlink'
-import { NavRow } from '~/components/nav-row'
 import { Page } from '~/components/page'
 import { Pagination } from '~/components/pagination'
-import { Paragraph } from '~/components/paragraph'
+import { ParentLink } from '~/components/parent-link'
 import { PostContentLink } from '~/components/post-content-link'
-import type { Route } from './+types/route'
+import { Subheadline } from '~/components/subheadline'
+import type { Breadcrumb } from '~/types/breadcrumb'
+import { formatArticleCount } from '~/utils/format-article-count'
+import type { FormattedDate } from '~/utils/format-date'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
-export { loader } from './_loader'
-export { meta } from './_meta'
+type TaxonomyArticle = {
+  authors: { name: string }[]
+  categories: { name: string; slug: string }[]
+  featuredImage: { altText: string; sources: ImageSources } | null
+  id: string
+  publishedAt: FormattedDate
+  slug: string
+  title: string
+}
 
-export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const {
-    articles,
-    categoryLinks,
-    currentPage,
-    pageSize,
-    totalCount,
-    totalPages,
-  } = loaderData
+type Props = {
+  articles: TaxonomyArticle[]
+  currentPage: number
+  kindLabel: string
+  name: string
+  pageSize: number
+  parent: Breadcrumb | undefined
+  totalCount: number
+  totalPages: number
+}
+
+/**
+ * The page of one category or tag (design 11b): the name as the headline, the
+ * kind and article count under it, the article rows and pagination. Both routes
+ * render it; they differ only in `kindLabel` and the parent link.
+ *
+ * The empty state shows only above a list the page really displays empty, so a
+ * draft in the editorial preview suppresses it (10d).
+ *
+ * @param kindLabel - The word under the headline: "Rubrika" or "Štítek"
+ * @param parent - The index one level up ("‹ Rubriky", "‹ Štítky")
+ * @param totalCount - The articles the visitor can see, which the count states
+ * @returns The taxonomy page
+ */
+export const TaxonomyPage = ({
+  articles,
+  currentPage,
+  kindLabel,
+  name,
+  pageSize,
+  parent,
+  totalCount,
+  totalPages,
+}: Props) => {
+  const isEmpty = totalCount === 0
 
   return (
     <Page>
+      {parent && <ParentLink to={parent.path}>{parent.label}</ParentLink>}
       <HeadlineGroup>
-        <Headline>Čtení, které vás chytne</Headline>
-        {categoryLinks.length > 0 && (
-          <NavRow
-            items={categoryLinks.map((category) => ({
-              label: category.name,
-              to: href('/articles/categories/:slug', { slug: category.slug }),
-            }))}
-            label={'Rubriky'}
-            more={{
-              label: 'Všechny rubriky',
-              to: href('/articles/categories'),
-            }}
-          />
-        )}
+        <Headline>{name}</Headline>
+        <Subheadline>
+          {isEmpty
+            ? kindLabel
+            : `${kindLabel} · ${formatArticleCount(totalCount)}`}
+        </Subheadline>
       </HeadlineGroup>
 
-      <ContentList>
-        {articles.map((article) => {
-          return (
+      {isEmpty ? (
+        <EmptyState link={{ label: 'Všechny články', to: href('/articles') }}>
+          Tady zatím žádný článek není.
+        </EmptyState>
+      ) : (
+        <ContentList>
+          {articles.map((article) => (
             <ContentListItem key={article.id}>
               <PostContentLink
                 to={href('/articles/:articleSlug', {
@@ -80,9 +112,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 </ContentLinkFooter>
               </PostContentLink>
             </ContentListItem>
-          )
-        })}
-      </ContentList>
+          ))}
+        </ContentList>
+      )}
 
       <Pagination
         currentPage={currentPage}
@@ -91,16 +123,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         totalCount={totalCount}
         totalPages={totalPages}
       />
-
-      <Callout>
-        <Paragraph>
-          Starší články si můžete přečíst na platformě{' '}
-          <Hyperlink href={'https://medium.com/vednemesicnik'}>
-            Medium
-          </Hyperlink>
-          .
-        </Paragraph>
-      </Callout>
     </Page>
   )
 }

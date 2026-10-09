@@ -11,9 +11,12 @@ import {
   ownArticle,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { findCategoriesWithArticleCounts } from '../utils/find-categories-with-article-counts.server'
+import { pickTopByArticleCount } from '../utils/pick-top-by-article-count'
 import type { Route } from './+types/route'
 
 const PAGE_SIZE = 9
+const CATEGORY_ROW_SIZE = 5
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const visibility = await getWebContentVisibility(request, [
@@ -25,7 +28,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url)
   const currentPage = parsePositiveIntegerParam(url.searchParams, PAGE_PARAM, 1)
 
-  const [articles, totalCount] = await Promise.all([
+  const [articles, totalCount, categories] = await Promise.all([
     prisma.article.findMany({
       orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
       select: {
@@ -56,7 +59,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     prisma.article.count({
       where: visibleArticles,
     }),
+    findCategoriesWithArticleCounts(visibility),
   ])
+
+  const categoryLinks = pickTopByArticleCount(
+    categories,
+    CATEGORY_ROW_SIZE,
+  ).map((category) => ({ name: category.name, slug: category.slug }))
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
@@ -73,6 +82,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return {
     articles: articlesWithSources,
+    categoryLinks,
     currentPage,
     pageSize: PAGE_SIZE,
     totalCount,

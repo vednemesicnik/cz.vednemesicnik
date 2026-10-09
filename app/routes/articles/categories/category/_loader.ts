@@ -50,12 +50,16 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
             name: true,
           },
         },
+        // A row on this category's page doesn't repeat its own badge (11b).
         categories: {
           select: {
             name: true,
             slug: true,
           },
-          where: visibility.where('article_category', ownByAuthor),
+          where: {
+            ...visibility.where('article_category', ownByAuthor),
+            slug: { not: slug },
+          },
         },
         featuredImage: {
           select: imageSourceSelect,
