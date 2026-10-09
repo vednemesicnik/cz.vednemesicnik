@@ -7,6 +7,7 @@ import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { createMagicLinkToken } from '~/utils/magic-link.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { sendMagicLinkEmail } from '~/utils/send-magic-link-email.server'
 import { findExistingUserByEmail } from '~/utils/sign-in.server'
 
@@ -69,6 +70,12 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
         )
         link.searchParams.set('token', token)
         link.searchParams.set('email', email)
+
+        // Where to land after the confirm click; the default adds nothing.
+        const redirectTo = safeRedirect(formData.get('redirectTo'))
+        if (redirectTo !== safeRedirect(null)) {
+          link.searchParams.set('redirectTo', redirectTo)
+        }
 
         await sendMagicLinkEmail({ email, link: link.href })
       }

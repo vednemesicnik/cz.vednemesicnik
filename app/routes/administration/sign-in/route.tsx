@@ -2,6 +2,7 @@
 import { Link } from 'react-router'
 
 import { HoneypotInputs } from '~/components/honeypot-inputs'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { PasskeyForm } from './components/passkey-form'
@@ -47,7 +48,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
         <Link
           className={styles.linkButton}
-          to={'/administration/sign-in/magic-link'}
+          to={withRedirectTo(
+            '/administration/sign-in/magic-link',
+            loaderData.redirectTo,
+          )}
         >
           Přihlásit odkazem v e-mailu
         </Link>

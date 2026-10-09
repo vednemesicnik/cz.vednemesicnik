@@ -8,6 +8,7 @@ import { AdminInput } from '~/components/admin/admin-input'
 import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { useHydrated } from '~/utils/use-hydrated'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import { schema } from './_schema'
 import styles from './_styles.module.css'
@@ -18,7 +19,10 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 export { middleware } from './_middleware'
 
-export default function RouteComponent({ actionData }: Route.ComponentProps) {
+export default function RouteComponent({
+  actionData,
+  loaderData,
+}: Route.ComponentProps) {
   const isHydrated = useHydrated()
 
   const [form, fields] = useForm({
@@ -62,6 +66,11 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
               method={'post'}
             >
               <HoneypotInputs />
+              <input
+                name={'redirectTo'}
+                type={'hidden'}
+                value={loaderData.redirectTo}
+              />
 
               <AdminInput
                 errors={fields.email.errors}
@@ -82,7 +91,13 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
         )}
 
         <div className={styles.footer}>
-          <Link className={styles.link} to={'/administration/sign-in'}>
+          <Link
+            className={styles.link}
+            to={withRedirectTo(
+              '/administration/sign-in',
+              loaderData.redirectTo,
+            )}
+          >
             Zpět na výběr přihlášení
           </Link>
         </div>

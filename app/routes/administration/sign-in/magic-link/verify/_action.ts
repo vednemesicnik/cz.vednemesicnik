@@ -3,7 +3,9 @@ import { requireUnauthenticated } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { consumeMagicLinkToken } from '~/utils/magic-link.server'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import type { Route } from './+types/route'
 
@@ -18,9 +20,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const token = formData.get('token')
   const email = formData.get('email')
+  const redirectTo = safeRedirect(formData.get('redirectTo'))
 
   if (typeof token !== 'string' || typeof email !== 'string') {
-    throw redirect('/administration/sign-in', { status: 303 })
+    throw redirect(withRedirectTo('/administration/sign-in', redirectTo), {
+      status: 303,
+    })
   }
 
   const normalizedEmail = email.trim().toLowerCase()
@@ -35,7 +40,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
       method: 'magic_link',
       request,
     })
-    throw redirect('/administration/sign-in/magic-link', { status: 303 })
+    throw redirect(
+      withRedirectTo('/administration/sign-in/magic-link', redirectTo),
+      { status: 303 },
+    )
   }
 
   const user = await findExistingUserByEmail(normalizedEmail)
@@ -48,9 +56,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
       method: 'magic_link',
       request,
     })
-    throw redirect('/administration/sign-in', { status: 303 })
+    throw redirect(withRedirectTo('/administration/sign-in', redirectTo), {
+      status: 303,
+    })
   }
 
-  // Always throws: a redirect to /administration on success.
-  return await signInUser(request, user.id, 'magic_link')
+  // Always throws: a redirect to `redirectTo` on success.
+  return await signInUser(request, user.id, 'magic_link', redirectTo)
 }
