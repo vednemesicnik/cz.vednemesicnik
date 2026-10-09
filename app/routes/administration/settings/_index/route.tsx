@@ -59,12 +59,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </AdminDetailList>
 
           <Form method="post">
-            <input name="userId" type="hidden" value={loaderData.user.id} />
-            <input
-              name="currentSessionId"
-              type="hidden"
-              value={loaderData.currentSession.id}
-            />
             <AuthenticityTokenInput />
             <AdminButton
               name={FORM_CONFIG.intent.name}
