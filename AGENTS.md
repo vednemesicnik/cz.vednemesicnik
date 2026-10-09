@@ -402,6 +402,18 @@ Applies when writing any stateful object (store, registry, cache, manager) or co
 
 Read `.agents/rules/functional-style/RULE.md` before acting.
 
+### One Function per File
+
+Applies when writing a new utility, helper or server function, or adding a function to an existing module.
+
+Read `.agents/rules/one-function-per-file/RULE.md` before acting.
+
+### Generic Guidance Examples
+
+Applies when writing or editing a rule, a skill, or the conventions in this file.
+
+Read `.agents/rules/generic-guidance-examples/RULE.md` before acting.
+
 ### Naming (no abbreviations)
 
 Applies when naming any variable, function parameter, function, or callback argument.
