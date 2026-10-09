@@ -27,10 +27,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         Před změnou způsobu přihlášení se přihlaste znovu. Pokračováním se
         nejprve odhlásíte.
       </AdminParagraph>
-      <AdminParagraph>
-        Po přihlášení odkazem v e-mailu otevřete Nastavení a vyberte, co chcete
-        změnit.
-      </AdminParagraph>
 
       <Form method="post">
         <input name="redirectTo" type="hidden" value={loaderData.redirectTo} />

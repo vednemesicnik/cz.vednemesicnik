@@ -7,8 +7,10 @@ import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { createMagicLinkToken } from '~/utils/magic-link.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { sendMagicLinkEmail } from '~/utils/send-magic-link-email.server'
 import { findExistingUserByEmail } from '~/utils/sign-in.server'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -63,8 +65,12 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       if (user !== null) {
         const token = await createMagicLinkToken(email)
 
+        // Carries where to land after the confirm click.
         const link = new URL(
-          '/administration/sign-in/magic-link/verify',
+          withRedirectTo(
+            '/administration/sign-in/magic-link/verify',
+            safeRedirect(formData.get('redirectTo')),
+          ),
           process.env.BASE_URL,
         )
         link.searchParams.set('token', token)

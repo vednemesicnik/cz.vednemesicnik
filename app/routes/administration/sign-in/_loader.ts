@@ -17,7 +17,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url)
 
   // Where to return after sign-in (same-origin only). Threaded into the OAuth
-  // start form so it survives the round-trip to Google.
+  // start form and the magic-link request so it survives the round-trip to
+  // Google or the inbox.
   const redirectTo = safeRedirect(url.searchParams.get('redirectTo'))
 
   const errorCode = url.searchParams.get('error')

@@ -3,6 +3,7 @@ import { Form, Link, useNavigation } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -30,7 +31,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <div className={styles.footer}>
             <Link
               className={styles.link}
-              to={'/administration/sign-in/magic-link'}
+              to={withRedirectTo(
+                '/administration/sign-in/magic-link',
+                loaderData.redirectTo,
+              )}
             >
               Požádat o nový odkaz
             </Link>
@@ -54,6 +58,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
           <input name={'token'} type={'hidden'} value={loaderData.token} />
           <input name={'email'} type={'hidden'} value={loaderData.email} />
+          <input
+            name={'redirectTo'}
+            type={'hidden'}
+            value={loaderData.redirectTo}
+          />
 
           <AdminButton
             className={styles.button}
