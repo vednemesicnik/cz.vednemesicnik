@@ -41,7 +41,7 @@ const cookieSessionStorage = createCookieSessionStorage<
     // Scope covers both the route path and its React Router `.data` request
     // variant (Single Fetch). A tighter `/…/two-factor` path would fail cookie
     // path-matching for `/…/two-factor.data`, so the cookie would never be sent.
-    path: '/administration/settings/profile',
+    path: '/administration/settings',
     sameSite: 'lax',
     secrets: process.env.SESSION_SECRET?.split(','),
     secure: process.env.NODE_ENV === 'production',

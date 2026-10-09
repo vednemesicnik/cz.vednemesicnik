@@ -5,8 +5,8 @@ import type { Breadcrumb } from '~/types/breadcrumb'
 export const handle = {
   breadcrumb: (): Breadcrumb => {
     return {
-      label: 'Dvoufázové ověření',
-      path: href('/administration/settings/profile/two-factor'),
+      label: 'Ověření',
+      path: href('/administration/settings/verify-identity'),
     }
   },
 }

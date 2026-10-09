@@ -6,7 +6,7 @@ export const handle = {
   breadcrumb: (): Breadcrumb => {
     return {
       label: 'Passkeys',
-      path: href('/administration/settings/profile/passkeys'),
+      path: href('/administration/settings/passkeys'),
     }
   },
 }

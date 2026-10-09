@@ -28,8 +28,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         nejprve odhlásíte.
       </AdminParagraph>
       <AdminParagraph>
-        Po přihlášení odkazem v e-mailu otevřete z Přehledu Nastavení a potom
-        Profil.
+        Po přihlášení odkazem v e-mailu otevřete Nastavení a vyberte, co chcete
+        změnit.
       </AdminParagraph>
 
       <Form method="post">
@@ -42,7 +42,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </AdminButton>
           <AdminLinkButton
             disabled={isSubmitting}
-            to={href('/administration/settings/profile')}
+            to={href('/administration/settings')}
           >
             Zrušit
           </AdminLinkButton>

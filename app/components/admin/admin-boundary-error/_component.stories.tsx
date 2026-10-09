@@ -154,7 +154,7 @@ export const ForbiddenCsrf: Story = {
 /** 403 without a composed reason (design 30h). */
 export const ForbiddenGeneric: Story = {
   args: { error: createRouteErrorResponse(403, 'Forbidden') },
-  parameters: { pathname: '/administration/settings/profile' },
+  parameters: { pathname: '/administration/settings' },
 }
 
 /** Unexpected error (design 30g); development shows the diagnostics under the sentence. */

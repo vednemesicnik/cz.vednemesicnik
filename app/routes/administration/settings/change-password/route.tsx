@@ -76,7 +76,7 @@ export default function RouteComponent({
           </AdminButton>
           <AdminLinkButton
             disabled={isLoadingOrSubmitting}
-            to={href('/administration/settings/profile')}
+            to={href('/administration/settings')}
           >
             Zrušit
           </AdminLinkButton>

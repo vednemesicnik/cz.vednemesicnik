@@ -218,45 +218,44 @@ export default [
             path: 'routes/administration/authors',
           }),
 
-          // Settings
+          // Settings of the signed-in account (design 29a)
           ...createAdminIntersection(
             {
               name: 'settings',
               path: 'routes/administration/settings',
             },
-            // Profile Settings
-            ...createAdminIntersection(
-              {
-                name: 'profile',
-                path: 'routes/administration/settings/profile',
-              },
-              route(
-                'change-password',
-                'routes/administration/settings/profile/change-password/route.tsx',
-              ),
-              route(
-                'two-factor',
-                'routes/administration/settings/profile/two-factor/route.tsx',
-              ),
-              // Fresh sign-in before changing sign-in methods
-              route(
-                'verify-identity',
-                'routes/administration/settings/profile/verify-identity/route.tsx',
-              ),
+            route(
+              'change-password',
+              'routes/administration/settings/change-password/route.tsx',
+            ),
+            route(
+              'two-factor',
+              'routes/administration/settings/two-factor/route.tsx',
+            ),
+            // Fresh sign-in before changing sign-in methods
+            route(
+              'verify-identity',
+              'routes/administration/settings/verify-identity/route.tsx',
+            ),
 
-              // Passkey management + registration ceremony endpoints
-              route(
-                'passkeys',
-                'routes/administration/settings/profile/passkeys/route.tsx',
-              ),
-              route(
-                'passkeys/generate-registration-options',
-                'routes/administration/settings/profile/passkeys/generate-registration-options/route.ts',
-              ),
-              route(
-                'passkeys/verify-registration-response',
-                'routes/administration/settings/profile/passkeys/verify-registration-response/route.ts',
-              ),
+            // Passkey management + registration ceremony endpoints
+            route(
+              'passkeys',
+              'routes/administration/settings/passkeys/route.tsx',
+            ),
+            route(
+              'passkeys/generate-registration-options',
+              'routes/administration/settings/passkeys/generate-registration-options/route.ts',
+            ),
+            route(
+              'passkeys/verify-registration-response',
+              'routes/administration/settings/passkeys/verify-registration-response/route.ts',
+            ),
+
+            // Old profile addresses (design 30b)
+            route(
+              'profile/*',
+              'routes/administration/settings/profile/route.ts',
             ),
           ),
 

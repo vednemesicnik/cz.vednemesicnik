@@ -9,7 +9,7 @@ import { recordAuthLog } from '~/utils/auth-log.server'
 import { requireCSRF } from '~/utils/csrf.server'
 import { safeRedirect } from '~/utils/safe-redirect'
 
-import { deleteSession } from '../../../sign-out/utils/delete-session.server'
+import { deleteSession } from '../../sign-out/utils/delete-session.server'
 import type { Route } from './+types/route'
 
 // Ends the current session and sends the user to sign-in, which returns them to
@@ -22,7 +22,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const redirectTo = safeRedirect(
     formData.get('redirectTo'),
-    '/administration/settings/profile',
+    '/administration/settings',
   )
 
   recordAuthLog({ event: 'sign_out', request, userId })

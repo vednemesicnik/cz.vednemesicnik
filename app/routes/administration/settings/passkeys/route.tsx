@@ -63,7 +63,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         )}
       </AdminDetailSection>
 
-      <AdminLinkButton to={href('/administration/settings/profile')}>
+      <AdminLinkButton to={href('/administration/settings')}>
         Zpět
       </AdminLinkButton>
     </AdminPage>

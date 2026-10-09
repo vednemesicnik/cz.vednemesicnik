@@ -11,7 +11,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const redirectTo = safeRedirect(
     url.searchParams.get('redirectTo'),
-    '/administration/settings/profile',
+    '/administration/settings',
   )
 
   // Freshly signed in (typically on the way back from sign-in): continue.
