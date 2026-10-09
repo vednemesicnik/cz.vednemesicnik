@@ -20,7 +20,6 @@ import { VdmWordmark } from '~/components/vdm-wordmark'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
-export { links } from './_links'
 export { loader } from './_loader'
 export { meta } from './_meta'
 

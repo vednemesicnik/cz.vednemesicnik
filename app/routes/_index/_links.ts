@@ -1,7 +1,0 @@
-import type { Route } from './+types/route'
-
-export const links: Route.LinksFunction = () => {
-  const baseUrl = 'https://vednemesicnik.cz'
-
-  return [{ href: baseUrl, rel: 'canonical' }]
-}
