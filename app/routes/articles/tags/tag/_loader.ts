@@ -6,6 +6,7 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { isPagePastLast } from '~/utils/is-page-past-last'
 import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 import {
   getWebContentVisibility,
@@ -74,6 +75,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   ])
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+  if (isPagePastLast(currentPage, totalPages)) {
+    throw data(null, { status: 404 })
+  }
 
   const articlesWithSources = articles.map((article) => ({
     ...article,
