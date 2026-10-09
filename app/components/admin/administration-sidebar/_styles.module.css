@@ -1,29 +1,161 @@
 .sidebar {
-  grid-area: sidebar;
-  position: fixed;
-  top: var(--header-height);
-  left: 0;
-  bottom: 0;
-  width: var(--sidebar-width);
-  background-color: var(--bg-secondary);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  z-index: var(--z-sidebar);
+  @layer component {
+    grid-area: sidebar;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: sticky;
+    top: 0;
+    box-sizing: border-box;
+    width: var(--sidebar-width);
+    block-size: 100dvh;
+    padding: 20px 12px;
+    overflow-y: auto;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    z-index: var(--z-sidebar);
+  }
+}
+
+.brand {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-inline: 8px;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+}
+
+.logo {
+  @layer component {
+    flex: none;
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.brandText {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+}
+
+.name {
+  @layer variant {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+.product {
+  @layer component {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
 }
 
 .nav {
-  padding-block-end: 16px;
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: var(--font-size-sm);
+  }
 }
 
 .list {
-  display: grid;
-  position: relative;
-  grid-auto-flow: row;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 .item {
-  margin: 0;
+  @layer component {
+    margin: 0;
+  }
+}
+
+.separator {
+  @layer component {
+    height: 1px;
+    margin: 8px 10px;
+    border: none;
+    background-color: var(--border);
+  }
+}
+
+.foot {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-block-start: auto;
+    padding-inline: 8px;
+  }
+}
+
+.user {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.userText {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+}
+
+.userName {
+  @layer component {
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}
+
+.role {
+  @layer component {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+}
+
+.footLink {
+  @layer component {
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
+    }
+  }
 }

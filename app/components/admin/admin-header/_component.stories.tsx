@@ -1,15 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
-import { AdminUserMenu } from '~/components/admin/admin-user-menu'
-
 import { AdminHeader } from './_component'
 
 const meta: Meta<typeof AdminHeader> = {
   argTypes: {
     children: {
       control: false,
-      description: 'Optional content (typically UserMenu component)',
+      description: 'Optional content on the right of the header',
     },
   },
   component: AdminHeader,
@@ -31,46 +29,9 @@ export default meta
 type Story = StoryObj<typeof AdminHeader>
 
 /**
- * Default administration header without user menu.
- * Shows the logo, title, and empty menu slot.
+ * The header of the sign-in pages: the logo and the title. Signed-in pages have
+ * the sidebar instead (design 22a).
  */
 export const Default: Story = {
   args: {},
-}
-
-/**
- * Administration header with user menu.
- * Displays authenticated user with dropdown menu options.
- */
-export const WithUserMenu: Story = {
-  args: {
-    children: (
-      <AdminUserMenu userEmail="jan.novak@example.com" userName="Jan Novák" />
-    ),
-  },
-}
-
-/**
- * Administration header with user menu (email only).
- * Shows fallback to email when user has no name.
- */
-export const WithUserMenuEmailOnly: Story = {
-  args: {
-    children: <AdminUserMenu userEmail="user@example.com" />,
-  },
-}
-
-/**
- * Administration header with long user name.
- * Tests how the header handles lengthy user names.
- */
-export const WithLongUserName: Story = {
-  args: {
-    children: (
-      <AdminUserMenu
-        userEmail="alexandr.novotny@example.com"
-        userName="Alexandr Konstantinovič Novotný"
-      />
-    ),
-  },
 }
