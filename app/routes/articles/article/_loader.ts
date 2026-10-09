@@ -5,6 +5,7 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { buildOgImageUrl } from '~/utils/image-store/image-url'
 import {
   getWebContentVisibility,
   ownArticle,
@@ -38,6 +39,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       },
       content: true,
       createdAt: true,
+      excerpt: true,
       featuredImage: {
         select: {
           ...imageSourceSelect,
@@ -104,6 +106,14 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       ...article,
       featuredImage,
       images,
+      // The admin derives the OG crop whenever it saves a featured image.
+      ogImageUrl: article.featuredImage
+        ? buildOgImageUrl(
+            'article-image',
+            article.featuredImage.id,
+            article.featuredImage.version,
+          )
+        : null,
       publishedAt: createFormattedDate(article.publishedAt),
     },
   }
