@@ -242,4 +242,78 @@ describe('createPageSEO', () => {
       name: 'twitter:image',
     })
   })
+
+  it.each([
+    ['missing', undefined],
+    ['empty', ''],
+  ])(
+    'should omit every description tag when the description is %s',
+    (_label, description) => {
+      const result = createPageSEO({
+        description,
+        title: 'Test Page',
+        url: 'https://example.com/test',
+      })
+
+      const descriptionTags = result.filter(
+        (descriptor) =>
+          ('name' in descriptor &&
+            (descriptor.name === 'description' ||
+              descriptor.name === 'twitter:description')) ||
+          ('property' in descriptor &&
+            descriptor.property === 'og:description'),
+      )
+
+      expect(descriptionTags).toEqual([])
+    },
+  )
+
+  it('should emit all three description tags when the description is given', () => {
+    const result = createPageSEO({
+      description: 'Perex článku',
+      title: 'Test Page',
+      url: 'https://example.com/test',
+    })
+
+    expect(result).toContainEqual({
+      content: 'Perex článku',
+      name: 'description',
+    })
+    expect(result).toContainEqual({
+      content: 'Perex článku',
+      property: 'og:description',
+    })
+    expect(result).toContainEqual({
+      content: 'Perex článku',
+      name: 'twitter:description',
+    })
+  })
+
+  it('should name the site in og:site_name', () => {
+    const result = createPageSEO({
+      title: 'Test Page',
+      url: 'https://example.com/test',
+    })
+
+    expect(result).toContainEqual({
+      content: 'Vedneměsíčník',
+      property: 'og:site_name',
+    })
+  })
+
+  it('should use the site name for every title when there is no title', () => {
+    const result = createPageSEO({
+      url: 'https://example.com/',
+    })
+
+    expect(result).toContainEqual({ title: 'Vedneměsíčník' })
+    expect(result).toContainEqual({
+      content: 'Vedneměsíčník',
+      property: 'og:title',
+    })
+    expect(result).toContainEqual({
+      content: 'Vedneměsíčník',
+      name: 'twitter:title',
+    })
+  })
 })

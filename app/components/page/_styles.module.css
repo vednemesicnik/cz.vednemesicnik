@@ -1,0 +1,28 @@
+.page {
+  @layer component {
+    container-name: page;
+    container-type: inline-size;
+
+    display: grid;
+    position: relative;
+    width: 100%;
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    align-content: start;
+    justify-items: center;
+    text-align: center;
+
+    @media all and (width > 768px) {
+      justify-items: start;
+      text-align: start;
+    }
+  }
+}
+
+/* Start-aligned at every width, e.g. the article (design 12b). */
+.start {
+  @layer variant {
+    justify-items: start;
+    text-align: start;
+  }
+}

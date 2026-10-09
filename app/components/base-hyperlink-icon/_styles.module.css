@@ -1,13 +1,21 @@
 .wrapper {
   @layer component {
-    display: inline-flex;
-    align-items: center;
-    font-size: inherit;
-    line-height: inherit;
-    margin-left: 2px;
+    /* Inline, not an atomic inline-flex: a line may break before an atomic box (even after
+       U+2060). The combining grapheme joiner joins the link's last letter, so not even
+       overflow-wrap: anywhere breaks before it, and its end padding holds the icon's room */
+    display: inline;
+    position: relative;
 
-    &:before {
-      content: "\200B"; /* Zero-width space to keep the height of the line-height */
+    &::before {
+      content: "\34F";
+      padding-inline-end: calc(1em + 2px);
+    }
+
+    & > svg {
+      position: absolute;
+      inset-inline-end: 0;
+      inset-block-start: 50%;
+      translate: 0 -50%;
     }
   }
 }

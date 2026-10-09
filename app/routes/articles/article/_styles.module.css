@@ -1,0 +1,64 @@
+.text {
+  @layer route {
+    /* About 65 characters per line; the headline and the images keep the page
+       width (design 12a). */
+    max-width: 42.5rem;
+  }
+}
+
+.gallery {
+  @layer route {
+    /* Ruled off from the text with a heading in the Štítky label style, so the
+       repeated featured image reads as the start of a gallery (design 12a/12b,
+       f5f51mnv). */
+    display: grid;
+    row-gap: 0.75rem;
+    width: 100%;
+    margin-block-start: 2.5rem;
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--border);
+
+    @media (width >= 640px) {
+      row-gap: 1rem;
+      padding-block-start: 1.5rem;
+    }
+  }
+}
+
+.galleryHeading {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+}
+
+.tags {
+  @layer route {
+    /* Ruled off from the gallery above, with the label beside the badges
+       (design 12a). */
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 0.75rem;
+    width: 100%;
+    margin-block-start: 2.5rem;
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid var(--border);
+  }
+}
+
+.tagsLabel {
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
+.tagList {
+  @layer route {
+    margin-block-end: 0;
+  }
+}

@@ -5,16 +5,22 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { buildOgImageUrl } from '~/utils/image-store/image-url'
 import {
   getWebContentVisibility,
   ownArticle,
+  ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const { articleSlug } = params
 
-  const visibility = await getWebContentVisibility(request, ['article'])
+  const visibility = await getWebContentVisibility(request, [
+    'article',
+    'article_category',
+    'article_tag',
+  ])
 
   const article = await prisma.article.findUnique({
     select: {
@@ -23,14 +29,17 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
           name: true,
         },
       },
+      // Only taxonomy whose own page opens for this reader (design 25d).
       categories: {
         select: {
           name: true,
           slug: true,
         },
+        where: visibility.where('article_category', ownByAuthor),
       },
       content: true,
       createdAt: true,
+      excerpt: true,
       featuredImage: {
         select: {
           ...imageSourceSelect,
@@ -38,6 +47,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         },
       },
       images: {
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
         select: {
           ...imageSourceSelect,
           description: true,
@@ -49,6 +59,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
           name: true,
           slug: true,
         },
+        where: visibility.where('article_tag', ownByAuthor),
       },
       title: true,
       updatedAt: true,
@@ -72,7 +83,18 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       }
     : null
 
-  const images = article.images.map((image) => ({
+  // The featured image opens the gallery: the reader sees it whole only there
+  // (design 12a, f5f51mnv).
+  const galleryImages = article.featuredImage
+    ? [
+        article.featuredImage,
+        ...article.images.filter(
+          (image) => image.id !== article.featuredImage?.id,
+        ),
+      ]
+    : article.images
+
+  const images = galleryImages.map((image) => ({
     altText: image.altText,
     description: image.description,
     id: image.id,
@@ -84,6 +106,14 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       ...article,
       featuredImage,
       images,
+      // The admin derives the OG crop whenever it saves a featured image.
+      ogImageUrl: article.featuredImage
+        ? buildOgImageUrl(
+            'article-image',
+            article.featuredImage.id,
+            article.featuredImage.version,
+          )
+        : null,
       publishedAt: createFormattedDate(article.publishedAt),
     },
   }

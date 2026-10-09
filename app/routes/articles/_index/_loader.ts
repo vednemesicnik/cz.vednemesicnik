@@ -9,13 +9,17 @@ import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 import {
   getWebContentVisibility,
   ownArticle,
+  ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 const PAGE_SIZE = 9
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const visibility = await getWebContentVisibility(request, ['article'])
+  const visibility = await getWebContentVisibility(request, [
+    'article',
+    'article_category',
+  ])
   const visibleArticles = visibility.where('article', ownArticle)
 
   const url = new URL(request.url)
@@ -35,6 +39,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
             name: true,
             slug: true,
           },
+          where: visibility.where('article_category', ownByAuthor),
         },
         featuredImage: {
           select: imageSourceSelect,

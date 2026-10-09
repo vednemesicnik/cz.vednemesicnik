@@ -10,9 +10,23 @@
   }
 }
 
+/* Cropped to a fixed height; the reader sees the whole photo in the gallery
+   (design 12a/12b, f5f51mnv). The Image's unlayered `height: auto` on the img beats
+   any layered `height`, so min- and max-height pin the img to the frame instead. */
 .image {
   @layer variant {
+    height: 13.75rem;
     border-radius: var(--radius-lg);
+
+    @media (width >= 640px) {
+      height: 30rem;
+    }
+
+    & img {
+      min-height: 100%;
+      max-height: 100%;
+      object-fit: cover;
+    }
   }
 }
 

@@ -1,9 +1,9 @@
-export const createPageTitle = (title?: string): string => {
-  const siteName = 'Vedneměsíčník'
+import { SITE_NAME } from '~/config/site-config'
 
+export const createPageTitle = (title?: string): string => {
   if (title === undefined || title === '') {
-    return siteName
+    return SITE_NAME
   }
 
-  return `${title} | ${siteName}`
+  return `${title} | ${SITE_NAME}`
 }

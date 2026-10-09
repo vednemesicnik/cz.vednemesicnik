@@ -319,7 +319,7 @@ A search tool for modern web development best practices. **Execute first** for a
 
 ```sh
 # Step 1: search for relevant use cases
-npx -y modern-web-guidance@latest search "<query>" --skill-version 2026_05_16-c5e7870
+npx -y modern-web-guidance@latest search "<query>" --skill-version 2026_09_04-7de96777
 
 # Step 2: retrieve the full guide by id from step 1
 npx -y modern-web-guidance@latest retrieve "<id>"
@@ -401,6 +401,18 @@ Read `.agents/rules/typescript-conventions/RULE.md` before acting.
 Applies when writing any stateful object (store, registry, cache, manager) or considering a class.
 
 Read `.agents/rules/functional-style/RULE.md` before acting.
+
+### One Function per File
+
+Applies when writing a new utility, helper or server function, or adding a function to an existing module.
+
+Read `.agents/rules/one-function-per-file/RULE.md` before acting.
+
+### Generic Guidance Examples
+
+Applies when writing or editing a rule, a skill, or the conventions in this file.
+
+Read `.agents/rules/generic-guidance-examples/RULE.md` before acting.
 
 ### Naming (no abbreviations)
 

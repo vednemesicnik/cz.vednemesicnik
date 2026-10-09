@@ -58,7 +58,7 @@ pushing.
   add / edit routes) are wired identically.
 - **Conventions** — kebab-case files, one component per directory, `type` not
   `interface`, `@layer` CSS modules, English comments / Czech UI copy, no
-  abbreviations in identifiers.
+  abbreviations in identifiers, one exported function per file.
 
 ## Why
 
