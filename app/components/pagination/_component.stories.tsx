@@ -27,10 +27,25 @@ type Story = StoryObj<typeof meta>
 export const Playground: Story = {
   args: {
     currentPage: 2,
+    layout: 'stacked',
     noun: 'článků',
     pageSize: 9,
+    size: 'md',
     totalCount: 52,
     totalPages: 6,
+  },
+}
+
+/** The administration list: 36 px, arrows only, summary on the left (design 22a). */
+export const Administration: Story = {
+  args: {
+    ...Playground.args,
+    currentPage: 1,
+    layout: 'inline',
+    pageSize: 20,
+    size: 'sm',
+    totalCount: 41,
+    totalPages: 3,
   },
 }
 
