@@ -27,6 +27,26 @@
   }
 }
 
+/* No image: the initials on the signature gradient, as the design system's Avatar. */
+.initials {
+  @layer variant {
+    border: none;
+    background-image: var(--gradient-signature);
+    color: var(--text-on-accent);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+  }
+}
+
+.extraSmall {
+  @layer component {
+    width: 32px;
+    height: 32px;
+    border-width: 0;
+    font-size: var(--font-size-xs);
+  }
+}
+
 .small {
   @layer component {
     width: 64px;
