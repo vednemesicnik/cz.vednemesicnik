@@ -1,4 +1,5 @@
 export { BoundaryError } from './_component'
 export type { ForbiddenData, NotFoundEpisodeData } from './utils/boundary-data'
 export { type ContentKind, getWebsiteContentKind } from './utils/content-kind'
+export type { NotFoundPageData } from './utils/parse-not-found-page-data'
 export { resolveWebsiteBoundary } from './utils/resolve-boundary'
