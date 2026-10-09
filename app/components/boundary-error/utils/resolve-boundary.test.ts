@@ -87,6 +87,21 @@ describe('resolveWebsiteBoundary', () => {
     ])
   })
 
+  test.each(['category', 'tag'] as const)(
+    '404 of a %s page past the last shows the generic page',
+    (kind) => {
+      const view = resolveWebsiteBoundary(
+        createRouteErrorResponse(404, { cause: 'page-past-last' }),
+        kind,
+        currentHref,
+      )
+
+      expect(view.title).toBe('Tuhle stránku jsme nenašli')
+      expect(view.pageTitle).toBe('Stránka nenalezena')
+      expect(view.unexpected).toBe(false)
+    },
+  )
+
   test('404 of an unknown address links the sections', () => {
     const view = resolveWebsiteBoundary(notFound, null, currentHref)
 
