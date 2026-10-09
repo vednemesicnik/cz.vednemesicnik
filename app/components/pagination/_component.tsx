@@ -5,10 +5,16 @@ import styles from './_styles.module.css'
 
 export const PAGE_PARAM = 'page'
 
+type Size = 'md' | 'sm'
+
+type Layout = 'stacked' | 'inline'
+
 type Props = {
   currentPage: number
+  layout?: Layout
   noun: string
   pageSize: number
+  size?: Size
   totalCount: number
   totalPages: number
 }
@@ -43,13 +49,17 @@ function getPageNumbers(
  * Numbered pagination over `?page=` (design 11a, 11d). Below 640 px the page
  * numbers give way to "Stránka 2 z 6" between Předchozí and Další.
  *
+ * @param layout - `stacked` puts the summary below the numbers (web); `inline` puts it to their left from 640 px up (administration, design 22a).
  * @param noun - What the list counts, in the genitive plural ("článků"); it ends the summary "1–9 z 52 článků".
+ * @param size - `md` has 44 px items with labelled steps (web); `sm` has 36 px items with arrow-only steps (administration, design 22a).
  * @returns The pagination, or nothing when everything fits on one page
  */
 export const Pagination = ({
   currentPage,
+  layout = 'stacked',
   noun,
   pageSize,
+  size = 'md',
   totalCount,
   totalPages,
 }: Props) => {
@@ -74,9 +84,19 @@ export const Pagination = ({
   const pageNumbers = getPageNumbers(currentPage, totalPages)
   const startItem = (currentPage - 1) * pageSize + 1
   const endItem = Math.min(currentPage * pageSize, totalCount)
+  const hasStepLabels = size === 'md'
+  const previousStep = hasStepLabels ? '‹ Předchozí' : '‹'
+  const nextStep = hasStepLabels ? 'Další ›' : '›'
 
   return (
-    <nav aria-label={'Stránkování'} className={styles.pagination}>
+    <nav
+      aria-label={'Stránkování'}
+      className={clsx(
+        styles.pagination,
+        size === 'sm' && styles.sm,
+        layout === 'inline' && styles.inline,
+      )}
+    >
       <ul className={styles.list}>
         <li>
           {currentPage > 1 ? (
@@ -86,12 +106,12 @@ export const Pagination = ({
               rel={'prev'}
               to={getPageLink(currentPage - 1)}
             >
-              <span aria-hidden={true}>‹ Předchozí</span>
+              <span aria-hidden={true}>{previousStep}</span>
             </BaseLink>
           ) : (
             <span className={clsx(styles.item, styles.step, styles.disabled)}>
               <span className={'screen-reader-only'}>Předchozí stránka</span>
-              <span aria-hidden={true}>‹ Předchozí</span>
+              <span aria-hidden={true}>{previousStep}</span>
             </span>
           )}
         </li>
@@ -134,12 +154,12 @@ export const Pagination = ({
               rel={'next'}
               to={getPageLink(currentPage + 1)}
             >
-              <span aria-hidden={true}>Další ›</span>
+              <span aria-hidden={true}>{nextStep}</span>
             </BaseLink>
           ) : (
             <span className={clsx(styles.item, styles.step, styles.disabled)}>
               <span className={'screen-reader-only'}>Další stránka</span>
-              <span aria-hidden={true}>Další ›</span>
+              <span aria-hidden={true}>{nextStep}</span>
             </span>
           )}
         </li>

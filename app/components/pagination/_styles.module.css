@@ -120,5 +120,38 @@
     margin: 0;
     color: var(--text-secondary);
     font-size: 0.875rem;
+    white-space: nowrap;
+  }
+}
+
+/* Administration: summary to the left of the numbers (22a); below 640 px stacked like the web. */
+.inline {
+  @layer variant {
+    @media (width >= 640px) {
+      flex-direction: row-reverse;
+      justify-content: space-between;
+      gap: 16px;
+    }
+  }
+}
+
+/* Administration: 36 px items, arrow-only steps (22a). */
+.sm .list {
+  @layer variant {
+    font-size: var(--font-size-sm);
+  }
+}
+
+.sm .item {
+  @layer variant {
+    min-width: 36px;
+    height: 36px;
+    padding-inline: 8px;
+  }
+}
+
+.sm .summary {
+  @layer variant {
+    font-size: 13px;
   }
 }

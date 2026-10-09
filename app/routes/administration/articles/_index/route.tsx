@@ -176,8 +176,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       </AdminTable>
       <Pagination
         currentPage={currentPage}
+        layout={'inline'}
         noun={'článků'}
         pageSize={pageSize}
+        size={'sm'}
         totalCount={totalCount}
         totalPages={totalPages}
       />
