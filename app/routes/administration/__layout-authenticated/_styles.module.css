@@ -4,12 +4,17 @@
   }
 }
 
-/* One sidebar beside the content, no header or footer (design 22a). */
+/* The sidebar beside the content, a footer under the content only (design 22a,
+   tyxr2jqk). The content row takes the rest of the window, so on a short page the
+   footer sits at the bottom of it. */
 .layout {
   @layer layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-    grid-template-areas: "sidebar content";
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "sidebar content"
+      "sidebar footer";
     align-items: start;
     margin: 0;
     background-color: var(--bg-secondary);

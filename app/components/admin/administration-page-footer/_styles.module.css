@@ -1,0 +1,29 @@
+.footer {
+  @layer component {
+    grid-area: footer;
+    display: flex;
+    align-items: center;
+    padding-block: 12px;
+    padding-inline: 24px;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Hyperlink in the footer's quiet tone: secondary text, no underline (design 22a). */
+.link {
+  @layer variant {
+    font-size: 13px;
+    font-weight: var(--font-weight-regular);
+    line-height: 20px;
+
+    &,
+    &:visited {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    &:hover {
+      color: var(--text-primary);
+    }
+  }
+}

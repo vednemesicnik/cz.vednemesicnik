@@ -2,7 +2,6 @@ import { Form, href } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
 import { useSidebarHighlight } from '~/components/admin/sidebar-highlight-provider'
-import { BaseLink } from '~/components/base-link'
 import { VdmLogo } from '~/components/vdm-logo'
 import { VdmWordmark } from '~/components/vdm-wordmark'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
@@ -56,13 +55,14 @@ export const AdministrationSidebar = ({
 
   return (
     <aside className={styles.sidebar}>
-      <BaseLink className={styles.brand} to={href('/administration')}>
+      {/* Not a link: Přehled is the first item below (design 22a, tyxr2jqk). */}
+      <div className={styles.brand}>
         <VdmLogo className={styles.logo} />
         <span className={styles.brandText}>
           <VdmWordmark className={styles.name} tone={'text'} />
           <span className={styles.product}>Administrace</span>
         </span>
-      </BaseLink>
+      </div>
 
       <nav aria-label={'Administrace'} className={styles.nav}>
         <ul className={styles.list}>{contentItems.map(renderItem)}</ul>

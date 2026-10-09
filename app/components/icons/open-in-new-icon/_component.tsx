@@ -3,14 +3,19 @@ import type { ComponentProps } from 'react'
 
 import styles from './_styles.module.css'
 
-type Props = Pick<ComponentProps<'svg'>, 'className'>
+type Props = Pick<ComponentProps<'svg'>, 'className'> & {
+  // Hidden from screen readers when the link around it already says it opens a new
+  // tab (design tyxr2jqk: one icon for every link that opens a new tab).
+  decorative?: boolean
+}
 
-export const OpenInNewIcon = ({ className }: Props) => {
+export const OpenInNewIcon = ({ className, decorative = false }: Props) => {
   return (
     <svg
-      aria-label={'Ikona otevření v novém okně'}
+      aria-hidden={decorative ? true : undefined}
+      aria-label={decorative ? undefined : 'Ikona otevření v novém okně'}
       className={clsx(styles.icon, className)}
-      role={'img'}
+      role={decorative ? undefined : 'img'}
       viewBox={'0 -960 960 960'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
