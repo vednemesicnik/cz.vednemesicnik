@@ -6,13 +6,12 @@ import {
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { findTagsWithArticleCounts } from '../../utils/find-tags-with-article-counts.server'
+import { nameCollator } from '../../utils/name-collator'
 import { pickTopByArticleCount } from '../../utils/pick-top-by-article-count'
 import type { Route } from './+types/route'
 
 const LATEST_ARTICLES_PER_CATEGORY = 2
 const TAG_STRIP_SIZE = 3
-
-const nameCollator = new Intl.Collator('cs', { numeric: true })
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const visibility = await getWebContentVisibility(request, [

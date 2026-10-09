@@ -1,13 +1,10 @@
 import { prisma } from '~/utils/db.server'
 import {
-  type getWebContentVisibility,
   ownArticle,
   ownByAuthor,
+  type WebContentVisibility,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
-
-type WebContentVisibility = Awaited<ReturnType<typeof getWebContentVisibility>>
-
-const nameCollator = new Intl.Collator('cs', { numeric: true })
+import { nameCollator } from './name-collator'
 
 /**
  * Finds the tags a reader can open that hold at least one article they can

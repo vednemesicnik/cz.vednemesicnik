@@ -1,6 +1,7 @@
+import { nameCollator } from './name-collator'
+
 const DIGIT_GROUP = '0–9'
 
-const nameCollator = new Intl.Collator('cs', { numeric: true })
 const letterCollator = new Intl.Collator('cs', { sensitivity: 'base' })
 
 type LetterGroup<Tag> = {

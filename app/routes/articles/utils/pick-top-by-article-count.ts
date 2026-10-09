@@ -1,4 +1,4 @@
-const nameCollator = new Intl.Collator('cs', { numeric: true })
+import { nameCollator } from './name-collator'
 
 /**
  * Picks the items with the most articles and orders them by name, as the
