@@ -6,7 +6,6 @@ export const meta: MetaFunction = ({ location }) => {
   return createPageSEO({
     description: 'Studentské nekritické noviny',
     ogImage: resolveOgImageUrl(null, ENV.BASE_URL),
-    title: '',
     url: new URL(location.pathname, ENV.BASE_URL).href,
   })
 }

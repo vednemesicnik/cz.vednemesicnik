@@ -289,9 +289,20 @@ describe('createPageSEO', () => {
     })
   })
 
-  it('should use the site name for every title when the title is empty', () => {
+  it('should name the site in og:site_name', () => {
     const result = createPageSEO({
-      title: '',
+      title: 'Test Page',
+      url: 'https://example.com/test',
+    })
+
+    expect(result).toContainEqual({
+      content: 'Vedneměsíčník',
+      property: 'og:site_name',
+    })
+  })
+
+  it('should use the site name for every title when there is no title', () => {
+    const result = createPageSEO({
       url: 'https://example.com/',
     })
 

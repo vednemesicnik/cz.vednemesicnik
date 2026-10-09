@@ -9,7 +9,9 @@ import type { Route } from './+types/route'
 export const meta: Route.MetaFunction = ({ loaderData, matches, location }) => {
   const pageSEO = createPageSEO({
     ogImage: resolveOgImageUrl(null, ENV.BASE_URL),
-    title: loaderData?.category ? `Rubrika: ${loaderData.category.name}` : '',
+    title: loaderData?.category
+      ? `Rubrika: ${loaderData.category.name}`
+      : undefined,
     url: new URL(location.pathname, ENV.BASE_URL).href,
   })
   const breadcrumbs = getBreadcrumbs(matches)

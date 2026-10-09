@@ -1,11 +1,12 @@
 import type { MetaDescriptor } from 'react-router'
-import { createPageTitle } from '~/utils/create-page-title'
+import { SITE_NAME } from '~/config/site-config'
 
 export type Options = {
   /**
-   * Page title (without site name suffix); empty for the site name alone
+   * The page's own name, without the site name (optional; the site name
+   * alone when missing)
    */
-  title: string
+  title?: string
 
   /**
    * Meta description (optional; omitted when missing or empty)
@@ -56,9 +57,11 @@ export type Options = {
  * - Open Graph meta tags
  * - Twitter Card meta tags
  *
- * Without a description, the `description`, `og:description` and
- * `twitter:description` tags are omitted, leaving the snippet to the search
- * engine. An empty title yields the site name alone.
+ * The document title joins the page's name with the site name; the share
+ * preview carries the page's name, with the site name in `og:site_name`.
+ * Without a title, both fall back to the site name alone. Without a
+ * description, the `description`, `og:description` and `twitter:description`
+ * tags are omitted, leaving the snippet to the search engine.
  *
  * @example
  * ```ts
@@ -83,22 +86,23 @@ export function createPageSEO({
   twitterCard = 'summary_large_image',
   twitterImage,
 }: Options): MetaDescriptor[] {
-  const socialTitle = title === '' ? createPageTitle() : title
+  const pageName = title || SITE_NAME
 
   const meta: MetaDescriptor[] = [
     // Basic meta tags
-    { title: createPageTitle(title) },
+    { title: title ? `${title} | ${SITE_NAME}` : SITE_NAME },
     { content: robots, name: 'robots' },
     { href: url, rel: 'canonical', tagName: 'link' },
 
     // Open Graph meta tags
-    { content: socialTitle, property: 'og:title' },
+    { content: SITE_NAME, property: 'og:site_name' },
+    { content: pageName, property: 'og:title' },
     { content: ogType, property: 'og:type' },
     { content: url, property: 'og:url' },
 
     // Twitter Card meta tags
     { content: twitterCard, name: 'twitter:card' },
-    { content: socialTitle, name: 'twitter:title' },
+    { content: pageName, name: 'twitter:title' },
   ]
 
   if (description) {
