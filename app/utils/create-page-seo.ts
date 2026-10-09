@@ -3,14 +3,14 @@ import { createPageTitle } from '~/utils/create-page-title'
 
 export type Options = {
   /**
-   * Page title (without site name suffix)
+   * Page title (without site name suffix); empty for the site name alone
    */
   title: string
 
   /**
-   * Meta description
+   * Meta description (optional; omitted when missing or empty)
    */
-  description: string
+  description?: string
 
   /**
    * Canonical URL for the page
@@ -56,6 +56,10 @@ export type Options = {
  * - Open Graph meta tags
  * - Twitter Card meta tags
  *
+ * Without a description, the `description`, `og:description` and
+ * `twitter:description` tags are omitted, leaving the snippet to the search
+ * engine. An empty title yields the site name alone.
+ *
  * @example
  * ```ts
  * export const meta: Route.MetaFunction = () => {
@@ -79,24 +83,31 @@ export function createPageSEO({
   twitterCard = 'summary_large_image',
   twitterImage,
 }: Options): MetaDescriptor[] {
+  const socialTitle = title === '' ? createPageTitle() : title
+
   const meta: MetaDescriptor[] = [
     // Basic meta tags
     { title: createPageTitle(title) },
-    { content: description, name: 'description' },
     { content: robots, name: 'robots' },
     { href: url, rel: 'canonical', tagName: 'link' },
 
     // Open Graph meta tags
-    { content: title, property: 'og:title' },
-    { content: description, property: 'og:description' },
+    { content: socialTitle, property: 'og:title' },
     { content: ogType, property: 'og:type' },
     { content: url, property: 'og:url' },
 
     // Twitter Card meta tags
     { content: twitterCard, name: 'twitter:card' },
-    { content: title, name: 'twitter:title' },
-    { content: description, name: 'twitter:description' },
+    { content: socialTitle, name: 'twitter:title' },
   ]
+
+  if (description) {
+    meta.push(
+      { content: description, name: 'description' },
+      { content: description, property: 'og:description' },
+      { content: description, name: 'twitter:description' },
+    )
+  }
 
   // Add optional keywords
   if (keywords) {
