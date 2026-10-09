@@ -3,7 +3,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
     margin-block: 24px;
   }
@@ -19,6 +19,8 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
+    font-size: 15px;
+    font-weight: var(--font-weight-medium);
 
     /* One line: Předchozí at the start, "Stránka 2 z 6" between, Další at the end (11d). */
     @media (width < 640px) {
@@ -60,78 +62,56 @@
     gap: 4px;
     box-sizing: border-box;
     min-width: 44px;
-    min-height: 44px;
-    padding-block: 0;
-    padding-inline: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    height: 44px;
+    padding-inline: 10px;
+    border-radius: var(--radius-lg);
     color: var(--text-primary);
     text-decoration: none;
-    line-height: 1.5;
     white-space: nowrap;
-    transition: all var(--transition-fast);
+    transition: background-color var(--transition-fast);
 
-    &:visited {
-      color: var(--text-primary);
+    &:is(a):hover {
+      background-color: var(--bg-tertiary);
     }
 
-    &:hover {
-      background-color: var(--bg-hover);
-      border-color: var(--border-hover);
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
     }
-  }
-}
-
-.itemIcon {
-  @layer component {
-    display: inline-flex;
-    height: calc(18px * 1.5);
-    align-items: center;
   }
 }
 
 .current {
   @layer variant {
-    background-color: var(--primary);
-    border-color: var(--primary);
+    background-color: var(--primary-hover);
     color: var(--text-on-accent);
-    font-weight: 600;
   }
 }
 
 .ellipsis {
   @layer component {
-    padding-inline: 0.25rem;
+    padding-inline: 6px;
     color: var(--text-tertiary);
     user-select: none;
   }
 }
 
-.disabled {
-  @layer variant {
-    background-color: var(--bg-disabled);
-    color: var(--text-tertiary);
-    cursor: default;
-  }
-}
-
-/* Below 640 px Předchozí and Další read as plain links, as in the drawing (11d). */
+/* Předchozí and Další: accent links; below 640 px tighter to fit one line (11d). */
 .step {
   @layer variant {
+    padding-inline: 14px;
+    color: var(--link-strong);
+
     @media (width < 640px) {
       padding-inline: 4px;
-      border-color: transparent;
-      background-color: transparent;
-      color: var(--link-strong);
     }
   }
 }
 
-.step.disabled {
+.disabled {
   @layer variant {
-    @media (width < 640px) {
-      color: var(--text-tertiary);
-    }
+    color: var(--text-tertiary);
+    cursor: default;
   }
 }
 
