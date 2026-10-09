@@ -3,11 +3,13 @@ import {
   getBreadcrumbs,
 } from '~/utils/breadcrumbs'
 import { createPageSEO } from '~/utils/create-page-seo'
+import { resolveOgImageUrl } from '~/utils/resolve-og-image-url'
 import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = ({ loaderData, matches, location }) => {
   const pageSEO = createPageSEO({
     description: loaderData.grant.summary,
+    ogImage: resolveOgImageUrl(null, ENV.BASE_URL),
     title: loaderData.grant.name,
     url: new URL(location.pathname, ENV.BASE_URL).href,
   })

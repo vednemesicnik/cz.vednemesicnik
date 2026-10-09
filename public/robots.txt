@@ -1,5 +1,9 @@
 User-agent: *
 Disallow: /administration/
+Allow: /resources/article-image/
+Allow: /resources/issue-cover/
+Allow: /resources/podcast-cover/
+Allow: /resources/podcast-episode-cover/
 Disallow: /resources/
 Disallow: /archive/
 Disallow: /health/
