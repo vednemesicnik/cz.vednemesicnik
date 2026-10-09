@@ -16,7 +16,6 @@ import { Subheading } from './components/subheading'
 import { VdmLogoClip } from './components/vdm-logo-clip'
 import './styles/global.css'
 
-export { links } from './_links'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
