@@ -62,6 +62,18 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["public/**/*.svg"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noSvgWithoutTitle": "off"
+          }
+        }
+      }
+    }
+  ],
   "vcs": {
     "clientKind": "git",
     "enabled": true,
