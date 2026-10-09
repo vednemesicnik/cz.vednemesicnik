@@ -46,6 +46,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 // A Coordinator who may see other people's records: both groups, under a rule.
+// The brand on top is not a link; the website link is in the page footer.
 export const Playground: Story = {
   args: {
     contentItems,
