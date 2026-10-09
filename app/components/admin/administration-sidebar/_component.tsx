@@ -89,12 +89,6 @@ export const AdministrationSidebar = ({
             )}
           </span>
         </div>
-        <BaseLink
-          className={styles.footLink}
-          to={href('/administration/settings/profile')}
-        >
-          Můj účet
-        </BaseLink>
         <Form action={href('/administration/sign-out')} method={'post'}>
           <button className={styles.footLink} type={'submit'}>
             Odhlásit se

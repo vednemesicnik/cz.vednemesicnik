@@ -58,8 +58,8 @@ export const Playground: Story = {
   },
 }
 
-// A member sees only their own record, so Autoři and Uživatelé are left out and
-// „Můj účet" leads to it (design 22a, 22i).
+// A member sees only their own record, so Autoři and Uživatelé are left out
+// (design 22a); Nastavení leads to it.
 export const OwnRecordOnly: Story = {
   args: {
     contentItems,
