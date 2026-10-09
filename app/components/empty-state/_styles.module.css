@@ -1,0 +1,17 @@
+.emptyState {
+  @layer component {
+    display: grid;
+    justify-items: inherit;
+    gap: 8px;
+    width: 100%;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+  }
+}
+
+.text {
+  @layer component {
+    margin: 0;
+    color: var(--text-secondary);
+  }
+}

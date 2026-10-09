@@ -1,0 +1,37 @@
+.strip {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 16px;
+    box-sizing: border-box;
+    width: 100%;
+    margin-block-start: 2rem;
+    padding: 20px 24px;
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-secondary);
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    text-align: start;
+  }
+}
+
+.text {
+  @layer component {
+    color: var(--text-secondary);
+  }
+}
+
+.links {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+}
+
+.more {
+  @layer variant {
+    margin-inline-start: auto;
+  }
+}

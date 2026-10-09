@@ -1,41 +1,23 @@
-import { prisma } from '~/utils/db.server'
-import {
-  getWebContentVisibility,
-  ownArticle,
-  ownByAuthor,
-} from '~/utils/permissions/author/get-web-content-visibility.server'
+import { getWebContentVisibility } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { findCategoriesWithArticleCounts } from '../../utils/find-categories-with-article-counts.server'
+import { findTagsWithArticleCounts } from '../../utils/find-tags-with-article-counts.server'
+import { groupTagsByLetter } from '../../utils/group-tags-by-letter'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const visibility = await getWebContentVisibility(request, [
     'article',
+    'article_category',
     'article_tag',
   ])
 
-  const tags = await prisma.articleTag.findMany({
-    orderBy: { name: 'asc' },
-    select: {
-      _count: {
-        select: {
-          articles: { where: visibility.where('article', ownArticle) },
-        },
-      },
-      id: true,
-      name: true,
-      slug: true,
-    },
-    where: visibility.where('article_tag', ownByAuthor),
-  })
+  const [tags, categories] = await Promise.all([
+    findTagsWithArticleCounts(visibility),
+    findCategoriesWithArticleCounts(visibility),
+  ])
 
-  // Hide taxonomies whose visible article count is zero.
-  const tagsWithArticles = tags
-    .map((tag) => ({
-      articleCount: tag._count.articles,
-      id: tag.id,
-      name: tag.name,
-      slug: tag.slug,
-    }))
-    .filter((tag) => tag.articleCount > 0)
-
-  return { tags: tagsWithArticles }
+  return {
+    hasCategories: categories.length > 0,
+    tagGroups: groupTagsByLetter(tags),
+  }
 }
