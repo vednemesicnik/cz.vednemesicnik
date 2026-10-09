@@ -9,33 +9,21 @@
   }
 }
 
+/* Hyperlink in the footer's quiet tone: secondary text, no underline (design 22a). */
 .link {
-  @layer component {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+  @layer variant {
     font-size: 13px;
+    font-weight: var(--font-weight-regular);
     line-height: 20px;
-    color: var(--text-secondary);
-    text-decoration: none;
+
+    &,
+    &:visited {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
 
     &:hover {
       color: var(--text-primary);
     }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: var(--focus-shadow);
-      border-radius: var(--radius-sm);
-    }
-  }
-}
-
-/* The icon sizes itself to 1em (unlayered), so the wrapper sets 14 px. */
-.icon {
-  @layer component {
-    display: inline-flex;
-    flex: none;
-    font-size: 14px;
   }
 }

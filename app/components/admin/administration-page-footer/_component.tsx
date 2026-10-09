@@ -1,4 +1,4 @@
-import { OpenInNewIcon } from '~/components/icons/open-in-new-icon'
+import { Hyperlink } from '~/components/hyperlink'
 
 import styles from './_styles.module.css'
 
@@ -9,16 +9,9 @@ import styles from './_styles.module.css'
 export const AdministrationPageFooter = () => {
   return (
     <footer className={styles.footer}>
-      <a className={styles.link} href={'/'} rel={'noopener'} target={'_blank'}>
+      <Hyperlink className={styles.link} href={'/'}>
         Zobrazit web
-        <span className={styles.icon}>
-          <OpenInNewIcon decorative />
-        </span>
-        <span className={'screen-reader-only'}>
-          {' '}
-          (otevře se v nové záložce)
-        </span>
-      </a>
+      </Hyperlink>
     </footer>
   )
 }
