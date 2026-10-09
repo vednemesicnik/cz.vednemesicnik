@@ -8,7 +8,9 @@ import { prisma } from '~/utils/db.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 export const action = async ({ request, url }: ActionFunctionArgs) => {
-  await requireAuthentication({ request, url })
+  // Whose sessions end comes from the signed-in session, never from the form:
+  // a posted user id would let anyone sign another account out everywhere.
+  const { sessionId, userId } = await requireAuthentication({ request, url })
 
   const formData = await request.formData()
   await requireCSRF(formData, request)
@@ -19,22 +21,13 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
     'Invalid intent',
   )
 
-  const userId = formData.get('userId')
-  invariantResponse(typeof userId === 'string', 'Missing user ID')
-
-  const currentSessionId = formData.get('currentSessionId')
-  invariantResponse(
-    typeof currentSessionId === 'string',
-    'Missing current session ID',
-  )
-
   try {
     await prisma.session.deleteMany({
       where: {
         id: {
-          not: currentSessionId,
+          not: sessionId,
         },
-        userId: userId,
+        userId,
       },
     })
   } catch (error) {

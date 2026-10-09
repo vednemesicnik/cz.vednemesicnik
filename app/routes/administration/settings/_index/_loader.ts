@@ -12,7 +12,6 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 
   const session = await prisma.session.findUniqueOrThrow({
     select: {
-      id: true,
       user: {
         select: {
           email: true,
@@ -49,5 +48,5 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
     },
   }
 
-  return { currentSession: { id: session.id }, user }
+  return { user }
 }
