@@ -1,13 +1,25 @@
 import { data } from 'react-router'
 
-import type { AdministrationPanelUser } from '~/components/admin/administration-panel'
 import { requireAuthentication } from '~/utils/auth.server'
 import { commitCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  type ImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
+import { canListPeople } from './utils/can-list-people'
+
+type SidebarUser = {
+  name: string
+  roleLabel: string | undefined
+  image: ImageSources
+}
 
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const [csrfToken, csrfCookie] = await commitCSRF(request)
@@ -17,13 +29,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     url,
   })
 
-  let administrationPanelUser: AdministrationPanelUser = {
-    email: undefined,
-    image: {
-      altText: undefined,
-      src: undefined,
-    },
-    name: undefined,
+  let user: SidebarUser = {
+    image: createImageSources('user-image', undefined),
+    name: '',
+    roleLabel: undefined,
   }
 
   if (sessionId !== undefined) {
@@ -32,7 +41,9 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         id: true,
         user: {
           select: {
+            author: { select: { role: { select: { name: true } } } },
             email: true,
+            image: { select: imageSourceSelect },
             name: true,
           },
         },
@@ -43,13 +54,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     })
 
     if (session) {
-      administrationPanelUser = {
-        email: session.user.email ?? undefined,
-        image: {
-          altText: undefined,
-          src: undefined,
-        },
-        name: session.user.name ?? undefined,
+      user = {
+        image: createImageSources('user-image', session.user.image),
+        name: session.user.name || session.user.email,
+        roleLabel: getAuthorRoleLabel(session.user.author.role.name),
       }
     }
   }
@@ -81,22 +89,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           action: 'view',
           entity: 'article',
         }).hasPermission,
-        canViewAuthors: userContext.can({
-          action: 'view',
-          entity: 'author',
-          targetUserId: userContext.userId,
-        }).hasPermission,
+        canViewAuthors: canListPeople(userContext, 'author'),
         canViewIssues: authorContext.can({ action: 'view', entity: 'issue' })
           .hasPermission,
         canViewPodcasts: authorContext.can({
           action: 'view',
           entity: 'podcast',
         }).hasPermission,
-        canViewUsers: userContext.can({
-          action: 'view',
-          entity: 'user',
-          targetUserId: userContext.userId,
-        }).hasPermission,
+        canViewUsers: canListPeople(userContext, 'user'),
       }
     } catch (error) {
       // If permission check fails, user might not have author role
@@ -110,7 +110,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       csrfToken,
       isAuthenticated,
       permissions,
-      user: administrationPanelUser,
+      user,
     },
     {
       headers: {

@@ -2,7 +2,7 @@
   @layer component {
     display: grid;
     position: sticky;
-    top: var(--header-height);
+    top: 0;
     grid-auto-flow: row;
     width: 100%;
     padding: 12px 24px;

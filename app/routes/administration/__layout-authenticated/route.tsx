@@ -1,11 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { Outlet, type ShouldRevalidateFunction } from 'react-router'
-import { AdminHeader } from '~/components/admin/admin-header'
-import { AdminUserMenu } from '~/components/admin/admin-user-menu'
 import { AdministrationContent } from '~/components/admin/administration-content'
-import { AdministrationFooter } from '~/components/admin/administration-footer'
-import { AdministrationSidebar } from '~/components/admin/administration-sidebar'
+import {
+  AdministrationSidebar,
+  type NavigationItem,
+} from '~/components/admin/administration-sidebar'
 import { SidebarHighlightProvider } from '~/components/admin/sidebar-highlight-provider'
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
 import { RootBoundaryError } from '~/components/root-boundary-error'
@@ -22,55 +22,45 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 }) => actionStatus === 403 || defaultShouldRevalidate
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const user = {
-    email: loaderData?.user.email ?? '',
-    name: loaderData?.user.name,
-  }
+  const { permissions, user } = loaderData
 
-  const { permissions } = loaderData
+  // Order per design 22a: content on top, people below the rule.
+  const contentItems: NavigationItem[] = [
+    { end: true, label: 'Přehled', to: '/administration' },
+    ...(permissions.canViewArticles
+      ? [{ label: 'Články', to: '/administration/articles' }]
+      : []),
+    ...(permissions.canViewPodcasts
+      ? [{ label: 'Podcasty', to: '/administration/podcasts' }]
+      : []),
+    ...(permissions.canViewIssues
+      ? [{ label: 'Archiv', to: '/administration/archive' }]
+      : []),
+  ]
 
-  const navigationItems = [
-    { end: true, label: 'Přehled', to: '/administration', visible: true },
-    {
-      label: 'Uživatelé',
-      to: '/administration/users',
-      visible: permissions.canViewUsers,
-    },
-    {
-      label: 'Autoři',
-      to: '/administration/authors',
-      visible: permissions.canViewAuthors,
-    },
-    {
-      label: 'Články',
-      to: '/administration/articles',
-      visible: permissions.canViewArticles,
-    },
-    {
-      label: 'Podcasty',
-      to: '/administration/podcasts',
-      visible: permissions.canViewPodcasts,
-    },
-    {
-      label: 'Archiv',
-      to: '/administration/archive',
-      visible: permissions.canViewIssues,
-    },
-    { label: 'Nastavení', to: '/administration/settings', visible: true },
+  // Nastavení stays until settings merge into „Můj účet" (design 29a).
+  const peopleItems: NavigationItem[] = [
+    ...(permissions.canViewAuthors
+      ? [{ label: 'Autoři', to: '/administration/authors' }]
+      : []),
+    ...(permissions.canViewUsers
+      ? [{ label: 'Uživatelé', to: '/administration/users' }]
+      : []),
+    { label: 'Nastavení', to: '/administration/settings' },
   ]
 
   return (
     <AuthenticityTokenProvider token={loaderData.csrfToken}>
       <SidebarHighlightProvider>
         <div className={styles.layout}>
-          <AdminHeader>
-            <AdminUserMenu userEmail={user.email} userName={user.name} />
-          </AdminHeader>
-          <AdministrationSidebar navigationItems={navigationItems} />
+          <AdministrationSidebar
+            contentItems={contentItems}
+            peopleItems={peopleItems}
+            user={user}
+          />
           <AdministrationContent className={styles.page}>
             <Outlet />
           </AdministrationContent>
-          <AdministrationFooter />
         </div>
       </SidebarHighlightProvider>
     </AuthenticityTokenProvider>
