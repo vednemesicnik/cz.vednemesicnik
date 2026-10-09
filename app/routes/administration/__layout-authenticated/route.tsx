@@ -2,6 +2,7 @@
 
 import { Outlet, type ShouldRevalidateFunction } from 'react-router'
 import { AdministrationContent } from '~/components/admin/administration-content'
+import { AdministrationPageFooter } from '~/components/admin/administration-page-footer'
 import {
   AdministrationSidebar,
   type NavigationItem,
@@ -61,6 +62,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <AdministrationContent className={styles.page}>
             <Outlet />
           </AdministrationContent>
+          <AdministrationPageFooter />
         </div>
       </SidebarHighlightProvider>
     </AuthenticityTokenProvider>
