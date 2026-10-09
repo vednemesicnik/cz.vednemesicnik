@@ -62,5 +62,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       : null,
   }))
 
-  return { issues: issuesWithSources, issuesCount }
+  return {
+    issues: issuesWithSources,
+    issuesCount,
+    // The newest issue's cover, uncropped: a 1200×630 crop of a portrait cover
+    // keeps only a band across the middle.
+    ogImageUrl: issuesWithSources[0]?.cover?.sources.src ?? null,
+  }
 }
