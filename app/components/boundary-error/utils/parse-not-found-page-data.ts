@@ -4,8 +4,8 @@ const notFoundPageDataSchema = z.object({ cause: z.literal('page-past-last') })
 
 /**
  * Data of a thrown list 404 for a page past the last —
- * `data({ cause: 'page-past-last' }, { status: 404 })`. The category or tag itself
- * exists, so the boundary shows the generic page copy instead of its own (#512).
+ * `data({ cause: 'page-past-last' }, { status: 404 })`. The list itself exists, so
+ * a category or tag page shows the generic page copy instead of its own (#512).
  */
 export type NotFoundPageData = z.infer<typeof notFoundPageDataSchema>
 
