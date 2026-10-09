@@ -39,7 +39,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       : []),
   ]
 
-  // Nastavení stays until settings merge into „Můj účet" (design 29a).
+  // Nastavení is under the name in the sidebar foot, not an item (design 29a).
   const peopleItems: NavigationItem[] = [
     ...(permissions.canViewAuthors
       ? [{ label: 'Autoři', to: '/administration/authors' }]
@@ -47,7 +47,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     ...(permissions.canViewUsers
       ? [{ label: 'Uživatelé', to: '/administration/users' }]
       : []),
-    { label: 'Nastavení', to: '/administration/settings' },
   ]
 
   return (

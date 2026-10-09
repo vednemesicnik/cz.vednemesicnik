@@ -134,6 +134,16 @@
   }
 }
 
+/* Nastavení under the name: a sidebar link in the foot's smaller type; the box is the
+   same in both states and its text lines up with the name (u6432mlm). */
+.accountLink {
+  @layer variant {
+    margin-inline: -8px;
+    padding: 7px 8px;
+    font-size: 13px;
+  }
+}
+
 .footLink {
   @layer component {
     align-self: flex-start;

@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { href, Link, useFetcher, useRevalidator } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
-import type { action as generateRegistrationOptionsAction } from '~/routes/administration/settings/profile/passkeys/generate-registration-options/_action'
-import type { action as verifyRegistrationResponseAction } from '~/routes/administration/settings/profile/passkeys/verify-registration-response/_action'
+import type { action as generateRegistrationOptionsAction } from '~/routes/administration/settings/passkeys/generate-registration-options/_action'
+import type { action as verifyRegistrationResponseAction } from '~/routes/administration/settings/passkeys/verify-registration-response/_action'
 import { useBiometric } from '~/utils/use-biometric'
 
 import {
@@ -19,8 +19,8 @@ const PROBLEM_MESSAGES: Record<RegistrationProblem, string> = {
   reauthenticate: 'Před přidáním passkey se znovu ověřte.',
 }
 
-const VERIFY_IDENTITY_URL = `${href('/administration/settings/profile/verify-identity')}?${new URLSearchParams(
-  { redirectTo: href('/administration/settings/profile/passkeys') },
+const VERIFY_IDENTITY_URL = `${href('/administration/settings/verify-identity')}?${new URLSearchParams(
+  { redirectTo: href('/administration/settings/passkeys') },
 )}`
 
 export const RegisterPasskey = () => {
@@ -66,7 +66,7 @@ export const RegisterPasskey = () => {
           JSON.stringify(registrationResponse),
           {
             action:
-              '/administration/settings/profile/passkeys/verify-registration-response',
+              '/administration/settings/passkeys/verify-registration-response',
             encType: 'application/json',
             method: 'POST',
           },
@@ -121,7 +121,7 @@ export const RegisterPasskey = () => {
     <>
       <GenerateRegistrationOptionsForm
         action={
-          '/administration/settings/profile/passkeys/generate-registration-options'
+          '/administration/settings/passkeys/generate-registration-options'
         }
         method={'post'}
         onSubmit={() => setProblem(null)}

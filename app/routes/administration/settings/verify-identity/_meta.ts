@@ -4,7 +4,7 @@ import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = () => {
   const title = createPageTitle(
-    'Administrace: Nastavení - Profil - Dvoufázové ověření',
+    'Administrace: Nastavení - Ověřte, že jste to vy',
   )
 
   return [{ title }]

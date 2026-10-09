@@ -5,8 +5,8 @@ import type { Breadcrumb } from '~/types/breadcrumb'
 export const handle = {
   breadcrumb: (): Breadcrumb => {
     return {
-      label: 'Profil',
-      path: href('/administration/settings/profile'),
+      label: 'Dvoufázové ověření',
+      path: href('/administration/settings/two-factor'),
     }
   },
 }

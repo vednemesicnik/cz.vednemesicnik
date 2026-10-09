@@ -14,8 +14,6 @@ const contentItems = [
   { label: 'Archiv', to: '/administration/archive' },
 ]
 
-const settingsItem = { label: 'Nastavení', to: '/administration/settings' }
-
 const noImage = createImageSources('user-image', undefined)
 
 const meta: Meta<typeof AdministrationSidebar> = {
@@ -25,12 +23,15 @@ const meta: Meta<typeof AdministrationSidebar> = {
     user: { control: 'object' },
   },
   component: AdministrationSidebar,
-  // The sidebar's links and sign-out form need a data router; Články is active.
+  // The sidebar's links and sign-out form need a data router; Články is active
+  // unless a story sets another pathname.
   decorators: [
-    (Story) => (
+    (Story, context) => (
       <RouterProvider
         router={createMemoryRouter([{ element: <Story />, path: '*' }], {
-          initialEntries: ['/administration/articles'],
+          initialEntries: [
+            context.parameters.pathname ?? '/administration/articles',
+          ],
         })}
       />
     ),
@@ -45,26 +46,39 @@ const meta: Meta<typeof AdministrationSidebar> = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+const peopleItems = [
+  { label: 'Autoři', to: '/administration/authors' },
+  { label: 'Uživatelé', to: '/administration/users' },
+]
+
 // A Coordinator who may see other people's records: both groups, under a rule.
-// The brand on top is not a link; the website link is in the page footer.
+// Nastavení sits under the name for every role (design 29a). The brand on top is
+// not a link; the website link is in the page footer.
 export const Playground: Story = {
   args: {
     contentItems,
-    peopleItems: [
-      { label: 'Autoři', to: '/administration/authors' },
-      { label: 'Uživatelé', to: '/administration/users' },
-      settingsItem,
-    ],
+    peopleItems,
     user: { image: noImage, name: 'Marie Horáková', roleLabel: 'Koordinátor' },
   },
 }
 
-// A member sees only their own record, so Autoři and Uživatelé are left out
-// (design 22a); Nastavení leads to it.
+// A member sees only their own record: no people group and no rule (design 22a);
+// Nastavení under the name leads to the account.
 export const OwnRecordOnly: Story = {
   args: {
     contentItems,
-    peopleItems: [settingsItem],
+    peopleItems: [],
     user: { image: noImage, name: 'Anna Dvořáková', roleLabel: 'Přispěvatel' },
   },
+}
+
+// On the account's settings page Nastavení gets the active fill and no item does
+// (u6432mlm).
+export const SettingsPage: Story = {
+  args: {
+    contentItems,
+    peopleItems,
+    user: { image: noImage, name: 'Marie Horáková', roleLabel: 'Koordinátor' },
+  },
+  parameters: { pathname: '/administration/settings' },
 }

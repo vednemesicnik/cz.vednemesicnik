@@ -6,7 +6,7 @@ export const handle = {
   breadcrumb: (): Breadcrumb => {
     return {
       label: 'Změnit heslo',
-      path: href('/administration/settings/profile/change-password'),
+      path: href('/administration/settings/change-password'),
     }
   },
 }

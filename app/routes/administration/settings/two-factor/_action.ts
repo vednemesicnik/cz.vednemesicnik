@@ -50,7 +50,7 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
   if (intent === FORM_CONFIG.intent.value.delete) {
     await disableUserTwoFactor(context.userId)
 
-    return redirect('/administration/settings/profile/two-factor')
+    return redirect('/administration/settings/two-factor')
   }
 
   // Regenerate backup codes for an already-enrolled user, invalidating the old
@@ -59,7 +59,7 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
     const twoFactor = await getUserTwoFactor(context.userId)
 
     if (twoFactor === null) {
-      return redirect('/administration/settings/profile/two-factor')
+      return redirect('/administration/settings/two-factor')
     }
 
     const backupCodes = await regenerateBackupCodes(context.userId)

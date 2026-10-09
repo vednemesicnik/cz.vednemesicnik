@@ -43,7 +43,7 @@ export const requireRecentAuthentication = async ({
     })
 
     throw redirect(
-      `${href('/administration/settings/profile/verify-identity')}?${search}`,
+      `${href('/administration/settings/verify-identity')}?${search}`,
     )
   }
 
