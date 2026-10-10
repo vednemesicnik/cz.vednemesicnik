@@ -47,6 +47,7 @@ export const toSignInAttempt = (row: AuthLogRow): SignInAttempt | null => {
     formattedDateTime: formatNumericDateTime(row.createdAt),
     id: row.id,
     isFailure,
-    label: isFailure ? `${methodLabel} — neúspěšný pokus` : methodLabel,
+    // A no-break space before the dash: a line never starts with it.
+    label: isFailure ? `${methodLabel} — neúspěšný pokus` : methodLabel,
   }
 }

@@ -41,7 +41,10 @@ describe('toSignInAttempt', () => {
         id: '1',
         method: 'password',
       }),
-    ).toMatchObject({ isFailure: true, label: 'Heslo — neúspěšný pokus' })
+    ).toMatchObject({
+      isFailure: true,
+      label: 'Heslo — neúspěšný pokus',
+    })
   })
 
   it('marks a failed second step as a failure too', () => {
@@ -54,7 +57,7 @@ describe('toSignInAttempt', () => {
       }),
     ).toMatchObject({
       isFailure: true,
-      label: 'Kód z ověřovací aplikace — neúspěšný pokus',
+      label: 'Kód z ověřovací aplikace — neúspěšný pokus',
     })
   })
 

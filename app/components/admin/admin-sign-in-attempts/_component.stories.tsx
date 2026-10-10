@@ -54,7 +54,7 @@ export const Playground: Story = {
         formattedDateTime: '24. 9. 2026, 8:02',
         id: '3',
         isFailure: true,
-        label: 'Kód z ověřovací aplikace — neúspěšný pokus',
+        label: 'Kód z ověřovací aplikace\u00a0— neúspěšný pokus',
       },
       {
         dateTime: '2026-09-22T05:52:00.000Z',
@@ -68,7 +68,7 @@ export const Playground: Story = {
         formattedDateTime: '22. 9. 2026, 7:50',
         id: '5',
         isFailure: true,
-        label: 'Heslo — neúspěšný pokus',
+        label: 'Heslo\u00a0— neúspěšný pokus',
       },
     ],
   },
