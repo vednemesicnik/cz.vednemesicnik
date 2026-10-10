@@ -19,5 +19,70 @@
     margin: 0;
     background-color: var(--bg-secondary);
     min-height: 100dvh;
+
+    /* Below 768 px one column: the top bar, the content, the footer; the
+       sidebar is behind Menu (design 22g, tbi5qpq9). */
+    @media (width < 768px) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "topbar"
+        "content"
+        "footer";
+    }
+  }
+}
+
+.topBar {
+  @layer layout {
+    grid-area: topbar;
+    align-self: start;
+
+    @media (width >= 768px) {
+      display: none;
+    }
+  }
+}
+
+.sidebar {
+  @layer layout {
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}
+
+/* The sidebar over the whole screen, like the website menu (22j, 10b). */
+.menu {
+  @layer layout {
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+
+    @media (prefers-reduced-motion: no-preference) {
+      &[open] {
+        animation: menu-in var(--transition-base);
+      }
+    }
+  }
+}
+
+/* The page under the open menu does not scroll. */
+:global(html):has(.menu[open]) {
+  @layer layout {
+    overflow: hidden;
+  }
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
   }
 }

@@ -72,6 +72,18 @@ export const OwnRecordOnly: Story = {
   },
 }
 
+// Below 768 px the sidebar opens from Menu over the whole screen: Zavřít in the
+// brand row where Menu was, 44 px rows (22j, tbi5qpq9).
+export const InMenu: Story = {
+  args: {
+    contentItems,
+    layout: 'menu',
+    peopleItems,
+    user: { image: noImage, name: 'Marie Horáková', roleLabel: 'Koordinátor' },
+  },
+  globals: { viewport: { isRotated: false, value: 'mobile1' } },
+}
+
 // On the account's settings page Nastavení gets the active fill and no item does
 // (u6432mlm).
 export const SettingsPage: Story = {

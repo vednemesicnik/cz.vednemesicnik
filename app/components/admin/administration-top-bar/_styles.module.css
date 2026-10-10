@@ -1,0 +1,56 @@
+.topBar {
+  @layer component {
+    display: flex;
+    position: sticky;
+    top: 0;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    block-size: var(--top-bar-height);
+    padding-inline: 16px;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border);
+    z-index: var(--z-header);
+
+    /* Hides while scrolling down and returns on the way up, like the website
+       header (tbi5qpq9, 10b); stays put with reduced motion. Browsers without
+       scroll-state queries keep it in place. */
+    @media (prefers-reduced-motion: no-preference) {
+      transition: translate 0.3s ease;
+
+      @container scroll-state((scrolled: bottom) and (scrollable: top)) {
+        translate: 0 -100%;
+      }
+
+      @container scroll-state(scrolled: top) {
+        translate: 0 0;
+      }
+    }
+  }
+}
+
+.logo {
+  @layer component {
+    flex: none;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.title {
+  @layer component {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+.menuButton {
+  @layer variant {
+    margin-inline-start: auto;
+  }
+}
