@@ -28,6 +28,7 @@ import { SettingsRow } from './components/settings-row'
 import { TextButton } from './components/text-button'
 import { TwoFactorDialog } from './components/two-factor-dialog'
 import { buildSettingsContinuePath } from './utils/build-settings-continue-path'
+import { formatOtherSignIns } from './utils/format-other-sign-ins'
 import { formatRemainingBackupCodes } from './utils/format-remaining-backup-codes'
 import type { SettingsContinue } from './utils/parse-settings-continue'
 
@@ -392,14 +393,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
         <div className={styles.column}>
           {otherSessionsCount > 0 && (
-            <AdminDetailSection title={'Aktivní relace'}>
-              <AdminDetailList>
-                <AdminDetailItem
-                  label={'Počet přihlášení na jiných zařízeních'}
-                >
-                  {otherSessionsCount}
-                </AdminDetailItem>
-              </AdminDetailList>
+            <AdminDetailSection title={'Přehled přihlášení'}>
+              <AdminParagraph>
+                {formatOtherSignIns(otherSessionsCount)}
+              </AdminParagraph>
 
               <Form method={'post'}>
                 <AuthenticityTokenInput />
