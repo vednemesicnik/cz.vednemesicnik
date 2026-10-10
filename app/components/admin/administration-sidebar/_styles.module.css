@@ -27,6 +27,12 @@
   }
 }
 
+.closeButton {
+  @layer variant {
+    margin-inline-start: auto;
+  }
+}
+
 .logo {
   @layer component {
     flex: none;
@@ -181,6 +187,47 @@
     &:focus-visible {
       outline: none;
       box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+/* Below 768 px: over the whole screen from Menu, like the site menu (tbi5qpq9).
+   The brand row lines up with the top bar, Zavřít where Menu was; the whole
+   panel scrolls when the items don't fit. Last, so it overrides the column. */
+.menu {
+  @layer variant {
+    position: static;
+    width: 100%;
+    block-size: auto;
+    min-block-size: 100dvh;
+    padding: 0 12px 20px;
+    gap: 16px;
+    overflow: visible;
+    border-right: 0;
+
+    /* As tall as the top bar, so the logo and Zavřít stand exactly where the
+       logo and Menu were. */
+    & .brand {
+      box-sizing: border-box;
+      block-size: var(--top-bar-height);
+      margin-inline: -12px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    & .logo {
+      width: 28px;
+      height: 28px;
+    }
+
+    /* Items, Nastavení and Odhlásit se are 44 px rows for touch. */
+    & .list a,
+    & .accountLink,
+    & .footLink {
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+      min-block-size: 44px;
     }
   }
 }

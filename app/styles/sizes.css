@@ -7,4 +7,7 @@
   --page-bottom-padding: 80px;
   --tile-width: 220px;
   --tile-gap: 20px;
+  /* The administration top bar and the menu's brand row, so nothing moves when
+     the menu opens (tbi5qpq9): 12 px, a 30 px sm button, 12 px, the 1 px rule. */
+  --top-bar-height: 55px;
 }

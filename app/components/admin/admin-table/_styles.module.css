@@ -23,6 +23,14 @@
   @layer component {
     max-block-size: calc(100dvh - 48px);
     overflow: auto;
+
+    /* Below 768 px the list scrolls with the page, so the top bar can hide on
+       the way down (tbi5qpq9); the table still scrolls sideways. */
+    @media (width < 768px) {
+      max-block-size: none;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
   }
 }
 

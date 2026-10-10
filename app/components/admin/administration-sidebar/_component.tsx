@@ -1,7 +1,10 @@
+import { clsx } from 'clsx'
+import type { Ref } from 'react'
 import { Form, href } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
 import { useSidebarHighlight } from '~/components/admin/sidebar-highlight-provider'
+import { Button } from '~/components/button'
 import { VdmLogo } from '~/components/vdm-logo'
 import { VdmWordmark } from '~/components/vdm-wordmark'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
@@ -27,6 +30,11 @@ type Props = {
   // People sections (Autoři, Uživatelé, …), below the rule.
   peopleItems: NavigationItem[]
   user: SidebarUser
+  layout?: 'column' | 'menu'
+  closeLabel?: string
+  onClose?: () => void
+  closeButtonRef?: Ref<HTMLButtonElement>
+  className?: string
 }
 
 /**
@@ -34,12 +42,25 @@ type Props = {
  * top, content sections, people below a rule and the signed-in user at the bottom,
  * with Nastavení (the account's own settings, 29a) and sign-out under the name.
  * Callers pass only the items the user may see.
+ *
+ * @param props.layout - `column` beside the content from 768 px, `menu` below it:
+ * over the whole screen from Menu, with Zavřít in the brand row and 44 px rows
+ * (tbi5qpq9). The caller puts the menu layout in a modal `<dialog>`.
+ * @param props.closeLabel - The close button's label in the menu layout.
+ * @param props.onClose - Called by the close button in the menu layout.
+ * @param props.closeButtonRef - The close button, which gets focus on opening.
  */
 export const AdministrationSidebar = ({
   contentItems,
   peopleItems,
   user,
+  layout = 'column',
+  closeLabel = 'Zavřít',
+  onClose,
+  closeButtonRef,
+  className,
 }: Props) => {
+  const isMenu = layout === 'menu'
   const highlightsSection = useSidebarHighlight()
 
   const renderItem = (item: NavigationItem) => (
@@ -55,7 +76,7 @@ export const AdministrationSidebar = ({
   )
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={clsx(styles.sidebar, isMenu && styles.menu, className)}>
       {/* Not a link: Přehled is the first item below (design 22a, tyxr2jqk). */}
       <div className={styles.brand}>
         <VdmLogo className={styles.logo} />
@@ -63,6 +84,19 @@ export const AdministrationSidebar = ({
           <VdmWordmark className={styles.name} tone={'text'} />
           <span className={styles.product}>Administrace</span>
         </span>
+        {isMenu && (
+          // Zavřít stands where Menu was in the top bar (tbi5qpq9).
+          <Button
+            className={styles.closeButton}
+            onClick={onClose}
+            ref={closeButtonRef}
+            size={'sm'}
+            type={'button'}
+            variant={'ghost'}
+          >
+            {closeLabel}
+          </Button>
+        )}
       </div>
 
       <nav aria-label={'Administrace'} className={styles.nav}>
