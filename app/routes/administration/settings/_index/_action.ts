@@ -74,7 +74,7 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
       throwDbError(error, "Unable to delete the user's sessions.")
     }
 
-    return { status: 'success' as const }
+    return { status: 'other-sign-ins-ended' as const }
   }
 
   const context = await getUserPermissionContext(request, {

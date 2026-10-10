@@ -2,7 +2,7 @@
 
 import type { AuthorRoleName } from '@generated/prisma/enums'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Form, href, useFetcher, useLocation, useNavigate } from 'react-router'
+import { href, useFetcher, useLocation, useNavigate } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
@@ -14,9 +14,11 @@ import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
+import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 
+import type { action } from './_action'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ChangePasswordDialog } from './components/change-password-dialog'
@@ -80,7 +82,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const mutationFetcher = useFetcher()
+  // Owned here, not by the section: the section unmounts once the sign-ins end.
+  const signInsFetcher = useFetcher<typeof action>()
   const authenticityToken = useAuthenticityToken()
+  const showToast = useToast()
 
   const [openDialog, setOpenDialog] = useState<OpenDialog | null>(null)
   // „Heslo bylo změněno.“ stays under the status until the page is left (design
@@ -128,6 +133,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       replace: true,
     })
   }, [location.pathname, navigate, settingsContinue])
+
+  const signInsResult = signInsFetcher.data
+
+  useEffect(() => {
+    if (signInsResult === undefined || !('status' in signInsResult)) return
+    if (signInsResult.status !== 'other-sign-ins-ended') return
+
+    showToast('Všechna ostatní přihlášení jsou ukončena.')
+  }, [showToast, signInsResult])
 
   const submitMutation = (action: string, fields: Record<string, string>) => {
     const formData = new FormData()
@@ -398,17 +412,19 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 {formatOtherSignIns(otherSessionsCount)}
               </AdminParagraph>
 
-              <Form method={'post'}>
+              {/* Nothing is lost and one can sign in again: a plain button, no dialog (design 29a). */}
+              <signInsFetcher.Form method={'post'}>
                 <AuthenticityTokenInput />
                 <Button
                   name={FORM_CONFIG.intent.name}
+                  size={'sm'}
                   type={'submit'}
                   value={FORM_CONFIG.intent.value.delete}
-                  variant={'danger'}
+                  variant={'outline'}
                 >
                   Ukončit všechna ostatní přihlášení
                 </Button>
-              </Form>
+              </signInsFetcher.Form>
             </AdminDetailSection>
           )}
         </div>

@@ -1,0 +1,74 @@
+/* Always open, empty until a toast arrives; only the toast takes the pointer. */
+.region {
+  @layer component {
+    background: transparent;
+    border: 0;
+    inset-block-end: 24px;
+    color: inherit;
+    inset-block-start: auto;
+    inset-inline: 0;
+    margin: 0;
+    overflow: visible;
+    padding: 0;
+    pointer-events: none;
+    width: auto;
+
+    &:popover-open {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (width < 768px) {
+      inset-block-end: 16px;
+      inset-inline: 16px;
+
+      &:popover-open {
+        align-items: stretch;
+      }
+    }
+  }
+}
+
+.slot {
+  @layer component {
+    display: flex;
+    justify-content: center;
+    opacity: 1;
+    pointer-events: auto;
+    transition:
+      opacity 200ms ease-in-out,
+      translate 200ms ease-in-out;
+    translate: 0 0;
+
+    @starting-style {
+      opacity: 0;
+      translate: 0 8px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: opacity 200ms ease-in-out;
+
+      @starting-style {
+        translate: 0 0;
+      }
+    }
+  }
+}
+
+.slot.leaving {
+  @layer variant {
+    opacity: 0;
+    transition: opacity 150ms ease-in-out;
+  }
+}
+
+.toast {
+  @layer variant {
+    @media (width < 768px) {
+      display: flex;
+      max-width: none;
+      width: 100%;
+    }
+  }
+}

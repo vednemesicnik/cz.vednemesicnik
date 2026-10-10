@@ -18,6 +18,7 @@ import { AdministrationTopBar } from '~/components/admin/administration-top-bar'
 import { SidebarHighlightProvider } from '~/components/admin/sidebar-highlight-provider'
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
 import { RootBoundaryError } from '~/components/root-boundary-error'
+import { ToastProvider } from '~/components/toast-provider'
 import { useFullScreenMenu } from '~/hooks/use-full-screen-menu'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -79,40 +80,42 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AuthenticityTokenProvider token={loaderData.csrfToken}>
       <SidebarHighlightProvider>
-        <div className={styles.layout}>
-          <AdministrationTopBar
-            className={styles.topBar}
-            controls={menuId}
-            expanded={isMenuOpen}
-            onMenu={open}
-            title={activeItem?.label}
-          />
-          <AdministrationSidebar
-            className={styles.sidebar}
-            contentItems={contentItems}
-            peopleItems={peopleItems}
-            user={user}
-          />
-          <dialog
-            aria-label={'Menu'}
-            className={styles.menu}
-            id={menuId}
-            ref={menuRef}
-          >
+        <ToastProvider>
+          <div className={styles.layout}>
+            <AdministrationTopBar
+              className={styles.topBar}
+              controls={menuId}
+              expanded={isMenuOpen}
+              onMenu={open}
+              title={activeItem?.label}
+            />
             <AdministrationSidebar
-              closeButtonRef={closeButtonRef}
+              className={styles.sidebar}
               contentItems={contentItems}
-              layout={'menu'}
-              onClose={close}
               peopleItems={peopleItems}
               user={user}
             />
-          </dialog>
-          <AdministrationContent className={styles.page}>
-            <Outlet />
-          </AdministrationContent>
-          <AdministrationPageFooter />
-        </div>
+            <dialog
+              aria-label={'Menu'}
+              className={styles.menu}
+              id={menuId}
+              ref={menuRef}
+            >
+              <AdministrationSidebar
+                closeButtonRef={closeButtonRef}
+                contentItems={contentItems}
+                layout={'menu'}
+                onClose={close}
+                peopleItems={peopleItems}
+                user={user}
+              />
+            </dialog>
+            <AdministrationContent className={styles.page}>
+              <Outlet />
+            </AdministrationContent>
+            <AdministrationPageFooter />
+          </div>
+        </ToastProvider>
       </SidebarHighlightProvider>
     </AuthenticityTokenProvider>
   )
