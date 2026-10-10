@@ -1,4 +1,6 @@
-const ORIGIN = 'http://localhost'
+// A placeholder base to resolve against, not the app's origin; any fixed origin
+// works. `.invalid` is a reserved TLD, so it can never be a real host.
+const RESOLUTION_BASE = 'http://safe-redirect.invalid'
 
 // ASCII control characters (C0 and DEL). Browsers strip tab, CR and LF while
 // parsing a URL, so `/\t/evil.com` would turn into `//evil.com`.
@@ -33,7 +35,9 @@ export const safeRedirect = (
   // is protocol-relative like `//`. (`new URL` over `URL.parse`: this also
   // runs in the browser, and `URL.parse` needs Safari 18.)
   try {
-    if (new URL(to, ORIGIN).origin !== ORIGIN) return fallback
+    if (new URL(to, RESOLUTION_BASE).origin !== RESOLUTION_BASE) {
+      return fallback
+    }
   } catch {
     return fallback
   }
