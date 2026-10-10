@@ -96,6 +96,14 @@ Run the `remember:remember` skill. Not a summary of the work — git and the PR 
   purpose, a deploy not yet verified;
 - **the leftovers** from 1.7 and the pairs from 1.8.
 
+**In a git worktree** (`git rev-parse --git-dir` differs from `--git-common-dir`), the
+handoff written to the worktree's `.remember/` is lost when the worktree is removed. Merge it
+into the main checkout's `.remember/remember.md` (the directory above
+`git rev-parse --path-format=absolute --git-common-dir`): read that file, keep what still
+holds, fold in this session's note, write the result there, and delete the worktree copy.
+The Write tool refuses paths outside the worktree, so write it from the shell — `.remember/`
+is gitignored and never touches the main checkout's branch.
+
 ### 🛑 Gate — Follow-ups are offered, not filed
 
 If the issue surfaced work worth doing later, **list it and ask** — one line each, with the
