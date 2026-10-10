@@ -318,6 +318,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     actions={
                       <>
                         <AdminButton
+                          // Not reopened after the identity check: opening it
+                          // replaces the codes, which an address must not do
+                          // without a click.
                           onClick={() =>
                             openWithIdentityCheck(
                               { name: 'new-backup-codes' },
