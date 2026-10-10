@@ -97,7 +97,11 @@ export const AdministrationSidebar = ({
         >
           Nastavení
         </SidebarLink>
-        <Form action={href('/administration/sign-out')} method={'post'}>
+        <Form
+          action={href('/administration/sign-out')}
+          className={styles.signOutForm}
+          method={'post'}
+        >
           <button className={styles.footLink} type={'submit'}>
             Odhlásit se
           </button>

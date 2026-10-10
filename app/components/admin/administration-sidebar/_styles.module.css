@@ -144,8 +144,16 @@
   }
 }
 
+/* The two rows under the name sit 2px apart, like the items above (puutrqhh):
+   the foot's 10px gap less 8px. */
+.signOutForm {
+  @layer component {
+    margin-block-start: -8px;
+  }
+}
+
 /* Odhlásit se: the same box and hover as Nastavení above it, so the whole row
-   is clickable and its text lines up with the name. */
+   is clickable and its text lines up with the name (puutrqhh). */
 .footLink {
   @layer component {
     display: block;
