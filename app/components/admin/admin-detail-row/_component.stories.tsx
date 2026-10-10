@@ -17,12 +17,14 @@ const meta: Meta<typeof AdminDetailRow> = {
     children: { control: false },
   },
   component: AdminDetailRow,
-  // The 480 px rule measures the section around the row.
+  // The 480 px rule measures the section around the row; `width` narrows it.
   decorators: [
-    (Story) => (
-      <AdminDetailSection>
-        <Story />
-      </AdminDetailSection>
+    (Story, { parameters }) => (
+      <div style={{ width: parameters.width }}>
+        <AdminDetailSection>
+          <Story />
+        </AdminDetailSection>
+      </div>
     ),
   ],
   parameters: {
@@ -75,11 +77,5 @@ export const Overview: Story = {
 // Under 480 px the name stands above the value, as in the right column.
 export const Narrow: Story = {
   args: Playground.args,
-  decorators: [
-    (Story) => (
-      <div style={{ width: '300px' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  parameters: { width: '300px' },
 }

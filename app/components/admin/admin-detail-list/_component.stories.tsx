@@ -11,12 +11,14 @@ const meta: Meta<typeof AdminDetailList> = {
     children: { control: false },
   },
   component: AdminDetailList,
-  // The 480 px rule measures the section around the list.
+  // The 480 px rule measures the section around the list; `width` narrows it.
   decorators: [
-    (Story) => (
-      <AdminDetailSection>
-        <Story />
-      </AdminDetailSection>
+    (Story, { parameters }) => (
+      <div style={{ width: parameters.width }}>
+        <AdminDetailSection>
+          <Story />
+        </AdminDetailSection>
+      </div>
     ),
   ],
   parameters: {
@@ -50,11 +52,5 @@ export const Narrow: Story = {
   args: {
     children: items,
   },
-  decorators: [
-    (Story) => (
-      <div style={{ width: '300px' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  parameters: { width: '300px' },
 }

@@ -51,6 +51,13 @@ const aside = (
 // The right column stands beside the main one from 820 px of container.
 export const Playground: Story = {
   args: { aside, main },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '1000px' }}>
+        <Story />
+      </div>
+    ),
+  ],
 }
 
 // An empty right column is not drawn; the main column takes the full width.
