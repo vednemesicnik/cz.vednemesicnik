@@ -42,7 +42,13 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
 
   if (submission.status !== 'success') {
     return data(
-      { status: 'error' as const, submissionResult: submission.reply() },
+      {
+        status: 'error' as const,
+        // Never send the typed passwords back.
+        submissionResult: submission.reply({
+          hideFields: ['newPassword', 'newPasswordConfirmation'],
+        }),
+      },
       { status: getStatusCodeFromSubmissionStatus(submission.status) },
     )
   }

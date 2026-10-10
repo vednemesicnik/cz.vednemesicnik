@@ -196,7 +196,9 @@ Utilities:
 Session-based authentication with multiple methods:
 
 - Magic link by e-mail, Google (OAuth) and passkeys (WebAuthn via @simplewebauthn) — the main paths
-- Password (bcrypt hashed) — an emergency path, off unless `ALLOW_PASSWORD_SIGN_IN` is set
+- Password (bcrypt hashed) — an emergency path, off unless `ALLOW_PASSWORD_SIGN_IN` is set;
+  only Owner and Administrator may set it and its two-factor authentication
+  (`can-use-emergency-password.ts`)
 
 Session management in `app/utils/auth.server.ts` using cookie-based sessions.
 

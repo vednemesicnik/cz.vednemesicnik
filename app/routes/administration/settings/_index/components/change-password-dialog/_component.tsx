@@ -1,6 +1,6 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
@@ -20,7 +20,8 @@ import styles from './_styles.module.css'
 
 type Props = {
   hasPassword: boolean
-  onSaved: () => void
+  // `isChange` is false when this set the account's first password.
+  onSaved: (isChange: boolean) => void
   onClose: () => void
 }
 
@@ -55,12 +56,20 @@ export const ChangePasswordDialog = ({
     'status' in fetcher.data &&
     fetcher.data.status === 'success'
 
+  // Whether this saves a change or a first password is fixed when the dialog
+  // opens; the page's data refreshes right after the save.
+  const [isChange] = useState(hasPassword)
+  const onSavedRef = useRef(onSaved)
+  onSavedRef.current = onSaved
+  const hasReportedRef = useRef(false)
+
   useEffect(() => {
-    if (isSaved) {
-      onSaved()
-      ref.current?.close()
-    }
-  }, [isSaved, onSaved, ref])
+    if (!isSaved || hasReportedRef.current) return
+    hasReportedRef.current = true
+
+    onSavedRef.current(isChange)
+    ref.current?.close()
+  }, [isChange, isSaved, ref])
 
   const isSubmitting = fetcher.state !== 'idle'
   const handleCancel = () => ref.current?.close()

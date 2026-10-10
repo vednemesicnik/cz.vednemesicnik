@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import type { AuthorRoleName } from '@generated/prisma/enums'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Form, href, useFetcher, useLocation, useNavigate } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
@@ -71,7 +71,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     emergencyPassword,
     otherSessionsCount,
     passkeys,
-    recentAuthenticationExpiresAt,
+    recentAuthenticationRemainingMs,
     settingsContinue,
     user,
   } = loaderData
@@ -85,6 +85,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   // „Heslo bylo změněno.“ stays under the status until the page is left (design
   // 29a): after a change the row itself would not move.
   const [isPasswordChanged, setIsPasswordChanged] = useState(false)
+
+  // Anchor the server's remaining time to this browser's clock when the data
+  // arrives, so a skewed clock cannot shift it.
+  const recentAuthenticationExpiresAt = useMemo(
+    () => Date.now() + recentAuthenticationRemainingMs,
+    [recentAuthenticationRemainingMs],
+  )
 
   const isRecentlyAuthenticated = useCallback(
     () => Date.now() < recentAuthenticationExpiresAt,
@@ -429,7 +436,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <ChangePasswordDialog
           hasPassword={emergencyPassword.hasPassword}
           onClose={closeDialog(openDialog)}
-          onSaved={() => setIsPasswordChanged(emergencyPassword.hasPassword)}
+          onSaved={setIsPasswordChanged}
         />
       )}
 

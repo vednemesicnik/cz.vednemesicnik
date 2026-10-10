@@ -43,13 +43,18 @@ const groupSecret = (secret: string) => secret.match(/.{1,4}/g)?.join(' ') ?? ''
  * cannot be closed until the person ticks that they saved the codes.
  */
 export const TwoFactorDialog = ({ mode, onClose }: Props) => {
-  const ref = useModalDialog(onClose)
   const fetcher = useFetcher<typeof twoFactorAction>()
   const authenticityToken = useAuthenticityToken()
 
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null)
   const [codes, setCodes] = useState<string[] | null>(null)
   const [isConfirmed, setIsConfirmed] = useState(false)
+
+  // The codes are shown once: the step stays open until the person confirms
+  // they saved them, whether they press Esc once or twice.
+  const ref = useModalDialog(onClose, {
+    shouldStayOpen: () => codes !== null && !isConfirmed,
+  })
 
   // Ask for the secret (or the new codes) once, when the dialog opens.
   const hasStartedRef = useRef(false)
@@ -86,24 +91,6 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
       setCodes(data.backupCodes)
     }
   }, [data])
-
-  // The codes are shown once: Esc does not close the step before the person
-  // confirms they saved them.
-  useEffect(() => {
-    const dialog = ref.current
-
-    if (dialog === null) return
-
-    const handleCancel = (event: Event) => {
-      if (codes !== null && !isConfirmed) {
-        event.preventDefault()
-      }
-    }
-
-    dialog.addEventListener('cancel', handleCancel)
-
-    return () => dialog.removeEventListener('cancel', handleCancel)
-  }, [codes, isConfirmed, ref])
 
   const lastResult =
     data !== undefined && 'submissionResult' in data
@@ -215,6 +202,19 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
               </AdminModalActions>
             </fetcher.Form>
           </>
+        )}
+
+        {/* New codes are on their way; Zrušit leaves if they never come. */}
+        {mode === 'new-codes' && (
+          <AdminModalActions>
+            <AdminButton
+              onClick={handleClose}
+              type={'button'}
+              variant={'secondary'}
+            >
+              Zrušit
+            </AdminButton>
+          </AdminModalActions>
         )}
       </AdminModalContent>
     </AdminDialog>

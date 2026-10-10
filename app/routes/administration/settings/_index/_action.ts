@@ -4,7 +4,7 @@ import { type ActionFunctionArgs, data } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
 import { requireAuthentication } from '~/utils/auth.server'
-import { checkCSRF } from '~/utils/csrf.server'
+import { checkCSRF, requireCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
@@ -49,10 +49,16 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
     )
   }
 
-  const csrfFailure = await checkCSRF(formData, request)
-  if (csrfFailure !== null) return csrfFailure
-
   const intent = formData.get(FORM_CONFIG.intent.name)
+
+  // The profile form stays on screen and shows the token message; the other
+  // intents are one-click actions (design 30h).
+  if (intent === FORM_CONFIG.intent.value.updateProfile) {
+    const csrfFailure = await checkCSRF(formData, request)
+    if (csrfFailure !== null) return csrfFailure
+  } else {
+    await requireCSRF(formData, request)
+  }
 
   if (intent === FORM_CONFIG.intent.value.delete) {
     try {

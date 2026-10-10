@@ -50,7 +50,10 @@ export const ProfileDialog = ({
   hasImage,
   onClose,
 }: Props) => {
-  const ref = useModalDialog(onClose)
+  // A photo still uploading would be saved but never shown: stay open for it.
+  const ref = useModalDialog(onClose, {
+    shouldStayOpen: () => imageFetcher.state !== 'idle',
+  })
   const profileFetcher = useFetcher<typeof settingsAction>()
   const imageFetcher = useFetcher<typeof settingsAction>()
   const authenticityToken = useAuthenticityToken()
@@ -235,7 +238,7 @@ export const ProfileDialog = ({
 
           <AdminModalActions>
             <AdminButton
-              disabled={isSubmitting}
+              disabled={isSubmitting || isImageBusy}
               onClick={handleCancel}
               type={'button'}
               variant={'secondary'}

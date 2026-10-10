@@ -88,6 +88,26 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
       })()
     : null
 
+  // Reopen only a dialog this account can open now; a hint for anything else
+  // (a Member's password dialog, 2FA without a password) is dropped.
+  const parsedContinue = parseSettingsContinue(url.searchParams, passkeyIds)
+  const canReopen = (() => {
+    switch (parsedContinue?.dialog) {
+      case undefined:
+      case 'remove-passkey':
+        return true
+      case 'change-password':
+        return emergencyPassword !== null
+      case 'enable-two-factor':
+        return (
+          emergencyPassword?.hasPassword === true &&
+          !emergencyPassword.isTwoFactorEnabled
+        )
+      case 'disable-two-factor':
+        return emergencyPassword?.isTwoFactorEnabled === true
+    }
+  })()
+
   return {
     emergencyPassword,
     otherSessionsCount: user.sessions.length,
@@ -96,11 +116,15 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
       deviceType: passkey.credentialDeviceType,
       id: passkey.id,
     })),
-    // Until when this session may change sign-in methods without signing in
-    // again; the page checks it at the moment of the click.
-    recentAuthenticationExpiresAt:
-      session.createdAt.getTime() + RECENT_AUTHENTICATION_MAX_AGE_MS,
-    settingsContinue: parseSettingsContinue(url.searchParams, passkeyIds),
+    // How long this session may still change sign-in methods without signing
+    // in again. A duration, not a time: the browser's clock may be off.
+    recentAuthenticationRemainingMs: Math.max(
+      0,
+      session.createdAt.getTime() +
+        RECENT_AUTHENTICATION_MAX_AGE_MS -
+        Date.now(),
+    ),
+    settingsContinue: canReopen ? parsedContinue : null,
     user: {
       authorBio: user.author.bio ?? '',
       authorName: user.author.name,
