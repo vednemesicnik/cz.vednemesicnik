@@ -349,7 +349,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                               }).map((detail, index) => (
                                 <Fragment key={detail}>
                                   {/* The line breaks after a dot, never inside a date. */}
-                                  {index > 0 && ' · '}
+                                  {index > 0 && '\u00a0· '}
                                   <span className={styles.passkeyDetail}>
                                     {detail}
                                   </span>
