@@ -4,7 +4,6 @@ import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -13,6 +12,7 @@ import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
+import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -144,7 +144,7 @@ export const ProfileDialog = ({
 
   return (
     <AdminDialog ref={ref}>
-      <AdminModalContent className={styles.content}>
+      <AdminModalContent>
         <AdminModalTitle>Upravit profil</AdminModalTitle>
 
         <section aria-label={'Fotka'} className={styles.photo}>
@@ -159,14 +159,14 @@ export const ProfileDialog = ({
               Nepovinná. Nejvýš 5 MB. Zobrazuje se v kruhu.
             </p>
             <div className={styles.photoActions}>
-              <AdminButton
+              <Button
                 disabled={isImageBusy}
                 onClick={() => fileInputRef.current?.click()}
                 type={'button'}
-                variant={'secondary'}
+                variant={'outline'}
               >
                 Vybrat fotku
-              </AdminButton>
+              </Button>
               {hasImage && (
                 <TextButton disabled={isImageBusy} onClick={handleRemoveImage}>
                   Odebrat
@@ -237,17 +237,18 @@ export const ProfileDialog = ({
           />
 
           <AdminModalActions>
-            <AdminButton
+            <Button
               disabled={isSubmitting || isImageBusy}
               onClick={handleCancel}
+              size={'sm'}
               type={'button'}
-              variant={'secondary'}
+              variant={'ghost'}
             >
               Zrušit
-            </AdminButton>
-            <AdminButton disabled={isSubmitting} type={'submit'}>
+            </Button>
+            <Button disabled={isSubmitting} size={'sm'} type={'submit'}>
               Uložit
-            </AdminButton>
+            </Button>
           </AdminModalActions>
         </profileFetcher.Form>
       </AdminModalContent>

@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
 import type { Blocker } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
+import { Button } from '~/components/button'
 
 type Props = {
   blocker: Blocker
@@ -67,16 +67,22 @@ export const AdminLeaveConfirmationDialog = ({
           vrátit.
         </AdminModalDescription>
         <AdminModalActions>
-          <AdminButton
+          <Button
             onClick={handleStay}
+            size={'sm'}
             type={'button'}
-            variant={'secondary'}
+            variant={'ghost'}
           >
             Zůstat
-          </AdminButton>
-          <AdminButton onClick={handleLeave} type={'button'} variant={'danger'}>
+          </Button>
+          <Button
+            onClick={handleLeave}
+            size={'sm'}
+            type={'button'}
+            variant={'danger'}
+          >
             Odejít
-          </AdminButton>
+          </Button>
         </AdminModalActions>
       </AdminModalContent>
     </AdminDialog>

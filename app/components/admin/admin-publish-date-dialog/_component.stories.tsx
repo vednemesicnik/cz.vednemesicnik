@@ -4,8 +4,8 @@ import type { Decorator, Meta, StoryObj } from '@storybook/react-vite'
 import { type ComponentProps, useRef } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
+import { Button } from '~/components/button'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import { AdminPublishDateDialog } from './_component'
@@ -20,12 +20,9 @@ const AdminPublishDateDialogPreview = (props: PreviewProps) => {
 
   return (
     <>
-      <AdminButton
-        onClick={() => dialogRef.current?.showModal()}
-        type={'button'}
-      >
+      <Button onClick={() => dialogRef.current?.showModal()} type={'button'}>
         Otevřít dialog
-      </AdminButton>
+      </Button>
       <AdminPublishDateDialog ref={dialogRef} {...props} />
     </>
   )

@@ -1,9 +1,3 @@
-.content {
-  @layer route {
-    justify-items: start;
-  }
-}
-
 .subject {
   @layer route {
     margin: 0;

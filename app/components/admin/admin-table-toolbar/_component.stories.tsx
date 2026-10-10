@@ -2,7 +2,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { AdminButton } from '~/components/admin/admin-button'
+import { Button } from '~/components/button'
 
 import { AdminTableToolbar } from './_component'
 
@@ -26,7 +26,7 @@ export const Playground: Story = {
   render: () => (
     <AdminTableToolbar>
       <input placeholder={'Hledat…'} type={'search'} />
-      <AdminButton>Nový článek</AdminButton>
+      <Button>Nový článek</Button>
     </AdminTableToolbar>
   ),
 }

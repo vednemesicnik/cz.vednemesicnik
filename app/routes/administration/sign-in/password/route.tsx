@@ -3,8 +3,8 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
 import { Link, useNavigation } from 'react-router'
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
+import { Button } from '~/components/button'
 import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { useHydrated } from '~/utils/use-hydrated'
@@ -79,13 +79,13 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
             placeholder={'••••••••'}
           />
 
-          <AdminButton
+          <Button
             className={styles.button}
             disabled={isSubmitting}
             type="submit"
           >
             {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
-          </AdminButton>
+          </Button>
         </Form>
 
         <div className={styles.footer}>

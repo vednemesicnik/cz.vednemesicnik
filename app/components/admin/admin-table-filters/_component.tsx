@@ -1,7 +1,7 @@
 import type { ReactNode, SubmitEvent } from 'react'
 import { Form, useSubmit } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
+import { Button } from '~/components/button'
 
 import styles from './_styles.module.css'
 
@@ -46,13 +46,9 @@ export const AdminTableFilters = ({ children, preservedParams }: Props) => {
       {children}
       {/* The no-JS path: the selects auto-submit only when JS is available, so
           the button is hidden via `@media (scripting: enabled)`. */}
-      <AdminButton
-        className={styles.submit}
-        type={'submit'}
-        variant={'secondary'}
-      >
+      <Button className={styles.submit} type={'submit'} variant={'outline'}>
         Filtrovat
-      </AdminButton>
+      </Button>
     </Form>
   )
 }

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Form, href, useFetcher, useLocation, useNavigate } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
@@ -14,6 +13,7 @@ import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
+import { Button } from '~/components/button'
 import { FORM_CONFIG } from '~/config/form-config'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 
@@ -192,14 +192,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 <span className={styles.name}>{user.authorName}</span>
                 <span className={styles.email}>{user.email}</span>
               </div>
-              <AdminButton
+              <Button
                 className={styles.profileButton}
                 onClick={() => setOpenDialog({ name: 'profile' })}
                 type={'button'}
-                variant={'secondary'}
+                variant={'outline'}
               >
                 Upravit profil
-              </AdminButton>
+              </Button>
             </div>
 
             <AdminDetailList>
@@ -293,7 +293,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               <div className={styles.rows}>
                 <SettingsRow
                   actions={
-                    <AdminButton
+                    <Button
                       onClick={() =>
                         openWithIdentityCheck(
                           { name: 'change-password' },
@@ -301,10 +301,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                         )
                       }
                       type={'button'}
-                      variant={'secondary'}
+                      variant={'outline'}
                     >
                       {emergencyPassword.hasPassword ? 'Změnit…' : 'Nastavit…'}
-                    </AdminButton>
+                    </Button>
                   }
                   note={isPasswordChanged ? 'Heslo bylo změněno.' : undefined}
                   status={
@@ -317,7 +317,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   <SettingsRow
                     actions={
                       <>
-                        <AdminButton
+                        <Button
                           // Not reopened after the identity check: opening it
                           // replaces the codes, which an address must not do
                           // without a click.
@@ -328,10 +328,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                             )
                           }
                           type={'button'}
-                          variant={'secondary'}
+                          variant={'outline'}
                         >
                           Nové záložní kódy
-                        </AdminButton>
+                        </Button>
                         <TextButton
                           onClick={() =>
                             setOpenDialog({ name: 'disable-two-factor' })
@@ -363,7 +363,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   <SettingsRow
                     actions={
                       emergencyPassword.hasPassword ? (
-                        <AdminButton
+                        <Button
                           onClick={() =>
                             openWithIdentityCheck(
                               { name: 'enable-two-factor' },
@@ -371,10 +371,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                             )
                           }
                           type={'button'}
-                          variant={'secondary'}
+                          variant={'outline'}
                         >
                           Zapnout…
-                        </AdminButton>
+                        </Button>
                       ) : (
                         <span className={styles.muted}>
                           Nejdřív nastavte heslo.
@@ -403,14 +403,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
               <Form method={'post'}>
                 <AuthenticityTokenInput />
-                <AdminButton
+                <Button
                   name={FORM_CONFIG.intent.name}
                   type={'submit'}
                   value={FORM_CONFIG.intent.value.delete}
                   variant={'danger'}
                 >
                   Ukončit všechna ostatní přihlášení
-                </AdminButton>
+                </Button>
               </Form>
             </AdminDetailSection>
           )}

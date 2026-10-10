@@ -8,13 +8,13 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
@@ -116,9 +116,9 @@ export default function RouteComponent({
         <input {...getInputProps(fields.state, { type: 'hidden' })} />
 
         <FormActions>
-          <AdminButton disabled={!canSubmit} type={'submit'}>
+          <Button disabled={!canSubmit} type={'submit'}>
             {isSubmitting ? 'Ukládá se...' : 'Uložit'}
-          </AdminButton>
+          </Button>
           <AdminLinkButton
             disabled={isLoadingOrSubmitting}
             to={href('/administration/articles/tags/:tagId', { tagId })}

@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 import { Form, Link, useNavigation } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
+import { Button } from '~/components/button'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 
@@ -64,13 +64,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             value={loaderData.redirectTo}
           />
 
-          <AdminButton
+          <Button
             className={styles.button}
             disabled={isSubmitting}
             type="submit"
           >
             {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
-          </AdminButton>
+          </Button>
         </Form>
       </section>
     </div>

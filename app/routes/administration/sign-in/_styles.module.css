@@ -44,7 +44,7 @@
   }
 }
 
-/* Filled primary link, matching AdminButton's primary variant — the main
+/* Filled primary link, matching Button's primary variant — the main
    sign-in method (magic link). */
 .linkButton {
   @layer route {

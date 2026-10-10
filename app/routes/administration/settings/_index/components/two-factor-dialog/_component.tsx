@@ -3,7 +3,6 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -12,6 +11,7 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
+import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -112,7 +112,7 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
   if (codes !== null) {
     return (
       <AdminDialog ref={ref}>
-        <AdminModalContent className={styles.content}>
+        <AdminModalContent>
           <BackupCodesStep
             codes={codes}
             isConfirmed={isConfirmed}
@@ -127,7 +127,7 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
 
   return (
     <AdminDialog ref={ref}>
-      <AdminModalContent className={styles.content}>
+      <AdminModalContent>
         <AdminModalTitle>
           {mode === 'enable'
             ? 'Zapnout dvoufázové ověření'
@@ -186,19 +186,21 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
               />
 
               <AdminModalActions>
-                <AdminButton
+                <Button
                   onClick={handleClose}
+                  size={'sm'}
                   type={'button'}
-                  variant={'secondary'}
+                  variant={'ghost'}
                 >
                   Zrušit
-                </AdminButton>
-                <AdminButton
+                </Button>
+                <Button
                   disabled={isSubmitting || enrollment === null}
+                  size={'sm'}
                   type={'submit'}
                 >
                   Zapnout
-                </AdminButton>
+                </Button>
               </AdminModalActions>
             </fetcher.Form>
           </>
@@ -207,13 +209,14 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
         {/* New codes are on their way; Zrušit leaves if they never come. */}
         {mode === 'new-codes' && (
           <AdminModalActions>
-            <AdminButton
+            <Button
               onClick={handleClose}
+              size={'sm'}
               type={'button'}
-              variant={'secondary'}
+              variant={'ghost'}
             >
               Zrušit
-            </AdminButton>
+            </Button>
           </AdminModalActions>
         )}
       </AdminModalContent>

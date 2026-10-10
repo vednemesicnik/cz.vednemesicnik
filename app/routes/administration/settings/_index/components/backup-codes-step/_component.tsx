@@ -1,9 +1,9 @@
 import { useId, useState } from 'react'
 
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
+import { Button } from '~/components/button'
 import { Label } from '~/components/label'
 import { downloadTextFile } from '~/utils/download-text-file'
 
@@ -84,12 +84,22 @@ export const BackupCodesStep = ({
       </ul>
 
       <div className={styles.tools}>
-        <AdminButton onClick={handleDownload} type="button" variant="secondary">
+        <Button
+          onClick={handleDownload}
+          size={'sm'}
+          type="button"
+          variant="outline"
+        >
           Stáhnout .txt
-        </AdminButton>
-        <AdminButton onClick={handleCopy} type="button" variant="secondary">
+        </Button>
+        <Button
+          onClick={handleCopy}
+          size={'sm'}
+          type="button"
+          variant="outline"
+        >
           Zkopírovat
-        </AdminButton>
+        </Button>
         <span aria-live={'polite'} className={styles.copied}>
           {isCopied ? 'Zkopírováno' : ''}
         </span>
@@ -106,9 +116,14 @@ export const BackupCodesStep = ({
       </div>
 
       <AdminModalActions>
-        <AdminButton disabled={!isConfirmed} onClick={onDone} type={'button'}>
+        <Button
+          disabled={!isConfirmed}
+          onClick={onDone}
+          size={'sm'}
+          type={'button'}
+        >
           Hotovo
-        </AdminButton>
+        </Button>
       </AdminModalActions>
     </>
   )

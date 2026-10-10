@@ -2,7 +2,6 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useFetcher } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -11,6 +10,7 @@ import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { useFilterDialog } from '~/components/admin/admin-saved-filters/_hook'
 import type { FilterActionData } from '~/components/admin/admin-saved-filters/_types'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { Label } from '~/components/label'
@@ -111,16 +111,21 @@ export const SaveFilterDialog = ({
           </ErrorMessageGroup>
 
           <AdminModalActions>
-            <AdminButton
+            <Button
               onClick={handleCancel}
+              size={'sm'}
               type={'button'}
-              variant={'secondary'}
+              variant={'ghost'}
             >
               Zrušit
-            </AdminButton>
-            <AdminButton disabled={fetcher.state !== 'idle'} type={'submit'}>
+            </Button>
+            <Button
+              disabled={fetcher.state !== 'idle'}
+              size={'sm'}
+              type={'submit'}
+            >
               Uložit
-            </AdminButton>
+            </Button>
           </AdminModalActions>
         </fetcher.Form>
       </AdminModalContent>
