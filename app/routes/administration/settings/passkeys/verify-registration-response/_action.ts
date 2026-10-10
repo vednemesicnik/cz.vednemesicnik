@@ -10,6 +10,7 @@ import {
   getBiometricCookieSession,
 } from '~/utils/biometric.server'
 import { prisma } from '~/utils/db.server'
+import { getPasskeyName } from '~/utils/passkey/get-passkey-name'
 import { isRequestRecentlyAuthenticated } from '~/utils/recent-authentication.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -59,6 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         credentialTransports: JSON.stringify(
           registrationInfo.credential.transports,
         ),
+        name: getPasskeyName(request.headers.get('User-Agent')),
         user: {
           connect: {
             id: session.userId,

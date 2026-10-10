@@ -47,6 +47,8 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
               createdAt: true,
               credentialDeviceType: true,
               id: true,
+              lastUsedAt: true,
+              name: true,
             },
           },
           password: { select: { userId: true } },
@@ -116,6 +118,11 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
       createdAt: formatNumericDate(passkey.createdAt),
       deviceType: passkey.credentialDeviceType,
       id: passkey.id,
+      lastUsedAt:
+        passkey.lastUsedAt === null
+          ? null
+          : formatNumericDate(passkey.lastUsedAt),
+      name: passkey.name,
     })),
     // How long this session may still change sign-in methods without signing
     // in again. A duration, not a time: the browser's clock may be off.
