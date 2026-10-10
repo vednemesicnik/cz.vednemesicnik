@@ -1,15 +1,9 @@
-.registerPasskey {
-  @layer route {
-    display: grid;
-    justify-items: start;
-    gap: 8px;
-  }
-}
-
-.problem {
+.unsupported {
   @layer route {
     margin: 0;
-    font-size: var(--font-size-sm);
-    color: var(--error-text);
+    max-width: 16rem;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    text-align: end;
   }
 }

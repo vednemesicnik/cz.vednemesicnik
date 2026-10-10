@@ -1,24 +1,31 @@
+/* Name column while the section is at least 480 px wide, otherwise the name
+   stands above the value (bbih22nt). */
 .item {
   @layer component {
     display: grid;
-    grid-template-columns: 180px 1fr;
-    column-gap: 24px;
+    grid-template-columns: var(--detail-label-width) minmax(0, 1fr);
+    column-gap: 12px;
     align-items: start;
+
+    @container (width < 480px) {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 2px;
+    }
   }
 }
 
 .label {
   @layer component {
-    font-size: 14px;
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-regular);
     color: var(--text-secondary);
   }
 }
 
 .value {
   @layer component {
-    font-size: 14px;
+    min-width: 0;
+    margin: 0;
     color: var(--text-primary);
-    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 }

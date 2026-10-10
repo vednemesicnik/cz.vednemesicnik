@@ -1,7 +1,9 @@
 .list {
   @layer component {
     display: grid;
-    grid-auto-flow: row;
-    row-gap: 12px;
+    row-gap: 10px;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
   }
 }

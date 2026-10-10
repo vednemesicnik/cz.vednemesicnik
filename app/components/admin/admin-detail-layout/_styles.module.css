@@ -1,0 +1,35 @@
+/* AdminPage sets justify-items: start; without a width the container
+   would collapse. */
+.container {
+  @layer component {
+    container-type: inline-size;
+    width: 100%;
+  }
+}
+
+.layout {
+  @layer component {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 32px var(--detail-column-gap);
+  }
+}
+
+/* 480 px main + gap + right column = 820 px of container. */
+.withAside {
+  @layer variant {
+    @container (width >= 820px) {
+      grid-template-columns: minmax(0, 1fr) var(--detail-aside-width);
+    }
+  }
+}
+
+.column {
+  @layer component {
+    display: grid;
+    align-content: start;
+    gap: 32px;
+    min-width: 0;
+  }
+}
