@@ -156,7 +156,12 @@ export const RegisterPasskey = ({
         method={'post'}
         onSubmit={handleSubmit}
       >
-        <Button disabled={isPending} type={'submit'} variant={'outline'}>
+        <Button
+          disabled={isPending}
+          size={'sm'}
+          type={'submit'}
+          variant={'outline'}
+        >
           Přidat passkey
         </Button>
       </GenerateRegistrationOptionsForm>
