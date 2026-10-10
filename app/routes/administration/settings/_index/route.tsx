@@ -82,7 +82,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const authenticityToken = useAuthenticityToken()
 
   const [openDialog, setOpenDialog] = useState<OpenDialog | null>(null)
-  // „Heslo je změněné.“ stays under the status until the page is left (design
+  // „Heslo bylo změněno.“ stays under the status until the page is left (design
   // 29a): after a change the row itself would not move.
   const [isPasswordChanged, setIsPasswordChanged] = useState(false)
 
@@ -299,7 +299,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                       {emergencyPassword.hasPassword ? 'Změnit…' : 'Nastavit…'}
                     </AdminButton>
                   }
-                  note={isPasswordChanged ? 'Heslo je změněné.' : undefined}
+                  note={isPasswordChanged ? 'Heslo bylo změněno.' : undefined}
                   status={
                     emergencyPassword.hasPassword ? 'nastavené' : 'nenastavené'
                   }
