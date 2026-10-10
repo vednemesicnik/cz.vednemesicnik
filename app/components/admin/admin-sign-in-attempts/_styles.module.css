@@ -1,0 +1,40 @@
+.list {
+  @layer component {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    list-style: none;
+  }
+}
+
+.attempt {
+  @layer component {
+    display: grid;
+    grid-template-columns: 128px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    padding-block: 8px;
+    border-block-end: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+}
+
+.method {
+  @layer component {
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+}
+
+/* Both cells, and the label says it too (29a). */
+.failure {
+  @layer variant {
+    color: var(--error-text);
+
+    & .method {
+      color: inherit;
+    }
+  }
+}

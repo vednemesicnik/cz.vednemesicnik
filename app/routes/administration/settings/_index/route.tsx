@@ -13,6 +13,7 @@ import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
+import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
@@ -79,6 +80,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     passkeys,
     recentAuthenticationRemainingMs,
     settingsContinue,
+    signInAttempts,
     user,
   } = loaderData
 
@@ -196,9 +198,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <AdminHeadline>Nastavení</AdminHeadline>
 
       <AdminDetailLayout
-        aside={
+        // An array, not a fragment: the layout skips the column only when
+        // every entry is empty.
+        aside={[
           otherSessionsCount > 0 && (
-            <AdminDetailSection title={'Přehled přihlášení'}>
+            <AdminDetailSection key={'sign-ins'} title={'Přehled přihlášení'}>
               <AdminParagraph>
                 {formatOtherSignIns(otherSessionsCount)}
               </AdminParagraph>
@@ -217,8 +221,21 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 </Button>
               </signInsFetcher.Form>
             </AdminDetailSection>
-          )
-        }
+          ),
+          signInAttempts.length > 0 && (
+            <AdminDetailSection
+              key={'sign-in-attempts'}
+              title={'Poslední pokusy o přihlášení'}
+            >
+              <AdminSignInAttempts attempts={signInAttempts} />
+              <AdminParagraph className={styles.note}>
+                {otherSessionsCount > 0
+                  ? 'Nepoznáváte některý pokus o přihlášení? Ukončete všechna ostatní přihlášení a obraťte se na Administrátora.'
+                  : 'Nepoznáváte některý pokus o přihlášení? Obraťte se na Administrátora.'}
+              </AdminParagraph>
+            </AdminDetailSection>
+          ),
+        ]}
         main={
           <>
             <AdminDetailSection
