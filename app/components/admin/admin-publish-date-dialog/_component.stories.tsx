@@ -3,6 +3,7 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite'
 import { type ComponentProps, useRef } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
+
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { FORM_CONFIG } from '~/config/form-config'

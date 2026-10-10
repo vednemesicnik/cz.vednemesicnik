@@ -1,10 +1,11 @@
 .dialog {
   @layer component {
+    /* The design system's Dialog: 460px wide, 24px from the viewport edge on a phone. */
+    width: min(460px, 100% - 48px);
+    max-width: none;
+    max-height: calc(100dvh - 48px);
     padding: 0;
     border: none;
-    border-radius: 4px;
-    max-width: calc(100vw - 32px);
-    max-height: calc(100vh - 32px);
     background-color: transparent;
     opacity: 0;
     transform: scale(0.9);
@@ -15,8 +16,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
+      background-color: var(--overlay);
       opacity: 0;
       animation: none;
     }

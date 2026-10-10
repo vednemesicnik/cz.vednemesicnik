@@ -144,7 +144,7 @@ export const ProfileDialog = ({
 
   return (
     <AdminDialog ref={ref}>
-      <AdminModalContent className={styles.content}>
+      <AdminModalContent>
         <AdminModalTitle>Upravit profil</AdminModalTitle>
 
         <section aria-label={'Fotka'} className={styles.photo}>
@@ -240,12 +240,13 @@ export const ProfileDialog = ({
             <Button
               disabled={isSubmitting || isImageBusy}
               onClick={handleCancel}
+              size={'sm'}
               type={'button'}
-              variant={'outline'}
+              variant={'ghost'}
             >
               Zrušit
             </Button>
-            <Button disabled={isSubmitting} type={'submit'}>
+            <Button disabled={isSubmitting} size={'sm'} type={'submit'}>
               Uložit
             </Button>
           </AdminModalActions>

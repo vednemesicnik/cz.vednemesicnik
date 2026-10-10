@@ -1,4 +1,5 @@
 import { Form, href, useNavigation } from 'react-router'
+
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -47,12 +48,13 @@ export const IdentityCheckDialog = ({ redirectTo, onClose }: Props) => {
             <Button
               disabled={isSubmitting}
               onClick={handleCancel}
+              size={'sm'}
               type={'button'}
-              variant={'outline'}
+              variant={'ghost'}
             >
               Zrušit
             </Button>
-            <Button disabled={isSubmitting} type={'submit'}>
+            <Button disabled={isSubmitting} size={'sm'} type={'submit'}>
               Odhlásit a přihlásit znovu
             </Button>
           </AdminModalActions>

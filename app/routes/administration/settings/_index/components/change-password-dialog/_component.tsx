@@ -2,6 +2,7 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
+
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -117,12 +118,13 @@ export const ChangePasswordDialog = ({
             <Button
               disabled={isSubmitting}
               onClick={handleCancel}
+              size={'sm'}
               type={'button'}
-              variant={'outline'}
+              variant={'ghost'}
             >
               Zrušit
             </Button>
-            <Button disabled={isSubmitting} type={'submit'}>
+            <Button disabled={isSubmitting} size={'sm'} type={'submit'}>
               Uložit
             </Button>
           </AdminModalActions>

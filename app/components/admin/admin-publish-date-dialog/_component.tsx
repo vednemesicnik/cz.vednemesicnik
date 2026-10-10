@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react'
 import { useFetcher } from 'react-router'
+
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -152,10 +153,17 @@ export const AdminPublishDateDialog = ({
           />
 
           <AdminModalActions>
-            <Button onClick={handleCancel} type={'button'} variant={'outline'}>
+            <Button
+              onClick={handleCancel}
+              size={'sm'}
+              type={'button'}
+              variant={'ghost'}
+            >
               Zrušit
             </Button>
-            <Button type={'submit'}>{confirmLabel}</Button>
+            <Button size={'sm'} type={'submit'}>
+              {confirmLabel}
+            </Button>
           </AdminModalActions>
         </fetcher.Form>
       </AdminModalContent>

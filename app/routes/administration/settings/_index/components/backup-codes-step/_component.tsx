@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
@@ -83,10 +84,20 @@ export const BackupCodesStep = ({
       </ul>
 
       <div className={styles.tools}>
-        <Button onClick={handleDownload} type="button" variant="outline">
+        <Button
+          onClick={handleDownload}
+          size={'sm'}
+          type="button"
+          variant="outline"
+        >
           Stáhnout .txt
         </Button>
-        <Button onClick={handleCopy} type="button" variant="outline">
+        <Button
+          onClick={handleCopy}
+          size={'sm'}
+          type="button"
+          variant="outline"
+        >
           Zkopírovat
         </Button>
         <span aria-live={'polite'} className={styles.copied}>
@@ -105,7 +116,12 @@ export const BackupCodesStep = ({
       </div>
 
       <AdminModalActions>
-        <Button disabled={!isConfirmed} onClick={onDone} type={'button'}>
+        <Button
+          disabled={!isConfirmed}
+          onClick={onDone}
+          size={'sm'}
+          type={'button'}
+        >
           Hotovo
         </Button>
       </AdminModalActions>

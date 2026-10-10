@@ -1,8 +1,9 @@
 .actions {
   @layer component {
     display: flex;
-    gap: 16px;
-    justify-content: flex-start;
+    gap: 8px;
+    justify-content: flex-end;
     align-items: center;
+    padding-block-start: 4px;
   }
 }

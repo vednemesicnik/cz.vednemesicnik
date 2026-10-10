@@ -1,10 +1,11 @@
 .title {
   @layer component {
     margin: 0;
-    font-size: var(--font-size-lg);
+    /* Fixed like the design system's Dialog; --font-size-lg grows from 768px. */
+    font-size: 18px;
     font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
-    line-height: 1.4;
-    text-align: center;
+    line-height: 1.35;
+    text-wrap: pretty;
   }
 }

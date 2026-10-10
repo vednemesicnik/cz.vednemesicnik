@@ -2,6 +2,7 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
+
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -111,7 +112,7 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
   if (codes !== null) {
     return (
       <AdminDialog ref={ref}>
-        <AdminModalContent className={styles.content}>
+        <AdminModalContent>
           <BackupCodesStep
             codes={codes}
             isConfirmed={isConfirmed}
@@ -126,7 +127,7 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
 
   return (
     <AdminDialog ref={ref}>
-      <AdminModalContent className={styles.content}>
+      <AdminModalContent>
         <AdminModalTitle>
           {mode === 'enable'
             ? 'Zapnout dvoufázové ověření'
@@ -187,13 +188,15 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
               <AdminModalActions>
                 <Button
                   onClick={handleClose}
+                  size={'sm'}
                   type={'button'}
-                  variant={'outline'}
+                  variant={'ghost'}
                 >
                   Zrušit
                 </Button>
                 <Button
                   disabled={isSubmitting || enrollment === null}
+                  size={'sm'}
                   type={'submit'}
                 >
                   Zapnout
@@ -206,7 +209,12 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
         {/* New codes are on their way; Zrušit leaves if they never come. */}
         {mode === 'new-codes' && (
           <AdminModalActions>
-            <Button onClick={handleClose} type={'button'} variant={'outline'}>
+            <Button
+              onClick={handleClose}
+              size={'sm'}
+              type={'button'}
+              variant={'ghost'}
+            >
               Zrušit
             </Button>
           </AdminModalActions>

@@ -1,9 +1,3 @@
-.content {
-  @layer route {
-    justify-items: start;
-  }
-}
-
 .photo {
   @layer route {
     display: flex;

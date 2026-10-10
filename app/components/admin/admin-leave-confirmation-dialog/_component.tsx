@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Blocker } from 'react-router'
+
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -66,10 +67,20 @@ export const AdminLeaveConfirmationDialog = ({
           vrátit.
         </AdminModalDescription>
         <AdminModalActions>
-          <Button onClick={handleStay} type={'button'} variant={'outline'}>
+          <Button
+            onClick={handleStay}
+            size={'sm'}
+            type={'button'}
+            variant={'ghost'}
+          >
             Zůstat
           </Button>
-          <Button onClick={handleLeave} type={'button'} variant={'danger'}>
+          <Button
+            onClick={handleLeave}
+            size={'sm'}
+            type={'button'}
+            variant={'danger'}
+          >
             Odejít
           </Button>
         </AdminModalActions>

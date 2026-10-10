@@ -1,6 +1,7 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useFetcher } from 'react-router'
+
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -110,10 +111,19 @@ export const SaveFilterDialog = ({
           </ErrorMessageGroup>
 
           <AdminModalActions>
-            <Button onClick={handleCancel} type={'button'} variant={'outline'}>
+            <Button
+              onClick={handleCancel}
+              size={'sm'}
+              type={'button'}
+              variant={'ghost'}
+            >
               Zrušit
             </Button>
-            <Button disabled={fetcher.state !== 'idle'} type={'submit'}>
+            <Button
+              disabled={fetcher.state !== 'idle'}
+              size={'sm'}
+              type={'submit'}
+            >
               Uložit
             </Button>
           </AdminModalActions>
