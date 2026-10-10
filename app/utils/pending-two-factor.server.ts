@@ -66,8 +66,9 @@ type PendingTwoFactor = {
  *
  * @param request - The request carrying the current pending cookie, if any.
  * @param pendingTwoFactor - The user awaiting the second factor, the failed
- *   attempts so far (default 0) and where to land once it succeeds. Required so
- *   a stale cookie never carries an earlier sign-in's target.
+ *   attempts so far (default 0) and where to land once it succeeds.
+ *   `redirectTo` is required so a stale cookie never carries an earlier
+ *   sign-in's target.
  * @returns The serialized cookie.
  */
 export const setPendingTwoFactorCookieSession = async (

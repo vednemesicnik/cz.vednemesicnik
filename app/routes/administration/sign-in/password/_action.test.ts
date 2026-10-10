@@ -37,7 +37,7 @@ const TARGET = '/administration/settings?continue=change-password'
 
 const runAction = async (redirectTo?: string) => {
   const formData = new FormData()
-  formData.append('email', 'user@vednemesicnik.cz')
+  formData.append('email', 'user@priklad.cz')
   formData.append('password', 'correct-password')
   if (redirectTo !== undefined) formData.append('redirectTo', redirectTo)
 
