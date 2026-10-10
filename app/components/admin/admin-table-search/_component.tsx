@@ -159,7 +159,7 @@ export const AdminTableSearch = ({ defaultValue, placeholder }: Props) => {
             Rendered only once hydrated: without JS it could not clear. */}
         {isHydrated && value !== '' && (
           <button
-            aria-label={'Vymazat hledání'}
+            aria-label={'Zrušit hledání'}
             className={styles.clear}
             onClick={handleClear}
             type={'button'}
