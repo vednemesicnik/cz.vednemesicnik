@@ -144,11 +144,24 @@
   }
 }
 
+/* The two rows under the name sit 2px apart, like the items above (puutrqhh):
+   the foot's 10px gap less 8px. */
+.signOutForm {
+  @layer component {
+    margin-block-start: -8px;
+  }
+}
+
+/* Odhlásit se: the same box and hover as Nastavení above it, so the whole row
+   is clickable and its text lines up with the name (puutrqhh). */
 .footLink {
   @layer component {
-    align-self: flex-start;
-    padding: 0;
+    display: block;
+    width: calc(100% + 16px);
+    margin-inline: -8px;
+    padding: 7px 8px;
     border: none;
+    border-radius: var(--radius-lg);
     background: none;
     font: inherit;
     font-size: 13px;
@@ -156,15 +169,18 @@
     text-align: start;
     text-decoration: none;
     cursor: pointer;
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out;
 
     &:hover {
+      background-color: var(--bg-tertiary);
       color: var(--text-primary);
     }
 
     &:focus-visible {
       outline: none;
       box-shadow: var(--focus-shadow);
-      border-radius: var(--radius-sm);
     }
   }
 }
