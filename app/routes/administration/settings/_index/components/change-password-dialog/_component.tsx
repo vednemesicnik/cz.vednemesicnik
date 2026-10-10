@@ -2,14 +2,13 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
-
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import type { action as changePasswordAction } from '~/routes/administration/settings/change-password/_action'
@@ -115,17 +114,17 @@ export const ChangePasswordDialog = ({
           />
 
           <AdminModalActions>
-            <AdminButton
+            <Button
               disabled={isSubmitting}
               onClick={handleCancel}
               type={'button'}
-              variant={'secondary'}
+              variant={'outline'}
             >
               Zrušit
-            </AdminButton>
-            <AdminButton disabled={isSubmitting} type={'submit'}>
+            </Button>
+            <Button disabled={isSubmitting} type={'submit'}>
               Uložit
-            </AdminButton>
+            </Button>
           </AdminModalActions>
         </fetcher.Form>
       </AdminModalContent>

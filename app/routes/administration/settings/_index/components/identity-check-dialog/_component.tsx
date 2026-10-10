@@ -1,12 +1,11 @@
 import { Form, href, useNavigation } from 'react-router'
-
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 
 import { useModalDialog } from '../../utils/use-modal-dialog'
 
@@ -45,17 +44,17 @@ export const IdentityCheckDialog = ({ redirectTo, onClose }: Props) => {
           <AuthenticityTokenInput />
 
           <AdminModalActions>
-            <AdminButton
+            <Button
               disabled={isSubmitting}
               onClick={handleCancel}
               type={'button'}
-              variant={'secondary'}
+              variant={'outline'}
             >
               Zrušit
-            </AdminButton>
-            <AdminButton disabled={isSubmitting} type={'submit'}>
+            </Button>
+            <Button disabled={isSubmitting} type={'submit'}>
               Odhlásit a přihlásit znovu
-            </AdminButton>
+            </Button>
           </AdminModalActions>
         </Form>
       </AdminModalContent>

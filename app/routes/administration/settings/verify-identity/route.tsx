@@ -1,12 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href, useNavigation } from 'react-router'
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import type { Route } from './+types/route'
@@ -33,9 +33,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <AuthenticityTokenInput />
 
         <FormActions>
-          <AdminButton disabled={isSubmitting} type={'submit'}>
+          <Button disabled={isSubmitting} type={'submit'}>
             Odhlásit a přihlásit znovu
-          </AdminButton>
+          </Button>
           <AdminLinkButton
             disabled={isSubmitting}
             to={href('/administration/settings')}

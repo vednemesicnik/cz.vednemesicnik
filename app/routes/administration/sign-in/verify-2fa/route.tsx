@@ -2,8 +2,8 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
+import { Button } from '~/components/button'
 import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { useHydrated } from '~/utils/use-hydrated'
@@ -72,9 +72,9 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
             />
           )}
 
-          <AdminButton className={styles.button} type="submit">
+          <Button className={styles.button} type="submit">
             Ověřit
-          </AdminButton>
+          </Button>
         </Form>
 
         {isHydrated && (

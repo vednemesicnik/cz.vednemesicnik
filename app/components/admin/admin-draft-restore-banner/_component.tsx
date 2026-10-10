@@ -1,5 +1,5 @@
-import { AdminButton } from '~/components/admin/admin-button'
 import { Banner, BannerActions, BannerContent } from '~/components/banner'
+import { Button } from '~/components/button'
 
 type Props = {
   savedAt: string
@@ -29,12 +29,12 @@ export const AdminDraftRestoreBanner = ({
         ). Chcete ji obnovit?
       </BannerContent>
       <BannerActions>
-        <AdminButton onClick={onRestore} type={'button'}>
+        <Button onClick={onRestore} type={'button'}>
           Obnovit
-        </AdminButton>
-        <AdminButton onClick={onDiscard} type={'button'} variant={'secondary'}>
+        </Button>
+        <Button onClick={onDiscard} type={'button'} variant={'outline'}>
           Zahodit
-        </AdminButton>
+        </Button>
       </BannerActions>
     </Banner>
   )

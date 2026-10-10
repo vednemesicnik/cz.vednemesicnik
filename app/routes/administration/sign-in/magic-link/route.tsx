@@ -2,9 +2,8 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { Link, useNavigation } from 'react-router'
-
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
+import { Button } from '~/components/button'
 import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { useHydrated } from '~/utils/use-hydrated'
@@ -79,13 +78,13 @@ export default function RouteComponent({
                 placeholder={'vas-email@vednemesicnik.cz'}
               />
 
-              <AdminButton
+              <Button
                 className={styles.button}
                 disabled={isSubmitting}
                 type="submit"
               >
                 {isSubmitting ? 'Odesílám…' : 'Poslat odkaz'}
-              </AdminButton>
+              </Button>
             </Form>
           </>
         )}

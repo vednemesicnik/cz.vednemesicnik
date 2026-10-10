@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react'
-
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
+import { Button } from '~/components/button'
 
 import { useModalDialog } from '../../utils/use-modal-dialog'
 import styles from './_styles.module.css'
@@ -48,20 +47,12 @@ export const ConfirmDialog = ({
         {subject !== undefined && <p className={styles.subject}>{subject}</p>}
         <AdminModalDescription>{description}</AdminModalDescription>
         <AdminModalActions>
-          <AdminButton
-            onClick={handleCancel}
-            type={'button'}
-            variant={'secondary'}
-          >
+          <Button onClick={handleCancel} type={'button'} variant={'outline'}>
             Zrušit
-          </AdminButton>
-          <AdminButton
-            onClick={handleConfirm}
-            type={'button'}
-            variant={'danger'}
-          >
+          </Button>
+          <Button onClick={handleConfirm} type={'button'} variant={'danger'}>
             {confirmLabel}
-          </AdminButton>
+          </Button>
         </AdminModalActions>
       </AdminModalContent>
     </AdminDialog>

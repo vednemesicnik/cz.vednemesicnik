@@ -2,7 +2,7 @@ import { startRegistration } from '@simplewebauthn/browser'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useFetcher, useRevalidator } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
+import { Button } from '~/components/button'
 import type { action as generateRegistrationOptionsAction } from '~/routes/administration/settings/passkeys/generate-registration-options/_action'
 import type { action as verifyRegistrationResponseAction } from '~/routes/administration/settings/passkeys/verify-registration-response/_action'
 import { useBiometric } from '~/utils/use-biometric'
@@ -156,9 +156,9 @@ export const RegisterPasskey = ({
         method={'post'}
         onSubmit={handleSubmit}
       >
-        <AdminButton disabled={isPending} type={'submit'} variant={'secondary'}>
+        <Button disabled={isPending} type={'submit'} variant={'outline'}>
           Přidat passkey
-        </AdminButton>
+        </Button>
       </GenerateRegistrationOptionsForm>
     </div>
   )

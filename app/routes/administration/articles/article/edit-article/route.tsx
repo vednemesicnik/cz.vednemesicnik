@@ -10,7 +10,6 @@ import {
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import type { SubmitEvent } from 'react'
 import { href, useNavigation } from 'react-router'
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminDraftRestoreBanner } from '~/components/admin/admin-draft-restore-banner'
 import { AdminHeadline } from '~/components/admin/admin-headline'
@@ -24,6 +23,7 @@ import { AdminRadioInput } from '~/components/admin/admin-radio-input'
 import { AdminTextEditor } from '~/components/admin/admin-text-editor'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
@@ -266,7 +266,7 @@ export default function RouteComponent({
               return (
                 <AdminImageUploadCard
                   action={
-                    <AdminButton
+                    <Button
                       onClick={() => {
                         const currentValue = fields.featuredImage.value
                         if (
@@ -285,7 +285,7 @@ export default function RouteComponent({
                     >
                       <DeleteIcon className={styles.removeIcon} />
                       Odstranit
-                    </AdminButton>
+                    </Button>
                   }
                   key={image.key}
                   title={'Existující obrázek'}
@@ -341,7 +341,7 @@ export default function RouteComponent({
               return (
                 <AdminImageUploadCard
                   action={
-                    <AdminButton
+                    <Button
                       onClick={() => {
                         const currentValue = fields.featuredImage.value
                         if (
@@ -360,7 +360,7 @@ export default function RouteComponent({
                     >
                       <DeleteIcon className={styles.removeIcon} />
                       Odstranit
-                    </AdminButton>
+                    </Button>
                   }
                   key={image.key}
                   title={'Nový obrázek'}
@@ -401,11 +401,11 @@ export default function RouteComponent({
               )
             })}
 
-            <AdminButton
+            <Button
               {...form.insert.getButtonProps({ name: fields.images.name })}
             >
               Přidat obrázek
-            </AdminButton>
+            </Button>
           </Fieldset>
 
           <Fieldset
@@ -427,7 +427,7 @@ export default function RouteComponent({
                   ))}
                 </Select>
                 {index > 0 && (
-                  <AdminButton
+                  <Button
                     {...form.remove.getButtonProps({
                       index,
                       name: fields.authorIds.name,
@@ -436,26 +436,26 @@ export default function RouteComponent({
                   >
                     <DeleteIcon className={styles.removeIcon} />
                     Odstranit
-                  </AdminButton>
+                  </Button>
                 )}
               </div>
             ))}
-            <AdminButton
+            <Button
               {...form.insert.getButtonProps({
                 defaultValue: '',
                 name: fields.authorIds.name,
               })}
             >
               Přidat autora
-            </AdminButton>
+            </Button>
           </Fieldset>
 
           <input {...getInputProps(fields.state, { type: 'hidden' })} />
 
           <FormActions>
-            <AdminButton disabled={!canSubmit} type={'submit'}>
+            <Button disabled={!canSubmit} type={'submit'}>
               {isSubmitting ? 'Ukládá se...' : 'Uložit'}
-            </AdminButton>
+            </Button>
             <AdminLinkButton
               disabled={isLoadingOrSubmitting}
               to={href('/administration/articles/:articleId', {
