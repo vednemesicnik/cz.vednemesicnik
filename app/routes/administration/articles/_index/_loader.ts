@@ -6,7 +6,9 @@ import {
   parseAdminListFilters,
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { prisma } from '~/utils/db.server'
+import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
@@ -182,6 +184,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     throw redirect(staleFilterRedirect)
   }
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+  // Deleting the last row on the last page revalidates a URL past the end. Checked
+  // after the stale-filter redirect, which already drops the page.
+  if (isPagePastLast(page, totalPages)) {
+    throw redirect(buildLastPageRedirect(url, totalPages))
+  }
+
   // Compute permissions for each article
   const articles = rawArticles.map((article) => {
     if (article.authors.length === 0) {
@@ -217,8 +227,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       }).hasPermission,
     }
   })
-
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   return {
     ...savedFilters,
