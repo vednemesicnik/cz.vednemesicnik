@@ -80,8 +80,8 @@ export const AdminTableSearch = ({ defaultValue, placeholder }: Props) => {
   }
 
   // The loader's value changes on our own submits too. Only a change that did
-  // not come from this field (Back/Forward, a filter preset, „Zrušit hledání")
-  // rewrites it — otherwise the trimmed echo of an older query would undo what
+  // not come from this field (Back/Forward, a filter preset, a link) rewrites
+  // it — otherwise the trimmed echo of an older query would undo what
   // was typed since.
   useEffect(() => {
     if (defaultValue === lastSubmittedValueRef.current.trim()) return
