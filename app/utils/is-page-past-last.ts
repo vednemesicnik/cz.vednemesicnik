@@ -4,7 +4,7 @@
  *
  * @param currentPage - The requested page, a positive integer.
  * @param totalPages - The pages the list has; 0 for an empty list.
- * @returns `true` when the page should be a 404.
+ * @returns `true` when the page does not exist.
  */
 export const isPagePastLast = (
   currentPage: number,
