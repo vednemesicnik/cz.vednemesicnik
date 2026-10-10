@@ -1,15 +1,16 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import bcrypt from 'bcryptjs'
 import { data, redirect } from 'react-router'
-import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { prisma } from '~/utils/db.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { setPendingTwoFactorCookieSession } from '~/utils/pending-two-factor.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
-import { createSession } from '~/utils/session.server'
+import { safeRedirect } from '~/utils/safe-redirect'
+import { signInUser } from '~/utils/sign-in.server'
 import { getUserTwoFactor } from '~/utils/two-factor.server'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -19,13 +20,17 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   checkHoneypot(formData)
 
+  const redirectTo = safeRedirect(formData.get('redirectTo'))
+
   // Break-glass gate: the password is a disabled emergency path. Reject before
   // ever verifying the hash when the flag is off — hiding the UI is not enough,
   // this action is directly POST-able.
   if (process.env.ALLOW_PASSWORD_SIGN_IN !== 'true') {
     // 303 See Other: turn this POST rejection into a GET redirect so the client
     // cannot retry with POST semantics.
-    throw redirect('/administration/sign-in', { status: 303 })
+    throw redirect(withRedirectTo('/administration/sign-in', redirectTo), {
+      status: 303,
+    })
   }
 
   // Rate limited by the middleware (see _middleware.ts): surface an inline error
@@ -121,35 +126,22 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   }
 
   // Second factor for the break-glass path: if the user has TOTP enrolled, do
-  // not create a session yet — stash the user id in a short-lived cookie and
-  // redirect to the TOTP entry step, which creates the session once verified.
+  // not create a session yet — stash the user id and the target in a
+  // short-lived cookie and redirect to the TOTP entry step, which creates the
+  // session once verified.
   const twoFactor = await getUserTwoFactor(user.id)
 
   if (twoFactor !== null) {
     throw redirect('/administration/sign-in/verify-2fa', {
       headers: {
-        'Set-Cookie': await setPendingTwoFactorCookieSession(request, user.id),
+        'Set-Cookie': await setPendingTwoFactorCookieSession(request, {
+          redirectTo,
+          userId: user.id,
+        }),
       },
       status: 303,
     })
   }
 
-  const session = await createSession(user.id)
-
-  recordAuthLog({
-    event: 'sign_in_success',
-    method: 'password',
-    request,
-    userId: user.id,
-  })
-
-  throw redirect('/administration', {
-    headers: {
-      'Set-Cookie': await setSessionAuthCookieSession(
-        request,
-        session.id,
-        session.expirationDate,
-      ),
-    },
-  })
+  await signInUser(request, user.id, 'password', redirectTo)
 }

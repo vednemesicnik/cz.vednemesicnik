@@ -60,7 +60,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <div className={styles.footer}>
             <Link
               className={styles.link}
-              to={'/administration/sign-in/password'}
+              to={withRedirectTo(
+                '/administration/sign-in/password',
+                loaderData.redirectTo,
+              )}
             >
               Přihlásit heslem
             </Link>
