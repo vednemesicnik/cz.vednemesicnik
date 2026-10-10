@@ -11,6 +11,7 @@ import {
 } from '~/utils/image-store/create-image-sources'
 import { canUseEmergencyPassword } from '~/utils/permissions/user/guards/can-use-emergency-password'
 import { RECENT_AUTHENTICATION_MAX_AGE_MS } from '~/utils/recent-authentication'
+import { getRecentSignInAttempts } from '~/utils/sign-in-attempts/get-recent-sign-in-attempts.server'
 import { getUserTwoFactor } from '~/utils/two-factor.server'
 
 import { parseSettingsContinue } from './utils/parse-settings-continue'
@@ -125,6 +126,10 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
         Date.now(),
     ),
     settingsContinue: canReopen ? parsedContinue : null,
+    signInAttempts: await getRecentSignInAttempts({
+      email: user.email,
+      userId: user.id,
+    }),
     user: {
       authorBio: user.author.bio ?? '',
       authorName: user.author.name,
