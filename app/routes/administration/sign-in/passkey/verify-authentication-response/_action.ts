@@ -78,10 +78,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Replay protection: persist the authenticator's new signature counter.
+  // Settings shows the last use as „naposledy“ (design 29a).
   await prisma.passkey.update({
     data: {
       credentialCounter:
         verifiedAuthenticationResponse.authenticationInfo.newCounter,
+      lastUsedAt: new Date(),
     },
     where: { credentialId: passkey.credentialId },
   })
