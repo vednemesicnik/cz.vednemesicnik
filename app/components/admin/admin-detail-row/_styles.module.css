@@ -1,0 +1,52 @@
+.row {
+  @layer component {
+    display: grid;
+    grid-template-columns: var(--detail-label-width) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 12px;
+    padding-block: 12px;
+    border-block-end: 1px solid var(--border);
+    font-size: var(--font-size-sm);
+
+    @container (width < 480px) {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+  }
+}
+
+.start {
+  @layer variant {
+    align-items: start;
+  }
+}
+
+.label {
+  @layer component {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+
+    @container (width < 480px) {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.value {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    color: var(--text-secondary);
+  }
+}
+
+.actions {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: end;
+    gap: 8px 16px;
+  }
+}
