@@ -412,7 +412,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 {formatOtherSignIns(otherSessionsCount)}
               </AdminParagraph>
 
-              {/* Ends nothing for good, so a plain button without a dialog (design 29a). */}
+              {/* Nothing is lost and one can sign in again: a plain button, no dialog (design 29a). */}
               <signInsFetcher.Form method={'post'}>
                 <AuthenticityTokenInput />
                 <Button
