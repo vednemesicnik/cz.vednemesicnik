@@ -1,6 +1,7 @@
 import { ALLOWED_EMAIL_DOMAIN } from '@constants/auth'
 import type { TokenPayload } from 'google-auth-library'
 import { redirect } from 'react-router'
+import { GOOGLE_PROVIDER_NAME } from '~/config/connection-config'
 import { requireUnauthenticated } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { prisma } from '~/utils/db.server'
@@ -13,8 +14,6 @@ import {
 import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
 
 import type { Route } from './+types/route'
-
-const GOOGLE_PROVIDER_NAME = 'google'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   // Never let an already-signed-in admin complete a callback and swap sessions.

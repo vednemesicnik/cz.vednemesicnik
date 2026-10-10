@@ -224,13 +224,15 @@ export default [
               name: 'settings',
               path: 'routes/administration/settings',
             },
+            // Old subpages: the loaders redirect to settings, the actions are
+            // the dialogs' targets (design 29a–29d)
             route(
               'change-password',
-              'routes/administration/settings/change-password/route.tsx',
+              'routes/administration/settings/change-password/route.ts',
             ),
             route(
               'two-factor',
-              'routes/administration/settings/two-factor/route.tsx',
+              'routes/administration/settings/two-factor/route.ts',
             ),
             // Fresh sign-in before changing sign-in methods
             route(
@@ -238,10 +240,10 @@ export default [
               'routes/administration/settings/verify-identity/route.tsx',
             ),
 
-            // Passkey management + registration ceremony endpoints
+            // Passkey removal + registration ceremony endpoints
             route(
               'passkeys',
-              'routes/administration/settings/passkeys/route.tsx',
+              'routes/administration/settings/passkeys/route.ts',
             ),
             route(
               'passkeys/generate-registration-options',

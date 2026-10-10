@@ -1,0 +1,13 @@
+.content {
+  @layer route {
+    justify-items: start;
+  }
+}
+
+.subject {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}

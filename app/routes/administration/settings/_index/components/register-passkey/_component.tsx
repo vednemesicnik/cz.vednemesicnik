@@ -1,12 +1,14 @@
 import { startRegistration } from '@simplewebauthn/browser'
-import { useEffect, useRef, useState } from 'react'
-import { href, Link, useFetcher, useRevalidator } from 'react-router'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { useFetcher, useRevalidator } from 'react-router'
 
 import { AdminButton } from '~/components/admin/admin-button'
 import type { action as generateRegistrationOptionsAction } from '~/routes/administration/settings/passkeys/generate-registration-options/_action'
 import type { action as verifyRegistrationResponseAction } from '~/routes/administration/settings/passkeys/verify-registration-response/_action'
 import { useBiometric } from '~/utils/use-biometric'
 
+import { TextButton } from '../text-button'
+import styles from './_styles.module.css'
 import {
   getRegistrationProblem,
   type RegistrationProblem,
@@ -19,11 +21,17 @@ const PROBLEM_MESSAGES: Record<RegistrationProblem, string> = {
   reauthenticate: 'Před přidáním passkey se znovu ověřte.',
 }
 
-const VERIFY_IDENTITY_URL = `${href('/administration/settings/verify-identity')}?${new URLSearchParams(
-  { redirectTo: href('/administration/settings/passkeys') },
-)}`
+type Props = {
+  // Whether this session may still change sign-in methods without signing in again.
+  isRecentlyAuthenticated: () => boolean
+  // Opens the identity check (design 29d).
+  onRequireIdentityCheck: () => void
+}
 
-export const RegisterPasskey = () => {
+export const RegisterPasskey = ({
+  isRecentlyAuthenticated,
+  onRequireIdentityCheck,
+}: Props) => {
   const { isBiometricSupported } = useBiometric()
   const revalidator = useRevalidator()
 
@@ -117,31 +125,41 @@ export const RegisterPasskey = () => {
     generateRegistrationOptionsFetcher.state !== 'idle' ||
     verifyRegistrationResponseFetcher.state !== 'idle'
 
+  // A stale session goes through the identity check before the ceremony starts.
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    setProblem(null)
+
+    if (!isRecentlyAuthenticated()) {
+      event.preventDefault()
+      onRequireIdentityCheck()
+    }
+  }
+
   return (
-    <>
+    <div className={styles.registerPasskey}>
+      {problem !== null ? (
+        <p className={styles.problem} role={'alert'}>
+          {PROBLEM_MESSAGES[problem]}
+          {problem === 'reauthenticate' ? (
+            <>
+              {' '}
+              <TextButton onClick={onRequireIdentityCheck}>Ověřit</TextButton>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+
       <GenerateRegistrationOptionsForm
         action={
           '/administration/settings/passkeys/generate-registration-options'
         }
         method={'post'}
-        onSubmit={() => setProblem(null)}
+        onSubmit={handleSubmit}
       >
-        <AdminButton disabled={isPending} type={'submit'}>
+        <AdminButton disabled={isPending} type={'submit'} variant={'secondary'}>
           Přidat passkey
         </AdminButton>
       </GenerateRegistrationOptionsForm>
-
-      {problem !== null ? (
-        <p role={'alert'}>
-          {PROBLEM_MESSAGES[problem]}
-          {problem === 'reauthenticate' ? (
-            <>
-              {' '}
-              <Link to={VERIFY_IDENTITY_URL}>Ověřit</Link>
-            </>
-          ) : null}
-        </p>
-      ) : null}
-    </>
+    </div>
   )
 }

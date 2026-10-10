@@ -35,10 +35,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         id: true,
         user: {
           select: {
-            author: { select: { role: { select: { name: true } } } },
+            author: {
+              select: { name: true, role: { select: { name: true } } },
+            },
             email: true,
             image: { select: imageSourceSelect },
-            name: true,
           },
         },
       },
@@ -50,7 +51,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     if (session) {
       user = {
         image: createImageSources('user-image', session.user.image),
-        name: session.user.name || session.user.email,
+        // The name belongs to the author (design 28f, 29b).
+        name: session.user.author.name || session.user.email,
         roleLabel: getAuthorRoleLabel(session.user.author.role.name),
       }
     }
