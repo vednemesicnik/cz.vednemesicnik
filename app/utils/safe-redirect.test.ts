@@ -10,6 +10,9 @@ describe('safeRedirect', () => {
     expect(safeRedirect('/administration?tab=1#top')).toBe(
       '/administration?tab=1#top',
     )
+    expect(
+      safeRedirect('/administration/settings?continue=change-password'),
+    ).toBe('/administration/settings?continue=change-password')
   })
 
   test('falls back for empty, null, or non-string input', () => {
@@ -22,6 +25,15 @@ describe('safeRedirect', () => {
   test('rejects protocol-relative and backslash-prefixed URLs', () => {
     expect(safeRedirect('//evil.com')).toBe('/administration')
     expect(safeRedirect('/\\evil.com')).toBe('/administration')
+    expect(safeRedirect('//[')).toBe('/administration')
+  })
+
+  test('rejects control characters browsers strip while parsing', () => {
+    expect(safeRedirect('/\t/evil.com')).toBe('/administration')
+    expect(safeRedirect('/\n/evil.com')).toBe('/administration')
+    expect(safeRedirect('/\r/evil.com')).toBe('/administration')
+    expect(safeRedirect('\t//evil.com')).toBe('/administration')
+    expect(safeRedirect('/administration\u0000')).toBe('/administration')
   })
 
   test('rejects absolute URLs and non-path values', () => {
