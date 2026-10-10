@@ -2,6 +2,7 @@ import type { ReactNode, SubmitEvent } from 'react'
 import { Form, useSubmit } from 'react-router'
 
 import { Button } from '~/components/button'
+import { buildNonEmptySearchParams } from '~/utils/build-non-empty-search-params'
 
 import styles from './_styles.module.css'
 
@@ -20,15 +21,9 @@ export const AdminTableFilters = ({ children, preservedParams }: Props) => {
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const searchParams = new URLSearchParams()
-
-    for (const [name, value] of new FormData(event.currentTarget).entries()) {
-      if (typeof value === 'string' && value !== '') {
-        searchParams.append(name, value)
-      }
-    }
-
-    void submit(searchParams, { method: 'get' })
+    void submit(buildNonEmptySearchParams(new FormData(event.currentTarget)), {
+      method: 'get',
+    })
   }
 
   return (
