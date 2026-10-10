@@ -1,28 +1,6 @@
-.columns {
-  @layer route {
-    display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    align-items: start;
-    gap: 32px;
-
-    @media (width < 960px) {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-}
-
-.column {
-  @layer route {
-    display: grid;
-    gap: 32px;
-    min-width: 0;
-  }
-}
-
 .profileHeader {
   @layer route {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 16px;
   }
@@ -32,7 +10,6 @@
   @layer route {
     display: grid;
     gap: 2px;
-    flex: 1 1 12rem;
     min-width: 0;
   }
 }
@@ -53,32 +30,40 @@
   }
 }
 
-.profileButton {
-  @layer route {
-    flex-shrink: 0;
-  }
-}
-
 .rows {
   @layer route {
     display: grid;
   }
 }
 
-.passkeys {
+.note {
   @layer route {
-    display: grid;
-    gap: 12px;
-    padding-block-start: 12px;
-    border-block-start: 1px solid var(--border);
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
   }
 }
 
-.subheading {
+.passkeys {
   @layer route {
+    display: grid;
+    gap: 4px;
     margin: 0;
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.passkey {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+  }
+}
+
+.passkeyType {
+  @layer route {
     color: var(--text-primary);
   }
 }
@@ -93,6 +78,8 @@
 
 .warning {
   @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
     color: var(--warning);
   }
 }

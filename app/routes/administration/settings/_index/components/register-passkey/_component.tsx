@@ -1,5 +1,5 @@
 import { startRegistration } from '@simplewebauthn/browser'
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useRef } from 'react'
 import { useFetcher, useRevalidator } from 'react-router'
 
 import { Button } from '~/components/button'
@@ -7,30 +7,26 @@ import type { action as generateRegistrationOptionsAction } from '~/routes/admin
 import type { action as verifyRegistrationResponseAction } from '~/routes/administration/settings/passkeys/verify-registration-response/_action'
 import { useBiometric } from '~/utils/use-biometric'
 
-import { TextButton } from '../text-button'
 import styles from './_styles.module.css'
 import {
   getRegistrationProblem,
   type RegistrationProblem,
 } from './get-registration-problem'
 
-const PROBLEM_MESSAGES: Record<RegistrationProblem, string> = {
-  'already-registered':
-    'Použijte stávající passkey — toto zařízení už má passkey k tomuto účtu.',
-  failed: 'Zkuste passkey přidat znovu — přidání se nepovedlo.',
-  reauthenticate: 'Před přidáním passkey se znovu ověřte.',
-}
-
 type Props = {
   // Whether this session may still change sign-in methods without signing in again.
   isRecentlyAuthenticated: () => boolean
   // Opens the identity check (design 29d).
   onRequireIdentityCheck: () => void
+  // Shows the problem in the row's value column (29d), `null` clears it; pass
+  // a state setter, the effects below depend on it.
+  onProblemChange: (problem: RegistrationProblem | null) => void
 }
 
 export const RegisterPasskey = ({
   isRecentlyAuthenticated,
   onRequireIdentityCheck,
+  onProblemChange,
 }: Props) => {
   const { isBiometricSupported } = useBiometric()
   const revalidator = useRevalidator()
@@ -39,8 +35,6 @@ export const RegisterPasskey = ({
     useFetcher<typeof generateRegistrationOptionsAction>()
   const verifyRegistrationResponseFetcher =
     useFetcher<typeof verifyRegistrationResponseAction>()
-
-  const [problem, setProblem] = useState<RegistrationProblem | null>(null)
 
   const generatedData = generateRegistrationOptionsFetcher.data
   const options =
@@ -80,12 +74,12 @@ export const RegisterPasskey = ({
           },
         )
       } catch (error) {
-        setProblem(getRegistrationProblem(error))
+        onProblemChange(getRegistrationProblem(error))
       }
     }
 
     void register()
-  }, [options, verifyRegistrationResponseFetcher])
+  }, [onProblemChange, options, verifyRegistrationResponseFetcher])
 
   const verifiedData = verifyRegistrationResponseFetcher.data
   const isVerified = verifiedData?.verified === true
@@ -100,22 +94,26 @@ export const RegisterPasskey = ({
   // The session aged past the recent-authentication window on this page.
   useEffect(() => {
     if (generatedData?.status === 'reauthenticate') {
-      setProblem('reauthenticate')
+      onProblemChange('reauthenticate')
     }
-  }, [generatedData])
+  }, [generatedData, onProblemChange])
 
   useEffect(() => {
     if (verifiedData === undefined || verifiedData.verified) {
       return
     }
 
-    setProblem(
+    onProblemChange(
       verifiedData.status === 'reauthenticate' ? 'reauthenticate' : 'failed',
     )
-  }, [verifiedData])
+  }, [onProblemChange, verifiedData])
 
   if (!isBiometricSupported) {
-    return <p>Na tomto zařízení nelze přidat passkey. Zkuste jiné zařízení.</p>
+    return (
+      <p className={styles.unsupported}>
+        Na tomto zařízení nelze přidat passkey. Zkuste jiné zařízení.
+      </p>
+    )
   }
 
   const GenerateRegistrationOptionsForm =
@@ -127,7 +125,7 @@ export const RegisterPasskey = ({
 
   // A stale session goes through the identity check before the ceremony starts.
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    setProblem(null)
+    onProblemChange(null)
 
     if (!isRecentlyAuthenticated()) {
       event.preventDefault()
@@ -136,35 +134,19 @@ export const RegisterPasskey = ({
   }
 
   return (
-    <div className={styles.registerPasskey}>
-      {problem !== null ? (
-        <p className={styles.problem} role={'alert'}>
-          {PROBLEM_MESSAGES[problem]}
-          {problem === 'reauthenticate' ? (
-            <>
-              {' '}
-              <TextButton onClick={onRequireIdentityCheck}>Ověřit</TextButton>
-            </>
-          ) : null}
-        </p>
-      ) : null}
-
-      <GenerateRegistrationOptionsForm
-        action={
-          '/administration/settings/passkeys/generate-registration-options'
-        }
-        method={'post'}
-        onSubmit={handleSubmit}
+    <GenerateRegistrationOptionsForm
+      action={'/administration/settings/passkeys/generate-registration-options'}
+      method={'post'}
+      onSubmit={handleSubmit}
+    >
+      <Button
+        disabled={isPending}
+        size={'sm'}
+        type={'submit'}
+        variant={'outline'}
       >
-        <Button
-          disabled={isPending}
-          size={'sm'}
-          type={'submit'}
-          variant={'outline'}
-        >
-          Přidat passkey
-        </Button>
-      </GenerateRegistrationOptionsForm>
-    </div>
+        Přidat passkey
+      </Button>
+    </GenerateRegistrationOptionsForm>
   )
 }
