@@ -14,6 +14,16 @@
   }
 }
 
+.withoutActions {
+  @layer variant {
+    grid-template-columns: var(--detail-label-width) minmax(0, 1fr);
+
+    @container (width < 480px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
 .start {
   @layer variant {
     align-items: start;

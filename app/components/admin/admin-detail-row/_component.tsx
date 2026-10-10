@@ -29,7 +29,12 @@ export const AdminDetailRow = ({
   className,
 }: Props) => (
   <div
-    className={clsx(styles.row, align === 'start' && styles.start, className)}
+    className={clsx(
+      styles.row,
+      actions === undefined && styles.withoutActions,
+      align === 'start' && styles.start,
+      className,
+    )}
   >
     <div className={styles.label}>{label}</div>
     <div className={styles.value}>{children}</div>
