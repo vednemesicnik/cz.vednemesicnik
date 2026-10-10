@@ -207,6 +207,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               <Button
                 className={styles.profileButton}
                 onClick={() => setOpenDialog({ name: 'profile' })}
+                size={'sm'}
                 type={'button'}
                 variant={'outline'}
               >
@@ -312,6 +313,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                           { dialog: 'change-password' },
                         )
                       }
+                      size={'sm'}
                       type={'button'}
                       variant={'outline'}
                     >
@@ -338,6 +340,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                               null,
                             )
                           }
+                          size={'sm'}
                           type={'button'}
                           variant={'outline'}
                         >
@@ -381,6 +384,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                               { dialog: 'enable-two-factor' },
                             )
                           }
+                          size={'sm'}
                           type={'button'}
                           variant={'outline'}
                         >
