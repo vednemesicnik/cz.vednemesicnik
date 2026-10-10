@@ -1,0 +1,42 @@
+.content {
+  @layer route {
+    justify-items: start;
+  }
+}
+
+.qrCode {
+  @layer route {
+    justify-self: center;
+    padding: 12px;
+    /* A QR code scans only dark on light, in both colour schemes. */
+    background-color: var(--color-white);
+    border-radius: 8px;
+  }
+}
+
+.secret {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
+.secretValue {
+  @layer route {
+    display: block;
+    margin-block-start: 4px;
+    font-family: ui-monospace, monospace;
+    font-size: var(--font-size-md);
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+  }
+}
+
+.form {
+  @layer route {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+  }
+}

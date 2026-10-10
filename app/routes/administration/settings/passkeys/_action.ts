@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { type ActionFunctionArgs, data, redirect } from 'react-router'
+import { type ActionFunctionArgs, data } from 'react-router'
 
 import { requireCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
@@ -42,5 +42,5 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
     where: { id: submission.value.passkeyId, userId: context.userId },
   })
 
-  return redirect('/administration/settings/passkeys')
+  return { status: 'success' as const }
 }

@@ -1,0 +1,98 @@
+.columns {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+    gap: 32px;
+
+    @media (width < 960px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+.column {
+  @layer route {
+    display: grid;
+    gap: 32px;
+    min-width: 0;
+  }
+}
+
+.profileHeader {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+  }
+}
+
+.profileName {
+  @layer route {
+    display: grid;
+    gap: 2px;
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+}
+
+.name {
+  @layer route {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+}
+
+.email {
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.profileButton {
+  @layer route {
+    flex-shrink: 0;
+  }
+}
+
+.rows {
+  @layer route {
+    display: grid;
+  }
+}
+
+.passkeys {
+  @layer route {
+    display: grid;
+    gap: 12px;
+    padding-block-start: 12px;
+    border-block-start: 1px solid var(--border);
+  }
+}
+
+.subheading {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+}
+
+.muted {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
+.warning {
+  @layer route {
+    color: var(--warning);
+  }
+}

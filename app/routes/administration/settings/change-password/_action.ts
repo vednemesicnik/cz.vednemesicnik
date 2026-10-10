@@ -1,9 +1,10 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { type ActionFunctionArgs, data, redirect } from 'react-router'
+import { type ActionFunctionArgs, data } from 'react-router'
 
 import { checkCSRF } from '~/utils/csrf.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { canUseEmergencyPassword } from '~/utils/permissions/user/guards/can-use-emergency-password'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
 import { requireRecentAuthentication } from '~/utils/recent-authentication.server'
 
@@ -17,6 +18,23 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
   const csrfFailure = await checkCSRF(formData, request)
   if (csrfFailure !== null) return csrfFailure
 
+  const context = await getUserPermissionContext(request, {
+    actions: ['update'],
+    entities: ['user'],
+  })
+
+  // Whose password changes comes from the session, never from the form.
+  checkUserPermission(context, {
+    action: 'update',
+    entity: 'user',
+    targetUserId: context.userId,
+  })
+
+  // The password is the emergency sign-in path: Owner and Administrator only.
+  if (!canUseEmergencyPassword(context.roleLevel)) {
+    throw data(null, { status: 403 })
+  }
+
   const submission = await parseWithZod(formData, {
     async: true,
     schema,
@@ -24,31 +42,12 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
 
   if (submission.status !== 'success') {
     return data(
-      { submissionResult: submission.reply() },
+      { status: 'error' as const, submissionResult: submission.reply() },
       { status: getStatusCodeFromSubmissionStatus(submission.status) },
     )
   }
 
-  const context = await getUserPermissionContext(request, {
-    actions: ['update'],
-    entities: ['user'],
-  })
+  await changePassword(context.userId, submission.value.newPassword)
 
-  const { userId, newPassword } = submission.value
-
-  // Verify that the user is changing their own password
-  if (userId !== context.userId) {
-    throw data(null, { status: 403 })
-  }
-
-  // Check permission to update own user account
-  checkUserPermission(context, {
-    action: 'update',
-    entity: 'user',
-    targetUserId: userId,
-  })
-
-  await changePassword(userId, newPassword)
-
-  return redirect(`/administration/settings`)
+  return { status: 'success' as const }
 }
