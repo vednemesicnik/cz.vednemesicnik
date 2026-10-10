@@ -88,9 +88,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const showToast = useToast()
 
   const [openDialog, setOpenDialog] = useState<OpenDialog | null>(null)
-  // „Heslo bylo změněno.“ stays under the status until the page is left (design
-  // 29a): after a change the row itself would not move.
-  const [isPasswordChanged, setIsPasswordChanged] = useState(false)
 
   // Anchor the server's remaining time to this browser's clock when the data
   // arrives, so a skewed clock cannot shift it.
@@ -321,7 +318,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                       {emergencyPassword.hasPassword ? 'Změnit…' : 'Nastavit…'}
                     </Button>
                   }
-                  note={isPasswordChanged ? 'Heslo bylo změněno.' : undefined}
                   status={
                     emergencyPassword.hasPassword ? 'nastavené' : 'nenastavené'
                   }
@@ -452,7 +448,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <ChangePasswordDialog
           hasPassword={emergencyPassword.hasPassword}
           onClose={closeDialog(openDialog)}
-          onSaved={setIsPasswordChanged}
+          // A first password shows in the row as „nastavené“; a change would
+          // not move the row, so it gets a toast (design 29d).
+          onSaved={(isChange) => {
+            if (isChange) showToast('Heslo bylo změněno.')
+          }}
         />
       )}
 
