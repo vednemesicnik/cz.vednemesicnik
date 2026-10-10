@@ -46,7 +46,7 @@
 .passkeys {
   @layer route {
     display: grid;
-    gap: 4px;
+    gap: 10px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -55,16 +55,30 @@
 
 .passkey {
   @layer route {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
   }
 }
 
-.passkeyType {
+.passkeyText {
+  @layer route {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+}
+
+.passkeyTitle {
   @layer route {
     color: var(--text-primary);
+  }
+}
+
+.passkeyDetail {
+  @layer route {
+    white-space: nowrap;
   }
 }
 

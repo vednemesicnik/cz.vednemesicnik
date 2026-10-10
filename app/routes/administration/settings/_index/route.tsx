@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import type { AuthorRoleName } from '@generated/prisma/enums'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { href, useFetcher, useLocation, useNavigate } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
@@ -36,6 +36,7 @@ import { TwoFactorDialog } from './components/two-factor-dialog'
 import { buildSettingsContinuePath } from './utils/build-settings-continue-path'
 import { formatOtherSignIns } from './utils/format-other-sign-ins'
 import { formatRemainingBackupCodes } from './utils/format-remaining-backup-codes'
+import { getPasskeyDetails } from './utils/get-passkey-details'
 import type { SettingsContinue } from './utils/parse-settings-continue'
 
 export { action } from './_action'
@@ -50,10 +51,16 @@ const authorRoleDescriptions: Record<AuthorRoleName, string> = {
   creator: 'spravuje vlastní obsah, vidí i cizí koncepty',
 }
 
-// credentialDeviceType → row title (design 29a, today's state without a name).
+// credentialDeviceType → row title of a passkey without a name (design 29a).
 const passkeyTypeLabels: Record<string, string> = {
   multiDevice: 'Synchronizovaný',
   singleDevice: 'Vázaný na zařízení',
+}
+
+// credentialDeviceType → small type under a passkey's name (design 29a).
+const passkeyTypeDetails: Record<string, string> = {
+  multiDevice: 'synchronizovaný',
+  singleDevice: 'vázaný na zařízení',
 }
 
 type OpenDialog =
@@ -324,11 +331,32 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     <ul className={styles.passkeys}>
                       {passkeys.map((passkey) => (
                         <li className={styles.passkey} key={passkey.id}>
-                          <span className={styles.passkeyType}>
-                            {passkeyTypeLabels[passkey.deviceType] ??
-                              passkey.deviceType}
+                          <span className={styles.passkeyText}>
+                            <span className={styles.passkeyTitle}>
+                              {passkey.name ??
+                                passkeyTypeLabels[passkey.deviceType] ??
+                                passkey.deviceType}
+                            </span>
+                            <span className={styles.note}>
+                              {getPasskeyDetails({
+                                createdAt: passkey.createdAt,
+                                lastUsedAt: passkey.lastUsedAt,
+                                type:
+                                  passkey.name === null
+                                    ? null
+                                    : (passkeyTypeDetails[passkey.deviceType] ??
+                                      passkey.deviceType),
+                              }).map((detail, index) => (
+                                <Fragment key={detail}>
+                                  {/* The line breaks after a dot, never inside a date. */}
+                                  {index > 0 && ' · '}
+                                  <span className={styles.passkeyDetail}>
+                                    {detail}
+                                  </span>
+                                </Fragment>
+                              ))}
+                            </span>
                           </span>
-                          <span>přidán {passkey.createdAt}</span>
                           <TextButton
                             onClick={() =>
                               setOpenDialog({
@@ -541,11 +569,21 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             }
             onClose={closeDialog(openDialog)}
             onConfirm={() => handleRemovePasskey(removedPasskey.id)}
-            subject={`${
-              passkeyTypeLabels[removedPasskey.deviceType] ??
-              removedPasskey.deviceType
-            } · přidán ${removedPasskey.createdAt}`}
-            title={'Odebrat passkey?'}
+            // A named passkey says which one in the title; without a name, the
+            // type and date tell it apart (design 29d).
+            subject={
+              removedPasskey.name === null
+                ? `${
+                    passkeyTypeLabels[removedPasskey.deviceType] ??
+                    removedPasskey.deviceType
+                  } · přidán ${removedPasskey.createdAt}`
+                : undefined
+            }
+            title={
+              removedPasskey.name === null
+                ? 'Odebrat passkey?'
+                : `Odebrat passkey ${removedPasskey.name}?`
+            }
           />
         )}
     </AdminPage>
