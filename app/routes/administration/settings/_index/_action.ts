@@ -12,7 +12,7 @@ import { getUserPermissionContext } from '~/utils/permissions/user/context/get-u
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
-import { imageSchema, profileSchema } from './_schema'
+import { colorSchemeSchema, imageSchema, profileSchema } from './_schema'
 import { deleteUserImage } from './utils/delete-user-image.server'
 import { replaceUserImage } from './utils/replace-user-image.server'
 import { updateOwnProfile } from './utils/update-own-profile.server'
@@ -75,6 +75,26 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
     }
 
     return { status: 'other-sign-ins-ended' as const }
+  }
+
+  // The colour scheme belongs to the signed-in account (design 29a, #560).
+  if (intent === FORM_CONFIG.intent.value.updateColorScheme) {
+    const result = colorSchemeSchema.safeParse(Object.fromEntries(formData))
+
+    if (!result.success) {
+      return data({ status: 'color-scheme-invalid' as const }, { status: 400 })
+    }
+
+    try {
+      await prisma.user.update({
+        data: { colorScheme: result.data.colorScheme },
+        where: { id: userId },
+      })
+    } catch (error) {
+      throwDbError(error, "Unable to update the user's colour scheme.")
+    }
+
+    return { status: 'color-scheme-updated' as const }
   }
 
   const context = await getUserPermissionContext(request, {

@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { AuthorRoleName } from '@generated/prisma/enums'
+import type { AuthorRoleName, ColorScheme } from '@generated/prisma/enums'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { href, useFetcher, useLocation, useNavigate } from 'react-router'
 
@@ -19,10 +19,15 @@ import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
+import { SegmentedControl } from '~/components/segmented-control'
 import { useToast } from '~/components/toast-provider'
+import { COLOR_SCHEME_CONFIG } from '~/config/color-scheme-config'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useColorScheme } from '~/hooks/use-color-scheme'
 import type { IdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
+import { runWithViewTransition } from '~/utils/run-with-view-transition'
+import { waitForColorScheme } from '~/utils/wait-for-color-scheme'
 
 import type { action } from './_action'
 import styles from './_styles.module.css'
@@ -55,6 +60,13 @@ const authorRoleDescriptions: Record<AuthorRoleName, string> = {
   coordinator: 'spravuje veškerý obsah a schvaluje',
   creator: 'spravuje vlastní obsah, vidí i cizí koncepty',
 }
+
+// The colour scheme choices (design 29a, wording from copy thread 64fd5tyk).
+const colorSchemeOptions = [
+  { label: 'Systém', value: 'system' },
+  { label: 'Světlý', value: 'light' },
+  { label: 'Tmavý', value: 'dark' },
+] satisfies { label: string; value: ColorScheme }[]
 
 // credentialDeviceType → row title of a passkey without a name (design 29a).
 const passkeyTypeLabels: Record<string, string> = {
@@ -110,6 +122,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const mutationFetcher = useFetcher()
   // Owned here, not by the section: the section unmounts once the sign-ins end.
   const signInsFetcher = useFetcher<typeof action>()
+  // Keyed: the root layout reads the pending scheme and repaints on click.
+  const colorSchemeFetcher = useFetcher({
+    key: COLOR_SCHEME_CONFIG.fetcherKey,
+  })
+  const colorScheme = useColorScheme()
   const authenticityToken = useAuthenticityToken()
   const showToast = useToast()
 
@@ -523,8 +540,46 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           )}
         </AdminDetailMain>
 
-        {/* With neither section the column is empty and not drawn. */}
         <AdminDetailAside>
+          {/* „Vzhled a jazyk“ once #295 adds Jazyk (design 29a, 0d0khewy). */}
+          <AdminDetailSection title={'Vzhled'}>
+            <colorSchemeFetcher.Form method={'post'}>
+              <AuthenticityTokenInput />
+              <input
+                name={FORM_CONFIG.intent.name}
+                type={'hidden'}
+                value={FORM_CONFIG.intent.value.updateColorScheme}
+              />
+              {/* Applies on click, no Save (29a); the hint only under Systém (0d0khewy). */}
+              <SegmentedControl
+                hint={
+                  colorScheme === 'system'
+                    ? 'Vzhled se řídí nastavením zařízení.'
+                    : undefined
+                }
+                legend={'Režim'}
+                name={COLOR_SCHEME_CONFIG.fieldName}
+                onChange={(event) => {
+                  // Read now: React restores the controlled radio before the
+                  // transition's update runs.
+                  const formData = new FormData(
+                    event.currentTarget.form ?? undefined,
+                  )
+                  const nextColorScheme = event.currentTarget
+                    .value as ColorScheme
+
+                  // The whole page changes colour: cross-fade it once the
+                  // pending scheme is rendered, not after the round trip (#560).
+                  runWithViewTransition(async () => {
+                    void colorSchemeFetcher.submit(formData, { method: 'post' })
+                    await waitForColorScheme(nextColorScheme)
+                  })
+                }}
+                options={colorSchemeOptions}
+                value={colorScheme}
+              />
+            </colorSchemeFetcher.Form>
+          </AdminDetailSection>
           {otherSessionsCount > 0 && (
             <AdminDetailSection title={'Přehled přihlášení'}>
               <AdminParagraph>

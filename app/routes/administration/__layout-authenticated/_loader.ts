@@ -1,3 +1,4 @@
+import type { ColorScheme } from '@generated/prisma/enums'
 import { data } from 'react-router'
 
 import type { SidebarUser } from '~/components/admin/administration-sidebar'
@@ -29,6 +30,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     roleLabel: undefined,
   }
 
+  let colorScheme: ColorScheme = 'system'
+
   if (sessionId !== undefined) {
     const session = await prisma.session.findUnique({
       select: {
@@ -38,6 +41,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
             author: {
               select: { name: true, role: { select: { name: true } } },
             },
+            colorScheme: true,
             email: true,
             image: { select: imageSourceSelect },
           },
@@ -49,6 +53,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     })
 
     if (session) {
+      colorScheme = session.user.colorScheme
       user = {
         image: createImageSources('user-image', session.user.image),
         // The name belongs to the author (design 28f, 29b).
@@ -103,6 +108,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   return data(
     {
+      colorScheme,
       csrfToken,
       isAuthenticated,
       permissions,

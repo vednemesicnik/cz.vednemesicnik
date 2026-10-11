@@ -20,6 +20,8 @@ import '~/styles/sizes.css'
 
 // After the global styles, so global.css declares the cascade layer order first.
 import { RootBoundaryError } from '~/components/root-boundary-error'
+import { useColorScheme } from '~/hooks/use-color-scheme'
+import { getColorSchemeMetaContent } from '~/utils/get-color-scheme-meta-content'
 
 import type { Route } from './+types/root'
 
@@ -52,12 +54,18 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function Layout({ children }: { children: ReactNode }) {
+  // global.css mirrors the meta into color-scheme (design 29a, #560).
+  const colorScheme = useColorScheme()
+
   return (
     <html lang="cs-CZ">
       <head>
         <meta charSet="utf-8" />
         <meta content="width=device-width, initial-scale=1" name="viewport" />
-        <meta content="light dark" name="color-scheme" />
+        <meta
+          content={getColorSchemeMetaContent(colorScheme)}
+          name="color-scheme"
+        />
         <Meta />
         <Links />
       </head>
