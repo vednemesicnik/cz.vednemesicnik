@@ -169,6 +169,12 @@ Týká se to i veřejného webu:
   10 minut, jinak se člověk musí znovu ověřit. Ověření (passkey, Google nebo odkaz v e‑mailu)
   nikoho neodhlásí a platí pro prohlížeč, ve kterém proběhlo.
 - **Uživatelská role**, ne *role účtu*.
+- **Nový účet zakládá Administrátor pozvánkou** (rozhodnuto 28. 9. 2026). Heslo za nikoho
+  nevymýšlí. Pozvánka je obyčejný odkaz v e‑mailu se jménem toho, kdo zve, a vede do
+  Nastavení. Prošlou pozvánku nikdo znovu neposílá: nový člověk si na stránce přihlášení
+  pošle odkaz sám, nebo se přihlásí přes Google. Tlačítko „poslat znovu“ neexistuje.
+- **Tentýž přihlašovací e‑mail** odchází při přihlášení i při ověření totožnosti
+  v Nastavení. Jeho text proto musí platit pro obojí.
 
 ## Dary a formuláře na webu (rozhodnuto 28.–29. 9. 2026)
 
