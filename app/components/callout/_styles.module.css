@@ -10,3 +10,24 @@
     width: 100%;
   }
 }
+
+.callout.success {
+  @layer variant {
+    background: var(--callout-success-bg);
+    border-inline-start-color: var(--success);
+  }
+}
+
+.callout.warning {
+  @layer variant {
+    background: var(--callout-warning-bg);
+    border-inline-start-color: var(--warning);
+  }
+}
+
+.callout.error {
+  @layer variant {
+    background: var(--callout-error-bg);
+    border-inline-start-color: var(--error);
+  }
+}

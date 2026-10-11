@@ -67,6 +67,7 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
               },
             },
           },
+          welcomeDismissedAt: true,
         },
       },
     },
@@ -141,6 +142,12 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
         Date.now(),
     ),
     settingsContinue: canReopen ? parsedContinue : null,
+    // The welcome row (design 29e) offers a passkey to someone who signs in by
+    // e-mail link: no passkey, no Google, not yet closed.
+    showWelcome:
+      user.passkeys.length === 0 &&
+      user.connections.length === 0 &&
+      user.welcomeDismissedAt === null,
     signInAttempts: await getRecentSignInAttempts({
       email: user.email,
       userId: user.id,

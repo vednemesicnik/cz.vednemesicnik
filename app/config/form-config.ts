@@ -12,6 +12,7 @@ export const FORM_CONFIG = {
       delete: 'delete',
       deleteFilter: 'delete-filter',
       deleteImage: 'delete-image',
+      dismissWelcome: 'dismiss-welcome',
       overwriteFilter: 'overwrite-filter',
       publish: 'publish',
       regenerateBackupCodes: 'regenerate-backup-codes',

@@ -2,6 +2,7 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
+import { INVITATION_CONFIG } from '~/config/invitation-config'
 import { recordAuditLog } from '~/utils/audit-log.server'
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
@@ -11,6 +12,7 @@ import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-
 
 import { schema } from './_schema'
 import { createUser } from './utils/create-user.server'
+import { sendInvitation } from './utils/send-invitation.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
@@ -64,5 +66,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     targetId: userId,
   })
 
-  return redirect(href('/administration/users/:userId', { userId }))
+  // The account exists either way; the detail says whether the invitation
+  // went out (design 28e). Who invites is named by their author name.
+  const inviter = await prisma.user.findUniqueOrThrow({
+    select: { author: { select: { name: true } } },
+    where: { id: context.userId },
+  })
+
+  const isSent = await sendInvitation({
+    email: submission.value.email,
+    inviterName: inviter.author.name,
+  })
+
+  const search = new URLSearchParams({
+    [INVITATION_CONFIG.resultParam]: isSent
+      ? INVITATION_CONFIG.result.sent
+      : INVITATION_CONFIG.result.failed,
+  })
+
+  return redirect(
+    `${href('/administration/users/:userId', { userId })}?${search}`,
+  )
 }

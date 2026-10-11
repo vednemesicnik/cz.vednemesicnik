@@ -1,12 +1,9 @@
-import bcrypt from 'bcryptjs'
-
 import { prisma } from '~/utils/db.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type DataBase = {
   email: string
   name: string
-  password: string
   roleId: string
 }
 
@@ -23,10 +20,6 @@ type Data = DataWithNewAuthor | DataWithExistingAuthor
 
 export const createUser = async (data: Data) => {
   try {
-    // Hash outside the transaction: bcrypt is CPU-bound and would otherwise
-    // hold the SQLite transaction open, increasing lock contention.
-    const passwordHash = bcrypt.hashSync(data.password, 12)
-
     const user = await prisma.$transaction(async (prisma) => {
       let authorId: string
 
@@ -55,11 +48,6 @@ export const createUser = async (data: Data) => {
           },
           email: data.email,
           name: data.name,
-          password: {
-            create: {
-              hash: passwordHash,
-            },
-          },
           role: {
             connect: {
               id: data.roleId,

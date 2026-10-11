@@ -77,6 +77,20 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
     return { status: 'other-sign-ins-ended' as const }
   }
 
+  // „Už nezobrazovat“ closes the welcome row for good (design 29e).
+  if (intent === FORM_CONFIG.intent.value.dismissWelcome) {
+    try {
+      await prisma.user.update({
+        data: { welcomeDismissedAt: new Date() },
+        where: { id: userId },
+      })
+    } catch (error) {
+      throwDbError(error, 'Unable to close the welcome row.')
+    }
+
+    return { status: 'welcome-dismissed' as const }
+  }
+
   // The colour scheme belongs to the signed-in account (design 29a, #560).
   if (intent === FORM_CONFIG.intent.value.updateColorScheme) {
     const result = colorSchemeSchema.safeParse(Object.fromEntries(formData))
