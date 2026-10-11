@@ -27,7 +27,7 @@ export const WelcomeRow = ({
         Příště se přihlásíte přes Google s adresou @vednemesicnik.cz nebo
         odkazem v e-mailu.
         {onAddPasskey !== undefined &&
-          ' Můžete si také přidat passkey pro přihlášení otiskem prstu, obličejem nebo PINem zařízení.'}
+          ' Můžete si také přidat passkey pro přihlášení odemknutím zařízení nebo bezpečnostního klíče.'}
       </span>
     </BannerContent>
     <BannerActions className={styles.actions}>
