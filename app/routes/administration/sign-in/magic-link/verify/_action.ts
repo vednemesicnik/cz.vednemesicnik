@@ -1,5 +1,5 @@
 import { redirect } from 'react-router'
-import { requireUnauthenticated } from '~/utils/auth.server'
+import { getAuthentication } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { consumeMagicLinkToken } from '~/utils/magic-link.server'
@@ -8,11 +8,10 @@ import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import type { Route } from './+types/route'
+import { verifyIdentityWithLink } from './utils/verify-identity-with-link.server'
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  // Enforce the auth boundary in the handler, not just the loader: a direct POST
-  // must not let an already-signed-in admin consume a token and swap sessions.
-  await requireUnauthenticated(request)
+  const authentication = await getAuthentication(request)
 
   const formData = await request.formData()
 
@@ -29,6 +28,24 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 
   const normalizedEmail = email.trim().toLowerCase()
+
+  // A signed-in browser checks its identity (design 29d) and never swaps the
+  // session for another one.
+  if (
+    authentication.sessionId !== undefined &&
+    authentication.userId !== undefined
+  ) {
+    return verifyIdentityWithLink({
+      email: normalizedEmail,
+      redirectTo,
+      request,
+      session: {
+        sessionId: authentication.sessionId,
+        userId: authentication.userId,
+      },
+      token,
+    })
+  }
 
   // Single-use: consume (delete) the row and check validity in one step.
   const isValid = await consumeMagicLinkToken(normalizedEmail, token)

@@ -20,6 +20,7 @@ describe('parseSettingsContinue', () => {
     expect(parse('continue=disable-two-factor')).toEqual({
       dialog: 'disable-two-factor',
     })
+    expect(parse('continue=add-passkey')).toEqual({ dialog: 'add-passkey' })
   })
 
   it('reads a passkey removal for an own passkey', () => {

@@ -5,6 +5,7 @@ import { requireAuthentication } from '~/utils/auth.server'
 import { countUnusedBackupCodes } from '~/utils/backup-codes.server'
 import { prisma } from '~/utils/db.server'
 import { formatNumericDate } from '~/utils/format-numeric-date'
+import { parseIdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
 import {
   createImageSources,
   imageSourceSelect,
@@ -21,7 +22,7 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 
   const session = await prisma.session.findUniqueOrThrow({
     select: {
-      createdAt: true,
+      authenticatedAt: true,
       user: {
         select: {
           author: {
@@ -98,6 +99,7 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
     switch (parsedContinue?.dialog) {
       case undefined:
       case 'remove-passkey':
+      case 'add-passkey':
         return true
       case 'change-password':
         return emergencyPassword !== null
@@ -111,8 +113,14 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
     }
   })()
 
+  // A one-shot failure the identity check through Google returned with.
+  const identityCheckFailure = parseIdentityCheckFailure(
+    url.searchParams.get('identityCheck'),
+  )
+
   return {
     emergencyPassword,
+    identityCheckFailure,
     otherSessionsCount: user.sessions.length,
     passkeys: user.passkeys.map((passkey) => ({
       createdAt: formatNumericDate(passkey.createdAt),
@@ -124,11 +132,11 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
           : formatNumericDate(passkey.lastUsedAt),
       name: passkey.name,
     })),
-    // How long this session may still change sign-in methods without signing
-    // in again. A duration, not a time: the browser's clock may be off.
+    // How long this session may still change sign-in methods without another
+    // identity check. A duration, not a time: the browser's clock may be off.
     recentAuthenticationRemainingMs: Math.max(
       0,
-      session.createdAt.getTime() +
+      session.authenticatedAt.getTime() +
         RECENT_AUTHENTICATION_MAX_AGE_MS -
         Date.now(),
     ),

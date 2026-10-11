@@ -96,12 +96,14 @@ enum UserPermissionAccess {
 }
 
 model Session {
-  id             String   @id @default(cuid())
-  expirationDate DateTime
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId         String
+  id              String   @id @default(cuid())
+  expirationDate  DateTime
+  // Last time the person proved who they are: the sign-in, or an identity check (#556).
+  authenticatedAt DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId          String
 
   // non-unique foreign key
   @@index([userId])
@@ -584,6 +586,8 @@ enum AuthLogEvent {
   sign_in_failure
   two_factor_failure
   sign_out
+  identity_check_success
+  identity_check_failure
 }
 
 enum AuthMethod {

@@ -234,10 +234,22 @@ export default [
               'two-factor',
               'routes/administration/settings/two-factor/route.ts',
             ),
-            // Fresh sign-in before changing sign-in methods
+            // Identity check before changing sign-in methods (design 29d)
             route(
-              'verify-identity',
-              'routes/administration/settings/verify-identity/route.tsx',
+              'verify-identity/passkey/generate-authentication-options',
+              'routes/administration/settings/verify-identity/passkey/generate-authentication-options/route.ts',
+            ),
+            route(
+              'verify-identity/passkey/verify-authentication-response',
+              'routes/administration/settings/verify-identity/passkey/verify-authentication-response/route.ts',
+            ),
+            route(
+              'verify-identity/google',
+              'routes/administration/settings/verify-identity/google/route.ts',
+            ),
+            route(
+              'verify-identity/magic-link',
+              'routes/administration/settings/verify-identity/magic-link/route.ts',
             ),
 
             // Passkey removal + registration ceremony endpoints

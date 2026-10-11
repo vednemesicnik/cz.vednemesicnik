@@ -81,11 +81,16 @@ export const safeCompare = (a: unknown, b: unknown) => {
 // destroys it regardless of outcome. sameSite=lax is required — the callback is
 // a top-level GET navigation from google.com, which strict would strip.
 
+// `purpose` tells the callback whether the round trip signs someone in or is
+// the identity check of a signed-in user (design 29d).
+export type OAuthPurpose = 'sign-in' | 'verify-identity'
+
 type OAuthCookieData = {
   state: string
   nonce: string
   codeVerifier: string
   redirectTo: string
+  purpose: OAuthPurpose
 }
 
 type OAuthCookieFlashData = {
@@ -124,6 +129,7 @@ export const setOAuthCookieSession = async (
   cookieSession.set('nonce', data.nonce)
   cookieSession.set('codeVerifier', data.codeVerifier)
   cookieSession.set('redirectTo', data.redirectTo)
+  cookieSession.set('purpose', data.purpose)
 
   return cookieSessionStorage.commitSession(cookieSession)
 }

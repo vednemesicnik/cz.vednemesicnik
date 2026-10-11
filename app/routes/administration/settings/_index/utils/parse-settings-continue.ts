@@ -1,17 +1,24 @@
 export type SettingsContinue =
-  | { dialog: 'change-password' | 'enable-two-factor' | 'disable-two-factor' }
+  | {
+      dialog:
+        | 'change-password'
+        | 'enable-two-factor'
+        | 'disable-two-factor'
+        | 'add-passkey'
+    }
   | { dialog: 'remove-passkey'; passkeyId: string }
 
 const simpleDialogs = [
   'change-password',
   'enable-two-factor',
   'disable-two-factor',
+  'add-passkey',
 ] as const
 
 /**
- * Reads the one-shot hint the identity check returns with (`?continue=…`):
- * which dialog the person was on their way to when they had to sign in again
- * (design 29d, 30a). Anything unknown is ignored rather than trusted.
+ * Reads the one-shot hint the identity check through Google returns with
+ * (`?continue=…`): which dialog the person was on their way to (design 29d,
+ * 30a). Anything unknown is ignored rather than trusted.
  *
  * @param searchParams - The settings page's search params.
  * @param passkeyIds - The signed-in user's passkeys; a hint naming any other
