@@ -41,7 +41,14 @@ export const WelcomeRow = ({
           Přidat passkey
         </Button>
       )}
-      <Button onClick={onDismiss} size={'sm'} type={'button'} variant={'ghost'}>
+      {/* Ghost beside the primary button (29e); alone it would float off the
+          text's edge, so it keeps the outline Settings uses for side actions. */}
+      <Button
+        onClick={onDismiss}
+        size={'sm'}
+        type={'button'}
+        variant={onAddPasskey === undefined ? 'outline' : 'ghost'}
+      >
         Už nezobrazovat
       </Button>
     </BannerActions>
