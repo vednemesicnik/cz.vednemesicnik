@@ -5,9 +5,11 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { href, useFetcher, useLocation, useNavigate } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
+import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
+import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailRow } from '~/components/admin/admin-detail-row'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
@@ -274,12 +276,257 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <AdminPage>
       <AdminHeadline>Nastavení</AdminHeadline>
 
-      <AdminDetailLayout
-        // An array, not a fragment: the layout skips the column only when
-        // every entry is empty.
-        aside={[
-          otherSessionsCount > 0 && (
-            <AdminDetailSection key={'sign-ins'} title={'Přehled přihlášení'}>
+      <AdminDetailLayout>
+        <AdminDetailMain>
+          <AdminDetailSection
+            actions={
+              <Button
+                onClick={() => setOpenDialog({ name: 'profile' })}
+                size={'sm'}
+                type={'button'}
+                variant={'outline'}
+              >
+                Upravit profil
+              </Button>
+            }
+            title={'Profil'}
+          >
+            <div className={styles.profileHeader}>
+              <AdminAvatar
+                alt={user.image.altText}
+                image={user.image.sources}
+                name={user.authorName}
+                size={'small'}
+              />
+              <div className={styles.profileName}>
+                <span className={styles.name}>{user.authorName}</span>
+                <span className={styles.email}>{user.email}</span>
+              </div>
+            </div>
+
+            <AdminDetailList>
+              <AdminDetailItem label={'Autorská role'}>
+                {authorRole}
+              </AdminDetailItem>
+              <AdminDetailItem label={'Uživatelská role'}>
+                {getUserRoleLabel(user.userRoleName)}
+              </AdminDetailItem>
+              <AdminDetailItem label={'Účet od'}>
+                {user.createdAt}
+              </AdminDetailItem>
+            </AdminDetailList>
+
+            <AdminParagraph className={styles.muted}>
+              E-mail a role mění Administrátor nebo Vlastník.
+            </AdminParagraph>
+          </AdminDetailSection>
+
+          <AdminDetailSection title={'Přihlášení'}>
+            <div className={styles.rows}>
+              <AdminDetailRow label={'Google'}>
+                <span>{user.isGoogleLinked ? 'propojený' : 'nepropojený'}</span>
+                {!user.isGoogleLinked && (
+                  <span className={styles.note}>
+                    Propojí se při prvním přihlášení přes Google s adresou
+                    @vednemesicnik.cz.
+                  </span>
+                )}
+              </AdminDetailRow>
+
+              <AdminDetailRow label={'Odkaz v e-mailu'}>
+                <span>k dispozici</span>
+                <span className={styles.note}>
+                  Na {user.email}. Nic se nenastavuje.
+                </span>
+              </AdminDetailRow>
+
+              <AdminDetailRow
+                actions={
+                  <RegisterPasskey
+                    isRecentlyAuthenticated={isRecentlyAuthenticated}
+                    onRequireIdentityCheck={requireIdentityCheckForPasskey}
+                    registration={passkeyRegistration}
+                  />
+                }
+                align={'start'}
+                label={'Passkey'}
+              >
+                {passkeys.length === 0 ? (
+                  <span>Zatím žádný.</span>
+                ) : (
+                  <ul className={styles.passkeys}>
+                    {passkeys.map((passkey) => (
+                      <li className={styles.passkey} key={passkey.id}>
+                        <span className={styles.passkeyText}>
+                          <span className={styles.passkeyTitle}>
+                            {passkey.name ??
+                              passkeyTypeLabels[passkey.deviceType] ??
+                              passkey.deviceType}
+                          </span>
+                          <span className={styles.note}>
+                            {getPasskeyDetails({
+                              createdAt: passkey.createdAt,
+                              lastUsedAt: passkey.lastUsedAt,
+                              type:
+                                passkey.name === null
+                                  ? null
+                                  : (passkeyTypeDetails[passkey.deviceType] ??
+                                    passkey.deviceType),
+                            }).map((detail, index) => (
+                              <Fragment key={detail}>
+                                {/* The line breaks after a dot, never inside a date. */}
+                                {index > 0 && '\u00a0· '}
+                                <span className={styles.passkeyDetail}>
+                                  {detail}
+                                </span>
+                              </Fragment>
+                            ))}
+                          </span>
+                        </span>
+                        <TextButton
+                          onClick={() =>
+                            setOpenDialog({
+                              name: 'remove-passkey',
+                              passkeyId: passkey.id,
+                            })
+                          }
+                        >
+                          Odebrat…
+                        </TextButton>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {passkeyProblem !== null && (
+                  <PasskeyProblem
+                    onRequireIdentityCheck={requireIdentityCheckForPasskey}
+                    problem={passkeyProblem}
+                  />
+                )}
+                <span className={styles.note}>
+                  Přihlášení otiskem prstu, obličejem nebo PINem zařízení, bez
+                  hesla.
+                </span>
+              </AdminDetailRow>
+            </div>
+          </AdminDetailSection>
+
+          {emergencyPassword !== null && (
+            <AdminDetailSection title={'Nouzové přihlášení heslem'}>
+              <AdminParagraph className={styles.muted}>
+                Heslo slouží pro nouzové přihlášení, které je běžně vypnuté.
+                Dvoufázové ověření platí jen při přihlášení heslem.
+              </AdminParagraph>
+
+              <div className={styles.rows}>
+                <AdminDetailRow
+                  actions={
+                    <Button
+                      onClick={() =>
+                        openWithIdentityCheck(
+                          { name: 'change-password' },
+                          { dialog: 'change-password' },
+                        )
+                      }
+                      size={'sm'}
+                      type={'button'}
+                      variant={'outline'}
+                    >
+                      {emergencyPassword.hasPassword ? 'Změnit…' : 'Nastavit…'}
+                    </Button>
+                  }
+                  label={'Heslo'}
+                >
+                  {emergencyPassword.hasPassword ? 'nastavené' : 'nenastavené'}
+                </AdminDetailRow>
+
+                {emergencyPassword.isTwoFactorEnabled ? (
+                  <AdminDetailRow
+                    actions={
+                      <>
+                        <Button
+                          // Not reopened after the identity check: opening it
+                          // replaces the codes, which an address must not do
+                          // without a click.
+                          onClick={() =>
+                            openWithIdentityCheck(
+                              { name: 'new-backup-codes' },
+                              null,
+                            )
+                          }
+                          size={'sm'}
+                          type={'button'}
+                          variant={'outline'}
+                        >
+                          Nové záložní kódy
+                        </Button>
+                        <TextButton
+                          onClick={() =>
+                            setOpenDialog({ name: 'disable-two-factor' })
+                          }
+                        >
+                          Vypnout…
+                        </TextButton>
+                      </>
+                    }
+                    label={'Dvoufázové ověření'}
+                  >
+                    <span>zapnuté</span>
+                    <span className={styles.note}>
+                      {formatRemainingBackupCodes(
+                        emergencyPassword.unusedBackupCodesCount,
+                      )}
+                    </span>
+                  </AdminDetailRow>
+                ) : (
+                  <AdminDetailRow
+                    actions={
+                      emergencyPassword.hasPassword ? (
+                        <Button
+                          onClick={() =>
+                            openWithIdentityCheck(
+                              { name: 'enable-two-factor' },
+                              { dialog: 'enable-two-factor' },
+                            )
+                          }
+                          size={'sm'}
+                          type={'button'}
+                          variant={'outline'}
+                        >
+                          Zapnout…
+                        </Button>
+                      ) : (
+                        <span className={styles.note}>
+                          Nejdřív nastavte heslo.
+                        </span>
+                      )
+                    }
+                    label={'Dvoufázové ověření'}
+                  >
+                    vypnuté
+                  </AdminDetailRow>
+                )}
+              </div>
+
+              {emergencyPassword.isTwoFactorEnabled &&
+                emergencyPassword.unusedBackupCodesCount <= 2 && (
+                  <p className={styles.warning}>
+                    {capitalize(
+                      formatRemainingBackupCodes(
+                        emergencyPassword.unusedBackupCodesCount,
+                      ),
+                    )}
+                    . Vytvořte nové.
+                  </p>
+                )}
+            </AdminDetailSection>
+          )}
+        </AdminDetailMain>
+
+        {/* With neither section the column is empty and not drawn. */}
+        <AdminDetailAside>
+          {otherSessionsCount > 0 && (
+            <AdminDetailSection title={'Přehled přihlášení'}>
               <AdminParagraph>
                 {formatOtherSignIns(otherSessionsCount)}
               </AdminParagraph>
@@ -298,12 +545,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 </Button>
               </signInsFetcher.Form>
             </AdminDetailSection>
-          ),
-          signInAttempts.length > 0 && (
-            <AdminDetailSection
-              key={'sign-in-attempts'}
-              title={'Poslední pokusy o přihlášení'}
-            >
+          )}
+          {signInAttempts.length > 0 && (
+            <AdminDetailSection title={'Poslední pokusy o přihlášení'}>
               <AdminSignInAttempts attempts={signInAttempts} />
               <AdminParagraph className={styles.note}>
                 {otherSessionsCount > 0
@@ -311,262 +555,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   : 'Nepoznáváte některý pokus o přihlášení? Obraťte se na Administrátora.'}
               </AdminParagraph>
             </AdminDetailSection>
-          ),
-        ]}
-        main={
-          <>
-            <AdminDetailSection
-              actions={
-                <Button
-                  onClick={() => setOpenDialog({ name: 'profile' })}
-                  size={'sm'}
-                  type={'button'}
-                  variant={'outline'}
-                >
-                  Upravit profil
-                </Button>
-              }
-              title={'Profil'}
-            >
-              <div className={styles.profileHeader}>
-                <AdminAvatar
-                  alt={user.image.altText}
-                  image={user.image.sources}
-                  name={user.authorName}
-                  size={'small'}
-                />
-                <div className={styles.profileName}>
-                  <span className={styles.name}>{user.authorName}</span>
-                  <span className={styles.email}>{user.email}</span>
-                </div>
-              </div>
-
-              <AdminDetailList>
-                <AdminDetailItem label={'Autorská role'}>
-                  {authorRole}
-                </AdminDetailItem>
-                <AdminDetailItem label={'Uživatelská role'}>
-                  {getUserRoleLabel(user.userRoleName)}
-                </AdminDetailItem>
-                <AdminDetailItem label={'Účet od'}>
-                  {user.createdAt}
-                </AdminDetailItem>
-              </AdminDetailList>
-
-              <AdminParagraph className={styles.muted}>
-                E-mail a role mění Administrátor nebo Vlastník.
-              </AdminParagraph>
-            </AdminDetailSection>
-
-            <AdminDetailSection title={'Přihlášení'}>
-              <div className={styles.rows}>
-                <AdminDetailRow label={'Google'}>
-                  <span>
-                    {user.isGoogleLinked ? 'propojený' : 'nepropojený'}
-                  </span>
-                  {!user.isGoogleLinked && (
-                    <span className={styles.note}>
-                      Propojí se při prvním přihlášení přes Google s adresou
-                      @vednemesicnik.cz.
-                    </span>
-                  )}
-                </AdminDetailRow>
-
-                <AdminDetailRow label={'Odkaz v e-mailu'}>
-                  <span>k dispozici</span>
-                  <span className={styles.note}>
-                    Na {user.email}. Nic se nenastavuje.
-                  </span>
-                </AdminDetailRow>
-
-                <AdminDetailRow
-                  actions={
-                    <RegisterPasskey
-                      isRecentlyAuthenticated={isRecentlyAuthenticated}
-                      onRequireIdentityCheck={requireIdentityCheckForPasskey}
-                      registration={passkeyRegistration}
-                    />
-                  }
-                  align={'start'}
-                  label={'Passkey'}
-                >
-                  {passkeys.length === 0 ? (
-                    <span>Zatím žádný.</span>
-                  ) : (
-                    <ul className={styles.passkeys}>
-                      {passkeys.map((passkey) => (
-                        <li className={styles.passkey} key={passkey.id}>
-                          <span className={styles.passkeyText}>
-                            <span className={styles.passkeyTitle}>
-                              {passkey.name ??
-                                passkeyTypeLabels[passkey.deviceType] ??
-                                passkey.deviceType}
-                            </span>
-                            <span className={styles.note}>
-                              {getPasskeyDetails({
-                                createdAt: passkey.createdAt,
-                                lastUsedAt: passkey.lastUsedAt,
-                                type:
-                                  passkey.name === null
-                                    ? null
-                                    : (passkeyTypeDetails[passkey.deviceType] ??
-                                      passkey.deviceType),
-                              }).map((detail, index) => (
-                                <Fragment key={detail}>
-                                  {/* The line breaks after a dot, never inside a date. */}
-                                  {index > 0 && '\u00a0· '}
-                                  <span className={styles.passkeyDetail}>
-                                    {detail}
-                                  </span>
-                                </Fragment>
-                              ))}
-                            </span>
-                          </span>
-                          <TextButton
-                            onClick={() =>
-                              setOpenDialog({
-                                name: 'remove-passkey',
-                                passkeyId: passkey.id,
-                              })
-                            }
-                          >
-                            Odebrat…
-                          </TextButton>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {passkeyProblem !== null && (
-                    <PasskeyProblem
-                      onRequireIdentityCheck={requireIdentityCheckForPasskey}
-                      problem={passkeyProblem}
-                    />
-                  )}
-                  <span className={styles.note}>
-                    Přihlášení otiskem prstu, obličejem nebo PINem zařízení, bez
-                    hesla.
-                  </span>
-                </AdminDetailRow>
-              </div>
-            </AdminDetailSection>
-
-            {emergencyPassword !== null && (
-              <AdminDetailSection title={'Nouzové přihlášení heslem'}>
-                <AdminParagraph className={styles.muted}>
-                  Heslo slouží pro nouzové přihlášení, které je běžně vypnuté.
-                  Dvoufázové ověření platí jen při přihlášení heslem.
-                </AdminParagraph>
-
-                <div className={styles.rows}>
-                  <AdminDetailRow
-                    actions={
-                      <Button
-                        onClick={() =>
-                          openWithIdentityCheck(
-                            { name: 'change-password' },
-                            { dialog: 'change-password' },
-                          )
-                        }
-                        size={'sm'}
-                        type={'button'}
-                        variant={'outline'}
-                      >
-                        {emergencyPassword.hasPassword
-                          ? 'Změnit…'
-                          : 'Nastavit…'}
-                      </Button>
-                    }
-                    label={'Heslo'}
-                  >
-                    {emergencyPassword.hasPassword
-                      ? 'nastavené'
-                      : 'nenastavené'}
-                  </AdminDetailRow>
-
-                  {emergencyPassword.isTwoFactorEnabled ? (
-                    <AdminDetailRow
-                      actions={
-                        <>
-                          <Button
-                            // Not reopened after the identity check: opening it
-                            // replaces the codes, which an address must not do
-                            // without a click.
-                            onClick={() =>
-                              openWithIdentityCheck(
-                                { name: 'new-backup-codes' },
-                                null,
-                              )
-                            }
-                            size={'sm'}
-                            type={'button'}
-                            variant={'outline'}
-                          >
-                            Nové záložní kódy
-                          </Button>
-                          <TextButton
-                            onClick={() =>
-                              setOpenDialog({ name: 'disable-two-factor' })
-                            }
-                          >
-                            Vypnout…
-                          </TextButton>
-                        </>
-                      }
-                      label={'Dvoufázové ověření'}
-                    >
-                      <span>zapnuté</span>
-                      <span className={styles.note}>
-                        {formatRemainingBackupCodes(
-                          emergencyPassword.unusedBackupCodesCount,
-                        )}
-                      </span>
-                    </AdminDetailRow>
-                  ) : (
-                    <AdminDetailRow
-                      actions={
-                        emergencyPassword.hasPassword ? (
-                          <Button
-                            onClick={() =>
-                              openWithIdentityCheck(
-                                { name: 'enable-two-factor' },
-                                { dialog: 'enable-two-factor' },
-                              )
-                            }
-                            size={'sm'}
-                            type={'button'}
-                            variant={'outline'}
-                          >
-                            Zapnout…
-                          </Button>
-                        ) : (
-                          <span className={styles.note}>
-                            Nejdřív nastavte heslo.
-                          </span>
-                        )
-                      }
-                      label={'Dvoufázové ověření'}
-                    >
-                      vypnuté
-                    </AdminDetailRow>
-                  )}
-                </div>
-
-                {emergencyPassword.isTwoFactorEnabled &&
-                  emergencyPassword.unusedBackupCodesCount <= 2 && (
-                    <p className={styles.warning}>
-                      {capitalize(
-                        formatRemainingBackupCodes(
-                          emergencyPassword.unusedBackupCodesCount,
-                        ),
-                      )}
-                      . Vytvořte nové.
-                    </p>
-                  )}
-              </AdminDetailSection>
-            )}
-          </>
-        }
-      />
+          )}
+        </AdminDetailAside>
+      </AdminDetailLayout>
 
       {openDialog?.name === 'profile' && (
         <ProfileDialog
