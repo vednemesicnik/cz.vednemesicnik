@@ -187,10 +187,14 @@ export const getAuthentication = async (request: Request) => {
   if (sessionAuthId !== undefined) {
     const session = await getSessionFromDatabase(sessionAuthId)
 
-    return { isAuthenticated: session !== null, sessionId: session?.id }
+    return {
+      isAuthenticated: session !== null,
+      sessionId: session?.id,
+      userId: session?.userId,
+    }
   }
 
-  return { isAuthenticated: false, sessionId: undefined }
+  return { isAuthenticated: false, sessionId: undefined, userId: undefined }
 }
 
 export const requireUnauthenticated = async (request: Request) => {

@@ -24,13 +24,18 @@ import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 import type { action } from './_action'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { AddPasskeyDialog } from './components/add-passkey-dialog'
 import { ChangePasswordDialog } from './components/change-password-dialog'
 import { ConfirmDialog } from './components/confirm-dialog'
-import { IdentityCheckDialog } from './components/identity-check-dialog'
+import {
+  IdentityCheckDialog,
+  type IdentityCheckFailure,
+} from './components/identity-check-dialog'
 import { PasskeyProblem } from './components/passkey-problem'
 import { ProfileDialog } from './components/profile-dialog'
 import { RegisterPasskey } from './components/register-passkey'
 import type { RegistrationProblem } from './components/register-passkey/get-registration-problem'
+import { useRegisterPasskey } from './components/register-passkey/use-register-passkey'
 import { TextButton } from './components/text-button'
 import { TwoFactorDialog } from './components/two-factor-dialog'
 import { buildSettingsContinuePath } from './utils/build-settings-continue-path'
@@ -70,7 +75,15 @@ type OpenDialog =
   | { name: 'new-backup-codes' }
   | { name: 'disable-two-factor' }
   | { name: 'remove-passkey'; passkeyId: string }
-  | { name: 'identity-check'; settingsContinue: SettingsContinue | null }
+  | { name: 'add-passkey' }
+  | {
+      name: 'identity-check'
+      // The dialog to reopen after the round trip to Google (30a).
+      settingsContinue: SettingsContinue | null
+      // Continues on the spot after a passkey or a link (design 29d).
+      onVerified: () => void
+      failure: IdentityCheckFailure | null
+    }
 
 const toOpenDialog = (settingsContinue: SettingsContinue): OpenDialog =>
   settingsContinue.dialog === 'remove-passkey'
@@ -83,6 +96,7 @@ const capitalize = (text: string) =>
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
     emergencyPassword,
+    identityCheckFailure,
     otherSessionsCount,
     passkeys,
     recentAuthenticationRemainingMs,
@@ -115,35 +129,74 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     [recentAuthenticationExpiresAt],
   )
 
+  const passkeyRegistration = useRegisterPasskey(setPasskeyProblem)
+
+  // Opens the identity check (design 29d). `settingsContinue` is the dialog
+  // Google returns to, `null` the bare page; `onVerified` continues on the
+  // spot after a passkey or a link.
+  const requireIdentityCheck = (
+    settingsContinue: SettingsContinue | null,
+    onVerified: () => void,
+    failure: IdentityCheckFailure | null = null,
+  ) => {
+    setOpenDialog({
+      failure,
+      name: 'identity-check',
+      onVerified,
+      settingsContinue,
+    })
+  }
+
   // Opens a dialog that changes a sign-in method, or the identity check first
-  // when the sign-in is too old (design 29d). `settingsContinue` is the dialog
-  // to reopen after signing in again; `null` returns to the bare page.
+  // when the last authentication is too old (design 29d).
   const openWithIdentityCheck = (
     dialog: OpenDialog,
     settingsContinue: SettingsContinue | null,
   ) => {
-    setOpenDialog(
-      isRecentlyAuthenticated()
-        ? dialog
-        : { name: 'identity-check', settingsContinue },
-    )
+    if (isRecentlyAuthenticated()) {
+      setOpenDialog(dialog)
+      return
+    }
+
+    requireIdentityCheck(settingsContinue, () => setOpenDialog(dialog))
   }
+
+  // Adding a passkey continues with a button: the browser creates a passkey
+  // only after a new click (29d).
+  const requireIdentityCheckForPasskey = () =>
+    requireIdentityCheck({ dialog: 'add-passkey' }, () =>
+      setOpenDialog({ name: 'add-passkey' }),
+    )
 
   // Unmount a dialog once it closed, unless another one took its place.
   const closeDialog = (dialog: OpenDialog) => () =>
     setOpenDialog((current) => (current === dialog ? null : current))
 
-  // Back from the identity check: reopen the dialog the person was on their
-  // way to, and drop the one-shot hint from the address (design 30a).
+  // Back from Google: reopen the dialog the person was on their way to, or
+  // the identity check with what went wrong, and drop the one-shot hints from
+  // the address (design 29d, 30a).
   useEffect(() => {
-    if (settingsContinue === null) return
+    if (settingsContinue === null && identityCheckFailure === null) return
 
-    setOpenDialog(toOpenDialog(settingsContinue))
+    if (identityCheckFailure !== null) {
+      setOpenDialog({
+        failure: identityCheckFailure,
+        name: 'identity-check',
+        onVerified: () =>
+          setOpenDialog(
+            settingsContinue === null ? null : toOpenDialog(settingsContinue),
+          ),
+        settingsContinue,
+      })
+    } else if (settingsContinue !== null) {
+      setOpenDialog(toOpenDialog(settingsContinue))
+    }
+
     void navigate(location.pathname, {
       preventScrollReset: true,
       replace: true,
     })
-  }, [location.pathname, navigate, settingsContinue])
+  }, [identityCheckFailure, location.pathname, navigate, settingsContinue])
 
   const signInsResult = signInsFetcher.data
 
@@ -165,30 +218,39 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     void mutationFetcher.submit(formData, { action, method: 'POST' })
   }
 
+  // A removal and switching 2FA off were confirmed before the identity check,
+  // so after a passkey or a link they run straight away; after Google, the
+  // confirmation reopens instead (an address must not take a method away).
   const handleRemovePasskey = (passkeyId: string) => {
+    const removePasskey = () =>
+      submitMutation(href('/administration/settings/passkeys'), { passkeyId })
+
     if (!isRecentlyAuthenticated()) {
-      setOpenDialog({
-        name: 'identity-check',
-        settingsContinue: { dialog: 'remove-passkey', passkeyId },
+      requireIdentityCheck({ dialog: 'remove-passkey', passkeyId }, () => {
+        setOpenDialog(null)
+        removePasskey()
       })
       return
     }
 
-    submitMutation(href('/administration/settings/passkeys'), { passkeyId })
+    removePasskey()
   }
 
   const handleDisableTwoFactor = () => {
+    const disableTwoFactor = () =>
+      submitMutation(href('/administration/settings/two-factor'), {
+        [FORM_CONFIG.intent.name]: FORM_CONFIG.intent.value.delete,
+      })
+
     if (!isRecentlyAuthenticated()) {
-      setOpenDialog({
-        name: 'identity-check',
-        settingsContinue: { dialog: 'disable-two-factor' },
+      requireIdentityCheck({ dialog: 'disable-two-factor' }, () => {
+        setOpenDialog(null)
+        disableTwoFactor()
       })
       return
     }
 
-    submitMutation(href('/administration/settings/two-factor'), {
-      [FORM_CONFIG.intent.name]: FORM_CONFIG.intent.value.delete,
-    })
+    disableTwoFactor()
   }
 
   const removedPasskey =
@@ -313,13 +375,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   actions={
                     <RegisterPasskey
                       isRecentlyAuthenticated={isRecentlyAuthenticated}
-                      onProblemChange={setPasskeyProblem}
-                      onRequireIdentityCheck={() =>
-                        setOpenDialog({
-                          name: 'identity-check',
-                          settingsContinue: null,
-                        })
-                      }
+                      onRequireIdentityCheck={requireIdentityCheckForPasskey}
+                      registration={passkeyRegistration}
                     />
                   }
                   align={'start'}
@@ -373,12 +430,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   )}
                   {passkeyProblem !== null && (
                     <PasskeyProblem
-                      onRequireIdentityCheck={() =>
-                        setOpenDialog({
-                          name: 'identity-check',
-                          settingsContinue: null,
-                        })
-                      }
+                      onRequireIdentityCheck={requireIdentityCheckForPasskey}
                       problem={passkeyProblem}
                     />
                   )}
@@ -521,8 +573,23 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       {openDialog?.name === 'identity-check' && (
         <IdentityCheckDialog
+          email={user.email}
+          failure={openDialog.failure}
+          hasPasskey={passkeys.length > 0}
+          isGoogleLinked={user.isGoogleLinked}
+          isRecentlyAuthenticated={isRecentlyAuthenticated}
           onClose={closeDialog(openDialog)}
-          redirectTo={buildSettingsContinuePath(openDialog.settingsContinue)}
+          onVerified={openDialog.onVerified}
+          settingsContinuePath={buildSettingsContinuePath(
+            openDialog.settingsContinue,
+          )}
+        />
+      )}
+
+      {openDialog?.name === 'add-passkey' && (
+        <AddPasskeyDialog
+          onAdd={passkeyRegistration.start}
+          onClose={closeDialog(openDialog)}
         />
       )}
 

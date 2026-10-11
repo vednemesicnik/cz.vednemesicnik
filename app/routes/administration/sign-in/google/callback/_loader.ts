@@ -1,24 +1,19 @@
-import { ALLOWED_EMAIL_DOMAIN } from '@constants/auth'
-import type { TokenPayload } from 'google-auth-library'
 import { redirect } from 'react-router'
 import { GOOGLE_PROVIDER_NAME } from '~/config/connection-config'
 import { requireUnauthenticated } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { prisma } from '~/utils/db.server'
+import { verifyGoogleCallback } from '~/utils/oauth/verify-google-callback.server'
 import {
-  createGoogleOAuthClient,
   deleteOAuthCookieSession,
   getOAuthCookieSession,
-  safeCompare,
 } from '~/utils/oauth.server'
 import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
 
 import type { Route } from './+types/route'
+import { verifyIdentityWithGoogle } from './utils/verify-identity-with-google.server'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  // Never let an already-signed-in admin complete a callback and swap sessions.
-  await requireUnauthenticated(request)
-
   // Read the transient OAuth material, then destroy the cookie regardless of
   // outcome — it is strictly single-use.
   const cookieSession = await getOAuthCookieSession(request)
@@ -28,6 +23,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const storedNonce = cookieSession.get('nonce')
   const codeVerifier = cookieSession.get('codeVerifier')
   const redirectTo = cookieSession.get('redirectTo')
+
+  // The identity check of a signed-in user (design 29d) shares the registered
+  // callback URL; it marks the current session instead of signing in.
+  if (cookieSession.get('purpose') === 'verify-identity') {
+    return verifyIdentityWithGoogle({
+      destroyCookie,
+      oauth: { codeVerifier, redirectTo, storedNonce, storedState },
+      request,
+    })
+  }
+
+  // Never let an already-signed-in admin complete a callback and swap sessions.
+  await requireUnauthenticated(request)
 
   // Preserve the original redirectTo across the error bounce, so retrying sign-in
   // still returns the user to where they started. (It was sanitized on the way
@@ -51,67 +59,16 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     })
   }
 
-  const url = new URL(request.url)
+  const result = await verifyGoogleCallback({
+    codeVerifier,
+    storedNonce,
+    storedState,
+    url: new URL(request.url),
+  })
 
-  // Google reports user-side failures (denied consent, etc.) via ?error.
-  if (url.searchParams.get('error') !== null) throw failTo('oauth')
+  if (result.status === 'failed') throw failTo(result.error, result.email)
 
-  const code = url.searchParams.get('code')
-  const state = url.searchParams.get('state')
-
-  // CSRF: the echoed state must match the one we stored (constant-time).
-  if (
-    code === null ||
-    codeVerifier === undefined ||
-    !safeCompare(state, storedState)
-  ) {
-    throw failTo('oauth')
-  }
-
-  let payload: TokenPayload | undefined
-  try {
-    // Inside the try: createGoogleOAuthClient throws when the Google env is
-    // missing — treat that like any other OAuth failure (bounce + clear cookie)
-    // rather than a 500.
-    const client = createGoogleOAuthClient()
-
-    const { tokens } = await client.getToken({ code, codeVerifier })
-
-    if (!tokens.id_token) throw new Error('missing id_token')
-
-    // verifyIdToken checks the RS256 signature against Google's JWKS and the
-    // iss / aud / exp claims.
-    const ticket = await client.verifyIdToken({
-      audience: process.env.GOOGLE_CLIENT_ID,
-      idToken: tokens.id_token,
-    })
-
-    payload = ticket.getPayload()
-  } catch {
-    // Do not log the raw error — it may embed the authorization code / tokens.
-    console.error(
-      '[google-oauth] token exchange or id_token verification failed',
-    )
-    throw failTo('oauth')
-  }
-
-  if (payload === undefined) throw failTo('oauth')
-
-  // Replay guard: the id_token must carry the nonce we issued.
-  if (!safeCompare(payload.nonce, storedNonce)) throw failTo('oauth')
-
-  const email = payload.email?.toLowerCase()
-
-  // Domain enforcement — three independent checks. `hd` is only trustworthy
-  // because it comes from a Google-signed id_token (verified above).
-  if (
-    payload.email_verified !== true ||
-    payload.hd !== ALLOWED_EMAIL_DOMAIN ||
-    email === undefined ||
-    !email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)
-  ) {
-    throw failTo('domain', email)
-  }
+  const { email, subject } = result
 
   try {
     // Already linked → sign in that user.
@@ -119,7 +76,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       select: { userId: true },
       where: {
         providerName_providerId: {
-          providerId: payload.sub,
+          providerId: subject,
           providerName: GOOGLE_PROVIDER_NAME,
         },
       },
@@ -144,7 +101,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
     await prisma.connection.create({
       data: {
-        providerId: payload.sub,
+        providerId: subject,
         providerName: GOOGLE_PROVIDER_NAME,
         userId: user.id,
       },

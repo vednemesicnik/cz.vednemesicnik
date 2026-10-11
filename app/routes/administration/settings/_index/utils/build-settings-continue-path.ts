@@ -3,8 +3,9 @@ import { href } from 'react-router'
 import type { SettingsContinue } from './parse-settings-continue'
 
 /**
- * Builds the address the identity check returns to: the settings page with a
- * one-shot hint naming the dialog to reopen (read by `parseSettingsContinue`).
+ * Builds the address the identity check through Google returns to: the
+ * settings page with a one-shot hint naming the dialog to reopen (read by
+ * `parseSettingsContinue`).
  *
  * @param settingsContinue - The dialog to reopen, or `null` for the bare page.
  * @returns The settings path with its search string.

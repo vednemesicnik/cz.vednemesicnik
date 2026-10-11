@@ -6,7 +6,8 @@ const RECENT_SIGN_IN_ATTEMPTS_COUNT = 5
 
 /**
  * Reads an account's last sign-in attempts from `AuthLog`, newest first,
- * successful and failed, without sign-outs (design 29a, 28e). Rows match by
+ * successful and failed, without sign-outs and identity checks (design 29a,
+ * 28e). Rows match by
  * `userId` or by `email`: a failed magic link carries only the email.
  *
  * @param account.userId - The account's user id.
@@ -25,7 +26,9 @@ export const getRecentSignInAttempts = async ({
     select: { createdAt: true, event: true, id: true, method: true },
     take: RECENT_SIGN_IN_ATTEMPTS_COUNT,
     where: {
-      event: { not: 'sign_out' },
+      event: {
+        in: ['sign_in_success', 'sign_in_failure', 'two_factor_failure'],
+      },
       OR: [{ userId }, { email }],
     },
   })

@@ -64,7 +64,7 @@ describe('sendMagicLinkEmail', () => {
       ),
     )
 
-    await sendMagicLinkEmail(recipient)
+    await expect(sendMagicLinkEmail(recipient)).resolves.toBe(false)
 
     expect(console.error).toHaveBeenCalledOnce()
     const [message] = vi.mocked(console.error).mock.calls[0]
@@ -78,7 +78,7 @@ describe('sendMagicLinkEmail', () => {
       vi.fn().mockResolvedValue(jsonResponse({ ok: true })),
     )
 
-    await sendMagicLinkEmail(recipient)
+    await expect(sendMagicLinkEmail(recipient)).resolves.toBe(true)
 
     expect(console.error).not.toHaveBeenCalled()
   })
@@ -106,7 +106,7 @@ describe('sendMagicLinkEmail', () => {
   test('swallows and logs when the request throws (network / timeout)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('boom')))
 
-    await expect(sendMagicLinkEmail(recipient)).resolves.toBeUndefined()
+    await expect(sendMagicLinkEmail(recipient)).resolves.toBe(false)
     expect(console.error).toHaveBeenCalledWith(
       '[magic-link] GAS request threw —',
       expect.any(Error),

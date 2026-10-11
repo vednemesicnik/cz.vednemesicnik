@@ -1,114 +1,23 @@
-import { startRegistration } from '@simplewebauthn/browser'
-import { type FormEvent, useEffect, useRef } from 'react'
-import { useFetcher, useRevalidator } from 'react-router'
-
 import { Button } from '~/components/button'
-import type { action as generateRegistrationOptionsAction } from '~/routes/administration/settings/passkeys/generate-registration-options/_action'
-import type { action as verifyRegistrationResponseAction } from '~/routes/administration/settings/passkeys/verify-registration-response/_action'
-import { useBiometric } from '~/utils/use-biometric'
 
 import styles from './_styles.module.css'
-import {
-  getRegistrationProblem,
-  type RegistrationProblem,
-} from './get-registration-problem'
+import type { PasskeyRegistration } from './use-register-passkey'
 
 type Props = {
-  // Whether this session may still change sign-in methods without signing in again.
+  // The page's registration ceremony (`useRegisterPasskey`).
+  registration: PasskeyRegistration
+  // Whether this session may still change sign-in methods without another identity check.
   isRecentlyAuthenticated: () => boolean
   // Opens the identity check (design 29d).
   onRequireIdentityCheck: () => void
-  // Shows the problem in the row's value column (29d), `null` clears it; pass
-  // a state setter, the effects below depend on it.
-  onProblemChange: (problem: RegistrationProblem | null) => void
 }
 
 export const RegisterPasskey = ({
+  registration,
   isRecentlyAuthenticated,
   onRequireIdentityCheck,
-  onProblemChange,
 }: Props) => {
-  const { isBiometricSupported } = useBiometric()
-  const revalidator = useRevalidator()
-
-  const generateRegistrationOptionsFetcher =
-    useFetcher<typeof generateRegistrationOptionsAction>()
-  const verifyRegistrationResponseFetcher =
-    useFetcher<typeof verifyRegistrationResponseAction>()
-
-  const generatedData = generateRegistrationOptionsFetcher.data
-  const options =
-    generatedData !== undefined && 'options' in generatedData
-      ? generatedData.options
-      : null
-
-  // Tracks the challenge already handed to the authenticator so re-renders
-  // (fetcher state changes, revalidation) don't re-run the ceremony.
-  const startedOptionsRef = useRef<typeof options>(null)
-
-  // Once the server returns the challenge, run the authenticator ceremony and
-  // POST the attestation for verification (which persists the Passkey row).
-  useEffect(() => {
-    if (options === null) {
-      return
-    }
-
-    if (startedOptionsRef.current === options) {
-      return
-    }
-    startedOptionsRef.current = options
-
-    const register = async () => {
-      try {
-        const registrationResponse = await startRegistration({
-          optionsJSON: options,
-        })
-
-        verifyRegistrationResponseFetcher.submit(
-          JSON.stringify(registrationResponse),
-          {
-            action:
-              '/administration/settings/passkeys/verify-registration-response',
-            encType: 'application/json',
-            method: 'POST',
-          },
-        )
-      } catch (error) {
-        onProblemChange(getRegistrationProblem(error))
-      }
-    }
-
-    void register()
-  }, [onProblemChange, options, verifyRegistrationResponseFetcher])
-
-  const verifiedData = verifyRegistrationResponseFetcher.data
-  const isVerified = verifiedData?.verified === true
-
-  // Refresh the list once the new passkey is stored.
-  useEffect(() => {
-    if (isVerified) {
-      void revalidator.revalidate()
-    }
-  }, [isVerified, revalidator])
-
-  // The session aged past the recent-authentication window on this page.
-  useEffect(() => {
-    if (generatedData?.status === 'reauthenticate') {
-      onProblemChange('reauthenticate')
-    }
-  }, [generatedData, onProblemChange])
-
-  useEffect(() => {
-    if (verifiedData === undefined || verifiedData.verified) {
-      return
-    }
-
-    onProblemChange(
-      verifiedData.status === 'reauthenticate' ? 'reauthenticate' : 'failed',
-    )
-  }, [onProblemChange, verifiedData])
-
-  if (!isBiometricSupported) {
+  if (!registration.isBiometricSupported) {
     return (
       <p className={styles.unsupported}>
         Na tomto zařízení nelze přidat passkey. Zkuste jiné zařízení.
@@ -116,37 +25,25 @@ export const RegisterPasskey = ({
     )
   }
 
-  const GenerateRegistrationOptionsForm =
-    generateRegistrationOptionsFetcher.Form
-
-  const isPending =
-    generateRegistrationOptionsFetcher.state !== 'idle' ||
-    verifyRegistrationResponseFetcher.state !== 'idle'
-
   // A stale session goes through the identity check before the ceremony starts.
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    onProblemChange(null)
-
+  const handleClick = () => {
     if (!isRecentlyAuthenticated()) {
-      event.preventDefault()
       onRequireIdentityCheck()
+      return
     }
+
+    registration.start()
   }
 
   return (
-    <GenerateRegistrationOptionsForm
-      action={'/administration/settings/passkeys/generate-registration-options'}
-      method={'post'}
-      onSubmit={handleSubmit}
+    <Button
+      disabled={registration.isPending}
+      onClick={handleClick}
+      size={'sm'}
+      type={'button'}
+      variant={'outline'}
     >
-      <Button
-        disabled={isPending}
-        size={'sm'}
-        type={'submit'}
-        variant={'outline'}
-      >
-        Přidat passkey
-      </Button>
-    </GenerateRegistrationOptionsForm>
+      Přidat passkey
+    </Button>
   )
 }
