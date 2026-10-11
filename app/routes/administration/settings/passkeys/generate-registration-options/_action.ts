@@ -37,6 +37,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     attestationType: 'none',
     // Any passkey: built-in, a phone via QR code or a security key (design
     // 29a). Sign-in is usernameless, so the passkey must be discoverable.
+    // No `preferredAuthenticatorType`: 'localDevice' also sets the platform
+    // attachment, which hides keys and phones; browsers offer this device
+    // first anyway.
     authenticatorSelection: {
       residentKey: 'required',
       userVerification: 'required',
@@ -46,8 +49,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       id: passkey.credentialId,
       transports: JSON.parse(passkey.credentialTransports),
     })),
-    // The browser still offers the built-in authenticator first.
-    preferredAuthenticatorType: 'localDevice',
     rpID: process.env.RELYING_PARTY_ID ?? '',
     rpName: process.env.RELYING_PARTY_NAME ?? '',
     userName: session.user.username,
