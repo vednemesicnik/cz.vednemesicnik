@@ -1,7 +1,15 @@
+.heading {
+  @layer route {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+  }
+}
+
 .subject {
   @layer route {
     margin: 0;
     font-size: var(--font-size-sm);
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
   }
 }

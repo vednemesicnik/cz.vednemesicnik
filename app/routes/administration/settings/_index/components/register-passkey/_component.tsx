@@ -17,10 +17,10 @@ export const RegisterPasskey = ({
   isRecentlyAuthenticated,
   onRequireIdentityCheck,
 }: Props) => {
-  if (!registration.isBiometricSupported) {
+  if (!registration.isPasskeySupported) {
     return (
       <p className={styles.unsupported}>
-        Na tomto zařízení nelze přidat passkey. Zkuste jiné zařízení.
+        V tomto prohlížeči nelze přidat passkey. Zkuste jiný prohlížeč.
       </p>
     )
   }

@@ -16,7 +16,7 @@ import type { action as generateAuthenticationOptionsAction } from '~/routes/adm
 import type { action as verifyAuthenticationResponseAction } from '~/routes/administration/settings/verify-identity/passkey/verify-authentication-response/_action'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import type { IdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
-import { useBiometric } from '~/utils/use-biometric'
+import { usePasskeySupport } from '~/utils/use-passkey-support'
 
 import { useModalDialog } from '../../utils/use-modal-dialog'
 import { TextButton } from '../text-button'
@@ -74,7 +74,7 @@ export const IdentityCheckDialog = ({
   onClose,
 }: Props) => {
   const ref = useModalDialog(onClose)
-  const { isBiometricSupported } = useBiometric()
+  const { isPasskeySupported } = usePasskeySupport()
   const revalidator = useRevalidator()
   const authenticityToken = useAuthenticityToken()
 
@@ -297,7 +297,7 @@ export const IdentityCheckDialog = ({
             </AdminModalDescription>
 
             <div className={styles.paths} ref={pathsRef}>
-              {hasPasskey && isBiometricSupported && (
+              {hasPasskey && isPasskeySupported && (
                 <Button
                   disabled={isPending}
                   onClick={handlePasskey}

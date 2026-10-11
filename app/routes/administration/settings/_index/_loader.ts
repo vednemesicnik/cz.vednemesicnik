@@ -48,6 +48,7 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
               createdAt: true,
               credentialDeviceType: true,
               id: true,
+              kind: true,
               lastUsedAt: true,
               name: true,
             },
@@ -127,6 +128,7 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
       createdAt: formatNumericDate(passkey.createdAt),
       deviceType: passkey.credentialDeviceType,
       id: passkey.id,
+      kind: passkey.kind,
       lastUsedAt:
         passkey.lastUsedAt === null
           ? null

@@ -44,8 +44,15 @@ export const ConfirmDialog = ({
   return (
     <AdminDialog ref={ref}>
       <AdminModalContent>
-        <AdminModalTitle>{title}</AdminModalTitle>
-        {subject !== undefined && <p className={styles.subject}>{subject}</p>}
+        {subject === undefined ? (
+          <AdminModalTitle>{title}</AdminModalTitle>
+        ) : (
+          // The subject belongs to the title, tight under it (design 29d).
+          <hgroup className={styles.heading}>
+            <AdminModalTitle>{title}</AdminModalTitle>
+            <p className={styles.subject}>{subject}</p>
+          </hgroup>
+        )}
         <AdminModalDescription>{description}</AdminModalDescription>
         <AdminModalActions>
           <Button

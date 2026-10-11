@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import type { AuthorRoleName, ColorScheme } from '@generated/prisma/enums'
+import { clsx } from 'clsx'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { href, useFetcher, useLocation, useNavigate } from 'react-router'
 
@@ -48,6 +49,7 @@ import { buildSettingsContinuePath } from './utils/build-settings-continue-path'
 import { formatOtherSignIns } from './utils/format-other-sign-ins'
 import { formatRemainingBackupCodes } from './utils/format-remaining-backup-codes'
 import { getPasskeyDetails } from './utils/get-passkey-details'
+import { getPasskeyLabel } from './utils/get-passkey-label'
 import type { SettingsContinue } from './utils/parse-settings-continue'
 
 export { action } from './_action'
@@ -68,18 +70,6 @@ const colorSchemeOptions = [
   { label: 'Světlý', value: 'light' },
   { label: 'Tmavý', value: 'dark' },
 ] satisfies { label: string; value: ColorScheme }[]
-
-// credentialDeviceType → row title of a passkey without a name (design 29a).
-const passkeyTypeLabels: Record<string, string> = {
-  multiDevice: 'Synchronizovaný',
-  singleDevice: 'Vázaný na zařízení',
-}
-
-// credentialDeviceType → small type under a passkey's name (design 29a).
-const passkeyTypeDetails: Record<string, string> = {
-  multiDevice: 'synchronizovaný',
-  singleDevice: 'vázaný na zařízení',
-}
 
 type OpenDialog =
   | { name: 'profile' }
@@ -309,6 +299,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     openDialog?.name === 'remove-passkey'
       ? passkeys.find((passkey) => passkey.id === openDialog.passkeyId)
       : undefined
+  // A named passkey needs no line under the dialog title (design 29d).
+  const removedPasskeyLabel =
+    removedPasskey === undefined || removedPasskey.name !== null
+      ? null
+      : getPasskeyLabel(removedPasskey)
 
   const authorRole = `${getAuthorRoleLabel(user.authorRoleName)} · ${
     authorRoleDescriptions[user.authorRoleName]
@@ -322,7 +317,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <WelcomeRow
           isAddingPasskey={passkeyRegistration.isPending}
           onAddPasskey={
-            passkeyRegistration.isBiometricSupported
+            passkeyRegistration.isPasskeySupported
               ? handleWelcomeAddPasskey
               : undefined
           }
@@ -409,46 +404,44 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   <span>Zatím žádný.</span>
                 ) : (
                   <ul className={styles.passkeys}>
-                    {passkeys.map((passkey) => (
-                      <li className={styles.passkey} key={passkey.id}>
-                        <span className={styles.passkeyText}>
-                          <span className={styles.passkeyTitle}>
-                            {passkey.name ??
-                              passkeyTypeLabels[passkey.deviceType] ??
-                              passkey.deviceType}
+                    {passkeys.map((passkey) => {
+                      const label = getPasskeyLabel(passkey)
+
+                      return (
+                        <li className={styles.passkey} key={passkey.id}>
+                          <span className={styles.passkeyText}>
+                            <span className={styles.passkeyTitle}>
+                              {label.title}
+                            </span>
+                            <span className={styles.note}>
+                              {getPasskeyDetails({
+                                createdAt: passkey.createdAt,
+                                lastUsedAt: passkey.lastUsedAt,
+                                type: label.type,
+                              }).map((detail, index) => (
+                                <Fragment key={detail}>
+                                  {/* The line breaks after a dot, never inside a date. */}
+                                  {index > 0 && '\u00a0· '}
+                                  <span className={styles.passkeyDetail}>
+                                    {detail}
+                                  </span>
+                                </Fragment>
+                              ))}
+                            </span>
                           </span>
-                          <span className={styles.note}>
-                            {getPasskeyDetails({
-                              createdAt: passkey.createdAt,
-                              lastUsedAt: passkey.lastUsedAt,
-                              type:
-                                passkey.name === null
-                                  ? null
-                                  : (passkeyTypeDetails[passkey.deviceType] ??
-                                    passkey.deviceType),
-                            }).map((detail, index) => (
-                              <Fragment key={detail}>
-                                {/* The line breaks after a dot, never inside a date. */}
-                                {index > 0 && '\u00a0· '}
-                                <span className={styles.passkeyDetail}>
-                                  {detail}
-                                </span>
-                              </Fragment>
-                            ))}
-                          </span>
-                        </span>
-                        <TextButton
-                          onClick={() =>
-                            setOpenDialog({
-                              name: 'remove-passkey',
-                              passkeyId: passkey.id,
-                            })
-                          }
-                        >
-                          Odebrat…
-                        </TextButton>
-                      </li>
-                    ))}
+                          <TextButton
+                            onClick={() =>
+                              setOpenDialog({
+                                name: 'remove-passkey',
+                                passkeyId: passkey.id,
+                              })
+                            }
+                          >
+                            Odebrat…
+                          </TextButton>
+                        </li>
+                      )
+                    })}
                   </ul>
                 )}
                 {passkeyProblem !== null && (
@@ -457,9 +450,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     problem={passkeyProblem}
                   />
                 )}
+                <span className={clsx(styles.note, styles.passkeyDescription)}>
+                  Přihlášení bez hesla pomocí passkey v zařízení nebo na
+                  bezpečnostním klíči.
+                </span>
+                {/* Always shown: the app can't tell a shared computer (29a, f3mu0o7u). */}
                 <span className={styles.note}>
-                  Přihlášení otiskem prstu, obličejem nebo PINem zařízení, bez
-                  hesla.
+                  Na sdíleném počítači ukládejte passkey do svého telefonu nebo
+                  na svůj bezpečnostní klíč. Možnost vyberte v okně prohlížeče.
                 </span>
               </AdminDetailRow>
             </div>
@@ -722,24 +720,36 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         removedPasskey !== undefined && (
           <ConfirmDialog
             confirmLabel={'Odebrat'}
-            description={
-              'Tento passkey už nebude možné použít k přihlášení. Jeho uloženou kopii můžete smazat i ze zařízení.'
-            }
+            description={`Tento passkey už nepůjde použít k přihlášení do tohoto účtu. ${
+              removedPasskey.kind === 'security_key'
+                ? 'Z bezpečnostního klíče'
+                : 'Ze zařízení'
+            } ho můžete smazat také.`}
             onClose={closeDialog(openDialog)}
             onConfirm={() => handleRemovePasskey(removedPasskey.id)}
-            // A named passkey says which one in the title; without a name, the
-            // type and date tell it apart (design 29d).
+            // A named passkey says which one in the title; a key, a phone and
+            // a passkey without a name get the row's line under it (29d).
             subject={
-              removedPasskey.name === null
-                ? `${
-                    passkeyTypeLabels[removedPasskey.deviceType] ??
-                    removedPasskey.deviceType
-                  } · přidán ${removedPasskey.createdAt}`
-                : undefined
+              removedPasskeyLabel === null ? undefined : (
+                <>
+                  {removedPasskeyLabel.type === null ? (
+                    // Without a name the type is the title, so it stands once.
+                    removedPasskeyLabel.title
+                  ) : (
+                    <>
+                      <span className={styles.subjectTitle}>
+                        {removedPasskeyLabel.title}
+                      </span>
+                      {` · ${removedPasskeyLabel.type}`}
+                    </>
+                  )}
+                  {` · přidán ${removedPasskey.createdAt}`}
+                </>
+              )
             }
             title={
               removedPasskey.name === null
-                ? 'Odebrat passkey?'
+                ? 'Odebrat passkey z účtu?'
                 : `Odebrat passkey ${removedPasskey.name}?`
             }
           />

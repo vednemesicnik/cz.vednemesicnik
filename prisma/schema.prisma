@@ -120,23 +120,32 @@ model Session {
 }
 
 model Passkey {
-  id                   String    @id @default(cuid())
-  credentialId         String    @unique
+  id                   String       @id @default(cuid())
+  credentialId         String       @unique
   credentialPublicKey  Bytes
   credentialCounter    BigInt
   credentialTransports String
   credentialDeviceType String
   credentialBackedUp   Boolean
-  // Device and browser from the User-Agent at registration; null before #554.
+  // Device and browser from the User-Agent at registration, built-in passkeys
+  // only; null before #554.
   name                 String?
+  // Where the passkey lives, from the registration response; null before #571.
+  kind                 PasskeyKind?
   lastUsedAt           DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  user                 User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId               String
 
   // non-unique foreign key
   @@index([userId])
+}
+
+enum PasskeyKind {
+  built_in
+  security_key
+  phone // a phone or tablet via QR code (hybrid)
 }
 
 model Connection {
