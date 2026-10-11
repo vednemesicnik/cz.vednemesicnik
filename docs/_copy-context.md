@@ -165,8 +165,9 @@ Týká se to i veřejného webu:
 - **Přihlášení drží prohlížeč, ne zařízení.** Jiný prohlížeč téhož počítače, prohlížeč uvnitř
   poštovní aplikace i anonymní okno jsou jiné přihlášení. Věta „na tomto zařízení“ tam, kde jde
   o prohlížeč, je nepravda.
-- Změna hesla, dvoufázového ověření nebo passkey chce přihlášení z posledních 10 minut, jinak
-  se člověk musí znovu ověřit.
+- Změna hesla, dvoufázového ověření nebo passkey chce přihlášení nebo ověření z posledních
+  10 minut, jinak se člověk musí znovu ověřit. Ověření (passkey, Google nebo odkaz v e‑mailu)
+  nikoho neodhlásí a platí pro prohlížeč, ve kterém proběhlo.
 - **Uživatelská role**, ne *role účtu*.
 
 ## Dary a formuláře na webu (rozhodnuto 28.–29. 9. 2026)
