@@ -1,4 +1,5 @@
-import type { ActionFunctionArgs } from 'react-router'
+import { type ActionFunctionArgs, href, redirect } from 'react-router'
+
 import {
   deleteSessionAuthCookieSession,
   getSessionAuthCookieSession,
@@ -6,12 +7,13 @@ import {
 } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { prisma } from '~/utils/db.server'
-import { redirectBack } from '~/utils/redirect-back'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import { deleteSession } from './utils/delete-session.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const sessionAuthCookieSession = await getSessionAuthCookieSession(request)
+  const formData = await request.formData()
   const sessionId = getSessionAuthId(sessionAuthCookieSession)
 
   // Only record / delete for an actual session — a session-less POST is not a
@@ -36,11 +38,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     deleteSession(sessionId)
   }
 
-  return redirectBack(request, {
-    headers: {
-      'Set-Cookie': await deleteSessionAuthCookieSession(
-        sessionAuthCookieSession,
-      ),
+  // Sign-in, back to the page the sign-out came from. The page is sent by the
+  // form, not read from Referer: a document opened at the sign-in link's
+  // confirmation keeps its `no-referrer` policy for the whole session.
+  const redirectTo = formData.get('redirectTo')
+
+  return redirect(
+    withRedirectTo(
+      href('/administration/sign-in'),
+      typeof redirectTo === 'string' ? redirectTo : '',
+    ),
+    {
+      headers: {
+        'Set-Cookie': await deleteSessionAuthCookieSession(
+          sessionAuthCookieSession,
+        ),
+      },
     },
-  })
+  )
 }
