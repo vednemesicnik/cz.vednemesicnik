@@ -151,4 +151,21 @@ describe('sendMagicLinkEmail', () => {
       .digest('hex')
     expect(envelope.signature).toBe(expected)
   })
+
+  test('signs an invitation with its kind and the inviter name', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const invitation = {
+      ...recipient,
+      inviterName: 'Petr Dvořák',
+      kind: 'invitation' as const,
+    }
+
+    expect(await sendMagicLinkEmail(invitation)).toBe(true)
+
+    const [, requestInit] = fetchMock.mock.calls[0]
+    const envelope = JSON.parse(requestInit.body as string)
+    expect(JSON.parse(envelope.payload)).toEqual(invitation)
+  })
 })

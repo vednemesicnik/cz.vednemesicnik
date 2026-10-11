@@ -3,10 +3,10 @@
   "definitions": {
     "Envelope": {
       "additionalProperties": false,
-      "description": "How a request should travel. `payload` is a SignInMagicLinkRequest serialised to a string, and it is signed as that exact string — never re-serialised, so the signature does not depend on JSON key order agreeing between the two ends. OWN_SECRET is the signing key and never leaves either end.",
+      "description": "How a request should travel. `payload` is a SignInMagicLinkRequest or an InvitationMagicLinkRequest serialised to a string, and it is signed as that exact string — never re-serialised, so the signature does not depend on JSON key order agreeing between the two ends. OWN_SECRET is the signing key and never leaves either end.",
       "properties": {
         "payload": {
-          "description": "JSON of SignInMagicLinkRequest.",
+          "description": "JSON of SignInMagicLinkRequest or InvitationMagicLinkRequest.",
           "type": "string"
         },
         "signature": {
@@ -22,6 +22,31 @@
       "required": ["timestamp", "payload", "signature"],
       "type": "object"
     },
+    "InvitationMagicLinkRequest": {
+      "additionalProperties": false,
+      "description": "The invitation of a new user: the same sign-in link, sent with the invitation text, which names who sent it.",
+      "properties": {
+        "email": {
+          "description": "Recipient address; must be on the vednemesicnik.cz domain.",
+          "type": "string"
+        },
+        "inviterName": {
+          "description": "Who sends the invitation, as one string in the nominative: a single line with no e-mail address or link.",
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string"
+        },
+        "kind": {
+          "const": "invitation"
+        },
+        "link": {
+          "description": "The sign-in verify URL. Must be an https link on the configured origin whose path is the verify route (/administration/sign-in/magic-link/verify).",
+          "type": "string"
+        }
+      },
+      "required": ["kind", "email", "link", "inviterName"],
+      "type": "object"
+    },
     "SignInMagicLinkRequest": {
       "additionalProperties": false,
       "properties": {
@@ -31,10 +56,6 @@
         },
         "link": {
           "description": "The sign-in verify URL. Must be an https link on the configured origin whose path is the verify route (/administration/sign-in/magic-link/verify).",
-          "type": "string"
-        },
-        "secret": {
-          "description": "DEPRECATED, and accepted for one release only. Send an Envelope instead: a secret in the body is a working credential for anything that logs a request. Set only when posting the unsigned legacy shape.",
           "type": "string"
         }
       },
@@ -96,6 +117,6 @@
       ]
     }
   },
-  "description": "Contract for the Vedneměsíčník administration magic-link web app. POST a SignInMagicLinkRequest to send a sign-in link; the response is a SignInMagicLinkResponse. The send is delegated to the Mailer, whose reason is surfaced in mailerError when error is \"mailer_send_failed\".",
+  "description": "Contract for the Vedneměsíčník administration magic-link web app. POST a SignInMagicLinkRequest to send a sign-in link, or an InvitationMagicLinkRequest to send the same link as the invitation of a new user; the response is a SignInMagicLinkResponse. The send is delegated to the Mailer, whose reason is surfaced in mailerError when error is \"mailer_send_failed\".",
   "title": "MagicLink"
 }
