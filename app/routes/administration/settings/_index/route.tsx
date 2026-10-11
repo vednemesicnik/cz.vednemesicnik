@@ -26,6 +26,8 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { useColorScheme } from '~/hooks/use-color-scheme'
 import type { IdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
+import { runWithViewTransition } from '~/utils/run-with-view-transition'
+import { waitForColorScheme } from '~/utils/wait-for-color-scheme'
 
 import type { action } from './_action'
 import styles from './_styles.module.css'
@@ -557,9 +559,22 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 }
                 legend={'Režim'}
                 name={COLOR_SCHEME_CONFIG.fieldName}
-                onChange={(event) =>
-                  colorSchemeFetcher.submit(event.currentTarget.form)
-                }
+                onChange={(event) => {
+                  // Read now: React restores the controlled radio before the
+                  // transition's update runs.
+                  const formData = new FormData(
+                    event.currentTarget.form ?? undefined,
+                  )
+                  const nextColorScheme = event.currentTarget
+                    .value as ColorScheme
+
+                  // The whole page changes colour: cross-fade it once the
+                  // pending scheme is rendered, not after the round trip (#560).
+                  runWithViewTransition(async () => {
+                    void colorSchemeFetcher.submit(formData, { method: 'post' })
+                    await waitForColorScheme(nextColorScheme)
+                  })
+                }}
                 options={colorSchemeOptions}
                 value={colorScheme}
               />
