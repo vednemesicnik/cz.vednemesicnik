@@ -10,6 +10,7 @@ import {
   getBiometricCookieSession,
 } from '~/utils/biometric.server'
 import { prisma } from '~/utils/db.server'
+import { getPasskeyKind } from '~/utils/passkey/get-passkey-kind'
 import { getPasskeyName } from '~/utils/passkey/get-passkey-name'
 import { isRequestRecentlyAuthenticated } from '~/utils/recent-authentication.server'
 
@@ -43,6 +44,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   ) {
     const { registrationInfo } = verifiedRegistrationResponse
 
+    const kind = getPasskeyKind({
+      authenticatorAttachment: body.authenticatorAttachment,
+      transports: registrationInfo.credential.transports,
+    })
+
     const session = await prisma.session.findUniqueOrThrow({
       select: { userId: true },
       where: { id: sessionAuthId },
@@ -60,7 +66,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         credentialTransports: JSON.stringify(
           registrationInfo.credential.transports,
         ),
-        name: getPasskeyName(request.headers.get('User-Agent')),
+        kind,
+        // For a key or a phone, the User-Agent would name the computer the
+        // user sat at, not the passkey.
+        name:
+          kind === 'built_in'
+            ? getPasskeyName(request.headers.get('User-Agent'))
+            : null,
         user: {
           connect: {
             id: session.userId,

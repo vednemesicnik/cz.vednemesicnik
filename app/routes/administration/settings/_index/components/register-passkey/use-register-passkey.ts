@@ -4,7 +4,7 @@ import { href, useFetcher, useRevalidator } from 'react-router'
 
 import type { action as generateRegistrationOptionsAction } from '~/routes/administration/settings/passkeys/generate-registration-options/_action'
 import type { action as verifyRegistrationResponseAction } from '~/routes/administration/settings/passkeys/verify-registration-response/_action'
-import { useBiometric } from '~/utils/use-biometric'
+import { usePasskeySupport } from '~/utils/use-passkey-support'
 
 import {
   getRegistrationProblem,
@@ -12,7 +12,7 @@ import {
 } from './get-registration-problem'
 
 export type PasskeyRegistration = {
-  isBiometricSupported: boolean
+  isPasskeySupported: boolean
   isPending: boolean
   start: () => void
 }
@@ -24,13 +24,13 @@ export type PasskeyRegistration = {
  *
  * @param onProblemChange - Shows the problem in the row's value column (29d),
  *   `null` clears it; pass a state setter, the effects depend on it.
- * @returns Whether the device can add a passkey, whether a ceremony runs, and
+ * @returns Whether the browser can add a passkey, whether a ceremony runs, and
  *   `start`, which asks for the challenge and runs the ceremony.
  */
 export const useRegisterPasskey = (
   onProblemChange: (problem: RegistrationProblem | null) => void,
 ): PasskeyRegistration => {
-  const { isBiometricSupported } = useBiometric()
+  const { isPasskeySupported } = usePasskeySupport()
   const revalidator = useRevalidator()
 
   const generateRegistrationOptionsFetcher =
@@ -122,7 +122,7 @@ export const useRegisterPasskey = (
   }, [onProblemChange, submit])
 
   return {
-    isBiometricSupported,
+    isPasskeySupported,
     isPending:
       generateRegistrationOptionsFetcher.state !== 'idle' ||
       verifyRegistrationResponseFetcher.state !== 'idle',

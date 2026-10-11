@@ -4,7 +4,7 @@ import { Button } from '~/components/button'
 import styles from './_styles.module.css'
 
 type Props = {
-  // Starts adding a passkey; absent where the device cannot hold one.
+  // Starts adding a passkey; absent in a browser without WebAuthn.
   onAddPasskey?: () => void
   isAddingPasskey: boolean
   onDismiss: () => void
@@ -13,7 +13,7 @@ type Props = {
 /**
  * The welcome row at the top of Settings after an invitation (design 29e):
  * how to sign in next time, and a passkey on offer. „Už nezobrazovat“ closes
- * it for good; on a device without passkeys only the first sentence stays.
+ * it for good; in a browser without passkeys only the first sentence stays.
  */
 export const WelcomeRow = ({
   onAddPasskey,

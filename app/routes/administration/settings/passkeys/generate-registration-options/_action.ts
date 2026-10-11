@@ -35,9 +35,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const options = await generateRegistrationOptions({
     attestationType: 'none',
+    // Any passkey: built-in, a phone via QR code or a security key (design
+    // 29a). Sign-in is usernameless, so the passkey must be discoverable.
     authenticatorSelection: {
-      authenticatorAttachment: 'platform',
-      residentKey: 'preferred',
+      residentKey: 'required',
       userVerification: 'required',
     },
     // Block registering an authenticator that is already enrolled.
@@ -45,6 +46,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       id: passkey.credentialId,
       transports: JSON.parse(passkey.credentialTransports),
     })),
+    // The browser still offers the built-in authenticator first.
+    preferredAuthenticatorType: 'localDevice',
     rpID: process.env.RELYING_PARTY_ID ?? '',
     rpName: process.env.RELYING_PARTY_NAME ?? '',
     userName: session.user.username,
