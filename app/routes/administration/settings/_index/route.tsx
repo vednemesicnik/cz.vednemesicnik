@@ -43,6 +43,7 @@ import type { RegistrationProblem } from './components/register-passkey/get-regi
 import { useRegisterPasskey } from './components/register-passkey/use-register-passkey'
 import { TextButton } from './components/text-button'
 import { TwoFactorDialog } from './components/two-factor-dialog'
+import { WelcomeRow } from './components/welcome-row'
 import { buildSettingsContinuePath } from './utils/build-settings-continue-path'
 import { formatOtherSignIns } from './utils/format-other-sign-ins'
 import { formatRemainingBackupCodes } from './utils/format-remaining-backup-codes'
@@ -113,6 +114,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     passkeys,
     recentAuthenticationRemainingMs,
     settingsContinue,
+    showWelcome,
     signInAttempts,
     user,
   } = loaderData
@@ -126,6 +128,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const colorSchemeFetcher = useFetcher({
     key: COLOR_SCHEME_CONFIG.fetcherKey,
   })
+  // Closing the welcome row hides it at once (design 29e).
+  const welcomeFetcher = useFetcher()
   const colorScheme = useColorScheme()
   const authenticityToken = useAuthenticityToken()
   const showToast = useToast()
@@ -185,6 +189,27 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     requireIdentityCheck({ dialog: 'add-passkey' }, () =>
       setOpenDialog({ name: 'add-passkey' }),
     )
+  }
+
+  // The welcome row adds a passkey the way the Passkey row does (design 29e).
+  const handleWelcomeAddPasskey = () => {
+    if (!isRecentlyAuthenticated()) {
+      requireIdentityCheckForPasskey()
+      return
+    }
+
+    passkeyRegistration.start()
+  }
+
+  const dismissWelcome = () => {
+    const formData = new FormData()
+    formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
+    formData.append(
+      FORM_CONFIG.intent.name,
+      FORM_CONFIG.intent.value.dismissWelcome,
+    )
+
+    void welcomeFetcher.submit(formData, { method: 'POST' })
   }
 
   // Unmount a dialog once it closed, unless another one took its place.
@@ -292,6 +317,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       <AdminHeadline>Nastavení</AdminHeadline>
+
+      {showWelcome && welcomeFetcher.state === 'idle' && (
+        <WelcomeRow
+          isAddingPasskey={passkeyRegistration.isPending}
+          onAddPasskey={
+            passkeyRegistration.isBiometricSupported
+              ? handleWelcomeAddPasskey
+              : undefined
+          }
+          onDismiss={dismissWelcome}
+        />
+      )}
 
       <AdminDetailLayout>
         <AdminDetailMain>

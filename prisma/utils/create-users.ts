@@ -49,6 +49,8 @@ export const createUsers = async (prisma: PrismaClient, data: UsersData) => {
             connect: { name: user.userRole },
           },
           username: user.email,
+          // Seeded accounts were not invited: no welcome row (design 29e).
+          welcomeDismissedAt: new Date(),
         },
         select: { id: true },
       })

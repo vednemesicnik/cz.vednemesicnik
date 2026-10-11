@@ -1,10 +1,12 @@
 /**
  * Sends the magic-link sign-in email through the Google Apps Script web app
- * (see the SCRIPT__Auth__Magic_Link repo). Best-effort: the sign-in request
- * action returns the same neutral response whether or not delivery succeeds, so
- * this never throws — failures are logged, reported to Sentry, and swallowed.
- * It resolves to whether the link went out; only the identity check of a
- * signed-in user (design 29d) tells the person, sign-in never does.
+ * (see the SCRIPT__Auth__Magic_Link repo), or, with `kind: 'invitation'`, the
+ * same link as the invitation of a new user (design 29e). Best-effort: the
+ * sign-in request action returns the same neutral response whether or not
+ * delivery succeeds, so this never throws — failures are logged, reported to
+ * Sentry, and swallowed. It resolves to whether the link went out; the identity
+ * check of a signed-in user (design 29d) and the invitation (28e) tell the
+ * person, sign-in never does.
  *
  * The request is **signed** rather than carrying the secret in its body, so
  * GAS_MAGIC_LINK_SECRET is a signing key and never travels — see
@@ -19,6 +21,7 @@
 
 import type {
   Envelope,
+  InvitationMagicLinkRequest,
   SignInMagicLinkRequest,
   SignInMagicLinkResponse,
 } from '@generated/magic-link/response'
@@ -27,13 +30,11 @@ import * as Sentry from '@sentry/react-router'
 import { postGasRequest } from './post-gas-request.server'
 import { signGasRequest } from './sign-gas-request.server'
 
-export const sendMagicLinkEmail = async ({
-  email,
-  link,
-}: {
-  email: string
-  link: string
-}): Promise<boolean> => {
+export const sendMagicLinkEmail = async (
+  request: SignInMagicLinkRequest | InvitationMagicLinkRequest,
+): Promise<boolean> => {
+  const { email, link } = request
+
   const url = process.env.GAS_MAGIC_LINK_URL
   const secret = process.env.GAS_MAGIC_LINK_SECRET
 
@@ -48,7 +49,9 @@ export const sendMagicLinkEmail = async ({
     // Local dev without a GAS deployment: print the link so the sign-in flow
     // is usable end-to-end without sending a real email.
     console.info(
-      `[magic-link] GAS not configured — sign-in link for ${email}: ${link}`,
+      `[magic-link] GAS not configured — ${
+        'kind' in request ? request.kind : 'sign-in'
+      } link for ${email}: ${link}`,
     )
     return true
   }
@@ -58,10 +61,7 @@ export const sendMagicLinkEmail = async ({
       url,
       // `satisfies Envelope` ties the envelope this builds to the shape the script
       // publishes, so the two cannot drift apart without the build saying so.
-      signGasRequest(secret, {
-        email,
-        link,
-      } satisfies SignInMagicLinkRequest) satisfies Envelope,
+      signGasRequest(secret, request) satisfies Envelope,
     )
 
     if (!ok || data?.ok !== true) {
