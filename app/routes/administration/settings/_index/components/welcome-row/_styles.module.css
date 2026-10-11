@@ -1,0 +1,46 @@
+/* The Banner in the welcome row's look (design 29e): accent ground, actions
+   under the text at every width. */
+.welcome {
+  @layer route {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "content" "actions";
+    gap: 0.75rem;
+    margin-block: 0;
+    padding: 1rem 1.125rem;
+    background: var(--bg-accent);
+    border: 1px solid color-mix(in srgb, var(--border-accent) 50%, transparent);
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+  }
+}
+
+.content {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+.title {
+  @layer route {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+}
+
+.text {
+  @layer route {
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+}
+
+.actions {
+  @layer route {
+    justify-self: start;
+  }
+}
