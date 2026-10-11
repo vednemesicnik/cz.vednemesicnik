@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import type { Ref } from 'react'
-import { Form, href } from 'react-router'
+import { Form, href, useLocation } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
 import { useSidebarHighlight } from '~/components/admin/sidebar-highlight-provider'
@@ -62,6 +62,7 @@ export const AdministrationSidebar = ({
 }: Props) => {
   const isMenu = layout === 'menu'
   const highlightsSection = useSidebarHighlight()
+  const location = useLocation()
 
   const renderItem = (item: NavigationItem) => (
     <li className={styles.item} key={item.to}>
@@ -136,6 +137,12 @@ export const AdministrationSidebar = ({
           className={styles.signOutForm}
           method={'post'}
         >
+          {/* Sign-in after sign-out returns here (not read from Referer). */}
+          <input
+            name={'redirectTo'}
+            type={'hidden'}
+            value={`${location.pathname}${location.search}`}
+          />
           <button className={styles.footLink} type={'submit'}>
             Odhlásit se
           </button>
