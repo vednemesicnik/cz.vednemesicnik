@@ -5,6 +5,7 @@ import { requireAuthentication } from '~/utils/auth.server'
 import { countUnusedBackupCodes } from '~/utils/backup-codes.server'
 import { prisma } from '~/utils/db.server'
 import { formatNumericDate } from '~/utils/format-numeric-date'
+import { parseIdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
 import {
   createImageSources,
   imageSourceSelect,
@@ -14,7 +15,6 @@ import { RECENT_AUTHENTICATION_MAX_AGE_MS } from '~/utils/recent-authentication'
 import { getRecentSignInAttempts } from '~/utils/sign-in-attempts/get-recent-sign-in-attempts.server'
 import { getUserTwoFactor } from '~/utils/two-factor.server'
 
-import type { IdentityCheckFailure } from './components/identity-check-dialog'
 import { parseSettingsContinue } from './utils/parse-settings-continue'
 
 export const loader = async ({ request, url }: LoaderFunctionArgs) => {
@@ -114,11 +114,9 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
   })()
 
   // A one-shot failure the identity check through Google returned with.
-  const identityCheck = url.searchParams.get('identityCheck')
-  const identityCheckFailure: IdentityCheckFailure | null =
-    identityCheck === 'google-account' || identityCheck === 'google-failed'
-      ? identityCheck
-      : null
+  const identityCheckFailure = parseIdentityCheckFailure(
+    url.searchParams.get('identityCheck'),
+  )
 
   return {
     emergencyPassword,

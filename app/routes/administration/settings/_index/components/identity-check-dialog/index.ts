@@ -1,1 +1,1 @@
-export { IdentityCheckDialog, type IdentityCheckFailure } from './_component'
+export { IdentityCheckDialog } from './_component'

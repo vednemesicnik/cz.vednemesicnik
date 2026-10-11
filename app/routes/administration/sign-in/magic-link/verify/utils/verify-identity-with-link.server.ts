@@ -1,16 +1,17 @@
 import { redirect } from 'react-router'
 
 import { recordAuthLog } from '~/utils/auth-log.server'
-import { markSessionAuthenticated } from '~/utils/identity-check/mark-session-authenticated.server'
+import { isLinkForUser } from '~/utils/identity-check/is-link-for-user.server'
+import { rotateAuthenticatedSession } from '~/utils/identity-check/rotate-authenticated-session.server'
 import { createMagicLinkUrl } from '~/utils/magic-link/create-magic-link-url'
 import { consumeMagicLinkToken } from '~/utils/magic-link.server'
-import { findExistingUserByEmail } from '~/utils/sign-in.server'
 
 /**
  * The confirm click on a sign-in link in a browser that is already signed in:
- * the identity check of design 29d. The link of the signed-in account marks
- * the current session as freshly authenticated; it never creates or swaps a
- * session. A link of another account is refused and left unused (20c).
+ * the identity check of design 29d. The link of the signed-in account swaps
+ * the session for a freshly authenticated one of the same user; it never
+ * signs in another account. A link of another account is refused and left
+ * unused (20c).
  *
  * @param args.request - The confirm request.
  * @param args.session - The browser's session.
@@ -55,12 +56,11 @@ export const verifyIdentityWithLink = async ({
   }
 
   // Checked before consuming, so another account's link stays usable.
-  const user = await findExistingUserByEmail(email)
-  if (user?.id !== userId) throw backToLink()
+  if (!(await isLinkForUser(email, userId))) throw backToLink()
 
   if (!(await consumeMagicLinkToken(email, token))) throw backToLink()
 
-  await markSessionAuthenticated(sessionId)
+  const sessionCookie = await rotateAuthenticatedSession({ request, sessionId })
   recordAuthLog({
     event: 'identity_check_success',
     method: 'magic_link',
@@ -68,5 +68,8 @@ export const verifyIdentityWithLink = async ({
     userId,
   })
 
-  throw redirect(redirectTo, { status: 303 })
+  throw redirect(redirectTo, {
+    headers: { 'Set-Cookie': sessionCookie },
+    status: 303,
+  })
 }

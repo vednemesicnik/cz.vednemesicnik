@@ -30,6 +30,12 @@ export const verifyPasskeyAssertion = async ({
   expectedChallenge: string
   userId?: string
 }): Promise<PasskeyAssertionResult> => {
+  // The body comes straight from the client; a payload without an id is a
+  // failed attempt, not a 500.
+  if (typeof response?.id !== 'string') {
+    return { status: 'failed', userId: null }
+  }
+
   const passkey = await prisma.passkey.findUnique({
     select: {
       credentialCounter: true,

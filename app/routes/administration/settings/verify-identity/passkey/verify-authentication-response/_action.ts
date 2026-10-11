@@ -7,14 +7,14 @@ import {
   getBiometricChallenge,
   getBiometricCookieSession,
 } from '~/utils/biometric.server'
-import { markSessionAuthenticated } from '~/utils/identity-check/mark-session-authenticated.server'
+import { rotateAuthenticatedSession } from '~/utils/identity-check/rotate-authenticated-session.server'
 import { verifyPasskeyAssertion } from '~/utils/passkey/verify-passkey-assertion.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
 
 import type { Route } from './+types/route'
 
 // Finishes the identity check with a passkey (design 29d): a passkey of the
-// signed-in user marks the current session as freshly authenticated. A fetcher
+// signed-in user swaps the session for a freshly authenticated one. A fetcher
 // endpoint, so every outcome is returned, never thrown.
 export const action = async ({ request, context }: Route.ActionArgs) => {
   const { sessionId, userId } = await requireSession(request)
@@ -34,7 +34,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   const result = await verifyPasskeyAssertion({
     expectedChallenge: getBiometricChallenge(biometricCookieSession) ?? '',
-    response: await request.json(),
+    // Unparsable JSON fails like any other bad assertion.
+    response: await request.json().catch(() => null),
     userId,
   })
 
@@ -48,7 +49,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     return data({ status: 'failed' as const }, { headers, status: 400 })
   }
 
-  await markSessionAuthenticated(sessionId)
+  const sessionCookie = await rotateAuthenticatedSession({ request, sessionId })
   recordAuthLog({
     event: 'identity_check_success',
     method: 'passkey',
@@ -56,5 +57,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     userId,
   })
 
-  return data({ status: 'verified' as const }, { headers })
+  const verifiedHeaders = new Headers(headers)
+  verifiedHeaders.append('Set-Cookie', sessionCookie)
+
+  return data({ status: 'verified' as const }, { headers: verifiedHeaders })
 }

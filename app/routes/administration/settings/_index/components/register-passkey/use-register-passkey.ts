@@ -47,6 +47,7 @@ export const useRegisterPasskey = (
   // Tracks the challenge already handed to the authenticator so re-renders
   // (fetcher state changes, revalidation) don't re-run the ceremony.
   const startedOptionsRef = useRef<typeof options>(null)
+  const { submit: submitAttestation } = verifyRegistrationResponseFetcher
 
   // Once the server returns the challenge, run the authenticator ceremony and
   // POST the attestation for verification (which persists the Passkey row).
@@ -66,23 +67,20 @@ export const useRegisterPasskey = (
           optionsJSON: options,
         })
 
-        verifyRegistrationResponseFetcher.submit(
-          JSON.stringify(registrationResponse),
-          {
-            action: href(
-              '/administration/settings/passkeys/verify-registration-response',
-            ),
-            encType: 'application/json',
-            method: 'POST',
-          },
-        )
+        void submitAttestation(JSON.stringify(registrationResponse), {
+          action: href(
+            '/administration/settings/passkeys/verify-registration-response',
+          ),
+          encType: 'application/json',
+          method: 'POST',
+        })
       } catch (error) {
         onProblemChange(getRegistrationProblem(error))
       }
     }
 
     void register()
-  }, [onProblemChange, options, verifyRegistrationResponseFetcher])
+  }, [onProblemChange, options, submitAttestation])
 
   const verifiedData = verifyRegistrationResponseFetcher.data
   const isVerified = verifiedData?.verified === true

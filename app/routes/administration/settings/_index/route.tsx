@@ -19,6 +19,7 @@ import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
+import type { IdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 
 import type { action } from './_action'
@@ -27,10 +28,7 @@ import type { Route } from './+types/route'
 import { AddPasskeyDialog } from './components/add-passkey-dialog'
 import { ChangePasswordDialog } from './components/change-password-dialog'
 import { ConfirmDialog } from './components/confirm-dialog'
-import {
-  IdentityCheckDialog,
-  type IdentityCheckFailure,
-} from './components/identity-check-dialog'
+import { IdentityCheckDialog } from './components/identity-check-dialog'
 import { PasskeyProblem } from './components/passkey-problem'
 import { ProfileDialog } from './components/profile-dialog'
 import { RegisterPasskey } from './components/register-passkey'
@@ -162,41 +160,50 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   }
 
   // Adding a passkey continues with a button: the browser creates a passkey
-  // only after a new click (29d).
-  const requireIdentityCheckForPasskey = () =>
+  // only after a new click (29d). The row's „znovu se ověřte“ goes with it.
+  const requireIdentityCheckForPasskey = () => {
+    setPasskeyProblem(null)
     requireIdentityCheck({ dialog: 'add-passkey' }, () =>
       setOpenDialog({ name: 'add-passkey' }),
     )
+  }
 
   // Unmount a dialog once it closed, unless another one took its place.
   const closeDialog = (dialog: OpenDialog) => () =>
     setOpenDialog((current) => (current === dialog ? null : current))
 
   // Back from Google: reopen the dialog the person was on their way to, or
-  // the identity check with what went wrong, and drop the one-shot hints from
-  // the address (design 29d, 30a).
+  // the identity check with what went wrong (also when the session went
+  // stale meanwhile), and drop the one-shot hints from the address (design
+  // 29d, 30a).
   useEffect(() => {
     if (settingsContinue === null && identityCheckFailure === null) return
 
-    if (identityCheckFailure !== null) {
+    const continueTo =
+      settingsContinue === null ? null : toOpenDialog(settingsContinue)
+
+    if (identityCheckFailure === null && isRecentlyAuthenticated()) {
+      setOpenDialog(continueTo)
+    } else {
       setOpenDialog({
         failure: identityCheckFailure,
         name: 'identity-check',
-        onVerified: () =>
-          setOpenDialog(
-            settingsContinue === null ? null : toOpenDialog(settingsContinue),
-          ),
+        onVerified: () => setOpenDialog(continueTo),
         settingsContinue,
       })
-    } else if (settingsContinue !== null) {
-      setOpenDialog(toOpenDialog(settingsContinue))
     }
 
     void navigate(location.pathname, {
       preventScrollReset: true,
       replace: true,
     })
-  }, [identityCheckFailure, location.pathname, navigate, settingsContinue])
+  }, [
+    identityCheckFailure,
+    isRecentlyAuthenticated,
+    location.pathname,
+    navigate,
+    settingsContinue,
+  ])
 
   const signInsResult = signInsFetcher.data
 
@@ -219,8 +226,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   }
 
   // A removal and switching 2FA off were confirmed before the identity check,
-  // so after a passkey or a link they run straight away; after Google, the
-  // confirmation reopens instead (an address must not take a method away).
+  // so after a passkey or a link they run straight away. Once the page has
+  // been to Google (success or a failure retried here), the confirmation
+  // reopens instead: an address must not take a method away.
   const handleRemovePasskey = (passkeyId: string) => {
     const removePasskey = () =>
       submitMutation(href('/administration/settings/passkeys'), { passkeyId })

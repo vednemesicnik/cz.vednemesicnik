@@ -15,13 +15,12 @@ import type { action as magicLinkAction } from '~/routes/administration/settings
 import type { action as generateAuthenticationOptionsAction } from '~/routes/administration/settings/verify-identity/passkey/generate-authentication-options/_action'
 import type { action as verifyAuthenticationResponseAction } from '~/routes/administration/settings/verify-identity/passkey/verify-authentication-response/_action'
 import { formatRetryAfter } from '~/utils/format-retry-after'
+import type { IdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
 import { useBiometric } from '~/utils/use-biometric'
 
 import { useModalDialog } from '../../utils/use-modal-dialog'
 import { TextButton } from '../text-button'
 import styles from './_styles.module.css'
-
-export type IdentityCheckFailure = 'google-account' | 'google-failed'
 
 // Approved copy (copywriter thread njslpjov, drawn in 29d by so197jap).
 const failureMessages: Record<IdentityCheckFailure, string> = {
@@ -181,10 +180,31 @@ export const IdentityCheckDialog = ({
     }
   }, [linkResult])
 
+  // Switching steps unmounts the focused button: move focus to the new step,
+  // so keyboard and screen-reader users land on what changed.
+  const sentRef = useRef<HTMLParagraphElement>(null)
+  const pathsRef = useRef<HTMLDivElement>(null)
+  const isFirstStepRef = useRef(true)
+
+  useEffect(() => {
+    if (isFirstStepRef.current) {
+      isFirstStepRef.current = false
+      return
+    }
+
+    if (isLinkSent) {
+      sentRef.current?.focus()
+    } else {
+      pathsRef.current?.querySelector('button')?.focus()
+    }
+  }, [isLinkSent])
+
+  // Google counts as pending only while submitting: after the redirect it
+  // stays `loading`, and a page restored by Back would keep every path disabled.
   const isPending =
     generateOptionsFetcher.state !== 'idle' ||
     verifyResponseFetcher.state !== 'idle' ||
-    googleFetcher.state !== 'idle' ||
+    googleFetcher.state === 'submitting' ||
     linkFetcher.state !== 'idle'
 
   const withToken = (fields: Record<string, string> = {}) => {
@@ -245,7 +265,7 @@ export const IdentityCheckDialog = ({
 
         {isLinkSent ? (
           <>
-            <p className={styles.sent}>
+            <p className={styles.sent} ref={sentRef} tabIndex={-1}>
               Odkaz byl odeslán na <strong>{email}</strong>. Platí 15 minut.
             </p>
             <AdminModalDescription>
@@ -276,7 +296,7 @@ export const IdentityCheckDialog = ({
               Před změnou způsobu přihlášení je potřeba ověření.
             </AdminModalDescription>
 
-            <div className={styles.paths}>
+            <div className={styles.paths} ref={pathsRef}>
               {hasPasskey && isBiometricSupported && (
                 <Button
                   disabled={isPending}

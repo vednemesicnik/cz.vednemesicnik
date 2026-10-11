@@ -1,9 +1,9 @@
 import { data, type LoaderFunctionArgs } from 'react-router'
 
 import { getAuthentication } from '~/utils/auth.server'
+import { isLinkForUser } from '~/utils/identity-check/is-link-for-user.server'
 import { verifyMagicLinkToken } from '~/utils/magic-link.server'
 import { safeRedirect } from '~/utils/safe-redirect'
-import { findExistingUserByEmail } from '~/utils/sign-in.server'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // A signed-in browser opens the link as an identity check (design 20c, 29d):
@@ -49,10 +49,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   if (isSignedIn) {
-    const user = await findExistingUserByEmail(email)
-
     // Left unused: the link still works in the browser it was meant for.
-    if (user?.id !== userId) {
+    if (!(await isLinkForUser(email, userId))) {
       return data(
         { email, status: 'other-account' as const },
         { headers: noStoreHeaders },

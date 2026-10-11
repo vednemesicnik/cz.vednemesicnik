@@ -4,7 +4,7 @@ import { data, href, redirect } from 'react-router'
 
 import { GOOGLE_PROVIDER_NAME } from '~/config/connection-config'
 import { requireActionSession } from '~/utils/auth.server'
-import { requireCSRF } from '~/utils/csrf.server'
+import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import {
   createGoogleOAuthClient,
@@ -24,7 +24,12 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   const { userId } = await requireActionSession(request)
 
   const formData = await request.formData()
-  await requireCSRF(formData, request)
+
+  // The dialog stays open, so a stale token is its error line, not the
+  // error boundary (design 30h); the layout then reissues the token.
+  if ((await checkCSRF(formData, request)) !== null) {
+    return data({ status: 'failed' as const }, { status: 403 })
+  }
 
   const limited = context.get(rateLimitContext)
   if (limited) {

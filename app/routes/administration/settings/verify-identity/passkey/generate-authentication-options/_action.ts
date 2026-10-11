@@ -15,6 +15,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     where: { userId },
   })
 
+  // An empty list would let the browser offer any passkey on the device.
+  if (passkeys.length === 0) {
+    return data({ status: 'failed' as const }, { status: 400 })
+  }
+
   const options = await generateAuthenticationOptions({
     allowCredentials: passkeys.map((passkey) => ({
       id: passkey.credentialId,
