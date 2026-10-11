@@ -76,6 +76,12 @@
   }
 }
 
+.passkeyDescription {
+  @layer route {
+    padding-block-start: 8px;
+  }
+}
+
 .passkeyDetail {
   @layer route {
     white-space: nowrap;
@@ -95,5 +101,12 @@
     margin: 0;
     font-size: var(--font-size-sm);
     color: var(--warning);
+  }
+}
+
+.subjectTitle {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
   }
 }
