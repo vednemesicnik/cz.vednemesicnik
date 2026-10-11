@@ -25,6 +25,7 @@ export const FORM_CONFIG = {
       startEnrollment: 'start-enrollment',
       toggleSharedFilter: 'toggle-shared-filter',
       unsetDefaultFilter: 'unset-default-filter',
+      updateColorScheme: 'update-color-scheme',
       updateProfile: 'update-profile',
       uploadImage: 'upload-image',
     },

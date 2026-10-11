@@ -20,6 +20,16 @@
 :root {
   color-scheme: light dark;
 
+  /* The administration's scheme pinned in Settings arrives as the meta's
+     content (design 29a, #560); written in CSS so the build lowers it. */
+  &:has(> head > meta[name="color-scheme"][content="light"]) {
+    color-scheme: light;
+  }
+
+  &:has(> head > meta[name="color-scheme"][content="dark"]) {
+    color-scheme: dark;
+  }
+
   /* ========================================
      Transitions
      ======================================== */

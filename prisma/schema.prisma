@@ -26,6 +26,14 @@ model User {
   filters     Filter[]
   author      Author       @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   authorId    String       @unique
+  colorScheme ColorScheme  @default(system)
+}
+
+// The administration's colour scheme (design 29a); system follows the device.
+enum ColorScheme {
+  system
+  light
+  dark
 }
 
 model UserImage {

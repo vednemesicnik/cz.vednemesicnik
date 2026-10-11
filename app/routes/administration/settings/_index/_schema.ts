@@ -1,4 +1,7 @@
+import { ColorScheme } from '@generated/prisma/enums'
 import { z } from 'zod'
+
+import { COLOR_SCHEME_CONFIG } from '~/config/color-scheme-config'
 
 // Largest profile photo accepted (design 29b: „Nejvýš 5 MB“).
 export const MAX_PROFILE_IMAGE_SIZE = 1024 * 1024 * 5
@@ -14,6 +17,10 @@ export const profileSchema = z.object({
     .string({ message: 'Jméno je povinné' })
     .min(2, { message: 'Jméno musí mít alespoň 2 znaky' })
     .max(100, { message: 'Jméno může mít maximálně 100 znaků' }),
+})
+
+export const colorSchemeSchema = z.object({
+  [COLOR_SCHEME_CONFIG.fieldName]: z.enum(ColorScheme),
 })
 
 export const imageSchema = z.object({
