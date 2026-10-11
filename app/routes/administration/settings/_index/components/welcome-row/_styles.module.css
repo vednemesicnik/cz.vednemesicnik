@@ -1,5 +1,6 @@
-/* The Banner in the welcome row's look (design 29e): accent ground, actions
-   under the text at every width. */
+/* The Banner in the welcome row's look (design 29e, oyeh9r6r): a neutral
+   ground with a violet border, so the outline button's border and hover show
+   on it; actions under the text at every width. */
 .welcome {
   @layer route {
     grid-template-columns: minmax(0, 1fr);
@@ -7,8 +8,9 @@
     gap: 0.75rem;
     margin-block: 0;
     padding: 1rem 1.125rem;
-    background: var(--bg-accent);
-    border: 1px solid color-mix(in srgb, var(--border-accent) 50%, transparent);
+    background: var(--bg-secondary);
+    border: 1px solid
+      light-dark(var(--color-violet-300), var(--color-violet-700));
     border-radius: var(--radius-lg);
     box-shadow: none;
   }
