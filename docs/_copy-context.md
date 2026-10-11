@@ -158,6 +158,11 @@ Týká se to i veřejného webu:
   redakční účet Google, ne „školní“.
 - **Hlavní cesty jsou Google, passkey a odkaz v e‑mailu.** Odkaz platí 15 minut a jen jednou,
   nový nahradí předchozí. Samo otevření odkazu nepřihlásí nic, přihlásí až potvrzení na stránce.
+- **Passkey může být v zařízení, ve vlastním telefonu nebo na bezpečnostním klíči** (rozhodnuto
+  11. 10. 2026). Telefon se k počítači připojí přes QR kód, klíč do USB nebo přes NFC. Vybírá se
+  v okně prohlížeče, ne na stránce; prohlížeč nabízí nejdřív tento počítač. Na sdíleném počítači
+  je bezpečný jen passkey ve vlastním telefonu nebo na vlastním klíči. Věta, která passkey váže
+  na otisk prstu nebo obličej tohoto zařízení, je neúplná.
 - **Heslo je nouzová cesta a v provozu je vypnuté.** Věta, která heslo nabízí jako běžnou cestu
   nebo jako záchranu při ztrátě telefonu, je nepravda.
 - **Dvoufázové ověření je nepovinné** a ptá se jen po hesle. Google, passkey ani odkaz ho
