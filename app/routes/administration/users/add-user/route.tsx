@@ -64,28 +64,13 @@ export default function RouteComponent({
             label="E-mail"
             {...getInputProps(fields.email, { type: 'email' })}
             errors={fields.email.errors}
-            placeholder="user@domain.name"
+            placeholder="jakub.novak@vednemesicnik.cz"
           />
           <AdminInput
             label="Jméno a příjmení"
             {...getInputProps(fields.name, { type: 'text' })}
             errors={fields.name.errors}
             placeholder="Jan Novák"
-          />
-        </Fieldset>
-
-        <Fieldset disabled={isLoadingOrSubmitting} legend={'Heslo'}>
-          <AdminInput
-            label="Heslo"
-            {...getInputProps(fields.password, { type: 'password' })}
-            errors={fields.password.errors}
-          />
-          <AdminInput
-            label="Potvrzení hesla"
-            {...getInputProps(fields.passwordConfirmation, {
-              type: 'password',
-            })}
-            errors={fields.passwordConfirmation.errors}
           />
         </Fieldset>
 
@@ -143,8 +128,9 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <FormActions>
+          {/* Creates the account and sends the invitation (design 28f). */}
           <Button disabled={!canSubmit} type={'submit'}>
-            {isSubmitting ? 'Přidává se...' : 'Přidat'}
+            {isSubmitting ? 'Čekejte prosím…' : 'Vytvořit a pozvat'}
           </Button>
           <AdminLinkButton
             disabled={isLoadingOrSubmitting}

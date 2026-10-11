@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { useRef } from 'react'
-import { href } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { href, useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
 import { AdminActionGroup } from '~/components/admin/admin-action-group'
@@ -15,8 +15,11 @@ import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
+import { Callout } from '~/components/callout'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
+import { useToast } from '~/components/toast-provider'
+import { INVITATION_CONFIG } from '~/config/invitation-config'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
@@ -33,6 +36,35 @@ export default function RouteComponent({
   const { userId } = params
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
+
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const showToast = useToast()
+
+  // The one-shot result of „Vytvořit a pozvat“ (design 28e, p8x1s8gs), read
+  // once and dropped from the address: a failure stays on screen until the
+  // page is left, a reload no longer shows it.
+  const [invitation] = useState(() => ({
+    result: searchParams.get(INVITATION_CONFIG.resultParam),
+    userId,
+  }))
+  const isInvitationFailed =
+    invitation.userId === userId &&
+    invitation.result === INVITATION_CONFIG.result.failed
+
+  useEffect(() => {
+    if (invitation.result === null) return
+
+    if (invitation.result === INVITATION_CONFIG.result.sent) {
+      showToast(`Pozvánka odešla na ${user.email}.`)
+    }
+
+    void navigate(location.pathname, {
+      preventScrollReset: true,
+      replace: true,
+    })
+  }, [invitation, location.pathname, navigate, showToast, user.email])
 
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
@@ -64,6 +96,14 @@ export default function RouteComponent({
           </AdminActionButton>
         )}
       </AdminActionGroup>
+
+      {isInvitationFailed && (
+        <Callout tone={'warning'}>
+          Účet je založený. Dejte pozvanému člověku vědět, ať se přihlásí přes
+          Google nebo si na stránce přihlášení pošle odkaz — pozvánku na{' '}
+          {user.email} se nepodařilo odeslat.
+        </Callout>
+      )}
 
       <AdminDetailSection title="Základní informace">
         <AdminDetailList>
