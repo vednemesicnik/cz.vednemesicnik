@@ -22,7 +22,8 @@ export const getRegistrationProblem = (
   }
 
   // `excludeCredentials` lists the account's passkeys, so the authenticator
-  // refuses to register one it already holds.
+  // picked in the browser window (this computer, a phone or a key) refuses to
+  // register one it already holds.
   if (error.name === 'InvalidStateError') {
     return 'already-registered'
   }

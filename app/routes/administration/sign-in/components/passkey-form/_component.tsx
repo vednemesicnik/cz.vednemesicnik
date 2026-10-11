@@ -5,7 +5,7 @@ import { useFetcher } from 'react-router'
 import type { action as generateAuthenticationOptionsAction } from '~/routes/administration/sign-in/passkey/generate-authentication-options/_action'
 import type { action as verifyAuthenticationResponseAction } from '~/routes/administration/sign-in/passkey/verify-authentication-response/_action'
 import { formatRetryAfter } from '~/utils/format-retry-after'
-import { useBiometric } from '~/utils/use-biometric'
+import { usePasskeySupport } from '~/utils/use-passkey-support'
 
 import styles from '../../_styles.module.css'
 
@@ -21,7 +21,7 @@ type Props = {
 }
 
 export const PasskeyForm = ({ redirectTo }: Props) => {
-  const { isBiometricSupported } = useBiometric()
+  const { isPasskeySupported } = usePasskeySupport()
 
   const generateAuthenticationOptionsFetcher =
     useFetcher<typeof generateAuthenticationOptionsAction>()
@@ -84,9 +84,9 @@ export const PasskeyForm = ({ redirectTo }: Props) => {
     }
   }, [verifyResult])
 
-  // Passkey sign-in relies on a platform authenticator; hide the option when
-  // the device can't offer one.
-  if (!isBiometricSupported) {
+  // Any passkey signs in (built-in, a phone via QR code, a security key); hide
+  // the option only in a browser without WebAuthn.
+  if (!isPasskeySupported) {
     return null
   }
 

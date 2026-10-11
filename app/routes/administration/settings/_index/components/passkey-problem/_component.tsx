@@ -4,7 +4,7 @@ import styles from './_styles.module.css'
 
 const PROBLEM_MESSAGES: Record<RegistrationProblem, string> = {
   'already-registered':
-    'Použijte stávající passkey — toto zařízení už má passkey k tomuto účtu.',
+    'Použijte stávající passkey — vybrané zařízení už má passkey k tomuto účtu.',
   failed: 'Zkuste passkey přidat znovu — přidání se nepovedlo.',
   reauthenticate: 'Před přidáním passkey se znovu ověřte.',
 }
