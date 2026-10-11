@@ -8,6 +8,17 @@
   }
 }
 
+.hint {
+  @layer component {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
 .textarea {
   @layer component {
     /* Colors */

@@ -62,6 +62,26 @@ export const Required: Story = {
 }
 
 /**
+ * Textarea with a hint below, linked to the textarea for screen readers; the
+ * hint may carry a counter on the other side.
+ */
+export const WithHint: Story = {
+  args: {
+    field: createMockField({ id: 'bio', name: 'bio' }),
+    hint: (
+      <>
+        <span>Zatím se na webu nezobrazuje.</span>
+        <span>39 / 500</span>
+      </>
+    ),
+    label: 'Bio',
+    textareaProps: {
+      defaultValue: 'Fotí a píše reportáže ze školních akcí.',
+    },
+  },
+}
+
+/**
  * Textarea with error messages displayed below.
  * Shows validation errors to the user.
  */

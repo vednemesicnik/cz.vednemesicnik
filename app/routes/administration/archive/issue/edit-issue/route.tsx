@@ -8,12 +8,12 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
@@ -132,9 +132,9 @@ export default function RouteComponent({
         <AuthenticityTokenInput />
 
         <FormActions>
-          <AdminButton disabled={!canSubmit} type={'submit'}>
+          <Button disabled={!canSubmit} type={'submit'}>
             {isSubmitting ? 'Upravuje se...' : 'Upravit'}
-          </AdminButton>
+          </Button>
           <AdminLinkButton
             disabled={isLoadingOrSubmitting}
             to={href('/administration/archive/:issueId', { issueId })}

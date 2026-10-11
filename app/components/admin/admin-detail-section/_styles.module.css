@@ -1,25 +1,44 @@
+/* The container for the 480 px rule of rows and lists inside. */
 .section {
   @layer component {
     display: grid;
-    grid-auto-flow: row;
-    row-gap: 16px;
+    gap: 12px;
     width: 100%;
+    min-width: 0;
+    container-type: inline-size;
+
+    & + & {
+      padding-block-start: 24px;
+      border-block-start: 1px solid var(--border);
+    }
+  }
+}
+
+.head {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
   }
 }
 
 .title {
   @layer component {
-    font-size: 18px;
-    font-weight: var(--font-weight-bold);
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.4;
     color: var(--text-primary);
   }
 }
 
-.content {
+.actions {
   @layer component {
-    display: grid;
-    grid-auto-flow: row;
-    row-gap: 12px;
-    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
   }
 }

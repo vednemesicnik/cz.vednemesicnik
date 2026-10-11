@@ -8,7 +8,6 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminInput } from '~/components/admin/admin-input'
@@ -16,6 +15,7 @@ import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
@@ -170,7 +170,7 @@ export default function RouteComponent({
                     label={'URL'}
                     placeholder={'https://open.spotify.com/episode/...'}
                   />
-                  <AdminButton
+                  <Button
                     {...form.remove.getButtonProps({
                       index,
                       name: fields.links.name,
@@ -179,24 +179,24 @@ export default function RouteComponent({
                   >
                     <DeleteIcon className={styles.removeIcon} />
                     Odstranit
-                  </AdminButton>
+                  </Button>
                 </div>
               )
             })}
 
-            <AdminButton
+            <Button
               {...form.insert.getButtonProps({ name: fields.links.name })}
             >
               Přidat odkaz
-            </AdminButton>
+            </Button>
           </Fieldset>
 
           <AuthenticityTokenInput />
 
           <FormActions>
-            <AdminButton disabled={!canSubmit} type={'submit'}>
+            <Button disabled={!canSubmit} type={'submit'}>
               {isSubmitting ? 'Upravuje se...' : 'Uložit'}
-            </AdminButton>
+            </Button>
             <AdminLinkButton
               disabled={isLoadingOrSubmitting}
               to={href(

@@ -35,7 +35,8 @@
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-regular);
     padding-block: 10px;
-    padding-inline: 40px 16px;
+    /* The end padding keeps the text clear of the ✕. */
+    padding-inline: 40px 48px;
     border-radius: 8px;
     width: 240px;
     max-width: 100%;
@@ -56,65 +57,66 @@
     &::placeholder {
       color: var(--text-tertiary);
     }
+
+    /* The field's own ✕ replaces the native one (qx3tx3bz). */
+    &::-webkit-search-cancel-button {
+      appearance: none;
+    }
+
+    @media (width >= 768px) {
+      padding-inline-end: 40px;
+    }
   }
 }
 
-.submit {
+/* The ✕: 44 px for a finger, 32 px from 768 px up (qx3tx3bz). */
+.clear {
   @layer component {
+    position: absolute;
+    inset-inline-end: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--primary);
-    color: var(--text-on-accent);
-    border: 2px solid transparent;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background-color: transparent;
+    color: var(--text-secondary);
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
-    line-height: 1;
-    padding-block: 10px;
-    padding-inline: 20px;
-    border-radius: 8px;
     cursor: pointer;
-    user-select: none;
-    transition: background-color 150ms ease-out;
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out,
+      box-shadow 150ms ease-out;
 
-    &:hover:not(:focus-visible) {
-      background-color: var(--primary-hover);
-    }
-
-    &:active {
-      background-color: var(--primary-active);
+    &:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
     }
 
     &:focus-visible {
       box-shadow: var(--focus-shadow);
       outline: none;
+    }
+
+    @media (width >= 768px) {
+      inset-inline-end: 6px;
+      width: 32px;
+      height: 32px;
     }
   }
 }
 
-/* Fully defines the link look so the shared Link base styles (underline,
-   --primary color, visited/hover) don't leak through. `variant` layer overrides
-   the base component layer regardless of import order. */
-.clear {
+/* The field searches by itself, so the button is only the no-JS fallback.
+   It stays in the DOM (just hidden) to remain the form's default button.
+   `variant` layer so it wins over the button's own component styles regardless
+   of import order; browsers without `scripting` support keep showing it. */
+.submit {
   @layer variant {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--text-secondary);
-    text-decoration: none;
-
-    &:visited {
-      color: var(--text-secondary);
-    }
-
-    &:hover {
-      color: var(--text-primary);
-      text-decoration: underline;
-    }
-
-    &:focus-visible {
-      box-shadow: var(--focus-shadow);
-      outline: none;
-      border-radius: 4px;
+    @media (scripting: enabled) {
+      display: none;
     }
   }
 }

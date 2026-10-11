@@ -4,12 +4,14 @@ import { NavLink, useMatch } from 'react-router'
 
 import styles from './_styles.module.css'
 
-type Props = ComponentProps<typeof NavLink> & {
+type Props = Omit<ComponentProps<typeof NavLink>, 'className'> & {
+  className?: string
   highlightsActive?: boolean
 }
 
 export const SidebarLink = ({
   children,
+  className,
   to,
   end = false,
   highlightsActive = true,
@@ -23,7 +25,11 @@ export const SidebarLink = ({
     <NavLink
       aria-current={isCurrentPage ? 'page' : undefined}
       className={({ isActive }) =>
-        clsx(styles.link, isActive && highlightsActive && styles.linkActive)
+        clsx(
+          styles.link,
+          className,
+          isActive && highlightsActive && styles.linkActive,
+        )
       }
       end={end}
       prefetch={'intent'}

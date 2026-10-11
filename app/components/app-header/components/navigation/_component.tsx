@@ -1,5 +1,6 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { HomeLink } from '~/components/app-header/components/home-link'
+import { useFullScreenMenu } from '~/hooks/use-full-screen-menu'
 
 import styles from './_styles.module.css'
 
@@ -11,48 +12,9 @@ type Props = {
 }
 
 export const Navigation = ({ children }: Props) => {
-  const menuRef = useRef<HTMLDialogElement>(null)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  const handleOpen = () => {
-    menuRef.current?.showModal()
-    // Zavřít stands where Menu was, so focus starts there (design 10b, qgr43icu).
-    closeButtonRef.current?.focus()
-    setIsMenuOpen(true)
-  }
-
-  const handleClose = () => {
-    menuRef.current?.close()
-  }
-
-  useEffect(() => {
-    const menu = menuRef.current
-    if (!menu) return
-
-    // Esc closes the dialog natively; the `close` event covers it and the button alike.
-    const handleMenuClose = () => setIsMenuOpen(false)
-    // A followed link would otherwise leave the menu open over the next page.
-    const handleMenuClick = (event: MouseEvent) => {
-      if (event.target instanceof Element && event.target.closest('a')) {
-        menu.close()
-      }
-    }
-    const inlineNavigation = window.matchMedia(INLINE_NAVIGATION_QUERY)
-    const handleWidthChange = () => {
-      if (inlineNavigation.matches) menu.close()
-    }
-
-    menu.addEventListener('close', handleMenuClose)
-    menu.addEventListener('click', handleMenuClick)
-    inlineNavigation.addEventListener('change', handleWidthChange)
-
-    return () => {
-      menu.removeEventListener('close', handleMenuClose)
-      menu.removeEventListener('click', handleMenuClick)
-      inlineNavigation.removeEventListener('change', handleWidthChange)
-    }
-  }, [])
+  // Zavřít stands where Menu was, so focus starts there (design 10b, qgr43icu).
+  const { close, closeButtonRef, isMenuOpen, menuRef, open } =
+    useFullScreenMenu(INLINE_NAVIGATION_QUERY)
 
   return (
     <nav className={styles.container}>
@@ -61,7 +23,7 @@ export const Navigation = ({ children }: Props) => {
         aria-expanded={isMenuOpen}
         aria-haspopup={'dialog'}
         className={styles.menuButton}
-        onClick={handleOpen}
+        onClick={open}
         type={'button'}
       >
         Menu
@@ -71,7 +33,7 @@ export const Navigation = ({ children }: Props) => {
           <HomeLink />
           <button
             className={styles.menuButton}
-            onClick={handleClose}
+            onClick={close}
             ref={closeButtonRef}
             type={'button'}
           >

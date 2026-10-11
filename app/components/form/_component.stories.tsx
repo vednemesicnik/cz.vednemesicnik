@@ -205,7 +205,7 @@ export const FormWithMultipleActions: Story = {
         <Button type="submit" variant="primary">
           Save
         </Button>
-        <Button type="button" variant="default">
+        <Button type="button" variant="outline">
           Cancel
         </Button>
       </div>

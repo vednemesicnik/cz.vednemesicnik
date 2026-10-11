@@ -62,8 +62,11 @@ const waitForPageLoad = () =>
         window.addEventListener('load', () => resolve(), { once: true })
       })
 
+type Tone = 'gradient' | 'text'
+
 type Props = {
   animate?: boolean
+  tone?: Tone
   className?: string
 }
 
@@ -88,8 +91,14 @@ type Props = {
  * z. s." or the name inside a sentence.
  *
  * @param animate - Turn „měsíčník" once per session.
+ * @param tone - `gradient` paints the signature gradient; `text` takes the colour of
+ *   the text around it (the administration sidebar).
  */
-export const VdmWordmark = ({ animate = false, className }: Props) => {
+export const VdmWordmark = ({
+  animate = false,
+  tone = 'gradient',
+  className,
+}: Props) => {
   const shouldTurn = useSyncExternalStore(
     subscribe,
     () => animate && readShouldTurn(),
@@ -127,7 +136,11 @@ export const VdmWordmark = ({ animate = false, className }: Props) => {
   return (
     <>
       <span
-        className={clsx(styles.wordmark, className)}
+        className={clsx(
+          styles.wordmark,
+          tone === 'text' && styles.text,
+          className,
+        )}
         data-pending={isPending ? '' : undefined}
         data-turning={shouldTurn || hasTurned ? '' : undefined}
         suppressHydrationWarning

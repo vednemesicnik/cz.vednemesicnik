@@ -1,0 +1,27 @@
+.textButton {
+  @layer route {
+    padding: 0;
+    border: none;
+    border-radius: 2px;
+    background: none;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    line-height: inherit;
+    color: var(--link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover:not(:disabled) {
+      color: var(--link-hover);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
+}

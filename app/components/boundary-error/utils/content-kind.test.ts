@@ -60,7 +60,7 @@ describe('getAdminContentKind', () => {
     '/administration/articles/categories',
     '/administration/podcasts/p1/episodes',
     '/administration/podcasts/p1/episodes/add-episode',
-    '/administration/settings/profile',
+    '/administration/settings',
     '/administration/nope',
     '/articles/some-article',
   ])('%s → null', (pathname) => {

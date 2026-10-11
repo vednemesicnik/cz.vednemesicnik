@@ -5,8 +5,10 @@ import { data } from 'react-router'
 import { requireUnauthenticated } from '~/utils/auth.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
+import { createMagicLinkUrl } from '~/utils/magic-link/create-magic-link-url'
 import { createMagicLinkToken } from '~/utils/magic-link.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { sendMagicLinkEmail } from '~/utils/send-magic-link-email.server'
 import { findExistingUserByEmail } from '~/utils/sign-in.server'
 
@@ -63,14 +65,15 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       if (user !== null) {
         const token = await createMagicLinkToken(email)
 
-        const link = new URL(
-          '/administration/sign-in/magic-link/verify',
-          process.env.BASE_URL,
-        )
-        link.searchParams.set('token', token)
-        link.searchParams.set('email', email)
+        // Carries where to land after the confirm click.
+        const link = createMagicLinkUrl({
+          baseUrl: process.env.BASE_URL,
+          email,
+          redirectTo: safeRedirect(formData.get('redirectTo')),
+          token,
+        })
 
-        await sendMagicLinkEmail({ email, link: link.href })
+        await sendMagicLinkEmail({ email, link })
       }
     } catch (error) {
       // Swallow failures (e.g. a DB error from the user lookup / token write):

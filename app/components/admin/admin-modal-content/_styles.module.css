@@ -1,16 +1,14 @@
 .content {
   @layer component {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-auto-flow: row;
-    justify-items: center;
-    gap: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+    width: 100%;
     padding: 24px;
-    background-color: var(--bg-primary);
+    background-color: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    box-shadow: var(--shadow-lg);
-    min-width: 400px;
-    max-width: 500px;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
   }
 }

@@ -8,7 +8,6 @@ import {
 } from 'react'
 import { useFetcher } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -16,6 +15,7 @@ import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import styles from './_styles.module.css'
@@ -153,14 +153,17 @@ export const AdminPublishDateDialog = ({
           />
 
           <AdminModalActions>
-            <AdminButton
+            <Button
               onClick={handleCancel}
+              size={'sm'}
               type={'button'}
-              variant={'secondary'}
+              variant={'ghost'}
             >
               Zrušit
-            </AdminButton>
-            <AdminButton type={'submit'}>{confirmLabel}</AdminButton>
+            </Button>
+            <Button size={'sm'} type={'submit'}>
+              {confirmLabel}
+            </Button>
           </AdminModalActions>
         </fetcher.Form>
       </AdminModalContent>

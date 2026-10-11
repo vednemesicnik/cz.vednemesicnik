@@ -48,3 +48,15 @@ export const Overview: Story = {
     </div>
   ),
 }
+
+// In the colour of the text around it, as in the administration sidebar.
+export const TextTone: Story = {
+  args: {
+    tone: 'text',
+  },
+  render: (args) => (
+    <span style={{ fontSize: '14px', fontWeight: 600 }}>
+      <VdmWordmark {...args} />
+    </span>
+  ),
+}

@@ -1,16 +1,17 @@
 import { redirect } from 'react-router'
-import { requireUnauthenticated } from '~/utils/auth.server'
+import { getAuthentication } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { consumeMagicLinkToken } from '~/utils/magic-link.server'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import type { Route } from './+types/route'
+import { verifyIdentityWithLink } from './utils/verify-identity-with-link.server'
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  // Enforce the auth boundary in the handler, not just the loader: a direct POST
-  // must not let an already-signed-in admin consume a token and swap sessions.
-  await requireUnauthenticated(request)
+  const authentication = await getAuthentication(request)
 
   const formData = await request.formData()
 
@@ -18,12 +19,33 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const token = formData.get('token')
   const email = formData.get('email')
+  const redirectTo = safeRedirect(formData.get('redirectTo'))
 
   if (typeof token !== 'string' || typeof email !== 'string') {
-    throw redirect('/administration/sign-in', { status: 303 })
+    throw redirect(withRedirectTo('/administration/sign-in', redirectTo), {
+      status: 303,
+    })
   }
 
   const normalizedEmail = email.trim().toLowerCase()
+
+  // A signed-in browser checks its identity (design 29d) and never swaps the
+  // session for another one.
+  if (
+    authentication.sessionId !== undefined &&
+    authentication.userId !== undefined
+  ) {
+    return verifyIdentityWithLink({
+      email: normalizedEmail,
+      redirectTo,
+      request,
+      session: {
+        sessionId: authentication.sessionId,
+        userId: authentication.userId,
+      },
+      token,
+    })
+  }
 
   // Single-use: consume (delete) the row and check validity in one step.
   const isValid = await consumeMagicLinkToken(normalizedEmail, token)
@@ -35,7 +57,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
       method: 'magic_link',
       request,
     })
-    throw redirect('/administration/sign-in/magic-link', { status: 303 })
+    throw redirect(
+      withRedirectTo('/administration/sign-in/magic-link', redirectTo),
+      { status: 303 },
+    )
   }
 
   const user = await findExistingUserByEmail(normalizedEmail)
@@ -48,9 +73,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
       method: 'magic_link',
       request,
     })
-    throw redirect('/administration/sign-in', { status: 303 })
+    throw redirect(withRedirectTo('/administration/sign-in', redirectTo), {
+      status: 303,
+    })
   }
 
-  // Always throws: a redirect to /administration on success.
-  return await signInUser(request, user.id, 'magic_link')
+  // Always throws: a redirect to `redirectTo` on success.
+  return await signInUser(request, user.id, 'magic_link', redirectTo)
 }

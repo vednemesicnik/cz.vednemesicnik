@@ -2,8 +2,8 @@ import { clsx } from 'clsx'
 import { useCallback, useId, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { Button } from '~/components/button'
 import {
   type AdminListTableKey,
   FILTER_PRESET_NONE,
@@ -84,9 +84,9 @@ export const AdminSavedFilters = ({
 
   return (
     <div className={styles.savedFilters}>
-      <AdminButton popoverTarget={menuId} type={'button'} variant={'secondary'}>
+      <Button popoverTarget={menuId} type={'button'} variant={'outline'}>
         Uložené filtry
-      </AdminButton>
+      </Button>
 
       {/*
         Native popover: the trigger (its popovertarget invoker) becomes the
@@ -147,13 +147,13 @@ export const AdminSavedFilters = ({
           {!hasCurrentQuery && (
             <p className={styles.hint}>Nejprve nastavte alespoň jeden filtr.</p>
           )}
-          <AdminButton
+          <Button
             disabled={!hasCurrentQuery}
             onClick={handleSave}
             type={'button'}
           >
             Uložit aktuální filtr
-          </AdminButton>
+          </Button>
         </div>
       </div>
 

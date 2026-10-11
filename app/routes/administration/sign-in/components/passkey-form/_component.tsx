@@ -4,12 +4,17 @@ import { useFetcher } from 'react-router'
 
 import type { action as generateAuthenticationOptionsAction } from '~/routes/administration/sign-in/passkey/generate-authentication-options/_action'
 import type { action as verifyAuthenticationResponseAction } from '~/routes/administration/sign-in/passkey/verify-authentication-response/_action'
+import { formatRetryAfter } from '~/utils/format-retry-after'
 import { useBiometric } from '~/utils/use-biometric'
 
 import styles from '../../_styles.module.css'
 
 const ERROR_MESSAGE =
   'Přihlášení pomocí passkey se nezdařilo. Zkuste to prosím znovu.'
+
+// Same wording as the rate-limited password sign-in.
+const formatRateLimit = (retryAfter: number) =>
+  `Příliš mnoho pokusů. Zkuste to prosím ${formatRetryAfter(retryAfter)}.`
 
 type Props = {
   redirectTo: string
@@ -69,14 +74,15 @@ export const PasskeyForm = ({ redirectTo }: Props) => {
     void authenticate()
   }, [options, verifyAuthenticationResponseFetcher])
 
-  const isVerifyFailed =
-    verifyAuthenticationResponseFetcher.data?.verified === false
+  const verifyResult = verifyAuthenticationResponseFetcher.data
 
   useEffect(() => {
-    if (isVerifyFailed) {
+    if (verifyResult?.status === 'failed') {
       setError(ERROR_MESSAGE)
+    } else if (verifyResult?.status === 'rate-limited') {
+      setError(formatRateLimit(verifyResult.retryAfter))
     }
-  }, [isVerifyFailed])
+  }, [verifyResult])
 
   // Passkey sign-in relies on a platform authenticator; hide the option when
   // the device can't offer one.

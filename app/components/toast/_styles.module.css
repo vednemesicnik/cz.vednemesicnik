@@ -1,0 +1,26 @@
+.toast {
+  @layer component {
+    align-items: center;
+    background-color: var(--surface-inverse);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    box-sizing: border-box;
+    color: var(--text-inverse);
+    display: inline-flex;
+    font-size: var(--font-size-sm);
+    gap: 12px;
+    line-height: 1.4;
+    max-width: 440px;
+    padding-block: 12px;
+    padding-inline: 16px;
+  }
+}
+
+.icon {
+  @layer component {
+    color: var(--toast-error);
+    display: inline-flex;
+    flex: none;
+    font-size: 16px;
+  }
+}

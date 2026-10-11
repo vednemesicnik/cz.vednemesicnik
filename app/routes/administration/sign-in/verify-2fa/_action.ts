@@ -4,6 +4,7 @@ import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { redeemBackupCode } from '~/utils/backup-codes.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
+import { getPendingTwoFactorRedirectTo } from '~/utils/get-pending-two-factor-redirect-to.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import {
   deletePendingTwoFactorCookieSession,
@@ -17,6 +18,7 @@ import { rateLimitContext } from '~/utils/rate-limit.server'
 import { createSession } from '~/utils/session.server'
 import { verifyTOTP } from '~/utils/totp.server'
 import { getUserTwoFactor } from '~/utils/two-factor.server'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -27,11 +29,13 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   checkHoneypot(formData)
 
   const cookieSession = await getPendingTwoFactorCookieSession(request)
+  const redirectTo = getPendingTwoFactorRedirectTo(cookieSession)
 
   // Any redirect out of the TOTP step clears the pending cookie so no stale
-  // pending user id / attempt counter lingers until it expires.
+  // pending user id / attempt counter lingers until it expires. The target
+  // rides along in the URL, so a restarted sign-in still returns there.
   const redirectToPassword = async () =>
-    redirect('/administration/sign-in/password', {
+    redirect(withRedirectTo('/administration/sign-in/password', redirectTo), {
       headers: {
         'Set-Cookie': await deletePendingTwoFactorCookieSession(cookieSession),
       },
@@ -102,7 +106,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       await deletePendingTwoFactorCookieSession(cookieSession),
     )
 
-    throw redirect('/administration', { headers, status: 303 })
+    throw redirect(redirectTo, { headers, status: 303 })
   }
 
   // Count the failed guess; once the cap is hit, invalidate the pending cookie
@@ -130,11 +134,11 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       },
       {
         headers: {
-          'Set-Cookie': await setPendingTwoFactorCookieSession(
-            request,
-            userId,
+          'Set-Cookie': await setPendingTwoFactorCookieSession(request, {
             attempts,
-          ),
+            redirectTo,
+            userId,
+          }),
         },
         status: 400,
       },

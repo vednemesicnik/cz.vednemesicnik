@@ -1,0 +1,12 @@
+.column {
+  @layer component {
+    display: grid;
+    align-content: start;
+    gap: 32px;
+    min-width: 0;
+
+    &:empty {
+      display: none;
+    }
+  }
+}

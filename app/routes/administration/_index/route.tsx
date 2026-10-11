@@ -201,12 +201,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               to={href('/administration/archive')}
             />
           )}
-          <AdminNavigationCard
-            description="Uživatelské nastavení a profil"
-            icon="⚙️"
-            title="Nastavení"
-            to={href('/administration/settings')}
-          />
         </AdminNavigationGrid>
       </section>
     </AdminPage>

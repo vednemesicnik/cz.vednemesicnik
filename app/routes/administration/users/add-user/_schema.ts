@@ -3,6 +3,8 @@ import { z } from 'zod'
 const baseSchema = z.object({
   email: z
     .string({ message: 'E-mail je povinný' })
+    .trim()
+    .toLowerCase()
     .email({ message: 'Neplatný formát e-mailu' }),
   name: z
     .string({ message: 'Jméno je povinné' })

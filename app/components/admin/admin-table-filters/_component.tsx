@@ -1,7 +1,8 @@
 import type { ReactNode, SubmitEvent } from 'react'
 import { Form, useSubmit } from 'react-router'
 
-import { AdminButton } from '~/components/admin/admin-button'
+import { Button } from '~/components/button'
+import { buildNonEmptySearchParams } from '~/utils/build-non-empty-search-params'
 
 import styles from './_styles.module.css'
 
@@ -20,15 +21,9 @@ export const AdminTableFilters = ({ children, preservedParams }: Props) => {
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const searchParams = new URLSearchParams()
-
-    for (const [name, value] of new FormData(event.currentTarget).entries()) {
-      if (typeof value === 'string' && value !== '') {
-        searchParams.append(name, value)
-      }
-    }
-
-    void submit(searchParams, { method: 'get' })
+    void submit(buildNonEmptySearchParams(new FormData(event.currentTarget)), {
+      method: 'get',
+    })
   }
 
   return (
@@ -46,13 +41,9 @@ export const AdminTableFilters = ({ children, preservedParams }: Props) => {
       {children}
       {/* The no-JS path: the selects auto-submit only when JS is available, so
           the button is hidden via `@media (scripting: enabled)`. */}
-      <AdminButton
-        className={styles.submit}
-        type={'submit'}
-        variant={'secondary'}
-      >
+      <Button className={styles.submit} type={'submit'} variant={'outline'}>
         Filtrovat
-      </AdminButton>
+      </Button>
     </Form>
   )
 }

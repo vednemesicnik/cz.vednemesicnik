@@ -1,0 +1,82 @@
+.paths {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* The account line belongs to the link only, so a larger gap sets it apart
+   from Google (design 29d, so197jap). */
+.link {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-block-start: 4px;
+  }
+}
+
+.account {
+  @layer route {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+}
+
+.email {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.sent {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-primary);
+    text-wrap: pretty;
+
+    & strong {
+      font-weight: var(--font-weight-medium);
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
+.waiting {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+.links {
+  @layer route {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+  }
+}
+
+.hint {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+/* Same look as the Passkey row's problem (PasskeyProblem). */
+.error {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--error-text);
+  }
+}

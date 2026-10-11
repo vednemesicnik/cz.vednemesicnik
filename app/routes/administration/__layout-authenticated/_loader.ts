@@ -1,13 +1,20 @@
+import type { ColorScheme } from '@generated/prisma/enums'
 import { data } from 'react-router'
 
-import type { AdministrationPanelUser } from '~/components/admin/administration-panel'
+import type { SidebarUser } from '~/components/admin/administration-sidebar'
 import { requireAuthentication } from '~/utils/auth.server'
 import { commitCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
+import { canListPeople } from './utils/can-list-people'
 
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const [csrfToken, csrfCookie] = await commitCSRF(request)
@@ -17,14 +24,13 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     url,
   })
 
-  let administrationPanelUser: AdministrationPanelUser = {
-    email: undefined,
-    image: {
-      altText: undefined,
-      src: undefined,
-    },
-    name: undefined,
+  let user: SidebarUser = {
+    image: createImageSources('user-image', undefined),
+    name: '',
+    roleLabel: undefined,
   }
+
+  let colorScheme: ColorScheme = 'system'
 
   if (sessionId !== undefined) {
     const session = await prisma.session.findUnique({
@@ -32,8 +38,12 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         id: true,
         user: {
           select: {
+            author: {
+              select: { name: true, role: { select: { name: true } } },
+            },
+            colorScheme: true,
             email: true,
-            name: true,
+            image: { select: imageSourceSelect },
           },
         },
       },
@@ -43,13 +53,12 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     })
 
     if (session) {
-      administrationPanelUser = {
-        email: session.user.email ?? undefined,
-        image: {
-          altText: undefined,
-          src: undefined,
-        },
-        name: session.user.name ?? undefined,
+      colorScheme = session.user.colorScheme
+      user = {
+        image: createImageSources('user-image', session.user.image),
+        // The name belongs to the author (design 28f, 29b).
+        name: session.user.author.name || session.user.email,
+        roleLabel: getAuthorRoleLabel(session.user.author.role.name),
       }
     }
   }
@@ -81,22 +90,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           action: 'view',
           entity: 'article',
         }).hasPermission,
-        canViewAuthors: userContext.can({
-          action: 'view',
-          entity: 'author',
-          targetUserId: userContext.userId,
-        }).hasPermission,
+        canViewAuthors: canListPeople(userContext, 'author'),
         canViewIssues: authorContext.can({ action: 'view', entity: 'issue' })
           .hasPermission,
         canViewPodcasts: authorContext.can({
           action: 'view',
           entity: 'podcast',
         }).hasPermission,
-        canViewUsers: userContext.can({
-          action: 'view',
-          entity: 'user',
-          targetUserId: userContext.userId,
-        }).hasPermission,
+        canViewUsers: canListPeople(userContext, 'user'),
       }
     } catch (error) {
       // If permission check fails, user might not have author role
@@ -107,10 +108,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   return data(
     {
+      colorScheme,
       csrfToken,
       isAuthenticated,
       permissions,
-      user: administrationPanelUser,
+      user,
     },
     {
       headers: {

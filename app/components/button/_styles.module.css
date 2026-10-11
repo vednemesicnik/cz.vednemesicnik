@@ -1,20 +1,10 @@
-/* ========================================
-   Primary Variant (Violet)
-   ======================================== */
-.primary {
+/* Every variant carries a 2px border (transparent unless outline), so all of
+   them are one height; the sizes take the border off the design system's
+   padding to keep its dimensions. */
+.button {
   @layer variant {
-    background-color: var(--primary);
-    color: var(--text-on-accent);
-    border: none;
-    transition: background-color var(--transition-fast);
-
-    &:hover:not(:disabled):not(:focus-visible) {
-      background-color: var(--primary-hover);
-    }
-
-    &:active:not(:disabled) {
-      background-color: var(--primary-active);
-    }
+    border: 2px solid transparent;
+    border-radius: var(--radius-lg);
 
     &:focus-visible {
       box-shadow: var(--focus-shadow);
@@ -23,14 +13,90 @@
   }
 }
 
-/* ========================================
-   Danger Variant (Rose)
-   ======================================== */
+.sm {
+  @layer variant {
+    padding-block: 6px;
+    padding-inline: 14px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+.md {
+  @layer variant {
+    padding-block: 10px;
+    padding-inline: 22px;
+    font-size: var(--font-size-md);
+  }
+}
+
+.lg {
+  @layer variant {
+    padding-block: 14px;
+    padding-inline: 30px;
+    font-size: var(--font-size-lg);
+  }
+}
+
+.primary {
+  @layer variant {
+    background-color: var(--primary);
+    color: var(--text-on-accent);
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--primary-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--primary-active);
+    }
+  }
+}
+
+.secondary {
+  @layer variant {
+    background-color: var(--secondary);
+    color: var(--text-on-accent);
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--secondary-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--secondary-active);
+    }
+  }
+}
+
+.outline {
+  @layer variant {
+    background-color: transparent;
+    color: var(--text-primary);
+    border-color: var(--border);
+
+    &:hover:not(:disabled):not(:focus-visible),
+    &:focus-visible {
+      background-color: var(--bg-accent);
+      border-color: var(--border-accent);
+    }
+  }
+}
+
+.ghost {
+  @layer variant {
+    background-color: transparent;
+    color: var(--text-secondary);
+
+    &:hover:not(:disabled):not(:focus-visible) {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+  }
+}
+
 .danger {
   @layer variant {
     background-color: var(--danger);
     color: var(--danger-text);
-    border: none;
 
     &:hover:not(:disabled):not(:focus-visible) {
       background-color: var(--danger-hover);
@@ -42,30 +108,6 @@
 
     &:focus-visible {
       box-shadow: var(--focus-shadow-danger);
-      outline: none;
-    }
-  }
-}
-
-/* ========================================
-   Default Variant (Outline)
-   ======================================== */
-.default {
-  @layer variant {
-    background-color: transparent;
-    color: var(--text-primary);
-    border: 2px solid var(--border);
-
-    &:hover:not(:disabled):not(:focus-visible) {
-      background-color: var(--bg-accent);
-      border-color: var(--border-accent);
-    }
-
-    &:focus-visible {
-      background-color: var(--bg-accent);
-      border-color: var(--border-accent);
-      box-shadow: var(--focus-shadow);
-      outline: none;
     }
   }
 }

@@ -1,0 +1,42 @@
+.footer {
+  @layer component {
+    grid-area: footer;
+    display: flex;
+    align-items: center;
+    padding-block: 12px;
+    padding-inline: 24px;
+    border-top: 1px solid var(--border);
+
+    /* Below 768 px the link is the 44 px row (see .link), on the 16 px edge
+       (design 22g, tyxr2jqk). */
+    @media (width < 768px) {
+      padding-block: 0;
+      padding-inline: 16px;
+    }
+  }
+}
+
+/* Hyperlink in the footer's quiet tone: secondary text, no underline (design 22a). */
+.link {
+  @layer variant {
+    font-size: 13px;
+    font-weight: var(--font-weight-regular);
+    line-height: 20px;
+
+    &,
+    &:visited {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    /* A 44 px row for touch: 20 px line and 12 px above and below (22g). */
+    @media (width < 768px) {
+      display: inline-block;
+      padding-block: 12px;
+    }
+  }
+}

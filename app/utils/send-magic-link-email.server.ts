@@ -3,6 +3,8 @@
  * (see the SCRIPT__Auth__Magic_Link repo). Best-effort: the sign-in request
  * action returns the same neutral response whether or not delivery succeeds, so
  * this never throws — failures are logged, reported to Sentry, and swallowed.
+ * It resolves to whether the link went out; only the identity check of a
+ * signed-in user (design 29d) tells the person, sign-in never does.
  *
  * The request is **signed** rather than carrying the secret in its body, so
  * GAS_MAGIC_LINK_SECRET is a signing key and never travels — see
@@ -31,7 +33,7 @@ export const sendMagicLinkEmail = async ({
 }: {
   email: string
   link: string
-}) => {
+}): Promise<boolean> => {
   const url = process.env.GAS_MAGIC_LINK_URL
   const secret = process.env.GAS_MAGIC_LINK_SECRET
 
@@ -40,14 +42,15 @@ export const sendMagicLinkEmail = async ({
       console.warn(
         '[magic-link] GAS_MAGIC_LINK_URL/SECRET not set — skipping email send.',
       )
-    } else {
-      // Local dev without a GAS deployment: print the link so the sign-in flow
-      // is usable end-to-end without sending a real email.
-      console.info(
-        `[magic-link] GAS not configured — sign-in link for ${email}: ${link}`,
-      )
+      return false
     }
-    return
+
+    // Local dev without a GAS deployment: print the link so the sign-in flow
+    // is usable end-to-end without sending a real email.
+    console.info(
+      `[magic-link] GAS not configured — sign-in link for ${email}: ${link}`,
+    )
+    return true
   }
 
   try {
@@ -89,9 +92,13 @@ export const sendMagicLinkEmail = async ({
           level: 'error',
         })
       }
+      return false
     }
+
+    return true
   } catch (error) {
     console.error('[magic-link] GAS request threw —', error)
     if (process.env.SENTRY_DSN) Sentry.captureException(error)
+    return false
   }
 }

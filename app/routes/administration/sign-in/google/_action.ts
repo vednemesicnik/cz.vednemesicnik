@@ -51,6 +51,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     cookie = await setOAuthCookieSession(request, {
       codeVerifier,
       nonce,
+      purpose: 'sign-in',
       redirectTo,
       state,
     })

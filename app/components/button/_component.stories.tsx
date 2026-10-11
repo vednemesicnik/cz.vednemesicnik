@@ -1,106 +1,73 @@
+// noinspection JSUnusedGlobalSymbols
+
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { Button } from './_component'
 
 const meta: Meta<typeof Button> = {
   argTypes: {
-    disabled: {
-      control: 'boolean',
-      description:
-        'Whether the button is disabled (reduces opacity and prevents interaction)',
-    },
-    type: {
-      control: 'select',
-      description: 'HTML button type attribute',
-      options: ['button', 'submit', 'reset'],
+    size: {
+      control: 'inline-radio',
+      options: ['sm', 'md', 'lg'],
     },
     variant: {
       control: 'select',
-      description:
-        "Visual style variant: 'primary' for main actions (bright green), 'danger' for destructive actions (red), 'default' for secondary actions (outlined)",
-      options: ['primary', 'danger', 'default'],
+      options: ['primary', 'secondary', 'outline', 'ghost', 'danger'],
     },
   },
   component: Button,
   parameters: {
-    docs: {
-      description: {
-        component:
-          'Modern button component with three distinct variants. Features smooth transitions, hover effects, subtle scale on click, and focus-visible box-shadow for keyboard navigation (Tab key). Uses form design tokens for consistent styling across all variants.',
-      },
-    },
+    layout: 'centered',
   },
   tags: ['autodocs'],
   title: 'Primitives/Button',
 }
 
 export default meta
-type Story = StoryObj<typeof Button>
+type Story = StoryObj<typeof meta>
 
 /**
- * Primary button variant used for main call-to-action buttons.
- * Use this for the most important action on a page or form.
+ * Interactive base case (controls enabled).
  */
-export const Primary: Story = {
+export const Playground: Story = {
   args: {
-    children: 'Primary Button',
+    children: 'Uložit',
+    disabled: false,
+    size: 'md',
     variant: 'primary',
   },
 }
 
-/**
- * Danger button variant used for destructive actions.
- * Use this for delete, remove, or other potentially harmful operations.
- */
-export const Danger: Story = {
-  args: {
-    children: 'Delete',
-    variant: 'danger',
-  },
-}
+const variants = ['primary', 'secondary', 'outline', 'ghost', 'danger'] as const
+const sizes = ['sm', 'md', 'lg'] as const
 
 /**
- * Default button variant used for secondary actions.
- * Use this for cancel, back, or other less prominent actions.
+ * Every variant in every size, and disabled. A dialog's actions are `ghost`
+ * Zrušit beside a `primary` or `danger` confirm, both `sm`.
  */
-export const Default: Story = {
-  args: {
-    children: 'Cancel',
-    variant: 'default',
-  },
-}
-
-/**
- * Disabled state prevents user interaction.
- * The button appears visually muted and cannot be clicked.
- */
-export const Disabled: Story = {
-  args: {
-    children: 'Disabled Button',
-    disabled: true,
-    variant: 'primary',
-  },
-}
-
-/**
- * Submit button for forms.
- * When used inside a form, this will trigger form submission.
- */
-export const FormSubmit: Story = {
-  args: {
-    children: 'Submit Form',
-    type: 'submit',
-    variant: 'primary',
-  },
-}
-
-/**
- * Button with longer text content.
- * Shows how the button handles varying content lengths.
- */
-export const LongText: Story = {
-  args: {
-    children: 'This is a button with much longer text content',
-    variant: 'primary',
-  },
+export const Overview: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'grid', gap: '16px' }}>
+      {sizes.map((size) => (
+        <div
+          key={size}
+          style={{ alignItems: 'center', display: 'flex', gap: '8px' }}
+        >
+          {variants.map((variant) => (
+            <Button key={variant} size={size} variant={variant}>
+              {variant}
+            </Button>
+          ))}
+        </div>
+      ))}
+      <div style={{ alignItems: 'center', display: 'flex', gap: '8px' }}>
+        {variants.map((variant) => (
+          <Button disabled key={variant} variant={variant}>
+            {variant}
+          </Button>
+        ))}
+      </div>
+    </div>
+  ),
 }

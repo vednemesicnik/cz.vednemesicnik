@@ -110,6 +110,21 @@
   }
 }
 
+/* The name in the colour of the text around it, without the gradient (design 21:
+   the administration sidebar). */
+.text .letters {
+  @layer variant {
+    animation: none;
+  }
+}
+
+.text .letter {
+  @layer variant {
+    color: currentColor;
+    background-image: none;
+  }
+}
+
 @keyframes wordmark-wave {
   0%,
   100% {

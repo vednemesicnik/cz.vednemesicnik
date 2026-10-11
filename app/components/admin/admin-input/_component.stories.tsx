@@ -70,6 +70,18 @@ export const Required: Story = {
 }
 
 /**
+ * Input field with a hint below, linked to the input for screen readers.
+ */
+export const WithHint: Story = {
+  args: {
+    defaultValue: 'Jakub Novák',
+    hint: 'Zobrazuje se u článků na webu a v panelu administrace.',
+    id: 'name',
+    label: 'Jméno',
+  },
+}
+
+/**
  * Input field with error messages displayed below.
  * Shows validation errors to the user.
  */

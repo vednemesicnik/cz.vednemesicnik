@@ -1,18 +1,15 @@
 .link {
   @layer component {
     display: block;
-    padding-block: 12px;
-    padding-inline: 24px;
+    padding-block: 8px;
+    padding-inline: 10px;
+    border-radius: var(--radius-lg);
     color: var(--text-secondary);
     text-decoration: none;
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
     transition:
       background-color 150ms ease-out,
-      color 150ms ease-out,
-      border-color 150ms ease-out;
-    border: none;
-    border-inline-start: 3px solid transparent;
+      color 150ms ease-out;
 
     &:hover {
       background-color: var(--bg-tertiary);
@@ -20,18 +17,20 @@
     }
 
     &:focus-visible {
-      outline: 2px solid var(--primary);
-      outline-offset: -2px;
-      border-radius: 4px;
+      outline: none;
+      box-shadow: var(--focus-shadow);
     }
   }
 }
 
+/* The tonal accent fill of the active item (design 22a). */
 .linkActive {
-  @layer component {
-    background-color: var(--bg-hover);
-    color: var(--primary);
-    border-inline-start-color: var(--primary);
-    font-weight: var(--font-weight-semibold);
+  @layer variant {
+    &,
+    &:hover {
+      background-color: var(--primary-light);
+      color: var(--link-strong);
+      font-weight: var(--font-weight-semibold);
+    }
   }
 }

@@ -1,14 +1,17 @@
 import { type LoaderFunctionArgs, redirect } from 'react-router'
 
 import { getAuthentication } from '~/utils/auth.server'
+import { getPendingTwoFactorRedirectTo } from '~/utils/get-pending-two-factor-redirect-to.server'
 import {
   deletePendingTwoFactorCookieSession,
   getPendingTwoFactorCookieSession,
   getPendingTwoFactorUserId,
 } from '~/utils/pending-two-factor.server'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const cookieSession = await getPendingTwoFactorCookieSession(request)
+  const redirectTo = getPendingTwoFactorRedirectTo(cookieSession)
 
   // Every redirect out of the TOTP step clears the pending cookie so no stale
   // pending user id / attempt counter lingers until it expires.
@@ -16,7 +19,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     deletePendingTwoFactorCookieSession(cookieSession)
 
   const redirectToPassword = async () =>
-    redirect('/administration/sign-in/password', {
+    redirect(withRedirectTo('/administration/sign-in/password', redirectTo), {
       headers: { 'Set-Cookie': await clearPendingCookie() },
     })
 
@@ -25,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // cookie too.
   const { isAuthenticated } = await getAuthentication(request)
   if (isAuthenticated) {
-    throw redirect('/administration', {
+    throw redirect(redirectTo, {
       headers: { 'Set-Cookie': await clearPendingCookie() },
     })
   }
