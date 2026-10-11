@@ -16,20 +16,12 @@
   }
 }
 
-/* 480 px main + gap + right column = 820 px of container. */
-.withAside {
+/* 480 px main + gap + right column = 820 px of container. Only a right column
+   with content (AdminDetailAside marks itself with data-column) earns one. */
+.layout:has(> [data-column="aside"]:not(:empty)) {
   @layer variant {
     @container (width >= 820px) {
       grid-template-columns: minmax(0, 1fr) var(--detail-aside-width);
     }
-  }
-}
-
-.column {
-  @layer component {
-    display: grid;
-    align-content: start;
-    gap: 32px;
-    min-width: 0;
   }
 }
