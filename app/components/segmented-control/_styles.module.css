@@ -1,0 +1,79 @@
+.fieldset {
+  @layer component {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+}
+
+.legend {
+  @layer component {
+    margin-block-end: 8px;
+    padding: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}
+
+.track {
+  @layer component {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-tertiary);
+  }
+}
+
+.segment {
+  @layer component {
+    position: relative;
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition:
+      background-color var(--transition-fast),
+      color var(--transition-fast);
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &:has(:checked) {
+      background-color: var(--bg-primary);
+      box-shadow: var(--shadow-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-primary);
+    }
+
+    &:has(:focus-visible) {
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+.input {
+  @layer component {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+}
+
+.hint {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
