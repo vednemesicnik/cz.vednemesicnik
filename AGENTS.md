@@ -199,6 +199,9 @@ Session-based authentication with multiple methods:
 - Password (bcrypt hashed) — an emergency path, off unless `ALLOW_PASSWORD_SIGN_IN` is set;
   only Owner and Administrator may set it and its two-factor authentication
   (`can-use-emergency-password.ts`)
+- Emergency sign-in link — under the same switch, an Owner or Administrator issues a one-time
+  15-minute link for an account they may edit (`can-issue-emergency-sign-in-link.ts`,
+  `app/utils/emergency-sign-in-link/`); handed over by phone or chat, never by e-mail
 
 Session management in `app/utils/auth.server.ts` using cookie-based sessions.
 
