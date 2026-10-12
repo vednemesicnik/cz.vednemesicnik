@@ -48,18 +48,20 @@ export const loadSavedFilters = async ({
         id: true,
         name: true,
         query: true,
-        user: { select: { name: true, username: true } },
+        user: {
+          select: { author: { select: { name: true } }, username: true },
+        },
       },
       where: { isShared: true, NOT: { userId }, tableKey },
     }),
   ])
 
-  // `User.name` is optional; the username is unique and always set, so it keeps the
-  // owner label unambiguous when two people share a preset of the same name.
+  // The name belongs to the author (design 28f); an empty one falls back to the
+  // username, which is unique and always set.
   const sharedFilters = rawSharedFilters.map((filter) => ({
     id: filter.id,
     name: filter.name,
-    ownerName: filter.user.name ?? filter.user.username,
+    ownerName: filter.user.author.name || filter.user.username,
     query: filter.query,
   }))
 

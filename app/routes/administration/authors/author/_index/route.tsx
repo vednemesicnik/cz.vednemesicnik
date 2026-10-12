@@ -78,14 +78,9 @@ export default function RouteComponent({
       <AdminDetailSection title="Propojený uživatel">
         <AdminDetailList>
           {author.user ? (
-            <>
-              <AdminDetailItem label="Jméno uživatele">
-                {author.user.name}
-              </AdminDetailItem>
-              <AdminDetailItem label="E-mail">
-                {author.user.email}
-              </AdminDetailItem>
-            </>
+            <AdminDetailItem label="E-mail">
+              {author.user.email}
+            </AdminDetailItem>
           ) : (
             <AdminDetailItem label="Uživatel">
               Autor není propojen s uživatelským účtem

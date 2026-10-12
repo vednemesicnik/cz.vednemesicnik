@@ -13,7 +13,7 @@ export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { userId } = match.params
 
-    const label = match.loaderData?.user.name ?? 'Neznámý uživatel'
+    const label = match.loaderData?.user.author.name ?? 'Neznámý uživatel'
     const path = href(`/administration/users/:userId`, { userId })
 
     return { label, path }

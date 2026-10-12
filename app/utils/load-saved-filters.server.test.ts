@@ -22,7 +22,7 @@ const SHARED_FILTER = {
   id: 'shared-1',
   name: 'Publikované',
   query: 'state=published',
-  user: { name: 'Jana Nováková', username: 'jana' },
+  user: { author: { name: 'Jana Nováková' }, username: 'jana' },
 }
 
 // The two queries resolve in the order the helper declares them: own presets first.
@@ -92,10 +92,10 @@ describe('loadSavedFilters', () => {
     ])
   })
 
-  test('should fall back to the username when the owner has no name', async () => {
+  test('should fall back to the username when the author name is empty', async () => {
     mockFilters(
       [],
-      [{ ...SHARED_FILTER, user: { name: null, username: 'jana' } }],
+      [{ ...SHARED_FILTER, user: { author: { name: '' }, username: 'jana' } }],
     )
 
     const { sharedFilters } = await load('')

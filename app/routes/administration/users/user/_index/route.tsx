@@ -76,7 +76,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>{user.name}</AdminHeadline>
+      <AdminHeadline>{user.author.name}</AdminHeadline>
 
       <AdminActionGroup>
         {canUpdate && (
@@ -107,7 +107,6 @@ export default function RouteComponent({
 
       <AdminDetailSection title="Základní informace">
         <AdminDetailList>
-          <AdminDetailItem label="Jméno">{user.name}</AdminDetailItem>
           <AdminDetailItem label="E-mail">{user.email}</AdminDetailItem>
           <AdminDetailItem label="Uživatelské jméno">
             {user.username}
