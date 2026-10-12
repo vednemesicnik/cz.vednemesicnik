@@ -8,16 +8,9 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import {
-  APPROVER_ROLE_LEVEL,
-  canPublishWithoutReview,
-  needsReviewToPublish,
-} from '~/utils/permissions/author/review-policy'
-import { canReturnForEdits } from '~/utils/permissions/author/submission/can-return-for-edits'
-import { canSubmitForReview } from '~/utils/permissions/author/submission/can-submit-for-review'
-import { canWithdrawSubmission } from '~/utils/permissions/author/submission/can-withdraw-submission'
-import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { canPublishWithoutReview } from '~/utils/permissions/author/review-policy'
 
+import { getArticleActionFlags } from '../../utils/get-article-action-flags.server'
 import type { Route } from './+types/route'
 import { getMissingArticleContent } from './utils/get-missing-article-content'
 
@@ -123,155 +116,20 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // Check update permission
-  const { hasPermission: canUpdate } = context.can({
-    action: 'update',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Check delete permission
-  const { hasPermission: canDelete } = context.can({
-    action: 'delete',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Check publish permission (draft → published)
-  const { hasPermission: canPublish } = context.can({
-    action: 'publish',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Whether an approving review (from a role exempt from the requirement) exists,
-  // and whether the content still needs one before publishing.
-  const hasApprovingReview = article.reviews.some((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
-  // The Coordinator publishes an article directly, even one nobody submitted or
-  // one retracted from the web: publishing is the approval (design 07b, 07c).
-  const needsReview =
-    context.roleLevel > APPROVER_ROLE_LEVEL &&
-    needsReviewToPublish({
-      authors: article.authors,
-      reviews: article.reviews,
-    })
-
-  // Check retract permission (published → draft)
-  const { hasPermission: canRetract } = context.can({
-    action: 'retract',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Check archive permission (published → archived)
-  const { hasPermission: canArchive } = context.can({
-    action: 'archive',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Check restore permission (archived → draft)
-  const { hasPermission: canRestore } = context.can({
-    action: 'restore',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Check review permission
-  const { hasPermission: canReview } = context.can({
-    action: 'review',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Don't offer approval if:
-  // 1. All authors can publish without review - they don't need reviews
-  // 2. Current user is one of the authors - can't review own content
-  // 3. The article isn't waiting - approval reads a submitted text, once (design 07c)
-  const authorCanPublishWithoutReview = article.authors.every((author) =>
-    canPublishWithoutReview(author.role),
-  )
-  const isOwnContent = article.authors.some(
-    (author) => author.id === context.authorId,
-  )
-  // Submission (design 07a, 07d): a submitted draft waits, and with an approving
-  // review it is approved. Its authors can't edit or delete it meanwhile.
-  const isSubmitted = article.submittedAt !== null
-  const approvingReview = article.reviews.find((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
-  const shouldShowReview =
-    canReview &&
-    !authorCanPublishWithoutReview &&
-    !isOwnContent &&
-    isSubmitted &&
-    approvingReview === undefined
-
-  const hasReviewed = article.reviews.some(
-    (review) => review.reviewer.id === context.authorId,
-  )
-
-  const submission =
-    article.state !== 'draft' || article.submittedAt === null
-      ? null
-      : approvingReview === undefined
-        ? {
-            date: formatNumericDate(article.submittedAt),
-            state: 'pending' as const,
-          }
-        : {
-            date: formatNumericDate(approvingReview.createdAt),
-            state: 'approved' as const,
-          }
-  const isLocked = isLockedBySubmission({
-    roleLevel: context.roleLevel,
-    submittedAt: article.submittedAt,
-  })
-
-  const canSubmit =
-    canUpdate &&
-    canSubmitForReview({
-      authorId: context.authorId,
-      authors: article.authors,
-      state: article.state,
-      submittedAt: article.submittedAt,
-    })
-  const canWithdraw = canWithdrawSubmission({
-    authorId: context.authorId,
-    authorIds: targetAuthorIds,
-    state: article.state,
-    submittedAt: article.submittedAt,
-  })
-  const canReturn =
-    canReview &&
-    canReturnForEdits({
-      roleLevel: context.roleLevel,
-      state: article.state,
-      submittedAt: article.submittedAt,
-    })
+  const flags = getArticleActionFlags(context, article)
 
   // Publishing an incomplete article opens the 23h list instead of the date
   // dialog; the server checks it again.
-  const missingBeforePublish =
-    canPublish && !needsReview
-      ? getMissingArticleContent({
-          authorCount: article.authors.length,
-          content: article.content,
-          excerpt: article.excerpt,
-          images: article.images,
-          slug: article.slug,
-          title: article.title,
-        })
-      : []
+  const missingBeforePublish = flags.canPublish
+    ? getMissingArticleContent({
+        authorCount: article.authors.length,
+        content: article.content,
+        excerpt: article.excerpt,
+        images: article.images,
+        slug: article.slug,
+        title: article.title,
+      })
+    : []
 
   return {
     article: {
@@ -280,7 +138,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       content: article.content,
       createdAt: createFormattedDate(article.createdAt),
       featuredImageId: article.featuredImageId,
-      hasApprovingReview,
+      hasApprovingReview: article.reviews.some((review) =>
+        canPublishWithoutReview(review.reviewer.role),
+      ),
       id: article.id,
       images: article.images.map((image) => ({
         id: image.id,
@@ -306,24 +166,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       title: article.title,
       updatedAt: createFormattedDate(article.updatedAt),
     },
-    canApprove: shouldShowReview && !hasReviewed,
-    canArchive,
-    canChangePublishedAt:
-      article.state === 'published' && context.roleLevel <= APPROVER_ROLE_LEVEL,
-    canDelete: canDelete && !isSubmitted,
-    canEdit: canUpdate && !isLocked,
-    canPublish: canPublish && !needsReview,
-    canRestore,
-    canRetract,
-    canReturn,
-    canSubmit,
-    canWithdraw,
-    isOwnContent,
-    // As canSubmitForReview: with a Coordinator among the authors, nobody submits it.
-    isSubmittable: article.authors.every(
-      (author) => !canPublishWithoutReview(author.role),
-    ),
+    ...flags,
     missingBeforePublish,
-    submission,
+    submission:
+      flags.submission === null
+        ? null
+        : {
+            date: formatNumericDate(flags.submission.date),
+            state: flags.submission.state,
+          },
   }
 }

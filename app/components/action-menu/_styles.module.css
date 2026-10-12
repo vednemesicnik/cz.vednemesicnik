@@ -17,6 +17,12 @@
   }
 }
 
+.actionMenu > .trigger.sm {
+  @layer variant {
+    width: 30px;
+  }
+}
+
 .menu {
   @layer component {
     /* Without Popover API support the [popover] attribute is ignored and the

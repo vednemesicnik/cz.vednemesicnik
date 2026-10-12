@@ -15,7 +15,6 @@ import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
@@ -25,6 +24,7 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { StatusTag } from '~/components/status-tag'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
@@ -154,7 +154,7 @@ export default function RouteComponent({
         <AdminDetailList>
           <AdminDetailItem label="Název">{podcast.title}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge state={podcast.state} />
+            <StatusTag state={podcast.state} />
           </AdminDetailItem>
           {podcast.description && (
             <AdminDetailItem label="Popis">

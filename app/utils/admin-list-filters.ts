@@ -7,6 +7,7 @@ import {
 import { z } from 'zod'
 
 import { PAGE_PARAM } from '~/components/pagination'
+import { ARTICLE_QUEUES } from '~/config/article-queue-config'
 import {
   ORDER_PARAM,
   SEARCH_PARAM,
@@ -52,7 +53,8 @@ export const ADMIN_LIST_FILTER_SCHEMAS = {
   articles: z.object({
     author: slugFilter,
     category: slugFilter,
-    state: stateFilter,
+    // The queues (design 22a), not the data states: a draft is an unsubmitted one.
+    state: z.enum(ARTICLE_QUEUES).optional(),
     tag: slugFilter,
   }),
   authors: z.object({ role: authorRoleFilter }),

@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useEffect, useRef, useState } from 'react'
+import { Activity, useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
@@ -14,73 +14,30 @@ import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminImageGallery } from '~/components/admin/admin-image-gallery'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
-import { AdminDialog } from '~/components/admin/admin-modal'
-import { AdminModalActions } from '~/components/admin/admin-modal-actions'
-import { AdminModalContent } from '~/components/admin/admin-modal-content'
-import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
-import { AdminPublishDateDialog } from '~/components/admin/admin-publish-date-dialog'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
-import { BulletedList } from '~/components/bulleted-list'
 import { Button } from '~/components/button'
 import { Hyperlink } from '~/components/hyperlink'
-import { ListItem } from '~/components/list-item'
-import { useToast } from '~/components/toast-provider'
+import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
-
+import { ArticleChangeDateDialog } from '../../components/article-change-date-dialog'
+import { ArticleMissingDialog } from '../../components/article-missing-dialog'
+import { ArticlePublishDialog } from '../../components/article-publish-dialog'
+import {
+  ARTICLE_ACTION_LABELS,
+  ARTICLE_DIRECT_INTENTS,
+  type ArticleAction,
+} from '../../utils/article-actions'
+import { useArticleActionResult } from '../../utils/use-article-action-result'
 import type { action as articleAction } from './_action'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
-import { ArticlePublishDialog } from './components/article-publish-dialog'
-import { getHeaderActions, type HeaderAction } from './utils/get-header-actions'
+import { getHeaderActions } from './utils/get-header-actions'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
-
-// Three dots announce a dialog (07c). Retract and archive get theirs in 23e.
-const ACTION_LABELS: Record<HeaderAction, string> = {
-  approve: 'Schválit',
-  'approve-and-publish': 'Schválit a publikovat…',
-  archive: 'Archivovat',
-  'change-date': 'Změnit datum publikace…',
-  delete: 'Smazat…',
-  edit: 'Upravit',
-  publish: 'Publikovat…',
-  restore: 'Obnovit jako koncept',
-  retract: 'Stáhnout z publikace',
-  return: 'Vrátit k úpravám',
-  submit: 'Odeslat ke schválení',
-  'view-on-web': 'Zobrazit na webu',
-  withdraw: 'Vzít zpět do konceptu',
-}
-
-// The actions that change the state in one click, without a dialog.
-const DIRECT_INTENTS: Partial<Record<HeaderAction, string>> = {
-  approve: INTENT_VALUE.review,
-  archive: INTENT_VALUE.archive,
-  restore: INTENT_VALUE.restore,
-  retract: INTENT_VALUE.retract,
-  return: INTENT_VALUE.returnForEdits,
-  submit: INTENT_VALUE.submitForReview,
-  withdraw: INTENT_VALUE.withdrawSubmission,
-}
-
-// Toasts after an action (design 23a, 23b, 23c, 23f).
-const ACTION_TOASTS: Record<string, string> = {
-  [INTENT_VALUE.publish]: 'Publikováno',
-  [INTENT_VALUE.returnForEdits]: 'Vráceno k úpravám',
-  [INTENT_VALUE.review]: 'Schváleno',
-  [INTENT_VALUE.submitForReview]: 'Odesláno ke schválení',
-  [INTENT_VALUE.withdrawSubmission]: 'Vráceno do konceptu',
-}
-
-type MissingList = {
-  intent: string
-  items: string[]
-}
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -104,42 +61,11 @@ export default function RouteComponent({
     submission: submission?.state ?? null,
   })
 
-  const showToast = useToast()
-  const missingDialogRef = useRef<HTMLDialogElement>(null)
-  const [missingList, setMissingList] = useState<MissingList | null>(null)
+  const { closeMissingList, missingList, showMissingList } =
+    useArticleActionResult(fetcher.data)
   const [publishDialog, setPublishDialog] = useState<{
     isApproval: boolean
   } | null>(null)
-  const actionResult = fetcher.data
-  // A keyed fetcher keeps its data across remounts; answer only a new result.
-  const handledResultRef = useRef(actionResult)
-
-  // An action answers once: a toast, or the 23h list of what is missing before
-  // the article can be submitted or published.
-  useEffect(() => {
-    if (
-      actionResult === undefined ||
-      actionResult === handledResultRef.current
-    ) {
-      return
-    }
-    handledResultRef.current = actionResult
-
-    if (actionResult.missing.length > 0) {
-      setMissingList({
-        intent: actionResult.intent,
-        items: actionResult.missing,
-      })
-      return
-    }
-
-    const toast = ACTION_TOASTS[actionResult.intent]
-    if (toast !== undefined) showToast(toast)
-  }, [showToast, actionResult])
-
-  useEffect(() => {
-    if (missingList !== null) missingDialogRef.current?.showModal()
-  }, [missingList])
 
   const isSubmitting = fetcher.state !== 'idle'
 
@@ -162,7 +88,7 @@ export default function RouteComponent({
   // An incomplete article opens the 23h list instead of the date dialog.
   const openPublishDialog = (isApproval: boolean) => {
     if (missingBeforePublish.length > 0) {
-      setMissingList({
+      showMissingList({
         intent: INTENT_VALUE.publish,
         items: missingBeforePublish,
       })
@@ -172,8 +98,8 @@ export default function RouteComponent({
     setPublishDialog({ isApproval })
   }
 
-  const runAction = (headerAction: HeaderAction) => {
-    const intent = DIRECT_INTENTS[headerAction]
+  const runAction = (headerAction: ArticleAction) => {
+    const intent = ARTICLE_DIRECT_INTENTS[headerAction]
 
     if (intent !== undefined) {
       const formData = new FormData()
@@ -198,7 +124,7 @@ export default function RouteComponent({
   }
 
   const renderButton = (
-    headerAction: HeaderAction,
+    headerAction: ArticleAction,
     variant: 'primary' | 'outline',
   ) => {
     switch (headerAction) {
@@ -209,7 +135,7 @@ export default function RouteComponent({
             disabled={isSubmitting}
             to={editHref}
           >
-            {ACTION_LABELS.edit}
+            {ARTICLE_ACTION_LABELS.edit}
           </AdminLinkButton>
         )
       case 'view-on-web':
@@ -220,7 +146,7 @@ export default function RouteComponent({
             target={'_blank'}
             to={href('/articles/:articleSlug', { articleSlug: article.slug })}
           >
-            {ACTION_LABELS['view-on-web']}
+            {ARTICLE_ACTION_LABELS['view-on-web']}
           </AdminLinkButton>
         )
       default:
@@ -231,7 +157,7 @@ export default function RouteComponent({
             type={'button'}
             variant={variant}
           >
-            {ACTION_LABELS[headerAction]}
+            {ARTICLE_ACTION_LABELS[headerAction]}
           </Button>
         )
     }
@@ -250,7 +176,7 @@ export default function RouteComponent({
           <ActionMenu
             items={headerActions.menu.map((headerAction) => ({
               danger: headerAction === 'delete',
-              label: ACTION_LABELS[headerAction],
+              label: ARTICLE_ACTION_LABELS[headerAction],
               onSelect: () => runAction(headerAction),
             }))}
           />
@@ -272,14 +198,16 @@ export default function RouteComponent({
       <AdminDetailSection title="Základní informace">
         <AdminDetailList>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge
-              state={article.state}
-              submission={submission?.state}
+            <StatusTag
+              detail={
+                submission === null
+                  ? undefined
+                  : submission.state === 'pending'
+                    ? `od ${submission.date}`
+                    : submission.date
+              }
+              state={submission?.state ?? article.state}
             />
-            {submission !== null &&
-              (submission.state === 'pending'
-                ? ` od ${submission.date}`
-                : ` ${submission.date}`)}
           </AdminDetailItem>
           <AdminDetailItem label="Název">{article.title}</AdminDetailItem>
           <AdminDetailItem label="Slug">{article.slug}</AdminDetailItem>
@@ -367,31 +295,13 @@ export default function RouteComponent({
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
 
-      <AdminDialog ref={missingDialogRef}>
-        <AdminModalContent>
-          <AdminModalTitle>
-            {missingList?.intent === INTENT_VALUE.publish
-              ? 'Článek ještě nejde publikovat'
-              : 'Článek ještě nejde odeslat'}
-          </AdminModalTitle>
-          <BulletedList>
-            {missingList?.items.map((item) => (
-              <ListItem key={item}>{item}</ListItem>
-            ))}
-          </BulletedList>
-          <AdminModalActions>
-            <Button
-              onClick={() => missingDialogRef.current?.close()}
-              size={'sm'}
-              type={'button'}
-              variant={'ghost'}
-            >
-              Zavřít
-            </Button>
-            <AdminLinkButton to={editHref}>Doplnit v editoru</AdminLinkButton>
-          </AdminModalActions>
-        </AdminModalContent>
-      </AdminDialog>
+      {missingList !== null && (
+        <ArticleMissingDialog
+          editHref={editHref}
+          missingList={missingList}
+          onClose={closeMissingList}
+        />
+      )}
 
       {publishDialog !== null && (
         <ArticlePublishDialog
@@ -411,17 +321,11 @@ export default function RouteComponent({
         />
       )}
 
-      <AdminPublishDateDialog
+      <ArticleChangeDateDialog
         action={href('/administration/articles/:articleId', { articleId })}
-        confirmLabel={'Změnit datum'}
-        defaultPublishedAt={article.publishedAt.iso ?? undefined}
-        description={
-          'Skutečně si přejete změnit datum vydání? Článek se přeřadí ve výpisu a změní se datum publikace v metadatech pro vyhledávače. Akce je určena k opravě chyb.'
-        }
         fetcherKey={fetcherKey}
-        intent={INTENT_VALUE.changePublishedAt}
+        publishedAt={article.publishedAt.iso}
         ref={changePublishedAtDialogRef}
-        title={'Změnit datum vydání'}
       />
     </AdminPage>
   )

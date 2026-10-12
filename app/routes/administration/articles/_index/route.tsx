@@ -21,20 +21,50 @@ import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { Pagination } from '~/components/pagination'
-import { CONTENT_STATE_OPTIONS } from '~/utils/admin-filter-options'
+import { StateFilter } from '~/components/state-filter'
+import type { ArticleQueue } from '~/config/article-queue-config'
 import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
+import { buildQueueSearch } from './utils/build-queue-search'
 
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-// selection + title + state + createdAt + actions
-const COLUMN_COUNT = 5
+// One sentence per empty queue, no button but in Koncepty (design 22e).
+const EMPTY_QUEUE_SENTENCES: Record<ArticleQueue, string> = {
+  approved: 'Mezi schválenými nejsou žádné články.',
+  archived: 'Mezi archivovanými nejsou žádné články.',
+  draft: 'V konceptech nejsou žádné články.',
+  pending: 'Ke schválení nečekají žádné články.',
+  published: 'Mezi publikovanými nejsou žádné články.',
+  submitted: 'Mezi odeslanými nejsou žádné články.',
+}
+
+type Pill = { label: string; queue: ArticleQueue | undefined }
+
+const PILLS: Pill[] = [
+  { label: 'Vše', queue: undefined },
+  { label: 'Koncepty', queue: 'draft' },
+  { label: 'Ke schválení', queue: 'pending' },
+  { label: 'Schválené', queue: 'approved' },
+  { label: 'Publikované', queue: 'published' },
+  { label: 'Archivované', queue: 'archived' },
+]
+
+// A Contributor approves nothing: Odeslané, waiting or approved (22i).
+const CONTRIBUTOR_PILLS: Pill[] = [
+  { label: 'Vše', queue: undefined },
+  { label: 'Koncepty', queue: 'draft' },
+  { label: 'Odeslané', queue: 'submitted' },
+  { label: 'Publikované', queue: 'published' },
+  { label: 'Archivované', queue: 'archived' },
+]
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
@@ -46,9 +76,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     currentFilterQuery,
     currentPage,
     filters,
+    isApprover,
+    isContributor,
     ownFilters,
     pageSize,
     query,
+    queueCounts,
     sharedFilters,
     tagOptions,
     totalCount,
@@ -58,8 +91,36 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
 
-  const hasActiveFilters = Object.values(filters).some(
+  // The queue is not a filter: the pills show it (22a).
+  const { state: queue, ...fieldFilters } = filters
+  const hasActiveFilters = Object.values(fieldFilters).some(
     (value) => value !== undefined,
+  )
+  const isQueueEmpty = totalCount === 0 && !hasActiveFilters && query === ''
+
+  // selection + title + author + updatedAt + state + actions
+  const columnCount = isContributor ? 5 : 6
+
+  const pills = (isContributor ? CONTRIBUTOR_PILLS : PILLS).map((pill) => {
+    const queueCount = queueCounts.find((entry) => entry.queue === pill.queue)
+
+    return {
+      // Ke schválení waits only for the Coordinator, who approves (22a).
+      attention:
+        pill.queue === 'pending' && isApprover && (queueCount?.count ?? 0) > 0,
+      count: queueCount?.count,
+      isActive: pill.queue === queue,
+      label: pill.label,
+      to: {
+        search: buildQueueSearch(searchParams, pill.queue),
+      },
+    }
+  })
+
+  const newArticleLink = canCreate && (
+    <AdminLinkButton to={href('/administration/articles/add-article')}>
+      Nový článek
+    </AdminLinkButton>
   )
 
   const deletableIds = articles
@@ -70,11 +131,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       <AdminHeadline>Články</AdminHeadline>
-      {canCreate && (
-        <AdminLinkButton to={href('/administration/articles/add-article')}>
-          Přidat článek
-        </AdminLinkButton>
-      )}
+      {newArticleLink}
+      <StateFilter items={pills} label={'Stav'} />
       <AdminTableToolbar>
         <AdminTableSearch defaultValue={query} placeholder={'Hledat články…'} />
         <AdminBulkActionsBar
@@ -82,15 +140,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
         />
+        {/* The pills own the queue; a filter submit keeps it. */}
         <AdminTableFilters
-          preservedParams={getPreservedFilterParams(searchParams, 'articles')}
+          preservedParams={[
+            ...getPreservedFilterParams(searchParams, 'articles'),
+            ...(queue === undefined
+              ? []
+              : [['state', queue] as [string, string]]),
+          ]}
         >
-          <AdminFilterSelect
-            defaultValue={filters.state ?? ''}
-            label={'Stav'}
-            name={'state'}
-            options={CONTENT_STATE_OPTIONS}
-          />
           <AdminFilterSelect
             defaultValue={filters.category ?? ''}
             label={'Kategorie'}
@@ -120,60 +178,79 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           tableKey={'articles'}
         />
       </AdminTableToolbar>
-      <AdminTable pending={pending} stickyHeader={true}>
-        <TableHeader>
-          <TableSelectionHeaderCell
-            checked={selection.allSelected}
-            disabled={deletableIds.length === 0}
-            indeterminate={selection.someSelected}
-            onChange={selection.toggleAll}
-          />
-          <TableSortableHeaderCell
-            defaultOrder={'desc'}
-            defaultSort={'createdAt'}
-            sortKey={'title'}
-            sortKeys={SORT_KEYS}
-          >
-            Název
-          </TableSortableHeaderCell>
-          <TableSortableHeaderCell
-            defaultOrder={'desc'}
-            defaultSort={'createdAt'}
-            sortKey={'createdAt'}
-            sortKeys={SORT_KEYS}
-          >
-            Vytvořeno
-          </TableSortableHeaderCell>
-          <TableHeaderCell>Stav</TableHeaderCell>
-          <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
-        </TableHeader>
-        <TableBody>
-          {totalCount === 0 ? (
-            <TableEmptyRow colSpan={COLUMN_COUNT}>
-              {getAdminListEmptyMessage({
-                emptyLabel: 'Žádné články',
-                hasActiveFilters,
-                query,
-              })}
-            </TableEmptyRow>
+      {isQueueEmpty ? (
+        // The table's head goes too; one sentence stands in its body (22e).
+        <div className={styles.empty}>
+          {queue === undefined ? (
+            <>
+              <p className={styles.emptyTitle}>Zatím tu není žádný článek</p>
+              <p className={styles.emptyText}>
+                Nový článek se uloží jako koncept.
+              </p>
+              {newArticleLink}
+            </>
           ) : (
-            articles.map((article) => (
-              <ItemRow
-                canDelete={article.canDelete}
-                canEdit={article.canEdit}
-                canView={article.canView}
-                createdAt={article.createdAt}
-                id={article.id}
-                key={article.id}
-                onSelect={() => selection.toggle(article.id)}
-                selected={selection.isSelected(article.id)}
-                state={article.state}
-                title={article.title}
-              />
-            ))
+            <>
+              <p className={styles.emptyTitle}>
+                {EMPTY_QUEUE_SENTENCES[queue]}
+              </p>
+              {queue === 'draft' && newArticleLink}
+            </>
           )}
-        </TableBody>
-      </AdminTable>
+        </div>
+      ) : (
+        <AdminTable pending={pending} stickyHeader={true}>
+          <TableHeader>
+            <TableSelectionHeaderCell
+              checked={selection.allSelected}
+              disabled={deletableIds.length === 0}
+              indeterminate={selection.someSelected}
+              onChange={selection.toggleAll}
+            />
+            <TableSortableHeaderCell
+              defaultOrder={'desc'}
+              defaultSort={'updatedAt'}
+              sortKey={'title'}
+              sortKeys={SORT_KEYS}
+            >
+              Název
+            </TableSortableHeaderCell>
+            {/* A Contributor is always the author (22i). */}
+            {!isContributor && <TableHeaderCell>Autor</TableHeaderCell>}
+            <TableSortableHeaderCell
+              defaultOrder={'desc'}
+              defaultSort={'updatedAt'}
+              sortKey={'updatedAt'}
+              sortKeys={SORT_KEYS}
+            >
+              Upraveno
+            </TableSortableHeaderCell>
+            <TableHeaderCell>Stav</TableHeaderCell>
+            <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
+          </TableHeader>
+          <TableBody>
+            {totalCount === 0 ? (
+              <TableEmptyRow colSpan={columnCount}>
+                {getAdminListEmptyMessage({
+                  emptyLabel: 'Žádné články',
+                  hasActiveFilters,
+                  query,
+                })}
+              </TableEmptyRow>
+            ) : (
+              articles.map((article) => (
+                <ItemRow
+                  article={article}
+                  key={article.id}
+                  onSelect={() => selection.toggle(article.id)}
+                  selected={selection.isSelected(article.id)}
+                  showAuthor={!isContributor}
+                />
+              ))
+            )}
+          </TableBody>
+        </AdminTable>
+      )}
       <Pagination
         currentPage={currentPage}
         layout={'inline'}

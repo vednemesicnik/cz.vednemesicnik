@@ -1,24 +1,14 @@
 import type { ContentState } from '@generated/prisma/enums'
 
-export type HeaderAction =
-  | 'approve'
-  | 'approve-and-publish'
-  | 'archive'
-  | 'change-date'
-  | 'delete'
-  | 'edit'
-  | 'publish'
-  | 'restore'
-  | 'retract'
-  | 'return'
-  | 'submit'
-  | 'view-on-web'
-  | 'withdraw'
+import {
+  type ArticleAction,
+  NOT_SUBMITTED_NOTE,
+} from '../../../utils/article-actions'
 
 type HeaderActions = {
-  primary: HeaderAction | null
-  outline: HeaderAction | null
-  menu: HeaderAction[]
+  primary: ArticleAction | null
+  outline: ArticleAction | null
+  menu: ArticleAction[]
   sentence: string | null
 }
 
@@ -40,7 +30,7 @@ type Options = {
   canChangePublishedAt: boolean
 }
 
-const only = (action: HeaderAction, isAllowed: boolean) =>
+const only = (action: ArticleAction, isAllowed: boolean) =>
   isAllowed ? [action] : []
 
 const getDraftActions = (options: Options): HeaderActions => {
@@ -89,7 +79,7 @@ const getDraftActions = (options: Options): HeaderActions => {
       menu: ['publish', ...only('delete', options.canDelete)],
       outline: edit[0] ?? null,
       primary: null,
-      sentence: 'Článek nebyl odeslán ke schválení.',
+      sentence: NOT_SUBMITTED_NOTE,
     }
   }
 

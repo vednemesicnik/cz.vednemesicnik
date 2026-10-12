@@ -1,0 +1,75 @@
+/* The title over its first category (22a). */
+.title {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+}
+
+.link {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--link-strong);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
+    }
+  }
+}
+
+.categories {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}
+
+.more {
+  @layer route {
+    color: var(--text-tertiary);
+  }
+}
+
+.actions {
+  @layer route {
+    display: inline-flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+}
+
+/* The design system's outline Button sm, as tall as „⋯“ beside it (22a). */
+.editLink {
+  @layer route {
+    padding-block: 6px;
+    padding-inline: 14px;
+    font-size: var(--font-size-sm);
+    border-color: var(--border);
+    border-radius: var(--radius-lg);
+
+    &:hover:not(:focus-visible),
+    &:focus-visible {
+      background-color: var(--bg-accent);
+      border-color: var(--border-accent);
+    }
+  }
+}
+
+.dialogs {
+  @layer route {
+    display: contents;
+    text-align: start;
+    white-space: normal;
+  }
+}

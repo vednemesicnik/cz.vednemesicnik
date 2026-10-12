@@ -15,7 +15,6 @@ import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
@@ -25,6 +24,7 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
@@ -199,7 +199,7 @@ export default function RouteComponent({
         <AdminDetailList>
           <AdminDetailItem label="Název">{issue.label}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge state={issue.state} />
+            <StatusTag state={issue.state} />
           </AdminDetailItem>
           <AdminDetailItem label="Datum vydání">
             {issue.releasedAt.formatted}
