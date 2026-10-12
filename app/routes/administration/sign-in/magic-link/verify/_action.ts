@@ -79,5 +79,5 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 
   // Always throws: a redirect to `redirectTo` on success.
-  return await signInUser(request, user.id, 'magic_link', redirectTo)
+  return await signInUser(request, user.id, 'magic_link', { redirectTo })
 }

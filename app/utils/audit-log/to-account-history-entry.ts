@@ -54,6 +54,7 @@ const labels: Record<HistoryEvent, (detail: string | null) => string> = {
     formatRoleChange('Autorská role', detail, (name) =>
       isAuthorRoleName(name) ? getAuthorRoleLabel(name) : null,
     ),
+  emergency_link_issued: () => 'Nouzový odkaz vydán',
   user_created: () => 'Účet založen',
   user_role_changed: (detail) =>
     formatRoleChange('Uživatelská role', detail, (name) =>

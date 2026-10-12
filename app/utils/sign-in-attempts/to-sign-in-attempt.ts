@@ -7,6 +7,7 @@ export type SignInAttempt = {
   dateTime: string
   formattedDateTime: string
   label: string
+  detail: string | null
   isFailure: boolean
 }
 
@@ -17,9 +18,10 @@ type AuthLogRow = {
   method: AuthMethod | null
 }
 
-// Approved copy (0camiulr).
+// Approved copy (0camiulr; Nouzový odkaz n2fjcvyq).
 const methodLabels: Record<AuthMethod, string> = {
   backup_code: 'Záložní kód',
+  emergency_link: 'Nouzový odkaz',
   google: 'Google',
   magic_link: 'Odkaz v e-mailu',
   passkey: 'Passkey',
@@ -33,10 +35,16 @@ const methodLabels: Record<AuthMethod, string> = {
  * so in words, not by colour alone.
  *
  * @param row - The row's id, time, event and method.
- * @returns The attempt with its ISO time, formatted time and label, or `null`
- *   for a row without a method (a sign-out).
+ * @param issuerName - Who issued the emergency link the attempt used, its
+ *   line „Odkaz od: …“ under the method (design 28e, n2fjcvyq); `null` without
+ *   a link or once the issuer's account is deleted.
+ * @returns The attempt with its ISO time, formatted time, label and detail, or
+ *   `null` for a row without a method (a sign-out).
  */
-export const toSignInAttempt = (row: AuthLogRow): SignInAttempt | null => {
+export const toSignInAttempt = (
+  row: AuthLogRow,
+  issuerName: string | null = null,
+): SignInAttempt | null => {
   if (row.method === null) return null
 
   const isFailure = row.event !== 'sign_in_success'
@@ -44,6 +52,7 @@ export const toSignInAttempt = (row: AuthLogRow): SignInAttempt | null => {
 
   return {
     dateTime: row.createdAt.toISOString(),
+    detail: issuerName === null ? null : `Odkaz od: ${issuerName}`,
     formattedDateTime: formatNumericDateTime(row.createdAt),
     id: row.id,
     isFailure,

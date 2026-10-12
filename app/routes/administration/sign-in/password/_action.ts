@@ -143,5 +143,5 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     })
   }
 
-  await signInUser(request, user.id, 'password', redirectTo)
+  await signInUser(request, user.id, 'password', { redirectTo })
 }

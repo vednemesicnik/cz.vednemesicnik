@@ -34,6 +34,9 @@ export const findExistingUserByEmail = async (email: string) => {
  * `headers` (optional) are merged into the redirect response — used by OAuth to
  * also clear its transient `vdm_oauth` cookie in the same response.
  *
+ * `emergencySignInLinkId` (optional) ties the success to the emergency link it
+ * used, so the sign-in attempts can name its issuer (#578).
+ *
  * `method` identifies the sign-in method for the audit log; the successful
  * event is recorded here once for every caller.
  *
@@ -45,12 +48,25 @@ export const signInUser = async (
   request: Request,
   userId: string,
   method: AuthMethod,
-  redirectTo?: string,
-  headers?: Headers,
+  {
+    redirectTo,
+    headers,
+    emergencySignInLinkId,
+  }: {
+    redirectTo?: string
+    headers?: Headers
+    emergencySignInLinkId?: string
+  } = {},
 ) => {
   const session = await createSession(userId)
 
-  recordAuthLog({ event: 'sign_in_success', method, request, userId })
+  recordAuthLog({
+    emergencySignInLinkId,
+    event: 'sign_in_success',
+    method,
+    request,
+    userId,
+  })
 
   const responseHeaders = headers ?? new Headers()
   responseHeaders.append(

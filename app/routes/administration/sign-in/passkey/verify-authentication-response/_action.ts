@@ -61,11 +61,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     'Set-Cookie': await deleteBiometricCookieSession(biometricCookieSession),
   })
 
-  return await signInUser(
-    request,
-    result.userId,
-    'passkey',
-    redirectTo,
+  return await signInUser(request, result.userId, 'passkey', {
     headers,
-  )
+    redirectTo,
+  })
 }

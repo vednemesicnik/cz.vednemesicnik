@@ -23,8 +23,18 @@
 
 .method {
   @layer component {
+    display: grid;
+    gap: 2px;
     color: var(--text-secondary);
     text-wrap: pretty;
+  }
+}
+
+/* „Odkaz od: …“ under an emergency link's attempt (28e, n2fjcvyq). */
+.detail {
+  @layer component {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
   }
 }
 

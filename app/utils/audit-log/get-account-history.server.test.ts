@@ -31,7 +31,13 @@ describe('getAccountHistory', () => {
         where: {
           OR: [
             {
-              event: { in: ['user_created', 'user_role_changed'] },
+              event: {
+                in: [
+                  'user_created',
+                  'user_role_changed',
+                  'emergency_link_issued',
+                ],
+              },
               targetId: 'user',
             },
             { event: 'author_role_changed', targetId: 'author' },

@@ -16,6 +16,7 @@ type AuthLogBase = {
   request: Request
   userId?: string
   email?: string
+  emergencySignInLinkId?: string
 }
 
 // Discriminated on `event`: the sign-in events require a `method` (a row without
@@ -42,11 +43,13 @@ export const recordAuthLog = ({
   method,
   userId,
   email,
+  emergencySignInLinkId,
 }: RecordAuthLogArgs): void => {
   void prisma.authLog
     .create({
       data: {
         email,
+        emergencySignInLinkId,
         event,
         ipAddress: getClientIp(request),
         method,
@@ -60,8 +63,9 @@ export const recordAuthLog = ({
 }
 
 /**
- * Deletes auth logs older than the retention window. Fire-and-forget; driven by
- * startAuthLogRetention.
+ * Deletes auth logs older than the retention window, and the emergency sign-in
+ * links as old: the attempts that name a link's issuer go with it, and old
+ * token hashes don't pile up. Fire-and-forget; driven by startAuthLogRetention.
  */
 export const cleanupOldAuthLogs = (): void => {
   const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000)
@@ -70,6 +74,12 @@ export const cleanupOldAuthLogs = (): void => {
     .deleteMany({ where: { createdAt: { lt: cutoff } } })
     .catch((error: unknown) => {
       console.error('Failed to clean up old auth logs', error)
+    })
+
+  void prisma.emergencySignInLink
+    .deleteMany({ where: { createdAt: { lt: cutoff } } })
+    .catch((error: unknown) => {
+      console.error('Failed to clean up old emergency sign-in links', error)
     })
 }
 

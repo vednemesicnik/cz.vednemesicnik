@@ -37,6 +37,7 @@ export const Playground: Story = {
     attempts: [
       {
         dateTime: '2026-09-25T17:14:00.000Z',
+        detail: null,
         formattedDateTime: '25. 9. 2026, 19:14',
         id: '1',
         isFailure: false,
@@ -44,6 +45,7 @@ export const Playground: Story = {
       },
       {
         dateTime: '2026-09-24T06:03:00.000Z',
+        detail: null,
         formattedDateTime: '24. 9. 2026, 8:03',
         id: '2',
         isFailure: false,
@@ -51,6 +53,7 @@ export const Playground: Story = {
       },
       {
         dateTime: '2026-09-24T06:02:00.000Z',
+        detail: null,
         formattedDateTime: '24. 9. 2026, 8:02',
         id: '3',
         isFailure: true,
@@ -58,6 +61,7 @@ export const Playground: Story = {
       },
       {
         dateTime: '2026-09-22T05:52:00.000Z',
+        detail: null,
         formattedDateTime: '22. 9. 2026, 7:52',
         id: '4',
         isFailure: false,
@@ -65,6 +69,7 @@ export const Playground: Story = {
       },
       {
         dateTime: '2026-09-22T05:50:00.000Z',
+        detail: null,
         formattedDateTime: '22. 9. 2026, 7:50',
         id: '5',
         isFailure: true,
@@ -78,4 +83,37 @@ export const Playground: Story = {
 export const Wide: Story = {
   args: Playground.args,
   parameters: { width: '640px' },
+}
+
+// The emergency link during a Google outage (28e): who issued it, small under
+// the method, on success and on failure.
+export const EmergencyLink: Story = {
+  args: {
+    attempts: [
+      {
+        dateTime: '2026-10-12T12:24:00.000Z',
+        detail: 'Odkaz od: Petr Dvořák',
+        formattedDateTime: '12. 10. 2026, 14:24',
+        id: '1',
+        isFailure: false,
+        label: 'Nouzový odkaz',
+      },
+      {
+        dateTime: '2026-10-12T12:22:00.000Z',
+        detail: 'Odkaz od: Petr Dvořák',
+        formattedDateTime: '12. 10. 2026, 14:22',
+        id: '2',
+        isFailure: true,
+        label: 'Nouzový odkaz — neúspěšný pokus',
+      },
+      {
+        dateTime: '2026-10-12T11:58:00.000Z',
+        detail: null,
+        formattedDateTime: '12. 10. 2026, 13:58',
+        id: '3',
+        isFailure: true,
+        label: 'Odkaz v e-mailu — neúspěšný pokus',
+      },
+    ],
+  },
 }
