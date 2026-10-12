@@ -1,22 +1,24 @@
+/* The design system's Link (components/core/Link, 0zgyl1ao): --link-strong,
+   500, underlined; hover thickens the underline. */
 .link {
   @layer component {
     display: inline;
     font-weight: var(--font-weight-medium);
     font-size: inherit;
     line-height: inherit;
-    color: var(--primary);
+    color: var(--link-strong);
     text-decoration: underline;
-    text-decoration-color: var(--primary);
-    transition: all var(--transition-fast);
-
-    &:visited {
-      color: var(--primary-active);
-      text-decoration-color: var(--primary-active);
-    }
+    text-underline-offset: 2px;
+    transition: text-decoration-thickness var(--transition-fast);
 
     &:hover {
-      color: var(--primary-hover);
-      text-decoration-color: var(--primary-hover);
+      text-decoration-thickness: 2px;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
     }
   }
 }

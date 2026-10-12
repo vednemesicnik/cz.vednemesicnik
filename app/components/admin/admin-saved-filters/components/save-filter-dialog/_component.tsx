@@ -11,9 +11,9 @@ import { useFilterDialog } from '~/components/admin/admin-saved-filters/_hook'
 import type { FilterActionData } from '~/components/admin/admin-saved-filters/_types'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { Checkbox } from '~/components/checkbox'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
-import { Label } from '~/components/label'
 import { FORM_CONFIG } from '~/config/form-config'
 import { createFilterSchema } from '~/routes/administration/filters/_schema'
 import type { AdminListTableKey } from '~/utils/admin-list-filters'
@@ -82,22 +82,20 @@ export const SaveFilterDialog = ({
           />
 
           <div className={styles.checkboxes}>
-            <div className={styles.checkbox}>
-              <input
-                {...getInputProps(fields.isDefault, {
-                  type: 'checkbox',
-                })}
-              />
-              <Label htmlFor={fields.isDefault.id}>Nastavit jako výchozí</Label>
-            </div>
-            <div className={styles.checkbox}>
-              <input
-                {...getInputProps(fields.isShared, {
-                  type: 'checkbox',
-                })}
-              />
-              <Label htmlFor={fields.isShared.id}>Sdílet s ostatními</Label>
-            </div>
+            <Checkbox
+              {...getInputProps(fields.isDefault, {
+                type: 'checkbox',
+              })}
+            >
+              Nastavit jako výchozí
+            </Checkbox>
+            <Checkbox
+              {...getInputProps(fields.isShared, {
+                type: 'checkbox',
+              })}
+            >
+              Sdílet s ostatními
+            </Checkbox>
           </div>
 
           {/* The snapshot is a hidden field, so its errors (an unusable filter)

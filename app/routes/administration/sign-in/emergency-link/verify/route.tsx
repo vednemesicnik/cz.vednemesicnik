@@ -111,26 +111,22 @@ export default function RouteComponent({
   }
 
   return (
-    <AdminSignInCard
-      details={
-        // The account says where, the pair under it by what and from whom.
-        <div className={styles.details}>
-          <p className={styles.line}>
-            Účet: <span className={styles.value}>{loaderData.email}</span>
-          </p>
-          <p className={styles.origin}>
-            <span>Nouzový odkaz</span>
-            {loaderData.issuerName !== null && (
-              <span>
-                Odkaz od:{' '}
-                <span className={styles.value}>{loaderData.issuerName}</span>
-              </span>
-            )}
-          </p>
-        </div>
-      }
-      title={'Potvrďte přihlášení'}
-    >
+    <AdminSignInCard title={'Potvrďte přihlášení'}>
+      {/* The account says where, the pair under it by what and from whom. */}
+      <div className={styles.details}>
+        <p className={styles.line}>
+          Účet: <span className={styles.value}>{loaderData.email}</span>
+        </p>
+        <p className={styles.origin}>
+          <span>Nouzový odkaz</span>
+          {loaderData.issuerName !== null && (
+            <span>
+              Odkaz od:{' '}
+              <span className={styles.value}>{loaderData.issuerName}</span>
+            </span>
+          )}
+        </p>
+      </div>
       <Form method={'post'}>
         <HoneypotInputs />
         <input name={'token'} type={'hidden'} value={loaderData.token} />

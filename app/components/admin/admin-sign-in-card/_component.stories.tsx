@@ -34,14 +34,12 @@ export const Playground: Story = {
   args: {
     children: (
       <>
+        <p style={text}>
+          Účet: <strong>jakub.novak@vednemesicnik.cz</strong>
+        </p>
         <Button style={{ width: '100%' }}>Přihlásit se</Button>
         <p style={text}>Po přihlášení si můžete v Nastavení přidat passkey.</p>
       </>
-    ),
-    details: (
-      <p style={text}>
-        Účet: <strong>jakub.novak@vednemesicnik.cz</strong>
-      </p>
     ),
     title: 'Potvrďte přihlášení',
   },

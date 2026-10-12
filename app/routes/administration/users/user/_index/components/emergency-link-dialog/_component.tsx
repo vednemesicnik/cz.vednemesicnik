@@ -9,6 +9,7 @@ import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { adminCsrfFormMessage } from '~/components/boundary-error/utils/boundary-copy'
 import { Button } from '~/components/button'
+import { Checkbox } from '~/components/checkbox'
 import { CopyButton } from '~/components/copy-button'
 import { ErrorMessage } from '~/components/error-message'
 import type { action as emergencyLinkAction } from '~/routes/administration/users/user/emergency-link/_action'
@@ -87,8 +88,7 @@ export const EmergencyLinkDialog = ({
           </p>
         </hgroup>
 
-        {/* Three paragraphs 8 px apart, a tighter block than the dialog's
-            16 px rhythm (28e). */}
+        {/* The dialog body: paragraphs 12 px apart (0zgyl1ao). */}
         <div className={styles.body}>
           <AdminModalDescription>
             Kdokoli s tímto odkazem může potvrdit přihlášení do tohoto účtu.
@@ -117,18 +117,13 @@ export const EmergencyLinkDialog = ({
             <ErrorMessage>{adminCsrfFormMessage}</ErrorMessage>
           )}
 
-          {/* A sentence, not a field name: regular weight, wrapping beside the
-              box (28e), so not the semibold Label. */}
-          <label className={styles.confirmation}>
-            <input
-              checked={isConfirmed}
-              className={styles.checkbox}
-              name={'identityConfirmed'}
-              onChange={(event) => setIsConfirmed(event.target.checked)}
-              type={'checkbox'}
-            />
+          <Checkbox
+            checked={isConfirmed}
+            name={'identityConfirmed'}
+            onChange={(event) => setIsConfirmed(event.target.checked)}
+          >
             Totožnost ověřena osobně nebo při hlasovém hovoru
-          </label>
+          </Checkbox>
 
           <AdminModalActions>
             <Button

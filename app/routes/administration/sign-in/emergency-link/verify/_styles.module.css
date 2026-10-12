@@ -1,4 +1,5 @@
-/* The 20f texts inside AdminSignInCard. */
+/* The 20f texts inside AdminSignInCard, as the design system's
+   vdm-signin__text and __note (0zgyl1ao). */
 .text {
   @layer route {
     margin: 0;
@@ -67,6 +68,7 @@
   @layer route {
     margin: 0;
     font-size: 13px;
+    line-height: 1.5;
     color: var(--text-secondary);
     text-align: center;
     text-wrap: pretty;
@@ -77,6 +79,7 @@
   @layer route {
     margin: 0;
     font-size: 13px;
+    line-height: 1.5;
     color: var(--text-tertiary);
     text-align: center;
     text-wrap: pretty;

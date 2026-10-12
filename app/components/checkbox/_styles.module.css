@@ -1,0 +1,52 @@
+/* The design system's Checkbox (components/forms/Checkbox, 0zgyl1ao). */
+.checkbox {
+  @layer component {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    width: fit-content;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    line-height: 1.4;
+    color: var(--text-primary);
+    cursor: pointer;
+
+    &:has(:disabled) {
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.input {
+  @layer component {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin: 2px 0 0;
+    accent-color: var(--primary);
+    cursor: inherit;
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
+    }
+  }
+}
+
+.text {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-wrap: pretty;
+  }
+}
+
+.hint {
+  @layer component {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}
