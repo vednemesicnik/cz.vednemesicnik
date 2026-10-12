@@ -9,7 +9,6 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
@@ -20,6 +19,7 @@ import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
@@ -85,7 +85,7 @@ export default function RouteComponent({
         <input {...getInputProps(fields.id, { type: 'hidden' })} />
 
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
-          <AdminInput
+          <TextField
             errors={fields.title.errors}
             label={'Název'}
             placeholder={'Název podcastu'}
@@ -99,7 +99,7 @@ export default function RouteComponent({
           >
             Vygenerovat nový slug
           </AdminButtonLink>
-          <AdminInput
+          <TextField
             errors={fields.slug.errors}
             label={'Slug'}
             onBlur={handleBlur}

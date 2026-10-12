@@ -4,7 +4,6 @@
   }
 }
 
-.imageFieldAltTextInput,
 .imageFieldDescriptionTextarea {
   @layer route {
     max-width: 100%;

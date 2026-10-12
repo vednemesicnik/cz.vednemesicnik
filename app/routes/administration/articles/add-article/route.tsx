@@ -14,7 +14,6 @@ import { AdminDraftRestoreBanner } from '~/components/admin/admin-draft-restore-
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminImageInput } from '~/components/admin/admin-image-input'
 import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminLeaveConfirmationDialog } from '~/components/admin/admin-leave-confirmation-dialog'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
@@ -28,6 +27,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import {
   clearArticleBackup,
@@ -161,14 +161,14 @@ export default function RouteComponent({
             disabled={isLoadingOrSubmitting}
             legend={'Základní informace'}
           >
-            <AdminInput
+            <TextField
               {...getInputProps(fields.title, { type: 'text' })}
               errors={fields.title.errors}
               label={'Název'}
               onChange={(event) => setTitle(event.target.value)}
               placeholder={'Název článku'}
             />
-            <AdminInput
+            <TextField
               {...getInputProps(fields.slug, { type: 'text' })}
               errors={fields.slug.errors}
               label={'Slug'}
@@ -270,9 +270,8 @@ export default function RouteComponent({
                     field={imageFields.file}
                     label={'Obrázek'}
                   />
-                  <AdminInput
-                    className={styles.imageFieldAltTextInput}
-                    containerClassName={styles.imageFieldAltTextContainer}
+                  <TextField
+                    className={styles.imageFieldAltTextContainer}
                     errors={imageFields.altText.errors}
                     label={'Alt text'}
                     placeholder={

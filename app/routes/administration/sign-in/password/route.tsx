@@ -3,7 +3,6 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
 import { href, useNavigation } from 'react-router'
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
@@ -11,6 +10,7 @@ import { Callout } from '~/components/callout'
 import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
+import { TextField } from '~/components/text-field'
 import { useHydrated } from '~/utils/use-hydrated'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 import { schema } from './_schema'
@@ -80,13 +80,13 @@ export default function RouteComponent({
           value={loaderData.redirectTo}
         />
 
-        <AdminInput
+        <TextField
           errors={fields.email.errors}
           label={'E-mail'}
           {...getInputProps(fields.email, { type: 'email' })}
         />
 
-        <AdminInput
+        <TextField
           errors={fields.password.errors}
           label={'Heslo'}
           ref={passwordInputRef}

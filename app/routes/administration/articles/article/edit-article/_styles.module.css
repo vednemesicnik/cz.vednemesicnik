@@ -4,12 +4,6 @@
   }
 }
 
-.imageFieldAltTextInput {
-  @layer route {
-    max-width: 100%;
-  }
-}
-
 .imageFieldAltTextContainer {
   @layer route {
     grid-area: altText;

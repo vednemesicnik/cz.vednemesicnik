@@ -7,8 +7,6 @@ import {
   useState,
 } from 'react'
 import { useFetcher } from 'react-router'
-
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -16,6 +14,7 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { TextField } from '~/components/text-field'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import styles from './_styles.module.css'
@@ -141,7 +140,7 @@ export const AdminPublishDateDialog = ({
           {/* Timezone-correct instant sent to the server; set in handleSubmit. */}
           <input name={'publishedAt'} ref={publishedAtRef} type={'hidden'} />
 
-          <AdminInput
+          <TextField
             defaultValue={defaultLocal}
             id={inputId}
             key={openCount}

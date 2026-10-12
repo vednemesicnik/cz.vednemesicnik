@@ -1,8 +1,6 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useFetcher } from 'react-router'
-
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -16,6 +14,7 @@ import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
+import { TextField } from '~/components/text-field'
 import { FORM_CONFIG } from '~/config/form-config'
 import { renameFilterSchema } from '~/routes/administration/filters/_schema'
 
@@ -65,7 +64,7 @@ export const RenameFilterDialog = ({ filter, onClose }: Props) => {
           />
           <input {...getInputProps(fields.id, { type: 'hidden' })} />
 
-          <AdminInput
+          <TextField
             errors={fields.name.errors}
             label={'Název'}
             {...getInputProps(fields.name, { type: 'text' })}
