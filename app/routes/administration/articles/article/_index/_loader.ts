@@ -19,6 +19,7 @@ import { canWithdrawSubmission } from '~/utils/permissions/author/submission/can
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 
 import type { Route } from './+types/route'
+import { getMissingArticleContent } from './utils/get-missing-article-content'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { articleId } = params
@@ -58,6 +59,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       content: true,
       createdAt: true,
+      excerpt: true,
       featuredImageId: true,
       id: true,
       images: {
@@ -191,7 +193,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorIds,
   })
 
-  // Don't show review button if:
+  // Don't offer approval if:
   // 1. All authors can publish without review - they don't need reviews
   // 2. Current user is one of the authors - can't review own content
   // 3. The article isn't waiting - approval reads a submitted text, once (design 07c)
@@ -214,7 +216,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     isSubmitted &&
     approvingReview === undefined
 
-  // Check if current user has already reviewed this article
   const hasReviewed = article.reviews.some(
     (review) => review.reviewer.id === context.authorId,
   )
@@ -258,6 +259,20 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       submittedAt: article.submittedAt,
     })
 
+  // Publishing an incomplete article opens the 23h list instead of the date
+  // dialog; the server checks it again.
+  const missingBeforePublish =
+    canPublish && !needsReview
+      ? getMissingArticleContent({
+          authorCount: article.authors.length,
+          content: article.content,
+          excerpt: article.excerpt,
+          images: article.images,
+          slug: article.slug,
+          title: article.title,
+        })
+      : []
+
   return {
     article: {
       authors: article.authors,
@@ -291,22 +306,24 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       title: article.title,
       updatedAt: createFormattedDate(article.updatedAt),
     },
+    canApprove: shouldShowReview && !hasReviewed,
     canArchive,
     canChangePublishedAt:
       article.state === 'published' && context.roleLevel <= APPROVER_ROLE_LEVEL,
     canDelete: canDelete && !isSubmitted,
-    canPublish,
-    canPublishBackdated: canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
+    canEdit: canUpdate && !isLocked,
+    canPublish: canPublish && !needsReview,
     canRestore,
     canRetract,
     canReturn,
-    canReview: shouldShowReview,
     canSubmit,
-    canUpdate: canUpdate && !isLocked,
     canWithdraw,
-    hasReviewed,
     isOwnContent,
-    needsReview,
+    // As canSubmitForReview: with a Coordinator among the authors, nobody submits it.
+    isSubmittable: article.authors.every(
+      (author) => !canPublishWithoutReview(author.role),
+    ),
+    missingBeforePublish,
     submission,
   }
 }

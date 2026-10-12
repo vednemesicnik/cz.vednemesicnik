@@ -7,7 +7,7 @@ import { canReturnForEdits } from '~/utils/permissions/author/submission/can-ret
 import { canSubmitForReview } from '~/utils/permissions/author/submission/can-submit-for-review'
 import { canWithdrawSubmission } from '~/utils/permissions/author/submission/can-withdraw-submission'
 
-import { getMissingForSubmission } from './get-missing-for-submission'
+import { getMissingArticleContent } from './get-missing-article-content'
 
 // Taking an article back or returning it ends in an unsubmitted, unapproved
 // draft (design 07b).
@@ -87,7 +87,7 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
           throw data(null, { status: 403 })
         }
 
-        const missing = getMissingForSubmission({
+        const missing = getMissingArticleContent({
           authorCount: article.authors.length,
           content: article.content,
           excerpt: article.excerpt,

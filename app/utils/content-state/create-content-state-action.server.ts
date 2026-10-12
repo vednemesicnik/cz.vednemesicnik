@@ -13,6 +13,9 @@ const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
 const REDIRECT_NAME = FORM_CONFIG.redirect.name
 const PUBLISHED_AT_NAME = 'publishedAt'
+// The publish dialog's date choice (design 23f); `today` is the server's now,
+// so a browser clock running ahead can't make it a future date.
+const PUBLISH_DATE_NAME = 'publishDate'
 
 type SubmissionTransitionOptions = {
   id: string
@@ -54,13 +57,18 @@ type RunContentStateActionOptions = {
 const parsePublishedAt = (value: FormDataEntryValue | null) =>
   typeof value === 'string' && value !== '' ? new Date(value) : undefined
 
+const parsePublishDate = (formData: FormData) =>
+  formData.get(PUBLISH_DATE_NAME) === 'today'
+    ? new Date()
+    : parsePublishedAt(formData.get(PUBLISHED_AT_NAME))
+
 /**
  * Shared intent-switch action for content entities: validates CSRF, loads the
  * permission target, and dispatches to the entity's {@link ContentStateHandlers}.
  * Replaces each per-entity `_index/_action.ts` switch.
  *
- * @returns For a submission intent, `{ intent, missing }` so the page can toast or
- *   list what blocks the submission; nothing for the other intents.
+ * @returns `{ intent, missing }` so the page can toast or list what blocks a
+ *   publish or a submission (23h); a delete that requested it redirects instead.
  */
 export const runContentStateAction = async (
   request: Request,
@@ -80,7 +88,7 @@ export const runContentStateAction = async (
   switch (intent) {
     case INTENT_VALUE.archive:
       await handlers.archive(request, { id, target })
-      break
+      return { intent, missing: [] }
 
     case INTENT_VALUE.delete:
       await handlers.delete(request, { id, target })
@@ -88,15 +96,16 @@ export const runContentStateAction = async (
       if (withRedirect) {
         throw redirect(options.deleteRedirectTo)
       }
-      break
+      return { intent, missing: [] }
 
-    case INTENT_VALUE.publish:
-      await handlers.publish(request, {
+    case INTENT_VALUE.publish: {
+      const { missing } = await handlers.publish(request, {
         id,
-        publishedAt: parsePublishedAt(formData.get(PUBLISHED_AT_NAME)),
+        publishedAt: parsePublishDate(formData),
         target,
       })
-      break
+      return { intent, missing }
+    }
 
     case INTENT_VALUE.changePublishedAt: {
       if (options.supportsChangePublishedAt !== true) {
@@ -113,20 +122,20 @@ export const runContentStateAction = async (
         publishedAt: new Date(publishedAtValue),
         target,
       })
-      break
+      return { intent, missing: [] }
     }
 
     case INTENT_VALUE.restore:
       await handlers.restore(request, { id, target })
-      break
+      return { intent, missing: [] }
 
     case INTENT_VALUE.retract:
       await handlers.retract(request, { id, target })
-      break
+      return { intent, missing: [] }
 
     case INTENT_VALUE.review:
       await handlers.review(request, { id, target })
-      break
+      return { intent, missing: [] }
 
     case INTENT_VALUE.submitForReview: {
       if (submissionHandlers === undefined) {

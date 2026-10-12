@@ -50,6 +50,19 @@ vi.mock('~/utils/image-store/store-image.server', () => ({
 const request = new Request('https://test.local/')
 const target = { authorIds: ['author-1'], state: 'published' as const }
 
+// One row answers both reads of a publish: its completeness and its publish state.
+const completeArticle = {
+  _count: { authors: 1 },
+  authors: [{ role: { level: 3 } }],
+  content: 'Text',
+  excerpt: 'Perex',
+  images: [],
+  publishedAt: null,
+  reviews: [{ reviewer: { role: { level: 1 } } }],
+  slug: 'clanek',
+  title: 'Článek',
+}
+
 beforeEach(() => {
   articleUpdateMock.mockResolvedValue({ slug: 'clear-redirect-test' })
   pageSeoUpdateManyMock.mockResolvedValue(undefined)
@@ -86,11 +99,7 @@ describe('articleContentStateHandlers — retract review clearing', () => {
 
 describe('articleContentStateHandlers — submission', () => {
   test('publishing ends the submission on the article row only', async () => {
-    articleFindUniqueOrThrowMock.mockResolvedValue({
-      authors: [{ role: { level: 3 } }],
-      publishedAt: null,
-      reviews: [{ reviewer: { role: { level: 1 } } }],
-    })
+    articleFindUniqueOrThrowMock.mockResolvedValue(completeArticle)
 
     await articleContentStateHandlers.publish(request, {
       id: 'a1',
@@ -106,6 +115,22 @@ describe('articleContentStateHandlers — submission', () => {
     expect(pageSeoUpdateManyMock.mock.lastCall?.[0].data).not.toHaveProperty(
       'submittedAt',
     )
+  })
+
+  test('an incomplete article is not published (23h)', async () => {
+    articleFindUniqueOrThrowMock.mockResolvedValue({
+      ...completeArticle,
+      excerpt: null,
+    })
+    articleUpdateMock.mockClear()
+
+    const result = await articleContentStateHandlers.publish(request, {
+      id: 'a1',
+      target: { authorIds: ['author-2'], state: 'draft' },
+    })
+
+    expect(result).toEqual({ missing: ['Chybí perex.'] })
+    expect(articleUpdateMock).not.toHaveBeenCalled()
   })
 
   test('changing the publish date keeps the row as it is', async () => {

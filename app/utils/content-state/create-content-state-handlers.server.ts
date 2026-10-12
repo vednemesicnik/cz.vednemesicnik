@@ -80,6 +80,11 @@ export type ContentStateHandlersConfig = {
    * draft is published directly (design 07b, 07c).
    */
   approverPublishesWithoutReview?: boolean
+  /**
+   * What the content still lacks before it can be published (design 23h); a
+   * non-empty list blocks the publish without writing. Only the article.
+   */
+  getMissingBeforePublish?: (id: string) => Promise<string[]>
 }
 
 type TransitionOptions = {
@@ -96,7 +101,11 @@ type ChangePublishedAtOptions = TransitionOptions & {
 }
 
 export type ContentStateHandlers = {
-  publish: (request: Request, options: PublishOptions) => Promise<void>
+  /** `missing` lists what blocks the publish (23h), empty once published. */
+  publish: (
+    request: Request,
+    options: PublishOptions,
+  ) => Promise<{ missing: string[] }>
   retract: (request: Request, options: TransitionOptions) => Promise<void>
   archive: (request: Request, options: TransitionOptions) => Promise<void>
   restore: (request: Request, options: TransitionOptions) => Promise<void>
@@ -130,6 +139,13 @@ export const createContentStateHandlers = (
           'Nelze publikovat bez schválení koordinátora',
         )
 
+        const missing =
+          (await config.getMissingBeforePublish?.(options.id)) ?? []
+
+        if (missing.length > 0) {
+          return { missing }
+        }
+
         // Ignore any client-supplied date unless the entity allows backdating.
         const requestedPublishedAt = config.allowBackdating
           ? options.publishedAt
@@ -152,6 +168,8 @@ export const createContentStateHandlers = (
         if (isApprover) {
           await config.ensureApprovingReview(options.id, context.authorId)
         }
+
+        return { missing }
       },
       target: options.target,
     })

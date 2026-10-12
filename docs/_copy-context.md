@@ -77,8 +77,12 @@ do konceptu, jen Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinát
 navíc `Odeslat ke schválení` a `Vzít zpět do konceptu` (autor) · `Vrátit k úpravám`
 (Koordinátor); odeslaný článek má štítek `Čeká na schválení`, schválený `Schváleno`.
 
-Pozor na dvojici **Zveřejnit / Publikováno**: tlačítko a stav dnes používají jiné slovo pro
-tentýž čin. Je to známá nesrovnalost, ne dva různé kroky.
+Článek už má akce nového návrhu: `Publikovat…` a `Schválit a publikovat…` otevřou dialog s
+datem publikace (`Dnes` · `Jiný den`, u dříve publikovaného navíc `Původní datum`), zpětné
+datum se volí tam, ne zvláštním tlačítkem.
+
+Pozor na dvojici **Zveřejnit / Publikováno**: u ostatního obsahu tlačítko a stav dnes používají
+jiné slovo pro tentýž čin. Je to známá nesrovnalost, ne dva různé kroky.
 
 ## Role
 
