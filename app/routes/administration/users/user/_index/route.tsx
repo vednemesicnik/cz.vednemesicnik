@@ -23,27 +23,14 @@ import { Link } from '~/components/link'
 import { useToast } from '~/components/toast-provider'
 import { INVITATION_CONFIG } from '~/config/invitation-config'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
-import type { SignInMethodDescription } from '~/utils/sign-in-methods/describe-sign-in-methods'
 
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { SignInMethod } from './components/sign-in-method'
 
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
-
-const SignInMethod = ({
-  description,
-}: {
-  description: SignInMethodDescription
-}) => (
-  <span className={styles.method}>
-    <span>{description.status}</span>
-    {description.note !== null && (
-      <span className={styles.note}>{description.note}</span>
-    )}
-  </span>
-)
 
 export default function RouteComponent({
   loaderData,

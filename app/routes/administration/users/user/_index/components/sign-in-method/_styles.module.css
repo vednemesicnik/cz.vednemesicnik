@@ -1,0 +1,13 @@
+.method {
+  @layer route {
+    display: grid;
+    gap: 2px;
+  }
+}
+
+.note {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
