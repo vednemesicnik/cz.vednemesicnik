@@ -25,7 +25,7 @@ const createHandlers = (): ContentStateHandlers => ({
   archive: vi.fn().mockResolvedValue(undefined),
   changePublishedAt: vi.fn().mockResolvedValue(undefined),
   delete: vi.fn().mockResolvedValue(undefined),
-  publish: vi.fn().mockResolvedValue(undefined),
+  publish: vi.fn().mockResolvedValue({ missing: [] }),
   restore: vi.fn().mockResolvedValue(undefined),
   retract: vi.fn().mockResolvedValue(undefined),
   review: vi.fn().mockResolvedValue(undefined),
@@ -129,7 +129,10 @@ describe('runContentStateAction — delete redirect', () => {
   test('does not redirect after delete without the flag', async () => {
     const { handlers, result } = run({ [INTENT_NAME]: INTENT_VALUE.delete })
 
-    await expect(result).resolves.toBeUndefined()
+    await expect(result).resolves.toEqual({
+      intent: INTENT_VALUE.delete,
+      missing: [],
+    })
     expect(handlers.delete).toHaveBeenCalled()
   })
 })
@@ -173,6 +176,47 @@ describe('runContentStateAction — validation', () => {
   test('throws when the intent is missing', async () => {
     const { result } = run({})
     await expect(result).rejects.toBeInstanceOf(Response)
+  })
+})
+
+describe('runContentStateAction — publish', () => {
+  test('answers with the intent and what blocks the publish', async () => {
+    const handlers = createHandlers()
+    vi.mocked(handlers.publish).mockResolvedValue({ missing: ['Chybí text.'] })
+
+    const { result } = run(
+      { [INTENT_NAME]: INTENT_VALUE.publish },
+      { handlers },
+    )
+
+    await expect(result).resolves.toEqual({
+      intent: INTENT_VALUE.publish,
+      missing: ['Chybí text.'],
+    })
+  })
+
+  test('Dnes is the server time, not a date from the browser', async () => {
+    const { handlers, result } = run({
+      [INTENT_NAME]: INTENT_VALUE.publish,
+      publishDate: 'today',
+      publishedAt: '2099-01-01T00:00:00.000Z',
+    })
+    await result
+
+    const { publishedAt } = vi.mocked(handlers.publish).mock.lastCall?.[1] ?? {}
+    expect(publishedAt).toBeInstanceOf(Date)
+    expect(Math.abs((publishedAt?.getTime() ?? 0) - Date.now())).toBeLessThan(
+      5000,
+    )
+  })
+
+  test('approval answers with its intent', async () => {
+    const { result } = run({ [INTENT_NAME]: INTENT_VALUE.review })
+
+    await expect(result).resolves.toEqual({
+      intent: INTENT_VALUE.review,
+      missing: [],
+    })
   })
 })
 

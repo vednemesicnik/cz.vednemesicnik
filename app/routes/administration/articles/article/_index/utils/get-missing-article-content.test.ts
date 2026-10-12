@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { getMissingForSubmission } from './get-missing-for-submission'
+import { getMissingArticleContent } from './get-missing-article-content'
 
 const complete = {
   authorCount: 1,
@@ -11,23 +11,23 @@ const complete = {
   title: 'Článek',
 }
 
-describe('getMissingForSubmission', () => {
+describe('getMissingArticleContent', () => {
   test('a complete article lacks nothing', () => {
-    expect(getMissingForSubmission(complete)).toEqual([])
+    expect(getMissingArticleContent(complete)).toEqual([])
   })
 
   test('a missing or blank perex is reported', () => {
-    expect(getMissingForSubmission({ ...complete, excerpt: null })).toEqual([
+    expect(getMissingArticleContent({ ...complete, excerpt: null })).toEqual([
       'Chybí perex.',
     ])
-    expect(getMissingForSubmission({ ...complete, excerpt: '  ' })).toEqual([
+    expect(getMissingArticleContent({ ...complete, excerpt: '  ' })).toEqual([
       'Chybí perex.',
     ])
   })
 
   test('lists everything missing in the order of 23h', () => {
     expect(
-      getMissingForSubmission({
+      getMissingArticleContent({
         authorCount: 0,
         content: '',
         excerpt: null,
@@ -47,7 +47,7 @@ describe('getMissingForSubmission', () => {
 
   test('counts images without alt text in the Czech plural', () => {
     const withoutAltText = (count: number) =>
-      getMissingForSubmission({
+      getMissingArticleContent({
         ...complete,
         images: Array.from({ length: count }, () => ({ altText: '' })),
       })

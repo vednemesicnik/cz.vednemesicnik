@@ -7,12 +7,15 @@ import {
 import { prisma } from '~/utils/db.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 
+import { getMissingArticleContent } from './get-missing-article-content'
+
 const buildPathname = (slug: string) => `/articles/${slug}`
 
 /**
  * Article state-transition handlers. The article is the only entity that mirrors
  * every transition onto its standalone PageSEO row, it accepts an approver
- * backdate on publish, and the Coordinator publishes it without a prior review.
+ * backdate on publish, the Coordinator publishes it without a prior review, and an
+ * incomplete article is not published (design 23h).
  */
 export const articleContentStateHandlers = createContentStateHandlers({
   allowBackdating: true,
@@ -87,6 +90,29 @@ export const articleContentStateHandlers = createContentStateHandlers({
     }
   },
   entity: 'article',
+
+  getMissingBeforePublish: async (id) => {
+    const article = await prisma.article.findUniqueOrThrow({
+      select: {
+        _count: { select: { authors: true } },
+        content: true,
+        excerpt: true,
+        images: { select: { altText: true } },
+        slug: true,
+        title: true,
+      },
+      where: { id },
+    })
+
+    return getMissingArticleContent({
+      authorCount: article._count.authors,
+      content: article.content,
+      excerpt: article.excerpt,
+      images: article.images,
+      slug: article.slug,
+      title: article.title,
+    })
+  },
 
   loadPublishState: async (id) => {
     const article = await prisma.article.findUniqueOrThrow({

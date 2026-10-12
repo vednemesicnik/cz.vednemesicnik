@@ -21,13 +21,13 @@ type Options = {
 const isBlank = (value: string | null) => value === null || value.trim() === ''
 
 /**
- * What an article still lacks before it can be submitted for review (design 23h).
- * Completeness is checked on submit, not on save.
+ * What an article still lacks before it can be submitted for review or published
+ * (design 23h). Completeness is checked on submit and publish, not on save.
  *
  * @param options - The article's fields, its author count and its images.
  * @returns One sentence per missing item, in the order of 23h; empty when complete.
  */
-export const getMissingForSubmission = ({
+export const getMissingArticleContent = ({
   title,
   slug,
   excerpt,

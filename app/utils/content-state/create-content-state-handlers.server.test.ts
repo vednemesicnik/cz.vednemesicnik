@@ -161,6 +161,44 @@ describe('createContentStateHandlers — review gate', () => {
   })
 })
 
+describe('createContentStateHandlers — completeness (23h)', () => {
+  const loadPublishState = vi.fn().mockResolvedValue({
+    authors: [{ role: { level: APPROVER } }],
+    publishedAt: null,
+    reviews: [],
+  })
+
+  test('an incomplete entity is not published and says what is missing', async () => {
+    const config = createConfig({
+      getMissingBeforePublish: vi.fn().mockResolvedValue(['Chybí perex.']),
+      loadPublishState,
+    })
+    runAs(APPROVER)
+
+    const result = await createContentStateHandlers(config).publish(request, {
+      id: 'a1',
+      target,
+    })
+
+    expect(result).toEqual({ missing: ['Chybí perex.'] })
+    expect(config.applyState).not.toHaveBeenCalled()
+    expect(config.ensureApprovingReview).not.toHaveBeenCalled()
+  })
+
+  test('an entity without the check publishes as before', async () => {
+    const config = createConfig({ loadPublishState })
+    runAs(APPROVER)
+
+    const result = await createContentStateHandlers(config).publish(request, {
+      id: 'a1',
+      target,
+    })
+
+    expect(result).toEqual({ missing: [] })
+    expect(config.applyState).toHaveBeenCalled()
+  })
+})
+
 describe('createContentStateHandlers — approver auto-approve', () => {
   test('records an approving review when an approver publishes', async () => {
     const config = createConfig({
