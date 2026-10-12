@@ -29,7 +29,7 @@
       color: var(--text-tertiary);
     }
 
-    &:hover:not(:disabled) {
+    &:hover:not(:disabled, :focus-visible) {
       border-color: var(--border-hover);
     }
 
