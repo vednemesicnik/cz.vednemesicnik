@@ -1,1 +1,0 @@
-export { AdministrationFooter } from './_component'
