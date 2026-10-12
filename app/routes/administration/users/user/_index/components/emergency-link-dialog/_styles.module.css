@@ -21,6 +21,14 @@
   }
 }
 
+.body {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
 .form {
   @layer route {
     display: flex;
@@ -34,6 +42,10 @@
     display: flex;
     align-items: flex-start;
     gap: 8px;
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    color: var(--text-primary);
+    cursor: pointer;
   }
 }
 
@@ -42,16 +54,18 @@
     flex: none;
     margin: 2px 0 0;
     accent-color: var(--primary);
+    cursor: pointer;
   }
 }
 
 /* The link once, in a box, the whole of it a copy button (design 28e). */
 .link {
   @layer route {
-    padding: 12px 14px;
+    padding-block: 12px;
+    padding-inline: 14px;
     font-family: ui-monospace, monospace;
     font-size: 13px;
-    overflow-wrap: anywhere;
+    word-break: break-all;
     background-color: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 8px;

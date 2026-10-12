@@ -1,0 +1,77 @@
+/* Centres the card on the sign-in page (design 20). */
+.page {
+  @layer component {
+    display: grid;
+    place-items: center;
+    min-height: 100%;
+    padding: 24px;
+  }
+}
+
+.card {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 400px;
+    padding: 32px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.heading {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.logo {
+  @layer component {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.title {
+  @layer component {
+    margin: 0;
+    font-size: 24px;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    text-align: center;
+    text-wrap: pretty;
+  }
+}
+
+/* A phone has no card: the content stands on the white page, full width,
+   from the top (20e). */
+@media (width < 768px) {
+  .page {
+    @layer component {
+      place-items: start stretch;
+      padding-block: 48px 24px;
+      padding-inline: 24px;
+      background-color: var(--bg-primary);
+    }
+  }
+
+  .card {
+    @layer component {
+      max-width: none;
+      padding: 0;
+      background-color: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+}

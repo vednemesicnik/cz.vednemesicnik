@@ -1,9 +1,10 @@
 // noinspection JSUnusedGlobalSymbols
-import { Form, href, Link, useNavigation } from 'react-router'
+import { Form, href, useNavigation } from 'react-router'
 
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
+import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
 import { Button } from '~/components/button'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
+import { Link } from '~/components/link'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import styles from './_styles.module.css'
@@ -34,57 +35,43 @@ export default function RouteComponent({
     const isSignedIn = loaderData.status === 'invalid-signed-in'
 
     return (
-      <div className={styles.container}>
-        <section className={styles.card}>
-          <h1 className={styles.title}>Odkaz už neplatí</h1>
-
-          <p className={styles.message}>
-            {isSignedIn
-              ? 'Vraťte se do administrace — tento nouzový odkaz už neplatí.'
-              : 'Přihlaste se jinak nebo se obraťte na Administrátora či Vlastníka — tento nouzový odkaz už neplatí.'}
-          </p>
-
-          <div className={styles.footer}>
-            <Link
-              className={styles.link}
-              to={
-                isSignedIn
-                  ? href('/administration')
-                  : href('/administration/sign-in')
-              }
-            >
-              {isSignedIn ? 'Zpět do administrace' : 'Přihlásit se jinak'}
-            </Link>
-          </div>
-        </section>
-      </div>
+      <AdminSignInCard title={'Odkaz už neplatí'}>
+        <p className={styles.text}>
+          {isSignedIn
+            ? 'Vraťte se do administrace — tento nouzový odkaz už neplatí.'
+            : 'Přihlaste se jinak nebo se obraťte na Administrátora či Vlastníka — tento nouzový odkaz už neplatí.'}
+        </p>
+        <Link
+          className={styles.link}
+          to={
+            isSignedIn
+              ? href('/administration')
+              : href('/administration/sign-in')
+          }
+        >
+          {isSignedIn ? 'Zpět do administrace' : 'Přihlásit se jinak'}
+        </Link>
+      </AdminSignInCard>
     )
   }
 
   // The same account has nothing to confirm; the link lapses by itself.
   if (loaderData.status === 'same-account') {
     return (
-      <div className={styles.container}>
-        <section className={styles.card}>
-          <h1 className={styles.title}>Už jste přihlášení</h1>
-
-          <p className={styles.message}>
-            Pokračujte do Nastavení — v tomto prohlížeči už jste přihlášení.
-          </p>
-          <p className={styles.account}>
-            Účet: <span className={styles.email}>{loaderData.email}</span>
-          </p>
-
-          <div className={styles.actions}>
-            <AdminLinkButton
-              className={styles.button}
-              to={href('/administration/settings')}
-            >
-              Pokračovat do Nastavení
-            </AdminLinkButton>
-          </div>
-        </section>
-      </div>
+      <AdminSignInCard title={'Už jste přihlášení'}>
+        <p className={styles.text}>
+          Pokračujte do Nastavení — v tomto prohlížeči už jste přihlášení.
+        </p>
+        <p className={styles.account}>
+          Účet: <span className={styles.value}>{loaderData.email}</span>
+        </p>
+        {/* A navigation drawn as the primary button (20f). */}
+        <Form action={href('/administration/settings')} method={'get'}>
+          <Button className={styles.button} type={'submit'}>
+            Pokračovat do Nastavení
+          </Button>
+        </Form>
+      </AdminSignInCard>
     )
   }
 
@@ -92,85 +79,75 @@ export default function RouteComponent({
   // leads back here, to the confirmation (20f).
   if (loaderData.status === 'other-account') {
     return (
-      <div className={styles.container}>
-        <section className={styles.card}>
-          <h1 className={styles.title}>Odkaz je pro jiný účet</h1>
-
-          <p className={styles.message}>
-            Odhlaste se a pokračujte — v tomto prohlížeči je přihlášený jiný
-            účet.
-          </p>
-          <p className={styles.account}>
-            Účet pro tento odkaz:{' '}
-            <span className={styles.email}>{loaderData.email}</span>
-          </p>
-
-          <Form className={styles.form} method={'post'}>
-            <HoneypotInputs />
-            <input name={'token'} type={'hidden'} value={loaderData.token} />
-            <input
-              name={FORM_CONFIG.intent.name}
-              type={'hidden'}
-              value={FORM_CONFIG.intent.value.signOut}
-            />
-
-            <Button
-              className={styles.button}
-              disabled={isSubmitting}
-              type={'submit'}
-            >
-              Odhlásit se a pokračovat
-            </Button>
-          </Form>
-
-          <div className={styles.footer}>
-            <Link className={styles.link} to={href('/administration')}>
-              Zpět do administrace
-            </Link>
-          </div>
-        </section>
-      </div>
-    )
-  }
-
-  return (
-    <div className={styles.container}>
-      <section className={styles.card}>
-        <h1 className={styles.title}>Potvrďte přihlášení</h1>
-
-        {/* The account says where, the pair under it by what and from whom. */}
-        <div className={styles.details}>
-          <p className={styles.subtitle}>
-            Účet: <span className={styles.email}>{loaderData.email}</span>
-          </p>
-          <p className={styles.origin}>
-            <span>Nouzový odkaz</span>
-            {loaderData.issuerName !== null && (
-              <span>Odkaz od: {loaderData.issuerName}</span>
-            )}
-          </p>
-        </div>
-
-        <Form className={styles.form} method={'post'}>
+      <AdminSignInCard title={'Odkaz je pro jiný účet'}>
+        <p className={styles.text}>
+          Odhlaste se a pokračujte — v tomto prohlížeči je přihlášený jiný účet.
+        </p>
+        <p className={styles.account}>
+          Účet pro tento odkaz:{' '}
+          <span className={styles.value}>{loaderData.email}</span>
+        </p>
+        <Form method={'post'}>
           <HoneypotInputs />
           <input name={'token'} type={'hidden'} value={loaderData.token} />
-
+          <input
+            name={FORM_CONFIG.intent.name}
+            type={'hidden'}
+            value={FORM_CONFIG.intent.value.signOut}
+          />
           <Button
             className={styles.button}
             disabled={isSubmitting}
             type={'submit'}
           >
-            {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
+            Odhlásit se a pokračovat
           </Button>
         </Form>
+        <Link className={styles.link} to={href('/administration')}>
+          Zpět do administrace
+        </Link>
+      </AdminSignInCard>
+    )
+  }
 
-        <p className={styles.message}>
-          Po přihlášení si můžete v Nastavení přidat passkey.
-        </p>
-        <p className={styles.hint}>
-          Nežádali jste o tento odkaz? Stránku zavřete.
-        </p>
-      </section>
-    </div>
+  return (
+    <AdminSignInCard
+      details={
+        // The account says where, the pair under it by what and from whom.
+        <div className={styles.details}>
+          <p className={styles.line}>
+            Účet: <span className={styles.value}>{loaderData.email}</span>
+          </p>
+          <p className={styles.origin}>
+            <span>Nouzový odkaz</span>
+            {loaderData.issuerName !== null && (
+              <span>
+                Odkaz od:{' '}
+                <span className={styles.value}>{loaderData.issuerName}</span>
+              </span>
+            )}
+          </p>
+        </div>
+      }
+      title={'Potvrďte přihlášení'}
+    >
+      <Form method={'post'}>
+        <HoneypotInputs />
+        <input name={'token'} type={'hidden'} value={loaderData.token} />
+        <Button
+          className={styles.button}
+          disabled={isSubmitting}
+          type={'submit'}
+        >
+          {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
+        </Button>
+      </Form>
+      <p className={styles.note}>
+        Po přihlášení si můžete v Nastavení přidat passkey.
+      </p>
+      <p className={styles.hint}>
+        Nežádali jste o tento odkaz? Stránku zavřete.
+      </p>
+    </AdminSignInCard>
   )
 }

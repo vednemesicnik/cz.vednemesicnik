@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { href, useFetcher } from 'react-router'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
@@ -11,7 +11,6 @@ import { adminCsrfFormMessage } from '~/components/boundary-error/utils/boundary
 import { Button } from '~/components/button'
 import { CopyButton } from '~/components/copy-button'
 import { ErrorMessage } from '~/components/error-message'
-import { Label } from '~/components/label'
 import type { action as emergencyLinkAction } from '~/routes/administration/users/user/emergency-link/_action'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
@@ -40,7 +39,6 @@ export const EmergencyLinkDialog = ({
 }: Props) => {
   const fetcher = useFetcher<typeof emergencyLinkAction>()
   const ref = useModalDialog(onClose)
-  const checkboxId = useId()
   const [isConfirmed, setIsConfirmed] = useState(false)
 
   const result = fetcher.data
@@ -89,18 +87,22 @@ export const EmergencyLinkDialog = ({
           </p>
         </hgroup>
 
-        <AdminModalDescription>
-          Kdokoli s tímto odkazem může potvrdit přihlášení do tohoto účtu.
-        </AdminModalDescription>
-        <AdminModalDescription>
-          Před vydáním ověřte totožnost osobně nebo při hlasovém hovoru. Zpráva
-          ani e-mail nestačí.
-        </AdminModalDescription>
-        {previousLinkTime !== null && (
+        {/* Three paragraphs 8 px apart, a tighter block than the dialog's
+            16 px rhythm (28e). */}
+        <div className={styles.body}>
           <AdminModalDescription>
-            {`Vydáním nového odkazu přestane platit předchozí z ${previousLinkTime}.`}
+            Kdokoli s tímto odkazem může potvrdit přihlášení do tohoto účtu.
           </AdminModalDescription>
-        )}
+          <AdminModalDescription>
+            Před vydáním ověřte totožnost osobně nebo při hlasovém hovoru.
+            Zpráva ani e-mail nestačí.
+          </AdminModalDescription>
+          {previousLinkTime !== null && (
+            <AdminModalDescription>
+              {`Vydáním nového odkazu přestane platit předchozí z ${previousLinkTime}.`}
+            </AdminModalDescription>
+          )}
+        </div>
 
         <fetcher.Form
           action={href('/administration/users/:userId/emergency-link', {
@@ -115,19 +117,18 @@ export const EmergencyLinkDialog = ({
             <ErrorMessage>{adminCsrfFormMessage}</ErrorMessage>
           )}
 
-          <div className={styles.confirmation}>
+          {/* A sentence, not a field name: regular weight, wrapping beside the
+              box (28e), so not the semibold Label. */}
+          <label className={styles.confirmation}>
             <input
               checked={isConfirmed}
               className={styles.checkbox}
-              id={checkboxId}
               name={'identityConfirmed'}
               onChange={(event) => setIsConfirmed(event.target.checked)}
               type={'checkbox'}
             />
-            <Label htmlFor={checkboxId}>
-              Totožnost ověřena osobně nebo při hlasovém hovoru
-            </Label>
-          </div>
+            Totožnost ověřena osobně nebo při hlasovém hovoru
+          </label>
 
           <AdminModalActions>
             <Button
