@@ -1,10 +1,9 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { Activity, useEffect, useRef, useState } from 'react'
-import { href, useFetcher } from 'react-router'
+import { href, useFetcher, useNavigate } from 'react-router'
 
-import { AdminActionButton } from '~/components/admin/admin-action-button'
-import { AdminActionGroup } from '~/components/admin/admin-action-group'
+import { ActionMenu } from '~/components/action-menu'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
@@ -22,43 +21,65 @@ import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminPublishDateDialog } from '~/components/admin/admin-publish-date-dialog'
-import { AdminSplitButton } from '~/components/admin/admin-split-button'
 import { AdminStateBadge } from '~/components/admin/admin-state-badge'
-import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { BulletedList } from '~/components/bulleted-list'
 import { Button } from '~/components/button'
 import { Hyperlink } from '~/components/hyperlink'
-import { ArchiveIcon } from '~/components/icons/archive-icon'
-import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
-import { CalendarIcon } from '~/components/icons/calendar-icon'
-import { CheckIcon } from '~/components/icons/check-icon'
-import { DeleteIcon } from '~/components/icons/delete-icon'
-import { EditIcon } from '~/components/icons/edit-icon'
-import { RedoIcon } from '~/components/icons/redo-icon'
-import { RefreshIcon } from '~/components/icons/refresh-icon'
-import { UndoIcon } from '~/components/icons/undo-icon'
 import { ListItem } from '~/components/list-item'
 import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { action as articleAction } from './_action'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { ArticlePublishDialog } from './components/article-publish-dialog'
+import { getHeaderActions, type HeaderAction } from './utils/get-header-actions'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
 
-const PUBLISH_MODES = ['publish', 'publish-backdated'] as const
-type PublishMode = (typeof PUBLISH_MODES)[number]
+// Three dots announce a dialog (07c). Retract and archive get theirs in 23e.
+const ACTION_LABELS: Record<HeaderAction, string> = {
+  approve: 'Schválit',
+  'approve-and-publish': 'Schválit a publikovat…',
+  archive: 'Archivovat',
+  'change-date': 'Změnit datum publikace…',
+  delete: 'Smazat…',
+  edit: 'Upravit',
+  publish: 'Publikovat…',
+  restore: 'Obnovit jako koncept',
+  retract: 'Stáhnout z publikace',
+  return: 'Vrátit k úpravám',
+  submit: 'Odeslat ke schválení',
+  'view-on-web': 'Zobrazit na webu',
+  withdraw: 'Vzít zpět do konceptu',
+}
 
-const isPublishMode = (id: string): id is PublishMode =>
-  (PUBLISH_MODES as readonly string[]).includes(id)
+// The actions that change the state in one click, without a dialog.
+const DIRECT_INTENTS: Partial<Record<HeaderAction, string>> = {
+  approve: INTENT_VALUE.review,
+  archive: INTENT_VALUE.archive,
+  restore: INTENT_VALUE.restore,
+  retract: INTENT_VALUE.retract,
+  return: INTENT_VALUE.returnForEdits,
+  submit: INTENT_VALUE.submitForReview,
+  withdraw: INTENT_VALUE.withdrawSubmission,
+}
 
-// Toasts after a submission action (design 23a, 23b, 23c).
-const SUBMISSION_TOASTS: Record<string, string> = {
+// Toasts after an action (design 23a, 23b, 23c, 23f).
+const ACTION_TOASTS: Record<string, string> = {
+  [INTENT_VALUE.publish]: 'Publikováno',
   [INTENT_VALUE.returnForEdits]: 'Vráceno k úpravám',
+  [INTENT_VALUE.review]: 'Schváleno',
   [INTENT_VALUE.submitForReview]: 'Odesláno ke schválení',
   [INTENT_VALUE.withdrawSubmission]: 'Vráceno do konceptu',
+}
+
+type MissingList = {
+  intent: string
+  items: string[]
 }
 
 export { action } from './_action'
@@ -69,73 +90,60 @@ export default function RouteComponent({
   loaderData,
   params,
 }: Route.ComponentProps) {
-  const {
-    article,
-    canUpdate,
-    canDelete,
-    canPublish,
-    canPublishBackdated,
-    canChangePublishedAt,
-    canRetract,
-    canArchive,
-    canRestore,
-    canReview,
-    canSubmit,
-    canWithdraw,
-    canReturn,
-    hasReviewed,
-    isOwnContent,
-    needsReview,
-    submission,
-  } = loaderData
+  const { article, isOwnContent, missingBeforePublish, submission } = loaderData
   const { articleId } = params
-
-  // Selected mode of the draft publish split button (Coordinators only).
-  const [publishMode, setPublishMode] = useState<PublishMode>('publish')
 
   const fetcherKey = `article-action-${articleId}`
   const fetcher = useFetcher<typeof articleAction>({ key: fetcherKey })
-  const { Form } = fetcher
+  const authenticityToken = useAuthenticityToken()
+  const navigate = useNavigate()
+
+  const headerActions = getHeaderActions({
+    ...loaderData,
+    state: article.state,
+    submission: submission?.state ?? null,
+  })
 
   const showToast = useToast()
   const missingDialogRef = useRef<HTMLDialogElement>(null)
-  const submissionResult = fetcher.data
+  const [missingList, setMissingList] = useState<MissingList | null>(null)
+  const [publishDialog, setPublishDialog] = useState<{
+    isApproval: boolean
+  } | null>(null)
+  const actionResult = fetcher.data
   // A keyed fetcher keeps its data across remounts; answer only a new result.
-  const handledResultRef = useRef(submissionResult)
+  const handledResultRef = useRef(actionResult)
 
-  // A submission action answers once: a toast, or the 23h list of what is
-  // missing before the article can be submitted.
+  // An action answers once: a toast, or the 23h list of what is missing before
+  // the article can be submitted or published.
   useEffect(() => {
     if (
-      submissionResult === undefined ||
-      submissionResult === handledResultRef.current
+      actionResult === undefined ||
+      actionResult === handledResultRef.current
     ) {
       return
     }
-    handledResultRef.current = submissionResult
+    handledResultRef.current = actionResult
 
-    if (submissionResult.missing.length > 0) {
-      missingDialogRef.current?.showModal()
+    if (actionResult.missing.length > 0) {
+      setMissingList({
+        intent: actionResult.intent,
+        items: actionResult.missing,
+      })
       return
     }
 
-    const toast = SUBMISSION_TOASTS[submissionResult.intent]
+    const toast = ACTION_TOASTS[actionResult.intent]
     if (toast !== undefined) showToast(toast)
-  }, [showToast, submissionResult])
+  }, [showToast, actionResult])
+
+  useEffect(() => {
+    if (missingList !== null) missingDialogRef.current?.showModal()
+  }, [missingList])
 
   const isSubmitting = fetcher.state !== 'idle'
 
-  const submittingIntent =
-    fetcher.state !== 'idle' && fetcher.formData
-      ? fetcher.formData.get(INTENT_NAME)
-      : null
-
-  const publishDisabledTitle = needsReview
-    ? 'Nelze publikovat bez schválení koordinátora'
-    : undefined
-
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
-  const backdatedPublishDialogRef = useRef<HTMLDialogElement>(null)
   const changePublishedAtDialogRef = useRef<HTMLDialogElement>(null)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(
@@ -147,221 +155,112 @@ export default function RouteComponent({
     },
   )
 
+  const editHref = href('/administration/articles/:articleId/edit-article', {
+    articleId,
+  })
+
+  // An incomplete article opens the 23h list instead of the date dialog.
+  const openPublishDialog = (isApproval: boolean) => {
+    if (missingBeforePublish.length > 0) {
+      setMissingList({
+        intent: INTENT_VALUE.publish,
+        items: missingBeforePublish,
+      })
+      return
+    }
+
+    setPublishDialog({ isApproval })
+  }
+
+  const runAction = (headerAction: HeaderAction) => {
+    const intent = DIRECT_INTENTS[headerAction]
+
+    if (intent !== undefined) {
+      const formData = new FormData()
+      formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
+      formData.append(INTENT_NAME, intent)
+      void fetcher.submit(formData, { method: 'POST' })
+      return
+    }
+
+    switch (headerAction) {
+      case 'approve-and-publish':
+        return openPublishDialog(true)
+      case 'publish':
+        return openPublishDialog(false)
+      case 'change-date':
+        return changePublishedAtDialogRef.current?.showModal()
+      case 'delete':
+        return openDialog()
+      case 'edit':
+        return navigate(editHref)
+    }
+  }
+
+  const renderButton = (
+    headerAction: HeaderAction,
+    variant: 'primary' | 'outline',
+  ) => {
+    switch (headerAction) {
+      case 'edit':
+        return (
+          <AdminLinkButton
+            className={styles.outlineLink}
+            disabled={isSubmitting}
+            to={editHref}
+          >
+            {ACTION_LABELS.edit}
+          </AdminLinkButton>
+        )
+      case 'view-on-web':
+        return (
+          <AdminLinkButton
+            className={styles.outlineLink}
+            rel={'noopener'}
+            target={'_blank'}
+            to={href('/articles/:articleSlug', { articleSlug: article.slug })}
+          >
+            {ACTION_LABELS['view-on-web']}
+          </AdminLinkButton>
+        )
+      default:
+        return (
+          <Button
+            disabled={isSubmitting}
+            onClick={() => runAction(headerAction)}
+            type={'button'}
+            variant={variant}
+          >
+            {ACTION_LABELS[headerAction]}
+          </Button>
+        )
+    }
+  }
+
   return (
     <AdminPage>
-      <AdminHeadline>{article.title}</AdminHeadline>
+      <div className={styles.header}>
+        <AdminHeadline>{article.title}</AdminHeadline>
 
-      <AdminActionGroup>
-        {canUpdate && (
-          <AdminLinkButton
-            disabled={isSubmitting}
-            to={href('/administration/articles/:articleId/edit-article', {
-              articleId,
-            })}
-          >
-            <EditIcon />
-            Upravit
-          </AdminLinkButton>
-        )}
-        {canSubmit && (
-          <Form method="post">
-            <AuthenticityTokenInput />
-            <AdminActionButton
-              action={'review'}
-              disabled={isSubmitting}
-              name={INTENT_NAME}
-              type={'submit'}
-              value={INTENT_VALUE.submitForReview}
-            >
-              <RedoIcon />
-              Odeslat ke schválení
-            </AdminActionButton>
-          </Form>
-        )}
-        {canWithdraw && (
-          <Form method="post">
-            <AuthenticityTokenInput />
-            <AdminActionButton
-              action={'retract'}
-              disabled={isSubmitting}
-              name={INTENT_NAME}
-              type={'submit'}
-              value={INTENT_VALUE.withdrawSubmission}
-            >
-              <UndoIcon />
-              Vzít zpět do konceptu
-            </AdminActionButton>
-          </Form>
-        )}
-        {canReturn && (
-          <Form method="post">
-            <AuthenticityTokenInput />
-            <AdminActionButton
-              action={'retract'}
-              disabled={isSubmitting}
-              name={INTENT_NAME}
-              type={'submit'}
-              value={INTENT_VALUE.returnForEdits}
-            >
-              <UndoIcon />
-              Vrátit k úpravám
-            </AdminActionButton>
-          </Form>
-        )}
-        {canReview && !hasReviewed && (
-          <Form method="post">
-            <AuthenticityTokenInput />
-            <AdminActionButton
-              action={'review'}
-              disabled={isSubmitting}
-              name={INTENT_NAME}
-              type={'submit'}
-              value={INTENT_VALUE.review}
-            >
-              <CheckIcon />
-              {submittingIntent === INTENT_VALUE.review
-                ? 'Schvaluje se...'
-                : 'Schválit'}
-            </AdminActionButton>
-          </Form>
-        )}
-        {canPublish &&
-          (canPublishBackdated ? (
-            <Form method="post">
-              <AuthenticityTokenInput />
-              <AdminSplitButton
-                action={'publish'}
-                disabled={isSubmitting}
-                onSelect={(id) => {
-                  if (isPublishMode(id)) setPublishMode(id)
-                }}
-                options={[
-                  { id: 'publish', label: 'Zveřejnit' },
-                  { id: 'publish-backdated', label: 'Zveřejnit zpětně' },
-                ]}
-                selectedId={publishMode}
-              >
-                {publishMode === 'publish' ? (
-                  <AdminActionButton
-                    action={'publish'}
-                    disabled={needsReview || isSubmitting}
-                    name={INTENT_NAME}
-                    title={publishDisabledTitle}
-                    type={'submit'}
-                    value={INTENT_VALUE.publish}
-                  >
-                    <ArrowUpwardIcon />
-                    {submittingIntent === INTENT_VALUE.publish
-                      ? 'Zveřejňuje se...'
-                      : 'Zveřejnit'}
-                  </AdminActionButton>
-                ) : (
-                  <AdminActionButton
-                    action={'publish'}
-                    disabled={needsReview || isSubmitting}
-                    onClick={() =>
-                      backdatedPublishDialogRef.current?.showModal()
-                    }
-                    title={publishDisabledTitle}
-                    type={'button'}
-                  >
-                    <ArrowUpwardIcon />
-                    Zveřejnit zpětně
-                  </AdminActionButton>
-                )}
-              </AdminSplitButton>
-            </Form>
-          ) : (
-            <Form method="post">
-              <AuthenticityTokenInput />
-              <AdminActionButton
-                action={'publish'}
-                disabled={needsReview || isSubmitting}
-                name={INTENT_NAME}
-                title={publishDisabledTitle}
-                type={'submit'}
-                value={INTENT_VALUE.publish}
-              >
-                <ArrowUpwardIcon />
-                {submittingIntent === INTENT_VALUE.publish
-                  ? 'Zveřejňuje se...'
-                  : 'Zveřejnit'}
-              </AdminActionButton>
-            </Form>
-          ))}
-        {canRetract && (
-          <Form method="post">
-            <AuthenticityTokenInput />
-            <AdminActionButton
-              action={'retract'}
-              disabled={isSubmitting}
-              name={INTENT_NAME}
-              type={'submit'}
-              value={INTENT_VALUE.retract}
-            >
-              <UndoIcon />
-              {submittingIntent === INTENT_VALUE.retract
-                ? 'Stahuje se...'
-                : 'Stáhnout z publikace'}
-            </AdminActionButton>
-          </Form>
-        )}
-        {canChangePublishedAt && (
-          <AdminActionButton
-            action={'publish'}
-            disabled={isSubmitting}
-            onClick={() => changePublishedAtDialogRef.current?.showModal()}
-            type={'button'}
-          >
-            <CalendarIcon />
-            Změnit datum vydání
-          </AdminActionButton>
-        )}
-        {canArchive && (
-          <Form method="post">
-            <AuthenticityTokenInput />
-            <AdminActionButton
-              action={'archive'}
-              disabled={isSubmitting}
-              name={INTENT_NAME}
-              type={'submit'}
-              value={INTENT_VALUE.archive}
-            >
-              <ArchiveIcon />
-              {submittingIntent === INTENT_VALUE.archive
-                ? 'Archivuje se...'
-                : 'Archivovat'}
-            </AdminActionButton>
-          </Form>
-        )}
-        {canRestore && (
-          <Form method="post">
-            <AuthenticityTokenInput />
-            <AdminActionButton
-              action={'restore'}
-              disabled={isSubmitting}
-              name={INTENT_NAME}
-              type={'submit'}
-              value={INTENT_VALUE.restore}
-            >
-              <RefreshIcon />
-              {submittingIntent === INTENT_VALUE.restore
-                ? 'Obnovuje se...'
-                : 'Obnovit'}
-            </AdminActionButton>
-          </Form>
-        )}
-        {canDelete && (
-          <AdminActionButton
-            action="delete"
-            disabled={isSubmitting}
-            onClick={openDialog}
-          >
-            <DeleteIcon />
-            {submittingIntent === INTENT_VALUE.delete ? 'Maže se...' : 'Smazat'}
-          </AdminActionButton>
-        )}
-      </AdminActionGroup>
+        {/* One primary, one outline, the rest in „⋯“; where the role may do nothing, who can (23d). */}
+        <div className={styles.actions}>
+          {headerActions.sentence !== null && (
+            <p className={styles.sentence}>{headerActions.sentence}</p>
+          )}
+          <ActionMenu
+            items={headerActions.menu.map((headerAction) => ({
+              danger: headerAction === 'delete',
+              label: ACTION_LABELS[headerAction],
+              onSelect: () => runAction(headerAction),
+            }))}
+            label={'Další akce s článkem'}
+          />
+          {headerActions.outline !== null &&
+            renderButton(headerActions.outline, 'outline')}
+          {headerActions.primary !== null &&
+            renderButton(headerActions.primary, 'primary')}
+        </div>
+      </div>
 
       {isOwnContent && submission !== null && (
         <AdminParagraph>
@@ -471,9 +370,13 @@ export default function RouteComponent({
 
       <AdminDialog ref={missingDialogRef}>
         <AdminModalContent>
-          <AdminModalTitle>Článek ještě nejde odeslat</AdminModalTitle>
+          <AdminModalTitle>
+            {missingList?.intent === INTENT_VALUE.publish
+              ? 'Článek ještě nejde publikovat'
+              : 'Článek ještě nejde odeslat'}
+          </AdminModalTitle>
           <BulletedList>
-            {submissionResult?.missing.map((item) => (
+            {missingList?.items.map((item) => (
               <ListItem key={item}>{item}</ListItem>
             ))}
           </BulletedList>
@@ -486,28 +389,28 @@ export default function RouteComponent({
             >
               Zavřít
             </Button>
-            <AdminLinkButton
-              to={href('/administration/articles/:articleId/edit-article', {
-                articleId,
-              })}
-            >
-              Doplnit v editoru
-            </AdminLinkButton>
+            <AdminLinkButton to={editHref}>Doplnit v editoru</AdminLinkButton>
           </AdminModalActions>
         </AdminModalContent>
       </AdminDialog>
 
-      <AdminPublishDateDialog
-        action={href('/administration/articles/:articleId', { articleId })}
-        confirmLabel={'Zveřejnit'}
-        description={
-          'Článek bude publikován se zvoleným datem v minulosti a zařadí se tak na odpovídající místo ve výpisu článků.'
-        }
-        fetcherKey={fetcherKey}
-        intent={INTENT_VALUE.publish}
-        ref={backdatedPublishDialogRef}
-        title={'Zveřejnit zpětně'}
-      />
+      {publishDialog !== null && (
+        <ArticlePublishDialog
+          action={href('/administration/articles/:articleId', { articleId })}
+          articleTitle={article.title}
+          authorNames={article.authors.map((author) => author.name)}
+          fetcherKey={fetcherKey}
+          isApproval={publishDialog.isApproval}
+          // A draft nobody submitted is published from „⋯“ (23d); the dialog says so.
+          note={
+            headerActions.menu.includes('publish')
+              ? headerActions.sentence
+              : null
+          }
+          onClose={() => setPublishDialog(null)}
+          originalPublishedAt={article.publishedAt.iso}
+        />
+      )}
 
       <AdminPublishDateDialog
         action={href('/administration/articles/:articleId', { articleId })}

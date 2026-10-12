@@ -1,0 +1,46 @@
+/* The title, with the actions on the right (23b, 23d). */
+.header {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    width: 100%;
+  }
+}
+
+.actions {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+/* Who can act, in secondary text where the buttons would be (23d). */
+.sentence {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}
+
+/* The design system's outline Button md, as tall as „⋯“ beside it (28e). */
+.outlineLink {
+  @layer route {
+    padding-block: 10px;
+    padding-inline: 22px;
+    border-color: var(--border);
+    border-radius: var(--radius-lg);
+
+    &:hover:not(:focus-visible),
+    &:focus-visible {
+      background-color: var(--bg-accent);
+      border-color: var(--border-accent);
+    }
+  }
+}
