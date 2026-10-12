@@ -6,10 +6,9 @@ import styles from './_styles.module.css'
 type Props = {
   children?: never
   className?: string
-  variant?: 'default' | 'admin'
 }
 
-export const VdmLogo = ({ className, variant = 'default' }: Props) => {
+export const VdmLogo = ({ className }: Props) => {
   // Each logo needs its own ids: the header and the open menu render one each.
   const clipId = useId()
   const gradientId = useId()
@@ -17,12 +16,7 @@ export const VdmLogo = ({ className, variant = 'default' }: Props) => {
   return (
     <svg
       aria-label={'Logo VDM'}
-      className={clsx(
-        styles.svg,
-        variant === 'default' && styles.default,
-        variant === 'admin' && styles.admin,
-        className,
-      )}
+      className={clsx(styles.svg, className)}
       height={'100%'}
       role={'img'}
       viewBox={'0 0 1000 1000'}
