@@ -2,6 +2,7 @@
 import { Form, href, useNavigation } from 'react-router'
 
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
@@ -36,13 +37,12 @@ export default function RouteComponent({
 
     return (
       <AdminSignInCard title={'Odkaz už neplatí'}>
-        <p className={styles.text}>
+        <AdminSignInText>
           {isSignedIn
             ? 'Vraťte se do administrace — tento nouzový odkaz už neplatí.'
             : 'Přihlaste se jinak nebo se obraťte na Administrátora či Vlastníka — tento nouzový odkaz už neplatí.'}
-        </p>
+        </AdminSignInText>
         <Link
-          className={styles.link}
           to={
             isSignedIn
               ? href('/administration')
@@ -59,17 +59,15 @@ export default function RouteComponent({
   if (loaderData.status === 'same-account') {
     return (
       <AdminSignInCard title={'Už jste přihlášení'}>
-        <p className={styles.text}>
+        <AdminSignInText>
           Pokračujte do Nastavení — v tomto prohlížeči už jste přihlášení.
-        </p>
+        </AdminSignInText>
         <p className={styles.account}>
           Účet: <span className={styles.value}>{loaderData.email}</span>
         </p>
         {/* A navigation drawn as the primary button (20f). */}
         <Form action={href('/administration/settings')} method={'get'}>
-          <Button className={styles.button} type={'submit'}>
-            Pokračovat do Nastavení
-          </Button>
+          <Button type={'submit'}>Pokračovat do Nastavení</Button>
         </Form>
       </AdminSignInCard>
     )
@@ -80,9 +78,9 @@ export default function RouteComponent({
   if (loaderData.status === 'other-account') {
     return (
       <AdminSignInCard title={'Odkaz je pro jiný účet'}>
-        <p className={styles.text}>
+        <AdminSignInText>
           Odhlaste se a pokračujte — v tomto prohlížeči je přihlášený jiný účet.
-        </p>
+        </AdminSignInText>
         <p className={styles.account}>
           Účet pro tento odkaz:{' '}
           <span className={styles.value}>{loaderData.email}</span>
@@ -95,17 +93,11 @@ export default function RouteComponent({
             type={'hidden'}
             value={FORM_CONFIG.intent.value.signOut}
           />
-          <Button
-            className={styles.button}
-            disabled={isSubmitting}
-            type={'submit'}
-          >
+          <Button disabled={isSubmitting} type={'submit'}>
             Odhlásit se a pokračovat
           </Button>
         </Form>
-        <Link className={styles.link} to={href('/administration')}>
-          Zpět do administrace
-        </Link>
+        <Link to={href('/administration')}>Zpět do administrace</Link>
       </AdminSignInCard>
     )
   }
@@ -130,20 +122,16 @@ export default function RouteComponent({
       <Form method={'post'}>
         <HoneypotInputs />
         <input name={'token'} type={'hidden'} value={loaderData.token} />
-        <Button
-          className={styles.button}
-          disabled={isSubmitting}
-          type={'submit'}
-        >
+        <Button disabled={isSubmitting} type={'submit'}>
           {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
         </Button>
       </Form>
-      <p className={styles.note}>
+      <AdminSignInText variant={'note'}>
         Po přihlášení si můžete v Nastavení přidat passkey.
-      </p>
-      <p className={styles.hint}>
+      </AdminSignInText>
+      <AdminSignInText variant={'quiet'}>
         Nežádali jste o tento odkaz? Stránku zavřete.
-      </p>
+      </AdminSignInText>
     </AdminSignInCard>
   )
 }
