@@ -23,6 +23,21 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
+
+    /* The card's gap spaces its parts; a Callout brings its own margin. */
+    & > aside {
+      margin-block: 0;
+    }
+
+    /* A link under the text, as the design system's `.vdm-signin .vdm-link`. */
+    & > a {
+      align-self: center;
+      font-size: 13px;
+    }
+
+    & button {
+      width: 100%;
+    }
   }
 }
 
@@ -55,6 +70,31 @@
   }
 }
 
+/* The name and the smaller title under it, on the sign-in chooser (hhcprc34). */
+.names {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.name {
+  @layer component {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.15;
+  }
+}
+
+.wordmarkTitle {
+  @layer variant {
+    font-size: 17px;
+    line-height: 1.4;
+  }
+}
+
 /* A phone has no card: the content stands on the white page, from the top
    (20e). */
 @media (width < 768px) {
@@ -74,6 +114,11 @@
       border: 0;
       border-radius: 0;
       box-shadow: none;
+
+      /* Buttons and fields are 44 px on a phone (20e). */
+      & :is(button, input) {
+        min-height: 44px;
+      }
     }
   }
 }

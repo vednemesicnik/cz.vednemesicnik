@@ -1,75 +1,72 @@
 // noinspection JSUnusedGlobalSymbols
-import { Link } from 'react-router'
+import { Form, href } from 'react-router'
 
+import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { Button } from '~/components/button'
+import { Callout } from '~/components/callout'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
+import { Link } from '~/components/link'
 import { withRedirectTo } from '~/utils/with-redirect-to'
-import styles from './_styles.module.css'
+
 import type { Route } from './+types/route'
 import { PasskeyForm } from './components/passkey-form'
 
 export { loader } from './_loader'
 export { meta } from './_meta'
 
+// The sign-in chooser (design 20a, 20e). Copy approved (gs905c2e, uquz5xhn).
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
+  const magicLinkPath = href('/administration/sign-in/magic-link')
+  const hasRedirectTo =
+    withRedirectTo(magicLinkPath, loaderData.redirectTo) !== magicLinkPath
+
   return (
-    <div className={styles.container}>
-      <section className={styles.card}>
-        <h1 className={styles.title}>Přihlášení</h1>
+    <AdminSignInCard title={'Přihlášení do administrace'} wordmark>
+      {loaderData.error !== null ? (
+        <Callout role={'alert'} tone={'error'}>
+          {loaderData.error}
+        </Callout>
+      ) : null}
 
-        <p className={styles.subtitle}>
-          Vyberte způsob přihlášení do administrace
-        </p>
+      {/* Native POST: the action redirects to google.com, so we want a full
+          top-level navigation (not a client-side fetch). */}
+      <form action={href('/administration/sign-in/google')} method={'post'}>
+        <HoneypotInputs />
+        <input
+          name={'redirectTo'}
+          type={'hidden'}
+          value={loaderData.redirectTo}
+        />
+        <Button type={'submit'}>Přihlásit se přes Google</Button>
+      </form>
 
-        {loaderData.error !== null ? (
-          <p className={styles.error} role={'alert'}>
-            {loaderData.error}
-          </p>
-        ) : null}
+      <PasskeyForm redirectTo={loaderData.redirectTo} />
 
-        {/* Native POST: the action redirects to google.com, so we want a full
-            top-level navigation (not a client-side fetch). */}
-        <form
-          action={'/administration/sign-in/google'}
-          className={styles.googleForm}
-          method={'post'}
-        >
-          <HoneypotInputs />
+      {/* Until the e-mail field moves onto this card (20a), a navigation drawn
+          as an outline button. */}
+      <Form action={magicLinkPath} method={'get'} viewTransition>
+        {hasRedirectTo ? (
           <input
             name={'redirectTo'}
             type={'hidden'}
             value={loaderData.redirectTo}
           />
-          <button className={styles.googleButton} type={'submit'}>
-            Přihlásit přes Google
-          </button>
-        </form>
+        ) : null}
+        <Button type={'submit'} variant={'outline'}>
+          Přihlásit odkazem v e-mailu
+        </Button>
+      </Form>
 
-        <PasskeyForm redirectTo={loaderData.redirectTo} />
-
+      {loaderData.allowPasswordSignIn ? (
         <Link
-          className={styles.linkButton}
           to={withRedirectTo(
-            '/administration/sign-in/magic-link',
+            href('/administration/sign-in/password'),
             loaderData.redirectTo,
           )}
         >
-          Přihlásit odkazem v e-mailu
+          Nouzové přihlášení heslem
         </Link>
-
-        {loaderData.allowPasswordSignIn ? (
-          <div className={styles.footer}>
-            <Link
-              className={styles.link}
-              to={withRedirectTo(
-                '/administration/sign-in/password',
-                loaderData.redirectTo,
-              )}
-            >
-              Přihlásit heslem
-            </Link>
-          </div>
-        ) : null}
-      </section>
-    </div>
+      ) : null}
+    </AdminSignInCard>
   )
 }

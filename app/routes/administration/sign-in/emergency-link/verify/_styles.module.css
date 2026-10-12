@@ -1,16 +1,3 @@
-/* The 20f texts inside AdminSignInCard, as the design system's
-   vdm-signin__text and __note (0zgyl1ao). */
-.text {
-  @layer route {
-    margin: 0;
-    font-size: var(--font-size-sm);
-    line-height: 1.55;
-    color: var(--text-secondary);
-    text-align: center;
-    text-wrap: pretty;
-  }
-}
-
 .account {
   @layer route {
     margin: 0;
@@ -55,49 +42,5 @@
     align-items: center;
     gap: 2px;
     margin: 0;
-  }
-}
-
-.button {
-  @layer route {
-    width: 100%;
-  }
-}
-
-.note {
-  @layer route {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--text-secondary);
-    text-align: center;
-    text-wrap: pretty;
-  }
-}
-
-.hint {
-  @layer route {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--text-tertiary);
-    text-align: center;
-    text-wrap: pretty;
-  }
-}
-
-.link {
-  @layer route {
-    align-self: center;
-    font-size: 13px;
-  }
-}
-
-/* Buttons are 44 px on a phone (20e). */
-@media (width < 768px) {
-  .button {
-    @layer route {
-      min-height: 44px;
-    }
   }
 }
