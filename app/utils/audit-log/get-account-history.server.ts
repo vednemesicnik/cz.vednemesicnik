@@ -7,7 +7,8 @@ import {
 
 /**
  * Reads an account's history from `AuditLog`, newest first (design 28e): its
- * creation and user role changes by the user id, author role changes by the
+ * creation, user role changes and emergency links issued for it by the user
+ * id, author role changes by the
  * id of the author that belongs to the account. The actor's name is their
  * author name; a deleted actor has none.
  *
@@ -34,7 +35,9 @@ export const getAccountHistory = async ({
     where: {
       OR: [
         {
-          event: { in: ['user_created', 'user_role_changed'] },
+          event: {
+            in: ['user_created', 'user_role_changed', 'emergency_link_issued'],
+          },
           targetId: userId,
         },
         { event: 'author_role_changed', targetId: authorId },

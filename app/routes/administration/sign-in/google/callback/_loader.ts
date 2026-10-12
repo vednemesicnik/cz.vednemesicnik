@@ -83,13 +83,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     })
 
     if (connection !== null) {
-      return await signInUser(
-        request,
-        connection.userId,
-        'google',
+      return await signInUser(request, connection.userId, 'google', {
+        headers: new Headers({ 'Set-Cookie': destroyCookie }),
         redirectTo,
-        new Headers({ 'Set-Cookie': destroyCookie }),
-      )
+      })
     }
 
     // First OAuth sign-in for an existing account → auto-link via verified email.
@@ -107,13 +104,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       },
     })
 
-    return await signInUser(
-      request,
-      user.id,
-      'google',
+    return await signInUser(request, user.id, 'google', {
+      headers: new Headers({ 'Set-Cookie': destroyCookie }),
       redirectTo,
-      new Headers({ 'Set-Cookie': destroyCookie }),
-    )
+    })
   } catch (error) {
     // Re-throw redirects (signInUser / failTo('account')); only DB faults reach
     // the generic branch.

@@ -1,0 +1,52 @@
+.heading {
+  @layer route {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+  }
+}
+
+.account {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
+.accountName {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}
+
+.body {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.form {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+/* The link once, in a box, the whole of it a copy button (design 28e). */
+.link {
+  @layer route {
+    padding-block: 12px;
+    padding-inline: 14px;
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    word-break: break-all;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+}

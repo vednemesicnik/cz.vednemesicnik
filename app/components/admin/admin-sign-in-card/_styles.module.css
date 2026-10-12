@@ -1,0 +1,79 @@
+/* Centres the card on the sign-in page (design 20). */
+.page {
+  @layer component {
+    display: grid;
+    place-items: center;
+    min-height: 100%;
+    padding: 24px;
+  }
+}
+
+/* The design system's AdminSignInCard (components/admin/AdminSignInCard). */
+.card {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 400px;
+    padding: 32px;
+    color: var(--text-primary);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.heading {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+}
+
+.logo {
+  @layer component {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* No negative tracking: Inter's optical size tightens large cuts (0zgyl1ao). */
+.title {
+  @layer component {
+    margin: 0;
+    font-size: 24px;
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.25;
+    letter-spacing: 0;
+    text-wrap: balance;
+  }
+}
+
+/* A phone has no card: the content stands on the white page, from the top
+   (20e). */
+@media (width < 768px) {
+  .page {
+    @layer component {
+      place-items: start stretch;
+      background-color: var(--bg-primary);
+    }
+  }
+
+  .card {
+    @layer component {
+      max-width: none;
+      padding-block: 24px;
+      padding-inline: 0;
+      background-color: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+}

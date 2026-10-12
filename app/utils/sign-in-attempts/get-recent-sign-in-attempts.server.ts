@@ -1,4 +1,5 @@
 import { prisma } from '~/utils/db.server'
+import { getUserAuthorNames } from '~/utils/emergency-sign-in-link/get-user-author-names.server'
 
 import { type SignInAttempt, toSignInAttempt } from './to-sign-in-attempt'
 
@@ -23,7 +24,13 @@ export const getRecentSignInAttempts = async ({
 }): Promise<SignInAttempt[]> => {
   const rows = await prisma.authLog.findMany({
     orderBy: { createdAt: 'desc' },
-    select: { createdAt: true, event: true, id: true, method: true },
+    select: {
+      createdAt: true,
+      emergencySignInLinkId: true,
+      event: true,
+      id: true,
+      method: true,
+    },
     take: RECENT_SIGN_IN_ATTEMPTS_COUNT,
     where: {
       event: {
@@ -33,5 +40,26 @@ export const getRecentSignInAttempts = async ({
     },
   })
 
-  return rows.flatMap((row) => toSignInAttempt(row) ?? [])
+  // An emergency link's attempt names who issued it (#578, design 28e, 29a).
+  const linkIds = rows.flatMap((row) => row.emergencySignInLinkId ?? [])
+  const links =
+    linkIds.length === 0
+      ? []
+      : await prisma.emergencySignInLink.findMany({
+          select: { id: true, issuedById: true },
+          where: { id: { in: linkIds } },
+        })
+  const issuerIds = new Map(links.map((link) => [link.id, link.issuedById]))
+  const issuerNames = await getUserAuthorNames([...issuerIds.values()])
+
+  return rows.flatMap((row) => {
+    const issuerId =
+      row.emergencySignInLinkId === null
+        ? undefined
+        : issuerIds.get(row.emergencySignInLinkId)
+    const issuerName =
+      issuerId === undefined ? null : (issuerNames.get(issuerId) ?? null)
+
+    return toSignInAttempt(row, issuerName) ?? []
+  })
 }

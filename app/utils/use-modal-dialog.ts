@@ -8,8 +8,8 @@ type Options = {
 
 /**
  * Opens a `<dialog>` as a modal as soon as it mounts and reports when it
- * closes, however it closes (a button, Esc, `close()`). The settings page
- * mounts a dialog to open it and unmounts it on close, so every opening starts
+ * closes, however it closes (a button, Esc, `close()`). A page (Settings, the
+ * user detail) mounts a dialog to open it and unmounts it on close, so every opening starts
  * from a clean state. Native listeners, not React's `onClose`, which does not
  * fire reliably on `<dialog>`.
  *

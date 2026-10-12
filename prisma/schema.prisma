@@ -9,24 +9,25 @@ datasource db {
 }
 
 model User {
-  id                 String       @id @default(cuid())
-  email              String       @unique
-  username           String       @unique
+  id                 String                @id @default(cuid())
+  email              String                @unique
+  username           String                @unique
   name               String?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
   image              UserImage?
   password           Password?
-  role               UserRole     @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  role               UserRole              @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   roleId             String
   sessions           Session[]
   passkeys           Passkey[]
   connections        Connection[]
   backupCodes        BackupCode[]
+  emergencyLinks     EmergencySignInLink[]
   filters            Filter[]
-  author             Author       @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  authorId           String       @unique
-  colorScheme        ColorScheme  @default(system)
+  author             Author                @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId           String                @unique
+  colorScheme        ColorScheme           @default(system)
   // When the welcome row in Settings was closed (design 29e); null = still shown.
   welcomeDismissedAt DateTime?
 }
@@ -184,6 +185,26 @@ model Verification {
   updatedAt DateTime  @updatedAt
 
   @@unique([target, type])
+}
+
+// One-time sign-in link an Owner or Administrator issues during a Google outage
+// (#578, design 28e/20f), only while ALLOW_PASSWORD_SIGN_IN is on. One row per
+// issued link, so a replaced or expired link can still be tied to its account.
+// Only the SHA-256 hash of the token is stored. issuedById has no relation, so
+// the row outlives the issuer's account, like AuditLog.actorId.
+model EmergencySignInLink {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  issuedById String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  usedAt     DateTime?
+  replacedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId     String
+
+  // non-unique foreign key
+  @@index([userId])
 }
 
 // Single-use backup (recovery) codes: a fallback second factor for the
@@ -616,19 +637,22 @@ enum AuthMethod {
   passkey
   two_factor
   backup_code
+  emergency_link
 }
 
 // Authentication log. Deliberately has no relation to User so events survive
 // account deletion. `method` is nullable because sign-out has none.
 model AuthLog {
-  id        String       @id @default(cuid())
-  createdAt DateTime     @default(now())
-  event     AuthLogEvent
-  method    AuthMethod? // null for sign-out
-  userId    String? // set when the user is known
-  email     String? // submitted email on failures where no user exists
-  ipAddress String?
-  userAgent String?
+  id                    String       @id @default(cuid())
+  createdAt             DateTime     @default(now())
+  event                 AuthLogEvent
+  method                AuthMethod? // null for sign-out
+  userId                String? // set when the user is known
+  email                 String? // submitted email on failures where no user exists
+  ipAddress             String?
+  userAgent             String?
+  // The emergency link a sign-in attempt used (#578); names its issuer.
+  emergencySignInLinkId String?
 
   @@index([createdAt])
   @@index([userId])
@@ -639,6 +663,7 @@ enum AuditLogEvent {
   user_deleted
   user_role_changed
   author_role_changed
+  emergency_link_issued
 }
 
 // Administrative audit log (user management, role changes). Deliberately has no

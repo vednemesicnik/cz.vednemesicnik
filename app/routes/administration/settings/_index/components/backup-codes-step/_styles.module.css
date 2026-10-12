@@ -38,12 +38,3 @@
     color: var(--text-secondary);
   }
 }
-
-.confirmation {
-  @layer route {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-  }
-}

@@ -52,6 +52,16 @@ export const InHeader: Story = {
         <Button variant={'outline'}>Upravit</Button>
       </div>
       <div style={{ display: 'flex', gap: '8px' }}>
+        <ActionMenu
+          items={[
+            { label: 'Vydat nouzový odkaz…', onSelect: fn() },
+            { danger: true, label: 'Smazat…', onSelect: fn() },
+          ]}
+          label={'Další akce s účtem'}
+        />
+        <Button variant={'outline'}>Upravit</Button>
+      </div>
+      <div style={{ display: 'flex', gap: '8px' }}>
         <ActionMenu items={[]} label={'Další akce s účtem'} />
         <Button variant={'outline'}>Upravit</Button>
       </div>

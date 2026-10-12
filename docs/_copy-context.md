@@ -165,6 +165,14 @@ Týká se to i veřejného webu:
   která passkey váže na otisk prstu nebo obličej tohoto zařízení, je neúplná.
 - **Heslo je nouzová cesta a v provozu je vypnuté.** Věta, která heslo nabízí jako běžnou cestu
   nebo jako záchranu při ztrátě telefonu, je nepravda.
+- **Nouzový režim zapíná jeden přepínač** při výpadku Googlu, a to jen ten, kdo spravuje
+  provoz. Otevře heslo (jen Vlastník a Administrátor, kteří si ho nastavili) a **nouzový
+  odkaz** (rozhodnuto 12. 10. 2026). Nouzový odkaz vydá Vlastník nebo Administrátor pro účet,
+  který smí upravit, nikdy pro sebe ani pro Vlastníka. Předá ho telefonem nebo v chatu, nikdy
+  e‑mailem, až po ověření totožnosti osobně nebo při hlasovém hovoru. Platí 15 minut a jen
+  jednou, nový nahradí předchozí; po vypnutí režimu neplatí žádný. Samo otevření nepřihlásí
+  nic, přihlásí až potvrzení na stránce. *Odkaz od:* jmenuje toho, kdo odkaz vydal, ne
+  *vydání* (to slovo nese tištěné číslo).
 - **Dvoufázové ověření je nepovinné** a ptá se jen po hesle. Google, passkey ani odkaz ho
   nechtějí. Aplikace pro kódy je **ověřovací aplikace**, ne *autentikační*.
 - **Přihlášení drží prohlížeč, ne zařízení.** Jiný prohlížeč téhož počítače, prohlížeč uvnitř

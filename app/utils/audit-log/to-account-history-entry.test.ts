@@ -64,6 +64,15 @@ describe('toAccountHistoryEntry', () => {
     ).toBe('Uživatelská role')
   })
 
+  test('labels every emergency link issued', () => {
+    expect(
+      toAccountHistoryEntry(
+        { createdAt, detail: null, event: 'emergency_link_issued', id: 'row' },
+        'Petr Dvořák',
+      )?.label,
+    ).toBe('Nouzový odkaz vydán')
+  })
+
   test('leaves out a deletion', () => {
     expect(
       toAccountHistoryEntry(
