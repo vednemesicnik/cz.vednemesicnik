@@ -1,19 +1,13 @@
 // noinspection JSUnusedGlobalSymbols
-import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { href, useNavigation } from 'react-router'
+import { Form, href, useNavigation } from 'react-router'
 
-import { AdminInput } from '~/components/admin/admin-input'
+import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
-import { Button } from '~/components/button'
-import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
-import { useHydrated } from '~/utils/use-hydrated'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 
-import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -22,85 +16,58 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 export { middleware } from './_middleware'
 
-export default function RouteComponent({
-  actionData,
-  loaderData,
-}: Route.ComponentProps) {
-  const isHydrated = useHydrated()
-
-  const [form, fields] = useForm({
-    constraint: getZodConstraint(schema),
-    defaultNoValidate: isHydrated,
-    id: 'magic-link-sign-in',
-    lastResult: actionData?.submissionResult,
-    onValidate({ formData }) {
-      return parseWithZod(formData, { schema })
-    },
-    shouldRevalidate: 'onBlur',
-    shouldValidate: 'onSubmit',
-  })
-
+// The sent state (design 20b); the field itself is on the chooser (20a).
+// Copy approved (gs905c2e).
+export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const navigation = useNavigation()
   const isSubmitting = navigation.state !== 'idle'
 
-  const backLink = (
-    <Link
-      to={withRedirectTo(
-        href('/administration/sign-in'),
-        loaderData.redirectTo,
-      )}
-    >
-      Zpět na výběr přihlášení
-    </Link>
-  )
-
-  // The sent state (design 20b). Copy approved (gs905c2e).
-  if (actionData?.sent === true) {
-    return (
-      <AdminSignInCard title={'Zkontrolujte e-mail'}>
-        <AdminSignInText>
-          Pokud k adrese{' '}
-          <span className={styles.value}>{actionData.email}</span> patří účet,
-          odkaz byl odeslán. Platí 15 minut.
-        </AdminSignInText>
-        <AdminSignInText variant={'quiet'}>
-          Odkaz můžete otevřít i na jiném zařízení. Přihlásíte se na něm po
-          potvrzení.
-        </AdminSignInText>
-        {backLink}
-      </AdminSignInCard>
-    )
-  }
-
-  // Until the field moves onto the chooser (20a), its own page.
   return (
-    <AdminSignInCard title={'Přihlášení odkazem'}>
+    <AdminSignInCard title={'Zkontrolujte e-mail'}>
       <AdminSignInText>
-        Zadejte svůj e-mail a my vám pošleme odkaz pro přihlášení do
-        administrace
+        Pokud k adrese <span className={styles.value}>{loaderData.email}</span>{' '}
+        patří účet, odkaz byl odeslán. Platí 15 minut.
+      </AdminSignInText>
+      <AdminSignInText variant={'quiet'}>
+        Odkaz můžete otevřít i na jiném zařízení. Přihlásíte se na něm po
+        potvrzení.
       </AdminSignInText>
 
-      <Form {...getFormProps(form)} errors={form.errors} method={'post'}>
-        <HoneypotInputs />
-        <input
-          name={'redirectTo'}
-          type={'hidden'}
-          value={loaderData.redirectTo}
-        />
+      <div className={styles.actions}>
+        {/* A new link replaces the old one (createMagicLinkToken, upsert). */}
+        <Form method={'post'}>
+          <HoneypotInputs />
+          <input name={'email'} type={'hidden'} value={loaderData.email} />
+          <input
+            name={'redirectTo'}
+            type={'hidden'}
+            value={loaderData.redirectTo}
+          />
+          <AdminButtonLink
+            className={styles.resend}
+            disabled={isSubmitting}
+            type={'submit'}
+          >
+            Poslat znovu
+          </AdminButtonLink>
+        </Form>
 
-        <AdminInput
-          errors={fields.email.errors}
-          label={'E-mail'}
-          {...getInputProps(fields.email, { type: 'email' })}
-          placeholder={'vas-email@vednemesicnik.cz'}
-        />
+        {/* Back to 20a with the field filled; router state keeps the address
+            out of the URL. */}
+        <Link
+          state={{ email: loaderData.email }}
+          to={withRedirectTo(
+            href('/administration/sign-in'),
+            loaderData.redirectTo,
+          )}
+        >
+          Zadat jiný e-mail
+        </Link>
+      </div>
 
-        <Button disabled={isSubmitting} type="submit">
-          {isSubmitting ? 'Odesílám…' : 'Poslat odkaz'}
-        </Button>
-      </Form>
-
-      {backLink}
+      <AdminSignInText className={styles.replaces} variant={'quiet'}>
+        Nový odkaz nahradí předchozí.
+      </AdminSignInText>
     </AdminSignInCard>
   )
 }

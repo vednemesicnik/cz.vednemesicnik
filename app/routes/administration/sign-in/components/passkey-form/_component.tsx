@@ -9,8 +9,17 @@ import type { action as verifyAuthenticationResponseAction } from '~/routes/admi
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { usePasskeySupport } from '~/utils/use-passkey-support'
 
+import { isPromptDismissed } from './is-prompt-dismissed'
+
+// A failure in the browser other than a closed window; rare and undrawn.
 const ERROR_MESSAGE =
   'Přihlášení pomocí passkey se nezdařilo. Zkuste to prosím znovu.'
+
+// The server's answers (design 20a, copy 650lapeb).
+const UNKNOWN_PASSKEY_MESSAGE =
+  'Přihlaste se jinak — tento passkey tu není přidaný. Passkey si můžete přidat v Nastavení.'
+const UNVERIFIED_PASSKEY_MESSAGE =
+  'Zkuste se přihlásit znovu — passkey se nepodařilo ověřit.'
 
 // Same wording as the rate-limited password sign-in.
 const formatRateLimit = (retryAfter: number) =>
@@ -65,9 +74,11 @@ export const PasskeyForm = ({ redirectTo }: Props) => {
             method: 'POST',
           },
         )
-      } catch {
-        // User dismissed the prompt or no matching passkey was available.
-        setError(ERROR_MESSAGE)
+      } catch (error) {
+        // Closing the browser window is a choice, not an error (20a).
+        if (!isPromptDismissed(error)) {
+          setError(ERROR_MESSAGE)
+        }
       }
     }
 
@@ -78,7 +89,11 @@ export const PasskeyForm = ({ redirectTo }: Props) => {
 
   useEffect(() => {
     if (verifyResult?.status === 'failed') {
-      setError(ERROR_MESSAGE)
+      setError(
+        verifyResult.reason === 'unknown'
+          ? UNKNOWN_PASSKEY_MESSAGE
+          : UNVERIFIED_PASSKEY_MESSAGE,
+      )
     } else if (verifyResult?.status === 'rate-limited') {
       setError(formatRateLimit(verifyResult.retryAfter))
     }

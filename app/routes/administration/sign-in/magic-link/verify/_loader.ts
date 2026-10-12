@@ -1,9 +1,10 @@
-import { data, type LoaderFunctionArgs } from 'react-router'
+import { data, type LoaderFunctionArgs, redirect } from 'react-router'
 
 import { getAuthentication } from '~/utils/auth.server'
 import { isLinkForUser } from '~/utils/identity-check/is-link-for-user.server'
 import { verifyMagicLinkToken } from '~/utils/magic-link.server'
 import { safeRedirect } from '~/utils/safe-redirect'
+import { withRedirectTo } from '~/utils/with-redirect-to'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // A signed-in browser opens the link as an identity check (design 20c, 29d):
@@ -24,20 +25,29 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const email = url.searchParams.get('email')?.trim().toLowerCase() ?? null
   const redirectTo = safeRedirect(url.searchParams.get('redirectTo'))
 
-  const invalid = () =>
-    isSignedIn
-      ? data(
-          { redirectTo, status: 'invalid-signed-in' as const },
-          { headers: noStoreHeaders },
-        )
-      : data(
-          { redirectTo, status: 'invalid' as const },
-          { headers: noStoreHeaders },
-        )
+  const invalidSignedIn = () =>
+    data(
+      { redirectTo, status: 'invalid-signed-in' as const },
+      { headers: noStoreHeaders },
+    )
 
   if (token === null || email === null || email === '') {
-    return invalid()
+    if (isSignedIn) return invalidSignedIn()
+
+    // Only a hand-edited link lacks the address; with nothing to resend to,
+    // it starts over at the chooser.
+    throw redirect(withRedirectTo('/administration/sign-in', redirectTo))
   }
+
+  // The address in the link is the one the person typed, so the invalid card
+  // may repeat it and resend to it in one click (20c).
+  const invalid = () =>
+    isSignedIn
+      ? invalidSignedIn()
+      : data(
+          { email, redirectTo, status: 'invalid' as const },
+          { headers: noStoreHeaders },
+        )
 
   // Validate only — do NOT consume here. Email clients / link scanners issue GET
   // requests that would otherwise burn the single-use token before the real

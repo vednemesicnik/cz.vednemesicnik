@@ -7,6 +7,7 @@ import {
   MAX_TWO_FACTOR_ATTEMPTS,
   setPendingTwoFactorCookieSession,
 } from '~/utils/pending-two-factor.server'
+import { readSignInNotice } from '~/utils/sign-in-notice/read-sign-in-notice.server'
 
 import { action } from './_action'
 import type { Route } from './+types/route'
@@ -38,12 +39,32 @@ vi.mock('~/utils/two-factor.server', () => ({
 const TARGET = '/administration/settings?continue=change-password'
 const PASSWORD_STEP = '/administration/sign-in/password'
 
+const EMAIL = 'jakub.novak@vednemesicnik.cz'
+
 const createPendingCookie = (attempts = 0) =>
   setPendingTwoFactorCookieSession(new Request('https://test.local/'), {
     attempts,
+    email: EMAIL,
     redirectTo: TARGET,
     userId: 'user-1',
   })
+
+// The notice the password page reads after a redirect out of this step.
+const readNotice = async (result: Awaited<ReturnType<typeof runAction>>) => {
+  if (!(result instanceof Response)) throw new Error('Expected a redirect.')
+
+  const noticeCookie = result.headers
+    .getSetCookie()
+    .find((cookie) => cookie.startsWith('vdm_sign_in_notice='))
+
+  const { notice } = await readSignInNotice(
+    new Request('https://test.local/', {
+      headers: { Cookie: noticeCookie?.split(';')[0] ?? '' },
+    }),
+  )
+
+  return notice
+}
 
 const readPendingCookie = (setCookie: string | null) =>
   getPendingTwoFactorCookieSession(
@@ -120,6 +141,31 @@ describe('verify-2fa action', () => {
     const result = await runAction({ code: '123456' })
 
     expect(getLocation(result)).toBe(PASSWORD_STEP)
+  })
+
+  test('says the time ran out, keeping the e-mail from the form', async () => {
+    const result = await runAction({ code: '123456', email: EMAIL })
+
+    expect(await readNotice(result)).toEqual({
+      email: EMAIL,
+      kind: 'two-factor-ended',
+      reason: 'expired',
+    })
+  })
+
+  test('says the codes ran out, keeping the e-mail of the sign-in', async () => {
+    verifyTOTPMock.mockResolvedValue(null)
+
+    const result = await runAction(
+      { code: '123456', email: 'other@vednemesicnik.cz' },
+      await createPendingCookie(MAX_TWO_FACTOR_ATTEMPTS - 1),
+    )
+
+    expect(await readNotice(result)).toEqual({
+      email: EMAIL,
+      kind: 'two-factor-ended',
+      reason: 'locked',
+    })
   })
 
   test('keeps redirectTo when the attempt cap restarts the sign-in', async () => {

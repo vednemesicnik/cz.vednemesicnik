@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, redirect } from 'react-router'
 
 import { getAuthentication } from '~/utils/auth.server'
+import { getPendingTwoFactorEmail } from '~/utils/get-pending-two-factor-email.server'
 import { getPendingTwoFactorRedirectTo } from '~/utils/get-pending-two-factor-redirect-to.server'
 import {
   deletePendingTwoFactorCookieSession,
@@ -45,5 +46,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw await redirectToPassword()
   }
 
-  return null
+  // Rides in the form, so an expired step still keeps the e-mail (20d).
+  return { email: getPendingTwoFactorEmail(cookieSession) }
 }

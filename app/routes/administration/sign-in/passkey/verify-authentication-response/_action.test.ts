@@ -77,13 +77,25 @@ describe('passkey sign-in verification', () => {
     expect(verifyMock).not.toHaveBeenCalled()
   })
 
-  test('returns 400 and logs the failure for a bad assertion', async () => {
+  test('returns 400 and logs the failure for a passkey no account holds', async () => {
     const result = await runAction()
 
     expect(result.init?.status).toBe(400)
-    expect(result.data).toEqual({ status: 'failed' })
+    expect(result.data).toEqual({ reason: 'unknown', status: 'failed' })
     expect(recordAuthLogMock).toHaveBeenCalledWith(
       expect.objectContaining({ event: 'sign_in_failure', method: 'passkey' }),
+    )
+  })
+
+  test('tells a known passkey that did not verify from an unknown one', async () => {
+    verifyMock.mockResolvedValue({ status: 'failed', userId: 'user-1' })
+
+    const result = await runAction()
+
+    expect(result.init?.status).toBe(400)
+    expect(result.data).toEqual({ reason: 'unverified', status: 'failed' })
+    expect(recordAuthLogMock).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'user-1' }),
     )
   })
 

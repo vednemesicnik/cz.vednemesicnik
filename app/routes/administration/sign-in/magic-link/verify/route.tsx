@@ -59,21 +59,42 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     )
   }
 
-  // Today's copy until the one-click resend lands (20c).
+  // Expired, used or replaced: one click sends a new link to the address in
+  // this one, and lands on the sent state (20b).
   if (loaderData.status === 'invalid') {
     return (
-      <AdminSignInCard title={'Odkaz je neplatný'}>
+      <AdminSignInCard title={'Odkaz už neplatí'}>
         <AdminSignInText>
-          Přihlašovací odkaz je neplatný nebo jeho platnost vypršela. Požádejte
-          prosím o nový.
+          Odkaz vypršel, byl použitý nebo ho nahradil nový. Můžete si poslat
+          nový na <span className={styles.value}>{loaderData.email}</span>.
         </AdminSignInText>
-        <Link
-          to={withRedirectTo(
+
+        <Form
+          action={withRedirectTo(
             href('/administration/sign-in/magic-link'),
             loaderData.redirectTo,
           )}
+          method={'post'}
         >
-          Požádat o nový odkaz
+          <HoneypotInputs />
+          <input name={'email'} type={'hidden'} value={loaderData.email} />
+          <input
+            name={'redirectTo'}
+            type={'hidden'}
+            value={loaderData.redirectTo}
+          />
+          <Button disabled={isSubmitting} type={'submit'}>
+            Poslat nový odkaz
+          </Button>
+        </Form>
+
+        <Link
+          to={withRedirectTo(
+            href('/administration/sign-in'),
+            loaderData.redirectTo,
+          )}
+        >
+          Přihlásit se jinak
         </Link>
       </AdminSignInCard>
     )

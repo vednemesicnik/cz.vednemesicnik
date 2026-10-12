@@ -13,6 +13,10 @@ const ATTEMPTS_KEY = 'attempts'
 // Where to land once the second factor succeeds (see
 // get-pending-two-factor-redirect-to.server.ts).
 export const REDIRECT_TO_KEY = 'redirectTo'
+// The e-mail the password was entered with, so the password page keeps it
+// when the second factor ends (design 20d, see
+// get-pending-two-factor-email.server.ts).
+export const EMAIL_KEY = 'email'
 
 // Cap on wrong TOTP guesses per pending sign-in before the cookie is invalidated
 // and the user must re-enter the password. Bounds brute-forcing the 6-digit code
@@ -23,6 +27,7 @@ type PendingTwoFactorCookieData = {
   [PENDING_TWO_FACTOR_KEY]: string
   [ATTEMPTS_KEY]: number
   [REDIRECT_TO_KEY]: string
+  [EMAIL_KEY]: string
 }
 
 type PendingTwoFactorCookieFlashData = {
@@ -57,6 +62,7 @@ export const getPendingTwoFactorCookieSession = async (request: Request) =>
 
 type PendingTwoFactor = {
   attempts?: number
+  email: string
   redirectTo: string
   userId: string
 }
@@ -65,21 +71,22 @@ type PendingTwoFactor = {
  * Stores a pending sign-in in the cookie and returns its `Set-Cookie` value.
  *
  * @param request - The request carrying the current pending cookie, if any.
- * @param pendingTwoFactor - The user awaiting the second factor, the failed
- *   attempts so far (default 0) and where to land once it succeeds.
- *   `redirectTo` is required so a stale cookie never carries an earlier
- *   sign-in's target.
+ * @param pendingTwoFactor - The user awaiting the second factor, the e-mail
+ *   they entered, the failed attempts so far (default 0) and where to land
+ *   once it succeeds. `redirectTo` and `email` are required so a stale cookie
+ *   never carries an earlier sign-in's values.
  * @returns The serialized cookie.
  */
 export const setPendingTwoFactorCookieSession = async (
   request: Request,
-  { attempts = 0, redirectTo, userId }: PendingTwoFactor,
+  { attempts = 0, email, redirectTo, userId }: PendingTwoFactor,
 ) => {
   const cookieSession = await getPendingTwoFactorCookieSession(request)
 
   cookieSession.set(PENDING_TWO_FACTOR_KEY, userId)
   cookieSession.set(ATTEMPTS_KEY, attempts)
   cookieSession.set(REDIRECT_TO_KEY, redirectTo)
+  cookieSession.set(EMAIL_KEY, email)
 
   return cookieSessionStorage.commitSession(cookieSession)
 }

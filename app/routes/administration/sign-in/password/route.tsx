@@ -7,6 +7,7 @@ import { AdminInput } from '~/components/admin/admin-input'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
+import { Callout } from '~/components/callout'
 import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
@@ -32,6 +33,7 @@ export default function RouteComponent({
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
     defaultNoValidate: isHydrated,
+    defaultValue: { email: loaderData.email ?? undefined },
     id: 'password-sign-in',
     lastResult: actionData?.submissionResult,
     onValidate({ formData }) {
@@ -59,6 +61,16 @@ export default function RouteComponent({
       <AdminSignInText>
         Pro případ, že nefunguje Google, passkey ani odkaz v e-mailu.
       </AdminSignInText>
+
+      {/* Until the next attempt, which brings its own answer (a failed one
+          does not revalidate the loader). */}
+      {loaderData.twoFactorEnded !== null && actionData === undefined ? (
+        <Callout role={'alert'} tone={'error'}>
+          {loaderData.twoFactorEnded === 'locked'
+            ? 'Zadejte heslo znovu — kód byl pětkrát zadán nesprávně.'
+            : 'Zadejte heslo znovu — čas na ověření vypršel.'}
+        </Callout>
+      ) : null}
 
       <Form {...getFormProps(form)} errors={form.errors} method={'post'}>
         <HoneypotInputs />
