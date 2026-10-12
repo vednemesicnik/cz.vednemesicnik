@@ -1,0 +1,109 @@
+/* The title on its own line, the authors under it (23f). */
+.article {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+  }
+}
+
+.articleTitle {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}
+
+.authors {
+  @layer route {
+    color: var(--text-secondary);
+  }
+}
+
+/* What the Coordinator skips, in full ink (23f). */
+.note {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    color: var(--text-primary);
+  }
+}
+
+.form {
+  @layer route {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+  }
+}
+
+.dates {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    border: none;
+  }
+}
+
+.legend {
+  @layer route {
+    margin-block-end: 8px;
+    padding: 0;
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+/* A native radio in the palette, as the design system's Checkbox. */
+.option {
+  @layer route {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    cursor: pointer;
+  }
+}
+
+.radio {
+  @layer route {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--primary);
+    cursor: inherit;
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: 50%;
+    }
+  }
+}
+
+/* The radio Jiný den names the field; its own label is for screen readers. */
+.otherDay {
+  @layer route {
+    padding-inline-start: 24px;
+
+    & > label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+}
