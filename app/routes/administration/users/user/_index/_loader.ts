@@ -1,13 +1,14 @@
 import { data } from 'react-router'
 
+import { getAccountHistory } from '~/utils/audit-log/get-account-history.server'
 import { prisma } from '~/utils/db.server'
-import { createFormattedDate } from '~/utils/format-date'
-import {
-  createImageSources,
-  imageSourceSelect,
-} from '~/utils/image-store/create-image-sources'
+import { formatNumericDate } from '~/utils/format-numeric-date'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { canDeleteUser } from '~/utils/permissions/user/guards/can-delete-user'
 import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
+import { getRecentSignInAttempts } from '~/utils/sign-in-attempts/get-recent-sign-in-attempts.server'
+import { describeSignInMethods } from '~/utils/sign-in-methods/describe-sign-in-methods'
+import { getSignInMethodSummary } from '~/utils/sign-in-methods/get-sign-in-method-summary.server'
 
 import type { Route } from './+types/route'
 
@@ -35,18 +36,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       createdAt: true,
       email: true,
       id: true,
-      image: {
-        select: imageSourceSelect,
-      },
       role: {
         select: {
-          id: true,
           level: true,
           name: true,
         },
       },
-      updatedAt: true,
-      username: true,
     },
     where: { id: userId },
   })
@@ -64,33 +59,32 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // Check update permission
-  const canUpdate = canEditUser(context, {
+  const target = {
     targetUserId: user.id,
     targetUserRoleLevel: user.role.level,
-  })
+  }
 
-  // Check delete permission
-  const { hasPermission: canDelete } = context.can({
-    action: 'delete',
-    entity: 'user',
-    targetUserId: user.id,
-    targetUserRoleLevel: user.role.level,
-  })
+  const [signInMethodSummary, signInAttempts, history] = await Promise.all([
+    getSignInMethodSummary(user.id),
+    getRecentSignInAttempts({ email: user.email, userId: user.id }),
+    getAccountHistory({ authorId: user.author.id, userId: user.id }),
+  ])
 
   return {
-    canDelete,
-    canUpdate,
+    canDelete: canDeleteUser(context, target),
+    canUpdate: canEditUser(context, target),
+    history,
+    signInAttempts,
+    // Read-only: only the account's owner changes them, in Settings (28e).
+    signInMethods: describeSignInMethods(signInMethodSummary, {
+      isPasswordSignInAllowed: process.env.ALLOW_PASSWORD_SIGN_IN === 'true',
+    }),
     user: {
       author: user.author,
-      createdAt: createFormattedDate(user.createdAt),
+      createdAt: formatNumericDate(user.createdAt),
       email: user.email,
-      hasImage: !!user.image,
       id: user.id,
-      imageUrl: createImageSources('user-image', user.image).src ?? null,
       role: user.role,
-      updatedAt: createFormattedDate(user.updatedAt),
-      username: user.username,
     },
   }
 }

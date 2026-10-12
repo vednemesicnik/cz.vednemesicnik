@@ -1,0 +1,101 @@
+.actionMenu {
+  @layer component {
+    display: inline-flex;
+    vertical-align: middle;
+  }
+}
+
+/* A square outline Button md; a fixed width, so it never shrinks under the
+   action beside it. */
+.actionMenu > .trigger {
+  @layer variant {
+    flex-shrink: 0;
+    width: 40px;
+    padding-inline: 0;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.05em;
+  }
+}
+
+.menu {
+  @layer component {
+    /* Without Popover API support the [popover] attribute is ignored and the
+       UA's `[popover]:not(:popover-open){display:none}` rule is absent, so the
+       menu would render in flow. Hide by default and only reveal when open. */
+    display: none;
+    flex-direction: column;
+    box-sizing: border-box;
+    min-width: 200px;
+    width: max-content;
+    max-width: 300px;
+    padding: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.menu:popover-open {
+  @layer component {
+    display: flex;
+  }
+}
+
+/* Anchor the menu under the trigger (implicit anchor via popovertarget).
+   Guarded by @supports so browsers with Popover but no anchor positioning
+   keep the UA's centred-popover fallback instead of the overridden insets. */
+@supports (position-area: block-end) {
+  .menu {
+    @layer component {
+      inset: auto;
+      margin: 0;
+      margin-block-start: 6px;
+      position-try-fallbacks: flip-block, flip-inline;
+    }
+  }
+
+  .end {
+    @layer variant {
+      position-area: block-end span-inline-start;
+    }
+  }
+
+  .start {
+    @layer variant {
+      position-area: block-end span-inline-end;
+    }
+  }
+}
+
+.item {
+  @layer component {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding-block: 9px;
+    padding-inline: 12px;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      outline: none;
+      background: var(--bg-tertiary);
+    }
+  }
+}
+
+.danger {
+  @layer variant {
+    color: var(--error-text);
+  }
+}

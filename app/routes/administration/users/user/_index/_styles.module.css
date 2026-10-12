@@ -1,0 +1,77 @@
+/* Name, then e-mail · role, with the actions on the right (28e). */
+.header {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    width: 100%;
+  }
+}
+
+.title {
+  @layer route {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+}
+
+.subtitle {
+  @layer route {
+    font-size: 13px;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.actions {
+  @layer route {
+    display: flex;
+    flex-shrink: 0;
+    gap: 8px;
+  }
+}
+
+/* The design system's outline Button md (28e), as tall as „⋯“ beside it. */
+.editLink {
+  @layer route {
+    padding-block: 10px;
+    padding-inline: 22px;
+    border-color: var(--border);
+    border-radius: var(--radius-lg);
+
+    &:hover:not(:focus-visible),
+    &:focus-visible {
+      background-color: var(--bg-accent);
+      border-color: var(--border-accent);
+    }
+  }
+}
+
+.note {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+.history {
+  @layer route {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    list-style: none;
+  }
+}
+
+.historyEntry {
+  @layer route {
+    display: grid;
+    gap: 1px;
+  }
+}
