@@ -18,7 +18,7 @@ import { FORM_CONFIG } from '~/config/form-config'
 import type { action as twoFactorAction } from '~/routes/administration/settings/two-factor/_action'
 import { schema } from '~/routes/administration/settings/two-factor/_schema'
 
-import { useModalDialog } from '../../utils/use-modal-dialog'
+import { useModalDialog } from '~/utils/use-modal-dialog'
 import { BackupCodesStep } from '../backup-codes-step'
 import styles from './_styles.module.css'
 

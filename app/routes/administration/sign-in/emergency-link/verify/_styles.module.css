@@ -1,0 +1,138 @@
+/* The card of the sign-in link's confirmation (20c), the same size (20f). */
+.container {
+  @layer route {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    min-height: 100%;
+    padding: 24px;
+  }
+}
+
+.card {
+  @layer route {
+    display: grid;
+    position: relative;
+    grid-auto-flow: row;
+    width: 100%;
+    max-width: 420px;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    padding: 32px;
+  }
+}
+
+.title {
+  @layer route {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    text-align: center;
+    margin: 0;
+  }
+}
+
+/* The link's two lines stand apart from Účet: … by a larger gap (n2fjcvyq). */
+.details {
+  @layer route {
+    display: grid;
+    gap: 12px;
+    margin-block-start: 8px;
+  }
+}
+
+.subtitle {
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin: 0;
+    text-align: center;
+  }
+}
+
+.origin {
+  @layer route {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-align: center;
+  }
+}
+
+.email {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.account {
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-block-start: 12px;
+    margin-block-end: 0;
+    text-align: center;
+  }
+}
+
+.form {
+  @layer route {
+    margin-block-start: 24px;
+  }
+}
+
+.actions {
+  @layer route {
+    display: grid;
+    margin-block-start: 24px;
+  }
+}
+
+.button {
+  @layer route {
+    width: 100%;
+  }
+}
+
+.message {
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-block-start: 24px;
+    margin-block-end: 0;
+    text-align: center;
+    line-height: 1.6;
+  }
+}
+
+.hint {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    margin-block-start: 8px;
+    margin-block-end: 0;
+    text-align: center;
+  }
+}
+
+.footer {
+  @layer route {
+    margin-block-start: 24px;
+    text-align: center;
+  }
+}
+
+.link {
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--primary);
+    text-decoration: underline;
+  }
+}

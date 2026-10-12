@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { useId, useRef } from 'react'
+import { Fragment, useId, useRef } from 'react'
 
 import { Button } from '~/components/button'
 
@@ -64,15 +64,20 @@ export const ActionMenu = ({
         popover={'auto'}
         ref={menuRef}
       >
-        {items.map((item) => (
-          <button
-            className={clsx(styles.item, item.danger && styles.danger)}
-            key={item.label}
-            onClick={() => handleSelect(item)}
-            type={'button'}
-          >
-            {item.label}
-          </button>
+        {items.map((item, index) => (
+          <Fragment key={item.label}>
+            {/* Destructive items go last, after a separator (design system). */}
+            {item.danger && index > 0 && !items[index - 1].danger && (
+              <hr className={styles.separator} />
+            )}
+            <button
+              className={clsx(styles.item, item.danger && styles.danger)}
+              onClick={() => handleSelect(item)}
+              type={'button'}
+            >
+              {item.label}
+            </button>
+          </Fragment>
         ))}
       </div>
     </span>

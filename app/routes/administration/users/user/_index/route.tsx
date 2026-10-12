@@ -26,6 +26,7 @@ import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { EmergencyLinkDialog } from './components/emergency-link-dialog'
 import { SignInMethod } from './components/sign-in-method'
 
 export { action } from './_action'
@@ -36,11 +37,21 @@ export default function RouteComponent({
   loaderData,
   params,
 }: Route.ComponentProps) {
-  const { canDelete, canUpdate, history, signInAttempts, signInMethods, user } =
-    loaderData
+  const {
+    canDelete,
+    canIssueEmergencyLink,
+    canUpdate,
+    emergencyLink,
+    history,
+    signInAttempts,
+    signInMethods,
+    user,
+  } = loaderData
   const { userId } = params
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
+  const [isEmergencyLinkDialogOpen, setIsEmergencyLinkDialogOpen] =
+    useState(false)
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -89,14 +100,22 @@ export default function RouteComponent({
           </span>
         </div>
 
-        {/* No primary action; „⋯“ holds Smazat…, never on your own account or the Owner's (28e, 28g). */}
+        {/* No primary action; „⋯“ holds Smazat…, never on your own account or the Owner's (28e, 28g), and during a Google outage Vydat nouzový odkaz… above it. */}
         <div className={styles.actions}>
           <ActionMenu
-            items={
-              canDelete
+            items={[
+              ...(canIssueEmergencyLink
+                ? [
+                    {
+                      label: 'Vydat nouzový odkaz…',
+                      onSelect: () => setIsEmergencyLinkDialogOpen(true),
+                    },
+                  ]
+                : []),
+              ...(canDelete
                 ? [{ danger: true, label: 'Smazat…', onSelect: openDialog }]
-                : []
-            }
+                : []),
+            ]}
             label={'Další akce s účtem'}
           />
           {canUpdate && (
@@ -137,6 +156,20 @@ export default function RouteComponent({
               <AdminDetailItem label={'Google'}>
                 <SignInMethod description={signInMethods.google} />
               </AdminDetailItem>
+              {/* Only while the link works, as of this load (28e). */}
+              {emergencyLink !== null && (
+                <AdminDetailItem label={'Nouzový odkaz'}>
+                  <SignInMethod
+                    description={{
+                      note:
+                        emergencyLink.issuerName === null
+                          ? `vydaný ve ${emergencyLink.issuedAt}`
+                          : `vydaný ve ${emergencyLink.issuedAt} · ${emergencyLink.issuerName}`,
+                      status: `platí do ${emergencyLink.expiresAt}`,
+                    }}
+                  />
+                </AdminDetailItem>
+              )}
             </AdminDetailList>
           </AdminDetailSection>
 
@@ -192,6 +225,15 @@ export default function RouteComponent({
       </AdminDetailLayout>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+
+      {isEmergencyLinkDialogOpen && (
+        <EmergencyLinkDialog
+          accountName={user.author.name}
+          onClose={() => setIsEmergencyLinkDialogOpen(false)}
+          previousLinkTime={emergencyLink?.issuedAt ?? null}
+          userId={userId}
+        />
+      )}
     </AdminPage>
   )
 }

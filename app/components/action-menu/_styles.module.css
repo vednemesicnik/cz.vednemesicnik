@@ -99,3 +99,13 @@
     color: var(--error-text);
   }
 }
+
+.separator {
+  @layer component {
+    height: 1px;
+    margin-block: 4px;
+    margin-inline: 6px;
+    background: var(--border);
+    border: 0;
+  }
+}

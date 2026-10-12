@@ -17,14 +17,13 @@ import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
-
+import { useModalDialog } from '~/utils/use-modal-dialog'
 import type { action as settingsAction } from '../../_action'
 import {
   BIO_MAX_LENGTH,
   MAX_PROFILE_IMAGE_SIZE,
   profileSchema,
 } from '../../_schema'
-import { useModalDialog } from '../../utils/use-modal-dialog'
 import { TextButton } from '../text-button'
 import styles from './_styles.module.css'
 

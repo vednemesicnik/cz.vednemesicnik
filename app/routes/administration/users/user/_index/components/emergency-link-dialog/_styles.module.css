@@ -1,0 +1,59 @@
+.heading {
+  @layer route {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+  }
+}
+
+.account {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
+.accountName {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}
+
+.form {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+.confirmation {
+  @layer route {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+.checkbox {
+  @layer route {
+    flex: none;
+    margin: 2px 0 0;
+    accent-color: var(--primary);
+  }
+}
+
+/* The link once, in a box, the whole of it a copy button (design 28e). */
+.link {
+  @layer route {
+    padding: 12px 14px;
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+}

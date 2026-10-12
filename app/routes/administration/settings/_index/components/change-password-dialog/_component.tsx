@@ -15,7 +15,7 @@ import { ErrorMessageGroup } from '~/components/error-message-group'
 import type { action as changePasswordAction } from '~/routes/administration/settings/change-password/_action'
 import { schema } from '~/routes/administration/settings/change-password/_schema'
 
-import { useModalDialog } from '../../utils/use-modal-dialog'
+import { useModalDialog } from '~/utils/use-modal-dialog'
 import styles from './_styles.module.css'
 
 type Props = {
