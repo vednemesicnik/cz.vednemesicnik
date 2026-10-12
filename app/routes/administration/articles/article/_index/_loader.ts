@@ -150,10 +150,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const hasApprovingReview = article.reviews.some((review) =>
     canPublishWithoutReview(review.reviewer.role),
   )
-  const needsReview = needsReviewToPublish({
-    authors: article.authors,
-    reviews: article.reviews,
-  })
+  // The Coordinator publishes an article directly, even one nobody submitted or
+  // one retracted from the web: publishing is the approval (design 07b, 07c).
+  const needsReview =
+    context.roleLevel > APPROVER_ROLE_LEVEL &&
+    needsReviewToPublish({
+      authors: article.authors,
+      reviews: article.reviews,
+    })
 
   // Check retract permission (published → draft)
   const { hasPermission: canRetract } = context.can({

@@ -11,8 +11,8 @@ const buildPathname = (slug: string) => `/articles/${slug}`
 
 /**
  * Article state-transition handlers. The article is the only entity that mirrors
- * every transition onto its standalone PageSEO row, and it accepts an approver
- * backdate on publish.
+ * every transition onto its standalone PageSEO row, it accepts an approver
+ * backdate on publish, and the Coordinator publishes it without a prior review.
  */
 export const articleContentStateHandlers = createContentStateHandlers({
   allowBackdating: true,
@@ -35,6 +35,7 @@ export const articleContentStateHandlers = createContentStateHandlers({
       where: { pathname: buildPathname(updatedArticle.slug) },
     })
   },
+  approverPublishesWithoutReview: true,
 
   deleteRow: async (id) => {
     // A submitted draft is not deleted (design 07c): it goes back to draft first.

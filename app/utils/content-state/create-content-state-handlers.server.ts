@@ -73,6 +73,13 @@ export type ContentStateHandlersConfig = {
    * date that survives retract, restore, and re-publish.
    */
   allowBackdating?: boolean
+  /**
+   * Whether an approver may publish without a prior approving review: their
+   * publishing act is the approval (recorded by the auto-approve). Only the
+   * article, where only the Coordinator publishes and an unsubmitted or retracted
+   * draft is published directly (design 07b, 07c).
+   */
+  approverPublishesWithoutReview?: boolean
 }
 
 type TransitionOptions = {
@@ -112,12 +119,14 @@ export const createContentStateHandlers = (
       entity,
       execute: async (context) => {
         const publishState = await config.loadPublishState(options.id)
+        const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
 
         invariantResponse(
-          !needsReviewToPublish({
-            authors: publishState.authors,
-            reviews: publishState.reviews,
-          }),
+          (config.approverPublishesWithoutReview === true && isApprover) ||
+            !needsReviewToPublish({
+              authors: publishState.authors,
+              reviews: publishState.reviews,
+            }),
           'Nelze publikovat bez schválení koordinátora',
         )
 
@@ -140,7 +149,7 @@ export const createContentStateHandlers = (
         // Auto-approve when an approver publishes: their publishing act is the
         // approval, so record it once (idempotent) to satisfy the review gate
         // for lower-role co-authors and future re-publishes.
-        if (context.roleLevel <= APPROVER_ROLE_LEVEL) {
+        if (isApprover) {
           await config.ensureApprovingReview(options.id, context.authorId)
         }
       },
