@@ -52,7 +52,20 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       request,
       userId: result.userId ?? undefined,
     })
-    return data({ status: 'failed' as const }, { status: 400 })
+    // A passkey the account doesn't hold, or one it holds that didn't verify
+    // (typically the 60-second challenge ran out): the chooser says either
+    // differently (copy 650lapeb). The person holding the authenticator
+    // learns nothing new from it.
+    return data(
+      {
+        reason:
+          result.userId === null
+            ? ('unknown' as const)
+            : ('unverified' as const),
+        status: 'failed' as const,
+      },
+      { status: 400 },
+    )
   }
 
   // Create the session, set the auth cookie and redirect into administration.
