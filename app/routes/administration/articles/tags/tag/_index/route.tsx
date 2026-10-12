@@ -15,7 +15,6 @@ import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
@@ -24,6 +23,7 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import type { Route } from './+types/route'
@@ -200,7 +200,7 @@ export default function RouteComponent({
           <AdminDetailItem label="Název">{tag.name}</AdminDetailItem>
           <AdminDetailItem label="Slug">{tag.slug}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge state={tag.state} />
+            <StatusTag state={tag.state} />
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>

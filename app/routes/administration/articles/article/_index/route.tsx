@@ -17,10 +17,10 @@ import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminPublishDateDialog } from '~/components/admin/admin-publish-date-dialog'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { Hyperlink } from '~/components/hyperlink'
+import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { ArticleMissingDialog } from '../../components/article-missing-dialog'
@@ -198,14 +198,16 @@ export default function RouteComponent({
       <AdminDetailSection title="Základní informace">
         <AdminDetailList>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge
-              state={article.state}
-              submission={submission?.state}
+            <StatusTag
+              detail={
+                submission === null
+                  ? undefined
+                  : submission.state === 'pending'
+                    ? `od ${submission.date}`
+                    : submission.date
+              }
+              state={submission?.state ?? article.state}
             />
-            {submission !== null &&
-              (submission.state === 'pending'
-                ? ` od ${submission.date}`
-                : ` ${submission.date}`)}
           </AdminDetailItem>
           <AdminDetailItem label="Název">{article.title}</AdminDetailItem>
           <AdminDetailItem label="Slug">{article.slug}</AdminDetailItem>

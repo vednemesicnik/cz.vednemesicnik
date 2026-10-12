@@ -17,7 +17,6 @@ import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminPublishDateDialog } from '~/components/admin/admin-publish-date-dialog'
 import { AdminSplitButton } from '~/components/admin/admin-split-button'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
@@ -28,6 +27,7 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
@@ -289,7 +289,7 @@ export default function RouteComponent({
           <AdminDetailItem label="Název">{episode.title}</AdminDetailItem>
           <AdminDetailItem label="Slug">{episode.slug}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge state={episode.state} />
+            <StatusTag state={episode.state} />
           </AdminDetailItem>
           {episode.description && (
             <AdminDetailItem label="Popis">
