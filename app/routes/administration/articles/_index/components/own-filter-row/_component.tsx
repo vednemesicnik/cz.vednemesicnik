@@ -1,4 +1,3 @@
-import { clsx } from 'clsx'
 import { useEffect, useRef } from 'react'
 import { href, Link, useFetcher } from 'react-router'
 
@@ -106,7 +105,8 @@ export const OwnFilterRow = ({
   return (
     <li className={styles.row}>
       <Link
-        className={clsx(styles.apply, isActive && styles.applyActive)}
+        className={styles.apply}
+        data-active={isActive || undefined}
         onClick={onApply}
         to={`?${filter.query}&${FILTER_PRESET_PARAM}=${filter.id}`}
       >

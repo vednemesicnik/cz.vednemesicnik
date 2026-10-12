@@ -22,17 +22,15 @@
       color: var(--link-hover);
     }
 
+    &[data-active] {
+      font-weight: var(--font-weight-semibold);
+    }
+
     &:focus-visible {
       border-radius: 4px;
       box-shadow: var(--focus-shadow);
       outline: none;
     }
-  }
-}
-
-.applyActive {
-  @layer route {
-    font-weight: var(--font-weight-semibold);
   }
 }
 
