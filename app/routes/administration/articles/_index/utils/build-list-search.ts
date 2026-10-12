@@ -1,28 +1,30 @@
 import { PAGE_PARAM } from '~/components/pagination'
-import type { ArticleQueue } from '~/config/article-queue-config'
 import {
   FILTER_PRESET_NONE,
   FILTER_PRESET_PARAM,
 } from '~/utils/admin-list-filters'
 
 /**
- * The search of a state pill's link (design 22a): the current list in another
- * queue. Search, filters and sort stay; the page restarts.
+ * The search of a link that changes the list (design 22a, 22d, 22e): a state
+ * pill, a filter chip's ×, Zrušit filtry, Zrušit hledání. The other params
+ * stay; the page restarts.
  *
  * @param searchParams - The current URL search params.
- * @param queue - The pill's queue, or `undefined` for Vše, which is not written.
+ * @param changes - The params to set, or to drop when `undefined`.
  * @returns The search with its `?`, or `''` for a bare list.
  */
-export const buildQueueSearch = (
+export const buildListSearch = (
   searchParams: URLSearchParams,
-  queue: ArticleQueue | undefined,
+  changes: Record<string, string | undefined>,
 ): string => {
   const params = new URLSearchParams(searchParams)
 
-  if (queue === undefined) {
-    params.delete('state')
-  } else {
-    params.set('state', queue)
+  for (const [name, value] of Object.entries(changes)) {
+    if (value === undefined) {
+      params.delete(name)
+    } else {
+      params.set(name, value)
+    }
   }
 
   params.delete(PAGE_PARAM)

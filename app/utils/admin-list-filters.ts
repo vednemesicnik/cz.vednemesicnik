@@ -63,6 +63,12 @@ export const ADMIN_LIST_FILTER_SCHEMAS = {
   users: z.object({ role: userRoleFilter }),
 } satisfies Record<AdminListTableKey, z.ZodObject>
 
+// Tables whose saved filter stores the search as well (design 22d). The search
+// stays out of the schema: it is not a filter, and a filter submit preserves it.
+const SAVED_FILTER_SEARCH_TABLES: ReadonlySet<AdminListTableKey> = new Set([
+  'articles',
+])
+
 const getFilterKeys = (tableKey: AdminListTableKey): string[] =>
   Object.keys(ADMIN_LIST_FILTER_SCHEMAS[tableKey].shape)
 
@@ -117,7 +123,8 @@ export const parseAdminListFilters = <TKey extends AdminListTableKey>(
  * Extracts only the table's filter params from a search string and serializes them
  * canonically — schema key order, invalid and empty values dropped — so that two
  * equal filters always produce the same string. Used to snapshot the current filter
- * for saving and to re-validate stored snapshots.
+ * for saving and to re-validate stored snapshots. The article list also keeps its
+ * search term, trimmed, after the filters.
  *
  * @param search - A search string, with or without the leading `?`.
  * @param tableKey - Which admin table's schema to validate against.
@@ -127,7 +134,8 @@ export const extractAdminListFilterSearch = (
   search: string,
   tableKey: AdminListTableKey,
 ): string => {
-  const values = pickValidFilters(new URLSearchParams(search), tableKey)
+  const searchParams = new URLSearchParams(search)
+  const values = pickValidFilters(searchParams, tableKey)
   const canonical = new URLSearchParams()
 
   for (const key of getFilterKeys(tableKey)) {
@@ -136,6 +144,12 @@ export const extractAdminListFilterSearch = (
     if (value !== undefined) {
       canonical.set(key, value)
     }
+  }
+
+  const query = (searchParams.get(SEARCH_PARAM) ?? '').trim()
+
+  if (SAVED_FILTER_SEARCH_TABLES.has(tableKey) && query !== '') {
+    canonical.set(SEARCH_PARAM, query)
   }
 
   return canonical.toString()

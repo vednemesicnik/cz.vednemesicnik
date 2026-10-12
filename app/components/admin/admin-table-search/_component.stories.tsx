@@ -37,7 +37,10 @@ export const Playground: Story = {
   render: () =>
     withRouterAt(
       '',
-      <AdminTableSearch defaultValue={''} placeholder={'Hledat články…'} />,
+      <AdminTableSearch
+        defaultValue={''}
+        placeholder={'Hledat v názvu a adrese'}
+      />,
     ),
 }
 
@@ -52,7 +55,7 @@ export const WithQuery: Story = {
       '?q=redakce&sort=title&order=asc',
       <AdminTableSearch
         defaultValue={'redakce'}
-        placeholder={'Hledat články…'}
+        placeholder={'Hledat v názvu a adrese'}
       />,
     ),
 }

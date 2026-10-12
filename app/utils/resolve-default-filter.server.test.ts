@@ -95,7 +95,7 @@ describe('resolveDefaultFilter', () => {
     const response = await catchRedirect('')
 
     expect(response?.headers.get('Location')).toBe(
-      '/administration/articles?state=draft&tag=skola&filter=filter-1',
+      '/administration/articles?state=draft&tag=skola&q=foo&filter=filter-1',
     )
   })
 })
