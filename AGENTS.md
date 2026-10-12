@@ -146,7 +146,7 @@ All content entities (Article, Podcast, PodcastEpisode, Issue, etc.) support thr
 #### Author Roles (content management)
 
 - **Contributor** (level 3): Can create/edit/view/delete own draft content
-- **Creator** (level 2): Can publish own content once a Coordinator has approved it, and retract and archive own published content
+- **Creator** (level 2): Can publish own content once a Coordinator has approved it (articles: submits for review instead, only the Coordinator approves and publishes), and retract and archive own published content
 - **Coordinator** (level 1): Full access to all content in all states
 
 Permissions are checked via:

@@ -73,7 +73,9 @@ stavů jsou `Koncept` · `Publikováno` · `Archivováno`.
 
 Akce, jak je dnes nese administrace: `Schválit` · `Zveřejnit` (a `Zveřejnit zpětně` s dřívějším
 datem) · `Stáhnout z publikace` (vrátí do konceptu) · `Archivovat` · `Obnovit` (z archivu zpět
-do konceptu, jen Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinátor).
+do konceptu, jen Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinátor). U článku
+navíc `Odeslat ke schválení` a `Vzít zpět do konceptu` (autor) · `Vrátit k úpravám`
+(Koordinátor); odeslaný článek má štítek `Čeká na schválení`, schválený `Schváleno`.
 
 Pozor na dvojici **Zveřejnit / Publikováno**: tlačítko a stav dnes používají jiné slovo pro
 tentýž čin. Je to známá nesrovnalost, ne dva různé kroky.
@@ -96,8 +98,10 @@ nedělá**. Poznají se jen podle modelu:
 - **Schvaluje jen Koordinátor.** Obsah autora s nižší rolí — Přispěvatele i Tvůrce — jde
   zveřejnit až po schválení Koordinátorem. Věta, která Tvůrci slibuje, že zveřejní sám, nebo
   že schválit může kdokoli z redakce, je nepravda.
-- **Krok „odeslat ke schválení“ zatím neexistuje.** Čekající obsah je dnes každý koncept autora
-  s nižší rolí. Věta, která mluví o „odeslaném“ konceptu, popisuje budoucí aplikaci.
+- **Odeslat ke schválení existuje jen u článku.** Autor hotový článek odešle, a dokud ho
+  nevezme zpět, needituje ho; Koordinátor ho smí opravit. Na přehledu čekají jen odeslané
+  články. U rubrik, štítků, podcastů, epizod a čísel krok zatím není: čekající je tam každý
+  koncept autora s nižší rolí. Článek zveřejní jen Koordinátor, i ten od Tvůrce.
 - **Publikovaný obsah se nemaže.** Smazat jde koncept, a archivovaný obsah jen Koordinátor.
   Publikovaný se nejdřív stáhne nebo archivuje.
 - **Publikovaný obsah nejde upravit na místě** — nejdřív se stáhne z publikace do konceptu.

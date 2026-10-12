@@ -57,7 +57,7 @@ first.
 |                 | **Retract** | - Retracting does not apply to drafts.                              | ❌ Do not have permission to retract published content. | - Retracting does not apply to archived content.      |
 |                 | **Archive** | - Archiving does not apply to drafts.                               | ❌ Do not have permission to archive published content. | - Archiving does not apply to archived content.       |
 |                 | **Restore** | - Restoring does not apply to drafts.                               | - Restoring does not apply to published content.       | ❌ Do not have permission to restore archived content. |
-| **Creator**     | **Publish** | ✅ Can publish own drafts.                                           | - Publishing does not apply to published content.      | - Publishing does not apply to archived content.      |
+| **Creator**     | **Publish** | ✅ Can publish own drafts (❌ articles: submits them for review).     | - Publishing does not apply to published content.      | - Publishing does not apply to archived content.      |
 |                 | **Retract** | - Retracting does not apply to drafts.                              | ✅ Can retract own published content.                   | - Retracting does not apply to archived content.      |
 |                 | **Archive** | - Archiving does not apply to drafts.                               | ✅ Can archive own published content.                   | - Archiving does not apply to archived content.       |
 |                 | **Restore** | - Restoring does not apply to drafts.                               | - Restoring does not apply to published content.       | ❌ Do not have permission to restore archived content. |
@@ -90,15 +90,31 @@ currently only Coordinator). If any author is at the approver level (`level <=
 APPROVER_ROLE_LEVEL`, e.g. a Coordinator co-author on a multi-author article), no review is
 required. Single-author content has one author, so the rule reduces to that author's role.
 
-- A Creator may submit a review (the `review` permission), but it is a **pre-review** that
-  helps the Coordinator; it does not satisfy the requirement. A Coordinator review still
-  has the final say.
+- A Creator may submit a review (the `review` permission) on everything but articles, but it
+  is a **pre-review** that helps the Coordinator; it does not satisfy the requirement. A
+  Coordinator review still has the final say.
 - A Coordinator publishing their own draft needs no review (it is at the approver level).
 
 The requirement is enforced both in the detail loaders (disabling the publish button, via
 `needsReviewToPublish`) and in the `publish-*` actions (server-side guard). See
 `app/utils/permissions/author/review-policy.ts` and
 [_author-roles-and-permissions.md](./_author-roles-and-permissions.md).
+
+---
+
+## Article submission
+
+Built for articles in #590; see
+[_author-roles-and-permissions.md → Article submission](./_author-roles-and-permissions.md#article-submission).
+
+```
+Draft ──Odeslat ke schválení──▶ Draft, submitted ──Schválit──▶ Draft, submitted + approved ──Publikovat──▶ Published
+  ▲                                   │                                   │
+  └──── Vzít zpět do konceptu / Vrátit k úpravám (submission and reviews cleared) ◀┘
+```
+
+A submitted article is locked for its authors and can't be deleted; the Coordinator may correct
+it. Retracting, restoring and publishing also clear the submission.
 
 ---
 
@@ -112,6 +128,7 @@ describes today's code; this is the target.
   `draft` · `published` · `archived`. The author submits a finished draft
   (**Odeslat ke schválení**), which sets `submittedAt`. The UI shows it as
   *Čeká na schválení*; a submitted draft with an approving review shows as *Schváleno*.
+  Built for articles (#590).
 - **Approving and publishing are two steps, both Coordinator-only.** On a submitted draft the
   Coordinator either **approves** it (stays off the web, recorded as a `Review`) or **approves
   and publishes** it in one step. An approved draft then has **Publikovat**. A Coordinator may
@@ -127,4 +144,4 @@ describes today's code; this is the target.
 - **Changing the publish date takes a time as well** (Coordinator only, never in the future),
   so a forgotten article can be placed between two already published ones.
 - **Creators neither approve nor publish** — not even their own content. Their `review`
-  permission on others' drafts goes away.
+  permission on others' drafts goes away. Done for articles (#590).
