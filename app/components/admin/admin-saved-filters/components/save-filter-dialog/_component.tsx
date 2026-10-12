@@ -1,8 +1,6 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useFetcher } from 'react-router'
-
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -14,6 +12,7 @@ import { Button } from '~/components/button'
 import { Checkbox } from '~/components/checkbox'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
+import { TextField } from '~/components/text-field'
 import { FORM_CONFIG } from '~/config/form-config'
 import { createFilterSchema } from '~/routes/administration/filters/_schema'
 import type { AdminListTableKey } from '~/utils/admin-list-filters'
@@ -75,7 +74,7 @@ export const SaveFilterDialog = ({
             value={currentQuery}
           />
 
-          <AdminInput
+          <TextField
             errors={fields.name.errors}
             label={'Název'}
             {...getInputProps(fields.name, { type: 'text' })}

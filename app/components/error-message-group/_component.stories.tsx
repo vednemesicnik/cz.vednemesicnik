@@ -21,7 +21,7 @@ type Story = StoryObj<typeof ErrorMessageGroup>
 
 /**
  * Empty error group with no messages.
- * The component renders but displays nothing when there are no errors.
+ * The component renders but takes no space when there are no errors.
  */
 export const Empty: Story = {
   render: () => <ErrorMessageGroup>{null}</ErrorMessageGroup>,

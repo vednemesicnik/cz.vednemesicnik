@@ -2,13 +2,13 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useSearchParams } from 'react-router'
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
+import { TextField } from '~/components/text-field'
 import { useHydrated } from '~/utils/use-hydrated'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -59,7 +59,7 @@ export default function RouteComponent({
         {/* Only the visible field is submitted, so the action branches on
             whichever of code / backupCode is present. */}
         {isBackupCodeMethod ? (
-          <AdminInput
+          <TextField
             errors={fields.backupCode.errors}
             label={'Záložní kód'}
             {...getInputProps(fields.backupCode, { type: 'text' })}
@@ -67,7 +67,7 @@ export default function RouteComponent({
             placeholder={'k7m2-9xqp'}
           />
         ) : (
-          <AdminInput
+          <TextField
             errors={fields.code.errors}
             label={'Kód'}
             {...getInputProps(fields.code, { type: 'text' })}

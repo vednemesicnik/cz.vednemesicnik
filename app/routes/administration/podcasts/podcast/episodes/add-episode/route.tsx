@@ -10,7 +10,6 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
@@ -21,6 +20,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
@@ -74,14 +74,14 @@ export default function RouteComponent({
       <FormProvider context={form.context}>
         <Form method={'post'} {...getFormProps(form)} errors={form.errors}>
           <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
-            <AdminInput
+            <TextField
               errors={fields.number.errors}
               label={'Číslo'}
               placeholder={'Číslo epizody'}
               {...getInputProps(fields.number, { type: 'number' })}
             />
 
-            <AdminInput
+            <TextField
               errors={fields.title.errors}
               label={'Název'}
               onChange={(event) => setTitle(event.target.value)}
@@ -90,7 +90,7 @@ export default function RouteComponent({
               {...getInputProps(fields.title, { type: 'text' })}
             />
 
-            <AdminInput
+            <TextField
               errors={fields.slug.errors}
               label={'Slug'}
               onBlur={handleBlur}
@@ -137,13 +137,13 @@ export default function RouteComponent({
 
               return (
                 <div className={styles.linkRow} key={link.key}>
-                  <AdminInput
+                  <TextField
                     {...getInputProps(linkFields.label, { type: 'text' })}
                     errors={linkFields.label.errors}
                     label={'Popisek'}
                     placeholder={'Poslechněte si na Spotify'}
                   />
-                  <AdminInput
+                  <TextField
                     {...getInputProps(linkFields.url, { type: 'url' })}
                     errors={linkFields.url.errors}
                     label={'URL'}

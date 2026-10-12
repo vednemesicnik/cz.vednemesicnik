@@ -9,7 +9,6 @@ import {
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
@@ -20,6 +19,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { Link } from '~/components/link'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -63,7 +63,7 @@ export default function RouteComponent({
 
       <Form errors={form.errors} method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily uživatele'}>
-          <AdminInput
+          <TextField
             label={'E-mail'}
             {...getInputProps(fields.email, { type: 'email' })}
             errors={fields.email.errors}

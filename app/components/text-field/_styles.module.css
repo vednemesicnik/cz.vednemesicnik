@@ -1,0 +1,68 @@
+/* The design system's TextField (`.vdm-field`, components.css). */
+.field {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+}
+
+.input {
+  @layer component {
+    box-sizing: border-box;
+    width: 100%;
+    padding-block: 10px;
+    padding-inline: 14px;
+    font-family: var(--font-family), sans-serif;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-regular);
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition:
+      border-color var(--transition-fast),
+      box-shadow var(--transition-fast);
+
+    &::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    &:hover:not(:disabled, :focus-visible) {
+      border-color: var(--border-hover);
+    }
+
+    &:focus-visible {
+      border-color: var(--border-accent);
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+
+    &:disabled {
+      background-color: var(--bg-disabled);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.input.inputError {
+  @layer variant {
+    border-color: var(--error);
+
+    &:focus-visible {
+      border-color: var(--error);
+      box-shadow: var(--focus-shadow-error);
+    }
+  }
+}
+
+.hint {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-sm);
+    color: var(--text-tertiary);
+  }
+}

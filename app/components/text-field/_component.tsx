@@ -9,19 +9,29 @@ import styles from './_styles.module.css'
 
 type Props = ComponentProps<'input'> & {
   label: string
-  errors?: string[]
   hint?: ReactNode
-  containerClassName?: string
+  errors?: string[]
 }
 
-export const AdminInput = ({
+/**
+ * The design system's `TextField` (components/forms/TextField, FormSet): a
+ * label, a single-line input, a hint and the errors under it, 6 px apart. No
+ * row is reserved for errors.
+ *
+ * @param props.label - The visible label, tied to the input by `id`.
+ * @param props.hint - Helper text under the input, added to its description.
+ * @param props.errors - Messages shown under the hint; they switch the input
+ * to the error look.
+ * @param props.className - Goes on the field, not the input (as in the design
+ * system), e.g. to place it in a grid.
+ */
+export const TextField = ({
   label,
-  errors,
   hint,
+  errors,
   id,
   required,
   className,
-  containerClassName,
   ...rest
 }: Props) => {
   const hasErrors = errors !== undefined && errors.length > 0
@@ -32,20 +42,17 @@ export const AdminInput = ({
     [rest['aria-describedby'], hintId].filter(Boolean).join(' ') || undefined
 
   return (
-    <section className={clsx(styles.container, containerClassName)}>
+    <div className={clsx(styles.field, className)}>
       <Label htmlFor={id} required={required}>
         {label}
       </Label>
       <input
-        className={clsx(
-          styles.input,
-          hasErrors && styles.inputError,
-          className,
-        )}
+        className={clsx(styles.input, hasErrors && styles.inputError)}
         id={id}
         required={required}
         {...rest}
         aria-describedby={describedBy}
+        aria-invalid={rest['aria-invalid'] ?? (hasErrors || undefined)}
       />
       {hint !== undefined && (
         <p className={styles.hint} id={hintId}>
@@ -57,6 +64,6 @@ export const AdminInput = ({
           <ErrorMessage key={index}>{error}</ErrorMessage>
         ))}
       </ErrorMessageGroup>
-    </section>
+    </div>
   )
 }
