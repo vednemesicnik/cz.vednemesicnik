@@ -1,28 +1,13 @@
 import { z } from 'zod'
 
-export const schema = z
-  .object({
-    email: z
-      .string({ message: 'E-mail je povinný' })
-      .trim()
-      .toLowerCase()
-      .email({ message: 'Neplatný formát e-mailu' }),
-    name: z
-      .string({ message: 'Jméno je povinné' })
-      .min(3, { message: 'Jméno musí mít alespoň 3 znaky' })
-      .max(30, { message: 'Jméno může mít maximálně 30 znaků' }),
-    password: z
-      .string()
-      .min(8, { message: 'Heslo musí mít alespoň 8 znaků' })
-      .optional(),
-    passwordConfirmation: z
-      .string()
-      .min(8, { message: 'Potvrzení hesla musí mít alespoň 8 znaků' })
-      .optional(),
-    roleId: z.string({ message: 'Role je povinná' }),
-    userId: z.string().readonly(),
-  })
-  .refine((data) => data.password === data.passwordConfirmation, {
-    message: 'Hesla se neshodují',
-    path: ['passwordConfirmation'],
-  })
+// No name and no password (design 28f): the name belongs to the author, and
+// whoever forgets a password signs in with a link.
+export const schema = z.object({
+  email: z
+    .string({ message: 'E-mail je povinný' })
+    .trim()
+    .toLowerCase()
+    .email({ message: 'Neplatný formát e-mailu' }),
+  roleId: z.string({ message: 'Role je povinná' }),
+  userId: z.string().readonly(),
+})
