@@ -1,35 +1,46 @@
 import { describe, expect, test } from 'vitest'
 
-import { buildQueueSearch } from './build-queue-search'
+import { buildListSearch } from './build-list-search'
 
-describe('buildQueueSearch', () => {
+describe('buildListSearch', () => {
   test('sets the queue and keeps search, filters and sort', () => {
     expect(
-      buildQueueSearch(
-        new URLSearchParams('q=ples&category=skola&sort=title'),
-        'pending',
-      ),
+      buildListSearch(new URLSearchParams('q=ples&category=skola&sort=title'), {
+        state: 'pending',
+      }),
     ).toBe('?q=ples&category=skola&sort=title&state=pending')
   })
 
   test('Vše drops the queue from the URL', () => {
     expect(
-      buildQueueSearch(new URLSearchParams('state=draft'), undefined),
+      buildListSearch(new URLSearchParams('state=draft'), { state: undefined }),
     ).toBe('')
+  })
+
+  test('drops several params and keeps the queue and the search', () => {
+    expect(
+      buildListSearch(
+        new URLSearchParams(
+          'state=draft&q=ples&category=skola&tag=ples&author=a1',
+        ),
+        { author: undefined, category: undefined, tag: undefined },
+      ),
+    ).toBe('?state=draft&q=ples')
   })
 
   test('restarts the page', () => {
     expect(
-      buildQueueSearch(new URLSearchParams('state=draft&page=3'), 'archived'),
+      buildListSearch(new URLSearchParams('state=draft&page=3'), {
+        state: 'archived',
+      }),
     ).toBe('?state=archived')
   })
 
   test('the saved filter marker becomes explicitly unfiltered', () => {
     expect(
-      buildQueueSearch(
-        new URLSearchParams('filter=abc&state=draft'),
-        undefined,
-      ),
+      buildListSearch(new URLSearchParams('filter=abc&state=draft'), {
+        state: undefined,
+      }),
     ).toBe('?filter=none')
   })
 })

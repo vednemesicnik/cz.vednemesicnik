@@ -2,35 +2,34 @@
 
 import { href, useSearchParams } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
-import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminSavedFilters } from '~/components/admin/admin-saved-filters'
 import {
   AdminTable,
   TableBody,
-  TableEmptyRow,
   TableHeader,
   TableHeaderCell,
   TableSelectionHeaderCell,
   TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
-import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { Pagination } from '~/components/pagination'
 import { StateFilter } from '~/components/state-filter'
 import type { ArticleQueue } from '~/config/article-queue-config'
-import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { ActiveFilterChips } from './components/active-filter-chips'
+import { FiltersPanel } from './components/filters-panel'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
-import { buildQueueSearch } from './utils/build-queue-search'
+import { buildListSearch } from './utils/build-list-search'
+import { getNoResultMessage } from './utils/get-no-result-message'
+import { getSavedFilterSummary } from './utils/get-saved-filter-summary'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -47,6 +46,11 @@ const EMPTY_QUEUE_SENTENCES: Record<ArticleQueue, string> = {
 }
 
 type Pill = { label: string; queue: ArticleQueue | undefined }
+
+type Option = { label: string; value: string }
+
+const findLabel = (options: Option[], value: string | undefined) =>
+  options.find((option) => option.value === value)?.label
 
 const PILLS: Pill[] = [
   { label: 'Vše', queue: undefined },
@@ -93,15 +97,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   // The queue is not a filter: the pills show it (22a).
   const { state: queue, ...fieldFilters } = filters
-  const hasActiveFilters = Object.values(fieldFilters).some(
+  const filterCount = Object.values(fieldFilters).filter(
     (value) => value !== undefined,
-  )
-  const isQueueEmpty = totalCount === 0 && !hasActiveFilters && query === ''
+  ).length
+  const isQueueEmpty = totalCount === 0 && filterCount === 0 && query === ''
+  const isNoResult = totalCount === 0 && !isQueueEmpty
 
-  // selection + title + author + updatedAt + state + actions
-  const columnCount = isContributor ? 5 : 6
+  const pillList = isContributor ? CONTRIBUTOR_PILLS : PILLS
 
-  const pills = (isContributor ? CONTRIBUTOR_PILLS : PILLS).map((pill) => {
+  const pills = pillList.map((pill) => {
     const queueCount = queueCounts.find((entry) => entry.queue === pill.queue)
 
     return {
@@ -112,7 +116,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       isActive: pill.queue === queue,
       label: pill.label,
       to: {
-        search: buildQueueSearch(searchParams, pill.queue),
+        search: buildListSearch(searchParams, { state: pill.queue }),
       },
     }
   })
@@ -123,6 +127,51 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     </AdminLinkButton>
   )
 
+  const chips = [
+    {
+      clearSearch: buildListSearch(searchParams, { category: undefined }),
+      label: 'Rubrika',
+      value: findLabel(categoryOptions, fieldFilters.category),
+    },
+    {
+      clearSearch: buildListSearch(searchParams, { tag: undefined }),
+      label: 'Štítek',
+      value: findLabel(tagOptions, fieldFilters.tag),
+    },
+    {
+      clearSearch: buildListSearch(searchParams, { author: undefined }),
+      label: 'Autor',
+      value: findLabel(authorOptions, fieldFilters.author),
+    },
+  ].flatMap((chip) =>
+    chip.value === undefined ? [] : [{ ...chip, value: chip.value }],
+  )
+  const clearFiltersSearch = buildListSearch(searchParams, {
+    author: undefined,
+    category: undefined,
+    tag: undefined,
+  })
+
+  const savedFilterSummary = getSavedFilterSummary({
+    authorName: findLabel(authorOptions, fieldFilters.author),
+    categoryName: findLabel(categoryOptions, fieldFilters.category),
+    query,
+    queueLabel:
+      queue === undefined
+        ? undefined
+        : pillList.find((pill) => pill.queue === queue)?.label,
+    tagName: findLabel(tagOptions, fieldFilters.tag),
+  })
+
+  const noResult = getNoResultMessage({ filterCount, query, queue })
+  // The queue stays; the search, the filters or both go (22e).
+  const noResultSearch = buildListSearch(searchParams, {
+    ...(query === '' ? {} : { q: undefined }),
+    ...(filterCount === 0
+      ? {}
+      : { author: undefined, category: undefined, tag: undefined }),
+  })
+
   const deletableIds = articles
     .filter((article) => article.canDelete)
     .map((article) => article.id)
@@ -132,53 +181,56 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <AdminPage>
       <AdminHeadline>Články</AdminHeadline>
       {newArticleLink}
-      <StateFilter items={pills} label={'Stav'} />
+      {/* One row: the queues on the left, the search and Filtry on the
+          right (22a). */}
       <AdminTableToolbar>
-        <AdminTableSearch defaultValue={query} placeholder={'Hledat články…'} />
-        <AdminBulkActionsBar
-          action={href('/administration/articles')}
-          onDone={selection.clear}
-          selectedIds={selection.selectedIds}
-        />
-        {/* The pills own the queue; a filter submit keeps it. */}
-        <AdminTableFilters
-          preservedParams={[
-            ...getPreservedFilterParams(searchParams, 'articles'),
-            ...(queue === undefined
-              ? []
-              : [['state', queue] as [string, string]]),
-          ]}
-        >
-          <AdminFilterSelect
-            defaultValue={filters.category ?? ''}
-            label={'Kategorie'}
-            name={'category'}
-            options={categoryOptions}
+        <StateFilter items={pills} label={'Stav'} />
+        <div className={styles.toolbarEnd}>
+          <AdminTableSearch
+            defaultValue={query}
+            placeholder={'Hledat v názvu a adrese'}
           />
-          <AdminFilterSelect
-            defaultValue={filters.tag ?? ''}
-            label={'Štítek'}
-            name={'tag'}
-            options={tagOptions}
+          {/* The pills own the queue; a filter change keeps it. */}
+          <FiltersPanel
+            activeFilterId={activeFilterId}
+            authorOptions={authorOptions}
+            categoryOptions={categoryOptions}
+            currentQuery={currentFilterQuery}
+            filters={fieldFilters}
+            ownFilters={ownFilters}
+            preservedParams={[
+              ...getPreservedFilterParams(searchParams, 'articles'),
+              ...(queue === undefined
+                ? []
+                : [['state', queue] as [string, string]]),
+            ]}
+            sharedFilters={sharedFilters}
+            summary={savedFilterSummary}
+            tagOptions={tagOptions}
           />
-          <AdminFilterSelect
-            defaultValue={filters.author ?? ''}
-            label={'Autor'}
-            name={'author'}
-            options={authorOptions}
-          />
-        </AdminTableFilters>
-        {/* Sibling of the filter form, never a child: its rows submit their own
-            forms, which cannot be nested inside another one. */}
-        <AdminSavedFilters
-          activeFilterId={activeFilterId}
-          currentQuery={currentFilterQuery}
-          ownFilters={ownFilters}
-          sharedFilters={sharedFilters}
-          tableKey={'articles'}
-        />
+        </div>
       </AdminTableToolbar>
-      {isQueueEmpty ? (
+      {chips.length > 0 && (
+        <ActiveFilterChips chips={chips} clearAllSearch={clearFiltersSearch} />
+      )}
+      <AdminBulkActionsBar
+        action={href('/administration/articles')}
+        onDone={selection.clear}
+        selectedIds={selection.selectedIds}
+      />
+      {isNoResult ? (
+        // A search or a filter found nothing: a way back, the queue stays (22e).
+        <div className={styles.empty}>
+          <p className={styles.emptyTitle}>Nic nenalezeno</p>
+          <p className={styles.emptyText}>{noResult.sentence}</p>
+          <AdminLinkButton
+            preventScrollReset={true}
+            to={{ search: noResultSearch }}
+          >
+            {noResult.clearLabel}
+          </AdminLinkButton>
+        </div>
+      ) : isQueueEmpty ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <div className={styles.empty}>
           {queue === undefined ? (
@@ -229,25 +281,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>
           <TableBody>
-            {totalCount === 0 ? (
-              <TableEmptyRow colSpan={columnCount}>
-                {getAdminListEmptyMessage({
-                  emptyLabel: 'Žádné články',
-                  hasActiveFilters,
-                  query,
-                })}
-              </TableEmptyRow>
-            ) : (
-              articles.map((article) => (
-                <ItemRow
-                  article={article}
-                  key={article.id}
-                  onSelect={() => selection.toggle(article.id)}
-                  selected={selection.isSelected(article.id)}
-                  showAuthor={!isContributor}
-                />
-              ))
-            )}
+            {articles.map((article) => (
+              <ItemRow
+                article={article}
+                key={article.id}
+                onSelect={() => selection.toggle(article.id)}
+                selected={selection.isSelected(article.id)}
+                showAuthor={!isContributor}
+              />
+            ))}
           </TableBody>
         </AdminTable>
       )}
