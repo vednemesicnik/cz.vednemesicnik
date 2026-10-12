@@ -280,6 +280,8 @@ model Author {
   pageSEOs          PageSEO[]         @relation("PageSeoCreator")
   // Reviewed content
   reviews           Review[]          @relation("ReviewsGiven")
+  // Articles submitted for review
+  submittedArticles Article[]         @relation("ArticleSubmissions")
 }
 
 model AuthorRole {
@@ -494,9 +496,15 @@ model Article {
   tags            ArticleTag[]
   categories      ArticleCategory[]
   reviews         Review[]          @relation("ArticleReviews")
+  // A draft its author sent for review (design 07d); null when not submitted.
+  submittedAt     DateTime?
+  submittedById   String?
+  submittedBy     Author?           @relation("ArticleSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   // content-state query path (public list ordering; authors are M:N, no authorId FK)
   @@index([state, publishedAt])
+  // non-unique foreign key
+  @@index([submittedById])
 }
 
 model ArticleImage {
