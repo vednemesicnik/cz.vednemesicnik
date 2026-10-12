@@ -1,3 +1,42 @@
+/* Poslat znovu and Zadat jiný e-mail side by side, as links (20b). */
+.actions {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 16px;
+    padding-block-start: 4px;
+    font-size: 13px;
+  }
+}
+
+/* A submit button drawn as the design system's Link, beside a real one. */
+.resend {
+  @layer route {
+    width: auto;
+    font-size: inherit;
+    color: var(--link-strong);
+
+    &:hover:not(:disabled) {
+      color: var(--link-strong);
+      text-decoration-thickness: 2px;
+    }
+
+    &:active:not(:disabled),
+    &:focus-visible {
+      color: var(--link-strong);
+    }
+  }
+}
+
+/* The note belongs to the links above it: 12 px, closer than the card's gap. */
+.replaces {
+  @layer route {
+    margin-block-start: -8px;
+    font-size: 12px;
+  }
+}
+
 /* The typed address stands out of the sentence (20b). */
 .value {
   @layer route {
