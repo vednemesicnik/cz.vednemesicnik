@@ -16,7 +16,7 @@ export { headers } from './_headers'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-// An opened magic link (design 20c). Copy approved (gs905c2e, so197jap).
+// An opened magic link (design 20c). Copy approved (gs905c2e, njslpjov).
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const navigation = useNavigation()
   const isSubmitting = navigation.state !== 'idle'
