@@ -119,10 +119,11 @@ export const authorRoles: AuthorRolesData = [
     level: 2,
     name: 'creator',
     permissions: [
-      // View any draft and published (for editorial oversight)
+      // View any draft and published (for editorial oversight); only the
+      // Coordinator approves and publishes articles (design 07c/07d, #590)
       {
         access: 'any',
-        actions: ['view', 'review'],
+        actions: ['view'],
         entity: 'article',
         state: 'draft',
       },
@@ -132,10 +133,10 @@ export const authorRoles: AuthorRolesData = [
         entity: 'article',
         state: 'published',
       },
-      // Own content permissions
+      // Own content permissions; an own draft is submitted for review instead
       {
         access: 'own',
-        actions: ['create', 'update', 'delete', 'publish'],
+        actions: ['create', 'update', 'delete'],
         entity: 'article',
         state: 'draft',
       },

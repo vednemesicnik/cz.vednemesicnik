@@ -110,6 +110,55 @@ describe('createContentStateHandlers — review gate', () => {
     // A contributor publishing does not create a review.
     expect(config.ensureApprovingReview).not.toHaveBeenCalled()
   })
+
+  test('blocks an approver without a review unless the entity lets them publish directly', async () => {
+    const loadPublishState = vi.fn().mockResolvedValue({
+      authors: [{ role: { level: CONTRIBUTOR } }],
+      publishedAt: null,
+      reviews: [],
+    })
+    runAs(APPROVER, 'coordinator-1')
+
+    const gated = createContentStateHandlers(createConfig({ loadPublishState }))
+    await expect(
+      gated.publish(request, { id: 'a1', target }),
+    ).rejects.toHaveProperty('status', 400)
+
+    const direct = createConfig({
+      approverPublishesWithoutReview: true,
+      loadPublishState,
+    })
+    await createContentStateHandlers(direct).publish(request, {
+      id: 'a1',
+      target,
+    })
+    expect(direct.applyState).toHaveBeenCalledWith(
+      'a1',
+      expect.objectContaining({ state: 'published' }),
+    )
+    // The publishing act is the approval.
+    expect(direct.ensureApprovingReview).toHaveBeenCalledWith(
+      'a1',
+      'coordinator-1',
+    )
+  })
+
+  test('a lower role still needs a review even when approvers publish directly', async () => {
+    const config = createConfig({
+      approverPublishesWithoutReview: true,
+      loadPublishState: vi.fn().mockResolvedValue({
+        authors: [{ role: { level: CONTRIBUTOR } }],
+        publishedAt: null,
+        reviews: [],
+      }),
+    })
+    runAs(CONTRIBUTOR)
+
+    await expect(
+      createContentStateHandlers(config).publish(request, { id: 'a1', target }),
+    ).rejects.toHaveProperty('status', 400)
+    expect(config.applyState).not.toHaveBeenCalled()
+  })
 })
 
 describe('createContentStateHandlers — approver auto-approve', () => {

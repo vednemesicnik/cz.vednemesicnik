@@ -80,7 +80,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.articles.map((article) => (
               <AdminPendingItem
                 author={article.authors.map((a) => a.name).join(', ')}
-                date={article.createdAt}
+                date={article.submittedAt}
                 key={article.id}
                 title={article.title}
                 to={href('/administration/articles/:articleId', {

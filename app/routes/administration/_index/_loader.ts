@@ -144,7 +144,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const pendingReviewItems = {
     articleCategories: draftArticleCategories.items.map(withFormattedCreatedAt),
-    articles: draftArticles.items.map(withFormattedCreatedAt),
+    // An article waits from the moment it was submitted (design 07d).
+    articles: draftArticles.items.map((article) => ({
+      ...article,
+      submittedAt: createFormattedDate(article.submittedAt),
+    })),
     articleTags: draftArticleTags.items.map(withFormattedCreatedAt),
     issues: draftIssues.items.map(withFormattedCreatedAt),
     podcastEpisodes: draftPodcastEpisodes.items.map(withFormattedCreatedAt),

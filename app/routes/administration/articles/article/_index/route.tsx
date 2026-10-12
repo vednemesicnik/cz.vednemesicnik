@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef, useState } from 'react'
+import { Activity, useEffect, useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -15,11 +15,18 @@ import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminImageGallery } from '~/components/admin/admin-image-gallery'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
+import { AdminDialog } from '~/components/admin/admin-modal'
+import { AdminModalActions } from '~/components/admin/admin-modal-actions'
+import { AdminModalContent } from '~/components/admin/admin-modal-content'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminPublishDateDialog } from '~/components/admin/admin-publish-date-dialog'
 import { AdminSplitButton } from '~/components/admin/admin-split-button'
 import { AdminStateBadge } from '~/components/admin/admin-state-badge'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { BulletedList } from '~/components/bulleted-list'
+import { Button } from '~/components/button'
 import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
@@ -27,11 +34,15 @@ import { CalendarIcon } from '~/components/icons/calendar-icon'
 import { CheckIcon } from '~/components/icons/check-icon'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
+import { RedoIcon } from '~/components/icons/redo-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { ListItem } from '~/components/list-item'
+import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
+import type { action as articleAction } from './_action'
 import type { Route } from './+types/route'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
@@ -42,6 +53,13 @@ type PublishMode = (typeof PUBLISH_MODES)[number]
 
 const isPublishMode = (id: string): id is PublishMode =>
   (PUBLISH_MODES as readonly string[]).includes(id)
+
+// Toasts after a submission action (design 23a, 23b, 23c).
+const SUBMISSION_TOASTS: Record<string, string> = {
+  [INTENT_VALUE.returnForEdits]: 'Vráceno k úpravám',
+  [INTENT_VALUE.submitForReview]: 'Odesláno ke schválení',
+  [INTENT_VALUE.withdrawSubmission]: 'Vráceno do konceptu',
+}
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -62,8 +80,13 @@ export default function RouteComponent({
     canArchive,
     canRestore,
     canReview,
+    canSubmit,
+    canWithdraw,
+    canReturn,
     hasReviewed,
+    isOwnContent,
     needsReview,
+    submission,
   } = loaderData
   const { articleId } = params
 
@@ -71,8 +94,34 @@ export default function RouteComponent({
   const [publishMode, setPublishMode] = useState<PublishMode>('publish')
 
   const fetcherKey = `article-action-${articleId}`
-  const fetcher = useFetcher({ key: fetcherKey })
+  const fetcher = useFetcher<typeof articleAction>({ key: fetcherKey })
   const { Form } = fetcher
+
+  const showToast = useToast()
+  const missingDialogRef = useRef<HTMLDialogElement>(null)
+  const submissionResult = fetcher.data
+  // A keyed fetcher keeps its data across remounts; answer only a new result.
+  const handledResultRef = useRef(submissionResult)
+
+  // A submission action answers once: a toast, or the 23h list of what is
+  // missing before the article can be submitted.
+  useEffect(() => {
+    if (
+      submissionResult === undefined ||
+      submissionResult === handledResultRef.current
+    ) {
+      return
+    }
+    handledResultRef.current = submissionResult
+
+    if (submissionResult.missing.length > 0) {
+      missingDialogRef.current?.showModal()
+      return
+    }
+
+    const toast = SUBMISSION_TOASTS[submissionResult.intent]
+    if (toast !== undefined) showToast(toast)
+  }, [showToast, submissionResult])
 
   const isSubmitting = fetcher.state !== 'idle'
 
@@ -113,6 +162,51 @@ export default function RouteComponent({
             <EditIcon />
             Upravit
           </AdminLinkButton>
+        )}
+        {canSubmit && (
+          <Form method="post">
+            <AuthenticityTokenInput />
+            <AdminActionButton
+              action={'review'}
+              disabled={isSubmitting}
+              name={INTENT_NAME}
+              type={'submit'}
+              value={INTENT_VALUE.submitForReview}
+            >
+              <RedoIcon />
+              Odeslat ke schválení
+            </AdminActionButton>
+          </Form>
+        )}
+        {canWithdraw && (
+          <Form method="post">
+            <AuthenticityTokenInput />
+            <AdminActionButton
+              action={'retract'}
+              disabled={isSubmitting}
+              name={INTENT_NAME}
+              type={'submit'}
+              value={INTENT_VALUE.withdrawSubmission}
+            >
+              <UndoIcon />
+              Vzít zpět do konceptu
+            </AdminActionButton>
+          </Form>
+        )}
+        {canReturn && (
+          <Form method="post">
+            <AuthenticityTokenInput />
+            <AdminActionButton
+              action={'retract'}
+              disabled={isSubmitting}
+              name={INTENT_NAME}
+              type={'submit'}
+              value={INTENT_VALUE.returnForEdits}
+            >
+              <UndoIcon />
+              Vrátit k úpravám
+            </AdminActionButton>
+          </Form>
         )}
         {canReview && !hasReviewed && (
           <Form method="post">
@@ -269,10 +363,25 @@ export default function RouteComponent({
         )}
       </AdminActionGroup>
 
+      {isOwnContent && submission !== null && (
+        <AdminParagraph>
+          {submission.state === 'pending'
+            ? 'Článek čeká na schválení Koordinátorem. Před úpravou ho vezměte zpět do konceptu a po úpravě znovu odešlete ke schválení.'
+            : 'Článek je schválený. Publikovat ho může Koordinátor. Před úpravou ho vezměte zpět do konceptu. Schválení se tím zruší.'}
+        </AdminParagraph>
+      )}
+
       <AdminDetailSection title="Základní informace">
         <AdminDetailList>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge state={article.state} />
+            <AdminStateBadge
+              state={article.state}
+              submission={submission?.state}
+            />
+            {submission !== null &&
+              (submission.state === 'pending'
+                ? ` od ${submission.date}`
+                : ` ${submission.date}`)}
           </AdminDetailItem>
           <AdminDetailItem label="Název">{article.title}</AdminDetailItem>
           <AdminDetailItem label="Slug">{article.slug}</AdminDetailItem>
@@ -359,6 +468,34 @@ export default function RouteComponent({
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+
+      <AdminDialog ref={missingDialogRef}>
+        <AdminModalContent>
+          <AdminModalTitle>Článek ještě nejde odeslat</AdminModalTitle>
+          <BulletedList>
+            {submissionResult?.missing.map((item) => (
+              <ListItem key={item}>{item}</ListItem>
+            ))}
+          </BulletedList>
+          <AdminModalActions>
+            <Button
+              onClick={() => missingDialogRef.current?.close()}
+              size={'sm'}
+              type={'button'}
+              variant={'ghost'}
+            >
+              Zavřít
+            </Button>
+            <AdminLinkButton
+              to={href('/administration/articles/:articleId/edit-article', {
+                articleId,
+              })}
+            >
+              Doplnit v editoru
+            </AdminLinkButton>
+          </AdminModalActions>
+        </AdminModalContent>
+      </AdminDialog>
 
       <AdminPublishDateDialog
         action={href('/administration/articles/:articleId', { articleId })}

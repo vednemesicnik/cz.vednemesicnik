@@ -5,6 +5,7 @@ import { prisma } from '~/utils/db.server'
 
 import type { Route } from './+types/route'
 import { articleContentStateHandlers } from './utils/content-state-handlers.server'
+import { articleSubmissionHandlers } from './utils/submission-handlers.server'
 
 export const action = ({ request, params }: Route.ActionArgs) => {
   const { articleId } = params
@@ -24,6 +25,7 @@ export const action = ({ request, params }: Route.ActionArgs) => {
         state: currentArticle.state,
       }
     },
+    submissionHandlers: articleSubmissionHandlers,
     supportsChangePublishedAt: true,
   })
 }

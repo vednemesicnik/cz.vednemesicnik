@@ -8,12 +8,14 @@ import { updateArticle } from './update-article.server'
 // Prisma operations return tags so the test can see what went into the
 // transaction; `deleteRowWithImages` keeps its real ordering (row, then files).
 const mocks = vi.hoisted(() => ({
+  articleFindUniqueOrThrow: vi.fn(),
   articleImageCreate: vi.fn(),
   articleImageDeleteMany: vi.fn(),
   articleImageFindMany: vi.fn(),
   articleImageUpdate: vi.fn(),
   articleUpdate: vi.fn(),
   pageSeoUpsert: vi.fn(),
+  permissionContext: vi.fn(),
   replacedVersionCleanup: vi.fn(),
   storeDelete: vi.fn(),
   storeImageVariants: vi.fn(),
@@ -26,14 +28,17 @@ vi.mock(
     withAuthorPermission: (
       _request: Request,
       options: { execute: (context: unknown) => Promise<unknown> },
-    ) => options.execute({ authorId: 'author-1', roleLevel: 1 }),
+    ) => options.execute(mocks.permissionContext()),
   }),
 )
 
 vi.mock('~/utils/db.server', () => ({
   prisma: {
     $transaction: mocks.transaction,
-    article: { update: mocks.articleUpdate },
+    article: {
+      findUniqueOrThrow: mocks.articleFindUniqueOrThrow,
+      update: mocks.articleUpdate,
+    },
     articleImage: {
       create: mocks.articleImageCreate,
       deleteMany: mocks.articleImageDeleteMany,
@@ -100,6 +105,11 @@ const options = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.permissionContext.mockReturnValue({
+    authorId: 'author-1',
+    roleLevel: 1,
+  })
+  mocks.articleFindUniqueOrThrow.mockResolvedValue({ submittedAt: null })
   // The removed-images lookup filters by article; the version lookup by ids.
   mocks.articleImageFindMany.mockImplementation(
     async ({ where }: { where: { articleId?: string } }) =>
@@ -218,5 +228,33 @@ describe('updateArticle — a successful save', () => {
     expect(mocks.pageSeoUpsert.mock.calls[0][0].update.ogImageUrl).toBe(
       'og-new',
     )
+  })
+})
+
+describe('updateArticle — a submitted article', () => {
+  const submittedAt = new Date('2026-09-25T10:00:00Z')
+
+  test('is locked for its authors', async () => {
+    mocks.permissionContext.mockReturnValue({
+      authorId: 'author-1',
+      roleLevel: 3,
+    })
+    mocks.articleFindUniqueOrThrow.mockResolvedValue({ submittedAt })
+
+    await expect(updateArticle(request, options)).rejects.toMatchObject({
+      init: { status: 403 },
+    })
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('the Coordinator corrects it and the submission and approval stay', async () => {
+    mocks.articleFindUniqueOrThrow.mockResolvedValue({ submittedAt })
+
+    await updateArticle(request, options)
+
+    const articleData = mocks.articleUpdate.mock.calls[0][0].data
+    expect(articleData).not.toHaveProperty('submittedAt')
+    expect(articleData).not.toHaveProperty('reviews')
+    expect(mocks.transaction).toHaveBeenCalledOnce()
   })
 })
