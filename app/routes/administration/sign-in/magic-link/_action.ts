@@ -33,7 +33,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     const submission = parseWithZod(formData, { schema })
     return data(
       {
-        sent: false,
+        sent: false as const,
         submissionResult: submission.reply({
           formErrors: [
             `Příliš mnoho požadavků. Zkuste to prosím ${formatRetryAfter(limited.retryAfter)}.`,
@@ -48,7 +48,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   if (submission.status !== 'success') {
     return data(
-      { sent: false, submissionResult: submission.reply() },
+      { sent: false as const, submissionResult: submission.reply() },
       { status: submission.status === 'error' ? 400 : 200 },
     )
   }
@@ -83,5 +83,11 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
   }
 
-  return data({ sent: true, submissionResult: submission.reply() })
+  // The page repeats the address: a typo is the usual reason no link arrives,
+  // and echoing what was typed reveals nothing about accounts (20b).
+  return data({
+    email,
+    sent: true as const,
+    submissionResult: submission.reply(),
+  })
 }

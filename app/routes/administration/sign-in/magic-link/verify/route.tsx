@@ -1,9 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
-import { Form, href, Link, useNavigation } from 'react-router'
+import { Form, href, useNavigation } from 'react-router'
 
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
+import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
+import { Link } from '~/components/link'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import styles from './_styles.module.css'
@@ -14,78 +16,62 @@ export { headers } from './_headers'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
+// An opened magic link (design 20c). Copy approved (gs905c2e, so197jap).
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const navigation = useNavigation()
   const isSubmitting = navigation.state !== 'idle'
 
+  // A navigation drawn as the primary button (20c).
+  const backToSettings = (
+    <Form action={href('/administration/settings')} method={'get'}>
+      <Button type={'submit'}>Zpět do Nastavení</Button>
+    </Form>
+  )
+
   // A browser already signed in to another account (design 20c, so197jap).
   if (loaderData.status === 'other-account') {
     return (
-      <div className={styles.container}>
-        <section className={styles.card}>
-          <h1 className={styles.title}>Odkaz je pro jiný účet</h1>
-
-          <p className={styles.message}>
-            Odkaz otevřete v prohlížeči, kde se ověřujete — patří účtu{' '}
-            {loaderData.email} a tady je přihlášený jiný účet.
-          </p>
-
-          <div className={styles.footer}>
-            <AdminLinkButton to={href('/administration/settings')}>
-              Zpět do Nastavení
-            </AdminLinkButton>
-          </div>
-        </section>
-      </div>
+      <AdminSignInCard title={'Odkaz je pro jiný účet'}>
+        <AdminSignInText>
+          Odkaz otevřete v prohlížeči, kde se ověřujete — patří účtu{' '}
+          <span className={styles.value}>{loaderData.email}</span> a tady je
+          přihlášený jiný účet.
+        </AdminSignInText>
+        {backToSettings}
+      </AdminSignInCard>
     )
   }
 
   // A signed-in browser gets a new link from the identity check in Nastavení.
   if (loaderData.status === 'invalid-signed-in') {
     return (
-      <div className={styles.container}>
-        <section className={styles.card}>
-          <h1 className={styles.title}>Odkaz už neplatí</h1>
-
-          <p className={styles.message}>
-            Nový odkaz si pošlete v Nastavení — tento vypršel, byl použitý nebo
-            ho nahradil nový.
-          </p>
-
-          <div className={styles.footer}>
-            <AdminLinkButton to={href('/administration/settings')}>
-              Zpět do Nastavení
-            </AdminLinkButton>
-          </div>
-        </section>
-      </div>
+      <AdminSignInCard title={'Odkaz už neplatí'}>
+        <AdminSignInText>
+          Nový odkaz si pošlete v Nastavení — tento vypršel, byl použitý nebo ho
+          nahradil nový.
+        </AdminSignInText>
+        {backToSettings}
+      </AdminSignInCard>
     )
   }
 
+  // Today's copy until the one-click resend lands (20c).
   if (loaderData.status === 'invalid') {
     return (
-      <div className={styles.container}>
-        <section className={styles.card}>
-          <h1 className={styles.title}>Odkaz je neplatný</h1>
-
-          <p className={styles.message}>
-            Přihlašovací odkaz je neplatný nebo jeho platnost vypršela.
-            Požádejte prosím o nový.
-          </p>
-
-          <div className={styles.footer}>
-            <Link
-              className={styles.link}
-              to={withRedirectTo(
-                '/administration/sign-in/magic-link',
-                loaderData.redirectTo,
-              )}
-            >
-              Požádat o nový odkaz
-            </Link>
-          </div>
-        </section>
-      </div>
+      <AdminSignInCard title={'Odkaz je neplatný'}>
+        <AdminSignInText>
+          Přihlašovací odkaz je neplatný nebo jeho platnost vypršela. Požádejte
+          prosím o nový.
+        </AdminSignInText>
+        <Link
+          to={withRedirectTo(
+            href('/administration/sign-in/magic-link'),
+            loaderData.redirectTo,
+          )}
+        >
+          Požádat o nový odkaz
+        </Link>
+      </AdminSignInCard>
     )
   }
 
@@ -94,42 +80,40 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const isIdentityCheck = loaderData.status === 'verify-identity'
 
   return (
-    <div className={styles.container}>
-      <section className={styles.card}>
-        <h1 className={styles.title}>
-          {isIdentityCheck ? 'Ověřte, že jste to vy' : 'Přihlášení odkazem'}
-        </h1>
+    <AdminSignInCard
+      title={isIdentityCheck ? 'Ověřte, že jste to vy' : 'Potvrďte přihlášení'}
+    >
+      <AdminSignInText>
+        Účet: <span className={styles.value}>{loaderData.email}</span>
+      </AdminSignInText>
 
-        <p className={styles.subtitle}>
+      <Form method={'post'}>
+        <HoneypotInputs />
+
+        <input name={'token'} type={'hidden'} value={loaderData.token} />
+        <input name={'email'} type={'hidden'} value={loaderData.email} />
+        <input
+          name={'redirectTo'}
+          type={'hidden'}
+          value={loaderData.redirectTo}
+        />
+
+        <Button disabled={isSubmitting} type="submit">
           {isIdentityCheck
-            ? `Účet: ${loaderData.email}`
-            : 'Pro dokončení přihlášení do administrace klikněte na tlačítko níže.'}
-        </p>
+            ? 'Potvrdit ověření'
+            : isSubmitting
+              ? 'Přihlašuji…'
+              : 'Přihlásit se'}
+        </Button>
+      </Form>
 
-        <Form className={styles.form} method={'post'}>
-          <HoneypotInputs />
-
-          <input name={'token'} type={'hidden'} value={loaderData.token} />
-          <input name={'email'} type={'hidden'} value={loaderData.email} />
-          <input
-            name={'redirectTo'}
-            type={'hidden'}
-            value={loaderData.redirectTo}
-          />
-
-          <Button
-            className={styles.button}
-            disabled={isSubmitting}
-            type="submit"
-          >
-            {isIdentityCheck
-              ? 'Potvrdit ověření'
-              : isSubmitting
-                ? 'Přihlašuji…'
-                : 'Přihlásit se'}
-          </Button>
-        </Form>
-      </section>
-    </div>
+      {/* The identity check was asked for in Nastavení, by the signed-in
+          person (20c). */}
+      {isIdentityCheck ? null : (
+        <AdminSignInText variant={'quiet'}>
+          Nežádali jste o přihlášení? Stránku zavřete.
+        </AdminSignInText>
+      )}
+    </AdminSignInCard>
   )
 }

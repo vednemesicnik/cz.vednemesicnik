@@ -26,7 +26,7 @@ export const schema = z
       .optional(),
     code: z
       .string()
-      .regex(/^\d{6}$/, { message: 'Kód musí obsahovat 6 číslic.' })
+      .regex(/^\d{6}$/, { message: 'Zadejte šest číslic.' })
       .optional(),
   })
   .superRefine((value, ctx) => {

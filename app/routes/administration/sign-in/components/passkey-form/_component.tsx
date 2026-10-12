@@ -2,12 +2,12 @@ import { startAuthentication } from '@simplewebauthn/browser'
 import { useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
+import { Button } from '~/components/button'
+import { Callout } from '~/components/callout'
 import type { action as generateAuthenticationOptionsAction } from '~/routes/administration/sign-in/passkey/generate-authentication-options/_action'
 import type { action as verifyAuthenticationResponseAction } from '~/routes/administration/sign-in/passkey/verify-authentication-response/_action'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { usePasskeySupport } from '~/utils/use-passkey-support'
-
-import styles from '../../_styles.module.css'
 
 const ERROR_MESSAGE =
   'Přihlášení pomocí passkey se nezdařilo. Zkuste to prosím znovu.'
@@ -103,24 +103,19 @@ export const PasskeyForm = ({ redirectTo }: Props) => {
         action={
           '/administration/sign-in/passkey/generate-authentication-options'
         }
-        className={styles.googleForm}
         method={'post'}
         onSubmit={() => setError(null)}
       >
         <input name={'redirectTo'} type={'hidden'} value={redirectTo} />
-        <button
-          className={styles.googleButton}
-          disabled={isPending}
-          type={'submit'}
-        >
-          Přihlásit pomocí passkey
-        </button>
+        <Button disabled={isPending} type={'submit'} variant={'outline'}>
+          Přihlásit se pomocí passkey
+        </Button>
       </GenerateAuthenticationOptionsForm>
 
       {error !== null ? (
-        <p className={styles.error} role={'alert'}>
+        <Callout role={'alert'} tone={'error'}>
           {error}
-        </p>
+        </Callout>
       ) : null}
     </>
   )

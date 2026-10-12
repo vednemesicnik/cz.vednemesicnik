@@ -160,7 +160,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     const redeemed = await redeemBackupCode(userId, submission.value.backupCode)
 
     if (!redeemed) {
-      return fail('backupCode', 'Záložní kód je neplatný nebo již byl použit.')
+      return fail(
+        'backupCode',
+        'Zkontrolujte záložní kód, případně použijte jiný.',
+      )
     }
 
     return succeed('backup_code')
@@ -187,7 +190,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   })
 
   if (result === null) {
-    return fail('code', 'Kód je nesprávný nebo jeho platnost vypršela.')
+    return fail(
+      'code',
+      'Zadejte aktuální kód z aplikace — tento nesouhlasí nebo už vypršel.',
+    )
   }
 
   return succeed('two_factor')

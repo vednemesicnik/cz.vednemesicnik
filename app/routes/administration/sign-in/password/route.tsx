@@ -2,15 +2,17 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef } from 'react'
-import { Link, useNavigation } from 'react-router'
+import { href, useNavigation } from 'react-router'
 import { AdminInput } from '~/components/admin/admin-input'
+import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
+import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
 import { Button } from '~/components/button'
 import { Form } from '~/components/form'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
+import { Link } from '~/components/link'
 import { useHydrated } from '~/utils/use-hydrated'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 import { schema } from './_schema'
-import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { action } from './_action'
@@ -51,64 +53,47 @@ export default function RouteComponent({
     }
   }, [formErrorsCount, passwordErrorsCount])
 
+  // The emergency password sign-in (design 20d). Copy approved (gs905c2e).
   return (
-    <div className={styles.container}>
-      <section className={styles.card}>
-        <h1 className={styles.title}>Přihlášení heslem</h1>
+    <AdminSignInCard title={'Nouzové přihlášení'}>
+      <AdminSignInText>
+        Pro případ, že nefunguje Google, passkey ani odkaz v e-mailu.
+      </AdminSignInText>
 
-        <p className={styles.subtitle}>
-          Zadejte své přihlašovací údaje pro přístup do administrace
-        </p>
+      <Form {...getFormProps(form)} errors={form.errors} method={'post'}>
+        <HoneypotInputs />
+        <input
+          name={'redirectTo'}
+          type={'hidden'}
+          value={loaderData.redirectTo}
+        />
 
-        <Form
-          {...getFormProps(form)}
-          className={styles.form}
-          errors={form.errors}
-          method={'post'}
-        >
-          <HoneypotInputs />
-          <input
-            name={'redirectTo'}
-            type={'hidden'}
-            value={loaderData.redirectTo}
-          />
+        <AdminInput
+          errors={fields.email.errors}
+          label={'E-mail'}
+          {...getInputProps(fields.email, { type: 'email' })}
+        />
 
-          <AdminInput
-            errors={fields.email.errors}
-            label={'E-mail'}
-            {...getInputProps(fields.email, { type: 'email' })}
-            placeholder={'vas-email@example.com'}
-          />
+        <AdminInput
+          errors={fields.password.errors}
+          label={'Heslo'}
+          ref={passwordInputRef}
+          {...getInputProps(fields.password, { type: 'password' })}
+        />
 
-          <AdminInput
-            errors={fields.password.errors}
-            label={'Heslo'}
-            ref={passwordInputRef}
-            {...getInputProps(fields.password, { type: 'password' })}
-            placeholder={'••••••••'}
-          />
+        <Button disabled={isSubmitting} type="submit">
+          {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
+        </Button>
+      </Form>
 
-          <Button
-            className={styles.button}
-            disabled={isSubmitting}
-            type="submit"
-          >
-            {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
-          </Button>
-        </Form>
-
-        <div className={styles.footer}>
-          <Link
-            className={styles.link}
-            to={withRedirectTo(
-              '/administration/sign-in',
-              loaderData.redirectTo,
-            )}
-          >
-            Zpět na výběr přihlášení
-          </Link>
-        </div>
-      </section>
-    </div>
+      <Link
+        to={withRedirectTo(
+          href('/administration/sign-in'),
+          loaderData.redirectTo,
+        )}
+      >
+        Zpět na přihlášení
+      </Link>
+    </AdminSignInCard>
   )
 }

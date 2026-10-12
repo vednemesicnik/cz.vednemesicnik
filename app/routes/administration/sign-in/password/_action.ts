@@ -115,7 +115,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
         isAuthenticated: false,
         registrationOptions: null,
         submissionResult: submission.reply({
-          formErrors: ['E-mail nebo heslo je nesprávné.'],
+          // Never says which of the two was wrong (20d, copy gs905c2e).
+          formErrors: [
+            'Zkontrolujte e-mail a heslo — přihlášení se nepovedlo.',
+          ],
           hideFields: ['password'],
         }),
       },
