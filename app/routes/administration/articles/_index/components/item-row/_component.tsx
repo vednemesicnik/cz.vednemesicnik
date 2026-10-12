@@ -1,8 +1,7 @@
-import type { ContentState } from '@generated/prisma/enums'
-import { useRef } from 'react'
-import { href, useFetcher } from 'react-router'
-import { AdminActionButton } from '~/components/admin/admin-action-button'
-import { AdminActionGroup } from '~/components/admin/admin-action-group'
+import { useRef, useState } from 'react'
+import { href, useFetcher, useNavigate } from 'react-router'
+
+import { ActionMenu } from '~/components/action-menu'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
@@ -13,99 +12,199 @@ import {
   TableRow,
   TableSelectionCell,
 } from '~/components/admin/admin-table'
-import { DeleteIcon } from '~/components/icons/delete-icon'
-import { EditIcon } from '~/components/icons/edit-icon'
-import { VisibilityIcon } from '~/components/icons/visibility-icon'
+import { useAuthenticityToken } from '~/components/authenticity-token-provider'
+import { BaseLink } from '~/components/base-link'
+import { Button } from '~/components/button'
 import { StatusTag } from '~/components/status-tag'
-import { getFormattedDateString } from '~/utils/get-formatted-date-string'
+import { FORM_CONFIG } from '~/config/form-config'
+import type { action as articleAction } from '../../../article/_index/_action'
+import { ArticleChangeDateDialog } from '../../../components/article-change-date-dialog'
+import { ArticleMissingDialog } from '../../../components/article-missing-dialog'
+import { ArticlePublishDialog } from '../../../components/article-publish-dialog'
+import {
+  ARTICLE_ACTION_LABELS,
+  ARTICLE_DIRECT_INTENTS,
+  type ArticleAction,
+  NOT_SUBMITTED_NOTE,
+} from '../../../utils/article-actions'
+import { useArticleActionResult } from '../../../utils/use-article-action-result'
+import type { Route } from '../../+types/route'
+import styles from './_styles.module.css'
+
+type Article = Route.ComponentProps['loaderData']['articles'][number]
 
 type Props = {
-  id: string
-  title: string
-  state: ContentState
-  createdAt: Date
-  canView: boolean
-  canEdit: boolean
-  canDelete: boolean
+  article: Article
+  showAuthor: boolean
   selected: boolean
   onSelect: () => void
 }
 
-export const ItemRow = ({
-  id,
-  title,
-  state,
-  createdAt,
-  canView,
-  canEdit,
-  canDelete,
-  selected,
-  onSelect,
-}: Props) => {
-  const dialogRef = useRef<HTMLDialogElement | null>(null)
-  const fetcherKey = `delete-article-${id}`
-
-  const fetcher = useFetcher({ key: fetcherKey })
-  const isDeleting = fetcher.state !== 'idle'
-
-  const { openDialog } = useAdminDeleteConfirmationDialog(dialogRef, {
-    action: href('/administration/articles/:articleId', {
-      articleId: id,
-    }),
-    key: fetcherKey,
+/**
+ * A row of the article list (design 22a, 22b): the title opening the detail
+ * with its first category, the author, the last update, the state tag with one
+ * fact, and one action with the rest in „⋯“.
+ */
+export const ItemRow = ({ article, showAuthor, selected, onSelect }: Props) => {
+  const { id } = article
+  const action = href('/administration/articles/:articleId', { articleId: id })
+  const editHref = href('/administration/articles/:articleId/edit-article', {
+    articleId: id,
   })
 
+  const fetcherKey = `article-row-${id}`
+  const fetcher = useFetcher<typeof articleAction>({ key: fetcherKey })
+  const isSubmitting = fetcher.state !== 'idle'
+  const authenticityToken = useAuthenticityToken()
+  const navigate = useNavigate()
+
+  const { closeMissingList, missingList } = useArticleActionResult(fetcher.data)
+  const [publishDialog, setPublishDialog] = useState<{
+    isApproval: boolean
+  } | null>(null)
+
+  const deleteDialogRef = useRef<HTMLDialogElement>(null)
+  const changeDateDialogRef = useRef<HTMLDialogElement>(null)
+  const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(
+    deleteDialogRef,
+    { action, key: fetcherKey },
+  )
+
+  const runAction = (articleAction: ArticleAction) => {
+    const intent = ARTICLE_DIRECT_INTENTS[articleAction]
+
+    if (intent !== undefined) {
+      const formData = new FormData()
+      formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
+      formData.append(FORM_CONFIG.intent.name, intent)
+      void fetcher.submit(formData, { action, method: 'POST' })
+      return
+    }
+
+    // An incomplete article answers the publish with the 23h list.
+    switch (articleAction) {
+      case 'approve-and-publish':
+        return setPublishDialog({ isApproval: true })
+      case 'publish':
+        return setPublishDialog({ isApproval: false })
+      case 'change-date':
+        return changeDateDialogRef.current?.showModal()
+      case 'delete':
+        return openDeleteDialog()
+      case 'edit':
+        return navigate(editHref)
+      case 'view-on-web':
+        return window.open(
+          href('/articles/:articleSlug', { articleSlug: article.slug }),
+          '_blank',
+          'noopener',
+        )
+    }
+  }
+
+  const rowAction = article.row
+  const [firstCategory, ...otherCategories] = article.categoryNames
+
   return (
-    <TableRow>
+    <TableRow muted={article.state === 'archived'}>
       <TableSelectionCell
         checked={selected}
-        disabled={!canDelete}
-        label={`Vybrat článek ${title}`}
+        disabled={!article.canDelete}
+        label={`Vybrat článek ${article.title}`}
         onChange={onSelect}
       />
-      <TableCell>{title}</TableCell>
-      <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell>
-        <StatusTag state={state} />
+        {/* Zobrazit is gone: the title opens the detail (22a). */}
+        <span className={styles.title}>
+          <BaseLink className={styles.link} to={action}>
+            {article.title}
+          </BaseLink>
+          {firstCategory !== undefined && (
+            <span
+              className={styles.categories}
+              title={article.categoryNames.join(', ')}
+            >
+              {firstCategory}
+              {otherCategories.length > 0 && (
+                <span className={styles.more}>
+                  {` +${otherCategories.length}`}
+                </span>
+              )}
+            </span>
+          )}
+        </span>
+      </TableCell>
+      {showAuthor && <TableCell>{article.authorNames.join(', ')}</TableCell>}
+      <TableCell>{article.updatedAt}</TableCell>
+      <TableCell>
+        <StatusTag detail={article.factLine} state={article.state} />
       </TableCell>
       <TableCell variant={'actions'}>
-        <AdminActionGroup>
-          {canView && (
+        <span className={styles.actions}>
+          {rowAction === 'edit' && (
             <AdminLinkButton
-              disabled={isDeleting}
-              to={href('/administration/articles/:articleId', {
-                articleId: id,
-              })}
+              className={styles.editLink}
+              disabled={isSubmitting}
+              to={editHref}
             >
-              <VisibilityIcon />
-              Zobrazit
+              {ARTICLE_ACTION_LABELS.edit}
             </AdminLinkButton>
           )}
-          {canEdit && (
-            <AdminLinkButton
-              disabled={isDeleting}
-              to={href('/administration/articles/:articleId/edit-article', {
-                articleId: id,
-              })}
+          {rowAction !== null && rowAction !== 'edit' && (
+            <Button
+              disabled={isSubmitting}
+              onClick={() => runAction(rowAction)}
+              size={'sm'}
+              type={'button'}
+              variant={'outline'}
             >
-              <EditIcon />
-              Upravit
-            </AdminLinkButton>
+              {ARTICLE_ACTION_LABELS[rowAction]}
+            </Button>
           )}
-          {canDelete && (
-            <>
-              <AdminActionButton
-                action={'delete'}
-                disabled={isDeleting}
-                onClick={openDialog}
-              >
-                <DeleteIcon />
-                {isDeleting ? 'Maže se...' : 'Smazat'}
-              </AdminActionButton>
-              <AdminDeleteConfirmationDialog ref={dialogRef} />
-            </>
+          <ActionMenu
+            items={article.menu.map((menuAction) => ({
+              danger: menuAction === 'delete',
+              label: ARTICLE_ACTION_LABELS[menuAction],
+              onSelect: () => runAction(menuAction),
+            }))}
+            label={`Další akce s článkem ${article.title}`}
+            size={'sm'}
+          />
+        </span>
+
+        {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
+        <div className={styles.dialogs}>
+          {article.menu.includes('delete') && (
+            <AdminDeleteConfirmationDialog ref={deleteDialogRef} />
           )}
-        </AdminActionGroup>
+          {article.menu.includes('change-date') && (
+            <ArticleChangeDateDialog
+              action={action}
+              fetcherKey={fetcherKey}
+              publishedAt={article.publishedAt}
+              ref={changeDateDialogRef}
+            />
+          )}
+          {publishDialog !== null && (
+            <ArticlePublishDialog
+              action={action}
+              articleTitle={article.title}
+              authorNames={article.authorNames}
+              fetcherKey={fetcherKey}
+              isApproval={publishDialog.isApproval}
+              note={article.isNotSubmitted ? NOT_SUBMITTED_NOTE : null}
+              onClose={() => setPublishDialog(null)}
+              originalPublishedAt={article.publishedAt}
+            />
+          )}
+          {missingList !== null && (
+            <ArticleMissingDialog
+              editHref={editHref}
+              missingList={missingList}
+              onClose={closeMissingList}
+            />
+          )}
+        </div>
       </TableCell>
     </TableRow>
   )

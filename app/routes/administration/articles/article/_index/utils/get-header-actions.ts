@@ -1,6 +1,9 @@
 import type { ContentState } from '@generated/prisma/enums'
 
-import type { ArticleAction } from '../../../utils/article-actions'
+import {
+  type ArticleAction,
+  NOT_SUBMITTED_NOTE,
+} from '../../../utils/article-actions'
 
 type HeaderActions = {
   primary: ArticleAction | null
@@ -76,7 +79,7 @@ const getDraftActions = (options: Options): HeaderActions => {
       menu: ['publish', ...only('delete', options.canDelete)],
       outline: edit[0] ?? null,
       primary: null,
-      sentence: 'Článek nebyl odeslán ke schválení.',
+      sentence: NOT_SUBMITTED_NOTE,
     }
   }
 

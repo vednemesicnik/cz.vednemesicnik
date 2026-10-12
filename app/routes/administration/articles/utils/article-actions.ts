@@ -45,3 +45,6 @@ export const ARTICLE_DIRECT_INTENTS: Partial<Record<ArticleAction, string>> = {
   submit: INTENT_VALUE.submitForReview,
   withdraw: INTENT_VALUE.withdrawSubmission,
 }
+
+// A draft nobody submitted, published by the Coordinator (23d, 23f).
+export const NOT_SUBMITTED_NOTE = 'Článek nebyl odeslán ke schválení.'

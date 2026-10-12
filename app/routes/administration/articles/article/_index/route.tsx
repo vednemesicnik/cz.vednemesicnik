@@ -16,13 +16,13 @@ import { AdminImageGallery } from '~/components/admin/admin-image-gallery'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
-import { AdminPublishDateDialog } from '~/components/admin/admin-publish-date-dialog'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { Hyperlink } from '~/components/hyperlink'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
+import { ArticleChangeDateDialog } from '../../components/article-change-date-dialog'
 import { ArticleMissingDialog } from '../../components/article-missing-dialog'
 import { ArticlePublishDialog } from '../../components/article-publish-dialog'
 import {
@@ -321,17 +321,11 @@ export default function RouteComponent({
         />
       )}
 
-      <AdminPublishDateDialog
+      <ArticleChangeDateDialog
         action={href('/administration/articles/:articleId', { articleId })}
-        confirmLabel={'Změnit datum'}
-        defaultPublishedAt={article.publishedAt.iso ?? undefined}
-        description={
-          'Skutečně si přejete změnit datum vydání? Článek se přeřadí ve výpisu a změní se datum publikace v metadatech pro vyhledávače. Akce je určena k opravě chyb.'
-        }
         fetcherKey={fetcherKey}
-        intent={INTENT_VALUE.changePublishedAt}
+        publishedAt={article.publishedAt.iso}
         ref={changePublishedAtDialogRef}
-        title={'Změnit datum vydání'}
       />
     </AdminPage>
   )
