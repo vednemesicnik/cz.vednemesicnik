@@ -13,6 +13,10 @@ const meta: Meta<typeof ActionMenu> = {
       control: 'inline-radio',
       options: ['start', 'end'],
     },
+    size: {
+      control: 'inline-radio',
+      options: ['sm', 'md'],
+    },
   },
   component: ActionMenu,
   parameters: {
@@ -65,6 +69,28 @@ export const InHeader: Story = {
         <ActionMenu items={[]} label={'Další akce s účtem'} />
         <Button variant={'outline'}>Upravit</Button>
       </div>
+    </div>
+  ),
+}
+
+/**
+ * In a list row (design 22a): the row's one action and „⋯“ beside it, both sm.
+ */
+export const InRow: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'flex', gap: '6px' }}>
+      <Button size={'sm'} variant={'outline'}>
+        Schválit
+      </Button>
+      <ActionMenu
+        items={[
+          { label: 'Schválit a publikovat…', onSelect: fn() },
+          { label: 'Vrátit k úpravám', onSelect: fn() },
+          { label: 'Upravit', onSelect: fn() },
+        ]}
+        size={'sm'}
+      />
     </div>
   ),
 }

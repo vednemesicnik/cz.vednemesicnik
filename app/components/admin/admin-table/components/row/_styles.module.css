@@ -9,3 +9,13 @@
     }
   }
 }
+
+.muted {
+  @layer variant {
+    color: var(--text-tertiary);
+
+    & > td {
+      color: inherit;
+    }
+  }
+}

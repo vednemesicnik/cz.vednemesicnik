@@ -15,6 +15,7 @@ type Props = {
   items: Item[]
   label?: string
   align?: 'start' | 'end'
+  size?: 'sm' | 'md'
   className?: string
 }
 
@@ -27,11 +28,13 @@ type Props = {
  * @param props.items - The actions; a destructive one is `danger` and last.
  * @param props.label - The trigger's accessible name, e.g. „Další akce s účtem“.
  * @param props.align - The menu's edge that lines up with the trigger.
+ * @param props.size - `sm` beside a list row's action (design 22a).
  */
 export const ActionMenu = ({
   items,
   label = 'Další akce',
   align = 'end',
+  size = 'md',
   className,
 }: Props) => {
   const menuRef = useRef<HTMLDivElement>(null)
@@ -50,8 +53,9 @@ export const ActionMenu = ({
     <span className={clsx(styles.actionMenu, className)}>
       <Button
         aria-label={label}
-        className={styles.trigger}
+        className={clsx(styles.trigger, styles[size])}
         popoverTarget={menuId}
+        size={size}
         type={'button'}
         variant={'outline'}
       >
