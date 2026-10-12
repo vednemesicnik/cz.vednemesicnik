@@ -7,6 +7,7 @@ import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import type { Route } from './+types/route'
@@ -22,7 +23,8 @@ const ORDER_BY: Record<
 > = {
   createdAt: (order) => [{ createdAt: order }],
   email: (order) => [{ email: order }, { createdAt: 'desc' }],
-  name: (order) => [{ name: order }, { createdAt: 'desc' }],
+  // The name belongs to the author (design 28f).
+  name: (order) => [{ author: { name: order } }, { createdAt: 'desc' }],
   role: (order) => [{ role: { level: order } }, { createdAt: 'desc' }],
 }
 
@@ -70,7 +72,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       ? []
       : [
           {
-            OR: [{ email: { contains: query } }, { name: { contains: query } }],
+            OR: [
+              { email: { contains: query } },
+              { author: { name: { contains: query } } },
+            ],
           },
         ]
 
@@ -89,10 +94,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     prisma.user.findMany({
       orderBy: ORDER_BY[sort](order),
       select: {
+        author: { select: { name: true } },
         createdAt: true,
         email: true,
         id: true,
-        name: true,
         role: {
           select: {
             id: true,
@@ -116,12 +121,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         targetUserId: user.id,
         targetUserRoleLevel: user.role.level,
       }).hasPermission,
-      canUpdate: context.can({
-        action: 'update',
-        entity: 'user',
+      canUpdate: canEditUser(context, {
         targetUserId: user.id,
         targetUserRoleLevel: user.role.level,
-      }).hasPermission,
+      }),
       canView: context.can({
         action: 'view',
         entity: 'user',

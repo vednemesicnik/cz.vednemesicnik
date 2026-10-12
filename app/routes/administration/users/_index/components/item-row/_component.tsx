@@ -17,7 +17,7 @@ import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 type Props = {
   id: string
   email: string
-  name: string | null
+  name: string
   roleName: string
   createdAt: Date
   canView: boolean
@@ -49,7 +49,7 @@ export const ItemRow = ({
   return (
     <TableRow>
       <TableCell>{email}</TableCell>
-      <TableCell>{name ?? '...'}</TableCell>
+      <TableCell>{name}</TableCell>
       <TableCell>{roleName}</TableCell>
       <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell variant={'actions'}>

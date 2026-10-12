@@ -7,6 +7,7 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
 
 import type { Route } from './+types/route'
 
@@ -37,7 +38,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       image: {
         select: imageSourceSelect,
       },
-      name: true,
       role: {
         select: {
           id: true,
@@ -65,9 +65,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   }
 
   // Check update permission
-  const { hasPermission: canUpdate } = context.can({
-    action: 'update',
-    entity: 'user',
+  const canUpdate = canEditUser(context, {
     targetUserId: user.id,
     targetUserRoleLevel: user.role.level,
   })
@@ -90,7 +88,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       hasImage: !!user.image,
       id: user.id,
       imageUrl: createImageSources('user-image', user.image).src ?? null,
-      name: user.name,
       role: user.role,
       updatedAt: createFormattedDate(user.updatedAt),
       username: user.username,

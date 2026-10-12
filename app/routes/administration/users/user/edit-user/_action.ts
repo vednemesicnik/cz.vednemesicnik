@@ -10,7 +10,7 @@ import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
-import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
+import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
 
 import { schema } from './_schema'
 import { updateUser } from './utils/update-user'
@@ -86,21 +86,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     { status: 403 },
   )
 
-  // Check if user can update this user with their current role
-  checkUserPermission(context, {
-    action: 'update',
-    entity: 'user',
-    targetUserId: targetUser.id,
-    targetUserRoleLevel: targetUser.role.level,
-  })
+  // Only an Administrator or the Owner edits accounts here, at the current role
+  // level and at the one being assigned; the generic denial (design 30h)
+  const canEdit = [targetUser.role.level, newRole.level].every((roleLevel) =>
+    canEditUser(context, {
+      targetUserId: targetUser.id,
+      targetUserRoleLevel: roleLevel,
+    }),
+  )
 
-  // Check if user can assign the new role
-  checkUserPermission(context, {
-    action: 'update',
-    entity: 'user',
-    targetUserId: targetUser.id,
-    targetUserRoleLevel: newRole.level,
-  })
+  if (!canEdit) {
+    throw data(null, { status: 403 })
+  }
 
   await updateUser(submission.value)
 

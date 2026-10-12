@@ -32,7 +32,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: {
           email: true,
           id: true,
-          name: true,
         },
       },
     },

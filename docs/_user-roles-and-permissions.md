@@ -37,7 +37,7 @@ When assigning roles, users can only assign roles with a level greater than or e
 | **Role**          | **Action** | **Access** | **Notes**                                                           |
 |-------------------|------------|------------|---------------------------------------------------------------------|
 | **Member**        | view       | own        | Members can only view their own account information.                |
-|                   | update     | own        | Members are allowed to update only their own account details.       |
+|                   | update     | own        | Members update their own account in Settings only; editing a user (e-mail, role) needs `any`. |
 | **Administrator** | view       | any        | Administrators can view all user accounts.                          |
 |                   | create     | any        | Administrators can create accounts for non-owner roles.             |
 |                   | update     | any        | Administrators can update accounts for all roles except for owners. |
@@ -86,7 +86,7 @@ When assigning roles, users can only assign roles with a level greater than or e
 ### **Member** (User Role - Level 3)
 
 - **Capabilities**:
-  - Can view and update their own **User** account.
+  - Can view their own **User** account and update it in Settings (sign-in methods); the e-mail and role are changed only by an Administrator or the Owner (design 29a).
   - Can view and update their own **Author** profile.
 - **Restrictions**:
   - Cannot assign any roles (no administrative access).

@@ -139,7 +139,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 email={user.email}
                 id={user.id}
                 key={user.id}
-                name={user.name}
+                name={user.author.name}
                 roleName={getUserRoleLabel(user.role.name)}
               />
             ))
