@@ -16,6 +16,7 @@ type Props = {
   currentQuery: string
   ownFilters: OwnFilter[]
   sharedFilters: SharedFilter[]
+  onApply: () => void
   onDelete: (filter: OwnFilter) => void
   onRename: (filter: OwnFilter) => void
   onSave: () => void
@@ -28,12 +29,15 @@ type Props = {
  *
  * @param props.currentQuery - The snapshot a save or an overwrite stores; `''`
  *   when there is nothing to save.
+ * @param props.onApply - Called when a filter is applied, which finishes the
+ *   choice, unlike a select change.
  */
 export const SavedFiltersSection = ({
   activeFilterId,
   currentQuery,
   ownFilters,
   sharedFilters,
+  onApply,
   onDelete,
   onRename,
   onSave,
@@ -56,6 +60,7 @@ export const SavedFiltersSection = ({
                 filter={filter}
                 isActive={filter.id === activeFilterId}
                 key={filter.id}
+                onApply={onApply}
                 onDelete={onDelete}
                 onRename={onRename}
               />
@@ -73,6 +78,7 @@ export const SavedFiltersSection = ({
                 <Link
                   className={styles.apply}
                   data-active={filter.id === activeFilterId || undefined}
+                  onClick={onApply}
                   to={`?${filter.query}&${FILTER_PRESET_PARAM}=${filter.id}`}
                 >
                   <span className={styles.name}>{filter.name}</span>

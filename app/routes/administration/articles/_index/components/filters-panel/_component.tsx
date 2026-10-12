@@ -153,6 +153,9 @@ export const FiltersPanel = ({
         <SavedFiltersSection
           activeFilterId={activeFilterId}
           currentQuery={currentQuery}
+          // A saved filter is a whole choice: the panel goes with it, so the
+          // list it switched to is in view. A select keeps it open.
+          onApply={closePanel}
           onDelete={handleDelete}
           onRename={handleRename}
           onSave={handleSave}

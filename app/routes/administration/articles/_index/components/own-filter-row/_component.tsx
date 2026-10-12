@@ -20,6 +20,7 @@ type Props = {
   currentQuery: string
   filter: OwnFilter
   isActive: boolean
+  onApply: () => void
   onDelete: (filter: OwnFilter) => void
   onRename: (filter: OwnFilter) => void
 }
@@ -28,6 +29,7 @@ export const OwnFilterRow = ({
   currentQuery,
   filter,
   isActive,
+  onApply,
   onDelete,
   onRename,
 }: Props) => {
@@ -105,6 +107,7 @@ export const OwnFilterRow = ({
     <li className={styles.row}>
       <Link
         className={clsx(styles.apply, isActive && styles.applyActive)}
+        onClick={onApply}
         to={`?${filter.query}&${FILTER_PRESET_PARAM}=${filter.id}`}
       >
         <span className={styles.name}>{filter.name}</span>
