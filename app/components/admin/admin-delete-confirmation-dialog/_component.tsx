@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import type { ReactNode, RefObject } from 'react'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -10,9 +10,21 @@ import { DIALOG_RETURN_VALUE } from '~/config/dialog-config'
 
 type Props = {
   ref: RefObject<HTMLDialogElement | null>
+  title?: ReactNode
+  description?: ReactNode
 }
 
-export const AdminDeleteConfirmationDialog = ({ ref }: Props) => {
+/**
+ * Confirms a delete; closes with the accept or decline return value.
+ *
+ * @param props.title - The question, generic by default.
+ * @param props.description - The sentence under it, generic by default.
+ */
+export const AdminDeleteConfirmationDialog = ({
+  ref,
+  title = 'Opravdu chcete tuto akci provést?',
+  description = 'Tato akce je nevratná.',
+}: Props) => {
   // Read ref.current inside the handlers, not during render: the <dialog> is
   // attached in the commit phase, so at render time ref.current is still null
   // and a captured value would never close the dialog.
@@ -22,8 +34,8 @@ export const AdminDeleteConfirmationDialog = ({ ref }: Props) => {
   return (
     <AdminDialog ref={ref}>
       <AdminModalContent>
-        <AdminModalTitle>Opravdu chcete tuto akci provést?</AdminModalTitle>
-        <AdminModalDescription>Tato akce je nevratná.</AdminModalDescription>
+        <AdminModalTitle>{title}</AdminModalTitle>
+        <AdminModalDescription>{description}</AdminModalDescription>
         <AdminModalActions>
           <Button
             onClick={handleDecline}

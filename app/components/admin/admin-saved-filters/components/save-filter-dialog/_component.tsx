@@ -23,12 +23,28 @@ type Props = {
   currentQuery: string
   onClose: () => void
   tableKey: AdminListTableKey
+  title?: string
+  summary?: string
+  defaultHint?: string
+  sharedHint?: string
 }
 
+/**
+ * Saves the list's current state as a named filter.
+ *
+ * @param props.title - The dialog's title.
+ * @param props.summary - A sentence on what is saved (design 22d).
+ * @param props.defaultHint - The hint under Nastavit jako výchozí.
+ * @param props.sharedHint - The hint under Sdílet s ostatními.
+ */
 export const SaveFilterDialog = ({
   currentQuery,
   onClose,
   tableKey,
+  title = 'Uložit aktuální filtr',
+  summary,
+  defaultHint,
+  sharedHint,
 }: Props) => {
   const fetcher = useFetcher<FilterActionData>()
   const dialogRef = useFilterDialog(fetcher, onClose)
@@ -51,7 +67,7 @@ export const SaveFilterDialog = ({
   return (
     <AdminDialog ref={dialogRef}>
       <AdminModalContent>
-        <AdminModalTitle>Uložit aktuální filtr</AdminModalTitle>
+        <AdminModalTitle>{title}</AdminModalTitle>
 
         <fetcher.Form
           action={href('/administration/filters')}
@@ -80,8 +96,11 @@ export const SaveFilterDialog = ({
             {...getInputProps(fields.name, { type: 'text' })}
           />
 
+          {summary !== undefined && <p className={styles.summary}>{summary}</p>}
+
           <div className={styles.checkboxes}>
             <Checkbox
+              hint={defaultHint}
               {...getInputProps(fields.isDefault, {
                 type: 'checkbox',
               })}
@@ -89,6 +108,7 @@ export const SaveFilterDialog = ({
               Nastavit jako výchozí
             </Checkbox>
             <Checkbox
+              hint={sharedHint}
               {...getInputProps(fields.isShared, {
                 type: 'checkbox',
               })}

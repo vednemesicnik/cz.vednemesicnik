@@ -1,11 +1,7 @@
 import { clsx } from 'clsx'
-import {
-  type ChangeEvent,
-  type ComponentProps,
-  useEffect,
-  useId,
-  useRef,
-} from 'react'
+import { type ChangeEvent, type ComponentProps, useId, useRef } from 'react'
+
+import { useSelectValueSync } from '~/utils/use-select-value-sync'
 
 import styles from './_styles.module.css'
 
@@ -34,22 +30,7 @@ export const AdminFilterSelect = ({
   const selectId = id ?? generatedId
   const selectRef = useRef<HTMLSelectElement>(null)
 
-  // The select is uncontrolled, so React writes `defaultValue` into the DOM on
-  // mount only — applying a saved filter, clearing one, or going back navigates
-  // client-side without remounting and would leave the previous option shown.
-  // Resynced by hand rather than through a `key`, which would remount the select
-  // and drop focus right after its own auto-submit.
-  useEffect(() => {
-    const select = selectRef.current
-
-    if (select === null) return
-
-    const value = String(defaultValue ?? '')
-
-    if (select.value !== value) {
-      select.value = value
-    }
-  }, [defaultValue])
+  useSelectValueSync(selectRef, defaultValue)
 
   const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
     onChange?.(event)
