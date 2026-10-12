@@ -44,7 +44,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       {/* Until the e-mail field moves onto this card (20a), a navigation drawn
           as an outline button. */}
-      <Form action={magicLinkPath} method={'get'}>
+      <Form action={magicLinkPath} method={'get'} viewTransition>
         {hasRedirectTo ? (
           <input
             name={'redirectTo'}

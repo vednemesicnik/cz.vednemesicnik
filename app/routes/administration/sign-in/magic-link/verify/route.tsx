@@ -23,7 +23,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   // A navigation drawn as the primary button (20c).
   const backToSettings = (
-    <Form action={href('/administration/settings')} method={'get'}>
+    <Form
+      action={href('/administration/settings')}
+      method={'get'}
+      viewTransition
+    >
       <Button type={'submit'}>Zpět do Nastavení</Button>
     </Form>
   )
