@@ -12,6 +12,7 @@ import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import type { Route } from './+types/route'
@@ -135,6 +136,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           createdAt: true,
           id: true,
           state: true,
+          submittedAt: true,
           title: true,
         },
         skip: (page - 1) * PAGE_SIZE,
@@ -193,7 +195,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   }
 
   // Compute permissions for each article
-  const articles = rawArticles.map((article) => {
+  const articles = rawArticles.map(({ submittedAt, ...article }) => {
     if (article.authors.length === 0) {
       return {
         ...article,
@@ -205,20 +207,26 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
     const targetAuthorIds = article.authors.map((a) => a.id)
 
+    // A submitted article is not deleted, and its authors don't edit it until
+    // they take it back (design 07c, 07d).
     return {
       ...article,
-      canDelete: context.can({
-        action: 'delete',
-        entity: 'article',
-        state: article.state,
-        targetAuthorIds,
-      }).hasPermission,
-      canEdit: context.can({
-        action: 'update',
-        entity: 'article',
-        state: article.state,
-        targetAuthorIds,
-      }).hasPermission,
+      canDelete:
+        submittedAt === null &&
+        context.can({
+          action: 'delete',
+          entity: 'article',
+          state: article.state,
+          targetAuthorIds,
+        }).hasPermission,
+      canEdit:
+        !isLockedBySubmission({ roleLevel: context.roleLevel, submittedAt }) &&
+        context.can({
+          action: 'update',
+          entity: 'article',
+          state: article.state,
+          targetAuthorIds,
+        }).hasPermission,
       canView: context.can({
         action: 'view',
         entity: 'article',
