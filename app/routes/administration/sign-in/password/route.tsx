@@ -62,7 +62,9 @@ export default function RouteComponent({
         Pro případ, že nefunguje Google, passkey ani odkaz v e-mailu.
       </AdminSignInText>
 
-      {loaderData.twoFactorEnded !== null ? (
+      {/* Until the next attempt, which brings its own answer (a failed one
+          does not revalidate the loader). */}
+      {loaderData.twoFactorEnded !== null && actionData === undefined ? (
         <Callout role={'alert'} tone={'error'}>
           {loaderData.twoFactorEnded === 'locked'
             ? 'Zadejte heslo znovu — kód byl pětkrát zadán nesprávně.'
