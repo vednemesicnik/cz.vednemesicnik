@@ -20,7 +20,15 @@ export const Label = ({
       htmlFor={htmlFor}
       {...rest}
     >
-      {children} {required && '*'}
+      {children}
+      {required && (
+        <>
+          {' '}
+          <span aria-hidden={true} className={styles.required}>
+            *
+          </span>
+        </>
+      )}
     </label>
   )
 }

@@ -1,7 +1,16 @@
+/* The design system's field label (`.vdm-field__label`); the field's gap
+   spaces it from the control. */
 .label {
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-sm);
-  margin-block-end: 4px;
+  @layer component {
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-sm);
+  }
+}
+
+.required {
+  @layer component {
+    color: var(--error-text);
+  }
 }
