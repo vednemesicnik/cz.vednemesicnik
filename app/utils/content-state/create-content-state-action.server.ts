@@ -14,6 +14,30 @@ const INTENT_VALUE = FORM_CONFIG.intent.value
 const REDIRECT_NAME = FORM_CONFIG.redirect.name
 const PUBLISHED_AT_NAME = 'publishedAt'
 
+type SubmissionTransitionOptions = {
+  id: string
+  target: PermissionTarget
+}
+
+/** The submission transitions of an entity that is submitted for review (design 07d). */
+export type SubmissionHandlers = {
+  /** Odeslat ke schválení; `missing` lists what blocks it (23h), empty once submitted. */
+  submit: (
+    request: Request,
+    options: SubmissionTransitionOptions,
+  ) => Promise<{ missing: string[] }>
+  /** Vzít zpět do konceptu (an author). */
+  withdraw: (
+    request: Request,
+    options: SubmissionTransitionOptions,
+  ) => Promise<void>
+  /** Vrátit k úpravám (the Coordinator). */
+  returnForEdits: (
+    request: Request,
+    options: SubmissionTransitionOptions,
+  ) => Promise<void>
+}
+
 type RunContentStateActionOptions = {
   id: string
   handlers: ContentStateHandlers
@@ -23,6 +47,8 @@ type RunContentStateActionOptions = {
   deleteRedirectTo: string
   /** Only the article exposes the change-published-at intent. */
   supportsChangePublishedAt?: boolean
+  /** Only the article is submitted for review so far. */
+  submissionHandlers?: SubmissionHandlers
 }
 
 const parsePublishedAt = (value: FormDataEntryValue | null) =>
@@ -32,12 +58,15 @@ const parsePublishedAt = (value: FormDataEntryValue | null) =>
  * Shared intent-switch action for content entities: validates CSRF, loads the
  * permission target, and dispatches to the entity's {@link ContentStateHandlers}.
  * Replaces each per-entity `_index/_action.ts` switch.
+ *
+ * @returns For a submission intent, `{ intent, missing }` so the page can toast or
+ *   list what blocks the submission; nothing for the other intents.
  */
 export const runContentStateAction = async (
   request: Request,
   options: RunContentStateActionOptions,
 ) => {
-  const { handlers, id } = options
+  const { handlers, id, submissionHandlers } = options
 
   const formData = await request.formData()
   await requireCSRF(formData, request)
@@ -98,6 +127,34 @@ export const runContentStateAction = async (
     case INTENT_VALUE.review:
       await handlers.review(request, { id, target })
       break
+
+    case INTENT_VALUE.submitForReview: {
+      if (submissionHandlers === undefined) {
+        throw new Error(`Invalid intent: ${intent}`)
+      }
+
+      const { missing } = await submissionHandlers.submit(request, {
+        id,
+        target,
+      })
+      return { intent, missing }
+    }
+
+    case INTENT_VALUE.withdrawSubmission:
+      if (submissionHandlers === undefined) {
+        throw new Error(`Invalid intent: ${intent}`)
+      }
+
+      await submissionHandlers.withdraw(request, { id, target })
+      return { intent, missing: [] }
+
+    case INTENT_VALUE.returnForEdits:
+      if (submissionHandlers === undefined) {
+        throw new Error(`Invalid intent: ${intent}`)
+      }
+
+      await submissionHandlers.returnForEdits(request, { id, target })
+      return { intent, missing: [] }
 
     default:
       throw new Error(`Invalid intent: ${intent}`)

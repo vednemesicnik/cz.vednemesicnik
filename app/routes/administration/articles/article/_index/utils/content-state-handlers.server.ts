@@ -1,3 +1,5 @@
+import { data } from 'react-router'
+
 import {
   clearReviewsOnDraft,
   createContentStateHandlers,
@@ -15,9 +17,14 @@ const buildPathname = (slug: string) => `/articles/${slug}`
 export const articleContentStateHandlers = createContentStateHandlers({
   allowBackdating: true,
   applyState: async (id, data) => {
+    // Every state change ends the submission (design 07b, 07e): a retracted or
+    // restored article is an unsubmitted draft, a published one waits no more.
+    const submission =
+      data.state === undefined ? {} : { submittedAt: null, submittedById: null }
+
     const updatedArticle = await prisma.article.update({
       // Retract/restore also wipe reviews; PageSEO has no reviews to clear.
-      data: clearReviewsOnDraft(data),
+      data: { ...clearReviewsOnDraft(data), ...submission },
       select: { slug: true },
       where: { id },
     })
@@ -30,6 +37,16 @@ export const articleContentStateHandlers = createContentStateHandlers({
   },
 
   deleteRow: async (id) => {
+    // A submitted draft is not deleted (design 07c): it goes back to draft first.
+    const { submittedAt } = await prisma.article.findUniqueOrThrow({
+      select: { submittedAt: true },
+      where: { id },
+    })
+
+    if (submittedAt !== null) {
+      throw data(null, { status: 403 })
+    }
+
     await deleteRowWithImages(
       async () => {
         const images = await prisma.articleImage.findMany({

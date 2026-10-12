@@ -2,6 +2,7 @@ import { data } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
+import { formatNumericDate } from '~/utils/format-numeric-date'
 import {
   createImageSources,
   imageSourceSelect,
@@ -12,6 +13,10 @@ import {
   canPublishWithoutReview,
   needsReviewToPublish,
 } from '~/utils/permissions/author/review-policy'
+import { canReturnForEdits } from '~/utils/permissions/author/submission/can-return-for-edits'
+import { canSubmitForReview } from '~/utils/permissions/author/submission/can-submit-for-review'
+import { canWithdrawSubmission } from '~/utils/permissions/author/submission/can-withdraw-submission'
+import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 
 import type { Route } from './+types/route'
 
@@ -80,6 +85,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       slug: true,
       state: true,
+      submittedAt: true,
       tags: {
         select: {
           id: true,
@@ -184,19 +190,65 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   // Don't show review button if:
   // 1. All authors can publish without review - they don't need reviews
   // 2. Current user is one of the authors - can't review own content
+  // 3. The article isn't submitted - approval reads a submitted text (design 07c)
   const authorCanPublishWithoutReview = article.authors.every((author) =>
     canPublishWithoutReview(author.role),
   )
   const isOwnContent = article.authors.some(
     (author) => author.id === context.authorId,
   )
+  const isSubmitted = article.submittedAt !== null
   const shouldShowReview =
-    canReview && !authorCanPublishWithoutReview && !isOwnContent
+    canReview && !authorCanPublishWithoutReview && !isOwnContent && isSubmitted
 
   // Check if current user has already reviewed this article
   const hasReviewed = article.reviews.some(
     (review) => review.reviewer.id === context.authorId,
   )
+
+  // Submission (design 07a, 07d): a submitted draft waits, and with an approving
+  // review it is approved. Its authors can't edit or delete it meanwhile.
+  const approvingReview = article.reviews.find((review) =>
+    canPublishWithoutReview(review.reviewer.role),
+  )
+  const submission =
+    article.state !== 'draft' || article.submittedAt === null
+      ? null
+      : approvingReview === undefined
+        ? {
+            date: formatNumericDate(article.submittedAt),
+            state: 'pending' as const,
+          }
+        : {
+            date: formatNumericDate(approvingReview.createdAt),
+            state: 'approved' as const,
+          }
+  const isLocked = isLockedBySubmission({
+    roleLevel: context.roleLevel,
+    submittedAt: article.submittedAt,
+  })
+
+  const canSubmit =
+    canUpdate &&
+    canSubmitForReview({
+      authorId: context.authorId,
+      authors: article.authors,
+      state: article.state,
+      submittedAt: article.submittedAt,
+    })
+  const canWithdraw = canWithdrawSubmission({
+    authorId: context.authorId,
+    authorIds: targetAuthorIds,
+    state: article.state,
+    submittedAt: article.submittedAt,
+  })
+  const canReturn =
+    canReview &&
+    canReturnForEdits({
+      roleLevel: context.roleLevel,
+      state: article.state,
+      submittedAt: article.submittedAt,
+    })
 
   return {
     article: {
@@ -234,14 +286,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     canArchive,
     canChangePublishedAt:
       article.state === 'published' && context.roleLevel <= APPROVER_ROLE_LEVEL,
-    canDelete,
+    canDelete: canDelete && !isSubmitted,
     canPublish,
     canPublishBackdated: canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
     canRestore,
     canRetract,
+    canReturn,
     canReview: shouldShowReview,
-    canUpdate,
+    canSubmit,
+    canUpdate: canUpdate && !isLocked,
+    canWithdraw,
     hasReviewed,
+    isOwnContent,
     needsReview,
+    submission,
   }
 }

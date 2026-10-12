@@ -3,7 +3,10 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { FORM_CONFIG } from '~/config/form-config'
 
-import { runContentStateAction } from './create-content-state-action.server'
+import {
+  runContentStateAction,
+  type SubmissionHandlers,
+} from './create-content-state-action.server'
 import type { ContentStateHandlers } from './create-content-state-handlers.server'
 
 // CSRF is validated elsewhere; make it a no-op so these tests focus on dispatch.
@@ -170,5 +173,54 @@ describe('runContentStateAction — validation', () => {
   test('throws when the intent is missing', async () => {
     const { result } = run({})
     await expect(result).rejects.toBeInstanceOf(Response)
+  })
+})
+
+describe('runContentStateAction — submission', () => {
+  const createSubmissionHandlers = (): SubmissionHandlers => ({
+    returnForEdits: vi.fn().mockResolvedValue(undefined),
+    submit: vi.fn().mockResolvedValue({ missing: ['Chybí perex.'] }),
+    withdraw: vi.fn().mockResolvedValue(undefined),
+  })
+
+  test('routes each submission intent and answers with the intent', async () => {
+    const cases: [string, keyof SubmissionHandlers][] = [
+      [INTENT_VALUE.returnForEdits, 'returnForEdits'],
+      [INTENT_VALUE.withdrawSubmission, 'withdraw'],
+    ]
+
+    for (const [intent, handlerName] of cases) {
+      const submissionHandlers = createSubmissionHandlers()
+      const { result } = run({ [INTENT_NAME]: intent }, { submissionHandlers })
+
+      await expect(result).resolves.toEqual({ intent, missing: [] })
+      expect(submissionHandlers[handlerName]).toHaveBeenCalledWith(
+        expect.any(Request),
+        { id: 'a1', target },
+      )
+    }
+  })
+
+  test('passes on what blocks a submission', async () => {
+    const { result } = run(
+      { [INTENT_NAME]: INTENT_VALUE.submitForReview },
+      { submissionHandlers: createSubmissionHandlers() },
+    )
+
+    await expect(result).resolves.toEqual({
+      intent: INTENT_VALUE.submitForReview,
+      missing: ['Chybí perex.'],
+    })
+  })
+
+  test('rejects a submission intent when the entity is not submitted', async () => {
+    for (const intent of [
+      INTENT_VALUE.submitForReview,
+      INTENT_VALUE.withdrawSubmission,
+      INTENT_VALUE.returnForEdits,
+    ]) {
+      const { result } = run({ [INTENT_NAME]: intent })
+      await expect(result).rejects.toThrow('Invalid intent')
+    }
   })
 })
