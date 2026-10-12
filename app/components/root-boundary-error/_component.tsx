@@ -21,14 +21,10 @@ type Props = {
 export const RootBoundaryError = ({ error }: Props) => {
   const { pathname, search } = useLocation()
   const copy = getPageLoadFailedCopy(pathname + search)
-  const isAdministration = pathname.startsWith('/administration')
 
   return (
     <main className={styles.container}>
-      <VdmLogo
-        className={styles.logo}
-        variant={isAdministration ? 'admin' : 'default'}
-      />
+      <VdmLogo className={styles.logo} />
       <h1 className={styles.title}>{copy.title}</h1>
       <p className={styles.sentence}>{copy.sentence}</p>
       <BoundaryDiagnostics error={error} />
