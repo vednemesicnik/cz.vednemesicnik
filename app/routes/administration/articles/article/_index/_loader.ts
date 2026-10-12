@@ -190,27 +190,31 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   // Don't show review button if:
   // 1. All authors can publish without review - they don't need reviews
   // 2. Current user is one of the authors - can't review own content
-  // 3. The article isn't submitted - approval reads a submitted text (design 07c)
+  // 3. The article isn't waiting - approval reads a submitted text, once (design 07c)
   const authorCanPublishWithoutReview = article.authors.every((author) =>
     canPublishWithoutReview(author.role),
   )
   const isOwnContent = article.authors.some(
     (author) => author.id === context.authorId,
   )
+  // Submission (design 07a, 07d): a submitted draft waits, and with an approving
+  // review it is approved. Its authors can't edit or delete it meanwhile.
   const isSubmitted = article.submittedAt !== null
+  const approvingReview = article.reviews.find((review) =>
+    canPublishWithoutReview(review.reviewer.role),
+  )
   const shouldShowReview =
-    canReview && !authorCanPublishWithoutReview && !isOwnContent && isSubmitted
+    canReview &&
+    !authorCanPublishWithoutReview &&
+    !isOwnContent &&
+    isSubmitted &&
+    approvingReview === undefined
 
   // Check if current user has already reviewed this article
   const hasReviewed = article.reviews.some(
     (review) => review.reviewer.id === context.authorId,
   )
 
-  // Submission (design 07a, 07d): a submitted draft waits, and with an approving
-  // review it is approved. Its authors can't edit or delete it meanwhile.
-  const approvingReview = article.reviews.find((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
   const submission =
     article.state !== 'draft' || article.submittedAt === null
       ? null
