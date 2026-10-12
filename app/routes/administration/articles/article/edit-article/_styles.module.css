@@ -42,12 +42,10 @@
     gap: 8px;
     width: 100%;
 
-    & > section {
+    /* The fields grow; the button lines up with the inputs, as no row is
+       reserved for errors. */
+    & > :not(button) {
       flex: 1;
-    }
-
-    & > button {
-      margin-block-end: 20px;
     }
   }
 }
