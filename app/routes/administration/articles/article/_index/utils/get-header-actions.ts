@@ -1,24 +1,11 @@
 import type { ContentState } from '@generated/prisma/enums'
 
-export type HeaderAction =
-  | 'approve'
-  | 'approve-and-publish'
-  | 'archive'
-  | 'change-date'
-  | 'delete'
-  | 'edit'
-  | 'publish'
-  | 'restore'
-  | 'retract'
-  | 'return'
-  | 'submit'
-  | 'view-on-web'
-  | 'withdraw'
+import type { ArticleAction } from '../../../utils/article-actions'
 
 type HeaderActions = {
-  primary: HeaderAction | null
-  outline: HeaderAction | null
-  menu: HeaderAction[]
+  primary: ArticleAction | null
+  outline: ArticleAction | null
+  menu: ArticleAction[]
   sentence: string | null
 }
 
@@ -40,7 +27,7 @@ type Options = {
   canChangePublishedAt: boolean
 }
 
-const only = (action: HeaderAction, isAllowed: boolean) =>
+const only = (action: ArticleAction, isAllowed: boolean) =>
   isAllowed ? [action] : []
 
 const getDraftActions = (options: Options): HeaderActions => {
