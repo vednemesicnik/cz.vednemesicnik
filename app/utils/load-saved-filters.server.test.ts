@@ -135,20 +135,20 @@ describe('loadSavedFilters', () => {
     expect(activeFilterId).toBeNull()
   })
 
-  test('should snapshot only the canonical filter params', async () => {
+  test('should snapshot the canonical filter params and the search', async () => {
     mockFilters()
 
     const { currentFilterQuery } = await load(
       '?tag=skola&q=foo&state=draft&page=2&filter=own-1',
     )
 
-    expect(currentFilterQuery).toBe('state=draft&tag=skola')
+    expect(currentFilterQuery).toBe('state=draft&tag=skola&q=foo')
   })
 
   test('should snapshot an empty query for an unfiltered list', async () => {
     mockFilters()
 
-    const { currentFilterQuery } = await load('?q=foo&sort=title')
+    const { currentFilterQuery } = await load('?sort=title&page=2')
 
     expect(currentFilterQuery).toBe('')
   })
