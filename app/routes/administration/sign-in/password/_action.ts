@@ -138,6 +138,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     throw redirect('/administration/sign-in/verify-2fa', {
       headers: {
         'Set-Cookie': await setPendingTwoFactorCookieSession(request, {
+          email,
           redirectTo,
           userId: user.id,
         }),

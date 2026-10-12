@@ -20,7 +20,10 @@ export { middleware } from './_middleware'
 
 // The second step of the emergency password sign-in (design 20d). Copy approved
 // (gs905c2e).
-export default function RouteComponent({ actionData }: Route.ComponentProps) {
+export default function RouteComponent({
+  actionData,
+  loaderData,
+}: Route.ComponentProps) {
   const isHydrated = useHydrated()
 
   // The method lives in the URL, so the switch works without JavaScript and the
@@ -50,6 +53,8 @@ export default function RouteComponent({ actionData }: Route.ComponentProps) {
 
       <Form {...getFormProps(form)} errors={form.errors} method={'post'}>
         <HoneypotInputs />
+        {/* Kept on the password page if the five minutes run out (20d). */}
+        <input name={'email'} type={'hidden'} value={loaderData.email ?? ''} />
 
         {/* Only the visible field is submitted, so the action branches on
             whichever of code / backupCode is present. */}
