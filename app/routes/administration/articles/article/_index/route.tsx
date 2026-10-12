@@ -253,7 +253,6 @@ export default function RouteComponent({
               label: ACTION_LABELS[headerAction],
               onSelect: () => runAction(headerAction),
             }))}
-            label={'Další akce s článkem'}
           />
           {headerActions.outline !== null &&
             renderButton(headerActions.outline, 'outline')}
