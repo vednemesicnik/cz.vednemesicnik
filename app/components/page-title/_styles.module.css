@@ -1,0 +1,11 @@
+.pageTitle {
+  @layer component {
+    margin: 0;
+    font-size: var(--page-title-font-size);
+    line-height: var(--page-title-line-height);
+    font-weight: var(--page-title-font-weight);
+    letter-spacing: var(--page-title-letter-spacing);
+    color: var(--text-primary);
+    text-wrap: pretty;
+  }
+}

@@ -8,7 +8,6 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -18,6 +17,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
 import { schema } from './_schema'
@@ -59,7 +59,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Upravit uživatele</AdminHeadline>
+      <PageTitle>Upravit uživatele</PageTitle>
 
       <Form errors={form.errors} method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily uživatele'}>

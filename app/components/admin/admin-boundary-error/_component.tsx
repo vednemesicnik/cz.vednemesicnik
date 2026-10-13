@@ -1,12 +1,11 @@
 import { useLocation } from 'react-router'
-
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useHighlightSidebarSection } from '~/components/admin/sidebar-highlight-provider'
 import { BoundaryDiagnostics } from '~/components/boundary-error/components/boundary-diagnostics'
 import type { ContentKind } from '~/components/boundary-error/utils/content-kind'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 
 import styles from './_styles.module.css'
 import { resolveAdminBoundaryView } from './utils/resolve-admin-boundary-view'
@@ -32,7 +31,7 @@ export const AdminBoundaryError = ({ error, kind }: Props) => {
 
   return (
     <AdminPage>
-      <AdminHeadline>{view.title}</AdminHeadline>
+      <PageTitle>{view.title}</PageTitle>
       <AdminParagraph>{view.sentence}</AdminParagraph>
       {view.unexpected && <BoundaryDiagnostics error={error} />}
 

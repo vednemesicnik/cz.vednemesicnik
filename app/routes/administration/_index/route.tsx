@@ -3,12 +3,12 @@
 import { href } from 'react-router'
 
 import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminNavigationCard } from '~/components/admin/admin-navigation-card'
 import { AdminNavigationGrid } from '~/components/admin/admin-navigation-grid'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminPendingItem } from '~/components/admin/admin-pending-item'
 import { AdminStatCard } from '~/components/admin/admin-stat-card'
+import { PageTitle } from '~/components/page-title'
 import { useContentEvents } from '~/hooks/use-content-events'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -37,7 +37,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Přehled</AdminHeadline>
+      <PageTitle>Přehled</PageTitle>
 
       {/* Statistics Section */}
       <section className={styles.section}>

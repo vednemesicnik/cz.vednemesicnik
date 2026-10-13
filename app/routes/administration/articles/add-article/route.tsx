@@ -11,7 +11,6 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { type SubmitEvent, useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminDraftRestoreBanner } from '~/components/admin/admin-draft-restore-banner'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminImageInput } from '~/components/admin/admin-image-input'
 import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
 import { AdminLeaveConfirmationDialog } from '~/components/admin/admin-leave-confirmation-dialog'
@@ -26,6 +25,7 @@ import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
@@ -132,7 +132,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Přidat článek</AdminHeadline>
+      <PageTitle>Přidat článek</PageTitle>
 
       {backup !== null && (
         <AdminDraftRestoreBanner

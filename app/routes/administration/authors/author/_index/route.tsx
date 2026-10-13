@@ -12,11 +12,11 @@ import {
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
@@ -44,7 +44,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>{author.name}</AdminHeadline>
+      <PageTitle>{author.name}</PageTitle>
 
       <AdminActionGroup>
         {canUpdate && (

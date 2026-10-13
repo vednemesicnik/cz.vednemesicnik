@@ -9,7 +9,6 @@ import {
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
@@ -17,6 +16,7 @@ import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
 import { slugify } from '~/utils/slugify'
@@ -74,7 +74,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Upravit kategorii</AdminHeadline>
+      <PageTitle>Upravit kategorii</PageTitle>
 
       <Form errors={form.errors} method={'post'} {...getFormProps(form)}>
         <AuthenticityTokenInput />

@@ -3,7 +3,6 @@
 import { clsx } from 'clsx'
 import { useEffect, useId, useRef } from 'react'
 import { href, useSearchParams } from 'react-router'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -18,6 +17,7 @@ import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { ListHeader } from '~/components/list-header'
+import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { useToast } from '~/components/toast-provider'
 import type { ArticleQueue } from '~/config/article-queue-config'
@@ -175,7 +175,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         className={styles.header}
         leadClassName={styles.headerLead}
       >
-        <AdminHeadline className={styles.headline}>Články</AdminHeadline>
+        <PageTitle className={styles.headline}>Články</PageTitle>
         {showWaitingWork && (
           <p className={styles.waitingWork}>
             <Link preventScrollReset={true} to={{ search: '?state=pending' }}>
