@@ -36,7 +36,10 @@ export async function action({ request }: Route.ActionArgs) {
     targetAuthorIds: [authorId],
   })
 
-  const { episodeId } = await createEpisode(submission.value)
+  const { episodeId } = await createEpisode({
+    ...submission.value,
+    actor: context,
+  })
   const { podcastId } = submission.value
 
   return redirect(

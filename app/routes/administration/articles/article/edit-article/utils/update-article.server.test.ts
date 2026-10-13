@@ -181,11 +181,10 @@ describe('updateArticle — a successful save', () => {
   test('announces the update once the transaction commits', async () => {
     await updateArticle(request, options)
 
-    expect(mocks.publishContentEvent).toHaveBeenCalledExactlyOnceWith({
-      change: 'update',
-      entity: 'article',
-      entityId: 'article-1',
-    })
+    expect(mocks.publishContentEvent).toHaveBeenCalledExactlyOnceWith(
+      { change: 'update', entity: 'article', entityId: 'article-1' },
+      mocks.permissionContext(),
+    )
   })
 
   test('deletes the removed image row in the transaction, then its files', async () => {

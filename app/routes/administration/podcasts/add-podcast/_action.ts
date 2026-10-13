@@ -43,6 +43,7 @@ export async function action({ request }: Route.ActionArgs) {
   })
 
   const { podcastId } = await createPodcast({
+    actor: context,
     authorId,
     cover,
     description,

@@ -127,77 +127,90 @@ export const createContentStateHandlers = (
   // PageSEO never runs through this factory and has no content event.
   const contentEventEntity = entity === 'page_seo' ? undefined : entity
 
-  // Announces a transition once its handler resolved; a rejected one (403,
-  // invariant) announces nothing.
+  // Announces a transition once its write resolved, in the actor's name; a
+  // rejected one (403, invariant) announces nothing.
   const announceOnSuccess =
-    <Options extends TransitionOptions, Result>(
-      change: ContentEventChange,
-      handler: (request: Request, options: Options) => Promise<Result>,
-      hasChanged: (result: Result) => boolean = () => true,
+    <Result>(
+      announcement: {
+        change: ContentEventChange
+        id: string
+        hasChanged?: (result: Result) => boolean
+      },
+      execute: (context: AuthorPermissionContext) => Promise<Result>,
     ) =>
-    async (request: Request, options: Options) => {
-      const result = await handler(request, options)
+    async (context: AuthorPermissionContext) => {
+      const { change, id, hasChanged = () => true } = announcement
+      const result = await execute(context)
 
       if (contentEventEntity !== undefined && hasChanged(result)) {
-        publishContentEvent({
-          change,
-          entity: contentEventEntity,
-          entityId: options.id,
-        })
+        publishContentEvent(
+          { change, entity: contentEventEntity, entityId: id },
+          context,
+        )
       }
 
       return result
     }
 
+  // A publish blocked by missing content writes nothing.
+  const isPublished = ({ missing }: { missing: string[] }) =>
+    missing.length === 0
+
   const publish = (request: Request, options: PublishOptions) =>
     withAuthorPermission(request, {
       action: 'publish',
       entity,
-      execute: async (context) => {
-        const publishState = await config.loadPublishState(options.id)
-        const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+      execute: announceOnSuccess(
+        { change: 'publish', hasChanged: isPublished, id: options.id },
+        async (context) => {
+          const publishState = await config.loadPublishState(options.id)
+          const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
 
-        invariantResponse(
-          (config.approverPublishesWithoutReview === true && isApprover) ||
-            !needsReviewToPublish({
-              authors: publishState.authors,
-              reviews: publishState.reviews,
-            }),
-          'Nelze publikovat bez schválení koordinátora',
-        )
+          invariantResponse(
+            (config.approverPublishesWithoutReview === true && isApprover) ||
+              !needsReviewToPublish({
+                authors: publishState.authors,
+                reviews: publishState.reviews,
+              }),
+            'Nelze publikovat bez schválení koordinátora',
+          )
 
-        const missing =
-          (await config.getMissingBeforePublish?.(options.id)) ?? []
+          const missing =
+            (await config.getMissingBeforePublish?.(options.id)) ?? []
 
-        if (missing.length > 0) {
+          if (missing.length > 0) {
+            return { missing }
+          }
+
+          // Ignore any client-supplied date unless the entity allows backdating.
+          const requestedPublishedAt = config.allowBackdating
+            ? options.publishedAt
+            : undefined
+
+          if (requestedPublishedAt !== undefined) {
+            assertCanSetPublishedAt(context, requestedPublishedAt)
+          }
+
+          // Preserve the stored "first published" date on re-publish; fall back to
+          // now on the first publish (no stored date yet).
+          const publishedAt =
+            requestedPublishedAt ?? publishState.publishedAt ?? new Date()
+
+          await config.applyState(options.id, {
+            publishedAt,
+            state: 'published',
+          })
+
+          // Auto-approve when an approver publishes: their publishing act is the
+          // approval, so record it once (idempotent) to satisfy the review gate
+          // for lower-role co-authors and future re-publishes.
+          if (isApprover) {
+            await config.ensureApprovingReview(options.id, context.authorId)
+          }
+
           return { missing }
-        }
-
-        // Ignore any client-supplied date unless the entity allows backdating.
-        const requestedPublishedAt = config.allowBackdating
-          ? options.publishedAt
-          : undefined
-
-        if (requestedPublishedAt !== undefined) {
-          assertCanSetPublishedAt(context, requestedPublishedAt)
-        }
-
-        // Preserve the stored "first published" date on re-publish; fall back to
-        // now on the first publish (no stored date yet).
-        const publishedAt =
-          requestedPublishedAt ?? publishState.publishedAt ?? new Date()
-
-        await config.applyState(options.id, { publishedAt, state: 'published' })
-
-        // Auto-approve when an approver publishes: their publishing act is the
-        // approval, so record it once (idempotent) to satisfy the review gate
-        // for lower-role co-authors and future re-publishes.
-        if (isApprover) {
-          await config.ensureApprovingReview(options.id, context.authorId)
-        }
-
-        return { missing }
-      },
+        },
+      ),
       target: options.target,
     })
 
@@ -207,7 +220,9 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'retract',
       entity,
-      execute: () => config.applyState(options.id, { state: 'draft' }),
+      execute: announceOnSuccess({ change: 'retract', id: options.id }, () =>
+        config.applyState(options.id, { state: 'draft' }),
+      ),
       target: options.target,
     })
 
@@ -215,7 +230,9 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'archive',
       entity,
-      execute: () => config.applyState(options.id, { state: 'archived' }),
+      execute: announceOnSuccess({ change: 'archive', id: options.id }, () =>
+        config.applyState(options.id, { state: 'archived' }),
+      ),
       target: options.target,
     })
 
@@ -223,7 +240,9 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'restore',
       entity,
-      execute: () => config.applyState(options.id, { state: 'draft' }),
+      execute: announceOnSuccess({ change: 'restore', id: options.id }, () =>
+        config.applyState(options.id, { state: 'draft' }),
+      ),
       target: options.target,
     })
 
@@ -231,8 +250,10 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'review',
       entity,
-      execute: (context) =>
-        config.ensureApprovingReview(options.id, context.authorId),
+      execute: announceOnSuccess(
+        { change: 'review', id: options.id },
+        (context) => config.ensureApprovingReview(options.id, context.authorId),
+      ),
       target: options.target,
     })
 
@@ -240,7 +261,10 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'delete',
       entity,
-      execute: (context) => config.deleteRow(options.id, context),
+      execute: announceOnSuccess(
+        { change: 'delete', id: options.id },
+        (context) => config.deleteRow(options.id, context),
+      ),
       target: options.target,
     })
 
@@ -253,30 +277,25 @@ export const createContentStateHandlers = (
       // assertCanSetPublishedAt narrows it to approvers.
       action: 'retract',
       entity,
-      execute: (context) => {
-        assertCanSetPublishedAt(context, options.publishedAt)
-        return config.applyState(options.id, {
-          publishedAt: options.publishedAt,
-        })
-      },
+      execute: announceOnSuccess(
+        { change: 'change-published-at', id: options.id },
+        (context) => {
+          assertCanSetPublishedAt(context, options.publishedAt)
+          return config.applyState(options.id, {
+            publishedAt: options.publishedAt,
+          })
+        },
+      ),
       target: options.target,
     })
 
   return {
-    archive: announceOnSuccess('archive', archive),
-    changePublishedAt: announceOnSuccess(
-      'change-published-at',
-      changePublishedAt,
-    ),
-    delete: announceOnSuccess('delete', deleteRow),
-    // A publish blocked by missing content writes nothing.
-    publish: announceOnSuccess(
-      'publish',
-      publish,
-      ({ missing }) => missing.length === 0,
-    ),
-    restore: announceOnSuccess('restore', restore),
-    retract: announceOnSuccess('retract', retract),
-    review: announceOnSuccess('review', review),
+    archive,
+    changePublishedAt,
+    delete: deleteRow,
+    publish,
+    restore,
+    retract,
+    review,
   }
 }

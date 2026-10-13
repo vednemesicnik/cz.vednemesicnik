@@ -15,11 +15,11 @@ export const updateCategory = async (
   request: Request,
   { categoryId, name, slug, authorId, state }: Options,
 ) => {
-  const category = await withAuthorPermission(request, {
+  return withAuthorPermission(request, {
     action: 'update',
     entity: 'article_category',
-    execute: () =>
-      prisma.articleCategory.update({
+    execute: async (context) => {
+      const category = await prisma.articleCategory.update({
         data: {
           authorId,
           name,
@@ -27,15 +27,15 @@ export const updateCategory = async (
         },
         select: { id: true },
         where: { id: categoryId },
-      }),
+      })
+
+      publishContentEvent(
+        { change: 'update', entity: 'article_category', entityId: categoryId },
+        context,
+      )
+
+      return category
+    },
     target: { authorIds: [authorId], state },
   })
-
-  publishContentEvent({
-    change: 'update',
-    entity: 'article_category',
-    entityId: categoryId,
-  })
-
-  return category
 }

@@ -26,6 +26,7 @@ export async function getAuthorPermissionContext(
           author: {
             select: {
               id: true,
+              name: true,
               role: {
                 select: {
                   level: true,
@@ -68,6 +69,8 @@ export async function getAuthorPermissionContext(
 
   return {
     authorId: author.id,
+    // Names the actor of a content event (22f).
+    authorName: author.name,
 
     can: (config: {
       entity: AuthorPermissionEntity

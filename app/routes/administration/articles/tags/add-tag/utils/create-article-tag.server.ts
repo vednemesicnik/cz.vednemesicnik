@@ -12,26 +12,26 @@ export const createArticleTag = async (
   request: Request,
   { name, slug, authorId }: Options,
 ) => {
-  const tag = await withAuthorPermission(request, {
+  return withAuthorPermission(request, {
     action: 'create',
     entity: 'article_tag',
-    execute: () =>
-      prisma.articleTag.create({
+    execute: async (context) => {
+      const tag = await prisma.articleTag.create({
         data: {
           authorId,
           name,
           slug,
         },
         select: { id: true },
-      }),
+      })
+
+      publishContentEvent(
+        { change: 'create', entity: 'article_tag', entityId: tag.id },
+        context,
+      )
+
+      return tag
+    },
     target: { authorIds: [authorId], state: 'draft' },
   })
-
-  publishContentEvent({
-    change: 'create',
-    entity: 'article_tag',
-    entityId: tag.id,
-  })
-
-  return tag
 }

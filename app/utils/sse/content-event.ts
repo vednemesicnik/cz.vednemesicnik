@@ -21,12 +21,22 @@ export type ContentEventChange =
   | 'create'
   | 'update'
 
+/** The author whose action changed the content. */
+export type ContentEventActor = {
+  authorId: string
+  name: string
+}
+
 /**
- * An id-only hint that a piece of content changed. Receivers revalidate their own
- * loaders, so the event carries no data and needs no permission filtering.
+ * A hint that a piece of content changed. Receivers revalidate their own
+ * loaders, so the event carries no content and needs no permission filtering;
+ * only who changed it and when, for the live change in the article list (22f).
  */
 export type ContentEvent = {
   entity: ContentEventEntity
   entityId: string
   change: ContentEventChange
+  actor: ContentEventActor
+  /** ISO 8601 */
+  occurredAt: string
 }

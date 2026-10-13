@@ -1,5 +1,8 @@
 import { prisma } from '~/utils/db.server'
-import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
+import {
+  type PublishingAuthor,
+  publishContentEvent,
+} from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -10,6 +13,7 @@ type Args = {
   description: string
   authorId: string
   links?: { label: string; url: string }[]
+  actor: PublishingAuthor
 }
 
 export async function updateEpisode({
@@ -20,6 +24,7 @@ export async function updateEpisode({
   description,
   authorId,
   links = [],
+  actor,
 }: Args) {
   try {
     // Links inherit the episode's lifecycle, so replace the whole set on save.
@@ -50,11 +55,10 @@ export async function updateEpisode({
     })
 
     // The links are saved with the episode, so its update covers them.
-    publishContentEvent({
-      change: 'update',
-      entity: 'podcast_episode',
-      entityId: id,
-    })
+    publishContentEvent(
+      { change: 'update', entity: 'podcast_episode', entityId: id },
+      actor,
+    )
   } catch (error) {
     throwDbError(error, 'Unable to update the episode.')
   }

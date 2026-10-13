@@ -1,5 +1,8 @@
 import { prisma } from '~/utils/db.server'
-import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
+import {
+  type PublishingAuthor,
+  publishContentEvent,
+} from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -10,6 +13,7 @@ type Args = {
   podcastId: string
   authorId: string
   links?: { label: string; url: string }[]
+  actor: PublishingAuthor
 }
 
 export async function createEpisode({
@@ -20,6 +24,7 @@ export async function createEpisode({
   podcastId,
   authorId,
   links = [],
+  actor,
 }: Args) {
   try {
     const episode = await prisma.podcastEpisode.create({
@@ -44,11 +49,10 @@ export async function createEpisode({
       },
     })
 
-    publishContentEvent({
-      change: 'create',
-      entity: 'podcast_episode',
-      entityId: episode.id,
-    })
+    publishContentEvent(
+      { change: 'create', entity: 'podcast_episode', entityId: episode.id },
+      actor,
+    )
 
     return { episodeId: episode.id }
   } catch (error) {

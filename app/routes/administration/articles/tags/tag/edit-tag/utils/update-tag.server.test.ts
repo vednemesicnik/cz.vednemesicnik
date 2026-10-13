@@ -23,6 +23,7 @@ vi.mock('~/utils/db.server', () => ({
 }))
 
 const request = new Request('https://test.local/')
+const context = { authorId: 'author-1', authorName: 'Marie Horáková' }
 
 const options = {
   authorId: 'author-1',
@@ -35,8 +36,10 @@ const options = {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.withAuthorPermission.mockImplementation(
-    (_request: Request, { execute }: { execute: () => Promise<unknown> }) =>
-      execute(),
+    (
+      _request: Request,
+      { execute }: { execute: (context: unknown) => Promise<unknown> },
+    ) => execute(context),
   )
   mocks.articleTagUpdate.mockResolvedValue({ id: 'tag-1' })
 })
@@ -59,11 +62,14 @@ describe('updateTag', () => {
       id: 'tag-1',
     })
 
-    expect(mocks.publishContentEvent).toHaveBeenCalledExactlyOnceWith({
-      change: 'update',
-      entity: 'article_tag',
-      entityId: 'tag-1',
-    })
+    expect(mocks.publishContentEvent).toHaveBeenCalledExactlyOnceWith(
+      {
+        change: 'update',
+        entity: 'article_tag',
+        entityId: 'tag-1',
+      },
+      context,
+    )
   })
 
   test('announces nothing when the write fails', async () => {
