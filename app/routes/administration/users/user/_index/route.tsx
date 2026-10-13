@@ -19,6 +19,7 @@ import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { Callout } from '~/components/callout'
+import { HistoryList } from '~/components/history-list'
 import { Link } from '~/components/link'
 import { useToast } from '~/components/toast-provider'
 import { INVITATION_CONFIG } from '~/config/invitation-config'
@@ -205,20 +206,7 @@ export default function RouteComponent({
           {/* An account older than the audit log has no Historie (by062t6n). */}
           {history.length > 0 && (
             <AdminDetailSection title={'Historie'}>
-              <ol className={styles.history}>
-                {history.map((entry) => (
-                  <li className={styles.historyEntry} key={entry.id}>
-                    <span>
-                      {entry.actorName === null
-                        ? entry.label
-                        : `${entry.label} · ${entry.actorName}`}
-                    </span>
-                    <time className={styles.note} dateTime={entry.dateTime}>
-                      {entry.formattedDateTime}
-                    </time>
-                  </li>
-                ))}
-              </ol>
+              <HistoryList entries={history} />
             </AdminDetailSection>
           )}
         </AdminDetailAside>

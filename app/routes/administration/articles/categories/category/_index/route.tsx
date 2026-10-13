@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef } from 'react'
+import { useRef } from 'react'
 import { href, useFetcher } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -16,6 +16,7 @@ import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { HistoryList } from '~/components/history-list'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
 import { CheckIcon } from '~/components/icons/check-icon'
@@ -211,44 +212,20 @@ export default function RouteComponent({
           <AdminDetailItem label="Stav">
             <StatusTag state={category.state} />
           </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Metadata">
-        <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">
-            {category.createdAt.formatted}
-          </AdminDetailItem>
-          <AdminDetailItem label="Aktualizováno">
-            {category.updatedAt.formatted}
-          </AdminDetailItem>
-          {category.publishedAt.iso && (
-            <AdminDetailItem label="Publikováno">
-              {category.publishedAt.formatted}
-            </AdminDetailItem>
-          )}
           <AdminDetailItem label="Autor">
             {category.author.name}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>
 
-      <AdminDetailSection title="Schválení">
-        <AdminDetailList>
-          <Activity mode={category.reviews.length > 0 ? 'visible' : 'hidden'}>
-            {category.reviews.map((review) => (
-              <AdminDetailItem
-                key={review.id}
-                label={`${review.reviewer.name} (${review.reviewer.roleName})`}
-              >
-                {review.createdAt.formatted}
-              </AdminDetailItem>
-            ))}
-          </Activity>
-          <AdminDetailItem label="Schváleno koordinátorem">
-            {category.hasApprovingReview ? 'Ano' : 'Ne'}
-          </AdminDetailItem>
-        </AdminDetailList>
+      <AdminDetailSection title="Historie">
+        <HistoryList
+          entries={category.history.entries}
+          isIncomplete={category.history.isIncomplete}
+          // A reused route component starts every record collapsed.
+          key={category.id}
+          visibleCount={5}
+        />
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />

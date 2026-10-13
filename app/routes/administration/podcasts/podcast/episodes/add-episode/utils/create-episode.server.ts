@@ -1,3 +1,4 @@
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import {
   type PublishingAuthor,
@@ -49,6 +50,10 @@ export async function createEpisode({
       },
     })
 
+    await recordContentLog(
+      { entity: 'podcast_episode', entityId: episode.id, events: ['create'] },
+      actor,
+    )
     publishContentEvent(
       { change: 'create', entity: 'podcast_episode', entityId: episode.id },
       actor,

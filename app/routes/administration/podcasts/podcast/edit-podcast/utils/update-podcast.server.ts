@@ -1,3 +1,4 @@
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
 import {
@@ -66,6 +67,10 @@ export async function updatePodcast({
       where: { id },
     })
 
+    await recordContentLog(
+      { entity: 'podcast', entityId: id, events: ['update'] },
+      actor,
+    )
     publishContentEvent(
       { change: 'update', entity: 'podcast', entityId: id },
       actor,

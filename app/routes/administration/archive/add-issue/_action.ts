@@ -1,6 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { createId } from '@paralleldrive/cuid2'
 import { data, href, redirect } from 'react-router'
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
@@ -92,6 +93,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
       },
     })
 
+    await recordContentLog(
+      { entity: 'issue', entityId: issue.id, events: ['create'] },
+      context,
+    )
     publishContentEvent(
       { change: 'create', entity: 'issue', entityId: issue.id },
       context,

@@ -1,0 +1,56 @@
+.history {
+  @layer component {
+    display: grid;
+    justify-items: start;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.list {
+  @layer component {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.entry {
+  @layer component {
+    display: grid;
+    gap: 1px;
+  }
+}
+
+.meta {
+  @layer component {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+.more {
+  @layer component {
+    padding: 0;
+    border: none;
+    border-radius: 2px;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    color: var(--link-strong);
+    background: none;
+
+    &:hover {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    &:focus-visible {
+      box-shadow: var(--focus-shadow);
+      outline: none;
+    }
+  }
+}

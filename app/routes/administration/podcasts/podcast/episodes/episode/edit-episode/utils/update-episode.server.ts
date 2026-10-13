@@ -1,3 +1,4 @@
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import {
   type PublishingAuthor,
@@ -55,6 +56,10 @@ export async function updateEpisode({
     })
 
     // The links are saved with the episode, so its update covers them.
+    await recordContentLog(
+      { entity: 'podcast_episode', entityId: id, events: ['update'] },
+      actor,
+    )
     publishContentEvent(
       { change: 'update', entity: 'podcast_episode', entityId: id },
       actor,

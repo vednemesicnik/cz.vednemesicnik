@@ -1,0 +1,6 @@
+.body {
+  @layer route {
+    max-block-size: 420px;
+    overflow-y: auto;
+  }
+}

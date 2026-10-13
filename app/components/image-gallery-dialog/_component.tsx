@@ -4,7 +4,6 @@ import {
   type PointerEvent,
   type ReactNode,
   type RefObject,
-  useEffect,
   useRef,
 } from 'react'
 import { CloseIcon } from '~/components/icons/close-icon'
@@ -12,6 +11,7 @@ import { KeyboardArrowLeftIcon } from '~/components/icons/keyboard-arrow-left-ic
 import { KeyboardArrowRightIcon } from '~/components/icons/keyboard-arrow-right-icon'
 import { Image } from '~/components/image'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
+import { useBackdropClickClose } from '~/utils/use-backdrop-click-close'
 import styles from './_styles.module.css'
 
 export type GalleryImage = {
@@ -64,29 +64,7 @@ export const ImageGalleryDialog = ({
   const currentIndex = index < count ? index : 0
   const image = images[currentIndex]
 
-  useEffect(() => {
-    const dialog = ref.current
-
-    if (dialog === null || 'closedBy' in HTMLDialogElement.prototype) return
-
-    // Without `closedby`, a click on the backdrop targets the dialog itself.
-    const handleClick = (event: MouseEvent) => {
-      if (event.target !== dialog) return
-
-      const rectangle = dialog.getBoundingClientRect()
-      const isInside =
-        rectangle.top <= event.clientY &&
-        event.clientY <= rectangle.bottom &&
-        rectangle.left <= event.clientX &&
-        event.clientX <= rectangle.right
-
-      if (!isInside) dialog.close()
-    }
-
-    dialog.addEventListener('click', handleClick)
-
-    return () => dialog.removeEventListener('click', handleClick)
-  }, [ref])
+  useBackdropClickClose(ref)
 
   const showPrevious = () => onIndexChange((currentIndex - 1 + count) % count)
   const showNext = () => onIndexChange((currentIndex + 1) % count)

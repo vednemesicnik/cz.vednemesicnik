@@ -124,6 +124,7 @@ export const articleContentStateHandlers = createContentStateHandlers({
             reviewer: { select: { role: { select: { level: true } } } },
           },
         },
+        submittedAt: true,
       },
       where: { id },
     })
@@ -132,6 +133,7 @@ export const articleContentStateHandlers = createContentStateHandlers({
       authors: article.authors,
       publishedAt: article.publishedAt,
       reviews: article.reviews,
+      submittedAt: article.submittedAt,
     }
   },
 })

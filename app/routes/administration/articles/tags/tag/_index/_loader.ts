@@ -1,7 +1,7 @@
 import { data } from 'react-router'
 
+import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
-import { createFormattedDate } from '~/utils/format-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import {
   canPublishWithoutReview,
@@ -32,26 +32,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       publishedAt: true,
       reviews: {
         select: {
-          createdAt: true,
-          id: true,
           reviewer: {
-            select: {
-              id: true,
-              name: true,
-              role: {
-                select: {
-                  level: true,
-                  name: true,
-                },
-              },
-            },
+            select: { id: true, role: { select: { level: true } } },
           },
-          state: true,
         },
       },
       slug: true,
       state: true,
-      updatedAt: true,
     },
     where: { id: tagId },
   })
@@ -111,10 +98,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorIds: [tag.author.id],
   })
 
-  // Whether an approving review exists and whether one is still needed to publish.
-  const hasApprovingReview = tag.reviews.some((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
+  // Whether an approving review is still needed to publish.
   const needsReview = needsReviewToPublish({
     authors: [tag.author],
     reviews: tag.reviews,
@@ -177,24 +161,16 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     needsReview,
     tag: {
       author: tag.author,
-      createdAt: createFormattedDate(tag.createdAt),
-      hasApprovingReview,
+      history: await getContentHistory({
+        createdAt: tag.createdAt,
+        entity: 'article_tag',
+        entityId: tag.id,
+        publishedAt: tag.publishedAt,
+      }),
       id: tag.id,
       name: tag.name,
-      publishedAt: createFormattedDate(tag.publishedAt),
-      reviews: tag.reviews.map((review) => ({
-        createdAt: createFormattedDate(review.createdAt),
-        id: review.id,
-        reviewer: {
-          id: review.reviewer.id,
-          name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
-        },
-        state: review.state,
-      })),
       slug: tag.slug,
       state: tag.state,
-      updatedAt: createFormattedDate(tag.updatedAt),
     },
   }
 }

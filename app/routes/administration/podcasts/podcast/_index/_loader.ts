@@ -1,5 +1,6 @@
 import { data } from 'react-router'
 
+import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -53,26 +54,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       publishedAt: true,
       reviews: {
         select: {
-          createdAt: true,
-          id: true,
           reviewer: {
-            select: {
-              id: true,
-              name: true,
-              role: {
-                select: {
-                  level: true,
-                  name: true,
-                },
-              },
-            },
+            select: { id: true, role: { select: { level: true } } },
           },
-          state: true,
         },
       },
       state: true,
       title: true,
-      updatedAt: true,
     },
     where: { id: podcastId },
   })
@@ -114,10 +102,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorIds: [podcast.author.id],
   })
 
-  // Whether an approving review exists and whether one is still needed to publish.
-  const hasApprovingReview = podcast.reviews.some((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
+  // Whether an approving review is still needed to publish.
   const needsReview = needsReviewToPublish({
     authors: [podcast.author],
     reviews: podcast.reviews,
@@ -183,25 +168,18 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     podcast: {
       author: podcast.author,
       coverUrl: createImageSources('podcast-cover', podcast.cover).src ?? null,
-      createdAt: createFormattedDate(podcast.createdAt),
       description: podcast.description,
-      hasApprovingReview,
       hasCover: !!podcast.cover,
+      history: await getContentHistory({
+        createdAt: podcast.createdAt,
+        entity: 'podcast',
+        entityId: podcast.id,
+        publishedAt: podcast.publishedAt,
+      }),
       id: podcast.id,
       publishedAt: createFormattedDate(podcast.publishedAt),
-      reviews: podcast.reviews.map((review) => ({
-        createdAt: createFormattedDate(review.createdAt),
-        id: review.id,
-        reviewer: {
-          id: review.reviewer.id,
-          name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
-        },
-        state: review.state,
-      })),
       state: podcast.state,
       title: podcast.title,
-      updatedAt: createFormattedDate(podcast.updatedAt),
     },
   }
 }

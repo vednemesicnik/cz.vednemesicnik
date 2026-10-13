@@ -10,6 +10,11 @@ const mocks = vi.hoisted(() => ({
   articleUpdateMany: vi.fn(),
   permissionContext: vi.fn(),
   publishContentEvent: vi.fn(),
+  recordContentLog: vi.fn(),
+}))
+
+vi.mock('~/utils/content-log/record-content-log.server', () => ({
+  recordContentLog: mocks.recordContentLog,
 }))
 
 vi.mock('~/utils/sse/publish-content-event.server', () => ({
@@ -219,6 +224,10 @@ describe('articleSubmissionHandlers — content events', () => {
       submissionEvent,
       mocks.permissionContext(),
     )
+    expect(mocks.recordContentLog).toHaveBeenCalledExactlyOnceWith(
+      { entity: 'article', entityId: 'a1', events: ['submit'] },
+      mocks.permissionContext(),
+    )
   })
 
   test('a submit blocked by missing content announces nothing', async () => {
@@ -246,6 +255,9 @@ describe('articleSubmissionHandlers — content events', () => {
     })
 
     expect(mocks.publishContentEvent).toHaveBeenCalledTimes(2)
+    expect(
+      mocks.recordContentLog.mock.calls.map(([record]) => record.events),
+    ).toEqual([['withdraw'], ['return']])
     expect(mocks.publishContentEvent).toHaveBeenLastCalledWith(
       submissionEvent,
       mocks.permissionContext(),
@@ -261,5 +273,6 @@ describe('articleSubmissionHandlers — content events', () => {
     ).rejects.toBeDefined()
 
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
   })
 })

@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
@@ -18,11 +18,11 @@ import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
+import { HistoryList } from '~/components/history-list'
 import { Hyperlink } from '~/components/hyperlink'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentEvents } from '~/hooks/use-content-events'
-import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { ArticleChangeDateDialog } from '../../components/article-change-date-dialog'
 import { ArticleMissingDialog } from '../../components/article-missing-dialog'
 import { ArticlePublishDialog } from '../../components/article-publish-dialog'
@@ -265,38 +265,14 @@ export default function RouteComponent({
         )}
       </AdminDetailSection>
 
-      <AdminDetailSection title="Metadata">
-        <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">
-            {article.createdAt.formatted}
-          </AdminDetailItem>
-          <AdminDetailItem label="Aktualizováno">
-            {article.updatedAt.formatted}
-          </AdminDetailItem>
-          {article.publishedAt.iso && (
-            <AdminDetailItem label="Datum publikování">
-              {article.publishedAt.formatted}
-            </AdminDetailItem>
-          )}
-        </AdminDetailList>
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Schválení">
-        <AdminDetailList>
-          <Activity mode={article.reviews.length > 0 ? 'visible' : 'hidden'}>
-            {article.reviews.map((review) => (
-              <AdminDetailItem
-                key={review.id}
-                label={`${review.reviewer.name} (${getAuthorRoleLabel(review.reviewer.roleName)})`}
-              >
-                {review.createdAt.formatted}
-              </AdminDetailItem>
-            ))}
-          </Activity>
-          <AdminDetailItem label="Schváleno koordinátorem">
-            {article.hasApprovingReview ? 'Ano' : 'Ne'}
-          </AdminDetailItem>
-        </AdminDetailList>
+      <AdminDetailSection title="Historie">
+        <HistoryList
+          entries={article.history.entries}
+          isIncomplete={article.history.isIncomplete}
+          // A reused route component starts every record collapsed.
+          key={article.id}
+          visibleCount={5}
+        />
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />

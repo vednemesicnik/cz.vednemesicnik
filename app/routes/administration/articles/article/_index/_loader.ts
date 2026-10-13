@@ -1,5 +1,6 @@
 import { data } from 'react-router'
 
+import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { formatNumericDate } from '~/utils/format-numeric-date'
@@ -8,7 +9,6 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { canPublishWithoutReview } from '~/utils/permissions/author/review-policy'
 
 import { getArticleActionFlags } from '../../utils/get-article-action-flags.server'
 import type { Route } from './+types/route'
@@ -62,20 +62,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       reviews: {
         select: {
           createdAt: true,
-          id: true,
-          reviewer: {
-            select: {
-              id: true,
-              name: true,
-              role: {
-                select: {
-                  level: true,
-                  name: true,
-                },
-              },
-            },
-          },
-          state: true,
+          reviewer: { select: { id: true, role: { select: { level: true } } } },
         },
       },
       slug: true,
@@ -88,7 +75,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         },
       },
       title: true,
-      updatedAt: true,
     },
     where: { id: articleId },
   })
@@ -136,11 +122,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       authors: article.authors,
       categories: article.categories,
       content: article.content,
-      createdAt: createFormattedDate(article.createdAt),
       featuredImageId: article.featuredImageId,
-      hasApprovingReview: article.reviews.some((review) =>
-        canPublishWithoutReview(review.reviewer.role),
-      ),
+      history: await getContentHistory({
+        createdAt: article.createdAt,
+        entity: 'article',
+        entityId: article.id,
+        publishedAt: article.publishedAt,
+      }),
       id: article.id,
       images: article.images.map((image) => ({
         id: image.id,
@@ -150,21 +138,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       // change-date dialog's picker (the browser converts it to/from local time,
       // keeping the default and submitted value in the editor's timezone).
       publishedAt: createFormattedDate(article.publishedAt),
-      reviews: article.reviews.map((review) => ({
-        createdAt: createFormattedDate(review.createdAt),
-        id: review.id,
-        reviewer: {
-          id: review.reviewer.id,
-          name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
-        },
-        state: review.state,
-      })),
       slug: article.slug,
       state: article.state,
       tags: article.tags,
       title: article.title,
-      updatedAt: createFormattedDate(article.updatedAt),
     },
     ...flags,
     missingBeforePublish,

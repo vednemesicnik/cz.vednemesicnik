@@ -1,7 +1,7 @@
 import { data } from 'react-router'
 
+import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
-import { createFormattedDate } from '~/utils/format-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import {
   canPublishWithoutReview,
@@ -46,26 +46,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       publishedAt: true,
       reviews: {
         select: {
-          createdAt: true,
-          id: true,
           reviewer: {
-            select: {
-              id: true,
-              name: true,
-              role: {
-                select: {
-                  level: true,
-                  name: true,
-                },
-              },
-            },
+            select: { id: true, role: { select: { level: true } } },
           },
-          state: true,
         },
       },
       slug: true,
       state: true,
-      updatedAt: true,
     },
     where: { id: categoryId },
   })
@@ -111,10 +98,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorIds: [category.author.id],
   })
 
-  // Whether an approving review exists and whether one is still needed to publish.
-  const hasApprovingReview = category.reviews.some((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
+  // Whether an approving review is still needed to publish.
   const needsReview = needsReviewToPublish({
     authors: [category.author],
     reviews: category.reviews,
@@ -177,24 +161,16 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     canUpdate,
     category: {
       author: category.author,
-      createdAt: createFormattedDate(category.createdAt),
-      hasApprovingReview,
+      history: await getContentHistory({
+        createdAt: category.createdAt,
+        entity: 'article_category',
+        entityId: category.id,
+        publishedAt: category.publishedAt,
+      }),
       id: category.id,
       name: category.name,
-      publishedAt: createFormattedDate(category.publishedAt),
-      reviews: category.reviews.map((review) => ({
-        createdAt: createFormattedDate(review.createdAt),
-        id: review.id,
-        reviewer: {
-          id: review.reviewer.id,
-          name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
-        },
-        state: review.state,
-      })),
       slug: category.slug,
       state: category.state,
-      updatedAt: createFormattedDate(category.updatedAt),
     },
     hasReviewed,
     needsReview,

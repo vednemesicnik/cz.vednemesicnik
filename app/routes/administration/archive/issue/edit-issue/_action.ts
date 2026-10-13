@@ -1,6 +1,6 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { href, redirect } from 'react-router'
-
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
@@ -132,6 +132,19 @@ export const action = async ({ request }: Route.ActionArgs) => {
       where: { id: id },
     })
 
+    // A replaced PDF or cover gets its own row beside the edit (26b).
+    await recordContentLog(
+      {
+        entity: 'issue',
+        entityId: id,
+        events: [
+          'update',
+          ...(pdf === undefined ? [] : ['pdf_uploaded' as const]),
+          ...(cover === undefined ? [] : ['cover_uploaded' as const]),
+        ],
+      },
+      context,
+    )
     publishContentEvent(
       { change: 'update', entity: 'issue', entityId: id },
       context,
