@@ -3,7 +3,6 @@ import { data } from 'react-router'
 import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
-import { formatNumericDate } from '~/utils/format-numeric-date'
 import {
   createImageSources,
   imageSourceSelect,
@@ -11,6 +10,7 @@ import {
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import { getArticleActionFlags } from '../../utils/get-article-action-flags.server'
+import { getArticleFactLine } from '../../utils/get-article-fact-line'
 import type { Route } from './+types/route'
 import { getMissingArticleContent } from './utils/get-missing-article-content'
 
@@ -45,6 +45,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         },
       },
       categories: {
+        orderBy: { name: 'asc' },
         select: {
           id: true,
           name: true,
@@ -53,10 +54,15 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       content: true,
       createdAt: true,
       excerpt: true,
-      featuredImageId: true,
+      featuredImage: {
+        select: {
+          ...imageSourceSelect,
+          description: true,
+        },
+      },
       id: true,
       images: {
-        select: imageSourceSelect,
+        select: { altText: true },
       },
       publishedAt: true,
       reviews: {
@@ -69,12 +75,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       state: true,
       submittedAt: true,
       tags: {
+        orderBy: { name: 'asc' },
         select: {
           id: true,
           name: true,
         },
       },
       title: true,
+      updatedAt: true,
     },
     where: { id: articleId },
   })
@@ -122,7 +130,22 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       authors: article.authors,
       categories: article.categories,
       content: article.content,
-      featuredImageId: article.featuredImageId,
+      excerpt: article.excerpt,
+      // The line under the title (design 22b, 23a).
+      factLine: getArticleFactLine({
+        now: new Date(),
+        publishedAt: article.publishedAt,
+        state: article.state,
+        submission: flags.submission,
+        updatedAt: article.updatedAt,
+      }),
+      featuredImage: article.featuredImage
+        ? {
+            altText: article.featuredImage.altText,
+            description: article.featuredImage.description,
+            sources: createImageSources('article-image', article.featuredImage),
+          }
+        : null,
       history: await getContentHistory({
         createdAt: article.createdAt,
         entity: 'article',
@@ -130,10 +153,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         publishedAt: article.publishedAt,
       }),
       id: article.id,
-      images: article.images.map((image) => ({
-        id: image.id,
-        sources: createImageSources('article-image', image),
-      })),
+      // The gallery is the editor's (24); the detail shows only the count (23a).
+      imageCount: article.images.length,
       // FormattedDate carries the raw instant in `.iso`, which seeds the
       // change-date dialog's picker (the browser converts it to/from local time,
       // keeping the default and submitted value in the editor's timezone).
@@ -145,12 +166,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     },
     ...flags,
     missingBeforePublish,
-    submission:
-      flags.submission === null
-        ? null
-        : {
-            date: formatNumericDate(flags.submission.date),
-            state: flags.submission.state,
-          },
+    submission: flags.submission?.state ?? null,
   }
 }

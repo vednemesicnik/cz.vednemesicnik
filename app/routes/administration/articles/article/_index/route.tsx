@@ -8,16 +8,20 @@ import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
+import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminImageGallery } from '~/components/admin/admin-image-gallery'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
+import { ContentRenderer } from '~/components/content-renderer'
+import { FeaturedImage } from '~/components/featured-image'
 import { HistoryList } from '~/components/history-list'
 import { Hyperlink } from '~/components/hyperlink'
 import { StatusTag } from '~/components/status-tag'
@@ -39,6 +43,10 @@ import { getHeaderActions } from './utils/get-header-actions'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
+
+// Every name, or a dash where there is none.
+const joinNames = (items: { name: string }[]) =>
+  items.length > 0 ? items.map((item) => item.name).join(', ') : '—'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -64,7 +72,7 @@ export default function RouteComponent({
   const headerActions = getHeaderActions({
     ...loaderData,
     state: article.state,
-    submission: submission?.state ?? null,
+    submission,
   })
 
   const { closeMissingList, missingList, showMissingList } =
@@ -86,6 +94,11 @@ export default function RouteComponent({
       withRedirect: true,
     },
   )
+
+  const authorNames = article.authors.map((author) => author.name)
+  const articlePath = href('/articles/:articleSlug', {
+    articleSlug: article.slug,
+  })
 
   const editHref = href('/administration/articles/:articleId/edit-article', {
     articleId,
@@ -150,7 +163,7 @@ export default function RouteComponent({
             className={styles.outlineLink}
             rel={'noopener'}
             target={'_blank'}
-            to={href('/articles/:articleSlug', { articleSlug: article.slug })}
+            to={articlePath}
           >
             {ARTICLE_ACTION_LABELS['view-on-web']}
           </AdminLinkButton>
@@ -172,7 +185,15 @@ export default function RouteComponent({
   return (
     <AdminPage>
       <div className={styles.header}>
-        <AdminHeadline>{article.title}</AdminHeadline>
+        <div className={styles.title}>
+          <div className={styles.titleLine}>
+            <AdminHeadline>{article.title}</AdminHeadline>
+            <StatusTag state={submission ?? article.state} />
+          </div>
+          <span className={styles.subtitle}>
+            {authorNames.join(', ')} · {article.factLine}
+          </span>
+        </div>
 
         {/* One primary, one outline, the rest in „⋯“; where the role may do nothing, who can (23d). */}
         <div className={styles.actions}>
@@ -195,85 +216,82 @@ export default function RouteComponent({
 
       {isOwnContent && submission !== null && (
         <AdminParagraph>
-          {submission.state === 'pending'
+          {submission === 'pending'
             ? 'Článek čeká na schválení Koordinátorem. Před úpravou ho vezměte zpět do konceptu a po úpravě znovu odešlete ke schválení.'
             : 'Článek je schválený. Publikovat ho může Koordinátor. Před úpravou ho vezměte zpět do konceptu. Schválení se tím zruší.'}
         </AdminParagraph>
       )}
 
-      <AdminDetailSection title="Základní informace">
-        <AdminDetailList>
-          <AdminDetailItem label="Stav">
-            <StatusTag
-              detail={
-                submission === null
-                  ? undefined
-                  : submission.state === 'pending'
-                    ? `od ${submission.date}`
-                    : submission.date
-              }
-              state={submission?.state ?? article.state}
+      {/* The text on the left, set as on the web; the details beside it (23a). */}
+      <AdminDetailLayout>
+        <AdminDetailMain>
+          <article className={styles.article}>
+            {article.featuredImage && (
+              <FeaturedImage
+                alt={article.featuredImage.altText}
+                description={
+                  <ContentRenderer
+                    content={article.featuredImage.description}
+                  />
+                }
+                image={article.featuredImage.sources}
+              />
+            )}
+            <ContentRenderer content={article.content} />
+          </article>
+        </AdminDetailMain>
+
+        <AdminDetailAside>
+          <AdminDetailSection title={'Údaje'}>
+            <AdminDetailList>
+              <AdminDetailItem label={'Adresa'}>
+                {article.state === 'published' ? (
+                  articlePath
+                ) : (
+                  <span className={styles.stack}>
+                    <Hyperlink
+                      href={articlePath}
+                      rel={'noopener'}
+                      target={'_blank'}
+                    >
+                      Náhled na webu
+                    </Hyperlink>
+                    <span className={styles.tertiary}>{articlePath}</span>
+                  </span>
+                )}
+              </AdminDetailItem>
+              <AdminDetailItem label={'Perex'}>
+                <span className={styles.stack}>
+                  <span>{article.excerpt ?? '—'}</span>
+                  <span className={styles.note}>pro vyhledávače a sdílení</span>
+                </span>
+              </AdminDetailItem>
+              <AdminDetailItem label={'Autoři'}>
+                {authorNames.join(', ')}
+              </AdminDetailItem>
+              <AdminDetailItem label={'Rubriky'}>
+                {joinNames(article.categories)}
+              </AdminDetailItem>
+              <AdminDetailItem label={'Štítky'}>
+                {joinNames(article.tags)}
+              </AdminDetailItem>
+              <AdminDetailItem label={'Obrázky'}>
+                {article.imageCount}
+              </AdminDetailItem>
+            </AdminDetailList>
+          </AdminDetailSection>
+
+          <AdminDetailSection title={'Historie'}>
+            <HistoryList
+              entries={article.history.entries}
+              isIncomplete={article.history.isIncomplete}
+              // A reused route component starts every record collapsed.
+              key={article.id}
+              visibleCount={5}
             />
-          </AdminDetailItem>
-          <AdminDetailItem label="Název">{article.title}</AdminDetailItem>
-          <AdminDetailItem label="Slug">{article.slug}</AdminDetailItem>
-          <AdminDetailItem label="Autoři">
-            {article.authors.map((author) => author.name).join(', ')}
-          </AdminDetailItem>
-          <AdminDetailItem label="Odkaz na článek">
-            <Hyperlink
-              href={href('/articles/:articleSlug', {
-                articleSlug: article.slug,
-              })}
-            >
-              /articles/{article.slug}
-            </Hyperlink>
-          </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Kategorizace">
-        <AdminDetailList>
-          <AdminDetailItem label="Rubriky">
-            {article.categories.length > 0
-              ? article.categories.map((cat) => cat.name).join(', ')
-              : 'Žádné rubriky'}
-          </AdminDetailItem>
-          <AdminDetailItem label="Štítky">
-            {article.tags.length > 0
-              ? article.tags.map((tag) => tag.name).join(', ')
-              : 'Žádné štítky'}
-          </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Obrázky">
-        {article.images.length > 0 ? (
-          <AdminImageGallery
-            featuredImageId={article.featuredImageId}
-            images={article.images.map((img) => ({
-              id: img.id,
-              sources: img.sources,
-            }))}
-          />
-        ) : (
-          <AdminDetailList>
-            <AdminDetailItem label="Galerie obrázků">
-              Žádné obrázky
-            </AdminDetailItem>
-          </AdminDetailList>
-        )}
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Historie">
-        <HistoryList
-          entries={article.history.entries}
-          isIncomplete={article.history.isIncomplete}
-          // A reused route component starts every record collapsed.
-          key={article.id}
-          visibleCount={5}
-        />
-      </AdminDetailSection>
+          </AdminDetailSection>
+        </AdminDetailAside>
+      </AdminDetailLayout>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
 
@@ -289,7 +307,7 @@ export default function RouteComponent({
         <ArticlePublishDialog
           action={href('/administration/articles/:articleId', { articleId })}
           articleTitle={article.title}
-          authorNames={article.authors.map((author) => author.name)}
+          authorNames={authorNames}
           fetcherKey={fetcherKey}
           isApproval={publishDialog.isApproval}
           // A draft nobody submitted is published from „⋯“ (23d); the dialog says so.

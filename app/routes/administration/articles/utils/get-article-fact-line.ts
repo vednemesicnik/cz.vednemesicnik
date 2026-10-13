@@ -12,7 +12,8 @@ type Options = {
 }
 
 /**
- * The one fact under a list row's state tag, never an instruction (design 22b).
+ * The one fact under a list row's state tag, and under the detail's title,
+ * never an instruction (design 22b, 23a).
  *
  * @param options.now - The moment of the request, which decides „dnes“.
  * @returns A draft's last save (`uloženo dnes v 14:02`, else `uloženo 22. 9.

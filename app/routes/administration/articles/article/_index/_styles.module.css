@@ -10,6 +10,62 @@
   }
 }
 
+/* The title with its state tag, and the authors · one fact under it (23a, 22b). */
+.title {
+  @layer route {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+}
+
+.titleLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+}
+
+.subtitle {
+  @layer route {
+    font-size: 13px;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+}
+
+/* The reader's view: the main image and the text at the web's measure (23a, 12a). */
+.article {
+  @layer route {
+    display: grid;
+    max-width: 42.5rem;
+  }
+}
+
+/* A value with a line under it: the address, the excerpt's note (23a). */
+.stack {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.tertiary {
+  @layer route {
+    color: var(--text-tertiary);
+  }
+}
+
+.note {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
 .actions {
   @layer route {
     display: flex;
