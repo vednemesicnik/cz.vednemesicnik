@@ -1,0 +1,53 @@
+.bar {
+  @layer component {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-block-size: 54px;
+    padding: 8px 8px 8px 16px;
+    box-sizing: border-box;
+    background-color: var(--bg-accent);
+    border-radius: 8px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+.count {
+  @layer component {
+    font-weight: var(--font-weight-semibold);
+    color: var(--link-strong);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.divider {
+  @layer component {
+    inline-size: 1px;
+    block-size: 20px;
+    margin-inline: 4px;
+    background-color: var(--border-accent);
+    opacity: 0.5;
+  }
+}
+
+.actions {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+.message {
+  @layer component {
+    font-size: var(--font-size-sm);
+    color: var(--link-strong);
+  }
+}
+
+.clear {
+  @layer component {
+    margin-inline-start: auto;
+  }
+}
