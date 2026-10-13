@@ -18,11 +18,11 @@ import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
 import { getArticleActionFlags } from '../utils/get-article-action-flags.server'
+import { getArticleFactLine } from '../utils/get-article-fact-line'
 import type { Route } from './+types/route'
 import { PINNED_ROWS_PARAM } from './pinned-rows'
 import { SORT_KEYS, type SortKey } from './sort'
 import { buildArticleQueueWhere } from './utils/build-article-queue-where'
-import { getArticleFactLine } from './utils/get-article-fact-line'
 import { getBulkActions } from './utils/get-bulk-actions'
 import { getRowActions } from './utils/get-row-actions'
 
