@@ -40,6 +40,10 @@ state.
 
 ## Alternatives considered
 
+- **Hash the ids.** The list matches an event to a row it shows, so the client would need the
+  same hash for the ids it already holds. The hash would then stand for the content exactly as
+  the id does: one opaque token for another. What a receiver learns stays the same, that author
+  X changed something at time T.
 - **Filter per receiver.** The broadcaster would build a permission context for every
   subscribed session and drop events it may not see. It costs a permission check per session
   per event, to protect names that are public anyway.
