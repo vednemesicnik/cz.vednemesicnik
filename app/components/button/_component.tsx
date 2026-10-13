@@ -5,9 +5,9 @@ import { BaseButton } from '~/components/base-button'
 
 import styles from './_styles.module.css'
 
-type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
+export type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
 
-type Size = 'sm' | 'md' | 'lg'
+export type Size = 'sm' | 'md' | 'lg'
 
 type Props = ComponentProps<'button'> & {
   variant?: Variant

@@ -1,0 +1,13 @@
+/* What a link needs on top of Button's stylesheet: no underline, and a
+   disabled state through aria-disabled, as a link has no :disabled. */
+.linkButton {
+  @layer variant {
+    text-decoration: none;
+
+    &[aria-disabled="true"] {
+      cursor: not-allowed;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  }
+}
