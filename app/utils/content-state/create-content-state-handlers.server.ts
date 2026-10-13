@@ -301,6 +301,14 @@ export const createContentStateHandlers = (
       execute: announceOnSuccess(
         { change: 'review', id: options.id },
         async (context) => {
+          // Approval reads a submitted text (design 07c); a draft nobody
+          // submitted is published directly instead.
+          const { submittedAt } = await config.loadPublishState(options.id)
+
+          if (submittedAt == null) {
+            throw data(null, { status: 403 })
+          }
+
           await config.ensureApprovingReview(options.id, context.authorId)
           await recordLog(options.id, ['approve'], context)
         },

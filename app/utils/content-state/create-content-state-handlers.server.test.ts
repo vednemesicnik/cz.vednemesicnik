@@ -93,6 +93,21 @@ const createConfig = (
 const APPROVER = 1
 const CONTRIBUTOR = 3
 
+// Approval reads a submitted text (07c), so the review handler needs one.
+const submittedConfig = (overrides: Partial<ContentStateHandlersConfig> = {}) =>
+  createConfig({
+    loadPublishState: vi.fn().mockResolvedValue({
+      authors: [],
+      publishedAt: null,
+      reviews: [],
+      submittedAt: new Date('2026-10-13T10:00:00Z'),
+    }),
+    ...overrides,
+  })
+
+const configFor = (handler: string) =>
+  handler === 'review' ? submittedConfig() : createConfig()
+
 describe('createContentStateHandlers — review gate', () => {
   test('blocks publish when content still needs an approving review', async () => {
     const config = createConfig({
@@ -391,7 +406,7 @@ describe('createContentStateHandlers — transition matrix', () => {
   })
 
   test('review records an approving review by the current author', async () => {
-    const config = createConfig()
+    const config = submittedConfig()
     const handlers = createContentStateHandlers(config)
     runAs(APPROVER, 'reviewer-9')
 
@@ -401,6 +416,17 @@ describe('createContentStateHandlers — transition matrix', () => {
       'a1',
       'reviewer-9',
     )
+  })
+
+  test('review refuses a draft nobody submitted', async () => {
+    const config = createConfig()
+    const handlers = createContentStateHandlers(config)
+    runAs(APPROVER, 'reviewer-9')
+
+    await expect(
+      handlers.review(request, { id: 'a1', target }),
+    ).rejects.toMatchObject({ init: { status: 403 } })
+    expect(config.ensureApprovingReview).not.toHaveBeenCalled()
   })
 
   test('delete delegates to the entity delete callback', async () => {
@@ -472,7 +498,7 @@ describe('createContentStateHandlers — content events', () => {
   ] as const)('a successful %s announces "%s"', async (handler, change) => {
     runAs(APPROVER)
     publishContentEventMock.mockClear()
-    const handlers = createContentStateHandlers(createConfig())
+    const handlers = createContentStateHandlers(configFor(handler))
 
     await handlers[handler](request, { id: 'a1', target })
 
@@ -555,7 +581,7 @@ describe('createContentStateHandlers — content log (07f)', () => {
     async (handler, event) => {
       runAs(APPROVER)
       recordContentLogMock.mockClear()
-      const handlers = createContentStateHandlers(createConfig())
+      const handlers = createContentStateHandlers(configFor(handler))
 
       await handlers[handler](request, { id: 'a1', target })
 
