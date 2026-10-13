@@ -213,33 +213,4 @@
       border-block-start: 1px solid var(--border);
     }
   }
-
-  /* The design system's primary Button md, 44 px tall, its content's width
-     (22g). */
-  .newArticleBarLink {
-    @layer route {
-      box-sizing: border-box;
-      min-block-size: 44px;
-      padding-block: 10px;
-      padding-inline: 22px;
-      color: var(--text-on-accent);
-      background-color: var(--primary);
-      border-color: transparent;
-      border-radius: var(--radius-lg);
-
-      &:hover:not(:focus-visible) {
-        background-color: var(--primary-hover);
-        border-color: transparent;
-      }
-
-      &:active {
-        background-color: var(--primary-active);
-      }
-
-      &:focus-visible {
-        background-color: var(--primary);
-        border-color: transparent;
-      }
-    }
-  }
 }

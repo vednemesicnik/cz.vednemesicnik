@@ -13,10 +13,10 @@ import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
+import { LinkButton } from '~/components/link-button'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
@@ -48,14 +48,15 @@ export default function RouteComponent({
 
       <AdminActionGroup>
         {canUpdate && (
-          <AdminLinkButton
+          <LinkButton
             to={href('/administration/authors/:authorId/edit-author', {
               authorId,
             })}
+            variant={'outline'}
           >
             <EditIcon />
             Upravit
-          </AdminLinkButton>
+          </LinkButton>
         )}
         {canDelete && (
           <AdminActionButton action="delete" onClick={openDialog}>

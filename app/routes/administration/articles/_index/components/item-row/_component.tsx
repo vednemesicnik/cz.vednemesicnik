@@ -7,7 +7,6 @@ import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import {
   TableCell,
   TableRow,
@@ -16,6 +15,7 @@ import {
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
+import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { action as articleAction } from '../../../article/_index/_action'
@@ -224,13 +224,14 @@ export const ItemRow = ({
         />
         <span className={styles.actions}>
           {rowAction === 'edit' && (
-            <AdminLinkButton
-              className={styles.editLink}
+            <LinkButton
               disabled={isSubmitting}
+              size={'sm'}
               to={editHref}
+              variant={'outline'}
             >
               {ARTICLE_ACTION_LABELS.edit}
-            </AdminLinkButton>
+            </LinkButton>
           )}
           {rowAction !== null && rowAction !== 'edit' && (
             <Button

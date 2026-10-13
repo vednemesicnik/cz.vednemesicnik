@@ -2,6 +2,7 @@ import type { AuthorPermissionAction } from '@generated/prisma/enums'
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
 import { BaseButton } from '~/components/base-button'
+import buttonStyles from '~/components/button/_styles.module.css'
 
 import styles from './_styles.module.css'
 
@@ -20,6 +21,7 @@ export const AdminActionButton = ({
 }: Props) => (
   <BaseButton
     className={clsx(
+      buttonStyles.md,
       action === 'publish' && styles.publish,
       action === 'retract' && styles.retract,
       action === 'archive' && styles.archive,

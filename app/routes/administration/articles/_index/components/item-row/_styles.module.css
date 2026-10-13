@@ -49,23 +49,6 @@
   }
 }
 
-/* The design system's outline Button sm, as tall as „⋯“ beside it (22a). */
-.editLink {
-  @layer route {
-    padding-block: 6px;
-    padding-inline: 14px;
-    font-size: var(--font-size-sm);
-    border-color: var(--border);
-    border-radius: var(--radius-lg);
-
-    &:hover:not(:focus-visible),
-    &:focus-visible {
-      background-color: var(--bg-accent);
-      border-color: var(--border-accent);
-    }
-  }
-}
-
 .dialogs {
   @layer route {
     display: contents;

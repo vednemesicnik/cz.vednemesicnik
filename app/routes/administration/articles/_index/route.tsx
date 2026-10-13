@@ -4,7 +4,6 @@ import { clsx } from 'clsx'
 import { useEffect, useId, useRef } from 'react'
 import { href, useSearchParams } from 'react-router'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -17,6 +16,7 @@ import {
 } from '~/components/admin/admin-table'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { Link } from '~/components/link'
+import { LinkButton } from '~/components/link-button'
 import { Pagination } from '~/components/pagination'
 import { useToast } from '~/components/toast-provider'
 import type { ArticleQueue } from '~/config/article-queue-config'
@@ -136,12 +136,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   const renderNewArticleLink = (className?: string) =>
     canCreate && (
-      <AdminLinkButton
+      <LinkButton
         className={className}
         to={href('/administration/articles/add-article')}
       >
         Nový článek
-      </AdminLinkButton>
+      </LinkButton>
     )
 
   const summaryLines = getSavedFilterSummary({
@@ -271,12 +271,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           )}
           {emptyMessage.action === 'newArticle' && renderNewArticleLink()}
           {emptyMessage.action === 'clearFilters' && (
-            <AdminLinkButton
+            <LinkButton
               preventScrollReset={true}
               to={{ search: clearFiltersSearch }}
+              variant={'outline'}
             >
               Zrušit filtry
-            </AdminLinkButton>
+            </LinkButton>
           )}
         </div>
       ) : (
@@ -341,9 +342,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           unless the empty list already offers it (22e). */}
       {canCreate &&
         (totalCount > 0 || emptyMessage.action !== 'newArticle') && (
-          <div className={styles.newArticleBar}>
-            {renderNewArticleLink(styles.newArticleBarLink)}
-          </div>
+          <div className={styles.newArticleBar}>{renderNewArticleLink()}</div>
         )}
     </AdminPage>
   )

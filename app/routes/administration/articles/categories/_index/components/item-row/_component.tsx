@@ -7,7 +7,6 @@ import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import {
   TableCell,
   TableRow,
@@ -16,6 +15,7 @@ import {
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
+import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 
@@ -71,18 +71,19 @@ export const ItemRow = ({
       <TableCell variant={'actions'}>
         <AdminActionGroup>
           {canView && (
-            <AdminLinkButton
+            <LinkButton
               disabled={isDeleting}
               to={href('/administration/articles/categories/:categoryId', {
                 categoryId: id,
               })}
+              variant={'outline'}
             >
               <VisibilityIcon />
               Zobrazit
-            </AdminLinkButton>
+            </LinkButton>
           )}
           {canEdit && (
-            <AdminLinkButton
+            <LinkButton
               disabled={isDeleting}
               to={href(
                 '/administration/articles/categories/:categoryId/edit-category',
@@ -90,10 +91,11 @@ export const ItemRow = ({
                   categoryId: id,
                 },
               )}
+              variant={'outline'}
             >
               <EditIcon />
               Upravit
-            </AdminLinkButton>
+            </LinkButton>
           )}
           {canDelete && (
             <>

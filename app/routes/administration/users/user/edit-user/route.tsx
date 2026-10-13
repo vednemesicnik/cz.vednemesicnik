@@ -9,7 +9,6 @@ import {
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -18,6 +17,7 @@ import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { Link } from '~/components/link'
+import { LinkButton } from '~/components/link-button'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
 import { schema } from './_schema'
@@ -108,12 +108,13 @@ export default function RouteComponent({
           <Button disabled={!canSubmit} type={'submit'}>
             {isSubmitting ? 'Ukládá se...' : 'Uložit'}
           </Button>
-          <AdminLinkButton
+          <LinkButton
             disabled={isLoadingOrSubmitting}
             to={href('/administration/users/:userId', { userId })}
+            variant={'outline'}
           >
             Zrušit
-          </AdminLinkButton>
+          </LinkButton>
         </FormActions>
       </Form>
     </AdminPage>

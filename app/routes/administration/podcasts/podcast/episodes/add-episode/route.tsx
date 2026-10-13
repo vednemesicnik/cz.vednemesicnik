@@ -10,7 +10,6 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -19,6 +18,7 @@ import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { DeleteIcon } from '~/components/icons/delete-icon'
+import { LinkButton } from '~/components/link-button'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
 import { useAutoSlug } from '~/utils/use-auto-slug'
@@ -176,14 +176,15 @@ export default function RouteComponent({
             <Button disabled={!canSubmit} type={'submit'}>
               {isSubmitting ? 'Přidává se...' : 'Přidat'}
             </Button>
-            <AdminLinkButton
+            <LinkButton
               disabled={isLoadingOrSubmitting}
               to={href('/administration/podcasts/:podcastId/episodes', {
                 podcastId,
               })}
+              variant={'outline'}
             >
               Zrušit
-            </AdminLinkButton>
+            </LinkButton>
           </FormActions>
         </Form>
       </FormProvider>
