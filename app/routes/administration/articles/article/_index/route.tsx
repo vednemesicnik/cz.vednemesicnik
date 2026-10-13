@@ -31,6 +31,10 @@ import { ArticleChangeDateDialog } from '../../components/article-change-date-di
 import { ArticleMissingDialog } from '../../components/article-missing-dialog'
 import { ArticlePublishDialog } from '../../components/article-publish-dialog'
 import {
+  ArticleStateDialog,
+  type ArticleStateDialogKind,
+} from '../../components/article-state-dialog'
+import {
   ARTICLE_ACTION_LABELS,
   ARTICLE_DIRECT_INTENTS,
   type ArticleAction,
@@ -56,7 +60,13 @@ export default function RouteComponent({
   loaderData,
   params,
 }: Route.ComponentProps) {
-  const { article, isOwnContent, missingBeforePublish, submission } = loaderData
+  const {
+    article,
+    isApprover,
+    isOwnContent,
+    missingBeforePublish,
+    submission,
+  } = loaderData
   const { articleId } = params
 
   useContentEvents({
@@ -77,6 +87,9 @@ export default function RouteComponent({
 
   const { closeMissingList, missingList, showMissingList } =
     useArticleActionResult(fetcher.data)
+  const [stateDialog, setStateDialog] = useState<ArticleStateDialogKind | null>(
+    null,
+  )
   const [publishDialog, setPublishDialog] = useState<{
     isApproval: boolean
   } | null>(null)
@@ -84,7 +97,7 @@ export default function RouteComponent({
   const isSubmitting = fetcher.state !== 'idle'
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
-  const changePublishedAtDialogRef = useRef<HTMLDialogElement>(null)
+  const [isChangeDateOpen, setIsChangeDateOpen] = useState(false)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
@@ -133,8 +146,11 @@ export default function RouteComponent({
         return openPublishDialog(true)
       case 'publish':
         return openPublishDialog(false)
+      case 'retract':
+      case 'archive':
+        return setStateDialog(headerAction)
       case 'change-date':
-        return changePublishedAtDialogRef.current?.showModal()
+        return setIsChangeDateOpen(true)
       case 'delete':
         return openDialog()
       case 'edit':
@@ -293,7 +309,27 @@ export default function RouteComponent({
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+      <AdminDeleteConfirmationDialog
+        description={'Smazání je nevratné.'}
+        ref={deleteConfirmationDialogRef}
+        subject={article.title}
+        title={
+          article.state === 'archived'
+            ? 'Smazat archivovaný článek?'
+            : 'Smazat koncept?'
+        }
+      />
+
+      {stateDialog !== null && (
+        <ArticleStateDialog
+          action={href('/administration/articles/:articleId', { articleId })}
+          articleTitle={article.title}
+          fetcherKey={fetcherKey}
+          isApprover={isApprover}
+          kind={stateDialog}
+          onClose={() => setStateDialog(null)}
+        />
+      )}
 
       {missingList !== null && (
         <ArticleMissingDialog
@@ -321,12 +357,15 @@ export default function RouteComponent({
         />
       )}
 
-      <ArticleChangeDateDialog
-        action={href('/administration/articles/:articleId', { articleId })}
-        fetcherKey={fetcherKey}
-        publishedAt={article.publishedAt.iso}
-        ref={changePublishedAtDialogRef}
-      />
+      {isChangeDateOpen && (
+        <ArticleChangeDateDialog
+          action={href('/administration/articles/:articleId', { articleId })}
+          articleTitle={article.title}
+          fetcherKey={fetcherKey}
+          onClose={() => setIsChangeDateOpen(false)}
+          publishedAt={article.publishedAt.iso}
+        />
+      )}
     </AdminPage>
   )
 }

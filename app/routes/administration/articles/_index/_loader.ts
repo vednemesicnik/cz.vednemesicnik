@@ -1,11 +1,12 @@
 import type { Prisma } from '@generated/prisma/client'
-import { redirect } from 'react-router'
+import { data, redirect } from 'react-router'
 import type { ArticleQueue } from '~/config/article-queue-config'
 import {
   buildStaleFilterRedirect,
   parseAdminListFilters,
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { prisma } from '~/utils/db.server'
 import { formatNumericDate } from '~/utils/format-numeric-date'
@@ -345,31 +346,41 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     }
   })
 
-  return {
-    ...savedFilters,
-    articles,
-    // Whose live changes are not someone else's (22f).
-    authorId: context.authorId,
-    authorOptions,
-    canCreate: context.can({
-      action: 'create',
-      entity: 'article',
-      state: 'draft',
-      targetAuthorIds: [context.authorId],
-    }).hasPermission,
-    categoryOptions,
-    currentPage: page,
-    filters,
-    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
-    isContributor,
-    pageSize: PAGE_SIZE,
-    // What waits for the Coordinator's approval, whatever is filtered (22a).
-    pendingCount:
-      queueCounts.find((entry) => entry.queue === 'pending')?.count ?? 0,
-    query,
-    queueCounts,
-    tagOptions,
-    totalCount,
-    totalPages,
-  }
+  // Read only here: an earlier redirect must not use up the toast (23f).
+  const notice = await readAdminNotice(request)
+
+  return data(
+    {
+      ...savedFilters,
+      articles,
+      // Whose live changes are not someone else's (22f).
+      authorId: context.authorId,
+      authorOptions,
+      canCreate: context.can({
+        action: 'create',
+        entity: 'article',
+        state: 'draft',
+        targetAuthorIds: [context.authorId],
+      }).hasPermission,
+      categoryOptions,
+      currentPage: page,
+      filters,
+      isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+      isContributor,
+      pageSize: PAGE_SIZE,
+      // What waits for the Coordinator's approval, whatever is filtered (22a).
+      pendingCount:
+        queueCounts.find((entry) => entry.queue === 'pending')?.count ?? 0,
+      query,
+      queueCounts,
+      tagOptions,
+      // Smazáno after a delete from the detail, once (23f).
+      toast: notice.toast,
+      totalCount,
+      totalPages,
+    },
+    notice.toast === null
+      ? undefined
+      : { headers: { 'Set-Cookie': notice.setCookie } },
+  )
 }

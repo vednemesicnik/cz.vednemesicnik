@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { clsx } from 'clsx'
-import { useId } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { href, useSearchParams } from 'react-router'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
@@ -18,6 +18,7 @@ import {
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { Link } from '~/components/link'
 import { Pagination } from '~/components/pagination'
+import { useToast } from '~/components/toast-provider'
 import type { ArticleQueue } from '~/config/article-queue-config'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import styles from './_styles.module.css'
@@ -81,6 +82,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     totalCount,
     totalPages,
   } = loaderData
+
+  // Smazáno after a delete from the detail (23f), once per load.
+  const showToast = useToast()
+  const handledToastRef = useRef<typeof loaderData | null>(null)
+  useEffect(() => {
+    if (loaderData.toast === null || handledToastRef.current === loaderData) {
+      return
+    }
+    handledToastRef.current = loaderData
+    showToast(loaderData.toast)
+  }, [loaderData, showToast])
 
   // Live, but the rows stay put until the next load (22f).
   const { articles, liveChanges, pendingCount, queueCounts } =
@@ -305,6 +317,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {articles.map((article) => (
               <ItemRow
                 article={article}
+                isApprover={isApprover}
                 key={article.id}
                 liveChange={liveChanges.get(article.id)}
                 onSelect={() => selection.toggle(article.id)}

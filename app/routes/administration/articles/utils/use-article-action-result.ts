@@ -5,9 +5,14 @@ import { FORM_CONFIG } from '~/config/form-config'
 
 const INTENT_VALUE = FORM_CONFIG.intent.value
 
-// Toasts after an action (design 23a, 23b, 23c, 23f).
+// Toasts after an action (design 23a, 23b, 23c, 23e, 23f). A delete from the
+// detail redirects to the list, which says Smazáno itself.
 const ACTION_TOASTS: Record<string, string> = {
+  [INTENT_VALUE.archive]: 'Archivováno',
+  [INTENT_VALUE.changePublishedAt]: 'Datum publikace změněno',
+  [INTENT_VALUE.delete]: 'Smazáno',
   [INTENT_VALUE.publish]: 'Publikováno',
+  [INTENT_VALUE.retract]: 'Staženo z publikace',
   [INTENT_VALUE.returnForEdits]: 'Vráceno k úpravám',
   [INTENT_VALUE.review]: 'Schváleno',
   [INTENT_VALUE.submitForReview]: 'Odesláno ke schválení',
