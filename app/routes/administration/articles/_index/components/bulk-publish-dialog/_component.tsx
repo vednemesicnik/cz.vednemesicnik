@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
@@ -68,6 +68,13 @@ export const BulkPublishDialog = ({
   const fetcher = useFetcher({ key: fetcherKey })
   const ref = useModalDialog(onClose)
   const publishedAtRef = useRef<HTMLInputElement>(null)
+  const submitRef = useRef<HTMLButtonElement>(null)
+
+  // After showModal (the effect above), which focuses the first stop: Enter
+  // confirms publishing (22c).
+  useEffect(() => {
+    submitRef.current?.focus()
+  }, [])
 
   const [ordered, setOrdered] = useState(orderedArticles)
   const [now] = useState(() => new Date())
@@ -90,7 +97,7 @@ export const BulkPublishDialog = ({
 
   return (
     <AdminDialog ref={ref}>
-      <AdminModalContent>
+      <AdminModalContent className={styles.content}>
         <AdminModalTitle>{`Publikovat ${count}?`}</AdminModalTitle>
 
         <fetcher.Form
@@ -117,7 +124,7 @@ export const BulkPublishDialog = ({
           <input name={'publishedAt'} ref={publishedAtRef} type={'hidden'} />
 
           {ordered.length > 0 && (
-            <div className={styles.section}>
+            <div className={styles.orderedSection}>
               <AdminModalDescription>
                 V tomto pořadí budou články na webu. Pořadí změníte přetažením
                 nebo v nabídce u článku.
@@ -127,7 +134,7 @@ export const BulkPublishDialog = ({
           )}
 
           {keptArticles.length > 0 && (
-            <div className={styles.section}>
+            <div className={styles.keptSection}>
               <h3 className={styles.subheading}>
                 Vrátí se na své datum publikace
               </h3>
@@ -171,7 +178,7 @@ export const BulkPublishDialog = ({
             >
               Zrušit
             </Button>
-            <Button size={'sm'} type={'submit'}>
+            <Button ref={submitRef} size={'sm'} type={'submit'}>
               {`Publikovat ${count}`}
             </Button>
           </AdminModalActions>
