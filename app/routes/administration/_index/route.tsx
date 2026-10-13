@@ -9,11 +9,15 @@ import { AdminNavigationGrid } from '~/components/admin/admin-navigation-grid'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminPendingItem } from '~/components/admin/admin-pending-item'
 import { AdminStatCard } from '~/components/admin/admin-stat-card'
+import { useContentEvents } from '~/hooks/use-content-events'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { pendingReviewItems, statistics, permissions } = loaderData
+
+  // Any change can move the pending list or the statistics.
+  useContentEvents()
 
   const {
     canViewUsers,
