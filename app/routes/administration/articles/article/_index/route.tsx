@@ -226,7 +226,7 @@ export default function RouteComponent({
       <AdminDetailLayout>
         <AdminDetailMain>
           <article className={styles.article}>
-            {article.featuredImage ? (
+            {article.featuredImage && (
               <FeaturedImage
                 alt={article.featuredImage.altText}
                 description={
@@ -236,8 +236,6 @@ export default function RouteComponent({
                 }
                 image={article.featuredImage.sources}
               />
-            ) : (
-              <div className={styles.imagePlaceholder} />
             )}
             <ContentRenderer content={article.content} />
           </article>

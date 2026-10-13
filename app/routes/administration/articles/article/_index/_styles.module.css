@@ -44,16 +44,6 @@
   }
 }
 
-/* Without a main image, the signature gradient in its place (23a). */
-.imagePlaceholder {
-  @layer route {
-    aspect-ratio: 16 / 9;
-    margin-block-end: 2.5rem;
-    border-radius: var(--radius-lg);
-    background: var(--gradient-signature);
-  }
-}
-
 /* A value with a line under it: the address, the excerpt's note (23a). */
 .stack {
   @layer route {
