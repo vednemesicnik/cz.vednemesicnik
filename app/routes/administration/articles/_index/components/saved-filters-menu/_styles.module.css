@@ -5,21 +5,6 @@
   }
 }
 
-.trigger {
-  @layer route {
-    max-inline-size: 320px;
-  }
-}
-
-.triggerText {
-  @layer route {
-    min-inline-size: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
 .menu {
   @layer route {
     /* Without Popover API support the [popover] attribute is ignored and the

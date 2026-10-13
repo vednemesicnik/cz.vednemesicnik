@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import {
@@ -8,39 +8,44 @@ import {
   type SharedFilter,
   useDeleteFilterConfirmation,
 } from '~/components/admin/admin-saved-filters'
-import { Button } from '~/components/button'
 
 import { SavedFiltersSection } from '../saved-filters-section'
+import { SavedFiltersTrigger } from '../saved-filters-trigger'
 import styles from './_styles.module.css'
 
 type Props = {
+  menuId: string
   currentQuery: string
   matchingFilterId: string | null
+  matchingFilterName: string | undefined
   ownFilters: OwnFilter[]
   sharedFilters: SharedFilter[]
   summaryLines: string[]
+  triggerClassName?: string
 }
 
 /**
  * Uložené filtry at the end of the filter row (design 22d): own filters with
- * „⋯“, shared ones from others, and Uložit filtry…. The button names the saved
- * filter the current filters match exactly.
+ * „⋯“, shared ones from others, and Uložit filtry…. Its button sits here; a
+ * second `SavedFiltersTrigger` with the same `menuId` may open the menu from
+ * elsewhere (22g).
  *
+ * @param props.menuId - The id of the menu's popover, shared by its buttons.
  * @param props.currentQuery - The snapshot a save or an overwrite stores; `''`
  *   when nothing differs from the default.
  * @param props.summaryLines - What a save keeps, one filter per line.
  */
 export const SavedFiltersMenu = ({
+  menuId,
   currentQuery,
   matchingFilterId,
+  matchingFilterName,
   ownFilters,
   sharedFilters,
   summaryLines,
+  triggerClassName,
 }: Props) => {
-  const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
-  // useId() contains colons, which are invalid in an id/anchor context.
-  const menuId = `saved-filters-menu-${useId().replace(/:/g, '')}`
   const deleteDialogRef = useRef<HTMLDialogElement | null>(null)
 
   // The form dialogs live only while they are open, so every visit starts from
@@ -51,17 +56,19 @@ export const SavedFiltersMenu = ({
   const { openDialog: openDeleteDialog } =
     useDeleteFilterConfirmation(deleteDialogRef)
 
-  const matchingFilterName = [...ownFilters, ...sharedFilters].find(
-    (filter) => filter.id === matchingFilterId,
-  )?.name
-
   // A modal opens above the menu in the top layer; left open behind it, the
   // menu would only be dismissed by the first click inside the modal.
   const closeMenu = () => menuRef.current?.hidePopover?.()
 
-  // The menu's items are gone once it closes; the focus goes back to its
-  // button (k9vl0m53).
-  const focusTrigger = useCallback(() => triggerRef.current?.focus(), [])
+  // The menu's items are gone once it closes; the focus goes back to the
+  // button on screen (k9vl0m53), of the two the one not hidden.
+  const focusTrigger = useCallback(() => {
+    const triggers = document.querySelectorAll<HTMLButtonElement>(
+      `[popovertarget="${menuId}"]`,
+    )
+
+    ;[...triggers].find((trigger) => trigger.checkVisibility())?.focus()
+  }, [menuId])
 
   const handleApply = () => {
     closeMenu()
@@ -130,20 +137,11 @@ export const SavedFiltersMenu = ({
 
   return (
     <div className={styles.savedFiltersMenu}>
-      <Button
-        className={styles.trigger}
-        popoverTarget={menuId}
-        ref={triggerRef}
-        size={'sm'}
-        type={'button'}
-        variant={'outline'}
-      >
-        <span className={styles.triggerText}>
-          {matchingFilterName === undefined
-            ? 'Uložené filtry'
-            : `Uložené filtry: ${matchingFilterName}`}
-        </span>
-      </Button>
+      <SavedFiltersTrigger
+        className={triggerClassName}
+        matchingFilterName={matchingFilterName}
+        menuId={menuId}
+      />
 
       {/* Native popover: the trigger (its popovertarget invoker) becomes the
           implicit anchor, so the menu is positioned in CSS. */}

@@ -1,5 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
+import { useId } from 'react'
 import { href, useSearchParams } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminHeadline } from '~/components/admin/admin-headline'
@@ -24,6 +25,7 @@ import type { Route } from './+types/route'
 import { FilterMenu, type FilterOption } from './components/filter-menu'
 import { ItemRow } from './components/item-row'
 import { SavedFiltersMenu } from './components/saved-filters-menu'
+import { SavedFiltersTrigger } from './components/saved-filters-trigger'
 import { SORT_KEYS } from './sort'
 import { buildClearFiltersSearch } from './utils/build-clear-filters-search'
 import { formatWaitingWork } from './utils/format-waiting-work'
@@ -110,6 +112,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   const clearFiltersSearch = buildClearFiltersSearch(searchParams)
 
+  // useId() contains colons, which are invalid in an id/anchor context.
+  const savedFiltersMenuId = `saved-filters-menu-${useId().replace(/:/g, '')}`
+  const matchingFilterName = [...ownFilters, ...sharedFilters].find(
+    (filter) => filter.id === matchingFilterId,
+  )?.name
+
   const newArticleLink = canCreate && (
     <AdminLinkButton to={href('/administration/articles/add-article')}>
       Nový článek
@@ -144,62 +152,72 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       )}
       {/* Everything that narrows the list is a filter, in one row (22d). */}
       <div className={styles.filterRow}>
-        <div className={styles.search}>
-          <AdminTableSearch
-            defaultValue={query}
-            placeholder={'Hledat v názvu a adrese'}
-          />
-        </div>
-        <div className={styles.filters}>
-          <FilterMenu
-            clearLabel={'Vše'}
-            label={'Stav'}
-            name={'state'}
-            options={stateOptions}
-            selectedValues={states}
-          />
-          <FilterMenu
-            clearLabel={'Všechny'}
-            label={'Rubrika'}
-            name={'category'}
-            options={categoryOptions}
-            selectedValues={filters.category ?? []}
-          />
-          <FilterMenu
-            clearLabel={'Všechny'}
-            label={'Štítek'}
-            name={'tag'}
-            options={tagOptions}
-            searchPlaceholder={'Hledat štítek'}
-            selectedValues={filters.tag ?? []}
-          />
-          <FilterMenu
-            clearLabel={'Všichni'}
-            label={'Autor'}
-            name={'author'}
-            options={authorOptions}
-            searchPlaceholder={'Hledat autora'}
-            selectedValues={filters.author ?? []}
-          />
-          {!isDefault && (
-            <Link
-              className={styles.clearFilters}
-              preventScrollReset={true}
-              to={{ search: clearFiltersSearch }}
-            >
-              Zrušit filtry
-            </Link>
-          )}
-          <div className={styles.savedFilters}>
-            <SavedFiltersMenu
-              currentQuery={currentFilterQuery}
-              matchingFilterId={matchingFilterId}
-              ownFilters={ownFilters}
-              sharedFilters={sharedFilters}
-              summaryLines={summaryLines}
+        <div className={styles.filterGroup}>
+          <div className={styles.search}>
+            <AdminTableSearch
+              defaultValue={query}
+              placeholder={'Hledat v názvu a adrese'}
+            />
+          </div>
+          <div className={styles.filters}>
+            <FilterMenu
+              clearLabel={'Vše'}
+              label={'Stav'}
+              name={'state'}
+              options={stateOptions}
+              selectedValues={states}
+            />
+            <FilterMenu
+              clearLabel={'Všechny'}
+              label={'Rubrika'}
+              name={'category'}
+              options={categoryOptions}
+              selectedValues={filters.category ?? []}
+            />
+            <FilterMenu
+              clearLabel={'Všechny'}
+              label={'Štítek'}
+              name={'tag'}
+              options={tagOptions}
+              searchPlaceholder={'Hledat štítek'}
+              selectedValues={filters.tag ?? []}
+            />
+            <FilterMenu
+              clearLabel={'Všichni'}
+              label={'Autor'}
+              name={'author'}
+              options={authorOptions}
+              searchPlaceholder={'Hledat autora'}
+              selectedValues={filters.author ?? []}
+            />
+            {!isDefault && (
+              <Link
+                className={styles.clearFilters}
+                preventScrollReset={true}
+                to={{ search: clearFiltersSearch }}
+              >
+                Zrušit filtry
+              </Link>
+            )}
+            {/* On a phone Uložené filtry ends the scrolling row (22g). */}
+            <SavedFiltersTrigger
+              className={styles.phoneTrigger}
+              matchingFilterName={matchingFilterName}
+              menuId={savedFiltersMenuId}
             />
           </div>
         </div>
+        {/* Apart from the filters: it sets them all at once (22d). */}
+        <SavedFiltersMenu
+          currentQuery={currentFilterQuery}
+          matchingFilterId={matchingFilterId}
+          matchingFilterName={matchingFilterName}
+          menuId={savedFiltersMenuId}
+          ownFilters={ownFilters}
+          sharedFilters={sharedFilters}
+          summaryLines={summaryLines}
+          triggerClassName={styles.wideTrigger}
+        />
       </div>
       <AdminBulkActionsBar
         action={href('/administration/articles')}

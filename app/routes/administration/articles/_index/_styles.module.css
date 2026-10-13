@@ -6,34 +6,37 @@
   }
 }
 
-/* The search, the filters, Zrušit filtry and Uložené filtry at the end (22d),
-   all of one height so a line reads as one row. */
+/* The filters on the left, wrapping as one group; Uložené filtry apart at the
+   end, since it sets them all (22d). Baseline alignment puts its text on the
+   line of the search and the filters, whatever their heights. */
 .filterRow {
   @layer route {
-    --filter-row-height: 40px;
-
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
+    align-items: baseline;
+    gap: 12px;
+    inline-size: 100%;
     margin-block-end: 16px;
+  }
+}
+
+.filterGroup {
+  @layer route {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: safe center;
+    gap: 8px;
+    min-inline-size: 0;
   }
 }
 
 .search {
   @layer route {
     flex: none;
-
-    & input {
-      block-size: var(--filter-row-height);
-      padding-block: 0;
-    }
   }
 }
 
-/* No box of its own on a wide screen: the buttons are items of the filter row
-   itself, so every wrapped line keeps its items centred on one axis. */
+/* No box of its own on a wide screen: the buttons wrap with the search. */
 .filters {
   @layer route {
     display: contents;
@@ -44,35 +47,37 @@
   @layer route {
     flex: none;
     margin-inline-start: 4px;
-    font-size: var(--font-size-sm);
+    /* 13 px, as the filter buttons. */
+    font-size: 0.8125rem;
     white-space: nowrap;
   }
 }
 
-.savedFilters {
+.phoneTrigger {
   @layer route {
-    display: flex;
-    flex: none;
-    margin-inline-start: auto;
-
-    & button {
-      min-block-size: var(--filter-row-height);
-    }
+    display: none;
   }
 }
 
-/* The search at full width over a row of filters that scrolls sideways,
-   Uložené filtry behind the edge (22g). */
+/* The search at full width over a row of filters that scrolls sideways, with
+   Uložené filtry at its end (22g). */
 @media (width < 768px) {
-  .search {
+  .filterRow {
     @layer route {
-      flex: 1 1 100%;
+      display: block;
+    }
+  }
+
+  .filterGroup {
+    @layer route {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 10px;
 
       /* The shared search field is 240 px wide; here it takes the row. */
-      & form,
-      & form > div,
-      & input {
-        width: 100%;
+      & .search :is(form, form > div, input) {
+        inline-size: 100%;
       }
     }
   }
@@ -81,13 +86,10 @@
     @layer route {
       /* Its own width, not its content's, so the row scrolls, not the page:
          the page's grid column grows with the content's width. */
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1 1 100%;
-      min-inline-size: 0;
       contain: inline-size;
-      flex-wrap: nowrap;
+      display: flex;
+      align-items: safe center;
+      gap: 8px;
       margin-inline: -16px;
       padding-inline: 16px;
       overflow-x: auto;
@@ -95,9 +97,15 @@
     }
   }
 
-  .savedFilters {
+  .phoneTrigger {
     @layer route {
-      margin-inline-start: 0;
+      display: inline-flex;
+    }
+  }
+
+  .wideTrigger {
+    @layer route {
+      display: none;
     }
   }
 }

@@ -11,7 +11,6 @@ import { Form, useNavigate, useSearchParams } from 'react-router'
 
 import { Button } from '~/components/button'
 import { Checkbox } from '~/components/checkbox'
-import { ArrowDropDownIcon } from '~/components/icons/arrow-drop-down-icon'
 import { useHydrated } from '~/utils/use-hydrated'
 
 import { buildListSearch } from '../../utils/build-list-search'
@@ -275,9 +274,19 @@ export const FilterMenu = ({
           {buttonText.more !== '' && (
             <span className={styles.more}>{buttonText.more}</span>
           )}
-          <span aria-hidden={'true'} className={styles.chevron}>
-            <ArrowDropDownIcon />
-          </span>
+          {/* The chevron of the drawing (22d), not the select's triangle. */}
+          <svg
+            aria-hidden={'true'}
+            className={styles.chevron}
+            fill={'none'}
+            stroke={'currentColor'}
+            strokeLinecap={'round'}
+            strokeLinejoin={'round'}
+            strokeWidth={2}
+            viewBox={'0 0 24 24'}
+          >
+            <path d={'m6 9 6 6 6-6'} />
+          </svg>
         </span>
       </button>
 
@@ -328,7 +337,6 @@ export const FilterMenu = ({
                 aria-selected={selected.length === 0}
                 className={clsx(
                   styles.option,
-                  styles.clearOption,
                   activeIndex === 0 && styles.isActive,
                 )}
                 id={optionId(0)}
@@ -338,6 +346,8 @@ export const FilterMenu = ({
                 <span aria-hidden={'true'} className={styles.checkboxTarget} />
                 {clearLabel}
               </div>
+              {/* The empty choice stands apart from the values (22d). */}
+              <div aria-hidden={'true'} className={styles.separator} />
               {visibleOptions.map((option, index) => {
                 const rowIndex = index + 1
                 const isSelected = selected.includes(option.value)

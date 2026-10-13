@@ -10,12 +10,11 @@
   @layer route {
     display: inline-flex;
     max-inline-size: 240px;
-    /* The filter row's height, else the design's 38 px (22d). */
-    min-block-size: var(--filter-row-height, 38px);
     padding: 3px;
     color: var(--text-secondary);
     font: inherit;
-    font-size: var(--font-size-sm);
+    /* 13 px in the drawing; the scale has no step between xs and sm. */
+    font-size: 0.8125rem;
     background-color: var(--bg-tertiary);
     border: none;
     border-radius: var(--radius-lg);
@@ -78,10 +77,11 @@
 
 .chevron {
   @layer route {
-    display: inline-flex;
+    display: block;
     flex: none;
+    inline-size: 14px;
+    block-size: 14px;
     color: var(--text-tertiary);
-    font-size: var(--font-size-md);
   }
 }
 
@@ -92,17 +92,20 @@
        menu would render in flow. Hide by default and only reveal when open. */
     display: none;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     box-sizing: border-box;
-    min-inline-size: 220px;
-    max-inline-size: min(320px, calc(100vw - 32px));
-    max-block-size: min(420px, 70dvh);
-    padding: 4px;
+    /* Sized by its content within bounds rather than fixed; the drawing's
+       240 px is the lower bound. */
+    inline-size: max-content;
+    min-inline-size: 15rem;
+    max-inline-size: min(20rem, 100vw - 2rem);
+    max-block-size: min(26rem, 70dvh);
+    padding: 6px;
     color: var(--text-primary);
     font-size: var(--font-size-sm);
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
   }
 }
@@ -138,10 +141,11 @@
     font: inherit;
     background-color: var(--bg-primary);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
 
     &:focus-visible {
       outline: none;
+      border-color: var(--border-accent);
       box-shadow: var(--focus-shadow);
     }
   }
@@ -153,7 +157,7 @@
     flex-direction: column;
     min-block-size: 0;
     overflow-y: auto;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
 
     &:focus-visible {
       outline: none;
@@ -165,49 +169,46 @@
   @layer route {
     display: flex;
     align-items: center;
-    min-block-size: 34px;
-    padding-inline-end: 12px;
-    border-radius: 6px;
+    gap: 10px;
+    padding-block: 8px;
+    padding-inline: 10px;
+    border-radius: var(--radius-md);
     cursor: pointer;
 
     &:hover {
-      background-color: var(--bg-hover);
+      background-color: var(--bg-tertiary);
     }
   }
 }
 
-/* The keyboard's row, visible only while the list has the focus. */
+/* The keyboard's row, marked only while the list has the focus. */
 .listbox:focus-visible .isActive {
   @layer route {
-    box-shadow: inset var(--focus-shadow);
+    background-color: var(--bg-tertiary);
+    box-shadow: inset 0 0 0 2px var(--border-accent);
   }
 }
 
-/* The empty choice stands apart from the values (22d). */
-.clearOption {
+.separator {
   @layer route {
-    position: relative;
-    margin-block-end: 5px;
-
-    &::after {
-      position: absolute;
-      inset-inline: 0;
-      inset-block-end: -3px;
-      block-size: 1px;
-      background-color: var(--border);
-      content: "";
-    }
+    flex: none;
+    block-size: 1px;
+    margin-block: 4px;
+    background-color: var(--border);
   }
 }
 
+/* The checkbox's own hit area: at least 24 × 24 (WCAG 2.5.8) around the
+   16 px box, without moving the label. */
 .checkboxTarget {
   @layer route {
     display: flex;
     flex: none;
     align-items: center;
     justify-content: center;
-    inline-size: 34px;
-    block-size: 34px;
+    inline-size: 24px;
+    block-size: 24px;
+    margin: -4px;
   }
 }
 
@@ -216,7 +217,7 @@
     box-sizing: border-box;
     inline-size: 16px;
     block-size: 16px;
-    border: 1.5px solid var(--text-tertiary);
+    border: 1.5px solid var(--border-strong);
     border-radius: 4px;
   }
 }
@@ -252,8 +253,9 @@
 .count {
   @layer route {
     flex: none;
-    margin-inline-start: 12px;
+    margin-inline-start: auto;
     color: var(--text-tertiary);
+    font-size: 0.8125rem;
     font-variant-numeric: tabular-nums;
   }
 }
@@ -266,11 +268,23 @@
   }
 }
 
-/* Rows and the checkbox's own target big enough for a finger (22g). */
+/* Under the button, on the content's width (22g). */
 @media (width < 768px) {
+  .popover {
+    @layer route {
+      inline-size: calc(100vw - 2rem);
+      max-inline-size: none;
+    }
+  }
+}
+
+/* A finger needs 44 px: the rows and the checkbox's own target (22g). */
+@media (pointer: coarse) {
   .option {
     @layer route {
       min-block-size: 44px;
+      padding-block: 0;
+      padding-inline-start: 0;
       font-size: var(--font-size-md);
     }
   }
@@ -279,6 +293,8 @@
     @layer route {
       inline-size: 44px;
       block-size: 44px;
+      padding: 0;
+      margin: 0;
     }
   }
 }
