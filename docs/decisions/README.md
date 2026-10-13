@@ -43,3 +43,4 @@ old one changes only its status line.
 | [0009](0009-no-transparent-bank-account.md) | No transparent bank account | Accepted | 2026-09-28 |
 | [0010](0010-one-component-per-role.md) | One component per role, no administration twins | Accepted | 2026-10-10 |
 | [0011](0011-passkeys-have-no-name.md) | Passkeys have no name or note | Accepted | 2026-10-11 |
+| [0012](0012-live-events-carry-the-actor-name-to-every-session.md) | Live content events carry the actor's name to every administration session | Accepted | 2026-10-13 |
