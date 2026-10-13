@@ -56,6 +56,16 @@ skills, and never replaces a real file or directory in `.claude/skills`, so pers
 skills can sit next to the linked ones. Git worktrees under `.claude/worktrees/` pick up
 the main checkout's links.
 
+### Claude Code Subagents
+
+Project subagents are committed in `.claude/agents/` (the one tracked path under `.claude/`),
+so worktrees and cloud environments have them without a link step. A subagent cannot ask the
+user anything, so only self-contained, read-only work goes to one; the interactive pipeline
+skills stay in the main session.
+
+- `implementation-reviewer` — the pre-PR review for `/review-implementation` and
+  `/ship-issue`, in a fresh context.
+
 ### Branching & Pull Requests
 
 `dev` is the default branch; `main` is production and the only deploy source. Branch

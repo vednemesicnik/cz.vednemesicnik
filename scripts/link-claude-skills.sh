@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Links each project skill in .agents/skills into .claude/skills, where Claude
-# Code discovers skills. /.claude is gitignored, so a fresh clone has none until
-# this runs.
+# Code discovers skills. .claude/skills is gitignored, so a fresh clone has none
+# until this runs.
 #
 # One link per skill rather than one link for the whole directory, so personal
 # skills can sit next to the project ones in .claude/skills. Idempotent: a
