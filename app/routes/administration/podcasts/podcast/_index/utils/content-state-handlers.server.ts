@@ -1,3 +1,4 @@
+import { clearSubmissionOnStateChange } from '~/utils/content-state/clear-submission-on-state-change'
 import {
   clearReviewsOnDraft,
   createContentStateHandlers,
@@ -9,10 +10,11 @@ import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 export const podcastContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
     await prisma.podcast.update({
-      data: clearReviewsOnDraft(data),
+      data: clearSubmissionOnStateChange(clearReviewsOnDraft(data)),
       where: { id },
     })
   },
+  approverPublishesWithoutReview: true,
 
   deleteRow: async (id) => {
     await deleteRowWithImages(
@@ -50,6 +52,7 @@ export const podcastContentStateHandlers = createContentStateHandlers({
             reviewer: { select: { role: { select: { level: true } } } },
           },
         },
+        submittedAt: true,
       },
       where: { id },
     })
@@ -58,6 +61,7 @@ export const podcastContentStateHandlers = createContentStateHandlers({
       authors: [podcast.author],
       publishedAt: podcast.publishedAt,
       reviews: podcast.reviews,
+      submittedAt: podcast.submittedAt,
     }
   },
 })

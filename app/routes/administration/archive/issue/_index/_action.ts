@@ -5,6 +5,7 @@ import { prisma } from '~/utils/db.server'
 
 import type { Route } from './+types/route'
 import { issueContentStateHandlers } from './utils/content-state-handlers.server'
+import { issueSubmissionHandlers } from './utils/submission-handlers.server'
 
 export const action = ({ request, params }: Route.ActionArgs) => {
   const { issueId } = params
@@ -21,5 +22,6 @@ export const action = ({ request, params }: Route.ActionArgs) => {
 
       return { authorIds: [currentIssue.authorId], state: currentIssue.state }
     },
+    submissionHandlers: issueSubmissionHandlers,
   })
 }

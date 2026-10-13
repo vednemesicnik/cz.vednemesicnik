@@ -53,7 +53,7 @@ type RunContentStateActionOptions = {
   deleteNotice?: string
   /** Only the article exposes the change-published-at intent. */
   supportsChangePublishedAt?: boolean
-  /** Only the article is submitted for review so far. */
+  /** The submission transitions (design 07d); without them its intents are refused. */
   submissionHandlers?: SubmissionHandlers
 }
 

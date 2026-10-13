@@ -1,10 +1,10 @@
 import { invariantResponse } from '@epic-web/invariant'
-
 import type {
   AuthorPermissionEntity,
   ContentLogEvent,
   ContentState,
 } from '@generated/prisma/enums'
+import { data } from 'react-router'
 import { deleteContentLog } from '~/utils/content-log/delete-content-log.server'
 import { formatPublishedAtChange } from '~/utils/content-log/format-published-at-change'
 import { recordContentLog } from '~/utils/content-log/record-content-log.server'
@@ -33,8 +33,8 @@ type PublishState = {
   authors: { role: RoleLevel }[]
   reviews: { reviewer: { role: RoleLevel } }[]
   publishedAt: Date | null
-  /** Only the article has a submission; it tells „Schváleno a publikováno“ apart (07f). */
-  submittedAt?: Date | null
+  /** Tells „Schváleno a publikováno“ apart (07f) and keeps a waiting row from deletion. */
+  submittedAt: Date | null
 }
 
 /**
@@ -84,9 +84,9 @@ export type ContentStateHandlersConfig = {
   allowBackdating?: boolean
   /**
    * Whether an approver may publish without a prior approving review: their
-   * publishing act is the approval (recorded by the auto-approve). Only the
-   * article, where only the Coordinator publishes and an unsubmitted or retracted
-   * draft is published directly (design 07b, 07c).
+   * publishing act is the approval (recorded by the auto-approve). Content that
+   * only the Coordinator publishes, where an unsubmitted or retracted draft is
+   * published directly (design 07b, 07c).
    */
   approverPublishesWithoutReview?: boolean
   /**
@@ -314,6 +314,13 @@ export const createContentStateHandlers = (
       execute: announceOnSuccess(
         { change: 'delete', id: options.id },
         async (context) => {
+          // A submitted draft is not deleted (design 07c): it goes back to draft first.
+          const { submittedAt } = await config.loadPublishState(options.id)
+
+          if (submittedAt != null) {
+            throw data(null, { status: 403 })
+          }
+
           await config.deleteRow(options.id, context)
 
           // The history goes with its content; the deletion isn't logged (07f).
