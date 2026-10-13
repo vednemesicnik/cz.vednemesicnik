@@ -134,25 +134,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     draftArticleCategories.count +
     draftArticleTags.count
 
-  // Pending items cross the loader boundary with their createdAt as a FormattedDate.
-  const withFormattedCreatedAt = <Item extends { createdAt: Date }>(
+  // Pending items cross the loader boundary with the date they were submitted,
+  // from which they wait (design 07d), as a FormattedDate.
+  const withFormattedSubmittedAt = <Item extends { submittedAt: Date | null }>(
     item: Item,
   ) => ({
     ...item,
-    createdAt: createFormattedDate(item.createdAt),
+    submittedAt: createFormattedDate(item.submittedAt),
   })
 
   const pendingReviewItems = {
-    articleCategories: draftArticleCategories.items.map(withFormattedCreatedAt),
-    // An article waits from the moment it was submitted (design 07d).
-    articles: draftArticles.items.map((article) => ({
-      ...article,
-      submittedAt: createFormattedDate(article.submittedAt),
-    })),
-    articleTags: draftArticleTags.items.map(withFormattedCreatedAt),
-    issues: draftIssues.items.map(withFormattedCreatedAt),
-    podcastEpisodes: draftPodcastEpisodes.items.map(withFormattedCreatedAt),
-    podcasts: draftPodcasts.items.map(withFormattedCreatedAt),
+    articleCategories: draftArticleCategories.items.map(
+      withFormattedSubmittedAt,
+    ),
+    articles: draftArticles.items.map(withFormattedSubmittedAt),
+    articleTags: draftArticleTags.items.map(withFormattedSubmittedAt),
+    issues: draftIssues.items.map(withFormattedSubmittedAt),
+    podcastEpisodes: draftPodcastEpisodes.items.map(withFormattedSubmittedAt),
+    podcasts: draftPodcasts.items.map(withFormattedSubmittedAt),
     totalCount: totalPendingCount,
   }
 
