@@ -154,6 +154,8 @@
       grid-column: 2;
       grid-row: 1 / span 3;
       justify-self: center;
+      /* The table's actions column shrinks to 1 %; the grid sizes it here. */
+      width: auto;
     }
   }
 
