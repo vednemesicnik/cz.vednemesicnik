@@ -1,12 +1,14 @@
-/* Over eight rows the list scrolls, the heading and buttons stay (22c). */
+/* Over eight rows the list scrolls, the heading and buttons stay (22c).
+   A scroll box clips on every side, so the dashed landing place, the lifted
+   row's shift and its shadow get 8 px of room, given back by the margin. */
 .list {
   @layer route {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    max-block-size: calc(8 * 54px);
-    margin: 0;
-    padding: 0;
+    max-block-size: calc(8 * 54px + 16px);
+    margin: -8px;
+    padding: 8px;
     overflow-y: auto;
     list-style: none;
   }
