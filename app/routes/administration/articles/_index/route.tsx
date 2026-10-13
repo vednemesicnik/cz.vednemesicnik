@@ -1,5 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
+import { clsx } from 'clsx'
 import { useId } from 'react'
 import { href, useSearchParams } from 'react-router'
 import { AdminHeadline } from '~/components/admin/admin-headline'
@@ -119,11 +120,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     (filter) => filter.id === matchingFilterId,
   )?.name
 
-  const newArticleLink = canCreate && (
-    <AdminLinkButton to={href('/administration/articles/add-article')}>
-      Nový článek
-    </AdminLinkButton>
-  )
+  const renderNewArticleLink = (className?: string) =>
+    canCreate && (
+      <AdminLinkButton
+        className={className}
+        to={href('/administration/articles/add-article')}
+      >
+        Nový článek
+      </AdminLinkButton>
+    )
 
   const summaryLines = getSavedFilterSummary({
     authorNames: getLabels(authorOptions, filters.author),
@@ -144,11 +149,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const selectedArticles = selection.selectedIds.flatMap((id) =>
     articles.filter((article) => article.id === id),
   )
+  const hasSelection = selectedArticles.length > 0
 
   return (
     <AdminPage>
       <AdminHeadline>Články</AdminHeadline>
-      {newArticleLink}
+      {/* On a phone it waits at the bottom, in reach of the thumb (22g). */}
+      {renderNewArticleLink(styles.topNewArticle)}
       {showWaitingWork && (
         <p className={styles.waitingWork}>
           <Link preventScrollReset={true} to={{ search: '?state=pending' }}>
@@ -156,85 +163,91 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </Link>
         </p>
       )}
-      {/* Once a row is checked, the selection bar takes the filter row's place (22c). */}
-      {selectedArticles.length > 0 ? (
+      {/* Once a row is checked, the selection bar takes the filter row's place
+          (22c), on a wide screen only: a phone has no selection (22g), even
+          one carried over from a wider window. */}
+      {hasSelection && (
         <ArticleSelectionBar
           action={href('/administration/articles')}
           articles={selectedArticles}
           className={styles.selectionBar}
           onClear={selection.clear}
         />
-      ) : (
-        /* Everything that narrows the list is a filter, in one row (22d). */
-        <div className={styles.filterRow}>
-          <div className={styles.filterGroup}>
-            <div className={styles.search}>
-              <AdminTableSearch
-                defaultValue={query}
-                placeholder={'Hledat v názvu a adrese'}
-              />
-            </div>
-            <div className={styles.filters}>
-              <FilterMenu
-                clearLabel={'Vše'}
-                label={'Stav'}
-                name={'state'}
-                options={stateOptions}
-                selectedValues={states}
-              />
-              <FilterMenu
-                clearLabel={'Všechny'}
-                label={'Rubrika'}
-                name={'category'}
-                options={categoryOptions}
-                selectedValues={filters.category ?? []}
-              />
-              <FilterMenu
-                clearLabel={'Všechny'}
-                label={'Štítek'}
-                name={'tag'}
-                options={tagOptions}
-                searchPlaceholder={'Hledat štítek'}
-                selectedValues={filters.tag ?? []}
-              />
-              <FilterMenu
-                clearLabel={'Všichni'}
-                label={'Autor'}
-                name={'author'}
-                options={authorOptions}
-                searchPlaceholder={'Hledat autora'}
-                selectedValues={filters.author ?? []}
-              />
-              {!isDefault && (
-                <Link
-                  className={styles.clearFilters}
-                  preventScrollReset={true}
-                  to={{ search: clearFiltersSearch }}
-                >
-                  Zrušit filtry
-                </Link>
-              )}
-              {/* On a phone Uložené filtry ends the scrolling row (22g). */}
-              <SavedFiltersTrigger
-                className={styles.phoneTrigger}
-                matchingFilterName={matchingFilterName}
-                menuId={savedFiltersMenuId}
-              />
-            </div>
-          </div>
-          {/* Apart from the filters: it sets them all at once (22d). */}
-          <SavedFiltersMenu
-            currentQuery={currentFilterQuery}
-            matchingFilterId={matchingFilterId}
-            matchingFilterName={matchingFilterName}
-            menuId={savedFiltersMenuId}
-            ownFilters={ownFilters}
-            sharedFilters={sharedFilters}
-            summaryLines={summaryLines}
-            triggerClassName={styles.wideTrigger}
-          />
-        </div>
       )}
+      {/* Everything that narrows the list is a filter, in one row (22d). */}
+      <div
+        className={clsx(
+          styles.filterRow,
+          hasSelection && styles.filterRowReplaced,
+        )}
+      >
+        <div className={styles.filterGroup}>
+          <div className={styles.search}>
+            <AdminTableSearch
+              defaultValue={query}
+              placeholder={'Hledat v názvu a adrese'}
+            />
+          </div>
+          <div className={styles.filters}>
+            <FilterMenu
+              clearLabel={'Vše'}
+              label={'Stav'}
+              name={'state'}
+              options={stateOptions}
+              selectedValues={states}
+            />
+            <FilterMenu
+              clearLabel={'Všechny'}
+              label={'Rubrika'}
+              name={'category'}
+              options={categoryOptions}
+              selectedValues={filters.category ?? []}
+            />
+            <FilterMenu
+              clearLabel={'Všechny'}
+              label={'Štítek'}
+              name={'tag'}
+              options={tagOptions}
+              searchPlaceholder={'Hledat štítek'}
+              selectedValues={filters.tag ?? []}
+            />
+            <FilterMenu
+              clearLabel={'Všichni'}
+              label={'Autor'}
+              name={'author'}
+              options={authorOptions}
+              searchPlaceholder={'Hledat autora'}
+              selectedValues={filters.author ?? []}
+            />
+            {!isDefault && (
+              <Link
+                className={styles.clearFilters}
+                preventScrollReset={true}
+                to={{ search: clearFiltersSearch }}
+              >
+                Zrušit filtry
+              </Link>
+            )}
+            {/* On a phone Uložené filtry ends the scrolling row (22g). */}
+            <SavedFiltersTrigger
+              className={styles.phoneTrigger}
+              matchingFilterName={matchingFilterName}
+              menuId={savedFiltersMenuId}
+            />
+          </div>
+        </div>
+        {/* Apart from the filters: it sets them all at once (22d). */}
+        <SavedFiltersMenu
+          currentQuery={currentFilterQuery}
+          matchingFilterId={matchingFilterId}
+          matchingFilterName={matchingFilterName}
+          menuId={savedFiltersMenuId}
+          ownFilters={ownFilters}
+          sharedFilters={sharedFilters}
+          summaryLines={summaryLines}
+          triggerClassName={styles.wideTrigger}
+        />
+      </div>
       {totalCount === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <div className={styles.empty}>
@@ -242,7 +255,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <p className={styles.emptyText}>{emptyMessage.text}</p>
           )}
-          {emptyMessage.action === 'newArticle' && newArticleLink}
+          {emptyMessage.action === 'newArticle' && renderNewArticleLink()}
           {emptyMessage.action === 'clearFilters' && (
             <AdminLinkButton
               preventScrollReset={true}
@@ -253,8 +266,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           )}
         </div>
       ) : (
-        <AdminTable pending={pending} stickyHeader={true}>
-          <TableHeader>
+        <AdminTable
+          className={styles.table}
+          pending={pending}
+          stickyHeader={true}
+        >
+          <TableHeader className={styles.tableHeader}>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
               disabled={selectableIds.length === 0}
@@ -304,6 +321,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         totalCount={totalCount}
         totalPages={totalPages}
       />
+      {/* Unless the empty list already offers it (22e). */}
+      {(totalCount > 0 || emptyMessage.action !== 'newArticle') &&
+        renderNewArticleLink(styles.bottomNewArticle)}
     </AdminPage>
   )
 }
