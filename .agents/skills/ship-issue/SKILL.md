@@ -59,13 +59,13 @@ the review is `review-implementation`'s, the PR lifecycle is
 2. **Guard the branch.** On `dev` or `main`, stop. Note uncommitted changes; Phase B commits
    them.
 
-### Phase A — Review the implementation (pre-PR, inline)
+### Phase A — Review the implementation (pre-PR)
 
-Run the review exactly as `.agents/skills/review-implementation/SKILL.md` describes — every
-hunk of `git diff dev...HEAD` against `self-review-before-pr`, the rules, `AGENTS.md`, design
-conformance and the issue's acceptance criteria. Not the `code-review:code-review` plugin (it
-needs a PR and adds an attribution footer); the built-in `/code-review` is user-triggered.
-Also check **no real data** in fixtures and docs (`priklad.cz`). One ranked report,
+Run the review exactly as `.agents/skills/review-implementation/SKILL.md` describes: the
+design extracted here, the diff read by the `implementation-reviewer` agent against
+`self-review-before-pr`, the rules, `AGENTS.md`, the decision records and the issue's
+acceptance criteria. Not the `code-review:code-review` plugin (it needs a PR and adds an
+attribution footer); the built-in `/code-review` is user-triggered. One ranked report,
 most-severe first.
 
 ### 🛑 Gate 1 — Apply fixes (auto-apply, gate only on risk)

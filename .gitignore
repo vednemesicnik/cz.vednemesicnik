@@ -23,7 +23,8 @@
 .DS_Store
 .env
 
-/.claude
+/.claude/*
+!/.claude/agents/
 *storybook.log
 storybook-static
 
