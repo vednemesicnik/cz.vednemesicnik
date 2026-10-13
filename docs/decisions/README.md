@@ -44,3 +44,4 @@ old one changes only its status line.
 | [0010](0010-one-component-per-role.md) | One component per role, no administration twins | Accepted | 2026-10-10 |
 | [0011](0011-passkeys-have-no-name.md) | Passkeys have no name or note | Accepted | 2026-10-11 |
 | [0012](0012-live-events-carry-the-actor-name-to-every-session.md) | Live content events carry the actor's name to every administration session | Accepted | 2026-10-13 |
+| [0013](0013-content-is-submitted-only-the-coordinator-approves-and-publishes.md) | Every content type is submitted for review; only the Coordinator approves and publishes | Accepted | 2026-09-28 |
