@@ -15,7 +15,6 @@ import {
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
-import type { Variant } from '~/components/button'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { Pagination } from '~/components/pagination'
@@ -135,12 +134,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     (filter) => filter.id === matchingFilterId,
   )?.name
 
-  const renderNewArticleLink = (variant: Variant, className?: string) =>
+  const renderNewArticleLink = (className?: string) =>
     canCreate && (
       <LinkButton
         className={className}
         to={href('/administration/articles/add-article')}
-        variant={variant}
       >
         Nový článek
       </LinkButton>
@@ -171,7 +169,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <AdminPage>
       <AdminHeadline>Články</AdminHeadline>
       {/* On a phone it waits at the bottom, in reach of the thumb (22g). */}
-      {renderNewArticleLink('primary', styles.topNewArticle)}
+      {renderNewArticleLink(styles.topNewArticle)}
       {showWaitingWork && (
         <p className={styles.waitingWork}>
           <Link preventScrollReset={true} to={{ search: '?state=pending' }}>
@@ -271,8 +269,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <p className={styles.emptyText}>{emptyMessage.text}</p>
           )}
-          {emptyMessage.action === 'newArticle' &&
-            renderNewArticleLink('outline')}
+          {emptyMessage.action === 'newArticle' && renderNewArticleLink()}
           {emptyMessage.action === 'clearFilters' && (
             <LinkButton
               preventScrollReset={true}
@@ -345,9 +342,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           unless the empty list already offers it (22e). */}
       {canCreate &&
         (totalCount > 0 || emptyMessage.action !== 'newArticle') && (
-          <div className={styles.newArticleBar}>
-            {renderNewArticleLink('primary')}
-          </div>
+          <div className={styles.newArticleBar}>{renderNewArticleLink()}</div>
         )}
     </AdminPage>
   )
