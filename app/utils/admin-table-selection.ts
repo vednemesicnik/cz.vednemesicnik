@@ -2,12 +2,17 @@
 // can be unit-tested directly; `useAdminTableSelection` wraps it with React state.
 
 // Intersection of the current selection with the ids currently selectable on the
-// page. This is what prunes stale ids automatically: after pagination, search, or
-// a revalidation that removes rows, ids no longer present simply drop out.
+// page, in the order they were selected (a Set keeps insertion order). This is
+// what prunes stale ids automatically: after pagination, search, or a
+// revalidation that removes rows, ids no longer present simply drop out.
 export const getSelectedIds = (
   selected: ReadonlySet<string>,
   selectableIds: string[],
-): string[] => selectableIds.filter((id) => selected.has(id))
+): string[] => {
+  const selectable = new Set(selectableIds)
+
+  return [...selected].filter((id) => selectable.has(id))
+}
 
 // Add or remove a single id, returning a new Set (never mutating the input).
 export const toggleSelection = (

@@ -16,11 +16,13 @@ import { getAuthorPermissionContext } from '~/utils/permissions/author/context/g
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
+import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
 import { getArticleActionFlags } from '../utils/get-article-action-flags.server'
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
 import { buildArticleQueueWhere } from './utils/build-article-queue-where'
 import { getArticleFactLine } from './utils/get-article-fact-line'
+import { getBulkActions } from './utils/get-bulk-actions'
 import { getRowActions } from './utils/get-row-actions'
 
 const PAGE_SIZE = 20
@@ -182,7 +184,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           orderBy: { name: 'asc' },
           select: { name: true, slug: true },
         },
+        // Completeness before bulk publishing (23h, 22c).
+        content: true,
+        excerpt: true,
         id: true,
+        images: { select: { altText: true } },
         publishedAt: true,
         reviews: {
           select: {
@@ -275,15 +281,20 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       ...article.categories.filter((category) => !isFilteredCategory(category)),
     ].map((category) => category.name)
 
+    const rowActions = getRowActions({
+      ...flags,
+      state: article.state,
+      submission: flags.submission?.state ?? null,
+    })
+
     return {
-      ...getRowActions({
-        ...flags,
-        state: article.state,
-        submission: flags.submission?.state ?? null,
-      }),
+      ...rowActions,
       authorNames: article.authors.map((author) => author.name),
-      // Selection is for bulk delete only.
-      canDelete: flags.canDelete,
+      // What the selection bar may apply to this row (22c).
+      bulkActions: getBulkActions({
+        ...rowActions,
+        isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+      }),
       categoryNames,
       factLine: getArticleFactLine({
         now,
@@ -293,6 +304,16 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         updatedAt: article.updatedAt,
       }),
       id: article.id,
+      // Bulk publishing skips it and says so up front (23h, 22c).
+      isIncomplete:
+        getMissingArticleContent({
+          authorCount: article.authors.length,
+          content: article.content,
+          excerpt: article.excerpt,
+          images: article.images,
+          slug: article.slug,
+          title: article.title,
+        }).length > 0,
       // Publishing it, the dialog says nobody submitted it (23f).
       isNotSubmitted:
         article.state === 'draft' &&

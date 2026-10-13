@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
@@ -8,14 +8,17 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
-import { TextField } from '~/components/text-field'
 import { FORM_CONFIG } from '~/config/form-config'
-import { formatNumericDate } from '~/utils/format-numeric-date'
+import { getMomentOnDay } from '~/utils/get-moment-on-day'
+import { toLocalDayValue } from '~/utils/to-local-day-value'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
-import styles from './_styles.module.css'
+import {
+  type PublishDateChoice,
+  PublishDateFieldset,
+} from '../publish-date-fieldset'
 
-type DateChoice = 'original' | 'today' | 'other'
+import styles from './_styles.module.css'
 
 type Props = {
   action: string
@@ -26,13 +29,6 @@ type Props = {
   note: string | null
   originalPublishedAt: string | null
   onClose: () => void
-}
-
-// A date input wants the local day as YYYY-MM-DD; toISOString would give UTC.
-const toLocalDayValue = (date: Date) => {
-  const pad = (value: number) => String(value).padStart(2, '0')
-
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
 /**
@@ -59,11 +55,10 @@ export const ArticlePublishDialog = ({
 }: Props) => {
   const fetcher = useFetcher({ key: fetcherKey })
   const ref = useModalDialog(onClose)
-  const otherDayId = useId()
 
   const [now] = useState(() => new Date())
   const today = toLocalDayValue(now)
-  const [choice, setChoice] = useState<DateChoice>(
+  const [choice, setChoice] = useState<PublishDateChoice>(
     originalPublishedAt === null ? 'today' : 'original',
   )
   const [otherDay, setOtherDay] = useState(today)
@@ -76,27 +71,11 @@ export const ArticlePublishDialog = ({
   // Another day keeps the time of confirmation (23f), read at submit.
   const handleSubmit = () => {
     if (publishDate === 'other' && publishedAtRef.current !== null) {
-      const [year, month, day] = otherDay.split('-').map(Number)
-      const confirmedAt = new Date()
-      confirmedAt.setFullYear(year, month - 1, day)
-      publishedAtRef.current.value = confirmedAt.toISOString()
+      publishedAtRef.current.value = getMomentOnDay(otherDay).toISOString()
     }
 
     ref.current?.close()
   }
-
-  const dateOptions: { value: DateChoice; label: string }[] = [
-    ...(originalPublishedAt === null
-      ? []
-      : [
-          {
-            label: `Původní datum, ${formatNumericDate(new Date(originalPublishedAt))}`,
-            value: 'original' as const,
-          },
-        ]),
-    { label: `Dnes, ${formatNumericDate(now)}`, value: 'today' },
-    { label: 'Jiný den', value: 'other' },
-  ]
 
   return (
     <AdminDialog ref={ref}>
@@ -133,36 +112,14 @@ export const ArticlePublishDialog = ({
           <input name={'publishDate'} type={'hidden'} value={publishDate} />
           <input name={'publishedAt'} ref={publishedAtRef} type={'hidden'} />
 
-          <fieldset className={styles.dates}>
-            <legend className={styles.legend}>Datum publikace</legend>
-            {dateOptions.map((option) => (
-              <label className={styles.option} key={option.value}>
-                <input
-                  checked={choice === option.value}
-                  className={styles.radio}
-                  name={'publishDateChoice'}
-                  onChange={() => setChoice(option.value)}
-                  type={'radio'}
-                  value={option.value}
-                />
-                {option.label}
-              </label>
-            ))}
-
-            {/* Today or earlier: the calendar offers no future day (23f). */}
-            {choice === 'other' && (
-              <TextField
-                className={styles.otherDay}
-                id={otherDayId}
-                label={'Jiný den'}
-                max={today}
-                onChange={(event) => setOtherDay(event.currentTarget.value)}
-                required
-                type={'date'}
-                value={otherDay}
-              />
-            )}
-          </fieldset>
+          <PublishDateFieldset
+            choice={choice}
+            now={now}
+            onChoiceChange={setChoice}
+            onOtherDayChange={setOtherDay}
+            originalPublishedAt={originalPublishedAt}
+            otherDay={otherDay}
+          />
 
           <AdminModalActions>
             <Button

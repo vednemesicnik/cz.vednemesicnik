@@ -2,7 +2,6 @@
 
 import { useId } from 'react'
 import { href, useSearchParams } from 'react-router'
-import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
@@ -22,6 +21,7 @@ import type { ArticleQueue } from '~/config/article-queue-config'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { ArticleSelectionBar } from './components/article-selection-bar'
 import { FilterMenu, type FilterOption } from './components/filter-menu'
 import { ItemRow } from './components/item-row'
 import { SavedFiltersMenu } from './components/saved-filters-menu'
@@ -31,6 +31,7 @@ import { buildClearFiltersSearch } from './utils/build-clear-filters-search'
 import { formatWaitingWork } from './utils/format-waiting-work'
 import { getEmptyListMessage } from './utils/get-empty-list-message'
 import { getSavedFilterSummary } from './utils/get-saved-filter-summary'
+import { useBulkActionResult } from './utils/use-bulk-action-result'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -134,10 +135,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   const emptyMessage = getEmptyListMessage({ hasOtherFilters, states })
 
-  const deletableIds = articles
-    .filter((article) => article.canDelete)
+  // A row joins the selection when the bar could apply something to it (22c).
+  const selectableIds = articles
+    .filter((article) => article.bulkActions.length > 0)
     .map((article) => article.id)
-  const selection = useAdminTableSelection(deletableIds)
+  const selection = useAdminTableSelection(selectableIds)
+  useBulkActionResult(selection.clear)
+  const selectedArticles = selection.selectedIds.flatMap((id) =>
+    articles.filter((article) => article.id === id),
+  )
 
   return (
     <AdminPage>
@@ -150,80 +156,85 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </Link>
         </p>
       )}
-      {/* Everything that narrows the list is a filter, in one row (22d). */}
-      <div className={styles.filterRow}>
-        <div className={styles.filterGroup}>
-          <div className={styles.search}>
-            <AdminTableSearch
-              defaultValue={query}
-              placeholder={'Hledat v názvu a adrese'}
-            />
-          </div>
-          <div className={styles.filters}>
-            <FilterMenu
-              clearLabel={'Vše'}
-              label={'Stav'}
-              name={'state'}
-              options={stateOptions}
-              selectedValues={states}
-            />
-            <FilterMenu
-              clearLabel={'Všechny'}
-              label={'Rubrika'}
-              name={'category'}
-              options={categoryOptions}
-              selectedValues={filters.category ?? []}
-            />
-            <FilterMenu
-              clearLabel={'Všechny'}
-              label={'Štítek'}
-              name={'tag'}
-              options={tagOptions}
-              searchPlaceholder={'Hledat štítek'}
-              selectedValues={filters.tag ?? []}
-            />
-            <FilterMenu
-              clearLabel={'Všichni'}
-              label={'Autor'}
-              name={'author'}
-              options={authorOptions}
-              searchPlaceholder={'Hledat autora'}
-              selectedValues={filters.author ?? []}
-            />
-            {!isDefault && (
-              <Link
-                className={styles.clearFilters}
-                preventScrollReset={true}
-                to={{ search: clearFiltersSearch }}
-              >
-                Zrušit filtry
-              </Link>
-            )}
-            {/* On a phone Uložené filtry ends the scrolling row (22g). */}
-            <SavedFiltersTrigger
-              className={styles.phoneTrigger}
-              matchingFilterName={matchingFilterName}
-              menuId={savedFiltersMenuId}
-            />
-          </div>
-        </div>
-        {/* Apart from the filters: it sets them all at once (22d). */}
-        <SavedFiltersMenu
-          currentQuery={currentFilterQuery}
-          matchingFilterId={matchingFilterId}
-          matchingFilterName={matchingFilterName}
-          menuId={savedFiltersMenuId}
-          ownFilters={ownFilters}
-          sharedFilters={sharedFilters}
-          summaryLines={summaryLines}
-          triggerClassName={styles.wideTrigger}
+      {/* Once a row is checked, the selection bar takes the filter row's place (22c). */}
+      {selectedArticles.length > 0 ? (
+        <ArticleSelectionBar
+          action={href('/administration/articles')}
+          articles={selectedArticles}
+          className={styles.selectionBar}
+          onClear={selection.clear}
         />
-      </div>
-      <AdminBulkActionsBar
-        action={href('/administration/articles')}
-        onDone={selection.clear}
-        selectedIds={selection.selectedIds}
-      />
+      ) : (
+        /* Everything that narrows the list is a filter, in one row (22d). */
+        <div className={styles.filterRow}>
+          <div className={styles.filterGroup}>
+            <div className={styles.search}>
+              <AdminTableSearch
+                defaultValue={query}
+                placeholder={'Hledat v názvu a adrese'}
+              />
+            </div>
+            <div className={styles.filters}>
+              <FilterMenu
+                clearLabel={'Vše'}
+                label={'Stav'}
+                name={'state'}
+                options={stateOptions}
+                selectedValues={states}
+              />
+              <FilterMenu
+                clearLabel={'Všechny'}
+                label={'Rubrika'}
+                name={'category'}
+                options={categoryOptions}
+                selectedValues={filters.category ?? []}
+              />
+              <FilterMenu
+                clearLabel={'Všechny'}
+                label={'Štítek'}
+                name={'tag'}
+                options={tagOptions}
+                searchPlaceholder={'Hledat štítek'}
+                selectedValues={filters.tag ?? []}
+              />
+              <FilterMenu
+                clearLabel={'Všichni'}
+                label={'Autor'}
+                name={'author'}
+                options={authorOptions}
+                searchPlaceholder={'Hledat autora'}
+                selectedValues={filters.author ?? []}
+              />
+              {!isDefault && (
+                <Link
+                  className={styles.clearFilters}
+                  preventScrollReset={true}
+                  to={{ search: clearFiltersSearch }}
+                >
+                  Zrušit filtry
+                </Link>
+              )}
+              {/* On a phone Uložené filtry ends the scrolling row (22g). */}
+              <SavedFiltersTrigger
+                className={styles.phoneTrigger}
+                matchingFilterName={matchingFilterName}
+                menuId={savedFiltersMenuId}
+              />
+            </div>
+          </div>
+          {/* Apart from the filters: it sets them all at once (22d). */}
+          <SavedFiltersMenu
+            currentQuery={currentFilterQuery}
+            matchingFilterId={matchingFilterId}
+            matchingFilterName={matchingFilterName}
+            menuId={savedFiltersMenuId}
+            ownFilters={ownFilters}
+            sharedFilters={sharedFilters}
+            summaryLines={summaryLines}
+            triggerClassName={styles.wideTrigger}
+          />
+        </div>
+      )}
       {totalCount === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <div className={styles.empty}>
@@ -246,7 +257,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
-              disabled={deletableIds.length === 0}
+              disabled={selectableIds.length === 0}
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />

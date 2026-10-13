@@ -141,6 +141,8 @@ describes today's code; this is the target.
   A Coordinator's own small fix of an approved text keeps the approval.
 - **Bulk publish gives every item its own time**, in the order the confirmation dialog shows
   (top = newest): the top item gets the moment of confirmation, each next one second earlier.
+  An item published before keeps its stored date and stays out of the order. Built for
+  articles (#600).
 - **Changing the publish date takes a time as well** (Coordinator only, never in the future),
   so a forgotten article can be placed between two already published ones.
 - **Creators neither approve nor publish** — not even their own content. Their `review`

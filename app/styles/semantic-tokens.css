@@ -67,8 +67,9 @@
       var(--color-charcoal-600),
       var(--color-charcoal-300)
     );
+    /* charcoal-500 in light: 4.8 : 1 on white, AA for text (5mehib4t). */
     --text-tertiary: light-dark(
-      var(--color-charcoal-400),
+      var(--color-charcoal-500),
       var(--color-charcoal-400)
     );
     --text-on-accent: light-dark(var(--color-white), var(--color-white));

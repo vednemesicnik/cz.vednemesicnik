@@ -59,8 +59,9 @@ describe('getSelectedIds', () => {
     expect(getSelectedIds(new Set(['a', 'b', 'c']), ['b'])).toEqual(['b'])
   })
 
-  test('preserves the order of selectableIds', () => {
-    expect(getSelectedIds(new Set(['a', 'b']), ['b', 'a'])).toEqual(['b', 'a'])
+  test('keeps the order in which the ids were selected', () => {
+    // The bulk publish dialog starts from the check order (design 22c).
+    expect(getSelectedIds(new Set(['a', 'b']), ['b', 'a'])).toEqual(['a', 'b'])
   })
 
   test('returns an empty array when nothing overlaps', () => {

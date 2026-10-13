@@ -19,6 +19,13 @@
   }
 }
 
+.selectionBar {
+  @layer route {
+    inline-size: 100%;
+    margin-block-end: 16px;
+  }
+}
+
 .filterGroup {
   @layer route {
     display: flex;

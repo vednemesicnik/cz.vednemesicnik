@@ -2,6 +2,7 @@ import { useRef } from 'react'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminSelectionBar } from '~/components/admin/admin-selection-bar'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 
 import { useAdminBulkDelete } from './_hook'
@@ -11,7 +12,7 @@ type Props = {
   // Route action URL (the list route itself).
   action: string
   selectedIds: string[]
-  // Clear the selection after a successful submit.
+  // Clear the selection after a successful submit, or on „Zrušit výběr“.
   onDone: () => void
 }
 
@@ -27,8 +28,11 @@ export const AdminBulkActionsBar = ({ action, selectedIds, onDone }: Props) => {
   return (
     <>
       {selectedIds.length > 0 && (
-        <section aria-label={'Hromadné akce'} className={styles.bar}>
-          <span className={styles.count}>Vybráno: {selectedIds.length}</span>
+        <AdminSelectionBar
+          className={styles.bar}
+          count={selectedIds.length}
+          onClear={onDone}
+        >
           <AdminActionButton
             action={'delete'}
             disabled={isSubmitting}
@@ -38,7 +42,7 @@ export const AdminBulkActionsBar = ({ action, selectedIds, onDone }: Props) => {
             <DeleteIcon />
             {isSubmitting ? 'Maže se...' : 'Smazat vybrané'}
           </AdminActionButton>
-        </section>
+        </AdminSelectionBar>
       )}
       {/* Keep the dialog mounted even with no selection: the hook attaches its
           `close` listener on mount, so a dialog that only appears on selection
