@@ -29,6 +29,7 @@ import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useContentEvents } from '~/hooks/use-content-events'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
@@ -65,6 +66,11 @@ export default function RouteComponent({
     needsReview,
   } = loaderData
   const { podcastId, episodeId } = params
+
+  useContentEvents({
+    filter: (event) =>
+      event.entity === 'podcast_episode' && event.entityId === episodeId,
+  })
 
   // Selected mode of the draft publish split button (Coordinators only).
   const [publishMode, setPublishMode] = useState<PublishMode>('publish')
