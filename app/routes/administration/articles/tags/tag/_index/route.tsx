@@ -217,6 +217,8 @@ export default function RouteComponent({
         <HistoryList
           entries={tag.history.entries}
           isIncomplete={tag.history.isIncomplete}
+          // A reused route component starts every record collapsed.
+          key={tag.id}
           visibleCount={5}
         />
       </AdminDetailSection>
