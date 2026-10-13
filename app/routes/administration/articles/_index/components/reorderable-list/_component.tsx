@@ -40,6 +40,9 @@ const DRAG_THRESHOLD_PX = 4
 // Matches the list's gap in the stylesheet.
 const ROW_GAP_PX = 6
 
+// How far past the midpoint the pointer goes before a swap, either way.
+const SWAP_HYSTERESIS_PX = 8
+
 // How long a row slides into its new place after a swap.
 const SWAP_MS = 150
 
@@ -211,14 +214,18 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
       const neighbourRow =
         neighbour === undefined ? undefined : rowRefs.current.get(neighbour.id)
 
+      // Past the midpoint of the step plus a band: a swap moves the row by
+      // the whole step, so without the band it lands past the line back and
+      // the slightest wiggle swaps it again.
+      const step = neighbourRow?.offsetHeight ?? 0
       if (
         neighbourRow === undefined ||
-        Math.abs(remaining) <= neighbourRow.offsetHeight / 2
+        Math.abs(remaining) <= (step + ROW_GAP_PX) / 2 + SWAP_HYSTERESIS_PX
       ) {
         break
       }
 
-      const shift = (neighbourRow.offsetHeight + ROW_GAP_PX) * direction
+      const shift = (step + ROW_GAP_PX) * direction
       target += direction
       remaining -= shift
       startY += shift
