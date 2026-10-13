@@ -297,6 +297,20 @@
       margin: 0;
     }
   }
+
+  /* An 18 px box for a finger (o482br61). */
+  .checkbox {
+    @layer route {
+      inline-size: 18px;
+      block-size: 18px;
+    }
+  }
+
+  .option[aria-selected="true"] .checkbox {
+    @layer route {
+      background-size: 13px;
+    }
+  }
 }
 
 .fallbackForm {
