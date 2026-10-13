@@ -23,6 +23,10 @@ import { ArticleChangeDateDialog } from '../../../components/article-change-date
 import { ArticleMissingDialog } from '../../../components/article-missing-dialog'
 import { ArticlePublishDialog } from '../../../components/article-publish-dialog'
 import {
+  ArticleStateDialog,
+  type ArticleStateDialogKind,
+} from '../../../components/article-state-dialog'
+import {
   ARTICLE_ACTION_LABELS,
   ARTICLE_DIRECT_INTENTS,
   type ArticleAction,
@@ -41,6 +45,7 @@ type Article = Route.ComponentProps['loaderData']['articles'][number]
 type Props = {
   article: Article
   showAuthor: boolean
+  isApprover: boolean
   selected: boolean
   onSelect: () => void
   liveChange?: LiveChange
@@ -57,6 +62,7 @@ type Props = {
 export const ItemRow = ({
   article,
   showAuthor,
+  isApprover,
   selected,
   onSelect,
   liveChange,
@@ -77,12 +83,15 @@ export const ItemRow = ({
   const navigate = useNavigate()
 
   const { closeMissingList, missingList } = useArticleActionResult(fetcher.data)
+  const [stateDialog, setStateDialog] = useState<ArticleStateDialogKind | null>(
+    null,
+  )
   const [publishDialog, setPublishDialog] = useState<{
     isApproval: boolean
   } | null>(null)
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
-  const changeDateDialogRef = useRef<HTMLDialogElement>(null)
+  const [isChangeDateOpen, setIsChangeDateOpen] = useState(false)
   const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(
     deleteDialogRef,
     { action, key: fetcherKey },
@@ -105,8 +114,11 @@ export const ItemRow = ({
         return setPublishDialog({ isApproval: true })
       case 'publish':
         return setPublishDialog({ isApproval: false })
+      case 'retract':
+      case 'archive':
+        return setStateDialog(articleAction)
       case 'change-date':
-        return changeDateDialogRef.current?.showModal()
+        return setIsChangeDateOpen(true)
       case 'delete':
         return openDeleteDialog()
       case 'edit':
@@ -241,14 +253,34 @@ export const ItemRow = ({
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
           {article.menu.includes('delete') && (
-            <AdminDeleteConfirmationDialog ref={deleteDialogRef} />
+            <AdminDeleteConfirmationDialog
+              description={'Smazání je nevratné.'}
+              ref={deleteDialogRef}
+              subject={article.title}
+              title={
+                article.state === 'archived'
+                  ? 'Smazat archivovaný článek?'
+                  : 'Smazat koncept?'
+              }
+            />
           )}
-          {article.menu.includes('change-date') && (
+          {isChangeDateOpen && (
             <ArticleChangeDateDialog
               action={action}
+              articleTitle={article.title}
               fetcherKey={fetcherKey}
+              onClose={() => setIsChangeDateOpen(false)}
               publishedAt={article.publishedAt}
-              ref={changeDateDialogRef}
+            />
+          )}
+          {stateDialog !== null && (
+            <ArticleStateDialog
+              action={action}
+              articleTitle={article.title}
+              fetcherKey={fetcherKey}
+              isApprover={isApprover}
+              kind={stateDialog}
+              onClose={() => setStateDialog(null)}
             />
           )}
           {publishDialog !== null && (

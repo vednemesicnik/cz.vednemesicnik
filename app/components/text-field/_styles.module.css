@@ -47,7 +47,9 @@
   }
 }
 
-.input.inputError {
+/* Also for a field whose error stands elsewhere, e.g. under a row of fields. */
+.input.inputError,
+.input[aria-invalid="true"] {
   @layer variant {
     border-color: var(--error);
 

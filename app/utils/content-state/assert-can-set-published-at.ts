@@ -11,7 +11,7 @@ export const assertCanSetPublishedAt = (
 ) => {
   invariantResponse(
     context.roleLevel <= APPROVER_ROLE_LEVEL,
-    'Nemáte oprávnění nastavit datum vydání.',
+    'Nemáte oprávnění nastavit datum publikace.',
     { status: 403 },
   )
   invariantResponse(
@@ -21,7 +21,7 @@ export const assertCanSetPublishedAt = (
   )
   invariantResponse(
     publishedAt.getTime() <= Date.now(),
-    'Datum publikace nemůže být v budoucnosti.',
+    'Zadejte datum a čas, které nejsou v budoucnosti.',
     { status: 400 },
   )
 }

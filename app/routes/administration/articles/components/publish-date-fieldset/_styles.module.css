@@ -63,3 +63,14 @@
     }
   }
 }
+
+/* Under Původní datum, in line with its text (23f). */
+.hint {
+  @layer route {
+    margin: -4px 0 0;
+    padding-inline-start: 24px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}

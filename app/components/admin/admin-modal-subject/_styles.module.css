@@ -1,0 +1,10 @@
+.subject {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+  }
+}

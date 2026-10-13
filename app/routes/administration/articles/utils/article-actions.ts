@@ -18,17 +18,17 @@ export type ArticleAction =
   | 'view-on-web'
   | 'withdraw'
 
-// Three dots announce a dialog (07c). Retract and archive get theirs in 23e.
+// Three dots announce a dialog (07c).
 export const ARTICLE_ACTION_LABELS: Record<ArticleAction, string> = {
   approve: 'Schválit',
   'approve-and-publish': 'Schválit a publikovat…',
-  archive: 'Archivovat',
+  archive: 'Archivovat…',
   'change-date': 'Změnit datum publikace…',
   delete: 'Smazat…',
   edit: 'Upravit',
   publish: 'Publikovat…',
   restore: 'Obnovit jako koncept',
-  retract: 'Stáhnout z publikace',
+  retract: 'Stáhnout z publikace…',
   return: 'Vrátit k úpravám',
   submit: 'Odeslat ke schválení',
   'view-on-web': 'Zobrazit na webu',
@@ -38,9 +38,7 @@ export const ARTICLE_ACTION_LABELS: Record<ArticleAction, string> = {
 // The actions that change the state in one click, without a dialog.
 export const ARTICLE_DIRECT_INTENTS: Partial<Record<ArticleAction, string>> = {
   approve: INTENT_VALUE.review,
-  archive: INTENT_VALUE.archive,
   restore: INTENT_VALUE.restore,
-  retract: INTENT_VALUE.retract,
   return: INTENT_VALUE.returnForEdits,
   submit: INTENT_VALUE.submitForReview,
   withdraw: INTENT_VALUE.withdrawSubmission,

@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { Fragment, useId } from 'react'
 
 import { TextField } from '~/components/text-field'
 import { formatNumericDate } from '~/utils/format-numeric-date'
@@ -37,6 +37,7 @@ export const PublishDateFieldset = ({
   onOtherDayChange,
 }: Props) => {
   const otherDayId = useId()
+  const originalHintId = useId()
   const today = toLocalDayValue(now)
 
   const options: { value: PublishDateChoice; label: string }[] = [
@@ -56,17 +57,28 @@ export const PublishDateFieldset = ({
     <fieldset className={styles.dates}>
       <legend className={styles.legend}>Datum publikace</legend>
       {options.map((option) => (
-        <label className={styles.option} key={option.value}>
-          <input
-            checked={choice === option.value}
-            className={styles.radio}
-            name={'publishDateChoice'}
-            onChange={() => onChoiceChange(option.value)}
-            type={'radio'}
-            value={option.value}
-          />
-          {option.label}
-        </label>
+        <Fragment key={option.value}>
+          <label className={styles.option}>
+            <input
+              aria-describedby={
+                option.value === 'original' ? originalHintId : undefined
+              }
+              checked={choice === option.value}
+              className={styles.radio}
+              name={'publishDateChoice'}
+              onChange={() => onChoiceChange(option.value)}
+              type={'radio'}
+              value={option.value}
+            />
+            {option.label}
+          </label>
+          {/* The date alone doesn't say the time stays too (23f, 1lgyzyy1). */}
+          {option.value === 'original' && (
+            <p className={styles.hint} id={originalHintId}>
+              Zachová dosavadní datum i čas publikace.
+            </p>
+          )}
+        </Fragment>
       ))}
 
       {/* Today or earlier: the calendar offers no future day (23f). */}

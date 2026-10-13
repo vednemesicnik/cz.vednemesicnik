@@ -11,6 +11,8 @@ export const action = ({ request, params }: Route.ActionArgs) => {
   const { articleId } = params
 
   return runContentStateAction(request, {
+    // The list says it, the detail is gone (23f).
+    deleteNotice: 'Smazáno',
     deleteRedirectTo: href('/administration/articles'),
     handlers: articleContentStateHandlers,
     id: articleId,

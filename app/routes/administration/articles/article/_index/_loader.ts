@@ -8,6 +8,7 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
 import { getArticleActionFlags } from '../../utils/get-article-action-flags.server'
 import { getArticleFactLine } from '../../utils/get-article-fact-line'
@@ -165,6 +166,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       title: article.title,
     },
     ...flags,
+    // Only the Coordinator publishes a retracted article again (23e).
+    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
     missingBeforePublish,
     submission: flags.submission?.state ?? null,
   }

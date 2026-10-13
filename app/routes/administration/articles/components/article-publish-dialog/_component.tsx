@@ -5,6 +5,7 @@ import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
@@ -85,12 +86,10 @@ export const ArticlePublishDialog = ({
         </AdminModalTitle>
 
         {/* The article by its title, the authors in the nominative (23f). */}
-        <p className={styles.article}>
-          <span className={styles.articleTitle}>{articleTitle}</span>
-          <span className={styles.authors}>
-            Autoři: {authorNames.join(', ')}
-          </span>
-        </p>
+        <div className={styles.article}>
+          <AdminModalSubject>{articleTitle}</AdminModalSubject>
+          <p className={styles.authors}>Autoři: {authorNames.join(', ')}</p>
+        </div>
 
         <AdminModalDescription>
           Článek bude publikován na webu.
