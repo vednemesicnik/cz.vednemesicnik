@@ -1,5 +1,6 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
+import type { ReactNode } from 'react'
 import { href, useFetcher } from 'react-router'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -24,7 +25,7 @@ type Props = {
   onClose: () => void
   tableKey: AdminListTableKey
   title?: string
-  summary?: string
+  summary?: ReactNode
   defaultHint?: string
   sharedHint?: string
 }
@@ -33,7 +34,7 @@ type Props = {
  * Saves the list's current state as a named filter.
  *
  * @param props.title - The dialog's title.
- * @param props.summary - A sentence on what is saved (design 22d).
+ * @param props.summary - What is saved, a sentence or a list (design 22d).
  * @param props.defaultHint - The hint under Nastavit jako výchozí.
  * @param props.sharedHint - The hint under Sdílet s ostatními.
  */
@@ -96,7 +97,9 @@ export const SaveFilterDialog = ({
             {...getInputProps(fields.name, { type: 'text' })}
           />
 
-          {summary !== undefined && <p className={styles.summary}>{summary}</p>}
+          {summary !== undefined && (
+            <div className={styles.summary}>{summary}</div>
+          )}
 
           <div className={styles.checkboxes}>
             <Checkbox

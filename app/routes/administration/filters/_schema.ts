@@ -15,9 +15,9 @@ const nameField = z
   .min(1, { message: 'Název je povinný' })
   .max(50, { message: 'Název může mít maximálně 50 znaků' })
 
-// Bounded so a forged payload cannot hand URLSearchParams a huge string; the
-// canonical form of any real filter is a few dozen characters.
-const queryField = z.string().max(500)
+// Bounded so a forged payload cannot hand URLSearchParams a huge string; a real
+// filter with several tags and authors stays within a few hundred characters.
+const queryField = z.string().max(2000)
 
 // Conform coerces a boolean from the literal "on" only — anything else fails
 // validation, so these must be submitted by real checkboxes.

@@ -89,12 +89,12 @@ export const OwnFilterRow = ({
         : 'Sdílet s ostatními',
       onSelect: () => submitIntent(INTENT_VALUE.toggleSharedFilter),
     },
-    // Nothing to copy into the filter on Vše without a search or a filter.
+    // Nothing to copy into the filter in the default setting.
     ...(currentQuery === ''
       ? []
       : [
           {
-            label: 'Přepsat podle nastavení seznamu',
+            label: 'Přepsat aktuálními filtry',
             onSelect: () => submitIntent(INTENT_VALUE.overwriteFilter),
           },
         ]),

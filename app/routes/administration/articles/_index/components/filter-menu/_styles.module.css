@@ -1,0 +1,303 @@
+.filterMenu {
+  @layer route {
+    display: inline-flex;
+    flex: none;
+  }
+}
+
+/* The grey track; the face inside turns white once the filter is set (22d). */
+.trigger {
+  @layer route {
+    display: inline-flex;
+    max-inline-size: 240px;
+    padding: 3px;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    background-color: var(--bg-tertiary);
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+.face {
+  @layer route {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-inline-size: 0;
+    padding-block: 6px;
+    padding-inline: 12px 10px;
+    white-space: nowrap;
+    border-radius: var(--radius-md);
+  }
+}
+
+.isSet .face {
+  @layer route {
+    color: var(--text-primary);
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.label {
+  @layer route {
+    flex: none;
+  }
+}
+
+/* Truncation shortens the values, never „+N“ (22d, 1lgyzyy1). */
+.values {
+  @layer route {
+    min-inline-size: 0;
+    overflow: hidden;
+    font-weight: var(--font-weight-medium);
+    text-overflow: ellipsis;
+  }
+}
+
+.more {
+  @layer route {
+    flex: none;
+    color: var(--text-secondary);
+  }
+}
+
+.chevron {
+  @layer route {
+    display: inline-flex;
+    flex: none;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-md);
+  }
+}
+
+.popover {
+  @layer route {
+    /* Without Popover API support the [popover] attribute is ignored and the
+       UA's `[popover]:not(:popover-open){display:none}` rule is absent, so the
+       menu would render in flow. Hide by default and only reveal when open. */
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    box-sizing: border-box;
+    min-inline-size: 220px;
+    max-inline-size: min(320px, calc(100vw - 32px));
+    max-block-size: min(420px, 70dvh);
+    padding: 4px;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+.popover:popover-open {
+  @layer route {
+    display: flex;
+  }
+}
+
+/* Under the button, its start edge lined up with the button's. Guarded by
+   @supports so browsers with Popover but no anchor positioning keep the UA's
+   centred-popover fallback instead of the overridden insets. */
+@supports (position-area: block-end) {
+  .popover {
+    @layer route {
+      inset: auto;
+      margin: 0;
+      margin-block-start: 6px;
+      position-area: block-end span-inline-end;
+      position-try-fallbacks: flip-block, flip-inline;
+    }
+  }
+}
+
+.search {
+  @layer route {
+    box-sizing: border-box;
+    inline-size: 100%;
+    padding-block: 8px;
+    padding-inline: 10px;
+    color: var(--text-primary);
+    font: inherit;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+.listbox {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+    overflow-y: auto;
+    border-radius: 6px;
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+}
+
+.option {
+  @layer route {
+    display: flex;
+    align-items: center;
+    min-block-size: 34px;
+    padding-inline-end: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--bg-hover);
+    }
+  }
+}
+
+/* The keyboard's row, visible only while the list has the focus. */
+.listbox:focus-visible .isActive {
+  @layer route {
+    box-shadow: inset var(--focus-shadow);
+  }
+}
+
+/* The empty choice stands apart from the values (22d). */
+.clearOption {
+  @layer route {
+    position: relative;
+    margin-block-end: 5px;
+
+    &::after {
+      position: absolute;
+      inset-inline: 0;
+      inset-block-end: -3px;
+      block-size: 1px;
+      background-color: var(--border);
+      content: "";
+    }
+  }
+}
+
+.checkboxTarget {
+  @layer route {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    inline-size: 34px;
+    block-size: 34px;
+  }
+}
+
+.checkbox {
+  @layer route {
+    box-sizing: border-box;
+    inline-size: 16px;
+    block-size: 16px;
+    border: 1.5px solid var(--text-tertiary);
+    border-radius: 4px;
+  }
+}
+
+.option[aria-selected="true"] .checkbox {
+  @layer route {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    /* A check mark drawn in CSS: the box is a drawing, hidden from readers. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 12px;
+  }
+}
+
+.optionLabel {
+  @layer route {
+    flex: 1;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.option[aria-selected="true"] .optionLabel {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+.count {
+  @layer route {
+    flex: none;
+    margin-inline-start: 12px;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Waiting for the viewer (22d): Ke schválení for the Coordinator. */
+.attention {
+  @layer route {
+    font-weight: var(--font-weight-semibold);
+    color: var(--state-attention-text);
+  }
+}
+
+/* Rows and the checkbox's own target big enough for a finger (22g). */
+@media (width < 768px) {
+  .option {
+    @layer route {
+      min-block-size: 44px;
+      font-size: var(--font-size-md);
+    }
+  }
+
+  .checkboxTarget {
+    @layer route {
+      inline-size: 44px;
+      block-size: 44px;
+    }
+  }
+}
+
+.fallbackForm {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+.fallbackFieldset {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+}

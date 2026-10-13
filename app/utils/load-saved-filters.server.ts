@@ -2,6 +2,7 @@ import {
   type AdminListTableKey,
   extractAdminListFilterSearch,
   FILTER_PRESET_PARAM,
+  validateFilterQuery,
 } from '~/utils/admin-list-filters'
 import { prisma } from '~/utils/db.server'
 
@@ -21,7 +22,9 @@ type LoadSavedFiltersOptions = {
  * @returns `ownFilters` — the viewer's presets, editable; `sharedFilters` — everyone
  *   else's shared ones, apply-only and labelled with their owner; `activeFilterId` —
  *   the preset the current URL came from, `null` when it points at nothing the viewer
- *   can see; `currentFilterQuery` — the canonical snapshot a save or overwrite stores.
+ *   can see; `currentFilterQuery` — the canonical snapshot a save or overwrite stores;
+ *   `matchingFilterId` — the preset whose filters equal the current ones exactly,
+ *   whatever the order of their values (design 22d), `null` when none does.
  */
 export const loadSavedFilters = async ({
   tableKey,
@@ -76,9 +79,26 @@ export const loadSavedFilters = async ({
       ? requestedFilterId
       : null
 
+  const currentFilterQuery = extractAdminListFilterSearch(url.search, tableKey)
+
+  // Compared as canonical snapshots, so the order of the values never matters.
+  // The preset the URL came from wins a tie, then own presets before shared ones.
+  const matchingFilters =
+    currentFilterQuery === ''
+      ? []
+      : [...ownFilters, ...sharedFilters].filter(
+          (filter) =>
+            validateFilterQuery(filter.query, tableKey) === currentFilterQuery,
+        )
+  const matchingFilterId =
+    matchingFilters.find((filter) => filter.id === activeFilterId)?.id ??
+    matchingFilters[0]?.id ??
+    null
+
   return {
     activeFilterId,
-    currentFilterQuery: extractAdminListFilterSearch(url.search, tableKey),
+    currentFilterQuery,
+    matchingFilterId,
     ownFilters,
     sharedFilters,
   }

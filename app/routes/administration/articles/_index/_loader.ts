@@ -1,6 +1,9 @@
 import type { Prisma } from '@generated/prisma/client'
 import { redirect } from 'react-router'
-import type { ArticleQueue } from '~/config/article-queue-config'
+import {
+  ARTICLE_QUEUES,
+  type ArticleQueue,
+} from '~/config/article-queue-config'
 import {
   buildStaleFilterRedirect,
   parseAdminListFilters,
@@ -99,22 +102,23 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const permissionWhere: Prisma.ArticleWhereInput = { OR: viewableStates }
 
-  // Field filters are ANDed with the permission clause, so they only ever narrow
-  // what the role may view — `?state=draft` still yields own drafts only.
+  // Filters are ANDed with the permission clause, so they only ever narrow what
+  // the role may view — `?state=draft` still yields own drafts only. Within one
+  // filter its values are alternatives, across filters they all apply (22d).
   const filterConditions: Prisma.ArticleWhereInput[] = [
     ...(filters.state === undefined
       ? []
-      : [buildArticleQueueWhere(filters.state)]),
+      : [{ OR: filters.state.map(buildArticleQueueWhere) }]),
     ...(filters.category === undefined
       ? []
-      : [{ categories: { some: { slug: filters.category } } }]),
+      : [{ categories: { some: { slug: { in: filters.category } } } }]),
     ...(filters.tag === undefined
       ? []
-      : [{ tags: { some: { slug: filters.tag } } }]),
+      : [{ tags: { some: { slug: { in: filters.tag } } } }]),
     // Authors are many-to-many, there is no authorId on Article — hence the id.
     ...(filters.author === undefined
       ? []
-      : [{ authors: { some: { id: filters.author } } }]),
+      : [{ authors: { some: { id: { in: filters.author } } } }]),
   ]
 
   // Shared by findMany and count, so totals and page counts follow the filters.
@@ -151,8 +155,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ? ['draft', 'submitted']
     : ['draft', 'pending', 'approved']
 
-  // The pills count work within what the role may view, whatever else is
-  // searched or filtered (22a).
+  // The Stav menu counts work within what the role may view, whatever else is
+  // searched or filtered (22d).
   const countQueue = (queue: ArticleQueue) =>
     prisma.article.count({
       where: { AND: [permissionWhere, buildArticleQueueWhere(queue)] },
@@ -232,13 +236,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   }))
   const tagOptions = tags.map((tag) => ({ label: tag.name, value: tag.slug }))
 
-  // `state` is enum-backed, so the schema already validates it; the rest is
-  // data-driven and can go stale between two visits. Checked after the queries
-  // so the common path stays a single round trip — a stale value is rare and
-  // costs one extra request.
+  // Category, tag and author are data-driven and can go stale between two
+  // visits; the state is passed only to be put in queue order. Checked after the
+  // queries so the common path stays a single round trip — a stale value or a
+  // hand-written order is rare and costs one extra request.
   const staleFilterRedirect = buildStaleFilterRedirect(url, {
     author: authorOptions,
     category: categoryOptions,
+    state: ARTICLE_QUEUES.map((queue) => ({ value: queue })),
     tag: tagOptions,
   })
 
@@ -259,15 +264,13 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const articles = rawArticles.map((article) => {
     const flags = getArticleActionFlags(context, article)
 
-    // The filtered category first, so the row shows why it is there; else
-    // the alphabetical first (22a).
+    // A filtered category first, so the row shows why it is there; else the
+    // alphabetical first (22a).
+    const isFilteredCategory = (category: { slug: string }) =>
+      filters.category?.includes(category.slug) ?? false
     const categoryNames = [
-      ...article.categories.filter(
-        (category) => category.slug === filters.category,
-      ),
-      ...article.categories.filter(
-        (category) => category.slug !== filters.category,
-      ),
+      ...article.categories.filter(isFilteredCategory),
+      ...article.categories.filter((category) => !isFilteredCategory(category)),
     ].map((category) => category.name)
 
     return {
@@ -318,6 +321,9 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
     isContributor,
     pageSize: PAGE_SIZE,
+    // What waits for the Coordinator's approval, whatever is filtered (22a).
+    pendingCount:
+      queueCounts.find((entry) => entry.queue === 'pending')?.count ?? 0,
     query,
     queueCounts,
     tagOptions,

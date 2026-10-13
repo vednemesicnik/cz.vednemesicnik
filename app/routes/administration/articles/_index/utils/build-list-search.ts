@@ -5,25 +5,25 @@ import {
 } from '~/utils/admin-list-filters'
 
 /**
- * The search of a link that changes the list (design 22a, 22d, 22e): a state
- * pill, a filter chip's ×, Zrušit filtry, Zrušit hledání. The other params
- * stay; the page restarts.
+ * The search of a link or a menu choice that changes the list's filters (design
+ * 22a, 22d). The other params stay; the page restarts.
  *
  * @param searchParams - The current URL search params.
- * @param changes - The params to set, or to drop when `undefined`.
+ * @param changes - The values to set per param, repeated in the given order,
+ *   or `undefined` (or no values) to drop the param.
  * @returns The search with its `?`, or `''` for a bare list.
  */
 export const buildListSearch = (
   searchParams: URLSearchParams,
-  changes: Record<string, string | undefined>,
+  changes: Record<string, string[] | undefined>,
 ): string => {
   const params = new URLSearchParams(searchParams)
 
-  for (const [name, value] of Object.entries(changes)) {
-    if (value === undefined) {
-      params.delete(name)
-    } else {
-      params.set(name, value)
+  for (const [name, values] of Object.entries(changes)) {
+    params.delete(name)
+
+    for (const value of values ?? []) {
+      params.append(name, value)
     }
   }
 

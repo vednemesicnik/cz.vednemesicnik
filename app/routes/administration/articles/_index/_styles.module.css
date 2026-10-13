@@ -1,9 +1,91 @@
-/* The search and Filtry, at the end of the toolbar row (22a). */
-.toolbarEnd {
+/* Under the headline, for the Coordinator only (22a). */
+.waitingWork {
+  @layer route {
+    margin: 0 0 12px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* The search, the filters, Zrušit filtry and Uložené filtry at the end (22d). */
+.filterRow {
   @layer route {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
+    width: 100%;
+    margin-block-end: 16px;
+  }
+}
+
+.search {
+  @layer route {
+    flex: none;
+  }
+}
+
+.filters {
+  @layer route {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.clearFilters {
+  @layer route {
+    flex: none;
+    margin-inline-start: 4px;
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+}
+
+.savedFilters {
+  @layer route {
+    display: flex;
+    flex: none;
+    margin-inline-start: auto;
+  }
+}
+
+/* The search at full width over a row of filters that scrolls sideways,
+   Uložené filtry behind the edge (22g). */
+@media (width < 768px) {
+  .search {
+    @layer route {
+      flex: 1 1 100%;
+
+      /* The shared search field is 240 px wide; here it takes the row. */
+      & form,
+      & form > div,
+      & input {
+        width: 100%;
+      }
+    }
+  }
+
+  .filters {
+    @layer route {
+      /* Its own width, not its content's, so the row scrolls, not the page:
+         the page's grid column grows with the content's width. */
+      flex: 1 1 100%;
+      min-inline-size: 0;
+      contain: inline-size;
+      flex-wrap: nowrap;
+      margin-inline: -16px;
+      padding-inline: 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+  }
+
+  .savedFilters {
+    @layer route {
+      margin-inline-start: 0;
+    }
   }
 }
 

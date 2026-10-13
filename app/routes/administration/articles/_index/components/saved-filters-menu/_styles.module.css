@@ -1,28 +1,35 @@
-.filtersPanel {
+.savedFiltersMenu {
   @layer route {
     display: inline-flex;
+    flex: none;
   }
 }
 
-.count {
+.trigger {
   @layer route {
-    margin-inline-start: 6px;
-    color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
+    max-inline-size: 320px;
   }
 }
 
-.panel {
+.triggerText {
+  @layer route {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.menu {
   @layer route {
     /* Without Popover API support the [popover] attribute is ignored and the
        UA's `[popover]:not(:popover-open){display:none}` rule is absent, so the
-       panel would render in flow. Hide by default and only reveal when open. */
+       menu would render in flow. Hide by default and only reveal when open. */
     display: none;
     flex-direction: column;
-    gap: 14px;
     box-sizing: border-box;
-    width: min(360px, calc(100vw - 32px));
-    padding: 18px;
+    width: min(340px, calc(100vw - 32px));
+    padding: 16px 18px 18px;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -31,7 +38,7 @@
   }
 }
 
-.panel:popover-open {
+.menu:popover-open {
   @layer route {
     display: flex;
   }
@@ -41,7 +48,7 @@
    @supports so browsers with Popover but no anchor positioning keep the UA's
    centred-popover fallback instead of the overridden insets. */
 @supports (position-area: block-end) {
-  .panel {
+  .menu {
     @layer route {
       inset: auto;
       margin: 0;
@@ -52,12 +59,17 @@
   }
 }
 
-/* The selects stack in the panel instead of the toolbar's row. */
-.form {
+.summaryIntro {
   @layer route {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
-    width: 100%;
+    margin: 0;
+  }
+}
+
+.summaryList {
+  @layer route {
+    margin: 4px 0 0;
+    padding: 0;
+    color: var(--text-primary);
+    list-style: none;
   }
 }
