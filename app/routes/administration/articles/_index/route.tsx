@@ -33,6 +33,7 @@ import { formatWaitingWork } from './utils/format-waiting-work'
 import { getEmptyListMessage } from './utils/get-empty-list-message'
 import { getSavedFilterSummary } from './utils/get-saved-filter-summary'
 import { useBulkActionResult } from './utils/use-bulk-action-result'
+import { useLiveArticleRows } from './utils/use-live-article-rows'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -63,7 +64,6 @@ const getLabels = (options: FilterOption[], values: string[] | undefined) =>
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
-    articles,
     authorOptions,
     canCreate,
     categoryOptions,
@@ -75,14 +75,16 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     matchingFilterId,
     ownFilters,
     pageSize,
-    pendingCount,
     query,
-    queueCounts,
     sharedFilters,
     tagOptions,
     totalCount,
     totalPages,
   } = loaderData
+
+  // Live, but the rows stay put until the next load (22f).
+  const { articles, liveChanges, pendingCount, queueCounts } =
+    useLiveArticleRows(loaderData)
 
   const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
@@ -304,6 +306,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               <ItemRow
                 article={article}
                 key={article.id}
+                liveChange={liveChanges.get(article.id)}
                 onSelect={() => selection.toggle(article.id)}
                 selected={selection.isSelected(article.id)}
                 showAuthor={!isContributor}

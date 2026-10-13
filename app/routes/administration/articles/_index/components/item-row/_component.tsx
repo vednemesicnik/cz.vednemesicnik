@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
@@ -30,6 +31,8 @@ import {
 import { useArticleActionResult } from '../../../utils/use-article-action-result'
 import type { Route } from '../../+types/route'
 import { formatArticleRowMeta } from '../../utils/format-article-row-meta'
+import { formatLiveChangeLine } from '../../utils/format-live-change-line'
+import type { LiveChange } from '../../utils/use-live-article-rows'
 import styles from './_styles.module.css'
 
 type Article = Route.ComponentProps['loaderData']['articles'][number]
@@ -39,6 +42,7 @@ type Props = {
   showAuthor: boolean
   selected: boolean
   onSelect: () => void
+  liveChange?: LiveChange
 }
 
 /**
@@ -46,9 +50,16 @@ type Props = {
  * with its first category, the author, the last update, the state tag with one
  * fact, and one action with the rest in „⋯“. Below 768 px it folds into three
  * lines — title, state, authors · categories — with the row action first in
- * „⋯“, and the whole row opens the detail (22g).
+ * „⋯“, and the whole row opens the detail (22g). A row someone else changed
+ * while the list is open is tinted for a moment and says who changed it (22f).
  */
-export const ItemRow = ({ article, showAuthor, selected, onSelect }: Props) => {
+export const ItemRow = ({
+  article,
+  showAuthor,
+  selected,
+  onSelect,
+  liveChange,
+}: Props) => {
   const { id } = article
   const action = href('/administration/articles/:articleId', { articleId: id })
   const editHref = href('/administration/articles/:articleId/edit-article', {
@@ -123,7 +134,17 @@ export const ItemRow = ({ article, showAuthor, selected, onSelect }: Props) => {
     rowAction === null ? article.menu : [rowAction, ...article.menu]
 
   return (
-    <TableRow className={styles.row} muted={article.state === 'archived'}>
+    <TableRow
+      className={clsx(
+        styles.row,
+        // Two identical animations, so the next change restarts the tint.
+        liveChange !== undefined &&
+          (liveChange.sequence % 2 === 0
+            ? styles.liveChangeEven
+            : styles.liveChangeOdd),
+      )}
+      muted={article.state === 'archived'}
+    >
       <TableSelectionCell
         checked={selected}
         className={styles.wideOnly}
@@ -161,7 +182,15 @@ export const ItemRow = ({ article, showAuthor, selected, onSelect }: Props) => {
       <TableCell className={styles.stateCell}>
         <StatusTag
           className={styles.state}
-          detail={article.factLine}
+          detail={
+            liveChange === undefined
+              ? article.factLine
+              : formatLiveChangeLine({
+                  name: liveChange.name,
+                  now: new Date(),
+                  occurredAt: liveChange.occurredAt,
+                })
+          }
           state={article.state}
         />
       </TableCell>
