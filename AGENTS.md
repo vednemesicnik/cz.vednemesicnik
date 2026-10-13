@@ -295,6 +295,7 @@ Comprehensive project documentation is in the `docs/` directory:
 - `docs/_prisma-studio-on-production.md` - Running Prisma Studio against the production database over a Fly tunnel
 - `docs/_design-project.md` - The Claude Design project and design system (ids, documents, `questions/`), and reading a screen with `pnpm design:screen`
 - `docs/_copy-context.md` - Context the copywriter gets in every `/ask-copy` thread: terms, content states, roles, voice (Czech)
+- `docs/decisions/` - Numbered decision records: what was decided, when and why (index and format in `README.md`, template in `_template.md`)
 
 ## Environment
 
@@ -371,6 +372,10 @@ From an idea to a merged PR, one issue per context window:
 - `.agents/skills/review-implementation/SKILL.md` — the pre-PR review on its own (report-only).
 - `.agents/skills/ship-issue/SKILL.md` — review, PR, Copilot loop, green CI, then ask and merge.
 - `.agents/skills/next-issue/SKILL.md` — after the merge: aftermath, handoff, pick the next issue.
+
+A decision that binds later changes gets a record in `docs/decisions/`:
+
+- `.agents/skills/record-decision/SKILL.md` — write a numbered decision record or supersede one; `/plan-issue`, `/review-idea` and `/next-issue` ask whether one is due.
 
 ### Design and Copy
 
