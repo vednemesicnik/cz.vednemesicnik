@@ -109,7 +109,7 @@ nedělá**. Poznají se jen podle modelu:
 - **Publikovaný obsah se nemaže.** Smazat jde koncept, a archivovaný obsah jen Koordinátor.
   Publikovaný se nejdřív stáhne nebo archivuje.
 - **Publikovaný obsah nejde upravit na místě** — nejdřív se stáhne z publikace do konceptu.
-- **Datum vydání nastaví jen Koordinátor, a nikdy do budoucnosti.** Nic se neplánuje: publikovaný
+- **Datum publikace nastaví jen Koordinátor, a nikdy do budoucnosti.** Nic se neplánuje: publikovaný
   článek je na webu hned. Věta, která slibuje „naplánované zveřejnění“, je nepravda.
 - **Na webu vidí koncept a archivovaný článek jen ten, kdo ho vidí v administraci** — jako
   náhled, dnes nijak odlišený od publikovaného. Přispěvatel jen vlastní, Tvůrce jakýkoli koncept

@@ -65,12 +65,12 @@ export const ArticleStateDialog = ({
       <AdminModalContent>
         <AdminModalTitle>{copy.title}</AdminModalTitle>
         <AdminModalSubject>{articleTitle}</AdminModalSubject>
-        <AdminModalDescription>
-          {copy.description}
-          {kind === 'retract' && !isApprover && (
-            <> Znovu ho publikovat může Koordinátor.</>
-          )}
-        </AdminModalDescription>
+        <AdminModalDescription>{copy.description}</AdminModalDescription>
+        {kind === 'retract' && !isApprover && (
+          <AdminModalDescription>
+            Znovu ho publikovat může Koordinátor.
+          </AdminModalDescription>
+        )}
 
         <fetcher.Form
           action={action}
