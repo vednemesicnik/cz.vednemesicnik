@@ -11,15 +11,15 @@ export default function ArticlesLayoutRoute() {
   // Only on the three lists; a detail has its breadcrumbs instead (22a, 25a, 23a).
   const isArticleList = useMatch({
     end: true,
-    path: '/administration/articles',
+    path: href('/administration/articles'),
   })
   const isCategoryList = useMatch({
     end: true,
-    path: '/administration/articles/categories',
+    path: href('/administration/articles/categories'),
   })
   const isTagList = useMatch({
     end: true,
-    path: '/administration/articles/tags',
+    path: href('/administration/articles/tags'),
   })
   const isList =
     isArticleList !== null || isCategoryList !== null || isTagList !== null

@@ -46,7 +46,6 @@
     border-radius: 4px;
     transition:
       color 0.15s ease,
-      font-weight 0.15s ease,
       box-shadow 0.15s ease;
 
     &:hover {
