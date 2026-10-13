@@ -49,29 +49,3 @@
     }
   }
 }
-
-.note {
-  @layer route {
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-  }
-}
-
-.history {
-  @layer route {
-    display: grid;
-    gap: 10px;
-    margin: 0;
-    padding: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    list-style: none;
-  }
-}
-
-.historyEntry {
-  @layer route {
-    display: grid;
-    gap: 1px;
-  }
-}
