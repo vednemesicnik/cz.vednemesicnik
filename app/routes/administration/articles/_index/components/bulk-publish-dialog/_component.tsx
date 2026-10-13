@@ -119,7 +119,8 @@ export const BulkPublishDialog = ({
           {ordered.length > 0 && (
             <div className={styles.section}>
               <AdminModalDescription>
-                V tomto pořadí budou články na webu. Pořadí změníte přetažením.
+                V tomto pořadí budou články na webu. Pořadí změníte přetažením
+                nebo v nabídce u článku.
               </AdminModalDescription>
               <ReorderableList items={ordered} onReorder={setOrdered} />
             </div>

@@ -29,7 +29,7 @@
 .row {
   @layer route {
     display: grid;
-    grid-template-columns: 16px 16px minmax(0, 1fr);
+    grid-template-columns: 16px 16px minmax(0, 1fr) auto;
     gap: 10px;
     align-items: center;
     padding: 9px 12px;
@@ -119,5 +119,13 @@
   @layer route {
     font-size: var(--font-size-xs);
     color: var(--text-secondary);
+  }
+}
+
+/* The „⋯“ that moves a row without dragging (WCAG 2.5.7, 5mehib4t). */
+.menu {
+  @layer route {
+    display: flex;
+    cursor: auto;
   }
 }

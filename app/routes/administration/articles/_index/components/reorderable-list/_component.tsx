@@ -8,6 +8,8 @@ import {
   useState,
 } from 'react'
 
+import { ActionMenu } from '~/components/action-menu'
+
 import { moveListItem } from '../../utils/move-list-item'
 
 import styles from './_styles.module.css'
@@ -42,10 +44,11 @@ const position = (index: number, count: number) =>
 
 /**
  * The articles of a bulk publish in the order they will stand on the website
- * (design 22c): the number, a handle and the title with its state. A row is
- * dragged as a whole; the handle is a button for the keyboard — Space lifts
- * and drops, the arrows move, Escape puts it back. A screen reader hears every
- * step (copy bhmem1jc).
+ * (design 22c): the number, a handle, the title with its state and a „⋯“. A
+ * row is dragged as a whole; the handle is a button for the keyboard — Space
+ * lifts and drops, the arrows move, Escape puts it back; the „⋯“ moves it with
+ * a single click, no dragging (WCAG 2.5.7, 5mehib4t). A screen reader hears
+ * every step (copy bhmem1jc, 8e0nd23z).
  *
  * @param props.items - The articles, top first.
  * @param props.onReorder - Receives the new order.
@@ -57,6 +60,8 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
     null,
   )
   const [announcement, setAnnouncement] = useState('')
+  // The row moved from its „⋯“, whose trigger keeps the focus.
+  const [menuMovedId, setMenuMovedId] = useState<string | null>(null)
   const rowRefs = useRef(new Map<string, HTMLDivElement>())
   const handleRefs = useRef(new Map<string, HTMLButtonElement>())
 
@@ -72,11 +77,61 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
     }
   })
 
+  // A moved row's „⋯“ keeps the focus, though React moved the row (5mehib4t).
+  useEffect(() => {
+    if (menuMovedId === null) return
+    rowRefs.current
+      .get(menuMovedId)
+      ?.querySelector<HTMLButtonElement>('[popovertarget]')
+      ?.focus()
+    setMenuMovedId(null)
+  }, [menuMovedId])
+
+  const moveFromMenu = (id: string, target: number) => {
+    onReorder(moveListItem(items, indexOf(id), target))
+    setMenuMovedId(id)
+    setAnnouncement(position(target, count))
+  }
+
+  // Only the steps that change something (22c).
+  const getMenuItems = (id: string, index: number) => [
+    ...(index > 0
+      ? [
+          {
+            label: 'Posunout nahoru',
+            onSelect: () => moveFromMenu(id, index - 1),
+          },
+        ]
+      : []),
+    ...(index < count - 1
+      ? [
+          {
+            label: 'Posunout dolů',
+            onSelect: () => moveFromMenu(id, index + 1),
+          },
+        ]
+      : []),
+    ...(index > 1
+      ? [{ label: 'Na začátek', onSelect: () => moveFromMenu(id, 0) }]
+      : []),
+    ...(index < count - 2
+      ? [{ label: 'Na konec', onSelect: () => moveFromMenu(id, count - 1) }]
+      : []),
+  ]
+
   const handlePointerDown = (
     event: PointerEvent<HTMLDivElement>,
     id: string,
   ) => {
     if (event.button !== 0 || lifted !== null) return
+    // The „⋯“ and its menu are clicked, not dragged; capturing the pointer
+    // would take their click.
+    if (
+      event.target instanceof Element &&
+      event.target.closest('[data-reorder-menu]') !== null
+    ) {
+      return
+    }
     event.currentTarget.setPointerCapture(event.pointerId)
     setDrag({
       id,
@@ -250,6 +305,13 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
                 <span className={styles.text}>
                   <span className={styles.title}>{item.title}</span>
                   <span className={styles.detail}>{item.detail}</span>
+                </span>
+                <span className={styles.menu} data-reorder-menu={true}>
+                  <ActionMenu
+                    items={getMenuItems(item.id, index)}
+                    label={`Změnit pořadí článku: ${item.title}`}
+                    size={'sm'}
+                  />
                 </span>
               </div>
             </li>
