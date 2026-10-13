@@ -2,7 +2,10 @@
   @layer component {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    /* The action sits on the headline's line, which is always there; centered
+       against the column it jumped whenever the line under the headline came
+       or went. */
+    align-items: first baseline;
     justify-content: space-between;
     gap: 16px;
     inline-size: 100%;

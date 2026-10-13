@@ -247,6 +247,7 @@ export default function RouteComponent({
                   />
                 }
                 image={article.featuredImage.sources}
+                imageClassName={styles.featuredImage}
               />
             )}
             <ContentRenderer content={article.content} />

@@ -44,6 +44,15 @@
   }
 }
 
+/* The main image scales with the column at 16 : 9 (23a); the web's fixed
+   480 px crop (12a) would only get taller relative to a narrower column. */
+.featuredImage {
+  @layer route {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+}
+
 /* A value with a line under it: the address, the excerpt's note (23a). */
 .stack {
   @layer route {
