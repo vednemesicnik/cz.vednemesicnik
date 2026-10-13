@@ -1,7 +1,7 @@
 /* Under the headline, for the Coordinator only (22a). */
 .waitingWork {
   @layer route {
-    margin: 0 0 12px;
+    margin: 0;
     font-size: var(--font-size-sm);
   }
 }
@@ -176,6 +176,27 @@
   .tableHeader {
     @layer route {
       display: none;
+    }
+  }
+
+  /* Only the waiting work is left to show: no row of its own, or an empty
+     one would still cost the page a gap. */
+  .header,
+  .headerLead {
+    @layer route {
+      display: contents;
+    }
+  }
+
+  /* The top bar names the page; the headline stays for screen readers. */
+  .headline {
+    @layer route {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
   }
 

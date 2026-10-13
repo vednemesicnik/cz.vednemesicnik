@@ -1,0 +1,19 @@
+.row {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    inline-size: 100%;
+  }
+}
+
+.lead {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-inline-size: 0;
+  }
+}
