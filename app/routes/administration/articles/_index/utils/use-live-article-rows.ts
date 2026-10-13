@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useFetcher, useLocation } from 'react-router'
 
 import { useContentEvents } from '~/hooks/use-content-events'
@@ -7,6 +7,7 @@ import type { loader } from '../_loader'
 import type { Route } from '../+types/route'
 import { PINNED_ROWS_PARAM } from '../pinned-rows'
 import { orderPinnedRows } from './order-pinned-rows'
+import { startPendingTints } from './start-pending-tints'
 
 type LoaderData = Route.ComponentProps['loaderData']
 
@@ -16,6 +17,8 @@ export type LiveChange = {
   occurredAt: Date
   /** Counts the changes, so a second one restarts the tint. */
   sequence: number
+  /** Client time the tint started, `null` while it waits for a hidden tab. */
+  tintStartedAt: number | null
 }
 
 /**
@@ -69,6 +72,9 @@ export const useLiveArticleRows = (loaderData: LoaderData) => {
           name: event.actor.name,
           occurredAt: new Date(event.occurredAt),
           sequence: (current.get(event.entityId)?.sequence ?? 0) + 1,
+          // The tint is meant to be seen, so a hidden tab holds it back.
+          tintStartedAt:
+            document.visibilityState === 'visible' ? Date.now() : null,
         }),
       )
     },
@@ -84,6 +90,20 @@ export const useLiveArticleRows = (loaderData: LoaderData) => {
       state: fetcher.state,
     },
   })
+
+  // Back in the tab, the held-back tints start, as the deferred reload does.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setLiveChanges((current) => startPendingTints(current, Date.now()))
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   const live = fetcher.data
 
