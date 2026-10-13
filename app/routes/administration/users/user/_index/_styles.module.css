@@ -33,19 +33,3 @@
     gap: 8px;
   }
 }
-
-/* The design system's outline Button md (28e), as tall as „⋯“ beside it. */
-.editLink {
-  @layer route {
-    padding-block: 10px;
-    padding-inline: 22px;
-    border-color: var(--border);
-    border-radius: var(--radius-lg);
-
-    &:hover:not(:focus-visible),
-    &:focus-visible {
-      background-color: var(--bg-accent);
-      border-color: var(--border-accent);
-    }
-  }
-}

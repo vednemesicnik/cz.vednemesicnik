@@ -15,7 +15,6 @@ import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminImageInput } from '~/components/admin/admin-image-input'
 import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
 import { AdminLeaveConfirmationDialog } from '~/components/admin/admin-leave-confirmation-dialog'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminRadioInput } from '~/components/admin/admin-radio-input'
 import { AdminTextEditor } from '~/components/admin/admin-text-editor'
@@ -26,6 +25,7 @@ import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { DeleteIcon } from '~/components/icons/delete-icon'
+import { LinkButton } from '~/components/link-button'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
@@ -352,12 +352,13 @@ export default function RouteComponent({
             <Button disabled={!canSubmit} type={'submit'}>
               {isSubmitting ? 'Přidává se...' : 'Přidat'}
             </Button>
-            <AdminLinkButton
+            <LinkButton
               disabled={isLoadingOrSubmitting}
               to={href('/administration/articles')}
+              variant={'outline'}
             >
               Zrušit
-            </AdminLinkButton>
+            </LinkButton>
           </FormActions>
         </Form>
       </FormProvider>

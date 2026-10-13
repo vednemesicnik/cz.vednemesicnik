@@ -15,7 +15,6 @@ import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
@@ -24,6 +23,7 @@ import { ContentRenderer } from '~/components/content-renderer'
 import { FeaturedImage } from '~/components/featured-image'
 import { HistoryList } from '~/components/history-list'
 import { Hyperlink } from '~/components/hyperlink'
+import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentEvents } from '~/hooks/use-content-events'
@@ -165,24 +165,20 @@ export default function RouteComponent({
     switch (headerAction) {
       case 'edit':
         return (
-          <AdminLinkButton
-            className={styles.outlineLink}
-            disabled={isSubmitting}
-            to={editHref}
-          >
+          <LinkButton disabled={isSubmitting} to={editHref} variant={'outline'}>
             {ARTICLE_ACTION_LABELS.edit}
-          </AdminLinkButton>
+          </LinkButton>
         )
       case 'view-on-web':
         return (
-          <AdminLinkButton
-            className={styles.outlineLink}
+          <LinkButton
             rel={'noopener'}
             target={'_blank'}
             to={articlePath}
+            variant={'outline'}
           >
             {ARTICLE_ACTION_LABELS['view-on-web']}
-          </AdminLinkButton>
+          </LinkButton>
         )
       default:
         return (

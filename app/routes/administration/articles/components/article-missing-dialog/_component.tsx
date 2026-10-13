@@ -1,10 +1,10 @@
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { BulletedList } from '~/components/bulleted-list'
 import { Button } from '~/components/button'
+import { LinkButton } from '~/components/link-button'
 import { ListItem } from '~/components/list-item'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useModalDialog } from '~/utils/use-modal-dialog'
@@ -49,7 +49,9 @@ export const ArticleMissingDialog = ({
           >
             Zavřít
           </Button>
-          <AdminLinkButton to={editHref}>Doplnit v editoru</AdminLinkButton>
+          <LinkButton size={'sm'} to={editHref}>
+            Doplnit v editoru
+          </LinkButton>
         </AdminModalActions>
       </AdminModalContent>
     </AdminDialog>

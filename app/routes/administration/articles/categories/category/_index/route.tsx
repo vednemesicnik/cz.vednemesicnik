@@ -13,7 +13,6 @@ import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { HistoryList } from '~/components/history-list'
@@ -24,6 +23,7 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentEvents } from '~/hooks/use-content-events'
@@ -90,7 +90,7 @@ export default function RouteComponent({
 
       <AdminActionGroup>
         {canUpdate && (
-          <AdminLinkButton
+          <LinkButton
             disabled={isSubmitting}
             to={href(
               '/administration/articles/categories/:categoryId/edit-category',
@@ -98,10 +98,11 @@ export default function RouteComponent({
                 categoryId,
               },
             )}
+            variant={'outline'}
           >
             <EditIcon />
             Upravit
-          </AdminLinkButton>
+          </LinkButton>
         )}
         {canReview && !hasReviewed && (
           <Form method="post">

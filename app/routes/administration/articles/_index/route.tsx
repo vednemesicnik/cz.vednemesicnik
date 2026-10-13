@@ -4,7 +4,6 @@ import { clsx } from 'clsx'
 import { useEffect, useId, useRef } from 'react'
 import { href, useSearchParams } from 'react-router'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -16,7 +15,9 @@ import {
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
+import type { Variant } from '~/components/button'
 import { Link } from '~/components/link'
+import { LinkButton } from '~/components/link-button'
 import { Pagination } from '~/components/pagination'
 import { useToast } from '~/components/toast-provider'
 import type { ArticleQueue } from '~/config/article-queue-config'
@@ -134,14 +135,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     (filter) => filter.id === matchingFilterId,
   )?.name
 
-  const renderNewArticleLink = (className?: string) =>
+  const renderNewArticleLink = (variant: Variant, className?: string) =>
     canCreate && (
-      <AdminLinkButton
+      <LinkButton
         className={className}
         to={href('/administration/articles/add-article')}
+        variant={variant}
       >
         Nový článek
-      </AdminLinkButton>
+      </LinkButton>
     )
 
   const summaryLines = getSavedFilterSummary({
@@ -169,7 +171,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <AdminPage>
       <AdminHeadline>Články</AdminHeadline>
       {/* On a phone it waits at the bottom, in reach of the thumb (22g). */}
-      {renderNewArticleLink(styles.topNewArticle)}
+      {renderNewArticleLink('primary', styles.topNewArticle)}
       {showWaitingWork && (
         <p className={styles.waitingWork}>
           <Link preventScrollReset={true} to={{ search: '?state=pending' }}>
@@ -269,14 +271,16 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <p className={styles.emptyText}>{emptyMessage.text}</p>
           )}
-          {emptyMessage.action === 'newArticle' && renderNewArticleLink()}
+          {emptyMessage.action === 'newArticle' &&
+            renderNewArticleLink('outline')}
           {emptyMessage.action === 'clearFilters' && (
-            <AdminLinkButton
+            <LinkButton
               preventScrollReset={true}
               to={{ search: clearFiltersSearch }}
+              variant={'outline'}
             >
               Zrušit filtry
-            </AdminLinkButton>
+            </LinkButton>
           )}
         </div>
       ) : (
@@ -342,7 +346,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       {canCreate &&
         (totalCount > 0 || emptyMessage.action !== 'newArticle') && (
           <div className={styles.newArticleBar}>
-            {renderNewArticleLink(styles.newArticleBarLink)}
+            {renderNewArticleLink('primary')}
           </div>
         )}
     </AdminPage>

@@ -15,12 +15,12 @@ import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { Callout } from '~/components/callout'
 import { HistoryList } from '~/components/history-list'
 import { Link } from '~/components/link'
+import { LinkButton } from '~/components/link-button'
 import { useToast } from '~/components/toast-provider'
 import { INVITATION_CONFIG } from '~/config/invitation-config'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
@@ -120,14 +120,14 @@ export default function RouteComponent({
             label={'Další akce s účtem'}
           />
           {canUpdate && (
-            <AdminLinkButton
-              className={styles.editLink}
+            <LinkButton
               to={href('/administration/users/:userId/edit-user', {
                 userId,
               })}
+              variant={'outline'}
             >
               Upravit
-            </AdminLinkButton>
+            </LinkButton>
           )}
         </div>
       </div>

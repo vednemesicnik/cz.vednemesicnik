@@ -13,7 +13,6 @@ import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
@@ -25,6 +24,7 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
 import { useContentEvents } from '~/hooks/use-content-events'
 
@@ -82,22 +82,24 @@ export default function RouteComponent({
         >
           Historie
         </Button>
-        <AdminLinkButton
+        <LinkButton
           to={href('/administration/podcasts/:podcastId/episodes', {
             podcastId,
           })}
+          variant={'outline'}
         >
           Zobrazit epizody
-        </AdminLinkButton>
+        </LinkButton>
         {canUpdate && (
-          <AdminLinkButton
+          <LinkButton
             to={href('/administration/podcasts/:podcastId/edit-podcast', {
               podcastId,
             })}
+            variant={'outline'}
           >
             <EditIcon />
             Upravit
-          </AdminLinkButton>
+          </LinkButton>
         )}
         {canReview && !hasReviewed && (
           <Form method="post">
