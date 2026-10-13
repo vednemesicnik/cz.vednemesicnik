@@ -43,6 +43,11 @@ const ROW_GAP_PX = 6
 // How far past the midpoint the pointer goes before a swap, either way.
 const SWAP_HYSTERESIS_PX = 8
 
+// Near the list's top or bottom edge a drag scrolls the list, faster the
+// closer the pointer gets, up to this many pixels a frame.
+const AUTOSCROLL_EDGE_PX = 40
+const AUTOSCROLL_MAX_PX = 12
+
 // How long a row slides into its new place after a swap.
 const SWAP_MS = 150
 
@@ -75,6 +80,8 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
   const previousTops = useRef(new Map<string, number>())
   const draggedIdRef = useRef<string | null>(null)
   draggedIdRef.current = drag?.isMoving === true ? drag.id : null
+  const listRef = useRef<HTMLOListElement>(null)
+  const lastPointerYRef = useRef<number | null>(null)
 
   const count = items.length
   const indexOf = (id: string) => items.findIndex((item) => item.id === id)
@@ -194,10 +201,12 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
     })
   }
 
-  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (drag === null || event.pointerId !== drag.pointerId) return
+  // Moves the dragged row to follow the pointer. `scrolledBy` is how far the
+  // list just scrolled under a still pointer, which shifts every row with it.
+  const moveTo = (clientY: number, scrolledBy = 0) => {
+    if (drag === null) return
 
-    const offsetY = event.clientY - drag.startY
+    const offsetY = clientY - (drag.startY - scrolledBy)
     if (!drag.isMoving && Math.abs(offsetY) < DRAG_THRESHOLD_PX) return
 
     // The row swaps with each neighbour whose middle the pointer has passed,
@@ -205,7 +214,7 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
     const from = indexOf(drag.id)
     let target = from
     let remaining = offsetY
-    let startY = drag.startY
+    let startY = drag.startY - scrolledBy
     // One direction per move: a leftover past the last swap never turns back.
     const direction = Math.sign(offsetY)
 
@@ -246,10 +255,61 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
 
     setDrag({ ...drag, isMoving: true, offsetY: clampedOffsetY, startY })
   }
+  const moveToRef = useRef(moveTo)
+  moveToRef.current = moveTo
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (drag === null || event.pointerId !== drag.pointerId) return
+    lastPointerYRef.current = event.clientY
+    moveTo(event.clientY)
+  }
+
+  // While a row is dragged near the list's edge, the list scrolls by itself,
+  // so a row can travel past what the list shows (a batch has 10–20 articles).
+  useEffect(() => {
+    if (drag?.isMoving !== true) return
+
+    let frame = 0
+    const tick = () => {
+      const list = listRef.current
+      const pointerY = lastPointerYRef.current
+
+      if (list !== null && pointerY !== null) {
+        const box = list.getBoundingClientRect()
+        const intoTop = box.top + AUTOSCROLL_EDGE_PX - pointerY
+        const intoBottom = pointerY - (box.bottom - AUTOSCROLL_EDGE_PX)
+        const speed =
+          intoTop > 0
+            ? -Math.min(
+                AUTOSCROLL_MAX_PX,
+                (intoTop / AUTOSCROLL_EDGE_PX) * AUTOSCROLL_MAX_PX,
+              )
+            : intoBottom > 0
+              ? Math.min(
+                  AUTOSCROLL_MAX_PX,
+                  (intoBottom / AUTOSCROLL_EDGE_PX) * AUTOSCROLL_MAX_PX,
+                )
+              : 0
+
+        if (speed !== 0) {
+          const before = list.scrollTop
+          list.scrollTop += speed
+          const scrolledBy = list.scrollTop - before
+          if (scrolledBy !== 0) moveToRef.current(pointerY, scrolledBy)
+        }
+      }
+
+      frame = requestAnimationFrame(tick)
+    }
+
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [drag?.isMoving])
 
   const handlePointerEnd = () => {
     if (drag === null) return
 
+    lastPointerYRef.current = null
     if (drag.isMoving) {
       const item = items[indexOf(drag.id)]
       setAnnouncement(
@@ -304,7 +364,8 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
 
   return (
     <>
-      <ol className={styles.list}>
+      {/* The rows' buttons reach and scroll it; the scroll box itself is no stop. */}
+      <ol className={styles.list} ref={listRef} tabIndex={-1}>
         {items.map((item, index) => {
           const isDragged = drag?.id === item.id && drag.isMoving
           const isLifted = isDragged || lifted?.id === item.id
