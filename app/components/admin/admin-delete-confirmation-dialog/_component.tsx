@@ -4,6 +4,7 @@ import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import { DIALOG_RETURN_VALUE } from '~/config/dialog-config'
@@ -11,6 +12,7 @@ import { DIALOG_RETURN_VALUE } from '~/config/dialog-config'
 type Props = {
   ref: RefObject<HTMLDialogElement | null>
   title?: ReactNode
+  subject?: string
   description?: ReactNode
 }
 
@@ -18,11 +20,14 @@ type Props = {
  * Confirms a delete; closes with the accept or decline return value.
  *
  * @param props.title - The question, generic by default.
+ * @param props.subject - What is deleted, on its own line, e.g. the article's
+ *   title (design 23f).
  * @param props.description - The sentence under it, generic by default.
  */
 export const AdminDeleteConfirmationDialog = ({
   ref,
   title = 'Opravdu chcete tuto akci provést?',
+  subject,
   description = 'Tato akce je nevratná.',
 }: Props) => {
   // Read ref.current inside the handlers, not during render: the <dialog> is
@@ -35,6 +40,9 @@ export const AdminDeleteConfirmationDialog = ({
     <AdminDialog ref={ref}>
       <AdminModalContent>
         <AdminModalTitle>{title}</AdminModalTitle>
+        {subject !== undefined && (
+          <AdminModalSubject>{subject}</AdminModalSubject>
+        )}
         <AdminModalDescription>{description}</AdminModalDescription>
         <AdminModalActions>
           <Button
