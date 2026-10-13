@@ -9,6 +9,11 @@ const mocks = vi.hoisted(() => ({
   articleUpdate: vi.fn(),
   articleUpdateMany: vi.fn(),
   permissionContext: vi.fn(),
+  publishContentEvent: vi.fn(),
+}))
+
+vi.mock('~/utils/sse/publish-content-event.server', () => ({
+  publishContentEvent: mocks.publishContentEvent,
 }))
 
 vi.mock(
@@ -195,5 +200,60 @@ describe('articleSubmissionHandlers.returnForEdits', () => {
     await expect(
       articleSubmissionHandlers.returnForEdits(request, { id: 'a1', target }),
     ).rejects.toMatchObject({ init: { status: 403 } })
+  })
+})
+
+describe('articleSubmissionHandlers — content events', () => {
+  const submissionEvent = {
+    change: 'submission',
+    entity: 'article',
+    entityId: 'a1',
+  }
+
+  test('a submit announces the change', async () => {
+    mocks.articleFindUniqueOrThrow.mockResolvedValue(completeDraft)
+
+    await articleSubmissionHandlers.submit(request, { id: 'a1', target })
+
+    expect(mocks.publishContentEvent).toHaveBeenCalledWith(submissionEvent)
+  })
+
+  test('a submit blocked by missing content announces nothing', async () => {
+    mocks.articleFindUniqueOrThrow.mockResolvedValue({
+      ...completeDraft,
+      excerpt: '',
+    })
+
+    await articleSubmissionHandlers.submit(request, { id: 'a1', target })
+
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+  })
+
+  test('a withdraw and a return announce the change', async () => {
+    mocks.articleFindUniqueOrThrow.mockResolvedValue({
+      ...completeDraft,
+      submittedAt,
+    })
+    await articleSubmissionHandlers.withdraw(request, { id: 'a1', target })
+
+    signInAs('coordinator', 1)
+    await articleSubmissionHandlers.returnForEdits(request, {
+      id: 'a1',
+      target,
+    })
+
+    expect(mocks.publishContentEvent).toHaveBeenCalledTimes(2)
+    expect(mocks.publishContentEvent).toHaveBeenLastCalledWith(submissionEvent)
+  })
+
+  test('a refused transition announces nothing', async () => {
+    mocks.articleFindUniqueOrThrow.mockResolvedValue(completeDraft)
+    signInAs('someone-else', 3)
+
+    await expect(
+      articleSubmissionHandlers.submit(request, { id: 'a1', target }),
+    ).rejects.toBeDefined()
+
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 })

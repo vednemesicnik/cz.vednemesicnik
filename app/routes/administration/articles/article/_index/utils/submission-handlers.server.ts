@@ -6,6 +6,7 @@ import { withAuthorPermission } from '~/utils/permissions/author/actions/with-au
 import { canReturnForEdits } from '~/utils/permissions/author/submission/can-return-for-edits'
 import { canSubmitForReview } from '~/utils/permissions/author/submission/can-submit-for-review'
 import { canWithdrawSubmission } from '~/utils/permissions/author/submission/can-withdraw-submission'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 import { getMissingArticleContent } from './get-missing-article-content'
 
@@ -51,6 +52,11 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
         }
 
         await prisma.article.update({ data: clearSubmission, where: { id } })
+        publishContentEvent({
+          change: 'submission',
+          entity: 'article',
+          entityId: id,
+        })
       },
       target,
     }),
@@ -111,6 +117,12 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
           throw data(null, { status: 409 })
         }
 
+        publishContentEvent({
+          change: 'submission',
+          entity: 'article',
+          entityId: id,
+        })
+
         return { missing }
       },
       target,
@@ -135,6 +147,11 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
         }
 
         await prisma.article.update({ data: clearSubmission, where: { id } })
+        publishContentEvent({
+          change: 'submission',
+          entity: 'article',
+          entityId: id,
+        })
       },
       target,
     }),
