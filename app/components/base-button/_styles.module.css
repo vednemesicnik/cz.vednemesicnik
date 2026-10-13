@@ -1,3 +1,5 @@
+/* LinkButton renders this class on an <a> too: keep the selectors
+   element-agnostic. */
 .button {
   @layer component {
     /* Layout */

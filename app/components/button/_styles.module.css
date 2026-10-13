@@ -1,4 +1,7 @@
-/* Every variant carries a 2px border (transparent unless outline), so all of
+/* LinkButton renders these classes on an <a> too: keep the selectors
+   element-agnostic.
+
+   Every variant carries a 2px border (transparent unless outline), so all of
    them are one height; the sizes take the border off the design system's
    padding to keep its dimensions. */
 .button {
