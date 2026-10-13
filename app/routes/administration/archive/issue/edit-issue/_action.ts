@@ -12,6 +12,7 @@ import {
 } from '~/utils/pdf-store/store-pdf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -130,6 +131,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
       },
       where: { id: id },
     })
+
+    publishContentEvent({ change: 'update', entity: 'issue', entityId: id })
 
     // Post-commit, best-effort: run both so a failing store delete can't skip the
     // other, and a cleanup failure doesn't turn an already-committed update into an

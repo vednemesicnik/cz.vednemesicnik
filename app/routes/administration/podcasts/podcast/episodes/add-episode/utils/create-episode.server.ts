@@ -1,4 +1,5 @@
 import { prisma } from '~/utils/db.server'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -41,6 +42,12 @@ export async function createEpisode({
         slug,
         title,
       },
+    })
+
+    publishContentEvent({
+      change: 'create',
+      entity: 'podcast_episode',
+      entityId: episode.id,
     })
 
     return { episodeId: episode.id }

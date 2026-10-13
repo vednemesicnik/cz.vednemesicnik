@@ -1,5 +1,6 @@
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 type Options = {
   name: string
@@ -7,11 +8,11 @@ type Options = {
   authorId: string
 }
 
-export const createCategory = (
+export const createCategory = async (
   request: Request,
   { authorId, name, slug }: Options,
-) =>
-  withAuthorPermission(request, {
+) => {
+  const category = await withAuthorPermission(request, {
     action: 'create',
     entity: 'article_category',
     execute: () =>
@@ -25,3 +26,12 @@ export const createCategory = (
       }),
     target: { authorIds: [authorId], state: 'draft' },
   })
+
+  publishContentEvent({
+    change: 'create',
+    entity: 'article_category',
+    entityId: category.id,
+  })
+
+  return category
+}

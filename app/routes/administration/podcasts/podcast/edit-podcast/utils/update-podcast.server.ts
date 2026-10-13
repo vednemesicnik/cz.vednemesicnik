@@ -1,5 +1,6 @@
 import { prisma } from '~/utils/db.server'
 import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -59,6 +60,8 @@ export async function updatePodcast({
       },
       where: { id },
     })
+
+    publishContentEvent({ change: 'update', entity: 'podcast', entityId: id })
 
     await cleanup()
   } catch (error) {

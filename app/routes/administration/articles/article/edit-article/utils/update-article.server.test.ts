@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   articleUpdate: vi.fn(),
   pageSeoUpsert: vi.fn(),
   permissionContext: vi.fn(),
+  publishContentEvent: vi.fn(),
   replacedVersionCleanup: vi.fn(),
   storeDelete: vi.fn(),
   storeImageVariants: vi.fn(),
@@ -31,6 +32,10 @@ vi.mock(
     ) => options.execute(mocks.permissionContext()),
   }),
 )
+
+vi.mock('~/utils/sse/publish-content-event.server', () => ({
+  publishContentEvent: mocks.publishContentEvent,
+}))
 
 vi.mock('~/utils/db.server', () => ({
   prisma: {
@@ -168,10 +173,21 @@ describe('updateArticle — a failed save changes nothing', () => {
     ])
     expect(mocks.storeDelete).not.toHaveBeenCalled()
     expect(mocks.replacedVersionCleanup).not.toHaveBeenCalled()
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 })
 
 describe('updateArticle — a successful save', () => {
+  test('announces the update once the transaction commits', async () => {
+    await updateArticle(request, options)
+
+    expect(mocks.publishContentEvent).toHaveBeenCalledExactlyOnceWith({
+      change: 'update',
+      entity: 'article',
+      entityId: 'article-1',
+    })
+  })
+
   test('deletes the removed image row in the transaction, then its files', async () => {
     const order: string[] = []
     mocks.transaction.mockImplementation(async () => {
@@ -245,6 +261,7 @@ describe('updateArticle — a submitted article', () => {
       init: { status: 403 },
     })
     expect(mocks.transaction).not.toHaveBeenCalled()
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 
   test('the Coordinator corrects it and the submission and approval stay', async () => {
