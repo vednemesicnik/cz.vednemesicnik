@@ -94,6 +94,30 @@ export const SavedFiltersMenu = ({
     focusTrigger()
   }, [focusTrigger])
 
+  // Esc closes an open „⋯“ first, the browser's own way; then the menu, with
+  // the focus back on its button (k9vl0m53), which Safari would not restore.
+  useEffect(() => {
+    const menu = menuRef.current
+
+    if (menu === null) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as Element
+
+      if (event.key !== 'Escape' || target.closest(':popover-open') !== menu) {
+        return
+      }
+
+      event.preventDefault()
+      menu.hidePopover?.()
+      focusTrigger()
+    }
+
+    menu.addEventListener('keydown', handleKeyDown)
+
+    return () => menu.removeEventListener('keydown', handleKeyDown)
+  }, [focusTrigger])
+
   useEffect(() => {
     const dialog = deleteDialogRef.current
 

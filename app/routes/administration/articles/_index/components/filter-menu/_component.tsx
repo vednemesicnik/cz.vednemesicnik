@@ -116,17 +116,37 @@ export const FilterMenu = ({
       }
 
       // Opens on the first selected value, so a long menu starts where it is.
-      const firstSelectedIndex = options.findIndex((option) =>
-        selected.includes(option.value),
+      // Read from the rendered rows, so the listener needs no re-subscribing.
+      const rows = [
+        ...(listboxRef.current?.querySelectorAll('[role="option"]') ?? []),
+      ]
+      const firstSelectedIndex = rows.findIndex(
+        (row, index) =>
+          index > 0 && row.getAttribute('aria-selected') === 'true',
       )
-      setActiveIndex(firstSelectedIndex === -1 ? 0 : firstSelectedIndex + 1)
+      setActiveIndex(Math.max(firstSelectedIndex, 0))
       ;(searchRef.current ?? listboxRef.current)?.focus()
     }
 
-    popover.addEventListener('toggle', handleToggle)
+    // Esc closes and returns the focus to the button (22d); left to the
+    // browser, it returns only to a button that had the focus, which Safari
+    // never gives.
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return
 
-    return () => popover.removeEventListener('toggle', handleToggle)
-  }, [options, selected])
+      event.preventDefault()
+      popover.hidePopover?.()
+      triggerRef.current?.focus()
+    }
+
+    popover.addEventListener('toggle', handleToggle)
+    popover.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      popover.removeEventListener('toggle', handleToggle)
+      popover.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isOpen) return

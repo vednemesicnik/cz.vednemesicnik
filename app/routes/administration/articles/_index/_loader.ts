@@ -1,9 +1,6 @@
 import type { Prisma } from '@generated/prisma/client'
 import { redirect } from 'react-router'
-import {
-  ARTICLE_QUEUES,
-  type ArticleQueue,
-} from '~/config/article-queue-config'
+import type { ArticleQueue } from '~/config/article-queue-config'
 import {
   buildStaleFilterRedirect,
   parseAdminListFilters,
@@ -154,6 +151,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const countedQueues: ArticleQueue[] = isContributor
     ? ['draft', 'submitted']
     : ['draft', 'pending', 'approved']
+  // The values of the role's Stav menu, in its order.
+  const offeredQueues: ArticleQueue[] = isContributor
+    ? ['draft', 'submitted', 'published', 'archived']
+    : ['draft', 'pending', 'approved', 'published', 'archived']
 
   // The Stav menu counts work within what the role may view, whatever else is
   // searched or filtered (22d).
@@ -237,13 +238,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const tagOptions = tags.map((tag) => ({ label: tag.name, value: tag.slug }))
 
   // Category, tag and author are data-driven and can go stale between two
-  // visits; the state is passed only to be put in queue order. Checked after the
-  // queries so the common path stays a single round trip — a stale value or a
-  // hand-written order is rare and costs one extra request.
+  // visits; a state the role's menu does not offer (a Coordinator's link opened
+  // by a Contributor) drops the same way, or it would filter unseen. Checked
+  // after the queries so the common path stays a single round trip — a stale
+  // value or a hand-written order is rare and costs one extra request.
   const staleFilterRedirect = buildStaleFilterRedirect(url, {
     author: authorOptions,
     category: categoryOptions,
-    state: ARTICLE_QUEUES.map((queue) => ({ value: queue })),
+    state: offeredQueues.map((queue) => ({ value: queue })),
     tag: tagOptions,
   })
 
