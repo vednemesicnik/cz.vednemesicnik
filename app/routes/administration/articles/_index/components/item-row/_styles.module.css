@@ -73,3 +73,120 @@
     white-space: normal;
   }
 }
+
+/* Only on a phone: the third line and the lone „⋯“ (22g). */
+.metaCell,
+.phoneMenu {
+  @layer route {
+    display: none;
+  }
+}
+
+/* Below 768 px the row folds into three lines beside one „⋯“; no selection,
+   no Upraveno, and a tap anywhere on it opens the detail (22g). */
+@media (width < 768px) {
+  .row {
+    @layer route {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 44px;
+      column-gap: 10px;
+      row-gap: 6px;
+      align-items: start;
+      /* The page's gutter, so the text lines up with the filters above. */
+      padding: 14px 24px;
+      border-block-end: 1px solid var(--border);
+
+      &:last-child {
+        border-block-end: none;
+      }
+
+      & > td {
+        padding: 0;
+        border: none;
+      }
+    }
+  }
+
+  .wideOnly,
+  .categories,
+  .actions {
+    @layer route {
+      display: none;
+    }
+  }
+
+  .titleCell {
+    @layer route {
+      grid-area: 1 / 1;
+    }
+  }
+
+  .stateCell {
+    @layer route {
+      grid-area: 2 / 1;
+    }
+  }
+
+  /* The tag with its fact beside it, not under it. */
+  .state {
+    @layer route {
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .metaCell {
+    @layer route {
+      display: block;
+      grid-area: 3 / 1;
+      font-size: var(--font-size-xs);
+      color: var(--text-secondary);
+    }
+  }
+
+  /* Above the title link's cover, so „⋯“ never opens the detail. */
+  .actionsCell {
+    @layer route {
+      position: relative;
+      z-index: 1;
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      justify-self: center;
+      /* The table's actions column shrinks to 1 %; the grid sizes it here. */
+      width: auto;
+    }
+  }
+
+  .phoneMenu {
+    @layer route {
+      display: inline-flex;
+
+      /* The 30 px trigger gets a finger's 44 px (22g); the column is 44 px
+         wide, so the larger target overlaps nothing. */
+      & > button {
+        position: relative;
+
+        &::after {
+          content: "";
+          position: absolute;
+          inset-block-start: 50%;
+          inset-inline-start: 50%;
+          inline-size: 44px;
+          block-size: 44px;
+          translate: -50% -50%;
+        }
+      }
+    }
+  }
+
+  /* The title link covers the whole row. */
+  .link::after {
+    @layer route {
+      content: "";
+      position: absolute;
+      inset: 0;
+    }
+  }
+}

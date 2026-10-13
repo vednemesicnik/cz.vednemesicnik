@@ -9,17 +9,23 @@ type Props = {
   pending?: boolean
   // Makes thead sticky within the scroll wrapper (adds max-block-size)
   stickyHeader?: boolean
+  className?: string
 }
 
 export const AdminTable = ({
   children,
   pending = false,
   stickyHeader = false,
+  className,
 }: Props) => {
   return (
     <div
       aria-busy={pending}
-      className={clsx(styles.scrollArea, stickyHeader && styles.stickyArea)}
+      className={clsx(
+        styles.scrollArea,
+        stickyHeader && styles.stickyArea,
+        className,
+      )}
     >
       <table className={clsx(styles.table, pending && styles.pending)}>
         {children}

@@ -29,6 +29,7 @@ import {
 } from '../../../utils/article-actions'
 import { useArticleActionResult } from '../../../utils/use-article-action-result'
 import type { Route } from '../../+types/route'
+import { formatArticleRowMeta } from '../../utils/format-article-row-meta'
 import styles from './_styles.module.css'
 
 type Article = Route.ComponentProps['loaderData']['articles'][number]
@@ -43,7 +44,9 @@ type Props = {
 /**
  * A row of the article list (design 22a, 22b): the title opening the detail
  * with its first category, the author, the last update, the state tag with one
- * fact, and one action with the rest in „⋯“.
+ * fact, and one action with the rest in „⋯“. Below 768 px it folds into three
+ * lines — title, state, authors · categories — with the row action first in
+ * „⋯“, and the whole row opens the detail (22g).
  */
 export const ItemRow = ({ article, showAuthor, selected, onSelect }: Props) => {
   const { id } = article
@@ -104,16 +107,31 @@ export const ItemRow = ({ article, showAuthor, selected, onSelect }: Props) => {
 
   const rowAction = article.row
   const [firstCategory, ...otherCategories] = article.categoryNames
+  const meta = formatArticleRowMeta({
+    authorNames: article.authorNames,
+    categoryNames: article.categoryNames,
+    showAuthor,
+  })
+
+  const toMenuItem = (menuAction: ArticleAction) => ({
+    danger: menuAction === 'delete',
+    label: ARTICLE_ACTION_LABELS[menuAction],
+    onSelect: () => runAction(menuAction),
+  })
+  // On a phone „⋯“ stands alone, the row action first in it (22g).
+  const phoneMenu =
+    rowAction === null ? article.menu : [rowAction, ...article.menu]
 
   return (
-    <TableRow muted={article.state === 'archived'}>
+    <TableRow className={styles.row} muted={article.state === 'archived'}>
       <TableSelectionCell
         checked={selected}
+        className={styles.wideOnly}
         disabled={article.bulkActions.length === 0}
         label={`Vybrat článek ${article.title}`}
         onChange={onSelect}
       />
-      <TableCell>
+      <TableCell className={styles.titleCell}>
         {/* Zobrazit is gone: the title opens the detail (22a). */}
         <span className={styles.title}>
           <BaseLink className={styles.link} to={action}>
@@ -134,12 +152,29 @@ export const ItemRow = ({ article, showAuthor, selected, onSelect }: Props) => {
           )}
         </span>
       </TableCell>
-      {showAuthor && <TableCell>{article.authorNames.join(', ')}</TableCell>}
-      <TableCell>{article.updatedAt}</TableCell>
-      <TableCell>
-        <StatusTag detail={article.factLine} state={article.state} />
+      {showAuthor && (
+        <TableCell className={styles.wideOnly}>
+          {article.authorNames.join(', ')}
+        </TableCell>
+      )}
+      <TableCell className={styles.wideOnly}>{article.updatedAt}</TableCell>
+      <TableCell className={styles.stateCell}>
+        <StatusTag
+          className={styles.state}
+          detail={article.factLine}
+          state={article.state}
+        />
       </TableCell>
-      <TableCell variant={'actions'}>
+      {meta !== null && (
+        <TableCell className={styles.metaCell}>{meta}</TableCell>
+      )}
+      <TableCell className={styles.actionsCell} variant={'actions'}>
+        <ActionMenu
+          className={styles.phoneMenu}
+          items={phoneMenu.map(toMenuItem)}
+          label={`Další akce s článkem ${article.title}`}
+          size={'sm'}
+        />
         <span className={styles.actions}>
           {rowAction === 'edit' && (
             <AdminLinkButton
@@ -162,11 +197,7 @@ export const ItemRow = ({ article, showAuthor, selected, onSelect }: Props) => {
             </Button>
           )}
           <ActionMenu
-            items={article.menu.map((menuAction) => ({
-              danger: menuAction === 'delete',
-              label: ARTICLE_ACTION_LABELS[menuAction],
-              onSelect: () => runAction(menuAction),
-            }))}
+            items={article.menu.map(toMenuItem)}
             label={`Další akce s článkem ${article.title}`}
             size={'sm'}
           />

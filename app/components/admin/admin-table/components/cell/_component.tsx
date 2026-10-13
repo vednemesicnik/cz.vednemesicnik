@@ -8,12 +8,14 @@ type Props = {
   align?: 'left' | 'right'
   // "actions" right-aligns and shrinks the column to fit its controls
   variant?: 'default' | 'actions'
+  className?: string
 }
 
 export const TableCell = ({
   children,
   align = 'left',
   variant = 'default',
+  className,
 }: Props) => {
   return (
     <td
@@ -21,6 +23,7 @@ export const TableCell = ({
         styles.cell,
         align === 'right' && styles.alignRight,
         variant === 'actions' && styles.actions,
+        className,
       )}
     >
       {children}

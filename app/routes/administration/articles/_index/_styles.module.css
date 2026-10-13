@@ -152,3 +152,94 @@
     color: var(--text-secondary);
   }
 }
+
+/* Wide screen: the selection bar stands in for the filter row (22c). */
+@media (width >= 768px) {
+  .filterRowReplaced {
+    @layer route {
+      display: none;
+    }
+  }
+
+  .newArticleBar {
+    @layer route {
+      display: none;
+    }
+  }
+}
+
+/* A phone has no selection; the list is rows across the whole width with
+   Nový článek under it, in reach of the thumb (22g). */
+@media (width < 768px) {
+  .selectionBar,
+  .topNewArticle,
+  .tableHeader {
+    @layer route {
+      display: none;
+    }
+  }
+
+  /* No card: the rows run edge to edge, past the page's 24 px gutter. */
+  .table {
+    @layer route {
+      box-sizing: border-box;
+      inline-size: calc(100% + 48px);
+      margin-inline: -24px;
+      overflow: visible;
+      border: none;
+      border-block: 1px solid var(--border);
+      border-radius: 0;
+      box-shadow: none;
+
+      & :is(table, tbody) {
+        display: block;
+      }
+    }
+  }
+
+  /* Always in reach of the thumb, never hiding: the page's main action
+     (d9en8oih). It stays in the flow after the pagination, so at the end of
+     the list it settles on the footer, bridging the page's 24 px padding. */
+  .newArticleBar {
+    @layer route {
+      position: sticky;
+      inset-block-end: 0;
+      z-index: 1;
+      justify-self: stretch;
+      margin-inline: -24px;
+      margin-block-end: -24px;
+      padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+      background-color: var(--bg-primary);
+      border-block-start: 1px solid var(--border);
+    }
+  }
+
+  /* The design system's primary Button md, 44 px tall, its content's width
+     (22g). */
+  .newArticleBarLink {
+    @layer route {
+      box-sizing: border-box;
+      min-block-size: 44px;
+      padding-block: 10px;
+      padding-inline: 22px;
+      color: var(--text-on-accent);
+      background-color: var(--primary);
+      border-color: transparent;
+      border-radius: var(--radius-lg);
+
+      &:hover:not(:focus-visible) {
+        background-color: var(--primary-hover);
+        border-color: transparent;
+      }
+
+      &:active {
+        background-color: var(--primary-active);
+      }
+
+      &:focus-visible {
+        background-color: var(--primary);
+        border-color: transparent;
+      }
+    }
+  }
+}
