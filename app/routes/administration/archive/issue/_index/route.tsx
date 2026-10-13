@@ -13,6 +13,7 @@ import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminSubmissionActions } from '~/components/admin/admin-submission-actions'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { HistoryList } from '~/components/history-list'
 import { Hyperlink } from '~/components/hyperlink'
@@ -44,15 +45,17 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     issue,
-    canUpdate,
+    canEdit,
     canDelete,
     canPublish,
     canRetract,
     canArchive,
     canRestore,
-    canReview,
-    hasReviewed,
-    needsReview,
+    canApprove,
+    canSubmit,
+    canWithdraw,
+    canReturn,
+    submission,
   } = loaderData
   const { issueId } = params
 
@@ -87,7 +90,7 @@ export default function RouteComponent({
       <PageTitle>{issue.label}</PageTitle>
 
       <AdminActionGroup>
-        {canUpdate && (
+        {canEdit && (
           <LinkButton
             disabled={isSubmitting}
             to={href('/administration/archive/:issueId/edit-issue', {
@@ -99,7 +102,13 @@ export default function RouteComponent({
             Upravit
           </LinkButton>
         )}
-        {canReview && !hasReviewed && (
+        <AdminSubmissionActions
+          canReturn={canReturn}
+          canSubmit={canSubmit}
+          canWithdraw={canWithdraw}
+          contentId={issue.id}
+        />
+        {canApprove && (
           <Form method="post">
             <AuthenticityTokenInput />
             <AdminActionButton
@@ -121,13 +130,8 @@ export default function RouteComponent({
             <AuthenticityTokenInput />
             <AdminActionButton
               action={'publish'}
-              disabled={needsReview || isSubmitting}
+              disabled={isSubmitting}
               name={INTENT_NAME}
-              title={
-                needsReview
-                  ? 'Nelze publikovat bez schválení koordinátora'
-                  : undefined
-              }
               type={'submit'}
               value={INTENT_VALUE.publish}
             >
@@ -205,7 +209,7 @@ export default function RouteComponent({
         <AdminDetailList>
           <AdminDetailItem label="Název">{issue.label}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <StatusTag state={issue.state} />
+            <StatusTag state={submission ?? issue.state} />
           </AdminDetailItem>
           <AdminDetailItem label="Datum vydání">
             {issue.releasedAt.formatted}

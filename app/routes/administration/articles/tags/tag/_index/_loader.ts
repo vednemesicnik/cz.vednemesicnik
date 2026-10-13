@@ -3,10 +3,7 @@ import { data } from 'react-router'
 import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import {
-  canPublishWithoutReview,
-  needsReviewToPublish,
-} from '~/utils/permissions/author/review-policy'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 
 import type { Route } from './+types/route'
 
@@ -32,6 +29,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       publishedAt: true,
       reviews: {
         select: {
+          createdAt: true,
           reviewer: {
             select: { id: true, role: { select: { level: true } } },
           },
@@ -39,6 +37,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       slug: true,
       state: true,
+      submittedAt: true,
     },
     where: { id: tagId },
   })
@@ -74,91 +73,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // Check update permission
-  const { hasPermission: canUpdate } = context.can({
-    action: 'update',
-    entity: 'article_tag',
-    state: tag.state,
-    targetAuthorIds: [tag.author.id],
-  })
-
-  // Check delete permission
-  const { hasPermission: canDelete } = context.can({
-    action: 'delete',
-    entity: 'article_tag',
-    state: tag.state,
-    targetAuthorIds: [tag.author.id],
-  })
-
-  // Check publish permission (draft → published)
-  const { hasPermission: canPublish } = context.can({
-    action: 'publish',
-    entity: 'article_tag',
-    state: tag.state,
-    targetAuthorIds: [tag.author.id],
-  })
-
-  // Whether an approving review is still needed to publish.
-  const needsReview = needsReviewToPublish({
+  const flags = getContentActionFlags(context, 'article_tag', {
     authors: [tag.author],
     reviews: tag.reviews,
-  })
-
-  // Check retract permission (published → draft)
-  const { hasPermission: canRetract } = context.can({
-    action: 'retract',
-    entity: 'article_tag',
     state: tag.state,
-    targetAuthorIds: [tag.author.id],
+    submittedAt: tag.submittedAt,
   })
-
-  // Check archive permission (published → archived)
-  const { hasPermission: canArchive } = context.can({
-    action: 'archive',
-    entity: 'article_tag',
-    state: tag.state,
-    targetAuthorIds: [tag.author.id],
-  })
-
-  // Check restore permission (archived → draft)
-  const { hasPermission: canRestore } = context.can({
-    action: 'restore',
-    entity: 'article_tag',
-    state: tag.state,
-    targetAuthorIds: [tag.author.id],
-  })
-
-  // Check review permission
-  const { hasPermission: canReview } = context.can({
-    action: 'review',
-    entity: 'article_tag',
-    state: tag.state,
-    targetAuthorIds: [tag.author.id],
-  })
-
-  // Don't show review button if:
-  // 1. Author can publish without review - they don't need reviews
-  // 2. Current user is the author - can't review own content
-  const authorCanPublishWithoutReview = canPublishWithoutReview(tag.author.role)
-  const isOwnContent = tag.author.id === context.authorId
-  const shouldShowReview =
-    canReview && !authorCanPublishWithoutReview && !isOwnContent
-
-  // Check if current user has already reviewed this tag
-  const hasReviewed = tag.reviews.some(
-    (review) => review.reviewer.id === context.authorId,
-  )
 
   return {
-    canArchive,
-    canDelete,
-    canPublish,
-    canRestore,
-    canRetract,
-    canReview: shouldShowReview,
-    canUpdate,
-    hasReviewed,
-    needsReview,
     tag: {
       author: tag.author,
       history: await getContentHistory({
@@ -172,5 +94,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       slug: tag.slug,
       state: tag.state,
     },
+    ...flags,
+    submission: flags.submission?.state ?? null,
   }
 }

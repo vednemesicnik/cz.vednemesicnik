@@ -26,6 +26,7 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { useContentEvents } from '~/hooks/use-content-events'
 import { ArticleChangeDateDialog } from '../../components/article-change-date-dialog'
 import { ArticleMissingDialog } from '../../components/article-missing-dialog'
@@ -39,7 +40,6 @@ import {
   ARTICLE_DIRECT_INTENTS,
   type ArticleAction,
 } from '../../utils/article-actions'
-import { useArticleActionResult } from '../../utils/use-article-action-result'
 import type { action as articleAction } from './_action'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -86,7 +86,7 @@ export default function RouteComponent({
   })
 
   const { closeMissingList, missingList, showMissingList } =
-    useArticleActionResult(fetcher.data)
+    useContentActionResult(fetcher.data)
   const [stateDialog, setStateDialog] = useState<ArticleStateDialogKind | null>(
     null,
   )

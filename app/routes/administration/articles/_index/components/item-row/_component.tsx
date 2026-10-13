@@ -18,6 +18,7 @@ import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useContentActionResult } from '~/hooks/use-content-action-result'
 import type { action as articleAction } from '../../../article/_index/_action'
 import { ArticleChangeDateDialog } from '../../../components/article-change-date-dialog'
 import { ArticleMissingDialog } from '../../../components/article-missing-dialog'
@@ -32,7 +33,6 @@ import {
   type ArticleAction,
   NOT_SUBMITTED_NOTE,
 } from '../../../utils/article-actions'
-import { useArticleActionResult } from '../../../utils/use-article-action-result'
 import type { Route } from '../../+types/route'
 import { formatArticleRowMeta } from '../../utils/format-article-row-meta'
 import { formatLiveChangeLine } from '../../utils/format-live-change-line'
@@ -82,7 +82,7 @@ export const ItemRow = ({
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
 
-  const { closeMissingList, missingList } = useArticleActionResult(fetcher.data)
+  const { closeMissingList, missingList } = useContentActionResult(fetcher.data)
   const [stateDialog, setStateDialog] = useState<ArticleStateDialogKind | null>(
     null,
   )

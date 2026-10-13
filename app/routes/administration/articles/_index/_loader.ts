@@ -14,11 +14,10 @@ import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
-
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
-import { getArticleActionFlags } from '../utils/get-article-action-flags.server'
 import { getArticleFactLine } from '../utils/get-article-fact-line'
 import type { Route } from './+types/route'
 import { PINNED_ROWS_PARAM } from './pinned-rows'
@@ -288,7 +287,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const now = new Date()
 
   const articles = rawArticles.map((article) => {
-    const flags = getArticleActionFlags(context, article)
+    const flags = getContentActionFlags(context, 'article', article)
 
     // A filtered category first, so the row shows why it is there; else the
     // alphabetical first (22a).

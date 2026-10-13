@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { updateTag } from './update-tag.server'
 
 const mocks = vi.hoisted(() => ({
+  articleTagFindUniqueOrThrow: vi.fn(),
   articleTagUpdate: vi.fn(),
   publishContentEvent: vi.fn(),
   withAuthorPermission: vi.fn(),
@@ -24,11 +25,20 @@ vi.mock('~/utils/sse/publish-content-event.server', () => ({
 }))
 
 vi.mock('~/utils/db.server', () => ({
-  prisma: { articleTag: { update: mocks.articleTagUpdate } },
+  prisma: {
+    articleTag: {
+      findUniqueOrThrow: mocks.articleTagFindUniqueOrThrow,
+      update: mocks.articleTagUpdate,
+    },
+  },
 }))
 
 const request = new Request('https://test.local/')
-const context = { authorId: 'author-1', authorName: 'Marie Horáková' }
+const context = {
+  authorId: 'author-1',
+  authorName: 'Marie Horáková',
+  roleLevel: 3,
+}
 
 const options = {
   authorId: 'author-1',
@@ -47,6 +57,7 @@ beforeEach(() => {
     ) => execute(context),
   )
   mocks.articleTagUpdate.mockResolvedValue({ id: 'tag-1' })
+  mocks.articleTagFindUniqueOrThrow.mockResolvedValue({ submittedAt: null })
 })
 
 describe('updateTag', () => {
@@ -94,5 +105,16 @@ describe('updateTag', () => {
     })
     expect(mocks.articleTagUpdate).not.toHaveBeenCalled()
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+  })
+
+  test('refuses its author while the tag is submitted', async () => {
+    mocks.articleTagFindUniqueOrThrow.mockResolvedValue({
+      submittedAt: new Date('2026-10-13T10:00:00Z'),
+    })
+
+    await expect(updateTag(request, options)).rejects.toMatchObject({
+      init: { status: 403 },
+    })
+    expect(mocks.articleTagUpdate).not.toHaveBeenCalled()
   })
 })

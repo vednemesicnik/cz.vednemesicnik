@@ -3,10 +3,7 @@ import { data } from 'react-router'
 import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import {
-  canPublishWithoutReview,
-  needsReviewToPublish,
-} from '~/utils/permissions/author/review-policy'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 
 import type { Route } from './+types/route'
 
@@ -46,6 +43,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       publishedAt: true,
       reviews: {
         select: {
+          createdAt: true,
           reviewer: {
             select: { id: true, role: { select: { level: true } } },
           },
@@ -53,6 +51,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       slug: true,
       state: true,
+      submittedAt: true,
     },
     where: { id: categoryId },
   })
@@ -74,91 +73,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // Check update permission
-  const { hasPermission: canUpdate } = context.can({
-    action: 'update',
-    entity: 'article_category',
-    state: category.state,
-    targetAuthorIds: [category.author.id],
-  })
-
-  // Check delete permission
-  const { hasPermission: canDelete } = context.can({
-    action: 'delete',
-    entity: 'article_category',
-    state: category.state,
-    targetAuthorIds: [category.author.id],
-  })
-
-  // Check publish permission (draft → published)
-  const { hasPermission: canPublish } = context.can({
-    action: 'publish',
-    entity: 'article_category',
-    state: category.state,
-    targetAuthorIds: [category.author.id],
-  })
-
-  // Whether an approving review is still needed to publish.
-  const needsReview = needsReviewToPublish({
+  const flags = getContentActionFlags(context, 'article_category', {
     authors: [category.author],
     reviews: category.reviews,
-  })
-
-  // Check retract permission (published → draft)
-  const { hasPermission: canRetract } = context.can({
-    action: 'retract',
-    entity: 'article_category',
     state: category.state,
-    targetAuthorIds: [category.author.id],
+    submittedAt: category.submittedAt,
   })
-
-  // Check archive permission (published → archived)
-  const { hasPermission: canArchive } = context.can({
-    action: 'archive',
-    entity: 'article_category',
-    state: category.state,
-    targetAuthorIds: [category.author.id],
-  })
-
-  // Check restore permission (archived → draft)
-  const { hasPermission: canRestore } = context.can({
-    action: 'restore',
-    entity: 'article_category',
-    state: category.state,
-    targetAuthorIds: [category.author.id],
-  })
-
-  // Check review permission
-  const { hasPermission: canReview } = context.can({
-    action: 'review',
-    entity: 'article_category',
-    state: category.state,
-    targetAuthorIds: [category.author.id],
-  })
-
-  // Don't show review button if:
-  // 1. Author can publish without review - they don't need reviews
-  // 2. Current user is the author - can't review own content
-  const authorCanPublishWithoutReview = canPublishWithoutReview(
-    category.author.role,
-  )
-  const isOwnContent = category.author.id === context.authorId
-  const shouldShowReview =
-    canReview && !authorCanPublishWithoutReview && !isOwnContent
-
-  // Check if current user has already reviewed this category
-  const hasReviewed = category.reviews.some(
-    (review) => review.reviewer.id === context.authorId,
-  )
 
   return {
-    canArchive,
-    canDelete,
-    canPublish,
-    canRestore,
-    canRetract,
-    canReview: shouldShowReview,
-    canUpdate,
     category: {
       author: category.author,
       history: await getContentHistory({
@@ -172,7 +94,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       slug: category.slug,
       state: category.state,
     },
-    hasReviewed,
-    needsReview,
+    ...flags,
+    submission: flags.submission?.state ?? null,
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { getArticleActionFlags } from './get-article-action-flags.server'
+import { getContentActionFlags } from './get-content-action-flags.server'
 
 const COORDINATOR = { level: 1 }
 const CREATOR = { level: 2 }
@@ -29,12 +29,16 @@ const draftBy = (authorId: string, role: { level: number }) => ({
   submittedAt: null,
 })
 
-describe('getArticleActionFlags', () => {
+describe('getContentActionFlags', () => {
   test('the Coordinator approves, publishes and returns a waiting draft', () => {
-    const flags = getArticleActionFlags(createContext('coordinator', 1), {
-      ...draftBy('contributor', CONTRIBUTOR),
-      submittedAt,
-    })
+    const flags = getContentActionFlags(
+      createContext('coordinator', 1),
+      'article',
+      {
+        ...draftBy('contributor', CONTRIBUTOR),
+        submittedAt,
+      },
+    )
 
     expect(flags).toMatchObject({
       canApprove: true,
@@ -49,26 +53,34 @@ describe('getArticleActionFlags', () => {
   })
 
   test('an approving review makes the draft approved, and approval is not offered again', () => {
-    const flags = getArticleActionFlags(createContext('coordinator', 1), {
-      ...draftBy('contributor', CONTRIBUTOR),
-      reviews: [
-        {
-          createdAt: approvedAt,
-          reviewer: { id: 'coordinator', role: COORDINATOR },
-        },
-      ],
-      submittedAt,
-    })
+    const flags = getContentActionFlags(
+      createContext('coordinator', 1),
+      'article',
+      {
+        ...draftBy('contributor', CONTRIBUTOR),
+        reviews: [
+          {
+            createdAt: approvedAt,
+            reviewer: { id: 'coordinator', role: COORDINATOR },
+          },
+        ],
+        submittedAt,
+      },
+    )
 
     expect(flags.canApprove).toBe(false)
     expect(flags.submission).toEqual({ date: approvedAt, state: 'approved' })
   })
 
   test('its author only takes a waiting draft back', () => {
-    const flags = getArticleActionFlags(createContext('contributor', 3), {
-      ...draftBy('contributor', CONTRIBUTOR),
-      submittedAt,
-    })
+    const flags = getContentActionFlags(
+      createContext('contributor', 3),
+      'article',
+      {
+        ...draftBy('contributor', CONTRIBUTOR),
+        submittedAt,
+      },
+    )
 
     expect(flags).toMatchObject({
       canApprove: false,
@@ -83,8 +95,9 @@ describe('getArticleActionFlags', () => {
   })
 
   test('the Creator submits an own draft instead of publishing it', () => {
-    const flags = getArticleActionFlags(
+    const flags = getContentActionFlags(
       createContext('creator', 2),
+      'article',
       draftBy('creator', CREATOR),
     )
 
@@ -99,8 +112,9 @@ describe('getArticleActionFlags', () => {
   })
 
   test('a draft with a Coordinator among its authors is not submitted', () => {
-    const flags = getArticleActionFlags(
+    const flags = getContentActionFlags(
       createContext('coordinator', 1),
+      'article',
       draftBy('coordinator', COORDINATOR),
     )
 
@@ -118,12 +132,15 @@ describe('getArticleActionFlags', () => {
     }
 
     expect(
-      getArticleActionFlags(createContext('creator', 2), published)
+      getContentActionFlags(createContext('creator', 2), 'article', published)
         .canChangePublishedAt,
     ).toBe(false)
     expect(
-      getArticleActionFlags(createContext('coordinator', 1), published)
-        .canChangePublishedAt,
+      getContentActionFlags(
+        createContext('coordinator', 1),
+        'article',
+        published,
+      ).canChangePublishedAt,
     ).toBe(true)
   })
 })

@@ -1,9 +1,8 @@
 import { prisma } from '~/utils/db.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
-
 import { articleContentStateHandlers } from '../../article/_index/utils/content-state-handlers.server'
-import { getArticleActionFlags } from '../../utils/get-article-action-flags.server'
 import type { BulkAction } from './get-bulk-actions'
 import { getBulkActions } from './get-bulk-actions'
 import { getOrderedPublishDates } from './get-ordered-publish-dates'
@@ -88,7 +87,7 @@ export const runBulkArticleAction = async (
       continue
     }
 
-    const flags = getArticleActionFlags(context, article)
+    const flags = getContentActionFlags(context, 'article', article)
     const bulkActions = getBulkActions({
       ...getRowActions({
         ...flags,
