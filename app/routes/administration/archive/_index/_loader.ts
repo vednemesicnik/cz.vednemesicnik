@@ -6,6 +6,7 @@ import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import type { Route } from './+types/route'
@@ -93,6 +94,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         id: true,
         label: true,
         state: true,
+        submittedAt: true,
       },
       where,
     }),
@@ -103,18 +105,25 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const issues = rawIssues.map((issue) => {
     return {
       ...issue,
-      canDelete: context.can({
-        action: 'delete',
-        entity: 'issue',
-        state: issue.state,
-        targetAuthorIds: [issue.authorId],
-      }).hasPermission,
-      canEdit: context.can({
-        action: 'update',
-        entity: 'issue',
-        state: issue.state,
-        targetAuthorIds: [issue.authorId],
-      }).hasPermission,
+      // A submitted draft is neither deleted nor edited by its author (07d).
+      canDelete:
+        context.can({
+          action: 'delete',
+          entity: 'issue',
+          state: issue.state,
+          targetAuthorIds: [issue.authorId],
+        }).hasPermission && issue.submittedAt === null,
+      canEdit:
+        context.can({
+          action: 'update',
+          entity: 'issue',
+          state: issue.state,
+          targetAuthorIds: [issue.authorId],
+        }).hasPermission &&
+        !isLockedBySubmission({
+          roleLevel: context.roleLevel,
+          submittedAt: issue.submittedAt,
+        }),
       canView: context.can({
         action: 'view',
         entity: 'issue',
