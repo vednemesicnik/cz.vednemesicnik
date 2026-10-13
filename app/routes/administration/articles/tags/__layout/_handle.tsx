@@ -9,4 +9,6 @@ export const handle = {
       path: href('/administration/articles/tags'),
     }
   },
+  // A tag's trail is „Štítky / …“, without Články, as a category's (25b).
+  breadcrumbStartsTrail: true,
 }

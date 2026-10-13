@@ -1,14 +1,11 @@
+/* A plain line above the record's title, not a bar (design 23a); the page
+   below adds its own 24 px. */
 .container {
   @layer component {
     display: grid;
-    position: sticky;
-    top: 0;
     grid-auto-flow: row;
     width: 100%;
-    padding: 12px 24px;
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
-    z-index: var(--z-breadcrumbs);
+    padding: 24px 24px 0;
   }
 }
 
@@ -32,9 +29,9 @@
     position: relative;
     align-items: center;
     gap: 8px;
-    font-size: var(--font-size-sm);
+    font-size: 13px;
     font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-sm);
+    line-height: 1.5;
     color: var(--text-secondary);
   }
 }
@@ -63,7 +60,6 @@
 
     &[aria-current="page"] {
       color: var(--text-primary);
-      font-weight: var(--font-weight-semibold);
     }
   }
 }
