@@ -17,7 +17,7 @@ export type LiveChange = {
   occurredAt: Date
   /** Counts the changes, so a second one restarts the tint. */
   sequence: number
-  /** Client time the tint started, `null` while it waits for a hidden tab. */
+  /** The tab's time (`performance.now()`) the tint started, `null` while it waits for a hidden tab. */
   tintStartedAt: number | null
 }
 
@@ -74,7 +74,7 @@ export const useLiveArticleRows = (loaderData: LoaderData) => {
           sequence: (current.get(event.entityId)?.sequence ?? 0) + 1,
           // The tint is meant to be seen, so a hidden tab holds it back.
           tintStartedAt:
-            document.visibilityState === 'visible' ? Date.now() : null,
+            document.visibilityState === 'visible' ? performance.now() : null,
         }),
       )
     },
@@ -95,7 +95,9 @@ export const useLiveArticleRows = (loaderData: LoaderData) => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        setLiveChanges((current) => startPendingTints(current, Date.now()))
+        setLiveChanges((current) =>
+          startPendingTints(current, performance.now()),
+        )
       }
     }
 

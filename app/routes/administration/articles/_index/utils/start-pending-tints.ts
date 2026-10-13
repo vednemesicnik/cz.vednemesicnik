@@ -5,7 +5,7 @@ import type { LiveChange } from './use-live-article-rows'
  * list wasn't seen tints once the tab is visible again.
  *
  * @param changes - The live changes, keyed by article id.
- * @param now - The client time the tab became visible.
+ * @param now - The tab's time (`performance.now()`) it became visible.
  * @returns The changes with every pending tint started at `now`, or the same map
  *   when none waited, so nothing re-renders.
  */

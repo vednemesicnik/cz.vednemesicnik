@@ -7,7 +7,8 @@ import { useLayoutEffect, useRef } from 'react'
  * paint, the animation jumps to the time elapsed since the tint started; past
  * its 3 s hold and 300 ms fade, it is finished and the row shows no tint.
  *
- * @param tintStartedAt - Client time the tint started, or `null` for no tint.
+ * @param tintStartedAt - The tab's time (`performance.now()`) the tint started,
+ *   or `null` for no tint.
  * @returns The ref for the tinted row.
  */
 export const useLiveChangeTint = (tintStartedAt: number | null) => {
@@ -20,7 +21,7 @@ export const useLiveChangeTint = (tintStartedAt: number | null) => {
 
     for (const animation of row.getAnimations()) {
       if (animation instanceof CSSAnimation) {
-        animation.currentTime = Date.now() - tintStartedAt
+        animation.currentTime = performance.now() - tintStartedAt
       }
     }
   })
