@@ -4,6 +4,7 @@ import { buildArticleFeaturedImageSeo } from '~/routes/administration/articles/u
 import { prisma } from '~/utils/db.server'
 import { storeImageVariants } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 type Options = {
   title: string
@@ -111,6 +112,12 @@ export async function createArticle(
       return createdArticle
     },
     target: { authorIds, state: 'draft' },
+  })
+
+  publishContentEvent({
+    change: 'create',
+    entity: 'article',
+    entityId: article.id,
   })
 
   return { articleId: article.id }

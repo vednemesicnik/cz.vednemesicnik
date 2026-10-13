@@ -1,6 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { prisma } from '~/utils/db.server'
 import { storeImageVariants } from '~/utils/image-store/store-image.server'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -38,6 +39,12 @@ export async function createPodcast({
         slug,
         title,
       },
+    })
+
+    publishContentEvent({
+      change: 'create',
+      entity: 'podcast',
+      entityId: podcast.id,
     })
 
     return {

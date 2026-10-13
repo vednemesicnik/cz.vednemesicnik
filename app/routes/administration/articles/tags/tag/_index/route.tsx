@@ -25,6 +25,7 @@ import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useContentEvents } from '~/hooks/use-content-events'
 
 import type { Route } from './+types/route'
 
@@ -52,6 +53,11 @@ export default function RouteComponent({
     needsReview,
   } = loaderData
   const { tagId } = params
+
+  useContentEvents({
+    filter: (event) =>
+      event.entity === 'article_tag' && event.entityId === tagId,
+  })
 
   const fetcherKey = `category-action-${tagId}`
   const fetcher = useFetcher({ key: fetcherKey })

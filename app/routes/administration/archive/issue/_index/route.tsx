@@ -26,6 +26,7 @@ import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useContentEvents } from '~/hooks/use-content-events'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
@@ -54,6 +55,10 @@ export default function RouteComponent({
     needsReview,
   } = loaderData
   const { issueId } = params
+
+  useContentEvents({
+    filter: (event) => event.entity === 'issue' && event.entityId === issueId,
+  })
 
   const fetcherKey = `issue-action-${issueId}`
   const fetcher = useFetcher({ key: fetcherKey })

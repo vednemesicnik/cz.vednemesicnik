@@ -15,6 +15,7 @@ import {
 } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 type Options = {
   articleId: string
@@ -216,6 +217,12 @@ export async function updateArticle(
       return { id: articleId }
     },
     target: { authorIds, state },
+  })
+
+  publishContentEvent({
+    change: 'update',
+    entity: 'article',
+    entityId: articleId,
   })
 
   return { id: articleId }

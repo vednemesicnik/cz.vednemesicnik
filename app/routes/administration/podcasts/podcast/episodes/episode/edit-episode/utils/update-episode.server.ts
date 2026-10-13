@@ -1,4 +1,5 @@
 import { prisma } from '~/utils/db.server'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -46,6 +47,13 @@ export async function updateEpisode({
         },
         where: { id },
       })
+    })
+
+    // The links are saved with the episode, so its update covers them.
+    publishContentEvent({
+      change: 'update',
+      entity: 'podcast_episode',
+      entityId: id,
     })
   } catch (error) {
     throwDbError(error, 'Unable to update the episode.')
