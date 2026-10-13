@@ -12,7 +12,7 @@ content once a Coordinator had approved it, and could pre-review other authors' 
 redesign needs the Coordinator to approve texts as they come and publish them later in the order
 they should stand on the web (#243), which a Creator publishing on their own would break.
 
-The design project decided it on 28 Sep 2026 (`dj753f0j`, `gbsczekj`, document 07) and drew it
+The design project decided it on 27–28 Sep 2026 (`dj753f0j`, `gbsczekj`, document 07) and drew it
 for every content type: 25c (categories), 25e (tags), 26e (issues), 27c, 27h and 27i (podcasts
 and episodes). #590 built it for articles, #627 for the rest.
 
@@ -34,6 +34,10 @@ retracting or archiving their own published content.
 - Submitted content is locked for its authors and can't be deleted until they take it back. A
   Coordinator's correction keeps the approval; taking back or returning it deletes the approval.
 - The Coordinator may publish a never-submitted draft directly: publishing is the approval.
+- Approval reads a submitted text: the server refuses Schválit on an unsubmitted draft.
+- Drafts are not marked as submitted when the columns arrive (#590, #627). An approval given
+  under the old flow stays on its draft, so such a draft shows as Schváleno as soon as its
+  author submits it.
 - The review gate from [0005](0005-review-gate-keys-off-role-level.md) stays as a server-side
   guard.
 - The current state is described in
