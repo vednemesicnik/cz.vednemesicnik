@@ -4,21 +4,21 @@ import { Outlet } from 'react-router'
 
 import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
 import { AdminBreadcrumbs } from '~/components/admin/admin-breadcrumbs'
-import { getBreadcrumbs } from '~/utils/breadcrumbs'
+import { getAdminBreadcrumbs } from '~/utils/get-admin-breadcrumbs'
 
 import type { Route } from './+types/route'
 
-export { handle } from './_handle'
 export { meta } from './_meta'
 
 export default function LayoutRouteComponent({
   matches,
 }: Route.ComponentProps) {
-  const breadcrumbs = getBreadcrumbs(matches)
+  // Only on a record, from its section (design 22a, 23a).
+  const breadcrumbs = getAdminBreadcrumbs(matches)
 
   return (
     <>
-      <AdminBreadcrumbs items={breadcrumbs} />
+      {breadcrumbs.length > 0 && <AdminBreadcrumbs items={breadcrumbs} />}
       <Outlet />
     </>
   )

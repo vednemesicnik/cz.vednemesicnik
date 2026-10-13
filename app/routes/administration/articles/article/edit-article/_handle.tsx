@@ -7,7 +7,7 @@ export const handle = {
     const { articleId } = params
 
     return {
-      label: 'Upravit článek',
+      label: 'Úprava',
       path: href('/administration/articles/:articleId/edit-article', {
         articleId,
       }),

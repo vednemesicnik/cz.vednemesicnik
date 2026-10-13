@@ -10,7 +10,7 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
   const episode = await prisma.podcastEpisode.findUnique({
     select: {
       id: true,
-      title: true,
+      number: true,
     },
     where: { id: episodeId },
   })

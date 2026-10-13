@@ -7,6 +7,8 @@ export type Breadcrumb = {
 
 export type BreadcrumbHandle = {
   breadcrumb: (match: UIMatch) => Breadcrumb
+  /** In the administration the trail starts here, e.g. „Rubriky / Kultura“ (25b). */
+  breadcrumbStartsTrail?: boolean
 }
 
 export interface BreadcrumbMatch<

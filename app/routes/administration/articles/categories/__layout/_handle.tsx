@@ -9,4 +9,6 @@ export const handle = {
       path: href('/administration/articles/categories'),
     }
   },
+  // A category's trail is „Rubriky / Kultura“, without Články (25b).
+  breadcrumbStartsTrail: true,
 }
