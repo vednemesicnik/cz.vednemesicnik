@@ -26,7 +26,8 @@ type Options = {
  *
  * @param request - The action's request, for the permission checks.
  * @param options - The action, the article ids in order, and the base moment.
- * @returns How many articles the action changed and how many it skipped.
+ * @returns How many articles the action changed and how many it skipped, and
+ *   whether all of them were drafts (the toast then counts koncepty).
  */
 export const runBulkArticleAction = async (
   request: Request,
@@ -128,5 +129,9 @@ export const runBulkArticleAction = async (
     processedCount += 1
   }
 
-  return { processedCount, skippedCount }
+  return {
+    onlyDrafts: articles.every((article) => article.state === 'draft'),
+    processedCount,
+    skippedCount,
+  }
 }

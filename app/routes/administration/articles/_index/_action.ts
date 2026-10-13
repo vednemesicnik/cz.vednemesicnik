@@ -12,11 +12,11 @@ const INTENT_VALUE = FORM_CONFIG.intent.value
 // Matches the list page size — the bar only offers selection on the current page.
 const MAX_SELECTION = 20
 
-const BULK_ACTIONS: Record<string, BulkAction> = {
-  [INTENT_VALUE.bulkArchive]: 'archive',
-  [INTENT_VALUE.bulkDelete]: 'delete',
-  [INTENT_VALUE.bulkPublish]: 'publish',
-}
+const BULK_ACTIONS = new Map<string, BulkAction>([
+  [INTENT_VALUE.bulkArchive, 'archive'],
+  [INTENT_VALUE.bulkDelete, 'delete'],
+  [INTENT_VALUE.bulkPublish, 'publish'],
+])
 
 // The bulk publish dialog's date choice (22c): `today` is the server's now, so
 // a browser clock running ahead can't make it a future date; another day comes
@@ -41,7 +41,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const intent = formData.get(INTENT_NAME)
   invariantResponse(typeof intent === 'string', 'Missing intent')
-  const bulkAction = BULK_ACTIONS[intent]
+  const bulkAction = BULK_ACTIONS.get(intent)
   invariantResponse(bulkAction !== undefined, 'Invalid intent')
 
   // Trim, drop empty values, and de-duplicate before the size guard so forged

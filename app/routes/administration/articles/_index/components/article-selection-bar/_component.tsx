@@ -1,16 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminSelectionBar } from '~/components/admin/admin-selection-bar'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { STATUS_TAG_LABELS } from '~/components/status-tag'
-import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import type { action as listAction } from '../../_action'
 import type { Route } from '../../+types/route'
-import { formatBulkActionToast } from '../../utils/format-bulk-action-toast'
+import { BULK_ACTION_FETCHER_KEY } from '../../utils/bulk-action-fetcher-key'
 import type { BulkAction } from '../../utils/get-bulk-actions'
 import { getBulkPublishNotes } from '../../utils/get-bulk-publish-notes'
 import { getSelectionBarContent } from '../../utils/get-selection-bar-content'
@@ -26,8 +25,6 @@ type Props = {
   className?: string
 }
 
-const FETCHER_KEY = 'articles-bulk-action'
-
 const BULK_ACTION_LABELS: Record<BulkAction, string> = {
   archive: 'Archivovat…',
   delete: 'Smazat…',
@@ -41,8 +38,8 @@ const BULK_INTENTS: Record<'archive' | 'delete', string> = {
 
 /**
  * The article list's selection bar (design 22c): the bulk actions valid for
- * every selected article, each confirmed in a dialog, then a toast with the
- * real result and a cleared selection.
+ * every selected article, each confirmed in a dialog. The list answers the
+ * result (`useBulkActionResult`).
  *
  * @param props.articles - The selected articles, in the order they were checked.
  * @param props.onClear - Clears the selection.
@@ -53,43 +50,18 @@ export const ArticleSelectionBar = ({
   onClear,
   className,
 }: Props) => {
-  const fetcher = useFetcher<typeof listAction>({ key: FETCHER_KEY })
+  const fetcher = useFetcher<typeof listAction>({
+    key: BULK_ACTION_FETCHER_KEY,
+  })
   const authenticityToken = useAuthenticityToken()
-  const showToast = useToast()
   const [openAction, setOpenAction] = useState<BulkAction | null>(null)
 
   const isSubmitting = fetcher.state !== 'idle'
   const onlyDrafts = articles.every((article) => article.state === 'draft')
-  const onlyDraftsRef = useRef(onlyDrafts)
-  // A keyed fetcher keeps its data across remounts; answer only a new result.
-  const handledResultRef = useRef(fetcher.data)
-
-  useEffect(() => {
-    const result = fetcher.data
-    if (
-      fetcher.state !== 'idle' ||
-      result === undefined ||
-      result === handledResultRef.current
-    ) {
-      return
-    }
-    handledResultRef.current = result
-
-    showToast(
-      formatBulkActionToast({
-        ...result,
-        onlyDrafts: onlyDraftsRef.current,
-      }),
-    )
-    onClear()
-  }, [fetcher.data, fetcher.state, onClear, showToast])
 
   const { actions, message } = getSelectionBarContent(articles)
 
-  const open = (bulkAction: BulkAction) => {
-    onlyDraftsRef.current = onlyDrafts
-    setOpenAction(bulkAction)
-  }
+  const open = (bulkAction: BulkAction) => setOpenAction(bulkAction)
 
   const submit = (bulkAction: 'archive' | 'delete', ids: string[]) => {
     const formData = new FormData()
@@ -134,7 +106,7 @@ export const ArticleSelectionBar = ({
       {openAction === 'publish' && (
         <BulkPublishDialog
           action={action}
-          fetcherKey={FETCHER_KEY}
+          fetcherKey={BULK_ACTION_FETCHER_KEY}
           keptArticles={completeArticles.flatMap((article) =>
             article.publishedAt === null
               ? []

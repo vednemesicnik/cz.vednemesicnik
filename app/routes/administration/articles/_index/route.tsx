@@ -31,6 +31,7 @@ import { buildClearFiltersSearch } from './utils/build-clear-filters-search'
 import { formatWaitingWork } from './utils/format-waiting-work'
 import { getEmptyListMessage } from './utils/get-empty-list-message'
 import { getSavedFilterSummary } from './utils/get-saved-filter-summary'
+import { useBulkActionResult } from './utils/use-bulk-action-result'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -139,6 +140,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     .filter((article) => article.bulkActions.length > 0)
     .map((article) => article.id)
   const selection = useAdminTableSelection(selectableIds)
+  useBulkActionResult(selection.clear)
   const selectedArticles = selection.selectedIds.flatMap((id) =>
     articles.filter((article) => article.id === id),
   )
