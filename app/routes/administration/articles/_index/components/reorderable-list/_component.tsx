@@ -175,13 +175,20 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
       startY += shift
     }
 
+    // The first row stops at the top, the last at the bottom: like the fixed
+    // sideways shift, the lifted row never leaves the list.
+    const clampedOffsetY =
+      target === 0 && remaining < 0
+        ? 0
+        : target === count - 1 && remaining > 0
+          ? 0
+          : remaining
+
     if (target !== from) {
       onReorder(moveListItem(items, from, target))
-      setDrag({ ...drag, isMoving: true, offsetY: remaining, startY })
-      return
     }
 
-    setDrag({ ...drag, isMoving: true, offsetY })
+    setDrag({ ...drag, isMoving: true, offsetY: clampedOffsetY, startY })
   }
 
   const handlePointerEnd = () => {
