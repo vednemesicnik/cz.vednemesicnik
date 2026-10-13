@@ -173,6 +173,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <ListHeader
         action={renderNewArticleLink(styles.topNewArticle)}
         className={styles.header}
+        leadClassName={styles.headerLead}
       >
         <AdminHeadline className={styles.headline}>Články</AdminHeadline>
         {showWaitingWork && (

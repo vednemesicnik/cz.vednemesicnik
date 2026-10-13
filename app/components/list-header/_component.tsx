@@ -7,6 +7,7 @@ type Props = {
   children: ReactNode
   action?: ReactNode
   className?: string
+  leadClassName?: string
 }
 
 /**
@@ -17,11 +18,17 @@ type Props = {
  * @param props.children - The headline, and what belongs under it, such as a
  * link to the work waiting in the list.
  * @param props.action - The list's main action, usually a primary `LinkButton`.
+ * @param props.leadClassName - Styles the column that holds `children`.
  */
-export const ListHeader = ({ children, action, className }: Props) => {
+export const ListHeader = ({
+  children,
+  action,
+  className,
+  leadClassName,
+}: Props) => {
   return (
     <div className={clsx(styles.row, className)}>
-      <div className={styles.lead}>{children}</div>
+      <div className={clsx(styles.lead, leadClassName)}>{children}</div>
       {action}
     </div>
   )

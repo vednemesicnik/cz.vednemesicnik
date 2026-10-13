@@ -181,13 +181,10 @@
 
   /* Only the waiting work is left to show: no row of its own, or an empty
      one would still cost the page a gap. */
-  .header {
+  .header,
+  .headerLead {
     @layer route {
       display: contents;
-
-      & > :first-child {
-        display: contents;
-      }
     }
   }
 

@@ -36,7 +36,9 @@ type Story = StoryObj<typeof meta>
 export const Playground: Story = {
   args: {
     action: (
-      <LinkButton to={'/administration/podcasts'}>Nový podcast</LinkButton>
+      <LinkButton to={'/administration/podcasts/add-podcast'}>
+        Nový podcast
+      </LinkButton>
     ),
     children: <AdminHeadline>Podcasty</AdminHeadline>,
   },
