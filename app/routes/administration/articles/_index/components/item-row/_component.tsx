@@ -109,7 +109,7 @@ export const ItemRow = ({ article, showAuthor, selected, onSelect }: Props) => {
     <TableRow muted={article.state === 'archived'}>
       <TableSelectionCell
         checked={selected}
-        disabled={!article.canDelete}
+        disabled={article.bulkActions.length === 0}
         label={`Vybrat článek ${article.title}`}
         onChange={onSelect}
       />

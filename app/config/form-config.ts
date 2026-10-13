@@ -6,7 +6,9 @@ export const FORM_CONFIG = {
     name: 'intent',
     value: {
       archive: 'archive',
+      bulkArchive: 'bulk-archive',
       bulkDelete: 'bulk-delete',
+      bulkPublish: 'bulk-publish',
       changePublishedAt: 'change-published-at',
       createFilter: 'create-filter',
       delete: 'delete',

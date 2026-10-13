@@ -12,7 +12,8 @@ type Props = {
   className?: string
 }
 
-const STATE_LABELS: Record<StatusTagState, string> = {
+/** The tag's words, also for a state written out as text (design 22c). */
+export const STATUS_TAG_LABELS: Record<StatusTagState, string> = {
   approved: 'Schváleno',
   archived: 'Archivováno',
   draft: 'Koncept',
@@ -29,7 +30,7 @@ const STATE_LABELS: Record<StatusTagState, string> = {
  */
 export const StatusTag = ({ state, detail, className }: Props) => (
   <span className={clsx(styles.status, styles[state], className)}>
-    <span className={styles.tag}>{STATE_LABELS[state]}</span>
+    <span className={styles.tag}>{STATUS_TAG_LABELS[state]}</span>
     {detail !== undefined && <span className={styles.detail}>{detail}</span>}
   </span>
 )
