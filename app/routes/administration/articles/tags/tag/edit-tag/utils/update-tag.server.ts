@@ -17,7 +17,7 @@ export const updateTag = async (
 ) => {
   const tag = await withAuthorPermission(request, {
     action: 'update',
-    entity: 'article_category',
+    entity: 'article_tag',
     execute: () =>
       prisma.articleTag.update({
         data: {

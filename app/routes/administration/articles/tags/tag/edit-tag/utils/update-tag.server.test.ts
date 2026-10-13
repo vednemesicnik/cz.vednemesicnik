@@ -42,6 +42,18 @@ beforeEach(() => {
 })
 
 describe('updateTag', () => {
+  test('checks the tag permission', async () => {
+    await updateTag(request, options)
+
+    expect(mocks.withAuthorPermission).toHaveBeenCalledWith(
+      request,
+      expect.objectContaining({
+        action: 'update',
+        entity: 'article_tag',
+        target: { authorIds: ['author-1'], state: 'draft' },
+      }),
+    )
+  })
   test('announces the updated tag', async () => {
     await expect(updateTag(request, options)).resolves.toEqual({
       id: 'tag-1',
