@@ -14,13 +14,13 @@ import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { Callout } from '~/components/callout'
 import { HistoryList } from '~/components/history-list'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { useToast } from '~/components/toast-provider'
 import { INVITATION_CONFIG } from '~/config/invitation-config'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
@@ -95,7 +95,7 @@ export default function RouteComponent({
     <AdminPage>
       <div className={styles.header}>
         <div className={styles.title}>
-          <AdminHeadline>{user.author.name}</AdminHeadline>
+          <PageTitle>{user.author.name}</PageTitle>
           <span className={styles.subtitle}>
             {user.email} · {getUserRoleLabel(user.role.name)}
           </span>

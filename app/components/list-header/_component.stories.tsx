@@ -2,10 +2,9 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
-
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 
 import { ListHeader } from './_component'
 
@@ -40,7 +39,7 @@ export const Playground: Story = {
         Nový podcast
       </LinkButton>
     ),
-    children: <AdminHeadline>Podcasty</AdminHeadline>,
+    children: <PageTitle>Podcasty</PageTitle>,
   },
 }
 
@@ -56,7 +55,7 @@ export const WithWaitingWork: Story = {
     ),
     children: (
       <>
-        <AdminHeadline>Články</AdminHeadline>
+        <PageTitle>Články</PageTitle>
         <p style={{ margin: 0 }}>
           <Link to={{ search: '?state=pending' }}>
             Na schválení čekají 3 články

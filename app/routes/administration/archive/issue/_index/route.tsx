@@ -12,7 +12,6 @@ import {
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { HistoryList } from '~/components/history-list'
@@ -25,6 +24,7 @@ import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentEvents } from '~/hooks/use-content-events'
@@ -84,7 +84,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>{issue.label}</AdminHeadline>
+      <PageTitle>{issue.label}</PageTitle>
 
       <AdminActionGroup>
         {canUpdate && (

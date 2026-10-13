@@ -2,7 +2,6 @@
 
 import { href, useSearchParams } from 'react-router'
 import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminSavedFilters } from '~/components/admin/admin-saved-filters'
 import {
@@ -18,6 +17,7 @@ import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { LinkButton } from '~/components/link-button'
 import { ListHeader } from '~/components/list-header'
+import { PageTitle } from '~/components/page-title'
 import { USER_ROLE_OPTIONS } from '~/utils/admin-filter-options'
 import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
@@ -63,7 +63,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           )
         }
       >
-        <AdminHeadline>Uživatelé</AdminHeadline>
+        <PageTitle>Uživatelé</PageTitle>
       </ListHeader>
       <AdminTableToolbar>
         <AdminTableSearch

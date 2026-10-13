@@ -14,7 +14,6 @@ import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
@@ -24,6 +23,7 @@ import { FeaturedImage } from '~/components/featured-image'
 import { HistoryList } from '~/components/history-list'
 import { Hyperlink } from '~/components/hyperlink'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentEvents } from '~/hooks/use-content-events'
@@ -199,7 +199,7 @@ export default function RouteComponent({
       <div className={styles.header}>
         <div className={styles.title}>
           <div className={styles.titleLine}>
-            <AdminHeadline>{article.title}</AdminHeadline>
+            <PageTitle>{article.title}</PageTitle>
             <StatusTag state={submission ?? article.state} />
           </div>
           <span className={styles.subtitle}>

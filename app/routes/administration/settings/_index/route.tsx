@@ -13,13 +13,13 @@ import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailRow } from '~/components/admin/admin-detail-row'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
+import { PageTitle } from '~/components/page-title'
 import { SegmentedControl } from '~/components/segmented-control'
 import { useToast } from '~/components/toast-provider'
 import { COLOR_SCHEME_CONFIG } from '~/config/color-scheme-config'
@@ -312,7 +312,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Nastavení</AdminHeadline>
+      <PageTitle>Nastavení</PageTitle>
 
       {showWelcome && welcomeFetcher.state === 'idle' && (
         <WelcomeRow

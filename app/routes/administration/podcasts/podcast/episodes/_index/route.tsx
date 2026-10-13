@@ -3,7 +3,6 @@
 import { href, useSearchParams } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminSavedFilters } from '~/components/admin/admin-saved-filters'
 import {
@@ -20,6 +19,7 @@ import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { CONTENT_STATE_OPTIONS } from '~/utils/admin-filter-options'
 import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
@@ -61,7 +61,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Epizody</AdminHeadline>
+      <PageTitle>Epizody</PageTitle>
       {canCreate && (
         <LinkButton
           to={href('/administration/podcasts/:podcastId/episodes/add-episode', {

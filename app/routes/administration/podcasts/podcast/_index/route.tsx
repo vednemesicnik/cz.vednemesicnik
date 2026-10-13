@@ -12,7 +12,6 @@ import {
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
@@ -25,6 +24,7 @@ import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { useContentEvents } from '~/hooks/use-content-events'
 
@@ -71,7 +71,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>{podcast.title}</AdminHeadline>
+      <PageTitle>{podcast.title}</PageTitle>
 
       <AdminActionGroup>
         {/* First in every state, until 27b's „⋯“ takes it over (27j). */}
