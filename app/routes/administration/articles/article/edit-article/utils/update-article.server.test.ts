@@ -23,6 +23,11 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
 }))
 
+// The content log has its own tests; here it only must not reach Prisma.
+vi.mock('~/utils/content-log/record-content-log.server', () => ({
+  recordContentLog: vi.fn(),
+}))
+
 vi.mock(
   '~/utils/permissions/author/actions/with-author-permission.server',
   () => ({
