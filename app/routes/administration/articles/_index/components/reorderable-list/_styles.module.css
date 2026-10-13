@@ -20,9 +20,12 @@
   }
 }
 
-/* Where the lifted row lands: dashed (22c). */
+/* Where the lifted row lands: dashed (22c). Above its neighbours, which slide
+   past it on a swap and would otherwise paint over it. */
 .landing {
   @layer route {
+    position: relative;
+    z-index: 1;
     outline: 1px dashed var(--border-accent);
     background-color: var(--bg-accent);
   }
