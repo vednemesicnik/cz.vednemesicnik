@@ -1,5 +1,6 @@
 import { data, href } from 'react-router'
 
+import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -60,25 +61,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       releasedAt: true,
       reviews: {
         select: {
-          createdAt: true,
-          id: true,
           reviewer: {
-            select: {
-              id: true,
-              name: true,
-              role: {
-                select: {
-                  level: true,
-                  name: true,
-                },
-              },
-            },
+            select: { id: true, role: { select: { level: true } } },
           },
-          state: true,
         },
       },
       state: true,
-      updatedAt: true,
     },
     where: { id: issueId },
   })
@@ -120,10 +108,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorIds: [issue.author.id],
   })
 
-  // Whether an approving review exists and whether one is still needed to publish.
-  const hasApprovingReview = issue.reviews.some((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
+  // Whether an approving review is still needed to publish.
   const needsReview = needsReviewToPublish({
     authors: [issue.author],
     reviews: issue.reviews,
@@ -188,9 +173,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     issue: {
       author: issue.author,
       coverUrl: createImageSources('issue-cover', issue.cover).src ?? null,
-      createdAt: createFormattedDate(issue.createdAt),
-      hasApprovingReview,
       hasCover: !!issue.cover,
+      history: await getContentHistory({
+        createdAt: issue.createdAt,
+        entity: 'issue',
+        entityId: issue.id,
+        publishedAt: issue.publishedAt,
+      }),
       id: issue.id,
       label: issue.label,
       pdfFileName: issue.pdf?.fileName ?? null,
@@ -199,18 +188,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         : null,
       publishedAt: createFormattedDate(issue.publishedAt),
       releasedAt: createFormattedDate(issue.releasedAt),
-      reviews: issue.reviews.map((review) => ({
-        createdAt: createFormattedDate(review.createdAt),
-        id: review.id,
-        reviewer: {
-          id: review.reviewer.id,
-          name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
-        },
-        state: review.state,
-      })),
       state: issue.state,
-      updatedAt: createFormattedDate(issue.updatedAt),
     },
     needsReview,
   }

@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Form, href } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -16,6 +16,7 @@ import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
@@ -26,9 +27,9 @@ import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { StatusTag } from '~/components/status-tag'
 import { useContentEvents } from '~/hooks/use-content-events'
-import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import type { Route } from './+types/route'
+import { PodcastHistoryDialog } from './components/podcast-history-dialog'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -58,6 +59,7 @@ export default function RouteComponent({
   })
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
@@ -72,6 +74,14 @@ export default function RouteComponent({
       <AdminHeadline>{podcast.title}</AdminHeadline>
 
       <AdminActionGroup>
+        {/* First in every state, until 27b's „⋯“ takes it over (27j). */}
+        <Button
+          onClick={() => setIsHistoryOpen(true)}
+          type={'button'}
+          variant={'outline'}
+        >
+          Historie
+        </Button>
         <AdminLinkButton
           to={href('/administration/podcasts/:podcastId/episodes', {
             podcastId,
@@ -188,36 +198,15 @@ export default function RouteComponent({
         </AdminDetailList>
       </AdminDetailSection>
 
-      <AdminDetailSection title="Metadata">
-        <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">
-            {podcast.createdAt.formatted}
-          </AdminDetailItem>
-          <AdminDetailItem label="Aktualizováno">
-            {podcast.updatedAt.formatted}
-          </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Schválení">
-        <AdminDetailList>
-          <Activity mode={podcast.reviews.length > 0 ? 'visible' : 'hidden'}>
-            {podcast.reviews.map((review) => (
-              <AdminDetailItem
-                key={review.id}
-                label={`${review.reviewer.name} (${getAuthorRoleLabel(review.reviewer.roleName)})`}
-              >
-                {review.createdAt.formatted}
-              </AdminDetailItem>
-            ))}
-          </Activity>
-          <AdminDetailItem label="Schváleno koordinátorem">
-            {podcast.hasApprovingReview ? 'Ano' : 'Ne'}
-          </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+
+      {isHistoryOpen && (
+        <PodcastHistoryDialog
+          history={podcast.history}
+          onClose={() => setIsHistoryOpen(false)}
+          podcastTitle={podcast.title}
+        />
+      )}
     </AdminPage>
   )
 }

@@ -118,6 +118,23 @@ it. Retracting, restoring and publishing also clear the submission.
 
 ---
 
+## Content history
+
+Built in #608 (design 07f). Every step an author takes with an article, tag, category, issue,
+podcast or episode writes a `ContentLog` row: the event, the actor and the time. The review
+and submission rows lose their history when the content returns to draft; the log keeps it.
+Its producers are the state handlers (`create-content-state-handlers.server.ts`), the article
+submission handlers, and the create and update utilities; a failed or forbidden action writes
+nothing. An approver publishing a submitted, unapproved article writes `approve` and `publish`
+at one time, read as one row *Schváleno a publikováno*. The rows are deleted with their
+content, and the deletion itself is not logged.
+
+The detail pages show it as **Historie** (`HistoryList`), newest first, five rows, then
+*Celá historie*; the podcast opens it in a dialog (27j). Content older than the log ends with
+its own creation and publish dates, without names.
+
+---
+
 ## Decided for the redesign (not implemented yet)
 
 Decided on 28 Sep 2026 in the design project (`07 Stavy a akce obsahu`, questions `dj753f0j`
