@@ -7,8 +7,8 @@ import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { ListItem } from '~/components/list-item'
 import { FORM_CONFIG } from '~/config/form-config'
+import type { MissingList } from '~/hooks/use-content-action-result'
 import { useModalDialog } from '~/utils/use-modal-dialog'
-import type { MissingList } from '../../utils/use-article-action-result'
 
 type Props = {
   missingList: MissingList

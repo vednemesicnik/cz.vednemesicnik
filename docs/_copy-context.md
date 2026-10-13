@@ -99,13 +99,14 @@ smí s účty.
 Chyby, kterých se tenhle postup bojí, jsou **plynulé věty, které tvrdí něco, co aplikace
 nedělá**. Poznají se jen podle modelu:
 
-- **Schvaluje jen Koordinátor.** Obsah autora s nižší rolí — Přispěvatele i Tvůrce — jde
-  zveřejnit až po schválení Koordinátorem. Věta, která Tvůrci slibuje, že zveřejní sám, nebo
-  že schválit může kdokoli z redakce, je nepravda.
-- **Odeslat ke schválení existuje jen u článku.** Autor hotový článek odešle, a dokud ho
-  nevezme zpět, needituje ho; Koordinátor ho smí opravit. Na přehledu čekají jen odeslané
-  články. U rubrik, štítků, podcastů, epizod a čísel krok zatím není: čekající je tam každý
-  koncept autora s nižší rolí. Článek zveřejní jen Koordinátor, i ten od Tvůrce.
+- **Schvaluje a zveřejňuje jen Koordinátor**, u všeho obsahu. Přispěvatel ani Tvůrce
+  nezveřejní nic, ani vlastní. Koordinátor smí zveřejnit i neodeslaný koncept: zveřejnění je
+  schválení. Věta, která Tvůrci slibuje, že zveřejní sám, nebo že schválit může kdokoli
+  z redakce, je nepravda.
+- **Odeslat ke schválení existuje u všeho obsahu** — článku, rubriky, štítku, podcastu,
+  epizody i čísla. Autor hotový koncept odešle, a dokud ho nevezme zpět, needituje ho ani
+  nesmaže; Koordinátor ho smí opravit a schválení tím nezmizí. Na přehledu čeká jen odeslané
+  a neschválené.
 - **Publikovaný obsah se nemaže.** Smazat jde koncept, a archivovaný obsah jen Koordinátor.
   Publikovaný se nejdřív stáhne nebo archivuje.
 - **Publikovaný obsah nejde upravit na místě** — nejdřív se stáhne z publikace do konceptu.

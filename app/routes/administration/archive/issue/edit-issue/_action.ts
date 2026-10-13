@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { href, redirect } from 'react-router'
+import { data, href, redirect } from 'react-router'
 import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
@@ -12,6 +12,7 @@ import {
 } from '~/utils/pdf-store/store-pdf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
+import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 import { schema } from './_schema'
@@ -53,6 +54,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     select: {
       authorId: true,
       state: true,
+      submittedAt: true,
     },
     where: { id },
   })
@@ -64,6 +66,16 @@ export const action = async ({ request }: Route.ActionArgs) => {
     state: existingIssue.state,
     targetAuthorIds: [existingIssue.authorId],
   })
+
+  // A submitted draft is locked for its author (design 07d).
+  if (
+    isLockedBySubmission({
+      roleLevel: context.roleLevel,
+      submittedAt: existingIssue.submittedAt,
+    })
+  ) {
+    throw data(null, { status: 403 })
+  }
 
   // Check permission to assign the SELECTED author
   checkAuthorPermission(context, {
@@ -124,10 +136,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
             where: { id: pdfId },
           },
         },
+        // A Coordinator's correction keeps the approval (design 07d, 26e); the
+        // author can't edit a submitted issue at all.
         releasedAt: releaseDate,
-        reviews: {
-          deleteMany: {}, // Delete all reviews when issue is updated (content changed, needs re-approval)
-        },
       },
       where: { id: id },
     })

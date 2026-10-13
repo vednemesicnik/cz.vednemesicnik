@@ -8,11 +8,8 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import {
-  APPROVER_ROLE_LEVEL,
-  canPublishWithoutReview,
-  needsReviewToPublish,
-} from '~/utils/permissions/author/review-policy'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
 import type { Route } from './+types/route'
 
@@ -66,6 +63,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       publishedAt: true,
       reviews: {
         select: {
+          createdAt: true,
           reviewer: {
             select: { id: true, role: { select: { level: true } } },
           },
@@ -73,6 +71,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       slug: true,
       state: true,
+      submittedAt: true,
       title: true,
     },
     where: { id: episodeId },
@@ -91,94 +90,16 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // Check update permission
-  const { hasPermission: canUpdate } = context.can({
-    action: 'update',
-    entity: 'podcast_episode',
-    state: episode.state,
-    targetAuthorIds: [episode.author.id],
-  })
-
-  // Check delete permission
-  const { hasPermission: canDelete } = context.can({
-    action: 'delete',
-    entity: 'podcast_episode',
-    state: episode.state,
-    targetAuthorIds: [episode.author.id],
-  })
-
-  // Check publish permission (draft → published)
-  const { hasPermission: canPublish } = context.can({
-    action: 'publish',
-    entity: 'podcast_episode',
-    state: episode.state,
-    targetAuthorIds: [episode.author.id],
-  })
-
-  // Whether an approving review is still needed to publish.
-  const needsReview = needsReviewToPublish({
+  const flags = getContentActionFlags(context, 'podcast_episode', {
     authors: [episode.author],
     reviews: episode.reviews,
-  })
-
-  // Check retract permission (published → draft)
-  const { hasPermission: canRetract } = context.can({
-    action: 'retract',
-    entity: 'podcast_episode',
     state: episode.state,
-    targetAuthorIds: [episode.author.id],
+    submittedAt: episode.submittedAt,
   })
-
-  // Check archive permission (published → archived)
-  const { hasPermission: canArchive } = context.can({
-    action: 'archive',
-    entity: 'podcast_episode',
-    state: episode.state,
-    targetAuthorIds: [episode.author.id],
-  })
-
-  // Check restore permission (archived → draft)
-  const { hasPermission: canRestore } = context.can({
-    action: 'restore',
-    entity: 'podcast_episode',
-    state: episode.state,
-    targetAuthorIds: [episode.author.id],
-  })
-
-  // Check review permission
-  const { hasPermission: canReview } = context.can({
-    action: 'review',
-    entity: 'podcast_episode',
-    state: episode.state,
-    targetAuthorIds: [episode.author.id],
-  })
-
-  // Don't show review button if:
-  // 1. Author can publish without review - they don't need reviews
-  // 2. Current user is the author - can't review own content
-  const authorCanPublishWithoutReview = canPublishWithoutReview(
-    episode.author.role,
-  )
-  const isOwnContent = episode.author.id === context.authorId
-  const shouldShowReview =
-    canReview && !authorCanPublishWithoutReview && !isOwnContent
-
-  // Check if current user has already reviewed this episode
-  const hasReviewed = episode.reviews.some(
-    (review) => review.reviewer.id === context.authorId,
-  )
 
   return {
-    canArchive,
-    canChangePublishedAt:
-      episode.state === 'published' && context.roleLevel <= APPROVER_ROLE_LEVEL,
-    canDelete,
-    canPublish,
-    canPublishBackdated: canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
-    canRestore,
-    canRetract,
-    canReview: shouldShowReview,
-    canUpdate,
+    canPublishBackdated:
+      flags.canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
     episode: {
       author: episode.author,
       coverUrl:
@@ -200,7 +121,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       state: episode.state,
       title: episode.title,
     },
-    hasReviewed,
-    needsReview,
+    ...flags,
+    submission: flags.submission?.state ?? null,
   }
 }

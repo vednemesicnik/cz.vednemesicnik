@@ -13,6 +13,7 @@ import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminSubmissionActions } from '~/components/admin/admin-submission-actions'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { Hyperlink } from '~/components/hyperlink'
@@ -41,15 +42,17 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     podcast,
-    canUpdate,
+    canEdit,
     canDelete,
     canPublish,
     canRetract,
     canArchive,
     canRestore,
-    canReview,
-    hasReviewed,
-    needsReview,
+    canApprove,
+    canSubmit,
+    canWithdraw,
+    canReturn,
+    submission,
   } = loaderData
   const { podcastId } = params
 
@@ -90,7 +93,7 @@ export default function RouteComponent({
         >
           Zobrazit epizody
         </LinkButton>
-        {canUpdate && (
+        {canEdit && (
           <LinkButton
             to={href('/administration/podcasts/:podcastId/edit-podcast', {
               podcastId,
@@ -101,7 +104,13 @@ export default function RouteComponent({
             Upravit
           </LinkButton>
         )}
-        {canReview && !hasReviewed && (
+        <AdminSubmissionActions
+          canReturn={canReturn}
+          canSubmit={canSubmit}
+          canWithdraw={canWithdraw}
+          contentId={podcast.id}
+        />
+        {canApprove && (
           <Form method="post">
             <AuthenticityTokenInput />
             <input name="intent" type="hidden" value="review" />
@@ -115,16 +124,7 @@ export default function RouteComponent({
           <Form method="post">
             <AuthenticityTokenInput />
             <input name="intent" type="hidden" value="publish" />
-            <AdminActionButton
-              action="publish"
-              disabled={needsReview}
-              title={
-                needsReview
-                  ? 'Nelze publikovat bez schválení koordinátora'
-                  : undefined
-              }
-              type="submit"
-            >
+            <AdminActionButton action="publish" type="submit">
               <ArrowUpwardIcon />
               Zveřejnit
             </AdminActionButton>
@@ -172,7 +172,7 @@ export default function RouteComponent({
         <AdminDetailList>
           <AdminDetailItem label="Název">{podcast.title}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <StatusTag state={podcast.state} />
+            <StatusTag state={submission ?? podcast.state} />
           </AdminDetailItem>
           {podcast.description && (
             <AdminDetailItem label="Popis">

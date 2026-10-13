@@ -8,9 +8,9 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
-import { getArticleActionFlags } from '../../utils/get-article-action-flags.server'
 import { getArticleFactLine } from '../../utils/get-article-fact-line'
 import type { Route } from './+types/route'
 import { getMissingArticleContent } from './utils/get-missing-article-content'
@@ -111,7 +111,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  const flags = getArticleActionFlags(context, article)
+  const flags = getContentActionFlags(context, 'article', article)
 
   // Publishing an incomplete article opens the 23h list instead of the date
   // dialog; the server checks it again.

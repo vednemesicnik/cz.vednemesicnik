@@ -28,14 +28,14 @@ export type MissingList = {
 type ActionResult = { intent: string; missing: string[] } | undefined
 
 /**
- * Answers an article action's result once (design 23h): a toast, or the list of
- * what is missing before the article can be submitted or published.
+ * Answers a content action's result once (design 23h): a toast, or the list of
+ * what is missing before the content can be submitted or published.
  *
  * @param actionResult - The keyed fetcher's data, `{ intent, missing }`.
  * @returns The missing list to show, `null` when there is none, and setters to
  *   show one up front (the detail checks before publishing) or close it.
  */
-export const useArticleActionResult = (actionResult: ActionResult) => {
+export const useContentActionResult = (actionResult: ActionResult) => {
   const showToast = useToast()
   const [missingList, setMissingList] = useState<MissingList | null>(null)
   // A keyed fetcher keeps its data across remounts; answer only a new result.

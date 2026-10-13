@@ -15,6 +15,7 @@ import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminPublishDateDialog } from '~/components/admin/admin-publish-date-dialog'
 import { AdminSplitButton } from '~/components/admin/admin-split-button'
+import { AdminSubmissionActions } from '~/components/admin/admin-submission-actions'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { HistoryList } from '~/components/history-list'
 import { Hyperlink } from '~/components/hyperlink'
@@ -53,7 +54,7 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     episode,
-    canUpdate,
+    canEdit,
     canDelete,
     canPublish,
     canPublishBackdated,
@@ -61,9 +62,11 @@ export default function RouteComponent({
     canRetract,
     canArchive,
     canRestore,
-    canReview,
-    hasReviewed,
-    needsReview,
+    canApprove,
+    canSubmit,
+    canWithdraw,
+    canReturn,
+    submission,
   } = loaderData
   const { podcastId, episodeId } = params
 
@@ -85,10 +88,6 @@ export default function RouteComponent({
     fetcher.state !== 'idle' && fetcher.formData
       ? fetcher.formData.get(INTENT_NAME)
       : null
-
-  const publishDisabledTitle = needsReview
-    ? 'Nelze publikovat bez schválení koordinátora'
-    : undefined
 
   const actionUrl = href(
     '/administration/podcasts/:podcastId/episodes/:episodeId',
@@ -113,7 +112,7 @@ export default function RouteComponent({
       <PageTitle>{episode.title}</PageTitle>
 
       <AdminActionGroup>
-        {canUpdate && (
+        {canEdit && (
           <LinkButton
             disabled={isSubmitting}
             to={href(
@@ -126,7 +125,13 @@ export default function RouteComponent({
             Upravit
           </LinkButton>
         )}
-        {canReview && !hasReviewed && (
+        <AdminSubmissionActions
+          canReturn={canReturn}
+          canSubmit={canSubmit}
+          canWithdraw={canWithdraw}
+          contentId={episode.id}
+        />
+        {canApprove && (
           <Form method="post">
             <AuthenticityTokenInput />
             <AdminActionButton
@@ -162,9 +167,8 @@ export default function RouteComponent({
                 {publishMode === 'publish' ? (
                   <AdminActionButton
                     action={'publish'}
-                    disabled={needsReview || isSubmitting}
+                    disabled={isSubmitting}
                     name={INTENT_NAME}
-                    title={publishDisabledTitle}
                     type={'submit'}
                     value={INTENT_VALUE.publish}
                   >
@@ -176,11 +180,10 @@ export default function RouteComponent({
                 ) : (
                   <AdminActionButton
                     action={'publish'}
-                    disabled={needsReview || isSubmitting}
+                    disabled={isSubmitting}
                     onClick={() =>
                       backdatedPublishDialogRef.current?.showModal()
                     }
-                    title={publishDisabledTitle}
                     type={'button'}
                   >
                     <ArrowUpwardIcon />
@@ -194,9 +197,8 @@ export default function RouteComponent({
               <AuthenticityTokenInput />
               <AdminActionButton
                 action={'publish'}
-                disabled={needsReview || isSubmitting}
+                disabled={isSubmitting}
                 name={INTENT_NAME}
-                title={publishDisabledTitle}
                 type={'submit'}
                 value={INTENT_VALUE.publish}
               >
@@ -296,7 +298,7 @@ export default function RouteComponent({
           <AdminDetailItem label="Název">{episode.title}</AdminDetailItem>
           <AdminDetailItem label="Slug">{episode.slug}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <StatusTag state={episode.state} />
+            <StatusTag state={submission ?? episode.state} />
           </AdminDetailItem>
           {episode.description && (
             <AdminDetailItem label="Popis">

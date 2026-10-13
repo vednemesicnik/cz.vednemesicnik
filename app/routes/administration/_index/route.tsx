@@ -96,7 +96,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.podcasts.map((podcast) => (
               <AdminPendingItem
                 author={podcast.author.name}
-                date={podcast.createdAt}
+                date={podcast.submittedAt}
                 key={podcast.id}
                 title={podcast.title}
                 to={href('/administration/podcasts/:podcastId', {
@@ -108,7 +108,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.podcastEpisodes.map((episode) => (
               <AdminPendingItem
                 author={episode.author.name}
-                date={episode.createdAt}
+                date={episode.submittedAt}
                 key={episode.id}
                 title={`${episode.podcast.title} - ${episode.title}`}
                 to={href(
@@ -124,7 +124,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.issues.map((issue) => (
               <AdminPendingItem
                 author={issue.author.name}
-                date={issue.createdAt}
+                date={issue.submittedAt}
                 key={issue.id}
                 title={issue.label}
                 to={href('/administration/archive/:issueId', {
@@ -136,7 +136,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.articleCategories.map((category) => (
               <AdminPendingItem
                 author={category.author.name}
-                date={category.createdAt}
+                date={category.submittedAt}
                 key={category.id}
                 title={category.name}
                 to={href('/administration/articles/categories/:categoryId', {
@@ -148,7 +148,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.articleTags.map((tag) => (
               <AdminPendingItem
                 author={tag.author.name}
-                date={tag.createdAt}
+                date={tag.submittedAt}
                 key={tag.id}
                 title={tag.name}
                 to={href('/administration/articles/tags/:tagId', {

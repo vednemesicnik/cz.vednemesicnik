@@ -1,3 +1,4 @@
+import { clearSubmissionOnStateChange } from '~/utils/content-state/clear-submission-on-state-change'
 import {
   clearReviewsOnDraft,
   createContentStateHandlers,
@@ -8,10 +9,11 @@ import { prisma } from '~/utils/db.server'
 export const categoryContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
     await prisma.articleCategory.update({
-      data: clearReviewsOnDraft(data),
+      data: clearSubmissionOnStateChange(clearReviewsOnDraft(data)),
       where: { id },
     })
   },
+  approverPublishesWithoutReview: true,
 
   deleteRow: async (id) => {
     await prisma.articleCategory.delete({ where: { id } })
@@ -40,6 +42,7 @@ export const categoryContentStateHandlers = createContentStateHandlers({
             reviewer: { select: { role: { select: { level: true } } } },
           },
         },
+        submittedAt: true,
       },
       where: { id },
     })
@@ -48,6 +51,7 @@ export const categoryContentStateHandlers = createContentStateHandlers({
       authors: [category.author],
       publishedAt: category.publishedAt,
       reviews: category.reviews,
+      submittedAt: category.submittedAt,
     }
   },
 })
