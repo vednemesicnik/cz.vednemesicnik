@@ -1,5 +1,5 @@
 import { data } from 'react-router'
-
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import type { SubmissionHandlers } from '~/utils/content-state/create-content-state-action.server'
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
@@ -52,6 +52,10 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
         }
 
         await prisma.article.update({ data: clearSubmission, where: { id } })
+        await recordContentLog(
+          { entity: 'article', entityId: id, events: ['return'] },
+          context,
+        )
         publishContentEvent(
           { change: 'submission', entity: 'article', entityId: id },
           context,
@@ -116,6 +120,10 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
           throw data(null, { status: 409 })
         }
 
+        await recordContentLog(
+          { entity: 'article', entityId: id, events: ['submit'] },
+          context,
+        )
         publishContentEvent(
           { change: 'submission', entity: 'article', entityId: id },
           context,
@@ -145,6 +153,10 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
         }
 
         await prisma.article.update({ data: clearSubmission, where: { id } })
+        await recordContentLog(
+          { entity: 'article', entityId: id, events: ['withdraw'] },
+          context,
+        )
         publishContentEvent(
           { change: 'submission', entity: 'article', entityId: id },
           context,

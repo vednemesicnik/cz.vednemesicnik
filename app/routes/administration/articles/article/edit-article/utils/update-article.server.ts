@@ -7,6 +7,7 @@ import {
   buildArticleFeaturedImageSeo,
   resolveArticleFeaturedImageSeo,
 } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import {
   deleteRowWithImages,
@@ -214,6 +215,10 @@ export async function updateArticle(
 
       await Promise.all(updatedImages.map(({ cleanup }) => cleanup()))
 
+      await recordContentLog(
+        { entity: 'article', entityId: articleId, events: ['update'] },
+        context,
+      )
       publishContentEvent(
         { change: 'update', entity: 'article', entityId: articleId },
         context,

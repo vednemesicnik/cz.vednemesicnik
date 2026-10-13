@@ -2,12 +2,17 @@ import { invariantResponse } from '@epic-web/invariant'
 
 import type {
   AuthorPermissionEntity,
+  ContentLogEvent,
   ContentState,
 } from '@generated/prisma/enums'
+import { deleteContentLog } from '~/utils/content-log/delete-content-log.server'
+import { formatPublishedAtChange } from '~/utils/content-log/format-published-at-change'
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import {
   APPROVER_ROLE_LEVEL,
+  canPublishWithoutReview,
   needsReviewToPublish,
 } from '~/utils/permissions/author/review-policy'
 import type { ContentEventChange } from '~/utils/sse/content-event'
@@ -28,6 +33,8 @@ type PublishState = {
   authors: { role: RoleLevel }[]
   reviews: { reviewer: { role: RoleLevel } }[]
   publishedAt: Date | null
+  /** Only the article has a submission; it tells „Schváleno a publikováno“ apart (07f). */
+  submittedAt?: Date | null
 }
 
 /**
@@ -124,8 +131,22 @@ export const createContentStateHandlers = (
 ): ContentStateHandlers => {
   const { entity } = config
 
-  // PageSEO never runs through this factory and has no content event.
-  const contentEventEntity = entity === 'page_seo' ? undefined : entity
+  // PageSEO never runs through this factory and has no content event or history.
+  const contentEntity = entity === 'page_seo' ? undefined : entity
+
+  // Writes the step into the content's history (07f) once its write resolved.
+  const recordLog = (
+    id: string,
+    events: ContentLogEvent[],
+    context: AuthorPermissionContext,
+    detail?: string,
+  ) =>
+    contentEntity === undefined
+      ? Promise.resolve()
+      : recordContentLog(
+          { detail, entity: contentEntity, entityId: id, events },
+          context,
+        )
 
   // Announces a transition once its write resolved, in the actor's name; a
   // rejected one (403, invariant) announces nothing.
@@ -142,9 +163,9 @@ export const createContentStateHandlers = (
       const { change, id, hasChanged = () => true } = announcement
       const result = await execute(context)
 
-      if (contentEventEntity !== undefined && hasChanged(result)) {
+      if (contentEntity !== undefined && hasChanged(result)) {
         publishContentEvent(
-          { change, entity: contentEventEntity, entityId: id },
+          { change, entity: contentEntity, entityId: id },
           context,
         )
       }
@@ -208,6 +229,20 @@ export const createContentStateHandlers = (
             await config.ensureApprovingReview(options.id, context.authorId)
           }
 
+          // „Schváleno a publikováno“ only when an approver publishes a submitted
+          // text nobody approved yet, in one step (07f).
+          const wasApproved = publishState.reviews.some((review) =>
+            canPublishWithoutReview(review.reviewer.role),
+          )
+          const isApprovedByPublishing =
+            isApprover && publishState.submittedAt != null && !wasApproved
+
+          await recordLog(
+            options.id,
+            isApprovedByPublishing ? ['approve', 'publish'] : ['publish'],
+            context,
+          )
+
           return { missing }
         },
       ),
@@ -220,8 +255,12 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'retract',
       entity,
-      execute: announceOnSuccess({ change: 'retract', id: options.id }, () =>
-        config.applyState(options.id, { state: 'draft' }),
+      execute: announceOnSuccess(
+        { change: 'retract', id: options.id },
+        async (context) => {
+          await config.applyState(options.id, { state: 'draft' })
+          await recordLog(options.id, ['unpublish'], context)
+        },
       ),
       target: options.target,
     })
@@ -230,8 +269,12 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'archive',
       entity,
-      execute: announceOnSuccess({ change: 'archive', id: options.id }, () =>
-        config.applyState(options.id, { state: 'archived' }),
+      execute: announceOnSuccess(
+        { change: 'archive', id: options.id },
+        async (context) => {
+          await config.applyState(options.id, { state: 'archived' })
+          await recordLog(options.id, ['archive'], context)
+        },
       ),
       target: options.target,
     })
@@ -240,8 +283,12 @@ export const createContentStateHandlers = (
     withAuthorPermission(request, {
       action: 'restore',
       entity,
-      execute: announceOnSuccess({ change: 'restore', id: options.id }, () =>
-        config.applyState(options.id, { state: 'draft' }),
+      execute: announceOnSuccess(
+        { change: 'restore', id: options.id },
+        async (context) => {
+          await config.applyState(options.id, { state: 'draft' })
+          await recordLog(options.id, ['restore'], context)
+        },
       ),
       target: options.target,
     })
@@ -252,7 +299,10 @@ export const createContentStateHandlers = (
       entity,
       execute: announceOnSuccess(
         { change: 'review', id: options.id },
-        (context) => config.ensureApprovingReview(options.id, context.authorId),
+        async (context) => {
+          await config.ensureApprovingReview(options.id, context.authorId)
+          await recordLog(options.id, ['approve'], context)
+        },
       ),
       target: options.target,
     })
@@ -263,7 +313,17 @@ export const createContentStateHandlers = (
       entity,
       execute: announceOnSuccess(
         { change: 'delete', id: options.id },
-        (context) => config.deleteRow(options.id, context),
+        async (context) => {
+          await config.deleteRow(options.id, context)
+
+          // The history goes with its content; the deletion isn't logged (07f).
+          if (contentEntity !== undefined) {
+            await deleteContentLog({
+              entity: contentEntity,
+              entityId: options.id,
+            })
+          }
+        },
       ),
       target: options.target,
     })
@@ -279,11 +339,21 @@ export const createContentStateHandlers = (
       entity,
       execute: announceOnSuccess(
         { change: 'change-published-at', id: options.id },
-        (context) => {
+        async (context) => {
           assertCanSetPublishedAt(context, options.publishedAt)
-          return config.applyState(options.id, {
+
+          const { publishedAt: previousPublishedAt } =
+            await config.loadPublishState(options.id)
+
+          await config.applyState(options.id, {
             publishedAt: options.publishedAt,
           })
+          await recordLog(
+            options.id,
+            ['set_published_at'],
+            context,
+            formatPublishedAtChange(previousPublishedAt, options.publishedAt),
+          )
         },
       ),
       target: options.target,

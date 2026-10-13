@@ -282,6 +282,8 @@ model Author {
   reviews           Review[]          @relation("ReviewsGiven")
   // Articles submitted for review
   submittedArticles Article[]         @relation("ArticleSubmissions")
+  // Content history entries this author caused
+  contentLogs       ContentLog[]      @relation("ContentLogActor")
 }
 
 model AuthorRole {
@@ -689,4 +691,46 @@ model AuditLog {
   @@index([createdAt])
   @@index([actorId])
   @@index([targetId])
+}
+
+enum ContentLogEntity {
+  article
+  article_tag
+  article_category
+  issue
+  podcast
+  podcast_episode
+}
+
+enum ContentLogEvent {
+  create
+  update
+  submit
+  withdraw
+  return
+  approve
+  publish
+  set_published_at
+  unpublish
+  archive
+  restore
+  pdf_uploaded
+  cover_uploaded
+}
+
+// Content history (design 07f): who did what to a piece of content and when. The
+// content id is polymorphic, so there is no foreign key; the rows are removed with
+// their content, and the deletion itself is not logged.
+model ContentLog {
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now())
+  entity    ContentLogEntity
+  entityId  String
+  event     ContentLogEvent
+  actor     Author?          @relation("ContentLogActor", fields: [actorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  actorId   String?
+  detail    String? // set_published_at: "<from ISO> → <to ISO>"
+
+  @@index([entity, entityId, createdAt])
+  @@index([actorId])
 }

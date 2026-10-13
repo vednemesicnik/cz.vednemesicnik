@@ -1,4 +1,5 @@
 import type { ContentState } from '@generated/prisma/enums'
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
@@ -29,6 +30,14 @@ export const updateCategory = async (
         where: { id: categoryId },
       })
 
+      await recordContentLog(
+        {
+          entity: 'article_category',
+          entityId: categoryId,
+          events: ['update'],
+        },
+        context,
+      )
       publishContentEvent(
         { change: 'update', entity: 'article_category', entityId: categoryId },
         context,

@@ -1,4 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import { storeImageVariants } from '~/utils/image-store/store-image.server'
 import {
@@ -46,6 +47,10 @@ export async function createPodcast({
       },
     })
 
+    await recordContentLog(
+      { entity: 'podcast', entityId: podcast.id, events: ['create'] },
+      actor,
+    )
     publishContentEvent(
       { change: 'create', entity: 'podcast', entityId: podcast.id },
       actor,

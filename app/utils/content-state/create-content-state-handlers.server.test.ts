@@ -33,6 +33,19 @@ vi.mock('~/utils/sse/publish-content-event.server', () => ({
   publishContentEvent: publishContentEventMock,
 }))
 
+const { deleteContentLogMock, recordContentLogMock } = vi.hoisted(() => ({
+  deleteContentLogMock: vi.fn().mockResolvedValue(undefined),
+  recordContentLogMock: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('~/utils/content-log/record-content-log.server', () => ({
+  recordContentLog: recordContentLogMock,
+}))
+
+vi.mock('~/utils/content-log/delete-content-log.server', () => ({
+  deleteContentLog: deleteContentLogMock,
+}))
+
 const request = new Request('https://test.local/')
 const target: PermissionTarget = { authorIds: ['author-1'], state: 'draft' }
 
@@ -525,6 +538,180 @@ describe('createContentStateHandlers — content events', () => {
     ).rejects.toThrow('database down')
 
     expect(publishContentEventMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('createContentStateHandlers — content log (07f)', () => {
+  const loggedEvents = () =>
+    recordContentLogMock.mock.calls.map(([record]) => record.events)
+
+  test.each([
+    ['archive', 'archive'],
+    ['restore', 'restore'],
+    ['retract', 'unpublish'],
+    ['review', 'approve'],
+  ] as const)(
+    'a successful %s writes "%s" with its actor',
+    async (handler, event) => {
+      runAs(APPROVER)
+      recordContentLogMock.mockClear()
+      const handlers = createContentStateHandlers(createConfig())
+
+      await handlers[handler](request, { id: 'a1', target })
+
+      expect(recordContentLogMock).toHaveBeenCalledExactlyOnceWith(
+        {
+          detail: undefined,
+          entity: 'article',
+          entityId: 'a1',
+          events: [event],
+        },
+        expect.objectContaining({ authorId: 'author-1' }),
+      )
+    },
+  )
+
+  test('an approver publishing a submitted, unapproved text writes approve and publish in one step', async () => {
+    runAs(APPROVER)
+    recordContentLogMock.mockClear()
+    const handlers = createContentStateHandlers(
+      createConfig({
+        approverPublishesWithoutReview: true,
+        loadPublishState: vi.fn().mockResolvedValue({
+          authors: [{ role: { level: CONTRIBUTOR } }],
+          publishedAt: null,
+          reviews: [],
+          submittedAt: new Date('2026-09-19'),
+        }),
+      }),
+    )
+
+    await handlers.publish(request, { id: 'a1', target })
+
+    expect(loggedEvents()).toEqual([['approve', 'publish']])
+  })
+
+  test.each([
+    ['an unsubmitted draft', null, []],
+    [
+      'an already approved text',
+      new Date('2026-09-19'),
+      [{ reviewer: { role: { level: APPROVER } } }],
+    ],
+  ])(
+    'an approver publishing %s writes publish only',
+    async (_case, submittedAt, reviews) => {
+      runAs(APPROVER)
+      recordContentLogMock.mockClear()
+      const handlers = createContentStateHandlers(
+        createConfig({
+          approverPublishesWithoutReview: true,
+          loadPublishState: vi.fn().mockResolvedValue({
+            authors: [{ role: { level: CONTRIBUTOR } }],
+            publishedAt: null,
+            reviews,
+            submittedAt,
+          }),
+        }),
+      )
+
+      await handlers.publish(request, { id: 'a1', target })
+
+      expect(loggedEvents()).toEqual([['publish']])
+    },
+  )
+
+  test('a publish-date change writes the old and the new date', async () => {
+    runAs(APPROVER)
+    recordContentLogMock.mockClear()
+    const handlers = createContentStateHandlers(
+      createConfig({
+        loadPublishState: vi.fn().mockResolvedValue({
+          authors: [],
+          publishedAt: new Date('2026-09-19T08:00:00.000Z'),
+          reviews: [],
+        }),
+      }),
+    )
+
+    await handlers.changePublishedAt(request, {
+      id: 'a1',
+      publishedAt: new Date('2026-09-18T08:00:00.000Z'),
+      target,
+    })
+
+    expect(recordContentLogMock).toHaveBeenCalledExactlyOnceWith(
+      {
+        detail: '2026-09-19T08:00:00.000Z → 2026-09-18T08:00:00.000Z',
+        entity: 'article',
+        entityId: 'a1',
+        events: ['set_published_at'],
+      },
+      expect.anything(),
+    )
+  })
+
+  test('delete removes the history and writes nothing', async () => {
+    runAs(APPROVER)
+    recordContentLogMock.mockClear()
+    deleteContentLogMock.mockClear()
+    const handlers = createContentStateHandlers(createConfig())
+
+    await handlers.delete(request, { id: 'a1', target })
+
+    expect(deleteContentLogMock).toHaveBeenCalledExactlyOnceWith({
+      entity: 'article',
+      entityId: 'a1',
+    })
+    expect(recordContentLogMock).not.toHaveBeenCalled()
+  })
+
+  test('a blocked, forbidden or failed transition writes nothing', async () => {
+    recordContentLogMock.mockClear()
+
+    runAs(APPROVER)
+    await createContentStateHandlers(
+      createConfig({
+        approverPublishesWithoutReview: true,
+        getMissingBeforePublish: vi.fn().mockResolvedValue(['Chybí perex.']),
+      }),
+    ).publish(request, { id: 'a1', target })
+
+    runAs(CONTRIBUTOR)
+    await expect(
+      createContentStateHandlers(
+        createConfig({
+          loadPublishState: vi.fn().mockResolvedValue({
+            authors: [{ role: { level: CONTRIBUTOR } }],
+            publishedAt: null,
+            reviews: [],
+          }),
+        }),
+      ).publish(request, { id: 'a1', target }),
+    ).rejects.toBeInstanceOf(Response)
+
+    runAs(APPROVER)
+    await expect(
+      createContentStateHandlers(
+        createConfig({
+          applyState: vi.fn().mockRejectedValue(new Error('database down')),
+        }),
+      ).archive(request, { id: 'a1', target }),
+    ).rejects.toThrow('database down')
+
+    expect(recordContentLogMock).not.toHaveBeenCalled()
+  })
+
+  test('page SEO keeps no history', async () => {
+    runAs(APPROVER)
+    recordContentLogMock.mockClear()
+    const handlers = createContentStateHandlers(
+      createConfig({ entity: 'page_seo' }),
+    )
+
+    await handlers.archive(request, { id: 'p1', target })
+
+    expect(recordContentLogMock).not.toHaveBeenCalled()
   })
 })
 
