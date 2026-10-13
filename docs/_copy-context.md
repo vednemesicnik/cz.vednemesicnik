@@ -142,8 +142,8 @@ o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše to
 - **Článek může mít víc autorů** a každý z nich ho má za vlastní: upraví ho, odešle i vezme zpět.
   Věta s jedním autorem v jednotném čísle (*autor článek neodeslal*) je pro spoluautorství
   nepravda.
-- **Přispěvatel má místo fronty `Ke schválení` pilulku `Odeslané`**: jsou v ní jeho čekající
-  i schválené články. Nic neschvaluje, jen čeká.
+- **Přispěvatel má ve filtru `Stav` místo hodnoty `Ke schválení` hodnotu `Odeslané`**: jsou v ní
+  jeho čekající i schválené články. Nic neschvaluje, jen čeká.
 - **Editor článku se ukládá sám** a drží **zámek**: článek upravuje vždy jen jedna záložka jednoho
   člověka, Koordinátor smí úpravu převzít. Posledních pár vteřin psaní se při převzetí může
   ztratit; věta, že se „nic neztratí“, je nepravda.

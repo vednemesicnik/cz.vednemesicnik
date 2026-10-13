@@ -1,39 +1,37 @@
+const alternatives = new Intl.ListFormat('cs', { type: 'disjunction' })
+
 type SavedFilterSummaryOptions = {
-  queueLabel: string | undefined
+  stateLabels: string[]
   query: string
-  categoryName: string | undefined
-  tagName: string | undefined
-  authorName: string | undefined
+  categoryNames: string[]
+  tagNames: string[]
+  authorNames: string[]
 }
 
 /**
- * The save dialog's sentence on what a saved filter keeps (design 22d), e.g.
- * „Uloží se: Koncepty, hledání „maturita“, rubrika Škola, autor Marie
- * Horáková.“ Vše is no choice, so it is left out.
+ * The save dialog's lines on what a saved filter keeps (design 22d), one per
+ * filter that differs from the default, its values whole and joined by „nebo“:
+ * „Stav: Koncepty nebo Ke schválení“, „Hledání: „maturita““.
  *
- * @param options - The pill's label (`undefined` for Vše), the search `query`
- *   (`''` for none) and the names of the active filters.
- * @returns The sentence, or `''` when nothing would be saved.
+ * @param options - The labels of the selected values per filter (empty for
+ *   none) and the search `query` (`''` for none).
+ * @returns The lines, or none when nothing would be saved.
  */
 export const getSavedFilterSummary = ({
-  queueLabel,
+  stateLabels,
   query,
-  categoryName,
-  tagName,
-  authorName,
-}: SavedFilterSummaryOptions): string => {
-  const parts = [
-    queueLabel,
-    query === '' ? undefined : `hledání „${query}“`,
-    categoryName === undefined ? undefined : `rubrika ${categoryName}`,
-    tagName === undefined ? undefined : `štítek ${tagName}`,
-    authorName === undefined ? undefined : `autor ${authorName}`,
-  ].filter((part) => part !== undefined)
+  categoryNames,
+  tagNames,
+  authorNames,
+}: SavedFilterSummaryOptions): string[] => {
+  const line = (label: string, values: string[]) =>
+    values.length === 0 ? [] : [`${label}: ${alternatives.format(values)}`]
 
-  if (parts.length === 0) return ''
-
-  const list = parts.join(', ')
-
-  // A name may end with its own period („Vedneměsíčník, z. s.“).
-  return `Uloží se: ${list}${list.endsWith('.') ? '' : '.'}`
+  return [
+    ...line('Stav', stateLabels),
+    ...(query === '' ? [] : [`Hledání: „${query}“`]),
+    ...line('Rubrika', categoryNames),
+    ...line('Štítek', tagNames),
+    ...line('Autor', authorNames),
+  ]
 }

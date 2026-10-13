@@ -3,35 +3,40 @@ import { describe, expect, test } from 'vitest'
 import { buildListSearch } from './build-list-search'
 
 describe('buildListSearch', () => {
-  test('sets the queue and keeps search, filters and sort', () => {
+  test('sets the state and keeps search, filters and sort', () => {
     expect(
       buildListSearch(new URLSearchParams('q=ples&category=skola&sort=title'), {
-        state: 'pending',
+        state: ['pending'],
       }),
     ).toBe('?q=ples&category=skola&sort=title&state=pending')
   })
 
-  test('Vše drops the queue from the URL', () => {
+  test('repeats a param for several values in the given order', () => {
     expect(
-      buildListSearch(new URLSearchParams('state=draft'), { state: undefined }),
+      buildListSearch(new URLSearchParams('category=skola&q=ples'), {
+        category: ['kultura', 'skola'],
+      }),
+    ).toBe('?q=ples&category=kultura&category=skola')
+  })
+
+  test('Vše drops the state from the URL', () => {
+    expect(
+      buildListSearch(new URLSearchParams('state=draft&state=pending'), {
+        state: undefined,
+      }),
     ).toBe('')
   })
 
-  test('drops several params and keeps the queue and the search', () => {
+  test('no values drops the param', () => {
     expect(
-      buildListSearch(
-        new URLSearchParams(
-          'state=draft&q=ples&category=skola&tag=ples&author=a1',
-        ),
-        { author: undefined, category: undefined, tag: undefined },
-      ),
-    ).toBe('?state=draft&q=ples')
+      buildListSearch(new URLSearchParams('tag=ples&state=draft'), { tag: [] }),
+    ).toBe('?state=draft')
   })
 
   test('restarts the page', () => {
     expect(
       buildListSearch(new URLSearchParams('state=draft&page=3'), {
-        state: 'archived',
+        state: ['archived'],
       }),
     ).toBe('?state=archived')
   })

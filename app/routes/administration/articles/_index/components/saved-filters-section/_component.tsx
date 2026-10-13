@@ -23,14 +23,14 @@ type Props = {
 }
 
 /**
- * The saved filters in the Filtry panel (design 22d): own ones with „⋯“,
- * shared ones from others to apply, and Uložit filtry…. The dialogs belong to
- * the caller, outside the panel.
+ * The saved filters in the Uložené filtry menu (design 22d): own ones with
+ * „⋯“, shared ones from others to apply, and Uložit filtry…. The dialogs
+ * belong to the caller, outside the menu.
  *
  * @param props.currentQuery - The snapshot a save or an overwrite stores; `''`
  *   when there is nothing to save.
  * @param props.onApply - Called when a filter is applied, which finishes the
- *   choice, unlike a select change.
+ *   choice.
  */
 export const SavedFiltersSection = ({
   activeFilterId,
@@ -94,7 +94,7 @@ export const SavedFiltersSection = ({
 
       <div className={styles.footer}>
         <Button
-          aria-describedby={saveNoteId}
+          aria-describedby={hasCurrentQuery ? undefined : saveNoteId}
           disabled={!hasCurrentQuery}
           onClick={onSave}
           size={'sm'}
@@ -103,11 +103,12 @@ export const SavedFiltersSection = ({
         >
           Uložit filtry…
         </Button>
-        <p className={styles.note} id={saveNoteId}>
-          {hasCurrentQuery
-            ? 'Uloží se i hledání a volba nad seznamem článků.'
-            : 'Není co uložit. Místo „Vše“ vyberte jinou možnost, něco vyhledejte nebo nastavte filtr.'}
-        </p>
+        {/* Only in the default, the one setting with nothing to save (22d). */}
+        {!hasCurrentQuery && (
+          <p className={styles.note} id={saveNoteId}>
+            Nastavte alespoň jeden filtr.
+          </p>
+        )}
       </div>
     </div>
   )

@@ -1,9 +1,112 @@
-/* The search and Filtry, at the end of the toolbar row (22a). */
-.toolbarEnd {
+/* Under the headline, for the Coordinator only (22a). */
+.waitingWork {
+  @layer route {
+    margin: 0 0 12px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* The filters on the left, wrapping as one group; Uložené filtry apart at the
+   end, since it sets them all (22d). Baseline alignment puts its text on the
+   line of the search and the filters, whatever their heights. */
+.filterRow {
   @layer route {
     display: flex;
-    align-items: center;
+    align-items: baseline;
+    gap: 12px;
+    inline-size: 100%;
+    margin-block-end: 16px;
+  }
+}
+
+.filterGroup {
+  @layer route {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: safe center;
     gap: 8px;
+    min-inline-size: 0;
+  }
+}
+
+.search {
+  @layer route {
+    flex: none;
+  }
+}
+
+/* No box of its own on a wide screen: the buttons wrap with the search. */
+.filters {
+  @layer route {
+    display: contents;
+  }
+}
+
+.clearFilters {
+  @layer route {
+    flex: none;
+    margin-inline-start: 4px;
+    /* 13 px, as the filter buttons. */
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+}
+
+.phoneTrigger {
+  @layer route {
+    display: none;
+  }
+}
+
+/* The search at full width over a row of filters that scrolls sideways, with
+   Uložené filtry at its end (22g). */
+@media (width < 768px) {
+  .filterRow {
+    @layer route {
+      display: block;
+    }
+  }
+
+  .filterGroup {
+    @layer route {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 10px;
+
+      /* The shared search field is 240 px wide; here it takes the row. */
+      & .search :is(form, form > div, input) {
+        inline-size: 100%;
+      }
+    }
+  }
+
+  .filters {
+    @layer route {
+      /* Its own width, not its content's, so the row scrolls, not the page:
+         the page's grid column grows with the content's width. */
+      contain: inline-size;
+      display: flex;
+      align-items: safe center;
+      gap: 8px;
+      margin-inline: -16px;
+      padding-inline: 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+  }
+
+  .phoneTrigger {
+    @layer route {
+      display: inline-flex;
+    }
+  }
+
+  .wideTrigger {
+    @layer route {
+      display: none;
+    }
   }
 }
 

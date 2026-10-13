@@ -1,0 +1,15 @@
+.trigger {
+  @layer route {
+    flex: none;
+    max-inline-size: 320px;
+  }
+}
+
+.text {
+  @layer route {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

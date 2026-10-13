@@ -30,9 +30,9 @@ export const FILTER_PRESET_NONE = 'none'
 
 const stateFilter = z.enum(ContentState).optional()
 
-// `.min(1)` so an empty value (`?category=`, the "Vše" option) is dropped
+// `.min(1)` so an empty value (`?category=`, the "Všechny" option) is dropped
 // instead of being kept as an empty string.
-const slugFilter = z.string().min(1).optional()
+const slugValue = z.string().min(1)
 
 // Roles are seeded, never created at runtime, so the filter can be validated
 // against the enum itself — which keeps a stale value out of the URL the same
@@ -50,12 +50,13 @@ export const ADMIN_LIST_FILTER_SCHEMAS = {
   archive: contentStateOnly,
   article_categories: contentStateOnly,
   article_tags: contentStateOnly,
+  // Every filter takes several values (design 22d): repeated params, any of.
   articles: z.object({
-    author: slugFilter,
-    category: slugFilter,
+    author: z.array(slugValue).optional(),
+    category: z.array(slugValue).optional(),
     // The queues (design 22a), not the data states: a draft is an unsubmitted one.
-    state: z.enum(ARTICLE_QUEUES).optional(),
-    tag: slugFilter,
+    state: z.array(z.enum(ARTICLE_QUEUES)).optional(),
+    tag: z.array(slugValue).optional(),
   }),
   authors: z.object({ role: authorRoleFilter }),
   podcast_episodes: contentStateOnly,
@@ -72,19 +73,49 @@ const SAVED_FILTER_SEARCH_TABLES: ReadonlySet<AdminListTableKey> = new Set([
 const getFilterKeys = (tableKey: AdminListTableKey): string[] =>
   Object.keys(ADMIN_LIST_FILTER_SCHEMAS[tableKey].shape)
 
-// Validates field by field so one bad value cannot discard its valid siblings.
+type FilterValue = string | string[]
+
+// The element schema of a multi-value filter, `null` for a single-value one.
+const getElementSchema = (fieldSchema: z.ZodType): z.ZodType | null => {
+  // The registry builds every schema with classic Zod, so its parts are too.
+  const innerSchema =
+    fieldSchema instanceof z.ZodOptional
+      ? (fieldSchema.unwrap() as z.ZodType)
+      : fieldSchema
+
+  return innerSchema instanceof z.ZodArray
+    ? (innerSchema.element as z.ZodType)
+    : null
+}
+
+// Validates field by field, and a multi-value field value by value, so one bad
+// value cannot discard its valid siblings.
 const pickValidFilters = (
   searchParams: URLSearchParams,
   tableKey: AdminListTableKey,
-): Record<string, string> => {
+): Record<string, FilterValue> => {
   const shape = ADMIN_LIST_FILTER_SCHEMAS[tableKey].shape as Record<
     string,
-    z.ZodType<string | undefined>
+    z.ZodType
   >
 
-  const values: Record<string, string> = {}
+  const values: Record<string, FilterValue> = {}
 
   for (const [key, fieldSchema] of Object.entries(shape)) {
+    const elementSchema = getElementSchema(fieldSchema)
+
+    if (elementSchema !== null) {
+      const validValues = [...new Set(searchParams.getAll(key))].filter(
+        (value) => elementSchema.safeParse(value).success,
+      )
+
+      if (validValues.length > 0) {
+        values[key] = validValues
+      }
+
+      continue
+    }
+
     const rawValue = searchParams.get(key)
 
     if (rawValue === null) {
@@ -93,7 +124,7 @@ const pickValidFilters = (
 
     const result = fieldSchema.safeParse(rawValue)
 
-    if (result.success && result.data !== undefined) {
+    if (result.success && typeof result.data === 'string') {
       values[key] = result.data
     }
   }
@@ -136,13 +167,37 @@ export const extractAdminListFilterSearch = (
 ): string => {
   const searchParams = new URLSearchParams(search)
   const values = pickValidFilters(searchParams, tableKey)
+  const shape = ADMIN_LIST_FILTER_SCHEMAS[tableKey].shape as Record<
+    string,
+    z.ZodType
+  >
   const canonical = new URLSearchParams()
 
   for (const key of getFilterKeys(tableKey)) {
     const value = values[key]
 
-    if (value !== undefined) {
+    if (value === undefined) {
+      continue
+    }
+
+    if (typeof value === 'string') {
       canonical.set(key, value)
+      continue
+    }
+
+    // Order-free, so a saved filter matches whatever the click order, and
+    // database-free: an enum in its own order, the rest by code point. The
+    // list's URL uses the menu order instead (`buildStaleFilterRedirect`).
+    const elementSchema = getElementSchema(shape[key])
+    const sortedValues =
+      elementSchema instanceof z.ZodEnum
+        ? elementSchema.options.filter((option) =>
+            value.includes(String(option)),
+          )
+        : [...value].sort()
+
+    for (const sortedValue of sortedValues) {
+      canonical.append(key, String(sortedValue))
     }
   }
 
@@ -208,44 +263,54 @@ export const hasAdminListParams = (
 }
 
 /**
- * Builds the redirect target that strips filter params whose value is no longer
- * offered — a deleted category, an author that lost its last visible article.
- * Left in place, such a value keeps narrowing the list while its select, having
- * no matching option, falls back to "Vše". Pass only the data-driven params;
- * enum-backed ones like `state` are already covered by the schema.
+ * Builds the redirect target that strips filter values no longer offered — a
+ * deleted category, an author that lost its last visible article — one by one,
+ * keeping the others. Left in place, such a value keeps narrowing the list while
+ * its menu, having no matching option, does not show it. It also puts repeated
+ * values in the options' order and drops duplicates, so equal filters give equal
+ * URLs (design 22d).
  *
  * @param url - The request's normalized URL (React Router's `url` loader arg).
- * @param optionsByParam - The offered options, keyed by filter param name.
- * @returns The path to redirect to, or `null` when every value is still offered.
+ * @param optionsByParam - The offered options in menu order, keyed by filter param name.
+ * @returns The path to redirect to, or `null` when the URL is already canonical.
  */
 export const buildStaleFilterRedirect = (
   url: URL,
   optionsByParam: Record<string, { value: string }[]>,
 ): string | null => {
-  const staleParams = Object.entries(optionsByParam)
-    .filter(([param, options]) => {
-      const value = url.searchParams.get(param)
-
+  const changedParams = Object.entries(optionsByParam).flatMap(
+    ([param, options]) => {
       // An empty value is the "Vše" option, which the parser drops anyway.
-      return (
-        value !== null &&
-        value !== '' &&
-        !options.some((option) => option.value === value)
-      )
-    })
-    .map(([param]) => param)
+      const values = url.searchParams
+        .getAll(param)
+        .filter((value) => value !== '')
+      const canonicalValues = options
+        .map((option) => option.value)
+        .filter((value) => values.includes(value))
+      const isCanonical =
+        values.length === canonicalValues.length &&
+        values.every((value, index) => value === canonicalValues[index])
 
-  if (staleParams.length === 0) {
+      return isCanonical ? [] : [{ canonicalValues, param }]
+    },
+  )
+
+  if (changedParams.length === 0) {
     return null
   }
 
   const searchParams = new URLSearchParams(url.searchParams)
 
-  for (const param of staleParams) {
+  for (const { canonicalValues, param } of changedParams) {
     searchParams.delete(param)
+
+    for (const value of canonicalValues) {
+      searchParams.append(param, value)
+    }
   }
 
-  // The result set widens, so the current page may no longer exist.
+  // A dropped value widens the result set, so the current page may no longer
+  // exist; a reorder alone happens on links that carry no page.
   searchParams.delete(PAGE_PARAM)
 
   const search = searchParams.toString()

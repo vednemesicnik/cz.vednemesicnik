@@ -152,4 +152,48 @@ describe('loadSavedFilters', () => {
 
     expect(currentFilterQuery).toBe('')
   })
+
+  test('should match a preset whatever the order of its values', async () => {
+    mockFilters([
+      { ...OWN_FILTER, query: 'state=draft&state=pending&category=skola' },
+    ])
+
+    const { matchingFilterId } = await load(
+      '?category=skola&state=pending&state=draft',
+    )
+
+    expect(matchingFilterId).toBe('own-1')
+  })
+
+  test('should match a preset with one value saved before several were possible', async () => {
+    mockFilters()
+
+    const { matchingFilterId } = await load('?state=published')
+
+    expect(matchingFilterId).toBe('shared-1')
+  })
+
+  test('should not match when the filters differ in any value', async () => {
+    mockFilters()
+
+    const { matchingFilterId } = await load('?state=draft&state=pending')
+
+    expect(matchingFilterId).toBeNull()
+  })
+
+  test('should not match an unfiltered list', async () => {
+    mockFilters([{ ...OWN_FILTER, query: '' }])
+
+    const { matchingFilterId } = await load('')
+
+    expect(matchingFilterId).toBeNull()
+  })
+
+  test('should prefer the preset the URL came from when two match', async () => {
+    mockFilters([OWN_FILTER], [{ ...SHARED_FILTER, query: 'state=draft' }])
+
+    const { matchingFilterId } = await load('?state=draft&filter=shared-1')
+
+    expect(matchingFilterId).toBe('shared-1')
+  })
 })
