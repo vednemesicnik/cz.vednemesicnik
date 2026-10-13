@@ -6,8 +6,16 @@ import type { ContentEvent } from '~/utils/sse/content-event'
 
 const REVALIDATION_DELAY_MILLISECONDS = 300
 
+/** What reloads the page's data; `useRevalidator()` and a fetcher both fit. */
+type Revalidator = {
+  revalidate: () => unknown
+  state: string
+}
+
 type Options = {
   filter?: (event: ContentEvent) => boolean
+  onEvent?: (event: ContentEvent) => void
+  revalidator?: Revalidator
 }
 
 const parseContentEvent = (data: string): ContentEvent | null => {
@@ -24,16 +32,23 @@ const parseContentEvent = (data: string): ContentEvent | null => {
  * wait and revalidate once on return. Keeps the shared administration stream open
  * while the calling page is mounted.
  *
- * @param options - `filter` narrows which content events concern the page.
+ * @param options - `filter` narrows which content events concern the page;
+ *   `onEvent` hears each of them at once, before the debounced revalidation;
+ *   `revalidator` replaces the page's revalidation (the article list loads only
+ *   the rows on screen, 22f).
  */
 export const useContentEvents = (options?: Options): void => {
-  const revalidator = useRevalidator()
+  const pageRevalidator = useRevalidator()
+  const revalidator = options?.revalidator ?? pageRevalidator
 
   const isRelevant = useEffectEvent(
     (event: ContentEvent) => options?.filter?.(event) ?? true,
   )
   const isRevalidating = useEffectEvent(() => revalidator.state !== 'idle')
   const revalidate = useEffectEvent(() => revalidator.revalidate())
+  const handleEvent = useEffectEvent((event: ContentEvent) =>
+    options?.onEvent?.(event),
+  )
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -66,6 +81,7 @@ export const useContentEvents = (options?: Options): void => {
         const event = parseContentEvent(message.data)
 
         if (event !== null && isRelevant(event)) {
+          handleEvent(event)
           scheduleRevalidation()
         }
       },
