@@ -17,6 +17,7 @@ import {
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
+import { ListHeader } from '~/components/list-header'
 import { Pagination } from '~/components/pagination'
 import { useToast } from '~/components/toast-provider'
 import type { ArticleQueue } from '~/config/article-queue-config'
@@ -167,16 +168,21 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Články</AdminHeadline>
-      {/* On a phone it waits at the bottom, in reach of the thumb (22g). */}
-      {renderNewArticleLink(styles.topNewArticle)}
-      {showWaitingWork && (
-        <p className={styles.waitingWork}>
-          <Link preventScrollReset={true} to={{ search: '?state=pending' }}>
-            {formatWaitingWork(pendingCount)}
-          </Link>
-        </p>
-      )}
+      {/* On a phone Nový článek waits at the bottom, in reach of the thumb,
+          and the top bar names the page (22g). */}
+      <ListHeader
+        action={renderNewArticleLink(styles.topNewArticle)}
+        className={styles.header}
+      >
+        <AdminHeadline className={styles.headline}>Články</AdminHeadline>
+        {showWaitingWork && (
+          <p className={styles.waitingWork}>
+            <Link preventScrollReset={true} to={{ search: '?state=pending' }}>
+              {formatWaitingWork(pendingCount)}
+            </Link>
+          </p>
+        )}
+      </ListHeader>
       {/* Once a row is checked, the selection bar takes the filter row's place
           (22c), on a wide screen only: a phone has no selection (22g), even
           one carried over from a wider window. */}

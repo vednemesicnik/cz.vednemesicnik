@@ -20,6 +20,7 @@ import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { LinkButton } from '~/components/link-button'
+import { ListHeader } from '~/components/list-header'
 import { CONTENT_STATE_OPTIONS } from '~/utils/admin-filter-options'
 import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
@@ -61,15 +62,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Archiv</AdminHeadline>
-      {canCreate && (
-        <LinkButton
-          to={href('/administration/archive/add-issue')}
-          variant={'outline'}
-        >
-          Přidat číslo
-        </LinkButton>
-      )}
+      <ListHeader
+        action={
+          canCreate && (
+            <LinkButton to={href('/administration/archive/add-issue')}>
+              Nové číslo
+            </LinkButton>
+          )
+        }
+      >
+        <AdminHeadline>Archiv</AdminHeadline>
+      </ListHeader>
       <AdminTableToolbar>
         <AdminTableSearch defaultValue={query} placeholder={'Hledat čísla…'} />
         <AdminBulkActionsBar

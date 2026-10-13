@@ -17,6 +17,7 @@ import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
 import { LinkButton } from '~/components/link-button'
+import { ListHeader } from '~/components/list-header'
 import { USER_ROLE_OPTIONS } from '~/utils/admin-filter-options'
 import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
@@ -53,15 +54,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Uživatelé</AdminHeadline>
-      {canCreate && (
-        <LinkButton
-          to={href('/administration/users/add-user')}
-          variant={'outline'}
-        >
-          Přidat uživatele
-        </LinkButton>
-      )}
+      <ListHeader
+        action={
+          canCreate && (
+            <LinkButton to={href('/administration/users/add-user')}>
+              Nový uživatel
+            </LinkButton>
+          )
+        }
+      >
+        <AdminHeadline>Uživatelé</AdminHeadline>
+      </ListHeader>
       <AdminTableToolbar>
         <AdminTableSearch
           defaultValue={query}
