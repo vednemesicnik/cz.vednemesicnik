@@ -12,8 +12,8 @@ type Props = {
 
 /**
  * A list's header in one row: the headline on the left, the list's main
- * action on the right; the action wraps under the headline when the row is
- * too narrow (22a).
+ * action on the right, on the headline's line; the action wraps under the
+ * headline when the row is too narrow (22a).
  *
  * @param props.children - The headline, and what belongs under it, such as a
  * link to the work waiting in the list.
@@ -27,9 +27,9 @@ export const ListHeader = ({
   leadClassName,
 }: Props) => {
   return (
-    <div className={clsx(styles.row, className)}>
+    <header className={clsx(styles.row, className)}>
       <div className={clsx(styles.lead, leadClassName)}>{children}</div>
       {action}
-    </div>
+    </header>
   )
 }
