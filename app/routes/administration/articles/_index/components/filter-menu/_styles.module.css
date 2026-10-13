@@ -10,6 +10,8 @@
   @layer route {
     display: inline-flex;
     max-inline-size: 240px;
+    /* The filter row's height, else the design's 38 px (22d). */
+    min-block-size: var(--filter-row-height, 38px);
     padding: 3px;
     color: var(--text-secondary);
     font: inherit;

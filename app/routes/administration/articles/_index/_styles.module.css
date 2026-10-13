@@ -6,9 +6,12 @@
   }
 }
 
-/* The search, the filters, Zrušit filtry and Uložené filtry at the end (22d). */
+/* The search, the filters, Zrušit filtry and Uložené filtry at the end (22d),
+   all of one height so a line reads as one row. */
 .filterRow {
   @layer route {
+    --filter-row-height: 40px;
+
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -21,16 +24,19 @@
 .search {
   @layer route {
     flex: none;
+
+    & input {
+      block-size: var(--filter-row-height);
+      padding-block: 0;
+    }
   }
 }
 
+/* No box of its own on a wide screen: the buttons are items of the filter row
+   itself, so every wrapped line keeps its items centred on one axis. */
 .filters {
   @layer route {
-    display: flex;
-    flex: 1;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
+    display: contents;
   }
 }
 
@@ -48,6 +54,10 @@
     display: flex;
     flex: none;
     margin-inline-start: auto;
+
+    & button {
+      min-block-size: var(--filter-row-height);
+    }
   }
 }
 
@@ -71,6 +81,9 @@
     @layer route {
       /* Its own width, not its content's, so the row scrolls, not the page:
          the page's grid column grows with the content's width. */
+      display: flex;
+      align-items: center;
+      gap: 8px;
       flex: 1 1 100%;
       min-inline-size: 0;
       contain: inline-size;
