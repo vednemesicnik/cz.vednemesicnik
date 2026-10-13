@@ -161,7 +161,7 @@
     }
   }
 
-  .bottomNewArticle {
+  .newArticleBar {
     @layer route {
       display: none;
     }
@@ -197,9 +197,27 @@
     }
   }
 
-  .bottomNewArticle {
+  /* Always in reach of the thumb, never hiding: the page's main action
+     (d9en8oih). It stays in the flow after the pagination, so at the end of
+     the list it settles on the footer, bridging the page's 24 px padding. */
+  .newArticleBar {
     @layer route {
+      position: sticky;
+      inset-block-end: 0;
+      z-index: 1;
       justify-self: stretch;
+      margin-inline: -24px;
+      margin-block-end: -24px;
+      padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+      background-color: var(--bg-primary);
+      border-block-start: 1px solid var(--border);
+    }
+  }
+
+  .newArticleBarLink {
+    @layer route {
+      box-sizing: border-box;
+      inline-size: 100%;
       min-block-size: 44px;
     }
   }

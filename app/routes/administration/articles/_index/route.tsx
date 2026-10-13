@@ -321,9 +321,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         totalCount={totalCount}
         totalPages={totalPages}
       />
-      {/* Unless the empty list already offers it (22e). */}
-      {(totalCount > 0 || emptyMessage.action !== 'newArticle') &&
-        renderNewArticleLink(styles.bottomNewArticle)}
+      {/* A bar that stays at the bottom of a phone's screen (22g, d9en8oih),
+          unless the empty list already offers it (22e). */}
+      {canCreate &&
+        (totalCount > 0 || emptyMessage.action !== 'newArticle') && (
+          <div className={styles.newArticleBar}>
+            {renderNewArticleLink(styles.newArticleBarLink)}
+          </div>
+        )}
     </AdminPage>
   )
 }
