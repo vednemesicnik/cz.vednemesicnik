@@ -428,6 +428,18 @@ Applies when writing markup in a route or a component, or planning a new compone
 
 Read `.agents/rules/reuse-existing-components/RULE.md` before acting.
 
+### Semantic HTML
+
+Applies when writing markup in a route or a component.
+
+Read `.agents/rules/semantic-html/RULE.md` before acting.
+
+### No Layout Shift
+
+Applies when content can appear, disappear or load after the page is shown, or when aligning items whose height can change.
+
+Read `.agents/rules/no-layout-shift/RULE.md` before acting.
+
 ### One Function per File
 
 Applies when writing a new utility, helper or server function, or adding a function to an existing module.
