@@ -2,6 +2,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { redirect } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
+import { flashAdminNotice } from '~/utils/admin-notice/flash-admin-notice.server'
 import { requireCSRF } from '~/utils/csrf.server'
 
 import type {
@@ -48,6 +49,8 @@ type RunContentStateActionOptions = {
   loadTarget: () => Promise<PermissionTarget>
   /** Where to redirect after a delete that requested it (row page is gone). */
   deleteRedirectTo: string
+  /** A toast for that page; it must read it with `readAdminNotice`. */
+  deleteNotice?: string
   /** Only the article exposes the change-published-at intent. */
   supportsChangePublishedAt?: boolean
   /** Only the article is submitted for review so far. */
@@ -94,7 +97,19 @@ export const runContentStateAction = async (
       await handlers.delete(request, { id, target })
 
       if (withRedirect) {
-        throw redirect(options.deleteRedirectTo)
+        throw redirect(
+          options.deleteRedirectTo,
+          options.deleteNotice === undefined
+            ? undefined
+            : {
+                headers: {
+                  'Set-Cookie': await flashAdminNotice(
+                    request,
+                    options.deleteNotice,
+                  ),
+                },
+              },
+        )
       }
       return { intent, missing: [] }
 
