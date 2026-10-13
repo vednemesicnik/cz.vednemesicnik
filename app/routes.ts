@@ -321,5 +321,6 @@ export default [
       'routes/resources/user-image/route.ts',
     ),
     route('env.js', 'routes/resources/env-script/route.ts'),
+    route('admin-events', 'routes/resources/admin-events/route.ts'),
   ]),
 ] satisfies RouteConfig
