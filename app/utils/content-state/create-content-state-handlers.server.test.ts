@@ -25,6 +25,14 @@ vi.mock(
   }),
 )
 
+const { publishContentEventMock } = vi.hoisted(() => ({
+  publishContentEventMock: vi.fn(),
+}))
+
+vi.mock('~/utils/sse/publish-content-event.server', () => ({
+  publishContentEvent: publishContentEventMock,
+}))
+
 const request = new Request('https://test.local/')
 const target: PermissionTarget = { authorIds: ['author-1'], state: 'draft' }
 
@@ -437,6 +445,83 @@ describe('createContentStateHandlers — permission wiring', () => {
     expect(options.entity).toBe('article')
     expect(options.action).toBe('archive')
     expect(options.target).toEqual(target)
+  })
+})
+
+describe('createContentStateHandlers — content events', () => {
+  test.each([
+    ['archive', 'archive'],
+    ['delete', 'delete'],
+    ['restore', 'restore'],
+    ['retract', 'retract'],
+    ['review', 'review'],
+  ] as const)('a successful %s announces "%s"', async (handler, change) => {
+    runAs(APPROVER)
+    publishContentEventMock.mockClear()
+    const handlers = createContentStateHandlers(createConfig())
+
+    await handlers[handler](request, { id: 'a1', target })
+
+    expect(publishContentEventMock).toHaveBeenCalledExactlyOnceWith({
+      change,
+      entity: 'article',
+      entityId: 'a1',
+    })
+  })
+
+  test('publish and a publish-date change announce themselves', async () => {
+    runAs(APPROVER)
+    publishContentEventMock.mockClear()
+    const handlers = createContentStateHandlers(
+      createConfig({
+        allowBackdating: true,
+        approverPublishesWithoutReview: true,
+        entity: 'issue',
+      }),
+    )
+
+    await handlers.publish(request, { id: 'i1', target })
+    await handlers.changePublishedAt(request, {
+      id: 'i1',
+      publishedAt: new Date('2020-01-01'),
+      target,
+    })
+
+    expect(publishContentEventMock.mock.calls).toEqual([
+      [{ change: 'publish', entity: 'issue', entityId: 'i1' }],
+      [{ change: 'change-published-at', entity: 'issue', entityId: 'i1' }],
+    ])
+  })
+
+  test('a publish blocked by missing content announces nothing', async () => {
+    runAs(APPROVER)
+    publishContentEventMock.mockClear()
+    const handlers = createContentStateHandlers(
+      createConfig({
+        approverPublishesWithoutReview: true,
+        getMissingBeforePublish: vi.fn().mockResolvedValue(['Chybí perex.']),
+      }),
+    )
+
+    await handlers.publish(request, { id: 'a1', target })
+
+    expect(publishContentEventMock).not.toHaveBeenCalled()
+  })
+
+  test('a failed transition announces nothing', async () => {
+    runAs(APPROVER)
+    publishContentEventMock.mockClear()
+    const handlers = createContentStateHandlers(
+      createConfig({
+        applyState: vi.fn().mockRejectedValue(new Error('database down')),
+      }),
+    )
+
+    await expect(
+      handlers.archive(request, { id: 'a1', target }),
+    ).rejects.toThrow('database down')
+
+    expect(publishContentEventMock).not.toHaveBeenCalled()
   })
 })
 

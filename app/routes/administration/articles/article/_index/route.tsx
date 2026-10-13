@@ -21,6 +21,7 @@ import { Button } from '~/components/button'
 import { Hyperlink } from '~/components/hyperlink'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useContentEvents } from '~/hooks/use-content-events'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { ArticleChangeDateDialog } from '../../components/article-change-date-dialog'
 import { ArticleMissingDialog } from '../../components/article-missing-dialog'
@@ -49,6 +50,11 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const { article, isOwnContent, missingBeforePublish, submission } = loaderData
   const { articleId } = params
+
+  useContentEvents({
+    filter: (event) =>
+      event.entity === 'article' && event.entityId === articleId,
+  })
 
   const fetcherKey = `article-action-${articleId}`
   const fetcher = useFetcher<typeof articleAction>({ key: fetcherKey })

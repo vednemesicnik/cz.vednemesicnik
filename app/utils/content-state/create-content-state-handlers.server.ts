@@ -10,6 +10,8 @@ import {
   APPROVER_ROLE_LEVEL,
   needsReviewToPublish,
 } from '~/utils/permissions/author/review-policy'
+import type { ContentEventChange } from '~/utils/sse/content-event'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 import { assertCanSetPublishedAt } from './assert-can-set-published-at'
 
@@ -121,6 +123,31 @@ export const createContentStateHandlers = (
   config: ContentStateHandlersConfig,
 ): ContentStateHandlers => {
   const { entity } = config
+
+  // PageSEO never runs through this factory and has no content event.
+  const contentEventEntity = entity === 'page_seo' ? undefined : entity
+
+  // Announces a transition once its handler resolved; a rejected one (403,
+  // invariant) announces nothing.
+  const announceOnSuccess =
+    <Options extends TransitionOptions, Result>(
+      change: ContentEventChange,
+      handler: (request: Request, options: Options) => Promise<Result>,
+      hasChanged: (result: Result) => boolean = () => true,
+    ) =>
+    async (request: Request, options: Options) => {
+      const result = await handler(request, options)
+
+      if (contentEventEntity !== undefined && hasChanged(result)) {
+        publishContentEvent({
+          change,
+          entity: contentEventEntity,
+          entityId: options.id,
+        })
+      }
+
+      return result
+    }
 
   const publish = (request: Request, options: PublishOptions) =>
     withAuthorPermission(request, {
@@ -236,12 +263,20 @@ export const createContentStateHandlers = (
     })
 
   return {
-    archive,
-    changePublishedAt,
-    delete: deleteRow,
-    publish,
-    restore,
-    retract,
-    review,
+    archive: announceOnSuccess('archive', archive),
+    changePublishedAt: announceOnSuccess(
+      'change-published-at',
+      changePublishedAt,
+    ),
+    delete: announceOnSuccess('delete', deleteRow),
+    // A publish blocked by missing content writes nothing.
+    publish: announceOnSuccess(
+      'publish',
+      publish,
+      ({ missing }) => missing.length === 0,
+    ),
+    restore: announceOnSuccess('restore', restore),
+    retract: announceOnSuccess('retract', retract),
+    review: announceOnSuccess('review', review),
   }
 }
