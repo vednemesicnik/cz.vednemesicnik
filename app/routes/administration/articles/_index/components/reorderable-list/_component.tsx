@@ -4,6 +4,7 @@ import {
   type PointerEvent,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
@@ -39,6 +40,9 @@ const DRAG_THRESHOLD_PX = 4
 // Matches the list's gap in the stylesheet.
 const ROW_GAP_PX = 6
 
+// How long a row slides into its new place after a swap.
+const SWAP_MS = 150
+
 const position = (index: number, count: number) =>
   `Pozice ${index + 1}, celkem ${count}.`
 
@@ -64,9 +68,54 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
   const [menuMovedId, setMenuMovedId] = useState<string | null>(null)
   const rowRefs = useRef(new Map<string, HTMLDivElement>())
   const handleRefs = useRef(new Map<string, HTMLButtonElement>())
+  const slotRefs = useRef(new Map<string, HTMLLIElement>())
+  const previousTops = useRef(new Map<string, number>())
+  const draggedIdRef = useRef<string | null>(null)
+  draggedIdRef.current = drag?.isMoving === true ? drag.id : null
 
   const count = items.length
   const indexOf = (id: string) => items.findIndex((item) => item.id === id)
+
+  // A swap slides the rows into their new places instead of jumping, which
+  // flickers (FLIP). The dragged row is held under the pointer by the inverse
+  // movement added on top of its own offset.
+  useLayoutEffect(() => {
+    const isReduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
+
+    for (const item of items) {
+      const slot = slotRefs.current.get(item.id)
+      if (slot === undefined) continue
+
+      const top = slot.offsetTop
+      const previousTop = previousTops.current.get(item.id)
+      previousTops.current.set(item.id, top)
+
+      if (isReduced || previousTop === undefined || previousTop === top) {
+        continue
+      }
+
+      const delta = previousTop - top
+      const timing = { duration: SWAP_MS, easing: 'ease-out' }
+      slot.animate(
+        [{ transform: `translateY(${delta}px)` }, { transform: 'none' }],
+        timing,
+      )
+
+      if (item.id === draggedIdRef.current) {
+        rowRefs.current
+          .get(item.id)
+          ?.animate(
+            [
+              { transform: `translateY(${-delta}px)` },
+              { transform: 'translateY(0)' },
+            ],
+            { ...timing, composite: 'add' },
+          )
+      }
+    }
+  }, [items])
 
   // A moved node can lose focus as React reorders the list; keep it on the handle.
   useEffect(() => {
@@ -257,6 +306,10 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
             <li
               className={clsx(styles.slot, isLifted && styles.landing)}
               key={item.id}
+              ref={(element) => {
+                if (element === null) slotRefs.current.delete(item.id)
+                else slotRefs.current.set(item.id, element)
+              }}
             >
               <div
                 className={clsx(styles.row, isLifted && styles.lifted)}
