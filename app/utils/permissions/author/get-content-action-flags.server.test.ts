@@ -143,4 +143,29 @@ describe('getContentActionFlags', () => {
       ).canChangePublishedAt,
     ).toBe(true)
   })
+
+  test('a single-author episode asks the episode grants and locks while submitted', () => {
+    const requested: string[] = []
+    const context = createContext('creator', 2)
+    const flags = getContentActionFlags(
+      {
+        ...context,
+        can: (options: { entity: string; targetAuthorIds?: string[] }) => {
+          requested.push(options.entity)
+          return context.can(options)
+        },
+      },
+      'podcast_episode',
+      { ...draftBy('creator', CREATOR), submittedAt },
+    )
+
+    expect(new Set(requested)).toEqual(new Set(['podcast_episode']))
+    expect(flags).toMatchObject({
+      canDelete: false,
+      canEdit: false,
+      canSubmit: false,
+      canWithdraw: true,
+      submission: { date: submittedAt, state: 'pending' },
+    })
+  })
 })
