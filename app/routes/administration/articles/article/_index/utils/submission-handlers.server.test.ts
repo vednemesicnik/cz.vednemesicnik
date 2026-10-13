@@ -215,7 +215,10 @@ describe('articleSubmissionHandlers — content events', () => {
 
     await articleSubmissionHandlers.submit(request, { id: 'a1', target })
 
-    expect(mocks.publishContentEvent).toHaveBeenCalledWith(submissionEvent)
+    expect(mocks.publishContentEvent).toHaveBeenCalledWith(
+      submissionEvent,
+      mocks.permissionContext(),
+    )
   })
 
   test('a submit blocked by missing content announces nothing', async () => {
@@ -243,7 +246,10 @@ describe('articleSubmissionHandlers — content events', () => {
     })
 
     expect(mocks.publishContentEvent).toHaveBeenCalledTimes(2)
-    expect(mocks.publishContentEvent).toHaveBeenLastCalledWith(submissionEvent)
+    expect(mocks.publishContentEvent).toHaveBeenLastCalledWith(
+      submissionEvent,
+      mocks.permissionContext(),
+    )
   })
 
   test('a refused transition announces nothing', async () => {

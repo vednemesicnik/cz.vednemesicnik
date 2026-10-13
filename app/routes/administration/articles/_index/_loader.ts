@@ -19,6 +19,7 @@ import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
 import { getArticleActionFlags } from '../utils/get-article-action-flags.server'
 import type { Route } from './+types/route'
+import { PINNED_ROWS_PARAM } from './pinned-rows'
 import { SORT_KEYS, type SortKey } from './sort'
 import { buildArticleQueueWhere } from './utils/build-article-queue-where'
 import { getArticleFactLine } from './utils/get-article-fact-line'
@@ -56,13 +57,25 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     entities: ['article'],
   })
 
+  // A live load of the rows on screen (22f): fresh data for exactly those rows,
+  // whatever the order, filters or page now say. A fetcher load, so it never
+  // redirects.
+  const pinnedIds = url.searchParams
+    .get(PINNED_ROWS_PARAM)
+    ?.split(',')
+    .filter((id) => id !== '')
+    .slice(0, PAGE_SIZE)
+  const isPinned = pinnedIds !== undefined
+
   // Before any query: a bare visit with a default preset never renders this list,
   // it redirects to the preset's own URL.
-  await resolveDefaultFilter({
-    tableKey: TABLE_KEY,
-    url,
-    userId: context.userId,
-  })
+  if (!isPinned) {
+    await resolveDefaultFilter({
+      tableKey: TABLE_KEY,
+      url,
+      userId: context.userId,
+    })
+  }
 
   // Check view permissions for each state
   const draftPerms = context.can({
@@ -165,6 +178,12 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       where: { AND: [permissionWhere, buildArticleQueueWhere(queue)] },
     })
 
+  // The page of the list, or the rows on screen for a live load (22f).
+  const rowsQuery: Pick<Prisma.ArticleFindManyArgs, 'skip' | 'take' | 'where'> =
+    isPinned
+      ? { where: { AND: [permissionWhere, { id: { in: pinnedIds } }] } }
+      : { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, where }
+
   const [
     rawArticles,
     totalCount,
@@ -204,9 +223,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         title: true,
         updatedAt: true,
       },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      where,
+      ...rowsQuery,
     }),
     prisma.article.count({ where }),
     prisma.author.findMany({
@@ -255,7 +272,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     tag: tagOptions,
   })
 
-  if (staleFilterRedirect !== null) {
+  if (staleFilterRedirect !== null && !isPinned) {
     throw redirect(staleFilterRedirect)
   }
 
@@ -263,7 +280,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   // Deleting the last row on the last page revalidates a URL past the end. Checked
   // after the stale-filter redirect, which already drops the page.
-  if (isPagePastLast(page, totalPages)) {
+  if (isPagePastLast(page, totalPages) && !isPinned) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
@@ -331,6 +348,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   return {
     ...savedFilters,
     articles,
+    // Whose live changes are not someone else's (22f).
+    authorId: context.authorId,
     authorOptions,
     canCreate: context.can({
       action: 'create',

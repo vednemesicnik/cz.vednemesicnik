@@ -23,14 +23,17 @@ vi.mock('~/utils/db.server', () => ({
 }))
 
 const request = new Request('https://test.local/')
+const context = { authorId: 'author-1', authorName: 'Marie Horáková' }
 
 const options = { authorId: 'author-1', name: 'Tag', slug: 'tag' }
 
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.withAuthorPermission.mockImplementation(
-    (_request: Request, { execute }: { execute: () => Promise<unknown> }) =>
-      execute(),
+    (
+      _request: Request,
+      { execute }: { execute: (context: unknown) => Promise<unknown> },
+    ) => execute(context),
   )
   mocks.articleTagCreate.mockResolvedValue({ id: 'tag-1' })
 })
@@ -41,11 +44,14 @@ describe('createArticleTag', () => {
       id: 'tag-1',
     })
 
-    expect(mocks.publishContentEvent).toHaveBeenCalledExactlyOnceWith({
-      change: 'create',
-      entity: 'article_tag',
-      entityId: 'tag-1',
-    })
+    expect(mocks.publishContentEvent).toHaveBeenCalledExactlyOnceWith(
+      {
+        change: 'create',
+        entity: 'article_tag',
+        entityId: 'tag-1',
+      },
+      context,
+    )
   })
 
   test('announces nothing when the permission is denied', async () => {

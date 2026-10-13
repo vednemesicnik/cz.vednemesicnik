@@ -132,7 +132,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
       where: { id: id },
     })
 
-    publishContentEvent({ change: 'update', entity: 'issue', entityId: id })
+    publishContentEvent(
+      { change: 'update', entity: 'issue', entityId: id },
+      context,
+    )
 
     // Post-commit, best-effort: run both so a failing store delete can't skip the
     // other, and a cleanup failure doesn't turn an already-committed update into an

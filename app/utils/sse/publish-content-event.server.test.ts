@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { publishContentEvent } from './publish-content-event.server'
 
@@ -8,17 +8,32 @@ vi.mock('./broadcaster.server', () => ({
   broadcaster: { publish: publishMock },
 }))
 
+const actor = { authorId: 'author-1', authorName: 'Jakub Novák' }
+
 describe('publishContentEvent', () => {
-  test('publishes the event to the admin topic', () => {
-    publishContentEvent({
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('publishes the event with its actor and time to the admin topic', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-13T12:02:00.000Z'))
+
+    publishContentEvent(
+      { change: 'review', entity: 'article', entityId: 'a1' },
+      actor,
+    )
+
+    const [topic, message] = publishMock.mock.lastCall ?? []
+
+    expect(topic).toBe('admin')
+    expect(message.event).toBe('content-change')
+    expect(JSON.parse(message.data)).toEqual({
+      actor: { authorId: 'author-1', name: 'Jakub Novák' },
       change: 'review',
       entity: 'article',
       entityId: 'a1',
-    })
-
-    expect(publishMock).toHaveBeenCalledWith('admin', {
-      data: '{"change":"review","entity":"article","entityId":"a1"}',
-      event: 'content-change',
+      occurredAt: '2026-10-13T12:02:00.000Z',
     })
   })
 
@@ -29,11 +44,10 @@ describe('publishContentEvent', () => {
     })
 
     expect(() =>
-      publishContentEvent({
-        change: 'publish',
-        entity: 'issue',
-        entityId: 'i1',
-      }),
+      publishContentEvent(
+        { change: 'publish', entity: 'issue', entityId: 'i1' },
+        actor,
+      ),
     ).not.toThrow()
   })
 })

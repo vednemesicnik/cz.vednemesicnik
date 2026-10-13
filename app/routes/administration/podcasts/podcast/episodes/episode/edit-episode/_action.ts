@@ -66,6 +66,7 @@ export async function action({ request }: Route.ActionArgs) {
   })
 
   await updateEpisode({
+    actor: context,
     authorId,
     description,
     id: episodeId,

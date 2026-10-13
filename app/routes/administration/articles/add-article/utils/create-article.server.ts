@@ -109,15 +109,14 @@ export async function createArticle(
         },
       })
 
+      publishContentEvent(
+        { change: 'create', entity: 'article', entityId: createdArticle.id },
+        context,
+      )
+
       return createdArticle
     },
     target: { authorIds, state: 'draft' },
-  })
-
-  publishContentEvent({
-    change: 'create',
-    entity: 'article',
-    entityId: article.id,
   })
 
   return { articleId: article.id }

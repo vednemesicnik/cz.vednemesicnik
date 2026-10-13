@@ -214,15 +214,12 @@ export async function updateArticle(
 
       await Promise.all(updatedImages.map(({ cleanup }) => cleanup()))
 
-      return { id: articleId }
+      publishContentEvent(
+        { change: 'update', entity: 'article', entityId: articleId },
+        context,
+      )
     },
     target: { authorIds, state },
-  })
-
-  publishContentEvent({
-    change: 'update',
-    entity: 'article',
-    entityId: articleId,
   })
 
   return { id: articleId }

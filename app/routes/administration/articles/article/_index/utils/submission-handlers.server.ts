@@ -52,11 +52,10 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
         }
 
         await prisma.article.update({ data: clearSubmission, where: { id } })
-        publishContentEvent({
-          change: 'submission',
-          entity: 'article',
-          entityId: id,
-        })
+        publishContentEvent(
+          { change: 'submission', entity: 'article', entityId: id },
+          context,
+        )
       },
       target,
     }),
@@ -117,11 +116,10 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
           throw data(null, { status: 409 })
         }
 
-        publishContentEvent({
-          change: 'submission',
-          entity: 'article',
-          entityId: id,
-        })
+        publishContentEvent(
+          { change: 'submission', entity: 'article', entityId: id },
+          context,
+        )
 
         return { missing }
       },
@@ -147,11 +145,10 @@ export const articleSubmissionHandlers: SubmissionHandlers = {
         }
 
         await prisma.article.update({ data: clearSubmission, where: { id } })
-        publishContentEvent({
-          change: 'submission',
-          entity: 'article',
-          entityId: id,
-        })
+        publishContentEvent(
+          { change: 'submission', entity: 'article', entityId: id },
+          context,
+        )
       },
       target,
     }),

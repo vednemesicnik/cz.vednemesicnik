@@ -51,6 +51,7 @@ const runAs = (roleLevel: number, authorId = 'author-1') => {
     async (_request: Request, options: WrapperOptions) =>
       options.execute({
         authorId,
+        authorName: 'Marie Horáková',
         can: vi.fn(),
         permissions: [],
         roleLevel,
@@ -462,11 +463,13 @@ describe('createContentStateHandlers — content events', () => {
 
     await handlers[handler](request, { id: 'a1', target })
 
-    expect(publishContentEventMock).toHaveBeenCalledExactlyOnceWith({
-      change,
-      entity: 'article',
-      entityId: 'a1',
-    })
+    expect(publishContentEventMock).toHaveBeenCalledExactlyOnceWith(
+      { change, entity: 'article', entityId: 'a1' },
+      expect.objectContaining({
+        authorId: 'author-1',
+        authorName: 'Marie Horáková',
+      }),
+    )
   })
 
   test('publish and a publish-date change announce themselves', async () => {
@@ -487,9 +490,9 @@ describe('createContentStateHandlers — content events', () => {
       target,
     })
 
-    expect(publishContentEventMock.mock.calls).toEqual([
-      [{ change: 'publish', entity: 'issue', entityId: 'i1' }],
-      [{ change: 'change-published-at', entity: 'issue', entityId: 'i1' }],
+    expect(publishContentEventMock.mock.calls.map(([event]) => event)).toEqual([
+      { change: 'publish', entity: 'issue', entityId: 'i1' },
+      { change: 'change-published-at', entity: 'issue', entityId: 'i1' },
     ])
   })
 

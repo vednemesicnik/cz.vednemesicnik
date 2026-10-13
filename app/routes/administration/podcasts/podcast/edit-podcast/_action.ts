@@ -59,6 +59,7 @@ export async function action({ request }: Route.ActionArgs) {
   })
 
   await updatePodcast({
+    actor: context,
     authorId,
     cover,
     coverId,

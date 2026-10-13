@@ -15,11 +15,11 @@ export const updateTag = async (
   request: Request,
   { tagId, name, slug, authorId, state }: Options,
 ) => {
-  const tag = await withAuthorPermission(request, {
+  return withAuthorPermission(request, {
     action: 'update',
     entity: 'article_tag',
-    execute: () =>
-      prisma.articleTag.update({
+    execute: async (context) => {
+      const tag = await prisma.articleTag.update({
         data: {
           authorId,
           name,
@@ -27,15 +27,15 @@ export const updateTag = async (
         },
         select: { id: true },
         where: { id: tagId },
-      }),
+      })
+
+      publishContentEvent(
+        { change: 'update', entity: 'article_tag', entityId: tagId },
+        context,
+      )
+
+      return tag
+    },
     target: { authorIds: [authorId], state },
   })
-
-  publishContentEvent({
-    change: 'update',
-    entity: 'article_tag',
-    entityId: tagId,
-  })
-
-  return tag
 }

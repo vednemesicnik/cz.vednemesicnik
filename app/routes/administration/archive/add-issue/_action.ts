@@ -92,11 +92,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
       },
     })
 
-    publishContentEvent({
-      change: 'create',
-      entity: 'issue',
-      entityId: issue.id,
-    })
+    publishContentEvent(
+      { change: 'create', entity: 'issue', entityId: issue.id },
+      context,
+    )
 
     return redirect(
       href('/administration/archive/:issueId', { issueId: issue.id }),
