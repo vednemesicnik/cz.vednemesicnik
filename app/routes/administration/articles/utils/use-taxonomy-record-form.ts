@@ -1,10 +1,19 @@
 import { type SubmissionResult, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { type MouseEvent, useEffect, useRef } from 'react'
-import { useFetcher, useLocation, useNavigate } from 'react-router'
+import {
+  useFetcher,
+  useLocation,
+  useNavigate,
+  useNavigation,
+} from 'react-router'
 
 import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
+import {
+  FILTER_PRESET_NONE,
+  FILTER_PRESET_PARAM,
+} from '~/utils/admin-list-filters'
 import { isNameTaken } from '~/utils/is-name-taken'
 import { recentChangeTints } from '~/utils/recent-change-tints'
 import { slugify } from '~/utils/slugify'
@@ -81,6 +90,7 @@ export const useTaxonomyRecordForm = ({
   parentPath,
 }: Options) => {
   const navigate = useNavigate()
+  const navigation = useNavigation()
   const location = useLocation()
   const showToast = useToast()
   const fetcher = useFetcher<ActionData>()
@@ -90,10 +100,18 @@ export const useTaxonomyRecordForm = ({
   const leave = () =>
     returnsToOpener ? navigate(-1) : navigate(parentPath, { replace: true })
 
-  // Zrušit is a link to the parent; opened from a page of the app, it goes
-  // back to that page instead, with its scroll position.
+  // Zrušit is a link to the parent; opened from a page of the app, a plain
+  // click goes back to that page instead, with its scroll position. A click
+  // that opens a new tab stays a link.
   const handleCancel = (event: MouseEvent) => {
-    if (!returnsToOpener) return
+    const opensElsewhere =
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+
+    if (!returnsToOpener || opensElsewhere) return
 
     event.preventDefault()
     navigate(-1)
@@ -149,16 +167,21 @@ export const useTaxonomyRecordForm = ({
     showToast(getToast(copy, result.intent))
 
     // A new row the list's state filter or search would hide opens the list
-    // without them (25c).
+    // without them (25c). From a shared link the list opens without filters,
+    // so a default saved filter does not hide it either.
     if (result.intent !== null) {
       const listPath = getListPathShowingRecord(parentPath, {
         name: result.name,
         slug: result.slug,
         state: result.intent === INTENT_VALUE.publish ? 'published' : 'draft',
       })
+      const target =
+        !returnsToOpener && !listPath.includes('?')
+          ? `${listPath}?${FILTER_PRESET_PARAM}=${FILTER_PRESET_NONE}`
+          : listPath
 
-      if (listPath !== parentPath) {
-        navigate(listPath, { replace: true })
+      if (target !== parentPath) {
+        navigate(target, { replace: true })
         return
       }
     }
@@ -176,7 +199,12 @@ export const useTaxonomyRecordForm = ({
     fields,
     form,
     handleCancel,
-    isSubmitting: fetcher.state !== 'idle',
+    // Saved and leaving: the page stays until the parent loads, and a second
+    // click must not send the form again.
+    isSubmitting:
+      fetcher.state !== 'idle' ||
+      navigation.state !== 'idle' ||
+      (fetcher.data !== undefined && 'status' in fetcher.data),
     slugSuggestion,
   }
 }

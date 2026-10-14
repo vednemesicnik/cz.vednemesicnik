@@ -18,7 +18,7 @@ describe('getListPathShowingRecord', () => {
   test('drops the state filter that would hide the row', () => {
     expect(
       getListPathShowingRecord('/categories?state=published&sort=name', record),
-    ).toBe('/categories?sort=name')
+    ).toBe('/categories?sort=name&filter=none')
   })
 
   test('drops a search the name and address do not match', () => {
@@ -27,10 +27,22 @@ describe('getListPathShowingRecord', () => {
     )
   })
 
-  test('matches the search ignoring letter case', () => {
-    expect(getListPathShowingRecord('/categories?q=ŠKOLNÍ', record)).toBe(
-      '/categories?q=ŠKOLNÍ',
+  test('matches the search ignoring the case of A–Z, as the list does', () => {
+    expect(getListPathShowingRecord('/categories?q=PLES', record)).toBe(
+      '/categories?q=PLES',
     )
+  })
+
+  test('drops a search that differs in the case of a Czech letter', () => {
+    expect(getListPathShowingRecord('/categories?q=ŠKOLNÍ', record)).toBe(
+      '/categories?filter=none',
+    )
+  })
+
+  test('replaces the saved filter it came from', () => {
+    expect(
+      getListPathShowingRecord('/categories?state=published&filter=f1', record),
+    ).toBe('/categories?filter=none')
   })
 
   test('keeps a bare list', () => {
