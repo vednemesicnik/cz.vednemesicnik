@@ -323,6 +323,12 @@ Project-specific conventions and guidelines for recurring tasks. Load when writi
 
 Read `.agents/skills/general-guidance/SKILL.md` — it lists the covered domains and directs you to the correct reference file.
 
+### Component Authoring
+
+How this project builds UI. Load before writing markup or a component, planning a new component, or changing a component's props.
+
+Read `.agents/skills/component-authoring/SKILL.md` — its references cover the component API (compound components first, then props, render props to hand values out), semantic HTML, no layout shift, and reusing existing components.
+
 ### Modern Web Guidance
 
 A search tool for modern web development best practices. **Execute first** for all HTML/CSS and client-side JS tasks — web APIs evolve rapidly and training weights contain obsolete patterns.
@@ -397,6 +403,8 @@ Loops for decisions this repository does not own. Load when a screen, component 
 ## Agent Rules
 
 Mandatory conventions that apply to all tasks. Read the relevant rule file before acting.
+A rule is one short convention with a single trigger; guidance made of several references
+for one body of work, such as building UI, is a skill (decision 0014).
 
 ### Package Versions
 
@@ -421,24 +429,6 @@ Read `.agents/rules/typescript-conventions/RULE.md` before acting.
 Applies when writing any stateful object (store, registry, cache, manager) or considering a class.
 
 Read `.agents/rules/functional-style/RULE.md` before acting.
-
-### Reuse Existing Components
-
-Applies when writing markup in a route or a component, or planning a new component.
-
-Read `.agents/rules/reuse-existing-components/RULE.md` before acting.
-
-### Semantic HTML
-
-Applies when writing markup in a route or a component.
-
-Read `.agents/rules/semantic-html/RULE.md` before acting.
-
-### No Layout Shift
-
-Applies when content can appear, disappear or load after the page is shown, or when aligning items whose height can change.
-
-Read `.agents/rules/no-layout-shift/RULE.md` before acting.
 
 ### One Function per File
 

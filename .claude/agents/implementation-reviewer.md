@@ -34,6 +34,8 @@ doing the same thing (add and edit, list and detail), the loader that feeds the 
 - every rule in `.agents/rules/*/RULE.md` and the conventions in `AGENTS.md`;
 - `.agents/skills/general-guidance/` references for the file types in the diff — CSS
   modules, stories;
+- `.agents/skills/component-authoring/` references when the diff adds markup or changes a
+  component — its API, semantic elements, layout shift, reuse;
 - the **Accepted** records in `docs/decisions/` — a change that contradicts one is a finding,
   whatever the code looks like;
 - **no real data** in fixtures, tests and docs — example addresses use `priklad.cz`, people

@@ -1,17 +1,3 @@
----
-name: no-layout-shift
-description: |
-  Content that appears, disappears or loads never moves what is already on screen.
-
-  Trigger for:
-  - Showing or hiding part of a page on a condition (a count, a notice, a link, a button)
-  - Images, embeds and anything whose size is known only after it loads
-  - Aligning items in a row where one item's height can change
-
-  DO NOT trigger for:
-  - A move the person caused and expects (opening a disclosure, expanding a row)
----
-
 # No Layout Shift
 
 ## Decide where things stand before the data decides
@@ -52,6 +38,8 @@ _if it vanished right now, would anything else move?_
   updates the row; it doesn't reorder or resize what the person is looking at.
 - **Prefer an overlay for transient messages** (a toast, a popover) over text
   inserted into the flow.
+- **Not a shift:** a move the person caused and expects — opening a disclosure,
+  expanding a row.
 
 ## Why
 

@@ -1,16 +1,3 @@
----
-name: reuse-existing-components
-description: |
-  Build UI from the components the project already has.
-
-  Trigger for:
-  - Writing markup in a route or a component (a link, a button, an icon, a heading, a field, a dialog)
-  - Planning a new component
-
-  DO NOT trigger for:
-  - Native elements no component wraps (`<ul>`, `<section>`, a layout `<div>`)
----
-
 # Reuse Existing Components
 
 ## Look in `app/components/` before writing markup
@@ -36,6 +23,8 @@ breaking, states, focus, dark mode). Search first, then compose:
   use the component's variant prop.
 - **Misses a behaviour the design asks for everywhere?** Change the component, so
   every use gets it — not one copy.
+- **A native element no component wraps** (`<ul>`, `<section>`, a layout `<div>`) is
+  written as it is.
 - **Nothing fits?** Write a new component, and say in the plan which existing ones
   you checked and why they don't fit.
 
