@@ -391,7 +391,7 @@ From an idea to a merged PR, one issue per context window:
 
 A decision that binds later changes gets a record in `docs/decisions/`:
 
-- `.agents/skills/record-decision/SKILL.md` — write a numbered decision record or supersede one; `/plan-issue`, `/review-idea` and `/next-issue` ask whether one is due.
+- `.agents/skills/record-decision/SKILL.md` — write a numbered decision record or supersede one, checked against every accepted record first; `/plan-issue`, `/review-idea` and `/next-issue` ask whether one is due.
 
 ### Design and Copy
 

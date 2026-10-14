@@ -28,6 +28,10 @@ order and never renumbered. The title names the decision, not the topic.
 A record is not rewritten once it is accepted. A changed decision gets a new record, and the
 old one changes only its status line.
 
+The accepted records form one whole. A new record is checked against every one of them before
+it is accepted. A conflict is settled by superseding one of the two, never by leaving both
+in force.
+
 ## Index
 
 | # | Decision | Status | Date |
@@ -46,3 +50,4 @@ old one changes only its status line.
 | [0012](0012-live-events-carry-the-actor-name-to-every-session.md) | Live content events carry the actor's name to every administration session | Accepted | 2026-10-13 |
 | [0013](0013-content-is-submitted-only-the-coordinator-approves-and-publishes.md) | Every content type is submitted for review; only the Coordinator approves and publishes | Accepted | 2026-09-28 |
 | [0014](0014-activity-guidance-is-a-skill-not-a-rule.md) | Guidance for one body of work is a skill, not a rule | Accepted | 2026-10-14 |
+| [0015](0015-edits-check-the-stored-record-not-the-form.md) | Content edits check the stored record, never the form | Accepted | 2026-10-14 |
