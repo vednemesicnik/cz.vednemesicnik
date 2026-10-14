@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest'
 
-import { formatWaitingWork } from './format-waiting-work'
+import { formatPendingSummary } from './format-pending-summary'
 
-describe('formatWaitingWork', () => {
+describe('formatPendingSummary', () => {
   test('agrees with the count', () => {
-    expect(formatWaitingWork(1)).toBe('Na schválení čeká 1 článek')
-    expect(formatWaitingWork(2)).toBe('Na schválení čekají 2 články')
-    expect(formatWaitingWork(4)).toBe('Na schválení čekají 4 články')
-    expect(formatWaitingWork(5)).toBe('Na schválení čeká 5 článků')
+    expect(formatPendingSummary(1)).toBe('na schválení čeká celkem 1 článek')
+    expect(formatPendingSummary(2)).toBe('na schválení čekají celkem 2 články')
+    expect(formatPendingSummary(4)).toBe('na schválení čekají celkem 4 články')
+    expect(formatPendingSummary(5)).toBe('na schválení čeká celkem 5 článků')
   })
 })

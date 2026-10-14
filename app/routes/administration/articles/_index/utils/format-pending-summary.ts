@@ -3,14 +3,15 @@ import { formatArticleCount } from '~/utils/format-article-count'
 const pluralRules = new Intl.PluralRules('cs')
 
 /**
- * The Coordinator's waiting-work link under the headline (design 22a).
+ * What the Stav filter's count says to a screen reader (design 22d, ih6ll3r4):
+ * every article waiting for approval, whatever the search and the filters.
  *
  * @param count - The number of articles waiting for approval.
- * @returns „Na schválení čeká 1 článek“, „Na schválení čekají 2 články“,
- *   „Na schválení čeká 5 článků“.
+ * @returns „na schválení čeká celkem 1 článek“, „na schválení čekají celkem
+ *   2 články“, „na schválení čeká celkem 5 článků“.
  */
-export const formatWaitingWork = (count: number) => {
+export const formatPendingSummary = (count: number) => {
   const verb = pluralRules.select(count) === 'few' ? 'čekají' : 'čeká'
 
-  return `Na schválení ${verb} ${formatArticleCount(count)}`
+  return `na schválení ${verb} celkem ${formatArticleCount(count)}`
 }

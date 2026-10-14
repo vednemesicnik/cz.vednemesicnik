@@ -75,6 +75,14 @@
   }
 }
 
+/* Work waiting for the person, after the values; never truncated (22d). */
+.triggerCount {
+  @layer route {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 .chevron {
   @layer route {
     display: block;

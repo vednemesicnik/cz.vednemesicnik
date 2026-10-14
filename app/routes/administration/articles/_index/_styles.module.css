@@ -1,8 +1,14 @@
-/* Under the headline, for the Coordinator only (22a). */
-.waitingWork {
+/* The filter row and the selection bar in one cell: the cell keeps the taller
+   of the two, so checking a row never moves the table (22c, cioukqn6). */
+.filterCell {
   @layer route {
-    margin: 0;
-    font-size: var(--font-size-sm);
+    display: grid;
+    inline-size: 100%;
+    margin-block-end: 16px;
+
+    & > * {
+      grid-area: 1 / 1;
+    }
   }
 }
 
@@ -15,14 +21,12 @@
     align-items: baseline;
     gap: 12px;
     inline-size: 100%;
-    margin-block-end: 16px;
   }
 }
 
 .selectionBar {
   @layer route {
     inline-size: 100%;
-    margin-block-end: 16px;
   }
 }
 
@@ -37,9 +41,12 @@
   }
 }
 
+/* Grows into the row's free space, 240–480 px (22a, cioukqn6). */
 .search {
   @layer route {
-    flex: none;
+    flex: 1 1 240px;
+    min-inline-size: 240px;
+    max-inline-size: 480px;
   }
 }
 
@@ -82,9 +89,10 @@
       align-items: stretch;
       gap: 10px;
 
-      /* The shared search field is 240 px wide; here it takes the row. */
-      & .search :is(form, form > div, input) {
-        inline-size: 100%;
+      /* The search takes the whole row; in the column, no flex basis. */
+      & .search {
+        flex: none;
+        max-inline-size: none;
       }
     }
   }
@@ -153,11 +161,12 @@
   }
 }
 
-/* Wide screen: the selection bar stands in for the filter row (22c). */
+/* Wide screen: the selection bar stands in for the filter row (22c), which
+   keeps its size; hidden, it leaves the tab order and the screen reader too. */
 @media (width >= 768px) {
   .filterRowReplaced {
     @layer route {
-      display: none;
+      visibility: hidden;
     }
   }
 
@@ -179,10 +188,9 @@
     }
   }
 
-  /* Only the waiting work is left to show: no row of its own, or an empty
-     one would still cost the page a gap. */
-  .header,
-  .headerLead {
+  /* Only the visually hidden headline is left: no row of its own, or an
+     empty one would still cost the page a gap. */
+  .header {
     @layer route {
       display: contents;
     }
