@@ -1,5 +1,10 @@
+/* The filter row's height, so the two share the filter cell without a jump
+   (22c, cioukqn6); the cell gives the spacing. */
 .bar {
   @layer variant {
-    margin-block-end: 16px;
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: 42px;
+    padding-block: 2px;
   }
 }

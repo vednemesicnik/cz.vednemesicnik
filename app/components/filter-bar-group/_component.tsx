@@ -1,9 +1,11 @@
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 
 import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  className?: string
 }
 
 /**
@@ -12,6 +14,6 @@ type Props = {
  *
  * @returns The group
  */
-export const FilterBarGroup = ({ children }: Props) => (
-  <div className={styles.filterBarGroup}>{children}</div>
+export const FilterBarGroup = ({ children, className }: Props) => (
+  <div className={clsx(styles.filterBarGroup, className)}>{children}</div>
 )

@@ -28,7 +28,10 @@ import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
-import { AUTHOR_ROLE_OPTIONS } from '~/utils/admin-filter-options'
+import {
+  ACCOUNT_OPTIONS,
+  AUTHOR_ROLE_OPTIONS,
+} from '~/utils/admin-filter-options'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
@@ -40,12 +43,6 @@ import { SORT_KEYS } from './sort'
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
-
-// Whether a user signs in as the author (28a).
-const ACCOUNT_OPTIONS = [
-  { label: 'S účtem', value: 'linked' },
-  { label: 'Bez účtu', value: 'none' },
-]
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {

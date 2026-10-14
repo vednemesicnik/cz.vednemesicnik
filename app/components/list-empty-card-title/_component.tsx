@@ -1,9 +1,11 @@
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 
 import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  className?: string
 }
 
 /**
@@ -11,6 +13,6 @@ type Props = {
  *
  * @returns The title
  */
-export const ListEmptyCardTitle = ({ children }: Props) => (
-  <p className={styles.listEmptyCardTitle}>{children}</p>
+export const ListEmptyCardTitle = ({ children, className }: Props) => (
+  <p className={clsx(styles.listEmptyCardTitle, className)}>{children}</p>
 )

@@ -172,7 +172,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 },
               )}
             >
-              Přidat epizodu
+              Nová epizoda
             </LinkButton>
           )}
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}

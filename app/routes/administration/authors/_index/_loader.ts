@@ -1,7 +1,14 @@
 import type { Prisma } from '@generated/prisma/client'
-import { data } from 'react-router'
+import { data, redirect } from 'react-router'
 
-import { parseAdminListFilters } from '~/utils/admin-list-filters'
+import {
+  ACCOUNT_OPTIONS,
+  AUTHOR_ROLE_OPTIONS,
+} from '~/utils/admin-filter-options'
+import {
+  buildStaleFilterRedirect,
+  parseAdminListFilters,
+} from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
@@ -59,6 +66,17 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   })
 
   const filters = parseAdminListFilters(request, TABLE_KEY)
+
+  // Repeated values in menu order, duplicates and unknown values dropped, so
+  // equal filters give equal URLs (22d).
+  const staleFilterRedirect = buildStaleFilterRedirect(url, {
+    account: ACCOUNT_OPTIONS,
+    role: AUTHOR_ROLE_OPTIONS,
+  })
+
+  if (staleFilterRedirect !== null) {
+    throw redirect(staleFilterRedirect)
+  }
 
   // If user only has "own" permission, filter to only their author profile.
   const permissionWhere =

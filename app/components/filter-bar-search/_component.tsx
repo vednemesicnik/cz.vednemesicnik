@@ -1,3 +1,5 @@
+import { clsx } from 'clsx'
+
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 
 import styles from './_styles.module.css'
@@ -5,6 +7,7 @@ import styles from './_styles.module.css'
 type Props = {
   defaultValue: string
   placeholder: string
+  className?: string
 }
 
 /**
@@ -13,8 +16,12 @@ type Props = {
  *
  * @returns The search field in its slot
  */
-export const FilterBarSearch = ({ defaultValue, placeholder }: Props) => (
-  <div className={styles.filterBarSearch}>
+export const FilterBarSearch = ({
+  defaultValue,
+  placeholder,
+  className,
+}: Props) => (
+  <div className={clsx(styles.filterBarSearch, className)}>
     <AdminTableSearch
       defaultValue={defaultValue}
       grow={true}

@@ -1,9 +1,11 @@
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 
 import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  className?: string
 }
 
 /**
@@ -13,6 +15,6 @@ type Props = {
  *
  * @returns The cell
  */
-export const FilterCell = ({ children }: Props) => (
-  <div className={styles.filterCell}>{children}</div>
+export const FilterCell = ({ children, className }: Props) => (
+  <div className={clsx(styles.filterCell, className)}>{children}</div>
 )

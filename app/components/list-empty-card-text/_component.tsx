@@ -1,9 +1,11 @@
+import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 
 import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  className?: string
 }
 
 /**
@@ -11,6 +13,6 @@ type Props = {
  *
  * @returns The sentence
  */
-export const ListEmptyCardText = ({ children }: Props) => (
-  <p className={styles.listEmptyCardText}>{children}</p>
+export const ListEmptyCardText = ({ children, className }: Props) => (
+  <p className={clsx(styles.listEmptyCardText, className)}>{children}</p>
 )

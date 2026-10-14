@@ -41,6 +41,8 @@ opens every list on the work that waits.
 - A new administration list with filters gets saved filters: a `FilterTable` value and a schema
   in `ADMIN_LIST_FILTER_SCHEMAS` (`app/utils/admin-list-filters.ts`). A list without filters
   gets neither.
+- No topic document in `docs/` describes the list filters yet; the current state is the
+  registry in `app/utils/admin-list-filters.ts` and the parts in `app/components/filter-bar`.
 - A new content type's list filters Stav by queue through `buildContentQueueWhere` and counts
   the queues with `countContentQueues`. The Coordinator's pending count comes from the same
   counts.

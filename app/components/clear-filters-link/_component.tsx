@@ -1,9 +1,14 @@
+import { clsx } from 'clsx'
 import { useSearchParams } from 'react-router'
 
 import { Link } from '~/components/link'
 import { buildClearFiltersSearch } from '~/utils/build-clear-filters-search'
 
 import styles from './_styles.module.css'
+
+type Props = {
+  className?: string
+}
 
 /**
  * Zrušit filtry at the end of the filter row (design 22d): back to the
@@ -13,12 +18,12 @@ import styles from './_styles.module.css'
  *
  * @returns The link
  */
-export const ClearFiltersLink = () => {
+export const ClearFiltersLink = ({ className }: Props) => {
   const [searchParams] = useSearchParams()
 
   return (
     <Link
-      className={styles.clearFiltersLink}
+      className={clsx(styles.clearFiltersLink, className)}
       preventScrollReset={true}
       to={{ search: buildClearFiltersSearch(searchParams) }}
     >
