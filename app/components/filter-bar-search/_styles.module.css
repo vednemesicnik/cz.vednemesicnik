@@ -1,0 +1,17 @@
+.filterBarSearch {
+  @layer component {
+    flex: 1 1 240px;
+    min-inline-size: 240px;
+    max-inline-size: 480px;
+  }
+}
+
+/* The search takes the whole row; in the column, no flex basis. */
+@media (width < 768px) {
+  .filterBarSearch {
+    @layer component {
+      flex: none;
+      max-inline-size: none;
+    }
+  }
+}

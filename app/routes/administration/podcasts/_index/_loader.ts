@@ -1,11 +1,22 @@
 import type { Prisma } from '@generated/prisma/client'
+import { redirect } from 'react-router'
 
-import { parseAdminListFilters } from '~/utils/admin-list-filters'
+import {
+  CONTRIBUTOR_STATE_FILTER_QUEUES,
+  STATE_FILTER_QUEUES,
+} from '~/config/content-queue-config'
+import {
+  buildStaleFilterRedirect,
+  parseAdminListFilters,
+} from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
+import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
@@ -92,11 +103,30 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
               ],
             },
           ]),
-      ...(filters.state === undefined ? [] : [{ state: filters.state }]),
+      ...(filters.state === undefined
+        ? []
+        : [{ OR: filters.state.map(buildContentQueueWhere) }]),
     ],
   }
 
-  const [rawPodcasts, savedFilters] = await Promise.all([
+  // A Contributor approves nothing: Odeslané instead of Ke schválení and
+  // Schválené (22i).
+  const isContributor = context.roleName === 'contributor'
+
+  // A state the role's menu does not offer (a Coordinator's link opened by a
+  // Contributor) drops, or it would filter unseen.
+  const staleFilterRedirect = buildStaleFilterRedirect(url, {
+    state: (isContributor
+      ? CONTRIBUTOR_STATE_FILTER_QUEUES
+      : STATE_FILTER_QUEUES
+    ).map((queue) => ({ value: queue })),
+  })
+
+  if (staleFilterRedirect !== null) {
+    throw redirect(staleFilterRedirect)
+  }
+
+  const [rawPodcasts, savedFilters, queueCounts] = await Promise.all([
     prisma.podcast.findMany({
       orderBy: ORDER_BY[sort](order),
       select: {
@@ -116,6 +146,13 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       where,
     }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
+    // The Stav menu counts work within what the role may view, whatever else
+    // is searched or filtered (22d).
+    countContentQueues(isContributor, (queue) =>
+      prisma.podcast.count({
+        where: { AND: [permissionWhere, buildContentQueueWhere(queue)] },
+      }),
+    ),
   ])
 
   // Compute permissions for each podcast
@@ -161,7 +198,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       targetAuthorIds: [context.authorId],
     }).hasPermission,
     filters,
+    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+    isContributor,
     podcasts,
     query,
+    queueCounts,
   }
 }

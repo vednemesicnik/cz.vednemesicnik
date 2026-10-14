@@ -6,7 +6,6 @@ import { MemoryRouter } from 'react-router'
 import { AdminTable } from './_component'
 import { TableBody } from './components/body'
 import { TableCell } from './components/cell'
-import { TableEmptyRow } from './components/empty-row'
 import { TableHeader } from './components/header'
 import { TableHeaderCell } from './components/header-cell'
 import { TableRow } from './components/row'
@@ -83,7 +82,7 @@ const meta: Meta<typeof AdminTable> = {
     docs: {
       description: {
         component:
-          'Shared administration table (design 22a): no box, small sentence-case header labels, one line under the header and one between rows. Wraps content in a horizontal-scroll container with optional sticky header and pending overlay; composes with TableHeader/TableRow/TableCell and TableEmptyRow. Tabular numbers and right-aligned action columns come for free.',
+          'Shared administration table (design 22a): no box, small sentence-case header labels, one line under the header and one between rows. Wraps content in a horizontal-scroll container with optional sticky header and pending overlay; composes with TableHeader/TableRow/TableCell (an empty list is a ListEmptyCard in place of the table, 22e). Tabular numbers and right-aligned action columns come for free.',
       },
     },
     layout: 'padded',
@@ -159,21 +158,6 @@ export const ArticleList: Story = {
             <TableCell variant="actions">Upravit</TableCell>
           </TableRow>
         ))}
-      </TableBody>
-    </AdminTable>
-  ),
-}
-
-/**
- * Empty list — TableEmptyRow spans every column with a muted centered message.
- */
-export const Empty: Story = {
-  parameters: { controls: { disable: true } },
-  render: () => (
-    <AdminTable>
-      <Head />
-      <TableBody>
-        <TableEmptyRow colSpan={4}>Žádní autoři</TableEmptyRow>
       </TableBody>
     </AdminTable>
   ),

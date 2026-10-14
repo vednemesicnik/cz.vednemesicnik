@@ -1,0 +1,27 @@
+.filterBar {
+  @layer component {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    inline-size: 100%;
+  }
+}
+
+/* The search at full width over a row of filters that scrolls sideways (22g). */
+@media (width < 768px) {
+  .filterBar {
+    @layer component {
+      display: block;
+    }
+  }
+}
+
+/* Wide screen: the selection bar stands in for the row (22c), which keeps its
+   size; hidden, it leaves the tab order and the screen reader too. */
+@media (width >= 768px) {
+  .isReplaced {
+    @layer variant {
+      visibility: hidden;
+    }
+  }
+}

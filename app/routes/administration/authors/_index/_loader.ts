@@ -67,13 +67,23 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       : {}
 
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
-  // match case-sensitively (accepted limitation). The role filter is ANDed with
-  // the permission clause, so it only ever narrows what the viewer may see.
+  // match case-sensitively (accepted limitation). The filters are ANDed with
+  // the permission clause, so they only ever narrow what the viewer may see.
   const where = {
     AND: [
       permissionWhere,
       ...(query === '' ? [] : [{ name: { contains: query } }]),
-      ...(filters.role === undefined ? [] : [{ role: { name: filters.role } }]),
+      ...(filters.role === undefined
+        ? []
+        : [{ role: { name: { in: filters.role } } }]),
+      // Both values together are everyone, as no value is (28a).
+      ...(filters.account?.length === 1
+        ? [
+            filters.account[0] === 'linked'
+              ? { user: { isNot: null } }
+              : { user: { is: null } },
+          ]
+        : []),
     ],
   }
 

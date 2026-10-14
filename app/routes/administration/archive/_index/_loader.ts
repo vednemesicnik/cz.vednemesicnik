@@ -1,11 +1,23 @@
 import type { Prisma } from '@generated/prisma/client'
+import { redirect } from 'react-router'
 
-import { parseAdminListFilters } from '~/utils/admin-list-filters'
+import {
+  CONTRIBUTOR_STATE_FILTER_QUEUES,
+  STATE_FILTER_QUEUES,
+} from '~/config/content-queue-config'
+import {
+  buildStaleFilterRedirect,
+  parseAdminListFilters,
+} from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
+import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
+import { getIssueYear } from '~/utils/get-issue-year'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
@@ -75,18 +87,60 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ),
   }
 
+  // The years an issue is in (26a), offered whether or not the role may view
+  // them, so a shared link means the same for everyone, as the article list's
+  // options do. An issue has no year of its own yet: it is its release's.
+  const issueYears = (
+    await prisma.issue.findMany({ select: { id: true, releasedAt: true } })
+  ).map((issue) => ({ id: issue.id, year: getIssueYear(issue.releasedAt) }))
+  const yearOptions = [...new Set(issueYears.map((issue) => issue.year))]
+    .sort((first, second) => second.localeCompare(first))
+    .map((year) => ({ label: year, value: year }))
+
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
-  // match case-sensitively (accepted limitation). The field filter is ANDed with
-  // the permission clause, so it only ever narrows what the role may view.
+  // match case-sensitively (accepted limitation). The field filters are ANDed
+  // with the permission clause, so they only ever narrow what the role may view.
   const where = {
     AND: [
       permissionWhere,
       ...(query === '' ? [] : [{ label: { contains: query } }]),
-      ...(filters.state === undefined ? [] : [{ state: filters.state }]),
+      ...(filters.state === undefined
+        ? []
+        : [{ OR: filters.state.map(buildContentQueueWhere) }]),
+      ...(filters.year === undefined
+        ? []
+        : [
+            {
+              id: {
+                in: issueYears
+                  .filter((issue) => filters.year?.includes(issue.year))
+                  .map((issue) => issue.id),
+              },
+            },
+          ]),
     ],
   }
 
-  const [rawIssues, savedFilters] = await Promise.all([
+  // A Contributor approves nothing: Odeslané instead of Ke schválení and
+  // Schválené (22i).
+  const isContributor = context.roleName === 'contributor'
+
+  // A year with no issue left, or a state the role's menu does not offer (a
+  // Coordinator's link opened by a Contributor), drops, or it would filter
+  // unseen.
+  const staleFilterRedirect = buildStaleFilterRedirect(url, {
+    state: (isContributor
+      ? CONTRIBUTOR_STATE_FILTER_QUEUES
+      : STATE_FILTER_QUEUES
+    ).map((queue) => ({ value: queue })),
+    year: yearOptions,
+  })
+
+  if (staleFilterRedirect !== null) {
+    throw redirect(staleFilterRedirect)
+  }
+
+  const [rawIssues, savedFilters, queueCounts] = await Promise.all([
     prisma.issue.findMany({
       orderBy: ORDER_BY[sort](order),
       select: {
@@ -106,6 +160,13 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       where,
     }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
+    // The Stav menu counts work within what the role may view, whatever else
+    // is searched or filtered (22d).
+    countContentQueues(isContributor, (queue) =>
+      prisma.issue.count({
+        where: { AND: [permissionWhere, buildContentQueueWhere(queue)] },
+      }),
+    ),
   ])
 
   // Compute permissions for each issue
@@ -151,7 +212,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       targetAuthorIds: [context.authorId],
     }).hasPermission,
     filters,
+    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+    isContributor,
     issues,
     query,
+    queueCounts,
+    yearOptions,
   }
 }

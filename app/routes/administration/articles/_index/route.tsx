@@ -1,8 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { clsx } from 'clsx'
-import { useEffect, useId, useRef } from 'react'
-import { href, useSearchParams } from 'react-router'
+import { useEffect, useRef } from 'react'
+import { href } from 'react-router'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -13,57 +12,42 @@ import {
   TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
-import { AdminTableSearch } from '~/components/admin/admin-table-search'
-import { Link } from '~/components/link'
+import { ClearFiltersButton } from '~/components/clear-filters-button'
+import { ClearFiltersLink } from '~/components/clear-filters-link'
+import { FilterBar } from '~/components/filter-bar'
+import { FilterBarFilters } from '~/components/filter-bar-filters'
+import { FilterBarGroup } from '~/components/filter-bar-group'
+import { FilterBarSearch } from '~/components/filter-bar-search'
+import { FilterCell } from '~/components/filter-cell'
+import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
+import { ListEmptyCard } from '~/components/list-empty-card'
+import { ListEmptyCardText } from '~/components/list-empty-card-text'
+import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
 import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
+import { SavedFiltersMenu } from '~/components/saved-filters-menu'
+import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { useToast } from '~/components/toast-provider'
-import type { ArticleQueue } from '~/config/article-queue-config'
+import { ARTICLE_NOUN } from '~/config/list-noun-config'
+import { getListEmptyMessage } from '~/utils/get-list-empty-message'
+import { getOptionLabels } from '~/utils/get-option-labels'
+import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
+import { getStateFilter } from '~/utils/get-state-filter'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../components/articles-tabs'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ArticleSelectionBar } from './components/article-selection-bar'
-import { FilterMenu, type FilterOption } from './components/filter-menu'
 import { ItemRow } from './components/item-row'
-import { SavedFiltersMenu } from './components/saved-filters-menu'
-import { SavedFiltersTrigger } from './components/saved-filters-trigger'
 import { SORT_KEYS } from './sort'
-import { buildClearFiltersSearch } from './utils/build-clear-filters-search'
-import { formatPendingSummary } from './utils/format-pending-summary'
-import { getEmptyListMessage } from './utils/get-empty-list-message'
-import { getSavedFilterSummary } from './utils/get-saved-filter-summary'
 import { useBulkActionResult } from './utils/use-bulk-action-result'
 import { useLiveArticleRows } from './utils/use-live-article-rows'
 
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
-
-type StateOption = { label: string; queue: ArticleQueue }
-
-const STATE_OPTIONS: StateOption[] = [
-  { label: 'Koncepty', queue: 'draft' },
-  { label: 'Ke schválení', queue: 'pending' },
-  { label: 'Schválené', queue: 'approved' },
-  { label: 'Publikované', queue: 'published' },
-  { label: 'Archivované', queue: 'archived' },
-]
-
-// A Contributor approves nothing: Odeslané, waiting or approved (22i).
-const CONTRIBUTOR_STATE_OPTIONS: StateOption[] = [
-  { label: 'Koncepty', queue: 'draft' },
-  { label: 'Odeslané', queue: 'submitted' },
-  { label: 'Publikované', queue: 'published' },
-  { label: 'Archivované', queue: 'archived' },
-]
-
-const getLabels = (options: FilterOption[], values: string[] | undefined) =>
-  options
-    .filter((option) => values?.includes(option.value) ?? false)
-    .map((option) => option.label)
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
@@ -97,10 +81,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   }, [loaderData, showToast])
 
   // Live, but the rows stay put until the next load (22f).
-  const { articles, liveChanges, pendingCount, queueCounts } =
-    useLiveArticleRows(loaderData)
+  const { articles, liveChanges, queueCounts } = useLiveArticleRows(loaderData)
 
-  const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
 
   const states = filters.state ?? []
@@ -111,27 +93,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     filters.author !== undefined
   const isDefault = states.length === 0 && !hasOtherFilters
 
-  const stateOptions: FilterOption[] = (
-    isContributor ? CONTRIBUTOR_STATE_OPTIONS : STATE_OPTIONS
-  ).map((option) => ({
-    // Ke schválení waits only for the Coordinator, who approves (22d).
-    attention: option.queue === 'pending' && isApprover && pendingCount > 0,
-    count: queueCounts.find((entry) => entry.queue === option.queue)?.count,
-    label: option.label,
-    value: option.queue,
-  }))
+  const stateFilter = getStateFilter({
+    isApprover,
+    isContributor,
+    noun: ARTICLE_NOUN,
+    queueCounts,
+  })
 
-  // The work that waits is a count on Stav, for the Coordinator only, also
-  // while Ke schválení is selected; it goes only at 0 (22d, cioukqn6).
-  const stateAttention =
-    isApprover && pendingCount > 0
-      ? { count: pendingCount, description: formatPendingSummary(pendingCount) }
-      : undefined
-
-  const clearFiltersSearch = buildClearFiltersSearch(searchParams)
-
-  // useId() contains colons, which are invalid in an id/anchor context.
-  const savedFiltersMenuId = `saved-filters-menu-${useId().replace(/:/g, '')}`
   const matchingFilterName = [...ownFilters, ...sharedFilters].find(
     (filter) => filter.id === matchingFilterId,
   )?.name
@@ -147,14 +115,32 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     )
 
   const summaryLines = getSavedFilterSummary({
-    authorNames: getLabels(authorOptions, filters.author),
-    categoryNames: getLabels(categoryOptions, filters.category),
+    filters: [
+      {
+        label: 'Stav',
+        valueLabels: getOptionLabels(stateFilter.options, filters.state),
+      },
+      {
+        label: 'Rubrika',
+        valueLabels: getOptionLabels(categoryOptions, filters.category),
+      },
+      {
+        label: 'Štítek',
+        valueLabels: getOptionLabels(tagOptions, filters.tag),
+      },
+      {
+        label: 'Autor',
+        valueLabels: getOptionLabels(authorOptions, filters.author),
+      },
+    ],
     query,
-    stateLabels: getLabels(stateOptions, filters.state),
-    tagNames: getLabels(tagOptions, filters.tag),
   })
 
-  const emptyMessage = getEmptyListMessage({ hasOtherFilters, states })
+  const emptyMessage = getListEmptyMessage({
+    hasOtherFilters,
+    noun: ARTICLE_NOUN,
+    states,
+  })
 
   // A row joins the selection when the bar could apply something to it (22c).
   const selectableIds = articles
@@ -180,7 +166,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           in the same cell, so the table does not move (22c, cioukqn6); on a
           wide screen only: a phone has no selection (22g), even one carried
           over from a wider window. */}
-      <div className={styles.filterCell}>
+      <FilterCell>
         {hasSelection && (
           <ArticleSelectionBar
             action={href('/administration/articles')}
@@ -190,27 +176,19 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           />
         )}
         {/* Everything that narrows the list is a filter, in one row (22d). */}
-        <search
-          className={clsx(
-            styles.filterRow,
-            hasSelection && styles.filterRowReplaced,
-          )}
-        >
-          <div className={styles.filterGroup}>
-            <div className={styles.search}>
-              <AdminTableSearch
-                defaultValue={query}
-                grow={true}
-                placeholder={'Název nebo adresa'}
-              />
-            </div>
-            <div className={styles.filters}>
+        <FilterBar replaced={hasSelection}>
+          <FilterBarGroup>
+            <FilterBarSearch
+              defaultValue={query}
+              placeholder={'Název nebo adresa'}
+            />
+            <FilterBarFilters>
               <FilterMenu
-                attention={stateAttention}
+                attention={stateFilter.attention}
                 clearLabel={'Vše'}
                 label={'Stav'}
                 name={'state'}
-                options={stateOptions}
+                options={stateFilter.options}
                 selectedValues={states}
               />
               <FilterMenu
@@ -236,54 +214,36 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 searchPlaceholder={'Hledat autora'}
                 selectedValues={filters.author ?? []}
               />
-              {!isDefault && (
-                <Link
-                  className={styles.clearFilters}
-                  preventScrollReset={true}
-                  to={{ search: clearFiltersSearch }}
-                >
-                  Zrušit filtry
-                </Link>
-              )}
-              {/* On a phone Uložené filtry ends the scrolling row (22g). */}
+              {!isDefault && <ClearFiltersLink />}
               <SavedFiltersTrigger
-                className={styles.phoneTrigger}
                 matchingFilterName={matchingFilterName}
-                menuId={savedFiltersMenuId}
+                placement={'filters'}
               />
-            </div>
-          </div>
+            </FilterBarFilters>
+          </FilterBarGroup>
           {/* Apart from the filters: it sets them all at once (22d). */}
           <SavedFiltersMenu
             currentQuery={currentFilterQuery}
+            defaultHint={ARTICLE_NOUN.defaultFilterHint}
             matchingFilterId={matchingFilterId}
             matchingFilterName={matchingFilterName}
-            menuId={savedFiltersMenuId}
             ownFilters={ownFilters}
             sharedFilters={sharedFilters}
             summaryLines={summaryLines}
-            triggerClassName={styles.wideTrigger}
+            tableKey={'articles'}
           />
-        </search>
-      </div>
+        </FilterBar>
+      </FilterCell>
       {totalCount === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
-        <div className={styles.empty}>
-          <p className={styles.emptyTitle}>{emptyMessage.title}</p>
+        <ListEmptyCard>
+          <ListEmptyCardTitle>{emptyMessage.title}</ListEmptyCardTitle>
           {emptyMessage.text !== null && (
-            <p className={styles.emptyText}>{emptyMessage.text}</p>
+            <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
           )}
-          {emptyMessage.action === 'newArticle' && renderNewArticleLink()}
-          {emptyMessage.action === 'clearFilters' && (
-            <LinkButton
-              preventScrollReset={true}
-              to={{ search: clearFiltersSearch }}
-              variant={'outline'}
-            >
-              Zrušit filtry
-            </LinkButton>
-          )}
-        </div>
+          {emptyMessage.action === 'create' && renderNewArticleLink()}
+          {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
+        </ListEmptyCard>
       ) : (
         <AdminTable
           className={styles.table}
@@ -344,10 +304,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       />
       {/* A bar that stays at the bottom of a phone's screen (22g, d9en8oih),
           unless the empty list already offers it (22e). */}
-      {canCreate &&
-        (totalCount > 0 || emptyMessage.action !== 'newArticle') && (
-          <div className={styles.newArticleBar}>{renderNewArticleLink()}</div>
-        )}
+      {canCreate && (totalCount > 0 || emptyMessage.action !== 'create') && (
+        <div className={styles.newArticleBar}>{renderNewArticleLink()}</div>
+      )}
     </AdminPage>
   )
 }

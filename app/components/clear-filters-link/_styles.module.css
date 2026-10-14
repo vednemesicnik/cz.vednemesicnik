@@ -1,0 +1,9 @@
+.clearFiltersLink {
+  @layer variant {
+    flex: none;
+    margin-inline-start: 4px;
+    /* 13 px, as the filter buttons. */
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+}

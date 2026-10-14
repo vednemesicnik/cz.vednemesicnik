@@ -1,0 +1,21 @@
+.filterBarGroup {
+  @layer component {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: safe center;
+    gap: 8px;
+    min-inline-size: 0;
+  }
+}
+
+@media (width < 768px) {
+  .filterBarGroup {
+    @layer component {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 10px;
+    }
+  }
+}
