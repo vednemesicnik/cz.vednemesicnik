@@ -39,9 +39,9 @@ the session.
   redirects from the old `add-…` and `edit-…` addresses.
 - A future design answer that puts a record's form in a dialog, or moves a page into one, comes
   back to product first. Choosing a page or a dialog is not part of a design answer.
-- The return to the opener uses the link state in
-  `app/routes/administration/articles/utils/return-to-opener-state.ts`. A new section reuses it
-  rather than adding another mechanism.
+- The return to the opener uses one link state, today in
+  `app/routes/administration/articles/utils/return-to-opener-state.ts`. The second section to use
+  it moves it to `app/utils/` rather than adding another mechanism.
 
 ## Alternatives considered
 
