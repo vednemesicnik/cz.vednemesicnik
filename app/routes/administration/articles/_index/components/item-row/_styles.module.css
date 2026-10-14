@@ -175,7 +175,7 @@
 }
 
 /* A row someone else changed: the tint holds 3 s, then leaves in 300 ms (22f).
-   No end keyframe and no fill-forwards, so zebra and hover return after it. */
+   No end keyframe and no fill-forwards, so hover returns after it. */
 .liveChangeOdd {
   @layer route {
     animation: live-change-odd 300ms ease-in-out 3s backwards;

@@ -5,6 +5,7 @@ import styles from './_styles.module.css'
 
 type Props = {
   children: string
+  className?: string
   end?: boolean
   to: string
 }
@@ -17,9 +18,9 @@ type Props = {
  * @param props.end - Match the address exactly, so a parent address is not active under its children.
  * @returns The tab
  */
-export const TabsItem = ({ children, end, to }: Props) => {
+export const TabsItem = ({ children, className, end, to }: Props) => {
   return (
-    <li className={styles.item}>
+    <li className={clsx(styles.item, className)}>
       <NavLink
         className={({ isActive }) =>
           clsx(styles.tab, isActive && styles.active)
