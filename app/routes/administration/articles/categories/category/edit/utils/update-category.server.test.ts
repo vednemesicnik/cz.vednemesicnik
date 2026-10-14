@@ -155,13 +155,14 @@ describe('updateCategory', () => {
     })
   })
 
-  test('writes only while the state and submission are the ones checked', async () => {
+  test('writes only while the author, state and submission are the ones checked', async () => {
     mocks.articleCategoryUpdateMany.mockResolvedValue({ count: 0 })
 
     await expect(updateCategory(request, options)).rejects.toMatchObject({
       init: { status: 403 },
     })
     expect(mocks.articleCategoryUpdateMany.mock.lastCall?.[0].where).toEqual({
+      authorId: 'author-1',
       id: 'category-1',
       state: 'draft',
       submittedAt: null,

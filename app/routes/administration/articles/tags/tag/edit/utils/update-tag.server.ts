@@ -2,7 +2,7 @@ import { data } from 'react-router'
 
 import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
-import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error'
+import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { requireContentUpdatePermission } from '~/utils/permissions/author/guards/require-content-update-permission.server'
@@ -102,10 +102,11 @@ export const updateTag = async (
   let count: number
 
   try {
-    // Only while the state and the submission are still the ones checked.
+    // Only while the author, state and submission are still the ones checked.
     const result = await prisma.articleTag.updateMany({
       data: { authorId, name, slug },
       where: {
+        authorId: storedTag.authorId,
         id: tagId,
         state: storedTag.state,
         submittedAt: storedTag.submittedAt,

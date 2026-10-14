@@ -155,13 +155,14 @@ describe('updateTag', () => {
     })
   })
 
-  test('writes only while the state and submission are the ones checked', async () => {
+  test('writes only while the author, state and submission are the ones checked', async () => {
     mocks.articleTagUpdateMany.mockResolvedValue({ count: 0 })
 
     await expect(updateTag(request, options)).rejects.toMatchObject({
       init: { status: 403 },
     })
     expect(mocks.articleTagUpdateMany.mock.lastCall?.[0].where).toEqual({
+      authorId: 'author-1',
       id: 'tag-1',
       state: 'draft',
       submittedAt: null,
