@@ -1,16 +1,3 @@
----
-name: reuse-existing-components
-description: |
-  Build UI from the components the project already has.
-
-  Trigger for:
-  - Writing markup in a route or a component (a link, a button, an icon, a heading, a field, a dialog)
-  - Planning a new component
-
-  DO NOT trigger for:
-  - Native elements no component wraps (`<ul>`, `<section>`, a layout `<div>`)
----
-
 # Reuse Existing Components
 
 ## Look in `app/components/` before writing markup

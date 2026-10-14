@@ -29,7 +29,8 @@ Do not write one for:
 - UX, layout or visuals — the design project owns them (`/ask-design`); a record may cite
   its answer when the decision also binds code;
 - user-facing Czech — the copywriter owns it (`/ask-copy`);
-- a convention for writing code — that is a rule in `.agents/rules/`;
+- a convention for writing code — that is a rule in `.agents/rules/`, or a skill when it
+  applies to one kind of work (decision 0014);
 - what the code already says plainly, or a detail that ends with the issue.
 
 If it is none of these, say which home it belongs in instead and stop.

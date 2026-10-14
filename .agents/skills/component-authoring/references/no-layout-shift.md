@@ -1,17 +1,3 @@
----
-name: no-layout-shift
-description: |
-  Content that appears, disappears or loads never moves what is already on screen.
-
-  Trigger for:
-  - Showing or hiding part of a page on a condition (a count, a notice, a link, a button)
-  - Images, embeds and anything whose size is known only after it loads
-  - Aligning items in a row where one item's height can change
-
-  DO NOT trigger for:
-  - A move the person caused and expects (opening a disclosure, expanding a row)
----
-
 # No Layout Shift
 
 ## Decide where things stand before the data decides

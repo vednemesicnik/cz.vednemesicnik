@@ -45,7 +45,8 @@ You are the **planning stage** of the issue pipeline:
 4. **Explore — and read it yourself unless you cannot.** Read `AGENTS.md` first, then the
    `.agents/rules/*/RULE.md` for the file types the change touches and the relevant
    `.agents/skills/*/SKILL.md` (react-router for routes/loaders/actions/middleware, prisma-*
-   for schema work, general-guidance for `.css` and `.stories.tsx`), and the
+   for schema work, general-guidance for `.css` and `.stories.tsx`, component-authoring for
+   markup and components), and the
    `modern-web-guidance` search for HTML/CSS/client-side JS. Prefer reusing existing
    functions and components over proposing new code.
 

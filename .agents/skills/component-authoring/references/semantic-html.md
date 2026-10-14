@@ -1,16 +1,3 @@
----
-name: semantic-html
-description: |
-  Mark up a page with the elements that say what each part is, not with `<div>`.
-
-  Trigger for:
-  - Writing markup in a route or a component
-  - Reviewing markup that is mostly `<div>` and `<span>`
-
-  DO NOT trigger for:
-  - A wrapper that exists only for layout and means nothing (a grid cell, a flex row)
----
-
 # Semantic HTML
 
 ## Pick the element by meaning, then style it
