@@ -1,6 +1,6 @@
 import type { TaxonomyRecordCopy } from '../utils/taxonomy-record-copy'
 
-/** A tag's dialog words (design 25e; copy 3htjei2x, dfsrpeuk). */
+/** A tag's add and edit words (design 25e; copy 3htjei2x, dfsrpeuk). */
 export const TAG_RECORD_COPY: TaxonomyRecordCopy = {
   editTitle: 'Upravit štítek',
   newTitle: 'Nový štítek',

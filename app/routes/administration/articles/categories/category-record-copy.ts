@@ -1,6 +1,6 @@
 import type { TaxonomyRecordCopy } from '../utils/taxonomy-record-copy'
 
-/** A category's dialog words (design 25c; copy 3htjei2x, dfsrpeuk). */
+/** A category's add and edit words (design 25c; copy 3htjei2x, dfsrpeuk). */
 export const CATEGORY_RECORD_COPY: TaxonomyRecordCopy = {
   editTitle: 'Upravit rubriku',
   newTitle: 'Nová rubrika',

@@ -24,7 +24,7 @@ type Result =
   | ({ status: 'conflict' } & TaxonomyConflicts)
 
 /**
- * Saves an edit of a tag from its dialog (design 25c). The permission is
+ * Saves an edit of a tag from its edit page (design 25c). The permission is
  * checked against the stored author and state, never against the form, and the
  * write only lands while they are still the ones checked. The caller has
  * checked the session (`checkCSRF`).

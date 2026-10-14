@@ -1,6 +1,6 @@
 import { type SubmissionResult, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { useEffect, useRef } from 'react'
+import { type MouseEvent, useEffect, useRef } from 'react'
 import { useFetcher, useLocation, useNavigate } from 'react-router'
 
 import { useToast } from '~/components/toast-provider'
@@ -8,8 +8,8 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { isNameTaken } from '~/utils/is-name-taken'
 import { recentChangeTints } from '~/utils/recent-change-tints'
 import { slugify } from '~/utils/slugify'
-import { useModalDialog } from '~/utils/use-modal-dialog'
-import { DIALOG_OPENER_STATE } from './dialog-opener-state'
+import { getListPathShowingRecord } from './get-list-path-showing-record'
+import { RETURN_TO_OPENER_STATE } from './return-to-opener-state'
 import type { TaxonomyRecordCopy } from './taxonomy-record-copy'
 import { taxonomyRecordSchema } from './taxonomy-record-schema'
 
@@ -20,7 +20,13 @@ type ActionData =
       submissionResult: SubmissionResult<string[]>
       slugSuggestion?: string | null
     }
-  | { status: 'success'; id: string; intent: string | null }
+  | {
+      status: 'success'
+      id: string
+      intent: string | null
+      name: string
+      slug: string
+    }
 
 type Options = {
   copy: TaxonomyRecordCopy
@@ -57,16 +63,18 @@ const getToast = (copy: TaxonomyRecordCopy, intent: string | null) => {
 }
 
 /**
- * Saves a category or tag from its dialog (design 25c, 30c): the form, sent
- * through a fetcher so the dialog stays open on an error; on success a toast,
- * the row's tint and closing. Closing goes back to the page that opened the
- * dialog, or to its parent when nothing in the app did (a shared link).
+ * Saves a category or tag from its add or edit page (design 25c, 30c): the
+ * form, sent through a fetcher so its errors stay at the fields; on success a
+ * toast, the row's tint and leaving. Leaving goes back to the page that opened
+ * this one, or to the record's parent when nothing in the app did (a shared
+ * link).
  *
- * @param options.parentPath - The dialog's parent with its query.
- * @returns The dialog's ref, the fetcher, the Conform form and fields, the
- *   free address the server suggests for a taken one, and `close`.
+ * @param options.parentPath - The record's parent with its query.
+ * @returns The fetcher, the Conform form and fields, the free address the
+ *   server suggests for a taken one, and `handleCancel` for the Zrušit link to
+ *   `parentPath`.
  */
-export const useTaxonomyRecordDialog = ({
+export const useTaxonomyRecordForm = ({
   copy,
   defaultValue,
   formId,
@@ -77,15 +85,19 @@ export const useTaxonomyRecordDialog = ({
   const showToast = useToast()
   const fetcher = useFetcher<ActionData>()
 
-  const isOpenedInApp =
-    location.state?.opensDialog === DIALOG_OPENER_STATE.opensDialog
-  const ref = useModalDialog(
-    () =>
-      isOpenedInApp
-        ? navigate(-1)
-        : navigate(parentPath, { preventScrollReset: true, replace: true }),
-    { shouldStayOpen: () => fetcher.state !== 'idle' },
-  )
+  const returnsToOpener =
+    location.state?.returnsToOpener === RETURN_TO_OPENER_STATE.returnsToOpener
+  const leave = () =>
+    returnsToOpener ? navigate(-1) : navigate(parentPath, { replace: true })
+
+  // Zrušit is a link to the parent; opened from a page of the app, it goes
+  // back to that page instead, with its scroll position.
+  const handleCancel = (event: MouseEvent) => {
+    if (!returnsToOpener) return
+
+    event.preventDefault()
+    navigate(-1)
+  }
 
   const lastResult =
     fetcher.data !== undefined && 'submissionResult' in fetcher.data
@@ -135,8 +147,24 @@ export const useTaxonomyRecordDialog = ({
 
     recentChangeTints.mark(result.id)
     showToast(getToast(copy, result.intent))
-    ref.current?.close()
-  }, [copy, fetcher.data, fetcher.state, ref, showToast])
+
+    // A new row the list's state filter or search would hide opens the list
+    // without them (25c).
+    if (result.intent !== null) {
+      const listPath = getListPathShowingRecord(parentPath, {
+        name: result.name,
+        slug: result.slug,
+        state: result.intent === INTENT_VALUE.publish ? 'published' : 'draft',
+      })
+
+      if (listPath !== parentPath) {
+        navigate(listPath, { replace: true })
+        return
+      }
+    }
+
+    leave()
+  })
 
   const slugSuggestion =
     fetcher.data !== undefined && 'slugSuggestion' in fetcher.data
@@ -144,12 +172,11 @@ export const useTaxonomyRecordDialog = ({
       : null
 
   return {
-    close: () => ref.current?.close(),
     fetcher,
     fields,
     form,
+    handleCancel,
     isSubmitting: fetcher.state !== 'idle',
-    ref,
     slugSuggestion,
   }
 }

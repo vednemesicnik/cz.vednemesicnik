@@ -1,5 +1,5 @@
 /**
- * The words of a category's or tag's dialog, toasts and errors (design 25c,
+ * The words of a category's or tag's add and edit pages, toasts and errors (design 25c,
  * 25e): the same screens, feminine for a category, masculine for a tag.
  */
 export type TaxonomyRecordCopy = {

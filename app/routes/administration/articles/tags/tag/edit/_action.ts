@@ -44,5 +44,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     )
   }
 
-  return { id: result.id, intent: null, status: 'success' as const }
+  return {
+    id: result.id,
+    intent: null,
+    name,
+    slug,
+    status: 'success' as const,
+  }
 }

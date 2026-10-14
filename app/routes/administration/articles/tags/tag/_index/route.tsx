@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { useRef } from 'react'
-import { href, Outlet, useFetcher } from 'react-router'
+import { href, useFetcher } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
 import { AdminActionGroup } from '~/components/admin/admin-action-group'
@@ -28,7 +28,7 @@ import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentEvents } from '~/hooks/use-content-events'
-import { DIALOG_OPENER_STATE } from '../../../utils/dialog-opener-state'
+import { RETURN_TO_OPENER_STATE } from '../../../utils/return-to-opener-state'
 import type { Route } from './+types/route'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
@@ -95,7 +95,7 @@ export default function RouteComponent({
         {canEdit && (
           <LinkButton
             disabled={isSubmitting}
-            state={DIALOG_OPENER_STATE}
+            state={RETURN_TO_OPENER_STATE}
             to={href('/administration/articles/tags/:tagId/edit', {
               tagId,
             })}
@@ -230,8 +230,6 @@ export default function RouteComponent({
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
-      {/* The edit dialog (/edit) opens over the detail (design 30a). */}
-      <Outlet />
     </AdminPage>
   )
 }

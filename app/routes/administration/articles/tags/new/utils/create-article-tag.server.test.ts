@@ -120,14 +120,19 @@ describe('createArticleTag', () => {
   test.each([
     [CONTRIBUTOR_LEVEL, 'publish'],
     [COORDINATOR_LEVEL, 'submit-for-review'],
-  ])('role level %i may not %s from the dialog', async (roleLevel, intent) => {
-    mocks.getAuthorPermissionContext.mockResolvedValue(createContext(roleLevel))
+  ])(
+    'role level %i may not %s from the add page',
+    async (roleLevel, intent) => {
+      mocks.getAuthorPermissionContext.mockResolvedValue(
+        createContext(roleLevel),
+      )
 
-    await expect(
-      createArticleTag(request, { ...options, intent }),
-    ).rejects.toMatchObject({ init: { status: 403 } })
-    expect(mocks.articleTagCreate).not.toHaveBeenCalled()
-  })
+      await expect(
+        createArticleTag(request, { ...options, intent }),
+      ).rejects.toMatchObject({ init: { status: 403 } })
+      expect(mocks.articleTagCreate).not.toHaveBeenCalled()
+    },
+  )
 
   test('answers a taken address with a free suggestion and writes nothing', async () => {
     mocks.articleTagFindMany.mockResolvedValue([

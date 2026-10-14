@@ -26,7 +26,7 @@ type Result =
   | ({ status: 'conflict' } & TaxonomyConflicts)
 
 /**
- * Creates a category as a draft from the add dialog (design 25c). The caller
+ * Creates a category as a draft from its add page (design 25c). The caller
  * has checked the session (`checkCSRF`) and publishes or submits it next.
  *
  * @param request - The action's request.
@@ -58,7 +58,7 @@ export const createCategory = async (
     targetAuthorIds: [authorId],
   })
 
-  // The dialog offers one primary action by role (07c); a forged one is refused
+  // The page offers one primary action by role (07c); a forged one is refused
   // before the draft exists.
   if (
     intent !== INTENT_VALUE.saveDraft &&

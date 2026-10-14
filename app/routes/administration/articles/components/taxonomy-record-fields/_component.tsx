@@ -36,7 +36,7 @@ type Props = {
 }
 
 /**
- * A category's or tag's fields in its dialog (design 25c): Název, Adresa with
+ * A category's or tag's fields on its add and edit pages (design 25c): Název, Adresa with
  * the full public address as its hint, and Autor for the Coordinator.
  *
  * @param props.authors - The authors to pick from, for the Coordinator only;

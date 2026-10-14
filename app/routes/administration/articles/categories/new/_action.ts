@@ -64,5 +64,5 @@ export const action = async ({ request }: Route.ActionArgs) => {
     await categorySubmissionHandlers.submit(request, { id: result.id, target })
   }
 
-  return { id: result.id, intent, status: 'success' as const }
+  return { id: result.id, intent, name, slug, status: 'success' as const }
 }

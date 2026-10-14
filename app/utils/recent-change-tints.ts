@@ -39,8 +39,8 @@ const createRecentChangeTints = () => {
 }
 
 /**
- * Rows one has just saved in a dialog (design 30c, 39aqwklv): the dialog marks
- * the record before it closes, and the list's row reads its tint (22f). Kept in
+ * Rows one has just saved (design 30c, 39aqwklv): the add or edit page marks
+ * the record before it leaves, and the list's row reads its tint (22f). Kept in
  * the tab's memory, so a reload doesn't replay the tint.
  */
 export const recentChangeTints = createRecentChangeTints()

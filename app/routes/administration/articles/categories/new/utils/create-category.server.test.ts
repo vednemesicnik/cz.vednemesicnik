@@ -117,14 +117,19 @@ describe('createCategory', () => {
   test.each([
     [CONTRIBUTOR_LEVEL, 'publish'],
     [COORDINATOR_LEVEL, 'submit-for-review'],
-  ])('role level %i may not %s from the dialog', async (roleLevel, intent) => {
-    mocks.getAuthorPermissionContext.mockResolvedValue(createContext(roleLevel))
+  ])(
+    'role level %i may not %s from the add page',
+    async (roleLevel, intent) => {
+      mocks.getAuthorPermissionContext.mockResolvedValue(
+        createContext(roleLevel),
+      )
 
-    await expect(
-      createCategory(request, { ...options, intent }),
-    ).rejects.toMatchObject({ init: { status: 403 } })
-    expect(mocks.articleCategoryCreate).not.toHaveBeenCalled()
-  })
+      await expect(
+        createCategory(request, { ...options, intent }),
+      ).rejects.toMatchObject({ init: { status: 403 } })
+      expect(mocks.articleCategoryCreate).not.toHaveBeenCalled()
+    },
+  )
 
   test('answers a taken address with a free suggestion and writes nothing', async () => {
     mocks.articleCategoryFindMany.mockResolvedValue([
