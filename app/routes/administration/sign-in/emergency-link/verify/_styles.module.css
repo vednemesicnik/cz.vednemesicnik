@@ -1,0 +1,46 @@
+.account {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-align: center;
+    text-wrap: pretty;
+  }
+}
+
+.value {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+  }
+}
+
+/* The link's two lines stand apart from Účet: … by a larger gap (n2fjcvyq). */
+.details {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-align: center;
+  }
+}
+
+.line {
+  @layer route {
+    margin: 0;
+  }
+}
+
+.origin {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin: 0;
+  }
+}

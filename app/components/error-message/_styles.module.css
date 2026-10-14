@@ -1,20 +1,28 @@
+/* The design system's error line (`.vdm-field__error`): an icon, so the error
+   never relies on colour alone. The icon is 1em, 14 px at this size. */
 .container {
-  display: flex;
-  flex-direction: row;
-  align-items: start;
-  justify-content: start;
-  gap: 4px;
-  color: var(--error);
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
+  @layer component {
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+    justify-content: start;
+    gap: 4px;
+    color: var(--error-text);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-sm);
+  }
 }
 
 .error {
-  line-height: 1;
-  padding: 0;
-  margin: 0;
+  @layer component {
+    padding: 0;
+    margin: 0;
+  }
 }
 
 .icon {
-  flex-shrink: 0;
+  @layer component {
+    flex-shrink: 0;
+    margin-block-start: 2px;
+  }
 }

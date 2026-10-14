@@ -1,0 +1,114 @@
+/* Never taller than the window: the lists give way and scroll, the heading,
+   sentences, date and buttons stay in view (22c). */
+.content {
+  @layer route {
+    max-block-size: calc(100dvh - 48px);
+    min-block-size: 0;
+  }
+}
+
+.form {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    gap: 14px;
+    min-block-size: 0;
+    width: 100%;
+  }
+}
+
+.orderedSection,
+.keptSection {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    gap: 8px;
+    min-width: 0;
+    min-block-size: 0;
+  }
+}
+
+/* At least two rows of the order stay visible in a short window. */
+.orderedSection {
+  @layer route {
+    min-block-size: 150px;
+
+    & > ol {
+      flex: 0 1 auto;
+      min-block-size: 0;
+    }
+  }
+}
+
+.subheading {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}
+
+.keptList {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-block-size: 0;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+}
+
+.keptRow {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+  }
+}
+
+.text {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+}
+
+.detail {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}
+
+.date {
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
+/* What the Coordinator approves, skips or publishes unsubmitted, in full ink (22c). */
+.note {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    color: var(--text-primary);
+  }
+}

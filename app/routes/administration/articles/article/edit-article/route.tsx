@@ -12,12 +12,9 @@ import type { SubmitEvent } from 'react'
 import { href, useNavigation } from 'react-router'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminDraftRestoreBanner } from '~/components/admin/admin-draft-restore-banner'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminImageInput } from '~/components/admin/admin-image-input'
 import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminLeaveConfirmationDialog } from '~/components/admin/admin-leave-confirmation-dialog'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminRadioInput } from '~/components/admin/admin-radio-input'
 import { AdminTextEditor } from '~/components/admin/admin-text-editor'
@@ -28,7 +25,10 @@ import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
 import { DeleteIcon } from '~/components/icons/delete-icon'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import {
   clearArticleBackup,
@@ -152,7 +152,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Upravit článek</AdminHeadline>
+      <PageTitle>Upravit článek</PageTitle>
 
       {backup !== null && (
         <AdminDraftRestoreBanner
@@ -181,7 +181,7 @@ export default function RouteComponent({
             disabled={isLoadingOrSubmitting}
             legend={'Základní informace'}
           >
-            <AdminInput
+            <TextField
               {...getInputProps(fields.title, { type: 'text' })}
               errors={fields.title.errors}
               label={'Název'}
@@ -194,7 +194,7 @@ export default function RouteComponent({
             >
               Vygenerovat nový slug
             </AdminButtonLink>
-            <AdminInput
+            <TextField
               {...getInputProps(fields.slug, { type: 'text' })}
               errors={fields.slug.errors}
               label={'Slug'}
@@ -303,10 +303,9 @@ export default function RouteComponent({
                     }
                   />
 
-                  <AdminInput
+                  <TextField
                     {...getInputProps(imageFields.altText, { type: 'text' })}
-                    className={styles.imageFieldAltTextInput}
-                    containerClassName={styles.imageFieldAltTextContainer}
+                    className={styles.imageFieldAltTextContainer}
                     errors={imageFields.altText.errors}
                     label={'Alt text'}
                     placeholder={
@@ -370,10 +369,9 @@ export default function RouteComponent({
                     field={imageFields.file}
                     label={'Obrázek'}
                   />
-                  <AdminInput
+                  <TextField
                     {...getInputProps(imageFields.altText, { type: 'text' })}
-                    className={styles.imageFieldAltTextInput}
-                    containerClassName={styles.imageFieldAltTextContainer}
+                    className={styles.imageFieldAltTextContainer}
                     errors={imageFields.altText.errors}
                     label={'Alt text'}
                     placeholder={
@@ -456,14 +454,15 @@ export default function RouteComponent({
             <Button disabled={!canSubmit} type={'submit'}>
               {isSubmitting ? 'Ukládá se...' : 'Uložit'}
             </Button>
-            <AdminLinkButton
+            <LinkButton
               disabled={isLoadingOrSubmitting}
               to={href('/administration/articles/:articleId', {
                 articleId: params.articleId,
               })}
+              variant={'outline'}
             >
               Zrušit
-            </AdminLinkButton>
+            </LinkButton>
           </FormActions>
         </Form>
       </FormProvider>

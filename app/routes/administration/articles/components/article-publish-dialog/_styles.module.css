@@ -1,0 +1,36 @@
+/* The title on its own line, the authors under it (23f). */
+.article {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.authors {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}
+
+/* What the Coordinator skips, in full ink (23f). */
+.note {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    color: var(--text-primary);
+  }
+}
+
+.form {
+  @layer route {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+  }
+}

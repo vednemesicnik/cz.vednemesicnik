@@ -1,0 +1,17 @@
+.form {
+  @layer route {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+  }
+}
+
+/* The date beside a narrower time, the error under both (23f). */
+.fields {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 130px;
+    align-items: start;
+    gap: 12px;
+  }
+}

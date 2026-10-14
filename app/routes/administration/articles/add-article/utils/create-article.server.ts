@@ -1,9 +1,11 @@
 import { createId } from '@paralleldrive/cuid2'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { buildArticleFeaturedImageSeo } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import { storeImageVariants } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 type Options = {
   title: string
@@ -107,6 +109,15 @@ export async function createArticle(
           twitterImageUrl,
         },
       })
+
+      await recordContentLog(
+        { entity: 'article', entityId: createdArticle.id, events: ['create'] },
+        context,
+      )
+      publishContentEvent(
+        { change: 'create', entity: 'article', entityId: createdArticle.id },
+        context,
+      )
 
       return createdArticle
     },

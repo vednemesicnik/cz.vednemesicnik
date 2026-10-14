@@ -1,5 +1,6 @@
 import { data, href } from 'react-router'
 
+import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -7,10 +8,7 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import {
-  canPublishWithoutReview,
-  needsReviewToPublish,
-} from '~/utils/permissions/author/review-policy'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 
 import type { Route } from './+types/route'
 
@@ -61,24 +59,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       reviews: {
         select: {
           createdAt: true,
-          id: true,
           reviewer: {
-            select: {
-              id: true,
-              name: true,
-              role: {
-                select: {
-                  level: true,
-                  name: true,
-                },
-              },
-            },
+            select: { id: true, role: { select: { level: true } } },
           },
-          state: true,
         },
       },
       state: true,
-      updatedAt: true,
+      submittedAt: true,
     },
     where: { id: issueId },
   })
@@ -96,101 +83,24 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // Check update permission
-  const { hasPermission: canUpdate } = context.can({
-    action: 'update',
-    entity: 'issue',
-    state: issue.state,
-    targetAuthorIds: [issue.author.id],
-  })
-
-  // Check delete permission
-  const { hasPermission: canDelete } = context.can({
-    action: 'delete',
-    entity: 'issue',
-    state: issue.state,
-    targetAuthorIds: [issue.author.id],
-  })
-
-  // Check publish permission (draft → published)
-  const { hasPermission: canPublish } = context.can({
-    action: 'publish',
-    entity: 'issue',
-    state: issue.state,
-    targetAuthorIds: [issue.author.id],
-  })
-
-  // Whether an approving review exists and whether one is still needed to publish.
-  const hasApprovingReview = issue.reviews.some((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
-  const needsReview = needsReviewToPublish({
+  const flags = getContentActionFlags(context, 'issue', {
     authors: [issue.author],
     reviews: issue.reviews,
-  })
-
-  // Check retract permission (published → draft)
-  const { hasPermission: canRetract } = context.can({
-    action: 'retract',
-    entity: 'issue',
     state: issue.state,
-    targetAuthorIds: [issue.author.id],
+    submittedAt: issue.submittedAt,
   })
-
-  // Check archive permission (published → archived)
-  const { hasPermission: canArchive } = context.can({
-    action: 'archive',
-    entity: 'issue',
-    state: issue.state,
-    targetAuthorIds: [issue.author.id],
-  })
-
-  // Check restore permission (archived → draft)
-  const { hasPermission: canRestore } = context.can({
-    action: 'restore',
-    entity: 'issue',
-    state: issue.state,
-    targetAuthorIds: [issue.author.id],
-  })
-
-  // Check review permission
-  const { hasPermission: canReview } = context.can({
-    action: 'review',
-    entity: 'issue',
-    state: issue.state,
-    targetAuthorIds: [issue.author.id],
-  })
-
-  // Don't show review button if:
-  // 1. Author can publish without review - they don't need reviews
-  // 2. Current user is the author - can't review own content
-  const authorCanPublishWithoutReview = canPublishWithoutReview(
-    issue.author.role,
-  )
-  const isOwnContent = issue.author.id === context.authorId
-  const shouldShowReview =
-    canReview && !authorCanPublishWithoutReview && !isOwnContent
-
-  // Check if current user has already reviewed this issue
-  const hasReviewed = issue.reviews.some(
-    (review) => review.reviewer.id === context.authorId,
-  )
 
   return {
-    canArchive,
-    canDelete,
-    canPublish,
-    canRestore,
-    canRetract,
-    canReview: shouldShowReview,
-    canUpdate,
-    hasReviewed,
     issue: {
       author: issue.author,
       coverUrl: createImageSources('issue-cover', issue.cover).src ?? null,
-      createdAt: createFormattedDate(issue.createdAt),
-      hasApprovingReview,
       hasCover: !!issue.cover,
+      history: await getContentHistory({
+        createdAt: issue.createdAt,
+        entity: 'issue',
+        entityId: issue.id,
+        publishedAt: issue.publishedAt,
+      }),
       id: issue.id,
       label: issue.label,
       pdfFileName: issue.pdf?.fileName ?? null,
@@ -199,19 +109,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         : null,
       publishedAt: createFormattedDate(issue.publishedAt),
       releasedAt: createFormattedDate(issue.releasedAt),
-      reviews: issue.reviews.map((review) => ({
-        createdAt: createFormattedDate(review.createdAt),
-        id: review.id,
-        reviewer: {
-          id: review.reviewer.id,
-          name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
-        },
-        state: review.state,
-      })),
       state: issue.state,
-      updatedAt: createFormattedDate(issue.updatedAt),
     },
-    needsReview,
+    ...flags,
+    submission: flags.submission?.state ?? null,
   }
 }

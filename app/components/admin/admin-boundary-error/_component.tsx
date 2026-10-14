@@ -1,12 +1,11 @@
 import { useLocation } from 'react-router'
-
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useHighlightSidebarSection } from '~/components/admin/sidebar-highlight-provider'
 import { BoundaryDiagnostics } from '~/components/boundary-error/components/boundary-diagnostics'
 import type { ContentKind } from '~/components/boundary-error/utils/content-kind'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 
 import styles from './_styles.module.css'
 import { resolveAdminBoundaryView } from './utils/resolve-admin-boundary-view'
@@ -32,19 +31,21 @@ export const AdminBoundaryError = ({ error, kind }: Props) => {
 
   return (
     <AdminPage>
-      <AdminHeadline>{view.title}</AdminHeadline>
+      <PageTitle>{view.title}</PageTitle>
       <AdminParagraph>{view.sentence}</AdminParagraph>
       {view.unexpected && <BoundaryDiagnostics error={error} />}
 
       <div className={styles.actions}>
-        {view.actions.map((action) => (
-          <AdminLinkButton
+        {/* The first action is primary, the rest ghost (30d–30h). */}
+        {view.actions.map((action, index) => (
+          <LinkButton
             key={action.label}
             reloadDocument={action.reload}
             to={action.href}
+            variant={index === 0 ? 'primary' : 'ghost'}
           >
             {action.label}
-          </AdminLinkButton>
+          </LinkButton>
         ))}
       </div>
     </AdminPage>

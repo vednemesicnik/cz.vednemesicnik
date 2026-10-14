@@ -7,5 +7,5 @@ type Props = {
 }
 
 export const AdminTableToolbar = ({ children }: Props) => {
-  return <div className={styles.toolbar}>{children}</div>
+  return <search className={styles.toolbar}>{children}</search>
 }

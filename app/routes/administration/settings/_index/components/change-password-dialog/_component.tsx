@@ -2,8 +2,6 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
-
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -12,10 +10,11 @@ import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
+import { TextField } from '~/components/text-field'
 import type { action as changePasswordAction } from '~/routes/administration/settings/change-password/_action'
 import { schema } from '~/routes/administration/settings/change-password/_schema'
 
-import { useModalDialog } from '../../utils/use-modal-dialog'
+import { useModalDialog } from '~/utils/use-modal-dialog'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -97,14 +96,14 @@ export const ChangePasswordDialog = ({
             </ErrorMessageGroup>
           )}
 
-          <AdminInput
+          <TextField
             label={'Nové heslo'}
             {...getInputProps(fields.newPassword, { type: 'password' })}
             autoComplete={'new-password'}
             disabled={isSubmitting}
             errors={fields.newPassword.errors}
           />
-          <AdminInput
+          <TextField
             label={'Nové heslo znovu'}
             {...getInputProps(fields.newPasswordConfirmation, {
               type: 'password',

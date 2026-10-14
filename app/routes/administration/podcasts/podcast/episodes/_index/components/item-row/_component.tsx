@@ -7,8 +7,6 @@ import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
 import {
   TableCell,
   TableRow,
@@ -17,6 +15,8 @@ import {
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
+import { LinkButton } from '~/components/link-button'
+import { StatusTag } from '~/components/status-tag'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 
 type Props = {
@@ -69,33 +69,35 @@ export const ItemRow = ({
       <TableCell>{title}</TableCell>
       <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell>
-        <AdminStateBadge state={state} />
+        <StatusTag state={state} />
       </TableCell>
       <TableCell variant={'actions'}>
         <AdminActionGroup>
           {canView && (
-            <AdminLinkButton
+            <LinkButton
               disabled={isDeleting}
               to={href(
                 '/administration/podcasts/:podcastId/episodes/:episodeId',
                 { episodeId: id, podcastId },
               )}
+              variant={'outline'}
             >
               <VisibilityIcon />
               Zobrazit
-            </AdminLinkButton>
+            </LinkButton>
           )}
           {canEdit && (
-            <AdminLinkButton
+            <LinkButton
               disabled={isDeleting}
               to={href(
                 '/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode',
                 { episodeId: id, podcastId },
               )}
+              variant={'outline'}
             >
               <EditIcon />
               Upravit
-            </AdminLinkButton>
+            </LinkButton>
           )}
           {canDelete && (
             <>

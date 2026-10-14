@@ -1,5 +1,10 @@
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
+import {
+  type PublishingAuthor,
+  publishContentEvent,
+} from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -10,6 +15,7 @@ type Args = {
   coverId: string
   cover?: File
   authorId: string
+  actor: PublishingAuthor
 }
 
 export async function updatePodcast({
@@ -20,6 +26,7 @@ export async function updatePodcast({
   coverId,
   cover,
   authorId,
+  actor,
 }: Args) {
   const coverAltText = `Obálka podcastu ${title}`
 
@@ -59,6 +66,15 @@ export async function updatePodcast({
       },
       where: { id },
     })
+
+    await recordContentLog(
+      { entity: 'podcast', entityId: id, events: ['update'] },
+      actor,
+    )
+    publishContentEvent(
+      { change: 'update', entity: 'podcast', entityId: id },
+      actor,
+    )
 
     await cleanup()
   } catch (error) {

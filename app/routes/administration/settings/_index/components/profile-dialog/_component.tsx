@@ -4,7 +4,6 @@ import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminAvatar } from '~/components/admin/admin-avatar'
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -15,16 +14,16 @@ import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
+import { TextField } from '~/components/text-field'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
-
+import { useModalDialog } from '~/utils/use-modal-dialog'
 import type { action as settingsAction } from '../../_action'
 import {
   BIO_MAX_LENGTH,
   MAX_PROFILE_IMAGE_SIZE,
   profileSchema,
 } from '../../_schema'
-import { useModalDialog } from '../../utils/use-modal-dialog'
 import { TextButton } from '../text-button'
 import styles from './_styles.module.css'
 
@@ -211,7 +210,7 @@ export const ProfileDialog = ({
             </ErrorMessageGroup>
           )}
 
-          <AdminInput
+          <TextField
             label={'Jméno'}
             {...getInputProps(fields.name, { type: 'text' })}
             disabled={isSubmitting}

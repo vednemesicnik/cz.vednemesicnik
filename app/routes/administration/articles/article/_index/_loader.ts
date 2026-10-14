@@ -1,5 +1,6 @@
 import { data } from 'react-router'
 
+import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -7,13 +8,12 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import {
-  APPROVER_ROLE_LEVEL,
-  canPublishWithoutReview,
-  needsReviewToPublish,
-} from '~/utils/permissions/author/review-policy'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
+import { getArticleFactLine } from '../../utils/get-article-fact-line'
 import type { Route } from './+types/route'
+import { getMissingArticleContent } from './utils/get-missing-article-content'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { articleId } = params
@@ -46,6 +46,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         },
       },
       categories: {
+        orderBy: { name: 'asc' },
         select: {
           id: true,
           name: true,
@@ -53,34 +54,29 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       content: true,
       createdAt: true,
-      featuredImageId: true,
+      excerpt: true,
+      featuredImage: {
+        select: {
+          ...imageSourceSelect,
+          description: true,
+        },
+      },
       id: true,
       images: {
-        select: imageSourceSelect,
+        select: { altText: true },
       },
       publishedAt: true,
       reviews: {
         select: {
           createdAt: true,
-          id: true,
-          reviewer: {
-            select: {
-              id: true,
-              name: true,
-              role: {
-                select: {
-                  level: true,
-                  name: true,
-                },
-              },
-            },
-          },
-          state: true,
+          reviewer: { select: { id: true, role: { select: { level: true } } } },
         },
       },
       slug: true,
       state: true,
+      submittedAt: true,
       tags: {
+        orderBy: { name: 'asc' },
         select: {
           id: true,
           name: true,
@@ -115,133 +111,64 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // Check update permission
-  const { hasPermission: canUpdate } = context.can({
-    action: 'update',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
+  const flags = getContentActionFlags(context, 'article', article)
 
-  // Check delete permission
-  const { hasPermission: canDelete } = context.can({
-    action: 'delete',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Check publish permission (draft → published)
-  const { hasPermission: canPublish } = context.can({
-    action: 'publish',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Whether an approving review (from a role exempt from the requirement) exists,
-  // and whether the content still needs one before publishing.
-  const hasApprovingReview = article.reviews.some((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
-  const needsReview = needsReviewToPublish({
-    authors: article.authors,
-    reviews: article.reviews,
-  })
-
-  // Check retract permission (published → draft)
-  const { hasPermission: canRetract } = context.can({
-    action: 'retract',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Check archive permission (published → archived)
-  const { hasPermission: canArchive } = context.can({
-    action: 'archive',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Check restore permission (archived → draft)
-  const { hasPermission: canRestore } = context.can({
-    action: 'restore',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Check review permission
-  const { hasPermission: canReview } = context.can({
-    action: 'review',
-    entity: 'article',
-    state: article.state,
-    targetAuthorIds,
-  })
-
-  // Don't show review button if:
-  // 1. All authors can publish without review - they don't need reviews
-  // 2. Current user is one of the authors - can't review own content
-  const authorCanPublishWithoutReview = article.authors.every((author) =>
-    canPublishWithoutReview(author.role),
-  )
-  const isOwnContent = article.authors.some(
-    (author) => author.id === context.authorId,
-  )
-  const shouldShowReview =
-    canReview && !authorCanPublishWithoutReview && !isOwnContent
-
-  // Check if current user has already reviewed this article
-  const hasReviewed = article.reviews.some(
-    (review) => review.reviewer.id === context.authorId,
-  )
+  // Publishing an incomplete article opens the 23h list instead of the date
+  // dialog; the server checks it again.
+  const missingBeforePublish = flags.canPublish
+    ? getMissingArticleContent({
+        authorCount: article.authors.length,
+        content: article.content,
+        excerpt: article.excerpt,
+        images: article.images,
+        slug: article.slug,
+        title: article.title,
+      })
+    : []
 
   return {
     article: {
       authors: article.authors,
       categories: article.categories,
       content: article.content,
-      createdAt: createFormattedDate(article.createdAt),
-      featuredImageId: article.featuredImageId,
-      hasApprovingReview,
+      excerpt: article.excerpt,
+      // The line under the title (design 22b, 23a).
+      factLine: getArticleFactLine({
+        now: new Date(),
+        publishedAt: article.publishedAt,
+        state: article.state,
+        submission: flags.submission,
+        updatedAt: article.updatedAt,
+      }),
+      featuredImage: article.featuredImage
+        ? {
+            altText: article.featuredImage.altText,
+            description: article.featuredImage.description,
+            sources: createImageSources('article-image', article.featuredImage),
+          }
+        : null,
+      history: await getContentHistory({
+        createdAt: article.createdAt,
+        entity: 'article',
+        entityId: article.id,
+        publishedAt: article.publishedAt,
+      }),
       id: article.id,
-      images: article.images.map((image) => ({
-        id: image.id,
-        sources: createImageSources('article-image', image),
-      })),
+      // The gallery is the editor's (24); the detail shows only the count (23a).
+      imageCount: article.images.length,
       // FormattedDate carries the raw instant in `.iso`, which seeds the
       // change-date dialog's picker (the browser converts it to/from local time,
       // keeping the default and submitted value in the editor's timezone).
       publishedAt: createFormattedDate(article.publishedAt),
-      reviews: article.reviews.map((review) => ({
-        createdAt: createFormattedDate(review.createdAt),
-        id: review.id,
-        reviewer: {
-          id: review.reviewer.id,
-          name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
-        },
-        state: review.state,
-      })),
       slug: article.slug,
       state: article.state,
       tags: article.tags,
       title: article.title,
-      updatedAt: createFormattedDate(article.updatedAt),
     },
-    canArchive,
-    canChangePublishedAt:
-      article.state === 'published' && context.roleLevel <= APPROVER_ROLE_LEVEL,
-    canDelete,
-    canPublish,
-    canPublishBackdated: canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
-    canRestore,
-    canRetract,
-    canReview: shouldShowReview,
-    canUpdate,
-    hasReviewed,
-    needsReview,
+    ...flags,
+    // Only the Coordinator publishes a retracted article again (23e).
+    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+    missingBeforePublish,
+    submission: flags.submission?.state ?? null,
   }
 }

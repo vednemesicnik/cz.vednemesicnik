@@ -1,50 +1,82 @@
 import type { Prisma } from '@generated/prisma/client'
-import { redirect } from 'react-router'
-
+import { data, redirect } from 'react-router'
+import type { ArticleQueue } from '~/config/article-queue-config'
 import {
   buildStaleFilterRedirect,
   parseAdminListFilters,
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { prisma } from '~/utils/db.server'
+import { formatNumericDate } from '~/utils/format-numeric-date'
 import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
+import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
+import { getArticleFactLine } from '../utils/get-article-fact-line'
 import type { Route } from './+types/route'
+import { PINNED_ROWS_PARAM } from './pinned-rows'
 import { SORT_KEYS, type SortKey } from './sort'
+import { buildArticleQueueWhere } from './utils/build-article-queue-where'
+import { getBulkActions } from './utils/get-bulk-actions'
+import { getRowActions } from './utils/get-row-actions'
 
 const PAGE_SIZE = 20
 
 const TABLE_KEY = 'articles'
 
-// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
-// equal values keep a deterministic order (matters most here — the list is
-// paginated, so unstable ordering could shuffle items across pages).
+// Each sort appends `createdAt desc` as a tie-breaker so rows with equal values
+// keep a deterministic order (matters most here — the list is paginated, so
+// unstable ordering could shuffle items across pages).
 const ORDER_BY: Record<
   SortKey,
   (order: SortOrder) => Prisma.ArticleOrderByWithRelationInput[]
 > = {
-  createdAt: (order) => [{ createdAt: order }],
   title: (order) => [{ title: order }, { createdAt: 'desc' }],
+  updatedAt: (order) => [{ updatedAt: order }, { createdAt: 'desc' }],
 }
 
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
-    actions: ['view', 'create', 'update', 'delete'],
+    actions: [
+      'view',
+      'create',
+      'update',
+      'delete',
+      'publish',
+      'retract',
+      'archive',
+      'restore',
+      'review',
+    ],
     entities: ['article'],
   })
 
+  // A live load of the rows on screen (22f): fresh data for exactly those rows,
+  // whatever the order, filters or page now say. A fetcher load, so it never
+  // redirects.
+  const pinnedIds = url.searchParams
+    .get(PINNED_ROWS_PARAM)
+    ?.split(',')
+    .filter((id) => id !== '')
+    .slice(0, PAGE_SIZE)
+  const isPinned = pinnedIds !== undefined
+
   // Before any query: a bare visit with a default preset never renders this list,
   // it redirects to the preset's own URL.
-  await resolveDefaultFilter({
-    tableKey: TABLE_KEY,
-    url,
-    userId: context.userId,
-  })
+  if (!isPinned) {
+    await resolveDefaultFilter({
+      tableKey: TABLE_KEY,
+      url,
+      userId: context.userId,
+    })
+  }
 
   // Check view permissions for each state
   const draftPerms = context.can({
@@ -65,7 +97,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const { order, page, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
-    defaultSort: 'createdAt',
+    defaultSort: 'updatedAt',
     sortKeys: SORT_KEYS,
   })
 
@@ -83,20 +115,23 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const permissionWhere: Prisma.ArticleWhereInput = { OR: viewableStates }
 
-  // Field filters are ANDed with the permission clause, so they only ever narrow
-  // what the role may view — `?state=draft` still yields own drafts only.
+  // Filters are ANDed with the permission clause, so they only ever narrow what
+  // the role may view — `?state=draft` still yields own drafts only. Within one
+  // filter its values are alternatives, across filters they all apply (22d).
   const filterConditions: Prisma.ArticleWhereInput[] = [
-    ...(filters.state === undefined ? [] : [{ state: filters.state }]),
+    ...(filters.state === undefined
+      ? []
+      : [{ OR: filters.state.map(buildArticleQueueWhere) }]),
     ...(filters.category === undefined
       ? []
-      : [{ categories: { some: { slug: filters.category } } }]),
+      : [{ categories: { some: { slug: { in: filters.category } } } }]),
     ...(filters.tag === undefined
       ? []
-      : [{ tags: { some: { slug: filters.tag } } }]),
+      : [{ tags: { some: { slug: { in: filters.tag } } } }]),
     // Authors are many-to-many, there is no authorId on Article — hence the id.
     ...(filters.author === undefined
       ? []
-      : [{ authors: { some: { id: filters.author } } }]),
+      : [{ authors: { some: { id: { in: filters.author } } } }]),
   ]
 
   // Shared by findMany and count, so totals and page counts follow the filters.
@@ -126,39 +161,95 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // article at all, which could never match anything.
   const withAnyArticle = { articles: { some: {} } }
 
-  const [rawArticles, totalCount, authors, categories, tags, savedFilters] =
-    await Promise.all([
-      prisma.article.findMany({
-        orderBy: ORDER_BY[sort](order),
-        select: {
-          authors: { select: { id: true } },
-          createdAt: true,
-          id: true,
-          state: true,
-          title: true,
+  // A Contributor sends articles but approves nothing: Odeslané instead of
+  // Ke schválení and Schválené (22i).
+  const isContributor = context.roleName === 'contributor'
+  const countedQueues: ArticleQueue[] = isContributor
+    ? ['draft', 'submitted']
+    : ['draft', 'pending', 'approved']
+  // The values of the role's Stav menu, in its order.
+  const offeredQueues: ArticleQueue[] = isContributor
+    ? ['draft', 'submitted', 'published', 'archived']
+    : ['draft', 'pending', 'approved', 'published', 'archived']
+
+  // The Stav menu counts work within what the role may view, whatever else is
+  // searched or filtered (22d).
+  const countQueue = (queue: ArticleQueue) =>
+    prisma.article.count({
+      where: { AND: [permissionWhere, buildArticleQueueWhere(queue)] },
+    })
+
+  // The page of the list, or the rows on screen for a live load (22f).
+  const rowsQuery: Pick<Prisma.ArticleFindManyArgs, 'skip' | 'take' | 'where'> =
+    isPinned
+      ? { where: { AND: [permissionWhere, { id: { in: pinnedIds } }] } }
+      : { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, where }
+
+  const [
+    rawArticles,
+    totalCount,
+    authors,
+    categories,
+    tags,
+    savedFilters,
+    queueCounts,
+  ] = await Promise.all([
+    prisma.article.findMany({
+      orderBy: ORDER_BY[sort](order),
+      select: {
+        authors: {
+          select: { id: true, name: true, role: { select: { level: true } } },
         },
-        skip: (page - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
-        where,
-      }),
-      prisma.article.count({ where }),
-      prisma.author.findMany({
-        orderBy: { name: 'asc' },
-        select: { id: true, name: true },
-        where: withAnyArticle,
-      }),
-      prisma.articleCategory.findMany({
-        orderBy: { name: 'asc' },
-        select: { name: true, slug: true },
-        where: withAnyArticle,
-      }),
-      prisma.articleTag.findMany({
-        orderBy: { name: 'asc' },
-        select: { name: true, slug: true },
-        where: withAnyArticle,
-      }),
-      loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
-    ])
+        categories: {
+          orderBy: { name: 'asc' },
+          select: { name: true, slug: true },
+        },
+        // Completeness before bulk publishing (23h, 22c).
+        content: true,
+        excerpt: true,
+        id: true,
+        images: { select: { altText: true } },
+        publishedAt: true,
+        reviews: {
+          select: {
+            createdAt: true,
+            reviewer: {
+              select: { id: true, role: { select: { level: true } } },
+            },
+          },
+        },
+        slug: true,
+        state: true,
+        submittedAt: true,
+        title: true,
+        updatedAt: true,
+      },
+      ...rowsQuery,
+    }),
+    prisma.article.count({ where }),
+    prisma.author.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true },
+      where: withAnyArticle,
+    }),
+    prisma.articleCategory.findMany({
+      orderBy: { name: 'asc' },
+      select: { name: true, slug: true },
+      where: withAnyArticle,
+    }),
+    prisma.articleTag.findMany({
+      orderBy: { name: 'asc' },
+      select: { name: true, slug: true },
+      where: withAnyArticle,
+    }),
+    loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
+    Promise.all(
+      countedQueues.map(async (queue) => ({
+        count: await countQueue(queue),
+        queue,
+      })),
+    ),
+  ])
 
   const authorOptions = authors.map((author) => ({
     label: author.name,
@@ -170,17 +261,19 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   }))
   const tagOptions = tags.map((tag) => ({ label: tag.name, value: tag.slug }))
 
-  // `state` is enum-backed, so the schema already validates it; the rest is
-  // data-driven and can go stale between two visits. Checked after the queries
-  // so the common path stays a single round trip — a stale value is rare and
-  // costs one extra request.
+  // Category, tag and author are data-driven and can go stale between two
+  // visits; a state the role's menu does not offer (a Coordinator's link opened
+  // by a Contributor) drops the same way, or it would filter unseen. Checked
+  // after the queries so the common path stays a single round trip — a stale
+  // value or a hand-written order is rare and costs one extra request.
   const staleFilterRedirect = buildStaleFilterRedirect(url, {
     author: authorOptions,
     category: categoryOptions,
+    state: offeredQueues.map((queue) => ({ value: queue })),
     tag: tagOptions,
   })
 
-  if (staleFilterRedirect !== null) {
+  if (staleFilterRedirect !== null && !isPinned) {
     throw redirect(staleFilterRedirect)
   }
 
@@ -188,63 +281,106 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   // Deleting the last row on the last page revalidates a URL past the end. Checked
   // after the stale-filter redirect, which already drops the page.
-  if (isPagePastLast(page, totalPages)) {
+  if (isPagePastLast(page, totalPages) && !isPinned) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
-  // Compute permissions for each article
-  const articles = rawArticles.map((article) => {
-    if (article.authors.length === 0) {
-      return {
-        ...article,
-        canDelete: false,
-        canEdit: false,
-        canView: false,
-      }
-    }
+  const now = new Date()
 
-    const targetAuthorIds = article.authors.map((a) => a.id)
+  const articles = rawArticles.map((article) => {
+    const flags = getContentActionFlags(context, 'article', article)
+
+    // A filtered category first, so the row shows why it is there; else the
+    // alphabetical first (22a).
+    const isFilteredCategory = (category: { slug: string }) =>
+      filters.category?.includes(category.slug) ?? false
+    const categoryNames = [
+      ...article.categories.filter(isFilteredCategory),
+      ...article.categories.filter((category) => !isFilteredCategory(category)),
+    ].map((category) => category.name)
+
+    const rowActions = getRowActions({
+      ...flags,
+      state: article.state,
+      submission: flags.submission?.state ?? null,
+    })
 
     return {
-      ...article,
-      canDelete: context.can({
-        action: 'delete',
-        entity: 'article',
+      ...rowActions,
+      authorNames: article.authors.map((author) => author.name),
+      // What the selection bar may apply to this row (22c).
+      bulkActions: getBulkActions({
+        ...rowActions,
+        isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+      }),
+      categoryNames,
+      factLine: getArticleFactLine({
+        now,
+        publishedAt: article.publishedAt,
         state: article.state,
-        targetAuthorIds,
-      }).hasPermission,
-      canEdit: context.can({
-        action: 'update',
-        entity: 'article',
-        state: article.state,
-        targetAuthorIds,
-      }).hasPermission,
-      canView: context.can({
-        action: 'view',
-        entity: 'article',
-        state: article.state,
-        targetAuthorIds,
-      }).hasPermission,
+        submission: flags.submission,
+        updatedAt: article.updatedAt,
+      }),
+      id: article.id,
+      // Bulk publishing skips it and says so up front (23h, 22c).
+      isIncomplete:
+        getMissingArticleContent({
+          authorCount: article.authors.length,
+          content: article.content,
+          excerpt: article.excerpt,
+          images: article.images,
+          slug: article.slug,
+          title: article.title,
+        }).length > 0,
+      // Publishing it, the dialog says nobody submitted it (23f).
+      isNotSubmitted:
+        article.state === 'draft' &&
+        flags.submission === null &&
+        flags.isSubmittable &&
+        !flags.isOwnContent,
+      publishedAt: article.publishedAt?.toISOString() ?? null,
+      slug: article.slug,
+      state: flags.submission?.state ?? article.state,
+      title: article.title,
+      updatedAt: formatNumericDate(article.updatedAt),
     }
   })
 
-  return {
-    ...savedFilters,
-    articles,
-    authorOptions,
-    canCreate: context.can({
-      action: 'create',
-      entity: 'article',
-      state: 'draft',
-      targetAuthorIds: [context.authorId],
-    }).hasPermission,
-    categoryOptions,
-    currentPage: page,
-    filters,
-    pageSize: PAGE_SIZE,
-    query,
-    tagOptions,
-    totalCount,
-    totalPages,
-  }
+  // Read only here: an earlier redirect must not use up the toast (23f).
+  const notice = await readAdminNotice(request)
+
+  return data(
+    {
+      ...savedFilters,
+      articles,
+      // Whose live changes are not someone else's (22f).
+      authorId: context.authorId,
+      authorOptions,
+      canCreate: context.can({
+        action: 'create',
+        entity: 'article',
+        state: 'draft',
+        targetAuthorIds: [context.authorId],
+      }).hasPermission,
+      categoryOptions,
+      currentPage: page,
+      filters,
+      isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+      isContributor,
+      pageSize: PAGE_SIZE,
+      // What waits for the Coordinator's approval, whatever is filtered (22a).
+      pendingCount:
+        queueCounts.find((entry) => entry.queue === 'pending')?.count ?? 0,
+      query,
+      queueCounts,
+      tagOptions,
+      // Smazáno after a delete from the detail, once (23f).
+      toast: notice.toast,
+      totalCount,
+      totalPages,
+    },
+    notice.toast === null
+      ? undefined
+      : { headers: { 'Set-Cookie': notice.setCookie } },
+  )
 }

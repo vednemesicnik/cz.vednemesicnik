@@ -1,0 +1,35 @@
+/* Name, then e-mail · role, with the actions on the right (28e). */
+.header {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    width: 100%;
+  }
+}
+
+.title {
+  @layer route {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+}
+
+.subtitle {
+  @layer route {
+    font-size: 13px;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.actions {
+  @layer route {
+    display: flex;
+    flex-shrink: 0;
+    gap: 8px;
+  }
+}

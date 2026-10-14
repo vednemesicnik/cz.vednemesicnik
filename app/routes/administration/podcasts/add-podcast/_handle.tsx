@@ -5,7 +5,7 @@ import type { Breadcrumb } from '~/types/breadcrumb'
 export const handle = {
   breadcrumb: (): Breadcrumb => {
     return {
-      label: 'Přidat podcast',
+      label: 'Nový podcast',
       path: href('/administration/podcasts/add-podcast'),
     }
   },

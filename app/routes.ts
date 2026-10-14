@@ -118,6 +118,12 @@ export default [
           'routes/administration/sign-in/magic-link/verify/route.tsx',
         ),
 
+        // Emergency sign-in link an Administrator issued: confirm (design 20f)
+        route(
+          'sign-in/emergency-link/verify',
+          'routes/administration/sign-in/emergency-link/verify/route.tsx',
+        ),
+
         // Google OAuth sign-in: start (POST) + callback
         route(
           'sign-in/google',
@@ -203,12 +209,19 @@ export default [
           ),
 
           // Users
-          ...createAdminEntriesSection({
-            entry: 'user',
-            id: 'userId',
-            name: 'users',
-            path: 'routes/administration/users',
-          }),
+          ...createAdminEntriesSection(
+            {
+              entry: 'user',
+              id: 'userId',
+              name: 'users',
+              path: 'routes/administration/users',
+            },
+            // Emergency sign-in link — action-only, the detail's dialog (28e)
+            route(
+              'emergency-link',
+              'routes/administration/users/user/emergency-link/route.ts',
+            ),
+          ),
 
           // Authors
           ...createAdminEntriesSection({
@@ -308,5 +321,6 @@ export default [
       'routes/resources/user-image/route.ts',
     ),
     route('env.js', 'routes/resources/env-script/route.ts'),
+    route('admin-events', 'routes/resources/admin-events/route.ts'),
   ]),
 ] satisfies RouteConfig

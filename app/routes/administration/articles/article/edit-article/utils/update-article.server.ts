@@ -1,11 +1,13 @@
 import type { ContentState } from '@generated/prisma/enums'
 import { createId } from '@paralleldrive/cuid2'
+import { data } from 'react-router'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import {
   buildArticleFeaturedImageSeo,
   resolveArticleFeaturedImageSeo,
 } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import {
   deleteRowWithImages,
@@ -13,6 +15,8 @@ import {
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
+import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 type Options = {
   articleId: string
@@ -55,6 +59,17 @@ export async function updateArticle(
     action: 'update',
     entity: 'article',
     execute: async (context) => {
+      // A submitted article is locked for its authors (design 07d); read the
+      // stored submission, the form doesn't carry it.
+      const { submittedAt } = await prisma.article.findUniqueOrThrow({
+        select: { submittedAt: true },
+        where: { id: articleId },
+      })
+
+      if (isLockedBySubmission({ roleLevel: context.roleLevel, submittedAt })) {
+        throw data(null, { status: 403 })
+      }
+
       // 1. Find images no longer in the form; their rows and files go last.
       const existingImageIds =
         existingImages?.map((existingImage) => existingImage.id) ?? []
@@ -200,7 +215,14 @@ export async function updateArticle(
 
       await Promise.all(updatedImages.map(({ cleanup }) => cleanup()))
 
-      return { id: articleId }
+      await recordContentLog(
+        { entity: 'article', entityId: articleId, events: ['update'] },
+        context,
+      )
+      publishContentEvent(
+        { change: 'update', entity: 'article', entityId: articleId },
+        context,
+      )
     },
     target: { authorIds, state },
   })

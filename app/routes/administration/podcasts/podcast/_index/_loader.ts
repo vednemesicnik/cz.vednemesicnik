@@ -1,5 +1,6 @@
 import { data } from 'react-router'
 
+import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -7,10 +8,7 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import {
-  canPublishWithoutReview,
-  needsReviewToPublish,
-} from '~/utils/permissions/author/review-policy'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 
 import type { Route } from './+types/route'
 
@@ -54,25 +52,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       reviews: {
         select: {
           createdAt: true,
-          id: true,
           reviewer: {
-            select: {
-              id: true,
-              name: true,
-              role: {
-                select: {
-                  level: true,
-                  name: true,
-                },
-              },
-            },
+            select: { id: true, role: { select: { level: true } } },
           },
-          state: true,
         },
       },
       state: true,
+      submittedAt: true,
       title: true,
-      updatedAt: true,
     },
     where: { id: podcastId },
   })
@@ -90,118 +77,31 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // Check update permission
-  const { hasPermission: canUpdate } = context.can({
-    action: 'update',
-    entity: 'podcast',
-    state: podcast.state,
-    targetAuthorIds: [podcast.author.id],
-  })
-
-  // Check delete permission
-  const { hasPermission: canDelete } = context.can({
-    action: 'delete',
-    entity: 'podcast',
-    state: podcast.state,
-    targetAuthorIds: [podcast.author.id],
-  })
-
-  // Check publish permission (draft → published)
-  const { hasPermission: canPublish } = context.can({
-    action: 'publish',
-    entity: 'podcast',
-    state: podcast.state,
-    targetAuthorIds: [podcast.author.id],
-  })
-
-  // Whether an approving review exists and whether one is still needed to publish.
-  const hasApprovingReview = podcast.reviews.some((review) =>
-    canPublishWithoutReview(review.reviewer.role),
-  )
-  const needsReview = needsReviewToPublish({
+  const flags = getContentActionFlags(context, 'podcast', {
     authors: [podcast.author],
     reviews: podcast.reviews,
-  })
-
-  // Check retract permission (published → draft)
-  const { hasPermission: canRetract } = context.can({
-    action: 'retract',
-    entity: 'podcast',
     state: podcast.state,
-    targetAuthorIds: [podcast.author.id],
+    submittedAt: podcast.submittedAt,
   })
-
-  // Check archive permission (published → archived)
-  const { hasPermission: canArchive } = context.can({
-    action: 'archive',
-    entity: 'podcast',
-    state: podcast.state,
-    targetAuthorIds: [podcast.author.id],
-  })
-
-  // Check restore permission (archived → draft)
-  const { hasPermission: canRestore } = context.can({
-    action: 'restore',
-    entity: 'podcast',
-    state: podcast.state,
-    targetAuthorIds: [podcast.author.id],
-  })
-
-  // Check review permission
-  const { hasPermission: canReview } = context.can({
-    action: 'review',
-    entity: 'podcast',
-    state: podcast.state,
-    targetAuthorIds: [podcast.author.id],
-  })
-
-  // Don't show review button if:
-  // 1. Author can publish without review - they don't need reviews
-  // 2. Current user is the author - can't review own content
-  const authorCanPublishWithoutReview = canPublishWithoutReview(
-    podcast.author.role,
-  )
-  const isOwnContent = podcast.author.id === context.authorId
-  const shouldShowReview =
-    canReview && !authorCanPublishWithoutReview && !isOwnContent
-
-  // Check if current user has already reviewed this podcast
-  const hasReviewed = podcast.reviews.some(
-    (review) => review.reviewer.id === context.authorId,
-  )
 
   return {
-    canArchive,
-    canDelete,
-    canPublish,
-    canRestore,
-    canRetract,
-    canReview: shouldShowReview,
-    canUpdate,
-    hasReviewed,
-    needsReview,
     podcast: {
       author: podcast.author,
       coverUrl: createImageSources('podcast-cover', podcast.cover).src ?? null,
-      createdAt: createFormattedDate(podcast.createdAt),
       description: podcast.description,
-      hasApprovingReview,
       hasCover: !!podcast.cover,
+      history: await getContentHistory({
+        createdAt: podcast.createdAt,
+        entity: 'podcast',
+        entityId: podcast.id,
+        publishedAt: podcast.publishedAt,
+      }),
       id: podcast.id,
       publishedAt: createFormattedDate(podcast.publishedAt),
-      reviews: podcast.reviews.map((review) => ({
-        createdAt: createFormattedDate(review.createdAt),
-        id: review.id,
-        reviewer: {
-          id: review.reviewer.id,
-          name: review.reviewer.name,
-          roleName: review.reviewer.role.name,
-        },
-        state: review.state,
-      })),
       state: podcast.state,
       title: podcast.title,
-      updatedAt: createFormattedDate(podcast.updatedAt),
     },
+    ...flags,
+    submission: flags.submission?.state ?? null,
   }
 }

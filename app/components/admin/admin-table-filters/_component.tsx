@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import type { ReactNode, SubmitEvent } from 'react'
 import { Form, useSubmit } from 'react-router'
 
@@ -8,10 +9,15 @@ import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  className?: string
   preservedParams: [string, string][]
 }
 
-export const AdminTableFilters = ({ children, preservedParams }: Props) => {
+export const AdminTableFilters = ({
+  children,
+  className,
+  preservedParams,
+}: Props) => {
   const submit = useSubmit()
 
   // A native GET submit serializes every select, so the ones left on "Vše"
@@ -27,7 +33,11 @@ export const AdminTableFilters = ({ children, preservedParams }: Props) => {
   }
 
   return (
-    <Form className={styles.form} method={'get'} onSubmit={handleSubmit}>
+    <Form
+      className={clsx(styles.form, className)}
+      method={'get'}
+      onSubmit={handleSubmit}
+    >
       {/* Carry the preserved params on GET submit so filtering doesn't drop
           search and sort. Build them with `getPreservedFilterParams`. */}
       {preservedParams.map(([name, value], index) => (

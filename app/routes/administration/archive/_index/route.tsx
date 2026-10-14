@@ -3,8 +3,6 @@
 import { href, useSearchParams } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminSavedFilters } from '~/components/admin/admin-saved-filters'
 import {
@@ -20,6 +18,9 @@ import {
 import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
+import { LinkButton } from '~/components/link-button'
+import { ListHeader } from '~/components/list-header'
+import { PageTitle } from '~/components/page-title'
 import { CONTENT_STATE_OPTIONS } from '~/utils/admin-filter-options'
 import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
@@ -61,12 +62,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Archiv</AdminHeadline>
-      {canCreate && (
-        <AdminLinkButton to={href('/administration/archive/add-issue')}>
-          Přidat číslo
-        </AdminLinkButton>
-      )}
+      <ListHeader
+        action={
+          canCreate && (
+            <LinkButton to={href('/administration/archive/add-issue')}>
+              Nové číslo
+            </LinkButton>
+          )
+        }
+      >
+        <PageTitle>Archiv</PageTitle>
+      </ListHeader>
       <AdminTableToolbar>
         <AdminTableSearch defaultValue={query} placeholder={'Hledat čísla…'} />
         <AdminBulkActionsBar

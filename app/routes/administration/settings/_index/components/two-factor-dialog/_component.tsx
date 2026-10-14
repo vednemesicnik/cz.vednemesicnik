@@ -2,8 +2,6 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useEffect, useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
-
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -14,11 +12,12 @@ import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
+import { TextField } from '~/components/text-field'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { action as twoFactorAction } from '~/routes/administration/settings/two-factor/_action'
 import { schema } from '~/routes/administration/settings/two-factor/_schema'
 
-import { useModalDialog } from '../../utils/use-modal-dialog'
+import { useModalDialog } from '~/utils/use-modal-dialog'
 import { BackupCodesStep } from '../backup-codes-step'
 import styles from './_styles.module.css'
 
@@ -175,7 +174,7 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
                 </ErrorMessageGroup>
               )}
 
-              <AdminInput
+              <TextField
                 label={'Kód z aplikace'}
                 {...getInputProps(fields.code, { type: 'text' })}
                 autoComplete={'one-time-code'}

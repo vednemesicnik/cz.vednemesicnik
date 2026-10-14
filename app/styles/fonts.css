@@ -56,6 +56,12 @@
       var(--font-size-5xl) *
       var(--scale-ratio-major-third)
     );
+    /* Page title — the h1 of every administration working screen (design
+       kh6gf6k6). No gradient; a scale step, so phones follow the scale. */
+    --page-title-font-size: var(--font-size-2xl);
+    --page-title-line-height: var(--line-height-2xl);
+    --page-title-font-weight: var(--font-weight-semibold);
+    --page-title-letter-spacing: var(--letter-spacing-normal);
   }
 
   @media (min-width: 768px) {

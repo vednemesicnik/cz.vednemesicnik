@@ -154,6 +154,20 @@ fly secrets set ALLOW_PASSWORD_SIGN_IN=true --app cz-vednemesicnik
 fly secrets unset ALLOW_PASSWORD_SIGN_IN --app cz-vednemesicnik
 ```
 
+The same switch opens the **emergency sign-in link** (#578) for whoever has no
+password and no passkey outside Google. While it is on, an Owner or Administrator
+issues the link on the user detail („⋯“ → *Vydat nouzový odkaz…*) for an account
+they may edit — never their own and never the Owner's. The link works once, for
+15 minutes; a new one replaces the previous one. Turning the switch off kills
+every issued link. Procedure:
+
+1. Verify the person's identity **in person or by a voice call** before issuing.
+   A message or an e-mail is not enough.
+2. Hand the link over by phone or in a chat tied to that person, never by e-mail.
+3. The issuing is in the account's history, the sign-in in its attempts, both
+   with the issuer's name. After signing in, Settings suggests a passkey — the
+   way out of the next outage.
+
 ## Image store
 
 Pre-generated image variants are served as static files from `/data/images` on the

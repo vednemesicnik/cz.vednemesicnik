@@ -6,6 +6,7 @@ import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import type { Route } from './+types/route'
@@ -111,6 +112,7 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
             createdAt: true,
             id: true,
             state: true,
+            submittedAt: true,
             title: true,
           },
           where: episodesWhere,
@@ -127,18 +129,25 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
   const episodes = podcast.episodes.map((episode) => {
     return {
       ...episode,
-      canDelete: context.can({
-        action: 'delete',
-        entity: 'podcast_episode',
-        state: episode.state,
-        targetAuthorIds: [episode.authorId],
-      }).hasPermission,
-      canEdit: context.can({
-        action: 'update',
-        entity: 'podcast_episode',
-        state: episode.state,
-        targetAuthorIds: [episode.authorId],
-      }).hasPermission,
+      // A submitted draft is neither deleted nor edited by its author (07d).
+      canDelete:
+        context.can({
+          action: 'delete',
+          entity: 'podcast_episode',
+          state: episode.state,
+          targetAuthorIds: [episode.authorId],
+        }).hasPermission && episode.submittedAt === null,
+      canEdit:
+        context.can({
+          action: 'update',
+          entity: 'podcast_episode',
+          state: episode.state,
+          targetAuthorIds: [episode.authorId],
+        }).hasPermission &&
+        !isLockedBySubmission({
+          roleLevel: context.roleLevel,
+          submittedAt: episode.submittedAt,
+        }),
       canView: context.can({
         action: 'view',
         entity: 'podcast_episode',

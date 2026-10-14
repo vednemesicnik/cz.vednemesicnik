@@ -1,0 +1,234 @@
+/* Under the headline, for the Coordinator only (22a). */
+.waitingWork {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* The filters on the left, wrapping as one group; Uložené filtry apart at the
+   end, since it sets them all (22d). Baseline alignment puts its text on the
+   line of the search and the filters, whatever their heights. */
+.filterRow {
+  @layer route {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    inline-size: 100%;
+    margin-block-end: 16px;
+  }
+}
+
+.selectionBar {
+  @layer route {
+    inline-size: 100%;
+    margin-block-end: 16px;
+  }
+}
+
+.filterGroup {
+  @layer route {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: safe center;
+    gap: 8px;
+    min-inline-size: 0;
+  }
+}
+
+.search {
+  @layer route {
+    flex: none;
+  }
+}
+
+/* No box of its own on a wide screen: the buttons wrap with the search. */
+.filters {
+  @layer route {
+    display: contents;
+  }
+}
+
+.clearFilters {
+  @layer route {
+    flex: none;
+    margin-inline-start: 4px;
+    /* 13 px, as the filter buttons. */
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+}
+
+.phoneTrigger {
+  @layer route {
+    display: none;
+  }
+}
+
+/* The search at full width over a row of filters that scrolls sideways, with
+   Uložené filtry at its end (22g). */
+@media (width < 768px) {
+  .filterRow {
+    @layer route {
+      display: block;
+    }
+  }
+
+  .filterGroup {
+    @layer route {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 10px;
+
+      /* The shared search field is 240 px wide; here it takes the row. */
+      & .search :is(form, form > div, input) {
+        inline-size: 100%;
+      }
+    }
+  }
+
+  .filters {
+    @layer route {
+      /* Its own width, not its content's, so the row scrolls, not the page:
+         the page's grid column grows with the content's width. */
+      contain: inline-size;
+      display: flex;
+      align-items: safe center;
+      gap: 8px;
+      margin-inline: -16px;
+      padding-inline: 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+  }
+
+  .phoneTrigger {
+    @layer route {
+      display: inline-flex;
+    }
+  }
+
+  .wideTrigger {
+    @layer route {
+      display: none;
+    }
+  }
+}
+
+/* One sentence in place of the table (22e). */
+.empty {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 48px 28px;
+    text-align: center;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.emptyTitle {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+}
+
+.emptyText {
+  @layer route {
+    max-width: 440px;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
+/* Wide screen: the selection bar stands in for the filter row (22c). */
+@media (width >= 768px) {
+  .filterRowReplaced {
+    @layer route {
+      display: none;
+    }
+  }
+
+  .newArticleBar {
+    @layer route {
+      display: none;
+    }
+  }
+}
+
+/* A phone has no selection; the list is rows across the whole width with
+   Nový článek under it, in reach of the thumb (22g). */
+@media (width < 768px) {
+  .selectionBar,
+  .topNewArticle,
+  .tableHeader {
+    @layer route {
+      display: none;
+    }
+  }
+
+  /* Only the waiting work is left to show: no row of its own, or an empty
+     one would still cost the page a gap. */
+  .header,
+  .headerLead {
+    @layer route {
+      display: contents;
+    }
+  }
+
+  /* The top bar names the page; the headline stays for screen readers. */
+  .headline {
+    @layer route {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  /* The rows run edge to edge, past the page's 24 px gutter. */
+  .table {
+    @layer route {
+      box-sizing: border-box;
+      inline-size: calc(100% + 48px);
+      margin-inline: -24px;
+      overflow: visible;
+      border-block: 1px solid var(--border);
+
+      & :is(table, tbody) {
+        display: block;
+      }
+    }
+  }
+
+  /* Always in reach of the thumb, never hiding: the page's main action
+     (d9en8oih). It stays in the flow after the pagination, so at the end of
+     the list it settles on the footer, bridging the page's 24 px padding. */
+  .newArticleBar {
+    @layer route {
+      position: sticky;
+      inset-block-end: 0;
+      z-index: 1;
+      justify-self: stretch;
+      margin-inline: -24px;
+      margin-block-end: -24px;
+      padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+      background-color: var(--bg-primary);
+      border-block-start: 1px solid var(--border);
+    }
+  }
+}

@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef } from 'react'
+import { useRef } from 'react'
 import { href, useFetcher } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -12,11 +12,10 @@ import {
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
+import { AdminSubmissionActions } from '~/components/admin/admin-submission-actions'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { HistoryList } from '~/components/history-list'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
 import { CheckIcon } from '~/components/icons/check-icon'
@@ -24,7 +23,11 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
+import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useContentEvents } from '~/hooks/use-content-events'
 
 import type { Route } from './+types/route'
 
@@ -41,17 +44,24 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     category,
-    canUpdate,
+    canEdit,
     canDelete,
     canPublish,
     canRetract,
     canArchive,
     canRestore,
-    canReview,
-    hasReviewed,
-    needsReview,
+    canApprove,
+    canSubmit,
+    canWithdraw,
+    canReturn,
+    submission,
   } = loaderData
   const { categoryId } = params
+
+  useContentEvents({
+    filter: (event) =>
+      event.entity === 'article_category' && event.entityId === categoryId,
+  })
 
   const fetcherKey = `category-action-${categoryId}`
   const fetcher = useFetcher({ key: fetcherKey })
@@ -79,11 +89,11 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>{category.name}</AdminHeadline>
+      <PageTitle>{category.name}</PageTitle>
 
       <AdminActionGroup>
-        {canUpdate && (
-          <AdminLinkButton
+        {canEdit && (
+          <LinkButton
             disabled={isSubmitting}
             to={href(
               '/administration/articles/categories/:categoryId/edit-category',
@@ -91,12 +101,19 @@ export default function RouteComponent({
                 categoryId,
               },
             )}
+            variant={'outline'}
           >
             <EditIcon />
             Upravit
-          </AdminLinkButton>
+          </LinkButton>
         )}
-        {canReview && !hasReviewed && (
+        <AdminSubmissionActions
+          canReturn={canReturn}
+          canSubmit={canSubmit}
+          canWithdraw={canWithdraw}
+          contentId={category.id}
+        />
+        {canApprove && (
           <Form method="post">
             <AuthenticityTokenInput />
             <AdminActionButton
@@ -118,13 +135,8 @@ export default function RouteComponent({
             <AuthenticityTokenInput />
             <AdminActionButton
               action={'publish'}
-              disabled={needsReview || isSubmitting}
+              disabled={isSubmitting}
               name={INTENT_NAME}
-              title={
-                needsReview
-                  ? 'Nelze publikovat bez schválení koordinátora'
-                  : undefined
-              }
               type={'submit'}
               value={INTENT_VALUE.publish}
             >
@@ -203,46 +215,22 @@ export default function RouteComponent({
           <AdminDetailItem label="Název">{category.name}</AdminDetailItem>
           <AdminDetailItem label="Slug">{category.slug}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge state={category.state} />
+            <StatusTag state={submission ?? category.state} />
           </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Metadata">
-        <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">
-            {category.createdAt.formatted}
-          </AdminDetailItem>
-          <AdminDetailItem label="Aktualizováno">
-            {category.updatedAt.formatted}
-          </AdminDetailItem>
-          {category.publishedAt.iso && (
-            <AdminDetailItem label="Publikováno">
-              {category.publishedAt.formatted}
-            </AdminDetailItem>
-          )}
           <AdminDetailItem label="Autor">
             {category.author.name}
           </AdminDetailItem>
         </AdminDetailList>
       </AdminDetailSection>
 
-      <AdminDetailSection title="Schválení">
-        <AdminDetailList>
-          <Activity mode={category.reviews.length > 0 ? 'visible' : 'hidden'}>
-            {category.reviews.map((review) => (
-              <AdminDetailItem
-                key={review.id}
-                label={`${review.reviewer.name} (${review.reviewer.roleName})`}
-              >
-                {review.createdAt.formatted}
-              </AdminDetailItem>
-            ))}
-          </Activity>
-          <AdminDetailItem label="Schváleno koordinátorem">
-            {category.hasApprovingReview ? 'Ano' : 'Ne'}
-          </AdminDetailItem>
-        </AdminDetailList>
+      <AdminDetailSection title="Historie">
+        <HistoryList
+          entries={category.history.entries}
+          isIncomplete={category.history.isIncomplete}
+          // A reused route component starts every record collapsed.
+          key={category.id}
+          visibleCount={5}
+        />
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />

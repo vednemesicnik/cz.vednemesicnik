@@ -1,0 +1,25 @@
+/* The design system's vdm-signin__text, __note and __note--quiet (0zgyl1ao). */
+.text {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+    color: var(--text-secondary);
+    text-align: center;
+    text-wrap: pretty;
+  }
+}
+
+.note,
+.quiet {
+  @layer variant {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.quiet {
+  @layer variant {
+    color: var(--text-tertiary);
+  }
+}

@@ -119,10 +119,11 @@ export const authorRoles: AuthorRolesData = [
     level: 2,
     name: 'creator',
     permissions: [
-      // View any draft and published (for editorial oversight)
+      // View any draft and published (for editorial oversight); only the
+      // Coordinator approves and publishes, any content (design 07c/07d)
       {
         access: 'any',
-        actions: ['view', 'review'],
+        actions: ['view'],
         entity: 'article',
         state: 'draft',
       },
@@ -132,10 +133,11 @@ export const authorRoles: AuthorRolesData = [
         entity: 'article',
         state: 'published',
       },
-      // Own content permissions
+      // Own content permissions; an own draft is submitted for review instead,
+      // for every entity below as well (#590, #627)
       {
         access: 'own',
-        actions: ['create', 'update', 'delete', 'publish'],
+        actions: ['create', 'update', 'delete'],
         entity: 'article',
         state: 'draft',
       },
@@ -154,7 +156,7 @@ export const authorRoles: AuthorRolesData = [
       // Article Category
       {
         access: 'any',
-        actions: ['view', 'review'],
+        actions: ['view'],
         entity: 'article_category',
         state: 'draft',
       },
@@ -166,7 +168,7 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         access: 'own',
-        actions: ['create', 'update', 'delete', 'publish'],
+        actions: ['create', 'update', 'delete'],
         entity: 'article_category',
         state: 'draft',
       },
@@ -185,7 +187,7 @@ export const authorRoles: AuthorRolesData = [
       // Article Tag
       {
         access: 'any',
-        actions: ['view', 'review'],
+        actions: ['view'],
         entity: 'article_tag',
         state: 'draft',
       },
@@ -197,7 +199,7 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         access: 'own',
-        actions: ['create', 'update', 'delete', 'publish'],
+        actions: ['create', 'update', 'delete'],
         entity: 'article_tag',
         state: 'draft',
       },
@@ -216,7 +218,7 @@ export const authorRoles: AuthorRolesData = [
       // Podcast
       {
         access: 'any',
-        actions: ['view', 'review'],
+        actions: ['view'],
         entity: 'podcast',
         state: 'draft',
       },
@@ -228,7 +230,7 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         access: 'own',
-        actions: ['create', 'update', 'delete', 'publish'],
+        actions: ['create', 'update', 'delete'],
         entity: 'podcast',
         state: 'draft',
       },
@@ -247,7 +249,7 @@ export const authorRoles: AuthorRolesData = [
       // Podcast Episode
       {
         access: 'any',
-        actions: ['view', 'review'],
+        actions: ['view'],
         entity: 'podcast_episode',
         state: 'draft',
       },
@@ -259,7 +261,7 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         access: 'own',
-        actions: ['create', 'update', 'delete', 'publish'],
+        actions: ['create', 'update', 'delete'],
         entity: 'podcast_episode',
         state: 'draft',
       },
@@ -278,7 +280,7 @@ export const authorRoles: AuthorRolesData = [
       // Issue
       {
         access: 'any',
-        actions: ['view', 'review'],
+        actions: ['view'],
         entity: 'issue',
         state: 'draft',
       },
@@ -290,7 +292,7 @@ export const authorRoles: AuthorRolesData = [
       },
       {
         access: 'own',
-        actions: ['create', 'update', 'delete', 'publish'],
+        actions: ['create', 'update', 'delete'],
         entity: 'issue',
         state: 'draft',
       },

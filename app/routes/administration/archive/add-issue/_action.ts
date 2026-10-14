@@ -1,6 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { createId } from '@paralleldrive/cuid2'
 import { data, href, redirect } from 'react-router'
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
@@ -17,6 +18,7 @@ import {
 } from '~/utils/pdf-store/store-pdf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
+import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -90,6 +92,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
         releasedAt: releaseDate,
       },
     })
+
+    await recordContentLog(
+      { entity: 'issue', entityId: issue.id, events: ['create'] },
+      context,
+    )
+    publishContentEvent(
+      { change: 'create', entity: 'issue', entityId: issue.id },
+      context,
+    )
 
     return redirect(
       href('/administration/archive/:issueId', { issueId: issue.id }),

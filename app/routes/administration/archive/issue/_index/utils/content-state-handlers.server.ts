@@ -1,3 +1,4 @@
+import { clearSubmissionOnStateChange } from '~/utils/content-state/clear-submission-on-state-change'
 import {
   clearReviewsOnDraft,
   createContentStateHandlers,
@@ -10,10 +11,11 @@ import { deletePdfObject } from '~/utils/pdf-store/store-pdf.server'
 export const issueContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
     await prisma.issue.update({
-      data: clearReviewsOnDraft(data),
+      data: clearSubmissionOnStateChange(clearReviewsOnDraft(data)),
       where: { id },
     })
   },
+  approverPublishesWithoutReview: true,
 
   deleteRow: async (id) => {
     // Capture the cover and PDF store ids before the rows are cascade-deleted.
@@ -62,6 +64,7 @@ export const issueContentStateHandlers = createContentStateHandlers({
             reviewer: { select: { role: { select: { level: true } } } },
           },
         },
+        submittedAt: true,
       },
       where: { id },
     })
@@ -70,6 +73,7 @@ export const issueContentStateHandlers = createContentStateHandlers({
       authors: [issue.author],
       publishedAt: issue.publishedAt,
       reviews: issue.reviews,
+      submittedAt: issue.submittedAt,
     }
   },
 })

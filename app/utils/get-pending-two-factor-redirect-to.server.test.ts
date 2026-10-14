@@ -9,7 +9,7 @@ import {
 const readBack = async (redirectTo: string) => {
   const setCookie = await setPendingTwoFactorCookieSession(
     new Request('https://test.local/'),
-    { redirectTo, userId: 'user-1' },
+    { email: 'jakub.novak@vednemesicnik.cz', redirectTo, userId: 'user-1' },
   )
 
   return getPendingTwoFactorRedirectTo(

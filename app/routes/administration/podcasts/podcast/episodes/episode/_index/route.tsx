@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -12,13 +12,12 @@ import {
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminPublishDateDialog } from '~/components/admin/admin-publish-date-dialog'
 import { AdminSplitButton } from '~/components/admin/admin-split-button'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
+import { AdminSubmissionActions } from '~/components/admin/admin-submission-actions'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { HistoryList } from '~/components/history-list'
 import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
@@ -28,8 +27,11 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
+import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
-import { getAuthorRoleLabel } from '~/utils/role-labels'
+import { useContentEvents } from '~/hooks/use-content-events'
 
 import type { Route } from './+types/route'
 
@@ -52,7 +54,7 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     episode,
-    canUpdate,
+    canEdit,
     canDelete,
     canPublish,
     canPublishBackdated,
@@ -60,11 +62,18 @@ export default function RouteComponent({
     canRetract,
     canArchive,
     canRestore,
-    canReview,
-    hasReviewed,
-    needsReview,
+    canApprove,
+    canSubmit,
+    canWithdraw,
+    canReturn,
+    submission,
   } = loaderData
   const { podcastId, episodeId } = params
+
+  useContentEvents({
+    filter: (event) =>
+      event.entity === 'podcast_episode' && event.entityId === episodeId,
+  })
 
   // Selected mode of the draft publish split button (Coordinators only).
   const [publishMode, setPublishMode] = useState<PublishMode>('publish')
@@ -79,10 +88,6 @@ export default function RouteComponent({
     fetcher.state !== 'idle' && fetcher.formData
       ? fetcher.formData.get(INTENT_NAME)
       : null
-
-  const publishDisabledTitle = needsReview
-    ? 'Nelze publikovat bez schválení koordinátora'
-    : undefined
 
   const actionUrl = href(
     '/administration/podcasts/:podcastId/episodes/:episodeId',
@@ -104,22 +109,29 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>{episode.title}</AdminHeadline>
+      <PageTitle>{episode.title}</PageTitle>
 
       <AdminActionGroup>
-        {canUpdate && (
-          <AdminLinkButton
+        {canEdit && (
+          <LinkButton
             disabled={isSubmitting}
             to={href(
               '/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode',
               { episodeId, podcastId },
             )}
+            variant={'outline'}
           >
             <EditIcon />
             Upravit
-          </AdminLinkButton>
+          </LinkButton>
         )}
-        {canReview && !hasReviewed && (
+        <AdminSubmissionActions
+          canReturn={canReturn}
+          canSubmit={canSubmit}
+          canWithdraw={canWithdraw}
+          contentId={episode.id}
+        />
+        {canApprove && (
           <Form method="post">
             <AuthenticityTokenInput />
             <AdminActionButton
@@ -155,9 +167,8 @@ export default function RouteComponent({
                 {publishMode === 'publish' ? (
                   <AdminActionButton
                     action={'publish'}
-                    disabled={needsReview || isSubmitting}
+                    disabled={isSubmitting}
                     name={INTENT_NAME}
-                    title={publishDisabledTitle}
                     type={'submit'}
                     value={INTENT_VALUE.publish}
                   >
@@ -169,11 +180,10 @@ export default function RouteComponent({
                 ) : (
                   <AdminActionButton
                     action={'publish'}
-                    disabled={needsReview || isSubmitting}
+                    disabled={isSubmitting}
                     onClick={() =>
                       backdatedPublishDialogRef.current?.showModal()
                     }
-                    title={publishDisabledTitle}
                     type={'button'}
                   >
                     <ArrowUpwardIcon />
@@ -187,9 +197,8 @@ export default function RouteComponent({
               <AuthenticityTokenInput />
               <AdminActionButton
                 action={'publish'}
-                disabled={needsReview || isSubmitting}
+                disabled={isSubmitting}
                 name={INTENT_NAME}
-                title={publishDisabledTitle}
                 type={'submit'}
                 value={INTENT_VALUE.publish}
               >
@@ -289,7 +298,7 @@ export default function RouteComponent({
           <AdminDetailItem label="Název">{episode.title}</AdminDetailItem>
           <AdminDetailItem label="Slug">{episode.slug}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge state={episode.state} />
+            <StatusTag state={submission ?? episode.state} />
           </AdminDetailItem>
           {episode.description && (
             <AdminDetailItem label="Popis">
@@ -331,33 +340,14 @@ export default function RouteComponent({
         </AdminDetailList>
       </AdminDetailSection>
 
-      <AdminDetailSection title="Metadata">
-        <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">
-            {episode.createdAt.formatted}
-          </AdminDetailItem>
-          <AdminDetailItem label="Aktualizováno">
-            {episode.updatedAt.formatted}
-          </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Schválení">
-        <AdminDetailList>
-          <Activity mode={episode.reviews.length > 0 ? 'visible' : 'hidden'}>
-            {episode.reviews.map((review) => (
-              <AdminDetailItem
-                key={review.id}
-                label={`${review.reviewer.name} (${getAuthorRoleLabel(review.reviewer.roleName)})`}
-              >
-                {review.createdAt.formatted}
-              </AdminDetailItem>
-            ))}
-          </Activity>
-          <AdminDetailItem label="Schváleno koordinátorem">
-            {episode.hasApprovingReview ? 'Ano' : 'Ne'}
-          </AdminDetailItem>
-        </AdminDetailList>
+      <AdminDetailSection title="Historie">
+        <HistoryList
+          entries={episode.history.entries}
+          isIncomplete={episode.history.isIncomplete}
+          // A reused route component starts every record collapsed.
+          key={episode.id}
+          visibleCount={5}
+        />
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />

@@ -4,6 +4,7 @@ import { setSessionAuthCookieSession } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { redeemBackupCode } from '~/utils/backup-codes.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
+import { getPendingTwoFactorEmail } from '~/utils/get-pending-two-factor-email.server'
 import { getPendingTwoFactorRedirectTo } from '~/utils/get-pending-two-factor-redirect-to.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import {
@@ -16,6 +17,8 @@ import {
 } from '~/utils/pending-two-factor.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
 import { createSession } from '~/utils/session.server'
+import { flashSignInNotice } from '~/utils/sign-in-notice/flash-sign-in-notice.server'
+import type { SignInNotice } from '~/utils/sign-in-notice/sign-in-notice-storage.server'
 import { verifyTOTP } from '~/utils/totp.server'
 import { getUserTwoFactor } from '~/utils/two-factor.server'
 import { withRedirectTo } from '~/utils/with-redirect-to'
@@ -33,14 +36,32 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   // Any redirect out of the TOTP step clears the pending cookie so no stale
   // pending user id / attempt counter lingers until it expires. The target
-  // rides along in the URL, so a restarted sign-in still returns there.
-  const redirectToPassword = async () =>
-    redirect(withRedirectTo('/administration/sign-in/password', redirectTo), {
-      headers: {
-        'Set-Cookie': await deletePendingTwoFactorCookieSession(cookieSession),
-      },
-      status: 303,
-    })
+  // rides along in the URL, so a restarted sign-in still returns there. When
+  // the step ended on its own (lockout, expiry), the password page says why
+  // and keeps the e-mail (design 20d).
+  const redirectToPassword = async (
+    ended?: Omit<Extract<SignInNotice, { kind: 'two-factor-ended' }>, 'kind'>,
+  ) => {
+    const headers = new Headers()
+    headers.append(
+      'Set-Cookie',
+      await deletePendingTwoFactorCookieSession(cookieSession),
+    )
+    if (ended !== undefined) {
+      headers.append(
+        'Set-Cookie',
+        await flashSignInNotice(request, {
+          kind: 'two-factor-ended',
+          ...ended,
+        }),
+      )
+    }
+
+    return redirect(
+      withRedirectTo('/administration/sign-in/password', redirectTo),
+      { headers, status: 303 },
+    )
+  }
 
   // Break-glass: the whole password path is gated behind the flag.
   if (process.env.ALLOW_PASSWORD_SIGN_IN !== 'true') {
@@ -49,10 +70,17 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   const userId = getPendingTwoFactorUserId(cookieSession)
 
-  // No pending sign-in — restart from the password step.
+  // No pending sign-in although a code was submitted: the five minutes ran out.
+  // The cookie is gone with them, so the e-mail comes from the form.
   if (userId === undefined) {
-    throw await redirectToPassword()
+    const email = formData.get('email')
+    throw await redirectToPassword({
+      email: typeof email === 'string' && email !== '' ? email : null,
+      reason: 'expired',
+    })
   }
+
+  const email = getPendingTwoFactorEmail(cookieSession)
 
   // Rate limited by the middleware (see _middleware.ts): surface an inline error
   // before verifying the code, bounding TOTP / backup-code brute-forcing and the
@@ -123,7 +151,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     const attempts = getPendingTwoFactorAttempts(cookieSession) + 1
 
     if (attempts >= MAX_TWO_FACTOR_ATTEMPTS) {
-      throw await redirectToPassword()
+      throw await redirectToPassword({ email, reason: 'locked' })
     }
 
     return data(
@@ -136,6 +164,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
         headers: {
           'Set-Cookie': await setPendingTwoFactorCookieSession(request, {
             attempts,
+            email: email ?? '',
             redirectTo,
             userId,
           }),
@@ -160,7 +189,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     const redeemed = await redeemBackupCode(userId, submission.value.backupCode)
 
     if (!redeemed) {
-      return fail('backupCode', 'Záložní kód je neplatný nebo již byl použit.')
+      return fail(
+        'backupCode',
+        'Zkontrolujte záložní kód, případně použijte jiný.',
+      )
     }
 
     return succeed('backup_code')
@@ -187,7 +219,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   })
 
   if (result === null) {
-    return fail('code', 'Kód je nesprávný nebo jeho platnost vypršela.')
+    return fail(
+      'code',
+      'Zadejte aktuální kód z aplikace — tento nesouhlasí nebo už vypršel.',
+    )
   }
 
   return succeed('two_factor')

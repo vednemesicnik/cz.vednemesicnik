@@ -8,9 +8,6 @@ import {
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminInput } from '~/components/admin/admin-input'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -19,7 +16,10 @@ import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
@@ -75,7 +75,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Upravit podcast ({podcast.title})</AdminHeadline>
+      <PageTitle>Upravit podcast ({podcast.title})</PageTitle>
       <Form
         {...getFormProps(form)}
         encType={'multipart/form-data'}
@@ -85,7 +85,7 @@ export default function RouteComponent({
         <input {...getInputProps(fields.id, { type: 'hidden' })} />
 
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
-          <AdminInput
+          <TextField
             errors={fields.title.errors}
             label={'Název'}
             placeholder={'Název podcastu'}
@@ -99,7 +99,7 @@ export default function RouteComponent({
           >
             Vygenerovat nový slug
           </AdminButtonLink>
-          <AdminInput
+          <TextField
             errors={fields.slug.errors}
             label={'Slug'}
             onBlur={handleBlur}
@@ -151,13 +151,14 @@ export default function RouteComponent({
           <Button disabled={!canSubmit} type={'submit'}>
             {isSubmitting ? 'Upravuji...' : 'Upravit'}
           </Button>
-          <AdminLinkButton
+          <LinkButton
             to={href('/administration/podcasts/:podcastId', {
               podcastId: podcast.id,
             })}
+            variant={'outline'}
           >
             Zrušit
-          </AdminLinkButton>
+          </LinkButton>
         </FormActions>
       </Form>
     </AdminPage>

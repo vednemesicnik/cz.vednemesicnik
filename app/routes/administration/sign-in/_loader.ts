@@ -1,14 +1,17 @@
-import type { LoaderFunctionArgs } from 'react-router'
+import { data, type LoaderFunctionArgs } from 'react-router'
 
 import { requireUnauthenticated } from '~/utils/auth.server'
 import { safeRedirect } from '~/utils/safe-redirect'
+import { readSignInNotice } from '~/utils/sign-in-notice/read-sign-in-notice.server'
 
-// Callback error codes → Czech messages. Only known codes render a message, so
-// the ?error param can't inject arbitrary text.
+// Callback error codes → Czech messages (design 20a, copy gs905c2e). Only known
+// codes render a message, so the ?error param can't inject arbitrary text.
 const ERROR_MESSAGES: Record<string, string> = {
-  account: 'Účet neexistuje, kontaktujte administrátora.',
-  domain: 'Přihlásit se mohou jen účty na doméně vednemesicnik.cz.',
-  oauth: 'Přihlášení přes Google se nezdařilo. Zkuste to prosím znovu.',
+  account:
+    'Požádejte Administrátora o pozvánku — k tomuto účtu Google tu není uživatel.',
+  domain:
+    'Vyberte účet Google s adresou @vednemesicnik.cz — jinou adresou se přihlásit nelze.',
+  oauth: 'Zkuste přihlášení přes Google znovu nebo si pošlete odkaz e-mailem.',
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -24,10 +27,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const errorCode = url.searchParams.get('error')
   const error = errorCode !== null ? (ERROR_MESSAGES[errorCode] ?? null) : null
 
-  return {
-    // Break-glass: only render the password form when the flag is enabled.
-    allowPasswordSignIn: process.env.ALLOW_PASSWORD_SIGN_IN === 'true',
-    error,
-    redirectTo,
-  }
+  // A link request the magic-link action rejected (wrong domain, rate limit)
+  // comes back to this field (20b).
+  const { notice, setCookie } = await readSignInNotice(request)
+  const magicLinkResult =
+    notice?.kind === 'magic-link-rejected' ? notice.submissionResult : null
+
+  return data(
+    {
+      // Break-glass: only render the password form when the flag is enabled.
+      allowPasswordSignIn: process.env.ALLOW_PASSWORD_SIGN_IN === 'true',
+      error,
+      magicLinkResult,
+      redirectTo,
+    },
+    { headers: { 'Set-Cookie': setCookie } },
+  )
 }

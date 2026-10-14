@@ -13,6 +13,7 @@ describe('toSignInAttempt', () => {
     ['google', 'Google'],
     ['two_factor', 'Kód z ověřovací aplikace'],
     ['backup_code', 'Záložní kód'],
+    ['emergency_link', 'Nouzový odkaz'],
   ])(
     'labels a successful %s sign-in with the method alone',
     (method, label) => {
@@ -25,6 +26,7 @@ describe('toSignInAttempt', () => {
         }),
       ).toEqual({
         dateTime: '2026-09-25T17:14:00.000Z',
+        detail: null,
         formattedDateTime: '25. 9. 2026, 19:14',
         id: '1',
         isFailure: false,
@@ -58,6 +60,34 @@ describe('toSignInAttempt', () => {
     ).toMatchObject({
       isFailure: true,
       label: 'Kód z ověřovací aplikace — neúspěšný pokus',
+    })
+  })
+
+  it('names who issued the emergency link, on success and on failure', () => {
+    expect(
+      toSignInAttempt(
+        {
+          createdAt,
+          event: 'sign_in_success',
+          id: '1',
+          method: 'emergency_link',
+        },
+        'Petr Dvořák',
+      ),
+    ).toMatchObject({ detail: 'Odkaz od: Petr Dvořák', label: 'Nouzový odkaz' })
+    expect(
+      toSignInAttempt(
+        {
+          createdAt,
+          event: 'sign_in_failure',
+          id: '1',
+          method: 'emergency_link',
+        },
+        'Petr Dvořák',
+      ),
+    ).toMatchObject({
+      detail: 'Odkaz od: Petr Dvořák',
+      label: 'Nouzový odkaz — neúspěšný pokus',
     })
   })
 

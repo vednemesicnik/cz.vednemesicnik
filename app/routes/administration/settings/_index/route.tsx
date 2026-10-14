@@ -13,13 +13,13 @@ import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailRow } from '~/components/admin/admin-detail-row'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
+import { PageTitle } from '~/components/page-title'
 import { SegmentedControl } from '~/components/segmented-control'
 import { useToast } from '~/components/toast-provider'
 import { COLOR_SCHEME_CONFIG } from '~/config/color-scheme-config'
@@ -28,6 +28,7 @@ import { useColorScheme } from '~/hooks/use-color-scheme'
 import type { IdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 import { runWithViewTransition } from '~/utils/run-with-view-transition'
+import { formatRemainingBackupCodes } from '~/utils/sign-in-methods/format-remaining-backup-codes'
 import { waitForColorScheme } from '~/utils/wait-for-color-scheme'
 
 import type { action } from './_action'
@@ -47,7 +48,6 @@ import { TwoFactorDialog } from './components/two-factor-dialog'
 import { WelcomeRow } from './components/welcome-row'
 import { buildSettingsContinuePath } from './utils/build-settings-continue-path'
 import { formatOtherSignIns } from './utils/format-other-sign-ins'
-import { formatRemainingBackupCodes } from './utils/format-remaining-backup-codes'
 import { getPasskeyDetails } from './utils/get-passkey-details'
 import { getPasskeyLabel } from './utils/get-passkey-label'
 import type { SettingsContinue } from './utils/parse-settings-continue'
@@ -106,6 +106,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     settingsContinue,
     showWelcome,
     signInAttempts,
+    signInMethods,
     user,
   } = loaderData
 
@@ -311,7 +312,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Nastavení</AdminHeadline>
+      <PageTitle>Nastavení</PageTitle>
 
       {showWelcome && welcomeFetcher.state === 'idle' && (
         <WelcomeRow
@@ -373,11 +374,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <AdminDetailSection title={'Přihlášení'}>
             <div className={styles.rows}>
               <AdminDetailRow label={'Google'}>
-                <span>{user.isGoogleLinked ? 'propojený' : 'nepropojený'}</span>
-                {!user.isGoogleLinked && (
+                <span>{signInMethods.google.status}</span>
+                {signInMethods.google.note !== null && (
                   <span className={styles.note}>
-                    Propojí se při prvním přihlášení přes Google s adresou
-                    @vednemesicnik.cz.
+                    {signInMethods.google.note}
                   </span>
                 )}
               </AdminDetailRow>
@@ -489,7 +489,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   }
                   label={'Heslo'}
                 >
-                  {emergencyPassword.hasPassword ? 'nastavené' : 'nenastavené'}
+                  {signInMethods.password.status}
                 </AdminDetailRow>
 
                 {emergencyPassword.isTwoFactorEnabled ? (
@@ -523,11 +523,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     }
                     label={'Dvoufázové ověření'}
                   >
-                    <span>zapnuté</span>
+                    <span>{signInMethods.twoFactor.status}</span>
                     <span className={styles.note}>
-                      {formatRemainingBackupCodes(
-                        emergencyPassword.unusedBackupCodesCount,
-                      )}
+                      {signInMethods.twoFactor.note}
                     </span>
                   </AdminDetailRow>
                 ) : (
@@ -555,7 +553,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     }
                     label={'Dvoufázové ověření'}
                   >
-                    vypnuté
+                    {signInMethods.twoFactor.status}
                   </AdminDetailRow>
                 )}
               </div>

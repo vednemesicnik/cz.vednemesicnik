@@ -2,6 +2,7 @@ import {
   type AdminListTableKey,
   extractAdminListFilterSearch,
   FILTER_PRESET_PARAM,
+  validateFilterQuery,
 } from '~/utils/admin-list-filters'
 import { prisma } from '~/utils/db.server'
 
@@ -21,7 +22,9 @@ type LoadSavedFiltersOptions = {
  * @returns `ownFilters` — the viewer's presets, editable; `sharedFilters` — everyone
  *   else's shared ones, apply-only and labelled with their owner; `activeFilterId` —
  *   the preset the current URL came from, `null` when it points at nothing the viewer
- *   can see; `currentFilterQuery` — the canonical snapshot a save or overwrite stores.
+ *   can see; `currentFilterQuery` — the canonical snapshot a save or overwrite stores;
+ *   `matchingFilterId` — the preset whose filters equal the current ones exactly,
+ *   whatever the order of their values (design 22d), `null` when none does.
  */
 export const loadSavedFilters = async ({
   tableKey,
@@ -48,18 +51,20 @@ export const loadSavedFilters = async ({
         id: true,
         name: true,
         query: true,
-        user: { select: { name: true, username: true } },
+        user: {
+          select: { author: { select: { name: true } }, username: true },
+        },
       },
       where: { isShared: true, NOT: { userId }, tableKey },
     }),
   ])
 
-  // `User.name` is optional; the username is unique and always set, so it keeps the
-  // owner label unambiguous when two people share a preset of the same name.
+  // The name belongs to the author (design 28f); an empty one falls back to the
+  // username, which is unique and always set.
   const sharedFilters = rawSharedFilters.map((filter) => ({
     id: filter.id,
     name: filter.name,
-    ownerName: filter.user.name ?? filter.user.username,
+    ownerName: filter.user.author.name || filter.user.username,
     query: filter.query,
   }))
 
@@ -74,9 +79,26 @@ export const loadSavedFilters = async ({
       ? requestedFilterId
       : null
 
+  const currentFilterQuery = extractAdminListFilterSearch(url.search, tableKey)
+
+  // Compared as canonical snapshots, so the order of the values never matters.
+  // The preset the URL came from wins a tie, then own presets before shared ones.
+  const matchingFilters =
+    currentFilterQuery === ''
+      ? []
+      : [...ownFilters, ...sharedFilters].filter(
+          (filter) =>
+            validateFilterQuery(filter.query, tableKey) === currentFilterQuery,
+        )
+  const matchingFilterId =
+    matchingFilters.find((filter) => filter.id === activeFilterId)?.id ??
+    matchingFilters[0]?.id ??
+    null
+
   return {
     activeFilterId,
-    currentFilterQuery: extractAdminListFilterSearch(url.search, tableKey),
+    currentFilterQuery,
+    matchingFilterId,
     ownFilters,
     sharedFilters,
   }

@@ -1,7 +1,10 @@
+import { data } from 'react-router'
+
 import { prisma } from '~/utils/db.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { requireContentUpdatePermission } from '~/utils/permissions/author/guards/require-content-update-permission.server'
 import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
+import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 
 import type { Route } from './+types/route'
 
@@ -20,6 +23,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       number: true,
       slug: true,
       state: true,
+      submittedAt: true,
       title: true,
     },
     where: { id: episodeId },
@@ -38,6 +42,17 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     state: episode.state,
     title: episode.title,
   })
+
+  // A submitted draft is locked for its author until they take it back
+  // (design 07d). Design 30d has no reason for it yet, so the generic 403 (30h).
+  if (
+    isLockedBySubmission({
+      roleLevel: context.roleLevel,
+      submittedAt: episode.submittedAt,
+    })
+  ) {
+    throw data(null, { status: 403 })
+  }
 
   const authors = await getAuthorsByPermission(
     context,

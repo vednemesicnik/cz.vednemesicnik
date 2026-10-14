@@ -3,17 +3,21 @@
 import { href } from 'react-router'
 
 import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
-import { AdminHeadline } from '~/components/admin/admin-headline'
 import { AdminNavigationCard } from '~/components/admin/admin-navigation-card'
 import { AdminNavigationGrid } from '~/components/admin/admin-navigation-grid'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminPendingItem } from '~/components/admin/admin-pending-item'
 import { AdminStatCard } from '~/components/admin/admin-stat-card'
+import { PageTitle } from '~/components/page-title'
+import { useContentEvents } from '~/hooks/use-content-events'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { pendingReviewItems, statistics, permissions } = loaderData
+
+  // Any change can move the pending list or the statistics.
+  useContentEvents()
 
   const {
     canViewUsers,
@@ -33,7 +37,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Přehled</AdminHeadline>
+      <PageTitle>Přehled</PageTitle>
 
       {/* Statistics Section */}
       <section className={styles.section}>
@@ -80,7 +84,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.articles.map((article) => (
               <AdminPendingItem
                 author={article.authors.map((a) => a.name).join(', ')}
-                date={article.createdAt}
+                date={article.submittedAt}
                 key={article.id}
                 title={article.title}
                 to={href('/administration/articles/:articleId', {
@@ -92,7 +96,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.podcasts.map((podcast) => (
               <AdminPendingItem
                 author={podcast.author.name}
-                date={podcast.createdAt}
+                date={podcast.submittedAt}
                 key={podcast.id}
                 title={podcast.title}
                 to={href('/administration/podcasts/:podcastId', {
@@ -104,7 +108,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.podcastEpisodes.map((episode) => (
               <AdminPendingItem
                 author={episode.author.name}
-                date={episode.createdAt}
+                date={episode.submittedAt}
                 key={episode.id}
                 title={`${episode.podcast.title} - ${episode.title}`}
                 to={href(
@@ -120,7 +124,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.issues.map((issue) => (
               <AdminPendingItem
                 author={issue.author.name}
-                date={issue.createdAt}
+                date={issue.submittedAt}
                 key={issue.id}
                 title={issue.label}
                 to={href('/administration/archive/:issueId', {
@@ -132,7 +136,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.articleCategories.map((category) => (
               <AdminPendingItem
                 author={category.author.name}
-                date={category.createdAt}
+                date={category.submittedAt}
                 key={category.id}
                 title={category.name}
                 to={href('/administration/articles/categories/:categoryId', {
@@ -144,7 +148,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {pendingReviewItems.articleTags.map((tag) => (
               <AdminPendingItem
                 author={tag.author.name}
-                date={tag.createdAt}
+                date={tag.submittedAt}
                 key={tag.id}
                 title={tag.name}
                 to={href('/administration/articles/tags/:tagId', {

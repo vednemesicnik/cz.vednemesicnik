@@ -1,11 +1,12 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { href, redirect } from 'react-router'
+import { data, href, redirect } from 'react-router'
 
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
+import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 import { updatePodcast } from './utils/update-podcast.server'
@@ -38,6 +39,7 @@ export async function action({ request }: Route.ActionArgs) {
     select: {
       authorId: true,
       state: true,
+      submittedAt: true,
     },
     where: { id },
   })
@@ -50,6 +52,16 @@ export async function action({ request }: Route.ActionArgs) {
     targetAuthorIds: [existingPodcast.authorId],
   })
 
+  // A submitted draft is locked for its author (design 07d).
+  if (
+    isLockedBySubmission({
+      roleLevel: context.roleLevel,
+      submittedAt: existingPodcast.submittedAt,
+    })
+  ) {
+    throw data(null, { status: 403 })
+  }
+
   // Check permission to assign the SELECTED author
   checkAuthorPermission(context, {
     action: 'update',
@@ -59,6 +71,7 @@ export async function action({ request }: Route.ActionArgs) {
   })
 
   await updatePodcast({
+    actor: context,
     authorId,
     cover,
     coverId,

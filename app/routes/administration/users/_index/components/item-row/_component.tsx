@@ -7,17 +7,17 @@ import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { TableCell, TableRow } from '~/components/admin/admin-table'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
+import { LinkButton } from '~/components/link-button'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 
 type Props = {
   id: string
   email: string
-  name: string | null
+  name: string
   roleName: string
   createdAt: Date
   canView: boolean
@@ -49,30 +49,32 @@ export const ItemRow = ({
   return (
     <TableRow>
       <TableCell>{email}</TableCell>
-      <TableCell>{name ?? '...'}</TableCell>
+      <TableCell>{name}</TableCell>
       <TableCell>{roleName}</TableCell>
       <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell variant={'actions'}>
         <AdminActionGroup>
           {canView && (
-            <AdminLinkButton
+            <LinkButton
               disabled={isDeleting}
               to={href('/administration/users/:userId', { userId: id })}
+              variant={'outline'}
             >
               <VisibilityIcon />
               Zobrazit
-            </AdminLinkButton>
+            </LinkButton>
           )}
           {canUpdate && (
-            <AdminLinkButton
+            <LinkButton
               disabled={isDeleting}
               to={href('/administration/users/:userId/edit-user', {
                 userId: id,
               })}
+              variant={'outline'}
             >
               <EditIcon />
               Upravit
-            </AdminLinkButton>
+            </LinkButton>
           )}
           {canDelete && (
             <>

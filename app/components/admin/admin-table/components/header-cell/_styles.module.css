@@ -1,23 +1,27 @@
 .headerCell {
   @layer component {
-    padding: 12px 16px;
+    /* Small sentence-case labels over one line (22a). */
+    padding: 0 6px 10px;
     text-align: left;
-    font-weight: var(--font-weight-semibold);
-    font-size: var(--font-size-sm);
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: var(--font-weight-regular);
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
     /* Opaque background + separator on the cell so both stay put while the
        header is sticky (border-collapse: separate ignores borders on thead). */
-    background-color: var(--bg-secondary);
-    border-bottom: 2px solid var(--border-strong);
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border);
 
     &:first-child {
-      padding-left: 24px;
+      padding-left: 8px;
     }
 
     &:last-child {
-      padding-right: 24px;
+      padding-right: 8px;
+    }
+
+    /* Air between the window's edge and the header stuck to it (5r4m681k). */
+    @media (width >= 1024px) {
+      padding-top: 10px;
     }
   }
 }

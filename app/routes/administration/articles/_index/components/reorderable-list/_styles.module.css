@@ -1,0 +1,136 @@
+/* Over eight rows the list scrolls, the heading and buttons stay (22c).
+   A scroll box clips on every side, so the dashed landing place, the lifted
+   row's shift and its shadow get 8 px of room, given back by the margin. */
+.list {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-block-size: calc(8 * 54px + 16px);
+    margin: -8px;
+    padding: 8px;
+    overflow-y: auto;
+    list-style: none;
+  }
+}
+
+.slot {
+  @layer route {
+    border-radius: 8px;
+  }
+}
+
+/* Where the lifted row lands: dashed (22c). Above its neighbours, which slide
+   past it on a swap and would otherwise paint over it. */
+.landing {
+  @layer route {
+    position: relative;
+    z-index: 1;
+    outline: 1px dashed var(--border-accent);
+    background-color: var(--bg-accent);
+  }
+}
+
+.row {
+  @layer route {
+    display: grid;
+    grid-template-columns: 16px 16px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: var(--card-bg);
+    font-size: var(--font-size-sm);
+    cursor: grab;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+.lifted {
+  @layer route {
+    position: relative;
+    border-color: var(--border-accent);
+    box-shadow: var(--shadow-lg);
+    cursor: grabbing;
+  }
+}
+
+/* Secondary, not tertiary as drawn: the number and the grip need 4.5:1 and 3:1. */
+.number {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* The grip is 16 px, the target 24 × 24 (44 × 44 to a finger); negative
+   margins keep the row's layout (o482br61). */
+.handle {
+  @layer route {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 24px;
+    block-size: 24px;
+    margin: -4px;
+    padding: 0;
+    position: relative;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: var(--text-secondary);
+    cursor: inherit;
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+
+    &[aria-pressed="true"] {
+      color: var(--link-strong);
+    }
+
+    @media (pointer: coarse) {
+      &::after {
+        content: "";
+        position: absolute;
+        inset: -10px;
+      }
+    }
+  }
+}
+
+.text {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+}
+
+.title {
+  @layer route {
+    color: var(--text-primary);
+  }
+}
+
+.detail {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}
+
+/* The „⋯“ that moves a row without dragging (WCAG 2.5.7, 5mehib4t). */
+.menu {
+  @layer route {
+    display: flex;
+    cursor: auto;
+  }
+}

@@ -1,4 +1,9 @@
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
+import {
+  type PublishingAuthor,
+  publishContentEvent,
+} from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -9,6 +14,7 @@ type Args = {
   podcastId: string
   authorId: string
   links?: { label: string; url: string }[]
+  actor: PublishingAuthor
 }
 
 export async function createEpisode({
@@ -19,6 +25,7 @@ export async function createEpisode({
   podcastId,
   authorId,
   links = [],
+  actor,
 }: Args) {
   try {
     const episode = await prisma.podcastEpisode.create({
@@ -42,6 +49,15 @@ export async function createEpisode({
         title,
       },
     })
+
+    await recordContentLog(
+      { entity: 'podcast_episode', entityId: episode.id, events: ['create'] },
+      actor,
+    )
+    publishContentEvent(
+      { change: 'create', entity: 'podcast_episode', entityId: episode.id },
+      actor,
+    )
 
     return { episodeId: episode.id }
   } catch (error) {

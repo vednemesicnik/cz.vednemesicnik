@@ -1,0 +1,48 @@
+# Decisions
+
+One file per decision that binds later changes — architecture, the product model,
+security, tooling. A record says what was decided, when, and why, so the next change does
+not reopen it by accident. The topic documents in `docs/` describe how things are; a record
+explains why they are that way and what was turned down.
+
+UX, layout and visuals are decided in the design project (`docs/_design-project.md`), and
+user-facing Czech by the copywriter (`docs/_copy-context.md`). A record cites those answers;
+it does not restate them.
+
+Agents write records with the `/record-decision` skill.
+
+## Format
+
+Start from [`_template.md`](_template.md). A record is `NNNN-kebab-title.md`, numbered in
+order and never renumbered. The title names the decision, not the topic.
+
+**Status** is one of:
+
+- `Proposed` — written, not yet agreed;
+- `Accepted` — in force;
+- `Superseded by NNNN` — replaced; the newer record says why;
+- `Deprecated` — no longer applies, nothing replaced it.
+
+**Date** is the day the decision was made, not the day the file was written.
+
+A record is not rewritten once it is accepted. A changed decision gets a new record, and the
+old one changes only its status line.
+
+## Index
+
+| # | Decision | Status | Date |
+| --- | --- | --- | --- |
+| [0001](0001-record-decisions-in-the-repository.md) | Record decisions in the repository | Accepted | 2026-10-13 |
+| [0002](0002-nonce-csp-deferred.md) | Defer the nonce-based Content-Security-Policy | Accepted | 2026-07-09 |
+| [0003](0003-exactly-one-owner.md) | Exactly one Owner | Accepted | 2026-07-10 |
+| [0004](0004-separate-auth-log-and-audit-log.md) | Separate the auth log from the audit log | Accepted | 2026-07-10 |
+| [0005](0005-review-gate-keys-off-role-level.md) | The review gate keys off the role level | Accepted | 2026-07-12 |
+| [0006](0006-archive-issue-is-the-printed-magazine-only.md) | The archive `Issue` is the printed magazine only | Accepted | 2026-07-14 |
+| [0007](0007-translate-the-interface-not-the-content.md) | Translate the interface, not the content | Accepted | 2026-07-19 |
+| [0008](0008-public-forms-carry-their-own-notice.md) | Public forms carry their own data-protection notice | Accepted | 2026-08-02 |
+| [0009](0009-no-transparent-bank-account.md) | No transparent bank account | Accepted | 2026-09-28 |
+| [0010](0010-one-component-per-role.md) | One component per role, no administration twins | Accepted | 2026-10-10 |
+| [0011](0011-passkeys-have-no-name.md) | Passkeys have no name or note | Accepted | 2026-10-11 |
+| [0012](0012-live-events-carry-the-actor-name-to-every-session.md) | Live content events carry the actor's name to every administration session | Accepted | 2026-10-13 |
+| [0013](0013-content-is-submitted-only-the-coordinator-approves-and-publishes.md) | Every content type is submitted for review; only the Coordinator approves and publishes | Accepted | 2026-09-28 |
+| [0014](0014-activity-guidance-is-a-skill-not-a-rule.md) | Guidance for one body of work is a skill, not a rule | Accepted | 2026-10-14 |

@@ -6,6 +6,7 @@ import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import type { Route } from './+types/route'
@@ -103,6 +104,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         id: true,
         name: true,
         state: true,
+        submittedAt: true,
       },
       where,
     }),
@@ -113,18 +115,25 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const categories = rawCategories.map((category) => {
     return {
       ...category,
-      canDelete: context.can({
-        action: 'delete',
-        entity: 'article_category',
-        state: category.state,
-        targetAuthorIds: [category.authorId],
-      }).hasPermission,
-      canEdit: context.can({
-        action: 'update',
-        entity: 'article_category',
-        state: category.state,
-        targetAuthorIds: [category.authorId],
-      }).hasPermission,
+      // A submitted draft is neither deleted nor edited by its author (07d).
+      canDelete:
+        context.can({
+          action: 'delete',
+          entity: 'article_category',
+          state: category.state,
+          targetAuthorIds: [category.authorId],
+        }).hasPermission && category.submittedAt === null,
+      canEdit:
+        context.can({
+          action: 'update',
+          entity: 'article_category',
+          state: category.state,
+          targetAuthorIds: [category.authorId],
+        }).hasPermission &&
+        !isLockedBySubmission({
+          roleLevel: context.roleLevel,
+          submittedAt: category.submittedAt,
+        }),
       canView: context.can({
         action: 'view',
         entity: 'article_category',

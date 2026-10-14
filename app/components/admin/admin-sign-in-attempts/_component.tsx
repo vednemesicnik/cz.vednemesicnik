@@ -11,8 +11,9 @@ type Props = {
 
 /**
  * The last sign-in attempts of an account, newest first (design 29a, 28e): a
- * 128 px column with the date and time, then the method, which may wrap. A
- * failed attempt is rose and says so in its label.
+ * 128 px column with the date and time, then the method, which may wrap, and
+ * small under it who issued an emergency link. A failed attempt is rose and
+ * says so in its label.
  *
  * @param props.attempts - The attempts from `getRecentSignInAttempts`.
  */
@@ -25,7 +26,12 @@ export const AdminSignInAttempts = ({ attempts, className }: Props) => {
           key={attempt.id}
         >
           <time dateTime={attempt.dateTime}>{attempt.formattedDateTime}</time>
-          <span className={styles.method}>{attempt.label}</span>
+          <span className={styles.method}>
+            {attempt.label}
+            {attempt.detail !== null && (
+              <span className={styles.detail}>{attempt.detail}</span>
+            )}
+          </span>
         </li>
       ))}
     </ol>

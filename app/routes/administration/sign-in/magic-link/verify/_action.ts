@@ -2,6 +2,7 @@ import { redirect } from 'react-router'
 import { getAuthentication } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
+import { createMagicLinkUrl } from '~/utils/magic-link/create-magic-link-url'
 import { consumeMagicLinkToken } from '~/utils/magic-link.server'
 import { safeRedirect } from '~/utils/safe-redirect'
 import { findExistingUserByEmail, signInUser } from '~/utils/sign-in.server'
@@ -50,6 +51,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
   // Single-use: consume (delete) the row and check validity in one step.
   const isValid = await consumeMagicLinkToken(normalizedEmail, token)
 
+  // Expired or used by another tab between opening and clicking: back to the
+  // link's page, which now says Odkaz už neplatí (20c).
   if (!isValid) {
     recordAuthLog({
       email: normalizedEmail,
@@ -57,15 +60,21 @@ export const action = async ({ request }: Route.ActionArgs) => {
       method: 'magic_link',
       request,
     })
-    throw redirect(
-      withRedirectTo('/administration/sign-in/magic-link', redirectTo),
-      { status: 303 },
+    const link = new URL(
+      createMagicLinkUrl({
+        baseUrl: request.url,
+        email: normalizedEmail,
+        redirectTo,
+        token,
+      }),
     )
+    throw redirect(link.pathname + link.search, { status: 303 })
   }
 
   const user = await findExistingUserByEmail(normalizedEmail)
 
-  // The account may have been removed between request and click.
+  // The account may have been removed between request and click: the chooser
+  // says so like a Google sign-in without an account (20c).
   if (user === null) {
     recordAuthLog({
       email: normalizedEmail,
@@ -73,11 +82,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
       method: 'magic_link',
       request,
     })
-    throw redirect(withRedirectTo('/administration/sign-in', redirectTo), {
-      status: 303,
-    })
+    const chooser = new URL(
+      withRedirectTo('/administration/sign-in', redirectTo),
+      request.url,
+    )
+    chooser.searchParams.set('error', 'account')
+    throw redirect(chooser.pathname + chooser.search, { status: 303 })
   }
 
   // Always throws: a redirect to `redirectTo` on success.
-  return await signInUser(request, user.id, 'magic_link', redirectTo)
+  return await signInUser(request, user.id, 'magic_link', { redirectTo })
 }

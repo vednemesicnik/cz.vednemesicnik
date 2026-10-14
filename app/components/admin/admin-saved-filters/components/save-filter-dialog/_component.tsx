@@ -1,8 +1,7 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
+import type { ReactNode } from 'react'
 import { href, useFetcher } from 'react-router'
-
-import { AdminInput } from '~/components/admin/admin-input'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -11,9 +10,10 @@ import { useFilterDialog } from '~/components/admin/admin-saved-filters/_hook'
 import type { FilterActionData } from '~/components/admin/admin-saved-filters/_types'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { Checkbox } from '~/components/checkbox'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
-import { Label } from '~/components/label'
+import { TextField } from '~/components/text-field'
 import { FORM_CONFIG } from '~/config/form-config'
 import { createFilterSchema } from '~/routes/administration/filters/_schema'
 import type { AdminListTableKey } from '~/utils/admin-list-filters'
@@ -24,12 +24,28 @@ type Props = {
   currentQuery: string
   onClose: () => void
   tableKey: AdminListTableKey
+  title?: string
+  summary?: ReactNode
+  defaultHint?: string
+  sharedHint?: string
 }
 
+/**
+ * Saves the list's current state as a named filter.
+ *
+ * @param props.title - The dialog's title.
+ * @param props.summary - What is saved, a sentence or a list (design 22d).
+ * @param props.defaultHint - The hint under Nastavit jako výchozí.
+ * @param props.sharedHint - The hint under Sdílet s ostatními.
+ */
 export const SaveFilterDialog = ({
   currentQuery,
   onClose,
   tableKey,
+  title = 'Uložit aktuální filtr',
+  summary,
+  defaultHint,
+  sharedHint,
 }: Props) => {
   const fetcher = useFetcher<FilterActionData>()
   const dialogRef = useFilterDialog(fetcher, onClose)
@@ -52,7 +68,7 @@ export const SaveFilterDialog = ({
   return (
     <AdminDialog ref={dialogRef}>
       <AdminModalContent>
-        <AdminModalTitle>Uložit aktuální filtr</AdminModalTitle>
+        <AdminModalTitle>{title}</AdminModalTitle>
 
         <fetcher.Form
           action={href('/administration/filters')}
@@ -75,29 +91,33 @@ export const SaveFilterDialog = ({
             value={currentQuery}
           />
 
-          <AdminInput
+          <TextField
             errors={fields.name.errors}
             label={'Název'}
             {...getInputProps(fields.name, { type: 'text' })}
           />
 
+          {summary !== undefined && (
+            <div className={styles.summary}>{summary}</div>
+          )}
+
           <div className={styles.checkboxes}>
-            <div className={styles.checkbox}>
-              <input
-                {...getInputProps(fields.isDefault, {
-                  type: 'checkbox',
-                })}
-              />
-              <Label htmlFor={fields.isDefault.id}>Nastavit jako výchozí</Label>
-            </div>
-            <div className={styles.checkbox}>
-              <input
-                {...getInputProps(fields.isShared, {
-                  type: 'checkbox',
-                })}
-              />
-              <Label htmlFor={fields.isShared.id}>Sdílet s ostatními</Label>
-            </div>
+            <Checkbox
+              hint={defaultHint}
+              {...getInputProps(fields.isDefault, {
+                type: 'checkbox',
+              })}
+            >
+              Nastavit jako výchozí
+            </Checkbox>
+            <Checkbox
+              hint={sharedHint}
+              {...getInputProps(fields.isShared, {
+                type: 'checkbox',
+              })}
+            >
+              Sdílet s ostatními
+            </Checkbox>
           </div>
 
           {/* The snapshot is a hidden field, so its errors (an unusable filter)

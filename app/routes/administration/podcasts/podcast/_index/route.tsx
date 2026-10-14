@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Activity, useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Form, href } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -12,11 +12,10 @@ import {
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminStateBadge } from '~/components/admin/admin-state-badge'
+import { AdminSubmissionActions } from '~/components/admin/admin-submission-actions'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { Hyperlink } from '~/components/hyperlink'
 import { ArchiveIcon } from '~/components/icons/archive-icon'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
@@ -25,9 +24,13 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { RefreshIcon } from '~/components/icons/refresh-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
-import { getAuthorRoleLabel } from '~/utils/role-labels'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
+import { StatusTag } from '~/components/status-tag'
+import { useContentEvents } from '~/hooks/use-content-events'
 
 import type { Route } from './+types/route'
+import { PodcastHistoryDialog } from './components/podcast-history-dialog'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -39,19 +42,27 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     podcast,
-    canUpdate,
+    canEdit,
     canDelete,
     canPublish,
     canRetract,
     canArchive,
     canRestore,
-    canReview,
-    hasReviewed,
-    needsReview,
+    canApprove,
+    canSubmit,
+    canWithdraw,
+    canReturn,
+    submission,
   } = loaderData
   const { podcastId } = params
 
+  useContentEvents({
+    filter: (event) =>
+      event.entity === 'podcast' && event.entityId === podcastId,
+  })
+
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
@@ -63,27 +74,43 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>{podcast.title}</AdminHeadline>
+      <PageTitle>{podcast.title}</PageTitle>
 
       <AdminActionGroup>
-        <AdminLinkButton
+        {/* First in every state, until 27b's „⋯“ takes it over (27j). */}
+        <Button
+          onClick={() => setIsHistoryOpen(true)}
+          type={'button'}
+          variant={'outline'}
+        >
+          Historie
+        </Button>
+        <LinkButton
           to={href('/administration/podcasts/:podcastId/episodes', {
             podcastId,
           })}
+          variant={'outline'}
         >
           Zobrazit epizody
-        </AdminLinkButton>
-        {canUpdate && (
-          <AdminLinkButton
+        </LinkButton>
+        {canEdit && (
+          <LinkButton
             to={href('/administration/podcasts/:podcastId/edit-podcast', {
               podcastId,
             })}
+            variant={'outline'}
           >
             <EditIcon />
             Upravit
-          </AdminLinkButton>
+          </LinkButton>
         )}
-        {canReview && !hasReviewed && (
+        <AdminSubmissionActions
+          canReturn={canReturn}
+          canSubmit={canSubmit}
+          canWithdraw={canWithdraw}
+          contentId={podcast.id}
+        />
+        {canApprove && (
           <Form method="post">
             <AuthenticityTokenInput />
             <input name="intent" type="hidden" value="review" />
@@ -97,16 +124,7 @@ export default function RouteComponent({
           <Form method="post">
             <AuthenticityTokenInput />
             <input name="intent" type="hidden" value="publish" />
-            <AdminActionButton
-              action="publish"
-              disabled={needsReview}
-              title={
-                needsReview
-                  ? 'Nelze publikovat bez schválení koordinátora'
-                  : undefined
-              }
-              type="submit"
-            >
+            <AdminActionButton action="publish" type="submit">
               <ArrowUpwardIcon />
               Zveřejnit
             </AdminActionButton>
@@ -154,7 +172,7 @@ export default function RouteComponent({
         <AdminDetailList>
           <AdminDetailItem label="Název">{podcast.title}</AdminDetailItem>
           <AdminDetailItem label="Stav">
-            <AdminStateBadge state={podcast.state} />
+            <StatusTag state={submission ?? podcast.state} />
           </AdminDetailItem>
           {podcast.description && (
             <AdminDetailItem label="Popis">
@@ -182,36 +200,15 @@ export default function RouteComponent({
         </AdminDetailList>
       </AdminDetailSection>
 
-      <AdminDetailSection title="Metadata">
-        <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">
-            {podcast.createdAt.formatted}
-          </AdminDetailItem>
-          <AdminDetailItem label="Aktualizováno">
-            {podcast.updatedAt.formatted}
-          </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Schválení">
-        <AdminDetailList>
-          <Activity mode={podcast.reviews.length > 0 ? 'visible' : 'hidden'}>
-            {podcast.reviews.map((review) => (
-              <AdminDetailItem
-                key={review.id}
-                label={`${review.reviewer.name} (${getAuthorRoleLabel(review.reviewer.roleName)})`}
-              >
-                {review.createdAt.formatted}
-              </AdminDetailItem>
-            ))}
-          </Activity>
-          <AdminDetailItem label="Schváleno koordinátorem">
-            {podcast.hasApprovingReview ? 'Ano' : 'Ne'}
-          </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+
+      {isHistoryOpen && (
+        <PodcastHistoryDialog
+          history={podcast.history}
+          onClose={() => setIsHistoryOpen(false)}
+          podcastTitle={podcast.title}
+        />
+      )}
     </AdminPage>
   )
 }

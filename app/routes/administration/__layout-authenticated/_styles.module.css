@@ -17,7 +17,8 @@
       "sidebar footer";
     align-items: start;
     margin: 0;
-    background-color: var(--bg-secondary);
+    /* The content is white; only the sidebar is grey, on its own (22a). */
+    background-color: var(--bg-primary);
     min-height: 100dvh;
 
     /* Below 768 px one column: the top bar, the content, the footer; the

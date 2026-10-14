@@ -9,16 +9,16 @@ import {
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminInput } from '~/components/admin/admin-input'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
@@ -74,13 +74,13 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Upravit kategorii</AdminHeadline>
+      <PageTitle>Upravit kategorii</PageTitle>
 
       <Form errors={form.errors} method={'post'} {...getFormProps(form)}>
         <AuthenticityTokenInput />
 
         <Fieldset legend={'Základní informace'}>
-          <AdminInput
+          <TextField
             errors={fields.name.errors}
             label={'Název'}
             {...getInputProps(fields.name, { type: 'text' })}
@@ -93,7 +93,7 @@ export default function RouteComponent({
           >
             Vygenerovat nový slug
           </AdminButtonLink>
-          <AdminInput
+          <TextField
             errors={fields.slug.errors}
             label={'Slug'}
             onBlur={handleBlur}
@@ -119,14 +119,15 @@ export default function RouteComponent({
           <Button disabled={!canSubmit} type={'submit'}>
             {isSubmitting ? 'Ukládá se...' : 'Uložit'}
           </Button>
-          <AdminLinkButton
+          <LinkButton
             disabled={isLoadingOrSubmitting}
             to={href('/administration/articles/categories/:categoryId', {
               categoryId,
             })}
+            variant={'outline'}
           >
             Zrušit
-          </AdminLinkButton>
+          </LinkButton>
         </FormActions>
       </Form>
     </AdminPage>

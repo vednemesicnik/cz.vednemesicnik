@@ -73,10 +73,16 @@ stavů jsou `Koncept` · `Publikováno` · `Archivováno`.
 
 Akce, jak je dnes nese administrace: `Schválit` · `Zveřejnit` (a `Zveřejnit zpětně` s dřívějším
 datem) · `Stáhnout z publikace` (vrátí do konceptu) · `Archivovat` · `Obnovit` (z archivu zpět
-do konceptu, jen Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinátor).
+do konceptu, jen Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinátor). U článku
+navíc `Odeslat ke schválení` a `Vzít zpět do konceptu` (autor) · `Vrátit k úpravám`
+(Koordinátor); odeslaný článek má štítek `Čeká na schválení`, schválený `Schváleno`.
 
-Pozor na dvojici **Zveřejnit / Publikováno**: tlačítko a stav dnes používají jiné slovo pro
-tentýž čin. Je to známá nesrovnalost, ne dva různé kroky.
+Článek už má akce nového návrhu: `Publikovat…` a `Schválit a publikovat…` otevřou dialog s
+datem publikace (`Dnes` · `Jiný den`, u dříve publikovaného navíc `Původní datum`), zpětné
+datum se volí tam, ne zvláštním tlačítkem.
+
+Pozor na dvojici **Zveřejnit / Publikováno**: u ostatního obsahu tlačítko a stav dnes používají
+jiné slovo pro tentýž čin. Je to známá nesrovnalost, ne dva různé kroky.
 
 ## Role
 
@@ -93,15 +99,18 @@ smí s účty.
 Chyby, kterých se tenhle postup bojí, jsou **plynulé věty, které tvrdí něco, co aplikace
 nedělá**. Poznají se jen podle modelu:
 
-- **Schvaluje jen Koordinátor.** Obsah autora s nižší rolí — Přispěvatele i Tvůrce — jde
-  zveřejnit až po schválení Koordinátorem. Věta, která Tvůrci slibuje, že zveřejní sám, nebo
-  že schválit může kdokoli z redakce, je nepravda.
-- **Krok „odeslat ke schválení“ zatím neexistuje.** Čekající obsah je dnes každý koncept autora
-  s nižší rolí. Věta, která mluví o „odeslaném“ konceptu, popisuje budoucí aplikaci.
+- **Schvaluje a zveřejňuje jen Koordinátor**, u všeho obsahu. Přispěvatel ani Tvůrce
+  nezveřejní nic, ani vlastní. Koordinátor smí zveřejnit i neodeslaný koncept: zveřejnění je
+  schválení. Věta, která Tvůrci slibuje, že zveřejní sám, nebo že schválit může kdokoli
+  z redakce, je nepravda.
+- **Odeslat ke schválení existuje u všeho obsahu** — článku, rubriky, štítku, podcastu,
+  epizody i čísla. Autor hotový koncept odešle, a dokud ho nevezme zpět, needituje ho ani
+  nesmaže; Koordinátor ho smí opravit a schválení tím nezmizí. Na přehledu čeká jen odeslané
+  a neschválené.
 - **Publikovaný obsah se nemaže.** Smazat jde koncept, a archivovaný obsah jen Koordinátor.
   Publikovaný se nejdřív stáhne nebo archivuje.
 - **Publikovaný obsah nejde upravit na místě** — nejdřív se stáhne z publikace do konceptu.
-- **Datum vydání nastaví jen Koordinátor, a nikdy do budoucnosti.** Nic se neplánuje: publikovaný
+- **Datum publikace nastaví jen Koordinátor, a nikdy do budoucnosti.** Nic se neplánuje: publikovaný
   článek je na webu hned. Věta, která slibuje „naplánované zveřejnění“, je nepravda.
 - **Na webu vidí koncept a archivovaný článek jen ten, kdo ho vidí v administraci** — jako
   náhled, dnes nijak odlišený od publikovaného. Přispěvatel jen vlastní, Tvůrce jakýkoli koncept
@@ -134,8 +143,8 @@ o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše to
 - **Článek může mít víc autorů** a každý z nich ho má za vlastní: upraví ho, odešle i vezme zpět.
   Věta s jedním autorem v jednotném čísle (*autor článek neodeslal*) je pro spoluautorství
   nepravda.
-- **Přispěvatel má místo fronty `Ke schválení` pilulku `Odeslané`**: jsou v ní jeho čekající
-  i schválené články. Nic neschvaluje, jen čeká.
+- **Přispěvatel má ve filtru `Stav` místo hodnoty `Ke schválení` hodnotu `Odeslané`**: jsou v ní
+  jeho čekající i schválené články. Nic neschvaluje, jen čeká.
 - **Editor článku se ukládá sám** a drží **zámek**: článek upravuje vždy jen jedna záložka jednoho
   člověka, Koordinátor smí úpravu převzít. Posledních pár vteřin psaní se při převzetí může
   ztratit; věta, že se „nic neztratí“, je nepravda.
@@ -165,6 +174,14 @@ Týká se to i veřejného webu:
   která passkey váže na otisk prstu nebo obličej tohoto zařízení, je neúplná.
 - **Heslo je nouzová cesta a v provozu je vypnuté.** Věta, která heslo nabízí jako běžnou cestu
   nebo jako záchranu při ztrátě telefonu, je nepravda.
+- **Nouzový režim zapíná jeden přepínač** při výpadku Googlu, a to jen ten, kdo spravuje
+  provoz. Otevře heslo (jen Vlastník a Administrátor, kteří si ho nastavili) a **nouzový
+  odkaz** (rozhodnuto 12. 10. 2026). Nouzový odkaz vydá Vlastník nebo Administrátor pro účet,
+  který smí upravit, nikdy pro sebe ani pro Vlastníka. Předá ho telefonem nebo v chatu, nikdy
+  e‑mailem, až po ověření totožnosti osobně nebo při hlasovém hovoru. Platí 15 minut a jen
+  jednou, nový nahradí předchozí; po vypnutí režimu neplatí žádný. Samo otevření nepřihlásí
+  nic, přihlásí až potvrzení na stránce. *Odkaz od:* jmenuje toho, kdo odkaz vydal, ne
+  *vydání* (to slovo nese tištěné číslo).
 - **Dvoufázové ověření je nepovinné** a ptá se jen po hesle. Google, passkey ani odkaz ho
   nechtějí. Aplikace pro kódy je **ověřovací aplikace**, ne *autentikační*.
 - **Přihlášení drží prohlížeč, ne zařízení.** Jiný prohlížeč téhož počítače, prohlížeč uvnitř

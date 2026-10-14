@@ -56,6 +56,16 @@ skills, and never replaces a real file or directory in `.claude/skills`, so pers
 skills can sit next to the linked ones. Git worktrees under `.claude/worktrees/` pick up
 the main checkout's links.
 
+### Claude Code Subagents
+
+Project subagents are committed in `.claude/agents/` (the one tracked path under `.claude/`),
+so worktrees and cloud environments have them without a link step. A subagent cannot ask the
+user anything, so only self-contained, read-only work goes to one; the interactive pipeline
+skills stay in the main session.
+
+- `implementation-reviewer` — the pre-PR review for `/review-implementation` and
+  `/ship-issue`, in a fresh context.
+
 ### Branching & Pull Requests
 
 `dev` is the default branch; `main` is production and the only deploy source. Branch
@@ -139,14 +149,14 @@ All content entities (Article, Podcast, PodcastEpisode, Issue, etc.) support thr
 
 #### User Roles (system access)
 
-- **Member** (level 3): Can view/update own account and author profile
+- **Member** (level 3): Can view/update own account (through Settings) and author profile
 - **Administrator** (level 2): Full access to users and authors except Owner accounts
 - **Owner** (level 1): Full system control; exactly one Owner (from seed), and the Owner role cannot be assigned (single-owner policy)
 
 #### Author Roles (content management)
 
 - **Contributor** (level 3): Can create/edit/view/delete own draft content
-- **Creator** (level 2): Can publish own content once a Coordinator has approved it, and retract and archive own published content
+- **Creator** (level 2): Submits own content for review like a Contributor (only the Coordinator approves and publishes), sees others' drafts, and retracts and archives own published content
 - **Coordinator** (level 1): Full access to all content in all states
 
 Permissions are checked via:
@@ -199,6 +209,9 @@ Session-based authentication with multiple methods:
 - Password (bcrypt hashed) — an emergency path, off unless `ALLOW_PASSWORD_SIGN_IN` is set;
   only Owner and Administrator may set it and its two-factor authentication
   (`can-use-emergency-password.ts`)
+- Emergency sign-in link — under the same switch, an Owner or Administrator issues a one-time
+  15-minute link for an account they may edit (`can-issue-emergency-sign-in-link.ts`,
+  `app/utils/emergency-sign-in-link/`); handed over by phone or chat, never by e-mail
 
 Session management in `app/utils/auth.server.ts` using cookie-based sessions.
 
@@ -292,6 +305,7 @@ Comprehensive project documentation is in the `docs/` directory:
 - `docs/_prisma-studio-on-production.md` - Running Prisma Studio against the production database over a Fly tunnel
 - `docs/_design-project.md` - The Claude Design project and design system (ids, documents, `questions/`), and reading a screen with `pnpm design:screen`
 - `docs/_copy-context.md` - Context the copywriter gets in every `/ask-copy` thread: terms, content states, roles, voice (Czech)
+- `docs/decisions/` - Numbered decision records: what was decided, when and why (index and format in `README.md`, template in `_template.md`)
 
 ## Environment
 
@@ -308,6 +322,12 @@ commands (see [Claude Code Skills](#claude-code-skills)).
 Project-specific conventions and guidelines for recurring tasks. Load when writing or updating story files (`.stories.tsx`), when writing or editing any `.module.css` or `.css` file, or when cutting a release (`dev → main` PR).
 
 Read `.agents/skills/general-guidance/SKILL.md` — it lists the covered domains and directs you to the correct reference file.
+
+### Component Authoring
+
+How this project builds UI. Load before writing markup or a component, planning a new component, or changing a component's props.
+
+Read `.agents/skills/component-authoring/SKILL.md` — its references cover the component API (compound components first, then props, render props to hand values out), semantic HTML, no layout shift, and reusing existing components.
 
 ### Modern Web Guidance
 
@@ -369,6 +389,10 @@ From an idea to a merged PR, one issue per context window:
 - `.agents/skills/ship-issue/SKILL.md` — review, PR, Copilot loop, green CI, then ask and merge.
 - `.agents/skills/next-issue/SKILL.md` — after the merge: aftermath, handoff, pick the next issue.
 
+A decision that binds later changes gets a record in `docs/decisions/`:
+
+- `.agents/skills/record-decision/SKILL.md` — write a numbered decision record or supersede one; `/plan-issue`, `/review-idea` and `/next-issue` ask whether one is due.
+
 ### Design and Copy
 
 Loops for decisions this repository does not own. Load when a screen, component or token needs a decision from the Claude Design project, when a design document comes back with open questions, or when user-facing Czech needs a copywriter.
@@ -379,6 +403,8 @@ Loops for decisions this repository does not own. Load when a screen, component 
 ## Agent Rules
 
 Mandatory conventions that apply to all tasks. Read the relevant rule file before acting.
+A rule is one short convention with a single trigger; guidance made of several references
+for one body of work, such as building UI, is a skill (decision 0014).
 
 ### Package Versions
 
@@ -403,12 +429,6 @@ Read `.agents/rules/typescript-conventions/RULE.md` before acting.
 Applies when writing any stateful object (store, registry, cache, manager) or considering a class.
 
 Read `.agents/rules/functional-style/RULE.md` before acting.
-
-### Reuse Existing Components
-
-Applies when writing markup in a route or a component, or planning a new component.
-
-Read `.agents/rules/reuse-existing-components/RULE.md` before acting.
 
 ### One Function per File
 

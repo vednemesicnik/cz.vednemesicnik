@@ -22,7 +22,7 @@ const SHARED_FILTER = {
   id: 'shared-1',
   name: 'Publikované',
   query: 'state=published',
-  user: { name: 'Jana Nováková', username: 'jana' },
+  user: { author: { name: 'Jana Nováková' }, username: 'jana' },
 }
 
 // The two queries resolve in the order the helper declares them: own presets first.
@@ -92,10 +92,10 @@ describe('loadSavedFilters', () => {
     ])
   })
 
-  test('should fall back to the username when the owner has no name', async () => {
+  test('should fall back to the username when the author name is empty', async () => {
     mockFilters(
       [],
-      [{ ...SHARED_FILTER, user: { name: null, username: 'jana' } }],
+      [{ ...SHARED_FILTER, user: { author: { name: '' }, username: 'jana' } }],
     )
 
     const { sharedFilters } = await load('')
@@ -135,21 +135,65 @@ describe('loadSavedFilters', () => {
     expect(activeFilterId).toBeNull()
   })
 
-  test('should snapshot only the canonical filter params', async () => {
+  test('should snapshot the canonical filter params and the search', async () => {
     mockFilters()
 
     const { currentFilterQuery } = await load(
       '?tag=skola&q=foo&state=draft&page=2&filter=own-1',
     )
 
-    expect(currentFilterQuery).toBe('state=draft&tag=skola')
+    expect(currentFilterQuery).toBe('state=draft&tag=skola&q=foo')
   })
 
   test('should snapshot an empty query for an unfiltered list', async () => {
     mockFilters()
 
-    const { currentFilterQuery } = await load('?q=foo&sort=title')
+    const { currentFilterQuery } = await load('?sort=title&page=2')
 
     expect(currentFilterQuery).toBe('')
+  })
+
+  test('should match a preset whatever the order of its values', async () => {
+    mockFilters([
+      { ...OWN_FILTER, query: 'state=draft&state=pending&category=skola' },
+    ])
+
+    const { matchingFilterId } = await load(
+      '?category=skola&state=pending&state=draft',
+    )
+
+    expect(matchingFilterId).toBe('own-1')
+  })
+
+  test('should match a preset with one value saved before several were possible', async () => {
+    mockFilters()
+
+    const { matchingFilterId } = await load('?state=published')
+
+    expect(matchingFilterId).toBe('shared-1')
+  })
+
+  test('should not match when the filters differ in any value', async () => {
+    mockFilters()
+
+    const { matchingFilterId } = await load('?state=draft&state=pending')
+
+    expect(matchingFilterId).toBeNull()
+  })
+
+  test('should not match an unfiltered list', async () => {
+    mockFilters([{ ...OWN_FILTER, query: '' }])
+
+    const { matchingFilterId } = await load('')
+
+    expect(matchingFilterId).toBeNull()
+  })
+
+  test('should prefer the preset the URL came from when two match', async () => {
+    mockFilters([OWN_FILTER], [{ ...SHARED_FILTER, query: 'state=draft' }])
+
+    const { matchingFilterId } = await load('?state=draft&filter=shared-1')
+
+    expect(matchingFilterId).toBe('shared-1')
   })
 })

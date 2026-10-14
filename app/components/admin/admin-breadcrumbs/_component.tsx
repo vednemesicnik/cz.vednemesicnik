@@ -23,13 +23,13 @@ type Props = {
  * ```tsx
  * // In an admin route component or layout
  * import { useMatches } from "react-router"
- * import { getBreadcrumbs } from "~/utils/breadcrumbs"
+ * import { getAdminBreadcrumbs } from "~/utils/get-admin-breadcrumbs"
  *
  * function AdminLayout() {
  *   const matches = useMatches()
- *   const breadcrumbs = getBreadcrumbs(matches)
+ *   const breadcrumbs = getAdminBreadcrumbs(matches)
  *
- *   return <AdminBreadcrumbs items={breadcrumbs} />
+ *   return breadcrumbs.length > 0 && <AdminBreadcrumbs items={breadcrumbs} />
  * }
  * ```
  *

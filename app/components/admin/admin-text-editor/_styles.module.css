@@ -2,7 +2,7 @@
   @layer component {
     display: grid;
     grid-auto-flow: row;
-    gap: 4px;
+    gap: 6px;
     justify-items: start;
     width: 100%;
   }
@@ -14,8 +14,8 @@
     width: 100%;
     max-width: 800px;
     min-height: 254px;
-    border: 2px solid var(--border);
-    border-radius: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
     overflow: hidden;
     transition:
       border-color 150ms ease-out,
@@ -28,7 +28,7 @@
 
     /* Focus-within for keyboard navigation */
     &:focus-within {
-      border-color: var(--primary);
+      border-color: var(--border-accent);
       box-shadow: var(--focus-shadow);
     }
 

@@ -3,8 +3,6 @@
 import { href, useSearchParams } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminSavedFilters } from '~/components/admin/admin-saved-filters'
 import {
@@ -20,6 +18,9 @@ import {
 import { AdminTableFilters } from '~/components/admin/admin-table-filters'
 import { AdminTableSearch } from '~/components/admin/admin-table-search'
 import { AdminTableToolbar } from '~/components/admin/admin-table-toolbar'
+import { LinkButton } from '~/components/link-button'
+import { ListHeader } from '~/components/list-header'
+import { PageTitle } from '~/components/page-title'
 import { AUTHOR_ROLE_OPTIONS } from '~/utils/admin-filter-options'
 import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
@@ -62,12 +63,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <AdminHeadline>Autoři</AdminHeadline>
-      {canCreate && (
-        <AdminLinkButton to={href('/administration/authors/add-author')}>
-          Přidat autora
-        </AdminLinkButton>
-      )}
+      <ListHeader
+        action={
+          canCreate && (
+            <LinkButton to={href('/administration/authors/add-author')}>
+              Nový autor
+            </LinkButton>
+          )
+        }
+      >
+        <PageTitle>Autoři</PageTitle>
+      </ListHeader>
       <AdminTableToolbar>
         <AdminTableSearch defaultValue={query} placeholder={'Hledat autory…'} />
         <AdminBulkActionsBar

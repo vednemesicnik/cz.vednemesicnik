@@ -5,6 +5,7 @@ import { prisma } from '~/utils/db.server'
 
 import type { Route } from './+types/route'
 import { episodeContentStateHandlers } from './utils/content-state-handlers.server'
+import { episodeSubmissionHandlers } from './utils/submission-handlers.server'
 
 export const action = ({ request, params }: Route.ActionArgs) => {
   const { podcastId, episodeId } = params
@@ -26,6 +27,7 @@ export const action = ({ request, params }: Route.ActionArgs) => {
         state: currentEpisode.state,
       }
     },
+    submissionHandlers: episodeSubmissionHandlers,
     supportsChangePublishedAt: true,
   })
 }

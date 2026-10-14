@@ -5,6 +5,7 @@ import { prisma } from '~/utils/db.server'
 
 import type { Route } from './+types/route'
 import { categoryContentStateHandlers } from './utils/content-state-handlers.server'
+import { categorySubmissionHandlers } from './utils/submission-handlers.server'
 
 export const action = ({ request, params }: Route.ActionArgs) => {
   const { categoryId } = params
@@ -24,5 +25,6 @@ export const action = ({ request, params }: Route.ActionArgs) => {
         state: currentCategory.state,
       }
     },
+    submissionHandlers: categorySubmissionHandlers,
   })
 }

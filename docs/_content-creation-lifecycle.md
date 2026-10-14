@@ -57,7 +57,7 @@ first.
 |                 | **Retract** | - Retracting does not apply to drafts.                              | ❌ Do not have permission to retract published content. | - Retracting does not apply to archived content.      |
 |                 | **Archive** | - Archiving does not apply to drafts.                               | ❌ Do not have permission to archive published content. | - Archiving does not apply to archived content.       |
 |                 | **Restore** | - Restoring does not apply to drafts.                               | - Restoring does not apply to published content.       | ❌ Do not have permission to restore archived content. |
-| **Creator**     | **Publish** | ✅ Can publish own drafts.                                           | - Publishing does not apply to published content.      | - Publishing does not apply to archived content.      |
+| **Creator**     | **Publish** | ❌ Submits own drafts for review instead (#590, #627).               | - Publishing does not apply to published content.      | - Publishing does not apply to archived content.      |
 |                 | **Retract** | - Retracting does not apply to drafts.                              | ✅ Can retract own published content.                   | - Retracting does not apply to archived content.      |
 |                 | **Archive** | - Archiving does not apply to drafts.                               | ✅ Can archive own published content.                   | - Archiving does not apply to archived content.       |
 |                 | **Restore** | - Restoring does not apply to drafts.                               | - Restoring does not apply to published content.       | ❌ Do not have permission to restore archived content. |
@@ -90,15 +90,49 @@ currently only Coordinator). If any author is at the approver level (`level <=
 APPROVER_ROLE_LEVEL`, e.g. a Coordinator co-author on a multi-author article), no review is
 required. Single-author content has one author, so the rule reduces to that author's role.
 
-- A Creator may submit a review (the `review` permission), but it is a **pre-review** that
-  helps the Coordinator; it does not satisfy the requirement. A Coordinator review still
-  has the final say.
+- Only the Coordinator publishes (#590, #627), and its publishing act is the approval, so in
+  practice the gate holds no one back; it stays as a server-side guard.
 - A Coordinator publishing their own draft needs no review (it is at the approver level).
 
-The requirement is enforced both in the detail loaders (disabling the publish button, via
-`needsReviewToPublish`) and in the `publish-*` actions (server-side guard). See
+The requirement is enforced in the detail flags (`get-content-action-flags.server.ts`, via
+`needsReviewToPublish`) and in the publish handler (server-side guard). See
 `app/utils/permissions/author/review-policy.ts` and
 [_author-roles-and-permissions.md](./_author-roles-and-permissions.md).
+
+---
+
+## Submission
+
+Built for articles in #590 and for tags, categories, issues, podcasts and episodes in #627; see
+[_author-roles-and-permissions.md → Submission](./_author-roles-and-permissions.md#submission).
+
+```
+Draft ──Odeslat ke schválení──▶ Draft, submitted ──Schválit──▶ Draft, submitted + approved ──Publikovat──▶ Published
+  ▲                                   │                                   │
+  └──── Vzít zpět do konceptu / Vrátit k úpravám (submission and reviews cleared) ◀┘
+```
+
+Submitted content is locked for its authors and can't be deleted; the Coordinator may correct
+it and the approval stays. Retracting, restoring, archiving and publishing also clear the
+submission.
+
+---
+
+## Content history
+
+Built in #608 (design 07f). Every step an author takes with an article, tag, category, issue,
+podcast or episode writes a `ContentLog` row: the event, the actor and the time. The review
+and submission rows lose their history when the content returns to draft; the log keeps it.
+Its producers are the state handlers (`create-content-state-handlers.server.ts`), the
+submission handlers (`create-submission-handlers.server.ts`), and the create and update
+utilities; a failed or forbidden action writes
+nothing. An approver publishing a submitted, unapproved item writes `approve` and `publish`
+at one time, read as one row *Schváleno a publikováno*. The rows are deleted with their
+content, and the deletion itself is not logged.
+
+The detail pages show it as **Historie** (`HistoryList`), newest first, five rows, then
+*Celá historie*; the podcast opens it in a dialog (27j). Content older than the log ends with
+its own creation and publish dates, without names.
 
 ---
 
@@ -112,6 +146,7 @@ describes today's code; this is the target.
   `draft` · `published` · `archived`. The author submits a finished draft
   (**Odeslat ke schválení**), which sets `submittedAt`. The UI shows it as
   *Čeká na schválení*; a submitted draft with an approving review shows as *Schváleno*.
+  Built (#590, #627).
 - **Approving and publishing are two steps, both Coordinator-only.** On a submitted draft the
   Coordinator either **approves** it (stays off the web, recorded as a `Review`) or **approves
   and publishes** it in one step. An approved draft then has **Publikovat**. A Coordinator may
@@ -124,7 +159,9 @@ describes today's code; this is the target.
   A Coordinator's own small fix of an approved text keeps the approval.
 - **Bulk publish gives every item its own time**, in the order the confirmation dialog shows
   (top = newest): the top item gets the moment of confirmation, each next one second earlier.
+  An item published before keeps its stored date and stays out of the order. Built for
+  articles (#600).
 - **Changing the publish date takes a time as well** (Coordinator only, never in the future),
   so a forgotten article can be placed between two already published ones.
 - **Creators neither approve nor publish** — not even their own content. Their `review`
-  permission on others' drafts goes away.
+  permission on others' drafts goes away. Done (#590, #627).

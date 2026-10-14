@@ -27,10 +27,8 @@ levels.
 
 Two independent concepts govern the review workflow; do not conflate them:
 
-- **`review` permission** — "this role **may submit** a review." Granted to Creator and
-  Coordinator (see the permission table). A Creator's review is a **pre-review that
-  assists the Coordinator**: the Creator vets the content so the Coordinator doesn't have
-  to go through everything and only needs to confirm it.
+- **`review` permission** — "this role **may approve**." Granted only to the Coordinator
+  (#590 for articles, #627 for the rest); the Creator's pre-review is gone.
 - **Approver level** — role levels are inverted (lower number = higher authority), so an
   approver is any role with `level <= APPROVER_ROLE_LEVEL` — currently only Coordinator
   (level 1). Such a role publishes without review, and *its* review unlocks publishing for
@@ -39,10 +37,8 @@ Two independent concepts govern the review workflow; do not conflate them:
 
 Consequences:
 
-- Content cannot be published while **every** author's role is below the approver level and
-  no approver-level review exists. In practice: a Contributor/Creator draft needs a
-  **Coordinator** review first; a Creator's own pre-review does **not** unlock publishing —
-  the Coordinator still has the final say.
+- Only the Coordinator publishes, and publishing is the approval: a Coordinator may publish
+  a Contributor's or Creator's draft directly, submitted or not (design 07c, 07d).
 - If any author is at the approver level (e.g. a Coordinator co-author on a multi-author
   article), publishing is allowed without a review. Single-author content (tags, categories,
   podcasts, episodes, links, issues) has exactly one author, so the rule reduces to "that
@@ -67,10 +63,10 @@ belongs in the permission catalog (a future `approve` action), not on the role.
 |                 | Create     | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
 |                 | Update     | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
 |                 | Delete     | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
-|                 | Publish    | Own        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
+|                 | Publish    | Own        | Draft                      | ❌          | ❌                   | ❌               | ❌           | ❌                  | ❌        |
 |                 | Retract    | Own        | Published                  | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
 |                 | Archive    | Own        | Published                  | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
-|                 | Review     | Any        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
+|                 | Review     | Any        | Draft                      | ❌          | ❌                   | ❌               | ❌           | ❌                  | ❌        |
 | **Coordinator** | View       | Any        | Draft, Published, Archived | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
 |                 | Create     | Any        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
 |                 | Update     | Any        | Draft                      | ✅          | ✅                   | ✅               | ✅           | ✅                  | ✅        |
@@ -88,7 +84,7 @@ belongs in the permission catalog (a future `approve` action), not on the role.
 - Can **view their own Archived content** (read-only) — archiving withdraws content
   from circulation, it does not hide it from its own author.
 - Can create, update, and delete their own drafts (Draft is the only editable state).
-- **Cannot publish, retract, archive, or restore content** - these actions require Creator or Coordinator intervention.
+- **Cannot publish, retract, archive, or restore content** - publishing and restoring are the Coordinator's; a Creator retracts and archives only their own.
 - **Cannot review content**.
 
 ### **Creator**
@@ -96,26 +92,39 @@ belongs in the permission catalog (a future `approve` action), not on the role.
 - Can **view their own Archived content** (read-only) — but **not** other authors' archived
   content; the archive stays a Coordinator zone.
 - Can create, update, and delete their own drafts.
-- Can publish, retract, and archive **their own content only**.
-- **Can submit reviews** (the `review` permission) — a pre-review that helps the Coordinator,
-  who then only needs to confirm it.
-- **Publishing own content requires review**: because Creator (level 2) is below the
-  approver level, a Creator can only publish their own draft once an approving **Coordinator**
-  review exists. A Creator's own review does not satisfy this.
-- **Cannot publish Contributor content** — only helps the Coordinator by pre-reviewing it.
+- Can retract and archive **their own content only**.
+- **Submits for review, like a Contributor** — neither approves nor publishes any content,
+  not even their own (#590, #627). See [Submission](#submission).
 
 ### **Coordinator**
 - Full access to any content (own or others') in Draft, Published, and Archived states.
 - Can create, update, and delete any content in Draft and Archived states.
 - Can publish, retract, and archive any content from any author.
 - Can restore archived content to draft state.
-- **Can review any content.** Because Coordinator is at the approver level (level 1), a
-  Coordinator review is the one that unlocks publishing for Contributor/Creator content.
-- **No review requirement for own content**: can publish their own content without review.
-- **Final publishing authority**: publishes Contributor and Creator content once reviewed.
+- **The only one who approves and publishes.** Approves submitted content (Schválit) and
+  publishes it, or publishes a draft directly — publishing is the approval.
 
 Reviews are recorded as `Review` rows (a reviewer plus a `ReviewState`); there is no
 `reviewed` boolean field on content.
+
+## Submission
+
+Built for articles in #590 and for tags, categories, issues, podcasts and episodes in #627
+(design 07a–07d). The three content states stay; a submission is a flag on a draft
+(`submittedAt`, `submittedById` on each content model):
+
+- **Odeslat ke schválení** — any author of an unsubmitted draft, when no author is at the
+  approver level. An article is checked for completeness first (design 23h, the perex
+  included); the other types' forms still require every field.
+- **Čeká na schválení** — submitted, no approving review. Only these drafts are the
+  dashboard's queue. **Schváleno** — submitted with a Coordinator review.
+- While submitted, the content is **locked for its authors**: no editing or deleting until
+  they take it back. The Coordinator may correct it, and the approval stays.
+- **Vzít zpět do konceptu** (an author) and **Vrátit k úpravám** (the Coordinator) clear the
+  submission and delete the reviews. Every state change (publish, retract, archive, restore)
+  also clears the submission.
+- The rules live in `app/utils/permissions/author/submission/`, the transitions in
+  `app/utils/content-state/create-submission-handlers.server.ts`.
 
 ## Decided for the redesign (not implemented yet)
 
@@ -124,7 +133,7 @@ today's code. In the target model:
 
 - **Only the Coordinator approves and only the Coordinator publishes.** The Creator loses
   `review` on others' drafts and `publish` on own drafts; its path ends at submitting for
-  approval, like the Contributor's.
+  approval, like the Contributor's. Done (#590, #627).
 - **Approving is its own action**, separate from publishing, so the Coordinator can approve
   texts ahead and publish them later in the order they should appear on the web.
 - `needsReviewToPublish` gating goes away, since only the Coordinator can publish at all.

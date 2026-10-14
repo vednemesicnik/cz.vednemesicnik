@@ -1,0 +1,22 @@
+.row {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    /* The action sits on the headline's line, which is always there; centered
+       against the column it jumped whenever the line under the headline came
+       or went. */
+    align-items: first baseline;
+    justify-content: space-between;
+    gap: 16px;
+    inline-size: 100%;
+  }
+}
+
+.lead {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-inline-size: 0;
+  }
+}

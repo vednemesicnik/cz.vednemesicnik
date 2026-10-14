@@ -8,9 +8,6 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminInput } from '~/components/admin/admin-input'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -18,7 +15,10 @@ import { Button } from '~/components/button'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -60,11 +60,11 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Upravit autora</AdminHeadline>
+      <PageTitle>Upravit autora</PageTitle>
 
       <Form errors={form.errors} method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily autora'}>
-          <AdminInput
+          <TextField
             label="Jméno"
             {...getInputProps(fields.name, { type: 'text' })}
             errors={fields.name.errors}
@@ -105,12 +105,13 @@ export default function RouteComponent({
           <Button disabled={!canSubmit} type={'submit'}>
             {isSubmitting ? 'Ukládá se...' : 'Uložit'}
           </Button>
-          <AdminLinkButton
+          <LinkButton
             disabled={isLoadingOrSubmitting}
             to={href('/administration/authors/:authorId', { authorId })}
+            variant={'outline'}
           >
             Zrušit
-          </AdminLinkButton>
+          </LinkButton>
         </FormActions>
       </Form>
     </AdminPage>

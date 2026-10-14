@@ -14,7 +14,7 @@ export const handle = {
     const { podcastId } = match.params
 
     return {
-      label: 'Přidat epizodu',
+      label: 'Nová epizoda',
       path: href('/administration/podcasts/:podcastId/episodes/add-episode', {
         podcastId,
       }),

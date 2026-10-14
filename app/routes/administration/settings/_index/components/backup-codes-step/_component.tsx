@@ -1,10 +1,10 @@
-import { useId, useState } from 'react'
+import { useState } from 'react'
 
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
-import { Label } from '~/components/label'
+import { Checkbox } from '~/components/checkbox'
 import { downloadTextFile } from '~/utils/download-text-file'
 
 import styles from './_styles.module.css'
@@ -41,7 +41,6 @@ export const BackupCodesStep = ({
   onConfirmedChange,
   onDone,
 }: Props) => {
-  const checkboxId = useId()
   const [isCopied, setIsCopied] = useState(false)
 
   // Plaintext codes exist only in this response, so the download is built
@@ -105,15 +104,12 @@ export const BackupCodesStep = ({
         </span>
       </div>
 
-      <div className={styles.confirmation}>
-        <input
-          checked={isConfirmed}
-          id={checkboxId}
-          onChange={(event) => onConfirmedChange(event.target.checked)}
-          type={'checkbox'}
-        />
-        <Label htmlFor={checkboxId}>Kódy mám uložené</Label>
-      </div>
+      <Checkbox
+        checked={isConfirmed}
+        onChange={(event) => onConfirmedChange(event.target.checked)}
+      >
+        Kódy mám uložené
+      </Checkbox>
 
       <AdminModalActions>
         <Button

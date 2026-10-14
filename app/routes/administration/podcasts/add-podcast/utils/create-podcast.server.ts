@@ -1,6 +1,11 @@
 import { createId } from '@paralleldrive/cuid2'
+import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import { storeImageVariants } from '~/utils/image-store/store-image.server'
+import {
+  type PublishingAuthor,
+  publishContentEvent,
+} from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 type Args = {
@@ -9,6 +14,7 @@ type Args = {
   description: string
   cover: File
   authorId: string
+  actor: PublishingAuthor
 }
 
 export async function createPodcast({
@@ -17,6 +23,7 @@ export async function createPodcast({
   description,
   cover,
   authorId,
+  actor,
 }: Args) {
   // Generate the cover id up front so its variants can be written to the store
   // before the row is committed.
@@ -39,6 +46,15 @@ export async function createPodcast({
         title,
       },
     })
+
+    await recordContentLog(
+      { entity: 'podcast', entityId: podcast.id, events: ['create'] },
+      actor,
+    )
+    publishContentEvent(
+      { change: 'create', entity: 'podcast', entityId: podcast.id },
+      actor,
+    )
 
     return {
       podcastId: podcast.id,

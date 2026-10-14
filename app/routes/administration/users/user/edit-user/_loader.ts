@@ -1,6 +1,8 @@
+import { data } from 'react-router'
+
 import { prisma } from '~/utils/db.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
-import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
+import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
 import { getAssignableRoles } from '~/utils/permissions/user/queries/get-assignable-roles.server'
 
 import type { Route } from './+types/route'
@@ -15,9 +17,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const user = await prisma.user.findUniqueOrThrow({
     select: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       email: true,
       id: true,
-      name: true,
       role: {
         select: {
           id: true,
@@ -30,13 +37,15 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     where: { id: userId },
   })
 
-  // Check if user has permission to update this user
-  checkUserPermission(context, {
-    action: 'update',
-    entity: 'user',
-    targetUserId: user.id,
-    targetUserRoleLevel: user.role.level,
-  })
+  // Only an Administrator or the Owner edits accounts here; the generic denial (design 30h)
+  if (
+    !canEditUser(context, {
+      targetUserId: user.id,
+      targetUserRoleLevel: user.role.level,
+    })
+  ) {
+    throw data(null, { status: 403 })
+  }
 
   // Get assignable roles with Owner constraint handling
   const roles = await getAssignableRoles(context, {

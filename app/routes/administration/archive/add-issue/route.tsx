@@ -8,9 +8,6 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminInput } from '~/components/admin/admin-input'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
@@ -18,7 +15,10 @@ import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -63,7 +63,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Přidat číslo</AdminHeadline>
+      <PageTitle>Přidat číslo</PageTitle>
 
       <Form
         encType={'multipart/form-data'}
@@ -75,14 +75,14 @@ export default function RouteComponent({
           disabled={isLoadingOrSubmitting}
           legend={'Základní informace'}
         >
-          <AdminInput
+          <TextField
             label={'Pořadové číslo'}
             {...getInputProps(fields.ordinalNumber, { type: 'number' })}
             errors={fields.ordinalNumber.errors}
             placeholder={'1'}
             step={1}
           />
-          <AdminInput
+          <TextField
             label={'Datum vydání'}
             {...getInputProps(fields.releasedAt, { type: 'date' })}
             errors={fields.releasedAt.errors}
@@ -129,12 +129,13 @@ export default function RouteComponent({
           <Button disabled={!canSubmit} type={'submit'}>
             {isSubmitting ? 'Přidává se...' : 'Přidat'}
           </Button>
-          <AdminLinkButton
+          <LinkButton
             disabled={isLoadingOrSubmitting}
             to={href('/administration/archive')}
+            variant={'outline'}
           >
             Zrušit
-          </AdminLinkButton>
+          </LinkButton>
         </FormActions>
       </Form>
     </AdminPage>

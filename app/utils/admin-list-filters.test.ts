@@ -24,10 +24,34 @@ describe('parseAdminListFilters', () => {
         'articles',
       ),
     ).toEqual({
-      author: 'abc123',
-      category: 'rozhovory',
-      state: 'draft',
-      tag: 'skola',
+      author: ['abc123'],
+      category: ['rozhovory'],
+      state: ['draft'],
+      tag: ['skola'],
+    })
+  })
+
+  test('should parse repeated articles params as several values', () => {
+    expect(
+      parse(
+        '?state=draft&state=pending&category=skola&category=sport',
+        'articles',
+      ),
+    ).toEqual({
+      category: ['skola', 'sport'],
+      state: ['draft', 'pending'],
+    })
+  })
+
+  test('should drop one invalid value and keep its valid siblings', () => {
+    expect(
+      parse('?state=draft&state=sideways&state=pending', 'articles'),
+    ).toEqual({ state: ['draft', 'pending'] })
+  })
+
+  test('should drop duplicate values', () => {
+    expect(parse('?tag=skola&tag=skola', 'articles')).toEqual({
+      tag: ['skola'],
     })
   })
 
@@ -62,13 +86,13 @@ describe('parseAdminListFilters', () => {
 
   test('should drop an invalid state without discarding its siblings', () => {
     expect(parse('?state=sideways&category=rozhovory', 'articles')).toEqual({
-      category: 'rozhovory',
+      category: ['rozhovory'],
     })
   })
 
   test('should drop empty values', () => {
     expect(parse('?state=&category=&tag=skola', 'articles')).toEqual({
-      tag: 'skola',
+      tag: ['skola'],
     })
   })
 
@@ -81,8 +105,27 @@ describe('parseAdminListFilters', () => {
 describe('extractAdminListFilterSearch', () => {
   test('should keep only the filter params', () => {
     expect(
-      extractAdminListFilterSearch('?state=draft&q=foo&page=2', 'articles'),
+      extractAdminListFilterSearch(
+        '?state=draft&sort=title&page=2',
+        'articles',
+      ),
     ).toBe('state=draft')
+  })
+
+  test('should keep the trimmed search after the filters of the article list', () => {
+    expect(
+      extractAdminListFilterSearch(
+        '?q=%20ples%20&state=draft&page=2',
+        'articles',
+      ),
+    ).toBe('state=draft&q=ples')
+    expect(extractAdminListFilterSearch('?q=%20%20', 'articles')).toBe('')
+  })
+
+  test('should drop the search of a list that does not save it', () => {
+    expect(extractAdminListFilterSearch('?q=foo&role=member', 'users')).toBe(
+      'role=member',
+    )
   })
 
   test('should serialize in schema key order regardless of input order', () => {
@@ -92,6 +135,21 @@ describe('extractAdminListFilterSearch', () => {
         'articles',
       ),
     ).toBe('author=abc123&state=draft&tag=skola')
+  })
+
+  test('should serialize several values the same whatever their order', () => {
+    expect(
+      extractAdminListFilterSearch(
+        '?state=pending&state=draft&category=sport&category=skola',
+        'articles',
+      ),
+    ).toBe('category=skola&category=sport&state=draft&state=pending')
+    expect(
+      extractAdminListFilterSearch(
+        '?category=skola&category=sport&state=draft&state=pending',
+        'articles',
+      ),
+    ).toBe('category=skola&category=sport&state=draft&state=pending')
   })
 
   test('should accept a search string without the leading question mark', () => {
@@ -135,13 +193,24 @@ describe('validateFilterQuery', () => {
   test('should drop params that are not filters of the table', () => {
     expect(
       validateFilterQuery('?q=foo&sort=title&page=2&state=draft', 'articles'),
-    ).toBe('state=draft')
+    ).toBe('state=draft&q=foo')
+  })
+
+  test('should keep accepting a saved filter with one value', () => {
+    expect(validateFilterQuery('state=draft&category=skola', 'articles')).toBe(
+      'category=skola&state=draft',
+    )
+  })
+
+  test('should accept a search alone on the article list', () => {
+    expect(validateFilterQuery('?q=ples', 'articles')).toBe('q=ples')
   })
 
   test('should return null when nothing valid remains', () => {
     expect(validateFilterQuery('', 'articles')).toBe(null)
     expect(validateFilterQuery('?state=&category=', 'articles')).toBe(null)
-    expect(validateFilterQuery('?q=foo&page=2', 'articles')).toBe(null)
+    expect(validateFilterQuery('?sort=title&page=2', 'articles')).toBe(null)
+    expect(validateFilterQuery('?q=foo&page=2', 'users')).toBe(null)
     expect(validateFilterQuery('?category=rozhovory', 'users')).toBe(null)
   })
 
@@ -183,6 +252,25 @@ describe('buildStaleFilterRedirect', () => {
   test('should keep the remaining params and drop the page', () => {
     expect(redirectFor('?q=foo&category=zaniklo&state=draft&page=3')).toBe(
       '/administration/articles?q=foo&state=draft',
+    )
+  })
+
+  test('should strip a stale value and keep the other values', () => {
+    expect(
+      redirectFor('?category=rozhovory&category=zaniklo&category=skola'),
+    ).toBe('/administration/articles?category=rozhovory&category=skola')
+  })
+
+  test('should return null when several values are in menu order', () => {
+    expect(redirectFor('?category=rozhovory&category=skola')).toBe(null)
+  })
+
+  test('should put several values in menu order and drop duplicates', () => {
+    expect(redirectFor('?category=skola&category=rozhovory')).toBe(
+      '/administration/articles?category=rozhovory&category=skola',
+    )
+    expect(redirectFor('?category=skola&category=skola')).toBe(
+      '/administration/articles?category=skola',
     )
   })
 

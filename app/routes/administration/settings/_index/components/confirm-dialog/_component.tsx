@@ -7,7 +7,7 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 
-import { useModalDialog } from '../../utils/use-modal-dialog'
+import { useModalDialog } from '~/utils/use-modal-dialog'
 import styles from './_styles.module.css'
 
 type Props = {

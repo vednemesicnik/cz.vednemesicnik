@@ -9,8 +9,8 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
 
   const user = await prisma.user.findUnique({
     select: {
+      author: { select: { name: true } },
       id: true,
-      name: true,
     },
     where: { id: userId },
   })

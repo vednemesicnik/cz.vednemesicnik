@@ -8,9 +8,6 @@ import {
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
 import { href, useNavigation } from 'react-router'
-import { AdminHeadline } from '~/components/admin/admin-headline'
-import { AdminInput } from '~/components/admin/admin-input'
-import { AdminLinkButton } from '~/components/admin/admin-link-button'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -19,7 +16,10 @@ import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
+import { LinkButton } from '~/components/link-button'
+import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { TextField } from '~/components/text-field'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -69,7 +69,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <AdminHeadline>Přidat podcast</AdminHeadline>
+      <PageTitle>Přidat podcast</PageTitle>
 
       <Form
         encType={'multipart/form-data'}
@@ -78,7 +78,7 @@ export default function RouteComponent({
         errors={form.errors}
       >
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
-          <AdminInput
+          <TextField
             errors={fields.title.errors}
             label={'Název'}
             onChange={(event) => setTitle(event.target.value)}
@@ -87,7 +87,7 @@ export default function RouteComponent({
             {...getInputProps(fields.title, { type: 'text' })}
           />
 
-          <AdminInput
+          <TextField
             errors={fields.slug.errors}
             label={'Slug'}
             onBlur={handleBlur}
@@ -137,12 +137,13 @@ export default function RouteComponent({
           <Button disabled={!canSubmit} type={'submit'}>
             {isSubmitting ? 'Přidává se...' : 'Přidat'}
           </Button>
-          <AdminLinkButton
+          <LinkButton
             disabled={isLoadingOrSubmitting}
             to={href('/administration/podcasts')}
+            variant={'outline'}
           >
             Zrušit
-          </AdminLinkButton>
+          </LinkButton>
         </FormActions>
       </Form>
     </AdminPage>

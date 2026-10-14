@@ -1,7 +1,8 @@
-import { type LoaderFunctionArgs, redirect } from 'react-router'
+import { data, type LoaderFunctionArgs, redirect } from 'react-router'
 
 import { requireUnauthenticated } from '~/utils/auth.server'
 import { safeRedirect } from '~/utils/safe-redirect'
+import { readSignInNotice } from '~/utils/sign-in-notice/read-sign-in-notice.server'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -16,5 +17,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect(withRedirectTo('/administration/sign-in', redirectTo))
   }
 
-  return { redirectTo }
+  // The second factor ended on its own (five wrong codes, five minutes): say
+  // why, with the e-mail kept (20d).
+  const { notice, setCookie } = await readSignInNotice(request)
+  const twoFactorEnded = notice?.kind === 'two-factor-ended' ? notice : null
+
+  return data(
+    {
+      email: twoFactorEnded?.email ?? null,
+      redirectTo,
+      twoFactorEnded: twoFactorEnded?.reason ?? null,
+    },
+    { headers: { 'Set-Cookie': setCookie } },
+  )
 }

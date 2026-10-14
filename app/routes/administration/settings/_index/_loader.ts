@@ -1,8 +1,6 @@
 import type { LoaderFunctionArgs } from 'react-router'
 
-import { GOOGLE_PROVIDER_NAME } from '~/config/connection-config'
 import { requireAuthentication } from '~/utils/auth.server'
-import { countUnusedBackupCodes } from '~/utils/backup-codes.server'
 import { prisma } from '~/utils/db.server'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { parseIdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
@@ -13,7 +11,8 @@ import {
 import { canUseEmergencyPassword } from '~/utils/permissions/user/guards/can-use-emergency-password'
 import { RECENT_AUTHENTICATION_MAX_AGE_MS } from '~/utils/recent-authentication'
 import { getRecentSignInAttempts } from '~/utils/sign-in-attempts/get-recent-sign-in-attempts.server'
-import { getUserTwoFactor } from '~/utils/two-factor.server'
+import { describeSignInMethods } from '~/utils/sign-in-methods/describe-sign-in-methods'
+import { getSignInMethodSummary } from '~/utils/sign-in-methods/get-sign-in-method-summary.server'
 
 import { parseSettingsContinue } from './utils/parse-settings-continue'
 
@@ -32,10 +31,6 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
               role: { select: { name: true } },
             },
           },
-          connections: {
-            select: { id: true },
-            where: { providerName: GOOGLE_PROVIDER_NAME },
-          },
           createdAt: true,
           email: true,
           id: true,
@@ -53,7 +48,6 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
               name: true,
             },
           },
-          password: { select: { userId: true } },
           role: { select: { level: true, name: true } },
           sessions: {
             select: {
@@ -77,21 +71,16 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 
   const { user } = session
   const passkeyIds = user.passkeys.map((passkey) => passkey.id)
+  const signInMethodSummary = await getSignInMethodSummary(user.id)
 
   // Password and two-factor are the emergency sign-in path: only Owner and
-  // Administrator see them (design 29a), so nobody else's page loads them.
+  // Administrator see them (design 29a).
   const emergencyPassword = canUseEmergencyPassword(user.role.level)
-    ? await (async () => {
-        const isTwoFactorEnabled = (await getUserTwoFactor(user.id)) !== null
-
-        return {
-          hasPassword: user.password !== null,
-          isTwoFactorEnabled,
-          unusedBackupCodesCount: isTwoFactorEnabled
-            ? await countUnusedBackupCodes(user.id)
-            : 0,
-        }
-      })()
+    ? {
+        hasPassword: signInMethodSummary.hasPassword,
+        isTwoFactorEnabled: signInMethodSummary.isTwoFactorEnabled,
+        unusedBackupCodesCount: signInMethodSummary.unusedBackupCodesCount,
+      }
     : null
 
   // Reopen only a dialog this account can open now; a hint for anything else
@@ -148,11 +137,15 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
     // e-mail link: no passkey, no Google, not yet closed.
     showWelcome:
       user.passkeys.length === 0 &&
-      user.connections.length === 0 &&
+      !signInMethodSummary.isGoogleLinked &&
       user.welcomeDismissedAt === null,
     signInAttempts: await getRecentSignInAttempts({
       email: user.email,
       userId: user.id,
+    }),
+    // The same wording as the user detail (28e, by062t6n).
+    signInMethods: describeSignInMethods(signInMethodSummary, {
+      isPasswordSignInAllowed: process.env.ALLOW_PASSWORD_SIGN_IN === 'true',
     }),
     user: {
       authorBio: user.author.bio ?? '',
@@ -165,7 +158,7 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
         altText: user.image?.altText ?? '',
         sources: createImageSources('user-image', user.image),
       },
-      isGoogleLinked: user.connections.length > 0,
+      isGoogleLinked: signInMethodSummary.isGoogleLinked,
       userRoleName: user.role.name,
     },
   }
