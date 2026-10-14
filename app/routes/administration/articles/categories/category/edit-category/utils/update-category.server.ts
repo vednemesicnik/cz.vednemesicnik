@@ -1,8 +1,8 @@
-import type { ContentState } from '@generated/prisma/enums'
 import { data } from 'react-router'
 import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
+import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
@@ -11,27 +11,44 @@ type Options = {
   name: string
   slug: string
   authorId: string
-  state: ContentState
 }
 
 export const updateCategory = async (
   request: Request,
-  { categoryId, name, slug, authorId, state }: Options,
+  { categoryId, name, slug, authorId }: Options,
 ) => {
+  // The permission is checked against the stored category, never against the
+  // author or state the form sends.
+  const storedCategory = await prisma.articleCategory.findUnique({
+    select: { authorId: true, state: true, submittedAt: true },
+    where: { id: categoryId },
+  })
+
+  if (storedCategory === null) {
+    throw data(null, { status: 404 })
+  }
+
   return withAuthorPermission(request, {
     action: 'update',
     entity: 'article_category',
     execute: async (context) => {
-      // A submitted draft is locked for its author (design 07d); read the stored
-      // submission, the form doesn't carry it.
-      const { submittedAt } = await prisma.articleCategory.findUniqueOrThrow({
-        select: { submittedAt: true },
-        where: { id: categoryId },
-      })
-
-      if (isLockedBySubmission({ roleLevel: context.roleLevel, submittedAt })) {
+      // A submitted draft is locked for its author (design 07d).
+      if (
+        isLockedBySubmission({
+          roleLevel: context.roleLevel,
+          submittedAt: storedCategory.submittedAt,
+        })
+      ) {
         throw data(null, { status: 403 })
       }
+
+      // Handing the category to another author needs the permission for them too.
+      checkAuthorPermission(context, {
+        action: 'update',
+        entity: 'article_category',
+        state: storedCategory.state,
+        targetAuthorIds: [authorId],
+      })
 
       const category = await prisma.articleCategory.update({
         data: {
@@ -58,6 +75,9 @@ export const updateCategory = async (
 
       return category
     },
-    target: { authorIds: [authorId], state },
+    target: {
+      authorIds: [storedCategory.authorId],
+      state: storedCategory.state,
+    },
   })
 }

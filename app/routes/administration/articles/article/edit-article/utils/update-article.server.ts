@@ -1,4 +1,3 @@
-import type { ContentState } from '@generated/prisma/enums'
 import { createId } from '@paralleldrive/cuid2'
 import { data } from 'react-router'
 import type { FeaturedImage } from '~/config/featured-image-config'
@@ -15,6 +14,7 @@ import {
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
+import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
@@ -33,7 +33,6 @@ type Options = {
   featuredImage: FeaturedImage
   images?: Array<{ file: File; altText: string; description?: string }>
   slug: string
-  state: ContentState
   tagIds?: string[]
   title: string
 }
@@ -50,25 +49,48 @@ export async function updateArticle(
     featuredImage,
     images,
     slug,
-    state,
     tagIds,
     title,
   }: Options,
 ) {
+  // The permission is checked against the stored article, never against the
+  // authors or state the form sends; an edit never changes the state.
+  const storedArticle = await prisma.article.findUnique({
+    select: {
+      authors: { select: { id: true } },
+      state: true,
+      submittedAt: true,
+    },
+    where: { id: articleId },
+  })
+
+  if (storedArticle === null) {
+    throw data(null, { status: 404 })
+  }
+
+  const { state } = storedArticle
+
   await withAuthorPermission(request, {
     action: 'update',
     entity: 'article',
     execute: async (context) => {
-      // A submitted article is locked for its authors (design 07d); read the
-      // stored submission, the form doesn't carry it.
-      const { submittedAt } = await prisma.article.findUniqueOrThrow({
-        select: { submittedAt: true },
-        where: { id: articleId },
-      })
-
-      if (isLockedBySubmission({ roleLevel: context.roleLevel, submittedAt })) {
+      // A submitted article is locked for its authors (design 07d).
+      if (
+        isLockedBySubmission({
+          roleLevel: context.roleLevel,
+          submittedAt: storedArticle.submittedAt,
+        })
+      ) {
         throw data(null, { status: 403 })
       }
+
+      // Setting the authors needs the permission for the new ones too.
+      checkAuthorPermission(context, {
+        action: 'update',
+        entity: 'article',
+        state,
+        targetAuthorIds: authorIds,
+      })
 
       // 1. Find images no longer in the form; their rows and files go last.
       const existingImageIds =
@@ -182,7 +204,6 @@ export async function updateArticle(
                 excerpt: excerpt || null,
                 featuredImageId,
                 slug,
-                state,
                 tags: {
                   set: tagIds?.map((id) => ({ id })) ?? [],
                 },
@@ -224,7 +245,10 @@ export async function updateArticle(
         context,
       )
     },
-    target: { authorIds, state },
+    target: {
+      authorIds: storedArticle.authors.map((author) => author.id),
+      state,
+    },
   })
 
   return { id: articleId }

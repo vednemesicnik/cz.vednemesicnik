@@ -1,4 +1,3 @@
-import { ContentState } from '@generated/prisma/enums'
 import { z } from 'zod'
 import { slugify } from '~/utils/slugify'
 
@@ -12,5 +11,4 @@ export const schema = z.object({
     .regex(/^\S/, 'Slug cannot start with a space')
     .regex(/^[^-]/, 'Slug cannot start with a hyphen')
     .transform(slugify),
-  state: z.enum(ContentState),
 })

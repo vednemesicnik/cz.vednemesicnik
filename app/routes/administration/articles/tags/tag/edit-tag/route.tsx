@@ -43,7 +43,6 @@ export default function RouteComponent({
       authorId: loaderData.tag.authorId,
       name: loaderData.tag.name,
       slug: loaderData.tag.slug,
-      state: loaderData.tag.state,
     },
     id: 'edit-article-tag',
     lastResult: actionData?.submissionResult,
@@ -112,8 +111,6 @@ export default function RouteComponent({
             ))}
           </Select>
         </Fieldset>
-
-        <input {...getInputProps(fields.state, { type: 'hidden' })} />
 
         <FormActions>
           <Button disabled={!canSubmit} type={'submit'}>
