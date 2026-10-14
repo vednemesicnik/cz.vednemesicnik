@@ -9,6 +9,7 @@ import {
 import { canReturnForEdits } from '~/utils/permissions/author/submission/can-return-for-edits'
 import { canSubmitForReview } from '~/utils/permissions/author/submission/can-submit-for-review'
 import { canWithdrawSubmission } from '~/utils/permissions/author/submission/can-withdraw-submission'
+import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 
 type RoleLevel = { level: number }
@@ -87,12 +88,7 @@ export const getContentActionFlags = (
     approvingReview === undefined &&
     !content.reviews.some((review) => review.reviewer.id === context.authorId)
 
-  const submission =
-    content.state !== 'draft' || content.submittedAt === null
-      ? null
-      : approvingReview === undefined
-        ? { date: content.submittedAt, state: 'pending' as const }
-        : { date: approvingReview.createdAt, state: 'approved' as const }
+  const submission = getSubmissionState(content)
 
   return {
     canApprove,

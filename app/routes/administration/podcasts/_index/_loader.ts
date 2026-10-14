@@ -6,6 +6,7 @@ import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
@@ -102,6 +103,12 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         authorId: true,
         createdAt: true,
         id: true,
+        reviews: {
+          select: {
+            createdAt: true,
+            reviewer: { select: { role: { select: { level: true } } } },
+          },
+        },
         state: true,
         submittedAt: true,
         title: true,
@@ -112,7 +119,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   ])
 
   // Compute permissions for each podcast
-  const podcasts = rawPodcasts.map((podcast) => {
+  const podcasts = rawPodcasts.map(({ reviews, ...podcast }) => {
     return {
       ...podcast,
       // A submitted draft is neither deleted nor edited by its author (07d).
@@ -140,6 +147,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         state: podcast.state,
         targetAuthorIds: [podcast.authorId],
       }).hasPermission,
+      // The row's tag says what the detail's does (07a).
+      submission: getSubmissionState({ ...podcast, reviews })?.state ?? null,
     }
   })
 

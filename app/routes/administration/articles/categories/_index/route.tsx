@@ -155,7 +155,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 name={category.name}
                 onSelect={() => selection.toggle(category.id)}
                 selected={selection.isSelected(category.id)}
-                state={category.state}
+                state={category.submission ?? category.state}
               />
             ))
           )}
