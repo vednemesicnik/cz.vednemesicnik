@@ -61,6 +61,8 @@ and a search engine read the element; none of them reads the class name.
 - **A `<button>` acts, an `<a>` goes somewhere.** Never a clickable `<div>`.
 - **A component renders the element its role needs** and takes `className` for the
   look; the place that uses it doesn't wrap it in another `<div>`.
+- **A wrapper that exists only for layout stays a `<div>`.** A grid cell or a flex row
+  means nothing, so no element would say more.
 - **ARIA only where no element fits.** A native element brings its role, keyboard
   behaviour and states with it.
 

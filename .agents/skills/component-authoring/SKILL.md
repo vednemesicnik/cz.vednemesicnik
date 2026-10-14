@@ -8,10 +8,11 @@ description: |
   - Writing markup in a route (`route.tsx`) — a list, a header, a form, a filter row, a dialog
   - Planning a new component or a new variant of an existing one
   - Reviewing a diff that adds markup or changes a component's props
+  - Aligning items in a row, or reserving space, where an item's height can change — CSS included
 
   DO NOT trigger for:
   - Loaders, actions, server utilities, schema and other code that renders nothing
-  - CSS-only changes — `general-guidance` (CSS layers) covers those
+  - CSS-only changes to look (colour, spacing, layers) — `general-guidance` covers those
   - Web-platform questions (which API, browser support) — use `modern-web-guidance`
 ---
 
@@ -26,7 +27,7 @@ each ends with why it holds.
 |:------------------------------------------------------------------------|:-------------------------------------------|
 | designing a component's API — parts, props, render props, variants      | `references/component-api.md`              |
 | writing any markup — which element says what the part is                | `references/semantic-html.md`              |
-| something appears, disappears or loads after the page is shown          | `references/no-layout-shift.md`            |
+| something appears, disappears or loads, or a row aligns items of changing height | `references/no-layout-shift.md` |
 | writing markup at all — a link, button, heading, field or dialog         | `references/reuse-existing-components.md`  |
 
 Writing a component usually takes all four: its API, the elements it renders, what it does

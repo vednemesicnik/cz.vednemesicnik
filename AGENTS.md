@@ -403,8 +403,8 @@ Loops for decisions this repository does not own. Load when a screen, component 
 ## Agent Rules
 
 Mandatory conventions that apply to all tasks. Read the relevant rule file before acting.
-A rule holds a convention for every file of its kind; guidance for one activity, such as
-building UI, is a skill and is loaded only for that work (decision 0014).
+A rule is one short convention with a single trigger; guidance made of several references
+for one body of work, such as building UI, is a skill (decision 0014).
 
 ### Package Versions
 

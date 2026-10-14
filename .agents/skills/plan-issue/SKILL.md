@@ -46,9 +46,8 @@ You are the **planning stage** of the issue pipeline:
    `.agents/rules/*/RULE.md` for the file types the change touches and the relevant
    `.agents/skills/*/SKILL.md` (react-router for routes/loaders/actions/middleware, prisma-*
    for schema work, general-guidance for `.css` and `.stories.tsx`, component-authoring for
-   markup and components), and the
-   `modern-web-guidance` search for HTML/CSS/client-side JS. Prefer reusing existing
-   functions and components over proposing new code.
+   markup and components), and the `modern-web-guidance` search for HTML/CSS/client-side JS.
+   Prefer reusing existing functions and components over proposing new code.
 
    **Subagents are the exception, not the method.** Most issues name the function and the
    file, and a `grep` plus a `sed -n` answers them for a fraction of what an agent costs.

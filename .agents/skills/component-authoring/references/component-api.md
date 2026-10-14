@@ -53,7 +53,8 @@ one take its own props, a condition or a wrapper:
 </Steps>
 ```
 
-- **Every part is its own component** in its own kebab-case directory in `app/components/`,
+- **Every part is its own component** in its own kebab-case directory beside the root —
+  `app/components/` for shared components, the route's `components/` for route-local ones —
   named after the root (`recipe-card`, `recipe-card-title`), or after the family when several
   roots share it. No `RecipeCard.Title` static members.
 - **The root and each part render the element their role needs** (`<nav>` and `<ul>` for the
@@ -69,7 +70,7 @@ A component with no parts is configured, not composed:
 
 ```tsx
 <Spinner size={'sm'} />
-<Avatar name={'Eva Malá'} size={'lg'} source={photo} />
+<Swatch color={'#c33'} size={'lg'} />
 ```
 
 Use a prop also when the caller must not get something wrong, such as a value that has to

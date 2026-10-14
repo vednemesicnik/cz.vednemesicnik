@@ -38,6 +38,8 @@ _if it vanished right now, would anything else move?_
   updates the row; it doesn't reorder or resize what the person is looking at.
 - **Prefer an overlay for transient messages** (a toast, a popover) over text
   inserted into the flow.
+- **Not a shift:** a move the person caused and expects — opening a disclosure,
+  expanding a row.
 
 ## Why
 
