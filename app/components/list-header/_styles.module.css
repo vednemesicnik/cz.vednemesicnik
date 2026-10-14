@@ -2,21 +2,11 @@
   @layer component {
     display: flex;
     flex-wrap: wrap;
-    /* The action sits on the headline's line, which is always there; centered
-       against the column it jumped whenever the line under the headline came
-       or went. */
-    align-items: first baseline;
+    /* Nothing in the row comes or goes, so centring moves nothing (cioukqn6). */
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
     inline-size: 100%;
-  }
-}
-
-.lead {
-  @layer component {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-inline-size: 0;
+    min-block-size: 44px;
   }
 }
