@@ -18,6 +18,11 @@
     &:last-child {
       padding-right: 8px;
     }
+
+    /* Air between the window's edge and the header stuck to it (5r4m681k). */
+    @media (width >= 1024px) {
+      padding-top: 10px;
+    }
   }
 }
 

@@ -10,7 +10,7 @@
 }
 
 /*
- * Only the page scrolls; a page of the list is 20 rows. A sticky thead sticks
+ * Only the page scrolls (5r4m681k); a page of the list is 20 rows. A sticky thead sticks
  * to the nearest scroll container, so from 1024 px, where every list fits
  * (the widest needs ~660 px), the wrapper stops being one and the header sticks
  * to the page. Below that the table scrolls sideways and the header scrolls
