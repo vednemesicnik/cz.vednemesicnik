@@ -28,6 +28,10 @@ order and never renumbered. The title names the decision, not the topic.
 A record is not rewritten once it is accepted. A changed decision gets a new record, and the
 old one changes only its status line.
 
+The accepted records form one whole. A new record is checked against every one of them before
+it is accepted. A conflict is settled by superseding one of the two, never by leaving both
+in force.
+
 ## Index
 
 | # | Decision | Status | Date |

@@ -18,11 +18,11 @@ A content edit checks the `update` permission against the **stored** record: its
 
 ## Consequences
 
-- Every edit action follows this order: load the stored record (404 when missing), check `update` against it, apply the submission lock, then check `update` for the new authors. The references are `updateArticle`, `updateCategory` and `updateTag` after PR #641, and the issue edit.
+- Every edit action follows this order: build the permission context, load the stored record, and answer 404 when it is missing or the author may not view it (design 30e, as the detail loaders do). Then check `update` against it, apply the submission lock, and check `update` for the new authors. The issue edit and `updateArticle`, `updateCategory` and `updateTag` after PR #641 follow it, except that the last three still answer 403 for a record the author may not view.
 - Edit forms carry no `state` field. A new edit form that needs the state reads it in its loader for display only.
 - Still open, deferred on purpose:
   - **The check-to-write race:** a publish or a submission between the check and the write still lets an edit already in flight land. Categories and tags get a conditional write in #640. Articles get the edit lock of the editor redesign (design 24, 07g).
-  - **The 403/404 difference** for a signed-in author without view rights: aligned in #640.
+  - **The 403 for a record the author may not view:** categories and tags move to 404 in #640, articles with the editor redesign.
 - See `docs/_author-roles-and-permissions.md` and `docs/_content-creation-lifecycle.md`.
 
 ## Alternatives considered
