@@ -1,15 +1,10 @@
-import { getFormProps } from '@conform-to/react'
-
-import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
-import { ErrorMessage } from '~/components/error-message'
-import { ErrorMessageGroup } from '~/components/error-message-group'
-import { LinkButton } from '~/components/link-button'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { TaxonomyRecordCopy } from '../../utils/taxonomy-record-copy'
 import { useTaxonomyRecordForm } from '../../utils/use-taxonomy-record-form'
+import { TaxonomyRecordActions } from '../taxonomy-record-actions'
 import { TaxonomyRecordFields } from '../taxonomy-record-fields'
-import styles from './_styles.module.css'
+import { TaxonomyRecordForm } from '../taxonomy-record-form'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
@@ -50,21 +45,7 @@ export const NewTaxonomyRecordForm = ({
     })
 
   return (
-    <fetcher.Form
-      className={styles.form}
-      method={'post'}
-      {...getFormProps(form)}
-    >
-      <AuthenticityTokenInput />
-
-      {form.errors !== undefined && form.errors.length > 0 && (
-        <ErrorMessageGroup>
-          {form.errors.map((error) => (
-            <ErrorMessage key={error}>{error}</ErrorMessage>
-          ))}
-        </ErrorMessageGroup>
-      )}
-
+    <TaxonomyRecordForm fetcher={fetcher} form={form}>
       <TaxonomyRecordFields
         authors={authors}
         copy={copy}
@@ -75,17 +56,11 @@ export const NewTaxonomyRecordForm = ({
         slugSuggestion={slugSuggestion}
       />
 
-      {/* Primary last, as in Dialog; on a phone stacked with it on top (25c). */}
-      <div className={styles.actions}>
-        <LinkButton
-          disabled={isSubmitting}
-          onClick={handleCancel}
-          replace={true}
-          to={parentPath}
-          variant={'ghost'}
-        >
-          Zrušit
-        </LinkButton>
+      <TaxonomyRecordActions
+        cancelPath={parentPath}
+        disabled={isSubmitting}
+        onCancel={handleCancel}
+      >
         <Button
           disabled={isSubmitting}
           name={INTENT_NAME}
@@ -105,7 +80,7 @@ export const NewTaxonomyRecordForm = ({
             ? 'Publikovat'
             : 'Odeslat ke schválení'}
         </Button>
-      </div>
-    </fetcher.Form>
+      </TaxonomyRecordActions>
+    </TaxonomyRecordForm>
   )
 }
