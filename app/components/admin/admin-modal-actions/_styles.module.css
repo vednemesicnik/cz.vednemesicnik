@@ -1,15 +1,9 @@
 .actions {
   @layer component {
     display: flex;
-    flex-wrap: wrap;
     gap: 8px;
     justify-content: flex-end;
     align-items: center;
     padding-block-start: 4px;
-
-    /* On a phone a button moves to the next row whole; its label never breaks. */
-    & > * {
-      white-space: nowrap;
-    }
   }
 }
