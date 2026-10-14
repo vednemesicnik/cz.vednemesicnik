@@ -7,7 +7,8 @@ explains why they are that way and what was turned down.
 
 UX, layout and visuals are decided in the design project (`docs/_design-project.md`), and
 user-facing Czech by the copywriter (`docs/_copy-context.md`). A record cites those answers;
-it does not restate them.
+it does not restate them. Whether something is a page or a dialog, and what has an address,
+is not UX: product and architecture decide it (0016).
 
 Agents write records with the `/record-decision` skill.
 
@@ -51,3 +52,4 @@ in force.
 | [0013](0013-content-is-submitted-only-the-coordinator-approves-and-publishes.md) | Every content type is submitted for review; only the Coordinator approves and publishes | Accepted | 2026-09-28 |
 | [0014](0014-activity-guidance-is-a-skill-not-a-rule.md) | Guidance for one body of work is a skill, not a rule | Accepted | 2026-10-14 |
 | [0015](0015-edits-check-the-stored-record-not-the-form.md) | Content edits check the stored record, never the form | Accepted | 2026-10-14 |
+| [0016](0016-records-are-added-and-edited-on-their-own-page.md) | Records are added and edited on their own page, not in a dialog | Accepted | 2026-10-14 |

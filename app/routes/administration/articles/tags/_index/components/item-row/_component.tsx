@@ -9,6 +9,7 @@ import {
 import {
   TableCell,
   TableRow,
+  type TableRowTint,
   TableSelectionCell,
 } from '~/components/admin/admin-table'
 import { DeleteIcon } from '~/components/icons/delete-icon'
@@ -17,6 +18,7 @@ import { VisibilityIcon } from '~/components/icons/visibility-icon'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
+import { RETURN_TO_OPENER_STATE } from '../../../../utils/return-to-opener-state'
 
 type Props = {
   id: string
@@ -28,6 +30,7 @@ type Props = {
   canDelete: boolean
   selected: boolean
   onSelect: () => void
+  tint?: TableRowTint
 }
 
 export const ItemRow = ({
@@ -40,6 +43,7 @@ export const ItemRow = ({
   canDelete,
   selected,
   onSelect,
+  tint,
 }: Props) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const fetcherKey = `delete-article-tag-${id}`
@@ -53,7 +57,7 @@ export const ItemRow = ({
   })
 
   return (
-    <TableRow>
+    <TableRow tint={tint}>
       <TableSelectionCell
         checked={selected}
         disabled={!canDelete}
@@ -80,7 +84,8 @@ export const ItemRow = ({
           {canEdit && (
             <LinkButton
               disabled={isDeleting}
-              to={href('/administration/articles/tags/:tagId/edit-tag', {
+              state={RETURN_TO_OPENER_STATE}
+              to={href('/administration/articles/tags/:tagId/edit', {
                 tagId: id,
               })}
               variant={'outline'}

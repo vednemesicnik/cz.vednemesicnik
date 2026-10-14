@@ -173,38 +173,3 @@
     }
   }
 }
-
-/* A row someone else changed: the tint holds 3 s, then leaves in 300 ms (22f).
-   No end keyframe and no fill-forwards, so hover returns after it. */
-.liveChangeOdd {
-  @layer route {
-    animation: live-change-odd 300ms ease-in-out 3s backwards;
-
-    /* No fade: the tint simply ends. */
-    @media (prefers-reduced-motion: reduce) {
-      animation-duration: 0s;
-    }
-  }
-}
-
-.liveChangeEven {
-  @layer route {
-    animation: live-change-even 300ms ease-in-out 3s backwards;
-
-    @media (prefers-reduced-motion: reduce) {
-      animation-duration: 0s;
-    }
-  }
-}
-
-@keyframes live-change-odd {
-  from {
-    background-color: var(--bg-accent);
-  }
-}
-
-@keyframes live-change-even {
-  from {
-    background-color: var(--bg-accent);
-  }
-}

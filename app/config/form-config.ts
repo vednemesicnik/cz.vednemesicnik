@@ -23,6 +23,7 @@ export const FORM_CONFIG = {
       retract: 'retract',
       returnForEdits: 'return-for-edits',
       review: 'review',
+      saveDraft: 'save-draft',
       setDefaultFilter: 'set-default-filter',
       signInWithBiometric: 'sign-in-with-biometric',
       signOut: 'sign-out',

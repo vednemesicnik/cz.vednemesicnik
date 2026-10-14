@@ -1,4 +1,3 @@
-import { clsx } from 'clsx'
 import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
@@ -37,7 +36,6 @@ import type { Route } from '../../+types/route'
 import { formatArticleRowMeta } from '../../utils/format-article-row-meta'
 import { formatLiveChangeLine } from '../../utils/format-live-change-line'
 import type { LiveChange } from '../../utils/use-live-article-rows'
-import { useLiveChangeTint } from '../../utils/use-live-change-tint'
 import styles from './_styles.module.css'
 
 type Article = Route.ComponentProps['loaderData']['articles'][number]
@@ -72,9 +70,6 @@ export const ItemRow = ({
   const editHref = href('/administration/articles/:articleId/edit-article', {
     articleId: id,
   })
-
-  // The tint runs on the tab's clock, so a re-mount doesn't replay it (22f).
-  const tintRef = useLiveChangeTint(liveChange?.tintStartedAt ?? null)
 
   const fetcherKey = `article-row-${id}`
   const fetcher = useFetcher<typeof articleAction>({ key: fetcherKey })
@@ -151,17 +146,17 @@ export const ItemRow = ({
 
   return (
     <TableRow
-      className={clsx(
-        styles.row,
-        // Two identical animations, so the next change restarts the tint; a
-        // tint held back for a hidden tab has none yet.
-        liveChange?.tintStartedAt != null &&
-          (liveChange.sequence % 2 === 0
-            ? styles.liveChangeEven
-            : styles.liveChangeOdd),
-      )}
+      className={styles.row}
       muted={article.state === 'archived'}
-      ref={tintRef}
+      // A tint held back for a hidden tab has none yet.
+      tint={
+        liveChange?.tintStartedAt == null
+          ? undefined
+          : {
+              sequence: liveChange.sequence,
+              startedAt: liveChange.tintStartedAt,
+            }
+      }
     >
       <TableSelectionCell
         checked={selected}

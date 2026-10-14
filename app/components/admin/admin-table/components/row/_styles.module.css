@@ -19,3 +19,38 @@
     }
   }
 }
+
+/* A row that has just changed: the tint holds 3 s, then leaves in 300 ms (22f).
+   No end keyframe and no fill-forwards, so hover returns after it. */
+.tintOdd {
+  @layer variant {
+    animation: tint-odd 300ms ease-in-out 3s backwards;
+
+    /* No fade: the tint simply ends. */
+    @media (prefers-reduced-motion: reduce) {
+      animation-duration: 0s;
+    }
+  }
+}
+
+.tintEven {
+  @layer variant {
+    animation: tint-even 300ms ease-in-out 3s backwards;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation-duration: 0s;
+    }
+  }
+}
+
+@keyframes tint-odd {
+  from {
+    background-color: var(--bg-accent);
+  }
+}
+
+@keyframes tint-even {
+  from {
+    background-color: var(--bg-accent);
+  }
+}
