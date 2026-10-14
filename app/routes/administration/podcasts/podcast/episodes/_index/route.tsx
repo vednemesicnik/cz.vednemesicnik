@@ -155,7 +155,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 onSelect={() => selection.toggle(episode.id)}
                 podcastId={podcast.id}
                 selected={selection.isSelected(episode.id)}
-                state={episode.state}
+                state={episode.submission ?? episode.state}
                 title={episode.title}
               />
             ))

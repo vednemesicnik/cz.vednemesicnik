@@ -1,4 +1,3 @@
-import type { ContentState } from '@generated/prisma/enums'
 import { useRef } from 'react'
 import { href, useFetcher } from 'react-router'
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -16,14 +15,14 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
 import { LinkButton } from '~/components/link-button'
-import { StatusTag } from '~/components/status-tag'
+import { StatusTag, type StatusTagState } from '~/components/status-tag'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 
 type Props = {
   podcastId: string
   id: string
   title: string
-  state: ContentState
+  state: StatusTagState
   createdAt: Date
   canView: boolean
   canEdit: boolean
