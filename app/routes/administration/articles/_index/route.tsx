@@ -198,7 +198,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         />
       )}
       {/* Everything that narrows the list is a filter, in one row (22d). */}
-      <div
+      <search
         className={clsx(
           styles.filterRow,
           hasSelection && styles.filterRowReplaced,
@@ -270,7 +270,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           summaryLines={summaryLines}
           triggerClassName={styles.wideTrigger}
         />
-      </div>
+      </search>
       {totalCount === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <div className={styles.empty}>
