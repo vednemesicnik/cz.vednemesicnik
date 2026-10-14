@@ -81,7 +81,6 @@ export default function RouteComponent({
         ? `${FEATURED_IMAGE_SOURCE.EXISTING}:${article.featuredImageId}`
         : FEATURED_IMAGE_SOURCE.NONE,
       slug: article.slug,
-      state: article.state,
       tagIds: article.tagIds,
       title: article.title,
     },
@@ -447,8 +446,6 @@ export default function RouteComponent({
               Přidat autora
             </Button>
           </Fieldset>
-
-          <input {...getInputProps(fields.state, { type: 'hidden' })} />
 
           <FormActions>
             <Button disabled={!canSubmit} type={'submit'}>

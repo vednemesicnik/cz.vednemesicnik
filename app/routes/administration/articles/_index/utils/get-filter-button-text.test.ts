@@ -36,4 +36,29 @@ describe('getFilterButtonText', () => {
       values: 'maturita',
     })
   })
+
+  test('reads a description after the name', () => {
+    expect(
+      getFilterButtonText('Stav', [], 'na schválení čeká celkem 1 článek'),
+    ).toEqual({
+      accessibleName: 'Stav, na schválení čeká celkem 1 článek',
+      more: '',
+      values: '',
+    })
+  })
+
+  test('reads a description after the values', () => {
+    expect(
+      getFilterButtonText(
+        'Stav',
+        ['Koncepty', 'Ke schválení'],
+        'na schválení čekají celkem 2 články',
+      ),
+    ).toEqual({
+      accessibleName:
+        'Stav: Koncepty, Ke schválení, na schválení čekají celkem 2 články',
+      more: '',
+      values: 'Koncepty, Ke schválení',
+    })
+  })
 })

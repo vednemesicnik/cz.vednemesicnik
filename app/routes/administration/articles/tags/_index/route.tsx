@@ -62,16 +62,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       <ArticlesTabs />
-      <ListHeader
-        action={
-          canCreate && (
-            <LinkButton to={href('/administration/articles/tags/add-tag')}>
-              Nový štítek
-            </LinkButton>
-          )
-        }
-      >
+      <ListHeader>
         <PageTitle>Štítky</PageTitle>
+        {canCreate && (
+          <LinkButton to={href('/administration/articles/tags/add-tag')}>
+            Nový štítek
+          </LinkButton>
+        )}
       </ListHeader>
       <AdminTableToolbar>
         <AdminTableSearch defaultValue={query} placeholder={'Hledat štítky…'} />

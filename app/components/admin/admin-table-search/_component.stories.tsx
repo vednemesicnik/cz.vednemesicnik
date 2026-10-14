@@ -37,10 +37,7 @@ export const Playground: Story = {
   render: () =>
     withRouterAt(
       '',
-      <AdminTableSearch
-        defaultValue={''}
-        placeholder={'Hledat v názvu a adrese'}
-      />,
+      <AdminTableSearch defaultValue={''} placeholder={'Název nebo adresa'} />,
     ),
 }
 
@@ -55,7 +52,25 @@ export const WithQuery: Story = {
       '?q=redakce&sort=title&order=asc',
       <AdminTableSearch
         defaultValue={'redakce'}
-        placeholder={'Hledat v názvu a adrese'}
+        placeholder={'Název nebo adresa'}
       />,
+    ),
+}
+
+/** `grow`: fills its container, here bounded to 240–480 px as in a filter row
+ * (cioukqn6). */
+export const Grow: Story = {
+  render: () =>
+    withRouterAt(
+      '',
+      <div style={{ inlineSize: '600px' }}>
+        <div style={{ maxInlineSize: '480px', minInlineSize: '240px' }}>
+          <AdminTableSearch
+            defaultValue={''}
+            grow={true}
+            placeholder={'Název nebo adresa'}
+          />
+        </div>
+      </div>,
     ),
 }

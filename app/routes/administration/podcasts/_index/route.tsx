@@ -62,16 +62,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <ListHeader
-        action={
-          canCreate && (
-            <LinkButton to={href('/administration/podcasts/add-podcast')}>
-              Nový podcast
-            </LinkButton>
-          )
-        }
-      >
+      <ListHeader>
         <PageTitle>Podcasty</PageTitle>
+        {canCreate && (
+          <LinkButton to={href('/administration/podcasts/add-podcast')}>
+            Nový podcast
+          </LinkButton>
+        )}
       </ListHeader>
       <AdminTableToolbar>
         <AdminTableSearch

@@ -34,7 +34,6 @@ export async function action({ request, params }: Route.ActionArgs) {
     categoryIds,
     tagIds,
     authorIds,
-    state,
     existingImages,
     images,
     featuredImage,
@@ -50,7 +49,6 @@ export async function action({ request, params }: Route.ActionArgs) {
     featuredImage,
     images,
     slug,
-    state,
     tagIds,
     title,
   })

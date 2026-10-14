@@ -2,7 +2,6 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
-import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 
@@ -30,38 +29,26 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 /**
- * Interactive base case (controls enabled).
+ * The title, then the list's main action.
  */
 export const Playground: Story = {
   args: {
-    action: (
-      <LinkButton to={'/administration/podcasts/add-podcast'}>
-        Nový podcast
-      </LinkButton>
+    children: (
+      <>
+        <PageTitle>Podcasty</PageTitle>
+        <LinkButton to={'/administration/podcasts/add-podcast'}>
+          Nový podcast
+        </LinkButton>
+      </>
     ),
-    children: <PageTitle>Podcasty</PageTitle>,
   },
 }
 
 /**
- * The article list: the waiting work under the headline (22a).
+ * A role that may not create: the title alone, at the same height.
  */
-export const WithWaitingWork: Story = {
+export const WithoutAction: Story = {
   args: {
-    action: (
-      <LinkButton to={'/administration/articles/add-article'}>
-        Nový článek
-      </LinkButton>
-    ),
-    children: (
-      <>
-        <PageTitle>Články</PageTitle>
-        <p style={{ margin: 0 }}>
-          <Link to={{ search: '?state=pending' }}>
-            Na schválení čekají 3 články
-          </Link>
-        </p>
-      </>
-    ),
+    children: <PageTitle>Uživatelé</PageTitle>,
   },
 }

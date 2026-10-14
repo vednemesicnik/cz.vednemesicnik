@@ -5,31 +5,19 @@ import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
-  action?: ReactNode
   className?: string
-  leadClassName?: string
 }
 
 /**
- * A list's header in one row: the headline on the left, the list's main
- * action on the right, on the headline's line; the action wraps under the
- * headline when the row is too narrow (22a).
+ * A list's header in one row: the title on the left, the list's main action
+ * on the right (22a). Nothing that comes and goes belongs in it, so the table
+ * under it never moves; work waiting for someone is a count on the state
+ * filter (cioukqn6).
  *
- * @param props.children - The headline, and what belongs under it, such as a
- * link to the work waiting in the list.
- * @param props.action - The list's main action, usually a primary `LinkButton`.
- * @param props.leadClassName - Styles the column that holds `children`.
+ * @param props.children - The `PageTitle`, then the main action, usually a
+ * primary `LinkButton`.
+ * @returns The header
  */
-export const ListHeader = ({
-  children,
-  action,
-  className,
-  leadClassName,
-}: Props) => {
-  return (
-    <header className={clsx(styles.row, className)}>
-      <div className={clsx(styles.lead, leadClassName)}>{children}</div>
-      {action}
-    </header>
-  )
+export const ListHeader = ({ children, className }: Props) => {
+  return <header className={clsx(styles.row, className)}>{children}</header>
 }

@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import {
   type ChangeEvent,
   type KeyboardEvent,
@@ -24,9 +25,22 @@ const SEARCH_DEBOUNCE_MILLISECONDS = 300
 type Props = {
   defaultValue: string
   placeholder?: string
+  grow?: boolean
 }
 
-export const AdminTableSearch = ({ defaultValue, placeholder }: Props) => {
+/**
+ * The search field over an administration list: it searches as you type
+ * (300 ms), with its own ✕ to clear (qx3tx3bz).
+ *
+ * @param props.grow - Fills its container instead of the fixed 240 px; the
+ *   container sets the bounds, e.g. 240–480 px in a filter row (cioukqn6).
+ * @returns The search form
+ */
+export const AdminTableSearch = ({
+  defaultValue,
+  placeholder,
+  grow = false,
+}: Props) => {
   const [searchParams] = useSearchParams()
   const submit = useSubmit()
   const isHydrated = useHydrated()
@@ -125,7 +139,7 @@ export const AdminTableSearch = ({ defaultValue, placeholder }: Props) => {
 
   return (
     <Form
-      className={styles.form}
+      className={clsx(styles.form, grow && styles.grow)}
       method={'get'}
       onSubmit={handleSubmit}
       ref={formRef}
