@@ -7,7 +7,7 @@ type Props = {
   children: ReactNode
   // Dims the table and shows a spinner overlay during navigation
   pending?: boolean
-  // Makes thead sticky within the scroll wrapper (adds max-block-size)
+  // Sticks thead to the page where the table fits without sideways scroll
   stickyHeader?: boolean
   className?: string
 }

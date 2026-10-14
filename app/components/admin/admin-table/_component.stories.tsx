@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { MemoryRouter } from 'react-router'
 
 import { AdminTable } from './_component'
 import { TableBody } from './components/body'
@@ -9,6 +10,33 @@ import { TableEmptyRow } from './components/empty-row'
 import { TableHeader } from './components/header'
 import { TableHeaderCell } from './components/header-cell'
 import { TableRow } from './components/row'
+import { TableSelectionCell } from './components/selection-cell'
+import { TableSelectionHeaderCell } from './components/selection-header-cell'
+import { TableSortableHeaderCell } from './components/sortable-header-cell'
+
+const sampleArticles = [
+  {
+    archived: false,
+    author: 'Anna Dvořáková',
+    state: 'Čeká na schválení',
+    title: 'Rozhovor s ředitelkou o nové budově',
+    updatedAt: '25. 9. 2026',
+  },
+  {
+    archived: false,
+    author: 'Tereza Malá',
+    state: 'Koncept',
+    title: 'Jak jsme psali reportáž z maturitního plesu',
+    updatedAt: '26. 9. 2026',
+  },
+  {
+    archived: true,
+    author: 'Tereza Malá',
+    state: 'Archivováno',
+    title: 'Plán akcí na jaro 2026',
+    updatedAt: '2. 6. 2026',
+  },
+]
 
 const sampleRows = [
   { articles: 42, id: 1, name: 'Anna Nováková', role: 'Koordinátor' },
@@ -46,7 +74,8 @@ const meta: Meta<typeof AdminTable> = {
     },
     stickyHeader: {
       control: 'boolean',
-      description: 'Pins the header while the list scrolls inside the wrapper.',
+      description:
+        'Pins the header to the page from 1024 px, where the table fits without sideways scroll.',
     },
   },
   component: AdminTable,
@@ -54,7 +83,7 @@ const meta: Meta<typeof AdminTable> = {
     docs: {
       description: {
         component:
-          'Shared administration table. Wraps content in a horizontal-scroll container with optional sticky header and pending overlay; composes with TableHeader/TableRow/TableCell and TableEmptyRow. Zebra striping, tabular numbers, and right-aligned action columns come for free.',
+          'Shared administration table (design 22a): no box, small sentence-case header labels, one line under the header and one between rows. Wraps content in a horizontal-scroll container with optional sticky header and pending overlay; composes with TableHeader/TableRow/TableCell and TableEmptyRow. Tabular numbers and right-aligned action columns come for free.',
       },
     },
     layout: 'padded',
@@ -79,6 +108,57 @@ export const Playground: Story = {
       <Head />
       <TableBody>
         <Rows />
+      </TableBody>
+    </AdminTable>
+  ),
+}
+
+/**
+ * The article list as 22a draws it: selection, a sortable column (Upraveno ↓)
+ * and a muted archived row.
+ */
+export const ArticleList: Story = {
+  decorators: [
+    (Story) => (
+      <MemoryRouter initialEntries={['/?sort=updatedAt&order=desc']}>
+        <Story />
+      </MemoryRouter>
+    ),
+  ],
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <AdminTable>
+      <TableHeader>
+        <TableSelectionHeaderCell
+          checked={false}
+          indeterminate={false}
+          onChange={() => {}}
+        />
+        <TableSortableHeaderCell sortKey={'title'}>
+          Název
+        </TableSortableHeaderCell>
+        <TableHeaderCell>Autor</TableHeaderCell>
+        <TableSortableHeaderCell sortKey={'updatedAt'}>
+          Upraveno
+        </TableSortableHeaderCell>
+        <TableHeaderCell>Stav</TableHeaderCell>
+        <TableHeaderCell variant="actions">Akce</TableHeaderCell>
+      </TableHeader>
+      <TableBody>
+        {sampleArticles.map((article) => (
+          <TableRow key={article.title} muted={article.archived}>
+            <TableSelectionCell
+              checked={false}
+              label={`Vybrat článek ${article.title}`}
+              onChange={() => {}}
+            />
+            <TableCell>{article.title}</TableCell>
+            <TableCell>{article.author}</TableCell>
+            <TableCell>{article.updatedAt}</TableCell>
+            <TableCell>{article.state}</TableCell>
+            <TableCell variant="actions">Upravit</TableCell>
+          </TableRow>
+        ))}
       </TableBody>
     </AdminTable>
   ),
@@ -116,8 +196,8 @@ export const Pending: Story = {
 }
 
 /**
- * Sticky header on a long list: the wrapper becomes the vertical scroll context,
- * so the header stays pinned while rows scroll beneath it.
+ * Sticky header on a long list: only the page scrolls, and from 1024 px the
+ * header stays pinned to the top of the page while the rows scroll under it.
  */
 export const StickyHeader: Story = {
   parameters: { controls: { disable: true } },

@@ -3,7 +3,7 @@
     /* Narrow column that hugs the first content column (reduced end padding). */
     width: 1%;
     white-space: nowrap;
-    padding: 16px 8px 16px 24px;
+    padding: 14px 6px 14px 8px;
     vertical-align: middle;
     /* Row separator (border-collapse: separate keeps it attached to sticky cells) */
     border-bottom: 1px solid var(--border);

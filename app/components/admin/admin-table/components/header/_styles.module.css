@@ -1,6 +1,6 @@
 .header {
   @layer component {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-primary);
     /* Sticks to the wrapper's scroll context when AdminTable stickyHeader is set.
        The separator border lives on the header cells — border-collapse: separate
        ignores borders on thead/tr. */
