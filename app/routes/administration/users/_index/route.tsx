@@ -54,16 +54,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <ListHeader
-        action={
-          canCreate && (
-            <LinkButton to={href('/administration/users/add-user')}>
-              Nový uživatel
-            </LinkButton>
-          )
-        }
-      >
+      <ListHeader>
         <PageTitle>Uživatelé</PageTitle>
+        {canCreate && (
+          <LinkButton to={href('/administration/users/add-user')}>
+            Nový uživatel
+          </LinkButton>
+        )}
       </ListHeader>
       <AdminTableToolbar>
         <AdminTableSearch

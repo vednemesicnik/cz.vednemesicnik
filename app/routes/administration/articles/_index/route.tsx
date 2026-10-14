@@ -32,7 +32,7 @@ import { SavedFiltersMenu } from './components/saved-filters-menu'
 import { SavedFiltersTrigger } from './components/saved-filters-trigger'
 import { SORT_KEYS } from './sort'
 import { buildClearFiltersSearch } from './utils/build-clear-filters-search'
-import { formatWaitingWork } from './utils/format-waiting-work'
+import { formatPendingSummary } from './utils/format-pending-summary'
 import { getEmptyListMessage } from './utils/get-empty-list-message'
 import { getSavedFilterSummary } from './utils/get-saved-filter-summary'
 import { useBulkActionResult } from './utils/use-bulk-action-result'
@@ -121,12 +121,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     value: option.queue,
   }))
 
-  // The work that waits, one click away, unless the list already shows just
-  // that (22a).
-  const showWaitingWork =
-    isApprover &&
-    pendingCount > 0 &&
-    !(states.length === 1 && states[0] === 'pending')
+  // The work that waits is a count on Stav, for the Coordinator only, also
+  // while Ke schválení is selected; it goes only at 0 (22d, cioukqn6).
+  const stateAttention =
+    isApprover && pendingCount > 0
+      ? { count: pendingCount, description: formatPendingSummary(pendingCount) }
+      : undefined
 
   const clearFiltersSearch = buildClearFiltersSearch(searchParams)
 
@@ -172,105 +172,100 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <ArticlesTabs />
       {/* On a phone Nový článek waits at the bottom, in reach of the thumb,
           and the top bar names the page (22g). */}
-      <ListHeader
-        action={renderNewArticleLink(styles.topNewArticle)}
-        className={styles.header}
-        leadClassName={styles.headerLead}
-      >
+      <ListHeader className={styles.header}>
         <PageTitle className={styles.headline}>Články</PageTitle>
-        {showWaitingWork && (
-          <p className={styles.waitingWork}>
-            <Link preventScrollReset={true} to={{ search: '?state=pending' }}>
-              {formatWaitingWork(pendingCount)}
-            </Link>
-          </p>
-        )}
+        {renderNewArticleLink(styles.topNewArticle)}
       </ListHeader>
       {/* Once a row is checked, the selection bar takes the filter row's place
-          (22c), on a wide screen only: a phone has no selection (22g), even
-          one carried over from a wider window. */}
-      {hasSelection && (
-        <ArticleSelectionBar
-          action={href('/administration/articles')}
-          articles={selectedArticles}
-          className={styles.selectionBar}
-          onClear={selection.clear}
-        />
-      )}
-      {/* Everything that narrows the list is a filter, in one row (22d). */}
-      <search
-        className={clsx(
-          styles.filterRow,
-          hasSelection && styles.filterRowReplaced,
+          in the same cell, so the table does not move (22c, cioukqn6); on a
+          wide screen only: a phone has no selection (22g), even one carried
+          over from a wider window. */}
+      <div className={styles.filterCell}>
+        {hasSelection && (
+          <ArticleSelectionBar
+            action={href('/administration/articles')}
+            articles={selectedArticles}
+            className={styles.selectionBar}
+            onClear={selection.clear}
+          />
         )}
-      >
-        <div className={styles.filterGroup}>
-          <div className={styles.search}>
-            <AdminTableSearch
-              defaultValue={query}
-              placeholder={'Hledat v názvu a adrese'}
-            />
+        {/* Everything that narrows the list is a filter, in one row (22d). */}
+        <search
+          className={clsx(
+            styles.filterRow,
+            hasSelection && styles.filterRowReplaced,
+          )}
+        >
+          <div className={styles.filterGroup}>
+            <div className={styles.search}>
+              <AdminTableSearch
+                defaultValue={query}
+                grow={true}
+                placeholder={'Název nebo adresa'}
+              />
+            </div>
+            <div className={styles.filters}>
+              <FilterMenu
+                attention={stateAttention}
+                clearLabel={'Vše'}
+                label={'Stav'}
+                name={'state'}
+                options={stateOptions}
+                selectedValues={states}
+              />
+              <FilterMenu
+                clearLabel={'Všechny'}
+                label={'Rubrika'}
+                name={'category'}
+                options={categoryOptions}
+                selectedValues={filters.category ?? []}
+              />
+              <FilterMenu
+                clearLabel={'Všechny'}
+                label={'Štítek'}
+                name={'tag'}
+                options={tagOptions}
+                searchPlaceholder={'Hledat štítek'}
+                selectedValues={filters.tag ?? []}
+              />
+              <FilterMenu
+                clearLabel={'Všichni'}
+                label={'Autor'}
+                name={'author'}
+                options={authorOptions}
+                searchPlaceholder={'Hledat autora'}
+                selectedValues={filters.author ?? []}
+              />
+              {!isDefault && (
+                <Link
+                  className={styles.clearFilters}
+                  preventScrollReset={true}
+                  to={{ search: clearFiltersSearch }}
+                >
+                  Zrušit filtry
+                </Link>
+              )}
+              {/* On a phone Uložené filtry ends the scrolling row (22g). */}
+              <SavedFiltersTrigger
+                className={styles.phoneTrigger}
+                matchingFilterName={matchingFilterName}
+                menuId={savedFiltersMenuId}
+              />
+            </div>
           </div>
-          <div className={styles.filters}>
-            <FilterMenu
-              clearLabel={'Vše'}
-              label={'Stav'}
-              name={'state'}
-              options={stateOptions}
-              selectedValues={states}
-            />
-            <FilterMenu
-              clearLabel={'Všechny'}
-              label={'Rubrika'}
-              name={'category'}
-              options={categoryOptions}
-              selectedValues={filters.category ?? []}
-            />
-            <FilterMenu
-              clearLabel={'Všechny'}
-              label={'Štítek'}
-              name={'tag'}
-              options={tagOptions}
-              searchPlaceholder={'Hledat štítek'}
-              selectedValues={filters.tag ?? []}
-            />
-            <FilterMenu
-              clearLabel={'Všichni'}
-              label={'Autor'}
-              name={'author'}
-              options={authorOptions}
-              searchPlaceholder={'Hledat autora'}
-              selectedValues={filters.author ?? []}
-            />
-            {!isDefault && (
-              <Link
-                className={styles.clearFilters}
-                preventScrollReset={true}
-                to={{ search: clearFiltersSearch }}
-              >
-                Zrušit filtry
-              </Link>
-            )}
-            {/* On a phone Uložené filtry ends the scrolling row (22g). */}
-            <SavedFiltersTrigger
-              className={styles.phoneTrigger}
-              matchingFilterName={matchingFilterName}
-              menuId={savedFiltersMenuId}
-            />
-          </div>
-        </div>
-        {/* Apart from the filters: it sets them all at once (22d). */}
-        <SavedFiltersMenu
-          currentQuery={currentFilterQuery}
-          matchingFilterId={matchingFilterId}
-          matchingFilterName={matchingFilterName}
-          menuId={savedFiltersMenuId}
-          ownFilters={ownFilters}
-          sharedFilters={sharedFilters}
-          summaryLines={summaryLines}
-          triggerClassName={styles.wideTrigger}
-        />
-      </search>
+          {/* Apart from the filters: it sets them all at once (22d). */}
+          <SavedFiltersMenu
+            currentQuery={currentFilterQuery}
+            matchingFilterId={matchingFilterId}
+            matchingFilterName={matchingFilterName}
+            menuId={savedFiltersMenuId}
+            ownFilters={ownFilters}
+            sharedFilters={sharedFilters}
+            summaryLines={summaryLines}
+            triggerClassName={styles.wideTrigger}
+          />
+        </search>
+      </div>
       {totalCount === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <div className={styles.empty}>

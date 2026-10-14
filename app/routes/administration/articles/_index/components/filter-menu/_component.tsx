@@ -25,6 +25,11 @@ export type FilterOption = {
   attention?: boolean
 }
 
+type FilterAttention = {
+  count: number
+  description: string
+}
+
 type Props = {
   label: string
   name: string
@@ -32,6 +37,7 @@ type Props = {
   options: FilterOption[]
   selectedValues: string[]
   searchPlaceholder?: string
+  attention?: FilterAttention
 }
 
 /**
@@ -45,6 +51,8 @@ type Props = {
  * @param props.options - The values in menu order, which is also their order
  *   in the URL; `count` and `attention` for the Stav menu.
  * @param props.searchPlaceholder - Puts a search field over a long menu.
+ * @param props.attention - Work waiting for the person, as a count in ink on
+ *   the button, read as `description` (the Coordinator's Stav, cioukqn6).
  */
 export const FilterMenu = ({
   label,
@@ -53,6 +61,7 @@ export const FilterMenu = ({
   options,
   selectedValues,
   searchPlaceholder,
+  attention,
 }: Props) => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -97,7 +106,13 @@ export const FilterMenu = ({
   const selectedLabels = options
     .filter((option) => selected.includes(option.value))
     .map((option) => option.label)
-  const buttonText = getFilterButtonText(label, selectedLabels)
+  const buttonText = getFilterButtonText(
+    label,
+    selectedLabels,
+    attention?.description,
+  )
+  // The counts in the menu are totals; the hint says so once (yatkgx65).
+  const hasCounts = options.some((option) => option.count !== undefined)
 
   useEffect(() => {
     const popover = popoverRef.current
@@ -274,6 +289,11 @@ export const FilterMenu = ({
           {buttonText.more !== '' && (
             <span className={styles.more}>{buttonText.more}</span>
           )}
+          {attention !== undefined && (
+            <span className={clsx(styles.triggerCount, styles.attention)}>
+              {attention.count}
+            </span>
+          )}
           {/* The chevron of the drawing (22d), not the select's triangle. */}
           <svg
             aria-hidden={'true'}
@@ -384,11 +404,6 @@ export const FilterMenu = ({
                       >
                         <span className={'screen-reader-only'}>, </span>
                         {option.count}
-                        {option.attention && (
-                          <span className={'screen-reader-only'}>
-                            , čekají na vás
-                          </span>
-                        )}
                       </span>
                     )}
                   </div>
@@ -398,6 +413,7 @@ export const FilterMenu = ({
             <p className={'screen-reader-only'} id={hintId}>
               Mezerníkem hodnotu přidáte nebo odeberete. Enterem vyberete jen
               tuto hodnotu a zavřete nabídku.
+              {hasCounts && ' Počty nezohledňují hledání ani ostatní filtry.'}
             </p>
           </>
         ) : (

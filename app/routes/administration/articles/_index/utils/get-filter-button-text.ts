@@ -11,6 +11,8 @@ type FilterButtonText = {
  *
  * @param label - The filter's name, e.g. „Rubrika“.
  * @param valueLabels - The selected values' labels in menu order.
+ * @param description - Read after the name and values, e.g. the count the
+ *   Stav button shows (22d): „na schválení čekají celkem 2 články“.
  * @returns `values` — what the button shows after the name, `''` for none;
  *   `more` — „+N“, kept visible when `values` is truncated, `''` for none;
  *   `accessibleName` — the name with every value, for screen readers.
@@ -18,12 +20,16 @@ type FilterButtonText = {
 export const getFilterButtonText = (
   label: string,
   valueLabels: string[],
+  description?: string,
 ): FilterButtonText => {
-  if (valueLabels.length === 0) {
-    return { accessibleName: label, more: '', values: '' }
-  }
+  const named =
+    valueLabels.length === 0 ? label : `${label}: ${valueLabels.join(', ')}`
+  const accessibleName =
+    description === undefined ? named : `${named}, ${description}`
 
-  const accessibleName = `${label}: ${valueLabels.join(', ')}`
+  if (valueLabels.length === 0) {
+    return { accessibleName, more: '', values: '' }
+  }
 
   if (valueLabels.length <= 2) {
     return { accessibleName, more: '', values: valueLabels.join(', ') }

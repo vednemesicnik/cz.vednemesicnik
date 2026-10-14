@@ -91,6 +91,14 @@ export const ThreeValuesTruncated: Story = {
     ),
 }
 
+const STATE_OPTIONS = [
+  { count: 12, label: 'Koncepty', value: 'draft' },
+  { attention: true, count: 2, label: 'Ke schválení', value: 'pending' },
+  { count: 3, label: 'Schválené', value: 'approved' },
+  { label: 'Publikované', value: 'published' },
+  { label: 'Archivované', value: 'archived' },
+]
+
 /** The Stav menu counts its work; Ke schválení in ink for the Coordinator. */
 export const StateWithCounts: Story = {
   render: () =>
@@ -100,19 +108,47 @@ export const StateWithCounts: Story = {
         clearLabel={'Vše'}
         label={'Stav'}
         name={'state'}
-        options={[
-          { count: 12, label: 'Koncepty', value: 'draft' },
-          {
-            attention: true,
-            count: 2,
-            label: 'Ke schválení',
-            value: 'pending',
-          },
-          { count: 3, label: 'Schválené', value: 'approved' },
-          { label: 'Publikované', value: 'published' },
-          { label: 'Archivované', value: 'archived' },
-        ]}
+        options={STATE_OPTIONS}
         selectedValues={['draft']}
+      />,
+    ),
+}
+
+/** The Coordinator's waiting work on the button: „Stav 2“, read as „Stav, na
+ * schválení čekají celkem 2 články“ (cioukqn6). */
+export const StateWithWaitingWork: Story = {
+  render: () =>
+    withRouterAt(
+      '',
+      <FilterMenu
+        attention={{
+          count: 2,
+          description: 'na schválení čekají celkem 2 články',
+        }}
+        clearLabel={'Vše'}
+        label={'Stav'}
+        name={'state'}
+        options={STATE_OPTIONS}
+        selectedValues={[]}
+      />,
+    ),
+}
+
+/** The count follows the values and stays with Ke schválení selected. */
+export const StateWithValuesAndWaitingWork: Story = {
+  render: () =>
+    withRouterAt(
+      '?state=draft&state=pending',
+      <FilterMenu
+        attention={{
+          count: 2,
+          description: 'na schválení čekají celkem 2 články',
+        }}
+        clearLabel={'Vše'}
+        label={'Stav'}
+        name={'state'}
+        options={STATE_OPTIONS}
+        selectedValues={['draft', 'pending']}
       />,
     ),
 }

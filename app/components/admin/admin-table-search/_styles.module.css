@@ -120,3 +120,19 @@
     }
   }
 }
+
+/* Fills its container, which sets the bounds (cioukqn6). */
+.grow {
+  @layer variant {
+    inline-size: 100%;
+
+    & .field {
+      flex: 1;
+      min-inline-size: 0;
+    }
+
+    & .input {
+      width: 100%;
+    }
+  }
+}
