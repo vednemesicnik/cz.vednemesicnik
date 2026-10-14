@@ -22,6 +22,7 @@ import { Pagination } from '~/components/pagination'
 import { useToast } from '~/components/toast-provider'
 import type { ArticleQueue } from '~/config/article-queue-config'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
+import { ArticlesTabs } from '../components/articles-tabs'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ArticleSelectionBar } from './components/article-selection-bar'
@@ -168,6 +169,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
+      <ArticlesTabs />
       {/* On a phone Nový článek waits at the bottom, in reach of the thumb,
           and the top bar names the page (22g). */}
       <ListHeader
