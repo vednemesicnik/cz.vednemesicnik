@@ -1,14 +1,9 @@
 import { href } from 'react-router'
 
 import { Tabs } from '~/components/tabs'
+import { TabsItem } from '~/components/tabs-item'
 
 import styles from './_styles.module.css'
-
-const ITEMS = [
-  { end: true, label: 'Články', to: href('/administration/articles') },
-  { label: 'Rubriky', to: href('/administration/articles/categories') },
-  { label: 'Štítky', to: href('/administration/articles/tags') },
-]
 
 /**
  * The tabs of the article lists, the first thing in the page (22a). Only the
@@ -17,5 +12,15 @@ const ITEMS = [
  * @returns The tabs Články · Rubriky · Štítky
  */
 export const ArticlesTabs = () => {
-  return <Tabs className={styles.tabs} items={ITEMS} label={'Články'} />
+  return (
+    <Tabs className={styles.tabs} label={'Články'}>
+      <TabsItem end={true} to={href('/administration/articles')}>
+        Články
+      </TabsItem>
+      <TabsItem to={href('/administration/articles/categories')}>
+        Rubriky
+      </TabsItem>
+      <TabsItem to={href('/administration/articles/tags')}>Štítky</TabsItem>
+    </Tabs>
+  )
 }
