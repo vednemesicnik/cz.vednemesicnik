@@ -1,3 +1,4 @@
+import { data } from 'react-router'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
@@ -8,12 +9,13 @@ import { updateArticle } from './update-article.server'
 // Prisma operations return tags so the test can see what went into the
 // transaction; `deleteRowWithImages` keeps its real ordering (row, then files).
 const mocks = vi.hoisted(() => ({
-  articleFindUniqueOrThrow: vi.fn(),
+  articleFindUnique: vi.fn(),
   articleImageCreate: vi.fn(),
   articleImageDeleteMany: vi.fn(),
   articleImageFindMany: vi.fn(),
   articleImageUpdate: vi.fn(),
   articleUpdate: vi.fn(),
+  checkAuthorPermission: vi.fn(),
   pageSeoUpsert: vi.fn(),
   permissionContext: vi.fn(),
   publishContentEvent: vi.fn(),
@@ -21,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   storeDelete: vi.fn(),
   storeImageVariants: vi.fn(),
   transaction: vi.fn(),
+  withAuthorPermission: vi.fn(),
 }))
 
 // The content log has its own tests; here it only must not reach Prisma.
@@ -30,12 +33,12 @@ vi.mock('~/utils/content-log/record-content-log.server', () => ({
 
 vi.mock(
   '~/utils/permissions/author/actions/with-author-permission.server',
-  () => ({
-    withAuthorPermission: (
-      _request: Request,
-      options: { execute: (context: unknown) => Promise<unknown> },
-    ) => options.execute(mocks.permissionContext()),
-  }),
+  () => ({ withAuthorPermission: mocks.withAuthorPermission }),
+)
+
+vi.mock(
+  '~/utils/permissions/author/guards/check-author-permission.server',
+  () => ({ checkAuthorPermission: mocks.checkAuthorPermission }),
 )
 
 vi.mock('~/utils/sse/publish-content-event.server', () => ({
@@ -46,7 +49,7 @@ vi.mock('~/utils/db.server', () => ({
   prisma: {
     $transaction: mocks.transaction,
     article: {
-      findUniqueOrThrow: mocks.articleFindUniqueOrThrow,
+      findUnique: mocks.articleFindUnique,
       update: mocks.articleUpdate,
     },
     articleImage: {
@@ -109,9 +112,14 @@ const options = {
   existingImages: [{ altText: 'Kept', id: 'image-kept' }],
   featuredImage: { source: FEATURED_IMAGE_SOURCE.NONE },
   slug: 'article',
-  state: 'draft' as const,
   title: 'Article',
 } satisfies Parameters<typeof updateArticle>[1]
+
+const storedArticle = {
+  authors: [{ id: 'author-1' }],
+  state: 'draft',
+  submittedAt: null,
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -119,7 +127,15 @@ beforeEach(() => {
     authorId: 'author-1',
     roleLevel: 1,
   })
-  mocks.articleFindUniqueOrThrow.mockResolvedValue({ submittedAt: null })
+  mocks.withAuthorPermission.mockImplementation(
+    (
+      _request: Request,
+      { execute }: { execute: (context: unknown) => Promise<unknown> },
+    ) => execute(mocks.permissionContext()),
+  )
+  // clearAllMocks keeps implementations; a test's denial must not leak.
+  mocks.checkAuthorPermission.mockReset()
+  mocks.articleFindUnique.mockResolvedValue(storedArticle)
   // The removed-images lookup filters by article; the version lookup by ids.
   mocks.articleImageFindMany.mockImplementation(
     async ({ where }: { where: { articleId?: string } }) =>
@@ -137,6 +153,77 @@ beforeEach(() => {
     version: 'version-1',
   })
   mocks.transaction.mockResolvedValue([])
+})
+
+describe('updateArticle — the permission follows the stored article', () => {
+  test('checks the stored authors and state, not the ones the form sends', async () => {
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      authors: [{ id: 'author-2' }],
+      state: 'published',
+    })
+
+    await updateArticle(request, options)
+
+    expect(mocks.withAuthorPermission).toHaveBeenCalledWith(
+      request,
+      expect.objectContaining({
+        action: 'update',
+        entity: 'article',
+        target: { authorIds: ['author-2'], state: 'published' },
+      }),
+    )
+  })
+
+  test('checks the authors it sets against the stored state', async () => {
+    await updateArticle(request, { ...options, authorIds: ['author-3'] })
+
+    expect(mocks.checkAuthorPermission).toHaveBeenCalledWith(
+      mocks.permissionContext(),
+      {
+        action: 'update',
+        entity: 'article',
+        state: 'draft',
+        targetAuthorIds: ['author-3'],
+      },
+    )
+  })
+
+  test('writes nothing when the new authors are not allowed', async () => {
+    mocks.checkAuthorPermission.mockImplementation(() => {
+      throw data(null, { status: 403 })
+    })
+
+    await expect(updateArticle(request, options)).rejects.toMatchObject({
+      init: { status: 403 },
+    })
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('keeps the stored state', async () => {
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      state: 'archived',
+    })
+
+    await updateArticle(request, options)
+
+    expect(mocks.articleUpdate.mock.calls[0][0].data).not.toHaveProperty(
+      'state',
+    )
+    const pageSeo = mocks.pageSeoUpsert.mock.calls[0][0]
+    expect(pageSeo.create.state).toBe('archived')
+    expect(pageSeo.update).not.toHaveProperty('state')
+  })
+
+  test('answers a missing article with 404', async () => {
+    mocks.articleFindUnique.mockResolvedValue(null)
+
+    await expect(updateArticle(request, options)).rejects.toMatchObject({
+      init: { status: 404 },
+    })
+    expect(mocks.withAuthorPermission).not.toHaveBeenCalled()
+  })
 })
 
 describe('updateArticle — a failed save changes nothing', () => {
@@ -259,7 +346,7 @@ describe('updateArticle — a submitted article', () => {
       authorId: 'author-1',
       roleLevel: 3,
     })
-    mocks.articleFindUniqueOrThrow.mockResolvedValue({ submittedAt })
+    mocks.articleFindUnique.mockResolvedValue({ ...storedArticle, submittedAt })
 
     await expect(updateArticle(request, options)).rejects.toMatchObject({
       init: { status: 403 },
@@ -269,7 +356,7 @@ describe('updateArticle — a submitted article', () => {
   })
 
   test('the Coordinator corrects it and the submission and approval stay', async () => {
-    mocks.articleFindUniqueOrThrow.mockResolvedValue({ submittedAt })
+    mocks.articleFindUnique.mockResolvedValue({ ...storedArticle, submittedAt })
 
     await updateArticle(request, options)
 

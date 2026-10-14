@@ -4,8 +4,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { updateTag } from './update-tag.server'
 
 const mocks = vi.hoisted(() => ({
-  articleTagFindUniqueOrThrow: vi.fn(),
+  articleTagFindUnique: vi.fn(),
   articleTagUpdate: vi.fn(),
+  checkAuthorPermission: vi.fn(),
   publishContentEvent: vi.fn(),
   withAuthorPermission: vi.fn(),
 }))
@@ -20,6 +21,11 @@ vi.mock(
   () => ({ withAuthorPermission: mocks.withAuthorPermission }),
 )
 
+vi.mock(
+  '~/utils/permissions/author/guards/check-author-permission.server',
+  () => ({ checkAuthorPermission: mocks.checkAuthorPermission }),
+)
+
 vi.mock('~/utils/sse/publish-content-event.server', () => ({
   publishContentEvent: mocks.publishContentEvent,
 }))
@@ -27,7 +33,7 @@ vi.mock('~/utils/sse/publish-content-event.server', () => ({
 vi.mock('~/utils/db.server', () => ({
   prisma: {
     articleTag: {
-      findUniqueOrThrow: mocks.articleTagFindUniqueOrThrow,
+      findUnique: mocks.articleTagFindUnique,
       update: mocks.articleTagUpdate,
     },
   },
@@ -44,9 +50,10 @@ const options = {
   authorId: 'author-1',
   name: 'Tag',
   slug: 'tag',
-  state: 'draft' as const,
   tagId: 'tag-1',
 }
+
+const storedTag = { authorId: 'author-1', state: 'draft', submittedAt: null }
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -56,12 +63,20 @@ beforeEach(() => {
       { execute }: { execute: (context: unknown) => Promise<unknown> },
     ) => execute(context),
   )
+  // clearAllMocks keeps implementations; a test's denial must not leak.
+  mocks.checkAuthorPermission.mockReset()
   mocks.articleTagUpdate.mockResolvedValue({ id: 'tag-1' })
-  mocks.articleTagFindUniqueOrThrow.mockResolvedValue({ submittedAt: null })
+  mocks.articleTagFindUnique.mockResolvedValue(storedTag)
 })
 
 describe('updateTag', () => {
-  test('checks the tag permission', async () => {
+  test('checks the stored author and state, not the ones the form sends', async () => {
+    mocks.articleTagFindUnique.mockResolvedValue({
+      ...storedTag,
+      authorId: 'author-2',
+      state: 'published',
+    })
+
     await updateTag(request, options)
 
     expect(mocks.withAuthorPermission).toHaveBeenCalledWith(
@@ -69,9 +84,40 @@ describe('updateTag', () => {
       expect.objectContaining({
         action: 'update',
         entity: 'article_tag',
-        target: { authorIds: ['author-1'], state: 'draft' },
+        target: { authorIds: ['author-2'], state: 'published' },
       }),
     )
+  })
+
+  test('checks the author it sets against the stored state', async () => {
+    await updateTag(request, { ...options, authorId: 'author-3' })
+
+    expect(mocks.checkAuthorPermission).toHaveBeenCalledWith(context, {
+      action: 'update',
+      entity: 'article_tag',
+      state: 'draft',
+      targetAuthorIds: ['author-3'],
+    })
+  })
+
+  test('writes nothing when the new author is not allowed', async () => {
+    mocks.checkAuthorPermission.mockImplementation(() => {
+      throw data(null, { status: 403 })
+    })
+
+    await expect(updateTag(request, options)).rejects.toMatchObject({
+      init: { status: 403 },
+    })
+    expect(mocks.articleTagUpdate).not.toHaveBeenCalled()
+  })
+
+  test('answers a missing tag with 404', async () => {
+    mocks.articleTagFindUnique.mockResolvedValue(null)
+
+    await expect(updateTag(request, options)).rejects.toMatchObject({
+      init: { status: 404 },
+    })
+    expect(mocks.withAuthorPermission).not.toHaveBeenCalled()
   })
   test('announces the updated tag', async () => {
     await expect(updateTag(request, options)).resolves.toEqual({
@@ -108,7 +154,8 @@ describe('updateTag', () => {
   })
 
   test('refuses its author while the tag is submitted', async () => {
-    mocks.articleTagFindUniqueOrThrow.mockResolvedValue({
+    mocks.articleTagFindUnique.mockResolvedValue({
+      ...storedTag,
       submittedAt: new Date('2026-10-13T10:00:00Z'),
     })
 

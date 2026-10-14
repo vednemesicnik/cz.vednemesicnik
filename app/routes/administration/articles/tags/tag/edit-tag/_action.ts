@@ -24,13 +24,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     )
   }
 
-  const { name, slug, authorId, state } = submission.value
+  const { name, slug, authorId } = submission.value
 
   await updateTag(request, {
     authorId,
     name,
     slug,
-    state,
     tagId,
   })
 
