@@ -24,9 +24,14 @@
   }
 }
 
+/* The filter row's height, so the two share the cell without a jump; the
+   bulk actions here are sm buttons (22c, cioukqn6). */
 .selectionBar {
   @layer route {
+    box-sizing: border-box;
     inline-size: 100%;
+    min-block-size: 42px;
+    padding-block: 2px;
   }
 }
 

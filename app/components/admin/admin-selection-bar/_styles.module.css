@@ -4,9 +4,8 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-    /* The filter row's height, so the two can share a cell (22c, cioukqn6). */
-    min-block-size: 42px;
-    padding: 2px 8px 2px 16px;
+    min-block-size: 54px;
+    padding: 8px 8px 8px 16px;
     box-sizing: border-box;
     background-color: var(--bg-accent);
     border-radius: 8px;

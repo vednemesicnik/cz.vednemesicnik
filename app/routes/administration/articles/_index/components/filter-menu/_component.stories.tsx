@@ -141,8 +141,8 @@ export const StateWithValuesAndWaitingWork: Story = {
       '?state=draft&state=pending',
       <FilterMenu
         attention={{
-          count: 5,
-          description: 'na schválení čeká celkem 5 článků',
+          count: 2,
+          description: 'na schválení čekají celkem 2 články',
         }}
         clearLabel={'Vše'}
         label={'Stav'}
