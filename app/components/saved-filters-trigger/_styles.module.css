@@ -1,0 +1,35 @@
+.trigger {
+  @layer variant {
+    flex: none;
+    max-inline-size: 320px;
+  }
+}
+
+.text {
+  @layer component {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.inFilters {
+  @layer variant {
+    display: none;
+  }
+}
+
+@media (width < 768px) {
+  .inFilters {
+    @layer variant {
+      display: inline-flex;
+    }
+  }
+
+  .rowEnd {
+    @layer variant {
+      display: none;
+    }
+  }
+}

@@ -53,3 +53,4 @@ in force.
 | [0014](0014-activity-guidance-is-a-skill-not-a-rule.md) | Guidance for one body of work is a skill, not a rule | Accepted | 2026-10-14 |
 | [0015](0015-edits-check-the-stored-record-not-the-form.md) | Content edits check the stored record, never the form | Accepted | 2026-10-14 |
 | [0016](0016-records-are-added-and-edited-on-their-own-page.md) | Records are added and edited on their own page, not in a dialog | Accepted | 2026-10-14 |
+| [0017](0017-every-list-with-filters-has-saved-filters.md) | Every administration list with filters has saved filters, and Stav filters by queue | Accepted | 2026-10-14 |

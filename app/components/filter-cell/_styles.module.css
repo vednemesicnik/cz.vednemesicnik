@@ -1,0 +1,21 @@
+.filterCell {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    inline-size: 100%;
+    margin-block-end: 16px;
+  }
+}
+
+@media (width >= 768px) {
+  .filterCell {
+    @layer component {
+      display: grid;
+
+      & > * {
+        grid-area: 1 / 1;
+      }
+    }
+  }
+}

@@ -1,13 +1,18 @@
 import type { Prisma } from '@generated/prisma/client'
 import { data, redirect } from 'react-router'
-import type { ArticleQueue } from '~/config/article-queue-config'
+import {
+  CONTRIBUTOR_STATE_FILTER_QUEUES,
+  STATE_FILTER_QUEUES,
+} from '~/config/content-queue-config'
 import {
   buildStaleFilterRedirect,
   parseAdminListFilters,
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
+import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
+import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { isPagePastLast } from '~/utils/is-page-past-last'
@@ -23,7 +28,6 @@ import { getArticleFactLine } from '../utils/get-article-fact-line'
 import type { Route } from './+types/route'
 import { PINNED_ROWS_PARAM } from './pinned-rows'
 import { SORT_KEYS, type SortKey } from './sort'
-import { buildArticleQueueWhere } from './utils/build-article-queue-where'
 import { getBulkActions } from './utils/get-bulk-actions'
 import { getRowActions } from './utils/get-row-actions'
 
@@ -121,7 +125,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const filterConditions: Prisma.ArticleWhereInput[] = [
     ...(filters.state === undefined
       ? []
-      : [{ OR: filters.state.map(buildArticleQueueWhere) }]),
+      : [{ OR: filters.state.map(buildContentQueueWhere) }]),
     ...(filters.category === undefined
       ? []
       : [{ categories: { some: { slug: { in: filters.category } } } }]),
@@ -164,20 +168,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // A Contributor sends articles but approves nothing: Odeslané instead of
   // Ke schválení and Schválené (22i).
   const isContributor = context.roleName === 'contributor'
-  const countedQueues: ArticleQueue[] = isContributor
-    ? ['draft', 'submitted']
-    : ['draft', 'pending', 'approved']
   // The values of the role's Stav menu, in its order.
-  const offeredQueues: ArticleQueue[] = isContributor
-    ? ['draft', 'submitted', 'published', 'archived']
-    : ['draft', 'pending', 'approved', 'published', 'archived']
-
-  // The Stav menu counts work within what the role may view, whatever else is
-  // searched or filtered (22d).
-  const countQueue = (queue: ArticleQueue) =>
-    prisma.article.count({
-      where: { AND: [permissionWhere, buildArticleQueueWhere(queue)] },
-    })
+  const offeredQueues = isContributor
+    ? CONTRIBUTOR_STATE_FILTER_QUEUES
+    : STATE_FILTER_QUEUES
 
   // The page of the list, or the rows on screen for a live load (22f).
   const rowsQuery: Pick<Prisma.ArticleFindManyArgs, 'skip' | 'take' | 'where'> =
@@ -243,11 +237,12 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       where: withAnyArticle,
     }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
-    Promise.all(
-      countedQueues.map(async (queue) => ({
-        count: await countQueue(queue),
-        queue,
-      })),
+    // The Stav menu counts work within what the role may view, whatever else
+    // is searched or filtered (22d).
+    countContentQueues(isContributor, (queue) =>
+      prisma.article.count({
+        where: { AND: [permissionWhere, buildContentQueueWhere(queue)] },
+      }),
     ),
   ])
 
