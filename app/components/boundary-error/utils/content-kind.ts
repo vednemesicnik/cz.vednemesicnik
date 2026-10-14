@@ -48,8 +48,9 @@ export const getWebsiteContentKind = (pathname: string): ContentKind | null => {
   return null
 }
 
+// `add-…` and `new` add a record (design 30a); they point at none yet.
 const isRecordSegment = (segment: string | undefined): segment is string =>
-  segment !== undefined && !segment.startsWith('add-')
+  segment !== undefined && segment !== 'new' && !segment.startsWith('add-')
 
 const adminSectionKinds: Record<string, ContentKind> = {
   archive: 'issue',
@@ -59,7 +60,7 @@ const adminSectionKinds: Record<string, ContentKind> = {
 
 /**
  * Derives the content kind of a record from an administration address (design 30e).
- * Sub-paths of a record (`…/edit-article`) still resolve to the record.
+ * Sub-paths of a record (`…/edit-article`, `…/edit`) still resolve to the record.
  *
  * @param pathname - The current pathname, e.g. `/administration/articles/abc123`.
  * @returns The record kind, plus `podcastId` for an episode, or `null` when the

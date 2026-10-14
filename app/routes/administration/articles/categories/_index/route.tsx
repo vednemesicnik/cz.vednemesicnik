@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href, useSearchParams } from 'react-router'
+import { href, Outlet, useLocation, useSearchParams } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminFilterSelect } from '~/components/admin/admin-filter-select'
 import { AdminPage } from '~/components/admin/admin-page'
@@ -24,6 +24,7 @@ import { PageTitle } from '~/components/page-title'
 import { CONTENT_STATE_OPTIONS } from '~/utils/admin-filter-options'
 import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
+import { recentChangeTints } from '~/utils/recent-change-tints'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../../components/articles-tabs'
 import type { Route } from './+types/route'
@@ -50,6 +51,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   } = loaderData
 
   const [searchParams] = useSearchParams()
+  const { search } = useLocation()
   const pending = useAdminListPending()
 
   const hasActiveFilters = Object.values(filters).some(
@@ -68,7 +70,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <PageTitle>Rubriky</PageTitle>
         {canCreate && (
           <LinkButton
-            to={href('/administration/articles/categories/add-category')}
+            to={`${href('/administration/articles/categories/new')}${search}`}
           >
             Nová rubrika
           </LinkButton>
@@ -156,11 +158,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 onSelect={() => selection.toggle(category.id)}
                 selected={selection.isSelected(category.id)}
                 state={category.submission ?? category.state}
+                tint={recentChangeTints.get(category.id)}
               />
             ))
           )}
         </TableBody>
       </AdminTable>
+      {/* The add dialog (/new) opens over the list (design 30a). */}
+      <Outlet />
     </AdminPage>
   )
 }

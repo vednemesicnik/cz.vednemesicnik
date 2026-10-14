@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { useRef } from 'react'
-import { href, useFetcher } from 'react-router'
+import { href, Outlet, useFetcher } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
 import { AdminActionGroup } from '~/components/admin/admin-action-group'
@@ -95,12 +95,9 @@ export default function RouteComponent({
         {canEdit && (
           <LinkButton
             disabled={isSubmitting}
-            to={href(
-              '/administration/articles/categories/:categoryId/edit-category',
-              {
-                categoryId,
-              },
-            )}
+            to={href('/administration/articles/categories/:categoryId/edit', {
+              categoryId,
+            })}
             variant={'outline'}
           >
             <EditIcon />
@@ -234,6 +231,8 @@ export default function RouteComponent({
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+      {/* The edit dialog (/edit) opens over the detail (design 30a). */}
+      <Outlet />
     </AdminPage>
   )
 }

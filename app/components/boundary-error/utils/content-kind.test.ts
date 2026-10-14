@@ -40,7 +40,7 @@ describe('getAdminContentKind', () => {
     ['/administration/articles/a1', { kind: 'article' }],
     ['/administration/articles/a1/edit-article', { kind: 'article' }],
     ['/administration/articles/categories/c1', { kind: 'category' }],
-    ['/administration/articles/tags/t1/edit-tag', { kind: 'tag' }],
+    ['/administration/articles/tags/t1/edit', { kind: 'tag' }],
     ['/administration/archive/i1', { kind: 'issue' }],
     ['/administration/podcasts/p1', { kind: 'podcast' }],
     [
@@ -58,6 +58,8 @@ describe('getAdminContentKind', () => {
     '/administration/articles',
     '/administration/articles/add-article',
     '/administration/articles/categories',
+    '/administration/articles/categories/new',
+    '/administration/articles/tags/new',
     '/administration/podcasts/p1/episodes',
     '/administration/podcasts/p1/episodes/add-episode',
     '/administration/settings',

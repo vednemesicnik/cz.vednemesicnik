@@ -1,0 +1,24 @@
+.form {
+  @layer route {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+  }
+}
+
+/* The address, its errors and „Použít …“ under them, 6 px apart (25c). */
+.slugField {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+.originalAddress {
+  @layer route {
+    display: block;
+    color: var(--text-tertiary);
+  }
+}

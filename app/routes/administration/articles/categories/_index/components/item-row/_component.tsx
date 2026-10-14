@@ -9,6 +9,7 @@ import {
 import {
   TableCell,
   TableRow,
+  type TableRowTint,
   TableSelectionCell,
 } from '~/components/admin/admin-table'
 import { DeleteIcon } from '~/components/icons/delete-icon'
@@ -28,6 +29,7 @@ type Props = {
   canDelete: boolean
   selected: boolean
   onSelect: () => void
+  tint?: TableRowTint
 }
 
 export const ItemRow = ({
@@ -40,6 +42,7 @@ export const ItemRow = ({
   canDelete,
   selected,
   onSelect,
+  tint,
 }: Props) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const fetcherKey = `delete-article-category-${id}`
@@ -55,7 +58,7 @@ export const ItemRow = ({
   })
 
   return (
-    <TableRow>
+    <TableRow tint={tint}>
       <TableSelectionCell
         checked={selected}
         disabled={!canDelete}
@@ -84,12 +87,9 @@ export const ItemRow = ({
           {canEdit && (
             <LinkButton
               disabled={isDeleting}
-              to={href(
-                '/administration/articles/categories/:categoryId/edit-category',
-                {
-                  categoryId: id,
-                },
-              )}
+              to={href('/administration/articles/categories/:categoryId/edit', {
+                categoryId: id,
+              })}
               variant={'outline'}
             >
               <EditIcon />
