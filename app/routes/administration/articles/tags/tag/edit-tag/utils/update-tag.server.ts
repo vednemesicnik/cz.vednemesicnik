@@ -13,12 +13,21 @@ type Options = {
   authorId: string
 }
 
+/**
+ * Saves an edit of a tag. The permission is checked against the stored author
+ * and state, never against the ones the form sends, and the new author must
+ * be one the editor may set. The caller has checked the session (`checkCSRF`).
+ *
+ * @param request - The action's request.
+ * @param options - The tag id and the edited fields.
+ * @returns The tag id.
+ * @throws A 404 response for a missing tag, a 403 response for a denied edit,
+ *   a locked submission or an author the editor may not set.
+ */
 export const updateTag = async (
   request: Request,
   { tagId, name, slug, authorId }: Options,
 ) => {
-  // The permission is checked against the stored tag, never against the
-  // author or state the form sends.
   const storedTag = await prisma.articleTag.findUnique({
     select: { authorId: true, state: true, submittedAt: true },
     where: { id: tagId },

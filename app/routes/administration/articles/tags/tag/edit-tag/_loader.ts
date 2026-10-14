@@ -57,7 +57,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const authors = await getAuthorsByPermission(
     context,
-    'article_category',
+    'article_tag',
     'update',
     tag.state,
   )

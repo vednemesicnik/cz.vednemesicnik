@@ -13,12 +13,22 @@ type Options = {
   authorId: string
 }
 
+/**
+ * Saves an edit of a category. The permission is checked against the stored
+ * author and state, never against the ones the form sends, and the new author
+ * must be one the editor may set. The caller has checked the session
+ * (`checkCSRF`).
+ *
+ * @param request - The action's request.
+ * @param options - The category id and the edited fields.
+ * @returns The category id.
+ * @throws A 404 response for a missing category, a 403 response for a denied
+ *   edit, a locked submission or an author the editor may not set.
+ */
 export const updateCategory = async (
   request: Request,
   { categoryId, name, slug, authorId }: Options,
 ) => {
-  // The permission is checked against the stored category, never against the
-  // author or state the form sends.
   const storedCategory = await prisma.articleCategory.findUnique({
     select: { authorId: true, state: true, submittedAt: true },
     where: { id: categoryId },

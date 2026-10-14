@@ -116,7 +116,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         previewUrl: createImageSources('article-image', image).src,
       })),
       slug: article.slug,
-      state: article.state,
       tagIds: article.tags.map((tag) => tag.id),
       title: article.title,
     },

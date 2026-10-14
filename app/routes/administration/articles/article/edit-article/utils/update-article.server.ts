@@ -37,6 +37,18 @@ type Options = {
   title: string
 }
 
+/**
+ * Saves an edit of an article. The permission is checked against the stored
+ * authors and state, never against the ones the form sends, and the new
+ * authors must be ones the editor may set. An edit never changes the state.
+ * The caller has checked the session (`checkCSRF`).
+ *
+ * @param request - The action's request.
+ * @param options - The article id and the edited fields.
+ * @returns The article id.
+ * @throws A 404 response for a missing article, a 403 response for a denied
+ *   edit, a locked submission or authors the editor may not set.
+ */
 export async function updateArticle(
   request: Request,
   {
@@ -53,8 +65,6 @@ export async function updateArticle(
     title,
   }: Options,
 ) {
-  // The permission is checked against the stored article, never against the
-  // authors or state the form sends; an edit never changes the state.
   const storedArticle = await prisma.article.findUnique({
     select: {
       authors: { select: { id: true } },
@@ -222,10 +232,10 @@ export async function updateArticle(
                 title,
                 twitterImageUrl,
               },
+              // The state belongs to the state transitions, not to an edit.
               update: {
                 description: excerpt || null,
                 ogImageUrl,
-                state,
                 title,
                 twitterImageUrl,
               },

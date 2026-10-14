@@ -211,7 +211,9 @@ describe('updateArticle — the permission follows the stored article', () => {
     expect(mocks.articleUpdate.mock.calls[0][0].data).not.toHaveProperty(
       'state',
     )
-    expect(mocks.pageSeoUpsert.mock.calls[0][0].update.state).toBe('archived')
+    const pageSeo = mocks.pageSeoUpsert.mock.calls[0][0]
+    expect(pageSeo.create.state).toBe('archived')
+    expect(pageSeo.update).not.toHaveProperty('state')
   })
 
   test('answers a missing article with 404', async () => {
