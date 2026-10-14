@@ -1,0 +1,12 @@
+/* On a phone the strip and its line run edge to edge, past the page's 24 px
+   gutter (22g). */
+.tabs {
+  @layer route {
+    @media (width < 768px) {
+      box-sizing: border-box;
+      inline-size: calc(100% + 48px);
+      margin-inline: -24px;
+      padding-inline: 24px;
+    }
+  }
+}

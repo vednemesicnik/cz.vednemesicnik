@@ -196,7 +196,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <div className={styles.header}>
+      <header className={styles.header}>
         <div className={styles.title}>
           <div className={styles.titleLine}>
             <PageTitle>{article.title}</PageTitle>
@@ -224,7 +224,7 @@ export default function RouteComponent({
           {headerActions.primary !== null &&
             renderButton(headerActions.primary, 'primary')}
         </div>
-      </div>
+      </header>
 
       {isOwnContent && submission !== null && (
         <AdminParagraph>

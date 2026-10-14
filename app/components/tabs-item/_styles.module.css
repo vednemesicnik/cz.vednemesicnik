@@ -1,0 +1,48 @@
+.item {
+  @layer component {
+    display: flex;
+  }
+}
+
+.tab {
+  @layer component {
+    /* The hidden semibold copy reserves the active width, so moving between
+       the tabs' pages never nudges the tabs after the active one. */
+    display: grid;
+    padding-block: 8px 10px;
+    margin-block-end: -1px;
+    border-block-end: 2px solid transparent;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+
+    &::after {
+      content: attr(data-label);
+      block-size: 0;
+      overflow: hidden;
+      visibility: hidden;
+      font-weight: var(--font-weight-semibold);
+    }
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+.active {
+  @layer variant {
+    color: var(--link-strong);
+    font-weight: var(--font-weight-semibold);
+    border-block-end-color: var(--primary-hover);
+
+    &:hover {
+      color: var(--link-strong);
+    }
+  }
+}

@@ -1,35 +1,25 @@
 .scrollArea {
   @layer component {
+    /* No box: the rows sit on the page, divided by lines (22a). */
     position: relative;
     width: 100%;
-    /* scroll horizontally on narrow viewports; clip vertically to the radius */
+    /* scroll horizontally on narrow viewports */
     overflow-x: auto;
     overflow-y: hidden;
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: var(--shadow-sm);
   }
 }
 
 /*
- * A sticky thead sticks to the nearest scroll container. Because the table sits
- * in an overflow-x: auto wrapper, it can never stick to page scroll — so
- * stickyHeader turns the wrapper into the vertical scroll context: long lists
- * scroll inside it while the header stays pinned and the pagination below stays
- * visible.
+ * Only the page scrolls (5r4m681k); a page of the list is 20 rows. A sticky thead sticks
+ * to the nearest scroll container, so from 1024 px, where every list fits
+ * (the widest needs ~660 px), the wrapper stops being one and the header sticks
+ * to the page. Below that the table scrolls sideways and the header scrolls
+ * away with the page.
  */
 .stickyArea {
   @layer component {
-    max-block-size: calc(100dvh - 48px);
-    overflow: auto;
-
-    /* Below 768 px the list scrolls with the page, so the top bar can hide on
-       the way down (tbi5qpq9); the table still scrolls sideways. */
-    @media (width < 768px) {
-      max-block-size: none;
-      overflow-x: auto;
-      overflow-y: hidden;
+    @media (width >= 1024px) {
+      overflow: visible;
     }
   }
 }
@@ -40,7 +30,6 @@
     /* separate (not collapse) so borders stay attached to sticky header cells */
     border-collapse: separate;
     border-spacing: 0;
-    background-color: var(--bg-primary);
     /* On the base so both the fade-in and fade-out (class removal) animate */
     transition: opacity 0.15s ease;
   }

@@ -22,6 +22,7 @@ import { Pagination } from '~/components/pagination'
 import { useToast } from '~/components/toast-provider'
 import type { ArticleQueue } from '~/config/article-queue-config'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
+import { ArticlesTabs } from '../components/articles-tabs'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ArticleSelectionBar } from './components/article-selection-bar'
@@ -168,6 +169,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
+      <ArticlesTabs />
       {/* On a phone Nový článek waits at the bottom, in reach of the thumb,
           and the top bar names the page (22g). */}
       <ListHeader
@@ -196,7 +198,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         />
       )}
       {/* Everything that narrows the list is a filter, in one row (22d). */}
-      <div
+      <search
         className={clsx(
           styles.filterRow,
           hasSelection && styles.filterRowReplaced,
@@ -268,7 +270,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           summaryLines={summaryLines}
           triggerClassName={styles.wideTrigger}
         />
-      </div>
+      </search>
       {totalCount === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <div className={styles.empty}>

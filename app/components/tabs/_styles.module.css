@@ -1,0 +1,17 @@
+.tabs {
+  @layer component {
+    inline-size: 100%;
+    font-size: var(--font-size-sm);
+    border-block-end: 1px solid var(--border);
+  }
+}
+
+.list {
+  @layer component {
+    display: flex;
+    gap: 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}

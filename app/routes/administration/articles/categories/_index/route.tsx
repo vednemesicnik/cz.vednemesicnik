@@ -25,6 +25,7 @@ import { CONTENT_STATE_OPTIONS } from '~/utils/admin-filter-options'
 import { getAdminListEmptyMessage } from '~/utils/admin-list-empty-message'
 import { getPreservedFilterParams } from '~/utils/admin-list-filters'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
+import { ArticlesTabs } from '../../components/articles-tabs'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
@@ -62,6 +63,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
+      <ArticlesTabs />
       <ListHeader
         action={
           canCreate && (
