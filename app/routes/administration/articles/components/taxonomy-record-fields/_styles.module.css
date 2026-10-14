@@ -1,11 +1,3 @@
-.form {
-  @layer route {
-    display: grid;
-    gap: 16px;
-    width: 100%;
-  }
-}
-
 /* The address, its errors and „Použít …“ under them, 6 px apart (25c). */
 .slugField {
   @layer route {

@@ -18,6 +18,7 @@ import { VisibilityIcon } from '~/components/icons/visibility-icon'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
+import { DIALOG_OPENER_STATE } from '../../../../utils/dialog-opener-state'
 
 type Props = {
   id: string
@@ -83,6 +84,7 @@ export const ItemRow = ({
           {canEdit && (
             <LinkButton
               disabled={isDeleting}
+              state={DIALOG_OPENER_STATE}
               to={href('/administration/articles/tags/:tagId/edit', {
                 tagId: id,
               })}

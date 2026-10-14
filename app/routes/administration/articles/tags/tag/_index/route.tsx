@@ -28,7 +28,7 @@ import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentEvents } from '~/hooks/use-content-events'
-
+import { DIALOG_OPENER_STATE } from '../../../utils/dialog-opener-state'
 import type { Route } from './+types/route'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
@@ -95,6 +95,7 @@ export default function RouteComponent({
         {canEdit && (
           <LinkButton
             disabled={isSubmitting}
+            state={DIALOG_OPENER_STATE}
             to={href('/administration/articles/tags/:tagId/edit', {
               tagId,
             })}

@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href, useLocation } from 'react-router'
-import { TaxonomyRecordDialog } from '../../../components/taxonomy-record-dialog'
+import { EditTaxonomyRecordDialog } from '../../../components/edit-taxonomy-record-dialog'
 import { CATEGORY_RECORD_COPY } from '../../category-record-copy'
 import type { Route } from './+types/route'
 
@@ -16,11 +16,10 @@ export default function RouteComponent({
   const { search } = useLocation()
 
   return (
-    <TaxonomyRecordDialog
+    <EditTaxonomyRecordDialog
       authors={loaderData.authors}
       copy={CATEGORY_RECORD_COPY}
       defaultValue={loaderData.category}
-      mode={'edit'}
       parentPath={`${href('/administration/articles/categories/:categoryId', {
         categoryId: params.categoryId,
       })}${search}`}

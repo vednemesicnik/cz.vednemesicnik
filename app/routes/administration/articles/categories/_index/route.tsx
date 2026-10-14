@@ -27,6 +27,7 @@ import { getPreservedFilterParams } from '~/utils/admin-list-filters'
 import { recentChangeTints } from '~/utils/recent-change-tints'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../../components/articles-tabs'
+import { DIALOG_OPENER_STATE } from '../../utils/dialog-opener-state'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
@@ -70,6 +71,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <PageTitle>Rubriky</PageTitle>
         {canCreate && (
           <LinkButton
+            state={DIALOG_OPENER_STATE}
             to={`${href('/administration/articles/categories/new')}${search}`}
           >
             Nová rubrika
