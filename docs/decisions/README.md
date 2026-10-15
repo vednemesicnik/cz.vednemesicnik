@@ -58,3 +58,4 @@ in force.
 | [0019](0019-the-edit-lock-lives-on-the-content-row.md) | The edit lock lives on the content row, and the article has it first | Accepted | 2026-10-15 |
 | [0020](0020-a-new-article-is-a-draft-created-on-click.md) | A new article is a draft created on click, not a page | Accepted | 2026-10-15 |
 | [0021](0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md) | An edit hold belongs to one page load, and a hold write never moves `updatedAt` | Accepted | 2026-10-15 |
+| [0022](0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md) | A Document autosaves its whole form from the holding tab, one save at a time | Accepted | 2026-10-15 |
