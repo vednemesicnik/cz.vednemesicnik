@@ -32,11 +32,12 @@ type Props = {
 /**
  * The design system's `ChipInput` (components/forms/ChipInput, yv8gi9i0): the
  * picked values as `Chip`s inside the field, and a list of suggestions under
- * it while typing. The suggestions are data, not parts, because the field owns
- * the active one and the keys: arrows move, Enter picks, Escape closes.
+ * it from the moment the field takes the focus, narrowed while typing. The
+ * suggestions are data, not parts, because the field owns the active one and
+ * the keys: arrows move, Enter picks, Escape closes.
  *
  * @param props.id - The search field's id, for the label.
- * @param props.query - The search text; the list shows while it is not empty.
+ * @param props.query - The search text; empty, the list offers everything.
  * @param props.onSelect - A suggestion picked; the search empties.
  */
 export const ChipInput = ({
@@ -60,8 +61,9 @@ export const ChipInput = ({
 
   const listboxId = `${id}-listbox`
   const optionId = (index: number) => `${id}-option-${index}`
-  const isOpen =
-    isFocused && !isDismissed && query.trim() !== '' && options.length > 0
+  // Open with the focus, not only once something is typed: the choice is
+  // seen before it is searched.
+  const isOpen = isFocused && !isDismissed && options.length > 0
   const active = Math.min(activeIndex, options.length - 1)
 
   const changeQuery = (nextQuery: string) => {
@@ -79,6 +81,12 @@ export const ChipInput = ({
     switch (event.key) {
       case 'ArrowDown':
       case 'ArrowUp':
+        // An arrow opens a list closed with Escape again.
+        if (isDismissed) {
+          event.preventDefault()
+          setIsDismissed(false)
+          return
+        }
         if (!isOpen) return
         event.preventDefault()
         setActiveIndex(
@@ -133,7 +141,12 @@ export const ChipInput = ({
           id={id}
           onBlur={() => setIsFocused(false)}
           onChange={(event) => changeQuery(event.currentTarget.value)}
-          onFocus={() => setIsFocused(true)}
+          // A click opens a list closed with Escape again.
+          onClick={() => setIsDismissed(false)}
+          onFocus={() => {
+            setIsFocused(true)
+            setIsDismissed(false)
+          }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           ref={inputRef}

@@ -85,8 +85,9 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 /**
- * Interactive base case: type to search, arrows and Enter to pick, Backspace in
- * the empty field removes the last chip (design 24a).
+ * Interactive base case: the focus opens every suggestion, typing narrows
+ * them, arrows and Enter pick, Backspace in the empty field removes the last
+ * chip (design 24a).
  */
 export const Playground: Story = {
   render: () => <ChipInputDemo initialValues={['podzim', 'cteni']} />,
@@ -106,7 +107,7 @@ export const WithArchived: Story = {
 }
 
 /**
- * The suggestions while typing; focus the field to open them.
+ * The suggestions narrowed by typing; focus the field to open them.
  */
 export const Searching: Story = {
   render: () => <ChipInputDemo initialQuery={'po'} initialValues={[]} />,
