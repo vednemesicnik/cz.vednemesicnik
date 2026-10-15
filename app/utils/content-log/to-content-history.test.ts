@@ -273,3 +273,32 @@ describe('toContentHistory', () => {
     })
   })
 })
+
+describe('toContentHistory — the edit hold (07f)', () => {
+  test('a takeover is its own row, between the edits around it', () => {
+    expect(
+      summarize([
+        createRow({ createdAt: at('10:00'), event: 'update', id: 'author' }),
+        createRow({
+          actorId: 'petr',
+          actorName: 'Petr Dvořák',
+          createdAt: at('11:00'),
+          event: 'take_over',
+          id: 'take-over',
+        }),
+        createRow({
+          actorId: 'petr',
+          actorName: 'Petr Dvořák',
+          createdAt: at('11:05'),
+          event: 'update',
+          id: 'coordinator',
+        }),
+        // Without it, the history closes with the article's own dates.
+      ]).slice(0, 3),
+    ).toEqual([
+      'Upraveno · Petr Dvořák',
+      'Převzata úprava · Petr Dvořák',
+      'Upraveno · Marie Horáková',
+    ])
+  })
+})
