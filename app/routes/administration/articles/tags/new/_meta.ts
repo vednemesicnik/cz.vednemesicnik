@@ -1,6 +1,6 @@
-import { createPageTitle } from '~/utils/create-page-title'
+import { createAdminPageTitle } from '~/utils/create-admin-page-title'
 import { TAG_RECORD_COPY } from '../tag-record-copy'
 
 export const meta = () => [
-  { title: createPageTitle(`Administrace - ${TAG_RECORD_COPY.newTitle}`) },
+  { title: createAdminPageTitle(TAG_RECORD_COPY.newTitle) },
 ]

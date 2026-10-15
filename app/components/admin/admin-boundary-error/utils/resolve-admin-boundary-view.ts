@@ -7,7 +7,7 @@ import {
   type AdminBoundaryView,
   resolveAdminBoundary,
 } from '~/components/boundary-error/utils/resolve-boundary'
-import { createPageTitle } from '~/utils/create-page-title'
+import { createAdminPageTitle } from '~/utils/create-admin-page-title'
 
 type BoundaryLocation = {
   pathname: string
@@ -57,5 +57,5 @@ export const getAdminBoundaryPageTitle = (
 ): string => {
   const view = resolveAdminBoundaryView(error, location, kind)
 
-  return createPageTitle(`${view.pageTitle ?? view.title} | Administrace`)
+  return createAdminPageTitle(view.pageTitle ?? view.title)
 }

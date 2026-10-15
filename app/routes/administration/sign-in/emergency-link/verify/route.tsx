@@ -10,6 +10,7 @@ import { FORM_CONFIG } from '~/config/form-config'
 
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { getEmergencyLinkVerifyHeading } from './utils/get-emergency-link-verify-heading'
 
 export { action } from './_action'
 export { headers } from './_headers'
@@ -24,6 +25,9 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const navigation = useNavigation()
   const isSubmitting = navigation.state !== 'idle'
+  const heading = getEmergencyLinkVerifyHeading(
+    actionData?.status === 'invalid' ? 'invalid' : loaderData.status,
+  )
 
   // An invalid link has no button: a new one comes only from an
   // Administrator, so the card says whom to ask. A failed „Přihlásit se“ shows
@@ -36,7 +40,7 @@ export default function RouteComponent({
     const isSignedIn = loaderData.status === 'invalid-signed-in'
 
     return (
-      <AdminSignInCard title={'Odkaz už neplatí'}>
+      <AdminSignInCard title={heading}>
         <AdminSignInText>
           {isSignedIn
             ? 'Vraťte se do administrace — tento nouzový odkaz už neplatí.'
@@ -58,7 +62,7 @@ export default function RouteComponent({
   // The same account has nothing to confirm; the link lapses by itself.
   if (loaderData.status === 'same-account') {
     return (
-      <AdminSignInCard title={'Už jste přihlášení'}>
+      <AdminSignInCard title={heading}>
         <AdminSignInText>
           Pokračujte do Nastavení — v tomto prohlížeči už jste přihlášení.
         </AdminSignInText>
@@ -81,7 +85,7 @@ export default function RouteComponent({
   // leads back here, to the confirmation (20f).
   if (loaderData.status === 'other-account') {
     return (
-      <AdminSignInCard title={'Odkaz je pro jiný účet'}>
+      <AdminSignInCard title={heading}>
         <AdminSignInText>
           Odhlaste se a pokračujte — v tomto prohlížeči je přihlášený jiný účet.
         </AdminSignInText>
@@ -107,7 +111,7 @@ export default function RouteComponent({
   }
 
   return (
-    <AdminSignInCard title={'Potvrďte přihlášení'}>
+    <AdminSignInCard title={heading}>
       {/* The account says where, the pair under it by what and from whom. */}
       <div className={styles.details}>
         <p className={styles.line}>

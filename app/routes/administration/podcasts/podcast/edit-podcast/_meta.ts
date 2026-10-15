@@ -1,12 +1,13 @@
-import { createPageTitle } from '~/utils/create-page-title'
+import { createAdminEditPageTitle } from '~/utils/create-admin-edit-page-title'
+import { createAdminPageTitle } from '~/utils/create-admin-page-title'
 
 import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = ({ loaderData }) => {
-  const podcastTitle = loaderData?.podcast?.title ?? '???'
-  const title = createPageTitle(
-    `Administrace: Podcasty - ${podcastTitle} - Upravit podcast`,
-  )
+  const title =
+    loaderData === undefined
+      ? createAdminPageTitle('Upravit podcast')
+      : createAdminEditPageTitle(loaderData.podcast.title)
 
   return [{ title }]
 }
