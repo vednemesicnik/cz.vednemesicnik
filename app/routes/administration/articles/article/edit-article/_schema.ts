@@ -10,9 +10,11 @@ const optionalText = z
   .transform((value) => value?.trim() ?? '')
 
 export const schema = z.object({
+  // A row added and not chosen yet is no author; at least one stays (#674).
   authorIds: z
-    .array(z.string({ error: 'Vyberte autora' }))
-    .min(1, 'Alespoň jeden autor je povinný'),
+    .array(z.string().optional())
+    .transform((ids) => ids.filter((id): id is string => Boolean(id)))
+    .pipe(z.array(z.string()).min(1, 'Alespoň jeden autor je povinný')),
   categoryIds: z.array(z.string()).optional(),
   content: optionalText,
   // The editor's tab, which holds the edit hold (design 24g).

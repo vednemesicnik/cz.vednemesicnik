@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   articleFindMany: vi.fn(),
   articleFindUnique: vi.fn(),
   articleImageAggregate: vi.fn(),
+  articleImageCount: vi.fn(),
   articleImageCreate: vi.fn(),
   articleImageDeleteMany: vi.fn(),
   articleImageFindMany: vi.fn(),
@@ -22,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   checkAuthorPermission: vi.fn(),
   contentLogCount: vi.fn(),
   deleteImage: vi.fn(),
+  isImageIdOwnedElsewhere: vi.fn(),
   pageSeoDeleteMany: vi.fn(),
   pageSeoUpsert: vi.fn(),
   permissionContext: vi.fn(),
@@ -32,6 +34,10 @@ const mocks = vi.hoisted(() => ({
   storeImageVariants: vi.fn(),
   transaction: vi.fn(),
   withAuthorPermission: vi.fn(),
+}))
+
+vi.mock('~/utils/image-store/is-image-id-owned-elsewhere.server', () => ({
+  isImageIdOwnedElsewhere: mocks.isImageIdOwnedElsewhere,
 }))
 
 // The content log has its own tests; here it only must not reach Prisma.
@@ -64,6 +70,7 @@ vi.mock('~/utils/db.server', () => ({
     },
     articleImage: {
       aggregate: mocks.articleImageAggregate,
+      count: mocks.articleImageCount,
       create: mocks.articleImageCreate,
       deleteMany: mocks.articleImageDeleteMany,
       findMany: mocks.articleImageFindMany,
@@ -179,6 +186,12 @@ beforeEach(() => {
   mocks.articleUpdate.mockReturnValue('update-article')
   // No other article has the address.
   mocks.articleFindMany.mockResolvedValue([])
+  // Every image the form names is the article's own; no cover has a new id.
+  mocks.articleImageCount.mockImplementation(
+    async ({ where }: { where: { id: { in: string[] } } }) =>
+      where.id.in.length,
+  )
+  mocks.isImageIdOwnedElsewhere.mockResolvedValue(false)
   mocks.articleUpdateMany.mockReturnValue('mark-first-content')
   mocks.articleImageAggregate.mockResolvedValue({ _max: { position: 1 } })
   mocks.pageSeoDeleteMany.mockReturnValue('delete-orphan-page-seo')
@@ -786,5 +799,84 @@ describe('updateArticle — a new image saves once (decision 0022)', () => {
         images: [{ ...newImage, id: '../other' }],
       }),
     ).rejects.toMatchObject({ init: { status: 400 } })
+  })
+})
+
+describe('updateArticle — images the form names (decision 0015)', () => {
+  test('refuses an existing image of another article', async () => {
+    mocks.articleImageCount.mockResolvedValue(0)
+
+    await expect(
+      updateArticle(request, {
+        ...options,
+        existingImages: [{ altText: 'Foreign', id: 'image-foreign' }],
+      }),
+    ).rejects.toMatchObject({ init: { status: 400 } })
+    expect(mocks.articleImageCount).toHaveBeenCalledWith({
+      where: { articleId: 'article-1', id: { in: ['image-foreign'] } },
+    })
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('refuses a featured image of another article', async () => {
+    mocks.articleImageCount.mockResolvedValue(1)
+
+    await expect(
+      updateArticle(request, {
+        ...options,
+        featuredImage: {
+          id: 'image-foreign',
+          source: FEATURED_IMAGE_SOURCE.EXISTING,
+        },
+      }),
+    ).rejects.toMatchObject({ init: { status: 400 } })
+  })
+
+  test('refuses a new id a cover or a profile picture already has', async () => {
+    mocks.isImageIdOwnedElsewhere.mockResolvedValue(true)
+
+    await expect(
+      updateArticle(request, {
+        ...options,
+        images: [{ altText: 'New', file: imageFile, id: 'covertaken1' }],
+      }),
+    ).rejects.toMatchObject({ init: { status: 400 } })
+    expect(mocks.isImageIdOwnedElsewhere).toHaveBeenCalledWith(['covertaken1'])
+    expect(mocks.storeImageVariants).not.toHaveBeenCalled()
+  })
+
+  test('a new file in a saved new image replaces its file', async () => {
+    mocks.articleImageFindMany.mockImplementation(
+      async ({ where }: { where: { articleId?: string } }) =>
+        where.articleId
+          ? []
+          : [{ articleId: 'article-1', id: 'newimage1', version: 'version-1' }],
+    )
+
+    await updateArticle(request, {
+      ...options,
+      images: [{ altText: 'New', file: imageFile, id: 'newimage1' }],
+    })
+
+    expect(mocks.storeImageVariants).not.toHaveBeenCalled()
+    expect(mocks.articleImageUpdate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ version: 'version-2' }),
+      where: { id: 'newimage1' },
+    })
+  })
+})
+
+describe('updateArticle — a missing row that is not the hold', () => {
+  test('fails the save instead of calling the own tab not holding', async () => {
+    const missingAuthor = new Prisma.PrismaClientKnownRequestError(
+      'No record',
+      { clientVersion: 'test', code: 'P2025' },
+    )
+    mocks.transaction.mockRejectedValue(missingAuthor)
+    mocks.articleFindUnique
+      .mockResolvedValueOnce(storedArticle)
+      .mockResolvedValueOnce(ownHold)
+
+    await expect(updateArticle(request, options)).rejects.toBe(missingAuthor)
   })
 })

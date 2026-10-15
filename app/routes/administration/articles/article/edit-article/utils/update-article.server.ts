@@ -14,6 +14,7 @@ import type { EditHoldColumns } from '~/utils/edit-hold/edit-hold-columns'
 import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import { isRecordNotFoundError } from '~/utils/edit-hold/is-record-not-found-error.server'
 import { getFreeSlugSuggestion } from '~/utils/get-free-slug-suggestion'
+import { isImageIdOwnedElsewhere } from '~/utils/image-store/is-image-id-owned-elsewhere.server'
 import {
   deleteImage,
   deleteRowWithImages,
@@ -178,9 +179,27 @@ export async function updateArticle(
         targetAuthorIds: authorIds,
       })
 
-      // 1. A new image saved before keeps its id (made in the editor), so a
-      // repeated or retried save stores it once; an id of another article's
-      // image is refused.
+      // 1. Every image the form names must be this article's (decision
+      // 0015): its existing images and the featured one.
+      const claimedImageIds = new Set([
+        ...(existingImages ?? []).map(({ id }) => id),
+        ...(featuredImage.source === FEATURED_IMAGE_SOURCE.EXISTING
+          ? [featuredImage.id]
+          : []),
+      ])
+      if (claimedImageIds.size > 0) {
+        const ownImages = await prisma.articleImage.count({
+          where: { articleId, id: { in: [...claimedImageIds] } },
+        })
+        if (ownImages !== claimedImageIds.size) {
+          throw data(null, { status: 400 })
+        }
+      }
+
+      // 2. A new image saved before keeps its id (made in the editor), so a
+      // repeated or retried save stores it once. An id another article's image
+      // or another record's picture has is refused: the store keys files by
+      // the id alone (decision 0022).
       const newImageIds = (images ?? []).map(({ id }) => id)
 
       if (newImageIds.some((id) => !isCuid(id))) {
@@ -200,14 +219,20 @@ export async function updateArticle(
       }
 
       const storedNewImageIds = new Set(storedNewImages.map(({ id }) => id))
+
+      if (
+        await isImageIdOwnedElsewhere(
+          newImageIds.filter((id) => !storedNewImageIds.has(id)),
+        )
+      ) {
+        throw data(null, { status: 400 })
+      }
+
       const keptImages = [
         ...(existingImages ?? []),
-        // Saved before: its file is stored already.
-        ...(images ?? []).flatMap(({ id, altText, description }) =>
-          storedNewImageIds.has(id)
-            ? [{ altText, description, file: undefined, id }]
-            : [],
-        ),
+        // Saved before: a file still sent is a replacement (a retry stores at
+        // most one version more).
+        ...(images ?? []).filter(({ id }) => storedNewImageIds.has(id)),
       ]
       const imagesToCreate = (images ?? []).flatMap(({ file, ...image }) =>
         !storedNewImageIds.has(image.id) && file !== undefined && file.size > 0
@@ -215,7 +240,7 @@ export async function updateArticle(
           : [],
       )
 
-      // 2. Find images no longer in the form; their rows and files go last.
+      // 3. Find images no longer in the form; their rows and files go last.
       const existingImageIds = keptImages.map((keptImage) => keptImage.id)
 
       const removedImages = await prisma.articleImage.findMany({
@@ -224,7 +249,7 @@ export async function updateArticle(
       })
       const removedImageIds = removedImages.map(({ id }) => id)
 
-      // 3. Store new images' variants (files before the rows commit); they
+      // 4. Store new images' variants (files before the rows commit); they
       // go after the existing ones in the gallery (design 24b).
       const { _max: lastImage } = await prisma.articleImage.aggregate({
         _max: { position: true },
@@ -246,7 +271,7 @@ export async function updateArticle(
         ),
       )
 
-      // 4. Store replaced files of existing images; the previous version's
+      // 5. Store replaced files of existing images; the previous version's
       // files are dropped only after the transaction commits.
       const previousVersions = await prisma.articleImage.findMany({
         select: { id: true, version: true },
@@ -270,7 +295,7 @@ export async function updateArticle(
         }),
       )
 
-      // 5. Determine featured image ID
+      // 6. Determine featured image ID
       const savedImageIds = new Set([
         ...existingImageIds,
         ...newImages.map(({ id }) => id),
@@ -310,7 +335,7 @@ export async function updateArticle(
             })
           : await resolveArticleFeaturedImageSeo(featuredImageId)
 
-      // 6. An address another article has is not saved; the rest is (24d).
+      // 7. An address another article has is not saved; the rest is (24d).
       // Until the author picks another, the article keeps its address, or has
       // none when it is new.
       const findSlugSuggestion = async (requestedSlug: string) => {
@@ -343,7 +368,7 @@ export async function updateArticle(
         newImages.length > 0 ||
         existingImageIds.length > 0
 
-      // 7. In one transaction: all image rows, the article and its PageSEO
+      // 8. In one transaction: all image rows, the article and its PageSEO
       // record. Store files of removed images and of replaced versions go only
       // after it commits, so a failed save leaves everything as it was.
       const saveInTransaction = async () => {
@@ -481,24 +506,33 @@ export async function updateArticle(
           saved = await saveInTransaction()
         }
       } catch (error) {
-        // The hold moved between the check and the write.
-        if (!isRecordNotFoundError(error)) throw error
-
         // The new images' files went in before the rows, which rolled back.
         await Promise.all(newImages.map(({ id }) => deleteImage(id)))
 
-        return toNotHeld(
-          await prisma.article.findUnique({
-            select: {
-              heldByAuthor: { select: { name: true } },
-              heldByAuthorId: true,
-              heldByTabId: true,
-              heldSince: true,
-              heldUntil: true,
-            },
-            where: { id: articleId },
-          }),
-        )
+        if (!isRecordNotFoundError(error)) throw error
+
+        const currentHold = await prisma.article.findUnique({
+          select: {
+            heldByAuthor: { select: { name: true } },
+            heldByAuthorId: true,
+            heldByTabId: true,
+            heldSince: true,
+            heldUntil: true,
+          },
+          where: { id: articleId },
+        })
+
+        // Still this tab's: another row was missing (an author, say), not the
+        // hold, so the save failed.
+        if (
+          currentHold?.heldByAuthorId === tab.authorId &&
+          currentHold.heldByTabId === tab.tabId
+        ) {
+          throw error
+        }
+
+        // The hold moved between the check and the write.
+        return toNotHeld(currentHold)
       }
 
       await Promise.all(updatedImages.map(({ cleanup }) => cleanup()))
