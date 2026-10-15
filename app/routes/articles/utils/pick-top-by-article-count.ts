@@ -1,4 +1,4 @@
-import { nameCollator } from './name-collator'
+import { nameCollator } from '~/utils/name-collator'
 
 /**
  * Picks the items with the most articles and orders them by name, as the

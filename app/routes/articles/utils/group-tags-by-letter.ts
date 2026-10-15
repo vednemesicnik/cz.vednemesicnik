@@ -1,4 +1,4 @@
-import { nameCollator } from './name-collator'
+import { nameCollator } from '~/utils/name-collator'
 
 const DIGIT_GROUP = '0–9'
 

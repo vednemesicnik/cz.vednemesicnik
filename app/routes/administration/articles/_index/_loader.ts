@@ -25,11 +25,11 @@ import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
 import { getArticleFactLine } from '../utils/get-article-fact-line'
+import { getRowActions } from '../utils/get-row-actions'
 import type { Route } from './+types/route'
 import { PINNED_ROWS_PARAM } from './pinned-rows'
 import { SORT_KEYS, type SortKey } from './sort'
 import { getBulkActions } from './utils/get-bulk-actions'
-import { getRowActions } from './utils/get-row-actions'
 
 const PAGE_SIZE = 20
 
