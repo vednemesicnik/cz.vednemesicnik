@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   articleUpdateMany: vi.fn(),
   checkAuthorPermission: vi.fn(),
   contentLogCount: vi.fn(),
+  deleteImage: vi.fn(),
   pageSeoDeleteMany: vi.fn(),
   pageSeoUpsert: vi.fn(),
   permissionContext: vi.fn(),
@@ -75,6 +76,7 @@ vi.mock('~/utils/db.server', () => ({
 }))
 
 vi.mock('~/utils/image-store/store-image.server', () => ({
+  deleteImage: mocks.deleteImage,
   deleteRowWithImages: async (
     loadImageIds: () => Promise<string[]>,
     deleteRow: () => Promise<unknown>,
@@ -564,12 +566,19 @@ describe('updateArticle — the edit hold (07g, decision 0019)', () => {
         heldByAuthorId: 'author-2',
       })
 
-    await expect(updateArticle(request, options)).resolves.toEqual({
+    await expect(
+      updateArticle(request, {
+        ...options,
+        images: [{ altText: 'New', file: imageFile }],
+      }),
+    ).resolves.toEqual({
       heldByName: 'Jakub Novák',
       status: 'not-held',
     })
     expect(mocks.recordContentLog).not.toHaveBeenCalled()
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+    // The new image's files went in before the rows; they go too.
+    expect(mocks.deleteImage).toHaveBeenCalledOnce()
   })
 
   test('logs Upraveno once per hold (07f), announces every save', async () => {

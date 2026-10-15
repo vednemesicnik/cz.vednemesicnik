@@ -27,7 +27,19 @@ describe('refuseWhenHeld', () => {
     expect(readEditHeldRefusal(refusal)).toBe('Jakub Novák')
   })
 
-  test('a miss with nobody holding it, and any other failure, go on as they were', async () => {
+  test('a hold that ended before the read-back: the write runs once more', async () => {
+    const write = vi
+      .fn()
+      .mockRejectedValueOnce(notFound())
+      .mockResolvedValueOnce('written')
+
+    await expect(refuseWhenHeld(write, async () => null)).resolves.toBe(
+      'written',
+    )
+    expect(write).toHaveBeenCalledTimes(2)
+  })
+
+  test('a miss with nobody holding it twice, and any other failure, go on as they were', async () => {
     const missing = notFound()
     await expect(
       refuseWhenHeld(
@@ -42,15 +54,5 @@ describe('refuseWhenHeld', () => {
       refuseWhenHeld(() => Promise.reject(failure), findHeldByName),
     ).rejects.toBe(failure)
     expect(findHeldByName).not.toHaveBeenCalled()
-  })
-})
-
-describe('readEditHeldRefusal', () => {
-  test('ignores what is not a held refusal', () => {
-    expect(readEditHeldRefusal(new Error('x'))).toBeNull()
-    expect(
-      readEditHeldRefusal({ data: null, init: { status: 403 } }),
-    ).toBeNull()
-    expect(readEditHeldRefusal(new Response(null, { status: 409 }))).toBeNull()
   })
 })

@@ -112,7 +112,15 @@ describe('articleSubmissionHandlers.submit', () => {
     ).resolves.toEqual({ missing: [] })
 
     expect(mocks.articleUpdateMany).toHaveBeenCalledWith({
-      data: { submittedAt: expect.any(Date), submittedById: 'contributor' },
+      // One's own edit, open in another tab, ends with the submission.
+      data: {
+        heldByAuthorId: null,
+        heldByTabId: null,
+        heldSince: null,
+        heldUntil: null,
+        submittedAt: expect.any(Date),
+        submittedById: 'contributor',
+      },
       where: {
         ...notHeldByOthers('contributor'),
         id: 'a1',

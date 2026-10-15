@@ -81,6 +81,8 @@ const completeArticle = {
 beforeEach(() => {
   vi.clearAllMocks()
   articleUpdateMock.mockResolvedValue({ slug: 'clear-redirect-test' })
+  // Nobody holds it, unless a test says so.
+  articleFindUniqueMock.mockResolvedValue(null)
   pageSeoUpdateManyMock.mockResolvedValue(undefined)
   // The publishing Coordinator's approval already exists.
   reviewFindFirstMock.mockResolvedValue({ id: 'review-1' })
@@ -233,12 +235,13 @@ describe('articleContentStateHandlers — the edit hold (07g, decision 0019)', (
     expect(recordContentLogMock).not.toHaveBeenCalled()
   })
 
-  test('a write that missed for another reason is not a held refusal', async () => {
-    const notFound = new Prisma.PrismaClientKnownRequestError('No record', {
-      clientVersion: 'test',
-      code: 'P2025',
-    })
-    articleUpdateMock.mockRejectedValue(notFound)
+  test('a hold that ended before the read-back: the write runs once more', async () => {
+    articleUpdateMock.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
     // The hold expired meanwhile: nobody holds it.
     articleFindUniqueMock.mockResolvedValue({
       heldByAuthor: { name: 'Jakub Novák' },
@@ -248,8 +251,28 @@ describe('articleContentStateHandlers — the edit hold (07g, decision 0019)', (
       heldUntil: new Date(Date.now() - 60_000),
     })
 
+    await articleContentStateHandlers.retract(request, { id: 'a1', target })
+
+    expect(articleUpdateMock).toHaveBeenCalledTimes(2)
+    expect(recordContentLogMock).toHaveBeenCalledOnce()
+  })
+
+  test('approving again while someone else edits is refused too', async () => {
+    articleFindUniqueOrThrowMock.mockResolvedValue({ submittedAt: new Date() })
+    articleFindUniqueMock.mockResolvedValue({
+      heldByAuthor: { name: 'Jakub Novák' },
+      heldByAuthorId: 'author-2',
+      heldByTabId: 'tab-2',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
     await expect(
-      articleContentStateHandlers.retract(request, { id: 'a1', target }),
-    ).rejects.toBe(notFound)
+      articleContentStateHandlers.review(request, {
+        id: 'a1',
+        target: { authorIds: ['author-2'], state: 'draft' },
+      }),
+    ).rejects.toMatchObject({ data: { heldByName: 'Jakub Novák' } })
+    expect(recordContentLogMock).not.toHaveBeenCalled()
   })
 })

@@ -23,12 +23,18 @@ vi.mock('~/utils/content-log/delete-content-log.server', () => ({
 
 const now = new Date('2026-10-15T12:00:00Z')
 
+// Its hold expired, whatever its age (24e); or never held and a day old.
 const staleWhere = {
-  createdAt: {
-    lt: new Date(now.getTime() - STALE_EMPTY_DRAFT_AGE_MILLISECONDS),
-  },
   firstContentAt: null,
-  OR: [{ heldUntil: null }, { heldUntil: { lt: now } }],
+  OR: [
+    { heldUntil: { lt: now } },
+    {
+      createdAt: {
+        lt: new Date(now.getTime() - STALE_EMPTY_DRAFT_AGE_MILLISECONDS),
+      },
+      heldUntil: null,
+    },
+  ],
 }
 
 beforeEach(() => {
@@ -41,7 +47,7 @@ beforeEach(() => {
 })
 
 describe('deleteStaleEmptyDrafts', () => {
-  test('looks for empty drafts older than a day whose hold is free', async () => {
+  test('looks for empty drafts whose hold expired, or never held for a day', async () => {
     await deleteStaleEmptyDrafts(now)
 
     expect(mocks.findMany.mock.calls[0][0]).toEqual({

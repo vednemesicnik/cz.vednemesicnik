@@ -30,6 +30,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     await runEditHoldIntent(request, intent, {
       expectedUpdatedAt: formData.get(EDIT_HOLD_CONFIG.expectedUpdatedAtName),
       id: params.articleId,
+      keepEmpty: formData.get(EDIT_HOLD_CONFIG.keepEmptyName) === 'true',
       tabId,
     }),
   )
@@ -40,28 +41,36 @@ const runEditHoldIntent = (
   intent: FormDataEntryValue | null,
   {
     expectedUpdatedAt,
+    keepEmpty,
     ...options
   }: {
     id: string
     tabId: string
     expectedUpdatedAt: FormDataEntryValue | null
+    keepEmpty: boolean
   },
 ) => {
+  // The editor's own last save: it takes the hold only over that (24i).
+  const takeOptions = {
+    ...options,
+    expectedUpdatedAt:
+      typeof expectedUpdatedAt === 'string' && expectedUpdatedAt !== ''
+        ? new Date(expectedUpdatedAt)
+        : undefined,
+  }
+
   switch (intent) {
     case INTENT_VALUE.takeEditHold:
-      return articleEditHoldHandlers.take(request, {
-        ...options,
-        expectedUpdatedAt:
-          typeof expectedUpdatedAt === 'string' && expectedUpdatedAt !== ''
-            ? new Date(expectedUpdatedAt)
-            : undefined,
-      })
+      return articleEditHoldHandlers.take(request, takeOptions)
     case INTENT_VALUE.renewEditHold:
       return articleEditHoldHandlers.renew(request, options)
     case INTENT_VALUE.releaseEditHold:
-      return articleEditHoldHandlers.release(request, options)
+      return articleEditHoldHandlers.release(request, {
+        ...options,
+        keepEmpty,
+      })
     case INTENT_VALUE.takeOverEditHold:
-      return articleEditHoldHandlers.takeOver(request, options)
+      return articleEditHoldHandlers.takeOver(request, takeOptions)
     default:
       throw new Response(null, { status: 400 })
   }

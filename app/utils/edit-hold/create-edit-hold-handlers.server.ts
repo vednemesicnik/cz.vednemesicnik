@@ -49,8 +49,13 @@ type HoldOptions = {
   tabId: string
 }
 
+type ReleaseOptions = HoldOptions & {
+  /** Keep an empty draft and let its hold expire (the page may be reloading). */
+  keepEmpty?: boolean
+}
+
 type TakeOptions = HoldOptions & {
-  /** Take only if the content was not saved since (the editor coming back, 24i). */
+  /** Take only if the content was not saved since the editor loaded it (24i). */
   expectedUpdatedAt?: Date
 }
 
@@ -208,8 +213,19 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
       return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
         const now = new Date()
 
+        // Published, archived or sent for review meanwhile: this editor may
+        // not write any more (07d, 07g).
         if (
           row.state !== 'draft' ||
+          isLockedBySubmission({
+            roleLevel: context.roleLevel,
+            submittedAt: row.submittedAt,
+          })
+        ) {
+          return { status: 'changed' }
+        }
+
+        if (
           row.heldByAuthorId !== tab.authorId ||
           row.heldByTabId !== tab.tabId
         ) {
@@ -240,16 +256,43 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
 
   const release = (
     request: Request,
-    { id, tabId }: HoldOptions,
+    { id, tabId, keepEmpty = false }: ReleaseOptions,
   ): Promise<EditHoldResult> =>
     withEditPermission(request, id, async (context, firstRow) => {
       const tab = { authorId: context.authorId, tabId }
 
       // An empty draft goes with its hold, unlogged and unannounced: nobody
-      // saw it (0020).
+      // saw it (0020). A page going away may be a reload, so then the hold
+      // only expires, and the sweep on Nový článek deletes the draft.
       if (firstRow.isEmpty) {
-        await config.deleteEmpty(id, tab)
-        return { status: 'released' }
+        if (!keepEmpty) {
+          await config.deleteEmpty(id, tab)
+          return { status: 'released' }
+        }
+
+        return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
+          if (
+            row.heldByAuthorId !== tab.authorId ||
+            row.heldByTabId !== tab.tabId
+          ) {
+            return { status: 'released' }
+          }
+
+          const now = new Date()
+          const count = await config.writeHold(
+            id,
+            { holder: tab, now, updatedAt: row.updatedAt },
+            {
+              heldByAuthorId: row.heldByAuthorId,
+              heldByTabId: row.heldByTabId,
+              heldSince: row.heldSince,
+              heldUntil: now,
+              updatedAt: row.updatedAt,
+            },
+          )
+
+          return count === 0 ? null : { status: 'released' }
+        })
       }
 
       return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
@@ -282,13 +325,21 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
 
   const takeOver = (
     request: Request,
-    { id, tabId }: HoldOptions,
+    { id, tabId, expectedUpdatedAt }: TakeOptions,
   ): Promise<EditHoldResult> =>
     withEditPermission(request, id, (context, firstRow) => {
       assertEditable(context, firstRow)
       const tab = { authorId: context.authorId, tabId }
 
       return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
+        // Saved since this editor loaded: taking it would edit old text.
+        if (
+          expectedUpdatedAt !== undefined &&
+          row.updatedAt.getTime() !== expectedUpdatedAt.getTime()
+        ) {
+          return { status: 'changed' }
+        }
+
         const now = new Date()
         const status = getEditHoldStatus(row, { ...tab, now })
 
@@ -298,9 +349,20 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
           throw data(null, { status: 403 })
         }
 
+        // The write repeats the holder it read: a hold taken in between fails
+        // it, and the next read applies the role check to the new holder.
         const count = await config.writeHold(
           id,
-          { holder: 'any', now, updatedAt: row.updatedAt },
+          {
+            holder:
+              status === 'free' ||
+              row.heldByAuthorId === null ||
+              row.heldByTabId === null
+                ? 'free'
+                : { authorId: row.heldByAuthorId, tabId: row.heldByTabId },
+            now,
+            updatedAt: row.updatedAt,
+          },
           {
             heldByAuthorId: tab.authorId,
             heldByTabId: tab.tabId,
@@ -312,7 +374,8 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
 
         if (count === 0) return null
 
-        if (status === 'other') {
+        // An empty draft leaves no history (0020).
+        if (status === 'other' && !row.isEmpty) {
           await recordContentLog(
             { entity, entityId: id, events: ['take_over'] },
             context,

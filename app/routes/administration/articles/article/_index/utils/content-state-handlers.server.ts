@@ -5,6 +5,7 @@ import {
 } from '~/utils/content-state/create-content-state-handlers.server'
 import { prisma } from '~/utils/db.server'
 import { buildNotHeldByOthersWhere } from '~/utils/edit-hold/build-not-held-by-others-where'
+import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
 import { refuseWhenHeld } from '~/utils/edit-hold/refuse-when-held.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 
@@ -106,7 +107,12 @@ export const articleContentStateHandlers = createContentStateHandlers({
       where: { articleId: id, reviewerId },
     })
 
-    if (!existingReview) {
+    // Nothing to write, but approving still waits for someone else's edit.
+    if (existingReview) {
+      const heldByName = await findArticleHeldByName(id, reviewerId)
+
+      if (heldByName !== null) throw createEditHeldRefusal(heldByName)
+    } else {
       // Through the article, so the approval repeats its hold condition.
       await refuseWhenHeld(
         () =>

@@ -363,3 +363,88 @@ describe('createEditHoldHandlers — release', () => {
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 })
+
+describe('createEditHoldHandlers — review fixes', () => {
+  test('a takeover repeats the holder it read, so a hold taken in between fails it', async () => {
+    signInAs('marie', COORDINATOR)
+    const config = createConfig(heldBy('jakub', 'tab-9', 'Jakub Novák'))
+
+    await createEditHoldHandlers(config).takeOver(request, {
+      id: 'a1',
+      tabId: 'tab-1',
+    })
+
+    expect(config.writeHold.mock.lastCall?.[1]).toMatchObject({
+      holder: { authorId: 'jakub', tabId: 'tab-9' },
+    })
+  })
+
+  test('a takeover over text saved since the editor loaded: changed, nothing written', async () => {
+    signInAs('marie', COORDINATOR)
+    const config = createConfig(heldBy('jakub', 'tab-9', 'Jakub Novák'))
+
+    await expect(
+      createEditHoldHandlers(config).takeOver(request, {
+        expectedUpdatedAt: new Date('2026-10-15T11:00:00.000Z'),
+        id: 'a1',
+        tabId: 'tab-1',
+      }),
+    ).resolves.toEqual({ status: 'changed' })
+    expect(config.writeHold).not.toHaveBeenCalled()
+  })
+
+  test('taking over an empty draft logs nothing (0020)', async () => {
+    signInAs('marie', COORDINATOR)
+    const config = createConfig({
+      ...heldBy('jakub', 'tab-9', 'Jakub Novák'),
+      isEmpty: true,
+    })
+
+    await createEditHoldHandlers(config).takeOver(request, {
+      id: 'a1',
+      tabId: 'tab-1',
+    })
+
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+  })
+
+  test('a renewal after one’s own submission: changed, the editor stops (07d)', async () => {
+    const config = createConfig({
+      ...heldBy('anna', 'tab-1', 'Anna'),
+      submittedAt: updatedAt,
+    })
+
+    await expect(
+      createEditHoldHandlers(config).renew(request, {
+        id: 'a1',
+        tabId: 'tab-1',
+      }),
+    ).resolves.toEqual({ status: 'changed' })
+    expect(config.writeHold).not.toHaveBeenCalled()
+  })
+})
+
+describe('createEditHoldHandlers — a page going away from an empty draft', () => {
+  test('ends its hold by expiring it and keeps the draft for a reload', async () => {
+    const row = { ...heldBy('anna', 'tab-1', 'Anna'), isEmpty: true }
+    const config = createConfig(row)
+
+    await expect(
+      createEditHoldHandlers(config).release(request, {
+        id: 'a1',
+        keepEmpty: true,
+        tabId: 'tab-1',
+      }),
+    ).resolves.toEqual({ status: 'released' })
+    expect(config.deleteEmpty).not.toHaveBeenCalled()
+
+    const data = config.writeHold.mock.lastCall?.[2]
+    expect(data).toMatchObject({
+      heldByAuthorId: 'anna',
+      heldByTabId: 'tab-1',
+      updatedAt,
+    })
+    expect(data.heldUntil.getTime()).toBeLessThanOrEqual(Date.now())
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+  })
+})

@@ -7,8 +7,8 @@ export type EditHoldCondition = {
   /** The stored `updatedAt`: a write that moves only the hold keeps it. */
   updatedAt: Date
   now: Date
-  /** `free` to take, a tab to renew or release, `any` to take over. */
-  holder: 'free' | 'any' | EditHoldTab
+  /** `free` to take; the holding tab, as read, to renew, release or take over. */
+  holder: 'free' | EditHoldTab
 }
 
 /**
@@ -25,10 +25,6 @@ export const buildHoldConditionWhere = ({
 }: EditHoldCondition) => ({
   AND: [
     { state: 'draft' as const, updatedAt },
-    holder === 'free'
-      ? buildFreeHoldWhere(now)
-      : holder === 'any'
-        ? {}
-        : buildHeldByTabWhere(holder),
+    holder === 'free' ? buildFreeHoldWhere(now) : buildHeldByTabWhere(holder),
   ],
 })

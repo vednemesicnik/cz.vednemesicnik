@@ -65,7 +65,16 @@ export const articleSubmissionHandlers = createSubmissionHandlers({
 
   markSubmitted: async (id, authorId) => {
     const { count } = await prisma.article.updateMany({
-      data: { submittedAt: new Date(), submittedById: authorId },
+      data: {
+        // Its authors no longer edit a submitted text (07d): one's own edit,
+        // open in another tab, ends with it.
+        heldByAuthorId: null,
+        heldByTabId: null,
+        heldSince: null,
+        heldUntil: null,
+        submittedAt: new Date(),
+        submittedById: authorId,
+      },
       where: {
         // Not while someone else edits it (decision 0019).
         AND: [buildNotHeldByOthersWhere(authorId, new Date())],

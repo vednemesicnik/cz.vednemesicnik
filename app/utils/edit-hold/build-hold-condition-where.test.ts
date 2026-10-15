@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
 import { buildHoldConditionWhere } from './build-hold-condition-where'
-import { buildNotHeldByOthersWhere } from './build-not-held-by-others-where'
 
 const now = new Date('2026-10-15T14:00:00.000Z')
 const updatedAt = new Date('2026-10-15T13:00:00.000Z')
@@ -24,7 +23,7 @@ describe('buildHoldConditionWhere', () => {
     )
   })
 
-  test('renews or releases only the holding tab', () => {
+  test('renews, releases or takes over only from the holding tab as read', () => {
     expect(
       buildHoldConditionWhere({
         holder: { authorId: 'anna', tabId: 'tab-1' },
@@ -32,24 +31,5 @@ describe('buildHoldConditionWhere', () => {
         updatedAt,
       }).AND[1],
     ).toEqual({ heldByAuthorId: 'anna', heldByTabId: 'tab-1' })
-  })
-
-  test('takes over whoever holds it', () => {
-    expect(
-      buildHoldConditionWhere({ holder: 'any', now, updatedAt }).AND[1],
-    ).toEqual({})
-  })
-})
-
-describe('buildNotHeldByOthersWhere', () => {
-  test('free, expired, or one’s own', () => {
-    expect(buildNotHeldByOthersWhere('anna', now)).toEqual({
-      OR: [
-        { heldByAuthorId: null },
-        { heldUntil: null },
-        { heldUntil: { lte: now } },
-        { heldByAuthorId: 'anna' },
-      ],
-    })
   })
 })

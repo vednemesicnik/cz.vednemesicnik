@@ -14,6 +14,7 @@ import type { EditHoldColumns } from '~/utils/edit-hold/edit-hold-columns'
 import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import { isRecordNotFoundError } from '~/utils/edit-hold/is-record-not-found-error.server'
 import {
+  deleteImage,
   deleteRowWithImages,
   prepareCoverReplacement,
   storeImageVariants,
@@ -353,6 +354,9 @@ export async function updateArticle(
       } catch (error) {
         // The hold moved between the check and the write.
         if (!isRecordNotFoundError(error)) throw error
+
+        // The new images' files went in before the rows, which rolled back.
+        await Promise.all(newImages.map(({ id }) => deleteImage(id)))
 
         return toNotHeld(
           await prisma.article.findUnique({
