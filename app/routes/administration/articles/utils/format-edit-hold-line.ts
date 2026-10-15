@@ -14,8 +14,10 @@ type Options = {
  * The line that stands in for the fact under a held article's title while the
  * hold lasts (design 22f, 23g), plain like every fact.
  *
- * @returns `upravuje Tereza Malá`, one's own `upravujete vy`; with `since`
- *   `upravuje Jakub Novák od 14:02`, past midnight `… od 27. 9. 2026, 14:02`.
+ * @returns `upravuje Tereza Malá`; with `since` `upravuje Jakub Novák od
+ *   14:02`, past midnight `… od 27. 9. 2026, 14:02`. One's own hold is
+ *   `upravujete vy` without a time, in the detail too: it stays true while the
+ *   editor just closed in this very tab releases it (copy hgb3jeqj).
  */
 export const formatEditHoldLine = ({
   holderName,
@@ -23,7 +25,9 @@ export const formatEditHoldLine = ({
   since,
   now,
 }: Options): string => {
-  const who = isOwn ? 'upravujete vy' : `upravuje ${holderName}`
+  if (isOwn) return 'upravujete vy'
+
+  const who = `upravuje ${holderName}`
 
   if (since === undefined) return who
 

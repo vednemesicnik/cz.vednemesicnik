@@ -32,4 +32,15 @@ describe('formatEditHoldLine', () => {
       }),
     ).toBe('upravuje Jakub Novák od 14. 10. 2026, 23:50')
   })
+
+  test('one’s own hold has no time, in the detail too (hgb3jeqj)', () => {
+    expect(
+      formatEditHoldLine({
+        holderName: 'Anna Dvořáková',
+        isOwn: true,
+        now,
+        since: new Date('2026-10-15T12:02:00.000Z'),
+      }),
+    ).toBe('upravujete vy')
+  })
 })

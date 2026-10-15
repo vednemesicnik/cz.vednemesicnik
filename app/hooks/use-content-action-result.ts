@@ -58,10 +58,12 @@ export const useContentActionResult = (
     }
     handledResultRef.current = actionResult
 
-    // Someone took the edit hold meanwhile; nothing changed (07g, 23g). Only
-    // the article has the hold so far.
+    // Someone took the edit hold meanwhile; nothing changed (07g, copy
+    // hgb3jeqj). Only the article has the hold so far.
     if (actionResult.heldByName !== undefined) {
-      showToast(`Článek právě upravuje ${actionResult.heldByName}.`)
+      showToast(
+        `Zkuste akci později — článek právě upravuje ${actionResult.heldByName}. Akce se neprovedla.`,
+      )
       return
     }
 

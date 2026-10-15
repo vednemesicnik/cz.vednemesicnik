@@ -33,7 +33,7 @@ describe('formatTakeOverDescription', () => {
         now,
       ),
     ).toBe(
-      `Článek upravuje Jakub Novák od 14. 10. 2026, 23:50. Poslední uložení 25. 9. 2026 v 14:02. ${ending}`,
+      `Článek upravuje Jakub Novák od 14. 10. 2026 v 23:50. Poslední uložení 25. 9. 2026 v 14:02. ${ending}`,
     )
   })
 })
