@@ -1,0 +1,54 @@
+.button {
+  @layer component {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 30px;
+    min-block-size: 28px;
+    padding-block: 5px;
+    padding-inline: 7px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    line-height: 1;
+    white-space: nowrap;
+    background-color: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 150ms ease-out;
+
+    & svg {
+      font-size: 16px;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: var(--bg-hover);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+
+    &:disabled {
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+    }
+
+    /* A finger's target on a phone (jb81di02). */
+    @media (width < 768px) {
+      min-inline-size: 44px;
+      min-block-size: 44px;
+    }
+  }
+}
+
+/* The format in force: grey background (24a). */
+.active {
+  @layer variant {
+    background-color: var(--bg-hover);
+  }
+}
