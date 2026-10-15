@@ -70,11 +70,25 @@ export type ContentStateHandlersConfig = {
   entity: AuthorPermissionEntity
   /** Load author role levels, reviews, and the current publish date. */
   loadPublishState: (id: string) => Promise<PublishState>
-  /** Write a state transition to the entity row (and any mirrored rows). */
-  applyState: (id: string, data: StateTransitionData) => Promise<void>
-  /** Idempotently record an approving review by `reviewerId`. */
+  /**
+   * Write a state transition to the entity row (and any mirrored rows). An
+   * entity with an edit hold repeats "not held by someone else than `authorId`"
+   * in that write and throws the held refusal when it fails (decision 0019).
+   */
+  applyState: (
+    id: string,
+    data: StateTransitionData,
+    authorId: string,
+  ) => Promise<void>
+  /**
+   * Idempotently record an approving review by `reviewerId`, the acting
+   * author; held content is refused as in `applyState`.
+   */
   ensureApprovingReview: (id: string, reviewerId: string) => Promise<void>
-  /** Delete the row and any entity-specific dependents (images, PDF, PageSEO). */
+  /**
+   * Delete the row and any entity-specific dependents (images, PDF, PageSEO);
+   * held content is refused as in `applyState`.
+   */
   deleteRow: (id: string, context: AuthorPermissionContext) => Promise<void>
   /**
    * Whether an approver may supply a backdated publish date on publish (and via
@@ -218,10 +232,11 @@ export const createContentStateHandlers = (
           const publishedAt =
             requestedPublishedAt ?? publishState.publishedAt ?? new Date()
 
-          await config.applyState(options.id, {
-            publishedAt,
-            state: 'published',
-          })
+          await config.applyState(
+            options.id,
+            { publishedAt, state: 'published' },
+            context.authorId,
+          )
 
           // Auto-approve when an approver publishes: their publishing act is the
           // approval, so record it once (idempotent) to satisfy the review gate
@@ -259,7 +274,11 @@ export const createContentStateHandlers = (
       execute: announceOnSuccess(
         { change: 'retract', id: options.id },
         async (context) => {
-          await config.applyState(options.id, { state: 'draft' })
+          await config.applyState(
+            options.id,
+            { state: 'draft' },
+            context.authorId,
+          )
           await recordLog(options.id, ['unpublish'], context)
         },
       ),
@@ -273,7 +292,11 @@ export const createContentStateHandlers = (
       execute: announceOnSuccess(
         { change: 'archive', id: options.id },
         async (context) => {
-          await config.applyState(options.id, { state: 'archived' })
+          await config.applyState(
+            options.id,
+            { state: 'archived' },
+            context.authorId,
+          )
           await recordLog(options.id, ['archive'], context)
         },
       ),
@@ -287,7 +310,11 @@ export const createContentStateHandlers = (
       execute: announceOnSuccess(
         { change: 'restore', id: options.id },
         async (context) => {
-          await config.applyState(options.id, { state: 'draft' })
+          await config.applyState(
+            options.id,
+            { state: 'draft' },
+            context.authorId,
+          )
           await recordLog(options.id, ['restore'], context)
         },
       ),
@@ -361,9 +388,11 @@ export const createContentStateHandlers = (
           const { publishedAt: previousPublishedAt } =
             await config.loadPublishState(options.id)
 
-          await config.applyState(options.id, {
-            publishedAt: options.publishedAt,
-          })
+          await config.applyState(
+            options.id,
+            { publishedAt: options.publishedAt },
+            context.authorId,
+          )
           await recordLog(
             options.id,
             ['set_published_at'],

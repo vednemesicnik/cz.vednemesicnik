@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
+import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
+
 import { runBulkArticleAction } from './run-bulk-article-action.server'
 
 // The database read, the permission context and the state transitions are
@@ -44,6 +46,8 @@ type ArticleRow = {
   state: 'draft' | 'published' | 'archived'
   publishedAt?: Date | null
   submittedAt?: Date | null
+  /** Someone else edits it (07g). */
+  isHeld?: boolean
 }
 
 const article = ({
@@ -51,8 +55,13 @@ const article = ({
   state,
   publishedAt = null,
   submittedAt = null,
+  isHeld = false,
 }: ArticleRow) => ({
   authors: [CONTRIBUTOR],
+  heldByAuthorId: isHeld ? 'contributor' : null,
+  heldByTabId: isHeld ? 'tab-1' : null,
+  heldSince: isHeld ? new Date(Date.now() - 60_000) : null,
+  heldUntil: isHeld ? new Date(Date.now() + 60_000) : null,
   id,
   publishedAt,
   reviews: [],
@@ -206,5 +215,38 @@ describe('runBulkArticleAction — archive and delete', () => {
       processedCount: 1,
       skippedCount: 1,
     })
+  })
+})
+
+describe('runBulkArticleAction — the edit hold (07g, 22f)', () => {
+  test('skips an article someone else edits, without touching it', async () => {
+    findManyMock.mockResolvedValue([
+      article({ id: 'free', state: 'draft' }),
+      article({ id: 'held', isHeld: true, state: 'draft' }),
+    ])
+
+    const result = await runBulkArticleAction(request, {
+      action: 'delete',
+      ids: ['free', 'held'],
+    })
+
+    expect(deleteMock.mock.calls.map(([, options]) => options.id)).toEqual([
+      'free',
+    ])
+    expect(result).toMatchObject({ processedCount: 1, skippedCount: 1 })
+  })
+
+  test('counts a transition its own write refused as skipped', async () => {
+    findManyMock.mockResolvedValue([
+      article({ id: 'taken-meanwhile', state: 'draft' }),
+    ])
+    deleteMock.mockRejectedValue(createEditHeldRefusal('Jakub Novák'))
+
+    const result = await runBulkArticleAction(request, {
+      action: 'delete',
+      ids: ['taken-meanwhile'],
+    })
+
+    expect(result).toMatchObject({ processedCount: 0, skippedCount: 1 })
   })
 })

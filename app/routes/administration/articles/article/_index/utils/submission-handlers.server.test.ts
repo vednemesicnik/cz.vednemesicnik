@@ -1,3 +1,4 @@
+import { Prisma } from '@generated/prisma/client'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { articleSubmissionHandlers } from './submission-handlers.server'
@@ -5,6 +6,7 @@ import { articleSubmissionHandlers } from './submission-handlers.server'
 // Pass-through permission wrapper (the role grant is tested elsewhere) with a
 // switchable signed-in author, and mocked Prisma writes.
 const mocks = vi.hoisted(() => ({
+  articleFindUnique: vi.fn(),
   articleFindUniqueOrThrow: vi.fn(),
   articleUpdate: vi.fn(),
   articleUpdateMany: vi.fn(),
@@ -34,6 +36,7 @@ vi.mock(
 vi.mock('~/utils/db.server', () => ({
   prisma: {
     article: {
+      findUnique: mocks.articleFindUnique,
       findUniqueOrThrow: mocks.articleFindUniqueOrThrow,
       update: mocks.articleUpdate,
       updateMany: mocks.articleUpdateMany,
@@ -62,19 +65,42 @@ const completeDraft = {
 const signInAs = (authorId: string, roleLevel: number) =>
   mocks.permissionContext.mockReturnValue({ authorId, roleLevel })
 
-const clearedSubmission = {
+// Not while someone else than the actor edits it (decision 0019).
+const notHeldByOthers = (authorId: string) => ({
+  AND: [{ OR: expect.arrayContaining([{ heldByAuthorId: authorId }]) }],
+})
+
+const clearedSubmission = (authorId: string) => ({
   data: {
     reviews: { deleteMany: {} },
     submittedAt: null,
     submittedById: null,
   },
-  where: { id: 'a1' },
+  select: { id: true },
+  where: { ...notHeldByOthers(authorId), id: 'a1' },
+})
+
+const heldByJakub = {
+  heldByAuthor: { name: 'Jakub Novák' },
+  heldByAuthorId: 'jakub',
+  heldByTabId: 'tab-2',
+  heldSince: new Date(Date.now() - 60_000),
+  heldUntil: new Date(Date.now() + 60_000),
 }
+
+const recordNotFound = () =>
+  new Prisma.PrismaClientKnownRequestError('No record', {
+    clientVersion: 'test',
+    code: 'P2025',
+  })
 
 beforeEach(() => {
   vi.clearAllMocks()
   signInAs('contributor', 3)
   mocks.articleUpdateMany.mockResolvedValue({ count: 1 })
+  mocks.articleUpdate.mockResolvedValue({ id: 'a1' })
+  // Nobody holds it, unless a test says so.
+  mocks.articleFindUnique.mockResolvedValue(null)
 })
 
 describe('articleSubmissionHandlers.submit', () => {
@@ -87,8 +113,27 @@ describe('articleSubmissionHandlers.submit', () => {
 
     expect(mocks.articleUpdateMany).toHaveBeenCalledWith({
       data: { submittedAt: expect.any(Date), submittedById: 'contributor' },
-      where: { id: 'a1', state: 'draft', submittedAt: null },
+      where: {
+        ...notHeldByOthers('contributor'),
+        id: 'a1',
+        state: 'draft',
+        submittedAt: null,
+      },
     })
+  })
+
+  test('refuses an article someone else edits, naming them (07g)', async () => {
+    mocks.articleFindUniqueOrThrow.mockResolvedValue(completeDraft)
+    mocks.articleUpdateMany.mockResolvedValue({ count: 0 })
+    mocks.articleFindUnique.mockResolvedValue(heldByJakub)
+
+    await expect(
+      articleSubmissionHandlers.submit(request, { id: 'a1', target }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Jakub Novák' },
+      init: { status: 409 },
+    })
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
   })
 
   test('lists what is missing and submits nothing', async () => {
@@ -153,7 +198,27 @@ describe('articleSubmissionHandlers.withdraw', () => {
 
     await articleSubmissionHandlers.withdraw(request, { id: 'a1', target })
 
-    expect(mocks.articleUpdate).toHaveBeenCalledWith(clearedSubmission)
+    expect(mocks.articleUpdate).toHaveBeenCalledWith(
+      clearedSubmission('contributor'),
+    )
+  })
+
+  test('waits while the Coordinator corrects it (07g)', async () => {
+    mocks.articleFindUniqueOrThrow.mockResolvedValue({
+      ...completeDraft,
+      submittedAt,
+    })
+    mocks.articleUpdate.mockRejectedValue(recordNotFound())
+    mocks.articleFindUnique.mockResolvedValue(heldByJakub)
+
+    await expect(
+      articleSubmissionHandlers.withdraw(request, { id: 'a1', target }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Jakub Novák' },
+      init: { status: 409 },
+    })
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 
   test('refuses someone who is not an author', async () => {
@@ -183,7 +248,9 @@ describe('articleSubmissionHandlers.returnForEdits', () => {
       target,
     })
 
-    expect(mocks.articleUpdate).toHaveBeenCalledWith(clearedSubmission)
+    expect(mocks.articleUpdate).toHaveBeenCalledWith(
+      clearedSubmission('coordinator'),
+    )
   })
 
   test('refuses a role below the approver', async () => {

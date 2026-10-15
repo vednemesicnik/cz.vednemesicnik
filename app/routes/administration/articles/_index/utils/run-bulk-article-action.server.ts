@@ -1,4 +1,6 @@
 import { prisma } from '~/utils/db.server'
+import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
+import { readEditHeldRefusal } from '~/utils/edit-hold/read-edit-held-refusal'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
@@ -19,8 +21,8 @@ type Options = {
 /**
  * Applies one bulk action to the selected articles, in their order (design
  * 22c). Each article is checked again as its row would be: one that changed
- * since the list was loaded — or, publishing, turned out incomplete (23h) — is
- * skipped and counted, never partly applied. Publishing gives each article
+ * since the list was loaded — or, publishing, turned out incomplete (23h), or
+ * that someone else edits (22f) — is skipped and counted, never partly applied. Publishing gives each article
  * without a stored publish date its own moment, the top one `publishBase` and
  * each next a second earlier; one published before keeps its date (fge4es3p).
  *
@@ -51,6 +53,10 @@ export const runBulkArticleAction = async (
   const articles = await prisma.article.findMany({
     select: {
       authors: { select: { id: true, role: { select: { level: true } } } },
+      heldByAuthorId: true,
+      heldByTabId: true,
+      heldSince: true,
+      heldUntil: true,
       id: true,
       publishedAt: true,
       reviews: {
@@ -98,7 +104,14 @@ export const runBulkArticleAction = async (
       isApprover,
     })
 
-    if (!bulkActions.includes(action)) {
+    // Someone else edits it: the action waits (07g, 22f).
+    const isHeldByOther =
+      getEditHoldStatus(article, {
+        authorId: context.authorId,
+        now: new Date(),
+      }) === 'other'
+
+    if (!bulkActions.includes(action) || isHeldByOther) {
       skippedCount += 1
       continue
     }
@@ -108,22 +121,30 @@ export const runBulkArticleAction = async (
       state: article.state,
     }
 
-    if (action === 'publish') {
-      const orderIndex = orderedIds.indexOf(id)
-      const { missing } = await articleContentStateHandlers.publish(request, {
-        id,
-        publishedAt: orderIndex === -1 ? undefined : orderedDates[orderIndex],
-        target,
-      })
+    // The hold taken since the check above refuses the transition's own write.
+    try {
+      if (action === 'publish') {
+        const orderIndex = orderedIds.indexOf(id)
+        const { missing } = await articleContentStateHandlers.publish(request, {
+          id,
+          publishedAt: orderIndex === -1 ? undefined : orderedDates[orderIndex],
+          target,
+        })
 
-      if (missing.length > 0) {
-        skippedCount += 1
-        continue
+        if (missing.length > 0) {
+          skippedCount += 1
+          continue
+        }
+      } else if (action === 'archive') {
+        await articleContentStateHandlers.archive(request, { id, target })
+      } else {
+        await articleContentStateHandlers.delete(request, { id, target })
       }
-    } else if (action === 'archive') {
-      await articleContentStateHandlers.archive(request, { id, target })
-    } else {
-      await articleContentStateHandlers.delete(request, { id, target })
+    } catch (error) {
+      if (readEditHeldRefusal(error) === null) throw error
+
+      skippedCount += 1
+      continue
     }
 
     processedCount += 1
