@@ -51,6 +51,11 @@
       var(--color-charcoal-400),
       var(--color-charcoal-500)
     );
+    /* A control's border on a tinted surface, ≥ 3 : 1 (jb81di02) */
+    --border-on-tint: light-dark(
+      var(--color-charcoal-500),
+      var(--color-charcoal-400)
+    );
     --border-accent: light-dark(
       var(--color-violet-500),
       var(--color-violet-400)
