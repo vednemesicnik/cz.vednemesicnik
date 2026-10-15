@@ -5,6 +5,9 @@ import { prisma } from '~/utils/db.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 
+import { getArticleFactLine } from '../../../utils/get-article-fact-line'
+import { getTaxonomyArticleSummary } from '../../../utils/get-taxonomy-article-summary.server'
+import { getTaxonomyHeaderActions } from '../../../utils/get-taxonomy-header-actions'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -21,11 +24,16 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       'restore',
       'review',
     ],
-    entities: ['article_category'],
+    // Viewing articles scopes the record's article list and counts (25b).
+    entities: ['article_category', 'article'],
   })
 
   const category = await prisma.articleCategory.findUnique({
     select: {
+      // What readers lose when it is retracted or archived (25d).
+      _count: {
+        select: { articles: { where: { state: 'published' } } },
+      },
       author: {
         select: {
           id: true,
@@ -52,6 +60,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       slug: true,
       state: true,
       submittedAt: true,
+      updatedAt: true,
     },
     where: { id: categoryId },
   })
@@ -80,21 +89,44 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     submittedAt: category.submittedAt,
   })
 
+  const relationWhere = { categories: { some: { id: category.id } } }
+
+  const [articles, articleCount, history] = await Promise.all([
+    getTaxonomyArticleSummary(context, relationWhere),
+    // Deleting takes the category off every article it has, in any state,
+    // whoever may see them (25d): the list row's count.
+    prisma.article.count({ where: relationWhere }),
+    getContentHistory({
+      createdAt: category.createdAt,
+      entity: 'article_category',
+      entityId: category.id,
+      publishedAt: category.publishedAt,
+    }),
+  ])
+
   return {
+    articles,
     category: {
-      author: category.author,
-      history: await getContentHistory({
-        createdAt: category.createdAt,
-        entity: 'article_category',
-        entityId: category.id,
+      articleCount,
+      authorName: category.author.name,
+      factLine: getArticleFactLine({
+        now: new Date(),
         publishedAt: category.publishedAt,
+        state: category.state,
+        submission: flags.submission,
+        updatedAt: category.updatedAt,
       }),
+      history,
       id: category.id,
       name: category.name,
+      publishedArticleCount: category._count.articles,
       slug: category.slug,
-      state: category.state,
+      state: flags.submission?.state ?? category.state,
     },
-    ...flags,
-    submission: flags.submission?.state ?? null,
+    headerActions: getTaxonomyHeaderActions({
+      ...flags,
+      state: category.state,
+      submission: flags.submission?.state ?? null,
+    }),
   }
 }

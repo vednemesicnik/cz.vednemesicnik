@@ -49,6 +49,18 @@ export const CONTRIBUTOR_COUNTED_QUEUES = [
   'submitted',
 ] as const satisfies readonly ContentQueue[]
 
+/**
+ * The articles in a category or tag, one count per state, in the detail's
+ * order (25b). Together they are every article, so their sum is the total.
+ */
+export const TAXONOMY_ARTICLE_COUNT_QUEUES = [
+  'published',
+  'draft',
+  'pending',
+  'approved',
+  'archived',
+] as const satisfies readonly ContentQueue[]
+
 export const CONTENT_QUEUE_LABELS: Record<ContentQueue, string> = {
   approved: 'Schválené',
   archived: 'Archivované',

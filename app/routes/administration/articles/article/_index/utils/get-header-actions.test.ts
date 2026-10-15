@@ -83,7 +83,7 @@ describe('getHeaderActions — draft', () => {
       menu: ['publish', 'delete'],
       outline: 'edit',
       primary: null,
-      sentence: 'Článek nebyl odeslán ke schválení.',
+      sentence: 'not-submitted',
     })
   })
 
@@ -144,11 +144,9 @@ describe('getHeaderActions — draft', () => {
     const sentenceFor = (submission: 'pending' | 'approved' | null) =>
       getHeaderActions({ ...nothingAllowed, submission }).sentence
 
-    expect(sentenceFor(null)).toBe(
-      'Upravovat mohou autoři článku a Koordinátor.',
-    )
-    expect(sentenceFor('pending')).toBe('Schválit může Koordinátor.')
-    expect(sentenceFor('approved')).toBe('Publikovat může Koordinátor.')
+    expect(sentenceFor(null)).toBe('who-edits')
+    expect(sentenceFor('pending')).toBe('who-approves')
+    expect(sentenceFor('approved')).toBe('who-publishes')
   })
 
   test('an author who may not submit still edits', () => {
@@ -238,7 +236,7 @@ describe('getHeaderActions — archived', () => {
       menu: [],
       outline: null,
       primary: null,
-      sentence: 'Obnovit článek může Koordinátor.',
+      sentence: 'who-restores',
     })
   })
 })

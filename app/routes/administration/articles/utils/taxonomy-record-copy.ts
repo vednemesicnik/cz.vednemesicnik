@@ -1,9 +1,16 @@
+import type { HeaderSentence } from './article-actions'
+
 /**
- * The words of a category's or tag's list row, add and edit pages, confirmations,
- * toasts and errors (design 25a, 25c, 25d, 25e): the same screens, feminine for a
- * category, masculine for a tag.
+ * The words of a category's or tag's list row, detail, add and edit pages,
+ * confirmations, toasts and errors (design 25a–25e): the same screens, feminine
+ * for a category, masculine for a tag.
  */
 export type TaxonomyRecordCopy = {
+  /** The detail's section of the record's articles (25b). */
+  articlesTitle: string
+  allArticlesLink: (articleCount: number) => string
+  /** The detail header's sentence beside or instead of its buttons (23d). */
+  headerSentences: Record<HeaderSentence, string>
   newTitle: string
   editTitle: string
   /** The public address the record's slug is appended to. */

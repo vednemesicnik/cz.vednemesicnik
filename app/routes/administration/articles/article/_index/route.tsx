@@ -38,7 +38,9 @@ import {
 import {
   ARTICLE_ACTION_LABELS,
   ARTICLE_DIRECT_INTENTS,
+  ARTICLE_HEADER_SENTENCES,
   type ArticleAction,
+  NOT_SUBMITTED_NOTE,
 } from '../../utils/article-actions'
 import type { action as articleAction } from './_action'
 import styles from './_styles.module.css'
@@ -210,7 +212,9 @@ export default function RouteComponent({
         {/* One primary, one outline, the rest in „⋯“; where the role may do nothing, who can (23d). */}
         <div className={styles.actions}>
           {headerActions.sentence !== null && (
-            <p className={styles.sentence}>{headerActions.sentence}</p>
+            <p className={styles.sentence}>
+              {ARTICLE_HEADER_SENTENCES[headerActions.sentence]}
+            </p>
           )}
           <ActionMenu
             items={headerActions.menu.map((headerAction) => ({
@@ -345,9 +349,7 @@ export default function RouteComponent({
           isApproval={publishDialog.isApproval}
           // A draft nobody submitted is published from „⋯“ (23d); the dialog says so.
           note={
-            headerActions.menu.includes('publish')
-              ? headerActions.sentence
-              : null
+            headerActions.menu.includes('publish') ? NOT_SUBMITTED_NOTE : null
           }
           onClose={() => setPublishDialog(null)}
           originalPublishedAt={article.publishedAt.iso}

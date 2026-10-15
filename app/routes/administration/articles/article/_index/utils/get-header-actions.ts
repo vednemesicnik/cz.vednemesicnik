@@ -1,15 +1,15 @@
 import type { ContentState } from '@generated/prisma/enums'
 
-import {
-  type ArticleAction,
-  NOT_SUBMITTED_NOTE,
+import type {
+  ArticleAction,
+  HeaderSentence,
 } from '../../../utils/article-actions'
 
 type HeaderActions = {
   primary: ArticleAction | null
   outline: ArticleAction | null
   menu: ArticleAction[]
-  sentence: string | null
+  sentence: HeaderSentence | null
 }
 
 type Options = {
@@ -57,9 +57,7 @@ const getDraftActions = (options: Options): HeaderActions => {
       outline: null,
       primary: null,
       sentence:
-        options.submission === 'pending'
-          ? 'Schválit může Koordinátor.'
-          : 'Publikovat může Koordinátor.',
+        options.submission === 'pending' ? 'who-approves' : 'who-publishes',
     }
   }
 
@@ -79,7 +77,7 @@ const getDraftActions = (options: Options): HeaderActions => {
       menu: ['publish', ...only('delete', options.canDelete)],
       outline: edit[0] ?? null,
       primary: null,
-      sentence: NOT_SUBMITTED_NOTE,
+      sentence: 'not-submitted',
     }
   }
 
@@ -105,7 +103,7 @@ const getDraftActions = (options: Options): HeaderActions => {
     menu: only('delete', options.canDelete),
     outline: null,
     primary: null,
-    sentence: 'Upravovat mohou autoři článku a Koordinátor.',
+    sentence: 'who-edits',
   }
 }
 
@@ -143,9 +141,7 @@ export const getHeaderActions = (options: Options): HeaderActions => {
         menu: only('delete', options.canDelete),
         outline: options.canRestore ? 'restore' : null,
         primary: null,
-        sentence: options.canRestore
-          ? null
-          : 'Obnovit článek může Koordinátor.',
+        sentence: options.canRestore ? null : 'who-restores',
       }
   }
 }
