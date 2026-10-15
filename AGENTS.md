@@ -391,7 +391,7 @@ From an idea to a merged PR, one issue per context window:
 
 A decision that binds later changes gets a record in `docs/decisions/`:
 
-- `.agents/skills/record-decision/SKILL.md` — write a numbered decision record or supersede one; `/plan-issue`, `/review-idea` and `/next-issue` ask whether one is due.
+- `.agents/skills/record-decision/SKILL.md` — write a numbered decision record or supersede one, checked against every accepted record first; `/plan-issue`, `/review-idea` and `/next-issue` ask whether one is due.
 
 ### Design and Copy
 
@@ -453,3 +453,10 @@ Read `.agents/rules/naming-no-abbreviations/RULE.md` before acting.
 Applies when opening a pull request or requesting an automated/Copilot review.
 
 Read `.agents/rules/self-review-before-pr/RULE.md` before acting.
+
+### Decide and Inform
+
+Applies when about to ask the user an architecture, product, security or process question,
+or which of several approaches to take.
+
+Read `.agents/rules/decide-and-inform/RULE.md` before acting.

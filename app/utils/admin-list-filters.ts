@@ -1,13 +1,8 @@
-import {
-  AuthorRoleName,
-  ContentState,
-  type FilterTable,
-  UserRoleName,
-} from '@generated/prisma/enums'
+import { AuthorRoleName, type FilterTable } from '@generated/prisma/enums'
 import { z } from 'zod'
 
 import { PAGE_PARAM } from '~/components/pagination'
-import { ARTICLE_QUEUES } from '~/config/article-queue-config'
+import { CONTENT_QUEUES } from '~/config/content-queue-config'
 import {
   ORDER_PARAM,
   SEARCH_PARAM,
@@ -28,47 +23,45 @@ export const FILTER_PRESET_PARAM = 'filter'
 // otherwise re-apply the default preset the moment the URL runs out of params.
 export const FILTER_PRESET_NONE = 'none'
 
-const stateFilter = z.enum(ContentState).optional()
-
 // `.min(1)` so an empty value (`?category=`, the "Všechny" option) is dropped
 // instead of being kept as an empty string.
 const slugValue = z.string().min(1)
 
-// Roles are seeded, never created at runtime, so the filter can be validated
-// against the enum itself — which keeps a stale value out of the URL the same
-// way `state` does, without a data-driven staleness check.
-const userRoleFilter = z.enum(UserRoleName).optional()
-const authorRoleFilter = z.enum(AuthorRoleName).optional()
+// Every filter takes several values (design 22d): repeated params, any of.
+// The queues (design 22a, 25a), not the data states: a draft is an
+// unsubmitted one.
+const stateFilter = z.array(z.enum(CONTENT_QUEUES)).optional()
 
-const contentStateOnly = z.object({ state: stateFilter })
+const stateOnly = z.object({ state: stateFilter })
 
 // Central registry: the saved-filters backend has to validate a stored query
 // string for an arbitrary table, so the lookup is keyed by table, not by route.
 // `satisfies` (instead of a `Record<...>` annotation) keeps the per-table
 // literal types, which `parseAdminListFilters` infers from.
 export const ADMIN_LIST_FILTER_SCHEMAS = {
-  archive: contentStateOnly,
-  article_categories: contentStateOnly,
-  article_tags: contentStateOnly,
-  // Every filter takes several values (design 22d): repeated params, any of.
+  archive: z.object({
+    state: stateFilter,
+    // The years an issue is in (26a), not a range.
+    year: z.array(z.string().regex(/^\d{4}$/)).optional(),
+  }),
+  article_categories: stateOnly,
+  article_tags: stateOnly,
   articles: z.object({
     author: z.array(slugValue).optional(),
     category: z.array(slugValue).optional(),
-    // The queues (design 22a), not the data states: a draft is an unsubmitted one.
-    state: z.array(z.enum(ARTICLE_QUEUES)).optional(),
+    state: stateFilter,
     tag: z.array(slugValue).optional(),
   }),
-  authors: z.object({ role: authorRoleFilter }),
-  podcast_episodes: contentStateOnly,
-  podcasts: contentStateOnly,
-  users: z.object({ role: userRoleFilter }),
+  // Roles are seeded, never created at runtime, so the filter is validated
+  // against the enum itself, without a data-driven staleness check.
+  authors: z.object({
+    // Whether a user signs in as the author (28a).
+    account: z.array(z.enum(['linked', 'none'])).optional(),
+    role: z.array(z.enum(AuthorRoleName)).optional(),
+  }),
+  podcast_episodes: stateOnly,
+  podcasts: stateOnly,
 } satisfies Record<AdminListTableKey, z.ZodObject>
-
-// Tables whose saved filter stores the search as well (design 22d). The search
-// stays out of the schema: it is not a filter, and a filter submit preserves it.
-const SAVED_FILTER_SEARCH_TABLES: ReadonlySet<AdminListTableKey> = new Set([
-  'articles',
-])
 
 const getFilterKeys = (tableKey: AdminListTableKey): string[] =>
   Object.keys(ADMIN_LIST_FILTER_SCHEMAS[tableKey].shape)
@@ -154,8 +147,8 @@ export const parseAdminListFilters = <TKey extends AdminListTableKey>(
  * Extracts only the table's filter params from a search string and serializes them
  * canonically — schema key order, invalid and empty values dropped — so that two
  * equal filters always produce the same string. Used to snapshot the current filter
- * for saving and to re-validate stored snapshots. The article list also keeps its
- * search term, trimmed, after the filters.
+ * for saving and to re-validate stored snapshots. The search term follows the
+ * filters, trimmed.
  *
  * @param search - A search string, with or without the leading `?`.
  * @param tableKey - Which admin table's schema to validate against.
@@ -203,7 +196,9 @@ export const extractAdminListFilterSearch = (
 
   const query = (searchParams.get(SEARCH_PARAM) ?? '').trim()
 
-  if (SAVED_FILTER_SEARCH_TABLES.has(tableKey) && query !== '') {
+  // A saved filter keeps the search as well (design 22d). It stays out of the
+  // schema: it is not a filter, and a filter change preserves it.
+  if (query !== '') {
     canonical.set(SEARCH_PARAM, query)
   }
 
@@ -316,37 +311,4 @@ export const buildStaleFilterRedirect = (
   const search = searchParams.toString()
 
   return search === '' ? url.pathname : `${url.pathname}?${search}`
-}
-
-/**
- * Collects the params a filter submit has to carry over as hidden inputs — everything
- * except the table's own filter params (the form owns those) and `page` (changing a
- * filter resets pagination). Mirrors how `AdminTableSearch` preserves params.
- *
- * @param searchParams - The current URL search params.
- * @param tableKey - Which admin table's filter params the form owns.
- * @returns Name/value entries to render as hidden inputs.
- */
-export const getPreservedFilterParams = (
-  searchParams: URLSearchParams,
-  tableKey: AdminListTableKey,
-): [string, string][] => {
-  const preserved = new URLSearchParams(searchParams)
-
-  for (const key of getFilterKeys(tableKey)) {
-    preserved.delete(key)
-  }
-
-  preserved.delete(PAGE_PARAM)
-
-  // Editing a select means the list no longer matches the preset it came from, so
-  // the marker degrades to "explicitly unfiltered" instead of falsely highlighting
-  // that preset — and, once every select is cleared, instead of leaving a bare URL
-  // that the default-filter redirect would immediately fill back in. Only rewritten
-  // when already present, so tables the user has no preset for keep clean URLs.
-  if (preserved.has(FILTER_PRESET_PARAM)) {
-    preserved.set(FILTER_PRESET_PARAM, FILTER_PRESET_NONE)
-  }
-
-  return [...preserved.entries()]
 }

@@ -128,7 +128,7 @@ export const ForbiddenEditForeignDraft: Story = {
     ),
   },
   parameters: {
-    pathname: '/administration/articles/categories/c1/edit-category',
+    pathname: '/administration/articles/categories/c1/edit',
   },
 }
 

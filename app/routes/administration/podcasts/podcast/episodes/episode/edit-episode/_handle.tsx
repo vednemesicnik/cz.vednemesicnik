@@ -14,7 +14,8 @@ export const handle = {
     const { podcastId, episodeId } = match.params
 
     return {
-      label: 'Upravit epizodu',
+      // The last crumb names the page, the record stands before it (copy 5yrb681l).
+      label: 'Úprava',
       path: href(
         `/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode`,
         {

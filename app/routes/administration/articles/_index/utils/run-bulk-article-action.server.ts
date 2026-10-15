@@ -4,10 +4,10 @@ import { getContentActionFlags } from '~/utils/permissions/author/get-content-ac
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
 import { articleContentStateHandlers } from '../../article/_index/utils/content-state-handlers.server'
+import { getRowActions } from '../../utils/get-row-actions'
 import type { BulkAction } from './get-bulk-actions'
 import { getBulkActions } from './get-bulk-actions'
 import { getOrderedPublishDates } from './get-ordered-publish-dates'
-import { getRowActions } from './get-row-actions'
 
 type Options = {
   action: BulkAction

@@ -4,7 +4,6 @@ import {
   type AdminListTableKey,
   buildStaleFilterRedirect,
   extractAdminListFilterSearch,
-  getPreservedFilterParams,
   hasAdminListParams,
   parseAdminListFilters,
   validateFilterQuery,
@@ -55,28 +54,29 @@ describe('parseAdminListFilters', () => {
     })
   })
 
-  test('should parse the role filter for users and authors', () => {
-    expect(parse('?role=administrator', 'users')).toEqual({
-      role: 'administrator',
-    })
-    expect(parse('?role=coordinator', 'authors')).toEqual({
-      role: 'coordinator',
-    })
+  test('should parse the role and account filters of the authors', () => {
+    expect(
+      parse('?role=coordinator&role=creator&account=none', 'authors'),
+    ).toEqual({ account: ['none'], role: ['coordinator', 'creator'] })
   })
 
-  test('should drop a role that is not a seeded role name', () => {
-    expect(parse('?role=superuser', 'users')).toEqual({})
-    // The two role enums are disjoint, so one table's role never applies to the other.
-    expect(parse('?role=coordinator', 'users')).toEqual({})
-    expect(parse('?role=administrator', 'authors')).toEqual({})
+  test('should drop a role that is not an author role or an unknown account', () => {
+    // A user role is no author role.
+    expect(parse('?role=administrator&account=maybe', 'authors')).toEqual({})
   })
 
-  test('should parse the state filter for the remaining content tables', () => {
-    expect(parse('?state=published', 'archive')).toEqual({
-      state: 'published',
+  test('should parse the queues of the remaining content tables', () => {
+    expect(parse('?state=pending&state=published', 'archive')).toEqual({
+      state: ['pending', 'published'],
     })
     expect(parse('?state=archived', 'podcast_episodes')).toEqual({
-      state: 'archived',
+      state: ['archived'],
+    })
+  })
+
+  test('should parse several years of the archive', () => {
+    expect(parse('?year=2025&year=2026&year=20x5', 'archive')).toEqual({
+      year: ['2025', '2026'],
     })
   })
 
@@ -98,7 +98,7 @@ describe('parseAdminListFilters', () => {
 
   test('should ignore params outside the table schema', () => {
     expect(parse('?q=foo&sort=title&order=asc&page=2', 'articles')).toEqual({})
-    expect(parse('?category=rozhovory', 'users')).toEqual({})
+    expect(parse('?category=rozhovory', 'authors')).toEqual({})
   })
 })
 
@@ -112,7 +112,7 @@ describe('extractAdminListFilterSearch', () => {
     ).toBe('state=draft')
   })
 
-  test('should keep the trimmed search after the filters of the article list', () => {
+  test('should keep the trimmed search after the filters', () => {
     expect(
       extractAdminListFilterSearch(
         '?q=%20ples%20&state=draft&page=2',
@@ -122,10 +122,10 @@ describe('extractAdminListFilterSearch', () => {
     expect(extractAdminListFilterSearch('?q=%20%20', 'articles')).toBe('')
   })
 
-  test('should drop the search of a list that does not save it', () => {
-    expect(extractAdminListFilterSearch('?q=foo&role=member', 'users')).toBe(
-      'role=member',
-    )
+  test('should keep the search on every list', () => {
+    expect(
+      extractAdminListFilterSearch('?q=foo&role=coordinator', 'authors'),
+    ).toBe('role=coordinator&q=foo')
   })
 
   test('should serialize in schema key order regardless of input order', () => {
@@ -166,7 +166,7 @@ describe('extractAdminListFilterSearch', () => {
 
   test('should return an empty string when nothing is valid', () => {
     expect(extractAdminListFilterSearch('', 'articles')).toBe('')
-    expect(extractAdminListFilterSearch('?q=foo&sort=title', 'users')).toBe('')
+    expect(extractAdminListFilterSearch('?sort=title', 'authors')).toBe('')
   })
 
   test('should ignore the preset marker', () => {
@@ -202,7 +202,7 @@ describe('validateFilterQuery', () => {
     )
   })
 
-  test('should accept a search alone on the article list', () => {
+  test('should accept a search alone', () => {
     expect(validateFilterQuery('?q=ples', 'articles')).toBe('q=ples')
   })
 
@@ -210,13 +210,13 @@ describe('validateFilterQuery', () => {
     expect(validateFilterQuery('', 'articles')).toBe(null)
     expect(validateFilterQuery('?state=&category=', 'articles')).toBe(null)
     expect(validateFilterQuery('?sort=title&page=2', 'articles')).toBe(null)
-    expect(validateFilterQuery('?q=foo&page=2', 'users')).toBe(null)
-    expect(validateFilterQuery('?category=rozhovory', 'users')).toBe(null)
+    expect(validateFilterQuery('?category=rozhovory', 'authors')).toBe(null)
   })
 
   test('should return null for a table key that is no longer in the registry', () => {
+    // The users list lost its filters (28d); a row could still carry its key.
     expect(
-      validateFilterQuery('?state=draft', 'retired_table' as AdminListTableKey),
+      validateFilterQuery('?role=member', 'users' as AdminListTableKey),
     ).toBe(null)
   })
 
@@ -284,49 +284,6 @@ describe('buildStaleFilterRedirect', () => {
   })
 })
 
-describe('getPreservedFilterParams', () => {
-  const preserved = (search: string, tableKey: AdminListTableKey) =>
-    getPreservedFilterParams(new URLSearchParams(search), tableKey)
-
-  test('should keep search and sort params', () => {
-    expect(preserved('?q=foo&sort=title&order=asc', 'articles')).toEqual([
-      ['q', 'foo'],
-      ['sort', 'title'],
-      ['order', 'asc'],
-    ])
-  })
-
-  test('should drop the table filter params', () => {
-    expect(
-      preserved('?q=foo&state=draft&category=rozhovory', 'articles'),
-    ).toEqual([['q', 'foo']])
-  })
-
-  test('should always drop the page param', () => {
-    expect(preserved('?q=foo&page=4', 'articles')).toEqual([['q', 'foo']])
-  })
-
-  test('should keep params that are filters of a different table', () => {
-    expect(preserved('?category=rozhovory', 'users')).toEqual([
-      ['category', 'rozhovory'],
-    ])
-  })
-
-  test('should return an empty array when nothing is preserved', () => {
-    expect(preserved('?state=draft&page=2', 'articles')).toEqual([])
-  })
-
-  test('should degrade the preset marker to none', () => {
-    expect(preserved('?state=draft&filter=abc123', 'articles')).toEqual([
-      ['filter', 'none'],
-    ])
-  })
-
-  test('should not add a preset marker when there is none', () => {
-    expect(preserved('?state=draft&q=foo', 'articles')).toEqual([['q', 'foo']])
-  })
-})
-
 describe('hasAdminListParams', () => {
   const hasParams = (search: string, tableKey: AdminListTableKey) =>
     hasAdminListParams(new URLSearchParams(search), tableKey)
@@ -348,7 +305,7 @@ describe('hasAdminListParams', () => {
   })
 
   test('should ignore a filter param of a different table', () => {
-    expect(hasParams('?category=rozhovory', 'users')).toBe(false)
+    expect(hasParams('?category=rozhovory', 'authors')).toBe(false)
   })
 
   test('should detect an empty value as list state', () => {

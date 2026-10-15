@@ -1,5 +1,9 @@
-import type { MetaFunction } from 'react-router'
+import { createAdminPageTitle } from '~/utils/create-admin-page-title'
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Vedneměsíčník | Administrace - Nastavení' }]
+import type { Route } from './+types/route'
+
+export const meta: Route.MetaFunction = () => {
+  const title = createAdminPageTitle('Nastavení')
+
+  return [{ title }]
 }

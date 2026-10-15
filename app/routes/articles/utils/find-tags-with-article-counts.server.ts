@@ -1,10 +1,10 @@
 import { prisma } from '~/utils/db.server'
+import { nameCollator } from '~/utils/name-collator'
 import {
   ownArticle,
   ownByAuthor,
   type WebContentVisibility,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
-import { nameCollator } from './name-collator'
 
 /**
  * Finds the tags a reader can open that hold at least one article they can

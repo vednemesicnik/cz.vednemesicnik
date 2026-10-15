@@ -1,10 +1,8 @@
-import { createPageTitle } from '~/utils/create-page-title'
+import { createAdminPageTitle } from '~/utils/create-admin-page-title'
 import type { Route } from './+types/route'
 
 export const meta = ({ loaderData }: Route.MetaArgs) => {
-  const title = createPageTitle(
-    `Administrace - ${loaderData?.tag.name ?? 'Detail'}`,
-  )
+  const title = createAdminPageTitle(loaderData?.tag.name ?? 'Štítky')
 
   return [{ title }]
 }

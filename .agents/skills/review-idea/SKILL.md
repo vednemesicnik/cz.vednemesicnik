@@ -77,8 +77,9 @@ A bad answer here is a **stop**, not a note.
 
 ### Phase 2 — The verdict
 
-Ask with `AskUserQuestion` only if the evidence genuinely leaves the call open. Otherwise say
-which of the three it is, and why:
+Say which of the three it is, and why. When the evidence leaves the call open, do not hand it
+to the user: get a second opinion as the `decide-and-inform` rule describes, then give the
+verdict.
 
 - **Write the issue.** Every question answered with evidence. The answers become the issue (in
   English): 1–2 the motivation, 4 the mechanism, 6 what each surface gets, 7 the design

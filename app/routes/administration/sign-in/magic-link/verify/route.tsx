@@ -10,6 +10,7 @@ import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { getMagicLinkVerifyHeading } from './utils/get-magic-link-verify-heading'
 
 export { action } from './_action'
 export { headers } from './_headers'
@@ -20,6 +21,7 @@ export { meta } from './_meta'
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const navigation = useNavigation()
   const isSubmitting = navigation.state !== 'idle'
+  const heading = getMagicLinkVerifyHeading(loaderData.status)
 
   // A navigation drawn as the primary button (20c).
   const backToSettings = (
@@ -35,7 +37,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   // A browser already signed in to another account (design 20c, so197jap).
   if (loaderData.status === 'other-account') {
     return (
-      <AdminSignInCard title={'Odkaz je pro jiný účet'}>
+      <AdminSignInCard title={heading}>
         <AdminSignInText>
           Odkaz otevřete v prohlížeči, kde se ověřujete — patří účtu{' '}
           <span className={styles.value}>{loaderData.email}</span> a tady je
@@ -49,7 +51,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   // A signed-in browser gets a new link from the identity check in Nastavení.
   if (loaderData.status === 'invalid-signed-in') {
     return (
-      <AdminSignInCard title={'Odkaz už neplatí'}>
+      <AdminSignInCard title={heading}>
         <AdminSignInText>
           Nový odkaz si pošlete v Nastavení — tento vypršel, byl použitý nebo ho
           nahradil nový.
@@ -63,7 +65,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   // this one, and lands on the sent state (20b).
   if (loaderData.status === 'invalid') {
     return (
-      <AdminSignInCard title={'Odkaz už neplatí'}>
+      <AdminSignInCard title={heading}>
         <AdminSignInText>
           Odkaz vypršel, byl použitý nebo ho nahradil nový. Můžete si poslat
           nový na <span className={styles.value}>{loaderData.email}</span>.
@@ -105,9 +107,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const isIdentityCheck = loaderData.status === 'verify-identity'
 
   return (
-    <AdminSignInCard
-      title={isIdentityCheck ? 'Ověřte, že jste to vy' : 'Potvrďte přihlášení'}
-    >
+    <AdminSignInCard title={heading}>
       <AdminSignInText>
         Účet: <span className={styles.value}>{loaderData.email}</span>
       </AdminSignInText>

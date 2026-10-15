@@ -1,32 +1,49 @@
-import type { Prisma } from '@generated/prisma/client'
+import { redirect } from 'react-router'
 
-import { parseAdminListFilters } from '~/utils/admin-list-filters'
-import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import {
+  CONTRIBUTOR_STATE_FILTER_QUEUES,
+  STATE_FILTER_QUEUES,
+} from '~/config/content-queue-config'
+import {
+  buildStaleFilterRedirect,
+  parseAdminListFilters,
+} from '~/utils/admin-list-filters'
+import { parseAdminListParams } from '~/utils/admin-list-params'
+import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
+import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
+import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
+import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
+import { getNameOrderedPage } from '../../utils/get-name-ordered-page'
+import { getTaxonomyFactLine } from '../../utils/get-taxonomy-fact-line'
+import { getTaxonomyRowActions } from '../../utils/get-taxonomy-row-actions'
 import type { Route } from './+types/route'
-import { SORT_KEYS, type SortKey } from './sort'
+import { SORT_KEYS } from './sort'
+
+const PAGE_SIZE = 20
 
 const TABLE_KEY = 'article_tags'
 
-// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
-// equal values keep a deterministic order across reloads.
-const ORDER_BY: Record<
-  SortKey,
-  (order: SortOrder) => Prisma.ArticleTagOrderByWithRelationInput[]
-> = {
-  createdAt: (order) => [{ createdAt: order }],
-  name: (order) => [{ name: order }, { createdAt: 'desc' }],
-}
-
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
-    actions: ['view', 'create', 'update', 'delete'],
+    actions: [
+      'view',
+      'create',
+      'update',
+      'delete',
+      'publish',
+      'retract',
+      'archive',
+      'restore',
+      'review',
+    ],
     entities: ['article_tag'],
   })
 
@@ -55,9 +72,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     state: 'archived',
   })
 
-  const { order, query, sort } = parseAdminListParams(request, {
-    defaultOrder: 'desc',
-    defaultSort: 'createdAt',
+  // Looked up, not processed: by name, ascending (25a, 25e).
+  const { order, page, query } = parseAdminListParams(request, {
+    defaultOrder: 'asc',
+    defaultSort: 'name',
     sortKeys: SORT_KEYS,
   })
 
@@ -91,56 +109,135 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
               ],
             },
           ]),
-      ...(filters.state === undefined ? [] : [{ state: filters.state }]),
+      ...(filters.state === undefined
+        ? []
+        : [{ OR: filters.state.map(buildContentQueueWhere) }]),
     ],
   }
 
-  const [rawTags, savedFilters] = await Promise.all([
-    prisma.articleTag.findMany({
-      orderBy: ORDER_BY[sort](order),
-      select: {
-        authorId: true,
-        createdAt: true,
-        id: true,
-        name: true,
-        state: true,
-        submittedAt: true,
-      },
-      where,
-    }),
+  // A Contributor approves nothing: Odeslané instead of Ke schválení and
+  // Schválené (22i).
+  const isContributor = context.roleName === 'contributor'
+
+  const [matchingTags, savedFilters, queueCounts] = await Promise.all([
+    // Every match by name: the order is Czech, not SQLite's (25a, 11c).
+    prisma.articleTag.findMany({ select: { id: true, name: true }, where }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
+    // The Stav menu counts work within what the role may view, whatever else
+    // is searched or filtered (22d).
+    countContentQueues(isContributor, (queue) =>
+      prisma.articleTag.count({
+        where: { AND: [permissionWhere, buildContentQueueWhere(queue)] },
+      }),
+    ),
   ])
 
-  // Compute permissions for each tag
-  const tags = rawTags.map((tag) => {
-    return {
-      ...tag,
-      // A submitted draft is neither deleted nor edited by its author (07d).
-      canDelete:
-        context.can({
-          action: 'delete',
-          entity: 'article_tag',
-          state: tag.state,
-          targetAuthorIds: [tag.authorId],
-        }).hasPermission && tag.submittedAt === null,
-      canEdit:
-        context.can({
-          action: 'update',
-          entity: 'article_tag',
-          state: tag.state,
-          targetAuthorIds: [tag.authorId],
-        }).hasPermission &&
-        !isLockedBySubmission({
-          roleLevel: context.roleLevel,
-          submittedAt: tag.submittedAt,
-        }),
-      canView: context.can({
-        action: 'view',
-        entity: 'article_tag',
-        state: tag.state,
-        targetAuthorIds: [tag.authorId],
-      }).hasPermission,
+  const { pageIds, totalCount } = getNameOrderedPage(matchingTags, {
+    order,
+    page,
+    pageSize: PAGE_SIZE,
+  })
+
+  // A state the role's menu does not offer (a Coordinator's link opened by a
+  // Contributor) drops, or it would filter unseen.
+  const staleFilterRedirect = buildStaleFilterRedirect(url, {
+    state: (isContributor
+      ? CONTRIBUTOR_STATE_FILTER_QUEUES
+      : STATE_FILTER_QUEUES
+    ).map((queue) => ({ value: queue })),
+  })
+
+  if (staleFilterRedirect !== null) {
+    throw redirect(staleFilterRedirect)
+  }
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+  // Deleting the last row on the last page revalidates a URL past the end.
+  if (isPagePastLast(page, totalPages)) {
+    throw redirect(buildLastPageRedirect(url, totalPages))
+  }
+
+  const [pageTags, pageArticleCounts] = await Promise.all([
+    prisma.articleTag.findMany({
+      select: {
+        // What a reader sees on the tag's page (25a, 25e).
+        _count: {
+          select: { articles: { where: { state: 'published' } } },
+        },
+        author: {
+          select: { id: true, name: true, role: { select: { level: true } } },
+        },
+        id: true,
+        name: true,
+        reviews: {
+          select: {
+            createdAt: true,
+            reviewer: {
+              select: { id: true, role: { select: { level: true } } },
+            },
+          },
+        },
+        slug: true,
+        state: true,
+        submittedAt: true,
+        submittedBy: { select: { name: true } },
+        updatedAt: true,
+      },
+      where: { id: { in: pageIds } },
+    }),
+    // Deleting takes the tag off every article it has, in any state (25d,
+    // 25e). A query of its own: `_count` holds one count per relation.
+    prisma.articleTag.findMany({
+      select: { _count: { select: { articles: true } }, id: true },
+      where: { id: { in: pageIds } },
+    }),
+  ])
+
+  const tagsById = new Map(pageTags.map((tag) => [tag.id, tag]))
+  const articleCounts = new Map(
+    pageArticleCounts.map((tag) => [tag.id, tag._count.articles]),
+  )
+
+  const tags = pageIds.flatMap((id) => {
+    const tag = tagsById.get(id)
+
+    // Deleted between the two queries.
+    if (tag === undefined) {
+      return []
     }
+
+    const flags = getContentActionFlags(context, 'article_tag', {
+      authors: [tag.author],
+      reviews: tag.reviews,
+      state: tag.state,
+      submittedAt: tag.submittedAt,
+    })
+
+    return [
+      {
+        articleCount: articleCounts.get(tag.id) ?? 0,
+        canDelete: flags.canDelete,
+        // The row's tag says what the detail's does (07a), with one fact (25e).
+        factLine: getTaxonomyFactLine({
+          authorName: tag.author.name,
+          state: tag.state,
+          submission: flags.submission,
+          submittedByName: tag.submittedBy?.name ?? null,
+          updatedAt: tag.updatedAt,
+        }),
+        id: tag.id,
+        name: tag.name,
+        publishedArticleCount: tag._count.articles,
+        slug: tag.slug,
+        state: flags.submission?.state ?? tag.state,
+        ...getTaxonomyRowActions({
+          ...flags,
+          state: tag.state,
+          submission: flags.submission?.state ?? null,
+        }),
+      },
+    ]
   })
 
   return {
@@ -151,8 +248,15 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       state: 'draft',
       targetAuthorIds: [context.authorId],
     }).hasPermission,
+    currentPage: page,
     filters,
+    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+    isContributor,
+    pageSize: PAGE_SIZE,
     query,
+    queueCounts,
     tags,
+    totalCount,
+    totalPages,
   }
 }

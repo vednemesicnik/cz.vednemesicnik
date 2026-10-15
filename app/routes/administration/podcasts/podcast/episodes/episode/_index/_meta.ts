@@ -1,11 +1,9 @@
-import { createPageTitle } from '~/utils/create-page-title'
+import { createAdminPageTitle } from '~/utils/create-admin-page-title'
 
 import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = ({ loaderData }) => {
-  const title = loaderData?.episode?.title
-    ? createPageTitle(`Administrace: ${loaderData.episode.title}`)
-    : createPageTitle('Administrace: Epizoda')
+  const title = createAdminPageTitle(loaderData?.episode?.title ?? 'Epizody')
 
   return [{ title }]
 }

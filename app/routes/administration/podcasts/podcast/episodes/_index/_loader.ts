@@ -1,11 +1,23 @@
 import type { Prisma } from '@generated/prisma/client'
+import { redirect } from 'react-router'
 
-import { parseAdminListFilters } from '~/utils/admin-list-filters'
+import {
+  CONTRIBUTOR_STATE_FILTER_QUEUES,
+  STATE_FILTER_QUEUES,
+} from '~/config/content-queue-config'
+import {
+  buildStaleFilterRedirect,
+  parseAdminListFilters,
+} from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
+import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
@@ -98,11 +110,30 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
               ],
             },
           ]),
-      ...(filters.state === undefined ? [] : [{ state: filters.state }]),
+      ...(filters.state === undefined
+        ? []
+        : [{ OR: filters.state.map(buildContentQueueWhere) }]),
     ],
   }
 
-  const [podcast, savedFilters] = await Promise.all([
+  // A Contributor approves nothing: Odeslané instead of Ke schválení and
+  // Schválené (22i).
+  const isContributor = context.roleName === 'contributor'
+
+  // A state the role's menu does not offer (a Coordinator's link opened by a
+  // Contributor) drops, or it would filter unseen.
+  const staleFilterRedirect = buildStaleFilterRedirect(url, {
+    state: (isContributor
+      ? CONTRIBUTOR_STATE_FILTER_QUEUES
+      : STATE_FILTER_QUEUES
+    ).map((queue) => ({ value: queue })),
+  })
+
+  if (staleFilterRedirect !== null) {
+    throw redirect(staleFilterRedirect)
+  }
+
+  const [podcast, savedFilters, queueCounts, episodeCount] = await Promise.all([
     prisma.podcast.findUniqueOrThrow({
       select: {
         episodes: {
@@ -111,6 +142,12 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
             authorId: true,
             createdAt: true,
             id: true,
+            reviews: {
+              select: {
+                createdAt: true,
+                reviewer: { select: { role: { select: { level: true } } } },
+              },
+            },
             state: true,
             submittedAt: true,
             title: true,
@@ -123,10 +160,23 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
       where: { id: podcastId },
     }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
+    // The Stav menu counts this podcast's work within what the role may view,
+    // whatever else is searched or filtered (22d, 27b).
+    countContentQueues(isContributor, (queue) =>
+      prisma.podcastEpisode.count({
+        where: {
+          AND: [permissionWhere, { podcastId }, buildContentQueueWhere(queue)],
+        },
+      }),
+    ),
+    // A podcast without a single episode has no filters to offer (27g).
+    prisma.podcastEpisode.count({
+      where: { AND: [permissionWhere, { podcastId }] },
+    }),
   ])
 
   // Compute permissions for each episode
-  const episodes = podcast.episodes.map((episode) => {
+  const episodes = podcast.episodes.map(({ reviews, ...episode }) => {
     return {
       ...episode,
       // A submitted draft is neither deleted nor edited by its author (07d).
@@ -154,6 +204,8 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
         state: episode.state,
         targetAuthorIds: [episode.authorId],
       }).hasPermission,
+      // The row's tag says what the detail's does (07a).
+      submission: getSubmissionState({ ...episode, reviews })?.state ?? null,
     }
   })
 
@@ -166,10 +218,14 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
       targetAuthorIds: [context.authorId],
     }).hasPermission,
     filters,
+    hasNoEpisodes: episodeCount === 0,
+    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+    isContributor,
     podcast: {
       ...podcast,
       episodes,
     },
     query,
+    queueCounts,
   }
 }

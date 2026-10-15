@@ -233,14 +233,13 @@ enum FilterTable {
   authors
   podcast_episodes
   podcasts
-  users
 }
 
 // A named, per-user snapshot of an administration list's filter params. `query`
-// holds the canonical serialized filter search (never page/sort/q) and is
-// re-validated against the registry on save and on apply. At most one row per
-// user and table may have `isDefault`; SQLite has no partial unique index, so
-// that is enforced transactionally in the action.
+// holds the canonical serialized filter search with the search term (never
+// page or sort) and is re-validated against the registry on save and on apply.
+// At most one row per user and table may have `isDefault`; SQLite has no
+// partial unique index, so that is enforced transactionally in the action.
 model Filter {
   id        String      @id @default(cuid())
   name      String

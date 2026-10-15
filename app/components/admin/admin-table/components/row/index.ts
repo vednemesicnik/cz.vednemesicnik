@@ -1,1 +1,1 @@
-export { TableRow } from './_component'
+export { TableRow, type TableRowTint } from './_component'

@@ -63,7 +63,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <PageTitle>Přidat číslo</PageTitle>
+      <PageTitle>Nové číslo</PageTitle>
 
       <Form
         encType={'multipart/form-data'}

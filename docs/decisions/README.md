@@ -7,7 +7,8 @@ explains why they are that way and what was turned down.
 
 UX, layout and visuals are decided in the design project (`docs/_design-project.md`), and
 user-facing Czech by the copywriter (`docs/_copy-context.md`). A record cites those answers;
-it does not restate them.
+it does not restate them. Whether something is a page or a dialog, and what has an address,
+is not UX: product and architecture decide it (0016).
 
 Agents write records with the `/record-decision` skill.
 
@@ -28,6 +29,10 @@ order and never renumbered. The title names the decision, not the topic.
 A record is not rewritten once it is accepted. A changed decision gets a new record, and the
 old one changes only its status line.
 
+The accepted records form one whole. A new record is checked against every one of them before
+it is accepted. A conflict is settled by superseding one of the two, never by leaving both
+in force.
+
 ## Index
 
 | # | Decision | Status | Date |
@@ -46,3 +51,7 @@ old one changes only its status line.
 | [0012](0012-live-events-carry-the-actor-name-to-every-session.md) | Live content events carry the actor's name to every administration session | Accepted | 2026-10-13 |
 | [0013](0013-content-is-submitted-only-the-coordinator-approves-and-publishes.md) | Every content type is submitted for review; only the Coordinator approves and publishes | Accepted | 2026-09-28 |
 | [0014](0014-activity-guidance-is-a-skill-not-a-rule.md) | Guidance for one body of work is a skill, not a rule | Accepted | 2026-10-14 |
+| [0015](0015-edits-check-the-stored-record-not-the-form.md) | Content edits check the stored record, never the form | Accepted | 2026-10-14 |
+| [0016](0016-records-are-added-and-edited-on-their-own-page.md) | Records are added and edited on their own page, not in a dialog | Accepted | 2026-10-14 |
+| [0017](0017-every-list-with-filters-has-saved-filters.md) | Every administration list with filters has saved filters, and Stav filters by queue | Accepted | 2026-10-14 |
+| [0018](0018-agents-decide-and-inform.md) | Agents make architecture, product and security calls and report them | Accepted | 2026-10-15 |

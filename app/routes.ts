@@ -10,6 +10,7 @@ import {
 import { createAdminEntriesIntersection } from '../utils/create-admin-entries-intersection'
 import { createAdminEntriesSection } from '../utils/create-admin-entries-section'
 import { createAdminIntersection } from '../utils/create-admin-intersection'
+import { createAdminRecordSection } from '../utils/create-admin-record-section'
 
 export default [
   // Health check route
@@ -167,7 +168,7 @@ export default [
               path: 'routes/administration/articles',
             },
             // Nested: Article Categories
-            ...createAdminEntriesSection({
+            ...createAdminRecordSection({
               entry: 'category',
               id: 'categoryId',
               name: 'categories',
@@ -175,7 +176,7 @@ export default [
             }),
 
             // Nested: Article Tags
-            ...createAdminEntriesSection({
+            ...createAdminRecordSection({
               entry: 'tag',
               id: 'tagId',
               name: 'tags',

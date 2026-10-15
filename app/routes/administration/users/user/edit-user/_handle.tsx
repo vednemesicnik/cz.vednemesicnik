@@ -13,9 +13,10 @@ export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { userId } = match.params
 
-    const label = 'Upravit uživatele'
-    const path = href(`/administration/users/:userId/edit-user`, { userId })
-
-    return { label, path }
+    return {
+      // The last crumb names the page, the record stands before it (copy 5yrb681l).
+      label: 'Úprava',
+      path: href(`/administration/users/:userId/edit-user`, { userId }),
+    }
   },
 }

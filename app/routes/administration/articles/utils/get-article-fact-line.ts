@@ -2,10 +2,11 @@ import type { ContentState } from '@generated/prisma/enums'
 
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { formatTime } from '~/utils/format-time'
+import type { SubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 
 type Options = {
   state: ContentState
-  submission: { state: 'pending' | 'approved'; date: Date } | null
+  submission: SubmissionState | null
   updatedAt: Date
   publishedAt: Date | null
   now: Date

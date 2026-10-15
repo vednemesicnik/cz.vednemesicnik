@@ -1,12 +1,12 @@
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
+import { nameCollator } from '~/utils/name-collator'
 import {
   getWebContentVisibility,
   ownArticle,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { findTagsWithArticleCounts } from '../../utils/find-tags-with-article-counts.server'
-import { nameCollator } from '../../utils/name-collator'
 import { pickTopByArticleCount } from '../../utils/pick-top-by-article-count'
 import type { Route } from './+types/route'
 

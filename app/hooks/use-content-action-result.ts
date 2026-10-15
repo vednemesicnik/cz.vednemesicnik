@@ -32,10 +32,15 @@ type ActionResult = { intent: string; missing: string[] } | undefined
  * what is missing before the content can be submitted or published.
  *
  * @param actionResult - The keyed fetcher's data, `{ intent, missing }`.
+ * @param toasts - Toasts that name the record, by intent (`Rubrika schválena`,
+ *   design 25a); the other intents keep the generic one.
  * @returns The missing list to show, `null` when there is none, and setters to
  *   show one up front (the detail checks before publishing) or close it.
  */
-export const useContentActionResult = (actionResult: ActionResult) => {
+export const useContentActionResult = (
+  actionResult: ActionResult,
+  toasts?: Record<string, string>,
+) => {
   const showToast = useToast()
   const [missingList, setMissingList] = useState<MissingList | null>(null)
   // A keyed fetcher keeps its data across remounts; answer only a new result.
@@ -58,9 +63,10 @@ export const useContentActionResult = (actionResult: ActionResult) => {
       return
     }
 
-    const toast = ACTION_TOASTS[actionResult.intent]
+    const toast =
+      toasts?.[actionResult.intent] ?? ACTION_TOASTS[actionResult.intent]
     if (toast !== undefined) showToast(toast)
-  }, [showToast, actionResult])
+  }, [showToast, actionResult, toasts])
 
   return {
     closeMissingList: () => setMissingList(null),

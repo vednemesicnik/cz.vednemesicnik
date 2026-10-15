@@ -1,8 +1,8 @@
-import { createPageTitle } from '~/utils/create-page-title'
+import { createAdminPageTitle } from '~/utils/create-admin-page-title'
 import type { Route } from './+types/route'
 
 export const meta = (_args: Route.MetaArgs) => {
-  const title = createPageTitle('Administrace - Přidat článek')
+  const title = createAdminPageTitle('Nový článek')
 
   return [{ title }]
 }

@@ -1,9 +1,13 @@
-import { createPageTitle } from '~/utils/create-page-title'
+import { createAdminEditPageTitle } from '~/utils/create-admin-edit-page-title'
+import { createAdminPageTitle } from '~/utils/create-admin-page-title'
 
 import type { Route } from './+types/route'
 
-export const meta: Route.MetaFunction = () => {
-  const title = createPageTitle('Administrace: Autoři - Upravit autora')
+export const meta: Route.MetaFunction = ({ loaderData }) => {
+  const title =
+    loaderData === undefined
+      ? createAdminPageTitle('Upravit autora')
+      : createAdminEditPageTitle(loaderData.author.name)
 
   return [{ title }]
 }

@@ -1,0 +1,23 @@
+/* No box of its own on a wide screen: the buttons wrap with the search. */
+.filterBarFilters {
+  @layer component {
+    display: contents;
+  }
+}
+
+@media (width < 768px) {
+  .filterBarFilters {
+    @layer component {
+      /* Its own width, not its content's, so the row scrolls, not the page:
+         the page's grid column grows with the content's width. */
+      contain: inline-size;
+      display: flex;
+      align-items: safe center;
+      gap: 8px;
+      margin-inline: -16px;
+      padding-inline: 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+  }
+}

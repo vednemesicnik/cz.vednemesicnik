@@ -14,16 +14,21 @@ export const useAutoSlug = ({
   fieldName,
 }: UseAutoSlugOptions) => {
   const [isFocused, setIsFocused] = useState(false)
+  const [isTouched, setIsTouched] = useState(false)
 
   useEffect(() => {
-    if (isFocused) return
+    if (isFocused || isTouched) return
 
     if (sourceValue) {
       updateFieldValue({ name: fieldName, value: slugify(sourceValue) })
     }
-  }, [fieldName, updateFieldValue, sourceValue, isFocused])
+  }, [fieldName, updateFieldValue, sourceValue, isFocused, isTouched])
 
   const handleFocus = () => setIsFocused(true)
+
+  // Opt-in: once the author types in the field, it stops following the source
+  // (design 25c). Without it, the field follows again after every blur.
+  const handleInput = () => setIsTouched(true)
 
   const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
     setIsFocused(false)
@@ -33,5 +38,6 @@ export const useAutoSlug = ({
   return {
     handleBlur,
     handleFocus,
+    handleInput,
   }
 }

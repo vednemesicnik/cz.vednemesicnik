@@ -1,0 +1,16 @@
+.actions {
+  @layer route {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-block-start: 8px;
+
+    @media (width < 768px) {
+      flex-direction: column-reverse;
+
+      & > * {
+        width: 100%;
+      }
+    }
+  }
+}

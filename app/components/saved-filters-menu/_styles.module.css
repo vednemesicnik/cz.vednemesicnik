@@ -1,0 +1,60 @@
+.savedFiltersMenu {
+  @layer component {
+    display: inline-flex;
+    flex: none;
+  }
+}
+
+.menu {
+  @layer component {
+    /* Without Popover API support the [popover] attribute is ignored and the
+       UA's `[popover]:not(:popover-open){display:none}` rule is absent, so the
+       menu would render in flow. Hide by default and only reveal when open. */
+    display: none;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: min(340px, calc(100vw - 32px));
+    padding: 16px 18px 18px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    color: var(--text-primary);
+  }
+}
+
+.menu:popover-open {
+  @layer component {
+    display: flex;
+  }
+}
+
+/* Under the button, its end edge lined up with the button's (22d). Guarded by
+   @supports so browsers with Popover but no anchor positioning keep the UA's
+   centred-popover fallback instead of the overridden insets. */
+@supports (position-area: block-end) {
+  .menu {
+    @layer component {
+      inset: auto;
+      margin: 0;
+      margin-block-start: 6px;
+      position-area: block-end span-inline-start;
+      position-try-fallbacks: flip-block, flip-inline;
+    }
+  }
+}
+
+.summaryIntro {
+  @layer component {
+    margin: 0;
+  }
+}
+
+.summaryList {
+  @layer component {
+    margin: 4px 0 0;
+    padding: 0;
+    color: var(--text-primary);
+    list-style: none;
+  }
+}
