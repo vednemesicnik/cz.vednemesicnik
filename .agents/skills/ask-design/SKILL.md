@@ -55,15 +55,16 @@ A question earns its place only if a different answer would change the code. Eac
 - **Varianty** — the realistic answers and what each costs.
 - **Co bych čekal** — a recommendation, marked as mine.
 
-**Product decisions are yours to make, not design's and not a question to Libor.** When the code
-and the drawing disagree on behaviour — a state that does not exist, an action that is removed, a
-permission, a data-model assumption — decide it per the `decide-and-inform` rule and tell Libor
-what you decided. Then write it into the question as a given fact, without widening it into
-implications the decision does not carry.
+**Product decisions are yours to make, not design's and not a question to the user.** When the
+code and the drawing disagree on behaviour — a state that does not exist, an action that is
+removed, a permission, a data-model assumption — decide it per the `decide-and-inform` rule and
+tell the user what you decided. Then write it into the question as a given fact, without widening
+it into implications the decision does not carry.
 
-**UX decisions are design's, not his.** Layout, which action is primary, dialog or toast, where
-a sentence sits, how a state is shown — answer those from the code's facts and leave the call to
-the design chat. Do not bring them to Libor, and do not settle them in the question either.
+**UX decisions are design's, not the user's.** Layout, which action is primary, dialog or toast,
+where a sentence sits, how a state is shown — answer those from the code's facts and leave the
+call to the design chat. Do not bring them to the user, and do not settle them in the question
+either.
 
 ## 3. Write it up
 
