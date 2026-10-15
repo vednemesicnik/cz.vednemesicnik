@@ -55,7 +55,8 @@ type Props = {
  * fact, and one action with the rest in „⋯“. Below 768 px it folds into three
  * lines — title, state, authors · categories — with the row action first in
  * „⋯“, and the whole row opens the detail (22g). A row someone else changed
- * while the list is open is tinted for a moment and says who changed it (22f).
+ * while the list is open is tinted for a moment and says who changed it (22f);
+ * while someone edits it, it says who instead.
  */
 export const ItemRow = ({
   article,
@@ -196,14 +197,16 @@ export const ItemRow = ({
       <TableCell className={styles.stateCell}>
         <StatusTag
           className={styles.state}
+          // Who edits it comes first: it changes what the row allows (22f).
           detail={
-            liveChange === undefined
+            article.holdLine ??
+            (liveChange === undefined
               ? article.factLine
               : formatLiveChangeLine({
                   name: liveChange.name,
                   now: new Date(),
                   occurredAt: liveChange.occurredAt,
-                })
+                }))
           }
           state={article.state}
         />

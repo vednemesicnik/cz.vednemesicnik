@@ -6,9 +6,9 @@ const INTENT_VALUE = FORM_CONFIG.intent.value
 
 /**
  * An action on a category or tag in its list row: the article's set (07c)
- * without a publish date to change.
+ * without a publish date to change, and without an edit hold to take over.
  */
-export type TaxonomyAction = Exclude<ArticleAction, 'change-date'>
+export type TaxonomyAction = Exclude<ArticleAction, 'change-date' | 'take-over'>
 
 /** An action that asks first when the record has published articles (25d, 3vnah8ji). */
 export type ConfirmAction = Extract<TaxonomyAction, 'archive' | 'retract'>

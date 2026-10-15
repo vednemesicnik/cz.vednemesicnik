@@ -1,5 +1,6 @@
 import { data, href, redirect } from 'react-router'
 
+import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
@@ -11,7 +12,10 @@ import { getAuthorPermissionContext } from '~/utils/permissions/author/context/g
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
+import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
 import { getArticleFactLine } from '../../utils/get-article-fact-line'
+import { getArticleHold } from '../../utils/get-article-hold'
+import { getHeldActionFlags } from '../../utils/get-held-action-flags'
 import type { Route } from './+types/route'
 import { getMissingArticleContent } from './utils/get-missing-article-content'
 
@@ -62,6 +66,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         },
       },
       firstContentAt: true,
+      heldByAuthor: { select: { name: true } },
+      heldByAuthorId: true,
+      heldByTabId: true,
+      heldSince: true,
+      heldUntil: true,
       id: true,
       images: {
         select: { altText: true },
@@ -119,7 +128,17 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     )
   }
 
-  const flags = getContentActionFlags(context, 'article', article)
+  const now = new Date()
+  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+  const hold = getArticleHold(article, { authorId: context.authorId, now })
+  const isHeldByOther = hold !== null && !hold.isOwn
+
+  // While someone else edits it, its edit and state actions wait (07g); the
+  // transitions check it again in their own writes.
+  const flags = getHeldActionFlags(
+    getContentActionFlags(context, 'article', article),
+    { isApprover, isHeldByOther },
+  )
 
   // Publishing an incomplete article opens the 23h list instead of the date
   // dialog; the server checks it again.
@@ -134,49 +153,76 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       })
     : []
 
-  return {
-    article: {
-      authors: article.authors,
-      categories: article.categories,
-      content: article.content,
-      excerpt: article.excerpt,
-      // The line under the title (design 22b, 23a).
-      factLine: getArticleFactLine({
-        now: new Date(),
-        publishedAt: article.publishedAt,
+  // Read only here: an earlier redirect must not use up the toast (23g).
+  const notice = await readAdminNotice(request)
+
+  return data(
+    {
+      article: {
+        authors: article.authors,
+        categories: article.categories,
+        content: article.content,
+        excerpt: article.excerpt,
+        // The line under the title (design 22b, 23a); who edits it while held
+        // (23g).
+        factLine:
+          hold === null
+            ? getArticleFactLine({
+                now,
+                publishedAt: article.publishedAt,
+                state: article.state,
+                submission: flags.submission,
+                updatedAt: article.updatedAt,
+              })
+            : formatEditHoldLine({
+                holderName: hold.heldByName,
+                isOwn: hold.isOwn,
+                now,
+                since: hold.heldSince,
+              }),
+        featuredImage: article.featuredImage
+          ? {
+              altText: article.featuredImage.altText,
+              description: article.featuredImage.description,
+              sources: createImageSources(
+                'article-image',
+                article.featuredImage,
+              ),
+            }
+          : null,
+        history: await getContentHistory({
+          createdAt: article.createdAt,
+          entity: 'article',
+          entityId: article.id,
+          publishedAt: article.publishedAt,
+        }),
+        id: article.id,
+        // The gallery is the editor's (24); the detail shows only the count (23a).
+        imageCount: article.images.length,
+        // FormattedDate carries the raw instant in `.iso`, which seeds the
+        // change-date dialog's picker (the browser converts it to/from local time,
+        // keeping the default and submitted value in the editor's timezone).
+        publishedAt: createFormattedDate(article.publishedAt),
+        slug: article.slug,
         state: article.state,
-        submission: flags.submission,
-        updatedAt: article.updatedAt,
-      }),
-      featuredImage: article.featuredImage
-        ? {
-            altText: article.featuredImage.altText,
-            description: article.featuredImage.description,
-            sources: createImageSources('article-image', article.featuredImage),
-          }
-        : null,
-      history: await getContentHistory({
-        createdAt: article.createdAt,
-        entity: 'article',
-        entityId: article.id,
-        publishedAt: article.publishedAt,
-      }),
-      id: article.id,
-      // The gallery is the editor's (24); the detail shows only the count (23a).
-      imageCount: article.images.length,
-      // FormattedDate carries the raw instant in `.iso`, which seeds the
-      // change-date dialog's picker (the browser converts it to/from local time,
-      // keeping the default and submitted value in the editor's timezone).
-      publishedAt: createFormattedDate(article.publishedAt),
-      slug: article.slug,
-      state: article.state,
-      tags: article.tags,
-      title: article.title,
+        tags: article.tags,
+        title: article.title,
+      },
+      ...flags,
+      // „Článek právě upravuje …“ in place of the buttons (23g), and when the
+      // page looks again: an expiry sends no event.
+      heldByName: isHeldByOther ? hold.heldByName : null,
+      heldUntil: hold?.heldUntil.toISOString() ?? null,
+      // Only the Coordinator publishes a retracted article again (23e).
+      isApprover,
+      isHeldByOther,
+      missingBeforePublish,
+      submission: flags.submission?.state ?? null,
+      // „Článek právě upravuje …“ after a direct address of its editor (23g).
+      toast: notice.toast,
     },
-    ...flags,
-    // Only the Coordinator publishes a retracted article again (23e).
-    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
-    missingBeforePublish,
-    submission: flags.submission?.state ?? null,
-  }
+    notice.toast === null
+      ? undefined
+      : { headers: { 'Set-Cookie': notice.setCookie } },
+  )
 }

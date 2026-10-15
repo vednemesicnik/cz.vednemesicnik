@@ -147,8 +147,21 @@ administration list or count (`NON_EMPTY_ARTICLE_WHERE`), and the public web lis
 with an address. Each *Nový článek* also deletes empty drafts older than a day whose edit hold
 is free.
 
-The edit-hold columns (`heldByAuthorId`, `heldByTabId`, `heldSince`, `heldUntil`) exist, but
-nothing takes the hold yet (#669). Gallery images carry their `position`.
+The edit hold is built in #669 (design 07g, 24g; decisions 0019 and
+[0021](./decisions/0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)).
+Only a draft is held, by one browser tab. The editor takes the hold when it opens and the hold
+is free (no holder, or `heldUntil` passed), renews it about every 30 s, and releases it when it
+closes, on *Uložit* (which closes it) and when the tab closes. Without a signal it expires
+after about 2 minutes, with no release. An empty draft is deleted when its hold is released.
+The same person's second tab asks *Článek máte otevřený v jiné záložce* and may take it over.
+Only the Coordinator takes over someone else's hold, through *Převzít úpravu?*, which logs
+*Převzata úprava*. Others get no *Upravit*, and the editor's address sends them to the detail
+with a toast. While someone else holds a draft, *Upravit* and every action that changes its
+state wait. Each transition repeats "not held by someone else" in its own write, a bulk action
+skips the held article, and a save checks that its tab still holds it. The list and the detail
+say „upravuje …“, live through the hold events and again when it expires. The history writes
+one *Upraveno* per hold. Hold writes keep `updatedAt` as it was. Gallery images carry their
+`position`.
 
 ---
 

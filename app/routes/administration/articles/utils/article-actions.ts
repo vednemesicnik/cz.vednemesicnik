@@ -15,6 +15,7 @@ export type ArticleAction =
   | 'retract'
   | 'return'
   | 'submit'
+  | 'take-over'
   | 'view-on-web'
   | 'withdraw'
 
@@ -31,6 +32,8 @@ export const ARTICLE_ACTION_LABELS: Record<ArticleAction, string> = {
   retract: 'Stáhnout z publikace…',
   return: 'Vrátit k úpravám',
   submit: 'Odeslat ke schválení',
+  // Opens the editor with the takeover dialog (24g).
+  'take-over': 'Převzít úpravu…',
   'view-on-web': 'Zobrazit na webu',
   withdraw: 'Vzít zpět do konceptu',
 }

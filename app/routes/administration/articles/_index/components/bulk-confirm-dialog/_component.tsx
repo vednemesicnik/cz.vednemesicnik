@@ -19,6 +19,7 @@ type Props = {
   action: 'archive' | 'delete'
   articles: { id: string; title: string }[]
   onlyDrafts: boolean
+  skipped: string | null
   onConfirm: () => void
   onClose: () => void
 }
@@ -30,11 +31,13 @@ type Props = {
  *
  * @param props.articles - The articles the action changes.
  * @param props.onlyDrafts - Every one is a draft: deleting says koncepty.
+ * @param props.skipped - What the action skips and why (22f), or `null`.
  */
 export const BulkConfirmDialog = ({
   action,
   articles,
   onlyDrafts,
+  skipped,
   onConfirm,
   onClose,
 }: Props) => {
@@ -69,6 +72,9 @@ export const BulkConfirmDialog = ({
               <li key={article.id}>{article.title}</li>
             ))}
           </ul>
+        )}
+        {skipped !== null && (
+          <AdminModalDescription>{skipped}</AdminModalDescription>
         )}
         {isDelete ? (
           <p className={styles.warning}>{description}</p>
