@@ -69,3 +69,39 @@
     color: var(--error-text);
   }
 }
+
+.unsentWarning {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-block: 0;
+  }
+}
+
+.unsentTitle {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+}
+
+.unsentCopy {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+}
+
+.unsentAdvice {
+  @layer route {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}

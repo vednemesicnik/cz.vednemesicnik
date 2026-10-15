@@ -2,6 +2,8 @@ import type { EditHolder } from '~/utils/edit-hold/edit-hold-result'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { formatTime } from '~/utils/format-time'
 
+import { formatSavedMoment } from './format-saved-moment'
+
 /**
  * The takeover dialog's text (design 24g, copy 940ikr3o): who edits, since
  * when and when they last saved, so the Coordinator tells someone writing from
@@ -23,10 +25,6 @@ export const formatTakeOverDescription = (holder: EditHolder, now: Date) => {
     formatNumericDate(since) === today
       ? formatTime(since)
       : `${formatNumericDate(since)} v ${formatTime(since)}`
-  const lastSavedText =
-    formatNumericDate(lastSavedAt) === today
-      ? `dnes v ${formatTime(lastSavedAt)}`
-      : `${formatNumericDate(lastSavedAt)} v ${formatTime(lastSavedAt)}`
 
-  return `Článek upravuje ${holder.name} od ${sinceText}. Poslední uložení ${lastSavedText}. Po převzetí bude původní editor jen ke čtení. Neuložené změny se mohou ztratit.`
+  return `Článek upravuje ${holder.name} od ${sinceText}. Poslední uložení ${formatSavedMoment(lastSavedAt, now)}. Po převzetí bude původní editor jen ke čtení. Neuložené změny se mohou ztratit.`
 }

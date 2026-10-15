@@ -29,6 +29,7 @@ import { AdminTextEditor } from '~/components/admin/admin-text-editor'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { Callout } from '~/components/callout'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
@@ -45,12 +46,19 @@ import { useEditHold } from '~/hooks/use-edit-hold'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
+import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { ArticleChangedDialog } from './components/article-changed-dialog'
+import { CopyArticleTextButton } from './components/copy-article-text-button'
+import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditHoldDialog } from './components/edit-hold-dialog'
+import { HoldTakenDialog } from './components/hold-taken-dialog'
+import { formatArticleChangedDescription } from './utils/format-article-changed-description'
+import { formatHoldTakenDescription } from './utils/format-hold-taken-description'
 import { formatTakeOverDescription } from './utils/format-take-over-description'
-import { getEditHoldNotice } from './utils/get-edit-hold-notice'
+import { getReadOnlyNotice } from './utils/get-read-only-notice'
 import { getSaveLineText } from './utils/get-save-line-text'
 
 export { handle } from './_handle'
@@ -73,6 +81,14 @@ const CONFORM_INTENT_NAME = '__intent__'
 
 const TAKEN_SLUG_HINT =
   'Zvolte jinou adresu — tuto už má jiný článek. Změna adresy se neuložila.'
+
+// What the editor says once the hold went elsewhere (24h, 24i): which dialog,
+// and whether anything stayed unsent.
+type HoldLoss = {
+  dialog: 'taken' | 'changed' | null
+  holderName: string
+  hasUnsentChanges: boolean
+}
 
 export default function RouteComponent({
   loaderData,
@@ -106,20 +122,17 @@ export default function RouteComponent({
     },
     updatedAt: article.updatedAt,
   })
-  // A refused save: someone else or another tab holds it now (24h). `undefined`
-  // while no save was refused.
-  const [refusedHolderName, setRefusedHolderName] = useState<
-    string | null | undefined
-  >(undefined)
-  const isSaveRefused = refusedHolderName !== undefined
-  const holdNotice = getEditHoldNotice(
-    isSaveRefused
-      ? refusedHolderName === null
-        ? { status: 'changed' }
-        : { holderName: refusedHolderName, status: 'lost' }
-      : editHold.state,
-  )
-  const isHolding = !isSaveRefused && editHold.state.status === 'holding'
+  const isHolding = editHold.state.status === 'holding'
+  const hasHeldRef = useRef(false)
+  if (isHolding) hasHeldRef.current = true
+  // Taken over or changed meanwhile: the editor only reads from now on (24h,
+  // 24i) and gets the edit back with a reload.
+  const lostHold =
+    editHold.state.status === 'lost' || editHold.state.status === 'changed'
+      ? editHold.state
+      : null
+  const readOnlyNotice = getReadOnlyNotice(editHold.state)
+  const [holdLoss, setHoldLoss] = useState<HoldLoss | null>(null)
 
   const closeHref = article.isEmptyDraft
     ? href('/administration/articles')
@@ -163,7 +176,10 @@ export default function RouteComponent({
   const [slugSuggestion, setSlugSuggestion] = useState<string | null>(null)
 
   // One save of the whole form; the server takes it only from this tab.
-  const send = async (formData: FormData): Promise<AutosaveSendResult> => {
+  const send = async (
+    formData: FormData,
+    isRetry = false,
+  ): Promise<AutosaveSendResult> => {
     let response: Response
 
     try {
@@ -184,9 +200,18 @@ export default function RouteComponent({
       return 'failed'
     }
 
+    // Refused: nobody holds it (the hold expired and was released meanwhile),
+    // so it is taken back if nothing was saved since, and the save goes
+    // again (24i); or someone does, and the editor learns who (24h). The
+    // changes stay unsent: a lost hold stops autosave and says so, and one
+    // the editor could not settle waits for *Zkusit znovu*.
     if (result.status === 'not-held') {
-      setRefusedHolderName(result.heldByName)
-      return 'stopped'
+      if (result.heldByName === null) {
+        if (!isRetry && (await editHold.retake())) return send(formData, true)
+      } else {
+        await editHold.recheck()
+      }
+      return 'failed'
     }
 
     editHold.acknowledgeSave(result.updatedAt)
@@ -207,6 +232,41 @@ export default function RouteComponent({
     send,
   })
   leaveSaveRef.current = autosave.getLeaveSave
+
+  // The hold went elsewhere: nothing more goes out, and the editor says
+  // whether anything stayed unsent (24h, 24i). Changed meanwhile with nothing
+  // lost, there is nothing to rescue: who holds it, as in 24h, or only the
+  // line offering the current version.
+  const handleHoldLoss = useEffectEvent(async () => {
+    const { state } = editHold
+    if (state.status !== 'lost' && state.status !== 'changed') return
+
+    const hasUnsentChanges = await autosave.stop()
+    const isChangedDialog = state.status === 'changed' && hasUnsentChanges
+
+    // Only an editor that held the edit lost it: one that never did (a
+    // takeover over a newer save) has nothing to be told about.
+    setHoldLoss({
+      dialog: !hasHeldRef.current
+        ? null
+        : isChangedDialog
+          ? 'changed'
+          : state.holder === null
+            ? null
+            : 'taken',
+      hasUnsentChanges,
+      holderName: state.holder?.name ?? '',
+    })
+  })
+  const lostStatus = lostHold?.status ?? null
+  useEffect(() => {
+    if (lostStatus !== null) void handleHoldLoss()
+  }, [lostStatus])
+  const closeHoldLossDialog = () =>
+    setHoldLoss((current) =>
+      current === null ? null : { ...current, dialog: null },
+    )
+  const reload = () => window.location.reload()
 
   // Every change of the form, typed or set by a button, saves (24e). Only
   // once the author touched it: the form reads empty while its fieldsets wait
@@ -337,8 +397,16 @@ export default function RouteComponent({
     })
   }
 
-  // Without the hold the editor only reads (07g); #671 draws it fully (24h).
-  const isReadOnly = !isHolding
+  // Without the hold nothing can be changed (07g). Lost for good, the editor
+  // also drops its toolbar and the buttons that would change something (24h).
+  const isLocked = !isHolding
+  const isReadOnly = lostHold !== null
+  // The text as the author sees it: the editor's own field, read at the click
+  // (a disabled fieldset leaves it out of the form's data).
+  const getContent = () => {
+    const input = formRef.current?.elements.namedItem(fields.content.name)
+    return input instanceof HTMLInputElement ? input.value : ''
+  }
 
   const isEmpty =
     !fields.title.value &&
@@ -352,7 +420,7 @@ export default function RouteComponent({
     now,
     savedAt,
     // Without the hold nothing goes out: the line says the last save, and
-    // #671 says what did not make it (24h).
+    // the warning what did not make it (24h).
     status:
       !isHolding &&
       (autosave.status === 'pending' || autosave.status === 'saving')
@@ -364,8 +432,25 @@ export default function RouteComponent({
     <AdminPage>
       <PageTitle>Upravit článek</PageTitle>
 
-      {/* The only sign of saving, without a toast (24e). */}
-      {autosave.status === 'failed' ? (
+      {/* The only sign of saving, without a toast (24e); while only reading,
+          who edits it now, or that it is free again (24h). */}
+      {lostHold !== null && lostHold.holder !== null ? (
+        <p className={styles.saveLine}>
+          {formatEditHoldLine({
+            holderName: lostHold.holder.name,
+            isOwn: false,
+            now,
+            since: new Date(lostHold.holder.since),
+          })}
+        </p>
+      ) : lostHold?.isEditable ? (
+        <p className={styles.saveLine}>
+          Článek lze znovu upravovat
+          <AdminButtonLink onClick={reload} type={'button'}>
+            Pokračovat v úpravě
+          </AdminButtonLink>
+        </p>
+      ) : autosave.status === 'failed' ? (
         <p className={styles.saveLine} role={'alert'}>
           <span className={styles.saveFailure}>{saveLine}</span>
           <AdminButtonLink onClick={autosave.retry} type={'button'}>
@@ -376,7 +461,59 @@ export default function RouteComponent({
         <p className={styles.saveLine}>{saveLine}</p>
       )}
 
-      {holdNotice !== null && <AdminParagraph>{holdNotice}</AdminParagraph>}
+      {readOnlyNotice !== null && (
+        <AdminParagraph>{readOnlyNotice}</AdminParagraph>
+      )}
+
+      {/* Stays until the editor closes: the only way back to the unsent text
+          (24h). */}
+      {holdLoss?.hasUnsentChanges && (
+        <Callout className={styles.unsentWarning} tone={'warning'}>
+          <p className={styles.unsentTitle}>
+            Některé změny se nestihly uložit.
+          </p>
+          <div className={styles.unsentCopy}>
+            <CopyArticleTextButton getContent={getContent} />
+            <CopyArticleTextHint />
+          </div>
+          <p className={styles.unsentAdvice}>
+            Než editor zavřete nebo budete pokračovat v úpravě, zkopírujte si
+            text článku.
+          </p>
+        </Callout>
+      )}
+
+      {holdLoss?.dialog === 'taken' && (
+        <HoldTakenDialog
+          description={formatHoldTakenDescription({
+            hasUnsentChanges: holdLoss.hasUnsentChanges,
+            now: new Date(),
+            savedAt,
+          })}
+          getContent={getContent}
+          hasUnsentChanges={holdLoss.hasUnsentChanges}
+          holderName={holdLoss.holderName}
+          onOpenDetail={() => navigate(closeHref)}
+          onStay={closeHoldLossDialog}
+        />
+      )}
+      {holdLoss?.dialog === 'changed' &&
+        editHold.state.status === 'changed' && (
+          <ArticleChangedDialog
+            canReload={
+              editHold.state.holder === null && editHold.state.isEditable
+            }
+            description={formatArticleChangedDescription({
+              awayMilliseconds: editHold.state.awayMilliseconds,
+              now: new Date(),
+              savedAt,
+            })}
+            getContent={getContent}
+            onClose={closeHoldLossDialog}
+            onOpenDetail={() => navigate(closeHref)}
+            onReload={reload}
+          />
+        )}
 
       {/* Someone else's edit, only the Coordinator's to take (24g). */}
       {editHold.state.status === 'held-by-other' && isApprover && (
@@ -421,20 +558,22 @@ export default function RouteComponent({
             value={editHold.tabId ?? ''}
           />
 
-          <Fieldset disabled={isReadOnly} legend={'Základní informace'}>
+          <Fieldset disabled={isLocked} legend={'Základní informace'}>
             <TextField
               {...getInputProps(fields.title, { type: 'text' })}
               errors={fields.title.errors}
               label={'Název'}
               placeholder={'Název článku'}
             />
-            <AdminButtonLink
-              disabled={isReadOnly}
-              onClick={regenerateSlug}
-              type="button"
-            >
-              Vygenerovat nový slug
-            </AdminButtonLink>
+            {!isReadOnly && (
+              <AdminButtonLink
+                disabled={isLocked}
+                onClick={regenerateSlug}
+                type="button"
+              >
+                Vygenerovat nový slug
+              </AdminButtonLink>
+            )}
             <TextField
               {...getInputProps(fields.slug, { type: 'text' })}
               errors={slugSuggestion === null ? undefined : [TAKEN_SLUG_HINT]}
@@ -445,9 +584,9 @@ export default function RouteComponent({
               placeholder={'nazev-clanku'}
             />
             {/* A taken address: a free one, filled in and saved (24d). */}
-            {slugSuggestion !== null && (
+            {slugSuggestion !== null && !isReadOnly && (
               <AdminButtonLink
-                disabled={isReadOnly}
+                disabled={isLocked}
                 onClick={() => {
                   // A chosen address no longer follows the title.
                   handleInput()
@@ -462,7 +601,7 @@ export default function RouteComponent({
             )}
           </Fieldset>
 
-          <Fieldset disabled={isReadOnly} legend={'Obsah'}>
+          <Fieldset disabled={isLocked} legend={'Obsah'}>
             <AdminTextarea
               field={fields.excerpt}
               label={'Výpis článku (excerpt)'}
@@ -477,10 +616,11 @@ export default function RouteComponent({
               }}
               key={form.key}
               label={'Obsah článku'}
+              readOnly={isReadOnly}
             />
           </Fieldset>
 
-          <Fieldset disabled={isReadOnly} legend={'Kategorizace'}>
+          <Fieldset disabled={isLocked} legend={'Kategorizace'}>
             <Select
               {...getSelectProps(fields.categoryIds)}
               errors={fields.categoryIds.errors}
@@ -507,7 +647,7 @@ export default function RouteComponent({
             </Select>
           </Fieldset>
 
-          <Fieldset disabled={isReadOnly} legend={'Obrázky'}>
+          <Fieldset disabled={isLocked} legend={'Obrázky'}>
             <AdminRadioInput
               className={styles.defaultFieldFeaturedImageContainer}
               field={fields.featuredImage}
@@ -525,26 +665,31 @@ export default function RouteComponent({
               return (
                 <AdminImageUploadCard
                   action={
-                    <Button
-                      onClick={() => {
-                        const currentValue = fields.featuredImage.value
-                        if (
-                          currentValue ===
-                          `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`
-                        ) {
-                          form.update({
-                            name: fields.featuredImage.name,
-                            value: FEATURED_IMAGE_SOURCE.NONE,
+                    !isReadOnly && (
+                      <Button
+                        onClick={() => {
+                          const currentValue = fields.featuredImage.value
+                          if (
+                            currentValue ===
+                            `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`
+                          ) {
+                            form.update({
+                              name: fields.featuredImage.name,
+                              value: FEATURED_IMAGE_SOURCE.NONE,
+                            })
+                          }
+                          form.remove({
+                            index,
+                            name: fields.existingImages.name,
                           })
-                        }
-                        form.remove({ index, name: fields.existingImages.name })
-                      }}
-                      type={'button'}
-                      variant={'danger'}
-                    >
-                      <DeleteIcon className={styles.removeIcon} />
-                      Odstranit
-                    </Button>
+                        }}
+                        type={'button'}
+                        variant={'danger'}
+                      >
+                        <DeleteIcon className={styles.removeIcon} />
+                        Odstranit
+                      </Button>
+                    )
                   }
                   key={image.key}
                   title={'Existující obrázek'}
@@ -579,6 +724,7 @@ export default function RouteComponent({
                       placeholder: 'Popis obrázku...',
                     }}
                     label={'Popis obrázku'}
+                    readOnly={isReadOnly}
                     toolbar={['link']}
                   />
 
@@ -599,26 +745,28 @@ export default function RouteComponent({
               return (
                 <AdminImageUploadCard
                   action={
-                    <Button
-                      onClick={() => {
-                        const currentValue = fields.featuredImage.value
-                        if (
-                          currentValue ===
-                          `${FEATURED_IMAGE_SOURCE.NEW}:${index}`
-                        ) {
-                          form.update({
-                            name: fields.featuredImage.name,
-                            value: FEATURED_IMAGE_SOURCE.NONE,
-                          })
-                        }
-                        form.remove({ index, name: fields.images.name })
-                      }}
-                      type={'button'}
-                      variant={'danger'}
-                    >
-                      <DeleteIcon className={styles.removeIcon} />
-                      Odstranit
-                    </Button>
+                    !isReadOnly && (
+                      <Button
+                        onClick={() => {
+                          const currentValue = fields.featuredImage.value
+                          if (
+                            currentValue ===
+                            `${FEATURED_IMAGE_SOURCE.NEW}:${index}`
+                          ) {
+                            form.update({
+                              name: fields.featuredImage.name,
+                              value: FEATURED_IMAGE_SOURCE.NONE,
+                            })
+                          }
+                          form.remove({ index, name: fields.images.name })
+                        }}
+                        type={'button'}
+                        variant={'danger'}
+                      >
+                        <DeleteIcon className={styles.removeIcon} />
+                        Odstranit
+                      </Button>
+                    )
                   }
                   key={image.key}
                   title={'Nový obrázek'}
@@ -648,6 +796,7 @@ export default function RouteComponent({
                       placeholder: 'Popis obrázku...',
                     }}
                     label={'Popis obrázku'}
+                    readOnly={isReadOnly}
                     toolbar={['link']}
                   />
                   <AdminRadioInput
@@ -662,20 +811,22 @@ export default function RouteComponent({
               )
             })}
 
-            <Button
-              onClick={() =>
-                form.insert({
-                  defaultValue: { id: createId() },
-                  name: fields.images.name,
-                })
-              }
-              type={'button'}
-            >
-              Přidat obrázek
-            </Button>
+            {!isReadOnly && (
+              <Button
+                onClick={() =>
+                  form.insert({
+                    defaultValue: { id: createId() },
+                    name: fields.images.name,
+                  })
+                }
+                type={'button'}
+              >
+                Přidat obrázek
+              </Button>
+            )}
           </Fieldset>
 
-          <Fieldset disabled={isReadOnly} legend={'Informace o autorech'}>
+          <Fieldset disabled={isLocked} legend={'Informace o autorech'}>
             {fields.authorIds.getFieldList().map((authorField, index) => (
               <div className={styles.authorRow} key={authorField.key}>
                 <Select
@@ -690,7 +841,7 @@ export default function RouteComponent({
                     </option>
                   ))}
                 </Select>
-                {index > 0 && (
+                {index > 0 && !isReadOnly && (
                   <Button
                     onClick={() =>
                       form.remove({ index, name: fields.authorIds.name })
@@ -705,14 +856,16 @@ export default function RouteComponent({
               </div>
             ))}
             {/* No submit buttons: Enter in a field must not add or remove one. */}
-            <Button
-              onClick={() =>
-                form.insert({ defaultValue: '', name: fields.authorIds.name })
-              }
-              type={'button'}
-            >
-              Přidat autora
-            </Button>
+            {!isReadOnly && (
+              <Button
+                onClick={() =>
+                  form.insert({ defaultValue: '', name: fields.authorIds.name })
+                }
+                type={'button'}
+              >
+                Přidat autora
+              </Button>
+            )}
           </Fieldset>
 
           <FormActions>

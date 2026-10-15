@@ -1,0 +1,29 @@
+.status {
+  @layer route {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.labels {
+  @layer route {
+    display: inline-grid;
+  }
+}
+
+.label {
+  @layer route {
+    grid-area: 1 / 1;
+  }
+}
+
+.hidden {
+  @layer route {
+    visibility: hidden;
+  }
+}

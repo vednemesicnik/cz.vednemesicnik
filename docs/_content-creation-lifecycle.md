@@ -179,6 +179,20 @@ waits first. When the page closes, the waiting save goes out with the release in
 The browser's own dialog asks only offline, after a failure, or when what waits cannot be sent
 while the page closes.
 
+Losing the hold is built in #671 (design 24h, 24i; decision
+[0023](./decisions/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold
+went to the Coordinator or to the same person's other tab shows *Úpravu přebírá …* and turns
+read-only: grey fields, no text toolbar, no buttons that change something. Autosave stops. It
+says *Všechny změny jsou uložené.* only when nothing was waiting; otherwise *Některé změny se
+nestihly uložit.* with *Zkopírovat celý text* (the article text as HTML and plain text, without
+the title, perex or other fields), which stays under the heading until the editor closes. The
+line under the heading says who edits it now; once the hold is free, *Článek lze znovu
+upravovat* with *Pokračovat v úpravě*, which reloads the editor, and the new page takes the
+hold. An editor whose hold expired while it was away takes it back silently and sends what
+waited, if nobody saved meanwhile. If someone did, it sends nothing and shows *Článek se
+mezitím změnil* with *Zkopírovat celý text* and *Načíst aktuální verzi*, or *Otevřít detail*
+while someone holds it or it is no longer an editable draft.
+
 ---
 
 ## Decided for the redesign (not implemented yet)

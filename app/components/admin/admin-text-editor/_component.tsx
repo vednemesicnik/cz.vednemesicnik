@@ -36,6 +36,8 @@ type Props = {
   inputProps: ComponentProps<'input'>
   field: FieldMetadata<string | undefined>
   toolbar?: ToolOption[]
+  /** Only reads, for good: grey, without the toolbar (design 24h). */
+  readOnly?: boolean
 }
 
 export const AdminTextEditor = ({
@@ -44,10 +46,11 @@ export const AdminTextEditor = ({
   inputProps: {
     className: inputClassName,
     placeholder: inputPlaceholder,
-    disabled: inputDisabled = false,
+    disabled: isInputDisabled = false,
     ...restInputProps
   },
   className,
+  readOnly = false,
   toolbar = [
     'bold',
     'italic',
@@ -62,6 +65,7 @@ export const AdminTextEditor = ({
     'redo',
   ],
 }: Props) => {
+  const inputDisabled = isInputDisabled || readOnly
   const [_meta, form] = useField(field.name)
   const hasErrors = field.errors !== undefined && field.errors.length > 0
 
@@ -166,145 +170,154 @@ export const AdminTextEditor = ({
       </Label>
 
       <div
-        className={clsx(styles.editorWrapper, hasErrors && styles.editorError)}
+        className={clsx(
+          styles.editorWrapper,
+          hasErrors && styles.editorError,
+          readOnly && styles.editorReadOnly,
+        )}
       >
         {editor && (
           <>
-            <Toolbar>
-              {toolbar?.includes('bold') && (
-                <ToolbarButton
-                  active={editorState?.isActiveBold}
-                  disabled={!editorState?.canToggleBold}
-                  onClick={() => editor?.chain().focus().toggleBold().run()}
-                  title="Tučně (Ctrl+B)"
-                >
-                  <strong>B</strong>
-                </ToolbarButton>
-              )}
+            {/* A read-only editor has no toolbar (design 24h). */}
+            {!readOnly && (
+              <Toolbar>
+                {toolbar?.includes('bold') && (
+                  <ToolbarButton
+                    active={editorState?.isActiveBold}
+                    disabled={!editorState?.canToggleBold}
+                    onClick={() => editor?.chain().focus().toggleBold().run()}
+                    title="Tučně (Ctrl+B)"
+                  >
+                    <strong>B</strong>
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('italic') && (
-                <ToolbarButton
-                  active={editorState?.isActiveItalic}
-                  disabled={!editorState?.canToggleItalic}
-                  onClick={() => editor?.chain().focus().toggleItalic().run()}
-                  title="Kurzíva (Ctrl+I)"
-                >
-                  <em>I</em>
-                </ToolbarButton>
-              )}
+                {toolbar?.includes('italic') && (
+                  <ToolbarButton
+                    active={editorState?.isActiveItalic}
+                    disabled={!editorState?.canToggleItalic}
+                    onClick={() => editor?.chain().focus().toggleItalic().run()}
+                    title="Kurzíva (Ctrl+I)"
+                  >
+                    <em>I</em>
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('link') && (
-                <ToolbarButton
-                  active={editorState?.isActiveLink}
-                  disabled={
-                    editorState?.isActiveLink
-                      ? !editorState?.canUnsetLink
-                      : !editorState?.canSetLink
-                  }
-                  onClick={handleToggleLink}
-                  title={
-                    editorState?.isActiveLink ? 'Upravit odkaz' : 'Vložit odkaz'
-                  }
-                >
-                  <LinkIcon />
-                </ToolbarButton>
-              )}
+                {toolbar?.includes('link') && (
+                  <ToolbarButton
+                    active={editorState?.isActiveLink}
+                    disabled={
+                      editorState?.isActiveLink
+                        ? !editorState?.canUnsetLink
+                        : !editorState?.canSetLink
+                    }
+                    onClick={handleToggleLink}
+                    title={
+                      editorState?.isActiveLink
+                        ? 'Upravit odkaz'
+                        : 'Vložit odkaz'
+                    }
+                  >
+                    <LinkIcon />
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('h2') && (
-                <ToolbarButton
-                  active={editorState?.isActiveH2}
-                  disabled={!editorState?.canToggleH2}
-                  onClick={() =>
-                    editor?.chain().focus().toggleHeading({ level: 2 }).run()
-                  }
-                  title="Nadpis 2"
-                >
-                  H2
-                </ToolbarButton>
-              )}
+                {toolbar?.includes('h2') && (
+                  <ToolbarButton
+                    active={editorState?.isActiveH2}
+                    disabled={!editorState?.canToggleH2}
+                    onClick={() =>
+                      editor?.chain().focus().toggleHeading({ level: 2 }).run()
+                    }
+                    title="Nadpis 2"
+                  >
+                    H2
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('h3') && (
-                <ToolbarButton
-                  active={editorState?.isActiveH3}
-                  disabled={!editorState?.canToggleH3}
-                  onClick={() =>
-                    editor?.chain().focus().toggleHeading({ level: 3 }).run()
-                  }
-                  title="Nadpis 3"
-                >
-                  H3
-                </ToolbarButton>
-              )}
+                {toolbar?.includes('h3') && (
+                  <ToolbarButton
+                    active={editorState?.isActiveH3}
+                    disabled={!editorState?.canToggleH3}
+                    onClick={() =>
+                      editor?.chain().focus().toggleHeading({ level: 3 }).run()
+                    }
+                    title="Nadpis 3"
+                  >
+                    H3
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('bulletList') && (
-                <ToolbarButton
-                  active={editorState?.isActiveBulletList}
-                  disabled={!editorState?.canToggleBulletList}
-                  onClick={() =>
-                    editor?.chain().focus().toggleBulletList().run()
-                  }
-                  title="Odrážkový seznam"
-                >
-                  •&nbsp;List
-                </ToolbarButton>
-              )}
+                {toolbar?.includes('bulletList') && (
+                  <ToolbarButton
+                    active={editorState?.isActiveBulletList}
+                    disabled={!editorState?.canToggleBulletList}
+                    onClick={() =>
+                      editor?.chain().focus().toggleBulletList().run()
+                    }
+                    title="Odrážkový seznam"
+                  >
+                    •&nbsp;List
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('orderedList') && (
-                <ToolbarButton
-                  active={editorState?.isActiveOrderedList}
-                  disabled={!editorState?.canToggleOrderedList}
-                  onClick={() =>
-                    editor?.chain().focus().toggleOrderedList().run()
-                  }
-                  title="Číslovaný seznam"
-                >
-                  1.&nbsp;List
-                </ToolbarButton>
-              )}
+                {toolbar?.includes('orderedList') && (
+                  <ToolbarButton
+                    active={editorState?.isActiveOrderedList}
+                    disabled={!editorState?.canToggleOrderedList}
+                    onClick={() =>
+                      editor?.chain().focus().toggleOrderedList().run()
+                    }
+                    title="Číslovaný seznam"
+                  >
+                    1.&nbsp;List
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('blockquote') && (
-                <ToolbarButton
-                  active={editorState?.isActiveBlockquote}
-                  disabled={!editorState?.canToggleBlockquote}
-                  onClick={() =>
-                    editor?.chain().focus().toggleBlockquote().run()
-                  }
-                  title="Citace"
-                >
-                  "&nbsp;"
-                </ToolbarButton>
-              )}
+                {toolbar?.includes('blockquote') && (
+                  <ToolbarButton
+                    active={editorState?.isActiveBlockquote}
+                    disabled={!editorState?.canToggleBlockquote}
+                    onClick={() =>
+                      editor?.chain().focus().toggleBlockquote().run()
+                    }
+                    title="Citace"
+                  >
+                    "&nbsp;"
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('hardBreak') && (
-                <ToolbarButton
-                  disabled={!editorState?.canSetHardBreak}
-                  onClick={() => editor?.chain().focus().setHardBreak().run()}
-                  title="Zalomení řádku"
-                >
-                  ↵
-                </ToolbarButton>
-              )}
+                {toolbar?.includes('hardBreak') && (
+                  <ToolbarButton
+                    disabled={!editorState?.canSetHardBreak}
+                    onClick={() => editor?.chain().focus().setHardBreak().run()}
+                    title="Zalomení řádku"
+                  >
+                    ↵
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('undo') && (
-                <ToolbarButton
-                  disabled={!editorState?.canUndo}
-                  onClick={() => editor?.chain().focus().undo().run()}
-                  title="Zpět (Ctrl+Z)"
-                >
-                  <UndoIcon />
-                </ToolbarButton>
-              )}
+                {toolbar?.includes('undo') && (
+                  <ToolbarButton
+                    disabled={!editorState?.canUndo}
+                    onClick={() => editor?.chain().focus().undo().run()}
+                    title="Zpět (Ctrl+Z)"
+                  >
+                    <UndoIcon />
+                  </ToolbarButton>
+                )}
 
-              {toolbar?.includes('redo') && (
-                <ToolbarButton
-                  disabled={!editorState?.canRedo}
-                  onClick={() => editor?.chain().focus().redo().run()}
-                  title="Znovu (Ctrl+Y)"
-                >
-                  <RedoIcon />
-                </ToolbarButton>
-              )}
-            </Toolbar>
+                {toolbar?.includes('redo') && (
+                  <ToolbarButton
+                    disabled={!editorState?.canRedo}
+                    onClick={() => editor?.chain().focus().redo().run()}
+                    title="Znovu (Ctrl+Y)"
+                  >
+                    <RedoIcon />
+                  </ToolbarButton>
+                )}
+              </Toolbar>
+            )}
 
             <EditorContent editor={editor} />
           </>

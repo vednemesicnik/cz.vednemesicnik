@@ -1,6 +1,6 @@
 import type { AutosaveStatus } from '~/hooks/use-autosave'
-import { formatNumericDate } from '~/utils/format-numeric-date'
-import { formatTime } from '~/utils/format-time'
+
+import { formatSavedMoment } from './format-saved-moment'
 
 type Options = {
   status: AutosaveStatus
@@ -41,11 +41,7 @@ export const getSaveLineText = ({
     default: {
       if (isEmpty) return 'Zatím prázdné'
 
-      const date =
-        formatNumericDate(savedAt) === formatNumericDate(now)
-          ? 'dnes'
-          : formatNumericDate(savedAt)
-      const savedLine = `uloženo ${date} v ${formatTime(savedAt)}`
+      const savedLine = `uloženo ${formatSavedMoment(savedAt, now)}`
 
       return isSlugUnsaved ? `${savedLine} · adresa neuložena` : savedLine
     }

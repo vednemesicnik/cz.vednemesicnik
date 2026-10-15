@@ -72,9 +72,10 @@
 
 .outline {
   @layer variant {
-    background-color: transparent;
+    /* A tinted surface (Callout) sets both, so the button reads as one (jb81di02). */
+    background-color: var(--button-outline-background, transparent);
     color: var(--text-primary);
-    border-color: var(--border);
+    border-color: var(--button-outline-border, var(--border));
 
     &:hover:not(:disabled):not(:focus-visible),
     &:focus-visible {

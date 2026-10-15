@@ -41,8 +41,9 @@ type Options = {
  * @param options - Whether the editor may save (it holds the edit), the form's
  *   fields, and `send`, which posts one save and reports how it ended.
  * @returns The status, `markChanged` for every edit, `flush` (resolves `true`
- *   once nothing waits that could still go), `retry`, `hasUnsavedChanges`, and
- *   `getLeaveSave` with what a closing page should still send, or `null`.
+ *   once nothing waits that could still go), `retry`, `hasUnsavedChanges`,
+ *   `getLeaveSave` with what a closing page should still send, or `null`, and
+ *   `stop` for a lost hold (resolves whether anything stayed unsent).
  */
 export const useAutosave = ({ isEnabled, getFormData, send }: Options) => {
   const [status, setStatus] = useState<AutosaveStatus>('idle')
@@ -108,8 +109,16 @@ export const useAutosave = ({ isEnabled, getFormData, send }: Options) => {
 
       inFlightRef.current = null
 
+      // Refused: what it carried stays unsent (24h).
       if (result === 'stopped') {
+        isDirtyRef.current = true
         changeStatus('stopped')
+        return
+      }
+
+      // Stopped while it was on its way: it says only whether it got through.
+      if (statusRef.current === 'stopped') {
+        if (result !== 'saved') isDirtyRef.current = true
         return
       }
 
@@ -194,6 +203,15 @@ export const useAutosave = ({ isEnabled, getFormData, send }: Options) => {
         return false
       }
     }
+  }
+
+  // The hold went elsewhere (24h, 24i): nothing more goes. Resolves, once a
+  // save on its way has its answer, whether anything stayed unsent.
+  const stop = async (): Promise<boolean> => {
+    clearDebounce()
+    changeStatus('stopped')
+    if (inFlightRef.current !== null) await inFlightRef.current
+    return isDirtyRef.current
   }
 
   const hasUnsavedChanges = () =>
@@ -281,5 +299,6 @@ export const useAutosave = ({ isEnabled, getFormData, send }: Options) => {
     markChanged,
     retry: () => void flush(),
     status,
+    stop,
   }
 }

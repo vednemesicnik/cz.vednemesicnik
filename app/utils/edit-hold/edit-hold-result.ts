@@ -15,5 +15,10 @@ export type EditHoldResult =
   | { status: 'own-other-tab' }
   | { status: 'held-by-other'; holder: EditHolder }
   | { status: 'lost'; holder: EditHolder | null }
-  | { status: 'changed' }
+  /**
+   * Saved since the editor loaded it, or no longer an editable draft (24i).
+   * `holder` is whoever else holds it now; `isEditable` is false once it left
+   * the draft or went for review, so reloading the editor would not help.
+   */
+  | { status: 'changed'; holder: EditHolder | null; isEditable: boolean }
   | { status: 'released' }

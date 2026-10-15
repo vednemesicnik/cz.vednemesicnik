@@ -179,8 +179,24 @@ describe('createEditHoldHandlers — take', () => {
         id: 'a1',
         tabId: 'tab-1',
       }),
-    ).resolves.toEqual({ status: 'changed' })
+    ).resolves.toEqual({ holder: null, isEditable: true, status: 'changed' })
     expect(config.writeHold).not.toHaveBeenCalled()
+  })
+
+  test('changed meanwhile and held by someone else: says who (24i)', async () => {
+    const config = createConfig(heldBy('jakub', 'tab-9', 'Jakub Novák'))
+
+    await expect(
+      createEditHoldHandlers(config).take(request, {
+        expectedUpdatedAt: new Date('2026-10-15T11:00:00.000Z'),
+        id: 'a1',
+        tabId: 'tab-1',
+      }),
+    ).resolves.toMatchObject({
+      holder: { name: 'Jakub Novák' },
+      isEditable: true,
+      status: 'changed',
+    })
   })
 
   test('a published article or a submitted one of one’s own is not held', async () => {
@@ -389,7 +405,11 @@ describe('createEditHoldHandlers — review fixes', () => {
         id: 'a1',
         tabId: 'tab-1',
       }),
-    ).resolves.toEqual({ status: 'changed' })
+    ).resolves.toMatchObject({
+      holder: { name: 'Jakub Novák' },
+      isEditable: true,
+      status: 'changed',
+    })
     expect(config.writeHold).not.toHaveBeenCalled()
   })
 
@@ -419,7 +439,7 @@ describe('createEditHoldHandlers — review fixes', () => {
         id: 'a1',
         tabId: 'tab-1',
       }),
-    ).resolves.toEqual({ status: 'changed' })
+    ).resolves.toEqual({ holder: null, isEditable: false, status: 'changed' })
     expect(config.writeHold).not.toHaveBeenCalled()
   })
 })

@@ -8,20 +8,33 @@ import type {
   EditHolder,
   EditHoldResult,
 } from '~/utils/edit-hold/edit-hold-result'
+import { isChangedWhileAway } from '~/utils/edit-hold/is-changed-while-away'
 import type { ContentEventEntity } from '~/utils/sse/content-event'
 
 const INTENT_VALUE = FORM_CONFIG.intent.value
 
-/** Where the editor stands with the edit hold (design 07g, 24g). */
+/** Where the editor stands with the edit hold (design 07g, 24g–24i). */
 export type EditHoldState =
   | { status: 'taking' }
   | { status: 'holding' }
   | { status: 'own-other-tab' }
   | { status: 'held-by-other'; holder: EditHolder }
-  /** Taken over: who holds it now, one's own other tab included (24g, 24h). */
-  | { status: 'lost'; holderName: string }
-  /** Saved elsewhere while this editor had no hold (24i). */
-  | { status: 'changed' }
+  /**
+   * Taken over (24g, 24h): who holds it now, one's own other tab included;
+   * `null` once it is free again. `isEditable` is false once it left the
+   * draft, so reloading the editor would not help.
+   */
+  | { status: 'lost'; holder: EditHolder | null; isEditable: boolean }
+  /**
+   * Saved elsewhere while this editor had no hold (24i), with who holds it
+   * now and how long the editor heard nothing from the server.
+   */
+  | {
+      status: 'changed'
+      holder: EditHolder | null
+      isEditable: boolean
+      awayMilliseconds: number
+    }
 
 type Options = {
   /** The hold endpoint (an action-only route). */
@@ -53,6 +66,11 @@ const NO_REVALIDATION = { revalidate: () => undefined, state: 'idle' }
  * (a failed take, someone else's hold, one's own in another tab) tries again
  * with each renewal, so it gets the edit once it is free.
  *
+ * An editor that lost the hold only reads (24h, 24i) and never takes it back by
+ * itself: each renewal asks who holds it now, so it can say when it is free,
+ * and the edit comes back with a reload. The one exception is an expiry while
+ * away with nothing saved meanwhile: the hold is taken again silently (24i).
+ *
  * The tab id lives for one page load: a duplicated tab copies `sessionStorage`,
  * so it would share the hold with its original. Autosave reports each of its
  * saves with `acknowledgeSave`, so taking the hold back after an expiry
@@ -64,8 +82,9 @@ const NO_REVALIDATION = { revalidate: () => undefined, state: 'idle' }
  *   is an empty draft, and the save to send instead of the release.
  * @returns The tab id for the save form (`null` until the page runs), the
  *   hold's state, `attempt` (a new one after each takeover, to bring back a
- *   dialog the takeover closed), `takeOver` for the 24g dialogs, and
- *   `acknowledgeSave`.
+ *   dialog the takeover closed), `takeOver` for the 24g dialogs,
+ *   `acknowledgeSave`, `retake` (resolves `true` once holding again) and
+ *   `recheck` for a save the server refused.
  */
 export const useEditHold = ({
   action,
@@ -92,6 +111,11 @@ export const useEditHold = ({
   isEmptyRef.current = isEmpty
   // False once the editor is gone: a take answered after that is released.
   const isActiveRef = useRef(false)
+  // The last answer from the server, a hold request's or a save's: how long
+  // the editor was away tells 24i from 24h.
+  const lastContactAtRef = useRef(0)
+  const getSilence = () =>
+    lastContactAtRef.current === 0 ? 0 : Date.now() - lastContactAtRef.current
 
   const buildFormData = (intent: string) => {
     const formData = new FormData()
@@ -110,6 +134,7 @@ export const useEditHold = ({
   const post = async (target: string, formData: FormData) => {
     try {
       const response = await fetch(target, { body: formData, method: 'POST' })
+      lastContactAtRef.current = Date.now()
       return response.ok ? ((await response.json()) as EditHoldResult) : null
     } catch {
       return null
@@ -160,22 +185,57 @@ export const useEditHold = ({
     return true
   })
 
-  const apply = (result: EditHoldResult | null) => {
+  // `silence` is how long the editor heard nothing before the request.
+  const apply = (result: EditHoldResult | null, silence: number) => {
     if (result === null || result.status === 'released') return
 
     // Holding again: a later leave goes out as usual.
     if (result.status === 'holding') isLeaveSaveSentRef.current = false
 
+    if (result.status === 'changed') {
+      setState({ ...result, awayMilliseconds: silence })
+      return
+    }
+
     if (result.status === 'lost') {
+      const { holder } = result
       setState(
-        result.holder === null
-          ? { status: 'changed' }
-          : { holderName: result.holder.name, status: 'lost' },
+        holder !== null &&
+          isChangedWhileAway({
+            awayMilliseconds: silence,
+            holder,
+            ownLastSavedAt: loadedUpdatedAtRef.current,
+          })
+          ? {
+              awayMilliseconds: silence,
+              holder,
+              isEditable: true,
+              status: 'changed',
+            }
+          : { holder, isEditable: true, status: 'lost' },
       )
       return
     }
 
     setState(result)
+  }
+
+  // An editor that only reads asks who holds it now; a renewal from a tab
+  // without the hold writes nothing (24h: *Článek lze znovu upravovat*).
+  const watch = async () => {
+    const result = await post(action, buildFormData(INTENT_VALUE.renewEditHold))
+
+    setState((current) => {
+      if (current.status !== 'lost' && current.status !== 'changed') {
+        return current
+      }
+      if (result?.status === 'lost')
+        return { ...current, holder: result.holder }
+      if (result?.status === 'changed' && !result.isEditable) {
+        return { ...current, holder: null, isEditable: false }
+      }
+      return current
+    })
   }
 
   // A page that loaded just before its own leave save landed meets that save
@@ -197,40 +257,59 @@ export const useEditHold = ({
     return true
   }
 
-  const take = useEffectEvent(async (isPageLoad = false) => {
-    const result = await post(action, buildFormData(INTENT_VALUE.takeEditHold))
+  // `silence` defaults to the time since the last answer; a renewal that
+  // found the hold gone passes its own, measured before it was sent.
+  const take = useEffectEvent(
+    async ({
+      isPageLoad = false,
+      silence = getSilence(),
+    }: {
+      isPageLoad?: boolean
+      silence?: number
+    } = {}): Promise<boolean> => {
+      const result = await post(
+        action,
+        buildFormData(INTENT_VALUE.takeEditHold),
+      )
 
-    // The editor went away while the take was on its way.
-    if (!isActiveRef.current) {
-      if (result?.status === 'holding') sendRelease(action)
-      return
-    }
+      // The editor went away while the take was on its way.
+      if (!isActiveRef.current) {
+        if (result?.status === 'holding') sendRelease(action)
+        return false
+      }
 
-    if (isPageLoad && result?.status === 'changed' && reloadOnce()) return
+      if (isPageLoad && result?.status === 'changed' && reloadOnce()) {
+        return false
+      }
 
-    apply(result)
-  })
+      apply(result, silence)
+      return result?.status === 'holding'
+    },
+  )
 
   const renew = useEffectEvent(async () => {
     const { status } = stateRef.current
 
-    // Lost, or saved elsewhere: the read-only editor of #671 takes it from here.
-    if (status === 'lost' || status === 'changed') return
+    if (status === 'lost' || status === 'changed') {
+      await watch()
+      return
+    }
 
     if (status !== 'holding') {
       await take()
       return
     }
 
+    const silence = getSilence()
     const result = await post(action, buildFormData(INTENT_VALUE.renewEditHold))
 
     // Expired and nobody took it: back, if nothing was saved meanwhile (24i).
     if (result?.status === 'lost' && result.holder === null) {
-      await take()
+      await take({ silence })
       return
     }
 
-    apply(result)
+    apply(result, silence)
   })
 
   // A remount right after the unmount (React's development double mount) keeps
@@ -255,7 +334,7 @@ export const useEditHold = ({
       tabIdRef.current = crypto.randomUUID()
       setTabId(tabIdRef.current)
     }
-    void take(true)
+    void take({ isPageLoad: true })
 
     const interval = setInterval(
       () => void renew(),
@@ -278,6 +357,10 @@ export const useEditHold = ({
     // a leave save the page loads afresh, since its form is older than the save.
     const handlePageShow = (event: PageTransitionEvent) => {
       if (!event.persisted) return
+      // An editor that lost the hold only reads, also after coming back
+      // (decision 0023): the edit returns only with a reload.
+      const { status } = stateRef.current
+      if (status === 'lost' || status === 'changed') return
       if (isLeaveSaveSentRef.current) {
         window.location.reload()
       } else {
@@ -320,6 +403,7 @@ export const useEditHold = ({
   // A takeover that did not get through asks the server again, and a new
   // attempt brings the closed dialog back with what holds now.
   const takeOver = async () => {
+    const silence = getSilence()
     const result = await post(
       action,
       buildFormData(INTENT_VALUE.takeOverEditHold),
@@ -328,7 +412,7 @@ export const useEditHold = ({
     if (result === null) {
       await take()
     } else {
-      apply(result)
+      apply(result, silence)
     }
 
     setAttempt((current) => current + 1)
@@ -336,7 +420,24 @@ export const useEditHold = ({
 
   const acknowledgeSave = (savedUpdatedAt: string) => {
     loadedUpdatedAtRef.current = savedUpdatedAt
+    lastContactAtRef.current = Date.now()
   }
 
-  return { acknowledgeSave, attempt, state, tabId, takeOver }
+  // A save refused with nobody holding it (24i): back if nothing was saved
+  // meanwhile, so the save can go again.
+  const retake = () => take()
+
+  // A save refused for someone else: who holds it now, without waiting for
+  // the next renewal.
+  const recheck = () => renew()
+
+  return {
+    acknowledgeSave,
+    attempt,
+    recheck,
+    retake,
+    state,
+    tabId,
+    takeOver,
+  }
 }
