@@ -17,11 +17,15 @@ export type TaxonomyRecordCopy = {
   archiveDescription: string
   deleteTitle: (name: string) => string
   deleteDescription: (articleCount: number) => string
+  retractTitle: (name: string) => string
+  retractDescription: (publishedArticleCount: number) => string
   toasts: {
     approved: string
+    approvedAndPublished: string
     archived: string
     created: string
     published: string
+    retracted: string
     saved: string
     submitted: string
   }

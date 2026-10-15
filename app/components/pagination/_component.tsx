@@ -1,6 +1,8 @@
 import { clsx } from 'clsx'
 import { useSearchParams } from 'react-router'
 import { BaseLink } from '~/components/base-link'
+import type { CountForms } from '~/config/list-noun-config'
+import { formatListCount } from '~/utils/format-list-count'
 import styles from './_styles.module.css'
 
 export const PAGE_PARAM = 'page'
@@ -12,7 +14,7 @@ type Layout = 'stacked' | 'inline'
 type Props = {
   currentPage: number
   layout?: Layout
-  noun: string
+  noun: string | CountForms
   pageSize: number
   size?: Size
   totalCount: number
@@ -50,9 +52,9 @@ function getPageNumbers(
  * numbers give way to "Stránka 2 z 6" between Předchozí and Další.
  *
  * @param layout - `stacked` puts the summary below the numbers (web); `inline` puts it to their left from 640 px up (administration, design 22a).
- * @param noun - What the list counts, in the genitive plural ("článků"); it ends the summary "1–9 z 52 článků".
+ * @param noun - What the list counts. The web passes the genitive plural ("článků"), which ends the summary "1–9 z 52 článků", and shows nothing on one page. The administration passes the forms by count, so one page still says how many records the list holds ("8 rubrik", design 3vnah8ji).
  * @param size - `md` has 44 px items with labelled steps (web); `sm` has 36 px items with arrow-only steps (administration, design 22a).
- * @returns The pagination, or nothing when everything fits on one page
+ * @returns The pagination; on one page the count when given the forms and records, else nothing
  */
 export const Pagination = ({
   currentPage,
@@ -65,7 +67,18 @@ export const Pagination = ({
 }: Props) => {
   const [searchParams] = useSearchParams()
 
-  if (totalPages <= 1) return null
+  if (totalPages <= 1) {
+    if (typeof noun === 'string' || totalCount === 0) return null
+
+    return (
+      <p
+        aria-live={'polite'}
+        className={clsx(styles.summary, size === 'sm' && styles.sm)}
+      >
+        {formatListCount(totalCount, noun)}
+      </p>
+    )
+  }
 
   // Preserve unrelated query params (q, sort, order, ...) when changing pages.
   const getPageLink = (page: number) => {
@@ -166,7 +179,8 @@ export const Pagination = ({
       </ul>
       <p aria-live={'polite'} className={styles.summary}>
         {startItem.toLocaleString('cs-CZ')}–{endItem.toLocaleString('cs-CZ')} z{' '}
-        {totalCount.toLocaleString('cs-CZ')} {noun}
+        {totalCount.toLocaleString('cs-CZ')}{' '}
+        {typeof noun === 'string' ? noun : noun.other}
       </p>
     </nav>
   )

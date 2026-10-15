@@ -43,7 +43,7 @@ describe('getTaxonomyFactLine', () => {
     ).toBe('Odesláno · Ondřej Beneš · 26. 9. 2026')
   })
 
-  test('an approved one still names its author', () => {
+  test('an approved one names its author and the approval date', () => {
     expect(
       getTaxonomyFactLine({
         ...base,
@@ -53,7 +53,7 @@ describe('getTaxonomyFactLine', () => {
           state: 'approved',
         },
       }),
-    ).toBe('Ondřej Beneš')
+    ).toBe('Schváleno · Ondřej Beneš · 27. 9. 2026')
   })
 
   test('a published one has no line', () => {

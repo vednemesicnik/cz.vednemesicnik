@@ -26,8 +26,10 @@ import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
 import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
+import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
+import { AUTHOR_COUNT_FORMS } from '~/config/list-noun-config'
 import {
   ACCOUNT_OPTIONS,
   AUTHOR_ROLE_OPTIONS,
@@ -211,6 +213,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </TableBody>
         </AdminTable>
       )}
+      <Pagination
+        currentPage={1}
+        layout={'inline'}
+        noun={AUTHOR_COUNT_FORMS}
+        pageSize={authors.length}
+        size={'sm'}
+        totalCount={authors.length}
+        totalPages={1}
+      />
     </AdminPage>
   )
 }

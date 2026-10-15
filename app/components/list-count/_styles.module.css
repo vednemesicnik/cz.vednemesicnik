@@ -1,8 +1,0 @@
-/* As the pagination's summary, which says the same of a longer list (22a). */
-.listCount {
-  @layer component {
-    margin: 0;
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-  }
-}

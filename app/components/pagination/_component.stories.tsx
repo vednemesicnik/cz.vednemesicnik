@@ -3,6 +3,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
+import { ARTICLE_NOUN, CATEGORY_NOUN } from '~/config/list-noun-config'
+
 import { Pagination } from './_component'
 
 const meta: Meta<typeof Pagination> = {
@@ -42,10 +44,24 @@ export const Administration: Story = {
     ...Playground.args,
     currentPage: 1,
     layout: 'inline',
+    noun: ARTICLE_NOUN.countForms,
     pageSize: 20,
     size: 'sm',
     totalCount: 41,
     totalPages: 3,
+  },
+}
+
+/** An administration list on one page: only how many records it holds (3vnah8ji). */
+export const OnePage: Story = {
+  args: {
+    currentPage: 1,
+    layout: 'inline',
+    noun: CATEGORY_NOUN.countForms,
+    pageSize: 20,
+    size: 'sm',
+    totalCount: 8,
+    totalPages: 1,
   },
 }
 

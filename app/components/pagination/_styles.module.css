@@ -150,7 +150,8 @@
   }
 }
 
-.sm .summary {
+.sm .summary,
+.summary.sm {
   @layer variant {
     font-size: 13px;
   }
