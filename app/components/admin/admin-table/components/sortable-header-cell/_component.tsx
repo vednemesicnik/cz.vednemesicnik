@@ -72,8 +72,6 @@ export const TableSortableHeaderCell = ({
       }
       className={styles.headerCell}
     >
-      {/* BaseLink, not the styled Link: both style one class in the same
-          layer, so which wins would depend on the order of CSS chunks. */}
       <BaseLink
         className={styles.link}
         preventScrollReset={true}
