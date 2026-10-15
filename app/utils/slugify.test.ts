@@ -22,4 +22,14 @@ describe('slugify', () => {
   test('should handle a combination of transformations', () => {
     expect(slugify('Éxámple Test!@#')).toBe('example-test')
   })
+
+  test('should turn separators between words into hyphens', () => {
+    expect(slugify('2026/4')).toBe('2026-4')
+    expect(slugify('Rozhovor: Jana Nováková')).toBe('rozhovor-jana-novakova')
+    expect(slugify('v2.0')).toBe('v2-0')
+  })
+
+  test('should leave a valid slug as it is', () => {
+    expect(slugify('2026-4')).toBe('2026-4')
+  })
 })
