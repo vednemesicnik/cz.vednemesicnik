@@ -7,14 +7,21 @@ import {
   getSelectProps,
   useForm,
 } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import type { SubmitEvent } from 'react'
-import { href, useNavigate, useNavigation } from 'react-router'
+import { parseWithZod } from '@conform-to/zod/v4'
+import { createId } from '@paralleldrive/cuid2'
+import {
+  type FormEvent,
+  type MouseEvent,
+  type SubmitEvent,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from 'react'
+import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
-import { AdminDraftRestoreBanner } from '~/components/admin/admin-draft-restore-banner'
 import { AdminImageInput } from '~/components/admin/admin-image-input'
 import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
-import { AdminLeaveConfirmationDialog } from '~/components/admin/admin-leave-confirmation-dialog'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminRadioInput } from '~/components/admin/admin-radio-input'
@@ -32,37 +39,58 @@ import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
+import { FORM_CONFIG } from '~/config/form-config'
+import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
-import {
-  clearArticleBackup,
-  getArticleBackupKey,
-  sanitizeArticleBackupValue,
-  writeArticleBackup,
-} from '~/utils/article-backup'
+import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
-import { useDraftRestore } from '~/utils/use-draft-restore'
-import { useUnsavedChangesGuard } from '~/utils/use-unsaved-changes-guard'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { EditHoldDialog } from './components/edit-hold-dialog'
 import { formatTakeOverDescription } from './utils/format-take-over-description'
 import { getEditHoldNotice } from './utils/get-edit-hold-notice'
+import { getSaveLineText } from './utils/get-save-line-text'
 
-export { action } from './_action'
 export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
+// What the save route answers (decision 0022).
+type SaveResponse =
+  | { status: 'saved'; updatedAt: string; slugSuggestion: string | null }
+  | { status: 'not-held'; heldByName: string | null }
+
+// The tab's own fields are no change of the article.
+const SNAPSHOT_IGNORED_FIELDS = new Set<string>([
+  FORM_CONFIG.authenticityToken.name,
+  EDIT_HOLD_CONFIG.tabIdName,
+])
+
+// The name of the button Conform submits its intents with.
+const CONFORM_INTENT_NAME = '__intent__'
+
+const TAKEN_SLUG_HINT =
+  'Zvolte jinou adresu — tuto už má jiný článek. Změna adresy se neuložila.'
+
 export default function RouteComponent({
   loaderData,
-  actionData,
   params,
 }: Route.ComponentProps) {
   const { article, isApprover } = loaderData
-  const { state } = useNavigation()
   const navigate = useNavigate()
+  const revalidator = useRevalidator()
+  // The title the breadcrumb and the tab show, as last loaded.
+  const loadedTitleRef = useRef(article.title)
+  loadedTitleRef.current = article.title
+  const formRef = useRef<HTMLFormElement>(null)
+  const saveAction = href('/administration/articles/:articleId/save', {
+    articleId: params.articleId,
+  })
+
+  // Autosave is set up after the hold; a closing page asks it through this.
+  const leaveSaveRef = useRef<() => FormData | null>(() => null)
 
   // One tab edits at a time (07g, 24g).
   const editHold = useEditHold({
@@ -72,15 +100,23 @@ export default function RouteComponent({
     entity: 'article',
     id: params.articleId,
     isEmpty: article.isEmptyDraft,
+    leaveSave: {
+      action: saveAction,
+      getFormData: () => leaveSaveRef.current(),
+    },
     updatedAt: article.updatedAt,
   })
-  // A refused save: someone else or another tab holds it now (24h).
-  const isSaveRefused = actionData !== undefined && 'heldByName' in actionData
+  // A refused save: someone else or another tab holds it now (24h). `undefined`
+  // while no save was refused.
+  const [refusedHolderName, setRefusedHolderName] = useState<
+    string | null | undefined
+  >(undefined)
+  const isSaveRefused = refusedHolderName !== undefined
   const holdNotice = getEditHoldNotice(
     isSaveRefused
-      ? actionData.heldByName === null
+      ? refusedHolderName === null
         ? { status: 'changed' }
-        : { holderName: actionData.heldByName, status: 'lost' }
+        : { holderName: refusedHolderName, status: 'lost' }
       : editHold.state,
   )
   const isHolding = !isSaveRefused && editHold.state.status === 'holding'
@@ -96,11 +132,8 @@ export default function RouteComponent({
     article.images.map((image) => [image.id, image.previewUrl]),
   )
 
-  const backupKey = getArticleBackupKey(params.articleId)
-
-  const { backup, defaultValue, formId, restore, discard } = useDraftRestore({
-    backupKey,
-    baseDefaultValue: {
+  const [form, fields] = useForm({
+    defaultValue: {
       authorIds: article.authorIds,
       categoryIds: article.categoryIds,
       content: article.content,
@@ -118,59 +151,182 @@ export default function RouteComponent({
       tagIds: article.tagIds,
       title: article.title,
     },
-    baseFormId: 'edit-article',
-  })
-
-  const [form, fields] = useForm({
-    constraint: getZodConstraint(schema),
-    defaultValue,
-    id: formId,
-    lastResult: actionData?.submissionResult,
+    id: 'edit-article',
+    // Parsed here so Conform runs `update`, `insert` and `remove` in the page;
+    // the schema refuses nothing a draft may lack (24d).
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
-    // The tab id arrives after hydration; it is no change of the article.
-    shouldDirtyConsider: (field) => {
-      return !field.startsWith('csrf') && field !== EDIT_HOLD_CONFIG.tabIdName
-    },
-    shouldRevalidate: 'onBlur',
-    shouldValidate: 'onSubmit',
   })
 
-  const writeBackup = () => {
-    writeArticleBackup(backupKey, {
-      savedAt: new Date().toISOString(),
-      value: sanitizeArticleBackupValue(form.value as Record<string, unknown>),
-    })
+  // The article's last save, as the line under the heading says it (24e).
+  const [savedAt, setSavedAt] = useState(() => new Date(article.updatedAt))
+  // A free address for a taken one, which did not save (24d).
+  const [slugSuggestion, setSlugSuggestion] = useState<string | null>(null)
+
+  // One save of the whole form; the server takes it only from this tab.
+  const send = async (formData: FormData): Promise<AutosaveSendResult> => {
+    let response: Response
+
+    try {
+      response = await fetch(saveAction, { body: formData, method: 'POST' })
+    } catch {
+      return 'offline'
+    }
+
+    // An expired session redirects to the sign-in page.
+    if (response.redirected || (!response.ok && response.status !== 409)) {
+      return 'failed'
+    }
+
+    let result: SaveResponse
+    try {
+      result = (await response.json()) as SaveResponse
+    } catch {
+      return 'failed'
+    }
+
+    if (result.status === 'not-held') {
+      setRefusedHolderName(result.heldByName)
+      return 'stopped'
+    }
+
+    editHold.acknowledgeSave(result.updatedAt)
+    setSavedAt(new Date(result.updatedAt))
+    setSlugSuggestion(result.slugSuggestion)
+
+    // A new title reaches the breadcrumb and the tab title.
+    const savedTitle = String(formData.get(fields.title.name) ?? '').trim()
+    if (savedTitle !== loadedTitleRef.current) void revalidator.revalidate()
+
+    return 'saved'
   }
 
-  const { blocker, markSubmitting } = useUnsavedChangesGuard({
-    isDirty: form.dirty,
-    onLeave: writeBackup,
-    // Cleared only when the submit actually redirects away (success), so a
-    // server error / expired session keeps the backup.
-    onSubmittedAway: () => clearArticleBackup(backupKey),
+  const autosave = useAutosave({
+    getFormData: () =>
+      formRef.current === null ? null : new FormData(formRef.current),
+    isEnabled: isHolding,
+    send,
   })
+  leaveSaveRef.current = autosave.getLeaveSave
+
+  // Every change of the form, typed or set by a button, saves (24e). Only
+  // once the author touched it: the form reads empty while its fieldsets wait
+  // for the hold, and coming back is no change.
+  const hasInteractedRef = useRef(false)
+  const markInteracted = () => {
+    hasInteractedRef.current = true
+  }
+  const snapshot = JSON.stringify(form.value ?? {}, (key, value) =>
+    SNAPSHOT_IGNORED_FIELDS.has(key)
+      ? undefined
+      : value instanceof File
+        ? `${value.name}:${value.size}:${value.lastModified}`
+        : value,
+  )
+  const snapshotRef = useRef(snapshot)
+  // Set by a button whose change saves at once instead of after the pause.
+  const isFlushOnChangeRef = useRef(false)
+  const handleFormChange = useEffectEvent(() => {
+    autosave.markChanged()
+    if (!isFlushOnChangeRef.current) return
+    isFlushOnChangeRef.current = false
+    void autosave.flush()
+  })
+  useEffect(() => {
+    if (snapshot === snapshotRef.current) return
+    snapshotRef.current = snapshot
+    if (hasInteractedRef.current) handleFormChange()
+  }, [snapshot])
+
+  // The platform's save shortcut saves at once (24e).
+  const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    const platform =
+      (navigator as Navigator & { userAgentData?: { platform: string } })
+        .userAgentData?.platform ?? navigator.platform
+
+    if (!isSaveShortcut(event, platform)) return
+    event.preventDefault()
+    void autosave.flush()
+  })
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => handleKeyDown(event)
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  // The line's „dnes“ turns into a date after midnight.
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Leaving sends what waits first. Offline or after a failure the leave
+  // becomes a full page load, so the browser's own dialog asks (24e).
+  const leaveTo = async (to: string, goInApp: () => void) => {
+    if (await autosave.flush()) {
+      goInApp()
+    } else {
+      window.location.assign(to)
+    }
+  }
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      currentLocation.pathname !== nextLocation.pathname &&
+      autosave.hasUnsavedChanges(),
+  )
+  const handleBlocked = useEffectEvent(() => {
+    if (blocker.state !== 'blocked') return
+    const { pathname, search, hash } = blocker.location
+    const to = `${pathname}${search}${hash}`
+
+    void leaveTo(to, () => blocker.proceed()).finally(() => {
+      if (blocker.state === 'blocked') blocker.reset()
+    })
+  })
+  useEffect(() => {
+    if (blocker.state === 'blocked') handleBlocked()
+  }, [blocker.state])
 
   const { onSubmit: conformOnSubmit, ...formProps } = getFormProps(form)
 
+  // Nothing posts the form: the editor has no submit button, so Enter in a
+  // field does nothing. Conform runs its own `update`, `insert` and `remove`
+  // as a submit (every keystroke of the text editor and of a title the address
+  // follows); those wait for the pause like typing. Any other submit saves.
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    const isConformIntent =
+      event.nativeEvent.submitter?.getAttribute('name') === CONFORM_INTENT_NAME
     conformOnSubmit(event)
-    // Exempt our own submission's redirect from the guard. An invalid submit is
-    // prevented by Conform, so skip it.
-    if (!event.defaultPrevented) markSubmitting()
+    event.preventDefault()
+    if (!isConformIntent) void autosave.flush()
   }
 
-  const handleConfirmLeave = () => {
-    writeBackup()
-    blocker.proceed?.()
+  // A picked file is a change even before Conform reads it.
+  const handleChange = (event: FormEvent<HTMLFormElement>) => {
+    if (
+      event.target instanceof HTMLInputElement &&
+      event.target.type === 'file'
+    ) {
+      autosave.markChanged()
+    }
+  }
+
+  const handleClose = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault()
+    void leaveTo(closeHref, () => navigate(closeHref))
   }
 
   const existingImages = fields.existingImages.getFieldList()
   const newImages = fields.images.getFieldList()
 
   // A new draft's address follows its title, as the add form's did (0020).
+  // Decided once, by the draft as it opened: a reload after a save that makes
+  // it non-empty must not stop the address following mid-sentence.
+  const [followsTitle] = useState(article.isEmptyDraft)
   const { handleBlur, handleFocus, handleInput } = useAutoSlug({
     fieldName: fields.slug.name,
-    sourceValue: article.isEmptyDraft ? fields.title.value || '' : undefined,
+    sourceValue: followsTitle ? fields.title.value || '' : undefined,
     updateFieldValue: form.update,
   })
 
@@ -181,15 +337,44 @@ export default function RouteComponent({
     })
   }
 
-  const isLoadingOrSubmitting = state !== 'idle'
-  const isSubmitting = state === 'submitting'
   // Without the hold the editor only reads (07g); #671 draws it fully (24h).
-  const isReadOnly = isLoadingOrSubmitting || !isHolding
-  const canSubmit = !isReadOnly && form.valid
+  const isReadOnly = !isHolding
+
+  const isEmpty =
+    !fields.title.value &&
+    !fields.content.value &&
+    existingImages.length === 0 &&
+    newImages.length === 0
+
+  const saveLine = getSaveLineText({
+    isEmpty,
+    isSlugUnsaved: slugSuggestion !== null,
+    now,
+    savedAt,
+    // Without the hold nothing goes out: the line says the last save, and
+    // #671 says what did not make it (24h).
+    status:
+      !isHolding &&
+      (autosave.status === 'pending' || autosave.status === 'saving')
+        ? 'idle'
+        : autosave.status,
+  })
 
   return (
     <AdminPage>
       <PageTitle>Upravit článek</PageTitle>
+
+      {/* The only sign of saving, without a toast (24e). */}
+      {autosave.status === 'failed' ? (
+        <p className={styles.saveLine} role={'alert'}>
+          <span className={styles.saveFailure}>{saveLine}</span>
+          <AdminButtonLink onClick={autosave.retry} type={'button'}>
+            Zkusit znovu
+          </AdminButtonLink>
+        </p>
+      ) : (
+        <p className={styles.saveLine}>{saveLine}</p>
+      )}
 
       {holdNotice !== null && <AdminParagraph>{holdNotice}</AdminParagraph>}
 
@@ -215,26 +400,19 @@ export default function RouteComponent({
         />
       )}
 
-      {backup !== null && (
-        <AdminDraftRestoreBanner
-          onDiscard={discard}
-          onRestore={restore}
-          savedAt={backup.savedAt}
-        />
-      )}
-
-      <AdminLeaveConfirmationDialog
-        blocker={blocker}
-        onConfirmLeave={handleConfirmLeave}
-      />
-
       <FormProvider context={form.context}>
         <Form
           encType={'multipart/form-data'}
-          errors={form.errors}
           method={'post'}
           {...formProps}
+          // Leaving a field saves at once (24e).
+          onBlur={() => void autosave.flush()}
+          onChange={handleChange}
+          onChangeCapture={markInteracted}
+          onClickCapture={markInteracted}
+          onInputCapture={markInteracted}
           onSubmit={handleSubmit}
+          ref={formRef}
         >
           <AuthenticityTokenInput />
           <input
@@ -259,13 +437,29 @@ export default function RouteComponent({
             </AdminButtonLink>
             <TextField
               {...getInputProps(fields.slug, { type: 'text' })}
-              errors={fields.slug.errors}
+              errors={slugSuggestion === null ? undefined : [TAKEN_SLUG_HINT]}
               label={'Slug'}
               onBlur={handleBlur}
               onFocus={handleFocus}
               onInput={handleInput}
               placeholder={'nazev-clanku'}
             />
+            {/* A taken address: a free one, filled in and saved (24d). */}
+            {slugSuggestion !== null && (
+              <AdminButtonLink
+                disabled={isReadOnly}
+                onClick={() => {
+                  // A chosen address no longer follows the title.
+                  handleInput()
+                  form.update({ name: fields.slug.name, value: slugSuggestion })
+                  // Saved at once (24d), once the field holds it.
+                  isFlushOnChangeRef.current = true
+                }}
+                type={'button'}
+              >
+                Použít {slugSuggestion}
+              </AdminButtonLink>
+            )}
           </Fieldset>
 
           <Fieldset disabled={isReadOnly} legend={'Obsah'}>
@@ -429,6 +623,10 @@ export default function RouteComponent({
                   key={image.key}
                   title={'Nový obrázek'}
                 >
+                  {/* Made here, so a repeated save stores the image once. */}
+                  <input
+                    {...getInputProps(imageFields.id, { type: 'hidden' })}
+                  />
                   <AdminImageInput
                     className={styles.imageFieldFileContainer}
                     field={imageFields.file}
@@ -465,7 +663,13 @@ export default function RouteComponent({
             })}
 
             <Button
-              {...form.insert.getButtonProps({ name: fields.images.name })}
+              onClick={() =>
+                form.insert({
+                  defaultValue: { id: createId() },
+                  name: fields.images.name,
+                })
+              }
+              type={'button'}
             >
               Přidat obrázek
             </Button>
@@ -488,10 +692,10 @@ export default function RouteComponent({
                 </Select>
                 {index > 0 && (
                   <Button
-                    {...form.remove.getButtonProps({
-                      index,
-                      name: fields.authorIds.name,
-                    })}
+                    onClick={() =>
+                      form.remove({ index, name: fields.authorIds.name })
+                    }
+                    type={'button'}
                     variant={'danger'}
                   >
                     <DeleteIcon className={styles.removeIcon} />
@@ -500,26 +704,25 @@ export default function RouteComponent({
                 )}
               </div>
             ))}
+            {/* No submit buttons: Enter in a field must not add or remove one. */}
             <Button
-              {...form.insert.getButtonProps({
-                defaultValue: '',
-                name: fields.authorIds.name,
-              })}
+              onClick={() =>
+                form.insert({ defaultValue: '', name: fields.authorIds.name })
+              }
+              type={'button'}
             >
               Přidat autora
             </Button>
           </Fieldset>
 
           <FormActions>
-            <Button disabled={!canSubmit} type={'submit'}>
-              {isSubmitting ? 'Ukládá se...' : 'Uložit'}
-            </Button>
+            {/* Sends what waits, then leaves (24e). */}
             <LinkButton
-              disabled={isLoadingOrSubmitting}
+              onClick={handleClose}
               to={closeHref}
               variant={'outline'}
             >
-              Zrušit
+              Zavřít
             </LinkButton>
           </FormActions>
         </Form>
