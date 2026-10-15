@@ -15,10 +15,11 @@ type Options = {
  * The one line under a category's or tag's state tag in its list (design 25a,
  * 25e; copy 3htjei2x).
  *
- * @returns Whose a draft is (its author, also for an approved one); who sent a
- *   waiting one and when (`Odesláno · Jakub Novák · 26. 9. 2026`); when it was
- *   archived (`Archivováno 14. 6. 2026`, its last update: an archived record
- *   isn't edited); nothing for a published one.
+ * @returns Whose a draft is (its author); who sent a waiting one and when
+ *   (`Odesláno · Jakub Novák · 26. 9. 2026`); an approved one's author and
+ *   approval date (`Schváleno · Jakub Novák · 30. 9. 2026`, 3vnah8ji); when it
+ *   was archived (`Archivováno 14. 6. 2026`, its last update: an archived
+ *   record isn't edited); nothing for a published one.
  */
 export const getTaxonomyFactLine = ({
   state,
@@ -29,6 +30,11 @@ export const getTaxonomyFactLine = ({
 }: Options): string | null => {
   if (submission?.state === 'pending') {
     return `Odesláno · ${submittedByName ?? authorName} · ${formatNumericDate(submission.date)}`
+  }
+
+  // The author, not the approver: the line's shape stays from state to state.
+  if (submission?.state === 'approved') {
+    return `Schváleno · ${authorName} · ${formatNumericDate(submission.date)}`
   }
 
   switch (state) {

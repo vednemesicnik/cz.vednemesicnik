@@ -22,12 +22,13 @@ import { useContentActionResult } from '~/hooks/use-content-action-result'
 
 import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
 import {
+  type ConfirmAction,
   TAXONOMY_ACTION_LABELS,
   TAXONOMY_DIRECT_INTENTS,
   type TaxonomyAction,
 } from '../../utils/taxonomy-actions'
 import type { TaxonomyRecordCopy } from '../../utils/taxonomy-record-copy'
-import { TaxonomyArchiveDialog } from '../taxonomy-archive-dialog'
+import { TaxonomyConfirmDialog } from '../taxonomy-confirm-dialog'
 import styles from './_styles.module.css'
 
 type TaxonomyRecord = {
@@ -85,14 +86,22 @@ export const TaxonomyItemRow = ({
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
 
+  // Schválit a publikovat submits the publish intent; its toast says both.
+  const [submittedAction, setSubmittedAction] = useState<TaxonomyAction | null>(
+    null,
+  )
   const toasts = useMemo(
     () => ({
       [INTENT_VALUE.archive]: copy.toasts.archived,
-      [INTENT_VALUE.publish]: copy.toasts.published,
+      [INTENT_VALUE.publish]:
+        submittedAction === 'approve-and-publish'
+          ? copy.toasts.approvedAndPublished
+          : copy.toasts.published,
+      [INTENT_VALUE.retract]: copy.toasts.retracted,
       [INTENT_VALUE.review]: copy.toasts.approved,
       [INTENT_VALUE.submitForReview]: copy.toasts.submitted,
     }),
-    [copy],
+    [copy, submittedAction],
   )
   useContentActionResult(fetcher.data, toasts)
 
@@ -101,19 +110,23 @@ export const TaxonomyItemRow = ({
     deleteDialogRef,
     { action: detailHref, key: fetcherKey },
   )
-  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
 
-  // Archiving asks first only when readers lose something (25d).
-  const asksBeforeArchive = record.publishedArticleCount > 0
+  // Archiving and retracting ask first only when readers lose something
+  // (25d, 3vnah8ji); publishing never does.
+  const asksFirst = (action: TaxonomyAction): action is ConfirmAction =>
+    (action === 'archive' || action === 'retract') &&
+    record.publishedArticleCount > 0
 
   const runAction = (action: TaxonomyAction) => {
-    if (action === 'archive' && asksBeforeArchive) {
-      return setIsArchiveDialogOpen(true)
+    if (asksFirst(action)) {
+      return setConfirmAction(action)
     }
 
     const intent = TAXONOMY_DIRECT_INTENTS[action]
 
     if (intent !== undefined) {
+      setSubmittedAction(action)
       const formData = new FormData()
       formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
       formData.append(FORM_CONFIG.intent.name, intent)
@@ -136,9 +149,20 @@ export const TaxonomyItemRow = ({
   }
 
   const getLabel = (action: TaxonomyAction) =>
-    action === 'archive' && asksBeforeArchive
-      ? `${TAXONOMY_ACTION_LABELS.archive}…`
+    asksFirst(action)
+      ? `${TAXONOMY_ACTION_LABELS[action]}…`
       : TAXONOMY_ACTION_LABELS[action]
+
+  const confirmCopy = {
+    archive: {
+      description: copy.archiveDescription,
+      title: copy.archiveTitle(record.name),
+    },
+    retract: {
+      description: copy.retractDescription(record.publishedArticleCount),
+      title: copy.retractTitle(record.name),
+    },
+  }
 
   const rowAction = record.row
 
@@ -218,13 +242,15 @@ export const TaxonomyItemRow = ({
               title={copy.deleteTitle(record.name)}
             />
           )}
-          {isArchiveDialogOpen && (
-            <TaxonomyArchiveDialog
+          {confirmAction !== null && (
+            <TaxonomyConfirmDialog
               action={detailHref}
-              description={copy.archiveDescription}
+              confirmLabel={TAXONOMY_ACTION_LABELS[confirmAction]}
+              description={confirmCopy[confirmAction].description}
               fetcherKey={fetcherKey}
-              onClose={() => setIsArchiveDialogOpen(false)}
-              title={copy.archiveTitle(record.name)}
+              intent={TAXONOMY_DIRECT_INTENTS[confirmAction]}
+              onClose={() => setConfirmAction(null)}
+              title={confirmCopy[confirmAction].title}
             />
           )}
         </div>

@@ -13,20 +13,25 @@ import { useModalDialog } from '~/utils/use-modal-dialog'
 type Props = {
   action: string
   fetcherKey: string
+  intent: string
+  confirmLabel: string
   title: string
   description: string
   onClose: () => void
 }
 
 /**
- * Confirms *Archivovat…* of a category or tag that has published articles
- * (design 25d): what readers lose, while the articles keep it assigned.
+ * Confirms *Archivovat…* or *Stáhnout z publikace…* of a category or tag that
+ * has published articles (design 25d, 3vnah8ji): what readers lose.
  *
+ * @param props.intent - The state change the confirmation submits.
  * @param props.title - The question with the record's name.
  */
-export const TaxonomyArchiveDialog = ({
+export const TaxonomyConfirmDialog = ({
   action,
   fetcherKey,
+  intent,
+  confirmLabel,
   title,
   description,
   onClose,
@@ -49,7 +54,7 @@ export const TaxonomyArchiveDialog = ({
           <input
             name={FORM_CONFIG.intent.name}
             type={'hidden'}
-            value={FORM_CONFIG.intent.value.archive}
+            value={intent}
           />
 
           <AdminModalActions>
@@ -62,7 +67,7 @@ export const TaxonomyArchiveDialog = ({
               Zrušit
             </Button>
             <Button size={'sm'} type={'submit'}>
-              Archivovat
+              {confirmLabel}
             </Button>
           </AdminModalActions>
         </fetcher.Form>
