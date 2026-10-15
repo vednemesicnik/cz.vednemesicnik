@@ -49,8 +49,9 @@ The record is read months later by someone who checks it. Take facts from the is
 and the code (`gh issue view`, `gh pr view`, `grep`), not from memory. The date is the day
 the decision was made; when backfilling, take it from the issue or PR that settled it.
 
-A decision the user has not confirmed is `Proposed`; say so and ask before marking it
-`Accepted`.
+A decision made under the `decide-and-inform` rule is `Accepted`; the user overrules it in the
+PR, not in a question up front. A record stays `Proposed` only while it waits on a fact only the
+user has; name that fact.
 
 ### 4. Check it against every accepted record
 
@@ -65,8 +66,9 @@ say which applies:
 - **consistent** — they touch, and the new record relies on it or extends it; cite it in
   the new record;
 - **in tension** — the new decision contradicts it, or a consequence of one would break the
-  other. **Stop and ask the user** which one wins. The answer is a new record that
-  supersedes the old one (step 2), or a changed draft of this one, never a silent pick.
+  other. **Decide which one wins** per the `decide-and-inform` rule, with a second opinion
+  first. The result is a new record that supersedes the old one (step 2), or a changed draft
+  of this one, and the report below names the choice and why: never a silent pick.
 
 Then check the new record against itself and what is planned:
 
