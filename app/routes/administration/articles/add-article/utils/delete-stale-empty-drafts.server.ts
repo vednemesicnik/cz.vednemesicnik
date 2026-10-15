@@ -7,8 +7,8 @@ export const STALE_EMPTY_DRAFT_AGE_MILLISECONDS = 24 * 60 * 60 * 1000
 /**
  * Deletes empty drafts (no first content, decision 0020) created more than a
  * day ago whose edit hold is free. A system clean-up: nothing is logged and no
- * event is sent. Until the edit hold is taken (#669), an editor left open for
- * more than a day on a new draft loses it.
+ * event is sent. An open editor renews its hold, so its draft stays; the sweep
+ * catches the drafts whose hold expired without a release (24e).
  *
  * @param now - The current time.
  * @returns The number of deleted drafts.

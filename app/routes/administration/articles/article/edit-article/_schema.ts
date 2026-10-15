@@ -8,6 +8,8 @@ export const schema = z.object({
     .min(1, 'Alespoň jeden autor je povinný'),
   categoryIds: z.array(z.string()).optional(),
   content: z.string({ error: 'Obsah je povinný' }),
+  // The editor's tab, which holds the edit hold (design 24g).
+  editTabId: z.string().min(1),
   excerpt: z.string().optional(),
   existingImages: z
     .array(
