@@ -55,3 +55,5 @@ in force.
 | [0016](0016-records-are-added-and-edited-on-their-own-page.md) | Records are added and edited on their own page, not in a dialog | Accepted | 2026-10-14 |
 | [0017](0017-every-list-with-filters-has-saved-filters.md) | Every administration list with filters has saved filters, and Stav filters by queue | Accepted | 2026-10-14 |
 | [0018](0018-agents-decide-and-inform.md) | Agents make architecture, product and security calls and report them | Accepted | 2026-10-15 |
+| [0019](0019-the-edit-lock-lives-on-the-content-row.md) | The edit lock lives on the content row, and the article has it first | Accepted | 2026-10-15 |
+| [0020](0020-a-new-article-is-a-draft-created-on-click.md) | A new article is a draft created on click, not a page | Accepted | 2026-10-15 |
