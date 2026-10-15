@@ -68,14 +68,15 @@ acceptance criteria. Not the `code-review:code-review` plugin (it needs a PR and
 attribution footer); the built-in `/code-review` is user-triggered. One ranked report,
 most-severe first.
 
-### 🛑 Gate 1 — Apply fixes (auto-apply, gate only on risk)
+### Gate 1 — Apply fixes (auto-apply, decide the risky ones)
 
 - **Low-risk / mechanical** — conventions, trivial refactors, correctness fixes with one clear
   resolution: **apply them yourself**, no questions.
 - **Risky / ambiguous** — several viable approaches, a behavioural change, a migration or
-  public-contract impact: **stop and ask** which option to take.
+  public-contract impact: **decide** per the `decide-and-inform` rule (a second opinion first),
+  apply it, and say what you chose and what you turned down.
 
-List what you applied and what you hold. After all edits run `pnpm app:typecheck` and
+List what you applied and what you decided. After all edits run `pnpm app:typecheck` and
 `pnpm test`; both must pass.
 
 ### Phase B — Commit & open the PR

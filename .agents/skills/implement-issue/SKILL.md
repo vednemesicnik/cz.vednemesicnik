@@ -80,12 +80,14 @@ Work through the plan's steps **end to end without asking between steps**. Repor
 don't narrate every edit; track the steps with the task tools when there are more than a
 handful. Reuse what the plan names; keep the diff to its scope — no drive-by refactors.
 
-**Stop and ask only when** it genuinely can't be decided from the plan:
+When the plan left a fork open, a discovery invalidates its approach, or a schema, migration or
+public-contract change turns up that the plan didn't anticipate, **decide** per the
+`decide-and-inform` rule and name the decision in the Finish report.
 
-- the plan left a fork open, or a discovery invalidates its approach;
+**Stop and ask only for:**
+
 - a destructive or irreversible operation — notably `prisma migrate reset`/`dev`, which is
   guarded for agents and needs the user's explicit consent text;
-- a schema, migration or public-contract change the plan didn't anticipate;
 - credentials, production data, or anything outward-facing.
 
 ### Phase 2 — Verify
@@ -114,7 +116,7 @@ Report: branch, what was implemented, typecheck/test status, acceptance criteria
 outstanding, and any deviation from the plan (and why).
 
 Then **close with what is open, in the order it should be done** — `/ship-issue <number>` is
-**one item on that list, not the list.** A criterion left unmet because it needs a decision, a
-follow-up the diff made obvious, a document or a design drawing the change left stale — a
-short numbered list, most important first, one or two lines each, and offer the top one as a
-question answerable in a word.
+**one item on that list, not the list.** A criterion left unmet because it waits on the user
+(a fact only they have, an outward step), a follow-up the diff made obvious, a document or a
+design drawing the change left stale — a short numbered list, most important first, one or two
+lines each, and offer the top one as a question answerable in a word.
