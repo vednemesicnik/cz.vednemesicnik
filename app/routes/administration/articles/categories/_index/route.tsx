@@ -21,11 +21,13 @@ import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
+import { ListCount } from '~/components/list-count'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
 import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
+import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { CATEGORY_NOUN } from '~/config/list-noun-config'
@@ -36,9 +38,10 @@ import { getStateFilter } from '~/utils/get-state-filter'
 import { recentChangeTints } from '~/utils/recent-change-tints'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../../components/articles-tabs'
+import { TaxonomyItemRow } from '../../components/taxonomy-item-row'
 import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
+import { CATEGORY_RECORD_COPY } from '../category-record-copy'
 import type { Route } from './+types/route'
-import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
 
 export { action } from './_action'
@@ -50,14 +53,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     canCreate,
     categories,
     currentFilterQuery,
+    currentPage,
     filters,
     isApprover,
     isContributor,
     matchingFilterId,
     ownFilters,
+    pageSize,
     query,
     queueCounts,
     sharedFilters,
+    totalCount,
+    totalPages,
   } = loaderData
 
   const { search } = useLocation()
@@ -153,7 +160,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           />
         </FilterBar>
       </FilterCell>
-      {categories.length === 0 ? (
+      {totalCount === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <ListEmptyCard>
           <ListEmptyCardTitle>{emptyMessage.title}</ListEmptyCardTitle>
@@ -180,42 +187,54 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               onChange={selection.toggleAll}
             />
             <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
+              defaultOrder={'asc'}
+              defaultSort={'name'}
               sortKey={'name'}
               sortKeys={SORT_KEYS}
             >
               Název
             </TableSortableHeaderCell>
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'createdAt'}
-              sortKeys={SORT_KEYS}
-            >
-              Vytvořeno
-            </TableSortableHeaderCell>
+            <TableHeaderCell>Publikované články</TableHeaderCell>
             <TableHeaderCell>Stav</TableHeaderCell>
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>
           <TableBody>
             {categories.map((category) => (
-              <ItemRow
-                canDelete={category.canDelete}
-                canEdit={category.canEdit}
-                canView={category.canView}
-                createdAt={category.createdAt}
-                id={category.id}
+              <TaxonomyItemRow
+                copy={CATEGORY_RECORD_COPY}
+                detailHref={href(
+                  '/administration/articles/categories/:categoryId',
+                  { categoryId: category.id },
+                )}
+                editHref={href(
+                  '/administration/articles/categories/:categoryId/edit',
+                  { categoryId: category.id },
+                )}
                 key={category.id}
-                name={category.name}
                 onSelect={() => selection.toggle(category.id)}
+                publishedArticlesHref={`${href('/administration/articles')}?${new URLSearchParams({ category: category.slug, state: 'published' })}`}
+                record={category}
                 selected={selection.isSelected(category.id)}
-                state={category.submission ?? category.state}
+                showSlug={true}
                 tint={recentChangeTints.get(category.id)}
               />
             ))}
           </TableBody>
         </AdminTable>
+      )}
+      {/* The count under one page, the pagination's summary over more (25a). */}
+      {totalPages > 1 ? (
+        <Pagination
+          currentPage={currentPage}
+          layout={'inline'}
+          noun={CATEGORY_NOUN.countForms.other}
+          pageSize={pageSize}
+          size={'sm'}
+          totalCount={totalCount}
+          totalPages={totalPages}
+        />
+      ) : (
+        totalCount > 0 && <ListCount count={totalCount} noun={CATEGORY_NOUN} />
       )}
     </AdminPage>
   )
