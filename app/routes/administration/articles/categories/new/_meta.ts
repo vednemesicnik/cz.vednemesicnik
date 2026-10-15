@@ -1,6 +1,6 @@
-import { createPageTitle } from '~/utils/create-page-title'
+import { createAdminPageTitle } from '~/utils/create-admin-page-title'
 import { CATEGORY_RECORD_COPY } from '../category-record-copy'
 
 export const meta = () => [
-  { title: createPageTitle(`Administrace - ${CATEGORY_RECORD_COPY.newTitle}`) },
+  { title: createAdminPageTitle(CATEGORY_RECORD_COPY.newTitle) },
 ]
