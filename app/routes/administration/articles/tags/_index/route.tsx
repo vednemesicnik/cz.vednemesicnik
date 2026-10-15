@@ -30,6 +30,7 @@ import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { TAG_NOUN } from '~/config/list-noun-config'
+import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -67,6 +68,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   } = loaderData
 
   const { search } = useLocation()
+  useAdminNoticeToast(loaderData)
   const pending = useAdminListPending()
 
   const deletableIds = tags.filter((tag) => tag.canDelete).map((tag) => tag.id)
