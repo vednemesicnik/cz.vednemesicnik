@@ -1,3 +1,4 @@
+import type { Prisma } from '@generated/prisma/client'
 import { createId } from '@paralleldrive/cuid2'
 import { data } from 'react-router'
 import type { FeaturedImage } from '~/config/featured-image-config'
@@ -68,6 +69,8 @@ export async function updateArticle(
   const storedArticle = await prisma.article.findUnique({
     select: {
       authors: { select: { id: true } },
+      firstContentAt: true,
+      slug: true,
       state: true,
       submittedAt: true,
     },
@@ -112,12 +115,24 @@ export async function updateArticle(
       })
       const removedImageIds = removedImages.map(({ id }) => id)
 
-      // 2. Store new images' variants (files before the rows commit)
+      // 2. Store new images' variants (files before the rows commit); they
+      // go after the existing ones in the gallery (design 24b).
+      const { _max: lastImage } = await prisma.articleImage.aggregate({
+        _max: { position: true },
+        where: { articleId },
+      })
+      const firstNewPosition = (lastImage.position ?? -1) + 1
       const newImages = await Promise.all(
-        (images ?? []).map(async ({ file, altText, description }) => {
+        (images ?? []).map(async ({ file, altText, description }, index) => {
           const id = createId()
           const meta = await storeImageVariants(id, file)
-          return { ...meta, altText, description: description || null, id }
+          return {
+            ...meta,
+            altText,
+            description: description || null,
+            id,
+            position: firstNewPosition + index,
+          }
         }),
       )
 
@@ -182,14 +197,38 @@ export async function updateArticle(
           : await resolveArticleFeaturedImageSeo(featuredImageId)
 
       const pathname = `/articles/${slug}`
+      // The PageSEO row moves with the address; a draft without one has none.
+      const storedPathname =
+        storedArticle.slug === null
+          ? pathname
+          : `/articles/${storedArticle.slug}`
+
+      // The first save with a title, text or image ends the empty draft and
+      // is its creation in the history (decision 0020, design 07f).
+      const hasContent =
+        title !== '' ||
+        content !== '' ||
+        newImages.length > 0 ||
+        existingImageIds.length > 0
 
       // 5. In one transaction: all image rows, the article and its PageSEO
       // record. Store files of removed images and of replaced versions go only
       // after it commits, so a failed save leaves everything as it was.
-      await deleteRowWithImages(
+      const [firstContent] = (await deleteRowWithImages(
         async () => removedImageIds,
         () =>
           prisma.$transaction([
+            // Conditional, so of two first saves only one is the creation.
+            prisma.article.updateMany({
+              data: { firstContentAt: hasContent ? new Date() : null },
+              where: { firstContentAt: null, id: articleId },
+            }),
+            // An orphan left at the new address by an earlier rename.
+            prisma.pageSEO.deleteMany({
+              where: {
+                AND: [{ pathname }, { pathname: { not: storedPathname } }],
+              },
+            }),
             prisma.articleImage.deleteMany({
               where: { id: { in: removedImageIds } },
             }),
@@ -236,22 +275,26 @@ export async function updateArticle(
               update: {
                 description: excerpt || null,
                 ogImageUrl,
+                pathname,
                 title,
                 twitterImageUrl,
               },
-              where: { pathname },
+              where: { pathname: storedPathname },
             }),
           ]),
-      )
+      )) as [Prisma.BatchPayload, ...unknown[]]
 
       await Promise.all(updatedImages.map(({ cleanup }) => cleanup()))
 
+      const change =
+        hasContent && firstContent.count === 1 ? 'create' : 'update'
+
       await recordContentLog(
-        { entity: 'article', entityId: articleId, events: ['update'] },
+        { entity: 'article', entityId: articleId, events: [change] },
         context,
       )
       publishContentEvent(
-        { change: 'update', entity: 'article', entityId: articleId },
+        { change, entity: 'article', entityId: articleId },
         context,
       )
     },
