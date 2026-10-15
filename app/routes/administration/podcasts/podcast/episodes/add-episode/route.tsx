@@ -69,7 +69,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <PageTitle>Přidat epizodu</PageTitle>
+      <PageTitle>Nová epizoda</PageTitle>
 
       <FormProvider context={form.context}>
         <Form method={'post'} {...getFormProps(form)} errors={form.errors}>

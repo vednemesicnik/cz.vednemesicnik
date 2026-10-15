@@ -132,7 +132,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <PageTitle>Přidat článek</PageTitle>
+      <PageTitle>Nový článek</PageTitle>
 
       {backup !== null && (
         <AdminDraftRestoreBanner

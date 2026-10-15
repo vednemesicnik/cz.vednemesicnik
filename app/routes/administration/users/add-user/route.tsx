@@ -56,7 +56,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <PageTitle>Přidat uživatele</PageTitle>
+      <PageTitle>Nový uživatel</PageTitle>
 
       <Form errors={form.errors} method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily uživatele'}>
