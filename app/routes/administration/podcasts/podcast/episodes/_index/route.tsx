@@ -25,6 +25,7 @@ import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
 import { PageTitle } from '~/components/page-title'
+import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { EPISODE_NOUN } from '~/config/list-noun-config'
@@ -224,6 +225,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </TableBody>
         </AdminTable>
       )}
+      <Pagination
+        currentPage={1}
+        layout={'inline'}
+        noun={EPISODE_NOUN.countForms}
+        pageSize={podcast.episodes.length}
+        size={'sm'}
+        totalCount={podcast.episodes.length}
+        totalPages={1}
+      />
     </AdminPage>
   )
 }

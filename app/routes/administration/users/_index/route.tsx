@@ -19,6 +19,8 @@ import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
 import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
+import { Pagination } from '~/components/pagination'
+import { USER_COUNT_FORMS } from '~/config/list-noun-config'
 import { SEARCH_PARAM } from '~/utils/admin-list-params'
 import { buildListSearch } from '~/utils/build-list-search'
 import { getUserRoleLabel } from '~/utils/role-labels'
@@ -131,6 +133,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </TableBody>
         </AdminTable>
       )}
+      <Pagination
+        currentPage={1}
+        layout={'inline'}
+        noun={USER_COUNT_FORMS}
+        pageSize={users.length}
+        size={'sm'}
+        totalCount={users.length}
+        totalPages={1}
+      />
     </AdminPage>
   )
 }

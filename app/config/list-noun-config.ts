@@ -1,5 +1,8 @@
 import type { ContentQueue } from '~/config/content-queue-config'
 
+/** A noun declined by count, by Czech plural rule (`1 rubrika`, `2 rubriky`, `5 rubrik`). */
+export type CountForms = Record<Intl.LDMLPluralRule, string>
+
 /**
  * What an administration list says about its records (design 22e, 25a–28a;
  * copy 3yexna4p, yzyd9p1l, w59y90od, vyecwbul): the empty card, the Stav
@@ -11,14 +14,14 @@ export type ListNoun = {
   queueSentences: Record<ContentQueue, string>
   severalStatesSentence: string
   noResultSentence: string
-  countForms: Record<Intl.LDMLPluralRule, string>
+  countForms: CountForms
   defaultFilterHint: string
 }
 
 const DEFAULT_FILTER_CONDITION =
   'pokud odkaz neobsahuje vlastní nastavení seznamu.'
 
-const countForms = (one: string, few: string, other: string) => ({
+const countForms = (one: string, few: string, other: string): CountForms => ({
   few,
   many: other,
   one,
@@ -131,3 +134,8 @@ export const EPISODE_NOUN: ListNoun = {
   },
   severalStatesSentence: 'Ve vybraných stavech nejsou žádné epizody.',
 }
+
+// Authors and users have no Stav queues, so only their count (3vnah8ji).
+export const AUTHOR_COUNT_FORMS = countForms('autor', 'autoři', 'autorů')
+
+export const USER_COUNT_FORMS = countForms('uživatel', 'uživatelé', 'uživatelů')

@@ -8,4 +8,4 @@ import { formatListCount } from '~/utils/format-list-count'
  * @returns `1 článek`, `2 články`, `5 článků`, `0 článků`.
  */
 export const formatArticleCount = (count: number) =>
-  formatListCount(count, ARTICLE_NOUN)
+  formatListCount(count, ARTICLE_NOUN.countForms)

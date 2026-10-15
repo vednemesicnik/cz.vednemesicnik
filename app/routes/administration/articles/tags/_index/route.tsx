@@ -21,7 +21,6 @@ import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
-import { ListCount } from '~/components/list-count'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -219,20 +218,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </TableBody>
         </AdminTable>
       )}
-      {/* The count under one page, the pagination's summary over more (25a, 25e). */}
-      {totalPages > 1 ? (
-        <Pagination
-          currentPage={currentPage}
-          layout={'inline'}
-          noun={TAG_NOUN.countForms.other}
-          pageSize={pageSize}
-          size={'sm'}
-          totalCount={totalCount}
-          totalPages={totalPages}
-        />
-      ) : (
-        totalCount > 0 && <ListCount count={totalCount} noun={TAG_NOUN} />
-      )}
+      <Pagination
+        currentPage={currentPage}
+        layout={'inline'}
+        noun={TAG_NOUN.countForms}
+        pageSize={pageSize}
+        size={'sm'}
+        totalCount={totalCount}
+        totalPages={totalPages}
+      />
     </AdminPage>
   )
 }

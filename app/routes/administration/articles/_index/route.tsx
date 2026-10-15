@@ -296,7 +296,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <Pagination
         currentPage={currentPage}
         layout={'inline'}
-        noun={'článků'}
+        noun={ARTICLE_NOUN.countForms}
         pageSize={pageSize}
         size={'sm'}
         totalCount={totalCount}

@@ -26,6 +26,7 @@ import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
 import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
+import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { ISSUE_NOUN } from '~/config/list-noun-config'
@@ -211,6 +212,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </TableBody>
         </AdminTable>
       )}
+      <Pagination
+        currentPage={1}
+        layout={'inline'}
+        noun={ISSUE_NOUN.countForms}
+        pageSize={issues.length}
+        size={'sm'}
+        totalCount={issues.length}
+        totalPages={1}
+      />
     </AdminPage>
   )
 }
