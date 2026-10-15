@@ -5,11 +5,11 @@
 
 ## Context
 
-The skills sent architecture, product and security calls to the owner as questions, each with
+The skills sent architecture, product and security calls to the user as questions, each with
 the agent's recommendation first: `/ask-design` for a product decision, `/review-idea` when the
 evidence left a verdict open, `/record-decision` when two records were in tension, and
 `/implement-issue` and `/ship-issue` when a plan left a fork open or a fix had several
-approaches. The owner almost always picked the recommendation, the frame being already set by
+approaches. The user almost always picked the recommendation, the frame being already set by
 `docs/` and the decision records, and each question stopped work on both sides.
 
 ## Decision
@@ -18,12 +18,12 @@ An agent with a recommendation makes the call and then reports it, with what it 
 A weighty or hard-to-reverse call (a data model, permissions, authentication, routes, a
 migration, the order of work) first goes to a subagent in a fresh context, asked to refute
 the recommendation against `docs/` and the decision records. A call that binds later changes
-gets a record, `Accepted` from the start. The owner overrules a reported decision by saying
+gets a record, `Accepted` from the start. The user overrules a reported decision by saying
 so. The convention is the rule `.agents/rules/decide-and-inform/RULE.md`.
 
 The agent still asks about outward or irreversible actions (a merge, closing an issue, a
-comment, a deploy, deleting data), about facts only the owner has (people, the organization,
-money, agreements), and when it hands over something the owner has to paste.
+comment, a deploy, deleting data), about facts only the user has (people, the organization,
+money, agreements), and when it hands over something the user has to paste.
 
 ## Consequences
 
@@ -42,7 +42,7 @@ money, agreements), and when it hands over something the owner has to paste.
 
 ## Alternatives considered
 
-- **Keep asking, recommendation first.** The previous practice, and the one the owner asked
+- **Keep asking, recommendation first.** The previous practice, and the one the user asked
   to stop: it costs a round trip for an answer that is almost always the recommendation.
 - **Decide without a second opinion.** It is cheaper, but a weighty call then rests on one
   context that may carry an unchecked premise. A fresh subagent is the cheapest independent
