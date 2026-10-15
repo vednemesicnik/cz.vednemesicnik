@@ -17,13 +17,13 @@ import { prisma } from '~/utils/db.server'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
-import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
+import { buildArticlePermissionWhere } from '../utils/build-article-permission-where'
 import { getArticleFactLine } from '../utils/get-article-fact-line'
 import { getRowActions } from '../utils/get-row-actions'
 import type { Route } from './+types/route'
@@ -82,23 +82,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     })
   }
 
-  // Check view permissions for each state
-  const draftPerms = context.can({
-    action: 'view',
-    entity: 'article',
-    state: 'draft',
-  })
-  const publishedPerms = context.can({
-    action: 'view',
-    entity: 'article',
-    state: 'published',
-  })
-  const archivedPerms = context.can({
-    action: 'view',
-    entity: 'article',
-    state: 'archived',
-  })
-
   const { order, page, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'updatedAt',
@@ -108,16 +91,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const filters = parseAdminListFilters(request, TABLE_KEY)
 
   // States the current role may view, scoped to own content where access is `own`.
-  const viewableStates = buildViewableStateFilters(
-    [
-      { rights: draftPerms, state: 'draft' },
-      { rights: publishedPerms, state: 'published' },
-      { rights: archivedPerms, state: 'archived' },
-    ],
-    { authors: { some: { id: context.authorId } } },
-  )
-
-  const permissionWhere: Prisma.ArticleWhereInput = { OR: viewableStates }
+  const permissionWhere = buildArticlePermissionWhere(context)
 
   // Filters are ANDed with the permission clause, so they only ever narrow what
   // the role may view — `?state=draft` still yields own drafts only. Within one
