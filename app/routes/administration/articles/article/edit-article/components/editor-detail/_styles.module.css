@@ -62,6 +62,25 @@
   }
 }
 
+.bar {
+  @layer component {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    @media (width < 768px) {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 1;
+      padding-block: 10px;
+      padding-inline: 16px;
+      background-color: var(--bg-primary);
+      border-block-end: 1px solid var(--border);
+    }
+  }
+}
+
 /* Over the whole screen, scrolling on its own (24f). */
 .isOpen .panel {
   @layer variant {
@@ -82,25 +101,6 @@
       & > .bar {
         margin-inline: -16px;
       }
-    }
-  }
-}
-
-.bar {
-  @layer component {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-
-    @media (width < 768px) {
-      position: sticky;
-      inset-block-start: 0;
-      z-index: 1;
-      padding-block: 10px;
-      padding-inline: 16px;
-      background-color: var(--bg-primary);
-      border-block-end: 1px solid var(--border);
     }
   }
 }
