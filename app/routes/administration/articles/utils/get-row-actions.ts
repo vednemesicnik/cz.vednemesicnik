@@ -1,6 +1,6 @@
 import type { ContentState } from '@generated/prisma/enums'
 
-import type { ArticleAction } from '../../utils/article-actions'
+import type { ArticleAction } from './article-actions'
 
 type RowActions = {
   row: ArticleAction | null

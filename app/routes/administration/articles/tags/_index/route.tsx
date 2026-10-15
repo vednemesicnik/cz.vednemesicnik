@@ -21,11 +21,13 @@ import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
+import { ListCount } from '~/components/list-count'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
 import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
+import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { TAG_NOUN } from '~/config/list-noun-config'
@@ -36,9 +38,10 @@ import { getStateFilter } from '~/utils/get-state-filter'
 import { recentChangeTints } from '~/utils/recent-change-tints'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../../components/articles-tabs'
+import { TaxonomyItemRow } from '../../components/taxonomy-item-row'
 import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
+import { TAG_RECORD_COPY } from '../tag-record-copy'
 import type { Route } from './+types/route'
-import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
 
 export { action } from './_action'
@@ -49,15 +52,19 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
     canCreate,
     currentFilterQuery,
+    currentPage,
     filters,
     isApprover,
     isContributor,
     matchingFilterId,
     ownFilters,
+    pageSize,
     query,
     queueCounts,
     sharedFilters,
     tags,
+    totalCount,
+    totalPages,
   } = loaderData
 
   const { search } = useLocation()
@@ -151,7 +158,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           />
         </FilterBar>
       </FilterCell>
-      {tags.length === 0 ? (
+      {totalCount === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <ListEmptyCard>
           <ListEmptyCardTitle>{emptyMessage.title}</ListEmptyCardTitle>
@@ -178,42 +185,53 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               onChange={selection.toggleAll}
             />
             <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
+              defaultOrder={'asc'}
+              defaultSort={'name'}
               sortKey={'name'}
               sortKeys={SORT_KEYS}
             >
               Název
             </TableSortableHeaderCell>
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'createdAt'}
-              sortKeys={SORT_KEYS}
-            >
-              Vytvořeno
-            </TableSortableHeaderCell>
+            <TableHeaderCell>Publikované články</TableHeaderCell>
             <TableHeaderCell>Stav</TableHeaderCell>
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>
           <TableBody>
             {tags.map((tag) => (
-              <ItemRow
-                canDelete={tag.canDelete}
-                canEdit={tag.canEdit}
-                canView={tag.canView}
-                createdAt={tag.createdAt}
-                id={tag.id}
+              <TaxonomyItemRow
+                copy={TAG_RECORD_COPY}
+                detailHref={href('/administration/articles/tags/:tagId', {
+                  tagId: tag.id,
+                })}
+                editHref={href('/administration/articles/tags/:tagId/edit', {
+                  tagId: tag.id,
+                })}
                 key={tag.id}
-                name={tag.name}
                 onSelect={() => selection.toggle(tag.id)}
+                publishedArticlesHref={`${href('/administration/articles')}?${new URLSearchParams({ state: 'published', tag: tag.slug })}`}
+                record={tag}
                 selected={selection.isSelected(tag.id)}
-                state={tag.submission ?? tag.state}
+                // A tag's address almost always repeats its name (25e).
+                showSlug={false}
                 tint={recentChangeTints.get(tag.id)}
               />
             ))}
           </TableBody>
         </AdminTable>
+      )}
+      {/* The count under one page, the pagination's summary over more (25a, 25e). */}
+      {totalPages > 1 ? (
+        <Pagination
+          currentPage={currentPage}
+          layout={'inline'}
+          noun={TAG_NOUN.countForms.other}
+          pageSize={pageSize}
+          size={'sm'}
+          totalCount={totalCount}
+          totalPages={totalPages}
+        />
+      ) : (
+        totalCount > 0 && <ListCount count={totalCount} noun={TAG_NOUN} />
       )}
     </AdminPage>
   )

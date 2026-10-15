@@ -25,6 +25,9 @@ export const useAdminDeleteConfirmationDialog = (
   const redirectName = FORM_CONFIG.redirect.name
   const redirectValue = options?.withRedirect ? 'true' : 'false'
 
+  // After every render, not once: a row whose state changes in place renders
+  // its dialog only once Smazat… becomes possible (archived after published),
+  // and a listener wired at mount would never see it.
   useEffect(() => {
     const dialog = dialogRef.current
 
@@ -37,7 +40,7 @@ export const useAdminDeleteConfirmationDialog = (
     dialog.addEventListener('close', handleClose)
 
     return () => dialog.removeEventListener('close', handleClose)
-  }, [dialogRef])
+  })
 
   useEffect(() => {
     if (returnValue === DIALOG_RETURN_VALUE.accept) {
