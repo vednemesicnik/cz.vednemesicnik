@@ -13,6 +13,8 @@ export type ChipInputOption = {
 type Props = {
   id: string
   label: string
+  /** A heading over the field already names it; the label stays for readers. */
+  isLabelHidden?: boolean
   placeholder?: string
   /** The suggestions for `query`, already filtered by the caller. */
   options: ChipInputOption[]
@@ -40,6 +42,7 @@ type Props = {
 export const ChipInput = ({
   id,
   label,
+  isLabelHidden = false,
   placeholder,
   options,
   query,
@@ -104,7 +107,12 @@ export const ChipInput = ({
 
   return (
     <div className={clsx(styles.chipInput, className)}>
-      <Label htmlFor={id}>{label}</Label>
+      <Label
+        className={isLabelHidden ? 'screen-reader-only' : undefined}
+        htmlFor={id}
+      >
+        {label}
+      </Label>
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: a click beside the chips reaches the field, which has the keys */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: as above */}
       <div

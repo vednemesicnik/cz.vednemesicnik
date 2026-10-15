@@ -965,7 +965,6 @@ export default function RouteComponent({
 
               <EditorDetail
                 {...detailProps('tags')}
-                isNameHidden
                 name={'Štítky'}
                 saveLine={renderSaveLine()}
                 summary={
@@ -983,6 +982,7 @@ export default function RouteComponent({
                   <ChipInput
                     disabled={isLocked}
                     id={`${fields.tagIds.id}-search`}
+                    isLabelHidden
                     label={'Štítky'}
                     onQueryChange={setTagQuery}
                     onRemoveLast={() => setTagIds(selectedTagIds.slice(0, -1))}

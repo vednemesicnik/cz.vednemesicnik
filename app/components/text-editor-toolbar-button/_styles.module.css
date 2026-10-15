@@ -8,7 +8,7 @@
     min-block-size: 28px;
     padding-block: 5px;
     padding-inline: 7px;
-    color: var(--text-primary);
+    color: var(--text-secondary);
     font-family: inherit;
     font-size: var(--font-size-sm);
     line-height: 1;
@@ -22,6 +22,12 @@
 
     & svg {
       font-size: 16px;
+    }
+
+    /* B and I stand in ink, like the text they make (24a). */
+    & > strong,
+    & > em {
+      color: var(--text-primary);
     }
 
     &:hover:not(:disabled) {
@@ -46,9 +52,10 @@
   }
 }
 
-/* The format in force: grey background (24a). */
+/* The format in force: grey background, ink (24a). */
 .active {
   @layer variant {
+    color: var(--text-primary);
     background-color: var(--bg-hover);
   }
 }
