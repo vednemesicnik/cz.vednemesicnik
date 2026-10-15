@@ -1,14 +1,11 @@
 import { getHeaderActions } from '../article/_index/utils/get-header-actions'
+import { isTaxonomyAction } from './is-taxonomy-action'
 import type { TaxonomyAction } from './taxonomy-actions'
 
 type Options = Omit<
   Parameters<typeof getHeaderActions>[0],
   'canChangePublishedAt'
 >
-
-const isTaxonomyAction = (
-  action: TaxonomyAction | 'change-date',
-): action is TaxonomyAction => action !== 'change-date'
 
 const asTaxonomyAction = (action: TaxonomyAction | 'change-date' | null) =>
   action !== null && isTaxonomyAction(action) ? action : null

@@ -227,16 +227,16 @@ export const TaxonomyDetail = ({
               {/* One line per state, zeros left out; no row without articles (25b). */}
               {stateCounts.length > 0 && (
                 <AdminDetailItem label={'Články'}>
-                  <ul className={styles.counts}>
+                  <dl className={styles.counts}>
                     {stateCounts.map(({ queue, count }) => (
-                      <li className={styles.count} key={queue}>
-                        <span>{STATUS_TAG_LABELS[queue]}</span>
-                        <span className={styles.number}>
+                      <div className={styles.count} key={queue}>
+                        <dt>{STATUS_TAG_LABELS[queue]}</dt>
+                        <dd className={styles.number}>
                           {count.toLocaleString('cs-CZ')}
-                        </span>
-                      </li>
+                        </dd>
+                      </div>
                     ))}
-                  </ul>
+                  </dl>
                 </AdminDetailItem>
               )}
               <AdminDetailItem label={'Autor'}>

@@ -90,6 +90,24 @@ describe('getTaxonomyHeaderActions', () => {
     })
   })
 
+  test('an approved one has only Publikovat, as the article (23b, gbsczekj)', () => {
+    expect(
+      getTaxonomyHeaderActions({
+        ...nothingAllowed,
+        canEdit: true,
+        canPublish: true,
+        canReturn: true,
+        state: 'draft',
+        submission: 'approved',
+      }),
+    ).toEqual({
+      menu: ['return', 'edit'],
+      outline: null,
+      primary: 'publish',
+      sentence: null,
+    })
+  })
+
   test('someone else’s archived one says who restores it', () => {
     expect(
       getTaxonomyHeaderActions({ ...nothingAllowed, state: 'archived' }),

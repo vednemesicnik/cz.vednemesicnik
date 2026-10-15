@@ -1,11 +1,7 @@
 import { getRowActions } from './get-row-actions'
-import type { TaxonomyAction } from './taxonomy-actions'
+import { isTaxonomyAction } from './is-taxonomy-action'
 
 type Options = Omit<Parameters<typeof getRowActions>[0], 'canChangePublishedAt'>
-
-const isTaxonomyAction = (
-  action: TaxonomyAction | 'change-date',
-): action is TaxonomyAction => action !== 'change-date'
 
 /**
  * A category's or tag's list row actions (design 25a): the article's (22a, 07c)
