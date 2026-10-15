@@ -200,7 +200,7 @@ export const ItemRow = ({
           // Who edits it comes first: it changes what the row allows (22f).
           detail={
             article.holdLine ??
-            (liveChange === undefined
+            (liveChange === undefined || liveChange.isLineSuperseded === true
               ? article.factLine
               : formatLiveChangeLine({
                   name: liveChange.name,

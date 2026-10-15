@@ -30,6 +30,7 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
+import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import {
@@ -70,6 +71,7 @@ export default function RouteComponent({
     }),
     entity: 'article',
     id: params.articleId,
+    isEmpty: article.isEmptyDraft,
     updatedAt: article.updatedAt,
   })
   // A refused save: someone else or another tab holds it now (24h).
@@ -127,7 +129,7 @@ export default function RouteComponent({
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     // The tab id arrives after hydration; it is no change of the article.
     shouldDirtyConsider: (field) => {
-      return !field.startsWith('csrf') && field !== 'editTabId'
+      return !field.startsWith('csrf') && field !== EDIT_HOLD_CONFIG.tabIdName
     },
     shouldRevalidate: 'onBlur',
     shouldValidate: 'onSubmit',
@@ -198,6 +200,7 @@ export default function RouteComponent({
             editHold.state.holder,
             new Date(),
           )}
+          key={editHold.attempt}
           kind={'take-over'}
           onCancel={() => navigate(closeHref)}
           onConfirm={() => void editHold.takeOver()}
@@ -205,6 +208,7 @@ export default function RouteComponent({
       )}
       {editHold.state.status === 'own-other-tab' && (
         <EditHoldDialog
+          key={editHold.attempt}
           kind={'other-tab'}
           onCancel={() => navigate(closeHref)}
           onConfirm={() => void editHold.takeOver()}

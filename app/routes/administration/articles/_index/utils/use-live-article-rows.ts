@@ -20,6 +20,8 @@ export type LiveChange = {
   sequence: number
   /** The tab's time (`performance.now()`) the tint started, `null` while it waits for a hidden tab. */
   tintStartedAt: number | null
+  /** An edit hold came after it: the line is the row's fact again, the tint runs on (22f). */
+  isLineSuperseded?: boolean
 }
 
 /**
@@ -67,14 +69,26 @@ export const useLiveArticleRows = (loaderData: LoaderData) => {
   useContentEvents({
     filter: (event) => event.entity === 'article',
     onEvent: (event) => {
+      // Taking or releasing the edit hold is no change to react to (no tint),
+      // but a running tint finishes; the line goes back to the row's fact,
+      // which is newer than the change the hold covered (22f, 2txmjnaq).
+      if (event.change === 'hold') {
+        setLiveChanges((current) => {
+          const liveChange = current.get(event.entityId)
+          if (liveChange === undefined) {
+            return current
+          }
+          return new Map(current).set(event.entityId, {
+            ...liveChange,
+            isLineSuperseded: true,
+          })
+        })
+        return
+      }
+
       // One's own change isn't announced, and the line no longer names the
-      // latest change: the row returns to its 22b fact. Taking or releasing
-      // the edit hold is no change to react to (no tint), and after the hold
-      // the last save is the newer fact (22f, 2txmjnaq).
-      if (
-        event.actor.authorId === loaderData.authorId ||
-        event.change === 'hold'
-      ) {
+      // latest change: the row returns to its 22b fact.
+      if (event.actor.authorId === loaderData.authorId) {
         setLiveChanges((current) => {
           if (!current.has(event.entityId)) {
             return current
