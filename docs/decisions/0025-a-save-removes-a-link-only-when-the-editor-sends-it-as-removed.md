@@ -37,6 +37,8 @@ The server reads the stored links, never the form's idea of them
   the same shape when they are rebuilt.
 - Revisit if a link ever carries data of its own (an order, a role): then a removed list is not
   enough and the link needs its own rows in the form.
+- The editor and its saves are described in
+  [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
 
 ## Alternatives considered
 
