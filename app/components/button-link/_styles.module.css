@@ -1,0 +1,33 @@
+/* The design system's Link (components/core/Link, 0zgyl1ao) on a button:
+   --link-strong, 500, underlined; hover thickens the underline. */
+.buttonLink {
+  @layer component {
+    display: inline;
+    padding: 0;
+    color: var(--link-strong);
+    font: inherit;
+    font-weight: var(--font-weight-medium);
+    text-align: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: text-decoration-thickness var(--transition-fast);
+
+    &:hover:not(:disabled) {
+      text-decoration-thickness: 2px;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+}

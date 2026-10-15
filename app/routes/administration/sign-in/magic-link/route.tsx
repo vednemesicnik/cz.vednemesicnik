@@ -1,9 +1,8 @@
 // noinspection JSUnusedGlobalSymbols
 import { Form, href, useNavigation } from 'react-router'
-
-import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminSignInCard } from '~/components/admin/admin-sign-in-card'
 import { AdminSignInText } from '~/components/admin/admin-sign-in-text'
+import { ButtonLink } from '~/components/button-link'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Link } from '~/components/link'
 import { withRedirectTo } from '~/utils/with-redirect-to'
@@ -43,13 +42,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             type={'hidden'}
             value={loaderData.redirectTo}
           />
-          <AdminButtonLink
-            className={styles.resend}
-            disabled={isSubmitting}
-            type={'submit'}
-          >
+          <ButtonLink disabled={isSubmitting} type={'submit'}>
             Poslat znovu
-          </AdminButtonLink>
+          </ButtonLink>
         </Form>
 
         {/* Back to 20a with the field filled; router state keeps the address

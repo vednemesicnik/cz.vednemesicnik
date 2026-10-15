@@ -22,7 +22,6 @@ import {
   useState,
 } from 'react'
 import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
-import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
@@ -34,6 +33,7 @@ import { AdminRadioInput } from '~/components/admin/admin-radio-input'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { Checkbox } from '~/components/checkbox'
 import { Chip } from '~/components/chip'
@@ -548,17 +548,17 @@ export default function RouteComponent({
       <p className={styles.saveLine}>
         {prefix}
         Článek lze znovu upravovat
-        <AdminButtonLink onClick={reload} type={'button'}>
+        <ButtonLink onClick={reload} type={'button'}>
           Pokračovat v úpravě
-        </AdminButtonLink>
+        </ButtonLink>
       </p>
     ) : autosave.status === 'failed' ? (
       <p className={styles.saveLine} role={'alert'}>
         {prefix}
         <span className={styles.saveFailure}>{saveLine}</span>
-        <AdminButtonLink onClick={autosave.retry} type={'button'}>
+        <ButtonLink onClick={autosave.retry} type={'button'}>
           Zkusit znovu
-        </AdminButtonLink>
+        </ButtonLink>
       </p>
     ) : (
       <p className={styles.saveLine}>
@@ -809,12 +809,9 @@ export default function RouteComponent({
                         <>
                           Změněno ručně.{' '}
                           {!isReadOnly && (
-                            <AdminButtonLink
-                              onClick={resumeSlug}
-                              type={'button'}
-                            >
+                            <ButtonLink onClick={resumeSlug} type={'button'}>
                               Obnovit podle názvu
-                            </AdminButtonLink>
+                            </ButtonLink>
                           )}
                         </>
                       )
@@ -826,7 +823,7 @@ export default function RouteComponent({
                   />
                   {/* A taken address: a free one, filled in and saved (24d). */}
                   {slugSuggestion !== null && !isReadOnly && (
-                    <AdminButtonLink
+                    <ButtonLink
                       onClick={() => {
                         // A chosen address no longer follows the title.
                         handleInput()
@@ -840,7 +837,7 @@ export default function RouteComponent({
                       type={'button'}
                     >
                       Použít {slugSuggestion}
-                    </AdminButtonLink>
+                    </ButtonLink>
                   )}
                   {/* The whole address, as the reader will see it (24a). */}
                   {slugValue !== '' && (
