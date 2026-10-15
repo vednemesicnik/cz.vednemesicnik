@@ -31,8 +31,9 @@ export const TAXONOMY_ACTION_LABELS: Record<TaxonomyAction, string> = {
   withdraw: 'Vzít zpět do konceptu',
 }
 
-// The actions that change the state in one click. The Coordinator's publish
-// of a waiting one is the approval (07b), hence one intent for both.
+// The intent each state change submits, at once or from the 25d confirmation.
+// The Coordinator's publish of a waiting one is the approval (07b), hence one
+// intent for both.
 export const TAXONOMY_DIRECT_INTENTS: Partial<Record<TaxonomyAction, string>> &
   Record<ConfirmAction, string> = {
   approve: INTENT_VALUE.review,

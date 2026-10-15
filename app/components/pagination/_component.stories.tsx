@@ -3,7 +3,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
-import { CATEGORY_NOUN } from '~/config/list-noun-config'
+import { ARTICLE_NOUN, CATEGORY_NOUN } from '~/config/list-noun-config'
 
 import { Pagination } from './_component'
 
@@ -44,6 +44,7 @@ export const Administration: Story = {
     ...Playground.args,
     currentPage: 1,
     layout: 'inline',
+    noun: ARTICLE_NOUN.countForms,
     pageSize: 20,
     size: 'sm',
     totalCount: 41,
