@@ -162,6 +162,12 @@ export default [
           'articles/:articleId/edit-hold',
           'routes/administration/articles/article/edit-hold/route.ts',
         ),
+        // The article editor's autosave (design 24e) — action-only, posted by
+        // the holding tab; guards itself like the edit hold.
+        route(
+          'articles/:articleId/save',
+          'routes/administration/articles/article/save-article/route.ts',
+        ),
 
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [

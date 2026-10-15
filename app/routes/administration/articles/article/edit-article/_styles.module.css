@@ -49,3 +49,23 @@
     }
   }
 }
+
+/* The line under the heading, the only sign of saving (24e). */
+.saveLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+}
+
+/* Only a failure has a colour: someone has to act (24e). */
+.saveFailure {
+  @layer route {
+    color: var(--error-text);
+  }
+}

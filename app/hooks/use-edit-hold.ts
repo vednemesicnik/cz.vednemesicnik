@@ -32,6 +32,11 @@ type Options = {
   updatedAt: string
   /** An empty draft is deleted with its release (0020), so a reload keeps it. */
   isEmpty: boolean
+  /**
+   * What autosave still has to send when the page goes away: that save, which
+   * also ends the hold, goes instead of the release (decision 0022).
+   */
+  leaveSave?: { action: string; getFormData: () => FormData | null }
 }
 
 // The editor's own events don't need the page's data reloaded.
@@ -49,13 +54,18 @@ const NO_REVALIDATION = { revalidate: () => undefined, state: 'idle' }
  * with each renewal, so it gets the edit once it is free.
  *
  * The tab id lives for one page load: a duplicated tab copies `sessionStorage`,
- * so it would share the hold with its original.
+ * so it would share the hold with its original. Autosave reports each of its
+ * saves with `acknowledgeSave`, so taking the hold back after an expiry
+ * compares against this tab's own last save (24i). When the page goes away with
+ * a save still waiting, that save goes out and ends the hold in one request,
+ * so it cannot race the release.
  *
- * @param options - The hold endpoint, the content, its last save and whether
- *   it is an empty draft.
+ * @param options - The hold endpoint, the content, its last save, whether it
+ *   is an empty draft, and the save to send instead of the release.
  * @returns The tab id for the save form (`null` until the page runs), the
  *   hold's state, `attempt` (a new one after each takeover, to bring back a
- *   dialog the takeover closed), and `takeOver` for the 24g dialogs.
+ *   dialog the takeover closed), `takeOver` for the 24g dialogs, and
+ *   `acknowledgeSave`.
  */
 export const useEditHold = ({
   action,
@@ -63,6 +73,7 @@ export const useEditHold = ({
   id,
   updatedAt,
   isEmpty,
+  leaveSave,
 }: Options) => {
   // Made in the browser, once the page runs: a server-rendered id would differ
   // from the hydrated one.
@@ -73,7 +84,8 @@ export const useEditHold = ({
   const [attempt, setAttempt] = useState(0)
   const stateRef = useRef(state)
   stateRef.current = state
-  // The form keeps what it loaded, whatever a later load brings (24i).
+  // The form keeps what it loaded, whatever a later load brings, and moves
+  // only with its own saves (24i).
   const loadedUpdatedAtRef = useRef(updatedAt)
   // False once the editor is gone: a take answered after that is released.
   const isActiveRef = useRef(false)
@@ -108,6 +120,23 @@ export const useEditHold = ({
     if (keepEmpty) formData.append(EDIT_HOLD_CONFIG.keepEmptyName, 'true')
 
     void fetch(target, {
+      body: formData,
+      keepalive: true,
+      method: 'POST',
+    }).catch(() => undefined)
+  })
+
+  // A waiting save goes out instead of the release and ends the hold itself.
+  const sendLeave = useEffectEvent((target: string, keepEmpty: boolean) => {
+    const formData = leaveSave?.getFormData() ?? null
+
+    if (leaveSave === undefined || formData === null) {
+      sendRelease(target, keepEmpty)
+      return
+    }
+
+    formData.append(EDIT_HOLD_CONFIG.releaseHoldName, 'true')
+    void fetch(leaveSave.action, {
       body: formData,
       keepalive: true,
       method: 'POST',
@@ -197,7 +226,7 @@ export const useEditHold = ({
     }
     // An empty draft would go with the release (0020), but a reload must find
     // it: its hold only expires, and the sweep clears it otherwise.
-    const handlePageHide = () => sendRelease(action, isEmpty)
+    const handlePageHide = () => sendLeave(action, isEmpty)
     // Back from the back/forward cache, the released hold is taken again.
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) void take()
@@ -250,5 +279,9 @@ export const useEditHold = ({
     setAttempt((current) => current + 1)
   }
 
-  return { attempt, state, tabId, takeOver }
+  const acknowledgeSave = (savedUpdatedAt: string) => {
+    loadedUpdatedAtRef.current = savedUpdatedAt
+  }
+
+  return { acknowledgeSave, attempt, state, tabId, takeOver }
 }

@@ -1,5 +1,5 @@
 import type { Prisma } from '@generated/prisma/client'
-import { createId } from '@paralleldrive/cuid2'
+import { isCuid } from '@paralleldrive/cuid2'
 import { data } from 'react-router'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
@@ -13,12 +13,14 @@ import { buildHeldByTabWhere } from '~/utils/edit-hold/build-held-by-tab-where'
 import type { EditHoldColumns } from '~/utils/edit-hold/edit-hold-columns'
 import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import { isRecordNotFoundError } from '~/utils/edit-hold/is-record-not-found-error.server'
+import { getFreeSlugSuggestion } from '~/utils/get-free-slug-suggestion'
 import {
   deleteImage,
   deleteRowWithImages,
   prepareCoverReplacement,
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
+import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
@@ -37,16 +39,27 @@ type Options = {
     file?: File
   }>
   featuredImage: FeaturedImage
-  images?: Array<{ file: File; altText: string; description?: string }>
+  images?: Array<{
+    id: string
+    file?: File
+    altText: string
+    description?: string
+  }>
   slug: string
   tagIds?: string[]
   title: string
   /** The editor's tab, which must hold the edit hold (decision 0019). */
   tabId: string
+  /** The last save of a page going away also ends its hold. */
+  releaseHold?: boolean
 }
 
 type UpdateArticleResult =
-  | { status: 'saved' }
+  /**
+   * `slugSuggestion` is a free address offered for a taken one, which was not
+   * saved (design 24d); `null` when the address saved.
+   */
+  | { status: 'saved'; updatedAt: Date; slugSuggestion: string | null }
   /** The tab does not hold the article; `heldByName` is who does, if anyone. */
   | { status: 'not-held'; heldByName: string | null }
 
@@ -62,20 +75,25 @@ const RELEASED_HOLD = {
 }
 
 /**
- * Saves an edit of an article. The permission is checked against the stored
- * authors and state, never against the ones the form sends, and the new
- * authors must be ones the editor may set. An edit never changes the state.
- * Only the tab holding the edit hold saves, checked again in the save's own
- * write (decision 0019); *Uložit* closes the editor, so the save releases the
- * hold. The history gets one *Upraveno* per hold (07f). The caller has checked
- * the session (`checkCSRF`).
+ * Saves the editor's whole article, as autosave sends it (design 24e, decision
+ * 0022). The permission is checked against the stored authors and state, never
+ * against the ones the form sends, and the new authors must be ones the editor
+ * may set. An edit never changes the state. Only the tab holding the edit hold
+ * saves, checked again in the save's own write (decision 0019), and the save
+ * keeps the hold unless `releaseHold` asks for the end. A draft saves
+ * incomplete; an address another article has is left out and the rest saves
+ * (24d). A new image carries the id the editor made for it, so a repeated save
+ * stores it once. The history gets one *Upraveno* per hold (07f). The caller
+ * has checked the session (`requireCSRF`).
  *
  * @param request - The action's request.
  * @param options - The article id, the editor's tab and the edited fields.
- * @returns `saved`, or `not-held` with the holder's name when another tab or
- *   someone else holds the article (nothing is written).
+ * @returns `saved` with the new `updatedAt` and a free address for a taken one,
+ *   or `not-held` with the holder's name when another tab or someone else holds
+ *   the article (nothing is written).
  * @throws A 404 response for a missing article, a 403 response for a denied
- *   edit, a locked submission or authors the editor may not set.
+ *   edit, a locked submission or authors the editor may not set, a 400
+ *   response for an image id that is not the article's.
  */
 export async function updateArticle(
   request: Request,
@@ -92,6 +110,7 @@ export async function updateArticle(
     tagIds,
     tabId,
     title,
+    releaseHold = false,
   }: Options,
 ): Promise<UpdateArticleResult> {
   const storedArticle = await prisma.article.findUnique({
@@ -159,9 +178,45 @@ export async function updateArticle(
         targetAuthorIds: authorIds,
       })
 
-      // 1. Find images no longer in the form; their rows and files go last.
-      const existingImageIds =
-        existingImages?.map((existingImage) => existingImage.id) ?? []
+      // 1. A new image saved before keeps its id (made in the editor), so a
+      // repeated or retried save stores it once; an id of another article's
+      // image is refused.
+      const newImageIds = (images ?? []).map(({ id }) => id)
+
+      if (newImageIds.some((id) => !isCuid(id))) {
+        throw data(null, { status: 400 })
+      }
+
+      const storedNewImages =
+        newImageIds.length === 0
+          ? []
+          : await prisma.articleImage.findMany({
+              select: { articleId: true, id: true },
+              where: { id: { in: newImageIds } },
+            })
+
+      if (storedNewImages.some((image) => image.articleId !== articleId)) {
+        throw data(null, { status: 400 })
+      }
+
+      const storedNewImageIds = new Set(storedNewImages.map(({ id }) => id))
+      const keptImages = [
+        ...(existingImages ?? []),
+        // Saved before: its file is stored already.
+        ...(images ?? []).flatMap(({ id, altText, description }) =>
+          storedNewImageIds.has(id)
+            ? [{ altText, description, file: undefined, id }]
+            : [],
+        ),
+      ]
+      const imagesToCreate = (images ?? []).flatMap(({ file, ...image }) =>
+        !storedNewImageIds.has(image.id) && file !== undefined && file.size > 0
+          ? [{ ...image, file }]
+          : [],
+      )
+
+      // 2. Find images no longer in the form; their rows and files go last.
+      const existingImageIds = keptImages.map((keptImage) => keptImage.id)
 
       const removedImages = await prisma.articleImage.findMany({
         select: { id: true },
@@ -169,7 +224,7 @@ export async function updateArticle(
       })
       const removedImageIds = removedImages.map(({ id }) => id)
 
-      // 2. Store new images' variants (files before the rows commit); they
+      // 3. Store new images' variants (files before the rows commit); they
       // go after the existing ones in the gallery (design 24b).
       const { _max: lastImage } = await prisma.articleImage.aggregate({
         _max: { position: true },
@@ -177,54 +232,59 @@ export async function updateArticle(
       })
       const firstNewPosition = (lastImage.position ?? -1) + 1
       const newImages = await Promise.all(
-        (images ?? []).map(async ({ file, altText, description }, index) => {
-          const id = createId()
-          const meta = await storeImageVariants(id, file)
-          return {
-            ...meta,
-            altText,
-            description: description || null,
-            id,
-            position: firstNewPosition + index,
-          }
-        }),
+        imagesToCreate.map(
+          async ({ id, file, altText, description }, index) => {
+            const meta = await storeImageVariants(id, file)
+            return {
+              ...meta,
+              altText,
+              description: description || null,
+              id,
+              position: firstNewPosition + index,
+            }
+          },
+        ),
       )
 
-      // 3. Store replaced files of existing images; the previous version's
+      // 4. Store replaced files of existing images; the previous version's
       // files are dropped only after the transaction commits.
       const previousVersions = await prisma.articleImage.findMany({
         select: { id: true, version: true },
         where: { id: { in: existingImageIds } },
       })
       const updatedImages = await Promise.all(
-        (existingImages ?? []).map(
-          async ({ id, altText, description, file }) => {
-            const { data, cleanup } = await prepareCoverReplacement({
-              altText,
-              coverId: id,
-              file: file !== undefined && file.size > 0 ? file : undefined,
-              previousVersion:
-                previousVersions.find((previous) => previous.id === id)
-                  ?.version ?? null,
-            })
-            return {
-              cleanup,
-              data: { ...data, description: description || null },
-              id,
-            }
-          },
-        ),
+        keptImages.map(async ({ id, altText, description, file }) => {
+          const { data, cleanup } = await prepareCoverReplacement({
+            altText,
+            coverId: id,
+            file: file !== undefined && file.size > 0 ? file : undefined,
+            previousVersion:
+              previousVersions.find((previous) => previous.id === id)
+                ?.version ?? null,
+          })
+          return {
+            cleanup,
+            data: { ...data, description: description || null },
+            id,
+          }
+        }),
       )
 
-      // 4. Determine featured image ID
+      // 5. Determine featured image ID
+      const savedImageIds = new Set([
+        ...existingImageIds,
+        ...newImages.map(({ id }) => id),
+      ])
       let featuredImageId: string | null = null
       if (featuredImage.source === FEATURED_IMAGE_SOURCE.EXISTING) {
         featuredImageId = featuredImage.id
-      } else if (
-        featuredImage.source === FEATURED_IMAGE_SOURCE.NEW &&
-        newImages[featuredImage.index]
-      ) {
-        featuredImageId = newImages[featuredImage.index].id
+      } else if (featuredImage.source === FEATURED_IMAGE_SOURCE.NEW) {
+        const featuredNewImageId = images?.[featuredImage.index]?.id
+        featuredImageId =
+          featuredNewImageId !== undefined &&
+          savedImageIds.has(featuredNewImageId)
+            ? featuredNewImageId
+            : null
       }
 
       // A new or replaced featured image isn't in the DB yet: build its SEO
@@ -250,12 +310,30 @@ export async function updateArticle(
             })
           : await resolveArticleFeaturedImageSeo(featuredImageId)
 
-      const pathname = `/articles/${slug}`
-      // The PageSEO row moves with the address; a draft without one has none.
-      const storedPathname =
-        storedArticle.slug === null
-          ? pathname
-          : `/articles/${storedArticle.slug}`
+      // 6. An address another article has is not saved; the rest is (24d).
+      // Until the author picks another, the article keeps its address, or has
+      // none when it is new.
+      const findSlugSuggestion = async (requestedSlug: string) => {
+        const otherArticles = await prisma.article.findMany({
+          select: { slug: true },
+          where: {
+            id: { not: articleId },
+            slug: { startsWith: requestedSlug },
+          },
+        })
+        const takenSlugs = otherArticles.flatMap((otherArticle) =>
+          otherArticle.slug === null ? [] : [otherArticle.slug],
+        )
+        return takenSlugs.includes(requestedSlug)
+          ? getFreeSlugSuggestion(requestedSlug, takenSlugs)
+          : null
+      }
+
+      const requestedSlug = slug === '' ? null : slug
+      let slugSuggestion =
+        requestedSlug === null || requestedSlug === storedArticle.slug
+          ? null
+          : await findSlugSuggestion(requestedSlug)
 
       // The first save with a title, text or image ends the empty draft and
       // is its creation in the history (decision 0020, design 07f).
@@ -265,92 +343,143 @@ export async function updateArticle(
         newImages.length > 0 ||
         existingImageIds.length > 0
 
-      // 5. In one transaction: all image rows, the article and its PageSEO
+      // 7. In one transaction: all image rows, the article and its PageSEO
       // record. Store files of removed images and of replaced versions go only
       // after it commits, so a failed save leaves everything as it was.
-      const saveInTransaction = () =>
-        deleteRowWithImages(
-          async () => removedImageIds,
-          () =>
-            prisma.$transaction([
-              // Conditional, so of two first saves only one is the creation.
-              prisma.article.updateMany({
-                data: { firstContentAt: hasContent ? new Date() : null },
-                where: { firstContentAt: null, id: articleId },
-              }),
-              // An orphan left at the new address by an earlier rename.
-              prisma.pageSEO.deleteMany({
-                where: {
-                  AND: [{ pathname }, { pathname: { not: storedPathname } }],
-                },
-              }),
-              prisma.articleImage.deleteMany({
-                where: { id: { in: removedImageIds } },
-              }),
-              ...newImages.map((imageData) =>
-                prisma.articleImage.create({
-                  data: { ...imageData, articleId },
-                  select: { id: true },
-                }),
-              ),
-              ...updatedImages.map(({ id, data }) =>
-                prisma.articleImage.update({ data, where: { id } }),
-              ),
-              prisma.article.update({
-                data: {
-                  authors: {
-                    set: authorIds.map((id) => ({ id })),
-                  },
-                  categories: {
-                    set: categoryIds?.map((id) => ({ id })) ?? [],
-                  },
-                  content,
-                  excerpt: excerpt || null,
-                  featuredImageId,
-                  slug,
-                  tags: {
-                    set: tagIds?.map((id) => ({ id })) ?? [],
-                  },
-                  title,
-                  // *Uložit* closes the editor (until autosave, #670).
-                  ...RELEASED_HOLD,
-                },
-                select: { id: true },
-                // Only the holding tab saves a draft (decision 0019); otherwise
-                // the whole transaction rolls back.
-                where: {
-                  id: articleId,
-                  state: 'draft',
-                  ...buildHeldByTabWhere(tab),
-                },
-              }),
-              prisma.pageSEO.upsert({
-                create: {
-                  authorId: context.authorId,
-                  description: excerpt || null,
-                  ogImageUrl,
-                  pathname,
-                  state,
-                  title,
-                  twitterImageUrl,
-                },
-                // The state belongs to the state transitions, not to an edit.
-                update: {
-                  description: excerpt || null,
-                  ogImageUrl,
-                  pathname,
-                  title,
-                  twitterImageUrl,
-                },
-                where: { pathname: storedPathname },
-              }),
-            ]),
-        ) as Promise<[Prisma.BatchPayload, ...unknown[]]>
+      const saveInTransaction = async () => {
+        const savedSlug =
+          slugSuggestion === null ? requestedSlug : storedArticle.slug
+        // The PageSEO row moves with the address; a draft without one has none.
+        const pathname = savedSlug === null ? null : `/articles/${savedSlug}`
+        const storedPathname =
+          storedArticle.slug === null
+            ? pathname
+            : `/articles/${storedArticle.slug}`
 
-      let firstContent: Prisma.BatchPayload
+        const pageSeoWrites =
+          pathname === null
+            ? // A cleared address takes its PageSEO row with it.
+              storedPathname === null
+              ? []
+              : [
+                  prisma.pageSEO.deleteMany({
+                    where: { pathname: storedPathname },
+                  }),
+                ]
+            : [
+                prisma.pageSEO.upsert({
+                  create: {
+                    authorId: context.authorId,
+                    description: excerpt || null,
+                    ogImageUrl,
+                    pathname,
+                    state,
+                    title,
+                    twitterImageUrl,
+                  },
+                  // The state belongs to the state transitions, not to an edit.
+                  update: {
+                    description: excerpt || null,
+                    ogImageUrl,
+                    pathname,
+                    title,
+                    twitterImageUrl,
+                  },
+                  where: { pathname: storedPathname ?? pathname },
+                }),
+              ]
+
+        const orphanWrites =
+          pathname === null || storedPathname === null
+            ? []
+            : [
+                // An orphan left at the new address by an earlier rename.
+                prisma.pageSEO.deleteMany({
+                  where: {
+                    AND: [{ pathname }, { pathname: { not: storedPathname } }],
+                  },
+                }),
+              ]
+
+        const articleWrite = prisma.article.update({
+          data: {
+            authors: {
+              set: authorIds.map((id) => ({ id })),
+            },
+            categories: {
+              set: categoryIds?.map((id) => ({ id })) ?? [],
+            },
+            content,
+            excerpt: excerpt || null,
+            featuredImageId,
+            slug: savedSlug,
+            tags: {
+              set: tagIds?.map((id) => ({ id })) ?? [],
+            },
+            title,
+            // Autosave keeps the hold; the save of a page going away ends it.
+            ...(releaseHold ? RELEASED_HOLD : {}),
+          },
+          select: { id: true, updatedAt: true },
+          // Only the holding tab saves a draft (decision 0019); otherwise
+          // the whole transaction rolls back.
+          where: {
+            id: articleId,
+            state: 'draft',
+            ...buildHeldByTabWhere(tab),
+          },
+        })
+
+        const writes = [
+          // Conditional, so of two first saves only one is the creation.
+          prisma.article.updateMany({
+            data: { firstContentAt: hasContent ? new Date() : null },
+            where: { firstContentAt: null, id: articleId },
+          }),
+          ...orphanWrites,
+          prisma.articleImage.deleteMany({
+            where: { id: { in: removedImageIds } },
+          }),
+          ...newImages.map((imageData) =>
+            prisma.articleImage.create({
+              data: { ...imageData, articleId },
+              select: { id: true },
+            }),
+          ),
+          ...updatedImages.map(({ id, data }) =>
+            prisma.articleImage.update({ data, where: { id } }),
+          ),
+          articleWrite,
+          ...pageSeoWrites,
+        ]
+        const articleWriteIndex = writes.indexOf(articleWrite)
+
+        const results = (await deleteRowWithImages(
+          async () => removedImageIds,
+          () => prisma.$transaction(writes),
+        )) as unknown[]
+
+        return {
+          firstContent: results[0] as Prisma.BatchPayload,
+          savedArticle: results[articleWriteIndex] as { updatedAt: Date },
+        }
+      }
+
+      let saved: Awaited<ReturnType<typeof saveInTransaction>>
 
       try {
-        ;[firstContent] = await saveInTransaction()
+        try {
+          saved = await saveInTransaction()
+        } catch (error) {
+          // Another article took the address between the check and the write:
+          // once more without it.
+          if (!isUniqueConstraintError(error) || requestedSlug === null) {
+            throw error
+          }
+          slugSuggestion = await findSlugSuggestion(requestedSlug)
+          if (slugSuggestion === null) throw error
+          saved = await saveInTransaction()
+        }
       } catch (error) {
         // The hold moved between the check and the write.
         if (!isRecordNotFoundError(error)) throw error
@@ -374,12 +503,18 @@ export async function updateArticle(
 
       await Promise.all(updatedImages.map(({ cleanup }) => cleanup()))
 
+      const savedResult = {
+        slugSuggestion,
+        status: 'saved',
+        updatedAt: saved.savedArticle.updatedAt,
+      } as const
+
       const change =
-        hasContent && firstContent.count === 1 ? 'create' : 'update'
+        hasContent && saved.firstContent.count === 1 ? 'create' : 'update'
 
       // A save that leaves a draft empty stays out of its history (0020).
       if (!hasContent && storedArticle.firstContentAt === null) {
-        return { status: 'saved' }
+        return savedResult
       }
 
       // One *Upraveno* per hold, however often it saves (07f, 24e).
@@ -408,7 +543,7 @@ export async function updateArticle(
         context,
       )
 
-      return { status: 'saved' }
+      return savedResult
     },
     target: {
       authorIds: storedArticle.authors.map((author) => author.id),
