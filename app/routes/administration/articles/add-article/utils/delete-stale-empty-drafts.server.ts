@@ -5,21 +5,27 @@ import { prisma } from '~/utils/db.server'
 export const STALE_EMPTY_DRAFT_AGE_MILLISECONDS = 24 * 60 * 60 * 1000
 
 /**
- * Deletes empty drafts (no first content, decision 0020) created more than a
- * day ago whose edit hold is free. A system clean-up: nothing is logged and no
- * event is sent. Until the edit hold is taken (#669), an editor left open for
- * more than a day on a new draft loses it.
+ * Deletes empty drafts (no first content, decision 0020) whose edit hold
+ * expired without a release, whatever their age: an empty draft ends with its
+ * hold (24e). One never held is deleted a day after it was created. A system
+ * clean-up: nothing is logged and no event is sent. An open editor renews its
+ * hold, so its draft stays.
  *
  * @param now - The current time.
  * @returns The number of deleted drafts.
  */
 export const deleteStaleEmptyDrafts = async (now: Date = new Date()) => {
   const where = {
-    createdAt: {
-      lt: new Date(now.getTime() - STALE_EMPTY_DRAFT_AGE_MILLISECONDS),
-    },
     firstContentAt: null,
-    OR: [{ heldUntil: null }, { heldUntil: { lt: now } }],
+    OR: [
+      { heldUntil: { lt: now } },
+      {
+        createdAt: {
+          lt: new Date(now.getTime() - STALE_EMPTY_DRAFT_AGE_MILLISECONDS),
+        },
+        heldUntil: null,
+      },
+    ],
   }
 
   const staleDrafts = await prisma.article.findMany({

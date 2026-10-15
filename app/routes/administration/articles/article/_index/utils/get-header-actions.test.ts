@@ -240,3 +240,22 @@ describe('getHeaderActions — archived', () => {
     })
   })
 })
+
+describe('getHeaderActions — someone else edits it (07g, 23g)', () => {
+  test('nothing for an author: the page says who edits it', () => {
+    expect(
+      getHeaderActions({ ...nothingAllowed, isHeldByOther: true }),
+    ).toEqual({ menu: [], outline: null, primary: null, sentence: null })
+  })
+
+  test('the Coordinator may take the edit over (24g)', () => {
+    expect(
+      getHeaderActions({
+        ...nothingAllowed,
+        canTakeOver: true,
+        isHeldByOther: true,
+        submission: 'pending',
+      }),
+    ).toEqual({ menu: [], outline: 'take-over', primary: null, sentence: null })
+  })
+})

@@ -1,5 +1,6 @@
-import { data } from 'react-router'
+import { data, href, redirect } from 'react-router'
 
+import { flashAdminNotice } from '~/utils/admin-notice/flash-admin-notice.server'
 import { prisma } from '~/utils/db.server'
 import {
   createImageSources,
@@ -8,8 +9,10 @@ import {
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { requireContentUpdatePermission } from '~/utils/permissions/author/guards/require-content-update-permission.server'
 import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 
+import { getArticleHold } from '../../utils/get-article-hold'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -35,6 +38,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: { id: true },
       },
       firstContentAt: true,
+      heldByAuthor: { select: { name: true } },
+      heldByAuthorId: true,
+      heldByTabId: true,
+      heldSince: true,
+      heldUntil: true,
       images: {
         orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
         select: {
@@ -49,6 +57,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: { id: true },
       },
       title: true,
+      updatedAt: true,
     },
     where: { id: articleId },
   })
@@ -74,6 +83,31 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     })
   ) {
     throw data(null, { status: 403 })
+  }
+
+  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+  const hold = getArticleHold(article, {
+    authorId: context.authorId,
+    now: new Date(),
+  })
+
+  // Someone else edits it: only the Coordinator gets the takeover dialog; the
+  // others go to the detail, which says who (23g, 24g). An empty draft has no
+  // detail (0020), so to the list.
+  if (hold !== null && !hold.isOwn && !isApprover) {
+    throw redirect(
+      article.firstContentAt === null
+        ? href('/administration/articles')
+        : href('/administration/articles/:articleId', { articleId }),
+      {
+        headers: {
+          'Set-Cookie': await flashAdminNotice(
+            request,
+            `Článek právě upravuje ${hold.heldByName}.`,
+          ),
+        },
+      },
+    )
   }
 
   const [authors, categories, tags] = await Promise.all([
@@ -121,9 +155,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       slug: article.slug ?? '',
       tagIds: article.tags.map((tag) => tag.id),
       title: article.title,
+      // The last save, which the editor's hold takes back only over (24i).
+      updatedAt: article.updatedAt.toISOString(),
     },
     authors,
     categories,
+    // Only the Coordinator takes over someone else's edit (24g).
+    isApprover,
     tags,
   }
 }

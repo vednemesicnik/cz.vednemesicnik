@@ -156,6 +156,13 @@ export default [
         // before a child action.
         route('filters', 'routes/administration/filters/route.ts'),
 
+        // The article editor's edit hold (design 07g) — action-only, posted by
+        // the editor; guards itself like the filters.
+        route(
+          'articles/:articleId/edit-hold',
+          'routes/administration/articles/article/edit-hold/route.ts',
+        ),
+
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [
           // Articles (hlavní sekce s nested routes pro categories a tags)

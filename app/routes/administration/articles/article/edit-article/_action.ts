@@ -30,6 +30,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     title,
     slug,
     content,
+    editTabId,
     excerpt,
     categoryIds,
     tagIds,
@@ -39,7 +40,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     featuredImage,
   } = submission.value
 
-  await updateArticle(request, {
+  const result = await updateArticle(request, {
     articleId,
     authorIds,
     categoryIds,
@@ -49,9 +50,19 @@ export async function action({ request, params }: Route.ActionArgs) {
     featuredImage,
     images,
     slug,
+    tabId: editTabId,
     tagIds,
     title,
   })
+
+  // Another tab or someone else holds the article: the editor turns read-only
+  // and keeps what was typed (24h).
+  if (result.status === 'not-held') {
+    return data(
+      { heldByName: result.heldByName, submissionResult: undefined },
+      { status: 409 },
+    )
+  }
 
   return redirect(
     href('/administration/articles/:articleId', {

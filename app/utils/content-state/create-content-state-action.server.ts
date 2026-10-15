@@ -4,6 +4,7 @@ import { redirect } from 'react-router'
 import { FORM_CONFIG } from '~/config/form-config'
 import { flashAdminNotice } from '~/utils/admin-notice/flash-admin-notice.server'
 import { requireCSRF } from '~/utils/csrf.server'
+import { readEditHeldRefusal } from '~/utils/edit-hold/read-edit-held-refusal'
 
 import type {
   ContentStateHandlers,
@@ -57,6 +58,12 @@ type RunContentStateActionOptions = {
   submissionHandlers?: SubmissionHandlers
 }
 
+type ContentStateActionResult = {
+  intent: string
+  missing: string[]
+  heldByName?: string
+}
+
 const parsePublishedAt = (value: FormDataEntryValue | null) =>
   typeof value === 'string' && value !== '' ? new Date(value) : undefined
 
@@ -71,19 +78,39 @@ const parsePublishDate = (formData: FormData) =>
  * Replaces each per-entity `_index/_action.ts` switch.
  *
  * @returns `{ intent, missing }` so the page can toast or list what blocks a
- *   publish or a submission (23h); a delete that requested it redirects instead.
+ *   publish or a submission (23h), and `heldByName` when the content is held by
+ *   someone else and nothing changed (07g, 23g) — returned, not thrown, so the
+ *   page's fetcher stays out of the error boundary; a delete that requested it
+ *   redirects instead.
  */
 export const runContentStateAction = async (
   request: Request,
   options: RunContentStateActionOptions,
-) => {
-  const { handlers, id, submissionHandlers } = options
-
+): Promise<ContentStateActionResult> => {
   const formData = await request.formData()
   await requireCSRF(formData, request)
 
   const intent = formData.get(INTENT_NAME)
   invariantResponse(typeof intent === 'string', 'Missing intent')
+
+  try {
+    return await dispatchContentStateIntent(request, options, formData, intent)
+  } catch (error) {
+    const heldByName = readEditHeldRefusal(error)
+
+    if (heldByName === null) throw error
+
+    return { heldByName, intent, missing: [] }
+  }
+}
+
+const dispatchContentStateIntent = async (
+  request: Request,
+  options: RunContentStateActionOptions,
+  formData: FormData,
+  intent: string,
+): Promise<ContentStateActionResult> => {
+  const { handlers, id, submissionHandlers } = options
 
   const withRedirect = formData.get(REDIRECT_NAME) === 'true'
   const target = await options.loadTarget()

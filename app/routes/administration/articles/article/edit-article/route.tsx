@@ -9,13 +9,14 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import type { SubmitEvent } from 'react'
-import { href, useNavigation } from 'react-router'
+import { href, useNavigate, useNavigation } from 'react-router'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminDraftRestoreBanner } from '~/components/admin/admin-draft-restore-banner'
 import { AdminImageInput } from '~/components/admin/admin-image-input'
 import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
 import { AdminLeaveConfirmationDialog } from '~/components/admin/admin-leave-confirmation-dialog'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminRadioInput } from '~/components/admin/admin-radio-input'
 import { AdminTextEditor } from '~/components/admin/admin-text-editor'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
@@ -29,7 +30,9 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
+import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
+import { useEditHold } from '~/hooks/use-edit-hold'
 import {
   clearArticleBackup,
   getArticleBackupKey,
@@ -43,6 +46,9 @@ import { useUnsavedChangesGuard } from '~/utils/use-unsaved-changes-guard'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { EditHoldDialog } from './components/edit-hold-dialog'
+import { formatTakeOverDescription } from './utils/format-take-over-description'
+import { getEditHoldNotice } from './utils/get-edit-hold-notice'
 
 export { action } from './_action'
 export { handle } from './_handle'
@@ -54,8 +60,36 @@ export default function RouteComponent({
   actionData,
   params,
 }: Route.ComponentProps) {
-  const { article } = loaderData
+  const { article, isApprover } = loaderData
   const { state } = useNavigation()
+  const navigate = useNavigate()
+
+  // One tab edits at a time (07g, 24g).
+  const editHold = useEditHold({
+    action: href('/administration/articles/:articleId/edit-hold', {
+      articleId: params.articleId,
+    }),
+    entity: 'article',
+    id: params.articleId,
+    isEmpty: article.isEmptyDraft,
+    updatedAt: article.updatedAt,
+  })
+  // A refused save: someone else or another tab holds it now (24h).
+  const isSaveRefused = actionData !== undefined && 'heldByName' in actionData
+  const holdNotice = getEditHoldNotice(
+    isSaveRefused
+      ? actionData.heldByName === null
+        ? { status: 'changed' }
+        : { holderName: actionData.heldByName, status: 'lost' }
+      : editHold.state,
+  )
+  const isHolding = !isSaveRefused && editHold.state.status === 'holding'
+
+  const closeHref = article.isEmptyDraft
+    ? href('/administration/articles')
+    : href('/administration/articles/:articleId', {
+        articleId: params.articleId,
+      })
 
   // Lookup existing image preview URLs by id (form fieldsets only carry schema fields).
   const previewUrlById = new Map(
@@ -93,8 +127,9 @@ export default function RouteComponent({
     id: formId,
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
+    // The tab id arrives after hydration; it is no change of the article.
     shouldDirtyConsider: (field) => {
-      return !field.startsWith('csrf')
+      return !field.startsWith('csrf') && field !== EDIT_HOLD_CONFIG.tabIdName
     },
     shouldRevalidate: 'onBlur',
     shouldValidate: 'onSubmit',
@@ -148,11 +183,37 @@ export default function RouteComponent({
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
-  const canSubmit = !isLoadingOrSubmitting && form.valid
+  // Without the hold the editor only reads (07g); #671 draws it fully (24h).
+  const isReadOnly = isLoadingOrSubmitting || !isHolding
+  const canSubmit = !isReadOnly && form.valid
 
   return (
     <AdminPage>
       <PageTitle>Upravit článek</PageTitle>
+
+      {holdNotice !== null && <AdminParagraph>{holdNotice}</AdminParagraph>}
+
+      {/* Someone else's edit, only the Coordinator's to take (24g). */}
+      {editHold.state.status === 'held-by-other' && isApprover && (
+        <EditHoldDialog
+          description={formatTakeOverDescription(
+            editHold.state.holder,
+            new Date(),
+          )}
+          key={editHold.attempt}
+          kind={'take-over'}
+          onCancel={() => navigate(closeHref)}
+          onConfirm={() => void editHold.takeOver()}
+        />
+      )}
+      {editHold.state.status === 'own-other-tab' && (
+        <EditHoldDialog
+          key={editHold.attempt}
+          kind={'other-tab'}
+          onCancel={() => navigate(closeHref)}
+          onConfirm={() => void editHold.takeOver()}
+        />
+      )}
 
       {backup !== null && (
         <AdminDraftRestoreBanner
@@ -176,11 +237,13 @@ export default function RouteComponent({
           onSubmit={handleSubmit}
         >
           <AuthenticityTokenInput />
+          <input
+            name={fields.editTabId.name}
+            type={'hidden'}
+            value={editHold.tabId ?? ''}
+          />
 
-          <Fieldset
-            disabled={isLoadingOrSubmitting}
-            legend={'Základní informace'}
-          >
+          <Fieldset disabled={isReadOnly} legend={'Základní informace'}>
             <TextField
               {...getInputProps(fields.title, { type: 'text' })}
               errors={fields.title.errors}
@@ -188,7 +251,7 @@ export default function RouteComponent({
               placeholder={'Název článku'}
             />
             <AdminButtonLink
-              disabled={isLoadingOrSubmitting}
+              disabled={isReadOnly}
               onClick={regenerateSlug}
               type="button"
             >
@@ -205,7 +268,7 @@ export default function RouteComponent({
             />
           </Fieldset>
 
-          <Fieldset disabled={isLoadingOrSubmitting} legend={'Obsah'}>
+          <Fieldset disabled={isReadOnly} legend={'Obsah'}>
             <AdminTextarea
               field={fields.excerpt}
               label={'Výpis článku (excerpt)'}
@@ -223,7 +286,7 @@ export default function RouteComponent({
             />
           </Fieldset>
 
-          <Fieldset disabled={isLoadingOrSubmitting} legend={'Kategorizace'}>
+          <Fieldset disabled={isReadOnly} legend={'Kategorizace'}>
             <Select
               {...getSelectProps(fields.categoryIds)}
               errors={fields.categoryIds.errors}
@@ -250,7 +313,7 @@ export default function RouteComponent({
             </Select>
           </Fieldset>
 
-          <Fieldset disabled={isLoadingOrSubmitting} legend={'Obrázky'}>
+          <Fieldset disabled={isReadOnly} legend={'Obrázky'}>
             <AdminRadioInput
               className={styles.defaultFieldFeaturedImageContainer}
               field={fields.featuredImage}
@@ -408,10 +471,7 @@ export default function RouteComponent({
             </Button>
           </Fieldset>
 
-          <Fieldset
-            disabled={isLoadingOrSubmitting}
-            legend={'Informace o autorech'}
-          >
+          <Fieldset disabled={isReadOnly} legend={'Informace o autorech'}>
             {fields.authorIds.getFieldList().map((authorField, index) => (
               <div className={styles.authorRow} key={authorField.key}>
                 <Select
@@ -456,13 +516,7 @@ export default function RouteComponent({
             </Button>
             <LinkButton
               disabled={isLoadingOrSubmitting}
-              to={
-                article.isEmptyDraft
-                  ? href('/administration/articles')
-                  : href('/administration/articles/:articleId', {
-                      articleId: params.articleId,
-                    })
-              }
+              to={closeHref}
               variant={'outline'}
             >
               Zrušit

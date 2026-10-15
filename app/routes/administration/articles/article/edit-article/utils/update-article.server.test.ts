@@ -1,3 +1,4 @@
+import { Prisma } from '@generated/prisma/client'
 import { data } from 'react-router'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -18,10 +19,13 @@ const mocks = vi.hoisted(() => ({
   articleUpdate: vi.fn(),
   articleUpdateMany: vi.fn(),
   checkAuthorPermission: vi.fn(),
+  contentLogCount: vi.fn(),
+  deleteImage: vi.fn(),
   pageSeoDeleteMany: vi.fn(),
   pageSeoUpsert: vi.fn(),
   permissionContext: vi.fn(),
   publishContentEvent: vi.fn(),
+  recordContentLog: vi.fn(),
   replacedVersionCleanup: vi.fn(),
   storeDelete: vi.fn(),
   storeImageVariants: vi.fn(),
@@ -31,7 +35,7 @@ const mocks = vi.hoisted(() => ({
 
 // The content log has its own tests; here it only must not reach Prisma.
 vi.mock('~/utils/content-log/record-content-log.server', () => ({
-  recordContentLog: vi.fn(),
+  recordContentLog: mocks.recordContentLog,
 }))
 
 vi.mock(
@@ -63,6 +67,7 @@ vi.mock('~/utils/db.server', () => ({
       findMany: mocks.articleImageFindMany,
       update: mocks.articleImageUpdate,
     },
+    contentLog: { count: mocks.contentLogCount },
     pageSEO: {
       deleteMany: mocks.pageSeoDeleteMany,
       upsert: mocks.pageSeoUpsert,
@@ -71,6 +76,7 @@ vi.mock('~/utils/db.server', () => ({
 }))
 
 vi.mock('~/utils/image-store/store-image.server', () => ({
+  deleteImage: mocks.deleteImage,
   deleteRowWithImages: async (
     loadImageIds: () => Promise<string[]>,
     deleteRow: () => Promise<unknown>,
@@ -120,12 +126,24 @@ const options = {
   existingImages: [{ altText: 'Kept', id: 'image-kept' }],
   featuredImage: { source: FEATURED_IMAGE_SOURCE.NONE },
   slug: 'article',
+  tabId: 'tab-1',
   title: 'Article',
 } satisfies Parameters<typeof updateArticle>[1]
+
+// The saving tab holds the article (decision 0019).
+const heldSince = new Date(Date.now() - 60_000)
+const ownHold = {
+  heldByAuthor: { name: 'Marie Horáková' },
+  heldByAuthorId: 'author-1',
+  heldByTabId: 'tab-1',
+  heldSince,
+  heldUntil: new Date(Date.now() + 60_000),
+}
 
 const storedArticle = {
   authors: [{ id: 'author-1' }],
   firstContentAt: new Date('2026-09-20T10:00:00Z'),
+  ...ownHold,
   slug: 'article',
   state: 'draft',
   submittedAt: null,
@@ -167,6 +185,8 @@ beforeEach(() => {
   })
   // The first entry is the first-content mark; 0 rows: not the first save.
   mocks.transaction.mockResolvedValue([{ count: 0 }])
+  // Nothing logged in this hold yet.
+  mocks.contentLogCount.mockResolvedValue(0)
 })
 
 describe('updateArticle — the permission follows the stored article', () => {
@@ -477,5 +497,104 @@ describe('updateArticle — the gallery order (design 24b)', () => {
       ([argument]) => argument.data.position,
     )
     expect(positions).toEqual([2, 3])
+  })
+})
+
+describe('updateArticle — the edit hold (07g, decision 0019)', () => {
+  test('saves only in the holding tab, checked in the write, and releases the hold', async () => {
+    await expect(updateArticle(request, options)).resolves.toEqual({
+      status: 'saved',
+    })
+
+    const articleWrite = mocks.articleUpdate.mock.lastCall?.[0]
+    expect(articleWrite.where).toEqual({
+      heldByAuthorId: 'author-1',
+      heldByTabId: 'tab-1',
+      id: 'article-1',
+      state: 'draft',
+    })
+    expect(articleWrite.data).toMatchObject({
+      heldByAuthorId: null,
+      heldByTabId: null,
+      heldSince: null,
+      heldUntil: null,
+    })
+  })
+
+  test('another tab of one’s own: nothing is stored or written', async () => {
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      heldByTabId: 'tab-2',
+    })
+
+    await expect(
+      updateArticle(request, {
+        ...options,
+        images: [{ altText: 'New', file: imageFile }],
+      }),
+    ).resolves.toEqual({ heldByName: 'Marie Horáková', status: 'not-held' })
+    expect(mocks.storeImageVariants).not.toHaveBeenCalled()
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('someone else holds it: refused, naming them', async () => {
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      heldByAuthor: { name: 'Jakub Novák' },
+      heldByAuthorId: 'author-2',
+    })
+
+    await expect(updateArticle(request, options)).resolves.toEqual({
+      heldByName: 'Jakub Novák',
+      status: 'not-held',
+    })
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('taken over between the check and the write: the transaction rolls back', async () => {
+    mocks.transaction.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    mocks.articleFindUnique
+      .mockResolvedValueOnce(storedArticle)
+      .mockResolvedValueOnce({
+        ...ownHold,
+        heldByAuthor: { name: 'Jakub Novák' },
+        heldByAuthorId: 'author-2',
+      })
+
+    await expect(
+      updateArticle(request, {
+        ...options,
+        images: [{ altText: 'New', file: imageFile }],
+      }),
+    ).resolves.toEqual({
+      heldByName: 'Jakub Novák',
+      status: 'not-held',
+    })
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+    // The new image's files went in before the rows; they go too.
+    expect(mocks.deleteImage).toHaveBeenCalledOnce()
+  })
+
+  test('logs Upraveno once per hold (07f), announces every save', async () => {
+    await updateArticle(request, options)
+    expect(mocks.contentLogCount).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        actorId: 'author-1',
+        createdAt: { gte: heldSince },
+        event: { in: ['create', 'update'] },
+      }),
+    })
+    expect(mocks.recordContentLog).toHaveBeenCalledOnce()
+
+    mocks.contentLogCount.mockResolvedValue(1)
+    await updateArticle(request, options)
+    expect(mocks.recordContentLog).toHaveBeenCalledOnce()
+    expect(mocks.publishContentEvent).toHaveBeenCalledTimes(2)
   })
 })

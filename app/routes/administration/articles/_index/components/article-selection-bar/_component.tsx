@@ -10,6 +10,7 @@ import { FORM_CONFIG } from '~/config/form-config'
 import type { action as listAction } from '../../_action'
 import type { Route } from '../../+types/route'
 import { BULK_ACTION_FETCHER_KEY } from '../../utils/bulk-action-fetcher-key'
+import { formatHeldSkipNote } from '../../utils/format-held-skip-note'
 import type { BulkAction } from '../../utils/get-bulk-actions'
 import { getBulkPublishNotes } from '../../utils/get-bulk-publish-notes'
 import { getSelectionBarContent } from '../../utils/get-selection-bar-content'
@@ -57,9 +58,17 @@ export const ArticleSelectionBar = ({
   const [openAction, setOpenAction] = useState<BulkAction | null>(null)
 
   const isSubmitting = fetcher.state !== 'idle'
-  const onlyDrafts = articles.every((article) => article.state === 'draft')
 
   const { actions, message } = getSelectionBarContent(articles)
+
+  // An article someone else edits is skipped and said apart (22f).
+  const unheldArticles = articles.filter((article) => !article.isHeldByOther)
+  const heldSkipNote = formatHeldSkipNote(
+    articles.length - unheldArticles.length,
+  )
+  const onlyDrafts = unheldArticles.every(
+    (article) => article.state === 'draft',
+  )
 
   const open = (bulkAction: BulkAction) => setOpenAction(bulkAction)
 
@@ -74,7 +83,21 @@ export const ArticleSelectionBar = ({
   const close = () => setOpenAction(null)
 
   // Incomplete articles are left out of publishing and said apart (23h).
-  const completeArticles = articles.filter((article) => !article.isIncomplete)
+  const completeArticles = unheldArticles.filter(
+    (article) => !article.isIncomplete,
+  )
+  const publishNotes = getBulkPublishNotes({
+    incompleteCount: unheldArticles.length - completeArticles.length,
+    notSubmittedCount: completeArticles.filter(
+      (article) => article.isNotSubmitted,
+    ).length,
+    pendingCount: completeArticles.filter(
+      (article) => article.state === 'pending',
+    ).length,
+  })
+  const publishSkipped = [publishNotes.skipped, heldSkipNote]
+    .filter((sentence) => sentence !== null)
+    .join(' ')
   const toListItem = (article: Article) => ({
     detail: STATUS_TAG_LABELS[article.state],
     id: article.id,
@@ -112,33 +135,27 @@ export const ArticleSelectionBar = ({
               ? []
               : [{ ...toListItem(article), publishedAt: article.publishedAt }],
           )}
+          notes={publishNotes.notes}
           onClose={close}
           orderedArticles={completeArticles
             .filter((article) => article.publishedAt === null)
             .map(toListItem)}
-          {...getBulkPublishNotes({
-            incompleteCount: articles.length - completeArticles.length,
-            notSubmittedCount: completeArticles.filter(
-              (article) => article.isNotSubmitted,
-            ).length,
-            pendingCount: completeArticles.filter(
-              (article) => article.state === 'pending',
-            ).length,
-          })}
+          skipped={publishSkipped === '' ? null : publishSkipped}
         />
       )}
       {(openAction === 'archive' || openAction === 'delete') && (
         <BulkConfirmDialog
           action={openAction}
-          articles={articles}
+          articles={unheldArticles}
           onClose={close}
           onConfirm={() =>
             submit(
               openAction,
-              articles.map((article) => article.id),
+              unheldArticles.map((article) => article.id),
             )
           }
           onlyDrafts={onlyDrafts}
+          skipped={heldSkipNote}
         />
       )}
     </>

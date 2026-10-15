@@ -28,12 +28,26 @@ type Options = {
   canRestore: boolean
   canDelete: boolean
   canChangePublishedAt: boolean
+  /** Someone else holds the edit (07g); the flags are already masked. */
+  isHeldByOther?: boolean
+  canTakeOver?: boolean
 }
 
 const only = (action: ArticleAction, isAllowed: boolean) =>
   isAllowed ? [action] : []
 
 const getDraftActions = (options: Options): HeaderActions => {
+  // Someone else edits it: in place of the buttons, the page says who (23g),
+  // and the Coordinator may take the edit over (24g).
+  if (options.isHeldByOther === true) {
+    return {
+      menu: [],
+      outline: options.canTakeOver === true ? 'take-over' : null,
+      primary: null,
+      sentence: null,
+    }
+  }
+
   const edit = only('edit', options.canEdit)
 
   if (options.submission !== null) {
@@ -113,10 +127,12 @@ const getDraftActions = (options: Options): HeaderActions => {
  * may do nothing, one sentence naming who can.
  *
  * @param options - The article's state and submission, whether it is submitted
- *   at all (no Coordinator among its authors), and what the signed-in author may
- *   do with it.
+ *   at all (no Coordinator among its authors), what the signed-in author may
+ *   do with it, and whether someone else holds its edit (07g).
  * @returns The primary and outline action, the „⋯“ items in order (Smazat… last),
- *   and the sentence shown beside or instead of them.
+ *   and the sentence shown beside or instead of them. A draft someone else
+ *   holds has only Převzít úpravu… for the Coordinator; the page says who
+ *   edits it (23g).
  */
 export const getHeaderActions = (options: Options): HeaderActions => {
   switch (options.state) {

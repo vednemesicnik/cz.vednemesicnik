@@ -26,8 +26,10 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { useContentEvents } from '~/hooks/use-content-events'
+import { useRevalidateAt } from '~/hooks/use-revalidate-at'
 import { ArticleChangeDateDialog } from '../../components/article-change-date-dialog'
 import { ArticleMissingDialog } from '../../components/article-missing-dialog'
 import { ArticlePublishDialog } from '../../components/article-publish-dialog'
@@ -64,6 +66,8 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     article,
+    heldByName,
+    heldUntil,
     isApprover,
     isOwnContent,
     missingBeforePublish,
@@ -75,6 +79,10 @@ export default function RouteComponent({
     filter: (event) =>
       event.entity === 'article' && event.entityId === articleId,
   })
+  // An edit hold's expiry sends no event; the page looks again then (23g).
+  useRevalidateAt([heldUntil])
+  // „Článek právě upravuje …“ after a direct address of its editor (23g).
+  useAdminNoticeToast(loaderData)
 
   const fetcherKey = `article-action-${articleId}`
   const fetcher = useFetcher<typeof articleAction>({ key: fetcherKey })
@@ -158,6 +166,7 @@ export default function RouteComponent({
       case 'delete':
         return openDialog()
       case 'edit':
+      case 'take-over':
         return navigate(editHref)
     }
   }
@@ -167,10 +176,12 @@ export default function RouteComponent({
     variant: 'primary' | 'outline',
   ) => {
     switch (headerAction) {
+      // Taking over opens the editor, which asks first (24g).
       case 'edit':
+      case 'take-over':
         return (
           <LinkButton disabled={isSubmitting} to={editHref} variant={'outline'}>
-            {ARTICLE_ACTION_LABELS.edit}
+            {ARTICLE_ACTION_LABELS[headerAction]}
           </LinkButton>
         )
       case 'view-on-web':
@@ -215,6 +226,12 @@ export default function RouteComponent({
 
         {/* One primary, one outline, the rest in „⋯“; where the role may do nothing, who can (23d). */}
         <div className={styles.actions}>
+          {/* Someone else edits it: who, in place of the buttons (23g). */}
+          {heldByName !== null && (
+            <p className={styles.sentence}>
+              Článek právě upravuje {heldByName}.
+            </p>
+          )}
           {headerActions.sentence !== null && (
             <p className={styles.sentence}>
               {ARTICLE_HEADER_SENTENCES[headerActions.sentence]}

@@ -758,6 +758,7 @@ enum ContentLogEvent {
   restore
   pdf_uploaded
   cover_uploaded
+  take_over
 }
 
 // Content history (design 07f): who did what to a piece of content and when. The
