@@ -132,9 +132,10 @@ export default function RouteComponent({
   const existingImages = fields.existingImages.getFieldList()
   const newImages = fields.images.getFieldList()
 
-  const { handleBlur } = useAutoSlug({
+  // A new draft's address follows its title, as the add form's did (0020).
+  const { handleBlur, handleFocus, handleInput } = useAutoSlug({
     fieldName: fields.slug.name,
-    sourceValue: undefined,
+    sourceValue: article.isEmptyDraft ? fields.title.value || '' : undefined,
     updateFieldValue: form.update,
   })
 
@@ -198,6 +199,8 @@ export default function RouteComponent({
               errors={fields.slug.errors}
               label={'Slug'}
               onBlur={handleBlur}
+              onFocus={handleFocus}
+              onInput={handleInput}
               placeholder={'nazev-clanku'}
             />
           </Fieldset>
@@ -453,9 +456,13 @@ export default function RouteComponent({
             </Button>
             <LinkButton
               disabled={isLoadingOrSubmitting}
-              to={href('/administration/articles/:articleId', {
-                articleId: params.articleId,
-              })}
+              to={
+                article.isEmptyDraft
+                  ? href('/administration/articles')
+                  : href('/administration/articles/:articleId', {
+                      articleId: params.articleId,
+                    })
+              }
               variant={'outline'}
             >
               Zrušit

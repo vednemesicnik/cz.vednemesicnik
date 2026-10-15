@@ -136,6 +136,22 @@ its own creation and publish dates, without names.
 
 ---
 
+## New article drafts and the edit hold
+
+Built in #668 (epic #667, decisions [0019](./decisions/0019-the-edit-lock-lives-on-the-content-row.md)
+and [0020](./decisions/0020-a-new-article-is-a-draft-created-on-click.md)). *Nový článek* posts
+to `add-article`, which creates an empty draft of the signed-in author and opens its edit page.
+The draft has no title, text or address (`slug` is null) and no history; `firstContentAt` stays
+null until the first save with content, which logs *Vytvořeno*. Until then the draft is in no
+administration list or count (`NON_EMPTY_ARTICLE_WHERE`), and the public web lists only articles
+with an address. Each *Nový článek* also deletes empty drafts older than a day whose edit hold
+is free.
+
+The edit-hold columns (`heldByAuthorId`, `heldByTabId`, `heldSince`, `heldUntil`) exist, but
+nothing takes the hold yet (#669). Gallery images carry their `position`.
+
+---
+
 ## Decided for the redesign (not implemented yet)
 
 Decided on 28 Sep 2026 in the design project (`07 Stavy a akce obsahu`, questions `dj753f0j`

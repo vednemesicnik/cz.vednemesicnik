@@ -1,6 +1,7 @@
 import { href } from 'react-router'
 import { grants } from '~/data/grants'
 import { prisma } from '~/utils/db.server'
+import { hasSlug } from '~/utils/has-slug'
 import {
   createSitemapResponse,
   createSitemapXml,
@@ -51,7 +52,7 @@ export const loader = async () => {
     ...grants.map((grant) => ({
       loc: toAbsoluteUrl(href('/grants/:grantSlug', { grantSlug: grant.slug })),
     })),
-    ...articles.map((article) => ({
+    ...articles.filter(hasSlug).map((article) => ({
       lastmod: article.updatedAt,
       loc: toAbsoluteUrl(
         href('/articles/:articleSlug', { articleSlug: article.slug }),

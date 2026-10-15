@@ -1,13 +1,12 @@
+import { buildVisibleArticleWhere } from '~/routes/articles/utils/build-visible-article-where'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
+import { hasSlug } from '~/utils/has-slug'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
-import {
-  getWebContentVisibility,
-  ownArticle,
-} from '~/utils/permissions/author/get-web-content-visibility.server'
+import { getWebContentVisibility } from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -31,10 +30,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       title: true,
     },
     take: 6,
-    where: visibility.where('article', ownArticle),
+    where: buildVisibleArticleWhere(visibility),
   })
 
-  const articlesWithSources = articles.map((article) => ({
+  const articlesWithSources = articles.filter(hasSlug).map((article) => ({
     ...article,
     featuredImage: article.featuredImage
       ? {

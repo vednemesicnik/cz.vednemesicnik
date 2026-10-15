@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from 'react-router'
 
+import { NON_EMPTY_ARTICLE_WHERE } from '~/routes/administration/articles/utils/non-empty-article-where'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
@@ -116,7 +117,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     totalIssues,
     publishedIssues,
   ] = await Promise.all([
-    prisma.article.count(),
+    prisma.article.count({ where: NON_EMPTY_ARTICLE_WHERE }),
     prisma.article.count({ where: { state: 'published' } }),
     prisma.podcast.count(),
     prisma.podcast.count({ where: { state: 'published' } }),

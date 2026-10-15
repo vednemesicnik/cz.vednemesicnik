@@ -34,8 +34,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       featuredImage: {
         select: { id: true },
       },
+      firstContentAt: true,
       images: {
-        orderBy: { createdAt: 'asc' },
+        orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
         select: {
           ...imageSourceSelect,
           description: true,
@@ -115,7 +116,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         id: image.id,
         previewUrl: createImageSources('article-image', image).src,
       })),
-      slug: article.slug,
+      // An empty draft (decision 0020) has no address and is left for the list.
+      isEmptyDraft: article.firstContentAt === null,
+      slug: article.slug ?? '',
       tagIds: article.tags.map((tag) => tag.id),
       title: article.title,
     },

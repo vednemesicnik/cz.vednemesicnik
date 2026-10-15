@@ -1,5 +1,6 @@
 import { href } from 'react-router'
 
+import { getArticleDisplayTitle } from '~/routes/administration/articles/utils/get-article-display-title'
 import type { Breadcrumb, BreadcrumbMatch } from '~/types/breadcrumb'
 
 import type { Route } from './+types/route'
@@ -13,7 +14,9 @@ export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { articleId } = match.params
 
-    const label = match.loaderData?.article?.title ?? 'Neznámý článek'
+    const title = match.loaderData?.article?.title
+    const label =
+      title === undefined ? 'Neznámý článek' : getArticleDisplayTitle(title)
     const path = href(`/administration/articles/:articleId`, { articleId })
 
     return { label, path }

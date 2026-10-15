@@ -10,12 +10,15 @@ import { updateArticle } from './update-article.server'
 // transaction; `deleteRowWithImages` keeps its real ordering (row, then files).
 const mocks = vi.hoisted(() => ({
   articleFindUnique: vi.fn(),
+  articleImageAggregate: vi.fn(),
   articleImageCreate: vi.fn(),
   articleImageDeleteMany: vi.fn(),
   articleImageFindMany: vi.fn(),
   articleImageUpdate: vi.fn(),
   articleUpdate: vi.fn(),
+  articleUpdateMany: vi.fn(),
   checkAuthorPermission: vi.fn(),
+  pageSeoDeleteMany: vi.fn(),
   pageSeoUpsert: vi.fn(),
   permissionContext: vi.fn(),
   publishContentEvent: vi.fn(),
@@ -51,14 +54,19 @@ vi.mock('~/utils/db.server', () => ({
     article: {
       findUnique: mocks.articleFindUnique,
       update: mocks.articleUpdate,
+      updateMany: mocks.articleUpdateMany,
     },
     articleImage: {
+      aggregate: mocks.articleImageAggregate,
       create: mocks.articleImageCreate,
       deleteMany: mocks.articleImageDeleteMany,
       findMany: mocks.articleImageFindMany,
       update: mocks.articleImageUpdate,
     },
-    pageSEO: { upsert: mocks.pageSeoUpsert },
+    pageSEO: {
+      deleteMany: mocks.pageSeoDeleteMany,
+      upsert: mocks.pageSeoUpsert,
+    },
   },
 }))
 
@@ -117,6 +125,8 @@ const options = {
 
 const storedArticle = {
   authors: [{ id: 'author-1' }],
+  firstContentAt: new Date('2026-09-20T10:00:00Z'),
+  slug: 'article',
   state: 'draft',
   submittedAt: null,
 }
@@ -145,6 +155,9 @@ beforeEach(() => {
   mocks.articleImageCreate.mockReturnValue('create-image')
   mocks.articleImageUpdate.mockReturnValue('update-image')
   mocks.articleUpdate.mockReturnValue('update-article')
+  mocks.articleUpdateMany.mockReturnValue('mark-first-content')
+  mocks.articleImageAggregate.mockResolvedValue({ _max: { position: 1 } })
+  mocks.pageSeoDeleteMany.mockReturnValue('delete-orphan-page-seo')
   mocks.pageSeoUpsert.mockReturnValue('upsert-page-seo')
   mocks.storeImageVariants.mockResolvedValue({
     intrinsicHeight: 800,
@@ -152,7 +165,8 @@ beforeEach(() => {
     placeholderDataUrl: 'data:',
     version: 'version-1',
   })
-  mocks.transaction.mockResolvedValue([])
+  // The first entry is the first-content mark; 0 rows: not the first save.
+  mocks.transaction.mockResolvedValue([{ count: 0 }])
 })
 
 describe('updateArticle — the permission follows the stored article', () => {
@@ -257,6 +271,8 @@ describe('updateArticle — a failed save changes nothing', () => {
     // Every row write was queued into the one failed transaction.
     expect(mocks.transaction).toHaveBeenCalledTimes(1)
     expect(mocks.transaction).toHaveBeenCalledWith([
+      'mark-first-content',
+      'delete-orphan-page-seo',
       'delete-removed-images',
       'create-image',
       'update-image',
@@ -283,7 +299,7 @@ describe('updateArticle — a successful save', () => {
     const order: string[] = []
     mocks.transaction.mockImplementation(async () => {
       order.push('transaction')
-      return []
+      return [{ count: 0 }]
     })
     mocks.storeDelete.mockImplementation(() => {
       order.push('delete-files')
@@ -295,6 +311,8 @@ describe('updateArticle — a successful save', () => {
       where: { id: { in: ['image-removed'] } },
     })
     expect(mocks.transaction).toHaveBeenCalledWith([
+      'mark-first-content',
+      'delete-orphan-page-seo',
       'delete-removed-images',
       'update-image',
       'update-article',
@@ -308,7 +326,7 @@ describe('updateArticle — a successful save', () => {
     const order: string[] = []
     mocks.transaction.mockImplementation(async () => {
       order.push('transaction')
-      return []
+      return [{ count: 0 }]
     })
     mocks.replacedVersionCleanup.mockImplementation(async () => {
       order.push('cleanup')
@@ -364,5 +382,100 @@ describe('updateArticle — a submitted article', () => {
     expect(articleData).not.toHaveProperty('submittedAt')
     expect(articleData).not.toHaveProperty('reviews')
     expect(mocks.transaction).toHaveBeenCalledOnce()
+  })
+})
+
+describe('updateArticle — the first content of a new draft (decision 0020)', () => {
+  const emptyDraft = { ...storedArticle, firstContentAt: null, slug: null }
+
+  test('marks the first content only where none is stored yet', async () => {
+    await updateArticle(request, options)
+
+    expect(mocks.articleUpdateMany).toHaveBeenCalledWith({
+      data: { firstContentAt: expect.any(Date) },
+      where: { firstContentAt: null, id: 'article-1' },
+    })
+  })
+
+  test('is the creation in the history when it marks the draft', async () => {
+    mocks.articleFindUnique.mockResolvedValue(emptyDraft)
+    mocks.transaction.mockResolvedValue([{ count: 1 }])
+
+    await updateArticle(request, options)
+
+    expect(mocks.publishContentEvent).toHaveBeenCalledExactlyOnceWith(
+      { change: 'create', entity: 'article', entityId: 'article-1' },
+      mocks.permissionContext(),
+    )
+  })
+
+  test('stays an update when another save marked it first', async () => {
+    mocks.articleFindUnique.mockResolvedValue(emptyDraft)
+
+    await updateArticle(request, options)
+
+    expect(mocks.publishContentEvent.mock.lastCall?.[0].change).toBe('update')
+  })
+
+  test('marks and logs nothing without a title, text or image', async () => {
+    mocks.articleFindUnique.mockResolvedValue(emptyDraft)
+    mocks.transaction.mockResolvedValue([{ count: 1 }])
+
+    await updateArticle(request, {
+      ...options,
+      content: '',
+      existingImages: [],
+      title: '',
+    })
+
+    expect(mocks.articleUpdateMany.mock.lastCall?.[0].data).toEqual({
+      firstContentAt: null,
+    })
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+  })
+})
+
+describe('updateArticle — the PageSEO row follows the address', () => {
+  test('creates it at the first address of a draft', async () => {
+    mocks.articleFindUnique.mockResolvedValue({ ...storedArticle, slug: null })
+
+    await updateArticle(request, options)
+
+    const pageSeo = mocks.pageSeoUpsert.mock.lastCall?.[0]
+    expect(pageSeo.where).toEqual({ pathname: '/articles/article' })
+    expect(pageSeo.create.pathname).toBe('/articles/article')
+  })
+
+  test('moves it when the address changes', async () => {
+    await updateArticle(request, { ...options, slug: 'renamed' })
+
+    const pageSeo = mocks.pageSeoUpsert.mock.lastCall?.[0]
+    expect(pageSeo.where).toEqual({ pathname: '/articles/article' })
+    expect(pageSeo.update.pathname).toBe('/articles/renamed')
+    expect(mocks.pageSeoDeleteMany).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          { pathname: '/articles/renamed' },
+          { pathname: { not: '/articles/article' } },
+        ],
+      },
+    })
+  })
+})
+
+describe('updateArticle — the gallery order (design 24b)', () => {
+  test('puts new images after the existing ones', async () => {
+    await updateArticle(request, {
+      ...options,
+      images: [
+        { altText: 'First', file: imageFile },
+        { altText: 'Second', file: imageFile },
+      ],
+    })
+
+    const positions = mocks.articleImageCreate.mock.calls.map(
+      ([argument]) => argument.data.position,
+    )
+    expect(positions).toEqual([2, 3])
   })
 })

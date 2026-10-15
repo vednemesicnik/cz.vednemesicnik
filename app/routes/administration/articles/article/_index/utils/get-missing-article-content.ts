@@ -11,7 +11,7 @@ const MISSING_ALT_TEXT: Record<Intl.LDMLPluralRule, string> = {
 
 type Options = {
   title: string
-  slug: string
+  slug: string | null
   excerpt: string | null
   content: string
   authorCount: number

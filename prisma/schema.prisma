@@ -281,6 +281,7 @@ model Author {
   reviews                    Review[]          @relation("ReviewsGiven")
   // Content submitted for review
   submittedArticles          Article[]         @relation("ArticleSubmissions")
+  heldArticles               Article[]         @relation("ArticleEditHolds")
   submittedArticleTags       ArticleTag[]      @relation("ArticleTagSubmissions")
   submittedArticleCategories ArticleCategory[] @relation("ArticleCategorySubmissions")
   submittedIssues            Issue[]           @relation("IssueSubmissions")
@@ -502,12 +503,15 @@ model PodcastEpisodeCover {
 
 model Article {
   id              String            @id @default(cuid())
-  slug            String            @unique
+  // Null until the draft has an address (design 24a); submitting and publishing require it.
+  slug            String?           @unique
   title           String
   excerpt         String?
   content         String
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  // The first save with a title, text or image; null is an empty draft (decision 0020).
+  firstContentAt  DateTime?
   publishedAt     DateTime?
   state           ContentState      @default(draft)
   authors         Author[]          @relation("ArticleAuthors")
@@ -521,11 +525,18 @@ model Article {
   submittedAt     DateTime?
   submittedById   String?
   submittedBy     Author?           @relation("ArticleSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  // The edit hold (design 07g, decision 0019): free when there is no holder or heldUntil has passed.
+  heldByAuthorId  String?
+  heldByAuthor    Author?           @relation("ArticleEditHolds", fields: [heldByAuthorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  heldByTabId     String?
+  heldSince       DateTime?
+  heldUntil       DateTime?
 
   // content-state query path (public list ordering; authors are M:N, no authorId FK)
   @@index([state, publishedAt])
-  // non-unique foreign key
+  // non-unique foreign keys
   @@index([submittedById])
+  @@index([heldByAuthorId])
 }
 
 model ArticleImage {
@@ -537,6 +548,8 @@ model ArticleImage {
   intrinsicWidth     Int
   intrinsicHeight    Int
   placeholderDataUrl String
+  // The order in the article's gallery and on the web (design 24b).
+  position           Int      @default(0)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   article            Article  @relation("ArticleImages", fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)

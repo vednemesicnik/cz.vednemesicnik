@@ -1,4 +1,4 @@
-import { data } from 'react-router'
+import { data, href, redirect } from 'react-router'
 
 import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
@@ -61,6 +61,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           description: true,
         },
       },
+      firstContentAt: true,
       id: true,
       images: {
         select: { altText: true },
@@ -109,6 +110,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   // A record the person may not see is a 404, like a deleted one (design 30e).
   if (!canView) {
     throw data(null, { status: 404 })
+  }
+
+  // An empty draft has no detail yet (decision 0020): its editor is the page.
+  if (article.firstContentAt === null) {
+    throw redirect(
+      href('/administration/articles/:articleId/edit-article', { articleId }),
+    )
   }
 
   const flags = getContentActionFlags(context, 'article', article)

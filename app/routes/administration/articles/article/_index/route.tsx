@@ -111,9 +111,11 @@ export default function RouteComponent({
   )
 
   const authorNames = article.authors.map((author) => author.name)
-  const articlePath = href('/articles/:articleSlug', {
-    articleSlug: article.slug,
-  })
+  // A draft without an address has no page on the web yet (decision 0020).
+  const articlePath =
+    article.slug === null
+      ? null
+      : href('/articles/:articleSlug', { articleSlug: article.slug })
 
   const editHref = href('/administration/articles/:articleId/edit-article', {
     articleId,
@@ -173,14 +175,16 @@ export default function RouteComponent({
         )
       case 'view-on-web':
         return (
-          <LinkButton
-            rel={'noopener'}
-            target={'_blank'}
-            to={articlePath}
-            variant={'outline'}
-          >
-            {ARTICLE_ACTION_LABELS['view-on-web']}
-          </LinkButton>
+          articlePath !== null && (
+            <LinkButton
+              rel={'noopener'}
+              target={'_blank'}
+              to={articlePath}
+              variant={'outline'}
+            >
+              {ARTICLE_ACTION_LABELS['view-on-web']}
+            </LinkButton>
+          )
         )
       default:
         return (
@@ -262,7 +266,9 @@ export default function RouteComponent({
           <AdminDetailSection title={'Údaje'}>
             <AdminDetailList>
               <AdminDetailItem label={'Adresa'}>
-                {article.state === 'published' ? (
+                {articlePath === null ? (
+                  '—'
+                ) : article.state === 'published' ? (
                   articlePath
                 ) : (
                   <span className={styles.stack}>
