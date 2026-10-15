@@ -1,0 +1,66 @@
+/* The design system's Chip (components/core/Chip). */
+.chip {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-inline-size: 100%;
+    padding-block: 3px;
+    padding-inline: 10px 6px;
+    color: var(--text-primary);
+    font-family: var(--font-family), sans-serif;
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+
+    /* Without the ×, the padding is even. */
+    &:not(:has(.remove)) {
+      padding-inline-end: 10px;
+    }
+  }
+}
+
+.muted {
+  @layer variant {
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    border-style: dashed;
+    border-color: var(--border-strong);
+  }
+}
+
+.note {
+  @layer component {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+.remove {
+  @layer component {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    inline-size: 18px;
+    block-size: 18px;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--bg-hover);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
