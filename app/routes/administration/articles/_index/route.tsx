@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
+import { Form, href } from 'react-router'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -11,6 +11,8 @@ import {
   TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
 import { FilterBar } from '~/components/filter-bar'
@@ -19,7 +21,6 @@ import { FilterBarGroup } from '~/components/filter-bar-group'
 import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
-import { LinkButton } from '~/components/link-button'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -94,14 +95,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     (filter) => filter.id === matchingFilterId,
   )?.name
 
-  const renderNewArticleLink = (className?: string) =>
+  // Nový článek creates the draft and opens it (decision 0020), so it posts.
+  const renderNewArticleButton = (className?: string) =>
     canCreate && (
-      <LinkButton
+      <Form
+        action={href('/administration/articles/add-article')}
         className={className}
-        to={href('/administration/articles/add-article')}
+        method={'post'}
       >
-        Nový článek
-      </LinkButton>
+        <AuthenticityTokenInput />
+        <Button type={'submit'}>Nový článek</Button>
+      </Form>
     )
 
   const summaryLines = getSavedFilterSummary({
@@ -150,7 +154,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           and the top bar names the page (22g). */}
       <ListHeader className={styles.header}>
         <PageTitle className={styles.headline}>Články</PageTitle>
-        {renderNewArticleLink(styles.topNewArticle)}
+        {renderNewArticleButton(styles.topNewArticle)}
       </ListHeader>
       {/* Once a row is checked, the selection bar takes the filter row's place
           in the same cell, so the table does not move (22c, cioukqn6); on a
@@ -231,7 +235,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
           )}
-          {emptyMessage.action === 'create' && renderNewArticleLink()}
+          {emptyMessage.action === 'create' && renderNewArticleButton()}
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
         </ListEmptyCard>
       ) : (
@@ -295,7 +299,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       {/* A bar that stays at the bottom of a phone's screen (22g, d9en8oih),
           unless the empty list already offers it (22e). */}
       {canCreate && (totalCount > 0 || emptyMessage.action !== 'create') && (
-        <div className={styles.newArticleBar}>{renderNewArticleLink()}</div>
+        <div className={styles.newArticleBar}>{renderNewArticleButton()}</div>
       )}
     </AdminPage>
   )
