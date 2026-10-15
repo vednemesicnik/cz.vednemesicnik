@@ -52,6 +52,13 @@
   }
 }
 
+/* Přidat spoluautora: as wide as its words, at the start of the column (24a). */
+.addButton {
+  @layer route {
+    justify-self: start;
+  }
+}
+
 /* Below 768 px the editor's own bar stays on top (24f); the text's toolbar
    sticks under it. */
 .page {

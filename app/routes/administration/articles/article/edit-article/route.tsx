@@ -886,17 +886,21 @@ export default function RouteComponent({
                     </div>
                   ))}
                   {/* No submit buttons: Enter in a field must not add or remove one. */}
+                  {/* A quiet button at the start, under the authors (24a). */}
                   {!isReadOnly && (
                     <Button
+                      className={styles.addButton}
                       onClick={() =>
                         form.insert({
                           defaultValue: '',
                           name: fields.authorIds.name,
                         })
                       }
+                      size={'sm'}
                       type={'button'}
+                      variant={'ghost'}
                     >
-                      Přidat autora
+                      Přidat spoluautora
                     </Button>
                   )}
                 </fieldset>
@@ -1211,15 +1215,19 @@ export default function RouteComponent({
                     )
                   })}
 
+                  {/* Quiet like Přidat spoluautora until the gallery's tile (#673). */}
                   {!isReadOnly && (
                     <Button
+                      className={styles.addButton}
                       onClick={() =>
                         form.insert({
                           defaultValue: { id: createId() },
                           name: fields.images.name,
                         })
                       }
+                      size={'sm'}
                       type={'button'}
+                      variant={'ghost'}
                     >
                       Přidat obrázek
                     </Button>
