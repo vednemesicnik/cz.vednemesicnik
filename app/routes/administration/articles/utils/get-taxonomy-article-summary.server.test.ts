@@ -27,7 +27,9 @@ const contributor: Context = {
 
 const relationWhere = { categories: { some: { id: 'category-1' } } }
 const mine = { authors: { some: { id: 'author-1' } } }
+// Empty drafts are in no count (decision 0020).
 const permissionWhere = {
+  firstContentAt: { not: null },
   OR: [
     { state: 'draft', ...mine },
     { state: 'published', ...mine },

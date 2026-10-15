@@ -47,7 +47,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         },
       },
       images: {
-        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
         select: {
           ...imageSourceSelect,
           description: true,

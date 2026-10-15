@@ -1,10 +1,10 @@
 import { prisma } from '~/utils/db.server'
 import { nameCollator } from '~/utils/name-collator'
 import {
-  ownArticle,
   ownByAuthor,
   type WebContentVisibility,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { buildVisibleArticleWhere } from './build-visible-article-where'
 
 /**
  * Finds the categories a reader can open that hold at least one article they
@@ -20,7 +20,7 @@ export const findCategoriesWithArticleCounts = async (
     select: {
       _count: {
         select: {
-          articles: { where: visibility.where('article', ownArticle) },
+          articles: { where: buildVisibleArticleWhere(visibility) },
         },
       },
       id: true,

@@ -17,6 +17,7 @@ const own = { hasAny: false, hasOwn: true }
 const any = { hasAny: true, hasOwn: false }
 const none = { hasAny: false, hasOwn: false }
 const mine = { authors: { some: { id: 'author-1' } } }
+const nonEmpty = { firstContentAt: { not: null } }
 
 describe('buildArticlePermissionWhere', () => {
   test('a Contributor sees only their own articles, in every state', () => {
@@ -25,6 +26,7 @@ describe('buildArticlePermissionWhere', () => {
         createContext({ archived: own, draft: own, published: own }),
       ),
     ).toEqual({
+      ...nonEmpty,
       OR: [
         { state: 'draft', ...mine },
         { state: 'published', ...mine },
@@ -39,6 +41,7 @@ describe('buildArticlePermissionWhere', () => {
         createContext({ archived: own, draft: any, published: any }),
       ),
     ).toEqual({
+      ...nonEmpty,
       OR: [
         { state: 'draft' },
         { state: 'published' },
@@ -52,6 +55,14 @@ describe('buildArticlePermissionWhere', () => {
       buildArticlePermissionWhere(
         createContext({ archived: none, draft: none, published: any }),
       ),
-    ).toEqual({ OR: [{ state: 'published' }] })
+    ).toEqual({ ...nonEmpty, OR: [{ state: 'published' }] })
+  })
+
+  test('an empty draft is in no state the role views (decision 0020)', () => {
+    expect(
+      buildArticlePermissionWhere(
+        createContext({ archived: any, draft: any, published: any }),
+      ),
+    ).toMatchObject(nonEmpty)
   })
 })

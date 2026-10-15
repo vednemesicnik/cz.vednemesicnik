@@ -119,6 +119,7 @@ export const ItemRow = ({
       case 'edit':
         return navigate(editHref)
       case 'view-on-web':
+        if (article.slug === null) return
         return window.open(
           href('/articles/:articleSlug', { articleSlug: article.slug }),
           '_blank',

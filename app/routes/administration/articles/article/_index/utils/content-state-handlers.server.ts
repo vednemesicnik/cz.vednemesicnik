@@ -26,11 +26,14 @@ export const articleContentStateHandlers = createContentStateHandlers({
       where: { id },
     })
 
-    // Mirror the same columns onto the standalone PageSEO row keyed by pathname.
-    await prisma.pageSEO.updateMany({
-      data,
-      where: { pathname: buildPathname(updatedArticle.slug) },
-    })
+    // Mirror the same columns onto the standalone PageSEO row keyed by
+    // pathname; a draft without an address has none yet.
+    if (updatedArticle.slug !== null) {
+      await prisma.pageSEO.updateMany({
+        data,
+        where: { pathname: buildPathname(updatedArticle.slug) },
+      })
+    }
   },
   approverPublishesWithoutReview: true,
 
@@ -54,9 +57,11 @@ export const articleContentStateHandlers = createContentStateHandlers({
             select: { slug: true },
             where: { id },
           })
-          await transaction.pageSEO.deleteMany({
-            where: { pathname: buildPathname(slug) },
-          })
+          if (slug !== null) {
+            await transaction.pageSEO.deleteMany({
+              where: { pathname: buildPathname(slug) },
+            })
+          }
           return transaction.article.delete({ where: { id } })
         }),
     )
