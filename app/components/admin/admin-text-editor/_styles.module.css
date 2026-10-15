@@ -32,6 +32,17 @@
       box-shadow: var(--focus-shadow);
     }
 
+    /* Read-only State: grey like a disabled field (design 24h) */
+    &.editorReadOnly {
+      background-color: var(--bg-disabled);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+
+      &:hover {
+        border-color: var(--border);
+      }
+    }
+
     /* Error State */
     &.editorError {
       border-color: var(--error);

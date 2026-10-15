@@ -1,0 +1,7 @@
+.hint {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+}
