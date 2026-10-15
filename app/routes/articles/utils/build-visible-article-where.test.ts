@@ -4,6 +4,11 @@ import type { WebContentVisibility } from '~/utils/permissions/author/get-web-co
 
 import { buildVisibleArticleWhere } from './build-visible-article-where'
 
+// The real module reads the session secret on import; only the predicate is used.
+vi.mock('~/utils/permissions/author/get-web-content-visibility.server', () => ({
+  ownArticle: (authorId: string) => ({ authors: { some: { id: authorId } } }),
+}))
+
 const createVisibility = (
   where: WebContentVisibility['where'],
 ): WebContentVisibility => ({ where })
