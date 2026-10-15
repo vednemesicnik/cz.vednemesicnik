@@ -22,6 +22,7 @@ import {
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
 import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
+import { mergeLinkedIds } from '~/utils/merge-linked-ids'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
@@ -46,6 +47,9 @@ type Options = {
     altText: string
     description?: string
   }>
+  /** Links the editor removed; any other stored one stays (decision 0025). */
+  removedCategoryIds?: string[]
+  removedTagIds?: string[]
   slug: string
   tagIds?: string[]
   title: string
@@ -83,7 +87,8 @@ const RELEASED_HOLD = {
  * saves, checked again in the save's own write (decision 0019), and the save
  * keeps the hold unless `releaseHold` asks for the end. A draft saves
  * incomplete; an address another article has is left out and the rest saves
- * (24d). A new image carries the id the editor made for it, so a repeated save
+ * (24d). A category or a tag goes only when the editor sends it as removed,
+ * so an archived one stays (decision 0025). A new image carries the id the editor made for it, so a repeated save
  * stores it once. The history gets one *Upraveno* per hold (07f). The caller
  * has checked the session (`requireCSRF`).
  *
@@ -107,6 +112,8 @@ export async function updateArticle(
     existingImages,
     featuredImage,
     images,
+    removedCategoryIds = [],
+    removedTagIds = [],
     slug,
     tagIds,
     tabId,
@@ -117,6 +124,7 @@ export async function updateArticle(
   const storedArticle = await prisma.article.findUnique({
     select: {
       authors: { select: { id: true } },
+      categories: { select: { id: true } },
       firstContentAt: true,
       heldByAuthor: { select: { name: true } },
       heldByAuthorId: true,
@@ -126,6 +134,7 @@ export async function updateArticle(
       slug: true,
       state: true,
       submittedAt: true,
+      tags: { select: { id: true } },
     },
     where: { id: articleId },
   })
@@ -360,6 +369,30 @@ export async function updateArticle(
           ? null
           : await findSlugSuggestion(requestedSlug)
 
+      // 8. A save removes a category or a tag only when the editor sends it
+      // as removed, so an archived one it never offered stays (decision
+      // 0025, design 24a). An id that names nothing is left out.
+      const [existingCategories, existingTags] = await Promise.all([
+        prisma.articleCategory.findMany({
+          select: { id: true },
+          where: { id: { in: categoryIds ?? [] } },
+        }),
+        prisma.articleTag.findMany({
+          select: { id: true },
+          where: { id: { in: tagIds ?? [] } },
+        }),
+      ])
+      const linkedCategoryIds = mergeLinkedIds({
+        removedIds: removedCategoryIds,
+        sentIds: existingCategories.map(({ id }) => id),
+        storedIds: storedArticle.categories.map(({ id }) => id),
+      })
+      const linkedTagIds = mergeLinkedIds({
+        removedIds: removedTagIds,
+        sentIds: existingTags.map(({ id }) => id),
+        storedIds: storedArticle.tags.map(({ id }) => id),
+      })
+
       // The first save with a title, text or image ends the empty draft and
       // is its creation in the history (decision 0020, design 07f).
       const hasContent =
@@ -368,7 +401,7 @@ export async function updateArticle(
         newImages.length > 0 ||
         existingImageIds.length > 0
 
-      // 8. In one transaction: all image rows, the article and its PageSEO
+      // 9. In one transaction: all image rows, the article and its PageSEO
       // record. Store files of removed images and of replaced versions go only
       // after it commits, so a failed save leaves everything as it was.
       const saveInTransaction = async () => {
@@ -432,14 +465,14 @@ export async function updateArticle(
               set: authorIds.map((id) => ({ id })),
             },
             categories: {
-              set: categoryIds?.map((id) => ({ id })) ?? [],
+              set: linkedCategoryIds.map((id) => ({ id })),
             },
             content,
             excerpt: excerpt || null,
             featuredImageId,
             slug: savedSlug,
             tags: {
-              set: tagIds?.map((id) => ({ id })) ?? [],
+              set: linkedTagIds.map((id) => ({ id })),
             },
             title,
             // Autosave keeps the hold; the save of a page going away ends it.

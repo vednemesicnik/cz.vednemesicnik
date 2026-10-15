@@ -59,6 +59,10 @@ export const schema = z.object({
       }),
     )
     .optional(),
+  // The links the editor had at open and no longer has; any other stored
+  // link stays, an archived one included (decision 0025).
+  removedCategoryIds: z.array(z.string()).optional(),
+  removedTagIds: z.array(z.string()).optional(),
   slug: optionalText.transform(slugify),
   tagIds: z.array(z.string()).optional(),
   title: optionalText,
