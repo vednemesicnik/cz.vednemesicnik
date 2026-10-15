@@ -357,6 +357,10 @@ export const useEditHold = ({
     // a leave save the page loads afresh, since its form is older than the save.
     const handlePageShow = (event: PageTransitionEvent) => {
       if (!event.persisted) return
+      // An editor that lost the hold only reads, also after coming back
+      // (decision 0023): the edit returns only with a reload.
+      const { status } = stateRef.current
+      if (status === 'lost' || status === 'changed') return
       if (isLeaveSaveSentRef.current) {
         window.location.reload()
       } else {

@@ -32,6 +32,17 @@ describe('getReadOnlyNotice', () => {
     ).toBe('Jen ke čtení. Zobrazený text není aktuální.')
   })
 
+  test('no longer an editable draft: only that it reads', () => {
+    expect(
+      getReadOnlyNotice({
+        awayMilliseconds: 0,
+        holder: null,
+        isEditable: false,
+        status: 'changed',
+      }),
+    ).toBe('Jen ke čtení.')
+  })
+
   test('holding: nothing', () => {
     expect(getReadOnlyNotice({ status: 'holding' })).toBeNull()
   })

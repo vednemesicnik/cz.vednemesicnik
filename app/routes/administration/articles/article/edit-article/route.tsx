@@ -123,6 +123,8 @@ export default function RouteComponent({
     updatedAt: article.updatedAt,
   })
   const isHolding = editHold.state.status === 'holding'
+  const hasHeldRef = useRef(false)
+  if (isHolding) hasHeldRef.current = true
   // Taken over or changed meanwhile: the editor only reads from now on (24h,
   // 24i) and gets the edit back with a reload.
   const lostHold =
@@ -200,14 +202,16 @@ export default function RouteComponent({
 
     // Refused: nobody holds it (the hold expired and was released meanwhile),
     // so it is taken back if nothing was saved since, and the save goes
-    // again (24i); or someone does, and the editor learns who (24h).
+    // again (24i); or someone does, and the editor learns who (24h). The
+    // changes stay unsent: a lost hold stops autosave and says so, and one
+    // the editor could not settle waits for *Zkusit znovu*.
     if (result.status === 'not-held') {
       if (result.heldByName === null) {
         if (!isRetry && (await editHold.retake())) return send(formData, true)
       } else {
-        void editHold.recheck()
+        await editHold.recheck()
       }
-      return 'stopped'
+      return 'failed'
     }
 
     editHold.acknowledgeSave(result.updatedAt)
@@ -240,12 +244,16 @@ export default function RouteComponent({
     const hasUnsentChanges = await autosave.stop()
     const isChangedDialog = state.status === 'changed' && hasUnsentChanges
 
+    // Only an editor that held the edit lost it: one that never did (a
+    // takeover over a newer save) has nothing to be told about.
     setHoldLoss({
-      dialog: isChangedDialog
-        ? 'changed'
-        : state.holder === null
-          ? null
-          : 'taken',
+      dialog: !hasHeldRef.current
+        ? null
+        : isChangedDialog
+          ? 'changed'
+          : state.holder === null
+            ? null
+            : 'taken',
       hasUnsentChanges,
       holderName: state.holder?.name ?? '',
     })

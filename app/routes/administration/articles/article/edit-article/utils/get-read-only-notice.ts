@@ -20,6 +20,9 @@ export const getReadOnlyNotice = (state: EditHoldState): string | null => {
         ? 'Jen ke čtení.'
         : `Jen ke čtení. Článek upravuje ${state.holder.name}.`
     case 'changed':
+      // No longer an editable draft (sent for review, published): its state
+      // changed, not necessarily its text.
+      if (!state.isEditable) return 'Jen ke čtení.'
       return state.holder === null
         ? 'Jen ke čtení. Zobrazený text není aktuální.'
         : `Jen ke čtení. Článek upravuje ${state.holder.name}.`
