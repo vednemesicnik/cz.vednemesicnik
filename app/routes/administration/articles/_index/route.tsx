@@ -1,6 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { useEffect, useRef } from 'react'
 import { href } from 'react-router'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
@@ -29,8 +28,8 @@ import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
-import { useToast } from '~/components/toast-provider'
 import { ARTICLE_NOUN } from '~/config/list-noun-config'
+import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -69,16 +68,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     totalPages,
   } = loaderData
 
-  // Smazáno after a delete from the detail (23f), once per load.
-  const showToast = useToast()
-  const handledToastRef = useRef<typeof loaderData | null>(null)
-  useEffect(() => {
-    if (loaderData.toast === null || handledToastRef.current === loaderData) {
-      return
-    }
-    handledToastRef.current = loaderData
-    showToast(loaderData.toast)
-  }, [loaderData, showToast])
+  useAdminNoticeToast(loaderData)
 
   // Live, but the rows stay put until the next load (22f).
   const { articles, liveChanges, queueCounts } = useLiveArticleRows(loaderData)
