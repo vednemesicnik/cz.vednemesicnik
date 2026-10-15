@@ -33,7 +33,10 @@ const staleWhere = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.findMany.mockResolvedValue([{ id: 'draft-1' }, { id: 'draft-2' }])
+  // The first lookup finds the stale drafts, the second the ones still there.
+  mocks.findMany
+    .mockResolvedValueOnce([{ id: 'draft-1' }, { id: 'draft-2' }])
+    .mockResolvedValueOnce([])
   mocks.deleteMany.mockResolvedValue({ count: 2 })
 })
 
@@ -41,7 +44,7 @@ describe('deleteStaleEmptyDrafts', () => {
   test('looks for empty drafts older than a day whose hold is free', async () => {
     await deleteStaleEmptyDrafts(now)
 
-    expect(mocks.findMany).toHaveBeenCalledWith({
+    expect(mocks.findMany.mock.calls[0][0]).toEqual({
       select: { id: true },
       where: staleWhere,
     })
@@ -65,7 +68,22 @@ describe('deleteStaleEmptyDrafts', () => {
     ])
   })
 
+  test('keeps the history of a draft that got content meanwhile', async () => {
+    mocks.findMany.mockReset()
+    mocks.findMany
+      .mockResolvedValueOnce([{ id: 'draft-1' }, { id: 'draft-2' }])
+      .mockResolvedValueOnce([{ id: 'draft-2' }])
+    mocks.deleteMany.mockResolvedValue({ count: 1 })
+
+    await deleteStaleEmptyDrafts(now)
+
+    expect(mocks.deleteContentLog.mock.calls).toEqual([
+      [{ entity: 'article', entityId: 'draft-1' }],
+    ])
+  })
+
   test('writes nothing when there is nothing to clear', async () => {
+    mocks.findMany.mockReset()
     mocks.findMany.mockResolvedValue([])
 
     expect(await deleteStaleEmptyDrafts(now)).toBe(0)

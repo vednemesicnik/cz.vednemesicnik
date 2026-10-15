@@ -289,6 +289,11 @@ export async function updateArticle(
       const change =
         hasContent && firstContent.count === 1 ? 'create' : 'update'
 
+      // A save that leaves a draft empty stays out of its history (0020).
+      if (!hasContent && storedArticle.firstContentAt === null) {
+        return
+      }
+
       await recordContentLog(
         { entity: 'article', entityId: articleId, events: [change] },
         context,

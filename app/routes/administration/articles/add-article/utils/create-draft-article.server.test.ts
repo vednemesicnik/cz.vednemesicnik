@@ -38,6 +38,7 @@ beforeEach(() => {
   mocks.requireAuthorPermission.mockReset()
   mocks.getAuthorPermissionContext.mockResolvedValue(context)
   mocks.create.mockResolvedValue({ id: 'draft-1' })
+  mocks.deleteStaleEmptyDrafts.mockResolvedValue(0)
 })
 
 describe('createDraftArticle', () => {
@@ -64,6 +65,14 @@ describe('createDraftArticle', () => {
     await createDraftArticle(request)
 
     expect(mocks.deleteStaleEmptyDrafts).toHaveBeenCalledOnce()
+  })
+
+  test('still opens the draft when the clean-up fails', async () => {
+    mocks.deleteStaleEmptyDrafts.mockRejectedValue(new Error('database busy'))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    expect(await createDraftArticle(request)).toEqual({ articleId: 'draft-1' })
+    expect(consoleError).toHaveBeenCalled()
   })
 
   test('creates nothing for an author who may not create articles', async () => {

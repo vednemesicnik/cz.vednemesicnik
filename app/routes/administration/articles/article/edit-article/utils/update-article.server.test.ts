@@ -417,7 +417,7 @@ describe('updateArticle — the first content of a new draft (decision 0020)', (
     expect(mocks.publishContentEvent.mock.lastCall?.[0].change).toBe('update')
   })
 
-  test('marks nothing without a title, text or image', async () => {
+  test('marks and logs nothing without a title, text or image', async () => {
     mocks.articleFindUnique.mockResolvedValue(emptyDraft)
     mocks.transaction.mockResolvedValue([{ count: 1 }])
 
@@ -431,7 +431,7 @@ describe('updateArticle — the first content of a new draft (decision 0020)', (
     expect(mocks.articleUpdateMany.mock.lastCall?.[0].data).toEqual({
       firstContentAt: null,
     })
-    expect(mocks.publishContentEvent.mock.lastCall?.[0].change).toBe('update')
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 })
 

@@ -35,7 +35,10 @@ export const createDraftArticle = async (request: Request) => {
     select: { id: true },
   })
 
-  await deleteStaleEmptyDrafts()
+  // Housekeeping never fails the click: the next one clears what is left.
+  await deleteStaleEmptyDrafts().catch((error: unknown) => {
+    console.error('Failed to delete stale empty drafts', error)
+  })
 
   return { articleId: draft.id }
 }

@@ -36,8 +36,17 @@ export const deleteStaleEmptyDrafts = async (now: Date = new Date()) => {
     where: { ...where, id: { in: ids } },
   })
 
+  // Only the deleted drafts lose their history, not one that got content.
+  const keptDrafts = await prisma.article.findMany({
+    select: { id: true },
+    where: { id: { in: ids } },
+  })
+  const keptIds = new Set(keptDrafts.map((draft) => draft.id))
+
   await Promise.all(
-    ids.map((id) => deleteContentLog({ entity: 'article', entityId: id })),
+    ids
+      .filter((id) => !keptIds.has(id))
+      .map((id) => deleteContentLog({ entity: 'article', entityId: id })),
   )
 
   return count
