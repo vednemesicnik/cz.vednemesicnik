@@ -2,6 +2,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { within } from 'storybook/test'
 
 import { Chip } from '~/components/chip'
 import { foldForSearch } from '~/utils/fold-for-search'
@@ -78,7 +79,7 @@ const meta: Meta<typeof ChipInput> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  title: 'Forms/ChipInput',
+  title: 'Components/ChipInput',
 }
 
 export default meta
@@ -107,8 +108,11 @@ export const WithArchived: Story = {
 }
 
 /**
- * The suggestions narrowed by typing; focus the field to open them.
+ * The suggestions narrowed by typing, open.
  */
 export const Searching: Story = {
+  play: async ({ canvasElement }) => {
+    within(canvasElement).getByRole('combobox').focus()
+  },
   render: () => <ChipInputDemo initialQuery={'po'} initialValues={[]} />,
 }

@@ -1,5 +1,11 @@
 import { clsx } from 'clsx'
-import { type KeyboardEvent, type ReactNode, useRef, useState } from 'react'
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import { Label } from '~/components/label'
 
@@ -66,6 +72,16 @@ export const ChipInput = ({
   const isOpen = isFocused && !isDismissed && options.length > 0
   const active = Math.min(activeIndex, options.length - 1)
 
+  // The active suggestion stays in sight in a long list.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the option's id follows `active`
+  useEffect(() => {
+    if (isOpen) {
+      document
+        .getElementById(optionId(active))
+        ?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [isOpen, active])
+
   const changeQuery = (nextQuery: string) => {
     onQueryChange(nextQuery)
     setActiveIndex(0)
@@ -107,8 +123,9 @@ export const ChipInput = ({
         event.stopPropagation()
         setIsDismissed(true)
         return
+      // A held key clears the search, not the chips behind it.
       case 'Backspace':
-        if (query === '') onRemoveLast?.()
+        if (query === '' && !event.repeat) onRemoveLast?.()
         return
     }
   }
@@ -126,7 +143,14 @@ export const ChipInput = ({
       <div
         className={clsx(styles.field, disabled && styles.disabled)}
         onClick={(event) => {
-          if (event.target === event.currentTarget) inputRef.current?.focus()
+          // A click beside the chips, or a chip's ×, which leaves with its
+          // chip: the field keeps the focus.
+          if (
+            event.target === event.currentTarget ||
+            (event.target instanceof Element && event.target.closest('button'))
+          ) {
+            inputRef.current?.focus()
+          }
         }}
       >
         {children}

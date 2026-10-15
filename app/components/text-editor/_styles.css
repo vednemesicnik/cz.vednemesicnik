@@ -23,8 +23,8 @@
       padding-inline: 12px;
     }
 
+    /* The wrapper paints the grey, with its rounded corners. */
     &[contenteditable="false"] {
-      background-color: var(--bg-disabled);
       color: var(--text-tertiary);
       cursor: not-allowed;
     }

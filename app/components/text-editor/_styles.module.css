@@ -15,7 +15,17 @@
     /* No overflow clip: it would stop the toolbar from sticking. */
     position: relative;
     width: 100%;
+    /* The toolbar and the text's minimum, before the editor mounts in the
+       browser, so nothing under it moves (41 px: the toolbar). */
+    min-block-size: calc(41px + var(--text-editor-min-block-size, 340px));
     background-color: var(--bg-primary);
+
+    @media (width < 768px) {
+      min-block-size: calc(
+        57px +
+        min(var(--text-editor-min-block-size, 200px), 200px)
+      );
+    }
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     transition:

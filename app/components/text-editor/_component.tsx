@@ -211,7 +211,7 @@ export const TextEditor = ({
           <>
             {/* A read-only editor has no toolbar (design 24h). */}
             {!readOnly && (
-              <TextEditorToolbar label={`Formát: ${label}`}>
+              <TextEditorToolbar>
                 {hasFormatGroup && (
                   <TextEditorToolbarGroup>
                     {toolbar.includes('bold') && (
