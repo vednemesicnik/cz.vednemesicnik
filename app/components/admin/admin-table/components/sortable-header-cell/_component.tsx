@@ -2,8 +2,8 @@ import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 
+import { BaseLink } from '~/components/base-link'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
-import { Link } from '~/components/link'
 import {
   buildSortSearch,
   ORDER_PARAM,
@@ -72,7 +72,13 @@ export const TableSortableHeaderCell = ({
       }
       className={styles.headerCell}
     >
-      <Link className={styles.link} preventScrollReset={true} to={{ search }}>
+      {/* BaseLink, not the styled Link: both style one class in the same
+          layer, so which wins would depend on the order of CSS chunks. */}
+      <BaseLink
+        className={styles.link}
+        preventScrollReset={true}
+        to={{ search }}
+      >
         {children}
         {/* Decorative: sort state is already conveyed by aria-sort. */}
         <span aria-hidden={true} className={styles.iconWrapper}>
@@ -84,7 +90,7 @@ export const TableSortableHeaderCell = ({
             )}
           />
         </span>
-      </Link>
+      </BaseLink>
     </th>
   )
 }
