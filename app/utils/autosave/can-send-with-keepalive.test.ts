@@ -17,6 +17,16 @@ describe('canSendWithKeepalive', () => {
     expect(canSendWithKeepalive(formData)).toBe(false)
   })
 
+  test('every part counts its multipart framing', () => {
+    const formData = new FormData()
+    // 500 short fields: tiny values, but 75 KB of boundaries and headers.
+    for (let index = 0; index < 500; index++) {
+      formData.append(`tagIds[${index}]`, 'x')
+    }
+
+    expect(canSendWithKeepalive(formData)).toBe(false)
+  })
+
   test('a save over the limit cannot, counted in UTF-8 bytes', () => {
     const formData = new FormData()
     // 2 bytes each in UTF-8: 31 000 characters are over 60 KB.

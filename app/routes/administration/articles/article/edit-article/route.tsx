@@ -223,7 +223,14 @@ export default function RouteComponent({
         : value,
   )
   const snapshotRef = useRef(snapshot)
-  const handleFormChange = useEffectEvent(() => autosave.markChanged())
+  // Set by a button whose change saves at once instead of after the pause.
+  const isFlushOnChangeRef = useRef(false)
+  const handleFormChange = useEffectEvent(() => {
+    autosave.markChanged()
+    if (!isFlushOnChangeRef.current) return
+    isFlushOnChangeRef.current = false
+    void autosave.flush()
+  })
   useEffect(() => {
     if (snapshot === snapshotRef.current) return
     snapshotRef.current = snapshot
@@ -283,9 +290,10 @@ export default function RouteComponent({
 
   const { onSubmit: conformOnSubmit, ...formProps } = getFormProps(form)
 
-  // Enter saves at once instead of posting. Conform runs its own `update`,
-  // `insert` and `remove` as a submit too (every keystroke of the text editor
-  // and of a title the address follows); those wait for the pause like typing.
+  // Nothing posts the form: the editor has no submit button, so Enter in a
+  // field does nothing. Conform runs its own `update`, `insert` and `remove`
+  // as a submit (every keystroke of the text editor and of a title the address
+  // follows); those wait for the pause like typing. Any other submit saves.
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     const isConformIntent =
       event.nativeEvent.submitter?.getAttribute('name') === CONFORM_INTENT_NAME
@@ -444,6 +452,8 @@ export default function RouteComponent({
                   // A chosen address no longer follows the title.
                   handleInput()
                   form.update({ name: fields.slug.name, value: slugSuggestion })
+                  // Saved at once (24d), once the field holds it.
+                  isFlushOnChangeRef.current = true
                 }}
                 type={'button'}
               >
@@ -682,10 +692,10 @@ export default function RouteComponent({
                 </Select>
                 {index > 0 && (
                   <Button
-                    {...form.remove.getButtonProps({
-                      index,
-                      name: fields.authorIds.name,
-                    })}
+                    onClick={() =>
+                      form.remove({ index, name: fields.authorIds.name })
+                    }
+                    type={'button'}
                     variant={'danger'}
                   >
                     <DeleteIcon className={styles.removeIcon} />
@@ -694,11 +704,12 @@ export default function RouteComponent({
                 )}
               </div>
             ))}
+            {/* No submit buttons: Enter in a field must not add or remove one. */}
             <Button
-              {...form.insert.getButtonProps({
-                defaultValue: '',
-                name: fields.authorIds.name,
-              })}
+              onClick={() =>
+                form.insert({ defaultValue: '', name: fields.authorIds.name })
+              }
+              type={'button'}
             >
               Přidat autora
             </Button>

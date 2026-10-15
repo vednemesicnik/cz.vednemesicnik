@@ -35,8 +35,8 @@ type Options = {
  * changes made meanwhile go with the next. A file goes until a save has it.
  * Without a network it tries again on its own; a refused or broken save waits
  * for `retry`. Leaving the page asks through the browser's own dialog only
- * when the changes cannot go out: offline, after a failure, or when what waits
- * is too big to send while the page closes.
+ * when the changes cannot go out: offline, after a failure, without the hold,
+ * or when what waits is too big to send while the page closes.
  *
  * @param options - Whether the editor may save (it holds the edit), the form's
  *   fields, and `send`, which posts one save and reports how it ended.
@@ -55,6 +55,8 @@ export const useAutosave = ({ isEnabled, getFormData, send }: Options) => {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedDisplayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedFilesRef = useRef(new WeakSet<File>())
+  // Counts the saves started, so `flush` sees when none could start.
+  const startedSavesRef = useRef(0)
 
   const changeStatus = (next: AutosaveStatus) => {
     statusRef.current = next
@@ -90,6 +92,7 @@ export const useAutosave = ({ isEnabled, getFormData, send }: Options) => {
     if (payload === null) return Promise.resolve()
 
     isDirtyRef.current = false
+    startedSavesRef.current += 1
     if (savedDisplayRef.current !== null) clearTimeout(savedDisplayRef.current)
     changeStatus('saving')
     const startedAt = Date.now()
@@ -181,7 +184,11 @@ export const useAutosave = ({ isEnabled, getFormData, send }: Options) => {
 
       if (!isDirtyRef.current || statusRef.current === 'stopped') return true
 
+      const startedSaves = startedSavesRef.current
       await runSave(true)
+
+      // Without the hold (or a form) nothing could go: not saved.
+      if (startedSavesRef.current === startedSaves) return false
 
       if (statusRef.current === 'offline' || statusRef.current === 'failed') {
         return false
@@ -193,8 +200,18 @@ export const useAutosave = ({ isEnabled, getFormData, send }: Options) => {
     statusRef.current !== 'stopped' &&
     (isDirtyRef.current || inFlightRef.current !== null)
 
+  // Offline, after a failure or without the hold, a closing page cannot send
+  // it either: the hold is released as usual and the browser asks.
   const getLeaveSave = () => {
-    if (!hasUnsavedChanges()) return null
+    const current = statusRef.current
+    if (
+      !hasUnsavedChanges() ||
+      !optionsRef.current.isEnabled ||
+      current === 'offline' ||
+      current === 'failed'
+    ) {
+      return null
+    }
 
     const payload = buildPayload()
     return payload !== null && canSendWithKeepalive(payload) ? payload : null
@@ -209,7 +226,11 @@ export const useAutosave = ({ isEnabled, getFormData, send }: Options) => {
       current === 'failed' ||
       (hasUnsavedChanges() && getLeaveSave() === null)
 
-    if (cannotLeaveSafely) event.preventDefault()
+    if (cannotLeaveSafely) {
+      event.preventDefault()
+      // Older Safari and Chromium ask only with a return value.
+      event.returnValue = ''
+    }
   })
 
   // The hold back (24i: taken again after an expiry): what waited goes.

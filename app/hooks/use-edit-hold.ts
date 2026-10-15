@@ -129,25 +129,42 @@ export const useEditHold = ({
     }).catch(() => undefined)
   })
 
-  // A waiting save goes out instead of the release and ends the hold itself.
-  const sendLeave = useEffectEvent((target: string, keepEmpty: boolean) => {
-    const formData = leaveSave?.getFormData() ?? null
+  // Set while a leave save is on its way: it ends the hold itself.
+  const isLeaveSaveSentRef = useRef(false)
 
-    if (leaveSave === undefined || formData === null) {
-      sendRelease(target, keepEmpty)
-      return
-    }
+  // A waiting save goes out instead of the release and ends the hold itself.
+  // Sent from `beforeunload`, before a reload asks for the new page, so the
+  // reload more likely loads it (decision 0022). Its answer can come while the
+  // page is still going away, so it only learns the save: a page that stays
+  // after all takes the hold again with its next renewal.
+  const sendLeaveSave = useEffectEvent((): boolean => {
+    const formData = leaveSave?.getFormData() ?? null
+    if (leaveSave === undefined || formData === null) return false
 
     formData.append(EDIT_HOLD_CONFIG.releaseHoldName, 'true')
+    isLeaveSaveSentRef.current = true
+
     void fetch(leaveSave.action, {
       body: formData,
       keepalive: true,
       method: 'POST',
-    }).catch(() => undefined)
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((result: { status: string; updatedAt?: string } | null) => {
+        if (result?.status === 'saved' && result.updatedAt !== undefined) {
+          loadedUpdatedAtRef.current = result.updatedAt
+        }
+      })
+      .catch(() => undefined)
+
+    return true
   })
 
   const apply = (result: EditHoldResult | null) => {
     if (result === null || result.status === 'released') return
+
+    // Holding again: a later leave goes out as usual.
+    if (result.status === 'holding') isLeaveSaveSentRef.current = false
 
     if (result.status === 'lost') {
       setState(
@@ -161,7 +178,26 @@ export const useEditHold = ({
     setState(result)
   }
 
-  const take = useEffectEvent(async () => {
+  // A page that loaded just before its own leave save landed meets that save
+  // on its first take. Nothing is typed yet, so it loads again instead of
+  // answering `changed`; once in 10 s, so a busy article cannot loop it.
+  const reloadOnce = () => {
+    const key = `edit-hold-reload:${entity}:${id}`
+
+    try {
+      if (Date.now() - Number(sessionStorage.getItem(key)) < 10_000) {
+        return false
+      }
+      sessionStorage.setItem(key, String(Date.now()))
+    } catch {
+      return false
+    }
+
+    window.location.reload()
+    return true
+  }
+
+  const take = useEffectEvent(async (isPageLoad = false) => {
     const result = await post(action, buildFormData(INTENT_VALUE.takeEditHold))
 
     // The editor went away while the take was on its way.
@@ -169,6 +205,8 @@ export const useEditHold = ({
       if (result?.status === 'holding') sendRelease(action)
       return
     }
+
+    if (isPageLoad && result?.status === 'changed' && reloadOnce()) return
 
     apply(result)
   })
@@ -217,7 +255,7 @@ export const useEditHold = ({
       tabIdRef.current = crypto.randomUUID()
       setTabId(tabIdRef.current)
     }
-    void take()
+    void take(true)
 
     const interval = setInterval(
       () => void renew(),
@@ -227,21 +265,35 @@ export const useEditHold = ({
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') void renew()
     }
+    const handleBeforeUnload = () => {
+      if (!isLeaveSaveSentRef.current) sendLeaveSave()
+    }
     // An empty draft would go with the release (0020), but a reload must find
     // it: its hold only expires, and the sweep clears it otherwise.
-    const handlePageHide = () => sendLeave(action, isEmptyRef.current)
-    // Back from the back/forward cache, the released hold is taken again.
+    const handlePageHide = () => {
+      if (isLeaveSaveSentRef.current || sendLeaveSave()) return
+      sendRelease(action, isEmptyRef.current)
+    }
+    // Back from the back/forward cache, the released hold is taken again; after
+    // a leave save the page loads afresh, since its form is older than the save.
     const handlePageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) void take()
+      if (!event.persisted) return
+      if (isLeaveSaveSentRef.current) {
+        window.location.reload()
+      } else {
+        void take()
+      }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('beforeunload', handleBeforeUnload)
     window.addEventListener('pagehide', handlePageHide)
     window.addEventListener('pageshow', handlePageShow)
 
     return () => {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
       window.removeEventListener('pagehide', handlePageHide)
       window.removeEventListener('pageshow', handlePageShow)
       pendingReleaseRef.current = {
