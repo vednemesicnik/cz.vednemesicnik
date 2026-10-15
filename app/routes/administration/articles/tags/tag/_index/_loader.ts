@@ -5,6 +5,9 @@ import { prisma } from '~/utils/db.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 
+import { getArticleFactLine } from '../../../utils/get-article-fact-line'
+import { getTaxonomyArticleSummary } from '../../../utils/get-taxonomy-article-summary.server'
+import { getTaxonomyHeaderActions } from '../../../utils/get-taxonomy-header-actions'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -12,6 +15,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const tag = await prisma.articleTag.findUnique({
     select: {
+      // What readers lose when it is retracted or archived (25d).
+      _count: {
+        select: { articles: { where: { state: 'published' } } },
+      },
       author: {
         select: {
           id: true,
@@ -38,6 +45,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       slug: true,
       state: true,
       submittedAt: true,
+      updatedAt: true,
     },
     where: { id: tagId },
   })
@@ -57,7 +65,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       'restore',
       'review',
     ],
-    entities: ['article_tag'],
+    // Viewing articles scopes the record's article list and counts (25b).
+    entities: ['article_tag', 'article'],
   })
 
   // Check view permission
@@ -80,21 +89,44 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     submittedAt: tag.submittedAt,
   })
 
+  const relationWhere = { tags: { some: { id: tag.id } } }
+
+  const [articles, articleCount, history] = await Promise.all([
+    getTaxonomyArticleSummary(context, relationWhere),
+    // Deleting takes the tag off every article it has, in any state, whoever
+    // may see them (25d): the list row's count.
+    prisma.article.count({ where: relationWhere }),
+    getContentHistory({
+      createdAt: tag.createdAt,
+      entity: 'article_tag',
+      entityId: tag.id,
+      publishedAt: tag.publishedAt,
+    }),
+  ])
+
   return {
+    articles,
+    headerActions: getTaxonomyHeaderActions({
+      ...flags,
+      state: tag.state,
+      submission: flags.submission?.state ?? null,
+    }),
     tag: {
-      author: tag.author,
-      history: await getContentHistory({
-        createdAt: tag.createdAt,
-        entity: 'article_tag',
-        entityId: tag.id,
+      articleCount,
+      authorName: tag.author.name,
+      factLine: getArticleFactLine({
+        now: new Date(),
         publishedAt: tag.publishedAt,
+        state: tag.state,
+        submission: flags.submission,
+        updatedAt: tag.updatedAt,
       }),
+      history,
       id: tag.id,
       name: tag.name,
+      publishedArticleCount: tag._count.articles,
       slug: tag.slug,
-      state: tag.state,
+      state: flags.submission?.state ?? tag.state,
     },
-    ...flags,
-    submission: flags.submission?.state ?? null,
   }
 }

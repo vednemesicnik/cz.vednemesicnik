@@ -1,16 +1,30 @@
 import type { TaxonomyRecordCopy } from '../utils/taxonomy-record-copy'
 
-/** A category's words (design 25a, 25c, 25d; copy 3htjei2x, dfsrpeuk, 3vnah8ji). */
+/**
+ * A category's words (design 25a–25d; copy 3htjei2x, dfsrpeuk, 3vnah8ji). The
+ * header sentences follow the copywriter's conversion of 23d for a record with
+ * one author (copy thread 26 archiv čísel, 2 Oct 2026).
+ */
 export const CATEGORY_RECORD_COPY: TaxonomyRecordCopy = {
+  allArticlesLink: (articleCount) =>
+    `Všechny články v rubrice (${articleCount})`,
   archiveDescription:
     'Rubrika zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazená, ale na webu se u nich nezobrazí.',
   archiveTitle: (name) => `Archivovat rubriku „${name}“?`,
+  articlesTitle: 'Články v rubrice',
   deleteDescription: (articleCount) =>
     articleCount === 0
       ? 'Rubrika se trvale smaže.'
       : `Rubrika se trvale smaže a odebere ze všech přiřazených článků (${articleCount}). Články se nesmažou.`,
   deleteTitle: (name) => `Smazat rubriku „${name}“?`,
   editTitle: 'Upravit rubriku',
+  headerSentences: {
+    'not-submitted': 'Rubrika nebyla odeslána ke schválení.',
+    'who-approves': 'Schválit může Koordinátor.',
+    'who-edits': 'Upravovat mohou autor rubriky a Koordinátor.',
+    'who-publishes': 'Publikovat může Koordinátor.',
+    'who-restores': 'Obnovit rubriku může Koordinátor.',
+  },
   menuLabel: (name) => `Další akce s rubrikou ${name}`,
   newTitle: 'Nová rubrika',
   publicPath: '/articles/categories',
