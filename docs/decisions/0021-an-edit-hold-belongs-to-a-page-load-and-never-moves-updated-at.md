@@ -41,8 +41,17 @@ fetchers. A thrown 4xx lands in the route's error boundary.
   (`createEditHeldRefusal`). The shared action turns it into `{ heldByName }`, the page says
   „Článek právě upravuje …“, and a bulk action counts the article as skipped. A save the hold
   refuses returns `not-held` with the holder's name.
+- **The holding tab's own writes do not check the expiry.** A save, a renewal and a release
+  repeat the holding author and tab, not `heldUntil`. A hold that expired while nobody took it
+  still belongs to its tab (24i); this narrows 0019's "unexpired". Everyone else's writes treat
+  an expired hold as free.
+- **A take and a takeover repeat what they read.** A takeover writes over the holder it read,
+  so a hold taken in between fails it and the role is checked again. Both carry the content's
+  last save as the editor loaded it, and over a newer one answer `changed`: an editor never
+  starts writing over text it has not seen.
 - **Leaving the draft ends the hold.** Publishing or archiving clears the hold columns in the
-  same write: published and archived content is never held (07g).
+  same write: published and archived content is never held (07g). So does a submission: its
+  authors no longer edit a submitted text (07d).
 
 The shared logic lives in `app/utils/edit-hold/`: the `where` builders, the status read, and
 `createEditHoldHandlers` with the entity's Prisma work as callbacks.

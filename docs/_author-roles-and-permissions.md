@@ -103,6 +103,15 @@ belongs in the permission catalog (a future `approve` action), not on the role.
 - Can restore archived content to draft state.
 - **The only one who approves and publishes.** Approves submitted content (Schválit) and
   publishes it, or publishes a draft directly — publishing is the approval.
+- **The only one who takes over someone else's edit of an article** (Převzít úpravu, design 24g),
+  logged as *Převzata úprava*.
+
+## The edit hold (articles)
+
+Built in #669 (design 07g, decisions 0019 and 0021). One browser tab of one person edits a
+draft at a time. While someone else holds it, nobody else edits it or changes its state;
+only the Coordinator may take the edit over. Anyone may move their own edit from another tab
+to this one, without a log. One's own hold never blocks one's own actions.
 
 Reviews are recorded as `Review` rows (a reviewer plus a `ReviewState`); there is no
 `reviewed` boolean field on content.
