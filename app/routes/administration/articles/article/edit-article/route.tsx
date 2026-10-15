@@ -53,10 +53,10 @@ import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { foldForSearch } from '~/utils/fold-for-search'
-import { formatNumericDate } from '~/utils/format-numeric-date'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
+import { formatSubmissionFact } from '../../utils/format-submission-fact'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -421,6 +421,9 @@ export default function RouteComponent({
     resume: resumeSlug,
   } = useAutoSlug({
     fieldName: fields.slug.name,
+    fieldValue: fields.slug.value ?? '',
+    // Without the hold the fields are disabled and read as empty (07g).
+    isEnabled: isHolding,
     isInitiallyTouched: isSlugInitiallyManual,
     sourceValue: fields.title.value || '',
     updateFieldValue: form.update,
@@ -575,9 +578,10 @@ export default function RouteComponent({
         ...(article.submission === null
           ? []
           : [
-              article.submission.state === 'pending'
-                ? `od ${formatNumericDate(new Date(article.submission.date))}`
-                : formatNumericDate(new Date(article.submission.date)),
+              formatSubmissionFact({
+                date: new Date(article.submission.date),
+                state: article.submission.state,
+              }),
             ]),
         '',
       ].join(' · ')
@@ -1007,7 +1011,7 @@ export default function RouteComponent({
                           muted={tag?.state !== 'published'}
                           note={isArchived ? 'archivovaný' : undefined}
                           onRemove={
-                            isLocked
+                            isReadOnly
                               ? undefined
                               : () =>
                                   setTagIds(

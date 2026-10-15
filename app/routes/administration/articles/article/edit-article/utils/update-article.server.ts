@@ -88,9 +88,10 @@ const RELEASED_HOLD = {
  * keeps the hold unless `releaseHold` asks for the end. A draft saves
  * incomplete; an address another article has is left out and the rest saves
  * (24d). A category or a tag goes only when the editor sends it as removed,
- * so an archived one stays (decision 0025). A new image carries the id the editor made for it, so a repeated save
- * stores it once. The history gets one *Upraveno* per hold (07f). The caller
- * has checked the session (`requireCSRF`).
+ * so an archived one stays (decision 0025). A new image carries the id the
+ * editor made for it, so a repeated save stores it once. The history gets one
+ * *Upraveno* per hold (07f). The caller has checked the session
+ * (`requireCSRF`).
  *
  * @param request - The action's request.
  * @param options - The article id, the editor's tab and the edited fields.

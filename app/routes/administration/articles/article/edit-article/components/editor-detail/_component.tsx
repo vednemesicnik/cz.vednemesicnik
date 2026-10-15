@@ -64,6 +64,8 @@ export const EditorDetail = ({
         aria-controls={panelId}
         aria-expanded={isOpen}
         className={styles.row}
+        // Under the open panel, out of reach until it closes.
+        inert={isOpen}
         onClick={onOpen}
         ref={rowRef}
         type={'button'}

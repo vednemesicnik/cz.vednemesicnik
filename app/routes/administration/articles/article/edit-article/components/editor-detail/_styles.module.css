@@ -105,6 +105,15 @@
   }
 }
 
+/* The page under an open panel does not scroll, as under the menu. */
+:global(html):has(.isOpen .panel) {
+  @layer variant {
+    @media (width < 768px) {
+      overflow: hidden;
+    }
+  }
+}
+
 /* The field's label names it beside the text; the panel still has a title. */
 .isNameHidden {
   @layer variant {
