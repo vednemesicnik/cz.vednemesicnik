@@ -7,26 +7,24 @@ const pickForm = (count: number, forms: [string, string, string]) =>
 
 /**
  * How long the editor heard nothing from the server, for *Článek se mezitím
- * změnil* (design 24i, copy zqe81r3k). Minutes under an hour, hours under two
- * days, days after that.
+ * změnil* (design 24i, copy zqe81r3k and kjcijk1q). Minutes under an hour,
+ * hours under two days, days after that; the unit follows the real length,
+ * and hours and days admit they are rounded.
  *
  * @param milliseconds - The silence; under a minute counts as one.
- * @returns „1 minutu“, „14 minut“, „3 hodiny“, „2 dny“.
+ * @returns „1 minutu“, „14 minut“, „přibližně 3 hodiny“, „přibližně 2 dny“.
  */
 export const formatAwayDuration = (milliseconds: number) => {
-  const minutes = Math.max(1, Math.round(milliseconds / MINUTE))
-
-  if (minutes < 60) {
+  if (milliseconds < HOUR) {
+    const minutes = Math.max(1, Math.round(milliseconds / MINUTE))
     return `${minutes} ${pickForm(minutes, ['minutu', 'minuty', 'minut'])}`
   }
 
-  const hours = Math.round(milliseconds / HOUR)
-
-  if (hours < 48) {
-    return `${hours} ${pickForm(hours, ['hodinu', 'hodiny', 'hodin'])}`
+  if (milliseconds < 48 * HOUR) {
+    const hours = Math.round(milliseconds / HOUR)
+    return `přibližně ${hours} ${pickForm(hours, ['hodinu', 'hodiny', 'hodin'])}`
   }
 
-  const days = Math.round(hours / 24)
-
-  return `${days} ${pickForm(days, ['den', 'dny', 'dní'])}`
+  const days = Math.round(milliseconds / (24 * HOUR))
+  return `přibližně ${days} ${pickForm(days, ['den', 'dny', 'dní'])}`
 }

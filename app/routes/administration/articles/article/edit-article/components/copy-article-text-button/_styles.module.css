@@ -9,3 +9,21 @@
     white-space: nowrap;
   }
 }
+
+.labels {
+  @layer route {
+    display: inline-grid;
+  }
+}
+
+.label {
+  @layer route {
+    grid-area: 1 / 1;
+  }
+}
+
+.hidden {
+  @layer route {
+    visibility: hidden;
+  }
+}

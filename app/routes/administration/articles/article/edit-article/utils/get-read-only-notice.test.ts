@@ -15,7 +15,13 @@ describe('getReadOnlyNotice', () => {
     ).toBe('Jen ke čtení. Článek upravuje Marie Horáková.')
   })
 
-  test('free again: only that it reads', () => {
+  test('free again after a takeover: only that it reads', () => {
+    expect(
+      getReadOnlyNotice({ holder: null, isEditable: true, status: 'lost' }),
+    ).toBe('Jen ke čtení.')
+  })
+
+  test('changed meanwhile and free: the text shown is old', () => {
     expect(
       getReadOnlyNotice({
         awayMilliseconds: 0,
@@ -23,7 +29,7 @@ describe('getReadOnlyNotice', () => {
         isEditable: true,
         status: 'changed',
       }),
-    ).toBe('Jen ke čtení.')
+    ).toBe('Jen ke čtení. Zobrazený text není aktuální.')
   })
 
   test('holding: nothing', () => {

@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { useEffect, useRef, useState } from 'react'
 
 import { Button, type Variant } from '~/components/button'
@@ -17,8 +18,9 @@ type Props = {
 /**
  * *Zkopírovat celý text* (design 24h, 24i): the whole article text, saved or
  * not, into the clipboard as HTML and as plain text, so the author can send it
- * to whoever edits it now. The label stays; „Zkopírováno“ is announced, as the
- * design system's `CopyButton` does it (29c).
+ * to whoever edits it now. After a copy that got through, the label reads
+ * „Zkopírováno“ for two seconds in the same width and it is announced, as the
+ * design system's `CopyButton` does it (29c; copy kjcijk1q).
  *
  * @param props.getContent - Reads the text to copy at the click.
  * @param props.variant - `outline` in the editor and 24h, `ghost` among the
@@ -68,7 +70,15 @@ export const CopyArticleTextButton = ({
         type={'button'}
         variant={variant}
       >
-        Zkopírovat celý text
+        {/* Both labels take one cell, so the button keeps its width. */}
+        <span className={styles.labels}>
+          <span className={clsx(styles.label, isCopied && styles.hidden)}>
+            Zkopírovat celý text
+          </span>
+          <span className={clsx(styles.label, !isCopied && styles.hidden)}>
+            Zkopírováno
+          </span>
+        </span>
       </Button>
       <span aria-live={'polite'} className={styles.status}>
         {isCopied ? 'Zkopírováno' : ''}
