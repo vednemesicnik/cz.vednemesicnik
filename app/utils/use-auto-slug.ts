@@ -6,15 +6,18 @@ type UseAutoSlugOptions = {
   sourceValue: string | undefined
   updateFieldValue: FormMetadata['update']
   fieldName: string
+  /** The field was changed by hand before, so it starts not following. */
+  isInitiallyTouched?: boolean
 }
 
 export const useAutoSlug = ({
   sourceValue,
   updateFieldValue,
   fieldName,
+  isInitiallyTouched = false,
 }: UseAutoSlugOptions) => {
   const [isFocused, setIsFocused] = useState(false)
-  const [isTouched, setIsTouched] = useState(false)
+  const [isTouched, setIsTouched] = useState(isInitiallyTouched)
 
   useEffect(() => {
     // An emptied source empties the field too; undefined means it doesn't follow.
@@ -34,9 +37,16 @@ export const useAutoSlug = ({
     updateFieldValue({ name: fieldName, value: slugify(event.target.value) })
   }
 
+  // Follows the source again, from its current value (24a: *Obnovit podle
+  // názvu*).
+  const resume = () => setIsTouched(false)
+
   return {
     handleBlur,
     handleFocus,
     handleInput,
+    /** Whether the field follows the source now. */
+    isFollowing: sourceValue !== undefined && !isTouched,
+    resume,
   }
 }

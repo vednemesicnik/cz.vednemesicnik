@@ -10,6 +10,7 @@ import { getAuthorPermissionContext } from '~/utils/permissions/author/context/g
 import { requireContentUpdatePermission } from '~/utils/permissions/author/guards/require-content-update-permission.server'
 import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 
 import { getArticleHold } from '../../utils/get-article-hold'
@@ -27,7 +28,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const article = await prisma.article.findUnique({
     select: {
       authors: {
-        select: { id: true },
+        orderBy: { name: 'asc' },
+        select: { id: true, name: true },
       },
       categories: {
         select: { id: true },
@@ -48,6 +50,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: {
           ...imageSourceSelect,
           description: true,
+        },
+      },
+      reviews: {
+        select: {
+          createdAt: true,
+          reviewer: { select: { role: { select: { level: true } } } },
         },
       },
       slug: true,
@@ -110,37 +118,35 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     )
   }
 
+  const categoryIds = article.categories.map((category) => category.id)
+  const tagIds = article.tags.map((tag) => tag.id)
+
   const [authors, categories, tags] = await Promise.all([
     // Authors with permission to update articles in the current state
     getAuthorsByPermission(context, 'article', 'update', article.state),
-    // Published categories
+    // The published ones to pick from, and the ones the article has in
+    // another state, which stay until removed (design 24a, iq3nur0e).
     prisma.articleCategory.findMany({
       orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        name: true,
-      },
-      where: {
-        state: 'published',
-      },
+      select: { id: true, name: true, state: true },
+      where: { OR: [{ state: 'published' }, { id: { in: categoryIds } }] },
     }),
-    // Published tags
     prisma.articleTag.findMany({
       orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        name: true,
-      },
-      where: {
-        state: 'published',
-      },
+      select: { id: true, name: true, state: true },
+      where: { OR: [{ state: 'published' }, { id: { in: tagIds } }] },
     }),
   ])
 
+  const authorIds = article.authors.map((author) => author.id)
+  const submission = getSubmissionState(article)
+
   return {
     article: {
-      authorIds: article.authors.map((author) => author.id),
-      categoryIds: article.categories.map((category) => category.id),
+      authorIds,
+      // Whose text it is, over someone else's (24c).
+      authorNames: article.authors.map((author) => author.name),
+      categoryIds,
       content: article.content,
       excerpt: article.excerpt || '',
       featuredImageId: article.featuredImage?.id,
@@ -153,7 +159,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       // An empty draft (decision 0020) has no address and is left for the list.
       isEmptyDraft: article.firstContentAt === null,
       slug: article.slug ?? '',
-      tagIds: article.tags.map((tag) => tag.id),
+      // Sent for approval, or approved: the tag and the line of 24c.
+      submission:
+        submission === null
+          ? null
+          : { date: submission.date.toISOString(), state: submission.state },
+      tagIds,
       title: article.title,
       // The last save, which the editor's hold takes back only over (24i).
       updatedAt: article.updatedAt.toISOString(),
@@ -162,6 +173,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     categories,
     // Only the Coordinator takes over someone else's edit (24g).
     isApprover,
+    // One's own text has no sentence over it (24c).
+    isOwn: authorIds.includes(context.authorId),
     tags,
   }
 }
