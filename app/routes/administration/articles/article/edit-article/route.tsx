@@ -18,7 +18,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { href, useBlocker, useNavigate } from 'react-router'
+import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
 import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminImageInput } from '~/components/admin/admin-image-input'
 import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
@@ -68,6 +68,9 @@ const SNAPSHOT_IGNORED_FIELDS = new Set<string>([
   EDIT_HOLD_CONFIG.tabIdName,
 ])
 
+// The name of the button Conform submits its intents with.
+const CONFORM_INTENT_NAME = '__intent__'
+
 const TAKEN_SLUG_HINT =
   'Zvolte jinou adresu — tuto už má jiný článek. Změna adresy se neuložila.'
 
@@ -77,6 +80,10 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const { article, isApprover } = loaderData
   const navigate = useNavigate()
+  const revalidator = useRevalidator()
+  // The title the breadcrumb and the tab show, as last loaded.
+  const loadedTitleRef = useRef(article.title)
+  loadedTitleRef.current = article.title
   const formRef = useRef<HTMLFormElement>(null)
   const saveAction = href('/administration/articles/:articleId/save', {
     articleId: params.articleId,
@@ -185,6 +192,11 @@ export default function RouteComponent({
     editHold.acknowledgeSave(result.updatedAt)
     setSavedAt(new Date(result.updatedAt))
     setSlugSuggestion(result.slugSuggestion)
+
+    // A new title reaches the breadcrumb and the tab title.
+    const savedTitle = String(formData.get(fields.title.name) ?? '').trim()
+    if (savedTitle !== loadedTitleRef.current) void revalidator.revalidate()
+
     return 'saved'
   }
 
@@ -271,11 +283,15 @@ export default function RouteComponent({
 
   const { onSubmit: conformOnSubmit, ...formProps } = getFormProps(form)
 
-  // Enter saves instead of posting; Conform still runs its list buttons.
+  // Enter saves at once instead of posting. Conform runs its own `update`,
+  // `insert` and `remove` as a submit too (every keystroke of the text editor
+  // and of a title the address follows); those wait for the pause like typing.
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    const isConformIntent =
+      event.nativeEvent.submitter?.getAttribute('name') === CONFORM_INTENT_NAME
     conformOnSubmit(event)
     event.preventDefault()
-    void autosave.flush()
+    if (!isConformIntent) void autosave.flush()
   }
 
   // A picked file is a change even before Conform reads it.
@@ -297,9 +313,12 @@ export default function RouteComponent({
   const newImages = fields.images.getFieldList()
 
   // A new draft's address follows its title, as the add form's did (0020).
+  // Decided once, by the draft as it opened: a reload after a save that makes
+  // it non-empty must not stop the address following mid-sentence.
+  const [followsTitle] = useState(article.isEmptyDraft)
   const { handleBlur, handleFocus, handleInput } = useAutoSlug({
     fieldName: fields.slug.name,
-    sourceValue: article.isEmptyDraft ? fields.title.value || '' : undefined,
+    sourceValue: followsTitle ? fields.title.value || '' : undefined,
     updateFieldValue: form.update,
   })
 

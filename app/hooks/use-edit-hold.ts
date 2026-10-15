@@ -87,6 +87,9 @@ export const useEditHold = ({
   // The form keeps what it loaded, whatever a later load brings, and moves
   // only with its own saves (24i).
   const loadedUpdatedAtRef = useRef(updatedAt)
+  // Read when the page goes away; a reload of the data must not re-take.
+  const isEmptyRef = useRef(isEmpty)
+  isEmptyRef.current = isEmpty
   // False once the editor is gone: a take answered after that is released.
   const isActiveRef = useRef(false)
 
@@ -226,7 +229,7 @@ export const useEditHold = ({
     }
     // An empty draft would go with the release (0020), but a reload must find
     // it: its hold only expires, and the sweep clears it otherwise.
-    const handlePageHide = () => sendLeave(action, isEmpty)
+    const handlePageHide = () => sendLeave(action, isEmptyRef.current)
     // Back from the back/forward cache, the released hold is taken again.
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) void take()
@@ -250,7 +253,7 @@ export const useEditHold = ({
         }, 0),
       }
     }
-  }, [action, isEmpty])
+  }, [action])
 
   // A takeover elsewhere reaches this tab at once, not with the next renewal.
   useContentEvents({
