@@ -17,11 +17,10 @@ export const useAutoSlug = ({
   const [isTouched, setIsTouched] = useState(false)
 
   useEffect(() => {
-    if (isFocused || isTouched) return
+    // An emptied source empties the field too; undefined means it doesn't follow.
+    if (isFocused || isTouched || sourceValue === undefined) return
 
-    if (sourceValue) {
-      updateFieldValue({ name: fieldName, value: slugify(sourceValue) })
-    }
+    updateFieldValue({ name: fieldName, value: slugify(sourceValue) })
   }, [fieldName, updateFieldValue, sourceValue, isFocused, isTouched])
 
   const handleFocus = () => setIsFocused(true)
