@@ -71,6 +71,16 @@ const toHolder = (row: EditHoldRow): EditHolder | null =>
         since: row.heldSince.toISOString(),
       }
 
+// Whoever holds it instead of this tab, for an editor that may not write (24i).
+const toOtherHolder = (
+  row: EditHoldRow,
+  viewer: EditHoldTab & { now: Date },
+) => {
+  const status = getEditHoldStatus(row, viewer)
+
+  return status === 'other' || status === 'own-other-tab' ? toHolder(row) : null
+}
+
 /**
  * Builds the edit hold's operations for one content type (design 07g, 24g,
  * decision 0019): take, renew, release and take over. The entity's callbacks
@@ -162,14 +172,19 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
       const tab = { authorId: context.authorId, tabId }
 
       return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
+        const now = new Date()
+
         if (
           expectedUpdatedAt !== undefined &&
           row.updatedAt.getTime() !== expectedUpdatedAt.getTime()
         ) {
-          return { status: 'changed' }
+          return {
+            holder: toOtherHolder(row, { ...tab, now }),
+            isEditable: true,
+            status: 'changed',
+          }
         }
 
-        const now = new Date()
         const status = getEditHoldStatus(row, { ...tab, now })
 
         if (status === 'own-other-tab') return { status: 'own-other-tab' }
@@ -222,7 +237,7 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
             submittedAt: row.submittedAt,
           })
         ) {
-          return { status: 'changed' }
+          return { holder: null, isEditable: false, status: 'changed' }
         }
 
         if (
@@ -332,15 +347,20 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
       const tab = { authorId: context.authorId, tabId }
 
       return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
+        const now = new Date()
+
         // Saved since this editor loaded: taking it would edit old text.
         if (
           expectedUpdatedAt !== undefined &&
           row.updatedAt.getTime() !== expectedUpdatedAt.getTime()
         ) {
-          return { status: 'changed' }
+          return {
+            holder: toOtherHolder(row, { ...tab, now }),
+            isEditable: true,
+            status: 'changed',
+          }
         }
 
-        const now = new Date()
         const status = getEditHoldStatus(row, { ...tab, now })
 
         // Only the Coordinator takes someone else's hold; one's own, from
