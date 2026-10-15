@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest'
 
 import { formatArticleChangedDescription } from './format-article-changed-description'
 
-const now = new Date(2026, 9, 15, 14, 40)
-const savedAt = new Date(2026, 9, 15, 14, 20)
+const now = new Date('2026-10-15T12:40:00.000Z')
+const savedAt = new Date('2026-10-15T12:20:00.000Z')
 
 describe('formatArticleChangedDescription', () => {
   test('says how long the editor was away', () => {

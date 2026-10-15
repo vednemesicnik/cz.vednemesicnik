@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest'
 
 import { formatHoldTakenDescription } from './format-hold-taken-description'
 
-const now = new Date(2026, 9, 15, 14, 40)
-const savedAt = new Date(2026, 9, 15, 14, 31)
+const now = new Date('2026-10-15T12:40:00.000Z')
+const savedAt = new Date('2026-10-15T12:31:00.000Z')
 
 describe('formatHoldTakenDescription', () => {
   test('nothing waited', () => {
