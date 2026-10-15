@@ -109,7 +109,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           })}
           variant={'outline'}
         >
-          Přidat epizodu
+          Nová epizoda
         </LinkButton>
       )}
       {!hasNoEpisodes && (

@@ -13,11 +13,12 @@ export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { podcastId } = match.params
 
-    const label = 'Upravit podcast'
-    const path = href('/administration/podcasts/:podcastId/edit-podcast', {
-      podcastId,
-    })
-
-    return { label, path }
+    return {
+      // The last crumb names the page, the record stands before it (copy 5yrb681l).
+      label: 'Úprava',
+      path: href('/administration/podcasts/:podcastId/edit-podcast', {
+        podcastId,
+      }),
+    }
   },
 }

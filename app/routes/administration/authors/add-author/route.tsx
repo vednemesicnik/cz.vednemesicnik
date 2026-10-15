@@ -52,7 +52,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <PageTitle>Přidat autora</PageTitle>
+      <PageTitle>Nový autor</PageTitle>
 
       <Form errors={form.errors} method="post" {...getFormProps(form)}>
         <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily autora'}>

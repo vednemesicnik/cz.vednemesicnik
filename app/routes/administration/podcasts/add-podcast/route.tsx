@@ -69,7 +69,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <PageTitle>Přidat podcast</PageTitle>
+      <PageTitle>Nový podcast</PageTitle>
 
       <Form
         encType={'multipart/form-data'}
