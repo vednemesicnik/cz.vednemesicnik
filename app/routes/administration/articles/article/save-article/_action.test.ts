@@ -76,12 +76,13 @@ describe('save-article action (design 24e, decision 0022)', () => {
     expect(mocks.updateArticle.mock.lastCall?.[1].releaseHold).toBe(true)
   })
 
-  test('an author row not chosen yet is no author', async () => {
-    await callAction(buildRequest({ ...validFields, 'authorIds[1]': '' }))
+  test('refuses an article without an author (24j)', async () => {
+    const { 'authorIds[0]': _author, ...withoutAuthor } = validFields
 
-    expect(mocks.updateArticle.mock.lastCall?.[1].authorIds).toEqual([
-      'author-1',
-    ])
+    const response = await callAction(buildRequest(withoutAuthor))
+
+    expect(response.status).toBe(400)
+    expect(mocks.updateArticle).not.toHaveBeenCalled()
   })
 
   test('answers 409 with the holder when the tab does not hold it', async () => {
