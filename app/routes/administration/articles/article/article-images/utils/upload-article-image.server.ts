@@ -73,13 +73,27 @@ export async function uploadArticleImage(
         throw data(null, { status: 400 })
       }
 
+      // Files this upload stored that no committed row uses. The row is
+      // read again: another upload under the same id (a retry whose answer
+      // was lost) may have committed meanwhile, and its files stay.
+      const dropUnusedFiles = async (version: string | null) => {
+        const committed = await prisma.articleImage.findUnique({
+          select: { version: true },
+          where: { id: imageId },
+        })
+        if (committed === null) {
+          await deleteImage(imageId)
+        } else if (version !== null && committed.version !== version) {
+          await deleteImageVersion(imageId, version)
+        }
+      }
+
       let meta: StoredImageMeta
       try {
         meta = await storeImageVariants(imageId, file)
       } catch {
-        // A new image's files that made it to the store go with it; a
-        // replaced one keeps its stored version.
-        if (storedImage === null) await deleteImage(imageId)
+        // What made it to the store goes; a replaced image keeps its version.
+        await dropUnusedFiles(null)
         return { status: 'failed' }
       }
 
@@ -108,7 +122,7 @@ export async function uploadArticleImage(
         return {
           addsContent: true,
           answer,
-          onRefused: () => deleteImage(imageId),
+          onRefused: () => dropUnusedFiles(meta.version),
           writes: [
             prisma.articleImage.create({
               data: {
@@ -136,11 +150,7 @@ export async function uploadArticleImage(
             await deleteImageVersion(imageId, previousVersion)
           }
         },
-        onRefused: async () => {
-          if (previousVersion !== meta.version) {
-            await deleteImageVersion(imageId, meta.version)
-          }
-        },
+        onRefused: () => dropUnusedFiles(meta.version),
         writes: [
           prisma.articleImage.update({
             data: { ...meta, fileName: file.name },

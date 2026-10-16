@@ -191,8 +191,8 @@ export async function updateArticle(
       }
 
       // 1. The gallery's images save on their own (decision 0027); the form
-      // carries only their alt texts and captions. The sharing preview
-      // follows the stored main image.
+      // carries only their alt texts and captions. A new PageSEO record
+      // starts with the stored main image as its sharing preview.
       const [storedImageCount, { ogImageUrl, twitterImageUrl }] =
         await Promise.all([
           prisma.articleImage.count({ where: { articleId } }),
@@ -285,13 +285,13 @@ export async function updateArticle(
                     title,
                     twitterImageUrl,
                   },
-                  // The state belongs to the state transitions, not to an edit.
+                  // The state belongs to the state transitions, not to an edit;
+                  // the sharing image to the gallery's own saves (0027), which
+                  // a save that read the main image earlier must not undo.
                   update: {
                     description: perex || null,
-                    ogImageUrl,
                     pathname,
                     title,
-                    twitterImageUrl,
                   },
                   where: { pathname: storedPathname ?? pathname },
                 }),

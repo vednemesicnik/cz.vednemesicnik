@@ -31,12 +31,16 @@ image is still processing.
 - **An upload keeps the browser-made id** of 0022. A new id becomes the gallery's last image. An
   id the article already has gets the new file, and the old version's files go only after the row
   commits, so a failed replacement keeps the old image.
-- **An upload under way lands without the hold**, as long as nobody else holds the article: the
-  write accepts this tab's hold or none. This narrows 0019 and 0021 for an upload only, as 0021
-  narrowed 0019's "unexpired". Every other gallery change requires this tab's hold.
+- **An upload under way lands without the hold** on a draft nobody holds that the author may still
+  edit: not submitted since, unless the author is the approver (07d). The write accepts this
+  tab's hold, or no hold together with those conditions. A submission, a publication or an
+  archiving clears the hold too (0021), so "nobody holds it" alone would let the image into a
+  submitted or published text. This narrows 0019 and 0021 for an upload only, as 0021 narrowed
+  0019's "unexpired". Every other gallery change requires this tab's hold.
 - **The whole-form save carries only the alt texts and captions.** It updates them by image id
   and article, so an image still processing changes nothing. It no longer creates or deletes
-  images, or sets the main image.
+  images, sets the main image or rewrites the sharing image: the gallery's own saves keep the
+  PageSEO image in step with the main image.
 - **The order is sent as the list of stored image ids.** An image the list leaves out keeps its
   place after the listed ones.
 - `ArticleImage.fileName` (nullable) keeps the picked file's name. Older images have none.

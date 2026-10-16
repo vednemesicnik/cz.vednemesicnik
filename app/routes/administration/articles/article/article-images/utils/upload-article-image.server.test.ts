@@ -250,6 +250,17 @@ describe('uploadArticleImage — a new image', () => {
     expect(mocks.deleteImage).toHaveBeenCalledWith(imageId)
   })
 
+  test('keeps the files another upload of the same id committed meanwhile', async () => {
+    const prepared = await run()
+    // A retry whose answer was lost landed first, with the same version.
+    mocks.articleImageFindUnique.mockResolvedValue({ version: 'v2' })
+
+    await prepared.onRefused()
+
+    expect(mocks.deleteImage).not.toHaveBeenCalled()
+    expect(mocks.deleteImageVersion).not.toHaveBeenCalled()
+  })
+
   test('answers failed and drops the files when processing fails', async () => {
     mocks.storeImageVariants.mockRejectedValue(new Error('corrupt'))
 

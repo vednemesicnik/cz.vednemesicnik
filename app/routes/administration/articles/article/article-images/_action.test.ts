@@ -74,7 +74,7 @@ describe('article-images action — the input', () => {
     expect(mocks.requireCSRF).toHaveBeenCalledOnce()
   })
 
-  test('does not read the form when the session is refused', async () => {
+  test('runs no change when the session is refused', async () => {
     mocks.requireCSRF.mockRejectedValueOnce(new Response(null, { status: 403 }))
 
     await expect(

@@ -11,6 +11,19 @@ type Options = {
   heldSince: Date | null
 }
 
+// Whether the article's latest history entry is this author's edit.
+const isLastEntryOwnEdit = async (authorId: string, articleId: string) => {
+  const lastEntry = await prisma.contentLog.findFirst({
+    orderBy: { createdAt: 'desc' },
+    select: { actorId: true, event: true },
+    where: { entity: 'article', entityId: articleId },
+  })
+  return (
+    lastEntry?.actorId === authorId &&
+    (lastEntry.event === 'create' || lastEntry.event === 'update')
+  )
+}
+
 /**
  * Logs one saved edit of an article and tells the open lists (design 07f,
  * 24e): the creation once, then one *Upraveno* per hold, however often the
@@ -26,18 +39,21 @@ export const recordArticleEditLog = async (
 ) => {
   const change = isCreation ? 'create' : 'update'
 
+  // Without a hold (an upload landing after *Zavřít*), the hold it belonged
+  // to is the one the history's last entry, by the same author, closed.
   const isLoggedInThisHold =
     change === 'update' &&
-    heldSince !== null &&
-    (await prisma.contentLog.count({
-      where: {
-        actorId: context.authorId,
-        createdAt: { gte: heldSince },
-        entity: 'article',
-        entityId: articleId,
-        event: { in: ['create', 'update'] },
-      },
-    })) > 0
+    (heldSince === null
+      ? await isLastEntryOwnEdit(context.authorId, articleId)
+      : (await prisma.contentLog.count({
+          where: {
+            actorId: context.authorId,
+            createdAt: { gte: heldSince },
+            entity: 'article',
+            entityId: articleId,
+            event: { in: ['create', 'update'] },
+          },
+        })) > 0)
 
   if (!isLoggedInThisHold) {
     await recordContentLog(

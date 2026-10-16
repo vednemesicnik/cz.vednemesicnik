@@ -306,6 +306,70 @@ describe('saveArticleImageChange — the edit hold', () => {
       expect(result).toMatchObject({ status: 'saved' })
     })
 
+    test('for an author, the write also needs a text not submitted meanwhile', async () => {
+      mocks.permissionContext.mockReturnValue({
+        authorId: 'author-1',
+        roleLevel: 3,
+      })
+      mocks.articleFindUnique.mockResolvedValue(releasedArticle)
+
+      await saveArticleImageChange(request, {
+        ...options,
+        landsWithoutHold: true,
+        prepare: buildPrepare(),
+      })
+
+      expect(mocks.articleUpdate.mock.lastCall?.[0].where).toEqual({
+        id: 'article-1',
+        OR: [
+          { heldByAuthorId: 'author-1', heldByTabId: 'tab-1' },
+          { heldByTabId: null, submittedAt: null },
+        ],
+        state: 'draft',
+      })
+    })
+
+    test('submitted between the check and the write: not-held, not a 500 (07d)', async () => {
+      mocks.permissionContext.mockReturnValue({
+        authorId: 'author-1',
+        roleLevel: 3,
+      })
+      mocks.transaction.mockRejectedValue(notFoundError())
+      mocks.articleFindUnique
+        .mockResolvedValueOnce(releasedArticle)
+        .mockResolvedValueOnce({
+          ...releasedArticle,
+          submittedAt: new Date('2026-10-16T12:05:00Z'),
+        })
+      const onRefused = vi.fn()
+
+      const result = await saveArticleImageChange(request, {
+        ...options,
+        landsWithoutHold: true,
+        prepare: buildPrepare({ onRefused }),
+      })
+
+      expect(result).toEqual({ heldByName: null, status: 'not-held' })
+      expect(onRefused).toHaveBeenCalledOnce()
+    })
+
+    test('refuses a published article before storing anything', async () => {
+      mocks.articleFindUnique.mockResolvedValue({
+        ...releasedArticle,
+        state: 'published',
+      })
+      const prepare = buildPrepare()
+
+      const result = await saveArticleImageChange(request, {
+        ...options,
+        landsWithoutHold: true,
+        prepare,
+      })
+
+      expect(result).toEqual({ heldByName: null, status: 'not-held' })
+      expect(prepare).not.toHaveBeenCalled()
+    })
+
     test('still refuses an article held by someone else', async () => {
       mocks.articleFindUnique.mockResolvedValue({
         ...storedArticle,
@@ -415,6 +479,20 @@ describe('saveArticleImageChange — the transaction', () => {
     })
 
     expect(order).toEqual(['transaction', 'committed'])
+  })
+
+  test('a failed cleanup after the commit still answers saved and logs', async () => {
+    const onCommitted = vi.fn().mockRejectedValue(new Error('store down'))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const result = await saveArticleImageChange(request, {
+      ...options,
+      prepare: buildPrepare({ onCommitted }),
+    })
+
+    expect(result).toMatchObject({ status: 'saved' })
+    expect(mocks.recordArticleEditLog).toHaveBeenCalledOnce()
+    consoleError.mockRestore()
   })
 
   test('marks the first content first when the change adds content', async () => {
@@ -635,6 +713,8 @@ describe('saveArticleImageChange — a refused write', () => {
         heldByTabId: null,
         heldSince: null,
         heldUntil: null,
+        state: 'draft',
+        submittedAt: null,
       })
 
     await expect(

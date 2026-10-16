@@ -361,6 +361,15 @@ describe('updateArticle — the gallery (design 24b, decision 0027)', () => {
     )
   })
 
+  test('never rewrites the sharing image of an existing PageSEO record', async () => {
+    await updateArticle(request, options)
+
+    const pageSeo = mocks.pageSeoUpsert.mock.lastCall?.[0]
+    expect(pageSeo.update).not.toHaveProperty('ogImageUrl')
+    expect(pageSeo.update).not.toHaveProperty('twitterImageUrl')
+    expect(pageSeo.create).toHaveProperty('ogImageUrl')
+  })
+
   test('a stored image is content of an untitled draft', async () => {
     mocks.articleFindUnique.mockResolvedValue({
       ...storedArticle,

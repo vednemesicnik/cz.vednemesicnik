@@ -185,8 +185,8 @@ once to the `images` route, under an id made in the editor, and its row exists o
 file is processed. A file over 10 MB or not an image is refused at selection. *Odebrat* asks
 first and deletes at once; *Nahradit soubor* keeps the old file until the new one is processed.
 The main image and the order (*Posunout dopředu*, *Posunout dozadu*) save at once. Each change
-checks the hold in its own write and moves `updatedAt`. An upload under way still lands after
-*Zavřít* released the hold, never over someone else's. Processing and a failure show only in
+checks the hold in its own write and moves `updatedAt`. An upload under way still lands after *Zavřít* released the hold, on a draft nobody holds and
+not submitted since; never over someone else's hold. Processing and a failure show only in
 the open editor.
 
 Losing the hold is built in #671 (design 24h, 24i; decision

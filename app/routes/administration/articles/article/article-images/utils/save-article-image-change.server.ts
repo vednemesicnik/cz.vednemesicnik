@@ -9,6 +9,7 @@ import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import { isRecordNotFoundError } from '~/utils/edit-hold/is-record-not-found-error.server'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 
 /** What an image operation reads of the stored article. */
@@ -57,14 +58,19 @@ type Options<Answer extends object> = {
 
 type StoredHold = EditHoldColumns & {
   heldByAuthor: { name: string } | null
+  state: string
+  submittedAt: Date | null
 }
 
+// The hold, and what an upload landing without it checks besides.
 const HOLD_SELECT = {
   heldByAuthor: { select: { name: true } },
   heldByAuthorId: true,
   heldByTabId: true,
   heldSince: true,
   heldUntil: true,
+  state: true,
+  submittedAt: true,
 } as const
 
 /**
@@ -97,8 +103,6 @@ export async function saveArticleImageChange<Answer extends object>(
       firstContentAt: true,
       ...HOLD_SELECT,
       slug: true,
-      state: true,
-      submittedAt: true,
     },
     where: { id: articleId },
   })
@@ -135,10 +139,19 @@ export async function saveArticleImageChange<Answer extends object>(
         status: 'not-held',
       })
 
+      // A text its authors submitted meanwhile stays theirs to edit only
+      // after they take it back; the approver edits it anyway (07d).
+      const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
       const isHeldByTab = (hold: StoredHold | null) =>
         hold?.heldByAuthorId === tab.authorId && hold.heldByTabId === tab.tabId
+      // Released by *Zavřít* during processing: a draft nobody holds, not
+      // submitted since. Leaving the draft clears the hold too (0021).
+      const isFreeDraft = (hold: StoredHold | null) =>
+        hold?.heldByTabId === null &&
+        hold.state === 'draft' &&
+        (isApprover || hold.submittedAt === null)
       const isAllowedHold = (hold: StoredHold | null) =>
-        isHeldByTab(hold) || (landsWithoutHold && hold?.heldByTabId === null)
+        isHeldByTab(hold) || (landsWithoutHold && isFreeDraft(hold))
 
       // Checked before any file is stored, so a refused change stores
       // nothing; the change's own write checks it again.
@@ -154,7 +167,15 @@ export async function saveArticleImageChange<Answer extends object>(
       if ('status' in prepared) return prepared
 
       const holdWhere = landsWithoutHold
-        ? { OR: [buildHeldByTabWhere(tab), { heldByTabId: null }] }
+        ? {
+            OR: [
+              buildHeldByTabWhere(tab),
+              {
+                heldByTabId: null,
+                ...(isApprover ? {} : { submittedAt: null }),
+              },
+            ],
+          }
         : buildHeldByTabWhere(tab)
 
       const articleWrite = prisma.article.update({
@@ -201,7 +222,12 @@ export async function saveArticleImageChange<Answer extends object>(
         return toNotHeld(currentHold)
       }
 
-      await prepared.onCommitted?.()
+      // The change is saved; files it left behind are only litter.
+      try {
+        await prepared.onCommitted?.()
+      } catch (error) {
+        console.error('Article image files left after a saved change', error)
+      }
 
       const isCreation =
         firstContentWrite.length > 0 &&
