@@ -137,8 +137,8 @@ export const articleContentStateHandlers = createContentStateHandlers({
       select: {
         _count: { select: { authors: true } },
         content: true,
-        excerpt: true,
         images: { select: { altText: true } },
+        perex: true,
         slug: true,
         title: true,
       },
@@ -148,8 +148,8 @@ export const articleContentStateHandlers = createContentStateHandlers({
     return getMissingArticleContent({
       authorCount: article._count.authors,
       content: article.content,
-      excerpt: article.excerpt,
       images: article.images,
+      perex: article.perex,
       slug: article.slug,
       title: article.title,
     })

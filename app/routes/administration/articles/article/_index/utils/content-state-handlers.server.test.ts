@@ -70,8 +70,8 @@ const completeArticle = {
   _count: { authors: 1 },
   authors: [{ role: { level: 3 } }],
   content: 'Text',
-  excerpt: 'Perex',
   images: [],
+  perex: 'Perex',
   publishedAt: null,
   reviews: [{ reviewer: { role: { level: 1 } } }],
   slug: 'clanek',
@@ -142,7 +142,7 @@ describe('articleContentStateHandlers — submission', () => {
   test('an incomplete article is not published (23h)', async () => {
     articleFindUniqueOrThrowMock.mockResolvedValue({
       ...completeArticle,
-      excerpt: null,
+      perex: null,
     })
     articleUpdateMock.mockClear()
 

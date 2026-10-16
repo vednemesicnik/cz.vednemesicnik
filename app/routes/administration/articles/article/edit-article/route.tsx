@@ -178,7 +178,6 @@ export default function RouteComponent({
       authorIds: article.authorIds,
       categoryIds: article.categoryIds,
       content: article.content,
-      excerpt: article.excerpt,
       existingImages: article.images.map((image) => ({
         altText: image.altText,
         description: image.description,
@@ -188,6 +187,7 @@ export default function RouteComponent({
       featuredImage: article.featuredImageId
         ? `${FEATURED_IMAGE_SOURCE.EXISTING}:${article.featuredImageId}`
         : FEATURED_IMAGE_SOURCE.NONE,
+      perex: article.perex,
       slug: article.slug,
       tagIds: article.tagIds,
       title: article.title,
@@ -594,7 +594,7 @@ export default function RouteComponent({
     .filter((author) => toList(fields.authorIds.value).includes(author.id))
     .map((author) => author.name)
   const imageCount = existingImages.length + newImages.length
-  const perexLength = [...(fields.excerpt.value ?? '')].length
+  const perexLength = [...(fields.perex.value ?? '')].length
   const slugValue = fields.slug.value ?? ''
 
   return (
@@ -762,7 +762,7 @@ export default function RouteComponent({
                 {/* For search engines and sharing, not shown on the web; the
                     count only advises (24a, mto4s7s7). */}
                 <AdminTextarea
-                  field={fields.excerpt}
+                  field={fields.perex}
                   hint={
                     <>
                       <span>

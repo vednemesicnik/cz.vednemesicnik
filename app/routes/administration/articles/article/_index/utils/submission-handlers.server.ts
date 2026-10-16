@@ -35,8 +35,8 @@ export const articleSubmissionHandlers = createSubmissionHandlers({
       select: {
         authors: { select: { id: true } },
         content: true,
-        excerpt: true,
         images: { select: { altText: true } },
+        perex: true,
         slug: true,
         title: true,
       },
@@ -46,8 +46,8 @@ export const articleSubmissionHandlers = createSubmissionHandlers({
     return getMissingArticleContent({
       authorCount: article.authors.length,
       content: article.content,
-      excerpt: article.excerpt,
       images: article.images,
+      perex: article.perex,
       slug: article.slug,
       title: article.title,
     })

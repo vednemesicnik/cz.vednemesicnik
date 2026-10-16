@@ -302,7 +302,7 @@ export default function RouteComponent({
               </AdminDetailItem>
               <AdminDetailItem label={'Perex'}>
                 <span className={styles.stack}>
-                  <span>{article.excerpt ?? '—'}</span>
+                  <span>{article.perex ?? '—'}</span>
                   <span className={styles.note}>pro vyhledávače a sdílení</span>
                 </span>
               </AdminDetailItem>

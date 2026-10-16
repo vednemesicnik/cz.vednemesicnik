@@ -19,7 +19,6 @@ export const schema = z.object({
   content: optionalText,
   // The editor's tab, which holds the edit hold (design 24g).
   editTabId: z.string().min(1),
-  excerpt: optionalText,
   existingImages: z
     .array(
       z.object({
@@ -59,6 +58,7 @@ export const schema = z.object({
       }),
     )
     .optional(),
+  perex: optionalText,
   // The links the editor had at open and no longer has; any other stored
   // link stays, an archived one included (decision 0025).
   removedCategoryIds: z.array(z.string()).optional(),

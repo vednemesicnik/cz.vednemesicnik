@@ -33,7 +33,7 @@ type Options = {
   authorIds: string[]
   categoryIds?: string[]
   content: string
-  excerpt?: string
+  perex?: string
   existingImages?: Array<{
     id: string
     altText: string
@@ -109,7 +109,7 @@ export async function updateArticle(
     authorIds,
     categoryIds,
     content,
-    excerpt,
+    perex,
     existingImages,
     featuredImage,
     images,
@@ -429,7 +429,7 @@ export async function updateArticle(
                 prisma.pageSEO.upsert({
                   create: {
                     authorId: context.authorId,
-                    description: excerpt || null,
+                    description: perex || null,
                     ogImageUrl,
                     pathname,
                     state,
@@ -438,7 +438,7 @@ export async function updateArticle(
                   },
                   // The state belongs to the state transitions, not to an edit.
                   update: {
-                    description: excerpt || null,
+                    description: perex || null,
                     ogImageUrl,
                     pathname,
                     title,
@@ -469,8 +469,8 @@ export async function updateArticle(
               set: linkedCategoryIds.map((id) => ({ id })),
             },
             content,
-            excerpt: excerpt || null,
             featuredImageId,
+            perex: perex || null,
             slug: savedSlug,
             tags: {
               set: linkedTagIds.map((id) => ({ id })),

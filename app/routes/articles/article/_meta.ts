@@ -15,7 +15,7 @@ export const meta: Route.MetaFunction = ({ loaderData, matches, location }) => {
   // The perex is the description; without one the tags are left out (decided
   // 2026-10-08 on #149).
   const pageSEO = createPageSEO({
-    description: article.excerpt ?? undefined,
+    description: article.perex ?? undefined,
     ogImage: resolveOgImageUrl(article.ogImageUrl, ENV.BASE_URL),
     ogType: 'article',
     title,
@@ -35,7 +35,7 @@ export const meta: Route.MetaFunction = ({ loaderData, matches, location }) => {
     categories: article.categories,
     dateModified: article.updatedAt.toISOString(),
     datePublished: article.publishedAt.iso,
-    description: article.excerpt,
+    description: article.perex,
     imageUrl: article.ogImageUrl
       ? resolveOgImageUrl(article.ogImageUrl, ENV.BASE_URL)
       : null,
