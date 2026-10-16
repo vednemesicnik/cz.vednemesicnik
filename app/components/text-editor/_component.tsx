@@ -1,5 +1,6 @@
 import type { FieldMetadata } from '@conform-to/react'
 import { useEditorState } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
 import { ErrorMessage } from '~/components/error-message'
@@ -16,8 +17,19 @@ import { TextEditorLinkButton } from '~/components/text-editor-link-button'
 import { TextEditorToolbar } from '~/components/text-editor-toolbar'
 import { TextEditorToolbarButton } from '~/components/text-editor-toolbar-button'
 import { TextEditorToolbarGroup } from '~/components/text-editor-toolbar-group'
+import { TEXT_EDITOR_LINK_CONFIG } from '~/config/text-editor-link-config'
 import { useTextEditor } from '~/hooks/use-text-editor'
 import styles from './_styles.module.css'
+
+// An article's text: headings 2 and 3, lists, the quote, bold and italic.
+const formats = [
+  StarterKit.configure({
+    heading: {
+      levels: [2, 3],
+    },
+    link: TEXT_EDITOR_LINK_CONFIG,
+  }),
+]
 
 type ToolOption =
   | 'bold'
@@ -80,6 +92,7 @@ export const TextEditor = ({
   const { editor, labelId } = useTextEditor({
     disabled: inputDisabled,
     field,
+    formats,
     placeholder: inputPlaceholder,
   })
 
