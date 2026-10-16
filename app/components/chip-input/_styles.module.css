@@ -144,11 +144,14 @@
   }
 }
 
-/* What creating leads to, on its own line under the create option. */
+/* What creating leads to, on its own line under the create option
+   (vdm-listbox__create-note). */
 .createNote {
   @layer component {
     display: block;
+    margin-block-start: 2px;
     font-size: var(--font-size-xs);
+    line-height: 1.4;
     color: var(--text-secondary);
   }
 }
