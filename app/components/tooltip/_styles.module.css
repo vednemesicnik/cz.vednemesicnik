@@ -10,7 +10,10 @@
   @layer component {
     /* Hidden until open, also where the Popover API is missing. */
     display: none;
+    inline-size: max-content;
+    /* A long whole name wraps inside instead of running out (jhwfoyxs). */
     max-inline-size: 240px;
+    box-sizing: border-box;
     padding-block: 4px;
     padding-inline: 8px;
     border: none;
@@ -23,10 +26,10 @@
     font-weight: var(--font-weight-medium);
     font-style: normal;
     line-height: 1.4;
-    white-space: nowrap;
-    transition:
-      opacity var(--transition-fast),
-      translate var(--transition-fast);
+    text-align: start;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+    transition: opacity var(--transition-fast);
 
     /* Bridges the gap to the trigger, so the pointer can move onto the
        bubble without it closing (WCAG 1.4.13). */
@@ -66,19 +69,9 @@
     @layer component {
       display: block;
       opacity: 1;
-      translate: 0 0;
 
       @starting-style {
         opacity: 0;
-        translate: 0 2px;
-      }
-    }
-  }
-
-  .bubble.bottom:popover-open {
-    @layer variant {
-      @starting-style {
-        translate: 0 -2px;
       }
     }
   }
