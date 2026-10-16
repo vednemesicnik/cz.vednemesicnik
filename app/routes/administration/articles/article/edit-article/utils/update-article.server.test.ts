@@ -314,6 +314,30 @@ describe('updateArticle — the permission follows the stored article', () => {
     expect(mocks.authorCount).not.toHaveBeenCalled()
   })
 
+  test('checks only the added authors when the association is stored', async () => {
+    mocks.permissionContext.mockReturnValue({
+      authorId: 'author-1',
+      roleLevel: 2,
+    })
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      authors: [{ id: 'author-1' }, { id: 'association' }],
+    })
+
+    const result = await updateArticle(request, {
+      ...options,
+      authorIds: ['author-1', 'association', 'author-2'],
+    })
+
+    expect(result.status).toBe('saved')
+    expect(mocks.authorCount).toHaveBeenCalledWith({
+      where: {
+        id: { in: ['author-2'] },
+        user: { role: { name: 'owner' } },
+      },
+    })
+  })
+
   test('lets the Coordinator add the association', async () => {
     mocks.authorCount.mockResolvedValue(1)
 

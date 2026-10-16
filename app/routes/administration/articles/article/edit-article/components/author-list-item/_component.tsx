@@ -18,7 +18,7 @@ type Props = {
   onReplace?: () => void
   /** While replacing: *Zrušit* in the row, and Esc or a click outside. */
   onCancelReplace?: () => void
-  /** While replacing: the *Vyměnit za* field, under the row in one frame. */
+  /** While replacing: the *Vybrat jiného autora* field, under the row in one frame. */
   children?: ReactNode
   className?: string
 }

@@ -4,7 +4,7 @@
   }
 }
 
-/* Replacing: the row and the Vyměnit za field in one frame (24j). */
+/* Replacing: the row and the Vybrat jiného autora field in one frame (24j). */
 .item.replacing {
   @layer route {
     display: flex;

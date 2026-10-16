@@ -45,6 +45,11 @@ Consequences:
   author's role".
 - A Coordinator can publish their own content without any review.
 
+The helpers `canPublishWithoutReview` / `needsReviewToPublish` in
+`app/utils/permissions/author/review-policy.ts` encode this and are used by every content
+detail loader and `publish-*` action. If the gate ever needs to become configurable, it
+belongs in the permission catalog (a future `approve` action), not on the role.
+
 ### An article's authors
 
 An article always has at least one author. With `update` on own content only, a Contributor
@@ -53,11 +58,6 @@ themselves. The Coordinator, with `update` on any content, picks any authors, wi
 themselves too. Only the Coordinator adds the association, *Vedneměsíčník, z. s.* (the Owner's
 author); one already on the article stays on anyone's save (design 24j, decision
 [0026](./decisions/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
-
-The helpers `canPublishWithoutReview` / `needsReviewToPublish` in
-`app/utils/permissions/author/review-policy.ts` encode this and are used by every content
-detail loader and `publish-*` action. If the gate ever needs to become configurable, it
-belongs in the permission catalog (a future `approve` action), not on the role.
 
 ## Permissions Overview
 
