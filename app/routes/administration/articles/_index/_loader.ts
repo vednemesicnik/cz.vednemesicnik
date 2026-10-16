@@ -177,7 +177,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         },
         // Completeness before bulk publishing (23h, 22c).
         content: true,
-        excerpt: true,
         // „upravuje …“ while someone edits it (22f).
         heldByAuthor: { select: { name: true } },
         heldByAuthorId: true,
@@ -186,6 +185,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         heldUntil: true,
         id: true,
         images: { select: { altText: true } },
+        perex: true,
         publishedAt: true,
         reviews: {
           select: {
@@ -330,8 +330,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         getMissingArticleContent({
           authorCount: article.authors.length,
           content: article.content,
-          excerpt: article.excerpt,
           images: article.images,
+          perex: article.perex,
           slug: article.slug,
           title: article.title,
         }).length > 0,

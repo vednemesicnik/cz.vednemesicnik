@@ -53,7 +53,7 @@
   }
 }
 
-/* A value with a line under it: the address, the excerpt's note (23a). */
+/* A value with a line under it: the address, the perex's note (23a). */
 .stack {
   @layer route {
     display: flex;

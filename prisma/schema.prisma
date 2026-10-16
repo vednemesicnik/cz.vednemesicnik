@@ -506,7 +506,7 @@ model Article {
   // Null until the draft has an address (design 24a); submitting and publishing require it.
   slug            String?           @unique
   title           String
-  excerpt         String?
+  perex           String?
   content         String
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt

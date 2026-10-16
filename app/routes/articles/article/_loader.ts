@@ -39,7 +39,6 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       },
       content: true,
       createdAt: true,
-      excerpt: true,
       featuredImage: {
         select: {
           ...imageSourceSelect,
@@ -53,6 +52,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
           description: true,
         },
       },
+      perex: true,
       publishedAt: true,
       tags: {
         select: {

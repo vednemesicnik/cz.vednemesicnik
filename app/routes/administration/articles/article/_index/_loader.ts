@@ -58,7 +58,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       content: true,
       createdAt: true,
-      excerpt: true,
       featuredImage: {
         select: {
           ...imageSourceSelect,
@@ -75,6 +74,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       images: {
         select: { altText: true },
       },
+      perex: true,
       publishedAt: true,
       reviews: {
         select: {
@@ -146,8 +146,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     ? getMissingArticleContent({
         authorCount: article.authors.length,
         content: article.content,
-        excerpt: article.excerpt,
         images: article.images,
+        perex: article.perex,
         slug: article.slug,
         title: article.title,
       })
@@ -162,7 +162,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         authors: article.authors,
         categories: article.categories,
         content: article.content,
-        excerpt: article.excerpt,
         // The line under the title (design 22b, 23a); who edits it while held
         // (23g).
         factLine:
@@ -199,6 +198,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         id: article.id,
         // The gallery is the editor's (24); the detail shows only the count (23a).
         imageCount: article.images.length,
+        perex: article.perex,
         // FormattedDate carries the raw instant in `.iso`, which seeds the
         // change-date dialog's picker (the browser converts it to/from local time,
         // keeping the default and submitted value in the editor's timezone).

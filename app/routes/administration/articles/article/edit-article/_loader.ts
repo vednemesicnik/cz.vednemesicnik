@@ -35,7 +35,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: { id: true },
       },
       content: true,
-      excerpt: true,
       featuredImage: {
         select: { id: true },
       },
@@ -52,6 +51,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           description: true,
         },
       },
+      perex: true,
       reviews: {
         select: {
           createdAt: true,
@@ -148,7 +148,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       authorNames: article.authors.map((author) => author.name),
       categoryIds,
       content: article.content,
-      excerpt: article.excerpt || '',
       featuredImageId: article.featuredImage?.id,
       images: article.images.map((image) => ({
         altText: image.altText,
@@ -158,6 +157,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       })),
       // An empty draft (decision 0020) has no address and is left for the list.
       isEmptyDraft: article.firstContentAt === null,
+      perex: article.perex || '',
       slug: article.slug ?? '',
       // Sent for approval, or approved: the tag and the line of 24c.
       submission:

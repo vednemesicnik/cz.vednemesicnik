@@ -54,8 +54,8 @@ const coordinator = { id: 'coordinator', role: { level: 1 } }
 const completeDraft = {
   authors: [contributor],
   content: '<p>Text</p>',
-  excerpt: 'Perex',
   images: [],
+  perex: 'Perex',
   slug: 'clanek',
   state: 'draft',
   submittedAt: null,
@@ -147,7 +147,7 @@ describe('articleSubmissionHandlers.submit', () => {
   test('lists what is missing and submits nothing', async () => {
     mocks.articleFindUniqueOrThrow.mockResolvedValue({
       ...completeDraft,
-      excerpt: null,
+      perex: null,
     })
 
     await expect(
@@ -308,7 +308,7 @@ describe('articleSubmissionHandlers — content events', () => {
   test('a submit blocked by missing content announces nothing', async () => {
     mocks.articleFindUniqueOrThrow.mockResolvedValue({
       ...completeDraft,
-      excerpt: '',
+      perex: '',
     })
 
     await articleSubmissionHandlers.submit(request, { id: 'a1', target })
