@@ -92,9 +92,17 @@ export default function RouteComponent({
         </Fieldset>
 
         <AuthenticityTokenInput />
-        {/* Back to that article's editor after saving (24j). */}
+        {/* Back to that article's editor after saving (24j), replacing the
+            author the search started from (ivyin4kr). */}
         {articleId !== null && (
           <input name={'article'} type={'hidden'} value={articleId} />
+        )}
+        {articleId !== null && loaderData.replacedAuthorId !== null && (
+          <input
+            name={'replace'}
+            type={'hidden'}
+            value={loaderData.replacedAuthorId}
+          />
         )}
 
         <FormActions>

@@ -40,11 +40,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { authorId } = await createAuthor(submission.value)
 
   // From an article's author search, back to the editor, which chooses the
-  // new author (design 24j).
+  // new author, in place of the replaced one if any (design 24j, ivyin4kr).
   const articleId = formData.get('article')
+  const replacedAuthorId = formData.get('replace')
   if (typeof articleId === 'string' && articleId !== '') {
     return redirect(
-      `${href('/administration/articles/:articleId/edit-article', { articleId })}?${new URLSearchParams({ author: authorId })}`,
+      `${href('/administration/articles/:articleId/edit-article', { articleId })}?${new URLSearchParams(
+        {
+          author: authorId,
+          ...(typeof replacedAuthorId === 'string' && replacedAuthorId !== ''
+            ? { replace: replacedAuthorId }
+            : {}),
+        },
+      )}`,
     )
   }
 

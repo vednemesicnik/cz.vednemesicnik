@@ -37,15 +37,6 @@
   }
 }
 
-/* Under the last author, why it has no × (24j). */
-.lastAuthorNote {
-  @layer route {
-    margin: 0;
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-  }
-}
-
 /* Přidat obrázek: as wide as its words, at the start of the column (24a). */
 .addButton {
   @layer route {
