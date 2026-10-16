@@ -50,6 +50,15 @@ The helpers `canPublishWithoutReview` / `needsReviewToPublish` in
 detail loader and `publish-*` action. If the gate ever needs to become configurable, it
 belongs in the permission catalog (a future `approve` action), not on the role.
 
+### An article's authors
+
+An article always has at least one author. With `update` on own content only, a Contributor
+or Creator must stay among the authors they save, so they add and remove co-authors but never
+themselves. The Coordinator, with `update` on any content, picks any authors, without
+themselves too. Only the Coordinator adds the association, *Vedneměsíčník, z. s.* (the Owner's
+author); one already on the article stays on anyone's save (design 24j, decision
+[0026](./decisions/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
+
 ## Permissions Overview
 
 | **Role**        | **Action** | **Access** | **State**                  | 📝 Article | 📂 Article Category | 🏷️ Article Tag | 🎙️ Podcast | 📻 Podcast Episode | 🗞 Issue |

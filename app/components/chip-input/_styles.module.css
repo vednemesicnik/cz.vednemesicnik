@@ -64,14 +64,13 @@
   }
 }
 
-.listbox {
+/* The listbox and, under a search that found nothing, the empty line. */
+.popup {
   @layer component {
     position: absolute;
     inset-block-start: 100%;
     inset-inline: 0;
     z-index: var(--z-dropdown, 1000);
-    display: flex;
-    flex-direction: column;
     max-block-size: min(18rem, 50dvh);
     margin: 0;
     margin-block-start: 4px;
@@ -83,6 +82,17 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     box-shadow: var(--shadow-lg);
+
+    &[hidden] {
+      display: none;
+    }
+  }
+}
+
+.listbox {
+  @layer component {
+    display: flex;
+    flex-direction: column;
 
     &[hidden] {
       display: none;
@@ -104,8 +114,59 @@
   }
 }
 
+/* With an avatar, the name and a note on the right (vdm-listbox__option--rich). */
+.rich {
+  @layer variant {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-block: 7px;
+  }
+}
+
+.label {
+  @layer component {
+    flex: 1;
+    min-inline-size: 0;
+  }
+}
+
+.note {
+  @layer component {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}
+
+.create {
+  @layer variant {
+    color: var(--link-strong);
+  }
+}
+
+/* What creating leads to, on its own line under the create option
+   (vdm-listbox__create-note). */
+.createNote {
+  @layer component {
+    display: block;
+    margin-block-start: 2px;
+    font-size: var(--font-size-xs);
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+}
+
 .active {
   @layer variant {
     background: var(--bg-tertiary);
+  }
+}
+
+.empty {
+  @layer component {
+    margin: 0;
+    padding-block: 9px;
+    padding-inline: 12px;
+    color: var(--text-tertiary);
   }
 }

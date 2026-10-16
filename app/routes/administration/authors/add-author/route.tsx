@@ -34,8 +34,12 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const { state } = useNavigation()
 
+  const { articleId } = loaderData
+
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
+    // The name typed in an article's author search (24j).
+    defaultValue: { name: loaderData.name },
     id: 'add-author',
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
@@ -88,6 +92,18 @@ export default function RouteComponent({
         </Fieldset>
 
         <AuthenticityTokenInput />
+        {/* Back to that article's editor after saving (24j), replacing the
+            author the search started from (ivyin4kr). */}
+        {articleId !== null && (
+          <input name={'article'} type={'hidden'} value={articleId} />
+        )}
+        {articleId !== null && loaderData.replacedAuthorId !== null && (
+          <input
+            name={'replace'}
+            type={'hidden'}
+            value={loaderData.replacedAuthorId}
+          />
+        )}
 
         <FormActions>
           <Button disabled={!canSubmit} type={'submit'}>
@@ -95,7 +111,13 @@ export default function RouteComponent({
           </Button>
           <LinkButton
             disabled={isLoadingOrSubmitting}
-            to={href('/administration/authors')}
+            to={
+              articleId === null
+                ? href('/administration/authors')
+                : href('/administration/articles/:articleId/edit-article', {
+                    articleId,
+                  })
+            }
             variant={'outline'}
           >
             Zrušit

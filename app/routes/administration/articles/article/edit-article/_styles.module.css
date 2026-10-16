@@ -37,22 +37,7 @@
   }
 }
 
-.authorRow {
-  @layer route {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    width: 100%;
-
-    /* The fields grow; the button lines up with the inputs, as no row is
-       reserved for errors. */
-    & > :not(button) {
-      flex: 1;
-    }
-  }
-}
-
-/* Přidat spoluautora: as wide as its words, at the start of the column (24a). */
+/* Přidat obrázek: as wide as its words, at the start of the column (24a). */
 .addButton {
   @layer route {
     justify-self: start;

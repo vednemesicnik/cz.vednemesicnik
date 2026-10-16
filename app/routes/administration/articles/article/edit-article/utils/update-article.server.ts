@@ -3,10 +3,12 @@ import { isCuid } from '@paralleldrive/cuid2'
 import { data } from 'react-router'
 import type { FeaturedImage } from '~/config/featured-image-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
+import { canChooseRecordAuthor } from '~/routes/administration/articles/utils/can-choose-record-author'
 import {
   buildArticleFeaturedImageSeo,
   resolveArticleFeaturedImageSeo,
 } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
+import { ASSOCIATION_AUTHOR_WHERE } from '~/utils/association-author-where'
 import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import { buildHeldByTabWhere } from '~/utils/edit-hold/build-held-by-tab-where'
@@ -83,7 +85,8 @@ const RELEASED_HOLD = {
  * Saves the editor's whole article, as autosave sends it (design 24e, decision
  * 0022). The permission is checked against the stored authors and state, never
  * against the ones the form sends, and the new authors must be ones the editor
- * may set. An edit never changes the state. Only the tab holding the edit hold
+ * may set; only the Coordinator adds the association (decision 0026). An edit
+ * never changes the state. Only the tab holding the edit hold
  * saves, checked again in the save's own write (decision 0019), and the save
  * keeps the hold unless `releaseHold` asks for the end. A draft saves
  * incomplete; an address another article has is left out and the rest saves
@@ -99,7 +102,8 @@ const RELEASED_HOLD = {
  *   or `not-held` with the holder's name when another tab or someone else holds
  *   the article (nothing is written).
  * @throws A 404 response for a missing article, a 403 response for a denied
- *   edit, a locked submission or authors the editor may not set, a 400
+ *   edit, a locked submission or authors the editor may not set (the
+ *   association included), a 400
  *   response for an image id that is not the article's.
  */
 export async function updateArticle(
@@ -181,13 +185,30 @@ export async function updateArticle(
         return toNotHeld(storedArticle)
       }
 
-      // Setting the authors needs the permission for the new ones too.
+      // Setting the authors needs the permission for the new ones too, so an
+      // author who may only edit their own cannot leave themselves out (24j).
       checkAuthorPermission(context, {
         action: 'update',
         entity: 'article',
         state,
         targetAuthorIds: authorIds,
       })
+
+      // Only the Coordinator adds the association; one already stored stays
+      // on anyone's save (decision 0026).
+      const storedAuthorIds = storedArticle.authors.map(({ id }) => id)
+      const addedAuthorIds = authorIds.filter(
+        (id) => !storedAuthorIds.includes(id),
+      )
+      if (
+        addedAuthorIds.length > 0 &&
+        !canChooseRecordAuthor(context.roleLevel) &&
+        (await prisma.author.count({
+          where: { ...ASSOCIATION_AUTHOR_WHERE, id: { in: addedAuthorIds } },
+        })) > 0
+      ) {
+        throw data(null, { status: 403 })
+      }
 
       // 1. Every image the form names must be this article's (decision
       // 0015): its existing images and the featured one.

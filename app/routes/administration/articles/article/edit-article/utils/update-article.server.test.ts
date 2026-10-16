@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   articleTagFindMany: vi.fn(),
   articleUpdate: vi.fn(),
   articleUpdateMany: vi.fn(),
+  authorCount: vi.fn(),
   checkAuthorPermission: vi.fn(),
   contentLogCount: vi.fn(),
   deleteImage: vi.fn(),
@@ -80,6 +81,7 @@ vi.mock('~/utils/db.server', () => ({
       update: mocks.articleImageUpdate,
     },
     articleTag: { findMany: mocks.articleTagFindMany },
+    author: { count: mocks.authorCount },
     contentLog: { count: mocks.contentLogCount },
     pageSEO: {
       deleteMany: mocks.pageSeoDeleteMany,
@@ -180,6 +182,8 @@ beforeEach(() => {
   )
   // clearAllMocks keeps implementations; a test's denial must not leak.
   mocks.checkAuthorPermission.mockReset()
+  // No author the form adds is the association.
+  mocks.authorCount.mockResolvedValue(0)
   mocks.articleFindUnique.mockResolvedValue(storedArticle)
   // The removed-images lookup filters by article; the version lookup by ids.
   mocks.articleImageFindMany.mockImplementation(
@@ -267,6 +271,86 @@ describe('updateArticle — the permission follows the stored article', () => {
       init: { status: 403 },
     })
     expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('refuses the association added by anyone but the Coordinator', async () => {
+    mocks.permissionContext.mockReturnValue({
+      authorId: 'author-1',
+      roleLevel: 2,
+    })
+    mocks.authorCount.mockResolvedValue(1)
+
+    await expect(
+      updateArticle(request, {
+        ...options,
+        authorIds: ['author-1', 'association'],
+      }),
+    ).rejects.toMatchObject({ init: { status: 403 } })
+    expect(mocks.authorCount).toHaveBeenCalledWith({
+      where: {
+        id: { in: ['association'] },
+        user: { role: { name: 'owner' } },
+      },
+    })
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('keeps the association already stored on a Creator’s save', async () => {
+    mocks.permissionContext.mockReturnValue({
+      authorId: 'author-1',
+      roleLevel: 2,
+    })
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      authors: [{ id: 'author-1' }, { id: 'association' }],
+    })
+
+    const result = await updateArticle(request, {
+      ...options,
+      authorIds: ['author-1', 'association'],
+    })
+
+    expect(result.status).toBe('saved')
+    expect(mocks.authorCount).not.toHaveBeenCalled()
+  })
+
+  test('checks only the added authors when the association is stored', async () => {
+    mocks.permissionContext.mockReturnValue({
+      authorId: 'author-1',
+      roleLevel: 2,
+    })
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      authors: [{ id: 'author-1' }, { id: 'association' }],
+    })
+
+    const result = await updateArticle(request, {
+      ...options,
+      authorIds: ['author-1', 'association', 'author-2'],
+    })
+
+    expect(result.status).toBe('saved')
+    expect(mocks.authorCount).toHaveBeenCalledWith({
+      where: {
+        id: { in: ['author-2'] },
+        user: { role: { name: 'owner' } },
+      },
+    })
+  })
+
+  test('lets the Coordinator add the association', async () => {
+    mocks.authorCount.mockResolvedValue(1)
+
+    const result = await updateArticle(request, {
+      ...options,
+      authorIds: ['association'],
+    })
+
+    expect(result.status).toBe('saved')
+    expect(mocks.authorCount).not.toHaveBeenCalled()
+    expect(mocks.articleUpdate.mock.calls[0][0].data.authors).toEqual({
+      set: [{ id: 'association' }],
+    })
   })
 
   test('keeps the stored state', async () => {

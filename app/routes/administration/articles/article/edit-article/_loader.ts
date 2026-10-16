@@ -1,6 +1,7 @@
 import { data, href, redirect } from 'react-router'
 
 import { flashAdminNotice } from '~/utils/admin-notice/flash-admin-notice.server'
+import { readCreatedAuthor } from '~/utils/created-author/read-created-author.server'
 import { prisma } from '~/utils/db.server'
 import {
   createImageSources,
@@ -8,13 +9,15 @@ import {
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { requireContentUpdatePermission } from '~/utils/permissions/author/guards/require-content-update-permission.server'
-import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
+import { canChooseRecordAuthor } from '../../utils/can-choose-record-author'
 import { getArticleHold } from '../../utils/get-article-hold'
 import type { Route } from './+types/route'
+import { getAuthorOptions } from './utils/get-author-options.server'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { articleId } = params
@@ -121,9 +124,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const categoryIds = article.categories.map((category) => category.id)
   const tagIds = article.tags.map((tag) => tag.id)
 
-  const [authors, categories, tags] = await Promise.all([
-    // Authors with permission to update articles in the current state
-    getAuthorsByPermission(context, 'article', 'update', article.state),
+  const [authors, categories, tags, userContext, created] = await Promise.all([
+    getAuthorOptions(),
     // The published ones to pick from, and the ones the article has in
     // another state, which stay until removed (design 24a, iq3nur0e).
     prisma.articleCategory.findMany({
@@ -136,45 +138,65 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       select: { id: true, name: true, state: true },
       where: { OR: [{ state: 'published' }, { id: { in: tagIds } }] },
     }),
+    getUserPermissionContext(request, {
+      actions: ['create'],
+      entities: ['author'],
+    }),
+    // Back from *Založit autora*, the author to choose (24j, ivyin4kr).
+    readCreatedAuthor(request, articleId),
   ])
 
   const authorIds = article.authors.map((author) => author.id)
   const submission = getSubmissionState(article)
 
-  return {
-    article: {
-      authorIds,
-      // Whose text it is, over someone else's (24c).
-      authorNames: article.authors.map((author) => author.name),
-      categoryIds,
-      content: article.content,
-      featuredImageId: article.featuredImage?.id,
-      images: article.images.map((image) => ({
-        altText: image.altText,
-        description: image.description || '',
-        id: image.id,
-        previewUrl: createImageSources('article-image', image).src,
-      })),
-      // An empty draft (decision 0020) has no address and is left for the list.
-      isEmptyDraft: article.firstContentAt === null,
-      perex: article.perex || '',
-      slug: article.slug ?? '',
-      // Sent for approval, or approved: the tag and the line of 24c.
-      submission:
-        submission === null
-          ? null
-          : { date: submission.date.toISOString(), state: submission.state },
-      tagIds,
-      title: article.title,
-      // The last save, which the editor's hold takes back only over (24i).
-      updatedAt: article.updatedAt.toISOString(),
+  return data(
+    {
+      article: {
+        authorIds,
+        // Whose text it is, over someone else's (24c).
+        authorNames: article.authors.map((author) => author.name),
+        categoryIds,
+        content: article.content,
+        featuredImageId: article.featuredImage?.id,
+        images: article.images.map((image) => ({
+          altText: image.altText,
+          description: image.description || '',
+          id: image.id,
+          previewUrl: createImageSources('article-image', image).src,
+        })),
+        // An empty draft (decision 0020) has no address and is left for the list.
+        isEmptyDraft: article.firstContentAt === null,
+        perex: article.perex || '',
+        slug: article.slug ?? '',
+        // Sent for approval, or approved: the tag and the line of 24c.
+        submission:
+          submission === null
+            ? null
+            : { date: submission.date.toISOString(), state: submission.state },
+        tagIds,
+        title: article.title,
+        // The last save, which the editor's hold takes back only over (24i).
+        updatedAt: article.updatedAt.toISOString(),
+      },
+      authors,
+      // Without itself and as the association too (24j, decision 0026).
+      canChooseAuthorsFreely: canChooseRecordAuthor(context.roleLevel),
+      // Offered for a name the search does not find (24j, 2re069d4).
+      canCreateAuthor: userContext.can({ action: 'create', entity: 'author' })
+        .hasPermission,
+      categories,
+      // The editor adds it, or puts it in place of the replaced author.
+      createdAuthor: created.createdAuthor,
+      // Only the Coordinator takes over someone else's edit (24g).
+      isApprover,
+      // One's own text has no sentence over it (24c).
+      isOwn: authorIds.includes(context.authorId),
+      // Marked *vy*, and kept by whoever does not choose freely (24j).
+      ownAuthorId: context.authorId,
+      tags,
     },
-    authors,
-    categories,
-    // Only the Coordinator takes over someone else's edit (24g).
-    isApprover,
-    // One's own text has no sentence over it (24c).
-    isOwn: authorIds.includes(context.authorId),
-    tags,
-  }
+    created.setCookie === null
+      ? undefined
+      : { headers: { 'Set-Cookie': created.setCookie } },
+  )
 }
