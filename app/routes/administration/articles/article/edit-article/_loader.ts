@@ -8,13 +8,15 @@ import {
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { requireContentUpdatePermission } from '~/utils/permissions/author/guards/require-content-update-permission.server'
-import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
+import { canChooseRecordAuthor } from '../../utils/can-choose-record-author'
 import { getArticleHold } from '../../utils/get-article-hold'
 import type { Route } from './+types/route'
+import { getAuthorOptions } from './utils/get-author-options.server'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { articleId } = params
@@ -121,9 +123,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const categoryIds = article.categories.map((category) => category.id)
   const tagIds = article.tags.map((tag) => tag.id)
 
-  const [authors, categories, tags] = await Promise.all([
-    // Authors with permission to update articles in the current state
-    getAuthorsByPermission(context, 'article', 'update', article.state),
+  const [authors, categories, tags, userContext] = await Promise.all([
+    getAuthorOptions(),
     // The published ones to pick from, and the ones the article has in
     // another state, which stay until removed (design 24a, iq3nur0e).
     prisma.articleCategory.findMany({
@@ -135,6 +136,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       orderBy: { name: 'asc' },
       select: { id: true, name: true, state: true },
       where: { OR: [{ state: 'published' }, { id: { in: tagIds } }] },
+    }),
+    getUserPermissionContext(request, {
+      actions: ['create'],
+      entities: ['author'],
     }),
   ])
 
@@ -170,11 +175,18 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       updatedAt: article.updatedAt.toISOString(),
     },
     authors,
+    // Without itself and as the association too (24j, decision 0026).
+    canChooseAuthorsFreely: canChooseRecordAuthor(context.roleLevel),
+    // Offered for a name the search does not find (24j, 2re069d4).
+    canCreateAuthor: userContext.can({ action: 'create', entity: 'author' })
+      .hasPermission,
     categories,
     // Only the Coordinator takes over someone else's edit (24g).
     isApprover,
     // One's own text has no sentence over it (24c).
     isOwn: authorIds.includes(context.authorId),
+    // Marked *vy*, and kept by whoever does not choose freely (24j).
+    ownAuthorId: context.authorId,
     tags,
   }
 }

@@ -1,0 +1,22 @@
+.option {
+  @layer route {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.name {
+  @layer route {
+    flex: 1;
+    min-inline-size: 0;
+  }
+}
+
+.role {
+  @layer route {
+    flex: none;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+  }
+}

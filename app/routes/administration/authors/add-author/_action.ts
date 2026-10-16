@@ -39,5 +39,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { authorId } = await createAuthor(submission.value)
 
+  // From an article's author search, back to the editor, which chooses the
+  // new author (design 24j).
+  const articleId = formData.get('article')
+  if (typeof articleId === 'string' && articleId !== '') {
+    return redirect(
+      `${href('/administration/articles/:articleId/edit-article', { articleId })}?${new URLSearchParams({ author: authorId })}`,
+    )
+  }
+
   return redirect(href('/administration/authors/:authorId', { authorId }))
 }

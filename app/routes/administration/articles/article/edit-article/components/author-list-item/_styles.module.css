@@ -1,0 +1,52 @@
+/* A row keeps its height with or without the ×, so removing one moves nothing
+   but the rows under it. */
+.item {
+  @layer route {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-block-size: 40px;
+    padding-block: 6px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+.name {
+  @layer route {
+    flex: 1;
+    min-inline-size: 0;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.own {
+  @layer route {
+    color: var(--text-secondary);
+  }
+}
+
+.remove {
+  @layer route {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}

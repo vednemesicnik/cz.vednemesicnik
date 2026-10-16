@@ -5,7 +5,6 @@ import {
   getCollectionProps,
   getFormProps,
   getInputProps,
-  getSelectProps,
   useForm,
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
@@ -40,10 +39,11 @@ import { Chip } from '~/components/chip'
 import { ChipInput } from '~/components/chip-input'
 import { Form } from '~/components/form'
 import { DeleteIcon } from '~/components/icons/delete-icon'
+import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
-import { Select } from '~/components/select'
 import { StatusTag } from '~/components/status-tag'
+import { SuggestInput } from '~/components/suggest-input'
 import { TextEditor } from '~/components/text-editor'
 import { TextField } from '~/components/text-field'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
@@ -53,6 +53,7 @@ import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { foldForSearch } from '~/utils/fold-for-search'
+import { createImageSources } from '~/utils/image-store/create-image-sources'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
@@ -61,6 +62,9 @@ import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ArticleChangedDialog } from './components/article-changed-dialog'
+import { AuthorList } from './components/author-list'
+import { AuthorListItem } from './components/author-list-item'
+import { AuthorOption } from './components/author-option'
 import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditHoldDialog } from './components/edit-hold-dialog'
@@ -103,6 +107,9 @@ const PEREX_RECOMMENDED_LENGTH = 160
 const DETAIL_COLUMN_QUERY = '(width >= 768px)'
 
 type DetailName = 'address' | 'authors' | 'categories' | 'tags' | 'images'
+
+// An author whose row is missing from the options shows the initials.
+const NO_IMAGE = createImageSources('user-image', undefined)
 
 // A Conform value of a multi-value field, as a list.
 const toList = (value: string | Array<string | undefined> | undefined) =>
@@ -469,6 +476,87 @@ export default function RouteComponent({
     autosave.markChanged()
   }
 
+  // Authors as rows with a search under them (24j). Only the Coordinator
+  // picks freely: without themselves, and the association. Everyone else
+  // keeps their own row and adds or removes co-authors (mto4s7s7).
+  const { canChooseAuthorsFreely, canCreateAuthor, ownAuthorId } = loaderData
+  const [selectedAuthorIds, setSelectedAuthorIds] = useState(article.authorIds)
+  const authorById = new Map(
+    loaderData.authors.map((author) => [author.id, author]),
+  )
+  const [authorQuery, setAuthorQuery] = useState('')
+  const foldedAuthorQuery = foldForSearch(authorQuery.trim())
+  const authorSuggestions = loaderData.authors
+    .filter(
+      (author) =>
+        !selectedAuthorIds.includes(author.id) &&
+        (canChooseAuthorsFreely || !author.isAssociation) &&
+        foldForSearch(author.name).includes(foldedAuthorQuery),
+    )
+    .map((author) => ({ ...author, value: author.id }))
+  // The last author stays: an article always has one (24j).
+  const canRemoveAuthor = (authorId: string) =>
+    selectedAuthorIds.length > 1 &&
+    (canChooseAuthorsFreely || authorId !== ownAuthorId)
+  const authorListRef = useRef<HTMLUListElement>(null)
+  const authorSearchRef = useRef<HTMLInputElement>(null)
+  // After a removal the focus goes to the next row's ×, or to the search.
+  const authorFocusIndexRef = useRef<number | null>(null)
+  const removeAuthor = (index: number) => {
+    authorFocusIndexRef.current = index
+    setSelectedAuthorIds(selectedAuthorIds.filter((_, at) => at !== index))
+  }
+
+  // An added or removed author saves at once, without a dialog (24j): once
+  // the hidden inputs carry the change.
+  const authorIdsKey = selectedAuthorIds.join(' ')
+  const authorIdsKeyRef = useRef(authorIdsKey)
+  const handleAuthorsChange = useEffectEvent(() => {
+    autosave.markChanged()
+    void autosave.flush()
+
+    const focusIndex = authorFocusIndexRef.current
+    if (focusIndex === null) return
+    authorFocusIndexRef.current = null
+    const nextRemoveButton = authorListRef.current?.children
+      .item(focusIndex)
+      ?.querySelector('button')
+    ;(nextRemoveButton ?? authorSearchRef.current)?.focus()
+  })
+  useEffect(() => {
+    if (authorIdsKey === authorIdsKeyRef.current) return
+    authorIdsKeyRef.current = authorIdsKey
+    handleAuthorsChange()
+  }, [authorIdsKey])
+
+  // Back from *Založit autora*, the new author is chosen (24j, 28c), once
+  // the hold allows a save. The address drops it without a revalidation, so a
+  // reload does not add the author again.
+  const [createdAuthorId] = useState(() =>
+    typeof window === 'undefined'
+      ? null
+      : new URLSearchParams(window.location.search).get('author'),
+  )
+  const hasAddedCreatedAuthorRef = useRef(false)
+  const addCreatedAuthor = useEffectEvent(() => {
+    if (hasAddedCreatedAuthorRef.current || createdAuthorId === null) return
+    hasAddedCreatedAuthorRef.current = true
+
+    const url = new URL(window.location.href)
+    url.searchParams.delete('author')
+    window.history.replaceState(window.history.state, '', url)
+
+    if (
+      authorById.has(createdAuthorId) &&
+      !selectedAuthorIds.includes(createdAuthorId)
+    ) {
+      setSelectedAuthorIds([...selectedAuthorIds, createdAuthorId])
+    }
+  })
+  useEffect(() => {
+    if (isHolding) addCreatedAuthor()
+  }, [isHolding])
+
   // One detail open over the whole screen on a phone (24f).
   const [openDetail, setOpenDetail] = useState<DetailName | null>(null)
   const isDetailOpen = openDetail !== null
@@ -590,9 +678,9 @@ export default function RouteComponent({
     isSubmitted: article.submission !== null,
   })
 
-  const selectedAuthorNames = loaderData.authors
-    .filter((author) => toList(fields.authorIds.value).includes(author.id))
-    .map((author) => author.name)
+  const selectedAuthorNames = selectedAuthorIds.map(
+    (authorId) => authorById.get(authorId)?.name ?? authorId,
+  )
   const imageCount = existingImages.length + newImages.length
   const perexLength = [...(fields.perex.value ?? '')].length
   const slugValue = fields.slug.value ?? ''
@@ -861,51 +949,91 @@ export default function RouteComponent({
                 }
               >
                 <fieldset className={styles.lock} disabled={isLocked}>
-                  {fields.authorIds.getFieldList().map((authorField, index) => (
-                    <div className={styles.authorRow} key={authorField.key}>
-                      <Select
-                        {...getSelectProps(authorField)}
-                        errors={authorField.errors}
-                        label={'Autor'}
-                      >
-                        <option value={''}>— vyberte autora —</option>
-                        {loaderData.authors.map((author) => (
-                          <option key={author.id} value={author.id}>
-                            {author.name}
-                          </option>
-                        ))}
-                      </Select>
-                      {index > 0 && !isReadOnly && (
-                        <Button
-                          onClick={() =>
-                            form.remove({ index, name: fields.authorIds.name })
+                  <legend className={'screen-reader-only'}>Autoři</legend>
+                  <AuthorList ref={authorListRef}>
+                    {selectedAuthorIds.map((authorId, index) => {
+                      const author = authorById.get(authorId)
+
+                      return (
+                        <AuthorListItem
+                          image={author?.image ?? NO_IMAGE}
+                          isOwn={authorId === ownAuthorId}
+                          key={authorId}
+                          name={author?.name ?? authorId}
+                          onRemove={
+                            !isReadOnly && canRemoveAuthor(authorId)
+                              ? () => removeAuthor(index)
+                              : undefined
                           }
-                          type={'button'}
-                          variant={'danger'}
-                        >
-                          <DeleteIcon className={styles.removeIcon} />
-                          Odstranit
-                        </Button>
-                      )}
-                    </div>
+                        />
+                      )
+                    })}
+                  </AuthorList>
+                  {selectedAuthorIds.map((authorId, index) => (
+                    <input
+                      key={authorId}
+                      name={`${fields.authorIds.name}[${index}]`}
+                      type={'hidden'}
+                      value={authorId}
+                    />
                   ))}
-                  {/* No submit buttons: Enter in a field must not add or remove one. */}
-                  {/* A quiet button at the start, under the authors (24a). */}
+                  {/* Only the Coordinator may remove their own row, so only
+                      they are told why the last one has no × (24j). */}
+                  {!isReadOnly &&
+                    canChooseAuthorsFreely &&
+                    selectedAuthorIds.length === 1 && (
+                      <p className={styles.lastAuthorNote}>
+                        Nejdřív přidejte jiného autora — článek musí mít aspoň
+                        jednoho.
+                      </p>
+                    )}
                   {!isReadOnly && (
-                    <Button
-                      className={styles.addButton}
-                      onClick={() =>
-                        form.insert({
-                          defaultValue: '',
-                          name: fields.authorIds.name,
-                        })
+                    <SuggestInput
+                      disabled={isLocked}
+                      id={`${fields.authorIds.id}-search`}
+                      isLabelHidden
+                      label={
+                        canChooseAuthorsFreely
+                          ? 'Hledat autora'
+                          : 'Přidat spoluautora'
                       }
-                      size={'sm'}
-                      type={'button'}
-                      variant={'ghost'}
+                      noMatch={
+                        canCreateAuthor ? (
+                          <Link
+                            to={`${href('/administration/authors/add-author')}?${new URLSearchParams(
+                              {
+                                article: params.articleId,
+                                name: authorQuery.trim(),
+                              },
+                            )}`}
+                          >
+                            Založit autora „{authorQuery.trim()}“
+                          </Link>
+                        ) : (
+                          'Žádný autor neodpovídá hledání. Nového autora může založit Administrátor nebo Vlastník.'
+                        )
+                      }
+                      onQueryChange={setAuthorQuery}
+                      onSelect={(authorId) =>
+                        setSelectedAuthorIds([...selectedAuthorIds, authorId])
+                      }
+                      options={authorSuggestions}
+                      placeholder={
+                        canChooseAuthorsFreely
+                          ? 'Hledat autora'
+                          : 'Přidat spoluautora'
+                      }
+                      query={authorQuery}
+                      ref={authorSearchRef}
                     >
-                      Přidat spoluautora
-                    </Button>
+                      {(author) => (
+                        <AuthorOption
+                          image={author.image}
+                          name={author.name}
+                          roleLabel={author.roleLabel}
+                        />
+                      )}
+                    </SuggestInput>
                   )}
                 </fieldset>
               </EditorDetail>
@@ -1219,7 +1347,7 @@ export default function RouteComponent({
                     )
                   })}
 
-                  {/* Quiet like Přidat spoluautora until the gallery's tile (#673). */}
+                  {/* A quiet button until the gallery's tile (#673). */}
                   {!isReadOnly && (
                     <Button
                       className={styles.addButton}
