@@ -6,6 +6,7 @@ import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
+import { DialogBody } from '~/components/dialog-body'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
 import { getBulkConfirmCopy } from '../../utils/get-bulk-confirm-copy'
@@ -73,14 +74,16 @@ export const BulkConfirmDialog = ({
             ))}
           </ul>
         )}
-        {skipped !== null && (
-          <AdminModalDescription>{skipped}</AdminModalDescription>
-        )}
-        {isDelete ? (
-          <p className={styles.warning}>{description}</p>
-        ) : (
-          <AdminModalDescription>{description}</AdminModalDescription>
-        )}
+        <DialogBody>
+          {skipped !== null && (
+            <AdminModalDescription>{skipped}</AdminModalDescription>
+          )}
+          {isDelete ? (
+            <p className={styles.warning}>{description}</p>
+          ) : (
+            <AdminModalDescription>{description}</AdminModalDescription>
+          )}
+        </DialogBody>
         <AdminModalActions>
           <Button
             onClick={() => ref.current?.close()}
