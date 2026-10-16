@@ -6,6 +6,7 @@ import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
+import { DialogBody } from '~/components/dialog-body'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
 type Props = {
@@ -36,16 +37,18 @@ export const RemoveImageDialog = ({
     <AdminDialog ref={ref}>
       <AdminModalContent>
         <AdminModalTitle>Odebrat obrázek?</AdminModalTitle>
-        <AdminModalDescription>
-          Obrázek se hned smaže i s alt textem a popiskem. Odebrání nelze
-          vrátit.
-        </AdminModalDescription>
-        {/* Its own paragraph, only for the main image (in5bl1cq). */}
-        {isFeatured && (
+        <DialogBody>
           <AdminModalDescription>
-            Článek zůstane bez hlavního obrázku.
+            Obrázek se hned smaže i s alt textem a popiskem. Odebrání nelze
+            vrátit.
           </AdminModalDescription>
-        )}
+          {/* Its own paragraph, only for the main image (in5bl1cq). */}
+          {isFeatured && (
+            <AdminModalDescription>
+              Článek zůstane bez hlavního obrázku.
+            </AdminModalDescription>
+          )}
+        </DialogBody>
 
         <AdminModalActions>
           <Button
