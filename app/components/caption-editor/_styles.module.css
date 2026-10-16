@@ -1,0 +1,114 @@
+/* The image tile's caption (`.vdm-imagetile__caption`, 24b): one line set as
+   the alt field, the link tool at its end. */
+.captionEditor {
+  @layer component {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    justify-items: start;
+    width: 100%;
+  }
+}
+
+.label {
+  @layer variant {
+    font-size: var(--font-size-xs);
+    line-height: normal;
+  }
+}
+
+.field {
+  @layer component {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    /* One line of text before the editor mounts (7 + 18 + 7 px, borders). */
+    min-block-size: 34px;
+    padding-block: 7px;
+    padding-inline: 10px 6px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition:
+      border-color 150ms ease-out,
+      box-shadow 150ms ease-out;
+
+    &:hover:not(:focus-within) {
+      border-color: var(--border-hover);
+    }
+
+    &:focus-within {
+      border-color: var(--border-accent);
+      box-shadow: var(--focus-shadow);
+    }
+
+    /* Read-only: grey like a disabled field (design 24h). */
+    &.isReadOnly {
+      background-color: var(--bg-disabled);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+
+      &:hover {
+        border-color: var(--border);
+      }
+    }
+
+    &.isInvalid {
+      border-color: var(--error);
+
+      &:focus-within {
+        border-color: var(--error);
+        box-shadow: var(--focus-shadow-error);
+      }
+    }
+  }
+}
+
+.content {
+  @layer variant {
+    flex: 1;
+    min-inline-size: 0;
+
+    & :global(.tiptap) {
+      min-block-size: auto;
+      padding: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      border-radius: 0;
+    }
+  }
+}
+
+/* The DS link chip, with the link icon in place of the word „Odkaz“. */
+.linkButton {
+  @layer variant {
+    min-inline-size: 24px;
+    min-block-size: 18px;
+    padding-block: 1px;
+    padding-inline: 6px;
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+
+    & svg {
+      font-size: 14px;
+    }
+
+    /* A finger's target on a phone, around the small chip (sa1x34z3). */
+    @media (width < 768px) {
+      position: relative;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset-block-start: 50%;
+        inset-inline-start: 50%;
+        inline-size: 44px;
+        block-size: 44px;
+        transform: translate(-50%, -50%);
+      }
+    }
+  }
+}
