@@ -2,6 +2,7 @@
 
 import {
   FormProvider,
+  getCollectionProps,
   getFormProps,
   getInputProps,
   getSelectProps,
@@ -9,9 +10,11 @@ import {
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
 import { createId } from '@paralleldrive/cuid2'
+import { clsx } from 'clsx'
 import {
   type FormEvent,
   type MouseEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type SubmitEvent,
   useEffect,
   useEffectEvent,
@@ -19,24 +22,29 @@ import {
   useState,
 } from 'react'
 import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
-import { AdminButtonLink } from '~/components/admin/admin-button-link'
+import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
+import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
+import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminImageInput } from '~/components/admin/admin-image-input'
 import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminRadioInput } from '~/components/admin/admin-radio-input'
-import { AdminTextEditor } from '~/components/admin/admin-text-editor'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
-import { Fieldset } from '~/components/fieldset'
+import { Checkbox } from '~/components/checkbox'
+import { Chip } from '~/components/chip'
+import { ChipInput } from '~/components/chip-input'
 import { Form } from '~/components/form'
-import { FormActions } from '~/components/form-actions'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
+import { StatusTag } from '~/components/status-tag'
+import { TextEditor } from '~/components/text-editor'
 import { TextField } from '~/components/text-field'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
@@ -44,9 +52,11 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
+import { foldForSearch } from '~/utils/fold-for-search'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
+import { formatSubmissionFact } from '../../utils/format-submission-fact'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -54,12 +64,16 @@ import { ArticleChangedDialog } from './components/article-changed-dialog'
 import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditHoldDialog } from './components/edit-hold-dialog'
+import { EditorDetail } from './components/editor-detail'
 import { HoldTakenDialog } from './components/hold-taken-dialog'
 import { formatArticleChangedDescription } from './utils/format-article-changed-description'
+import { formatFirstNameAndCount } from './utils/format-first-name-and-count'
 import { formatHoldTakenDescription } from './utils/format-hold-taken-description'
 import { formatTakeOverDescription } from './utils/format-take-over-description'
+import { getEditorSentence } from './utils/get-editor-sentence'
 import { getReadOnlyNotice } from './utils/get-read-only-notice'
 import { getSaveLineText } from './utils/get-save-line-text'
+import { useRemovedIds } from './utils/use-removed-ids'
 
 export { handle } from './_handle'
 export { loader } from './_loader'
@@ -82,6 +96,20 @@ const CONFORM_INTENT_NAME = '__intent__'
 const TAKEN_SLUG_HINT =
   'Zvolte jinou adresu — tuto už má jiný článek. Změna adresy se neuložila.'
 
+// Up to this length a search engine shows the perex whole (24a).
+const PEREX_RECOMMENDED_LENGTH = 160
+
+// Below it the details are rows that open over the whole screen (24f).
+const DETAIL_COLUMN_QUERY = '(width >= 768px)'
+
+type DetailName = 'address' | 'authors' | 'categories' | 'tags' | 'images'
+
+// A Conform value of a multi-value field, as a list.
+const toList = (value: string | Array<string | undefined> | undefined) =>
+  (Array.isArray(value) ? value : [value]).filter(
+    (item): item is string => item !== undefined && item !== '',
+  )
+
 // What the editor says once the hold went elsewhere (24h, 24i): which dialog,
 // and whether anything stayed unsent.
 type HoldLoss = {
@@ -94,7 +122,7 @@ export default function RouteComponent({
   loaderData,
   params,
 }: Route.ComponentProps) {
-  const { article, isApprover } = loaderData
+  const { article, isApprover, isOwn } = loaderData
   const navigate = useNavigate()
   const revalidator = useRevalidator()
   // The title the breadcrumb and the tab show, as last loaded.
@@ -380,21 +408,98 @@ export default function RouteComponent({
   const existingImages = fields.existingImages.getFieldList()
   const newImages = fields.images.getFieldList()
 
-  // A new draft's address follows its title, as the add form's did (0020).
-  // Decided once, by the draft as it opened: a reload after a save that makes
-  // it non-empty must not stop the address following mid-sentence.
-  const [followsTitle] = useState(article.isEmptyDraft)
-  const { handleBlur, handleFocus, handleInput } = useAutoSlug({
+  // The address follows the title until changed by hand (24a): one that
+  // differs from the title's as the editor opens was changed by hand.
+  const [isSlugInitiallyManual] = useState(
+    article.slug !== '' && article.slug !== slugify(article.title),
+  )
+  const {
+    handleBlur,
+    handleFocus,
+    handleInput,
+    isFollowing: isSlugFollowing,
+    resume: resumeSlug,
+  } = useAutoSlug({
     fieldName: fields.slug.name,
-    sourceValue: followsTitle ? fields.title.value || '' : undefined,
+    fieldValue: fields.slug.value ?? '',
+    // Without the hold the fields are disabled and read as empty (07g).
+    isEnabled: isHolding,
+    isInitiallyTouched: isSlugInitiallyManual,
+    sourceValue: fields.title.value || '',
     updateFieldValue: form.update,
   })
 
-  const regenerateSlug = () => {
-    form.update({
-      name: fields.slug.name,
-      value: slugify(fields.title.value || ''),
-    })
+  // The heading says *Nový článek* for the draft that opened empty (24a).
+  const [isNewArticle] = useState(article.isEmptyDraft)
+
+  // The categories and tags as the editor opened: an archived one stays in
+  // the list after it is unticked, so a mistake can be undone (24a).
+  const [categoryOptions] = useState(loaderData.categories)
+  const [tagOptions] = useState(loaderData.tags)
+  const selectedCategoryIds = toList(fields.categoryIds.value)
+  // Kept here: the hidden inputs are rendered from them, so the form has none
+  // to read them from before the first pick.
+  const [selectedTagIds, setSelectedTagIds] = useState(article.tagIds)
+  const removedCategoryIds = useRemovedIds(
+    article.categoryIds,
+    selectedCategoryIds,
+  )
+  const removedTagIds = useRemovedIds(article.tagIds, selectedTagIds)
+  const publishedCategories = categoryOptions.filter(
+    (category) => category.state === 'published',
+  )
+  const otherCategories = categoryOptions.filter(
+    (category) => category.state !== 'published',
+  )
+
+  // Tags by search: only published ones not picked yet are offered.
+  const [tagQuery, setTagQuery] = useState('')
+  const foldedTagQuery = foldForSearch(tagQuery.trim())
+  const tagSuggestions = tagOptions
+    .filter(
+      (tag) =>
+        tag.state === 'published' &&
+        !selectedTagIds.includes(tag.id) &&
+        foldForSearch(tag.name).includes(foldedTagQuery),
+    )
+    .map((tag) => ({ label: tag.name, value: tag.id }))
+  const setTagIds = (tagIds: string[]) => {
+    setSelectedTagIds(tagIds)
+    // Hidden inputs change without an event, so the change is said here.
+    autosave.markChanged()
+  }
+
+  // One detail open over the whole screen on a phone (24f).
+  const [openDetail, setOpenDetail] = useState<DetailName | null>(null)
+  const isDetailOpen = openDetail !== null
+  const detailProps = (name: DetailName) => ({
+    isInert: isDetailOpen && openDetail !== name,
+    isOpen: openDetail === name,
+    onClose: () => setOpenDetail(null),
+    onOpen: () => setOpenDetail(name),
+  })
+  useEffect(() => {
+    const columnQuery = window.matchMedia(DETAIL_COLUMN_QUERY)
+    const handleWidthChange = () => {
+      if (columnQuery.matches) setOpenDetail(null)
+    }
+    columnQuery.addEventListener('change', handleWidthChange)
+    return () => columnQuery.removeEventListener('change', handleWidthChange)
+  }, [])
+
+  // Enter in the title saves instead of breaking it; a pasted break goes.
+  const handleTitleKeyDown = (
+    event: ReactKeyboardEvent<HTMLTextAreaElement>,
+  ) => {
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    void autosave.flush()
+  }
+  const handleTitleInput = (event: FormEvent<HTMLTextAreaElement>) => {
+    const textarea = event.currentTarget
+    if (/[\r\n]/.test(textarea.value)) {
+      textarea.value = textarea.value.replace(/[\r\n]+/g, ' ')
+    }
   }
 
   // Without the hold nothing can be changed (07g). Lost for good, the editor
@@ -428,37 +533,115 @@ export default function RouteComponent({
         : autosave.status,
   })
 
-  return (
-    <AdminPage>
-      <PageTitle>Upravit článek</PageTitle>
+  // The only sign of saving, without a toast (24e); while only reading, who
+  // edits it now, or that it is free again (24h). The same line stands in the
+  // header, in the phone's bar and over an open detail (24f).
+  const renderSaveLine = (prefix?: string) =>
+    lostHold !== null && lostHold.holder !== null ? (
+      <p className={styles.saveLine}>
+        {prefix}
+        {formatEditHoldLine({
+          holderName: lostHold.holder.name,
+          isOwn: false,
+          now,
+          since: new Date(lostHold.holder.since),
+        })}
+      </p>
+    ) : lostHold?.isEditable ? (
+      <p className={styles.saveLine}>
+        {prefix}
+        Článek lze znovu upravovat
+        <ButtonLink onClick={reload} type={'button'}>
+          Pokračovat v úpravě
+        </ButtonLink>
+      </p>
+    ) : autosave.status === 'failed' ? (
+      <p className={styles.saveLine} role={'alert'}>
+        {prefix}
+        <span className={styles.saveFailure}>{saveLine}</span>
+        <ButtonLink onClick={autosave.retry} type={'button'}>
+          Zkusit znovu
+        </ButtonLink>
+      </p>
+    ) : (
+      <p className={styles.saveLine}>
+        {prefix}
+        {saveLine}
+      </p>
+    )
 
-      {/* The only sign of saving, without a toast (24e); while only reading,
-          who edits it now, or that it is free again (24h). */}
-      {lostHold !== null && lostHold.holder !== null ? (
-        <p className={styles.saveLine}>
-          {formatEditHoldLine({
-            holderName: lostHold.holder.name,
-            isOwn: false,
-            now,
-            since: new Date(lostHold.holder.since),
-          })}
+  // Over someone else's text, whose it is and since when it waits (24c).
+  const ownerPrefix = isOwn
+    ? undefined
+    : [
+        article.authorNames.join(', '),
+        ...(article.submission === null
+          ? []
+          : [
+              formatSubmissionFact({
+                date: new Date(article.submission.date),
+                state: article.submission.state,
+              }),
+            ]),
+        '',
+      ].join(' · ')
+  const editorSentence = getEditorSentence({
+    isOwn,
+    isSubmitted: article.submission !== null,
+  })
+
+  const selectedAuthorNames = loaderData.authors
+    .filter((author) => toList(fields.authorIds.value).includes(author.id))
+    .map((author) => author.name)
+  const imageCount = existingImages.length + newImages.length
+  const perexLength = [...(fields.excerpt.value ?? '')].length
+  const slugValue = fields.slug.value ?? ''
+
+  return (
+    <AdminPage className={styles.page}>
+      {/* On a phone a bar that stays on top instead of the header's
+          buttons: Zavřít and the save line (24f). */}
+      <div className={styles.mobileBar} inert={isDetailOpen}>
+        <LinkButton
+          onClick={handleClose}
+          size={'sm'}
+          to={closeHref}
+          variant={'ghost'}
+        >
+          Zavřít
+        </LinkButton>
+        {renderSaveLine()}
+      </div>
+
+      {/* The detail's header (23a): only Zavřít, the editor saves itself
+          (24a). */}
+      <header className={styles.header} inert={isDetailOpen}>
+        <div className={styles.title}>
+          <div className={styles.titleLine}>
+            <PageTitle>
+              {isNewArticle ? 'Nový článek' : 'Úprava článku'}
+            </PageTitle>
+            <StatusTag state={article.submission?.state ?? 'draft'} />
+          </div>
+          <div className={styles.headerSaveLine}>
+            {renderSaveLine(ownerPrefix)}
+          </div>
+        </div>
+        {/* Sends what waits, then leaves (24e). */}
+        <LinkButton
+          className={styles.headerClose}
+          onClick={handleClose}
+          to={closeHref}
+          variant={'outline'}
+        >
+          Zavřít
+        </LinkButton>
+      </header>
+
+      {editorSentence !== null && (
+        <p className={styles.sentence} inert={isDetailOpen}>
+          {editorSentence}
         </p>
-      ) : lostHold?.isEditable ? (
-        <p className={styles.saveLine}>
-          Článek lze znovu upravovat
-          <AdminButtonLink onClick={reload} type={'button'}>
-            Pokračovat v úpravě
-          </AdminButtonLink>
-        </p>
-      ) : autosave.status === 'failed' ? (
-        <p className={styles.saveLine} role={'alert'}>
-          <span className={styles.saveFailure}>{saveLine}</span>
-          <AdminButtonLink onClick={autosave.retry} type={'button'}>
-            Zkusit znovu
-          </AdminButtonLink>
-        </p>
-      ) : (
-        <p className={styles.saveLine}>{saveLine}</p>
       )}
 
       {readOnlyNotice !== null && (
@@ -558,326 +741,505 @@ export default function RouteComponent({
             value={editHold.tabId ?? ''}
           />
 
-          <Fieldset disabled={isLocked} legend={'Základní informace'}>
-            <TextField
-              {...getInputProps(fields.title, { type: 'text' })}
-              errors={fields.title.errors}
-              label={'Název'}
-              placeholder={'Název článku'}
-            />
-            {!isReadOnly && (
-              <AdminButtonLink
+          <AdminDetailLayout>
+            <AdminDetailMain>
+              <fieldset
+                className={styles.lock}
                 disabled={isLocked}
-                onClick={regenerateSlug}
-                type="button"
+                inert={isDetailOpen}
               >
-                Vygenerovat nový slug
-              </AdminButtonLink>
-            )}
-            <TextField
-              {...getInputProps(fields.slug, { type: 'text' })}
-              errors={slugSuggestion === null ? undefined : [TAKEN_SLUG_HINT]}
-              label={'Slug'}
-              onBlur={handleBlur}
-              onFocus={handleFocus}
-              onInput={handleInput}
-              placeholder={'nazev-clanku'}
-            />
-            {/* A taken address: a free one, filled in and saved (24d). */}
-            {slugSuggestion !== null && !isReadOnly && (
-              <AdminButtonLink
-                disabled={isLocked}
-                onClick={() => {
-                  // A chosen address no longer follows the title.
-                  handleInput()
-                  form.update({ name: fields.slug.name, value: slugSuggestion })
-                  // Saved at once (24d), once the field holds it.
-                  isFlushOnChangeRef.current = true
-                }}
-                type={'button'}
+                {/* The title as the detail's heading will set it (kh6gf6k6). */}
+                <AdminTextarea
+                  field={fields.title}
+                  label={'Název'}
+                  textareaProps={{
+                    className: styles.titleInput,
+                    onInput: handleTitleInput,
+                    onKeyDown: handleTitleKeyDown,
+                    rows: 1,
+                  }}
+                />
+                {/* For search engines and sharing, not shown on the web; the
+                    count only advises (24a, mto4s7s7). */}
+                <AdminTextarea
+                  field={fields.excerpt}
+                  hint={
+                    <>
+                      <span>
+                        Shrnutí pro vyhledávače a náhled při sdílení. Na webu se
+                        nezobrazuje. Doporučeno do 160 znaků.
+                      </span>
+                      <span
+                        className={clsx(
+                          styles.perexCount,
+                          perexLength > PEREX_RECOMMENDED_LENGTH &&
+                            styles.perexCountOver,
+                        )}
+                      >
+                        {perexLength} / {PEREX_RECOMMENDED_LENGTH}
+                      </span>
+                    </>
+                  }
+                  label={'Perex'}
+                  textareaProps={{ className: styles.perexInput }}
+                />
+                <TextEditor
+                  field={fields.content}
+                  key={form.key}
+                  label={'Text'}
+                  readOnly={isReadOnly}
+                />
+              </fieldset>
+            </AdminDetailMain>
+
+            <AdminDetailAside>
+              <EditorDetail
+                {...detailProps('address')}
+                isNameHidden
+                name={'Adresa'}
+                saveLine={renderSaveLine()}
+                summary={slugValue === '' ? '—' : slugValue}
               >
-                Použít {slugSuggestion}
-              </AdminButtonLink>
-            )}
-          </Fieldset>
-
-          <Fieldset disabled={isLocked} legend={'Obsah'}>
-            <AdminTextarea
-              field={fields.excerpt}
-              label={'Výpis článku (excerpt)'}
-              textareaProps={{
-                placeholder: 'Krátký výpis článku pro SEO...',
-              }}
-            />
-            <AdminTextEditor
-              field={fields.content}
-              inputProps={{
-                placeholder: 'Obsah článku...',
-              }}
-              key={form.key}
-              label={'Obsah článku'}
-              readOnly={isReadOnly}
-            />
-          </Fieldset>
-
-          <Fieldset disabled={isLocked} legend={'Kategorizace'}>
-            <Select
-              {...getSelectProps(fields.categoryIds)}
-              errors={fields.categoryIds.errors}
-              label={'Rubriky (můžete vybrat více)'}
-              multiple
-            >
-              {loaderData.categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </Select>
-            <Select
-              {...getSelectProps(fields.tagIds)}
-              errors={fields.tagIds.errors}
-              label={'Štítky (můžete vybrat více)'}
-              multiple
-            >
-              {loaderData.tags.map((tag) => (
-                <option key={tag.id} value={tag.id}>
-                  {tag.name}
-                </option>
-              ))}
-            </Select>
-          </Fieldset>
-
-          <Fieldset disabled={isLocked} legend={'Obrázky'}>
-            <AdminRadioInput
-              className={styles.defaultFieldFeaturedImageContainer}
-              field={fields.featuredImage}
-              inputProps={{
-                defaultChecked: !article.featuredImageId,
-                value: FEATURED_IMAGE_SOURCE.NONE,
-              }}
-              label={'Bez hlavního obrázku'}
-            />
-
-            {existingImages.map((image, index) => {
-              const imageFields = image.getFieldset()
-              const imageId = imageFields.id.value
-
-              return (
-                <AdminImageUploadCard
-                  action={
-                    !isReadOnly && (
-                      <Button
-                        onClick={() => {
-                          const currentValue = fields.featuredImage.value
-                          if (
-                            currentValue ===
-                            `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`
-                          ) {
-                            form.update({
-                              name: fields.featuredImage.name,
-                              value: FEATURED_IMAGE_SOURCE.NONE,
-                            })
-                          }
-                          form.remove({
-                            index,
-                            name: fields.existingImages.name,
-                          })
-                        }}
-                        type={'button'}
-                        variant={'danger'}
-                      >
-                        <DeleteIcon className={styles.removeIcon} />
-                        Odstranit
-                      </Button>
-                    )
-                  }
-                  key={image.key}
-                  title={'Existující obrázek'}
-                >
-                  <input
-                    {...getInputProps(imageFields.id, { type: 'hidden' })}
-                  />
-
-                  <AdminImageInput
-                    className={styles.imageFieldFileContainer}
-                    field={imageFields.file}
-                    label={'Obrázek'}
-                    previewUrl={
-                      imageId ? previewUrlById.get(imageId) : undefined
-                    }
-                  />
-
+                <fieldset className={styles.lock} disabled={isLocked}>
                   <TextField
-                    {...getInputProps(imageFields.altText, { type: 'text' })}
-                    className={styles.imageFieldAltTextContainer}
-                    errors={imageFields.altText.errors}
-                    label={'Alt text'}
-                    placeholder={
-                      'Popis obrázku pro vyhledávače a čtečky obrazovky'
+                    {...getInputProps(fields.slug, { type: 'text' })}
+                    errors={
+                      slugSuggestion === null ? undefined : [TAKEN_SLUG_HINT]
                     }
-                  />
-
-                  <AdminTextEditor
-                    className={styles.imageFieldDescriptionContainer}
-                    field={imageFields.description}
-                    inputProps={{
-                      placeholder: 'Popis obrázku...',
-                    }}
-                    label={'Popis obrázku'}
-                    readOnly={isReadOnly}
-                    toolbar={['link']}
-                  />
-
-                  <AdminRadioInput
-                    className={styles.fieldFeaturedImageContainer}
-                    field={fields.featuredImage}
-                    inputProps={{
-                      value: `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`,
-                    }}
-                    label={'Použít jako hlavní obrázek'}
-                  />
-                </AdminImageUploadCard>
-              )
-            })}
-
-            {newImages.map((image, index) => {
-              const imageFields = image.getFieldset()
-              return (
-                <AdminImageUploadCard
-                  action={
-                    !isReadOnly && (
-                      <Button
-                        onClick={() => {
-                          const currentValue = fields.featuredImage.value
-                          if (
-                            currentValue ===
-                            `${FEATURED_IMAGE_SOURCE.NEW}:${index}`
-                          ) {
-                            form.update({
-                              name: fields.featuredImage.name,
-                              value: FEATURED_IMAGE_SOURCE.NONE,
-                            })
-                          }
-                          form.remove({ index, name: fields.images.name })
-                        }}
-                        type={'button'}
-                        variant={'danger'}
-                      >
-                        <DeleteIcon className={styles.removeIcon} />
-                        Odstranit
-                      </Button>
-                    )
-                  }
-                  key={image.key}
-                  title={'Nový obrázek'}
-                >
-                  {/* Made here, so a repeated save stores the image once. */}
-                  <input
-                    {...getInputProps(imageFields.id, { type: 'hidden' })}
-                  />
-                  <AdminImageInput
-                    className={styles.imageFieldFileContainer}
-                    field={imageFields.file}
-                    label={'Obrázek'}
-                  />
-                  <TextField
-                    {...getInputProps(imageFields.altText, { type: 'text' })}
-                    className={styles.imageFieldAltTextContainer}
-                    errors={imageFields.altText.errors}
-                    label={'Alt text'}
-                    placeholder={
-                      'Popis obrázku pro vyhledávače a čtečky obrazovky'
+                    hint={
+                      isSlugFollowing ? (
+                        'Podle názvu, dokud ji nezměníte.'
+                      ) : (
+                        <>
+                          Změněno ručně.{' '}
+                          {!isReadOnly && (
+                            <ButtonLink onClick={resumeSlug} type={'button'}>
+                              Obnovit podle názvu
+                            </ButtonLink>
+                          )}
+                        </>
+                      )
                     }
+                    label={'Adresa'}
+                    onBlur={handleBlur}
+                    onFocus={handleFocus}
+                    onInput={handleInput}
                   />
-                  <AdminTextEditor
-                    className={styles.imageFieldDescriptionContainer}
-                    field={imageFields.description}
-                    inputProps={{
-                      placeholder: 'Popis obrázku...',
-                    }}
-                    label={'Popis obrázku'}
-                    readOnly={isReadOnly}
-                    toolbar={['link']}
-                  />
-                  <AdminRadioInput
-                    className={styles.fieldFeaturedImageContainer}
-                    field={fields.featuredImage}
-                    inputProps={{
-                      value: `${FEATURED_IMAGE_SOURCE.NEW}:${index}`,
-                    }}
-                    label={'Použít jako hlavní obrázek'}
-                  />
-                </AdminImageUploadCard>
-              )
-            })}
+                  {/* A taken address: a free one, filled in and saved (24d). */}
+                  {slugSuggestion !== null && !isReadOnly && (
+                    <ButtonLink
+                      onClick={() => {
+                        // A chosen address no longer follows the title.
+                        handleInput()
+                        form.update({
+                          name: fields.slug.name,
+                          value: slugSuggestion,
+                        })
+                        // Saved at once (24d), once the field holds it.
+                        isFlushOnChangeRef.current = true
+                      }}
+                      type={'button'}
+                    >
+                      Použít {slugSuggestion}
+                    </ButtonLink>
+                  )}
+                  {/* The whole address, as the reader will see it (24a). */}
+                  {slugValue !== '' && (
+                    <span className={styles.path}>/articles/{slugValue}</span>
+                  )}
+                </fieldset>
+              </EditorDetail>
 
-            {!isReadOnly && (
-              <Button
-                onClick={() =>
-                  form.insert({
-                    defaultValue: { id: createId() },
-                    name: fields.images.name,
-                  })
+              <EditorDetail
+                {...detailProps('authors')}
+                name={'Autoři'}
+                saveLine={renderSaveLine()}
+                summary={
+                  selectedAuthorNames.length === 0
+                    ? '—'
+                    : selectedAuthorNames.join(', ')
                 }
-                type={'button'}
               >
-                Přidat obrázek
-              </Button>
-            )}
-          </Fieldset>
-
-          <Fieldset disabled={isLocked} legend={'Informace o autorech'}>
-            {fields.authorIds.getFieldList().map((authorField, index) => (
-              <div className={styles.authorRow} key={authorField.key}>
-                <Select
-                  {...getSelectProps(authorField)}
-                  errors={authorField.errors}
-                  label={'Autor'}
-                >
-                  <option value={''}>— vyberte autora —</option>
-                  {loaderData.authors.map((author) => (
-                    <option key={author.id} value={author.id}>
-                      {author.name}
-                    </option>
+                <fieldset className={styles.lock} disabled={isLocked}>
+                  {fields.authorIds.getFieldList().map((authorField, index) => (
+                    <div className={styles.authorRow} key={authorField.key}>
+                      <Select
+                        {...getSelectProps(authorField)}
+                        errors={authorField.errors}
+                        label={'Autor'}
+                      >
+                        <option value={''}>— vyberte autora —</option>
+                        {loaderData.authors.map((author) => (
+                          <option key={author.id} value={author.id}>
+                            {author.name}
+                          </option>
+                        ))}
+                      </Select>
+                      {index > 0 && !isReadOnly && (
+                        <Button
+                          onClick={() =>
+                            form.remove({ index, name: fields.authorIds.name })
+                          }
+                          type={'button'}
+                          variant={'danger'}
+                        >
+                          <DeleteIcon className={styles.removeIcon} />
+                          Odstranit
+                        </Button>
+                      )}
+                    </div>
                   ))}
-                </Select>
-                {index > 0 && !isReadOnly && (
-                  <Button
-                    onClick={() =>
-                      form.remove({ index, name: fields.authorIds.name })
-                    }
-                    type={'button'}
-                    variant={'danger'}
-                  >
-                    <DeleteIcon className={styles.removeIcon} />
-                    Odstranit
-                  </Button>
-                )}
-              </div>
-            ))}
-            {/* No submit buttons: Enter in a field must not add or remove one. */}
-            {!isReadOnly && (
-              <Button
-                onClick={() =>
-                  form.insert({ defaultValue: '', name: fields.authorIds.name })
-                }
-                type={'button'}
-              >
-                Přidat autora
-              </Button>
-            )}
-          </Fieldset>
+                  {/* No submit buttons: Enter in a field must not add or remove one. */}
+                  {/* A quiet button at the start, under the authors (24a). */}
+                  {!isReadOnly && (
+                    <Button
+                      className={styles.addButton}
+                      onClick={() =>
+                        form.insert({
+                          defaultValue: '',
+                          name: fields.authorIds.name,
+                        })
+                      }
+                      size={'sm'}
+                      type={'button'}
+                      variant={'ghost'}
+                    >
+                      Přidat spoluautora
+                    </Button>
+                  )}
+                </fieldset>
+              </EditorDetail>
 
-          <FormActions>
-            {/* Sends what waits, then leaves (24e). */}
-            <LinkButton
-              onClick={handleClose}
-              to={closeHref}
-              variant={'outline'}
-            >
-              Zavřít
-            </LinkButton>
-          </FormActions>
+              <EditorDetail
+                {...detailProps('categories')}
+                name={'Rubriky'}
+                saveLine={renderSaveLine()}
+                summary={formatFirstNameAndCount(
+                  categoryOptions
+                    .filter((category) =>
+                      selectedCategoryIds.includes(category.id),
+                    )
+                    .map((category) => category.name),
+                )}
+              >
+                {/* Ticked, all at once: there are few (24a). One the article
+                    has in another state stays under them, greyed, until the
+                    editor closes, so unticking it can be undone (iq3nur0e). */}
+                <fieldset
+                  className={clsx(styles.lock, styles.categories)}
+                  disabled={isLocked}
+                >
+                  <legend className={'screen-reader-only'}>Rubriky</legend>
+                  {getCollectionProps(fields.categoryIds, {
+                    options: [...publishedCategories, ...otherCategories].map(
+                      (category) => category.id,
+                    ),
+                    type: 'checkbox',
+                  }).map(({ key, ...checkboxProps }) => {
+                    const category = categoryOptions.find(
+                      (option) => option.id === checkboxProps.value,
+                    )
+                    const isPublished = category?.state === 'published'
+
+                    return (
+                      <Checkbox
+                        {...checkboxProps}
+                        className={clsx(
+                          styles.category,
+                          !isPublished && styles.categoryOutOfPlay,
+                        )}
+                        key={key}
+                      >
+                        {category?.name ?? ''}
+                        {category?.state === 'archived' && (
+                          <span className={styles.categoryNote}>
+                            {' '}
+                            archivovaná, na webu se neukáže
+                          </span>
+                        )}
+                      </Checkbox>
+                    )
+                  })}
+                  {removedCategoryIds.map((id) => (
+                    <input
+                      key={id}
+                      name={fields.removedCategoryIds.name}
+                      type={'hidden'}
+                      value={id}
+                    />
+                  ))}
+                </fieldset>
+              </EditorDetail>
+
+              <EditorDetail
+                {...detailProps('tags')}
+                name={'Štítky'}
+                saveLine={renderSaveLine()}
+                summary={
+                  selectedTagIds.length === 0
+                    ? '—'
+                    : tagOptions
+                        .filter((tag) => selectedTagIds.includes(tag.id))
+                        .map((tag) => tag.name)
+                        .join(', ')
+                }
+              >
+                {/* Searched, as there are many; an archived one the article
+                    has is a dashed chip and never offered again (24a). */}
+                <fieldset className={styles.lock} disabled={isLocked}>
+                  <ChipInput
+                    disabled={isLocked}
+                    id={`${fields.tagIds.id}-search`}
+                    isLabelHidden
+                    label={'Štítky'}
+                    onQueryChange={setTagQuery}
+                    onRemoveLast={() => setTagIds(selectedTagIds.slice(0, -1))}
+                    onSelect={(tagId) => setTagIds([...selectedTagIds, tagId])}
+                    options={tagSuggestions}
+                    placeholder={'Přidat štítek'}
+                    query={tagQuery}
+                  >
+                    {selectedTagIds.map((tagId) => {
+                      const tag = tagOptions.find(
+                        (option) => option.id === tagId,
+                      )
+                      const isArchived = tag?.state === 'archived'
+
+                      return (
+                        <Chip
+                          key={tagId}
+                          muted={tag?.state !== 'published'}
+                          note={isArchived ? 'archivovaný' : undefined}
+                          onRemove={
+                            isReadOnly
+                              ? undefined
+                              : () =>
+                                  setTagIds(
+                                    selectedTagIds.filter(
+                                      (selectedId) => selectedId !== tagId,
+                                    ),
+                                  )
+                          }
+                        >
+                          {tag?.name ?? tagId}
+                        </Chip>
+                      )
+                    })}
+                  </ChipInput>
+                  {selectedTagIds.map((tagId) => (
+                    <input
+                      key={tagId}
+                      name={fields.tagIds.name}
+                      type={'hidden'}
+                      value={tagId}
+                    />
+                  ))}
+                  {removedTagIds.map((id) => (
+                    <input
+                      key={id}
+                      name={fields.removedTagIds.name}
+                      type={'hidden'}
+                      value={id}
+                    />
+                  ))}
+                </fieldset>
+              </EditorDetail>
+
+              <EditorDetail
+                {...detailProps('images')}
+                name={'Obrázky'}
+                saveLine={renderSaveLine()}
+                summary={imageCount === 0 ? '—' : String(imageCount)}
+              >
+                <fieldset className={styles.lock} disabled={isLocked}>
+                  <AdminRadioInput
+                    className={styles.defaultFieldFeaturedImageContainer}
+                    field={fields.featuredImage}
+                    inputProps={{
+                      defaultChecked: !article.featuredImageId,
+                      value: FEATURED_IMAGE_SOURCE.NONE,
+                    }}
+                    label={'Bez hlavního obrázku'}
+                  />
+
+                  {existingImages.map((image, index) => {
+                    const imageFields = image.getFieldset()
+                    const imageId = imageFields.id.value
+
+                    return (
+                      <AdminImageUploadCard
+                        action={
+                          !isReadOnly && (
+                            <Button
+                              onClick={() => {
+                                const currentValue = fields.featuredImage.value
+                                if (
+                                  currentValue ===
+                                  `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`
+                                ) {
+                                  form.update({
+                                    name: fields.featuredImage.name,
+                                    value: FEATURED_IMAGE_SOURCE.NONE,
+                                  })
+                                }
+                                form.remove({
+                                  index,
+                                  name: fields.existingImages.name,
+                                })
+                              }}
+                              type={'button'}
+                              variant={'danger'}
+                            >
+                              <DeleteIcon className={styles.removeIcon} />
+                              Odstranit
+                            </Button>
+                          )
+                        }
+                        key={image.key}
+                        title={'Existující obrázek'}
+                      >
+                        <input
+                          {...getInputProps(imageFields.id, { type: 'hidden' })}
+                        />
+
+                        <AdminImageInput
+                          className={styles.imageFieldFileContainer}
+                          field={imageFields.file}
+                          label={'Obrázek'}
+                          previewUrl={
+                            imageId ? previewUrlById.get(imageId) : undefined
+                          }
+                        />
+
+                        <TextField
+                          {...getInputProps(imageFields.altText, {
+                            type: 'text',
+                          })}
+                          className={styles.imageFieldAltTextContainer}
+                          errors={imageFields.altText.errors}
+                          label={'Alt text'}
+                          placeholder={
+                            'Popis obrázku pro vyhledávače a čtečky obrazovky'
+                          }
+                        />
+
+                        <TextEditor
+                          className={styles.imageFieldDescriptionContainer}
+                          field={imageFields.description}
+                          inputProps={{
+                            placeholder: 'Popis obrázku...',
+                          }}
+                          label={'Popis obrázku'}
+                          readOnly={isReadOnly}
+                          toolbar={['link']}
+                        />
+
+                        <AdminRadioInput
+                          className={styles.fieldFeaturedImageContainer}
+                          field={fields.featuredImage}
+                          inputProps={{
+                            value: `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`,
+                          }}
+                          label={'Použít jako hlavní obrázek'}
+                        />
+                      </AdminImageUploadCard>
+                    )
+                  })}
+
+                  {newImages.map((image, index) => {
+                    const imageFields = image.getFieldset()
+                    return (
+                      <AdminImageUploadCard
+                        action={
+                          !isReadOnly && (
+                            <Button
+                              onClick={() => {
+                                const currentValue = fields.featuredImage.value
+                                if (
+                                  currentValue ===
+                                  `${FEATURED_IMAGE_SOURCE.NEW}:${index}`
+                                ) {
+                                  form.update({
+                                    name: fields.featuredImage.name,
+                                    value: FEATURED_IMAGE_SOURCE.NONE,
+                                  })
+                                }
+                                form.remove({ index, name: fields.images.name })
+                              }}
+                              type={'button'}
+                              variant={'danger'}
+                            >
+                              <DeleteIcon className={styles.removeIcon} />
+                              Odstranit
+                            </Button>
+                          )
+                        }
+                        key={image.key}
+                        title={'Nový obrázek'}
+                      >
+                        {/* Made here, so a repeated save stores the image once. */}
+                        <input
+                          {...getInputProps(imageFields.id, { type: 'hidden' })}
+                        />
+                        <AdminImageInput
+                          className={styles.imageFieldFileContainer}
+                          field={imageFields.file}
+                          label={'Obrázek'}
+                        />
+                        <TextField
+                          {...getInputProps(imageFields.altText, {
+                            type: 'text',
+                          })}
+                          className={styles.imageFieldAltTextContainer}
+                          errors={imageFields.altText.errors}
+                          label={'Alt text'}
+                          placeholder={
+                            'Popis obrázku pro vyhledávače a čtečky obrazovky'
+                          }
+                        />
+                        <TextEditor
+                          className={styles.imageFieldDescriptionContainer}
+                          field={imageFields.description}
+                          inputProps={{
+                            placeholder: 'Popis obrázku...',
+                          }}
+                          label={'Popis obrázku'}
+                          readOnly={isReadOnly}
+                          toolbar={['link']}
+                        />
+                        <AdminRadioInput
+                          className={styles.fieldFeaturedImageContainer}
+                          field={fields.featuredImage}
+                          inputProps={{
+                            value: `${FEATURED_IMAGE_SOURCE.NEW}:${index}`,
+                          }}
+                          label={'Použít jako hlavní obrázek'}
+                        />
+                      </AdminImageUploadCard>
+                    )
+                  })}
+
+                  {/* Quiet like Přidat spoluautora until the gallery's tile (#673). */}
+                  {!isReadOnly && (
+                    <Button
+                      className={styles.addButton}
+                      onClick={() =>
+                        form.insert({
+                          defaultValue: { id: createId() },
+                          name: fields.images.name,
+                        })
+                      }
+                      size={'sm'}
+                      type={'button'}
+                      variant={'ghost'}
+                    >
+                      Přidat obrázek
+                    </Button>
+                  )}
+                </fieldset>
+              </EditorDetail>
+            </AdminDetailAside>
+          </AdminDetailLayout>
         </Form>
       </FormProvider>
     </AdminPage>

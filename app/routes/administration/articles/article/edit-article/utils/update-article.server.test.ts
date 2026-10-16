@@ -10,6 +10,7 @@ import { updateArticle } from './update-article.server'
 // Prisma operations return tags so the test can see what went into the
 // transaction; `deleteRowWithImages` keeps its real ordering (row, then files).
 const mocks = vi.hoisted(() => ({
+  articleCategoryFindMany: vi.fn(),
   articleFindMany: vi.fn(),
   articleFindUnique: vi.fn(),
   articleImageAggregate: vi.fn(),
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   articleImageDeleteMany: vi.fn(),
   articleImageFindMany: vi.fn(),
   articleImageUpdate: vi.fn(),
+  articleTagFindMany: vi.fn(),
   articleUpdate: vi.fn(),
   articleUpdateMany: vi.fn(),
   checkAuthorPermission: vi.fn(),
@@ -68,6 +70,7 @@ vi.mock('~/utils/db.server', () => ({
       update: mocks.articleUpdate,
       updateMany: mocks.articleUpdateMany,
     },
+    articleCategory: { findMany: mocks.articleCategoryFindMany },
     articleImage: {
       aggregate: mocks.articleImageAggregate,
       count: mocks.articleImageCount,
@@ -76,6 +79,7 @@ vi.mock('~/utils/db.server', () => ({
       findMany: mocks.articleImageFindMany,
       update: mocks.articleImageUpdate,
     },
+    articleTag: { findMany: mocks.articleTagFindMany },
     contentLog: { count: mocks.contentLogCount },
     pageSEO: {
       deleteMany: mocks.pageSeoDeleteMany,
@@ -153,11 +157,13 @@ const savedAt = new Date('2026-10-15T12:06:00Z')
 
 const storedArticle = {
   authors: [{ id: 'author-1' }],
+  categories: [] as Array<{ id: string }>,
   firstContentAt: new Date('2026-09-20T10:00:00Z'),
   ...ownHold,
   slug: 'article',
   state: 'draft',
   submittedAt: null,
+  tags: [] as Array<{ id: string }>,
 }
 
 beforeEach(() => {
@@ -186,6 +192,11 @@ beforeEach(() => {
   mocks.articleUpdate.mockReturnValue('update-article')
   // No other article has the address.
   mocks.articleFindMany.mockResolvedValue([])
+  // Every category and tag the form sends exists.
+  const echoIds = async ({ where }: { where: { id: { in: string[] } } }) =>
+    where.id.in.map((id) => ({ id }))
+  mocks.articleCategoryFindMany.mockImplementation(echoIds)
+  mocks.articleTagFindMany.mockImplementation(echoIds)
   // Every image the form names is the article's own; no cover has a new id.
   mocks.articleImageCount.mockImplementation(
     async ({ where }: { where: { id: { in: string[] } } }) =>
@@ -878,5 +889,73 @@ describe('updateArticle — a missing row that is not the hold', () => {
       .mockResolvedValueOnce(ownHold)
 
     await expect(updateArticle(request, options)).rejects.toBe(missingAuthor)
+  })
+})
+
+describe('updateArticle — categories and tags (design 24a, decision 0025)', () => {
+  const linkedIds = () => {
+    const [{ data: written }] = mocks.articleUpdate.mock.lastCall as [
+      {
+        data: {
+          categories: { set: Array<{ id: string }> }
+          tags: { set: Array<{ id: string }> }
+        }
+      },
+    ]
+    return {
+      categories: written.categories.set.map(({ id }) => id),
+      tags: written.tags.set.map(({ id }) => id),
+    }
+  }
+
+  beforeEach(() => {
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      categories: [{ id: 'culture' }, { id: 'archived-category' }],
+      tags: [{ id: 'autumn' }, { id: 'archived-tag' }],
+    })
+  })
+
+  test('keeps an archived link the editor did not send', async () => {
+    await updateArticle(request, {
+      ...options,
+      categoryIds: ['culture'],
+      tagIds: ['autumn'],
+    })
+
+    expect(linkedIds()).toEqual({
+      categories: ['culture', 'archived-category'],
+      tags: ['autumn', 'archived-tag'],
+    })
+  })
+
+  test('removes only what the editor sends as removed', async () => {
+    await updateArticle(request, {
+      ...options,
+      categoryIds: ['culture'],
+      removedCategoryIds: ['archived-category'],
+      removedTagIds: ['autumn'],
+      tagIds: [],
+    })
+
+    expect(linkedIds()).toEqual({
+      categories: ['culture'],
+      tags: ['archived-tag'],
+    })
+  })
+
+  test('adds a picked one and leaves out an id that names nothing', async () => {
+    mocks.articleCategoryFindMany.mockResolvedValue([{ id: 'news' }])
+
+    await updateArticle(request, {
+      ...options,
+      categoryIds: ['news', 'missing'],
+    })
+
+    expect(linkedIds().categories).toEqual([
+      'culture',
+      'archived-category',
+      'news',
+    ])
   })
 })

@@ -7,11 +7,11 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { href, useNavigation } from 'react-router'
-import { AdminButtonLink } from '~/components/admin/admin-button-link'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { ButtonLink } from '~/components/button-link'
 import { Fieldset } from '~/components/fieldset'
 import { FileInput } from '~/components/file-input'
 import { Form } from '~/components/form'
@@ -92,13 +92,13 @@ export default function RouteComponent({
             {...getInputProps(fields.title, { type: 'text' })}
           />
 
-          <AdminButtonLink
+          <ButtonLink
             disabled={isLoadingOrSubmitting}
             onClick={regenerateSlug}
             type={'button'}
           >
             Vygenerovat nový slug
-          </AdminButtonLink>
+          </ButtonLink>
           <TextField
             errors={fields.slug.errors}
             label={'Slug'}

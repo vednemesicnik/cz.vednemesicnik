@@ -13,4 +13,6 @@ export const handle = {
       }),
     }
   },
+  // On a phone the editor's own bar replaces the top bar (24f).
+  hasOwnMobileBar: true,
 }

@@ -13,6 +13,8 @@
 .imageFieldDescriptionContainer {
   @layer route {
     grid-area: description;
+    /* A short text, not an article's (24a). */
+    --text-editor-min-block-size: 90px;
   }
 }
 
@@ -47,6 +49,225 @@
     & > :not(button) {
       flex: 1;
     }
+  }
+}
+
+/* Přidat spoluautora: as wide as its words, at the start of the column (24a). */
+.addButton {
+  @layer route {
+    justify-self: start;
+  }
+}
+
+/* Below 768 px the editor's own bar stays on top (24f); the text's toolbar
+   sticks under it. */
+.page {
+  @layer route {
+    --editor-bar-height: 52px;
+
+    @media (width < 768px) {
+      padding-block-start: 0;
+      --text-editor-toolbar-top: var(--editor-bar-height);
+    }
+  }
+}
+
+.mobileBar {
+  @layer route {
+    display: none;
+
+    @media (width < 768px) {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: var(--z-header);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-sizing: border-box;
+      block-size: var(--editor-bar-height);
+      /* Across the page's gutters, to the screen's edges. */
+      inline-size: calc(100% + 48px);
+      margin-inline: -24px;
+      padding-inline: 16px;
+      background-color: var(--bg-primary);
+      border-block-end: 1px solid var(--border);
+    }
+  }
+}
+
+/* On a phone the details are rows under the text, one after another (24f). */
+.page [data-column="aside"] {
+  @layer route {
+    @media (width < 768px) {
+      gap: 0;
+      border-block-start: 1px solid var(--border);
+    }
+  }
+}
+
+/* The detail's header (23a): the title with its tag, the save line under it,
+   Zavřít on the right (24a). */
+.header {
+  @layer route {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    width: 100%;
+  }
+}
+
+.title {
+  @layer route {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+}
+
+.titleLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+}
+
+/* On a phone the bar carries the line and Zavřít (24f). */
+.headerSaveLine,
+.headerClose {
+  @layer route {
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}
+
+/* One sentence over someone else's text, not a banner (24c). */
+.sentence {
+  @layer route {
+    max-width: 40rem;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+}
+
+/* A fieldset only to lock its fields without the hold (07g): no frame. */
+.lock {
+  @layer route {
+    display: grid;
+    /* One column the field's width: a wide toolbar scrolls instead. */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}
+
+/* The main column: title, perex and text at the web's measure (24a). */
+[data-column="main"] > .lock {
+  @layer route {
+    gap: 20px;
+    max-width: 40rem;
+  }
+}
+
+/* The title in the size it will have as the detail's heading (kh6gf6k6). */
+.titleInput {
+  @layer route {
+    field-sizing: content;
+    min-height: 0;
+    font-size: var(--page-title-font-size);
+    font-weight: var(--page-title-font-weight);
+    line-height: var(--page-title-line-height);
+    letter-spacing: var(--page-title-letter-spacing);
+    text-wrap: pretty;
+    resize: none;
+  }
+}
+
+.perexInput {
+  @layer route {
+    field-sizing: content;
+    min-height: 3lh;
+    font-size: 17px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1.55;
+    text-wrap: pretty;
+    resize: none;
+  }
+}
+
+.perexCount {
+  @layer route {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Over 160 the count turns amber; nothing is blocked (24a). */
+.perexCountOver {
+  @layer route {
+    color: var(--state-attention-text);
+  }
+}
+
+/* The whole address under its field, as the reader will see it (24a). */
+.path {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Two columns of checkboxes; on a phone one per row, a finger's height (24f). */
+.categories {
+  @layer route {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+
+    @media (width < 768px) {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+  }
+}
+
+.category {
+  @layer route {
+    @media (width < 768px) {
+      align-items: center;
+      width: 100%;
+      min-height: 44px;
+      border-block-end: 1px solid var(--border);
+    }
+  }
+}
+
+/* One the article has in another state: under the others, across, greyed (24a). */
+.categoryOutOfPlay {
+  @layer route {
+    grid-column: 1 / -1;
+    color: var(--text-secondary);
+
+    & input {
+      accent-color: var(--border-strong);
+    }
+  }
+}
+
+/* Why it stays greyed: readers do not see it (24a, 25d). */
+.categoryNote {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
   }
 }
 

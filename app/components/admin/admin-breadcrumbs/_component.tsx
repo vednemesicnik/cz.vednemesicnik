@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { Activity } from 'react'
 
 import { BaseBreadcrumbLink } from '~/components/base-breadcrumb-link'
@@ -7,6 +8,7 @@ import styles from './_styles.module.css'
 
 type Props = {
   items: Breadcrumb[]
+  className?: string
 }
 
 /**
@@ -40,11 +42,11 @@ type Props = {
  * - Separates breadcrumbs with forward slashes (except after the last item)
  * - Integrates with React Router for navigation and active state detection
  */
-export const AdminBreadcrumbs = ({ items }: Props) => {
+export const AdminBreadcrumbs = ({ items, className }: Props) => {
   const breadcrumbsCount = items.length
 
   return (
-    <nav className={styles.container}>
+    <nav className={clsx(styles.container, className)}>
       <ul className={styles.list}>
         {items.map((breadcrumb, index) => {
           const isLastItem = breadcrumbsCount === index + 1

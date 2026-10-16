@@ -45,6 +45,12 @@
   }
 }
 
+.topBarHidden {
+  @layer layout {
+    display: none;
+  }
+}
+
 .sidebar {
   @layer layout {
     @media (width < 768px) {

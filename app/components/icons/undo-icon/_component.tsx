@@ -5,20 +5,18 @@ import styles from './_styles.module.css'
 
 type Props = Pick<ComponentProps<'svg'>, 'className'>
 
+/** Lucide's icon, as the design system draws it (jb81di02). */
 export const UndoIcon = ({ className }: Props) => {
   return (
     <svg
       aria-label={'Ikona vrácení zpět'}
       className={clsx(styles.icon, className)}
       role={'img'}
-      viewBox={'0 -960 960 960'}
+      viewBox={'0 0 24 24'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
-      <path
-        d={
-          'M280-200v-80h284q63 0 109.5-40T720-420q0-60-46.5-100T564-560H312l104 104-56 56-200-200 200-200 56 56-104 104h252q97 0 166.5 63T800-420q0 94-69.5 157T564-200H280Z'
-        }
-      />
+      <path d={'M9 14 4 9l5-5'} />
+      <path d={'M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11'} />
     </svg>
   )
 }

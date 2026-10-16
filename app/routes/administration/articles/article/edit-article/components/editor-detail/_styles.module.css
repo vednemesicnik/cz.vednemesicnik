@@ -1,0 +1,161 @@
+/* A detail of the right column (24a); below 768 px a row that opens it over
+   the whole screen (24f). */
+.detail {
+  @layer component {
+    display: grid;
+    min-width: 0;
+  }
+}
+
+.row {
+  @layer component {
+    display: none;
+
+    @media (width < 768px) {
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr);
+      gap: 12px;
+      align-items: baseline;
+      min-block-size: 44px;
+      padding-block: 14px;
+      padding-inline: 0;
+      color: var(--text-primary);
+      font: inherit;
+      font-size: var(--font-size-sm);
+      text-align: start;
+      background: none;
+      border: 0;
+      border-block-end: 1px solid var(--border);
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-shadow);
+      }
+    }
+  }
+}
+
+.rowName {
+  @layer component {
+    color: var(--text-secondary);
+  }
+}
+
+.rowValue {
+  @layer component {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.panel {
+  @layer component {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}
+
+.bar {
+  @layer component {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    @media (width < 768px) {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 1;
+      padding-block: 10px;
+      padding-inline: 16px;
+      background-color: var(--bg-primary);
+      border-block-end: 1px solid var(--border);
+    }
+  }
+}
+
+/* Over the whole screen, scrolling on its own (24f). */
+.isOpen .panel {
+  @layer variant {
+    @media (width < 768px) {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-modal);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-block-end: 16px;
+      padding-inline: 16px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background-color: var(--bg-primary);
+
+      /* The bar spans the screen; the fields keep the gutter. */
+      & > .bar {
+        margin-inline: -16px;
+      }
+    }
+  }
+}
+
+/* The page under an open panel does not scroll, as under the menu. */
+:global(html):has(.isOpen .panel) {
+  @layer variant {
+    @media (width < 768px) {
+      overflow: hidden;
+    }
+  }
+}
+
+/* The field's label names it beside the text; the panel still has a title. */
+.isNameHidden {
+  @layer variant {
+    @media (width >= 768px) {
+      display: none;
+    }
+  }
+}
+
+.barTitle {
+  @layer component {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+  }
+}
+
+.name {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.4;
+    color: var(--text-primary);
+
+    &:focus {
+      outline: none;
+    }
+
+    @media (width < 768px) {
+      font-size: var(--font-size-md);
+    }
+  }
+}
+
+/* The save line and Hotovo belong to the open panel only; a variant, so it
+   wins over the button's own display. */
+.saveLine,
+.done {
+  @layer variant {
+    @media (width >= 768px) {
+      display: none;
+    }
+  }
+}

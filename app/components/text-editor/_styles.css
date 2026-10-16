@@ -1,0 +1,102 @@
+/* The text inside the editor, set as the web sets an article (design 24a,
+   12a): Tiptap renders plain elements, so the article's components' values
+   are repeated here. Global, as Tiptap's class is not a module's. */
+@layer component {
+  /* A short field, such as an image's description, sets
+     --text-editor-min-block-size lower. */
+  .tiptap {
+    min-block-size: var(--text-editor-min-block-size, 340px);
+    padding-block: 18px 28px;
+    padding-inline: 20px;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-lg);
+    text-wrap: pretty;
+    border-end-start-radius: var(--radius-md);
+    border-end-end-radius: var(--radius-md);
+    outline: none;
+
+    @media (width < 768px) {
+      min-block-size: min(var(--text-editor-min-block-size, 200px), 200px);
+      padding-block: 14px 20px;
+      padding-inline: 12px;
+    }
+
+    /* The wrapper paints the grey, with its rounded corners. */
+    &[contenteditable="false"] {
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+    }
+
+    & > :first-child {
+      margin-block-start: 0;
+    }
+
+    & > :last-child {
+      margin-block-end: 0;
+    }
+
+    /* As the web's paragraph: the last in its block has no gap under it. */
+    & p {
+      margin-block: 0 1.25rem;
+
+      &:last-child {
+        margin-block-end: 0;
+      }
+    }
+
+    & h2,
+    & h3 {
+      font-weight: var(--font-weight-semibold);
+      line-height: var(--line-height-4xl);
+      margin-block: 0.25em 0.75em;
+    }
+
+    & h2 {
+      font-size: var(--font-size-2xl);
+    }
+
+    & h3 {
+      font-size: var(--font-size-xl);
+    }
+
+    & ul,
+    & ol {
+      margin-block: 0.75em 1.25em;
+      padding-inline-start: 1em;
+    }
+
+    & ul {
+      list-style-type: disc;
+    }
+
+    & ol {
+      list-style-type: decimal;
+    }
+
+    & blockquote {
+      margin-block: 2rem;
+      margin-inline: 1rem;
+      padding: 1rem;
+      background: var(--bg-accent);
+      border-inline-start: 4px solid var(--border-accent);
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+      font-style: italic;
+    }
+
+    & a {
+      color: var(--link);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    & p.is-editor-empty:first-child::before {
+      color: var(--text-tertiary);
+      content: attr(data-placeholder);
+      float: left;
+      height: 0;
+      pointer-events: none;
+    }
+  }
+}

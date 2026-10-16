@@ -1,0 +1,30 @@
+import { clsx } from 'clsx'
+import type { ComponentProps } from 'react'
+
+import styles from './_styles.module.css'
+
+type Props = Pick<ComponentProps<'svg'>, 'className'>
+
+/** Lucide's icon, as the design system draws it (jb81di02). */
+export const QuoteIcon = ({ className }: Props) => {
+  return (
+    <svg
+      aria-label={'Ikona citace'}
+      className={clsx(styles.icon, className)}
+      role={'img'}
+      viewBox={'0 0 24 24'}
+      xmlns={'http://www.w3.org/2000/svg'}
+    >
+      <path
+        d={
+          'M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z'
+        }
+      />
+      <path
+        d={
+          'M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z'
+        }
+      />
+    </svg>
+  )
+}

@@ -10,25 +10,6 @@
   }
 }
 
-/* A submit button drawn as the design system's Link, beside a real one. */
-.resend {
-  @layer route {
-    width: auto;
-    font-size: inherit;
-    color: var(--link-strong);
-
-    &:hover:not(:disabled) {
-      color: var(--link-strong);
-      text-decoration-thickness: 2px;
-    }
-
-    &:active:not(:disabled),
-    &:focus-visible {
-      color: var(--link-strong);
-    }
-  }
-}
-
 /* The note belongs to the links above it: 12 px, closer than the card's gap. */
 .replaces {
   @layer route {
