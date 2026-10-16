@@ -1,4 +1,9 @@
 import type { FieldMetadata } from '@conform-to/react'
+import { Document } from '@tiptap/extension-document'
+import { Link } from '@tiptap/extension-link'
+import { Paragraph } from '@tiptap/extension-paragraph'
+import { Text } from '@tiptap/extension-text'
+import { UndoRedo } from '@tiptap/extensions'
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
 import { ErrorMessage } from '~/components/error-message'
@@ -7,8 +12,19 @@ import { Label } from '~/components/label'
 import { TextEditorContent } from '~/components/text-editor-content'
 import { TextEditorHiddenInput } from '~/components/text-editor-hidden-input'
 import { TextEditorLinkButton } from '~/components/text-editor-link-button'
+import { TEXT_EDITOR_LINK_CONFIG } from '~/config/text-editor-link-config'
 import { useTextEditor } from '~/hooks/use-text-editor'
 import styles from './_styles.module.css'
+
+// Text and links only (design 24b): a typed `17. ` stays text, and a pasted
+// heading or list lands as paragraphs.
+const formats = [
+  Document,
+  Paragraph,
+  Text,
+  Link.configure(TEXT_EDITOR_LINK_CONFIG),
+  UndoRedo,
+]
 
 type Props = {
   label: string
@@ -22,7 +38,8 @@ type Props = {
 /**
  * An image's caption (design 24b, `.vdm-imagetile__caption`): a short field
  * set like the image tile's alt text, with the link tool as a chip at its end
- * instead of a toolbar. The text of an article is `TextEditor`.
+ * instead of a toolbar. It holds text and links only. The text of an article
+ * is `TextEditor`.
  *
  * @param props.field - The Conform field; the editor writes its JSON into it.
  */
@@ -42,6 +59,7 @@ export const CaptionEditor = ({
   const { editor, labelId } = useTextEditor({
     disabled: isInputDisabled || readOnly,
     field,
+    formats,
     placeholder: inputPlaceholder,
   })
 
