@@ -23,6 +23,29 @@
   }
 }
 
+/* `.vdm-actionmenu__chip`: over an image's preview (ImageTile, 24b). */
+.chip {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding-inline: 8px;
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    background: var(--card-bg);
+    border: 0;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
 .menu {
   @layer component {
     /* Without Popover API support the [popover] attribute is ignored and the
