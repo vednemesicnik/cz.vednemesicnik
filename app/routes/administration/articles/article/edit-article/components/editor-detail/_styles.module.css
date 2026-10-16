@@ -1,14 +1,14 @@
 /* A detail of the right column (24a); below 768 px a row that opens it over
    the whole screen (24f). */
 .detail {
-  @layer component {
+  @layer route {
     display: grid;
     min-width: 0;
   }
 }
 
 .row {
-  @layer component {
+  @layer route {
     display: none;
 
     @media (width < 768px) {
@@ -37,13 +37,13 @@
 }
 
 .rowName {
-  @layer component {
+  @layer route {
     color: var(--text-secondary);
   }
 }
 
 .rowValue {
-  @layer component {
+  @layer route {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -51,7 +51,7 @@
 }
 
 .panel {
-  @layer component {
+  @layer route {
     display: grid;
     gap: 10px;
     min-width: 0;
@@ -63,7 +63,7 @@
 }
 
 .bar {
-  @layer component {
+  @layer route {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -83,7 +83,7 @@
 
 /* Over the whole screen, scrolling on its own (24f). */
 .isOpen .panel {
-  @layer variant {
+  @layer route {
     @media (width < 768px) {
       position: fixed;
       inset: 0;
@@ -107,7 +107,7 @@
 
 /* The page under an open panel does not scroll, as under the menu. */
 :global(html):has(.isOpen .panel) {
-  @layer variant {
+  @layer route {
     @media (width < 768px) {
       overflow: hidden;
     }
@@ -115,8 +115,8 @@
 }
 
 /* The field's label names it beside the text; the panel still has a title. */
-.isNameHidden {
-  @layer variant {
+.bar.isNameHidden {
+  @layer route {
     @media (width >= 768px) {
       display: none;
     }
@@ -124,7 +124,7 @@
 }
 
 .barTitle {
-  @layer component {
+  @layer route {
     display: grid;
     gap: 1px;
     min-width: 0;
@@ -132,7 +132,7 @@
 }
 
 .name {
-  @layer component {
+  @layer route {
     margin: 0;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
@@ -149,11 +149,10 @@
   }
 }
 
-/* The save line and Hotovo belong to the open panel only; a variant, so it
-   wins over the button's own display. */
+/* The save line and Hotovo belong to the open panel only. */
 .saveLine,
 .done {
-  @layer variant {
+  @layer route {
     @media (width >= 768px) {
       display: none;
     }
