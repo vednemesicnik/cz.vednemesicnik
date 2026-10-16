@@ -111,18 +111,23 @@ export const Tooltip = ({
     show()
   }
 
-  const handleToggle = (event: ToggleEvent<HTMLSpanElement>) => {
-    const isNowOpen = event.newState === 'open'
+  // `beforetoggle` fires inside hidePopover() and on a native close, so the
+  // next trigger, entered in the same pointer move, already sees the time.
+  const handleBeforeToggle = (event: ToggleEvent<HTMLSpanElement>) => {
+    if (event.newState === 'closed') lastHiddenAt = Date.now()
+  }
 
-    if (!isNowOpen) lastHiddenAt = Date.now()
-    setIsOpen(isNowOpen)
+  const handleToggle = (event: ToggleEvent<HTMLSpanElement>) => {
+    setIsOpen(event.newState === 'open')
   }
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: listens to its trigger's pointer and focus, which bubble here; the trigger is the control
+    // biome-ignore lint/a11y/noStaticElementInteractions: listens to its trigger's pointer, focus and click, which bubble here; the trigger is the control
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the click only hides the bubble; the trigger owns the keys, and its keyboard press arrives as this click
     <span
       className={clsx(styles.anchor, className)}
       onBlur={hide}
+      onClick={hide}
       onFocus={handleFocus}
       onPointerDown={hide}
       onPointerEnter={handlePointerEnter}
@@ -133,6 +138,7 @@ export const Tooltip = ({
       <span
         aria-hidden={true}
         className={clsx(styles.bubble, placement === 'bottom' && styles.bottom)}
+        onBeforeToggle={handleBeforeToggle}
         onToggle={handleToggle}
         popover={'hint'}
         ref={bubbleRef}

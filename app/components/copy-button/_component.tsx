@@ -88,7 +88,13 @@ export const CopyButton = ({ value, children, className }: Props) => {
 
   return (
     <>
-      {hasText ? button : <Tooltip label={LABEL}>{button}</Tooltip>}
+      {hasText ? (
+        button
+      ) : (
+        <Tooltip className={styles.tooltip} label={LABEL}>
+          {button}
+        </Tooltip>
+      )}
       <span className={styles.visuallyHidden} role={'status'}>
         {isCopied ? COPIED_LABEL : ''}
       </span>

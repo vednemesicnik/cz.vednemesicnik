@@ -53,7 +53,7 @@ export const AdminSplitButton = ({
       {children}
 
       {/* The arrow has no visible name; the Tooltip shows it (jb81di02). */}
-      <Tooltip className={styles.chevronTooltip} label={chevronAriaLabel}>
+      <Tooltip label={chevronAriaLabel}>
         <AdminActionButton
           action={action}
           aria-label={chevronAriaLabel}
