@@ -41,6 +41,11 @@ type Props = {
   toolbar?: ToolOption[]
   /** Only reads, for good: grey, without the toolbar (design 24h). */
   readOnly?: boolean
+  /**
+   * `sm`: a short field set like the image tile's alt text, with the link
+   * tool at its end instead of a toolbar on top (the caption, 24b).
+   */
+  size?: 'md' | 'sm'
 }
 
 /**
@@ -52,6 +57,8 @@ type Props = {
  *
  * @param props.field - The Conform field; the editor writes its JSON into it.
  * @param props.toolbar - The tools shown, all by default.
+ * @param props.size - `sm` for an image's caption: only the link tool, at
+ * the field's end.
  */
 export const TextEditor = ({
   label,
@@ -64,6 +71,7 @@ export const TextEditor = ({
   } = {},
   className,
   readOnly = false,
+  size = 'md',
   toolbar = [
     'bold',
     'italic',
@@ -194,9 +202,30 @@ export const TextEditor = ({
     toolbar.includes('blockquote')
   const hasHistoryGroup = toolbar.includes('undo') || toolbar.includes('redo')
 
+  const linkButton = (
+    <TextEditorToolbarButton
+      active={editorState?.isActiveLink}
+      className={size === 'sm' ? styles.inlineTool : undefined}
+      disabled={
+        editorState?.isActiveLink
+          ? !editorState?.canUnsetLink
+          : !editorState?.canSetLink
+      }
+      label={'Odkaz'}
+      onClick={handleToggleLink}
+    >
+      <LinkIcon />
+    </TextEditorToolbarButton>
+  )
+
   return (
-    <section className={clsx(styles.container, className)}>
-      <Label htmlFor={field.id} id={labelId} required={field.required}>
+    <section className={clsx(styles.container, styles[size], className)}>
+      <Label
+        className={styles.label}
+        htmlFor={field.id}
+        id={labelId}
+        required={field.required}
+      >
         {label}
       </Label>
 
@@ -207,7 +236,14 @@ export const TextEditor = ({
           readOnly && styles.editorReadOnly,
         )}
       >
-        {editor && (
+        {editor && size === 'sm' && (
+          <>
+            <EditorContent className={styles.content} editor={editor} />
+            {/* The one tool, at the field's end (24b). */}
+            {!readOnly && toolbar.includes('link') && linkButton}
+          </>
+        )}
+        {editor && size === 'md' && (
           <>
             {/* A read-only editor has no toolbar (design 24h). */}
             {!readOnly && (
@@ -242,20 +278,7 @@ export const TextEditor = ({
                       </TextEditorToolbarButton>
                     )}
 
-                    {toolbar.includes('link') && (
-                      <TextEditorToolbarButton
-                        active={editorState?.isActiveLink}
-                        disabled={
-                          editorState?.isActiveLink
-                            ? !editorState?.canUnsetLink
-                            : !editorState?.canSetLink
-                        }
-                        label={'Odkaz'}
-                        onClick={handleToggleLink}
-                      >
-                        <LinkIcon />
-                      </TextEditorToolbarButton>
-                    )}
+                    {toolbar.includes('link') && linkButton}
                   </TextEditorToolbarGroup>
                 )}
 

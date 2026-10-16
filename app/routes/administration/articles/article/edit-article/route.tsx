@@ -1623,13 +1623,13 @@ export default function RouteComponent({
                               size={'sm'}
                             />
                             <TextEditor
-                              className={styles.captionField}
                               field={imageFields.description}
                               inputProps={{
                                 placeholder: 'Pod obrázkem na webu',
                               }}
                               label={'Popisek'}
                               readOnly={isReadOnly}
+                              size={'sm'}
                               toolbar={['link']}
                             />
                             {tile?.fileName != null && (

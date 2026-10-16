@@ -33,24 +33,6 @@
   }
 }
 
-/* A short text, not an article's: set as the tile's alt field (24b). */
-.captionField {
-  @layer route {
-    --text-editor-min-block-size: 40px;
-
-    & label {
-      font-size: var(--font-size-xs);
-    }
-
-    & :global(.tiptap) {
-      padding-block: 7px;
-      padding-inline: 10px;
-      font-size: 13px;
-      line-height: 1.4;
-    }
-  }
-}
-
 /* Opened by *Nahradit soubor* and *Vybrat jiný soubor*. */
 .replaceInput {
   @layer route {
