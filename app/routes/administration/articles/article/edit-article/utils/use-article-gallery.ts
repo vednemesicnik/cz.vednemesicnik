@@ -3,7 +3,6 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { FORM_CONFIG } from '~/config/form-config'
-import { moveListItem } from '~/utils/move-list-item'
 
 import { getRejectedFileSentence } from './get-rejected-file-sentence'
 
@@ -18,6 +17,13 @@ export type GalleryTile = {
   isReplacing: boolean
   /** The new file of a replacement did not process; the old one stays. */
   hasReplaceFailed: boolean
+  /**
+   * A failed new image whose upload got no answer: it may have landed, so
+   * removing it asks the server too.
+   */
+  isUnconfirmed: boolean
+  /** Its removal is on its way: no more changes to it. */
+  isRemoving: boolean
 }
 
 type StoredImage = {
@@ -71,7 +77,9 @@ type Options = {
 const toTile = (image: StoredImage): GalleryTile => ({
   fileName: image.fileName,
   hasReplaceFailed: false,
+  isRemoving: false,
   isReplacing: false,
+  isUnconfirmed: false,
   previewUrl: image.previewUrl,
   status: 'stored',
 })
@@ -105,6 +113,11 @@ export const useArticleGallery = ({
   )
   const tilesRef = useRef(tiles)
   tilesRef.current = tiles
+  // The images the server has, kept in step at once, ahead of a render.
+  const storedIdsRef = useRef(new Set(images.map(({ id }) => id)))
+  // A new image landed before one picked earlier: the server's order is not
+  // the tiles' until the uploads settle.
+  const isOrderStaleRef = useRef(false)
   const [featuredImageId, setFeaturedImageId] = useState(initialFeaturedImageId)
   const [rejectedSentences, setRejectedSentences] = useState<string[]>([])
   // A removal, the main image or the order did not save, and was put back.
@@ -195,7 +208,21 @@ export const useArticleGallery = ({
     return next
   }
 
-  const isStored = (id: string) => tilesRef.current.get(id)?.status === 'stored'
+  const isStored = (id: string) => storedIdsRef.current.has(id)
+
+  // The stored images in the order the tiles show, read when it is sent.
+  const getStoredOrder = () => optionsRef.current.list.getIds().filter(isStored)
+
+  // Once no upload is under way, the server gets the tiles' order if a new
+  // image landed out of turn.
+  const syncOrderAfterUploads = async () => {
+    if (uploadsInFlightRef.current > 0 || !isOrderStaleRef.current) return
+    isOrderStaleRef.current = false
+    const result = await enqueue(() =>
+      post({ imageIds: getStoredOrder(), intent: 'reorder' }),
+    )
+    if (result.status !== 'saved') setHasFailedChange(true)
+  }
 
   // Uploads go side by side; each tile waits only for its own file.
   const upload = async (id: string, file: File) => {
@@ -209,21 +236,17 @@ export const useArticleGallery = ({
       })
 
       if (result.status === 'saved') {
-        // The server puts a new image last; one that landed before an image
-        // picked earlier sends the order the tiles show.
+        // The server puts a new image last.
         if (!isStored(id)) {
-          const storedIds = optionsRef.current.list
-            .getIds()
-            .filter((imageId) => imageId === id || isStored(imageId))
-          if (storedIds.at(-1) !== id) {
-            void enqueue(() => post({ imageIds: storedIds, intent: 'reorder' }))
-          }
+          storedIdsRef.current.add(id)
+          if (getStoredOrder().at(-1) !== id) isOrderStaleRef.current = true
         }
         revokeObjectUrl(id)
         updateTile(id, {
           fileName: result.fileName ?? file.name,
           hasReplaceFailed: false,
           isReplacing: false,
+          isUnconfirmed: false,
           previewUrl: result.previewUrl ?? null,
           status: 'stored',
         })
@@ -239,11 +262,16 @@ export const useArticleGallery = ({
           id,
           tile.isReplacing
             ? { ...tile, hasReplaceFailed: true, isReplacing: false }
-            : { ...tile, status: 'failed' },
+            : {
+                ...tile,
+                isUnconfirmed: result.status !== 'failed',
+                status: 'failed',
+              },
         )
       })
     } finally {
       uploadsInFlightRef.current -= 1
+      void syncOrderAfterUploads()
     }
   }
 
@@ -271,12 +299,16 @@ export const useArticleGallery = ({
       }
 
       const id = createId()
+      // Made outside the updater, which React may run twice.
+      const previewUrl = rememberPreview(id, file)
       setTiles((current) =>
         new Map(current).set(id, {
           fileName: file.name,
           hasReplaceFailed: false,
+          isRemoving: false,
           isReplacing: false,
-          previewUrl: rememberPreview(id, file),
+          isUnconfirmed: false,
+          previewUrl,
           status: 'processing',
         }),
       )
@@ -312,22 +344,39 @@ export const useArticleGallery = ({
     void upload(id, file)
   }
 
-  /** Removes a stored image (after its dialog) or drops a failed one. */
-  const remove = async (id: string) => {
-    if (!isStored(id)) {
+  /**
+   * Removes a stored image (after its dialog) or drops a failed one; one whose
+   * upload got no answer is removed on the server too, in case it landed.
+   *
+   * @returns Whether the tile is gone.
+   */
+  const remove = async (id: string): Promise<boolean> => {
+    const tile = tilesRef.current.get(id)
+    if (tile === undefined || tile.isRemoving) return false
+
+    const drop = () => {
       revokeObjectUrl(id)
+      storedIdsRef.current.delete(id)
       optionsRef.current.list.remove(id)
       dropTile(id)
-      return
     }
 
+    if (!isStored(id) && !tile.isUnconfirmed) {
+      drop()
+      return true
+    }
+
+    updateTile(id, { isRemoving: true })
     const result = await enqueue(() => post({ imageId: id, intent: 'remove' }))
     setHasFailedChange(result.status !== 'saved')
-    if (result.status !== 'saved') return
+    if (result.status !== 'saved') {
+      updateTile(id, { isRemoving: false })
+      return false
+    }
 
-    optionsRef.current.list.remove(id)
-    dropTile(id)
+    drop()
     setFeaturedImageId((current) => (current === id ? null : current))
+    return true
   }
 
   /** Sets the main image, or none with `null`. */
@@ -348,28 +397,30 @@ export const useArticleGallery = ({
    *
    * @param id - The stored image.
    * @param to - Its new place among the stored images.
+   * @returns Whether the new order saved.
    */
-  const move = async (id: string, to: number) => {
+  const move = async (id: string, to: number): Promise<boolean> => {
     const ids = optionsRef.current.list.getIds()
     const storedIds = ids.filter(isStored)
     const from = storedIds.indexOf(id)
-    if (from === -1 || to === from || to < 0 || to >= storedIds.length) return
+    if (from === -1 || to === from || to < 0 || to >= storedIds.length) {
+      return false
+    }
 
     // In the form the tile takes the place of the stored image it passes.
     const listFrom = ids.indexOf(id)
     const listTo = ids.indexOf(storedIds[to])
     optionsRef.current.list.move(listFrom, listTo)
 
+    // The order as it stands when the change goes, after those before it.
     const result = await enqueue(() =>
-      post({
-        imageIds: moveListItem(storedIds, from, to),
-        intent: 'reorder',
-      }),
+      post({ imageIds: getStoredOrder(), intent: 'reorder' }),
     )
     setHasFailedChange(result.status !== 'saved')
     if (result.status !== 'saved') {
       optionsRef.current.list.move(listTo, listFrom)
     }
+    return result.status === 'saved'
   }
 
   // An upload on its way is lost with the page; the browser asks (24b).

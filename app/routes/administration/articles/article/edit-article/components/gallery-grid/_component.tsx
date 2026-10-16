@@ -6,7 +6,7 @@ import styles from './_styles.module.css'
 type Props = {
   /** Three in the panel (24b), two in the narrow column (24a). */
   columns: 2 | 3
-  /** `GalleryGridItem`s, then the *Přidat obrázky* tile. */
+  /** The images' `<li>`s, then the *Přidat obrázky* tile. */
   children: ReactNode
   className?: string
 }

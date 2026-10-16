@@ -20,7 +20,8 @@ type Options = {
  * @param request - The action's request.
  * @param options - The article, the tab and the image.
  * @returns `saved` or `not-held`.
- * @throws A 400 response for an image that is not the article's.
+ * @throws A 400 response for an image of another article; one that does not
+ *   exist counts as removed.
  */
 export async function removeArticleImage(
   request: Request,
@@ -29,12 +30,16 @@ export async function removeArticleImage(
   return saveArticleImageChange(request, {
     articleId,
     prepare: async (_context, article) => {
-      const image = await prisma.articleImage.findFirst({
-        select: { id: true },
-        where: { articleId, id: imageId },
+      const image = await prisma.articleImage.findUnique({
+        select: { articleId: true },
+        where: { id: imageId },
       })
 
-      if (image === null) {
+      // Already gone, or never landed (an upload that got no answer): the
+      // removal holds.
+      if (image === null) return { answer: {}, writes: [] }
+
+      if (image.articleId !== articleId) {
         throw data(null, { status: 400 })
       }
 

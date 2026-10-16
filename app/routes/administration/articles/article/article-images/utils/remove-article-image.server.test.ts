@@ -4,7 +4,7 @@ import { removeArticleImage } from './remove-article-image.server'
 
 const mocks = vi.hoisted(() => ({
   articleImageDelete: vi.fn(),
-  articleImageFindFirst: vi.fn(),
+  articleImageFindUnique: vi.fn(),
   buildArticlePageSeoImageWrites: vi.fn(),
   deleteImage: vi.fn(),
   saveArticleImageChange: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('~/utils/db.server', () => ({
   prisma: {
     articleImage: {
       delete: mocks.articleImageDelete,
-      findFirst: mocks.articleImageFindFirst,
+      findUnique: mocks.articleImageFindUnique,
     },
   },
 }))
@@ -52,7 +52,7 @@ const run = async (
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.saveArticleImageChange.mockResolvedValue({ status: 'saved' })
-  mocks.articleImageFindFirst.mockResolvedValue({ id: 'image-1' })
+  mocks.articleImageFindUnique.mockResolvedValue({ articleId: 'article-1' })
   mocks.articleImageDelete.mockReturnValue('delete-image')
   mocks.buildArticlePageSeoImageWrites.mockResolvedValue(['seo-write'])
   mocks.deleteImage.mockResolvedValue(undefined)
@@ -69,16 +69,26 @@ describe('removeArticleImage', () => {
     })
   })
 
-  test('answers 400 for an image that is not the article’s', async () => {
-    mocks.articleImageFindFirst.mockResolvedValue(null)
+  test('answers 400 for an image of another article', async () => {
+    mocks.articleImageFindUnique.mockResolvedValue({ articleId: 'article-2' })
 
     await expect(run()).rejects.toMatchObject({ init: { status: 400 } })
 
-    expect(mocks.articleImageFindFirst).toHaveBeenCalledWith({
-      select: { id: true },
-      where: { articleId: 'article-1', id: 'image-1' },
+    expect(mocks.articleImageFindUnique).toHaveBeenCalledWith({
+      select: { articleId: true },
+      where: { id: 'image-1' },
     })
     expect(mocks.articleImageDelete).not.toHaveBeenCalled()
+  })
+
+  test('an image that does not exist counts as removed', async () => {
+    mocks.articleImageFindUnique.mockResolvedValue(null)
+
+    const prepared = await run()
+
+    expect(prepared.writes).toEqual([])
+    expect(mocks.articleImageDelete).not.toHaveBeenCalled()
+    expect(mocks.deleteImage).not.toHaveBeenCalled()
   })
 
   test('deletes the row and keeps the files until it committed', async () => {

@@ -108,9 +108,17 @@ export const GalleryDetail = ({
         {preview}
       </div>
 
+      {/* A file dropped beside *Přidat obrázky* is ignored rather than
+          opened by the browser in place of the editor. */}
       <dialog
         aria-labelledby={headingId}
         className={styles.panel}
+        onDragOver={(event) => {
+          if (event.dataTransfer.types.includes('Files')) event.preventDefault()
+        }}
+        onDrop={(event) => {
+          if (event.dataTransfer.types.includes('Files')) event.preventDefault()
+        }}
         ref={panelRef}
       >
         <div className={styles.bar}>

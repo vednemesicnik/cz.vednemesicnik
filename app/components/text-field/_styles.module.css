@@ -91,3 +91,10 @@
     color: var(--text-tertiary);
   }
 }
+
+/* The hint only while the field has the focus. */
+.isHintOnFocus:not(:focus-within) > .hint {
+  @layer variant {
+    display: none;
+  }
+}

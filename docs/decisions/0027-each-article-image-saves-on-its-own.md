@@ -55,7 +55,12 @@ image is still processing.
   its hold ([0020](0020-a-new-article-is-a-draft-created-on-click.md)). The upload then finds no
   article, drops its files and stores nothing. Revisit this if authors lose images this way.
 - A new image that finishes before one picked earlier makes the editor send the order the tiles
-  show, so the web keeps the pick order.
+  show once the uploads settle, so the web keeps the pick order.
+- Alt text typed while its image is still processing goes with the upload as it stood when the
+  upload started, and with the next whole-form save once the image is stored. If the editor
+  closes before the image lands, later typing is lost; 23h still asks for the alt at submit.
+- An upload that got no answer may still have landed: removing its failed tile asks the server
+  too, and a removal of an image that does not exist counts as done.
 - Progress bars are #227. The current state is described in
   [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
 

@@ -336,11 +336,7 @@ export default function RouteComponent({
     hasInteractedRef.current = true
   }
   const snapshot = JSON.stringify(form.value ?? {}, (key, value) =>
-    SNAPSHOT_IGNORED_FIELDS.has(key)
-      ? undefined
-      : value instanceof File
-        ? `${value.name}:${value.size}:${value.lastModified}`
-        : value,
+    SNAPSHOT_IGNORED_FIELDS.has(key) ? undefined : value,
   )
   const snapshotRef = useRef(snapshot)
   // Set by a button whose change saves at once instead of after the pause.
@@ -503,10 +499,36 @@ export default function RouteComponent({
     setMovedImageId(null)
   }, [movedImageId])
   // `to` is the place among the stored images, which the „⋯“ moves between.
-  const moveImage = (id: string, to: number, count: number) => {
+  // Said once it saved; emptied first, so the same words are said again.
+  const moveImage = async (id: string, to: number, count: number) => {
     setMovedImageId(id)
-    setMoveAnnouncement(`Pozice ${to + 1}, celkem ${count}.`)
-    void gallery.move(id, to)
+    setMoveAnnouncement('')
+    if (await gallery.move(id, to)) {
+      setMoveAnnouncement(`Pozice ${to + 1}, celkem ${count}.`)
+    }
+  }
+  // After a removal the focus goes to the next tile's „⋯“, the previous
+  // one's, or *Přidat obrázky*: never lost to the page.
+  const [removedImageIndex, setRemovedImageIndex] = useState<number | null>(
+    null,
+  )
+  useEffect(() => {
+    if (removedImageIndex === null) return
+    const panel = formRef.current?.querySelector('dialog[open]')
+    const tiles = [
+      ...(panel?.querySelectorAll('li[data-image-id]') ?? []),
+    ] as HTMLElement[]
+    const target =
+      tiles[removedImageIndex] ?? tiles[removedImageIndex - 1] ?? null
+    const focusable =
+      target?.querySelector<HTMLElement>('[popovertarget], button') ??
+      panel?.querySelector<HTMLInputElement>('input[type="file"][multiple]')
+    focusable?.focus()
+    setRemovedImageIndex(null)
+  }, [removedImageIndex])
+  const removeImage = async (id: string) => {
+    const index = getImageIds().indexOf(id)
+    if (await gallery.remove(id)) setRemovedImageIndex(index)
   }
   // Wherever a pick starts, it ends in the panel, in the first new image's
   // alt text (sa1x34z3). A pick that made no tile opens nothing.
@@ -1507,8 +1529,8 @@ export default function RouteComponent({
                       )}
                     </GalleryGrid>
                     {/* A pick that made no tile opens nothing (sa1x34z3). */}
-                    {gallery.rejectedSentences.map((sentence) => (
-                      <p className={styles.galleryError} key={sentence}>
+                    {gallery.rejectedSentences.map((sentence, index) => (
+                      <p className={styles.galleryError} key={index}>
                         {sentence}
                       </p>
                     ))}
@@ -1517,7 +1539,7 @@ export default function RouteComponent({
                 // A change that did not save says so where saving is said, in
                 // sight wherever the author is in the gallery (in5bl1cq).
                 saveLine={
-                  gallery.hasFailedChange ? (
+                  gallery.hasFailedChange && lostHold === null ? (
                     <p className={styles.saveLine} role={'alert'}>
                       <span className={styles.saveFailure}>
                         Proveďte změnu znovu — nepodařilo se ji uložit.
@@ -1575,7 +1597,7 @@ export default function RouteComponent({
                                     Vybrat jiný soubor
                                   </ButtonLink>
                                   <ButtonLink
-                                    onClick={() => void gallery.remove(id)}
+                                    onClick={() => void removeImage(id)}
                                   >
                                     Odebrat
                                   </ButtonLink>
@@ -1592,7 +1614,13 @@ export default function RouteComponent({
                       const isFeatured = gallery.featuredImageId === id
 
                       return (
-                        <li data-image-id={id} key={image.key}>
+                        <li
+                          className={clsx(
+                            tile?.isRemoving && styles.removingImage,
+                          )}
+                          data-image-id={id}
+                          key={image.key}
+                        >
                           {idInput}
                           <ImageTile>
                             <ImageTileMedia
@@ -1607,34 +1635,37 @@ export default function RouteComponent({
                                   Zpracovává se
                                 </ImageTilePill>
                               )}
-                              {isStored && !isProcessing && !isReadOnly && (
-                                <ImageTileMenu>
-                                  <ActionMenu
-                                    items={getImageMenuItems({
-                                      count: storedImageIds.length,
-                                      index: storedImageIds.indexOf(id),
-                                      isFeatured,
-                                      onFeature: () =>
-                                        void gallery.setFeatured(id),
-                                      onMove: (to) =>
-                                        moveImage(
-                                          id,
-                                          to,
-                                          storedImageIds.length,
-                                        ),
-                                      onRemove: () => setRemovingImageId(id),
-                                      onReplace: () => pickReplacement(id),
-                                      onUnfeature: () =>
-                                        void gallery.setFeatured(null),
-                                    })}
-                                    // The tile has no name of its own: its
-                                    // place in the gallery tells it apart
-                                    // (copy hu5a658a).
-                                    label={`Další akce obrázku ${index + 1}`}
-                                    variant={'chip'}
-                                  />
-                                </ImageTileMenu>
-                              )}
+                              {isStored &&
+                                !isProcessing &&
+                                !tile?.isRemoving &&
+                                !isReadOnly && (
+                                  <ImageTileMenu>
+                                    <ActionMenu
+                                      items={getImageMenuItems({
+                                        count: storedImageIds.length,
+                                        index: storedImageIds.indexOf(id),
+                                        isFeatured,
+                                        onFeature: () =>
+                                          void gallery.setFeatured(id),
+                                        onMove: (to) =>
+                                          void moveImage(
+                                            id,
+                                            to,
+                                            storedImageIds.length,
+                                          ),
+                                        onRemove: () => setRemovingImageId(id),
+                                        onReplace: () => pickReplacement(id),
+                                        onUnfeature: () =>
+                                          void gallery.setFeatured(null),
+                                      })}
+                                      // The tile has no name of its own: its
+                                      // place in the gallery tells it apart
+                                      // (copy hu5a658a).
+                                      label={`Další akce obrázku ${index + 1}`}
+                                      variant={'chip'}
+                                    />
+                                  </ImageTileMenu>
+                                )}
                             </ImageTileMedia>
                             {tile?.hasReplaceFailed && (
                               <>
@@ -1657,10 +1688,10 @@ export default function RouteComponent({
                               {...getInputProps(imageFields.altText, {
                                 type: 'text',
                               })}
-                              className={styles.altField}
                               hint={
                                 'Popis obrázku pro čtečky obrazovky a vyhledávače.'
                               }
+                              isHintOnFocus
                               label={'Alt text'}
                               placeholder={'Co je na obrázku'}
                               size={'sm'}
@@ -1690,8 +1721,8 @@ export default function RouteComponent({
                       <AddImagesTile disabled={isLocked} onFiles={addImages} />
                     )}
                   </GalleryGrid>
-                  {gallery.rejectedSentences.map((sentence) => (
-                    <p className={styles.galleryError} key={sentence}>
+                  {gallery.rejectedSentences.map((sentence, index) => (
+                    <p className={styles.galleryError} key={index}>
                       {sentence}
                     </p>
                   ))}
@@ -1721,12 +1752,17 @@ export default function RouteComponent({
                     isFeatured={gallery.featuredImageId === removingImageId}
                     onCancel={() => setRemovingImageId(null)}
                     onConfirm={() => {
-                      void gallery.remove(removingImageId)
+                      void removeImage(removingImageId)
                       setRemovingImageId(null)
                     }}
                   />
                 )}
               </GalleryDetail>
+              {/* Refused files are said too, outside the panel: a pick from
+                  the column that made no tile opens nothing (sa1x34z3). */}
+              <span aria-live={'polite'} className={'screen-reader-only'}>
+                {gallery.rejectedSentences.join(' ')}
+              </span>
             </AdminDetailAside>
           </AdminDetailLayout>
         </Form>

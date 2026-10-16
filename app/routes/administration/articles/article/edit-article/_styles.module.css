@@ -26,10 +26,11 @@
   }
 }
 
-/* The alt text's hint shows while the field has the focus (24b). */
-.altField:not(:focus-within) [id$="-hint"] {
+/* A tile whose removal is on its way takes no more changes. */
+.removingImage {
   @layer route {
-    display: none;
+    opacity: 0.5;
+    pointer-events: none;
   }
 }
 
