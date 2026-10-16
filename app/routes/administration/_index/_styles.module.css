@@ -1,5 +1,5 @@
 .section {
-  @layer component {
+  @layer route {
     /* Layout */
     display: flex;
     flex-direction: column;
@@ -12,7 +12,7 @@
 }
 
 .sectionTitle {
-  @layer component {
+  @layer route {
     /* Reset */
     margin: 0;
 
@@ -25,7 +25,7 @@
 }
 
 .statsGrid {
-  @layer component {
+  @layer route {
     /* Layout */
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -34,7 +34,7 @@
 }
 
 .pendingList {
-  @layer component {
+  @layer route {
     /* Layout */
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

@@ -1,0 +1,23 @@
+/* Stays at the top of the field while the text scrolls; an editor under a
+   sticky bar sets --text-editor-toolbar-top to its height (24a, 24f). */
+.toolbar {
+  @layer component {
+    position: sticky;
+    inset-block-start: var(--text-editor-toolbar-top, 0);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 6px;
+    background-color: var(--bg-secondary);
+    border-block-end: 1px solid var(--border);
+    border-start-start-radius: var(--radius-md);
+    border-start-end-radius: var(--radius-md);
+
+    /* On a phone the row scrolls sideways instead of wrapping (24f). */
+    @media (width < 768px) {
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+  }
+}

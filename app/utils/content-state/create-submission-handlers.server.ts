@@ -20,7 +20,7 @@ type SubmissionHandlersConfig = {
   entity: ContentLogEntity
   loadSubmissionState: (id: string) => Promise<SubmissionState>
   markSubmitted: (id: string, authorId: string) => Promise<number>
-  clearSubmission: (id: string) => Promise<void>
+  clearSubmission: (id: string, authorId: string) => Promise<void>
   getMissing?: (id: string) => Promise<string[]>
 }
 
@@ -33,9 +33,12 @@ type SubmissionHandlersConfig = {
  * @param config.loadSubmissionState - The content's authors, state and submission.
  * @param config.markSubmitted - Records the submission only while the row is still
  *   an unsubmitted draft, so a submit racing another transition can't overwrite
- *   it; resolves to the number of rows written.
+ *   it; resolves to the number of rows written. An entity with an edit hold
+ *   repeats "not held by someone else than `authorId`" in that write and throws
+ *   the held refusal when it fails (decision 0019).
  * @param config.clearSubmission - Ends the submission and deletes the reviews: a
  *   taken back or returned draft is unsubmitted and unapproved (design 07b).
+ *   Held content is refused as in `markSubmitted`.
  * @param config.getMissing - What the content still lacks before it can be
  *   submitted (design 23h); none when omitted.
  */
@@ -72,7 +75,7 @@ export const createSubmissionHandlers = (
             throw data(null, { status: 403 })
           }
 
-          await config.clearSubmission(id)
+          await config.clearSubmission(id, context.authorId)
           await announce(id, 'return', context)
         },
         target,
@@ -133,7 +136,7 @@ export const createSubmissionHandlers = (
             throw data(null, { status: 403 })
           }
 
-          await config.clearSubmission(id)
+          await config.clearSubmission(id, context.authorId)
           await announce(id, 'withdraw', context)
         },
         target,

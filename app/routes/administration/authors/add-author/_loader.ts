@@ -23,5 +23,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const roles = await getAllAuthorRoles()
 
-  return { roles }
+  // Opened from an article's author search (design 24j): the name typed
+  // there, the article to go back to with the new author chosen, and the
+  // author it replaces when the search was Vybrat jiného autora (ivyin4kr).
+  const searchParams = new URL(request.url).searchParams
+
+  return {
+    articleId: searchParams.get('article') || null,
+    name: searchParams.get('name') ?? '',
+    replacedAuthorId: searchParams.get('replace') || null,
+    roles,
+  }
 }

@@ -1,8 +1,10 @@
 import { data } from 'react-router'
 import type { NotFoundPageData } from '~/components/boundary-error'
 import { PAGE_PARAM } from '~/components/pagination'
+import { buildVisibleArticleWhere } from '~/routes/articles/utils/build-visible-article-where'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
+import { hasSlug } from '~/utils/has-slug'
 import {
   createImageSources,
   imageSourceSelect,
@@ -11,7 +13,6 @@ import { isPagePastLast } from '~/utils/is-page-past-last'
 import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 import {
   getWebContentVisibility,
-  ownArticle,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { findCategoriesWithArticleCounts } from '../utils/find-categories-with-article-counts.server'
@@ -26,7 +27,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     'article',
     'article_category',
   ])
-  const visibleArticles = visibility.where('article', ownArticle)
+  const visibleArticles = buildVisibleArticleWhere(visibility)
 
   const url = new URL(request.url)
   const currentPage = parsePositiveIntegerParam(url.searchParams, PAGE_PARAM, 1)
@@ -77,7 +78,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     throw data(notFoundData, { status: 404 })
   }
 
-  const articlesWithSources = articles.map((article) => ({
+  const articlesWithSources = articles.filter(hasSlug).map((article) => ({
     ...article,
     featuredImage: article.featuredImage
       ? {

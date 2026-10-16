@@ -17,14 +17,17 @@ import { prisma } from '~/utils/db.server'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
-import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
+import { buildArticlePermissionWhere } from '../utils/build-article-permission-where'
+import { formatEditHoldLine } from '../utils/format-edit-hold-line'
 import { getArticleFactLine } from '../utils/get-article-fact-line'
+import { getArticleHold } from '../utils/get-article-hold'
+import { getHeldActionFlags } from '../utils/get-held-action-flags'
 import { getRowActions } from '../utils/get-row-actions'
 import type { Route } from './+types/route'
 import { PINNED_ROWS_PARAM } from './pinned-rows'
@@ -82,23 +85,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     })
   }
 
-  // Check view permissions for each state
-  const draftPerms = context.can({
-    action: 'view',
-    entity: 'article',
-    state: 'draft',
-  })
-  const publishedPerms = context.can({
-    action: 'view',
-    entity: 'article',
-    state: 'published',
-  })
-  const archivedPerms = context.can({
-    action: 'view',
-    entity: 'article',
-    state: 'archived',
-  })
-
   const { order, page, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'updatedAt',
@@ -108,16 +94,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const filters = parseAdminListFilters(request, TABLE_KEY)
 
   // States the current role may view, scoped to own content where access is `own`.
-  const viewableStates = buildViewableStateFilters(
-    [
-      { rights: draftPerms, state: 'draft' },
-      { rights: publishedPerms, state: 'published' },
-      { rights: archivedPerms, state: 'archived' },
-    ],
-    { authors: { some: { id: context.authorId } } },
-  )
-
-  const permissionWhere: Prisma.ArticleWhereInput = { OR: viewableStates }
+  const permissionWhere = buildArticlePermissionWhere(context)
 
   // Filters are ANDed with the permission clause, so they only ever narrow what
   // the role may view — `?state=draft` still yields own drafts only. Within one
@@ -200,9 +177,15 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         },
         // Completeness before bulk publishing (23h, 22c).
         content: true,
-        excerpt: true,
+        // „upravuje …“ while someone edits it (22f).
+        heldByAuthor: { select: { name: true } },
+        heldByAuthorId: true,
+        heldByTabId: true,
+        heldSince: true,
+        heldUntil: true,
         id: true,
         images: { select: { altText: true } },
+        perex: true,
         publishedAt: true,
         reviews: {
           select: {
@@ -282,8 +265,18 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const now = new Date()
 
+  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+
   const articles = rawArticles.map((article) => {
-    const flags = getContentActionFlags(context, 'article', article)
+    const unheldFlags = getContentActionFlags(context, 'article', article)
+    const hold = getArticleHold(article, { authorId: context.authorId, now })
+    const isHeldByOther = hold !== null && !hold.isOwn
+    // While someone else edits it, its edit and state actions wait (07g); the
+    // Coordinator's Upravit opens the takeover (22f, 24g).
+    const flags = getHeldActionFlags(unheldFlags, {
+      isApprover,
+      isHeldByOther,
+    })
 
     // A filtered category first, so the row shows why it is there; else the
     // alphabetical first (22a).
@@ -294,19 +287,22 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       ...article.categories.filter((category) => !isFilteredCategory(category)),
     ].map((category) => category.name)
 
+    const submission = flags.submission?.state ?? null
     const rowActions = getRowActions({
       ...flags,
+      canEdit: flags.canEdit || flags.canTakeOver,
       state: article.state,
-      submission: flags.submission?.state ?? null,
+      submission,
     })
 
     return {
       ...rowActions,
       authorNames: article.authors.map((author) => author.name),
-      // What the selection bar may apply to this row (22c).
+      // What the selection bar may apply to this row (22c); a held one is
+      // skipped and said apart (22f), not left out of the bar's actions.
       bulkActions: getBulkActions({
-        ...rowActions,
-        isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+        ...getRowActions({ ...unheldFlags, state: article.state, submission }),
+        isApprover,
       }),
       categoryNames,
       factLine: getArticleFactLine({
@@ -316,14 +312,26 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         submission: flags.submission,
         updatedAt: article.updatedAt,
       }),
+      heldUntil: hold?.heldUntil.toISOString() ?? null,
+      // Who edits it, ahead of the fact and of a live change (22f, 2txmjnaq);
+      // the list looks again when it should expire.
+      holdLine:
+        hold === null
+          ? null
+          : formatEditHoldLine({
+              holderName: hold.heldByName,
+              isOwn: hold.isOwn,
+              now,
+            }),
       id: article.id,
+      isHeldByOther,
       // Bulk publishing skips it and says so up front (23h, 22c).
       isIncomplete:
         getMissingArticleContent({
           authorCount: article.authors.length,
           content: article.content,
-          excerpt: article.excerpt,
           images: article.images,
+          perex: article.perex,
           slug: article.slug,
           title: article.title,
         }).length > 0,

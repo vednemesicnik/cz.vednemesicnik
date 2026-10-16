@@ -39,10 +39,10 @@ type Story = StoryObj<typeof meta>
  */
 export const Playground: Story = {
   args: {
-    children: 'Nový článek',
+    children: 'Nová rubrika',
     disabled: false,
     size: 'md',
-    to: '/administration/articles/add-article',
+    to: '/administration/articles/categories/new',
     variant: 'primary',
   },
 }

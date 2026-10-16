@@ -5,8 +5,8 @@ import { getMissingArticleContent } from './get-missing-article-content'
 const complete = {
   authorCount: 1,
   content: 'Text článku',
-  excerpt: 'Perex',
   images: [{ altText: 'Popis' }],
+  perex: 'Perex',
   slug: 'clanek',
   title: 'Článek',
 }
@@ -17,10 +17,10 @@ describe('getMissingArticleContent', () => {
   })
 
   test('a missing or blank perex is reported', () => {
-    expect(getMissingArticleContent({ ...complete, excerpt: null })).toEqual([
+    expect(getMissingArticleContent({ ...complete, perex: null })).toEqual([
       'Chybí perex.',
     ])
-    expect(getMissingArticleContent({ ...complete, excerpt: '  ' })).toEqual([
+    expect(getMissingArticleContent({ ...complete, perex: '  ' })).toEqual([
       'Chybí perex.',
     ])
   })
@@ -30,8 +30,8 @@ describe('getMissingArticleContent', () => {
       getMissingArticleContent({
         authorCount: 0,
         content: '',
-        excerpt: null,
         images: [{ altText: '' }],
+        perex: null,
         slug: '',
         title: '',
       }),

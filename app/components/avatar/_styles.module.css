@@ -1,0 +1,31 @@
+/* The design system's Avatar (components/brand/Avatar). */
+.avatar {
+  @layer component {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: var(--radius-full);
+    background-image: var(--gradient-signature);
+    color: var(--text-on-accent);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+  }
+}
+
+/* The Image fills the circle. Its unlayered `height: auto` on the img beats a
+   layered `height`, so min- and max-height pin the img to the circle; a photo
+   of any shape covers it, cropped around its middle. */
+.image {
+  @layer variant {
+    inline-size: 100%;
+    block-size: 100%;
+
+    & img {
+      min-block-size: 100%;
+      max-block-size: 100%;
+      object-fit: cover;
+    }
+  }
+}

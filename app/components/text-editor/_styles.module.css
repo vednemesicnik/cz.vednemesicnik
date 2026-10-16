@@ -1,0 +1,162 @@
+.container {
+  @layer component {
+    display: grid;
+    /* The field's width, not its toolbar's: a long toolbar scrolls (24f). */
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-flow: row;
+    gap: 6px;
+    justify-items: start;
+    width: 100%;
+  }
+}
+
+.editorWrapper {
+  @layer component {
+    /* No overflow clip: it would stop the toolbar from sticking. */
+    position: relative;
+    width: 100%;
+    /* The toolbar and the text's minimum, before the editor mounts in the
+       browser, so nothing under it moves (41 px: the toolbar). */
+    min-block-size: calc(41px + var(--text-editor-min-block-size, 340px));
+    background-color: var(--bg-primary);
+
+    @media (width < 768px) {
+      min-block-size: calc(
+        57px +
+        min(var(--text-editor-min-block-size, 200px), 200px)
+      );
+    }
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition:
+      border-color 150ms ease-out,
+      box-shadow 150ms ease-out;
+
+    /* Hover State */
+    &:hover:not(:focus-within) {
+      border-color: var(--border-hover);
+    }
+
+    /* Focus-within for keyboard navigation */
+    &:focus-within {
+      border-color: var(--border-accent);
+      box-shadow: var(--focus-shadow);
+    }
+
+    /* Read-only State: grey like a disabled field (design 24h) */
+    &.editorReadOnly {
+      background-color: var(--bg-disabled);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+
+      &:hover {
+        border-color: var(--border);
+      }
+    }
+
+    /* Error State */
+    &.editorError {
+      border-color: var(--error);
+
+      &:focus-within {
+        border-color: var(--error);
+        box-shadow: var(--focus-shadow-error);
+      }
+    }
+  }
+}
+
+/* The image tile's caption (`.vdm-imagetile__caption`, 24b): one line set as
+   the alt field, the link tool at its end instead of a toolbar. */
+.sm {
+  @layer variant {
+    gap: 4px;
+  }
+}
+
+.sm > .label {
+  @layer variant {
+    font-size: var(--font-size-xs);
+    line-height: normal;
+  }
+}
+
+.sm > .editorWrapper {
+  @layer variant {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    box-sizing: border-box;
+    /* One line of text before the editor mounts (7 + 18 + 7 px, borders). */
+    min-block-size: 34px;
+    padding-block: 7px;
+    padding-inline: 10px 6px;
+  }
+}
+
+.content {
+  @layer component {
+    flex: 1;
+    min-inline-size: 0;
+  }
+}
+
+.sm :global(.tiptap) {
+  @layer variant {
+    min-block-size: auto;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    border-radius: 0;
+  }
+}
+
+/* The DS link chip, with the link icon in place of the word „Odkaz“. */
+.inlineTool {
+  @layer variant {
+    min-inline-size: 24px;
+    min-block-size: 18px;
+    padding-block: 1px;
+    padding-inline: 6px;
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+
+    & svg {
+      font-size: 14px;
+    }
+
+    /* A finger's target on a phone, around the small chip (sa1x34z3). */
+    @media (width < 768px) {
+      position: relative;
+      min-inline-size: 24px;
+      min-block-size: 18px;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset-block-start: 50%;
+        inset-inline-start: 50%;
+        inline-size: 44px;
+        block-size: 44px;
+        transform: translate(-50%, -50%);
+      }
+    }
+  }
+}
+
+/* Hidden input for form submission and focus management */
+.hiddenInput {
+  @layer component {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+  }
+}

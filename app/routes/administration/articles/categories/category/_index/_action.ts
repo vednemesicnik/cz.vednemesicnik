@@ -11,6 +11,8 @@ export const action = ({ request, params }: Route.ActionArgs) => {
   const { categoryId } = params
 
   return runContentStateAction(request, {
+    // The list says it, the detail is gone (23f).
+    deleteNotice: 'Smazáno',
     deleteRedirectTo: href('/administration/articles/categories'),
     handlers: categoryContentStateHandlers,
     id: categoryId,

@@ -11,8 +11,8 @@ const MISSING_ALT_TEXT: Record<Intl.LDMLPluralRule, string> = {
 
 type Options = {
   title: string
-  slug: string
-  excerpt: string | null
+  slug: string | null
+  perex: string | null
   content: string
   authorCount: number
   images: { altText: string }[]
@@ -30,7 +30,7 @@ const isBlank = (value: string | null) => value === null || value.trim() === ''
 export const getMissingArticleContent = ({
   title,
   slug,
-  excerpt,
+  perex,
   content,
   authorCount,
   images,
@@ -40,7 +40,7 @@ export const getMissingArticleContent = ({
   if (isBlank(title)) missing.push('Chybí název.')
   if (isBlank(slug)) missing.push('Chybí adresa.')
   if (isBlank(content)) missing.push('Chybí text.')
-  if (isBlank(excerpt)) missing.push('Chybí perex.')
+  if (isBlank(perex)) missing.push('Chybí perex.')
   if (authorCount === 0) missing.push('Článek nemá autora.')
 
   const missingAltTextCount = images.filter((image) =>

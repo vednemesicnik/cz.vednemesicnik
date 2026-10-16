@@ -1,3 +1,4 @@
+import { Prisma } from '@generated/prisma/client'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { articleContentStateHandlers } from './content-state-handlers.server'
@@ -8,23 +9,27 @@ import { articleContentStateHandlers } from './content-state-handlers.server'
 // nested relation writes).
 const {
   withAuthorPermissionMock,
+  articleFindUniqueMock,
   articleFindUniqueOrThrowMock,
   articleUpdateMock,
   deleteRowWithImagesMock,
   pageSeoUpdateManyMock,
+  recordContentLogMock,
   reviewFindFirstMock,
 } = vi.hoisted(() => ({
+  articleFindUniqueMock: vi.fn(),
   articleFindUniqueOrThrowMock: vi.fn(),
   articleUpdateMock: vi.fn(),
   deleteRowWithImagesMock: vi.fn(),
   pageSeoUpdateManyMock: vi.fn(),
+  recordContentLogMock: vi.fn(),
   reviewFindFirstMock: vi.fn(),
   withAuthorPermissionMock: vi.fn(),
 }))
 
 // The content log has its own tests; here it only must not reach Prisma.
 vi.mock('~/utils/content-log/record-content-log.server', () => ({
-  recordContentLog: vi.fn(),
+  recordContentLog: recordContentLogMock,
 }))
 
 vi.mock('~/utils/content-log/delete-content-log.server', () => ({
@@ -44,6 +49,7 @@ vi.mock(
 vi.mock('~/utils/db.server', () => ({
   prisma: {
     article: {
+      findUnique: articleFindUniqueMock,
       findUniqueOrThrow: articleFindUniqueOrThrowMock,
       update: articleUpdateMock,
     },
@@ -64,8 +70,8 @@ const completeArticle = {
   _count: { authors: 1 },
   authors: [{ role: { level: 3 } }],
   content: 'Text',
-  excerpt: 'Perex',
   images: [],
+  perex: 'Perex',
   publishedAt: null,
   reviews: [{ reviewer: { role: { level: 1 } } }],
   slug: 'clanek',
@@ -73,7 +79,10 @@ const completeArticle = {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks()
   articleUpdateMock.mockResolvedValue({ slug: 'clear-redirect-test' })
+  // Nobody holds it, unless a test says so.
+  articleFindUniqueMock.mockResolvedValue(null)
   pageSeoUpdateManyMock.mockResolvedValue(undefined)
   // The publishing Coordinator's approval already exists.
   reviewFindFirstMock.mockResolvedValue({ id: 'review-1' })
@@ -97,7 +106,11 @@ describe('articleContentStateHandlers — retract review clearing', () => {
         submittedById: null,
       },
       select: { slug: true },
-      where: { id: 'a1' },
+      // Not while someone else edits it (decision 0019).
+      where: {
+        AND: [{ OR: expect.arrayContaining([{ heldByAuthorId: 'author-1' }]) }],
+        id: 'a1',
+      },
     })
 
     const pageSeoData = pageSeoUpdateManyMock.mock.calls[0][0].data
@@ -129,7 +142,7 @@ describe('articleContentStateHandlers — submission', () => {
   test('an incomplete article is not published (23h)', async () => {
     articleFindUniqueOrThrowMock.mockResolvedValue({
       ...completeArticle,
-      excerpt: null,
+      perex: null,
     })
     articleUpdateMock.mockClear()
 
@@ -177,5 +190,89 @@ describe('articleContentStateHandlers — submission', () => {
     })
 
     expect(deleteRowWithImagesMock).toHaveBeenCalledOnce()
+  })
+})
+
+describe('articleContentStateHandlers — the edit hold (07g, decision 0019)', () => {
+  test('publishing ends one’s own hold with the draft', async () => {
+    articleFindUniqueOrThrowMock.mockResolvedValue(completeArticle)
+
+    await articleContentStateHandlers.publish(request, {
+      id: 'a1',
+      target: { authorIds: ['author-2'], state: 'draft' },
+    })
+
+    expect(articleUpdateMock.mock.lastCall?.[0].data).toMatchObject({
+      heldByAuthorId: null,
+      heldByTabId: null,
+      heldSince: null,
+      heldUntil: null,
+    })
+  })
+
+  test('a transition on an article someone else edits is refused in its write', async () => {
+    articleUpdateMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    articleFindUniqueMock.mockResolvedValue({
+      heldByAuthor: { name: 'Jakub Novák' },
+      heldByAuthorId: 'author-2',
+      heldByTabId: 'tab-2',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
+    await expect(
+      articleContentStateHandlers.retract(request, { id: 'a1', target }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Jakub Novák' },
+      init: { status: 409 },
+    })
+    expect(pageSeoUpdateManyMock).not.toHaveBeenCalled()
+    expect(recordContentLogMock).not.toHaveBeenCalled()
+  })
+
+  test('a hold that ended before the read-back: the write runs once more', async () => {
+    articleUpdateMock.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    // The hold expired meanwhile: nobody holds it.
+    articleFindUniqueMock.mockResolvedValue({
+      heldByAuthor: { name: 'Jakub Novák' },
+      heldByAuthorId: 'author-2',
+      heldByTabId: 'tab-2',
+      heldSince: new Date(Date.now() - 180_000),
+      heldUntil: new Date(Date.now() - 60_000),
+    })
+
+    await articleContentStateHandlers.retract(request, { id: 'a1', target })
+
+    expect(articleUpdateMock).toHaveBeenCalledTimes(2)
+    expect(recordContentLogMock).toHaveBeenCalledOnce()
+  })
+
+  test('approving again while someone else edits is refused too', async () => {
+    articleFindUniqueOrThrowMock.mockResolvedValue({ submittedAt: new Date() })
+    articleFindUniqueMock.mockResolvedValue({
+      heldByAuthor: { name: 'Jakub Novák' },
+      heldByAuthorId: 'author-2',
+      heldByTabId: 'tab-2',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
+    await expect(
+      articleContentStateHandlers.review(request, {
+        id: 'a1',
+        target: { authorIds: ['author-2'], state: 'draft' },
+      }),
+    ).rejects.toMatchObject({ data: { heldByName: 'Jakub Novák' } })
+    expect(recordContentLogMock).not.toHaveBeenCalled()
   })
 })

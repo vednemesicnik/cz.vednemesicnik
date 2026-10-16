@@ -1,5 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
+import { clsx } from 'clsx'
 import { useId } from 'react'
 import {
   href,
@@ -20,6 +21,7 @@ import { AuthenticityTokenProvider } from '~/components/authenticity-token-provi
 import { RootBoundaryError } from '~/components/root-boundary-error'
 import { ToastProvider } from '~/components/toast-provider'
 import { useFullScreenMenu } from '~/hooks/use-full-screen-menu'
+import { hasOwnMobileBar } from '~/utils/has-own-mobile-bar'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -36,7 +38,10 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   defaultShouldRevalidate,
 }) => actionStatus === 403 || defaultShouldRevalidate
 
-export default function RouteComponent({ loaderData }: Route.ComponentProps) {
+export default function RouteComponent({
+  loaderData,
+  matches,
+}: Route.ComponentProps) {
   const { permissions, user } = loaderData
 
   // Order per design 22a: content on top, people below the rule.
@@ -83,7 +88,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <ToastProvider>
           <div className={styles.layout}>
             <AdministrationTopBar
-              className={styles.topBar}
+              className={clsx(
+                styles.topBar,
+                // The page's own bar stands in its place (24f).
+                hasOwnMobileBar(matches) && styles.topBarHidden,
+              )}
               controls={menuId}
               expanded={isMenuOpen}
               onMenu={open}

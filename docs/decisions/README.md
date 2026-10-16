@@ -55,3 +55,12 @@ in force.
 | [0016](0016-records-are-added-and-edited-on-their-own-page.md) | Records are added and edited on their own page, not in a dialog | Accepted | 2026-10-14 |
 | [0017](0017-every-list-with-filters-has-saved-filters.md) | Every administration list with filters has saved filters, and Stav filters by queue | Accepted | 2026-10-14 |
 | [0018](0018-agents-decide-and-inform.md) | Agents make architecture, product and security calls and report them | Accepted | 2026-10-15 |
+| [0019](0019-the-edit-lock-lives-on-the-content-row.md) | The edit lock lives on the content row, and the article has it first | Accepted | 2026-10-15 |
+| [0020](0020-a-new-article-is-a-draft-created-on-click.md) | A new article is a draft created on click, not a page | Accepted | 2026-10-15 |
+| [0021](0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md) | An edit hold belongs to one page load, and a hold write never moves `updatedAt` | Accepted | 2026-10-15 |
+| [0022](0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md) | A Document autosaves its whole form from the holding tab, one save at a time | Accepted | 2026-10-15 |
+| [0023](0023-a-lost-edit-hold-turns-the-editor-read-only.md) | A lost edit hold turns the editor read-only, and the edit comes back only through a reload | Accepted | 2026-10-15 |
+| [0024](0024-dates-are-utc-instants-shown-in-prague-time-without-temporal.md) | Dates are UTC instants shown in Prague time, with `Date` and `Intl` until Temporal is Baseline | Accepted | 2026-10-15 |
+| [0025](0025-a-save-removes-a-link-only-when-the-editor-sends-it-as-removed.md) | A save removes a category or tag link only when the editor sends it as removed | Accepted | 2026-10-15 |
+| [0026](0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md) | The association is the Owner's author, and only the Coordinator adds it to an article | Accepted | 2026-10-16 |
+| [0027](0027-each-article-image-saves-on-its-own.md) | Each article image saves on its own; the whole-form save carries only alt texts and captions | Accepted | 2026-10-16 |

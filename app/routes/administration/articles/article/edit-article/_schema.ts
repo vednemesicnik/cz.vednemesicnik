@@ -1,56 +1,39 @@
 import { z } from 'zod'
-import { featuredImageSchema } from '~/config/featured-image-config'
 import { slugify } from '~/utils/slugify'
 
+// A draft saves incomplete (design 24d): what is missing is said on submit and
+// publish (23h), so a field is only trimmed, never refused for being empty.
+const optionalText = z
+  .string()
+  .optional()
+  .transform((value) => value?.trim() ?? '')
+
 export const schema = z.object({
+  // An article always has an author, a draft too (design 24j).
   authorIds: z
-    .array(z.string({ error: 'Vyberte autora' }))
+    .array(z.string().min(1))
     .min(1, 'Alespoň jeden autor je povinný'),
   categoryIds: z.array(z.string()).optional(),
-  content: z.string({ error: 'Obsah je povinný' }),
-  excerpt: z.string().optional(),
-  existingImages: z
-    .array(
-      z.object({
-        altText: z.string().min(1, 'Alt text je povinný'),
-        description: z.string().optional(),
-        file: z
-          .instanceof(File)
-          .refine((f) => f.size === 0 || f.type.startsWith('image/'), {
-            message: 'Neplatný formát souboru',
-          })
-          .refine((f) => f.size === 0 || f.size <= 1024 * 5000, {
-            message: 'Maximální velikost souboru je 5000 kB',
-          })
-          .optional(),
-        id: z.string(),
-      }),
-    )
-    .optional(),
-  featuredImage: featuredImageSchema,
+  content: optionalText,
+  // The editor's tab, which holds the edit hold (design 24g).
+  editTabId: z.string().min(1),
+  // The gallery's alt texts and captions; every image change saves on its
+  // own (design 24b, decision 0027).
   images: z
     .array(
       z.object({
-        altText: z.string().min(1, 'Alt text je povinný'),
+        altText: optionalText,
         description: z.string().optional(),
-        file: z
-          .instanceof(File)
-          .refine((f) => f.type.startsWith('image/'), {
-            message: 'Neplatný formát souboru',
-          })
-          .refine((f) => f.size <= 1024 * 5000, {
-            message: 'Maximální velikost souboru je 5000 kB',
-          }),
+        id: z.string().min(1),
       }),
     )
     .optional(),
-  slug: z
-    .string({ error: 'Slug je povinný' })
-    .regex(/^\S/, 'Slug nemůže začínat mezerou')
-    .regex(/^[^-]/, 'Slug nemůže začínat pomlčkou')
-    .transform(slugify),
+  perex: optionalText,
+  // The links the editor had at open and no longer has; any other stored
+  // link stays, an archived one included (decision 0025).
+  removedCategoryIds: z.array(z.string()).optional(),
+  removedTagIds: z.array(z.string()).optional(),
+  slug: optionalText.transform(slugify),
   tagIds: z.array(z.string()).optional(),
-  title: z
-    .string({ error: 'Název je povinný' })
-    .regex(/^\S/, 'Název nemůže začínat mezerou'),
+  title: optionalText,
 })

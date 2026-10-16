@@ -42,6 +42,7 @@ const labels: Record<ContentLogEvent, string> = {
   return: 'Vráceno k úpravám',
   set_published_at: 'Změněno datum publikace',
   submit: 'Odesláno ke schválení',
+  take_over: 'Převzata úprava',
   unpublish: 'Staženo z publikace',
   update: 'Upraveno',
   withdraw: 'Vzato zpět do konceptu',
@@ -51,6 +52,7 @@ const labels: Record<ContentLogEvent, string> = {
 // the one written last is the newest.
 const writeOrder: ContentLogEvent[] = [
   'create',
+  'take_over',
   'update',
   'pdf_uploaded',
   'cover_uploaded',

@@ -1,0 +1,10 @@
+/* The design system's `.vdm-imagetile--compact`; its preview pads 6 px. */
+.compactImageTile {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    --image-tile-media-padding: 6px;
+  }
+}

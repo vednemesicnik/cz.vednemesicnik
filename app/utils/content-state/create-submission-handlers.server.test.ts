@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
+import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
+
 import { createSubmissionHandlers } from './create-submission-handlers.server'
 
 // Pass-through permission wrapper with a switchable signed-in author; the
@@ -92,7 +94,7 @@ describe('createSubmissionHandlers — an entity without a completeness check', 
       target,
     })
 
-    expect(config.clearSubmission).toHaveBeenCalledWith('e1')
+    expect(config.clearSubmission).toHaveBeenCalledWith('e1', 'contributor')
     expect(mocks.recordContentLog).toHaveBeenCalledWith(
       expect.objectContaining({ events: ['withdraw'] }),
       expect.anything(),
@@ -112,6 +114,23 @@ describe('createSubmissionHandlers — an entity without a completeness check', 
 
     signInAs('coordinator', 1)
     await handlers.returnForEdits(request, { id: 'e1', target })
-    expect(config.clearSubmission).toHaveBeenCalledWith('e1')
+    expect(config.clearSubmission).toHaveBeenCalledWith('e1', 'coordinator')
+  })
+
+  test('a held refusal from the write stops the log and the event (0019)', async () => {
+    const config = createConfig()
+    config.loadSubmissionState.mockResolvedValue({ ...draft, submittedAt })
+    config.clearSubmission.mockRejectedValue(
+      createEditHeldRefusal('Marie Horáková'),
+    )
+
+    await expect(
+      createSubmissionHandlers(config).withdraw(request, { id: 'e1', target }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Marie Horáková' },
+      init: { status: 409 },
+    })
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 })

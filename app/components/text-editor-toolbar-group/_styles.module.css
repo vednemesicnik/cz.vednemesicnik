@@ -1,0 +1,23 @@
+.group {
+  @layer component {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 2px;
+
+    /* The hairline between groups (24a). */
+    & + &:not(.atEnd)::before {
+      content: "";
+      inline-size: 1px;
+      block-size: 18px;
+      margin-inline: 3px;
+      background-color: var(--border-hover);
+    }
+  }
+}
+
+.atEnd {
+  @layer variant {
+    margin-inline-start: auto;
+  }
+}

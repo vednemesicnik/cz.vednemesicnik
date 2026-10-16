@@ -4,6 +4,8 @@ import { formatNumericDate } from '~/utils/format-numeric-date'
 import { formatTime } from '~/utils/format-time'
 import type { SubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 
+import { formatSubmissionFact } from './format-submission-fact'
+
 type Options = {
   state: ContentState
   submission: SubmissionState | null
@@ -29,11 +31,7 @@ export const getArticleFactLine = ({
   publishedAt,
   now,
 }: Options): string => {
-  if (submission !== null) {
-    return submission.state === 'pending'
-      ? `od ${formatNumericDate(submission.date)}`
-      : formatNumericDate(submission.date)
-  }
+  if (submission !== null) return formatSubmissionFact(submission)
 
   switch (state) {
     case 'draft':

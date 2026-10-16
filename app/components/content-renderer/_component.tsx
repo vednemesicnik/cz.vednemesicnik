@@ -63,7 +63,8 @@ const renderTextblockContent = ({ node, renderElement }: TextblockProps) =>
   })
 
 export function ContentRenderer({ content, className }: Props) {
-  if (content === null) return null
+  // A draft saves without text (design 24d): empty is no content.
+  if (content === null || content === '') return null
 
   const parsedContent: JSONContent = JSON.parse(content)
 

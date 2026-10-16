@@ -1,0 +1,18 @@
+/* `.vdm-imagetile__failactions`. */
+.imageTileActions {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+/* The second action is the quiet one; it restyles a ButtonLink, so a layer up. */
+.imageTileActions > :nth-child(n + 2) {
+  @layer variant {
+    color: var(--text-secondary);
+  }
+}

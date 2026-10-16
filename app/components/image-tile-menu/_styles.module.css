@@ -1,0 +1,8 @@
+/* `.vdm-imagetile__menu`. */
+.imageTileMenu {
+  @layer component {
+    position: relative;
+    display: inline-flex;
+    margin-inline-start: auto;
+  }
+}

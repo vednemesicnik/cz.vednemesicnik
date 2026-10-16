@@ -5,7 +5,9 @@ import { Outlet } from 'react-router'
 import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
 import { AdminBreadcrumbs } from '~/components/admin/admin-breadcrumbs'
 import { getAdminBreadcrumbs } from '~/utils/get-admin-breadcrumbs'
+import { hasOwnMobileBar } from '~/utils/has-own-mobile-bar'
 
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { meta } from './_meta'
@@ -18,7 +20,14 @@ export default function LayoutRouteComponent({
 
   return (
     <>
-      {breadcrumbs.length > 0 && <AdminBreadcrumbs items={breadcrumbs} />}
+      {breadcrumbs.length > 0 && (
+        <AdminBreadcrumbs
+          className={
+            hasOwnMobileBar(matches) ? styles.hiddenOnMobile : undefined
+          }
+          items={breadcrumbs}
+        />
+      )}
       <Outlet />
     </>
   )

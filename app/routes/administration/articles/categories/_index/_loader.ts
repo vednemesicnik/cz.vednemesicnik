@@ -1,4 +1,4 @@
-import { redirect } from 'react-router'
+import { data, redirect } from 'react-router'
 
 import {
   CONTRIBUTOR_STATE_FILTER_QUEUES,
@@ -9,6 +9,7 @@ import {
   parseAdminListFilters,
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams } from '~/utils/admin-list-params'
+import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { countContentQueues } from '~/utils/count-content-queues.server'
@@ -248,23 +249,33 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ]
   })
 
-  return {
-    ...savedFilters,
-    canCreate: context.can({
-      action: 'create',
-      entity: 'article_category',
-      state: 'draft',
-      targetAuthorIds: [context.authorId],
-    }).hasPermission,
-    categories,
-    currentPage: page,
-    filters,
-    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
-    isContributor,
-    pageSize: PAGE_SIZE,
-    query,
-    queueCounts,
-    totalCount,
-    totalPages,
-  }
+  // Read only here: an earlier redirect must not use up the toast (23f).
+  const notice = await readAdminNotice(request)
+
+  return data(
+    {
+      ...savedFilters,
+      canCreate: context.can({
+        action: 'create',
+        entity: 'article_category',
+        state: 'draft',
+        targetAuthorIds: [context.authorId],
+      }).hasPermission,
+      categories,
+      currentPage: page,
+      filters,
+      isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+      isContributor,
+      pageSize: PAGE_SIZE,
+      query,
+      queueCounts,
+      // Smazáno after a delete from the detail, once (23f).
+      toast: notice.toast,
+      totalCount,
+      totalPages,
+    },
+    notice.toast === null
+      ? undefined
+      : { headers: { 'Set-Cookie': notice.setCookie } },
+  )
 }

@@ -16,6 +16,8 @@ type Props = {
   label?: string
   align?: 'start' | 'end'
   size?: 'sm' | 'md'
+  /** `chip`: a small white „⋯“ over an image tile's preview (24b). */
+  variant?: 'button' | 'chip'
   className?: string
 }
 
@@ -29,12 +31,14 @@ type Props = {
  * @param props.label - The trigger's accessible name, e.g. „Další akce s účtem“.
  * @param props.align - The menu's edge that lines up with the trigger.
  * @param props.size - `sm` beside a list row's action (design 22a).
+ * @param props.variant - `chip` over an image's preview (`ImageTile`, 24b).
  */
 export const ActionMenu = ({
   items,
   label = 'Další akce',
   align = 'end',
   size = 'md',
+  variant = 'button',
   className,
 }: Props) => {
   const menuRef = useRef<HTMLDivElement>(null)
@@ -51,16 +55,27 @@ export const ActionMenu = ({
 
   return (
     <span className={clsx(styles.actionMenu, className)}>
-      <Button
-        aria-label={label}
-        className={clsx(styles.trigger, styles[size])}
-        popoverTarget={menuId}
-        size={size}
-        type={'button'}
-        variant={'outline'}
-      >
-        <span aria-hidden={'true'}>⋯</span>
-      </Button>
+      {variant === 'chip' ? (
+        <button
+          aria-label={label}
+          className={styles.chip}
+          popoverTarget={menuId}
+          type={'button'}
+        >
+          <span aria-hidden={'true'}>⋯</span>
+        </button>
+      ) : (
+        <Button
+          aria-label={label}
+          className={clsx(styles.trigger, styles[size])}
+          popoverTarget={menuId}
+          size={size}
+          type={'button'}
+          variant={'outline'}
+        >
+          <span aria-hidden={'true'}>⋯</span>
+        </Button>
+      )}
 
       <div
         className={clsx(styles.menu, styles[align])}

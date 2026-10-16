@@ -136,6 +136,97 @@ its own creation and publish dates, without names.
 
 ---
 
+## New article drafts and the edit hold
+
+Built in #668 (epic #667, decisions [0019](./decisions/0019-the-edit-lock-lives-on-the-content-row.md)
+and [0020](./decisions/0020-a-new-article-is-a-draft-created-on-click.md)). *Nový článek* posts
+to `add-article`, which creates an empty draft of the signed-in author and opens its edit page.
+The draft has no title, text or address (`slug` is null) and no history; `firstContentAt` stays
+null until the first save with content, which logs *Vytvořeno*. Until then the draft is in no
+administration list or count (`NON_EMPTY_ARTICLE_WHERE`), and the public web lists only articles
+with an address. Each *Nový článek* also deletes empty drafts older than a day whose edit hold
+is free.
+
+The edit hold is built in #669 (design 07g, 24g; decisions 0019 and
+[0021](./decisions/0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)).
+Only a draft is held, by one browser tab. The editor takes the hold when it opens and the hold
+is free (no holder, or `heldUntil` passed), renews it about every 30 s, and releases it when it
+closes and when the tab closes. Without a signal it expires
+after about 2 minutes, with no release. An empty draft is deleted when its hold is released.
+The same person's second tab asks *Článek máte otevřený v jiné záložce* and may take it over.
+Only the Coordinator takes over someone else's hold, through *Převzít úpravu?*, which logs
+*Převzata úprava*. Others get no *Upravit*, and the editor's address sends them to the detail
+with a toast. While someone else holds a draft, *Upravit* and every action that changes its
+state wait. Each transition repeats "not held by someone else" in its own write, a bulk action
+skips the held article, and a save checks that its tab still holds it. The list and the detail
+say „upravuje …“, live through the hold events and again when it expires. The history writes
+one *Upraveno* per hold. Hold writes keep `updatedAt` as it was. Gallery images carry their
+`position`.
+
+Autosave is built in #670 (design 24e, 24d; decision
+[0022](./decisions/0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md)). There is
+no *Uložit*, no leave dialog and no copy in the browser's storage. The editor sends the whole
+form about a second after the last change, at once on leaving a field and on ⌘S (Ctrl+S
+elsewhere). One save is on its way at a time, to the `save` route, which takes it only from the
+holding tab and keeps the hold. A draft saves incomplete; what is missing is said on submit and
+publish (23h). Of the gallery, the save carries only the alt texts and captions.
+The line under the heading is the only sign: *Zatím prázdné*, *ukládá se* (at least 300 ms),
+*uloženo dnes v 14:02* (another day with the date), *bez připojení · čeká na uložení* (it sends
+again when the network is back) or *Nepodařilo se uložit.* with *Zkusit znovu*. An address
+another article has does not save, while the rest does. The line adds *· adresa neuložena*, and
+the field offers *Použít …* with a free address. *Zavřít* and every other way out send what
+waits first. When the page closes, the waiting save goes out with the release in one request.
+The browser's own dialog asks only offline, after a failure, or when what waits cannot be sent
+while the page closes.
+
+The gallery saves image by image, built in #673 (design 24b; decision
+[0027](./decisions/0027-each-article-image-saves-on-its-own.md)). A picked image uploads at
+once to the `images` route, under an id made in the editor, and its row exists only once the
+file is processed. A file over 10 MB or not an image is refused at selection. *Odebrat* asks
+first and deletes at once; *Nahradit soubor* keeps the old file until the new one is processed.
+The main image and the order (*Posunout dopředu*, *Posunout dozadu*) save at once. Each change
+checks the hold in its own write and moves `updatedAt`. An upload under way still lands after *Zavřít* released the hold, on a draft nobody holds and
+not submitted since; never over someone else's hold. Processing and a failure show only in
+the open editor.
+
+Losing the hold is built in #671 (design 24h, 24i; decision
+[0023](./decisions/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold
+went to the Coordinator or to the same person's other tab shows *Úpravu přebírá …* and turns
+read-only: grey fields, no text toolbar, no buttons that change something. Autosave stops. It
+says *Všechny změny jsou uložené.* only when nothing was waiting; otherwise *Některé změny se
+nestihly uložit.* with *Zkopírovat celý text* (the article text as HTML and plain text, without
+the title, perex or other fields), which stays under the heading until the editor closes. The
+line under the heading says who edits it now; once the hold is free, *Článek lze znovu
+upravovat* with *Pokračovat v úpravě*, which reloads the editor, and the new page takes the
+hold. An editor whose hold expired while it was away takes it back silently and sends what
+waited, if nobody saved meanwhile. If someone did, it sends nothing and shows *Článek se
+mezitím změnil* with *Zkopírovat celý text* and *Načíst aktuální verzi*, or *Otevřít detail*
+while someone holds it or it is no longer an editable draft.
+
+Choosing authors is built in #674 (design 24j; decision
+[0026](./decisions/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
+The authors are rows with an avatar and a ×. Under them is *Přidat autora*, a search field (a
+`ChipInput` without chips) whose list opens with the focus and narrows through every author
+while typing. An article always has at least one author, a draft too, and the last row has no
+×. A Contributor or Creator keeps their own row (no ×) and adds or removes co-authors. The
+Coordinator picks freely, without themselves too, and only they are offered the association,
+*Vedneměsíčník, z. s.* (the Owner's author). Replacing and adding are two actions (ivyin4kr):
+for the Coordinator the only author has *Vyměnit* in place of the ×, which opens *Vybrat
+jiného autora* under the row and hides *Přidat autora*; the pick replaces the author in one
+save, and *Zrušit*, Esc or a click outside closes it. Adding, removing or replacing saves at
+once, without a dialog. Administrators and Owners get *Založit autora „…“* as the last option
+while the typed name is no author's (in the replace field with a second line, *Po uložení
+nahradí současného autora.*); it opens `add-author` with the name and comes back to the
+editor with the new author chosen, or put in place of the replaced one. The new author comes
+back in a one-time cookie, not in the address, so no link can change an article's authors.
+When the search finds
+nothing, everyone else reads that only they can create one. The save refuses an article
+without an author (400), a Contributor or Creator leaving themselves out, and the association
+added by anyone but the Coordinator (403); an association already stored stays on anyone's
+save.
+
+---
+
 ## Decided for the redesign (not implemented yet)
 
 Decided on 28 Sep 2026 in the design project (`07 Stavy a akce obsahu`, questions `dj753f0j`

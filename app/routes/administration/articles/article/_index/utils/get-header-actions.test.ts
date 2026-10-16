@@ -83,7 +83,7 @@ describe('getHeaderActions — draft', () => {
       menu: ['publish', 'delete'],
       outline: 'edit',
       primary: null,
-      sentence: 'Článek nebyl odeslán ke schválení.',
+      sentence: 'not-submitted',
     })
   })
 
@@ -144,11 +144,9 @@ describe('getHeaderActions — draft', () => {
     const sentenceFor = (submission: 'pending' | 'approved' | null) =>
       getHeaderActions({ ...nothingAllowed, submission }).sentence
 
-    expect(sentenceFor(null)).toBe(
-      'Upravovat mohou autoři článku a Koordinátor.',
-    )
-    expect(sentenceFor('pending')).toBe('Schválit může Koordinátor.')
-    expect(sentenceFor('approved')).toBe('Publikovat může Koordinátor.')
+    expect(sentenceFor(null)).toBe('who-edits')
+    expect(sentenceFor('pending')).toBe('who-approves')
+    expect(sentenceFor('approved')).toBe('who-publishes')
   })
 
   test('an author who may not submit still edits', () => {
@@ -238,7 +236,26 @@ describe('getHeaderActions — archived', () => {
       menu: [],
       outline: null,
       primary: null,
-      sentence: 'Obnovit článek může Koordinátor.',
+      sentence: 'who-restores',
     })
+  })
+})
+
+describe('getHeaderActions — someone else edits it (07g, 23g)', () => {
+  test('nothing for an author: the page says who edits it', () => {
+    expect(
+      getHeaderActions({ ...nothingAllowed, isHeldByOther: true }),
+    ).toEqual({ menu: [], outline: null, primary: null, sentence: null })
+  })
+
+  test('the Coordinator may take the edit over (24g)', () => {
+    expect(
+      getHeaderActions({
+        ...nothingAllowed,
+        canTakeOver: true,
+        isHeldByOther: true,
+        submission: 'pending',
+      }),
+    ).toEqual({ menu: [], outline: 'take-over', primary: null, sentence: null })
   })
 })

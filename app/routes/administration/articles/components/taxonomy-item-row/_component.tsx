@@ -1,34 +1,23 @@
-import { useMemo, useRef, useState } from 'react'
-import { useFetcher, useNavigate } from 'react-router'
-
 import { ActionMenu } from '~/components/action-menu'
-import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
 import {
   TableCell,
   TableRow,
   type TableRowTint,
   TableSelectionCell,
 } from '~/components/admin/admin-table'
-import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
-import { FORM_CONFIG } from '~/config/form-config'
-import { useContentActionResult } from '~/hooks/use-content-action-result'
 
 import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
 import {
-  type ConfirmAction,
   TAXONOMY_ACTION_LABELS,
-  TAXONOMY_DIRECT_INTENTS,
   type TaxonomyAction,
 } from '../../utils/taxonomy-actions'
 import type { TaxonomyRecordCopy } from '../../utils/taxonomy-record-copy'
-import { TaxonomyConfirmDialog } from '../taxonomy-confirm-dialog'
+import { useTaxonomyActions } from '../../utils/use-taxonomy-actions'
+import { TaxonomyActionDialogs } from '../taxonomy-action-dialogs'
 import styles from './_styles.module.css'
 
 type TaxonomyRecord = {
@@ -56,8 +45,6 @@ type Props = {
   tint?: TableRowTint
 }
 
-const INTENT_VALUE = FORM_CONFIG.intent.value
-
 /**
  * A row of the category or tag list (design 25a, 25e): the name opening the
  * detail, for a category with its address under it; the published articles
@@ -80,89 +67,15 @@ export const TaxonomyItemRow = ({
   onSelect,
   tint,
 }: Props) => {
-  const fetcherKey = `taxonomy-row-${record.id}`
-  const fetcher = useFetcher({ key: fetcherKey })
-  const isSubmitting = fetcher.state !== 'idle'
-  const authenticityToken = useAuthenticityToken()
-  const navigate = useNavigate()
-
-  // Schválit a publikovat submits the publish intent; its toast says both.
-  const [submittedAction, setSubmittedAction] = useState<TaxonomyAction | null>(
-    null,
-  )
-  const toasts = useMemo(
-    () => ({
-      [INTENT_VALUE.archive]: copy.toasts.archived,
-      [INTENT_VALUE.publish]:
-        submittedAction === 'approve-and-publish'
-          ? copy.toasts.approvedAndPublished
-          : copy.toasts.published,
-      [INTENT_VALUE.retract]: copy.toasts.retracted,
-      [INTENT_VALUE.review]: copy.toasts.approved,
-      [INTENT_VALUE.submitForReview]: copy.toasts.submitted,
-    }),
-    [copy, submittedAction],
-  )
-  useContentActionResult(fetcher.data, toasts)
-
-  const deleteDialogRef = useRef<HTMLDialogElement>(null)
-  const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(
-    deleteDialogRef,
-    { action: detailHref, key: fetcherKey },
-  )
-  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
-
-  // Archiving and retracting ask first only when readers lose something
-  // (25d, 3vnah8ji); publishing never does.
-  const asksFirst = (action: TaxonomyAction): action is ConfirmAction =>
-    (action === 'archive' || action === 'retract') &&
-    record.publishedArticleCount > 0
-
-  const runAction = (action: TaxonomyAction) => {
-    if (asksFirst(action)) {
-      return setConfirmAction(action)
-    }
-
-    const intent = TAXONOMY_DIRECT_INTENTS[action]
-
-    if (intent !== undefined) {
-      setSubmittedAction(action)
-      const formData = new FormData()
-      formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
-      formData.append(FORM_CONFIG.intent.name, intent)
-      void fetcher.submit(formData, { action: detailHref, method: 'POST' })
-      return
-    }
-
-    switch (action) {
-      case 'delete':
-        return openDeleteDialog()
-      case 'edit':
-        return navigate(editHref, { state: RETURN_TO_OPENER_STATE })
-      case 'view-on-web':
-        return window.open(
-          `${copy.publicPath}/${record.slug}`,
-          '_blank',
-          'noopener',
-        )
-    }
-  }
-
-  const getLabel = (action: TaxonomyAction) =>
-    asksFirst(action)
-      ? `${TAXONOMY_ACTION_LABELS[action]}…`
-      : TAXONOMY_ACTION_LABELS[action]
-
-  const confirmCopy = {
-    archive: {
-      description: copy.archiveDescription,
-      title: copy.archiveTitle(record.name),
-    },
-    retract: {
-      description: copy.retractDescription(record.publishedArticleCount),
-      title: copy.retractTitle(record.name),
-    },
-  }
+  const actions = useTaxonomyActions({
+    copy,
+    deleteRedirects: false,
+    detailHref,
+    editHref,
+    fetcherKey: `taxonomy-row-${record.id}`,
+    record,
+  })
+  const { getLabel, isSubmitting, runAction } = actions
 
   const rowAction = record.row
 
@@ -235,24 +148,10 @@ export const TaxonomyItemRow = ({
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
-          {record.menu.includes('delete') && (
-            <AdminDeleteConfirmationDialog
-              description={copy.deleteDescription(record.articleCount)}
-              ref={deleteDialogRef}
-              title={copy.deleteTitle(record.name)}
-            />
-          )}
-          {confirmAction !== null && (
-            <TaxonomyConfirmDialog
-              action={detailHref}
-              confirmLabel={TAXONOMY_ACTION_LABELS[confirmAction]}
-              description={confirmCopy[confirmAction].description}
-              fetcherKey={fetcherKey}
-              intent={TAXONOMY_DIRECT_INTENTS[confirmAction]}
-              onClose={() => setConfirmAction(null)}
-              title={confirmCopy[confirmAction].title}
-            />
-          )}
+          <TaxonomyActionDialogs
+            actions={actions}
+            canDelete={record.menu.includes('delete')}
+          />
         </div>
       </TableCell>
     </TableRow>

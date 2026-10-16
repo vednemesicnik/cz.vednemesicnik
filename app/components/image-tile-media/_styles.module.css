@@ -1,0 +1,44 @@
+/* `.vdm-imagetile__media`; a compact tile sets the padding to 6 px. */
+.imageTileMedia {
+  @layer component {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    box-sizing: border-box;
+    aspect-ratio: 4 / 3;
+    padding: var(--image-tile-media-padding, 8px);
+    background: var(--placeholder-bg);
+    border-radius: var(--radius-md);
+  }
+}
+
+.image {
+  @layer component {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+  }
+}
+
+.empty {
+  @layer variant {
+    background-image: var(--gradient-signature);
+  }
+}
+
+.processing {
+  @layer variant {
+    opacity: 0.6;
+  }
+}
+
+.failed {
+  @layer variant {
+    background: var(--callout-error-bg);
+    border: 1px solid var(--error);
+  }
+}

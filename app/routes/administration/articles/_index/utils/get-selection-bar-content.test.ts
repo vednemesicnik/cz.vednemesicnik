@@ -6,8 +6,16 @@ describe('getSelectionBarContent', () => {
   test('offers the actions every selected article has', () => {
     expect(
       getSelectionBarContent([
-        { bulkActions: ['publish', 'delete'], isIncomplete: false },
-        { bulkActions: ['publish', 'delete'], isIncomplete: true },
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: false,
+          isIncomplete: false,
+        },
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: false,
+          isIncomplete: true,
+        },
       ]),
     ).toEqual({ actions: ['publish', 'delete'], message: null })
   })
@@ -15,8 +23,12 @@ describe('getSelectionBarContent', () => {
   test('says no action is common when none is left', () => {
     expect(
       getSelectionBarContent([
-        { bulkActions: ['publish', 'delete'], isIncomplete: false },
-        { bulkActions: ['archive'], isIncomplete: false },
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: false,
+          isIncomplete: false,
+        },
+        { bulkActions: ['archive'], isHeldByOther: false, isIncomplete: false },
       ]),
     ).toEqual({ actions: [], message: 'Pro tento výběr není společná akce.' })
   })
@@ -24,8 +36,16 @@ describe('getSelectionBarContent', () => {
   test('drops publishing when every selected article is incomplete', () => {
     expect(
       getSelectionBarContent([
-        { bulkActions: ['publish', 'delete'], isIncomplete: true },
-        { bulkActions: ['publish', 'delete'], isIncomplete: true },
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: false,
+          isIncomplete: true,
+        },
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: false,
+          isIncomplete: true,
+        },
       ]),
     ).toEqual({ actions: ['delete'], message: null })
   })
@@ -38,9 +58,61 @@ describe('getSelectionBarContent', () => {
       getSelectionBarContent(
         Array.from({ length: count }, () => ({
           bulkActions: ['publish' as const],
+          isHeldByOther: false,
           isIncomplete: true,
         })),
       ),
     ).toEqual({ actions: [], message })
+  })
+
+  test('offers an action that skips a held article (22f)', () => {
+    expect(
+      getSelectionBarContent([
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: false,
+          isIncomplete: false,
+        },
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: true,
+          isIncomplete: false,
+        },
+      ]),
+    ).toEqual({ actions: ['publish', 'delete'], message: null })
+  })
+
+  test('offers nothing when every selected article is held (22c)', () => {
+    expect(
+      getSelectionBarContent([
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: true,
+          isIncomplete: false,
+        },
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: true,
+          isIncomplete: false,
+        },
+      ]),
+    ).toEqual({ actions: [], message: 'Pro tento výběr není společná akce.' })
+  })
+
+  test('drops publishing when every selected article is incomplete or held', () => {
+    expect(
+      getSelectionBarContent([
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: true,
+          isIncomplete: false,
+        },
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: false,
+          isIncomplete: true,
+        },
+      ]),
+    ).toEqual({ actions: ['delete'], message: null })
   })
 })

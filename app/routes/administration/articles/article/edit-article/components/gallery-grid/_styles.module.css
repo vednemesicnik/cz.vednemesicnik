@@ -1,0 +1,29 @@
+.galleryGrid {
+  @layer route {
+    display: grid;
+    align-items: start;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+/* The narrow column (24a). */
+.twoColumns {
+  @layer route {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+/* The panel (24b); one column on a phone (24f). */
+.threeColumns {
+  @layer route {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px 20px;
+
+    @media (width < 768px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}

@@ -6,6 +6,7 @@ import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
+import { DialogBody } from '~/components/dialog-body'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
 import { getBulkConfirmCopy } from '../../utils/get-bulk-confirm-copy'
@@ -19,6 +20,7 @@ type Props = {
   action: 'archive' | 'delete'
   articles: { id: string; title: string }[]
   onlyDrafts: boolean
+  skipped: string | null
   onConfirm: () => void
   onClose: () => void
 }
@@ -30,11 +32,13 @@ type Props = {
  *
  * @param props.articles - The articles the action changes.
  * @param props.onlyDrafts - Every one is a draft: deleting says koncepty.
+ * @param props.skipped - What the action skips and why (22f), or `null`.
  */
 export const BulkConfirmDialog = ({
   action,
   articles,
   onlyDrafts,
+  skipped,
   onConfirm,
   onClose,
 }: Props) => {
@@ -70,11 +74,16 @@ export const BulkConfirmDialog = ({
             ))}
           </ul>
         )}
-        {isDelete ? (
-          <p className={styles.warning}>{description}</p>
-        ) : (
-          <AdminModalDescription>{description}</AdminModalDescription>
-        )}
+        <DialogBody>
+          {skipped !== null && (
+            <AdminModalDescription>{skipped}</AdminModalDescription>
+          )}
+          {isDelete ? (
+            <p className={styles.warning}>{description}</p>
+          ) : (
+            <AdminModalDescription>{description}</AdminModalDescription>
+          )}
+        </DialogBody>
         <AdminModalActions>
           <Button
             onClick={() => ref.current?.close()}

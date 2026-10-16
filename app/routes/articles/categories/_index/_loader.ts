@@ -1,9 +1,10 @@
+import { buildVisibleArticleWhere } from '~/routes/articles/utils/build-visible-article-where'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
+import { hasSlug } from '~/utils/has-slug'
 import { nameCollator } from '~/utils/name-collator'
 import {
   getWebContentVisibility,
-  ownArticle,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { findTagsWithArticleCounts } from '../../utils/find-tags-with-article-counts.server'
@@ -19,7 +20,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     'article_category',
     'article_tag',
   ])
-  const visibleArticles = visibility.where('article', ownArticle)
+  const visibleArticles = buildVisibleArticleWhere(visibility)
 
   const [categories, tags] = await Promise.all([
     prisma.articleCategory.findMany({
@@ -56,7 +57,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     .map((category) => ({
       articleCount: category._count.articles,
       id: category.id,
-      latestArticles: category.articles.map((article) => ({
+      latestArticles: category.articles.filter(hasSlug).map((article) => ({
         ...article,
         publishedAt: createFormattedDate(article.publishedAt),
       })),

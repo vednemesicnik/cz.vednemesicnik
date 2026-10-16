@@ -1,0 +1,9 @@
+/* `.vdm-imagetile__file`. */
+.imageTileFile {
+  @layer component {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}

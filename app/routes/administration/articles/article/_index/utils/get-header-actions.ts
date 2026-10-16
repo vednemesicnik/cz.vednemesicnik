@@ -1,15 +1,15 @@
 import type { ContentState } from '@generated/prisma/enums'
 
-import {
-  type ArticleAction,
-  NOT_SUBMITTED_NOTE,
+import type {
+  ArticleAction,
+  HeaderSentence,
 } from '../../../utils/article-actions'
 
 type HeaderActions = {
   primary: ArticleAction | null
   outline: ArticleAction | null
   menu: ArticleAction[]
-  sentence: string | null
+  sentence: HeaderSentence | null
 }
 
 type Options = {
@@ -28,12 +28,26 @@ type Options = {
   canRestore: boolean
   canDelete: boolean
   canChangePublishedAt: boolean
+  /** Someone else holds the edit (07g); the flags are already masked. */
+  isHeldByOther?: boolean
+  canTakeOver?: boolean
 }
 
 const only = (action: ArticleAction, isAllowed: boolean) =>
   isAllowed ? [action] : []
 
 const getDraftActions = (options: Options): HeaderActions => {
+  // Someone else edits it: in place of the buttons, the page says who (23g),
+  // and the Coordinator may take the edit over (24g).
+  if (options.isHeldByOther === true) {
+    return {
+      menu: [],
+      outline: options.canTakeOver === true ? 'take-over' : null,
+      primary: null,
+      sentence: null,
+    }
+  }
+
   const edit = only('edit', options.canEdit)
 
   if (options.submission !== null) {
@@ -57,9 +71,7 @@ const getDraftActions = (options: Options): HeaderActions => {
       outline: null,
       primary: null,
       sentence:
-        options.submission === 'pending'
-          ? 'Schválit může Koordinátor.'
-          : 'Publikovat může Koordinátor.',
+        options.submission === 'pending' ? 'who-approves' : 'who-publishes',
     }
   }
 
@@ -79,7 +91,7 @@ const getDraftActions = (options: Options): HeaderActions => {
       menu: ['publish', ...only('delete', options.canDelete)],
       outline: edit[0] ?? null,
       primary: null,
-      sentence: NOT_SUBMITTED_NOTE,
+      sentence: 'not-submitted',
     }
   }
 
@@ -105,7 +117,7 @@ const getDraftActions = (options: Options): HeaderActions => {
     menu: only('delete', options.canDelete),
     outline: null,
     primary: null,
-    sentence: 'Upravovat mohou autoři článku a Koordinátor.',
+    sentence: 'who-edits',
   }
 }
 
@@ -115,10 +127,12 @@ const getDraftActions = (options: Options): HeaderActions => {
  * may do nothing, one sentence naming who can.
  *
  * @param options - The article's state and submission, whether it is submitted
- *   at all (no Coordinator among its authors), and what the signed-in author may
- *   do with it.
+ *   at all (no Coordinator among its authors), what the signed-in author may
+ *   do with it, and whether someone else holds its edit (07g).
  * @returns The primary and outline action, the „⋯“ items in order (Smazat… last),
- *   and the sentence shown beside or instead of them.
+ *   and the sentence shown beside or instead of them. A draft someone else
+ *   holds has only Převzít úpravu… for the Coordinator; the page says who
+ *   edits it (23g).
  */
 export const getHeaderActions = (options: Options): HeaderActions => {
   switch (options.state) {
@@ -143,9 +157,7 @@ export const getHeaderActions = (options: Options): HeaderActions => {
         menu: only('delete', options.canDelete),
         outline: options.canRestore ? 'restore' : null,
         primary: null,
-        sentence: options.canRestore
-          ? null
-          : 'Obnovit článek může Koordinátor.',
+        sentence: options.canRestore ? null : 'who-restores',
       }
   }
 }

@@ -1,0 +1,8 @@
+/* A page with its own bar on a phone goes without the trail there (24f). */
+.hiddenOnMobile {
+  @layer layout {
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}

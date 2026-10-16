@@ -15,6 +15,7 @@ export type ArticleAction =
   | 'retract'
   | 'return'
   | 'submit'
+  | 'take-over'
   | 'view-on-web'
   | 'withdraw'
 
@@ -31,6 +32,8 @@ export const ARTICLE_ACTION_LABELS: Record<ArticleAction, string> = {
   retract: 'Stáhnout z publikace…',
   return: 'Vrátit k úpravám',
   submit: 'Odeslat ke schválení',
+  // Opens the editor with the takeover dialog (24g).
+  'take-over': 'Převzít úpravu…',
   'view-on-web': 'Zobrazit na webu',
   withdraw: 'Vzít zpět do konceptu',
 }
@@ -46,3 +49,22 @@ export const ARTICLE_DIRECT_INTENTS: Partial<Record<ArticleAction, string>> = {
 
 // A draft nobody submitted, published by the Coordinator (23d, 23f).
 export const NOT_SUBMITTED_NOTE = 'Článek nebyl odeslán ke schválení.'
+
+/**
+ * The sentence a detail header shows beside or instead of its buttons (23d):
+ * who may do what the role may not, or that a draft wasn't submitted.
+ */
+export type HeaderSentence =
+  | 'not-submitted'
+  | 'who-edits'
+  | 'who-approves'
+  | 'who-publishes'
+  | 'who-restores'
+
+export const ARTICLE_HEADER_SENTENCES: Record<HeaderSentence, string> = {
+  'not-submitted': NOT_SUBMITTED_NOTE,
+  'who-approves': 'Schválit může Koordinátor.',
+  'who-edits': 'Upravovat mohou autoři článku a Koordinátor.',
+  'who-publishes': 'Publikovat může Koordinátor.',
+  'who-restores': 'Obnovit článek může Koordinátor.',
+}

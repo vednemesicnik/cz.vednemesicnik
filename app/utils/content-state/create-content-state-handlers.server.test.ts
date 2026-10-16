@@ -143,6 +143,7 @@ describe('createContentStateHandlers — review gate', () => {
     expect(config.applyState).toHaveBeenCalledWith(
       'a1',
       expect.objectContaining({ state: 'published' }),
+      'author-1',
     )
     // A contributor publishing does not create a review.
     expect(config.ensureApprovingReview).not.toHaveBeenCalled()
@@ -172,6 +173,7 @@ describe('createContentStateHandlers — review gate', () => {
     expect(direct.applyState).toHaveBeenCalledWith(
       'a1',
       expect.objectContaining({ state: 'published' }),
+      'coordinator-1',
     )
     // The publishing act is the approval.
     expect(direct.ensureApprovingReview).toHaveBeenCalledWith(
@@ -272,10 +274,11 @@ describe('createContentStateHandlers — publish date', () => {
 
     await handlers.publish(request, { id: 'a1', target })
 
-    expect(config.applyState).toHaveBeenCalledWith('a1', {
-      publishedAt: existing,
-      state: 'published',
-    })
+    expect(config.applyState).toHaveBeenCalledWith(
+      'a1',
+      { publishedAt: existing, state: 'published' },
+      'author-1',
+    )
   })
 
   test('defaults to now on the first publish (no stored date)', async () => {
@@ -337,10 +340,11 @@ describe('createContentStateHandlers — publish date', () => {
       target,
     })
 
-    expect(config.applyState).toHaveBeenCalledWith('a1', {
-      publishedAt: backdate,
-      state: 'published',
-    })
+    expect(config.applyState).toHaveBeenCalledWith(
+      'a1',
+      { publishedAt: backdate, state: 'published' },
+      'author-1',
+    )
   })
 
   test('rejects a backdate from a non-approver', async () => {
@@ -389,7 +393,11 @@ describe('createContentStateHandlers — transition matrix', () => {
 
     await handlers.archive(request, { id: 'a1', target })
 
-    expect(config.applyState).toHaveBeenCalledWith('a1', { state: 'archived' })
+    expect(config.applyState).toHaveBeenCalledWith(
+      'a1',
+      { state: 'archived' },
+      'author-1',
+    )
   })
 
   test('restore moves to draft and keeps the publish date', async () => {
@@ -452,9 +460,11 @@ describe('createContentStateHandlers — transition matrix', () => {
       target,
     })
 
-    expect(config.applyState).toHaveBeenCalledWith('a1', {
-      publishedAt: nextDate,
-    })
+    expect(config.applyState).toHaveBeenCalledWith(
+      'a1',
+      { publishedAt: nextDate },
+      'author-1',
+    )
   })
 
   test('changePublishedAt is rejected for a non-approver', async () => {

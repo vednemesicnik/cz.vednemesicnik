@@ -25,13 +25,16 @@ export type MissingList = {
   items: string[]
 }
 
-type ActionResult = { intent: string; missing: string[] } | undefined
+type ActionResult =
+  | { intent: string; missing: string[]; heldByName?: string }
+  | undefined
 
 /**
  * Answers a content action's result once (design 23h): a toast, or the list of
  * what is missing before the content can be submitted or published.
  *
- * @param actionResult - The keyed fetcher's data, `{ intent, missing }`.
+ * @param actionResult - The keyed fetcher's data, `{ intent, missing }`, and
+ *   `heldByName` when the content's edit hold refused it.
  * @param toasts - Toasts that name the record, by intent (`Rubrika schválena`,
  *   design 25a); the other intents keep the generic one.
  * @returns The missing list to show, `null` when there is none, and setters to
@@ -54,6 +57,15 @@ export const useContentActionResult = (
       return
     }
     handledResultRef.current = actionResult
+
+    // Someone took the edit hold meanwhile; nothing changed (07g, copy
+    // hgb3jeqj). Only the article has the hold so far.
+    if (actionResult.heldByName !== undefined) {
+      showToast(
+        `Zkuste akci později — článek právě upravuje ${actionResult.heldByName}. Akce se neprovedla.`,
+      )
+      return
+    }
 
     if (actionResult.missing.length > 0) {
       setMissingList({
