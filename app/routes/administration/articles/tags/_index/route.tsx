@@ -39,6 +39,7 @@ import { recentChangeTints } from '~/utils/recent-change-tints'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../../components/articles-tabs'
 import { TaxonomyItemRow } from '../../components/taxonomy-item-row'
+import { getTaxonomyBulkDeleteConfirmation } from '../../utils/get-taxonomy-bulk-delete-confirmation'
 import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
 import { TAG_RECORD_COPY } from '../tag-record-copy'
 import type { Route } from './+types/route'
@@ -73,6 +74,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   const deletableIds = tags.filter((tag) => tag.canDelete).map((tag) => tag.id)
   const selection = useAdminTableSelection(deletableIds)
+  const selectedTags = tags.filter((tag) =>
+    selection.selectedIds.includes(tag.id),
+  )
 
   const states = filters.state ?? []
   const hasOtherFilters = query !== ''
@@ -122,6 +126,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <FilterCell>
         <AdminBulkActionsBar
           action={href('/administration/articles/tags')}
+          confirmation={getTaxonomyBulkDeleteConfirmation(
+            selectedTags,
+            TAG_RECORD_COPY,
+          )}
+          formatToast={TAG_RECORD_COPY.bulkDelete.toast}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
         />

@@ -2,6 +2,7 @@ import { type RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { type FetcherSubmitOptions, useFetcher } from 'react-router'
 
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
+import { useToast } from '~/components/toast-provider'
 import { DIALOG_RETURN_VALUE } from '~/config/dialog-config'
 import { FORM_CONFIG } from '~/config/form-config'
 
@@ -12,21 +13,26 @@ type Options = {
   // selection). Deliberately a separate hook from the single-delete dialog hook,
   // which is shared by ~18 item rows and must stay untouched.
   onDone: () => void
+  // The toast after a successful delete, from the number actually deleted.
+  formatToast?: (deletedCount: number) => string
 }
 
 // The bulk-delete action (#219) signals success with this payload. Failures
 // follow the app convention `data({ status: 'fail' }, { status: 400 })`, whose
 // body is still non-null — so onDone must gate on an explicit success rather
 // than on the mere presence of data.
-type BulkDeleteResult = { status: 'success' | 'fail' }
+type BulkDeleteResult =
+  | { status: 'success'; deletedCount: number }
+  | { status: 'fail' }
 
 export const useAdminBulkDelete = (
   dialogRef: RefObject<HTMLDialogElement | null>,
-  { action, selectedIds, onDone }: Options,
+  { action, selectedIds, onDone, formatToast }: Options,
 ) => {
   const [returnValue, setReturnValue] = useState<string>('')
   const fetcher = useFetcher<BulkDeleteResult>()
   const isSubmitting = fetcher.state !== 'idle'
+  const showToast = useToast()
 
   const authTokenName = FORM_CONFIG.authenticityToken.name
   const authTokenValue = useAuthenticityToken()
@@ -74,9 +80,15 @@ export const useAdminBulkDelete = (
     }
     if (wasSubmittingRef.current) {
       wasSubmittingRef.current = false
-      if (fetcher.data?.status === 'success') onDone()
+      const result = fetcher.data
+      if (result?.status === 'success') {
+        if (formatToast !== undefined) {
+          showToast(formatToast(result.deletedCount))
+        }
+        onDone()
+      }
     }
-  }, [fetcher.state, fetcher.data, onDone])
+  }, [fetcher.state, fetcher.data, formatToast, onDone, showToast])
 
   const openDialog = useCallback(() => {
     dialogRef.current?.showModal()

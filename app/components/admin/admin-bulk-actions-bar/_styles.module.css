@@ -8,3 +8,17 @@
     padding-block: 2px;
   }
 }
+
+/* The selected records in the confirmation, as 22c lists articles. */
+.items {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding-inline-start: 18px;
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+}
