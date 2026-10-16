@@ -13,6 +13,13 @@
   }
 }
 
+/* The chevron's Tooltip anchor stretches to the main segment's height. */
+.chevronTooltip {
+  @layer variant {
+    align-items: stretch;
+  }
+}
+
 /* Chevron segment: narrow, square inline-start corners, subtle divider. */
 .chevron {
   @layer variant {

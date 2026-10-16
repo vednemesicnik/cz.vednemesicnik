@@ -4,6 +4,7 @@ import { type ComponentProps, type ReactNode, useId, useRef } from 'react'
 import { AdminActionButton } from '~/components/admin/admin-action-button'
 import { ArrowDropDownIcon } from '~/components/icons/arrow-drop-down-icon'
 import { CheckIcon } from '~/components/icons/check-icon'
+import { Tooltip } from '~/components/tooltip'
 
 import styles from './_styles.module.css'
 
@@ -25,7 +26,6 @@ type Props = {
   // Disables the chevron segment too, so both segments can be locked together
   // (e.g. while submitting); the parent disables the main segment via children.
   disabled?: boolean
-  title?: string
   chevronAriaLabel?: string
 }
 
@@ -36,7 +36,6 @@ export const AdminSplitButton = ({
   selectedId,
   onSelect,
   disabled,
-  title,
   chevronAriaLabel = 'Další možnosti publikace',
 }: Props) => {
   const menuRef = useRef<HTMLDivElement>(null)
@@ -53,17 +52,19 @@ export const AdminSplitButton = ({
     <div className={styles.splitButton}>
       {children}
 
-      <AdminActionButton
-        action={action}
-        aria-label={chevronAriaLabel}
-        className={styles.chevron}
-        disabled={disabled}
-        popoverTarget={menuId}
-        title={title}
-        type={'button'}
-      >
-        <ArrowDropDownIcon />
-      </AdminActionButton>
+      {/* The arrow has no visible name; the Tooltip shows it (jb81di02). */}
+      <Tooltip className={styles.chevronTooltip} label={chevronAriaLabel}>
+        <AdminActionButton
+          action={action}
+          aria-label={chevronAriaLabel}
+          className={styles.chevron}
+          disabled={disabled}
+          popoverTarget={menuId}
+          type={'button'}
+        >
+          <ArrowDropDownIcon />
+        </AdminActionButton>
+      </Tooltip>
 
       {/*
         Native popover: the chevron (its popovertarget invoker) becomes the
