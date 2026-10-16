@@ -8,6 +8,7 @@ import {
   useForm,
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
+import type { ContentState } from '@generated/prisma/enums'
 import { createId } from '@paralleldrive/cuid2'
 import { clsx } from 'clsx'
 import {
@@ -108,6 +109,18 @@ const PEREX_RECOMMENDED_LENGTH = 160
 const DETAIL_COLUMN_QUERY = '(width >= 768px)'
 
 type DetailName = 'address' | 'authors' | 'categories' | 'tags' | 'images'
+
+// Why a category or tag the article has is greyed (24a, iq3nur0e, 8kfn4ou3).
+// A draft one is previewed on the web by an author who may view it, so only
+// readers do not see it; an archived one nobody sees (copy 86b7n1dq).
+const CATEGORY_STATE_NOTE: Partial<Record<ContentState, string>> = {
+  archived: 'archivovaná, na webu se neukáže',
+  draft: 'v konceptu, čtenáři ji nevidí',
+}
+const TAG_STATE_NOTE: Partial<Record<ContentState, string>> = {
+  archived: 'archivovaný',
+  draft: 'v konceptu',
+}
 
 // An author whose row is missing from the options shows the initials.
 const NO_IMAGE = createImageSources('user-image', undefined)
@@ -440,8 +453,8 @@ export default function RouteComponent({
   // The heading says *Nový článek* for the draft that opened empty (24a).
   const [isNewArticle] = useState(article.isEmptyDraft)
 
-  // The categories and tags as the editor opened: an archived one stays in
-  // the list after it is unticked, so a mistake can be undone (24a).
+  // The categories and tags as the editor opened: one in another state stays
+  // in the list after it is unticked, so a mistake can be undone (24a).
   const [categoryOptions] = useState(loaderData.categories)
   const [tagOptions] = useState(loaderData.tags)
   const selectedCategoryIds = toList(fields.categoryIds.value)
@@ -460,17 +473,27 @@ export default function RouteComponent({
     (category) => category.state !== 'published',
   )
 
-  // Tags by search: only published ones not picked yet are offered.
+  // Tags by search, the ones not picked yet. Besides the published ones,
+  // a tag the article had at open in another state stays on offer under them
+  // until the editor closes, so removing it can be undone (8kfn4ou3).
   const [tagQuery, setTagQuery] = useState('')
   const foldedTagQuery = foldForSearch(tagQuery.trim())
   const tagSuggestions = tagOptions
     .filter(
       (tag) =>
-        tag.state === 'published' &&
         !selectedTagIds.includes(tag.id) &&
         foldForSearch(tag.name).includes(foldedTagQuery),
     )
-    .map((tag) => ({ label: tag.name, value: tag.id }))
+    .sort(
+      (first, second) =>
+        Number(first.state !== 'published') -
+        Number(second.state !== 'published'),
+    )
+    .map((tag) => ({
+      label: tag.name,
+      note: TAG_STATE_NOTE[tag.state],
+      value: tag.id,
+    }))
   const setTagIds = (tagIds: string[]) => {
     setSelectedTagIds(tagIds)
     // Hidden inputs change without an event, so the change is said here.
@@ -1227,12 +1250,13 @@ export default function RouteComponent({
                         key={key}
                       >
                         {category?.name ?? ''}
-                        {category?.state === 'archived' && (
-                          <span className={styles.categoryNote}>
-                            {' '}
-                            archivovaná, na webu se neukáže
-                          </span>
-                        )}
+                        {category !== undefined &&
+                          CATEGORY_STATE_NOTE[category.state] !== undefined && (
+                            <span className={styles.categoryNote}>
+                              {' '}
+                              {CATEGORY_STATE_NOTE[category.state]}
+                            </span>
+                          )}
                       </Checkbox>
                     )
                   })}
@@ -1260,8 +1284,8 @@ export default function RouteComponent({
                         .join(', ')
                 }
               >
-                {/* Searched, as there are many; an archived one the article
-                    has is a dashed chip and never offered again (24a). */}
+                {/* Searched, as there are many; one the article has in
+                    another state is a dashed chip with its word (24a). */}
                 <fieldset className={styles.lock} disabled={isLocked}>
                   <ChipInput
                     disabled={isLocked}
@@ -1279,13 +1303,16 @@ export default function RouteComponent({
                       const tag = tagOptions.find(
                         (option) => option.id === tagId,
                       )
-                      const isArchived = tag?.state === 'archived'
 
                       return (
                         <Chip
                           key={tagId}
                           muted={tag?.state !== 'published'}
-                          note={isArchived ? 'archivovaný' : undefined}
+                          note={
+                            tag === undefined
+                              ? undefined
+                              : TAG_STATE_NOTE[tag.state]
+                          }
                           onRemove={
                             isReadOnly
                               ? undefined
