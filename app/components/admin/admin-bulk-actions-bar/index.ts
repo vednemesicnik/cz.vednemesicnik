@@ -1,1 +1,1 @@
-export { AdminBulkActionsBar } from './_component'
+export { AdminBulkActionsBar, type BulkDeleteConfirmation } from './_component'

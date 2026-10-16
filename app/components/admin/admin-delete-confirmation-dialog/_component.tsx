@@ -14,6 +14,8 @@ type Props = {
   title?: ReactNode
   subject?: string
   description?: ReactNode
+  confirmLabel?: string
+  children?: ReactNode
 }
 
 /**
@@ -23,12 +25,18 @@ type Props = {
  * @param props.subject - What is deleted, on its own line, e.g. the article's
  *   title (design 23f).
  * @param props.description - The sentence under it, generic by default.
+ * @param props.confirmLabel - The delete button, „Smazat“ by default; a bulk
+ *   delete repeats the title's count (26f, 25g).
+ * @param props.children - What is deleted, between the title and the
+ *   sentence, e.g. the list of a bulk delete (22c).
  */
 export const AdminDeleteConfirmationDialog = ({
   ref,
   title = 'Opravdu chcete tuto akci provést?',
   subject,
   description = 'Tato akce je nevratná.',
+  confirmLabel = 'Smazat',
+  children,
 }: Props) => {
   // Read ref.current inside the handlers, not during render: the <dialog> is
   // attached in the commit phase, so at render time ref.current is still null
@@ -43,6 +51,7 @@ export const AdminDeleteConfirmationDialog = ({
         {subject !== undefined && (
           <AdminModalSubject>{subject}</AdminModalSubject>
         )}
+        {children}
         <AdminModalDescription>{description}</AdminModalDescription>
         <AdminModalActions>
           <Button
@@ -59,7 +68,7 @@ export const AdminDeleteConfirmationDialog = ({
             type={'button'}
             variant={'danger'}
           >
-            Smazat
+            {confirmLabel}
           </Button>
         </AdminModalActions>
       </AdminModalContent>
