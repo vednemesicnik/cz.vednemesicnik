@@ -44,6 +44,8 @@ type Props = {
    * `emptyLabel`.
    */
   createLabel?: string
+  /** A second line under the create option: what creating leads to. */
+  createNote?: string
   onCreate?: () => void
   disabled?: boolean
   /**
@@ -79,6 +81,7 @@ export const ChipInput = ({
   onRemoveLast,
   emptyLabel,
   createLabel,
+  createNote,
   onCreate,
   disabled = false,
   children,
@@ -274,6 +277,9 @@ export const ChipInput = ({
               role={'option'}
             >
               {createLabel}
+              {createNote !== undefined && (
+                <span className={styles.createNote}>{createNote}</span>
+              )}
             </div>
           )}
         </div>

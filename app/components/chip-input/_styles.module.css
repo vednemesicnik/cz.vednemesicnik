@@ -144,6 +144,15 @@
   }
 }
 
+/* What creating leads to, on its own line under the create option. */
+.createNote {
+  @layer component {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}
+
 .active {
   @layer variant {
     background: var(--bg-tertiary);

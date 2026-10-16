@@ -1049,11 +1049,14 @@ export default function RouteComponent({
                           {replacingAuthorId === authorId ? (
                             <ChipInput
                               createLabel={getCreateAuthorLabel(replaceQuery)}
+                              createNote={
+                                'Po uložení nahradí současného autora.'
+                              }
                               disabled={isLocked}
                               emptyLabel={noAuthorFound}
                               id={`${fields.authorIds.id}-replace`}
                               isLabelHidden
-                              label={`Vyměnit autora ${name} za`}
+                              label={`Vybrat jiného autora. Nyní: ${name}`}
                               onCreate={
                                 createAuthor === undefined
                                   ? undefined
@@ -1064,7 +1067,7 @@ export default function RouteComponent({
                                 replaceAuthor(authorId, newAuthorId)
                               }
                               options={getAuthorSuggestions(replaceQuery)}
-                              placeholder={'Vyměnit za'}
+                              placeholder={'Vybrat jiného autora'}
                               query={replaceQuery}
                               ref={replaceSearchRef}
                             />

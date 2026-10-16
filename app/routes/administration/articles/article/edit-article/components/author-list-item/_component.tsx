@@ -67,6 +67,7 @@ export const AuthorListItem = ({
         {isOwn && <span className={styles.own}>vy</span>}
         {isReplacing ? (
           <Button
+            aria-label={'Zrušit výměnu autora'}
             className={styles.action}
             onClick={onCancelReplace}
             size={'sm'}
@@ -99,7 +100,7 @@ export const AuthorListItem = ({
         ) : (
           onReplace !== undefined && (
             <Button
-              aria-label={`Vyměnit autora ${name}`}
+              aria-label={`Vyměnit autora: ${name}`}
               className={styles.action}
               onClick={onReplace}
               size={'sm'}
