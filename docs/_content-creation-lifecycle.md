@@ -195,16 +195,16 @@ while someone holds it or it is no longer an editable draft.
 
 Choosing authors is built in #674 (design 24j; decision
 [0026](./decisions/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
-The authors are rows with an avatar and a ×, with a search under them that suggests from the
-first letter through every author. An article always has at least one author, a draft too, and
+The authors are rows with an avatar and a ×. Under them is a search field (a `ChipInput`
+without chips) whose list opens with the focus and narrows through every author while typing. An article always has at least one author, a draft too, and
 the last row has no ×. A Contributor or Creator keeps their own row (no ×) and adds or removes
 co-authors (*Přidat spoluautora*). The Coordinator picks freely (*Hledat autora*), without
 themselves too, and only they are offered the association, *Vedneměsíčník, z. s.* (the Owner's
 author). Under a last row the Coordinator reads *Nejdřív přidejte jiného autora — článek musí
-mít aspoň jednoho.* Adding or removing an author saves at once, without a dialog. When the
-search finds nothing, Administrators and Owners get *Založit autora „…“*, which opens
-`add-author` with the name and comes back to the editor with the new author chosen; everyone
-else reads that only they can create one. The save refuses an article without an author (400),
+mít aspoň jednoho.* Adding or removing an author saves at once, without a dialog. Administrators
+and Owners get *Založit autora „…“* as the last option while the typed name is no author's;
+it opens `add-author` with the name and comes back to the editor with the new author chosen.
+When the search finds nothing, everyone else reads that only they can create one. The save refuses an article without an author (400),
 a Contributor or Creator leaving themselves out, and the association added by anyone but the
 Coordinator (403); an association already stored stays on anyone's save.
 
