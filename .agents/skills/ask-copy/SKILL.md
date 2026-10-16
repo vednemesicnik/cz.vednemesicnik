@@ -114,9 +114,12 @@ LC_ALL=cs_CZ.UTF-8 pbcopy < tmp/copy/join-room.md
 LC_ALL=cs_CZ.UTF-8 pbpaste | grep <thread-id>
 ```
 
-Then report what went out and **ask the user to confirm the paste** with `AskUserQuestion`
-(thread code and topic in the question): a plain report does not reach someone working on
-something else, a question does. Once confirmed, **call `ask_wait` on the thread**.
+Then report what went out, with **the effort level to pick in the copywriter's chat** and a
+one-line reason: **medium** for a few strings on one screen, **high** for a whole screen or
+document, or for a drawn string that needs an argument against the drawing. Then **ask the user
+to confirm the paste** with `AskUserQuestion` (thread code and topic in the question): a plain
+report does not reach someone working on something else, a question does. Once confirmed, **call
+`ask_wait` on the thread**.
 
 ## 6. `check` — what comes back is a proposal, not a decision
 
