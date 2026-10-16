@@ -1,7 +1,9 @@
 import { clsx } from 'clsx'
+import { useRef } from 'react'
 
 import { Button } from '~/components/button'
 import { useFilterBar } from '~/components/filter-bar'
+import { Tooltip } from '~/components/tooltip'
 
 import styles from './_styles.module.css'
 
@@ -24,23 +26,33 @@ export const SavedFiltersTrigger = ({
   placement,
 }: Props) => {
   const { savedFiltersMenuId } = useFilterBar()
+  const textRef = useRef<HTMLSpanElement>(null)
+  const label =
+    matchingFilterName === undefined
+      ? 'Uložené filtry'
+      : `Uložené filtry: ${matchingFilterName}`
 
   return (
-    <Button
+    // A long filter name is cut off; the Tooltip shows it whole (jb81di02).
+    <Tooltip
       className={clsx(
-        styles.trigger,
+        styles.tooltip,
         placement === 'row-end' ? styles.rowEnd : styles.inFilters,
       )}
-      popoverTarget={savedFiltersMenuId}
-      size={'sm'}
-      type={'button'}
-      variant={'outline'}
+      label={label}
+      truncatedRef={textRef}
     >
-      <span className={styles.text}>
-        {matchingFilterName === undefined
-          ? 'Uložené filtry'
-          : `Uložené filtry: ${matchingFilterName}`}
-      </span>
-    </Button>
+      <Button
+        className={styles.trigger}
+        popoverTarget={savedFiltersMenuId}
+        size={'sm'}
+        type={'button'}
+        variant={'outline'}
+      >
+        <span className={styles.text} ref={textRef}>
+          {label}
+        </span>
+      </Button>
+    </Tooltip>
   )
 }

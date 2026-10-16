@@ -18,7 +18,8 @@ type Story = StoryObj<typeof meta>
 
 /**
  * Interactive base case (controls enabled). Click it: the icon turns into a
- * check for two seconds.
+ * check on a green fill for two seconds; the text stays, and a screen reader
+ * hears „Zkopírováno“.
  */
 export const Playground: Story = {
   args: {
@@ -28,7 +29,8 @@ export const Playground: Story = {
 }
 
 /**
- * Only the icon, after a value written out beside it.
+ * Only the icon, after a value written out beside it: named „Kopírovat“,
+ * which its Tooltip shows.
  */
 export const IconOnly: Story = {
   args: {

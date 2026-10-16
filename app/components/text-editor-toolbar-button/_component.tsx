@@ -1,6 +1,8 @@
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
 
+import { Tooltip } from '~/components/tooltip'
+
 import styles from './_styles.module.css'
 
 type Props = Omit<ComponentProps<'button'>, 'type'> & {
@@ -8,13 +10,14 @@ type Props = Omit<ComponentProps<'button'>, 'type'> & {
   active?: boolean
   /** The name of a button without words, e.g. *Tučné* (jb81di02). */
   label?: string
-  /** Its keyboard shortcut, added to the native tooltip. */
+  /** Its keyboard shortcut in ARIA syntax, e.g. `Control+B`. */
   shortcut?: string
 }
 
 /**
  * A button of `TextEditorToolbar`. One without a visible word is named by
- * `label`; a format button says whether it is on (`aria-pressed`).
+ * `label`, which its `Tooltip` shows; a format button says whether it is on
+ * (`aria-pressed`).
  */
 export const TextEditorToolbarButton = ({
   children,
@@ -23,22 +26,25 @@ export const TextEditorToolbarButton = ({
   label,
   shortcut,
   ...rest
-}: Props) => (
-  <button
-    aria-label={label}
-    aria-pressed={active}
-    className={clsx(styles.button, active && styles.active, className)}
-    // Until the Tooltip (#680).
-    title={
-      label === undefined
-        ? undefined
-        : shortcut === undefined
-          ? label
-          : `${label} (${shortcut})`
-    }
-    type={'button'}
-    {...rest}
-  >
-    {children}
-  </button>
-)
+}: Props) => {
+  const button = (
+    <button
+      aria-keyshortcuts={shortcut}
+      aria-label={label}
+      aria-pressed={active}
+      className={clsx(styles.button, active && styles.active, className)}
+      type={'button'}
+      {...rest}
+    >
+      {children}
+    </button>
+  )
+
+  return label === undefined ? (
+    button
+  ) : (
+    <Tooltip className={styles.tooltip} label={label}>
+      {button}
+    </Tooltip>
+  )
+}

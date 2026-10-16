@@ -1,9 +1,8 @@
 import { useId } from 'react'
-import { Link } from 'react-router'
 import { Button } from '~/components/button'
 import { OwnFilterRow } from '~/components/own-filter-row'
+import { SharedFilterRow } from '~/components/shared-filter-row'
 import type { OwnFilter, SharedFilter } from '~/types/saved-filter'
-import { FILTER_PRESET_PARAM } from '~/utils/admin-list-filters'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -69,19 +68,12 @@ export const SavedFiltersSection = ({
           <h3 className={styles.sectionTitle}>Sdílené od ostatních</h3>
           <ul className={styles.list}>
             {sharedFilters.map((filter) => (
-              <li key={filter.id}>
-                <Link
-                  className={styles.apply}
-                  data-active={filter.id === activeFilterId || undefined}
-                  onClick={onApply}
-                  to={`?${filter.query}&${FILTER_PRESET_PARAM}=${filter.id}`}
-                >
-                  <span className={styles.name}>{filter.name}</span>
-                  {/* Names are unique per user only, so the owner is what
-                      tells two identically named filters apart. */}
-                  <span className={styles.owner}>{filter.ownerName}</span>
-                </Link>
-              </li>
+              <SharedFilterRow
+                filter={filter}
+                isActive={filter.id === activeFilterId}
+                key={filter.id}
+                onApply={onApply}
+              />
             ))}
           </ul>
         </section>

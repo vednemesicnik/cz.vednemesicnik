@@ -157,7 +157,7 @@ export const TextEditor = ({
                         onClick={() =>
                           editor?.chain().focus().toggleBold().run()
                         }
-                        shortcut={'Ctrl+B'}
+                        shortcut={'Control+B Meta+B'}
                       >
                         <strong>B</strong>
                       </TextEditorToolbarButton>
@@ -171,7 +171,7 @@ export const TextEditor = ({
                         onClick={() =>
                           editor?.chain().focus().toggleItalic().run()
                         }
-                        shortcut={'Ctrl+I'}
+                        shortcut={'Control+I Meta+I'}
                       >
                         <em>I</em>
                       </TextEditorToolbarButton>
@@ -270,7 +270,7 @@ export const TextEditor = ({
                         disabled={!editorState?.canUndo}
                         label={'Zpět'}
                         onClick={() => editor?.chain().focus().undo().run()}
-                        shortcut={'Ctrl+Z'}
+                        shortcut={'Control+Z Meta+Z'}
                       >
                         <UndoIcon />
                       </TextEditorToolbarButton>
@@ -281,7 +281,7 @@ export const TextEditor = ({
                         disabled={!editorState?.canRedo}
                         label={'Znovu'}
                         onClick={() => editor?.chain().focus().redo().run()}
-                        shortcut={'Ctrl+Y'}
+                        shortcut={'Control+Y Meta+Y'}
                       >
                         <RedoIcon />
                       </TextEditorToolbarButton>
