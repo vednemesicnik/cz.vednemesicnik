@@ -27,7 +27,6 @@ const buildRequest = (fields: Record<string, string>) => {
 const validFields = {
   'authorIds[0]': 'author-1',
   editTabId: 'tab-1',
-  featuredImage: 'none',
   title: 'Deset knih',
 }
 

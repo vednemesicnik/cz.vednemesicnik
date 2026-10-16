@@ -1,0 +1,10 @@
+/* `.vdm-imagetile__failtext`. */
+.imageTileMessage {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    color: var(--error-text);
+  }
+}

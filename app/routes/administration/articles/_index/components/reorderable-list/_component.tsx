@@ -11,7 +11,7 @@ import {
 
 import { ActionMenu } from '~/components/action-menu'
 
-import { moveListItem } from '../../utils/move-list-item'
+import { moveListItem } from '~/utils/move-list-item'
 
 import styles from './_styles.module.css'
 

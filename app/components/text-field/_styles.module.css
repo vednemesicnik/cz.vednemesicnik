@@ -47,6 +47,29 @@
   }
 }
 
+/* An image tile's field (`.vdm-imagetile__field`, `.vdm-field__input--sm`). */
+.sm {
+  @layer variant {
+    gap: 4px;
+  }
+}
+
+.sm > .label {
+  @layer variant {
+    font-size: var(--font-size-xs);
+    line-height: normal;
+  }
+}
+
+.sm > .input {
+  @layer variant {
+    padding-block: 7px;
+    padding-inline: 10px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+
 /* Also for a field whose error stands elsewhere, e.g. under a row of fields. */
 .input.inputError,
 .input[aria-invalid="true"] {
@@ -66,5 +89,12 @@
     font-size: var(--font-size-sm);
     line-height: var(--line-height-sm);
     color: var(--text-tertiary);
+  }
+}
+
+/* The hint only while the field has the focus. */
+.isHintOnFocus:not(:focus-within) > .hint {
+  @layer variant {
+    display: none;
   }
 }

@@ -9,7 +9,6 @@ import {
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
 import type { ContentState } from '@generated/prisma/enums'
-import { createId } from '@paralleldrive/cuid2'
 import { clsx } from 'clsx'
 import {
   type FocusEvent,
@@ -23,31 +22,35 @@ import {
   useState,
 } from 'react'
 import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
+import { ActionMenu } from '~/components/action-menu'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
-import { AdminImageInput } from '~/components/admin/admin-image-input'
-import { AdminImageUploadCard } from '~/components/admin/admin-image-upload-card'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
-import { AdminRadioInput } from '~/components/admin/admin-radio-input'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Button } from '~/components/button'
 import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { Checkbox } from '~/components/checkbox'
 import { Chip } from '~/components/chip'
 import { ChipInput } from '~/components/chip-input'
+import { CompactImageTile } from '~/components/compact-image-tile'
 import { Form } from '~/components/form'
-import { DeleteIcon } from '~/components/icons/delete-icon'
+import { ImageTile } from '~/components/image-tile'
+import { ImageTileActions } from '~/components/image-tile-actions'
+import { ImageTileAltLine } from '~/components/image-tile-alt-line'
+import { ImageTileFile } from '~/components/image-tile-file'
+import { ImageTileMedia } from '~/components/image-tile-media'
+import { ImageTileMenu } from '~/components/image-tile-menu'
+import { ImageTileMessage } from '~/components/image-tile-message'
+import { ImageTilePill } from '~/components/image-tile-pill'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { TextEditor } from '~/components/text-editor'
 import { TextField } from '~/components/text-field'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
-import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
@@ -61,6 +64,7 @@ import { formatSubmissionFact } from '../../utils/format-submission-fact'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { AddImagesTile } from './components/add-images-tile'
 import { ArticleChangedDialog } from './components/article-changed-dialog'
 import { AuthorList } from './components/author-list'
 import { AuthorListItem } from './components/author-list-item'
@@ -71,14 +75,20 @@ import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditHoldDialog } from './components/edit-hold-dialog'
 import { EditorDetail } from './components/editor-detail'
+import { GalleryDetail } from './components/gallery-detail'
+import { GalleryGrid } from './components/gallery-grid'
 import { HoldTakenDialog } from './components/hold-taken-dialog'
+import { RemoveImageDialog } from './components/remove-image-dialog'
 import { formatArticleChangedDescription } from './utils/format-article-changed-description'
 import { formatFirstNameAndCount } from './utils/format-first-name-and-count'
+import { formatGallerySummary } from './utils/format-gallery-summary'
 import { formatHoldTakenDescription } from './utils/format-hold-taken-description'
 import { formatTakeOverDescription } from './utils/format-take-over-description'
 import { getEditorSentence } from './utils/get-editor-sentence'
+import { getImageMenuItems } from './utils/get-image-menu-items'
 import { getReadOnlyNotice } from './utils/get-read-only-notice'
 import { getSaveLineText } from './utils/get-save-line-text'
+import { useArticleGallery } from './utils/use-article-gallery'
 import { useRemovedIds } from './utils/use-removed-ids'
 
 export { handle } from './_handle'
@@ -189,25 +199,18 @@ export default function RouteComponent({
         articleId: params.articleId,
       })
 
-  // Lookup existing image preview URLs by id (form fieldsets only carry schema fields).
-  const previewUrlById = new Map(
-    article.images.map((image) => [image.id, image.previewUrl]),
-  )
-
   const [form, fields] = useForm({
     defaultValue: {
       authorIds: article.authorIds,
       categoryIds: article.categoryIds,
       content: article.content,
-      existingImages: article.images.map((image) => ({
+      // The gallery's alt texts and captions save with the form; the images
+      // save on their own (decision 0027).
+      images: article.images.map((image) => ({
         altText: image.altText,
         description: image.description,
-        file: undefined,
         id: image.id,
       })),
-      featuredImage: article.featuredImageId
-        ? `${FEATURED_IMAGE_SOURCE.EXISTING}:${article.featuredImageId}`
-        : FEATURED_IMAGE_SOURCE.NONE,
       perex: article.perex,
       slug: article.slug,
       tagIds: article.tagIds,
@@ -221,6 +224,15 @@ export default function RouteComponent({
 
   // The article's last save, as the line under the heading says it (24e).
   const [savedAt, setSavedAt] = useState(() => new Date(article.updatedAt))
+  const lastSavedAtRef = useRef(article.updatedAt)
+  // The form and the gallery save side by side: only a newer save is the
+  // last one the hold compares against (24i).
+  const acknowledgeSaved = (updatedAt: string) => {
+    if (new Date(updatedAt) <= new Date(lastSavedAtRef.current)) return
+    lastSavedAtRef.current = updatedAt
+    editHold.acknowledgeSave(updatedAt)
+    setSavedAt(new Date(updatedAt))
+  }
   // A free address for a taken one, which did not save (24d).
   const [slugSuggestion, setSlugSuggestion] = useState<string | null>(null)
 
@@ -263,8 +275,7 @@ export default function RouteComponent({
       return 'failed'
     }
 
-    editHold.acknowledgeSave(result.updatedAt)
-    setSavedAt(new Date(result.updatedAt))
+    acknowledgeSaved(result.updatedAt)
     setSlugSuggestion(result.slugSuggestion)
 
     // A new title reaches the breadcrumb and the tab title.
@@ -325,11 +336,7 @@ export default function RouteComponent({
     hasInteractedRef.current = true
   }
   const snapshot = JSON.stringify(form.value ?? {}, (key, value) =>
-    SNAPSHOT_IGNORED_FIELDS.has(key)
-      ? undefined
-      : value instanceof File
-        ? `${value.name}:${value.size}:${value.lastModified}`
-        : value,
+    SNAPSHOT_IGNORED_FIELDS.has(key) ? undefined : value,
   )
   const snapshotRef = useRef(snapshot)
   // Set by a button whose change saves at once instead of after the pause.
@@ -411,23 +418,138 @@ export default function RouteComponent({
     if (!isConformIntent) void autosave.flush()
   }
 
-  // A picked file is a change even before Conform reads it.
-  const handleChange = (event: FormEvent<HTMLFormElement>) => {
-    if (
-      event.target instanceof HTMLInputElement &&
-      event.target.type === 'file'
-    ) {
-      autosave.markChanged()
-    }
-  }
-
   const handleClose = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
     void leaveTo(closeHref, () => navigate(closeHref))
   }
 
-  const existingImages = fields.existingImages.getFieldList()
-  const newImages = fields.images.getFieldList()
+  // The gallery: every image change saves on its own (24b, decision 0027).
+  const imageFieldList = fields.images.getFieldList()
+  const readImageField = (index: number, name: string) => {
+    const input = formRef.current?.elements.namedItem(
+      `${fields.images.name}[${index}].${name}`,
+    )
+    return input instanceof HTMLInputElement ? input.value : null
+  }
+  // Read from the form as it stands, ahead of a render.
+  const getImageIds = () => {
+    const ids: string[] = []
+    for (let index = 0; ; index += 1) {
+      const id = readImageField(index, 'id')
+      if (id === null) return ids
+      ids.push(id)
+    }
+  }
+  const gallery = useArticleGallery({
+    action: href('/administration/articles/:articleId/images', {
+      articleId: params.articleId,
+    }),
+    featuredImageId: article.featuredImageId,
+    images: article.images,
+    list: {
+      add: (id) =>
+        form.insert({
+          defaultValue: { altText: '', description: '', id },
+          name: fields.images.name,
+        }),
+      getIds: getImageIds,
+      getTexts: (id) => {
+        const index = getImageIds().indexOf(id)
+        return {
+          altText: readImageField(index, 'altText') ?? '',
+          description: readImageField(index, 'description') ?? '',
+        }
+      },
+      move: (from, to) => form.reorder({ from, name: fields.images.name, to }),
+      remove: (id) => {
+        const index = getImageIds().indexOf(id)
+        if (index !== -1) form.remove({ index, name: fields.images.name })
+      },
+    },
+    // Refused for the hold: as the whole-form save does (24h, 24i).
+    onNotHeld: async (heldByName) => {
+      if (heldByName === null) return editHold.retake()
+      await editHold.recheck()
+      return false
+    },
+    onSaved: acknowledgeSaved,
+    onUploaded: () => autosave.markChanged(),
+    tabId: editHold.tabId,
+  })
+  // The stored image whose removal waits for its dialog.
+  const [removingImageId, setRemovingImageId] = useState<string | null>(null)
+  // One file input for *Nahradit soubor* and *Vybrat jiný soubor*.
+  const replaceInputRef = useRef<HTMLInputElement>(null)
+  const replacingImageIdRef = useRef<string | null>(null)
+  const pickReplacement = (id: string) => {
+    replacingImageIdRef.current = id
+    replaceInputRef.current?.click()
+  }
+  // After a step from the „⋯“, the focus stays on that tile's „⋯“ and a
+  // screen reader hears the new place (8kfn4ou3).
+  const [moveAnnouncement, setMoveAnnouncement] = useState('')
+  const [movedImageId, setMovedImageId] = useState<string | null>(null)
+  useEffect(() => {
+    if (movedImageId === null) return
+    formRef.current
+      ?.querySelector<HTMLButtonElement>(
+        `[data-image-id="${movedImageId}"] [popovertarget]`,
+      )
+      ?.focus()
+    setMovedImageId(null)
+  }, [movedImageId])
+  // `to` is the place among the stored images, which the „⋯“ moves between.
+  // Said once it saved; emptied first, so the same words are said again.
+  const moveImage = async (id: string, to: number, count: number) => {
+    setMovedImageId(id)
+    setMoveAnnouncement('')
+    if (await gallery.move(id, to)) {
+      setMoveAnnouncement(`Pozice ${to + 1}, celkem ${count}.`)
+    }
+  }
+  // After a removal the focus goes to the next tile's „⋯“, the previous
+  // one's, or *Přidat obrázky*: never lost to the page.
+  const [removedImageIndex, setRemovedImageIndex] = useState<number | null>(
+    null,
+  )
+  useEffect(() => {
+    if (removedImageIndex === null) return
+    const panel = formRef.current?.querySelector('dialog[open]')
+    const tiles = [
+      ...(panel?.querySelectorAll('li[data-image-id]') ?? []),
+    ] as HTMLElement[]
+    const target =
+      tiles[removedImageIndex] ?? tiles[removedImageIndex - 1] ?? null
+    const focusable =
+      target?.querySelector<HTMLElement>('[popovertarget], button') ??
+      panel?.querySelector<HTMLInputElement>('input[type="file"][multiple]')
+    focusable?.focus()
+    setRemovedImageIndex(null)
+  }, [removedImageIndex])
+  const removeImage = async (id: string) => {
+    const index = getImageIds().indexOf(id)
+    if (await gallery.remove(id)) setRemovedImageIndex(index)
+  }
+  // Wherever a pick starts, it ends in the panel, in the first new image's
+  // alt text (sa1x34z3). A pick that made no tile opens nothing.
+  const [newImageFocusId, setNewImageFocusId] = useState<string | null>(null)
+  const addImages = (files: File[]) => {
+    const [firstAddedId] = gallery.addFiles(files)
+    if (firstAddedId === undefined) return
+    setOpenDetail('images')
+    setNewImageFocusId(firstAddedId)
+  }
+  // Runs after the panel's own focus on its name, once the tile is there.
+  useEffect(() => {
+    if (newImageFocusId === null) return
+    const altInput = formRef.current?.querySelector<HTMLInputElement>(
+      `[data-image-id="${newImageFocusId}"] input[name$=".altText"]`,
+    )
+    if (altInput == null) return
+    altInput.scrollIntoView({ block: 'center' })
+    altInput.focus()
+    setNewImageFocusId(null)
+  })
 
   // The address follows the title until changed by hand (24a): one that
   // differs from the title's as the editor opens was changed by hand.
@@ -735,10 +857,7 @@ export default function RouteComponent({
   }
 
   const isEmpty =
-    !fields.title.value &&
-    !fields.content.value &&
-    existingImages.length === 0 &&
-    newImages.length === 0
+    !fields.title.value && !fields.content.value && imageFieldList.length === 0
 
   const saveLine = getSaveLineText({
     isEmpty,
@@ -814,7 +933,14 @@ export default function RouteComponent({
   const selectedAuthorNames = selectedAuthorIds.map(
     (authorId) => authorById.get(authorId)?.name ?? authorId,
   )
-  const imageCount = existingImages.length + newImages.length
+  // The images saved already, in the gallery's order; only they move.
+  const storedImageIds = imageFieldList
+    .map((image) => image.getFieldset().id.value ?? '')
+    .filter((id) => gallery.tiles.get(id)?.status === 'stored')
+  const gallerySummary = formatGallerySummary(
+    imageFieldList.length,
+    gallery.processingCount,
+  )
   const perexLength = [...(fields.perex.value ?? '')].length
   const slugValue = fields.slug.value ?? ''
 
@@ -948,7 +1074,6 @@ export default function RouteComponent({
           {...formProps}
           // Leaving a field saves at once (24e).
           onBlur={() => void autosave.flush()}
-          onChange={handleChange}
           onChangeCapture={markInteracted}
           onClickCapture={markInteracted}
           onInputCapture={markInteracted}
@@ -1348,199 +1473,296 @@ export default function RouteComponent({
                 </fieldset>
               </EditorDetail>
 
-              <EditorDetail
+              <GalleryDetail
                 {...detailProps('images')}
-                name={'Obrázky'}
-                saveLine={renderSaveLine()}
-                summary={imageCount === 0 ? '—' : String(imageCount)}
+                preview={
+                  <>
+                    <GalleryGrid columns={2}>
+                      {imageFieldList.map((image) => {
+                        const imageFields = image.getFieldset()
+                        const id = imageFields.id.value ?? ''
+                        const tile = gallery.tiles.get(id)
+                        const altText = imageFields.altText.value ?? ''
+                        const isFailed = tile?.status === 'failed'
+                        const isProcessing =
+                          tile?.status === 'processing' ||
+                          tile?.isReplacing === true
+
+                        return (
+                          <li key={image.key}>
+                            <CompactImageTile>
+                              <ImageTileMedia
+                                isFailed={isFailed}
+                                isProcessing={isProcessing}
+                                source={tile?.previewUrl}
+                              >
+                                {gallery.featuredImageId === id && (
+                                  <ImageTilePill>Hlavní</ImageTilePill>
+                                )}
+                                {isProcessing && (
+                                  <ImageTilePill isMuted>
+                                    Zpracovává se
+                                  </ImageTilePill>
+                                )}
+                              </ImageTileMedia>
+                              {isFailed ? (
+                                <ImageTileAltLine isFailed>
+                                  Zpracování selhalo
+                                </ImageTileAltLine>
+                              ) : altText === '' ? (
+                                <ImageTileAltLine isMissing>
+                                  Bez alt textu
+                                </ImageTileAltLine>
+                              ) : (
+                                <ImageTileAltLine>{altText}</ImageTileAltLine>
+                              )}
+                            </CompactImageTile>
+                          </li>
+                        )
+                      })}
+                      {!isReadOnly && (
+                        <AddImagesTile
+                          disabled={isLocked}
+                          isCompact
+                          onFiles={addImages}
+                        />
+                      )}
+                    </GalleryGrid>
+                    {/* A pick that made no tile opens nothing (sa1x34z3). */}
+                    {gallery.rejectedSentences.map((sentence, index) => (
+                      <p className={styles.galleryError} key={index}>
+                        {sentence}
+                      </p>
+                    ))}
+                  </>
+                }
+                // A change that did not save says so where saving is said, in
+                // sight wherever the author is in the gallery (in5bl1cq).
+                saveLine={
+                  gallery.hasFailedChange && lostHold === null ? (
+                    <p className={styles.saveLine} role={'alert'}>
+                      <span className={styles.saveFailure}>
+                        Proveďte změnu znovu — nepodařilo se ji uložit.
+                      </span>
+                    </p>
+                  ) : (
+                    renderSaveLine()
+                  )
+                }
+                summary={gallerySummary}
               >
-                <fieldset className={styles.lock} disabled={isLocked}>
-                  <AdminRadioInput
-                    className={styles.defaultFieldFeaturedImageContainer}
-                    field={fields.featuredImage}
-                    inputProps={{
-                      defaultChecked: !article.featuredImageId,
-                      value: FEATURED_IMAGE_SOURCE.NONE,
-                    }}
-                    label={'Bez hlavního obrázku'}
-                  />
-
-                  {existingImages.map((image, index) => {
-                    const imageFields = image.getFieldset()
-                    const imageId = imageFields.id.value
-
-                    return (
-                      <AdminImageUploadCard
-                        action={
-                          !isReadOnly && (
-                            <Button
-                              onClick={() => {
-                                const currentValue = fields.featuredImage.value
-                                if (
-                                  currentValue ===
-                                  `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`
-                                ) {
-                                  form.update({
-                                    name: fields.featuredImage.name,
-                                    value: FEATURED_IMAGE_SOURCE.NONE,
-                                  })
-                                }
-                                form.remove({
-                                  index,
-                                  name: fields.existingImages.name,
-                                })
-                              }}
-                              type={'button'}
-                              variant={'danger'}
-                            >
-                              <DeleteIcon className={styles.removeIcon} />
-                              Odstranit
-                            </Button>
-                          )
-                        }
-                        key={image.key}
-                        title={'Existující obrázek'}
-                      >
-                        <input
-                          {...getInputProps(imageFields.id, { type: 'hidden' })}
-                        />
-
-                        <AdminImageInput
-                          className={styles.imageFieldFileContainer}
-                          field={imageFields.file}
-                          label={'Obrázek'}
-                          previewUrl={
-                            imageId ? previewUrlById.get(imageId) : undefined
-                          }
-                        />
-
-                        <TextField
-                          {...getInputProps(imageFields.altText, {
-                            type: 'text',
-                          })}
-                          className={styles.imageFieldAltTextContainer}
-                          errors={imageFields.altText.errors}
-                          label={'Alt text'}
-                          placeholder={
-                            'Popis obrázku pro vyhledávače a čtečky obrazovky'
-                          }
-                        />
-
-                        <TextEditor
-                          className={styles.imageFieldDescriptionContainer}
-                          field={imageFields.description}
-                          inputProps={{
-                            placeholder: 'Popis obrázku...',
-                          }}
-                          label={'Popis obrázku'}
-                          readOnly={isReadOnly}
-                          toolbar={['link']}
-                        />
-
-                        <AdminRadioInput
-                          className={styles.fieldFeaturedImageContainer}
-                          field={fields.featuredImage}
-                          inputProps={{
-                            value: `${FEATURED_IMAGE_SOURCE.EXISTING}:${imageId}`,
-                          }}
-                          label={'Použít jako hlavní obrázek'}
-                        />
-                      </AdminImageUploadCard>
-                    )
-                  })}
-
-                  {newImages.map((image, index) => {
-                    const imageFields = image.getFieldset()
-                    return (
-                      <AdminImageUploadCard
-                        action={
-                          !isReadOnly && (
-                            <Button
-                              onClick={() => {
-                                const currentValue = fields.featuredImage.value
-                                if (
-                                  currentValue ===
-                                  `${FEATURED_IMAGE_SOURCE.NEW}:${index}`
-                                ) {
-                                  form.update({
-                                    name: fields.featuredImage.name,
-                                    value: FEATURED_IMAGE_SOURCE.NONE,
-                                  })
-                                }
-                                form.remove({ index, name: fields.images.name })
-                              }}
-                              type={'button'}
-                              variant={'danger'}
-                            >
-                              <DeleteIcon className={styles.removeIcon} />
-                              Odstranit
-                            </Button>
-                          )
-                        }
-                        key={image.key}
-                        title={'Nový obrázek'}
-                      >
-                        {/* Made here, so a repeated save stores the image once. */}
-                        <input
-                          {...getInputProps(imageFields.id, { type: 'hidden' })}
-                        />
-                        <AdminImageInput
-                          className={styles.imageFieldFileContainer}
-                          field={imageFields.file}
-                          label={'Obrázek'}
-                        />
-                        <TextField
-                          {...getInputProps(imageFields.altText, {
-                            type: 'text',
-                          })}
-                          className={styles.imageFieldAltTextContainer}
-                          errors={imageFields.altText.errors}
-                          label={'Alt text'}
-                          placeholder={
-                            'Popis obrázku pro vyhledávače a čtečky obrazovky'
-                          }
-                        />
-                        <TextEditor
-                          className={styles.imageFieldDescriptionContainer}
-                          field={imageFields.description}
-                          inputProps={{
-                            placeholder: 'Popis obrázku...',
-                          }}
-                          label={'Popis obrázku'}
-                          readOnly={isReadOnly}
-                          toolbar={['link']}
-                        />
-                        <AdminRadioInput
-                          className={styles.fieldFeaturedImageContainer}
-                          field={fields.featuredImage}
-                          inputProps={{
-                            value: `${FEATURED_IMAGE_SOURCE.NEW}:${index}`,
-                          }}
-                          label={'Použít jako hlavní obrázek'}
-                        />
-                      </AdminImageUploadCard>
-                    )
-                  })}
-
-                  {/* A quiet button until the gallery's tile (#673). */}
-                  {!isReadOnly && (
-                    <Button
-                      className={styles.addButton}
-                      onClick={() =>
-                        form.insert({
-                          defaultValue: { id: createId() },
-                          name: fields.images.name,
-                        })
-                      }
-                      size={'sm'}
-                      type={'button'}
-                      variant={'ghost'}
-                    >
-                      Přidat obrázek
-                    </Button>
+                <fieldset
+                  className={clsx(styles.lock, styles.gallery)}
+                  disabled={isLocked}
+                >
+                  <legend className={'screen-reader-only'}>Obrázky</legend>
+                  {imageFieldList.length > 0 && (
+                    <p className={styles.gallerySummary}>{gallerySummary}</p>
                   )}
+                  <GalleryGrid columns={3}>
+                    {imageFieldList.map((image, index) => {
+                      const imageFields = image.getFieldset()
+                      const id = imageFields.id.value ?? ''
+                      const tile = gallery.tiles.get(id)
+                      const isStored = tile?.status === 'stored'
+                      const isProcessing =
+                        tile?.status === 'processing' ||
+                        tile?.isReplacing === true
+                      const idInput = (
+                        <input
+                          {...getInputProps(imageFields.id, {
+                            type: 'hidden',
+                          })}
+                          key={imageFields.id.key}
+                        />
+                      )
+
+                      // Only in the open editor; removed without a dialog,
+                      // there is nothing to lose (24b).
+                      if (tile?.status === 'failed') {
+                        return (
+                          <li data-image-id={id} key={image.key}>
+                            {idInput}
+                            <ImageTile>
+                              <ImageTileMedia isFailed />
+                              <ImageTileMessage>
+                                Vyberte jiný soubor nebo obrázek odeberte —
+                                zpracování se nepodařilo.
+                              </ImageTileMessage>
+                              {!isReadOnly && (
+                                <ImageTileActions>
+                                  <ButtonLink
+                                    onClick={() => pickReplacement(id)}
+                                  >
+                                    Vybrat jiný soubor
+                                  </ButtonLink>
+                                  <ButtonLink
+                                    onClick={() => void removeImage(id)}
+                                  >
+                                    Odebrat
+                                  </ButtonLink>
+                                </ImageTileActions>
+                              )}
+                              {tile.fileName !== null && (
+                                <ImageTileFile>{tile.fileName}</ImageTileFile>
+                              )}
+                            </ImageTile>
+                          </li>
+                        )
+                      }
+
+                      const isFeatured = gallery.featuredImageId === id
+
+                      return (
+                        <li
+                          className={clsx(
+                            tile?.isRemoving && styles.removingImage,
+                          )}
+                          data-image-id={id}
+                          key={image.key}
+                        >
+                          {idInput}
+                          <ImageTile>
+                            <ImageTileMedia
+                              isProcessing={isProcessing}
+                              source={tile?.previewUrl}
+                            >
+                              {isFeatured && (
+                                <ImageTilePill>Hlavní</ImageTilePill>
+                              )}
+                              {isProcessing && (
+                                <ImageTilePill isMuted>
+                                  Zpracovává se
+                                </ImageTilePill>
+                              )}
+                              {isStored &&
+                                !isProcessing &&
+                                !tile?.isRemoving &&
+                                !isReadOnly && (
+                                  <ImageTileMenu>
+                                    <ActionMenu
+                                      items={getImageMenuItems({
+                                        count: storedImageIds.length,
+                                        index: storedImageIds.indexOf(id),
+                                        isFeatured,
+                                        onFeature: () =>
+                                          void gallery.setFeatured(id),
+                                        onMove: (to) =>
+                                          void moveImage(
+                                            id,
+                                            to,
+                                            storedImageIds.length,
+                                          ),
+                                        onRemove: () => setRemovingImageId(id),
+                                        onReplace: () => pickReplacement(id),
+                                        onUnfeature: () =>
+                                          void gallery.setFeatured(null),
+                                      })}
+                                      // The tile has no name of its own: its
+                                      // place in the gallery tells it apart
+                                      // (copy hu5a658a).
+                                      label={`Další akce obrázku ${index + 1}`}
+                                      variant={'chip'}
+                                    />
+                                  </ImageTileMenu>
+                                )}
+                            </ImageTileMedia>
+                            {tile?.hasReplaceFailed && (
+                              <>
+                                <ImageTileMessage>
+                                  Nový soubor se nepodařilo zpracovat. Původní
+                                  obrázek zůstává.
+                                </ImageTileMessage>
+                                {!isReadOnly && (
+                                  <ImageTileActions>
+                                    <ButtonLink
+                                      onClick={() => pickReplacement(id)}
+                                    >
+                                      Vybrat jiný soubor
+                                    </ButtonLink>
+                                  </ImageTileActions>
+                                )}
+                              </>
+                            )}
+                            <TextField
+                              {...getInputProps(imageFields.altText, {
+                                type: 'text',
+                              })}
+                              hint={
+                                'Popis obrázku pro čtečky obrazovky a vyhledávače.'
+                              }
+                              isHintOnFocus
+                              label={'Alt text'}
+                              placeholder={'Co je na obrázku'}
+                              size={'sm'}
+                            />
+                            <TextEditor
+                              field={imageFields.description}
+                              inputProps={{
+                                placeholder: 'Pod obrázkem na webu',
+                              }}
+                              label={'Popisek'}
+                              readOnly={isReadOnly}
+                              size={'sm'}
+                              toolbar={['link']}
+                            />
+                            {tile?.fileName != null && (
+                              <ImageTileFile>
+                                {tile.fileName}
+                                {tile.status === 'processing' &&
+                                  ' · zpracovává se'}
+                              </ImageTileFile>
+                            )}
+                          </ImageTile>
+                        </li>
+                      )
+                    })}
+                    {!isReadOnly && (
+                      <AddImagesTile disabled={isLocked} onFiles={addImages} />
+                    )}
+                  </GalleryGrid>
+                  {gallery.rejectedSentences.map((sentence, index) => (
+                    <p className={styles.galleryError} key={index}>
+                      {sentence}
+                    </p>
+                  ))}
+
+                  <input
+                    accept={'image/*'}
+                    className={styles.replaceInput}
+                    form={''}
+                    onChange={(event) => {
+                      const [file] = event.currentTarget.files ?? []
+                      const id = replacingImageIdRef.current
+                      event.currentTarget.value = ''
+                      if (file !== undefined && id !== null) {
+                        gallery.replaceFile(id, file)
+                      }
+                    }}
+                    ref={replaceInputRef}
+                    tabIndex={-1}
+                    type={'file'}
+                  />
+                  <span aria-live={'polite'} className={'screen-reader-only'}>
+                    {moveAnnouncement}
+                  </span>
                 </fieldset>
-              </EditorDetail>
+                {removingImageId !== null && (
+                  <RemoveImageDialog
+                    isFeatured={gallery.featuredImageId === removingImageId}
+                    onCancel={() => setRemovingImageId(null)}
+                    onConfirm={() => {
+                      void removeImage(removingImageId)
+                      setRemovingImageId(null)
+                    }}
+                  />
+                )}
+              </GalleryDetail>
+              {/* Refused files are said too, outside the panel: a pick from
+                  the column that made no tile opens nothing (sa1x34z3). */}
+              <span aria-live={'polite'} className={'screen-reader-only'}>
+                {gallery.rejectedSentences.join(' ')}
+              </span>
             </AdminDetailAside>
           </AdminDetailLayout>
         </Form>

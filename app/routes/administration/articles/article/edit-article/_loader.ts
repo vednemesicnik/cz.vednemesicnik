@@ -52,6 +52,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: {
           ...imageSourceSelect,
           description: true,
+          fileName: true,
         },
       },
       perex: true,
@@ -157,12 +158,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         authorNames: article.authors.map((author) => author.name),
         categoryIds,
         content: article.content,
-        featuredImageId: article.featuredImage?.id,
+        featuredImageId: article.featuredImage?.id ?? null,
         images: article.images.map((image) => ({
           altText: image.altText,
           description: image.description || '',
+          // Older images were stored without it (24b).
+          fileName: image.fileName,
           id: image.id,
-          previewUrl: createImageSources('article-image', image).src,
+          previewUrl: createImageSources('article-image', image).src ?? null,
         })),
         // An empty draft (decision 0020) has no address and is left for the list.
         isEmptyDraft: article.firstContentAt === null,

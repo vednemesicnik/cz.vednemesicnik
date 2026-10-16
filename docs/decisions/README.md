@@ -63,3 +63,4 @@ in force.
 | [0024](0024-dates-are-utc-instants-shown-in-prague-time-without-temporal.md) | Dates are UTC instants shown in Prague time, with `Date` and `Intl` until Temporal is Baseline | Accepted | 2026-10-15 |
 | [0025](0025-a-save-removes-a-link-only-when-the-editor-sends-it-as-removed.md) | A save removes a category or tag link only when the editor sends it as removed | Accepted | 2026-10-15 |
 | [0026](0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md) | The association is the Owner's author, and only the Coordinator adds it to an article | Accepted | 2026-10-16 |
+| [0027](0027-each-article-image-saves-on-its-own.md) | Each article image saves on its own; the whole-form save carries only alt texts and captions | Accepted | 2026-10-16 |

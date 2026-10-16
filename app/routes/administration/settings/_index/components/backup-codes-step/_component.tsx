@@ -5,6 +5,7 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import { Checkbox } from '~/components/checkbox'
+import { DialogBody } from '~/components/dialog-body'
 import { downloadTextFile } from '~/utils/download-text-file'
 
 import styles from './_styles.module.css'
@@ -63,15 +64,17 @@ export const BackupCodesStep = ({
         {isReplacement ? 'Nové záložní kódy' : 'Dvoufázové ověření je zapnuté'}
       </AdminModalTitle>
 
-      {isReplacement && (
+      <DialogBody>
+        {isReplacement && (
+          <AdminModalDescription>
+            Uložené záložní kódy nahraďte těmito — předchozí už neplatí.
+          </AdminModalDescription>
+        )}
         <AdminModalDescription>
-          Uložené záložní kódy nahraďte těmito — předchozí už neplatí.
+          Při nouzovém přihlášení heslem nahradí tyto kódy kód z aplikace. Každý
+          lze použít jednou. Uložte si je, znovu se nezobrazí.
         </AdminModalDescription>
-      )}
-      <AdminModalDescription>
-        Při nouzovém přihlášení heslem nahradí tyto kódy kód z aplikace. Každý
-        lze použít jednou. Uložte si je, znovu se nezobrazí.
-      </AdminModalDescription>
+      </DialogBody>
 
       {/* biome-ignore lint/a11y/noRedundantRoles: WebKit drops list semantics when list-style is none; the explicit role restores them for VoiceOver. */}
       <ul className={styles.codes} role="list">

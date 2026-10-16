@@ -1,0 +1,10 @@
+/* The design system's ImageTile (`.vdm-imagetile`, components.css). */
+.imageTile {
+  @layer component {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+}

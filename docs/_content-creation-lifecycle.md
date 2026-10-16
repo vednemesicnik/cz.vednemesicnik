@@ -169,7 +169,7 @@ no *Uložit*, no leave dialog and no copy in the browser's storage. The editor s
 form about a second after the last change, at once on leaving a field and on ⌘S (Ctrl+S
 elsewhere). One save is on its way at a time, to the `save` route, which takes it only from the
 holding tab and keeps the hold. A draft saves incomplete; what is missing is said on submit and
-publish (23h). A new image carries an id made in the editor, so a repeated save stores it once.
+publish (23h). Of the gallery, the save carries only the alt texts and captions.
 The line under the heading is the only sign: *Zatím prázdné*, *ukládá se* (at least 300 ms),
 *uloženo dnes v 14:02* (another day with the date), *bez připojení · čeká na uložení* (it sends
 again when the network is back) or *Nepodařilo se uložit.* with *Zkusit znovu*. An address
@@ -178,6 +178,16 @@ the field offers *Použít …* with a free address. *Zavřít* and every other 
 waits first. When the page closes, the waiting save goes out with the release in one request.
 The browser's own dialog asks only offline, after a failure, or when what waits cannot be sent
 while the page closes.
+
+The gallery saves image by image, built in #673 (design 24b; decision
+[0027](./decisions/0027-each-article-image-saves-on-its-own.md)). A picked image uploads at
+once to the `images` route, under an id made in the editor, and its row exists only once the
+file is processed. A file over 10 MB or not an image is refused at selection. *Odebrat* asks
+first and deletes at once; *Nahradit soubor* keeps the old file until the new one is processed.
+The main image and the order (*Posunout dopředu*, *Posunout dozadu*) save at once. Each change
+checks the hold in its own write and moves `updatedAt`. An upload under way still lands after *Zavřít* released the hold, on a draft nobody holds and
+not submitted since; never over someone else's hold. Processing and a failure show only in
+the open editor.
 
 Losing the hold is built in #671 (design 24h, 24i; decision
 [0023](./decisions/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold

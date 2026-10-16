@@ -8,6 +8,7 @@ import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { DialogBody } from '~/components/dialog-body'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
@@ -65,12 +66,14 @@ export const ArticleStateDialog = ({
       <AdminModalContent>
         <AdminModalTitle>{copy.title}</AdminModalTitle>
         <AdminModalSubject>{articleTitle}</AdminModalSubject>
-        <AdminModalDescription>{copy.description}</AdminModalDescription>
-        {kind === 'retract' && !isApprover && (
-          <AdminModalDescription>
-            Znovu ho publikovat může Koordinátor.
-          </AdminModalDescription>
-        )}
+        <DialogBody>
+          <AdminModalDescription>{copy.description}</AdminModalDescription>
+          {kind === 'retract' && !isApprover && (
+            <AdminModalDescription>
+              Znovu ho publikovat může Koordinátor.
+            </AdminModalDescription>
+          )}
+        </DialogBody>
 
         <fetcher.Form
           action={action}

@@ -168,6 +168,12 @@ export default [
           'articles/:articleId/save',
           'routes/administration/articles/article/save-article/route.ts',
         ),
+        // The article editor's gallery (design 24b): each image change saves
+        // on its own; guards itself like the save.
+        route(
+          'articles/:articleId/images',
+          'routes/administration/articles/article/article-images/route.ts',
+        ),
 
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [

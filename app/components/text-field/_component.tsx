@@ -7,10 +7,14 @@ import { Label } from '~/components/label'
 
 import styles from './_styles.module.css'
 
-type Props = ComponentProps<'input'> & {
+type Props = Omit<ComponentProps<'input'>, 'size'> & {
   label: string
   hint?: ReactNode
   errors?: string[]
+  /** `sm`: the field of an image tile, 12 px label and a 13 px input (24b). */
+  size?: 'md' | 'sm'
+  /** The hint shows only while the field has the focus (24b alt text). */
+  isHintOnFocus?: boolean
 }
 
 /**
@@ -31,6 +35,8 @@ export const TextField = ({
   errors,
   id,
   required,
+  size = 'md',
+  isHintOnFocus = false,
   className,
   ...rest
 }: Props) => {
@@ -42,8 +48,15 @@ export const TextField = ({
     [rest['aria-describedby'], hintId].filter(Boolean).join(' ') || undefined
 
   return (
-    <div className={clsx(styles.field, className)}>
-      <Label htmlFor={id} required={required}>
+    <div
+      className={clsx(
+        styles.field,
+        styles[size],
+        isHintOnFocus && styles.isHintOnFocus,
+        className,
+      )}
+    >
+      <Label className={styles.label} htmlFor={id} required={required}>
         {label}
       </Label>
       <input

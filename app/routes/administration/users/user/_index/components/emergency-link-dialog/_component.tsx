@@ -11,6 +11,7 @@ import { adminCsrfFormMessage } from '~/components/boundary-error/utils/boundary
 import { Button } from '~/components/button'
 import { Checkbox } from '~/components/checkbox'
 import { CopyButton } from '~/components/copy-button'
+import { DialogBody } from '~/components/dialog-body'
 import { ErrorMessage } from '~/components/error-message'
 import type { action as emergencyLinkAction } from '~/routes/administration/users/user/emergency-link/_action'
 import { useModalDialog } from '~/utils/use-modal-dialog'
@@ -89,7 +90,7 @@ export const EmergencyLinkDialog = ({
         </hgroup>
 
         {/* The dialog body: paragraphs 12 px apart (0zgyl1ao). */}
-        <div className={styles.body}>
+        <DialogBody>
           <AdminModalDescription>
             Kdokoli s tímto odkazem může potvrdit přihlášení do tohoto účtu.
           </AdminModalDescription>
@@ -102,7 +103,7 @@ export const EmergencyLinkDialog = ({
               {`Vydáním nového odkazu přestane platit předchozí z ${previousLinkTime}.`}
             </AdminModalDescription>
           )}
-        </div>
+        </DialogBody>
 
         <fetcher.Form
           action={href('/administration/users/:userId/emergency-link', {

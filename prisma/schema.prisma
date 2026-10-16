@@ -548,6 +548,8 @@ model ArticleImage {
   intrinsicWidth     Int
   intrinsicHeight    Int
   placeholderDataUrl String
+  // The picked file's name, under the tile's fields; none for older images (24b).
+  fileName           String?
   // The order in the article's gallery and on the web (design 24b).
   position           Int      @default(0)
   createdAt          DateTime @default(now())

@@ -21,14 +21,6 @@
   }
 }
 
-.body {
-  @layer route {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-}
-
 .form {
   @layer route {
     display: flex;

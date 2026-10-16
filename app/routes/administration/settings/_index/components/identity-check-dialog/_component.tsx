@@ -9,6 +9,7 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
+import { DialogBody } from '~/components/dialog-body'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { action as googleAction } from '~/routes/administration/settings/verify-identity/google/_action'
 import type { action as magicLinkAction } from '~/routes/administration/settings/verify-identity/magic-link/_action'
@@ -264,17 +265,19 @@ export const IdentityCheckDialog = ({
 
         {isLinkSent ? (
           <>
-            <p className={styles.sent} ref={sentRef} tabIndex={-1}>
-              Odkaz byl odeslán na <strong>{email}</strong>. Platí 15 minut.
-            </p>
-            <AdminModalDescription>
-              Odkaz otevřete v tomto prohlížeči a potvrďte ověření. Pak se
-              vraťte do této záložky — změna bude automaticky pokračovat.
-            </AdminModalDescription>
-            <AdminModalDescription>
-              V jiném prohlížeči ověření tady nedokončíte. Pokud tam nejste
-              přihlášeni, odkaz vás po potvrzení přihlásí jen tam.
-            </AdminModalDescription>
+            <DialogBody>
+              <p className={styles.sent} ref={sentRef} tabIndex={-1}>
+                Odkaz byl odeslán na <strong>{email}</strong>. Platí 15 minut.
+              </p>
+              <AdminModalDescription>
+                Odkaz otevřete v tomto prohlížeči a potvrďte ověření. Pak se
+                vraťte do této záložky — změna bude automaticky pokračovat.
+              </AdminModalDescription>
+              <AdminModalDescription>
+                V jiném prohlížeči ověření tady nedokončíte. Pokud tam nejste
+                přihlášeni, odkaz vás po potvrzení přihlásí jen tam.
+              </AdminModalDescription>
+            </DialogBody>
 
             <div className={styles.waiting}>
               <div className={styles.links}>
