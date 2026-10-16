@@ -1,46 +1,60 @@
-.imageFieldFileContainer {
+/* The gallery panel (24b): the count over the tiles, at the end. */
+.gallery {
   @layer route {
-    grid-area: image;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 }
 
-.imageFieldAltTextContainer {
+.gallerySummary {
   @layer route {
-    grid-area: altText;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-align: end;
   }
 }
 
-.imageFieldDescriptionContainer {
+/* A file refused at selection, or a change that did not save (24b). */
+.galleryError {
   @layer route {
-    grid-area: description;
-    /* A short text, not an article's (24a). */
-    --text-editor-min-block-size: 90px;
+    margin: 0;
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    color: var(--error-text);
   }
 }
 
-.defaultFieldFeaturedImageContainer {
+/* The alt text's hint shows while the field has the focus (24b). */
+.altField:not(:focus-within) [id$="-hint"] {
   @layer route {
-    margin-block-end: 16px;
+    display: none;
   }
 }
 
-.fieldFeaturedImageContainer {
+/* A short text, not an article's: set as the tile's alt field (24b). */
+.captionField {
   @layer route {
-    grid-area: featuredImage;
+    --text-editor-min-block-size: 40px;
+
+    & label {
+      font-size: var(--font-size-xs);
+    }
+
+    & :global(.tiptap) {
+      padding-block: 7px;
+      padding-inline: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
   }
 }
 
-.removeIcon {
+/* Opened by *Nahradit soubor* and *Vybrat jiný soubor*. */
+.replaceInput {
   @layer route {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-/* Přidat obrázek: as wide as its words, at the start of the column (24a). */
-.addButton {
-  @layer route {
-    justify-self: start;
+    display: none;
   }
 }
 

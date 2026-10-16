@@ -1,0 +1,186 @@
+/* Obrázky in the editor's right column (24a); the gallery opens as a panel at
+   every width (24b, 8kfn4ou3), over the whole screen below 768 px (24f). */
+.galleryDetail {
+  @layer route {
+    display: grid;
+    min-width: 0;
+  }
+}
+
+/* The phone's row, as EditorDetail's (24f). */
+.row {
+  @layer route {
+    display: none;
+
+    @media (width < 768px) {
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr);
+      gap: 12px;
+      align-items: baseline;
+      min-block-size: 44px;
+      padding-block: 14px;
+      padding-inline: 0;
+      color: var(--text-primary);
+      font: inherit;
+      font-size: var(--font-size-sm);
+      text-align: start;
+      background: none;
+      border: 0;
+      border-block-end: 1px solid var(--border);
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-shadow);
+      }
+    }
+  }
+}
+
+.rowName {
+  @layer route {
+    color: var(--text-secondary);
+  }
+}
+
+.rowValue {
+  @layer route {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.column {
+  @layer route {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}
+
+/* The heading and Upravit on one line; the button keeps to the heading's. */
+.columnHeading {
+  @layer route {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-block-size: 30px;
+  }
+}
+
+.name {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.4;
+    color: var(--text-primary);
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.panelName {
+  @layer route {
+    font-size: var(--font-size-md);
+  }
+}
+
+/* Over the editor, at most 976 px wide, from 24 px under the window's top to
+   its bottom, scrolling inside (24b). */
+.panel {
+  @layer route {
+    box-sizing: border-box;
+    inset-block: 24px 0;
+    width: min(976px, 100% - 48px);
+    max-width: none;
+    height: auto;
+    max-height: none;
+    margin-block: 0;
+    margin-inline: auto;
+    padding: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-block-end: 0;
+    border-start-start-radius: 12px;
+    border-start-end-radius: 12px;
+    box-shadow: var(--shadow-xl);
+
+    &::backdrop {
+      background-color: var(--overlay);
+    }
+
+    &[open] {
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (width < 768px) {
+      inset: 0;
+      width: 100%;
+      border: 0;
+      border-radius: 0;
+    }
+  }
+}
+
+.bar {
+  @layer route {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block: 14px;
+    padding-inline: 32px;
+    background-color: var(--bg-primary);
+    border-block-end: 1px solid var(--border);
+
+    @media (width < 768px) {
+      padding-block: 10px;
+      padding-inline: 16px;
+    }
+  }
+}
+
+.barTitle {
+  @layer route {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+  }
+}
+
+.saveLine {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}
+
+.body {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-block: 20px 32px;
+    padding-inline: 32px;
+
+    @media (width < 768px) {
+      padding: 16px;
+    }
+  }
+}

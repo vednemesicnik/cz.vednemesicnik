@@ -2,45 +2,29 @@ import { Prisma } from '@generated/prisma/client'
 import { data } from 'react-router'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { FEATURED_IMAGE_SOURCE } from '~/config/featured-image-config'
-
 import { updateArticle } from './update-article.server'
 
-// Pass-through permission wrapper and mocked Prisma + image store. The queued
-// Prisma operations return tags so the test can see what went into the
-// transaction; `deleteRowWithImages` keeps its real ordering (row, then files).
+// Pass-through permission wrapper and mocked Prisma. The queued Prisma
+// operations return tags so the test can see what went into the transaction.
 const mocks = vi.hoisted(() => ({
   articleCategoryFindMany: vi.fn(),
   articleFindMany: vi.fn(),
   articleFindUnique: vi.fn(),
-  articleImageAggregate: vi.fn(),
   articleImageCount: vi.fn(),
-  articleImageCreate: vi.fn(),
-  articleImageDeleteMany: vi.fn(),
-  articleImageFindMany: vi.fn(),
-  articleImageUpdate: vi.fn(),
+  articleImageUpdateMany: vi.fn(),
   articleTagFindMany: vi.fn(),
   articleUpdate: vi.fn(),
   articleUpdateMany: vi.fn(),
   authorCount: vi.fn(),
   checkAuthorPermission: vi.fn(),
   contentLogCount: vi.fn(),
-  deleteImage: vi.fn(),
-  isImageIdOwnedElsewhere: vi.fn(),
   pageSeoDeleteMany: vi.fn(),
   pageSeoUpsert: vi.fn(),
   permissionContext: vi.fn(),
   publishContentEvent: vi.fn(),
   recordContentLog: vi.fn(),
-  replacedVersionCleanup: vi.fn(),
-  storeDelete: vi.fn(),
-  storeImageVariants: vi.fn(),
   transaction: vi.fn(),
   withAuthorPermission: vi.fn(),
-}))
-
-vi.mock('~/utils/image-store/is-image-id-owned-elsewhere.server', () => ({
-  isImageIdOwnedElsewhere: mocks.isImageIdOwnedElsewhere,
 }))
 
 // The content log has its own tests; here it only must not reach Prisma.
@@ -73,12 +57,8 @@ vi.mock('~/utils/db.server', () => ({
     },
     articleCategory: { findMany: mocks.articleCategoryFindMany },
     articleImage: {
-      aggregate: mocks.articleImageAggregate,
       count: mocks.articleImageCount,
-      create: mocks.articleImageCreate,
-      deleteMany: mocks.articleImageDeleteMany,
-      findMany: mocks.articleImageFindMany,
-      update: mocks.articleImageUpdate,
+      updateMany: mocks.articleImageUpdateMany,
     },
     articleTag: { findMany: mocks.articleTagFindMany },
     author: { count: mocks.authorCount },
@@ -90,39 +70,9 @@ vi.mock('~/utils/db.server', () => ({
   },
 }))
 
-vi.mock('~/utils/image-store/store-image.server', () => ({
-  deleteImage: mocks.deleteImage,
-  deleteRowWithImages: async (
-    loadImageIds: () => Promise<string[]>,
-    deleteRow: () => Promise<unknown>,
-  ) => {
-    const imageIds = await loadImageIds()
-    const result = await deleteRow()
-    mocks.storeDelete(imageIds)
-    return result
-  },
-  prepareCoverReplacement: async ({
-    altText,
-    file,
-  }: {
-    altText: string
-    file: File | undefined
-  }) => ({
-    cleanup: file ? mocks.replacedVersionCleanup : async () => {},
-    data: file
-      ? { altText, intrinsicWidth: 1200, version: 'version-2' }
-      : { altText },
-  }),
-  storeImageVariants: mocks.storeImageVariants,
-}))
-
 vi.mock(
   '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server',
   () => ({
-    buildArticleFeaturedImageSeo: async () => ({
-      ogImageUrl: 'og-new',
-      twitterImageUrl: 'og-new',
-    }),
     resolveArticleFeaturedImageSeo: async () => ({
       ogImageUrl: null,
       twitterImageUrl: null,
@@ -132,14 +82,11 @@ vi.mock(
 
 const request = new Request('https://test.local/')
 
-const imageFile = new File(['image'], 'image.png', { type: 'image/png' })
-
 const options = {
   articleId: 'article-1',
   authorIds: ['author-1'],
   content: '<p>Text</p>',
-  existingImages: [{ altText: 'Kept', id: 'image-kept' }],
-  featuredImage: { source: FEATURED_IMAGE_SOURCE.NONE },
+  images: [{ altText: 'Kept', description: '', id: 'image-kept' }],
   slug: 'article',
   tabId: 'tab-1',
   title: 'Article',
@@ -185,14 +132,7 @@ beforeEach(() => {
   // No author the form adds is the association.
   mocks.authorCount.mockResolvedValue(0)
   mocks.articleFindUnique.mockResolvedValue(storedArticle)
-  // The removed-images lookup filters by article; the version lookup by ids.
-  mocks.articleImageFindMany.mockImplementation(
-    async ({ where }: { where: { articleId?: string } }) =>
-      where.articleId ? [{ id: 'image-removed' }] : [],
-  )
-  mocks.articleImageDeleteMany.mockReturnValue('delete-removed-images')
-  mocks.articleImageCreate.mockReturnValue('create-image')
-  mocks.articleImageUpdate.mockReturnValue('update-image')
+  mocks.articleImageUpdateMany.mockReturnValue('update-image-text')
   mocks.articleUpdate.mockReturnValue('update-article')
   // No other article has the address.
   mocks.articleFindMany.mockResolvedValue([])
@@ -201,22 +141,11 @@ beforeEach(() => {
     where.id.in.map((id) => ({ id }))
   mocks.articleCategoryFindMany.mockImplementation(echoIds)
   mocks.articleTagFindMany.mockImplementation(echoIds)
-  // Every image the form names is the article's own; no cover has a new id.
-  mocks.articleImageCount.mockImplementation(
-    async ({ where }: { where: { id: { in: string[] } } }) =>
-      where.id.in.length,
-  )
-  mocks.isImageIdOwnedElsewhere.mockResolvedValue(false)
+  // The article has a stored image.
+  mocks.articleImageCount.mockResolvedValue(1)
   mocks.articleUpdateMany.mockReturnValue('mark-first-content')
-  mocks.articleImageAggregate.mockResolvedValue({ _max: { position: 1 } })
   mocks.pageSeoDeleteMany.mockReturnValue('delete-orphan-page-seo')
   mocks.pageSeoUpsert.mockReturnValue('upsert-page-seo')
-  mocks.storeImageVariants.mockResolvedValue({
-    intrinsicHeight: 800,
-    intrinsicWidth: 1200,
-    placeholderDataUrl: 'data:',
-    version: 'version-1',
-  })
   // The first entry is the first-content mark; 0 rows: not the first save.
   // The article write answers with its new updatedAt.
   mocks.transaction.mockImplementation(async (writes: unknown[]) =>
@@ -379,51 +308,6 @@ describe('updateArticle — the permission follows the stored article', () => {
   })
 })
 
-describe('updateArticle — a failed save changes nothing', () => {
-  test('keeps a removed image when a new image fails to store', async () => {
-    mocks.storeImageVariants.mockRejectedValue(new Error('sharp failed'))
-
-    await expect(
-      updateArticle(request, {
-        ...options,
-        images: [{ altText: 'New', file: imageFile, id: 'newimage1' }],
-      }),
-    ).rejects.toThrow('sharp failed')
-
-    expect(mocks.transaction).not.toHaveBeenCalled()
-    expect(mocks.storeDelete).not.toHaveBeenCalled()
-  })
-
-  test('keeps removed images and replaced versions when the article write fails', async () => {
-    mocks.transaction.mockRejectedValue(new Error('unique constraint'))
-
-    await expect(
-      updateArticle(request, {
-        ...options,
-        existingImages: [
-          { altText: 'Kept', file: imageFile, id: 'image-kept' },
-        ],
-        images: [{ altText: 'New', file: imageFile, id: 'newimage1' }],
-      }),
-    ).rejects.toThrow('unique constraint')
-
-    // Every row write was queued into the one failed transaction.
-    expect(mocks.transaction).toHaveBeenCalledTimes(1)
-    expect(mocks.transaction).toHaveBeenCalledWith([
-      'mark-first-content',
-      'delete-orphan-page-seo',
-      'delete-removed-images',
-      'create-image',
-      'update-image',
-      'update-article',
-      'upsert-page-seo',
-    ])
-    expect(mocks.storeDelete).not.toHaveBeenCalled()
-    expect(mocks.replacedVersionCleanup).not.toHaveBeenCalled()
-    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
-  })
-})
-
 describe('updateArticle — a successful save', () => {
   test('announces the update once the transaction commits', async () => {
     await updateArticle(request, options)
@@ -433,69 +317,61 @@ describe('updateArticle — a successful save', () => {
       mocks.permissionContext(),
     )
   })
+})
 
-  test('deletes the removed image row in the transaction, then its files', async () => {
-    const order: string[] = []
-    mocks.transaction.mockImplementation(async (writes: unknown[]) => {
-      order.push('transaction')
-      return writes.map((write) =>
-        write === 'update-article' ? { updatedAt: savedAt } : { count: 0 },
-      )
-    })
-    mocks.storeDelete.mockImplementation(() => {
-      order.push('delete-files')
+describe('updateArticle — the gallery (design 24b, decision 0027)', () => {
+  test('saves the alt texts and captions of the article’s own images', async () => {
+    await updateArticle(request, {
+      ...options,
+      images: [
+        { altText: 'Studovna', description: '<p>Foto</p>', id: 'image-1' },
+        { altText: '', description: '', id: 'image-2' },
+      ],
     })
 
-    await updateArticle(request, options)
-
-    expect(mocks.articleImageDeleteMany).toHaveBeenCalledWith({
-      where: { id: { in: ['image-removed'] } },
-    })
+    expect(mocks.articleImageUpdateMany.mock.calls).toEqual([
+      [
+        {
+          data: { altText: 'Studovna', description: '<p>Foto</p>' },
+          where: { articleId: 'article-1', id: 'image-1' },
+        },
+      ],
+      [
+        {
+          data: { altText: '', description: null },
+          where: { articleId: 'article-1', id: 'image-2' },
+        },
+      ],
+    ])
     expect(mocks.transaction).toHaveBeenCalledWith([
       'mark-first-content',
       'delete-orphan-page-seo',
-      'delete-removed-images',
-      'update-image',
+      'update-image-text',
+      'update-image-text',
       'update-article',
       'upsert-page-seo',
     ])
-    expect(mocks.storeDelete).toHaveBeenCalledWith(['image-removed'])
-    expect(order).toEqual(['transaction', 'delete-files'])
   })
 
-  test('drops a replaced version only after the transaction commits', async () => {
-    const order: string[] = []
-    mocks.transaction.mockImplementation(async (writes: unknown[]) => {
-      order.push('transaction')
-      return writes.map((write) =>
-        write === 'update-article' ? { updatedAt: savedAt } : { count: 0 },
-      )
-    })
-    mocks.replacedVersionCleanup.mockImplementation(async () => {
-      order.push('cleanup')
-    })
+  test('leaves the images and the main image to their own saves', async () => {
+    await updateArticle(request, options)
 
-    await updateArticle(request, {
-      ...options,
-      existingImages: [{ altText: 'Kept', file: imageFile, id: 'image-kept' }],
-    })
-
-    expect(order).toEqual(['transaction', 'cleanup'])
-  })
-
-  test('builds SEO for a new featured image from its stored metadata', async () => {
-    await updateArticle(request, {
-      ...options,
-      featuredImage: { index: 0, source: FEATURED_IMAGE_SOURCE.NEW },
-      images: [{ altText: 'New', file: imageFile, id: 'newimage1' }],
-    })
-
-    const articleData = mocks.articleUpdate.mock.calls[0][0].data
-    const createdImage = mocks.articleImageCreate.mock.calls[0][0].data
-    expect(articleData.featuredImageId).toBe(createdImage.id)
-    expect(mocks.pageSeoUpsert.mock.calls[0][0].update.ogImageUrl).toBe(
-      'og-new',
+    expect(mocks.articleUpdate.mock.calls[0][0].data).not.toHaveProperty(
+      'featuredImageId',
     )
+  })
+
+  test('a stored image is content of an untitled draft', async () => {
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      firstContentAt: null,
+    })
+
+    await updateArticle(request, { ...options, content: '', title: '' })
+
+    expect(mocks.articleUpdateMany.mock.lastCall?.[0].data).toEqual({
+      firstContentAt: expect.any(Date),
+    })
   })
 })
 
@@ -566,6 +442,7 @@ describe('updateArticle — the first content of a new draft (decision 0020)', (
 
   test('marks and logs nothing without a title, text or image', async () => {
     mocks.articleFindUnique.mockResolvedValue(emptyDraft)
+    mocks.articleImageCount.mockResolvedValue(0)
     mocks.transaction.mockImplementation(async (writes: unknown[]) =>
       writes.map((write) =>
         write === 'update-article' ? { updatedAt: savedAt } : { count: 1 },
@@ -575,7 +452,7 @@ describe('updateArticle — the first content of a new draft (decision 0020)', (
     await updateArticle(request, {
       ...options,
       content: '',
-      existingImages: [],
+      images: [],
       title: '',
     })
 
@@ -614,23 +491,6 @@ describe('updateArticle — the PageSEO row follows the address', () => {
   })
 })
 
-describe('updateArticle — the gallery order (design 24b)', () => {
-  test('puts new images after the existing ones', async () => {
-    await updateArticle(request, {
-      ...options,
-      images: [
-        { altText: 'First', file: imageFile, id: 'newimage1' },
-        { altText: 'Second', file: imageFile, id: 'newimage2' },
-      ],
-    })
-
-    const positions = mocks.articleImageCreate.mock.calls.map(
-      ([argument]) => argument.data.position,
-    )
-    expect(positions).toEqual([2, 3])
-  })
-})
-
 describe('updateArticle — the edit hold (07g, decision 0019)', () => {
   test('saves only in the holding tab, checked in the write, and keeps the hold', async () => {
     await expect(updateArticle(request, options)).resolves.toEqual({
@@ -661,19 +521,16 @@ describe('updateArticle — the edit hold (07g, decision 0019)', () => {
     })
   })
 
-  test('another tab of one’s own: nothing is stored or written', async () => {
+  test('another tab of one’s own: nothing is written', async () => {
     mocks.articleFindUnique.mockResolvedValue({
       ...storedArticle,
       heldByTabId: 'tab-2',
     })
 
-    await expect(
-      updateArticle(request, {
-        ...options,
-        images: [{ altText: 'New', file: imageFile, id: 'newimage1' }],
-      }),
-    ).resolves.toEqual({ heldByName: 'Marie Horáková', status: 'not-held' })
-    expect(mocks.storeImageVariants).not.toHaveBeenCalled()
+    await expect(updateArticle(request, options)).resolves.toEqual({
+      heldByName: 'Marie Horáková',
+      status: 'not-held',
+    })
     expect(mocks.transaction).not.toHaveBeenCalled()
   })
 
@@ -706,19 +563,12 @@ describe('updateArticle — the edit hold (07g, decision 0019)', () => {
         heldByAuthorId: 'author-2',
       })
 
-    await expect(
-      updateArticle(request, {
-        ...options,
-        images: [{ altText: 'New', file: imageFile, id: 'newimage1' }],
-      }),
-    ).resolves.toEqual({
+    await expect(updateArticle(request, options)).resolves.toEqual({
       heldByName: 'Jakub Novák',
       status: 'not-held',
     })
     expect(mocks.recordContentLog).not.toHaveBeenCalled()
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
-    // The new image's files went in before the rows; they go too.
-    expect(mocks.deleteImage).toHaveBeenCalledOnce()
   })
 
   test('logs Upraveno once per hold (07f), announces every save', async () => {
@@ -819,144 +669,6 @@ describe('updateArticle — a taken address (design 24d)', () => {
     expect(mocks.pageSeoUpsert).not.toHaveBeenCalled()
     expect(mocks.pageSeoDeleteMany).toHaveBeenCalledWith({
       where: { pathname: '/articles/article' },
-    })
-  })
-})
-
-describe('updateArticle — a new image saves once (decision 0022)', () => {
-  const newImage = { altText: 'New', file: imageFile, id: 'newimage1' }
-
-  test('a repeated save with the same id updates it instead of storing it again', async () => {
-    mocks.articleImageFindMany.mockImplementation(
-      async ({ where }: { where: { articleId?: string; id?: unknown } }) =>
-        where.articleId
-          ? []
-          : [{ articleId: 'article-1', id: 'newimage1', version: 'version-1' }],
-    )
-
-    await updateArticle(request, {
-      ...options,
-      existingImages: [],
-      featuredImage: { index: 0, source: FEATURED_IMAGE_SOURCE.NEW },
-      images: [newImage],
-    })
-
-    expect(mocks.storeImageVariants).not.toHaveBeenCalled()
-    expect(mocks.articleImageCreate).not.toHaveBeenCalled()
-    expect(mocks.articleImageUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'newimage1' } }),
-    )
-    expect(mocks.articleUpdate.mock.lastCall?.[0].data.featuredImageId).toBe(
-      'newimage1',
-    )
-  })
-
-  test('stores a new image under the id the editor made', async () => {
-    await updateArticle(request, { ...options, images: [newImage] })
-
-    expect(mocks.storeImageVariants).toHaveBeenCalledWith(
-      'newimage1',
-      imageFile,
-    )
-    expect(mocks.articleImageCreate.mock.lastCall?.[0].data.id).toBe(
-      'newimage1',
-    )
-  })
-
-  test('keeps a saved new image out of the removed ones', async () => {
-    await updateArticle(request, { ...options, images: [newImage] })
-
-    expect(mocks.articleImageFindMany).toHaveBeenCalledWith({
-      select: { id: true },
-      where: {
-        articleId: 'article-1',
-        id: { notIn: ['image-kept'] },
-      },
-    })
-  })
-
-  test('refuses an id of another article’s image', async () => {
-    mocks.articleImageFindMany.mockImplementation(
-      async ({ where }: { where: { articleId?: string } }) =>
-        where.articleId ? [] : [{ articleId: 'article-2', id: 'newimage1' }],
-    )
-
-    await expect(
-      updateArticle(request, { ...options, images: [newImage] }),
-    ).rejects.toMatchObject({ init: { status: 400 } })
-    expect(mocks.transaction).not.toHaveBeenCalled()
-  })
-
-  test('refuses an id that is not one the editor makes', async () => {
-    await expect(
-      updateArticle(request, {
-        ...options,
-        images: [{ ...newImage, id: '../other' }],
-      }),
-    ).rejects.toMatchObject({ init: { status: 400 } })
-  })
-})
-
-describe('updateArticle — images the form names (decision 0015)', () => {
-  test('refuses an existing image of another article', async () => {
-    mocks.articleImageCount.mockResolvedValue(0)
-
-    await expect(
-      updateArticle(request, {
-        ...options,
-        existingImages: [{ altText: 'Foreign', id: 'image-foreign' }],
-      }),
-    ).rejects.toMatchObject({ init: { status: 400 } })
-    expect(mocks.articleImageCount).toHaveBeenCalledWith({
-      where: { articleId: 'article-1', id: { in: ['image-foreign'] } },
-    })
-    expect(mocks.transaction).not.toHaveBeenCalled()
-  })
-
-  test('refuses a featured image of another article', async () => {
-    mocks.articleImageCount.mockResolvedValue(1)
-
-    await expect(
-      updateArticle(request, {
-        ...options,
-        featuredImage: {
-          id: 'image-foreign',
-          source: FEATURED_IMAGE_SOURCE.EXISTING,
-        },
-      }),
-    ).rejects.toMatchObject({ init: { status: 400 } })
-  })
-
-  test('refuses a new id a cover or a profile picture already has', async () => {
-    mocks.isImageIdOwnedElsewhere.mockResolvedValue(true)
-
-    await expect(
-      updateArticle(request, {
-        ...options,
-        images: [{ altText: 'New', file: imageFile, id: 'covertaken1' }],
-      }),
-    ).rejects.toMatchObject({ init: { status: 400 } })
-    expect(mocks.isImageIdOwnedElsewhere).toHaveBeenCalledWith(['covertaken1'])
-    expect(mocks.storeImageVariants).not.toHaveBeenCalled()
-  })
-
-  test('a new file in a saved new image replaces its file', async () => {
-    mocks.articleImageFindMany.mockImplementation(
-      async ({ where }: { where: { articleId?: string } }) =>
-        where.articleId
-          ? []
-          : [{ articleId: 'article-1', id: 'newimage1', version: 'version-1' }],
-    )
-
-    await updateArticle(request, {
-      ...options,
-      images: [{ altText: 'New', file: imageFile, id: 'newimage1' }],
-    })
-
-    expect(mocks.storeImageVariants).not.toHaveBeenCalled()
-    expect(mocks.articleImageUpdate).toHaveBeenCalledWith({
-      data: expect.objectContaining({ version: 'version-2' }),
-      where: { id: 'newimage1' },
     })
   })
 })
