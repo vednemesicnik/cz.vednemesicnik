@@ -3,7 +3,8 @@ import { ISSUE_NOUN } from '~/config/list-noun-config'
 import { formatListCount } from '~/utils/format-list-count'
 
 /**
- * The archive's bulk-delete confirmation (design 26f; copy yzyd9p1l): the
+ * The archive's bulk-delete confirmation (design 26f, qjv38ti4, sjbpskpf; copy
+ * yzyd9p1l): the
  * count in the title and the button, the issues by their label. The sentence
  * names no cover or PDF — a draft may have neither — and agrees with one issue.
  *

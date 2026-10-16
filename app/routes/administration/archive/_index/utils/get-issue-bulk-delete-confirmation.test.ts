@@ -20,6 +20,12 @@ describe('getIssueBulkDeleteConfirmation', () => {
     })
   })
 
+  it('agrees with one issue', () => {
+    expect(getIssueBulkDeleteConfirmation([issue(5)]).description).toBe(
+      'Smažou se i jeho nahrané soubory. Vrátit to nejde.',
+    )
+  })
+
   it.each([
     [1, 'Smazat 1 číslo?'],
     [5, 'Smazat 5 čísel?'],

@@ -7,12 +7,12 @@ import { formatListCount } from '~/utils/format-list-count'
  *
  * @param deletedCount - How many records were deleted.
  * @param countForms - The list's noun by plural rule (`ISSUE_NOUN.countForms`, …).
- * @returns „Smazáno: 2 čísla“, or „Nic nebylo smazáno.“ when nothing was.
+ * @returns „Smazáno: 2 čísla“, or „Nic nebylo smazáno“ when nothing was.
  */
 export const formatBulkDeleteToast = (
   deletedCount: number,
   countForms: CountForms,
 ) =>
   deletedCount === 0
-    ? 'Nic nebylo smazáno.'
+    ? 'Nic nebylo smazáno'
     : `Smazáno: ${formatListCount(deletedCount, countForms)}`

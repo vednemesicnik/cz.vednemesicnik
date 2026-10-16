@@ -24,7 +24,7 @@ describe('formatBulkDeleteToast', () => {
 
   it('says nothing was deleted', () => {
     expect(formatBulkDeleteToast(0, ISSUE_NOUN.countForms)).toBe(
-      'Nic nebylo smazáno.',
+      'Nic nebylo smazáno',
     )
   })
 })
