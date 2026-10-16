@@ -1,9 +1,8 @@
 import { useRef } from 'react'
 
-import { AdminActionButton } from '~/components/admin/admin-action-button'
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminSelectionBar } from '~/components/admin/admin-selection-bar'
-import { DeleteIcon } from '~/components/icons/delete-icon'
+import { Button } from '~/components/button'
 
 import { useAdminBulkDelete } from './_hook'
 import styles from './_styles.module.css'
@@ -33,15 +32,15 @@ export const AdminBulkActionsBar = ({ action, selectedIds, onDone }: Props) => {
           count={selectedIds.length}
           onClear={onDone}
         >
-          <AdminActionButton
-            action={'delete'}
+          <Button
             disabled={isSubmitting}
             onClick={openDialog}
+            size={'sm'}
             type={'button'}
+            variant={'outline'}
           >
-            <DeleteIcon />
-            {isSubmitting ? 'Maže se...' : 'Smazat vybrané'}
-          </AdminActionButton>
+            Smazat…
+          </Button>
         </AdminSelectionBar>
       )}
       {/* Keep the dialog mounted even with no selection: the hook attaches its
