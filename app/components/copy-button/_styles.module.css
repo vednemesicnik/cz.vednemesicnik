@@ -73,8 +73,9 @@
   }
 }
 
-/* Announced, not shown: the title says it to the pointer. */
-.status {
+/* Read, not shown: „Kopírovat“ after the value, „Zkopírováno“ beside the
+   button (jhwfoyxs). */
+.visuallyHidden {
   @layer component {
     position: absolute;
     width: 1px;
