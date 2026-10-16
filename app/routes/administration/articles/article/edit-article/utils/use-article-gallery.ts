@@ -254,9 +254,14 @@ export const useArticleGallery = ({
     return url
   }
 
-  /** New images, each uploading at once; refused files get a sentence. */
-  const addFiles = (files: File[]) => {
+  /**
+   * New images, each uploading at once; refused files get a sentence.
+   *
+   * @returns The ids of the tiles it made, in the order picked.
+   */
+  const addFiles = (files: File[]): string[] => {
     const sentences: string[] = []
+    const addedIds: string[] = []
 
     for (const file of files) {
       const sentence = getRejectedFileSentence(file)
@@ -276,11 +281,13 @@ export const useArticleGallery = ({
         }),
       )
       optionsRef.current.list.add(id)
+      addedIds.push(id)
       void upload(id, file)
     }
 
     // The next pick clears what the last one refused (24b).
     setRejectedSentences(sentences)
+    return addedIds
   }
 
   /**

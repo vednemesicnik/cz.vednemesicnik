@@ -508,6 +508,26 @@ export default function RouteComponent({
     setMoveAnnouncement(`Obrázek je teď ${to + 1}. ze ${count}.`)
     void gallery.move(id, to)
   }
+  // Wherever a pick starts, it ends in the panel, in the first new image's
+  // alt text (sa1x34z3). A pick that made no tile opens nothing.
+  const [newImageFocusId, setNewImageFocusId] = useState<string | null>(null)
+  const addImages = (files: File[]) => {
+    const [firstAddedId] = gallery.addFiles(files)
+    if (firstAddedId === undefined) return
+    setOpenDetail('images')
+    setNewImageFocusId(firstAddedId)
+  }
+  // Runs after the panel's own focus on its name, once the tile is there.
+  useEffect(() => {
+    if (newImageFocusId === null) return
+    const altInput = formRef.current?.querySelector<HTMLInputElement>(
+      `[data-image-id="${newImageFocusId}"] input[name$=".altText"]`,
+    )
+    if (altInput == null) return
+    altInput.scrollIntoView({ block: 'center' })
+    altInput.focus()
+    setNewImageFocusId(null)
+  })
 
   // The address follows the title until changed by hand (24a): one that
   // differs from the title's as the editor opens was changed by hand.
@@ -1434,57 +1454,65 @@ export default function RouteComponent({
               <GalleryDetail
                 {...detailProps('images')}
                 preview={
-                  <GalleryGrid columns={2}>
-                    {imageFieldList.map((image) => {
-                      const imageFields = image.getFieldset()
-                      const id = imageFields.id.value ?? ''
-                      const tile = gallery.tiles.get(id)
-                      const altText = imageFields.altText.value ?? ''
-                      const isFailed = tile?.status === 'failed'
-                      const isProcessing =
-                        tile?.status === 'processing' ||
-                        tile?.isReplacing === true
+                  <>
+                    <GalleryGrid columns={2}>
+                      {imageFieldList.map((image) => {
+                        const imageFields = image.getFieldset()
+                        const id = imageFields.id.value ?? ''
+                        const tile = gallery.tiles.get(id)
+                        const altText = imageFields.altText.value ?? ''
+                        const isFailed = tile?.status === 'failed'
+                        const isProcessing =
+                          tile?.status === 'processing' ||
+                          tile?.isReplacing === true
 
-                      return (
-                        <li key={image.key}>
-                          <CompactImageTile>
-                            <ImageTileMedia
-                              isFailed={isFailed}
-                              isProcessing={isProcessing}
-                              source={tile?.previewUrl}
-                            >
-                              {gallery.featuredImageId === id && (
-                                <ImageTilePill>Hlavní</ImageTilePill>
+                        return (
+                          <li key={image.key}>
+                            <CompactImageTile>
+                              <ImageTileMedia
+                                isFailed={isFailed}
+                                isProcessing={isProcessing}
+                                source={tile?.previewUrl}
+                              >
+                                {gallery.featuredImageId === id && (
+                                  <ImageTilePill>Hlavní</ImageTilePill>
+                                )}
+                                {isProcessing && (
+                                  <ImageTilePill isMuted>
+                                    Zpracovává se
+                                  </ImageTilePill>
+                                )}
+                              </ImageTileMedia>
+                              {isFailed ? (
+                                <ImageTileAltLine isFailed>
+                                  Zpracování selhalo
+                                </ImageTileAltLine>
+                              ) : altText === '' ? (
+                                <ImageTileAltLine isMissing>
+                                  Bez alt textu
+                                </ImageTileAltLine>
+                              ) : (
+                                <ImageTileAltLine>{altText}</ImageTileAltLine>
                               )}
-                              {isProcessing && (
-                                <ImageTilePill isMuted>
-                                  Zpracovává se
-                                </ImageTilePill>
-                              )}
-                            </ImageTileMedia>
-                            {isFailed ? (
-                              <ImageTileAltLine isFailed>
-                                Zpracování selhalo
-                              </ImageTileAltLine>
-                            ) : altText === '' ? (
-                              <ImageTileAltLine isMissing>
-                                Bez alt textu
-                              </ImageTileAltLine>
-                            ) : (
-                              <ImageTileAltLine>{altText}</ImageTileAltLine>
-                            )}
-                          </CompactImageTile>
-                        </li>
-                      )
-                    })}
-                    {!isReadOnly && (
-                      <AddImagesTile
-                        disabled={isLocked}
-                        isCompact
-                        onFiles={gallery.addFiles}
-                      />
-                    )}
-                  </GalleryGrid>
+                            </CompactImageTile>
+                          </li>
+                        )
+                      })}
+                      {!isReadOnly && (
+                        <AddImagesTile
+                          disabled={isLocked}
+                          isCompact
+                          onFiles={addImages}
+                        />
+                      )}
+                    </GalleryGrid>
+                    {/* A pick that made no tile opens nothing (sa1x34z3). */}
+                    {gallery.rejectedSentences.map((sentence) => (
+                      <p className={styles.galleryError} key={sentence}>
+                        {sentence}
+                      </p>
+                    ))}
+                  </>
                 }
                 saveLine={renderSaveLine()}
                 summary={gallerySummary}
@@ -1644,10 +1672,7 @@ export default function RouteComponent({
                       )
                     })}
                     {!isReadOnly && (
-                      <AddImagesTile
-                        disabled={isLocked}
-                        onFiles={gallery.addFiles}
-                      />
+                      <AddImagesTile disabled={isLocked} onFiles={addImages} />
                     )}
                   </GalleryGrid>
                   {gallery.rejectedSentences.map((sentence) => (

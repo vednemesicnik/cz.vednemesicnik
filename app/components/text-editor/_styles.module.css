@@ -122,12 +122,24 @@
     border-radius: var(--radius-sm);
 
     & svg {
-      font-size: 13px;
+      font-size: 14px;
     }
 
+    /* A finger's target on a phone, around the small chip (sa1x34z3). */
     @media (width < 768px) {
+      position: relative;
       min-inline-size: 24px;
       min-block-size: 18px;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset-block-start: 50%;
+        inset-inline-start: 50%;
+        inline-size: 44px;
+        block-size: 44px;
+        transform: translate(-50%, -50%);
+      }
     }
   }
 }
