@@ -14,10 +14,18 @@
   }
 }
 
+/* The Image fills the circle. Its unlayered `height: auto` on the img beats a
+   layered `height`, so min- and max-height pin the img to the circle; a photo
+   of any shape covers it, cropped around its middle. */
 .image {
-  @layer component {
+  @layer variant {
     inline-size: 100%;
     block-size: 100%;
-    object-fit: cover;
+
+    & img {
+      min-block-size: 100%;
+      max-block-size: 100%;
+      object-fit: cover;
+    }
   }
 }

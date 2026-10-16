@@ -11,6 +11,7 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { createId } from '@paralleldrive/cuid2'
 import { clsx } from 'clsx'
 import {
+  type FocusEvent,
   type FormEvent,
   type MouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -62,6 +63,9 @@ import type { Route } from './+types/route'
 import { ArticleChangedDialog } from './components/article-changed-dialog'
 import { AuthorList } from './components/author-list'
 import { AuthorListItem } from './components/author-list-item'
+import { AuthorRemoveButton } from './components/author-remove-button'
+import { AuthorRow } from './components/author-row'
+import { AuthorRowButton } from './components/author-row-button'
 import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditHoldDialog } from './components/edit-hold-dialog'
@@ -536,11 +540,17 @@ export default function RouteComponent({
   // After a change the focus goes to that row's button (the next row's
   // after a removal), or to the search.
   const authorFocusIndexRef = useRef<number | null>(null)
-  const focusAuthorRow = (index: number) =>
-    (
-      authorListRef.current?.children.item(index)?.querySelector('button') ??
+  // The row's button, else the previous row's (after removing the last one);
+  // the search only when no row has one.
+  const focusAuthorRow = (index: number) => {
+    const rowButton = (at: number) =>
+      authorListRef.current?.children.item(at)?.querySelector('button')
+    ;(
+      rowButton(index) ??
+      rowButton(index - 1) ??
       authorSearchRef.current
     )?.focus()
+  }
   const removeAuthor = (index: number) => {
     authorFocusIndexRef.current = index
     setSelectedAuthorIds(selectedAuthorIds.filter((_, at) => at !== index))
@@ -557,10 +567,37 @@ export default function RouteComponent({
     setReplaceQuery('')
     setReplacingAuthorId(authorId)
   }
-  const cancelReplacing = (index: number) => {
+  // Zrušit and Esc return the focus to Vyměnit; leaving the frame (a click or
+  // Tab elsewhere) keeps it where it went.
+  const cancelFocusIndexRef = useRef<number | null>(null)
+  const cancelReplacing = (
+    index: number,
+    { refocus }: { refocus: boolean },
+  ) => {
+    cancelFocusIndexRef.current = refocus ? index : null
     setReplacingAuthorId(null)
-    // Back to Vyměnit once the row has it again.
-    requestAnimationFrame(() => focusAuthorRow(index))
+  }
+  // Esc cancels at once, the open list included, and goes no further: on a
+  // phone it would also close the Autoři panel (24f).
+  const handleReplaceKeyDown =
+    (index: number) => (event: ReactKeyboardEvent<HTMLLIElement>) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      event.stopPropagation()
+      cancelReplacing(index, { refocus: true })
+    }
+  const handleReplaceBlur =
+    (index: number) => (event: FocusEvent<HTMLLIElement>) => {
+      if (!event.currentTarget.contains(event.relatedTarget)) {
+        cancelReplacing(index, { refocus: false })
+      }
+    }
+  // A press anywhere in the frame but the field keeps the focus in the field:
+  // a click that does not focus (Zrušit in Safari, the name) is no leaving.
+  const handleReplaceMouseDown = (event: MouseEvent<HTMLLIElement>) => {
+    if (!(event.target instanceof Element && event.target.closest('input'))) {
+      event.preventDefault()
+    }
   }
   const replaceAuthor = (replacedAuthorId: string, authorId: string) => {
     authorFocusIndexRef.current = selectedAuthorIds.indexOf(replacedAuthorId)
@@ -569,8 +606,20 @@ export default function RouteComponent({
       selectedAuthorIds.map((id) => (id === replacedAuthorId ? authorId : id)),
     )
   }
+  // After the commit: into the field when replacing starts, back to Vyměnit
+  // when Zrušit or Esc ended it.
+  const handleReplacingChange = useEffectEvent((isReplacing: boolean) => {
+    if (isReplacing) {
+      replaceSearchRef.current?.focus()
+      return
+    }
+    const index = cancelFocusIndexRef.current
+    if (index === null) return
+    cancelFocusIndexRef.current = null
+    focusAuthorRow(index)
+  })
   useEffect(() => {
-    if (replacingAuthorId !== null) replaceSearchRef.current?.focus()
+    handleReplacingChange(replacingAuthorId !== null)
   }, [replacingAuthorId])
 
   // An added or removed author saves at once, without a dialog (24j): once
@@ -1015,26 +1064,62 @@ export default function RouteComponent({
                     {selectedAuthorIds.map((authorId, index) => {
                       const author = authorById.get(authorId)
                       const name = author?.name ?? authorId
+                      // Without the hold nothing is replaced (07g).
+                      const isReplacing =
+                        replacingAuthorId === authorId && !isReadOnly
 
                       return (
                         <AuthorListItem
-                          image={author?.image ?? NO_IMAGE}
-                          isOwn={authorId === ownAuthorId}
+                          isReplacing={isReplacing}
                           key={authorId}
-                          name={name}
-                          onCancelReplace={() => cancelReplacing(index)}
-                          onRemove={
-                            !isReadOnly && canRemoveAuthor(authorId)
-                              ? () => removeAuthor(index)
+                          onBlur={
+                            isReplacing ? handleReplaceBlur(index) : undefined
+                          }
+                          onKeyDownCapture={
+                            isReplacing
+                              ? handleReplaceKeyDown(index)
                               : undefined
                           }
-                          onReplace={
-                            !isReadOnly && canReplaceAuthor
-                              ? () => startReplacing(authorId)
-                              : undefined
+                          onMouseDown={
+                            isReplacing ? handleReplaceMouseDown : undefined
                           }
                         >
-                          {replacingAuthorId === authorId ? (
+                          {/* At most one action, each its own node, so a
+                              click meant for one never lands on another. */}
+                          <AuthorRow
+                            image={author?.image ?? NO_IMAGE}
+                            isOwn={authorId === ownAuthorId}
+                            name={name}
+                          >
+                            {isReplacing ? (
+                              <AuthorRowButton
+                                aria-label={'Zrušit výměnu autora'}
+                                key={'cancel'}
+                                onClick={() =>
+                                  cancelReplacing(index, { refocus: true })
+                                }
+                              >
+                                Zrušit
+                              </AuthorRowButton>
+                            ) : isReadOnly ? null : canRemoveAuthor(
+                                authorId,
+                              ) ? (
+                              <AuthorRemoveButton
+                                key={'remove'}
+                                name={name}
+                                onClick={() => removeAuthor(index)}
+                              />
+                            ) : canReplaceAuthor ? (
+                              <AuthorRowButton
+                                aria-label={`Vyměnit autora: ${name}`}
+                                key={'replace'}
+                                onClick={() => startReplacing(authorId)}
+                              >
+                                Vyměnit
+                              </AuthorRowButton>
+                            ) : null}
+                          </AuthorRow>
+                          {isReplacing && (
                             <ChipInput
                               createLabel={getCreateAuthorLabel(replaceQuery)}
                               createNote={
@@ -1059,7 +1144,7 @@ export default function RouteComponent({
                               query={replaceQuery}
                               ref={replaceSearchRef}
                             />
-                          ) : undefined}
+                          )}
                         </AuthorListItem>
                       )
                     })}

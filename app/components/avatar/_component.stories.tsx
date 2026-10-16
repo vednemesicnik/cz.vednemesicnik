@@ -33,7 +33,16 @@ export const Playground: Story = {
   },
 }
 
-// The sizes of the author picker (24j): a suggestion and a chosen row.
+// A landscape photo: it covers the circle, cropped around its middle.
+const landscapePhoto = {
+  ...noImage,
+  height: 600,
+  src: '/images/article-link-image.jpeg',
+  width: 1200,
+}
+
+// The sizes of the author picker (24j): a suggestion and a chosen row, with
+// initials and with a photo that is not square.
 export const Overview: Story = {
   parameters: { controls: { disable: true } },
   render: () => (
@@ -41,6 +50,8 @@ export const Overview: Story = {
       <Avatar image={noImage} name={'Veronika Pokorná'} size={24} />
       <Avatar image={noImage} name={'Tereza Malá'} size={28} />
       <Avatar image={noImage} name={'Vedneměsíčník, z. s.'} size={28} />
+      <Avatar image={landscapePhoto} name={'Jakub Novák'} size={28} />
+      <Avatar image={landscapePhoto} name={'Jakub Novák'} size={96} />
     </div>
   ),
 }

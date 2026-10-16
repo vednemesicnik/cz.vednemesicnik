@@ -197,7 +197,8 @@ export const ChipInput = ({
           aria-activedescendant={hasActive ? optionId(active) : undefined}
           aria-autocomplete={'list'}
           aria-controls={listboxId}
-          aria-expanded={isOpen}
+          // Expanded only with options: the empty line is said by the status.
+          aria-expanded={hasActive}
           autoComplete={'off'}
           className={styles.input}
           disabled={disabled}
@@ -255,7 +256,10 @@ export const ChipInput = ({
                   <Avatar image={option.avatar} name={option.label} size={24} />
                   <span className={styles.label}>{option.label}</span>
                   {option.note !== undefined && (
-                    <span className={styles.note}>{option.note}</span>
+                    <>
+                      {' '}
+                      <span className={styles.note}>{option.note}</span>
+                    </>
                   )}
                 </>
               )}
@@ -278,13 +282,25 @@ export const ChipInput = ({
             >
               {createLabel}
               {createNote !== undefined && (
-                <span className={styles.createNote}>{createNote}</span>
+                <>
+                  {' '}
+                  <span className={styles.createNote}>{createNote}</span>
+                </>
               )}
             </div>
           )}
         </div>
-        {hasEmpty && <p className={styles.empty}>{emptyLabel}</p>}
+        {/* Seen in the list; readers get it from the status below. */}
+        {hasEmpty && (
+          <p aria-hidden={'true'} className={styles.empty}>
+            {emptyLabel}
+          </p>
+        )}
       </div>
+      {/* Mounted always, so a search that finds nothing is announced. */}
+      <p className={'screen-reader-only'} role={'status'}>
+        {hasEmpty && isOpen ? emptyLabel : ''}
+      </p>
     </div>
   )
 }
