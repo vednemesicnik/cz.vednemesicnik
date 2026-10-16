@@ -546,7 +546,7 @@ export default function RouteComponent({
     setSelectedAuthorIds(selectedAuthorIds.filter((_, at) => at !== index))
   }
 
-  // Replacing: the row gets the Vyměnit za field, Přidat autora steps aside
+  // Replacing: the row gets the Vybrat jiného autora field, Přidat autora steps aside
   // (ivyin4kr). The pick replaces the author in one save.
   const [replacingAuthorId, setReplacingAuthorId] = useState<string | null>(
     null,
@@ -594,25 +594,13 @@ export default function RouteComponent({
 
   // Back from *Založit autora*, the new author is chosen (24j, 28c), in place
   // of the replaced one if the replacement started it, once the hold allows a
-  // save. The address drops both without a revalidation, so a reload does
-  // not add the author again.
-  const [createdAuthor] = useState(() => {
-    if (typeof window === 'undefined') return null
-    const searchParams = new URLSearchParams(window.location.search)
-    const authorId = searchParams.get('author')
-    return authorId === null
-      ? null
-      : { authorId, replacedAuthorId: searchParams.get('replace') }
-  })
+  // save. It comes once, from the page load (a one-time cookie), so neither a
+  // revalidation nor a link adds it.
+  const [createdAuthor] = useState(loaderData.createdAuthor)
   const hasAddedCreatedAuthorRef = useRef(false)
   const addCreatedAuthor = useEffectEvent(() => {
     if (hasAddedCreatedAuthorRef.current || createdAuthor === null) return
     hasAddedCreatedAuthorRef.current = true
-
-    const url = new URL(window.location.href)
-    url.searchParams.delete('author')
-    url.searchParams.delete('replace')
-    window.history.replaceState(window.history.state, '', url)
 
     const { authorId, replacedAuthorId } = createdAuthor
     if (!authorById.has(authorId) || selectedAuthorIds.includes(authorId)) {
