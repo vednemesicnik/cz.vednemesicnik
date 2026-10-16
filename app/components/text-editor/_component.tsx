@@ -21,7 +21,7 @@ import { TEXT_EDITOR_LINK_CONFIG } from '~/config/text-editor-link-config'
 import { useTextEditor } from '~/hooks/use-text-editor'
 import styles from './_styles.module.css'
 
-// An article's text: headings 2 and 3, lists, the quote, bold and italic.
+// An article's text: the whole StarterKit, headings 2 and 3 only.
 const formats = [
   StarterKit.configure({
     heading: {
