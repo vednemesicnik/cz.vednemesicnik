@@ -1,0 +1,93 @@
+/* The design system's Tooltip (jb81di02). */
+.anchor {
+  @layer component {
+    display: inline-flex;
+    anchor-name: var(--tooltip-anchor);
+  }
+}
+
+.bubble {
+  @layer component {
+    /* Hidden until open, also where the Popover API is missing. */
+    display: none;
+    max-inline-size: 240px;
+    padding-block: 4px;
+    padding-inline: 8px;
+    border: none;
+    border-radius: var(--radius-md);
+    background-color: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    box-shadow: var(--shadow-sm);
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    font-style: normal;
+    line-height: 1.4;
+    white-space: nowrap;
+    transition:
+      opacity var(--transition-fast),
+      translate var(--transition-fast);
+
+    /* Bridges the gap to the trigger, so the pointer can move onto the
+       bubble without it closing (WCAG 1.4.13). */
+    &::before {
+      content: "";
+      position: absolute;
+      inset-block: -6px;
+      inset-inline: 0;
+    }
+  }
+}
+
+/* Only where it can stand at the trigger; elsewhere the trigger's own name
+   is enough, as a tooltip never carries anything else. */
+@supports (anchor-name: --tooltip) {
+  .bubble {
+    @layer component {
+      position-anchor: var(--tooltip-anchor);
+      position-area: block-start;
+      position-try-fallbacks: flip-block;
+      position-visibility: anchors-visible;
+      inset: auto;
+      margin: 0;
+      margin-block-end: 6px;
+      overflow: visible;
+    }
+  }
+
+  .bubble.bottom {
+    @layer variant {
+      position-area: block-end;
+      margin-block: 6px 0;
+    }
+  }
+
+  .bubble:popover-open {
+    @layer component {
+      display: block;
+      opacity: 1;
+      translate: 0 0;
+
+      @starting-style {
+        opacity: 0;
+        translate: 0 2px;
+      }
+    }
+  }
+
+  .bubble.bottom:popover-open {
+    @layer variant {
+      @starting-style {
+        translate: 0 -2px;
+      }
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble {
+    @layer variant {
+      transition: none;
+    }
+  }
+}
