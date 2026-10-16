@@ -1514,7 +1514,19 @@ export default function RouteComponent({
                     ))}
                   </>
                 }
-                saveLine={renderSaveLine()}
+                // A change that did not save says so where saving is said, in
+                // sight wherever the author is in the gallery (in5bl1cq).
+                saveLine={
+                  gallery.hasFailedChange ? (
+                    <p className={styles.saveLine} role={'alert'}>
+                      <span className={styles.saveFailure}>
+                        Proveďte změnu znovu — nepodařilo se ji uložit.
+                      </span>
+                    </p>
+                  ) : (
+                    renderSaveLine()
+                  )
+                }
                 summary={gallerySummary}
               >
                 <fieldset
@@ -1683,11 +1695,7 @@ export default function RouteComponent({
                       {sentence}
                     </p>
                   ))}
-                  {gallery.hasFailedChange && (
-                    <p className={styles.galleryError} role={'alert'}>
-                      Proveďte změnu znovu — nepodařilo se ji uložit.
-                    </p>
-                  )}
+
                   <input
                     accept={'image/*'}
                     className={styles.replaceInput}

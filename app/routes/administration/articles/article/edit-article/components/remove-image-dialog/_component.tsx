@@ -38,8 +38,14 @@ export const RemoveImageDialog = ({
         <AdminModalTitle>Odebrat obrázek?</AdminModalTitle>
         <AdminModalDescription>
           Obrázek se hned smaže i s alt textem a popiskem. Odebrání nelze
-          vrátit.{isFeatured && ' Článek zůstane bez hlavního obrázku.'}
+          vrátit.
         </AdminModalDescription>
+        {/* Its own paragraph, only for the main image (in5bl1cq). */}
+        {isFeatured && (
+          <AdminModalDescription>
+            Článek zůstane bez hlavního obrázku.
+          </AdminModalDescription>
+        )}
 
         <AdminModalActions>
           <Button
