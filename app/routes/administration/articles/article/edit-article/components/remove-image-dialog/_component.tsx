@@ -9,6 +9,8 @@ import { Button } from '~/components/button'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
 type Props = {
+  /** The main image: the article is left without one (copy hu5a658a). */
+  isFeatured: boolean
   onConfirm: () => void
   /** Closed any way but *Odebrat*. */
   onCancel: () => void
@@ -19,7 +21,11 @@ type Props = {
  * at once with its alt text and caption, and it cannot be undone. It names no
  * file; it opens from that tile's „⋯“ (8kfn4ou3).
  */
-export const RemoveImageDialog = ({ onConfirm, onCancel }: Props) => {
+export const RemoveImageDialog = ({
+  isFeatured,
+  onConfirm,
+  onCancel,
+}: Props) => {
   // The native close comes after the confirm, maybe after a re-render.
   const isConfirmedRef = useRef(false)
   const ref = useModalDialog(() => {
@@ -32,7 +38,7 @@ export const RemoveImageDialog = ({ onConfirm, onCancel }: Props) => {
         <AdminModalTitle>Odebrat obrázek?</AdminModalTitle>
         <AdminModalDescription>
           Obrázek se hned smaže i s alt textem a popiskem. Odebrání nelze
-          vrátit.
+          vrátit.{isFeatured && ' Článek zůstane bez hlavního obrázku.'}
         </AdminModalDescription>
 
         <AdminModalActions>

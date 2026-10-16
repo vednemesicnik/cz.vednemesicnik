@@ -505,7 +505,7 @@ export default function RouteComponent({
   // `to` is the place among the stored images, which the „⋯“ moves between.
   const moveImage = (id: string, to: number, count: number) => {
     setMovedImageId(id)
-    setMoveAnnouncement(`Obrázek je teď ${to + 1}. ze ${count}.`)
+    setMoveAnnouncement(`Pozice ${to + 1}, celkem ${count}.`)
     void gallery.move(id, to)
   }
   // Wherever a pick starts, it ends in the panel, in the first new image's
@@ -1526,7 +1526,7 @@ export default function RouteComponent({
                     <p className={styles.gallerySummary}>{gallerySummary}</p>
                   )}
                   <GalleryGrid columns={3}>
-                    {imageFieldList.map((image) => {
+                    {imageFieldList.map((image, index) => {
                       const imageFields = image.getFieldset()
                       const id = imageFields.id.value ?? ''
                       const tile = gallery.tiles.get(id)
@@ -1615,7 +1615,10 @@ export default function RouteComponent({
                                       onUnfeature: () =>
                                         void gallery.setFeatured(null),
                                     })}
-                                    label={'Akce obrázku'}
+                                    // The tile has no name of its own: its
+                                    // place in the gallery tells it apart
+                                    // (copy hu5a658a).
+                                    label={`Další akce obrázku ${index + 1}`}
                                     variant={'chip'}
                                   />
                                 </ImageTileMenu>
@@ -1624,8 +1627,8 @@ export default function RouteComponent({
                             {tile?.hasReplaceFailed && (
                               <>
                                 <ImageTileMessage>
-                                  Nový soubor se nepodařilo zpracovat, zůstává
-                                  původní.
+                                  Nový soubor se nepodařilo zpracovat. Původní
+                                  obrázek zůstává.
                                 </ImageTileMessage>
                                 {!isReadOnly && (
                                   <ImageTileActions>
@@ -1682,7 +1685,7 @@ export default function RouteComponent({
                   ))}
                   {gallery.hasFailedChange && (
                     <p className={styles.galleryError} role={'alert'}>
-                      Změnu se nepodařilo uložit. Zkuste to znovu.
+                      Proveďte změnu znovu — nepodařilo se ji uložit.
                     </p>
                   )}
                   <input
@@ -1707,6 +1710,7 @@ export default function RouteComponent({
                 </fieldset>
                 {removingImageId !== null && (
                   <RemoveImageDialog
+                    isFeatured={gallery.featuredImageId === removingImageId}
                     onCancel={() => setRemovingImageId(null)}
                     onConfirm={() => {
                       void gallery.remove(removingImageId)

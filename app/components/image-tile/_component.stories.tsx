@@ -47,7 +47,7 @@ export const Playground: Story = {
           <ImageTileMenu>
             <ActionMenu
               items={menuItems}
-              label={'Akce obrázku'}
+              label={'Další akce obrázku 1'}
               variant={'chip'}
             />
           </ImageTileMenu>
@@ -113,13 +113,13 @@ export const ReplaceFailed: Story = {
           <ImageTileMenu>
             <ActionMenu
               items={menuItems}
-              label={'Akce obrázku'}
+              label={'Další akce obrázku 1'}
               variant={'chip'}
             />
           </ImageTileMenu>
         </ImageTileMedia>
         <ImageTileMessage>
-          Nový soubor se nepodařilo zpracovat, zůstává původní.
+          Nový soubor se nepodařilo zpracovat. Původní obrázek zůstává.
         </ImageTileMessage>
         <ImageTileActions>
           <ButtonLink>Vybrat jiný soubor</ButtonLink>
