@@ -124,6 +124,15 @@
   }
 }
 
+/* Without an avatar, the name and a note on the right, e.g. a tag's state (24a). */
+.withNote {
+  @layer variant {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+}
+
 .label {
   @layer component {
     flex: 1;

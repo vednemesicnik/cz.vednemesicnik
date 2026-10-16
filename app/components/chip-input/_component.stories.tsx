@@ -22,24 +22,30 @@ const TAGS = [
 type DemoProps = {
   initialValues: string[]
   initialQuery?: string
-  archivedValues?: string[]
+  /** Tags out of play, by value: the word their chip and suggestion carry. */
+  stateNotes?: Record<string, string>
 }
 
 // The field with its chips and a search over the tags, as the editor uses it.
 const ChipInputDemo = ({
   initialValues,
   initialQuery = '',
-  archivedValues = [],
+  stateNotes = {},
 }: DemoProps) => {
   const [values, setValues] = useState(initialValues)
   const [query, setQuery] = useState(initialQuery)
   const foldedQuery = foldForSearch(query.trim())
+  // One out of play is offered under the others, with its word (8kfn4ou3).
   const options = TAGS.filter(
     (tag) =>
       !values.includes(tag.value) &&
-      !archivedValues.includes(tag.value) &&
       foldForSearch(tag.label).includes(foldedQuery),
   )
+    .map((tag) => ({ ...tag, note: stateNotes[tag.value] }))
+    .sort(
+      (first, second) =>
+        Number(first.note !== undefined) - Number(second.note !== undefined),
+    )
 
   return (
     <div style={{ width: '300px' }}>
@@ -54,13 +60,13 @@ const ChipInputDemo = ({
         query={query}
       >
         {values.map((value) => {
-          const isArchived = archivedValues.includes(value)
+          const note = stateNotes[value]
 
           return (
             <Chip
               key={value}
-              muted={isArchived}
-              note={isArchived ? 'archivovaný' : undefined}
+              muted={note !== undefined}
+              note={note}
               onRemove={() =>
                 setValues(values.filter((picked) => picked !== value))
               }
@@ -96,14 +102,30 @@ export const Playground: Story = {
 }
 
 /**
- * An archived tag the article already has: dashed, with *archivovaný*, never
- * offered again (iq3nur0e).
+ * Tags the article has out of play: dashed, with *archivovaný* or *v konceptu*
+ * (iq3nur0e, 8kfn4ou3).
  */
 export const WithArchived: Story = {
   render: () => (
     <ChipInputDemo
-      archivedValues={['prazdniny']}
-      initialValues={['podzim', 'cteni', 'prazdniny']}
+      initialValues={['podzim', 'cteni', 'prazdniny', 'sport']}
+      stateNotes={{ prazdniny: 'archivovaný', sport: 'v konceptu' }}
+    />
+  ),
+}
+
+/**
+ * An archived tag removed by mistake: offered under the others, with its word,
+ * until the editor closes (8kfn4ou3).
+ */
+export const ArchivedOffered: Story = {
+  play: async ({ canvasElement }) => {
+    within(canvasElement).getByRole('combobox').focus()
+  },
+  render: () => (
+    <ChipInputDemo
+      initialValues={['podzim', 'cteni']}
+      stateNotes={{ prazdniny: 'archivovaný' }}
     />
   ),
 }

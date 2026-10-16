@@ -17,7 +17,7 @@ import styles from './_styles.module.css'
 export type ChipInputOption = {
   value: string
   label: string
-  /** Shown on the right, e.g. an author's role (ivyin4kr). */
+  /** Shown on the right, e.g. an author's role (ivyin4kr) or a tag's state (24a). */
   note?: string
   /** A person's photo: the suggestion starts with their avatar. */
   avatar?: ImageSources
@@ -239,7 +239,9 @@ export const ChipInput = ({
               aria-selected={index === active}
               className={clsx(
                 styles.option,
-                option.avatar !== undefined && styles.rich,
+                option.avatar !== undefined
+                  ? styles.rich
+                  : option.note !== undefined && styles.withNote,
                 index === active && styles.active,
               )}
               id={optionId(index)}
@@ -249,11 +251,17 @@ export const ChipInput = ({
               onMouseDown={(event) => event.preventDefault()}
               role={'option'}
             >
-              {option.avatar === undefined ? (
+              {option.avatar === undefined && option.note === undefined ? (
                 option.label
               ) : (
                 <>
-                  <Avatar image={option.avatar} name={option.label} size={24} />
+                  {option.avatar !== undefined && (
+                    <Avatar
+                      image={option.avatar}
+                      name={option.label}
+                      size={24}
+                    />
+                  )}
                   <span className={styles.label}>{option.label}</span>
                   {option.note !== undefined && (
                     <>
