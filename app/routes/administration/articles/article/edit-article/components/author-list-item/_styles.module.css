@@ -7,29 +7,32 @@
     gap: 10px;
     min-block-size: 40px;
     padding-block: 6px;
+    padding-inline-end: 4px;
     font-size: var(--font-size-sm);
   }
 }
 
 .name {
   @layer route {
-    flex: 1;
     min-inline-size: 0;
     color: var(--text-primary);
     overflow-wrap: anywhere;
   }
 }
 
+/* *vy* beside the name (24j). */
 .own {
   @layer route {
     color: var(--text-secondary);
   }
 }
 
+/* At the end of the row. */
 .remove {
   @layer route {
     display: inline-flex;
     flex: none;
+    margin-inline-start: auto;
     align-items: center;
     justify-content: center;
     padding: 6px;

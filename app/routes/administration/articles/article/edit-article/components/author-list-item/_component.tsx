@@ -32,10 +32,8 @@ export const AuthorListItem = ({
 }: Props) => (
   <li className={clsx(styles.item, className)}>
     <Avatar image={image} name={name} size={28} />
-    <span className={styles.name}>
-      {name}
-      {isOwn && <span className={styles.own}> vy</span>}
-    </span>
+    <span className={styles.name}>{name}</span>
+    {isOwn && <span className={styles.own}>vy</span>}
     {onRemove !== undefined && (
       <button
         aria-label={`Odebrat ${name}`}

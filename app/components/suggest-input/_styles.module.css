@@ -60,11 +60,12 @@
   }
 }
 
+/* As the design system's empty listbox row (vdm-listbox__empty). */
 .noMatch {
   @layer component {
     margin: 0;
-    padding-block: 8px;
-    padding-inline: 10px;
-    color: var(--text-secondary);
+    padding-block: 9px;
+    padding-inline: 12px;
+    color: var(--text-tertiary);
   }
 }
