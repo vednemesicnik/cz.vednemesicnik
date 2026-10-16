@@ -105,7 +105,7 @@ export const Playground: Story = {
  * Tags the article has out of play: dashed, with *archivovaný* or *v konceptu*
  * (iq3nur0e, 8kfn4ou3).
  */
-export const WithArchived: Story = {
+export const WithStateNotes: Story = {
   render: () => (
     <ChipInputDemo
       initialValues={['podzim', 'cteni', 'prazdniny', 'sport']}
