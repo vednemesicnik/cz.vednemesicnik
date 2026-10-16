@@ -32,6 +32,7 @@ import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
+import { CaptionEditor } from '~/components/caption-editor'
 import { Checkbox } from '~/components/checkbox'
 import { Chip } from '~/components/chip'
 import { ChipInput } from '~/components/chip-input'
@@ -1696,15 +1697,13 @@ export default function RouteComponent({
                               placeholder={'Co je na obrázku'}
                               size={'sm'}
                             />
-                            <TextEditor
+                            <CaptionEditor
                               field={imageFields.description}
                               inputProps={{
                                 placeholder: 'Pod obrázkem na webu',
                               }}
                               label={'Popisek'}
                               readOnly={isReadOnly}
-                              size={'sm'}
-                              toolbar={['link']}
                             />
                             {tile?.fileName != null && (
                               <ImageTileFile>

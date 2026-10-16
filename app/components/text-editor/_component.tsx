@@ -1,25 +1,23 @@
-import { type FieldMetadata, getInputProps, useField } from '@conform-to/react'
-import { Placeholder } from '@tiptap/extensions'
-import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
+import type { FieldMetadata } from '@conform-to/react'
+import { useEditorState } from '@tiptap/react'
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
-import { useEffect } from 'react'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
-import { LinkIcon } from '~/components/icons/link-icon'
 import { ListIcon } from '~/components/icons/list-icon'
 import { ListOrderedIcon } from '~/components/icons/list-ordered-icon'
 import { QuoteIcon } from '~/components/icons/quote-icon'
 import { RedoIcon } from '~/components/icons/redo-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { Label } from '~/components/label'
+import { TextEditorContent } from '~/components/text-editor-content'
+import { TextEditorHiddenInput } from '~/components/text-editor-hidden-input'
+import { TextEditorLinkButton } from '~/components/text-editor-link-button'
 import { TextEditorToolbar } from '~/components/text-editor-toolbar'
 import { TextEditorToolbarButton } from '~/components/text-editor-toolbar-button'
 import { TextEditorToolbarGroup } from '~/components/text-editor-toolbar-group'
-import { createEditorContent } from '~/utils/create-editor-content'
+import { useTextEditor } from '~/hooks/use-text-editor'
 import styles from './_styles.module.css'
-import './_styles.css'
 
 type ToolOption =
   | 'bold'
@@ -41,11 +39,6 @@ type Props = {
   toolbar?: ToolOption[]
   /** Only reads, for good: grey, without the toolbar (design 24h). */
   readOnly?: boolean
-  /**
-   * `sm`: a short field set like the image tile's alt text, with the link
-   * tool at its end instead of a toolbar on top (the caption, 24b).
-   */
-  size?: 'md' | 'sm'
 }
 
 /**
@@ -53,12 +46,10 @@ type Props = {
  * 24a, jb81di02): **B**, *I* and the link, *Nadpis* and *Podnadpis* in words,
  * the lists and the quote, undo and redo at the end. Shift+Enter breaks a
  * line. The field grows with the text, and the toolbar stays at its top while
- * it scrolls.
+ * it scrolls. An image's caption is `CaptionEditor`.
  *
  * @param props.field - The Conform field; the editor writes its JSON into it.
  * @param props.toolbar - The tools shown, all by default.
- * @param props.size - `sm` for an image's caption: only the link tool, at
- * the field's end.
  */
 export const TextEditor = ({
   label,
@@ -71,7 +62,6 @@ export const TextEditor = ({
   } = {},
   className,
   readOnly = false,
-  size = 'md',
   toolbar = [
     'bold',
     'italic',
@@ -86,60 +76,17 @@ export const TextEditor = ({
   ],
 }: Props) => {
   const inputDisabled = isInputDisabled || readOnly
-  const [_meta, form] = useField(field.name)
   const hasErrors = field.errors !== undefined && field.errors.length > 0
-  const labelId = `${field.id}-label`
-
-  const editor = useEditor({
-    content: createEditorContent(field.defaultValue),
-    editable: !inputDisabled,
-    // The text field is named by its label.
-    editorProps: {
-      attributes: {
-        'aria-labelledby': labelId,
-        'aria-multiline': 'true',
-        role: 'textbox',
-      },
-    },
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [2, 3],
-        },
-        link: {
-          autolink: true,
-          defaultProtocol: 'https',
-          enableClickSelection: true,
-          HTMLAttributes: { rel: 'noopener', target: '_blank' },
-          linkOnPaste: true,
-          openOnClick: false,
-          protocols: ['mailto', 'tel'],
-        },
-      }),
-      Placeholder.configure({
-        placeholder: inputPlaceholder ?? 'Začněte psát...',
-      }),
-    ],
-    immediatelyRender: false,
-    onBlur: ({ editor }) => {
-      if (!inputDisabled && form.dirty && editor.isEditable) {
-        form.validate({ name: field.name })
-      }
-    },
-    onUpdate: ({ editor }) => {
-      if (!inputDisabled && editor.isEditable) {
-        const newValue = editor.isEmpty ? '' : JSON.stringify(editor.getJSON())
-        form.update({ name: field.name, value: newValue })
-      }
-    },
-    shouldRerenderOnTransaction: false,
+  const { editor, labelId } = useTextEditor({
+    disabled: inputDisabled,
+    field,
+    placeholder: inputPlaceholder,
   })
 
   const editorState = useEditorState({
     editor,
     selector: ({ editor }) => ({
       canRedo: editor?.can().redo() ?? false,
-      canSetLink: editor?.can().setLink({ href: '' }) ?? false,
       canToggleBlockquote: editor?.can().toggleBlockquote() ?? false,
       canToggleBold: editor?.can().toggleBold() ?? false,
       canToggleBulletList: editor?.can().toggleBulletList() ?? false,
@@ -148,48 +95,15 @@ export const TextEditor = ({
       canToggleItalic: editor?.can().toggleItalic() ?? false,
       canToggleOrderedList: editor?.can().toggleOrderedList() ?? false,
       canUndo: editor?.can().undo() ?? false,
-      canUnsetLink: editor?.can().unsetLink() ?? false,
       isActiveBlockquote: editor?.isActive('blockquote') ?? false,
       isActiveBold: editor?.isActive('bold') ?? false,
       isActiveBulletList: editor?.isActive('bulletList') ?? false,
       isActiveH2: editor?.isActive('heading', { level: 2 }) ?? false,
       isActiveH3: editor?.isActive('heading', { level: 3 }) ?? false,
       isActiveItalic: editor?.isActive('italic') ?? false,
-      isActiveLink: editor?.isActive('link') ?? false,
       isActiveOrderedList: editor?.isActive('orderedList') ?? false,
     }),
   })
-
-  // Update editor editable state when disabled prop changes
-  useEffect(() => {
-    if (editor) {
-      editor.setEditable(!inputDisabled)
-    }
-  }, [editor, inputDisabled])
-
-  const handleToggleLink = () => {
-    if (!editor) return
-
-    // Get current URL if link is active
-    const previousUrl = editor.getAttributes('link').href || ''
-
-    // Prompt for URL (works for both adding and editing)
-    const url = window.prompt('Zadejte URL:', previousUrl)
-
-    // If cancelled, do nothing
-    if (url === null) {
-      return
-    }
-
-    // If empty string, remove the link
-    if (url === '') {
-      editor.chain().focus().unsetLink().run()
-      return
-    }
-
-    // Set or update the link
-    editor.chain().focus().setLink({ href: url }).run()
-  }
 
   const hasFormatGroup =
     toolbar.includes('bold') ||
@@ -202,30 +116,9 @@ export const TextEditor = ({
     toolbar.includes('blockquote')
   const hasHistoryGroup = toolbar.includes('undo') || toolbar.includes('redo')
 
-  const linkButton = (
-    <TextEditorToolbarButton
-      active={editorState?.isActiveLink}
-      className={size === 'sm' ? styles.inlineTool : undefined}
-      disabled={
-        editorState?.isActiveLink
-          ? !editorState?.canUnsetLink
-          : !editorState?.canSetLink
-      }
-      label={'Odkaz'}
-      onClick={handleToggleLink}
-    >
-      <LinkIcon />
-    </TextEditorToolbarButton>
-  )
-
   return (
-    <section className={clsx(styles.container, styles[size], className)}>
-      <Label
-        className={styles.label}
-        htmlFor={field.id}
-        id={labelId}
-        required={field.required}
-      >
+    <section className={clsx(styles.container, className)}>
+      <Label htmlFor={field.id} id={labelId} required={field.required}>
         {label}
       </Label>
 
@@ -236,14 +129,7 @@ export const TextEditor = ({
           readOnly && styles.editorReadOnly,
         )}
       >
-        {editor && size === 'sm' && (
-          <>
-            <EditorContent className={styles.content} editor={editor} />
-            {/* The one tool, at the field's end (24b). */}
-            {!readOnly && toolbar.includes('link') && linkButton}
-          </>
-        )}
-        {editor && size === 'md' && (
+        {editor && (
           <>
             {/* A read-only editor has no toolbar (design 24h). */}
             {!readOnly && (
@@ -278,7 +164,9 @@ export const TextEditor = ({
                       </TextEditorToolbarButton>
                     )}
 
-                    {toolbar.includes('link') && linkButton}
+                    {toolbar.includes('link') && (
+                      <TextEditorLinkButton editor={editor} />
+                    )}
                   </TextEditorToolbarGroup>
                 )}
 
@@ -390,18 +278,15 @@ export const TextEditor = ({
               </TextEditorToolbar>
             )}
 
-            <EditorContent editor={editor} />
+            <TextEditorContent editor={editor} />
           </>
         )}
 
-        {/* Hidden input for form submission and focus management */}
-        <input
-          {...getInputProps(field, { type: 'text' })}
+        <TextEditorHiddenInput
           {...restInputProps}
-          aria-hidden="true"
-          className={clsx(styles.hiddenInput, inputClassName)}
-          onFocus={() => editor?.commands.focus()}
-          tabIndex={-1}
+          className={inputClassName}
+          editor={editor}
+          field={field}
         />
       </div>
 
