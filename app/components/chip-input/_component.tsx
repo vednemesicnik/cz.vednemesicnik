@@ -1,13 +1,8 @@
 import { clsx } from 'clsx'
-import {
-  type KeyboardEvent,
-  type ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { type ReactNode, useRef } from 'react'
 
 import { Label } from '~/components/label'
+import { useCombobox } from '~/hooks/use-combobox'
 
 import styles from './_styles.module.css'
 
@@ -61,31 +56,10 @@ export const ChipInput = ({
   className,
 }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [isFocused, setIsFocused] = useState(false)
-  const [isDismissed, setIsDismissed] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(0)
-
-  const listboxId = `${id}-listbox`
-  const optionId = (index: number) => `${id}-option-${index}`
-  // Open with the focus, not only once something is typed: the choice is
-  // seen before it is searched.
-  const isOpen = isFocused && !isDismissed && options.length > 0
-  const active = Math.min(activeIndex, options.length - 1)
-
-  // The active suggestion stays in sight in a long list.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the option's id follows `active`
-  useEffect(() => {
-    if (isOpen) {
-      document
-        .getElementById(optionId(active))
-        ?.scrollIntoView({ block: 'nearest' })
-    }
-  }, [isOpen, active])
 
   const changeQuery = (nextQuery: string) => {
     onQueryChange(nextQuery)
-    setActiveIndex(0)
-    setIsDismissed(false)
+    combobox.reset()
   }
 
   const select = (option: ChipInputOption) => {
@@ -93,42 +67,14 @@ export const ChipInput = ({
     changeQuery('')
   }
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    switch (event.key) {
-      case 'ArrowDown':
-      case 'ArrowUp':
-        // An arrow opens a list closed with Escape again.
-        if (isDismissed) {
-          event.preventDefault()
-          setIsDismissed(false)
-          return
-        }
-        if (!isOpen) return
-        event.preventDefault()
-        setActiveIndex(
-          event.key === 'ArrowDown'
-            ? Math.min(active + 1, options.length - 1)
-            : Math.max(active - 1, 0),
-        )
-        return
-      // Enter never submits the form around the field.
-      case 'Enter':
-        event.preventDefault()
-        if (isOpen) select(options[active])
-        return
-      // Closes only the list, not a panel the field stands in.
-      case 'Escape':
-        if (!isOpen) return
-        event.preventDefault()
-        event.stopPropagation()
-        setIsDismissed(true)
-        return
-      // A held key clears the search, not the chips behind it.
-      case 'Backspace':
-        if (query === '' && !event.repeat) onRemoveLast?.()
-        return
-    }
-  }
+  const combobox = useCombobox({
+    // Open with the focus, not only once something is typed: the choice is
+    // seen before it is searched.
+    canOpen: options.length > 0,
+    id,
+    onPick: (index) => select(options[index]),
+    optionCount: options.length,
+  })
 
   return (
     <div className={clsx(styles.chipInput, className)}>
@@ -155,26 +101,20 @@ export const ChipInput = ({
       >
         {children}
         <input
-          aria-activedescendant={isOpen ? optionId(active) : undefined}
-          aria-autocomplete={'list'}
-          aria-controls={listboxId}
-          aria-expanded={isOpen}
-          autoComplete={'off'}
+          {...combobox.inputProps}
           className={styles.input}
           disabled={disabled}
-          id={id}
-          onBlur={() => setIsFocused(false)}
           onChange={(event) => changeQuery(event.currentTarget.value)}
-          // A click opens a list closed with Escape again.
-          onClick={() => setIsDismissed(false)}
-          onFocus={() => {
-            setIsFocused(true)
-            setIsDismissed(false)
+          onKeyDown={(event) => {
+            // A held key clears the search, not the chips behind it.
+            if (event.key === 'Backspace') {
+              if (query === '' && !event.repeat) onRemoveLast?.()
+              return
+            }
+            combobox.inputProps.onKeyDown(event)
           }}
-          onKeyDown={handleKeyDown}
           placeholder={placeholder}
           ref={inputRef}
-          role={'combobox'}
           type={'text'}
           value={query}
         />
@@ -183,17 +123,20 @@ export const ChipInput = ({
       <div
         aria-label={label}
         className={styles.listbox}
-        hidden={!isOpen}
-        id={listboxId}
+        hidden={!combobox.isOpen}
+        id={combobox.listboxId}
         role={'listbox'}
       >
         {options.map((option, index) => (
           // biome-ignore lint/a11y/useKeyWithClickEvents: the field owns the keys
           // biome-ignore lint/a11y/useFocusableInteractive: the field keeps the focus, aria-activedescendant points here
           <div
-            aria-selected={index === active}
-            className={clsx(styles.option, index === active && styles.active)}
-            id={optionId(index)}
+            aria-selected={index === combobox.activeIndex}
+            className={clsx(
+              styles.option,
+              index === combobox.activeIndex && styles.active,
+            )}
+            id={combobox.getOptionId(index)}
             key={option.value}
             onClick={() => select(option)}
             // The field keeps the focus, so the list stays open.

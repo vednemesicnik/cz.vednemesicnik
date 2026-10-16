@@ -9,6 +9,8 @@ import styles from './_styles.module.css'
 
 type Props = ComponentProps<'input'> & {
   label: string
+  /** A heading over the field already names it; the label stays for readers. */
+  isLabelHidden?: boolean
   hint?: ReactNode
   errors?: string[]
 }
@@ -27,6 +29,7 @@ type Props = ComponentProps<'input'> & {
  */
 export const TextField = ({
   label,
+  isLabelHidden = false,
   hint,
   errors,
   id,
@@ -43,7 +46,11 @@ export const TextField = ({
 
   return (
     <div className={clsx(styles.field, className)}>
-      <Label htmlFor={id} required={required}>
+      <Label
+        className={isLabelHidden ? 'screen-reader-only' : undefined}
+        htmlFor={id}
+        required={required}
+      >
         {label}
       </Label>
       <input

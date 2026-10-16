@@ -1,0 +1,23 @@
+/* The design system's Avatar (components/brand/Avatar). */
+.avatar {
+  @layer component {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: var(--radius-full);
+    background-image: var(--gradient-signature);
+    color: var(--text-on-accent);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+  }
+}
+
+.image {
+  @layer component {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+}
