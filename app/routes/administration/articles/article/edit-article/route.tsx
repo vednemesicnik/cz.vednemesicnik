@@ -39,11 +39,9 @@ import { Chip } from '~/components/chip'
 import { ChipInput } from '~/components/chip-input'
 import { Form } from '~/components/form'
 import { DeleteIcon } from '~/components/icons/delete-icon'
-import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
-import { SuggestInput } from '~/components/suggest-input'
 import { TextEditor } from '~/components/text-editor'
 import { TextField } from '~/components/text-field'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
@@ -64,7 +62,6 @@ import type { Route } from './+types/route'
 import { ArticleChangedDialog } from './components/article-changed-dialog'
 import { AuthorList } from './components/author-list'
 import { AuthorListItem } from './components/author-list-item'
-import { AuthorOption } from './components/author-option'
 import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditHoldDialog } from './components/edit-hold-dialog'
@@ -493,7 +490,21 @@ export default function RouteComponent({
         (canChooseAuthorsFreely || !author.isAssociation) &&
         foldForSearch(author.name).includes(foldedAuthorQuery),
     )
-    .map((author) => ({ ...author, value: author.id }))
+    .map((author) => ({
+      avatar: author.image,
+      label: author.name,
+      note: author.roleLabel ?? undefined,
+      value: author.id,
+    }))
+  // *Založit autora* stays the last option, under matches too, until the
+  // typed name is exactly an author's (ivyin4kr).
+  const isAuthorNameNew = !loaderData.authors.some(
+    (author) => foldForSearch(author.name) === foldedAuthorQuery,
+  )
+  // The Coordinator need not add a co-author (24j).
+  const authorSearchLabel = canChooseAuthorsFreely
+    ? 'Hledat autora'
+    : 'Přidat spoluautora'
   // The last author stays: an article always has one (24j).
   const canRemoveAuthor = (authorId: string) =>
     selectedAuthorIds.length > 1 &&
@@ -987,53 +998,44 @@ export default function RouteComponent({
                         jednoho.
                       </p>
                     )}
+                  {/* ChipInput without chips: the authors are the rows
+                      above (ivyin4kr). */}
                   {!isReadOnly && (
-                    <SuggestInput
+                    <ChipInput
+                      createLabel={
+                        isAuthorNameNew
+                          ? `Založit autora „${authorQuery.trim()}“`
+                          : undefined
+                      }
                       disabled={isLocked}
+                      emptyLabel={
+                        'Žádný autor neodpovídá hledání. Nového autora může založit Administrátor nebo Vlastník.'
+                      }
                       id={`${fields.authorIds.id}-search`}
                       isLabelHidden
-                      label={
-                        canChooseAuthorsFreely
-                          ? 'Hledat autora'
-                          : 'Přidat spoluautora'
-                      }
-                      noMatch={
-                        canCreateAuthor ? (
-                          <Link
-                            to={`${href('/administration/authors/add-author')}?${new URLSearchParams(
-                              {
-                                article: params.articleId,
-                                name: authorQuery.trim(),
-                              },
-                            )}`}
-                          >
-                            Založit autora „{authorQuery.trim()}“
-                          </Link>
-                        ) : (
-                          'Žádný autor neodpovídá hledání. Nového autora může založit Administrátor nebo Vlastník.'
-                        )
+                      label={authorSearchLabel}
+                      onCreate={
+                        canCreateAuthor
+                          ? () =>
+                              navigate(
+                                `${href('/administration/authors/add-author')}?${new URLSearchParams(
+                                  {
+                                    article: params.articleId,
+                                    name: authorQuery.trim(),
+                                  },
+                                )}`,
+                              )
+                          : undefined
                       }
                       onQueryChange={setAuthorQuery}
                       onSelect={(authorId) =>
                         setSelectedAuthorIds([...selectedAuthorIds, authorId])
                       }
                       options={authorSuggestions}
-                      placeholder={
-                        canChooseAuthorsFreely
-                          ? 'Hledat autora'
-                          : 'Přidat spoluautora'
-                      }
+                      placeholder={authorSearchLabel}
                       query={authorQuery}
                       ref={authorSearchRef}
-                    >
-                      {(author) => (
-                        <AuthorOption
-                          image={author.image}
-                          name={author.name}
-                          roleLabel={author.roleLabel}
-                        />
-                      )}
-                    </SuggestInput>
+                    />
                   )}
                 </fieldset>
               </EditorDetail>
