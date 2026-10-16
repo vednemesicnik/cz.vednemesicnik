@@ -174,10 +174,7 @@ export const ItemRow = ({
             {article.title}
           </BaseLink>
           {firstCategory !== undefined && (
-            <span
-              className={styles.categories}
-              title={article.categoryNames.join(', ')}
-            >
+            <span className={styles.categories}>
               {firstCategory}
               {otherCategories.length > 0 && (
                 <span className={styles.more}>

@@ -52,6 +52,13 @@
   }
 }
 
+/* The Tooltip's anchor holds its place in the row like the button. */
+.tooltip {
+  @layer variant {
+    flex: none;
+  }
+}
+
 /* The format in force: grey background, ink (24a). */
 .active {
   @layer variant {

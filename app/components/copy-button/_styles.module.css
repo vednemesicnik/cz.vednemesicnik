@@ -73,8 +73,17 @@
   }
 }
 
-/* Announced, not shown: the title says it to the pointer. */
-.status {
+/* The icon alone sits in the Tooltip's anchor, which takes the button's place
+   in the line. */
+.tooltip {
+  @layer variant {
+    vertical-align: middle;
+  }
+}
+
+/* Read, not shown: „Kopírovat“ after the value, „Zkopírováno“ beside the
+   button (jhwfoyxs). */
+.visuallyHidden {
   @layer component {
     position: absolute;
     width: 1px;

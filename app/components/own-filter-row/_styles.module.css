@@ -6,6 +6,16 @@
   }
 }
 
+/* The Tooltip's anchor takes the row's free width, so a long name is cut off
+   before the „⋯“. */
+.tooltip {
+  @layer variant {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+  }
+}
+
 .apply {
   @layer component {
     display: flex;

@@ -117,8 +117,11 @@ our proposal in them is answering our own question in the system's voice.
 
 ## 5. Hand over the prompt
 
-Compose the message for the design chat. **Its first line is the code and the path** —
-`Otázka k7m2x9qa: questions/k7m2x9qa-question.md`. Then it says what decision is wanted, asks for
+Compose the message for the design chat. **Its first line names the project to paste it into** —
+`[Vložit do: app projekt]` for a question, `[Vložit do: design system — zdroj]` for a port into
+the source — because the two chats look alike and a prompt in the wrong one does the wrong work.
+**The second line is the code and the path** — `Otázka k7m2x9qa: questions/k7m2x9qa-question.md`.
+Then it says what decision is wanted, asks for
 the answer in `questions/<code>-answer.md` (or straight into the document when that is the
 natural place), and says what to continue with. If design wants to change a component, that is
 theirs to do in the design system in the same pass.
@@ -145,11 +148,17 @@ LC_CTYPE=UTF-8 pbpaste | head -1
 
 ## 6. Report
 
-Where the files landed, what is on the clipboard, one line per question. Then **ask the user to
-confirm the paste** with `AskUserQuestion` (code and topic in the question) — a plain report does
-not reach someone working on something else, a question does. A `reply` handed over the same way
-gets the same question. Then stop — the design chat is a separate conversation and this one does
-not wait for it.
+Where the files landed, what is on the clipboard and **which project's chat it goes into**, one
+line per question, and **the effort level to pick in the design chat**, with a one-line reason:
+
+- **medium** — the answer is decisions only: confirm, choose a variant, write a note.
+- **high** — the answer also has to draw or redraw a screen, change a component or a token in the
+  design system, or split a document.
+
+Then **ask the user to confirm the paste** with `AskUserQuestion` (code, topic and target project
+in the question) — a plain report does not reach someone working on something else, a question does. A
+`reply` handed over the same way gets the same question. Then stop — the design chat is a separate
+conversation and this one does not wait for it.
 
 ## 7. `check` — read the answer back
 

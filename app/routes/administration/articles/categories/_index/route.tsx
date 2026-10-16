@@ -39,6 +39,7 @@ import { recentChangeTints } from '~/utils/recent-change-tints'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../../components/articles-tabs'
 import { TaxonomyItemRow } from '../../components/taxonomy-item-row'
+import { getTaxonomyBulkDeleteConfirmation } from '../../utils/get-taxonomy-bulk-delete-confirmation'
 import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
 import { CATEGORY_RECORD_COPY } from '../category-record-copy'
 import type { Route } from './+types/route'
@@ -75,6 +76,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     .filter((category) => category.canDelete)
     .map((category) => category.id)
   const selection = useAdminTableSelection(deletableIds)
+  const selectedCategories = categories.filter((category) =>
+    selection.selectedIds.includes(category.id),
+  )
 
   const states = filters.state ?? []
   const hasOtherFilters = query !== ''
@@ -124,6 +128,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <FilterCell>
         <AdminBulkActionsBar
           action={href('/administration/articles/categories')}
+          confirmation={getTaxonomyBulkDeleteConfirmation(
+            selectedCategories,
+            CATEGORY_RECORD_COPY,
+          )}
+          formatToast={CATEGORY_RECORD_COPY.bulkDelete.toast}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
         />

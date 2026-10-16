@@ -300,6 +300,13 @@
     );
     --toast-error: light-dark(var(--color-rose-300), var(--color-rose-700));
 
+    /* Tooltip (jb81di02) */
+    --tooltip-bg: light-dark(
+      var(--color-charcoal-900),
+      var(--color-charcoal-100)
+    );
+    --tooltip-text: light-dark(var(--color-white), var(--color-charcoal-900));
+
     --overlay: light-dark(
       color-mix(in srgb, var(--color-charcoal-950) 40%, transparent),
       color-mix(in srgb, var(--color-black) 60%, transparent)

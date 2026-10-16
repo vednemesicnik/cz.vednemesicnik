@@ -1,6 +1,13 @@
-.trigger {
+/* The Tooltip's anchor is the item of the filter row; it carries the
+   placement. */
+.tooltip {
   @layer variant {
     flex: none;
+  }
+}
+
+.trigger {
+  @layer variant {
     max-inline-size: 320px;
   }
 }

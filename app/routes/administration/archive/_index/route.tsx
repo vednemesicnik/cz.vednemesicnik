@@ -30,6 +30,7 @@ import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { ISSUE_NOUN } from '~/config/list-noun-config'
+import { formatBulkDeleteToast } from '~/utils/format-bulk-delete-toast'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -38,6 +39,7 @@ import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
+import { getIssueBulkDeleteConfirmation } from './utils/get-issue-bulk-delete-confirmation'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -65,6 +67,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     .filter((issue) => issue.canDelete)
     .map((issue) => issue.id)
   const selection = useAdminTableSelection(deletableIds)
+  const selectedIssues = issues.filter((issue) =>
+    selection.selectedIds.includes(issue.id),
+  )
 
   const states = filters.state ?? []
   const hasOtherFilters = query !== '' || filters.year !== undefined
@@ -111,6 +116,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <FilterCell>
         <AdminBulkActionsBar
           action={href('/administration/archive')}
+          confirmation={getIssueBulkDeleteConfirmation(selectedIssues)}
+          formatToast={(deletedCount) =>
+            formatBulkDeleteToast(deletedCount, ISSUE_NOUN.countForms)
+          }
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
         />
