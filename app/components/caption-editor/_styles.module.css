@@ -44,25 +44,29 @@
       border-color: var(--border-accent);
       box-shadow: var(--focus-shadow);
     }
+  }
+}
 
-    /* Read-only: grey like a disabled field (design 24h). */
-    &.isReadOnly {
-      background-color: var(--bg-disabled);
-      color: var(--text-tertiary);
-      cursor: not-allowed;
+/* Read-only: grey like a disabled field (design 24h). */
+.field.isReadOnly {
+  @layer variant {
+    background-color: var(--bg-disabled);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
 
-      &:hover {
-        border-color: var(--border);
-      }
+    &:hover {
+      border-color: var(--border);
     }
+  }
+}
 
-    &.isInvalid {
+.field.isInvalid {
+  @layer variant {
+    border-color: var(--error);
+
+    &:focus-within {
       border-color: var(--error);
-
-      &:focus-within {
-        border-color: var(--error);
-        box-shadow: var(--focus-shadow-error);
-      }
+      box-shadow: var(--focus-shadow-error);
     }
   }
 }

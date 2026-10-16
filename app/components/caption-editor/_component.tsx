@@ -46,7 +46,7 @@ export const CaptionEditor = ({
   })
 
   return (
-    <section className={clsx(styles.captionEditor, className)}>
+    <div className={clsx(styles.captionEditor, className)}>
       <Label
         className={styles.label}
         htmlFor={field.id}
@@ -88,6 +88,6 @@ export const CaptionEditor = ({
           <ErrorMessage key={index}>{error}</ErrorMessage>
         ))}
       </ErrorMessageGroup>
-    </section>
+    </div>
   )
 }
