@@ -4,6 +4,7 @@ import { href, Link, useFetcher } from 'react-router'
 import { ActionMenu } from '~/components/action-menu'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { useToast } from '~/components/toast-provider'
+import { Tooltip } from '~/components/tooltip'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { FilterActionData, OwnFilter } from '~/types/saved-filter'
 import { FILTER_PRESET_PARAM } from '~/utils/admin-list-filters'
@@ -36,6 +37,8 @@ export const OwnFilterRow = ({
   const showToast = useToast()
   // The intent of the round trip in flight, answered once it is back.
   const submittedIntentRef = useRef<string | null>(null)
+  // A name cut off by the menu's width shows whole in the Tooltip (jb81di02).
+  const nameRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     if (fetcher.state !== 'idle' || submittedIntentRef.current === null) return
@@ -101,16 +104,24 @@ export const OwnFilterRow = ({
 
   return (
     <li className={styles.row}>
-      <Link
-        className={styles.apply}
-        data-active={isActive || undefined}
-        onClick={onApply}
-        to={`?${filter.query}&${FILTER_PRESET_PARAM}=${filter.id}`}
+      <Tooltip
+        className={styles.tooltip}
+        label={filter.name}
+        truncatedRef={nameRef}
       >
-        <span className={styles.name}>{filter.name}</span>
-        {filter.isDefault && <span className={styles.note}>výchozí</span>}
-        {filter.isShared && <span className={styles.note}>sdílený</span>}
-      </Link>
+        <Link
+          className={styles.apply}
+          data-active={isActive || undefined}
+          onClick={onApply}
+          to={`?${filter.query}&${FILTER_PRESET_PARAM}=${filter.id}`}
+        >
+          <span className={styles.name} ref={nameRef}>
+            {filter.name}
+          </span>
+          {filter.isDefault && <span className={styles.note}>výchozí</span>}
+          {filter.isShared && <span className={styles.note}>sdílený</span>}
+        </Link>
+      </Tooltip>
       <ActionMenu
         items={menuItems}
         label={`Další akce: ${filter.name}`}
