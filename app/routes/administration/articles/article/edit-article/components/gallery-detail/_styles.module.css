@@ -139,7 +139,8 @@
   @layer route {
     position: sticky;
     inset-block-start: 0;
-    z-index: 1;
+    /* Above a lifted tile and its landing place (z-index 1). */
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: space-between;

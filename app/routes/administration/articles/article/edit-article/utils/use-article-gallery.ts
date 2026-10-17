@@ -5,6 +5,7 @@ import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import { getRejectedFileSentence } from './get-rejected-file-sentence'
+import { getStoredMoveIndexes } from './get-stored-move-indexes'
 
 /** One tile of the editor's gallery, as only the open editor knows it. */
 export type GalleryTile = {
@@ -401,15 +402,10 @@ export const useArticleGallery = ({
    */
   const move = async (id: string, to: number): Promise<boolean> => {
     const ids = optionsRef.current.list.getIds()
-    const storedIds = ids.filter(isStored)
-    const from = storedIds.indexOf(id)
-    if (from === -1 || to === from || to < 0 || to >= storedIds.length) {
-      return false
-    }
+    const indexes = getStoredMoveIndexes(ids, ids.filter(isStored), id, to)
+    if (indexes === null) return false
 
-    // In the form the tile takes the place of the stored image it passes.
-    const listFrom = ids.indexOf(id)
-    const listTo = ids.indexOf(storedIds[to])
+    const { from: listFrom, to: listTo } = indexes
     optionsRef.current.list.move(listFrom, listTo)
 
     // The order as it stands when the change goes, after those before it.
