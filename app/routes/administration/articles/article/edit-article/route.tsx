@@ -1656,14 +1656,13 @@ export default function RouteComponent({
                         >
                           {idInput}
                           <ImageTile
-                            className={clsx(
-                              styles.galleryImage,
-                              isLifted && styles.liftedImage,
-                            )}
+                            className={clsx(isLifted && styles.liftedImage)}
                           >
                             <ImageTileMedia
                               className={clsx(
-                                canDragImage(id) && styles.imageHandle,
+                                canDragImage(id) &&
+                                  !isLifted &&
+                                  styles.imageHandle,
                               )}
                               isProcessing={isProcessing}
                               source={tile?.previewUrl}

@@ -104,6 +104,17 @@ export const useGalleryDrag = ({
   const pointerRef = useRef<Point | null>(null)
   const tileRefs = useRef(new Map<string, HTMLLIElement>())
   const previousPositions = useRef(new Map<string, Point>())
+  const swappedIdRef = useRef<string | null>(null)
+  // Where the dropped tile was drawn, to settle from into its place.
+  const settleRef = useRef<{ id: string; left: number; top: number } | null>(
+    null,
+  )
+  // A finger's lifted tile moves instead of the panel scrolling. On every
+  // tile all along, not only once lifted: Safari decides at the touch's
+  // start whether a listener may stop the scroll.
+  const preventLiftedScroll = useRef((event: TouchEvent) => {
+    if (gestureRef.current?.isLifted) event.preventDefault()
+  }).current
   const optionsRef = useRef({ canDrag, handleSelector, onDrop, storedIds })
   optionsRef.current = { canDrag, handleSelector, onDrop, storedIds }
 
@@ -166,13 +177,19 @@ export const useGalleryDrag = ({
       Math.max(gridBox.left, Math.min(pointer.x, gridBox.right - 1)),
       Math.max(gridBox.top, Math.min(pointer.y, gridBox.bottom - 1)),
     )
+    // The tile just swapped with stays out of play until the pointer leaves
+    // it: a taller one still under the pointer would swap straight back.
+    if (overId === swappedIdRef.current) return
+    swappedIdRef.current = null
     if (overId === null) return
 
     const to = shownStoredIds.indexOf(overId)
-    if (to !== current.to) setDrag({ id: current.id, to })
+    if (to === current.to) return
+    swappedIdRef.current = overId
+    setDrag({ id: current.id, to })
   }
 
-  const lift = (tile: HTMLLIElement) => {
+  const lift = () => {
     const gesture = gestureRef.current
     if (gesture === null) return
 
@@ -183,13 +200,7 @@ export const useGalleryDrag = ({
     }
 
     gesture.isLifted = true
-    if (!tile.hasPointerCapture(gesture.pointerId)) {
-      try {
-        tile.setPointerCapture(gesture.pointerId)
-      } catch {
-        // The finger already left.
-      }
-    }
+    swappedIdRef.current = null
     setDrag({ id: gesture.id, to: from })
   }
 
@@ -208,6 +219,18 @@ export const useGalleryDrag = ({
     }
 
     const current = dragRef.current
+    if (current !== null && tile !== undefined) {
+      const slot = getSlotBox(tile)
+      settleRef.current = {
+        id: current.id,
+        left:
+          slot.left +
+          Number.parseFloat(tile.style.getPropertyValue('--drag-x') || '0'),
+        top:
+          slot.top +
+          Number.parseFloat(tile.style.getPropertyValue('--drag-y') || '0'),
+      }
+    }
     // Cleared first: the form's list moves at once, in the same render.
     setDrag(null)
     if (!isCommitted || current === null || current.id !== gesture.id) return
@@ -254,14 +277,12 @@ export const useGalleryDrag = ({
     }
     gestureRef.current = gesture
     pointerRef.current = { x: event.clientX, y: event.clientY }
+    // Taken at once, a finger's too: its own capture to the element under
+    // it would otherwise move later and end the gesture. A swipe still pans.
+    tile.setPointerCapture(event.pointerId)
 
     if (event.pointerType === 'touch') {
-      gesture.longPressTimer = window.setTimeout(
-        () => lift(tile),
-        LONG_PRESS_MS,
-      )
-    } else {
-      tile.setPointerCapture(event.pointerId)
+      gesture.longPressTimer = window.setTimeout(lift, LONG_PRESS_MS)
     }
   }
 
@@ -279,7 +300,7 @@ export const useGalleryDrag = ({
       if (gesture.pointerType === 'touch') {
         if (distance > LONG_PRESS_TOLERANCE_PX) finish(false)
       } else if (distance >= DRAG_THRESHOLD_PX) {
-        lift(event.currentTarget)
+        lift()
       }
       return
     }
@@ -296,9 +317,13 @@ export const useGalleryDrag = ({
   }
 
   // After each step: the other tiles slide from where they stood (FLIP), and
-  // the lifted tile stays under the pointer in its new place.
+  // the lifted tile stays under the pointer in its new place. A dropped tile
+  // settles from where it was drawn.
   useLayoutEffect(() => {
     dragRef.current = drag
+    const isReduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
 
     if (drag === null) {
       previousPositions.current.clear()
@@ -306,12 +331,24 @@ export const useGalleryDrag = ({
         tile.style.removeProperty('--drag-x')
         tile.style.removeProperty('--drag-y')
       }
+
+      const settle = settleRef.current
+      settleRef.current = null
+      const tile = settle === null ? undefined : tileRefs.current.get(settle.id)
+      if (settle === null || tile === undefined || isReduced) return
+
+      const slot = getSlotBox(tile)
+      tile.animate(
+        [
+          {
+            transform: `translate(${settle.left - slot.left}px, ${settle.top - slot.top}px)`,
+          },
+          { transform: 'none' },
+        ],
+        { duration: SWAP_MS, easing: 'ease-out' },
+      )
       return
     }
-
-    const isReduced = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
 
     for (const [id, tile] of tileRefs.current) {
       const position = { x: tile.offsetLeft, y: tile.offsetTop }
@@ -397,18 +434,6 @@ export const useGalleryDrag = ({
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [isDragging])
 
-  // A finger's lifted tile moves instead of the panel scrolling. Listening
-  // all along, not only once lifted: Safari decides at the touch's start
-  // whether a listener may stop the scroll.
-  useEffect(() => {
-    const handleTouchMove = (event: TouchEvent) => {
-      if (gestureRef.current?.isLifted) event.preventDefault()
-    }
-
-    window.addEventListener('touchmove', handleTouchMove, { passive: false })
-    return () => window.removeEventListener('touchmove', handleTouchMove)
-  }, [])
-
   return {
     draggedId: drag?.id ?? null,
     /** The tile's CSS `order` while one is lifted; negative, so tiles after the images stay last. */
@@ -419,8 +444,12 @@ export const useGalleryDrag = ({
       onContextMenu: (event: MouseEvent<HTMLLIElement>) => {
         if (gestureRef.current?.pointerType === 'touch') event.preventDefault()
       },
-      onLostPointerCapture: (event: PointerEvent<HTMLLIElement>) =>
-        handlePointerEnd(event, false),
+      // Only the tile's own capture: a child's loss bubbles up too.
+      onLostPointerCapture: (event: PointerEvent<HTMLLIElement>) => {
+        if (event.target === event.currentTarget) {
+          handlePointerEnd(event, false)
+        }
+      },
       onPointerCancel: (event: PointerEvent<HTMLLIElement>) =>
         handlePointerEnd(event, false),
       onPointerDown: (event: PointerEvent<HTMLLIElement>) =>
@@ -428,9 +457,15 @@ export const useGalleryDrag = ({
       onPointerMove: handlePointerMove,
       onPointerUp: (event: PointerEvent<HTMLLIElement>) =>
         handlePointerEnd(event, true),
-      ref: (element: HTMLLIElement | null) => {
-        if (element === null) tileRefs.current.delete(id)
-        else tileRefs.current.set(id, element)
+      ref: (element: HTMLLIElement) => {
+        tileRefs.current.set(id, element)
+        element.addEventListener('touchmove', preventLiftedScroll, {
+          passive: false,
+        })
+        return () => {
+          tileRefs.current.delete(id)
+          element.removeEventListener('touchmove', preventLiftedScroll)
+        }
       },
     }),
   }

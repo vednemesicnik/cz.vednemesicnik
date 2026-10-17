@@ -60,23 +60,15 @@
   }
 }
 
-/* A dropped tile settles into its place. */
-.galleryImage {
-  @layer route {
-    transition: transform 150ms ease-out;
-
-    @media (prefers-reduced-motion: reduce) {
-      transition: none;
-    }
-  }
-}
-
 /* The lifted tile follows the pointer (`--drag-x`, `--drag-y` from the
    gallery's drag) on a card that leaves the layout as it is (22c). */
 .liftedImage {
   @layer route {
     transform: translate(var(--drag-x, 0px), var(--drag-y, 0px));
-    transition: none;
+    cursor: grabbing;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
     border-radius: var(--radius-md);
     background-color: var(--bg-primary);
     box-shadow:
