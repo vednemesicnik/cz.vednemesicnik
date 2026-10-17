@@ -90,6 +90,7 @@ import { getImageMenuItems } from './utils/get-image-menu-items'
 import { getReadOnlyNotice } from './utils/get-read-only-notice'
 import { getSaveLineText } from './utils/get-save-line-text'
 import { useArticleGallery } from './utils/use-article-gallery'
+import { useGalleryDrag } from './utils/use-gallery-drag'
 import { useRemovedIds } from './utils/use-removed-ids'
 
 export { handle } from './_handle'
@@ -499,10 +500,10 @@ export default function RouteComponent({
       ?.focus()
     setMovedImageId(null)
   }, [movedImageId])
-  // `to` is the place among the stored images, which the „⋯“ moves between.
-  // Said once it saved; emptied first, so the same words are said again.
+  // `to` is the place among the stored images, which the „⋯“ and a drag move
+  // between. Said once it saved; emptied first, so the same words are said
+  // again.
   const moveImage = async (id: string, to: number, count: number) => {
-    setMovedImageId(id)
     setMoveAnnouncement('')
     if (await gallery.move(id, to)) {
       setMoveAnnouncement(`Pozice ${to + 1}, celkem ${count}.`)
@@ -934,10 +935,32 @@ export default function RouteComponent({
   const selectedAuthorNames = selectedAuthorIds.map(
     (authorId) => authorById.get(authorId)?.name ?? authorId,
   )
+  const imageIds = imageFieldList.map(
+    (image) => image.getFieldset().id.value ?? '',
+  )
   // The images saved already, in the gallery's order; only they move.
-  const storedImageIds = imageFieldList
-    .map((image) => image.getFieldset().id.value ?? '')
-    .filter((id) => gallery.tiles.get(id)?.status === 'stored')
+  const storedImageIds = imageIds.filter(
+    (id) => gallery.tiles.get(id)?.status === 'stored',
+  )
+  // A tile with its „⋯“ is dragged by its preview too (24b); a drop moves
+  // and says the place as the „⋯“ does, the focus stays where it is.
+  const canDragImage = (id: string) => {
+    const tile = gallery.tiles.get(id)
+    return (
+      !isLocked &&
+      !isReadOnly &&
+      tile?.status === 'stored' &&
+      !tile.isReplacing &&
+      !tile.isRemoving
+    )
+  }
+  const galleryDrag = useGalleryDrag({
+    canDrag: canDragImage,
+    handleSelector: `.${styles.imageHandle}`,
+    ids: imageIds,
+    onDrop: (id, to) => void moveImage(id, to, storedImageIds.length),
+    storedIds: storedImageIds,
+  })
   const gallerySummary = formatGallerySummary(
     imageFieldList.length,
     gallery.processingCount,
@@ -1582,7 +1605,12 @@ export default function RouteComponent({
                       // there is nothing to lose (24b).
                       if (tile?.status === 'failed') {
                         return (
-                          <li data-image-id={id} key={image.key}>
+                          <li
+                            data-image-id={id}
+                            key={image.key}
+                            {...galleryDrag.getTileProps(id)}
+                            style={{ order: galleryDrag.getOrder(id) }}
+                          >
                             {idInput}
                             <ImageTile>
                               <ImageTileMedia isFailed />
@@ -1613,18 +1641,29 @@ export default function RouteComponent({
                       }
 
                       const isFeatured = gallery.featuredImageId === id
+                      const isLifted = galleryDrag.draggedId === id
 
                       return (
                         <li
                           className={clsx(
                             tile?.isRemoving && styles.removingImage,
+                            isLifted && styles.imageLanding,
                           )}
                           data-image-id={id}
                           key={image.key}
+                          {...galleryDrag.getTileProps(id)}
+                          style={{ order: galleryDrag.getOrder(id) }}
                         >
                           {idInput}
-                          <ImageTile>
+                          <ImageTile
+                            className={clsx(isLifted && styles.liftedImage)}
+                          >
                             <ImageTileMedia
+                              className={clsx(
+                                canDragImage(id) &&
+                                  !isLifted &&
+                                  styles.imageHandle,
+                              )}
                               isProcessing={isProcessing}
                               source={tile?.previewUrl}
                             >
@@ -1648,12 +1687,14 @@ export default function RouteComponent({
                                         isFeatured,
                                         onFeature: () =>
                                           void gallery.setFeatured(id),
-                                        onMove: (to) =>
+                                        onMove: (to) => {
+                                          setMovedImageId(id)
                                           void moveImage(
                                             id,
                                             to,
                                             storedImageIds.length,
-                                          ),
+                                          )
+                                        },
                                         onRemove: () => setRemovingImageId(id),
                                         onReplace: () => pickReplacement(id),
                                         onUnfeature: () =>
