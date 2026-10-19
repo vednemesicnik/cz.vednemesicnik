@@ -726,3 +726,109 @@ describe('saveArticleImageChange — a refused write', () => {
     ).rejects.toBe(error)
   })
 })
+
+describe('saveArticleImageChange — a cancellable change (bxy8xxqs)', () => {
+  const buildCancellable = () => {
+    const controller = new AbortController()
+    const cancellableRequest = new Request('https://test.local/', {
+      signal: controller.signal,
+    })
+    return { cancel: () => controller.abort(), cancellableRequest }
+  }
+
+  test('a cancel before the files are stored runs nothing', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    cancel()
+    const prepare = buildPrepare()
+
+    const result = await saveArticleImageChange(cancellableRequest, {
+      ...options,
+      isCancellable: true,
+      prepare,
+    })
+
+    expect(result).toEqual({ status: 'cancelled' })
+    expect(prepare).not.toHaveBeenCalled()
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('a cancel while the files are stored drops them and commits nothing', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    const onRefused = vi.fn(async () => undefined)
+    const prepare = vi.fn<Prepare>(async () => {
+      cancel()
+      return { answer: {}, onRefused, writes: ['image-write'] } as never
+    })
+
+    const result = await saveArticleImageChange(cancellableRequest, {
+      ...options,
+      isCancellable: true,
+      prepare,
+    })
+
+    expect(result).toEqual({ status: 'cancelled' })
+    expect(onRefused).toHaveBeenCalledOnce()
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('a cancel during the commit puts things back, not onCommitted', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    mocks.transaction.mockImplementation(async () => {
+      cancel()
+      return [{ updatedAt: savedAt }]
+    })
+    const onCancelled = vi.fn(async () => undefined)
+    const onCommitted = vi.fn(async () => undefined)
+
+    const result = await saveArticleImageChange(cancellableRequest, {
+      ...options,
+      isCancellable: true,
+      prepare: buildPrepare({ onCancelled, onCommitted }),
+    })
+
+    expect(result).toEqual({ status: 'cancelled' })
+    expect(onCancelled).toHaveBeenCalledOnce()
+    expect(onCommitted).not.toHaveBeenCalled()
+    expect(mocks.recordArticleEditLog).not.toHaveBeenCalled()
+  })
+
+  test('the empty draft a cancelled first image filled stays empty', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      firstContentAt: null,
+    })
+    mocks.transaction.mockImplementation(async (writes: unknown[]) => {
+      cancel()
+      return writes.map((write) =>
+        write === 'mark-first-content' ? { count: 1 } : { updatedAt: savedAt },
+      )
+    })
+
+    await saveArticleImageChange(cancellableRequest, {
+      ...options,
+      isCancellable: true,
+      prepare: buildPrepare({
+        addsContent: true,
+        onCancelled: async () => undefined,
+      }),
+    })
+
+    expect(mocks.articleUpdateMany).toHaveBeenLastCalledWith({
+      data: { firstContentAt: null },
+      where: { id: 'article-1' },
+    })
+  })
+
+  test('a change that is not cancellable saves despite an aborted request', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    cancel()
+
+    const result = await saveArticleImageChange(cancellableRequest, {
+      ...options,
+      prepare: buildPrepare(),
+    })
+
+    expect(result).toMatchObject({ status: 'saved' })
+  })
+})

@@ -31,13 +31,15 @@ type Options = {
  * has gets the new file, and the old version's files go only after the row
  * commits, so a failed replacement keeps the old image. The row exists only
  * once the file is processed. An upload under way lands after *Zavřít*
- * released the hold, never over someone else's.
+ * released the hold, never over someone else's. The editor can cancel it until
+ * it saves: a cancel during the commit deletes a new image and puts a
+ * replaced one back (bxy8xxqs).
  *
  * @param request - The action's request.
  * @param options - The article, the tab, the image id, the file, and the alt
  *   text and caption typed while it was processed.
- * @returns `saved` with the stored preview's URL, `not-held`, or `failed`
- *   when the file could not be processed.
+ * @returns `saved` with the stored preview's URL, `not-held`, `failed` when
+ *   the file could not be processed, or `cancelled`.
  * @throws A 400 response for a file that is not an image or is too big, or an
  *   id that is not a cuid or belongs to another record.
  */
@@ -56,10 +58,18 @@ export async function uploadArticleImage(
 
   return saveArticleImageChange(request, {
     articleId,
+    isCancellable: true,
     landsWithoutHold: true,
     prepare: async (_context, article) => {
       const storedImage = await prisma.articleImage.findUnique({
-        select: { articleId: true, version: true },
+        select: {
+          articleId: true,
+          fileName: true,
+          intrinsicHeight: true,
+          intrinsicWidth: true,
+          placeholderDataUrl: true,
+          version: true,
+        },
         where: { id: imageId },
       })
 
@@ -122,6 +132,14 @@ export async function uploadArticleImage(
         return {
           addsContent: true,
           answer,
+          // A new image is never the main one: only the row and its files.
+          onCancelled: async () => {
+            await prisma.articleImage.delete({
+              select: { id: true },
+              where: { id: imageId },
+            })
+            await deleteImage(imageId)
+          },
           onRefused: () => dropUnusedFiles(meta.version),
           writes: [
             prisma.articleImage.create({
@@ -141,10 +159,37 @@ export async function uploadArticleImage(
         }
       }
 
-      const previousVersion = storedImage.version
+      const previousMeta: StoredImageMeta = {
+        intrinsicHeight: storedImage.intrinsicHeight,
+        intrinsicWidth: storedImage.intrinsicWidth,
+        placeholderDataUrl: storedImage.placeholderDataUrl,
+        version: storedImage.version,
+      }
+      const previousVersion = previousMeta.version
 
       return {
         answer,
+        // The previous version's files are still there: the row points back
+        // at them, the sharing preview too, and the new version's go.
+        onCancelled: async () => {
+          const previousSeoWrites = isFeatured
+            ? await buildArticlePageSeoImageWrites({
+                featuredImage: { id: imageId, ...previousMeta },
+                slug: article.slug,
+              })
+            : []
+          await prisma.$transaction([
+            prisma.articleImage.update({
+              data: { ...previousMeta, fileName: storedImage.fileName },
+              select: { id: true },
+              where: { id: imageId },
+            }),
+            ...previousSeoWrites,
+          ])
+          if (previousVersion !== meta.version) {
+            await deleteImageVersion(imageId, meta.version)
+          }
+        },
         onCommitted: async () => {
           if (previousVersion !== meta.version) {
             await deleteImageVersion(imageId, previousVersion)

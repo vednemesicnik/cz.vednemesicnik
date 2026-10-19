@@ -29,6 +29,11 @@ export type PreparedImageChange<Answer extends object> = {
   onCommitted?: () => Promise<void>
   /** Runs when the writes did not commit: drops files the change stored. */
   onRefused?: () => Promise<void>
+  /**
+   * Runs when a cancellable change was cancelled after its writes committed,
+   * before `onCommitted`: puts back what the change replaced (bxy8xxqs).
+   */
+  onCancelled?: () => Promise<void>
   /** Added to the `saved` answer. */
   answer: Answer
 }
@@ -40,6 +45,8 @@ export type ImageChangeResult<Answer extends object> =
   | { status: 'not-held'; heldByName: string | null }
   /** The file could not be processed; nothing was stored (24b). */
   | { status: 'failed' }
+  /** The editor cancelled the upload; nothing stays stored (bxy8xxqs). */
+  | { status: 'cancelled' }
 
 type Options<Answer extends object> = {
   articleId: string
@@ -50,6 +57,12 @@ type Options<Answer extends object> = {
    * meanwhile (*Zavřít* during processing, 24b), never over someone else's.
    */
   landsWithoutHold?: boolean
+  /**
+   * An upload the editor can cancel until it saves (bxy8xxqs): the aborted
+   * request is checked before the files are stored, right before the commit,
+   * and once more after it, where `onCancelled` puts things back.
+   */
+  isCancellable?: boolean
   prepare: (
     context: AuthorPermissionContext,
     article: ImageChangeArticle,
@@ -87,15 +100,24 @@ const HOLD_SELECT = {
  *   without the hold, and `prepare`, which checks the input, stores any files
  *   and returns the writes.
  * @returns `saved` with the new `updatedAt` and the change's answer,
- *   `not-held` with the holder's name (nothing is written), or `failed` for a
- *   file that could not be processed.
+ *   `not-held` with the holder's name (nothing is written), `failed` for a
+ *   file that could not be processed, or `cancelled` for a cancellable change
+ *   whose request was aborted.
  * @throws A 404 response for a missing article, a 403 response for a denied
  *   edit or a locked submission, and whatever `prepare` throws.
  */
 export async function saveArticleImageChange<Answer extends object>(
   request: Request,
-  { articleId, tabId, landsWithoutHold = false, prepare }: Options<Answer>,
+  {
+    articleId,
+    tabId,
+    landsWithoutHold = false,
+    isCancellable = false,
+    prepare,
+  }: Options<Answer>,
 ): Promise<ImageChangeResult<Answer>> {
+  const isCancelled = () => isCancellable && request.signal.aborted
+
   const storedArticle = await prisma.article.findUnique({
     select: {
       authors: { select: { id: true } },
@@ -159,12 +181,21 @@ export async function saveArticleImageChange<Answer extends object>(
         return toNotHeld(storedArticle)
       }
 
+      // Cancelled before any file is stored.
+      if (isCancelled()) return { status: 'cancelled' }
+
       const prepared = await prepare(context, {
         featuredImageId: storedArticle.featuredImageId,
         slug: storedArticle.slug,
       })
 
       if ('status' in prepared) return prepared
+
+      // Cancelled while the files were stored: they go, nothing commits.
+      if (isCancelled()) {
+        await prepared.onRefused?.()
+        return { status: 'cancelled' }
+      }
 
       const holdWhere = landsWithoutHold
         ? {
@@ -222,16 +253,33 @@ export async function saveArticleImageChange<Answer extends object>(
         return toNotHeld(currentHold)
       }
 
+      const isCreation =
+        firstContentWrite.length > 0 &&
+        (results[0] as Prisma.BatchPayload).count === 1
+
+      // Cancelled during the commit: put back what it replaced, and the
+      // empty draft it would have filled stays empty (0020).
+      if (isCancelled() && prepared.onCancelled) {
+        try {
+          await prepared.onCancelled()
+          if (isCreation) {
+            await prisma.article.updateMany({
+              data: { firstContentAt: null },
+              where: { id: articleId },
+            })
+          }
+        } catch (error) {
+          console.error('Article image change left after a cancel', error)
+        }
+        return { status: 'cancelled' }
+      }
+
       // The change is saved; files it left behind are only litter.
       try {
         await prepared.onCommitted?.()
       } catch (error) {
         console.error('Article image files left after a saved change', error)
       }
-
-      const isCreation =
-        firstContentWrite.length > 0 &&
-        (results[0] as Prisma.BatchPayload).count === 1
 
       // An empty draft's history starts with its first content (0020).
       if (isCreation || storedArticle.firstContentAt !== null) {
