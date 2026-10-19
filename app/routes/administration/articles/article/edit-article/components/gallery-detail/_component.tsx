@@ -31,8 +31,8 @@ type Props = {
 
 /**
  * The article editor's *Obrázky* (design 24a, 24b, 8kfn4ou3). In the column,
- * the heading with *Upravit* and the compact tiles; on a phone, a row with the
- * count. Both open the gallery as a panel at every width: over the editor, at
+ * the heading with *Upravit* and the compact tiles; on a phone, a row with up
+ * to three thumbnails and the count (u94oosdp). Both open the gallery as a panel at every width: over the editor, at
  * most 976 px wide, with a dimmed backdrop out of reach; under 768 px over the
  * whole screen (24f). The panel stays in the form while closed, so its fields
  * save with it. Focus goes to its name; Esc and *Hotovo* close it and give the
