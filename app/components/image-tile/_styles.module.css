@@ -8,3 +8,19 @@
     min-width: 0;
   }
 }
+
+/* `.vdm-imagetile--lifted`: a card whose padding and border the margin gives
+   back, so the tile keeps its size and place. */
+.lifted {
+  @layer variant {
+    --image-tile-grip-color: var(--link-strong);
+
+    margin: -9px;
+    padding: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-accent);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    cursor: grabbing;
+  }
+}

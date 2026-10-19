@@ -8,6 +8,7 @@ import { uploadArticleImage } from './upload-article-image.server'
 const mocks = vi.hoisted(() => ({
   articleImageAggregate: vi.fn(),
   articleImageCreate: vi.fn(),
+  articleImageDelete: vi.fn(),
   articleImageFindUnique: vi.fn(),
   articleImageUpdate: vi.fn(),
   buildArticlePageSeoImageWrites: vi.fn(),
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   isImageIdOwnedElsewhere: vi.fn(),
   saveArticleImageChange: vi.fn(),
   storeImageVariants: vi.fn(),
+  transaction: vi.fn(),
 }))
 
 vi.mock(
@@ -28,9 +30,11 @@ vi.mock(
 
 vi.mock('~/utils/db.server', () => ({
   prisma: {
+    $transaction: mocks.transaction,
     articleImage: {
       aggregate: mocks.articleImageAggregate,
       create: mocks.articleImageCreate,
+      delete: mocks.articleImageDelete,
       findUnique: mocks.articleImageFindUnique,
       update: mocks.articleImageUpdate,
     },
@@ -150,6 +154,7 @@ describe('uploadArticleImage — the input', () => {
 
     expect(mocks.saveArticleImageChange).toHaveBeenCalledWith(request, {
       articleId: 'article-1',
+      isCancellable: true,
       landsWithoutHold: true,
       prepare: expect.any(Function),
       tabId: 'tab-1',
@@ -271,6 +276,18 @@ describe('uploadArticleImage — a new image', () => {
     expect(mocks.articleImageCreate).not.toHaveBeenCalled()
   })
 
+  test('a cancel during the commit deletes the row and its files (bxy8xxqs)', async () => {
+    const prepared = await run()
+
+    await prepared.onCancelled()
+
+    expect(mocks.articleImageDelete).toHaveBeenCalledWith({
+      select: { id: true },
+      where: { id: imageId },
+    })
+    expect(mocks.deleteImage).toHaveBeenCalledWith(imageId)
+  })
+
   test('adds no sharing preview for an image that is not the main one', async () => {
     const prepared = await run(
       {},
@@ -296,11 +313,55 @@ describe('uploadArticleImage — a new image', () => {
 })
 
 describe('uploadArticleImage — a stored image', () => {
+  const previousMeta = {
+    intrinsicHeight: 400,
+    intrinsicWidth: 500,
+    placeholderDataUrl: 'data:image/jpeg;base64,BBBB',
+    version: 'v1',
+  }
+
   beforeEach(() => {
     mocks.articleImageFindUnique.mockResolvedValue({
+      ...previousMeta,
       articleId: 'article-1',
-      version: 'v1',
+      fileName: 'stary.jpg',
     })
+  })
+
+  test('a cancel during the commit writes the previous version back (bxy8xxqs)', async () => {
+    const prepared = await run()
+    mocks.articleImageUpdate.mockReturnValue('restore-image')
+
+    await prepared.onCancelled()
+
+    expect(mocks.articleImageUpdate).toHaveBeenLastCalledWith({
+      data: { ...previousMeta, fileName: 'stary.jpg' },
+      select: { id: true },
+      where: { id: imageId },
+    })
+    expect(mocks.transaction).toHaveBeenCalledWith(['restore-image'])
+    expect(mocks.deleteImageVersion).toHaveBeenCalledWith(imageId, 'v2')
+    expect(mocks.deleteImage).not.toHaveBeenCalled()
+  })
+
+  test('a cancelled main image points the sharing preview back', async () => {
+    const prepared = await run(
+      {},
+      { featuredImageId: imageId, slug: 'article' },
+    )
+    mocks.articleImageUpdate.mockReturnValue('restore-image')
+    mocks.buildArticlePageSeoImageWrites.mockResolvedValue(['previous-seo'])
+
+    await prepared.onCancelled()
+
+    expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenLastCalledWith({
+      featuredImage: { id: imageId, ...previousMeta },
+      slug: 'article',
+    })
+    expect(mocks.transaction).toHaveBeenCalledWith([
+      'restore-image',
+      'previous-seo',
+    ])
   })
 
   test('replaces the file and the metadata, keeping the position', async () => {

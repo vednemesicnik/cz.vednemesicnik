@@ -3,9 +3,6 @@ import { z } from 'zod'
 
 import { COLOR_SCHEME_CONFIG } from '~/config/color-scheme-config'
 
-// Largest profile photo accepted (design 29b: „Nejvýš 5 MB“).
-export const MAX_PROFILE_IMAGE_SIZE = 1024 * 1024 * 5
-
 export const BIO_MAX_LENGTH = 500
 
 export const profileSchema = z.object({
@@ -21,17 +18,4 @@ export const profileSchema = z.object({
 
 export const colorSchemeSchema = z.object({
   [COLOR_SCHEME_CONFIG.fieldName]: z.enum(ColorScheme),
-})
-
-export const imageSchema = z.object({
-  image: z
-    .instanceof(File, {
-      message: 'Vyberte obrázek — tento soubor není obrázek.',
-    })
-    .refine((file) => file.type.startsWith('image/'), {
-      message: 'Vyberte obrázek — tento soubor není obrázek.',
-    })
-    .refine((file) => file.size <= MAX_PROFILE_IMAGE_SIZE, {
-      message: 'Vyberte obrázek do 5 MB — tento je příliš velký.',
-    }),
 })

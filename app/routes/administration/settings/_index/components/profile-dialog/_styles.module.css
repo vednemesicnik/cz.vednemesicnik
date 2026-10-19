@@ -7,6 +7,13 @@
   }
 }
 
+/* The picked file, lightened while it uploads (29b, like the gallery's tile). */
+.uploading {
+  @layer route {
+    opacity: 0.6;
+  }
+}
+
 .photoControls {
   @layer route {
     display: grid;

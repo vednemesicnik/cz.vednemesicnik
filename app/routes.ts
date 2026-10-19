@@ -285,6 +285,9 @@ export default [
               'routes/administration/settings/verify-identity/magic-link/route.ts',
             ),
 
+            // The profile photo (design 29b): saved on its own, cancellable
+            route('photo', 'routes/administration/settings/photo/route.ts'),
+
             // Passkey removal + registration ceremony endpoints
             route(
               'passkeys',

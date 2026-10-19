@@ -5,14 +5,17 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { ActionMenu } from '~/components/action-menu'
 import { ButtonLink } from '~/components/button-link'
 import { CompactImageTile } from '~/components/compact-image-tile'
+import { CompactUploadStatus } from '~/components/compact-upload-status'
 import { ImageTileActions } from '~/components/image-tile-actions'
 import { ImageTileAltLine } from '~/components/image-tile-alt-line'
 import { ImageTileFile } from '~/components/image-tile-file'
 import { ImageTileMedia } from '~/components/image-tile-media'
 import { ImageTileMenu } from '~/components/image-tile-menu'
 import { ImageTileMessage } from '~/components/image-tile-message'
+import { ImageTileOrder } from '~/components/image-tile-order'
 import { ImageTilePill } from '~/components/image-tile-pill'
 import { TextField } from '~/components/text-field'
+import { UploadStatus } from '~/components/upload-status'
 
 import { ImageTile } from './_component'
 
@@ -37,12 +40,16 @@ const menuItems = [
 
 const tileWidth = { width: '300px' }
 
-/** A stored image: the main one, its „⋯“, the alt text and the file (24b). */
+/**
+ * The main image: first, its number without a grip, its „⋯“, the alt text and
+ * the file (24b, yj2t50dd).
+ */
 export const Playground: Story = {
   render: () => (
     <div style={tileWidth}>
       <ImageTile>
         <ImageTileMedia>
+          <ImageTileOrder number={1} />
           <ImageTilePill>Hlavní</ImageTilePill>
           <ImageTileMenu>
             <ActionMenu
@@ -65,22 +72,62 @@ export const Playground: Story = {
   ),
 }
 
-/** Picked and processing: dimmed, without a „⋯“ (24b). */
-export const Processing: Story = {
+/**
+ * Picked and uploading: lightened, without a number or „⋯“; the upload row
+ * under the preview (24b, bxy8xxqs).
+ */
+export const Uploading: Story = {
   render: () => (
     <div style={tileWidth}>
       <ImageTile>
-        <ImageTileMedia isProcessing>
-          <ImageTilePill isMuted>Zpracovává se</ImageTilePill>
-        </ImageTileMedia>
+        <ImageTileMedia isUploading />
+        <UploadStatus
+          cancelLabel={'Zrušit nahrávání ctenari.jpg'}
+          onCancel={() => {}}
+        />
         <TextField
-          id={'image-tile-processing-alt'}
+          id={'image-tile-uploading-alt'}
           label={'Alt text'}
           placeholder={'Co je na obrázku'}
           size={'sm'}
         />
-        <ImageTileFile>ctenari.jpg · zpracovává se</ImageTileFile>
+        <ImageTileFile>ctenari.jpg</ImageTileFile>
       </ImageTile>
+    </div>
+  ),
+}
+
+/**
+ * A stored image that can be dragged, and the same tile taken hold of: a card
+ * with its grip coloured (24b „Během přetažení“, as 22c).
+ */
+export const Draggable: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'flex', gap: '32px' }}>
+      {[false, true].map((isLifted) => (
+        <div key={String(isLifted)} style={tileWidth}>
+          <ImageTile isLifted={isLifted}>
+            <ImageTileMedia>
+              <ImageTileOrder hasGrip number={2} />
+              <ImageTileMenu>
+                <ActionMenu
+                  items={menuItems}
+                  label={'Další akce obrázku 2'}
+                  variant={'chip'}
+                />
+              </ImageTileMenu>
+            </ImageTileMedia>
+            <TextField
+              defaultValue={'Čtenáři u okna'}
+              id={`image-tile-draggable-alt-${isLifted}`}
+              label={'Alt text'}
+              size={'sm'}
+            />
+            <ImageTileFile>ctenari.jpg</ImageTileFile>
+          </ImageTile>
+        </div>
+      ))}
     </div>
   ),
 }
@@ -110,10 +157,11 @@ export const ReplaceFailed: Story = {
     <div style={tileWidth}>
       <ImageTile>
         <ImageTileMedia>
+          <ImageTileOrder hasGrip number={2} />
           <ImageTileMenu>
             <ActionMenu
               items={menuItems}
-              label={'Další akce obrázku 1'}
+              label={'Další akce obrázku 2'}
               variant={'chip'}
             />
           </ImageTileMenu>
@@ -149,13 +197,18 @@ export const Compact: Story = {
     >
       <CompactImageTile>
         <ImageTileMedia>
+          <ImageTileOrder number={1} />
           <ImageTilePill>Hlavní</ImageTilePill>
         </ImageTileMedia>
         <ImageTileAltLine>Studovna městské knihovny</ImageTileAltLine>
       </CompactImageTile>
       <CompactImageTile>
-        <ImageTileMedia isProcessing>
-          <ImageTilePill isMuted>Zpracovává se</ImageTilePill>
+        <ImageTileMedia isUploading />
+        <CompactUploadStatus />
+      </CompactImageTile>
+      <CompactImageTile>
+        <ImageTileMedia>
+          <ImageTileOrder number={2} />
         </ImageTileMedia>
         <ImageTileAltLine isMissing>Bez alt textu</ImageTileAltLine>
       </CompactImageTile>

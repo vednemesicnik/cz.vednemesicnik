@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { setArticleFeaturedImage } from './set-article-featured-image.server'
 
 const mocks = vi.hoisted(() => ({
-  articleImageCount: vi.fn(),
+  articleImageFindMany: vi.fn(),
+  articleImageUpdate: vi.fn(),
   buildArticlePageSeoImageWrites: vi.fn(),
   saveArticleImageChange: vi.fn(),
 }))
@@ -16,7 +17,12 @@ vi.mock(
 )
 
 vi.mock('~/utils/db.server', () => ({
-  prisma: { articleImage: { count: mocks.articleImageCount } },
+  prisma: {
+    articleImage: {
+      findMany: mocks.articleImageFindMany,
+      update: mocks.articleImageUpdate,
+    },
+  },
 }))
 
 vi.mock('./save-article-image-change.server', () => ({
@@ -40,7 +46,14 @@ const run = async (imageId: string | null) => {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.saveArticleImageChange.mockResolvedValue({ status: 'saved' })
-  mocks.articleImageCount.mockResolvedValue(1)
+  mocks.articleImageFindMany.mockResolvedValue([
+    { id: 'image-0' },
+    { id: 'image-1' },
+    { id: 'image-2' },
+  ])
+  mocks.articleImageUpdate.mockImplementation(
+    ({ data: { position }, where: { id } }) => `${id}@${position}`,
+  )
   mocks.buildArticlePageSeoImageWrites.mockResolvedValue(['seo-write'])
 })
 
@@ -56,25 +69,24 @@ describe('setArticleFeaturedImage', () => {
   })
 
   test('answers 400 for an image that is not the article’s', async () => {
-    mocks.articleImageCount.mockResolvedValue(0)
-
     await expect(run('image-foreign')).rejects.toMatchObject({
       init: { status: 400 },
     })
 
-    expect(mocks.articleImageCount).toHaveBeenCalledWith({
-      where: { articleId: 'article-1', id: 'image-foreign' },
-    })
+    expect(mocks.articleImageFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { articleId: 'article-1' } }),
+    )
     expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
   })
 
-  test('sets the main image and points the sharing preview at it', async () => {
+  test('sets the main image first and points the sharing preview at it', async () => {
     const prepared = await run('image-1')
 
+    // The others keep their order behind it (yj2t50dd).
     expect(prepared).toEqual({
       answer: {},
       articleData: { featuredImageId: 'image-1' },
-      writes: ['seo-write'],
+      writes: ['image-1@0', 'image-0@1', 'image-2@2', 'seo-write'],
     })
     expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
       featuredImage: 'image-1',
@@ -82,15 +94,36 @@ describe('setArticleFeaturedImage', () => {
     })
   })
 
-  test('clears the main image without looking for an image', async () => {
-    const prepared = await run(null)
+  test('clears the main image and leaves it first, as the editor shows it', async () => {
+    const prepared = await setArticleFeaturedImage(request, {
+      articleId: 'article-1',
+      imageId: null,
+      tabId: 'tab-1',
+    }).then(() =>
+      mocks.saveArticleImageChange.mock.lastCall?.[1].prepare(context, {
+        featuredImageId: 'image-2',
+        slug: 'article',
+      }),
+    )
 
-    expect(mocks.articleImageCount).not.toHaveBeenCalled()
     expect(prepared.articleData).toEqual({ featuredImageId: null })
+    expect(prepared.writes).toEqual([
+      'image-2@0',
+      'image-0@1',
+      'image-1@2',
+      'seo-write',
+    ])
     expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
       featuredImage: null,
       slug: 'article',
     })
+  })
+
+  test('clears no main image without touching the order', async () => {
+    const prepared = await run(null)
+
+    expect(mocks.articleImageFindMany).not.toHaveBeenCalled()
+    expect(prepared.writes).toEqual(['seo-write'])
   })
 
   test('writes no sharing preview for a draft without an address', async () => {
@@ -98,6 +131,6 @@ describe('setArticleFeaturedImage', () => {
 
     const prepared = await run('image-1')
 
-    expect(prepared.writes).toEqual([])
+    expect(prepared.writes).toEqual(['image-1@0', 'image-0@1', 'image-2@2'])
   })
 })

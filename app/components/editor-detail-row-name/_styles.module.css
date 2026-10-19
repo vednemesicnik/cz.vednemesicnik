@@ -1,0 +1,5 @@
+.editorDetailRowName {
+  @layer component {
+    color: var(--text-secondary);
+  }
+}

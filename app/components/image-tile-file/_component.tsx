@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import styles from './_styles.module.css'
 
 type Props = {
-  /** The file's name, and *· zpracovává se* while it processes (24b). */
+  /** The file's name: the picked one, while it uploads (24b). */
   children: ReactNode
   className?: string
 }

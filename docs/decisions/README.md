@@ -64,3 +64,5 @@ in force.
 | [0025](0025-a-save-removes-a-link-only-when-the-editor-sends-it-as-removed.md) | A save removes a category or tag link only when the editor sends it as removed | Accepted | 2026-10-15 |
 | [0026](0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md) | The association is the Owner's author, and only the Coordinator adds it to an article | Accepted | 2026-10-16 |
 | [0027](0027-each-article-image-saves-on-its-own.md) | Each article image saves on its own; the whole-form save carries only alt texts and captions | Accepted | 2026-10-16 |
+| [0028](0028-the-main-image-stands-first-in-the-gallery.md) | The main image stands first in the gallery, in the editor as on the web | Accepted | 2026-10-19 |
+| [0029](0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md) | An admin upload stays on `fetch`, shows no progress, and can be cancelled until it saves | Accepted | 2026-10-19 |

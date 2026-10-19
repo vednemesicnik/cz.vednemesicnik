@@ -1,0 +1,11 @@
+.editorDetailRowThumbnail {
+  @layer component {
+    display: block;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    background-color: var(--placeholder-bg);
+    border-radius: var(--radius-sm);
+  }
+}

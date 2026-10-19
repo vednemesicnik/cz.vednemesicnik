@@ -184,10 +184,21 @@ The gallery saves image by image, built in #673 (design 24b; decision
 once to the `images` route, under an id made in the editor, and its row exists only once the
 file is processed. A file over 10 MB or not an image is refused at selection. *Odebrat* asks
 first and deletes at once; *Nahradit soubor* keeps the old file until the new one is processed.
-The main image and the order (*Posunout dopředu*, *Posunout dozadu*) save at once. Each change
-checks the hold in its own write and moves `updatedAt`. An upload under way still lands after *Zavřít* released the hold, on a draft nobody holds and
-not submitted since; never over someone else's hold. Processing and a failure show only in
+The main image and the order save at once; a tile moves by dragging its preview (a long press
+on a phone) or by *Posunout dopředu*, *Posunout dozadu*. Every stored image shows its number,
+its place on the web. The main image stands first, as on the web: setting one moves it there,
+and it is neither moved nor passed (yj2t50dd). Each change
+checks the hold in its own write and moves `updatedAt`. An upload under way still lands after the hold was released, on a draft nobody holds and
+not submitted since; never over someone else's hold. An upload and a failure show only in
 the open editor.
+
+An upload is one step under the tile's preview (#704, design 24b; decision
+[0029](./decisions/0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)):
+*Nahrává se* with an indeterminate bar, since `fetch` reports no progress, and *Zrušit* until it
+saves. A cancelled new image's tile goes, and the server keeps nothing of it. A cancelled
+replacement returns to the stored image; only one whose answer crossed the cancel stays replaced
+on the server. *Zavřít* and a link out of the
+editor ask while an image uploads, because leaving cancels it.
 
 Losing the hold is built in #671 (design 24h, 24i; decision
 [0023](./decisions/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold

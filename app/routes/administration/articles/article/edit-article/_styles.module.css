@@ -34,6 +34,42 @@
   }
 }
 
+/* A tile is taken hold of by its preview (24b); a finger's long press is a
+   lift, not the system's image menu or a text selection. */
+.imageHandle {
+  @layer route {
+    cursor: grab;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Where the lifted tile lands: its own place, dashed and tinted as in 22c
+   (24b). Above its neighbours, which slide past it. */
+.imageLanding {
+  @layer route {
+    position: relative;
+    z-index: 1;
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-accent);
+    outline: 1px dashed var(--border-accent);
+    outline-offset: -1px;
+    cursor: grabbing;
+  }
+}
+
+/* The lifted tile (its card is `ImageTile isLifted`) follows the pointer:
+   `--drag-x`, `--drag-y` from the gallery's drag. */
+.liftedImage {
+  @layer route {
+    transform: translate(var(--drag-x, 0px), var(--drag-y, 0px));
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 /* Opened by *Nahradit soubor* and *Vybrat jiný soubor*. */
 .replaceInput {
   @layer route {

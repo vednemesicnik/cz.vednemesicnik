@@ -159,14 +159,22 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         categoryIds,
         content: article.content,
         featuredImageId: article.featuredImage?.id ?? null,
-        images: article.images.map((image) => ({
-          altText: image.altText,
-          description: image.description || '',
-          // Older images were stored without it (24b).
-          fileName: image.fileName,
-          id: image.id,
-          previewUrl: createImageSources('article-image', image).src ?? null,
-        })),
+        // The main image stands first, as on the web (yj2t50dd); one set before
+        // that may be stored further on.
+        images: [...article.images]
+          .sort(
+            (first, second) =>
+              Number(second.id === article.featuredImage?.id) -
+              Number(first.id === article.featuredImage?.id),
+          )
+          .map((image) => ({
+            altText: image.altText,
+            description: image.description || '',
+            // Older images were stored without it (24b).
+            fileName: image.fileName,
+            id: image.id,
+            previewUrl: createImageSources('article-image', image).src ?? null,
+          })),
         // An empty draft (decision 0020) has no address and is left for the list.
         isEmptyDraft: article.firstContentAt === null,
         perex: article.perex || '',

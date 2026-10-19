@@ -2,6 +2,9 @@ import { clsx } from 'clsx'
 import { type ReactNode, useEffect, useId, useRef } from 'react'
 
 import { Button } from '~/components/button'
+import { EditorDetailRow } from '~/components/editor-detail-row'
+import { EditorDetailRowName } from '~/components/editor-detail-row-name'
+import { EditorDetailRowValue } from '~/components/editor-detail-row-value'
 
 import styles from './_styles.module.css'
 
@@ -60,7 +63,7 @@ export const EditorDetail = ({
       className={clsx(styles.detail, isOpen && styles.isOpen)}
       inert={isInert}
     >
-      <button
+      <EditorDetailRow
         aria-controls={panelId}
         aria-expanded={isOpen}
         className={styles.row}
@@ -68,11 +71,10 @@ export const EditorDetail = ({
         inert={isOpen}
         onClick={onOpen}
         ref={rowRef}
-        type={'button'}
       >
-        <span className={styles.rowName}>{name}</span>
-        <span className={styles.rowValue}>{summary}</span>
-      </button>
+        <EditorDetailRowName>{name}</EditorDetailRowName>
+        <EditorDetailRowValue>{summary}</EditorDetailRowValue>
+      </EditorDetailRow>
 
       {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: the role is set, dialog or group, both named by the heading */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: as above; Esc closes the open panel */}

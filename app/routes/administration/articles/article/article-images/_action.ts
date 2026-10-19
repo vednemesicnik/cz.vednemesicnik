@@ -8,7 +8,12 @@ import { reorderArticleImages } from './utils/reorder-article-images.server'
 import { setArticleFeaturedImage } from './utils/set-article-featured-image.server'
 import { uploadArticleImage } from './utils/upload-article-image.server'
 
+// A cancelled upload's client is gone; 499 is the code for that, by
+// convention, and nobody reads it.
+const CANCELLED_STATUS = 499
+
 const STATUS_CODES = {
+  cancelled: CANCELLED_STATUS,
   failed: 422,
   'not-held': 409,
   saved: 200,
@@ -21,10 +26,19 @@ const STATUS_CODES = {
  * requires the session itself (`requireCSRF`). Answers JSON: `saved` with the
  * new `updatedAt` (and an upload's preview), `not-held` (409) with who holds
  * it, `failed` (422) for a file that could not be processed, or `invalid`
- * (400).
+ * (400). An upload the editor cancelled (bxy8xxqs) stores nothing and is no
+ * error, even when it was cancelled while its body was still arriving.
  */
 export const action = async ({ request, params }: Route.ActionArgs) => {
-  const formData = await getMultipartFormData(request)
+  let formData: FormData
+  try {
+    formData = await getMultipartFormData(request)
+  } catch (error) {
+    if (request.signal.aborted) {
+      return new Response(null, { status: CANCELLED_STATUS })
+    }
+    throw error
+  }
   await requireCSRF(formData, request)
 
   const parsed = schema.safeParse({

@@ -10,7 +10,9 @@ import {
 } from 'react'
 
 import { ActionMenu } from '~/components/action-menu'
+import { GripVerticalIcon } from '~/components/icons/grip-vertical-icon'
 
+import { getEdgeScrollSpeed } from '~/utils/get-edge-scroll-speed'
 import { moveListItem } from '~/utils/move-list-item'
 
 import styles from './_styles.module.css'
@@ -276,20 +278,13 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
 
       if (list !== null && pointerY !== null) {
         const box = list.getBoundingClientRect()
-        const intoTop = box.top + AUTOSCROLL_EDGE_PX - pointerY
-        const intoBottom = pointerY - (box.bottom - AUTOSCROLL_EDGE_PX)
-        const speed =
-          intoTop > 0
-            ? -Math.min(
-                AUTOSCROLL_MAX_PX,
-                (intoTop / AUTOSCROLL_EDGE_PX) * AUTOSCROLL_MAX_PX,
-              )
-            : intoBottom > 0
-              ? Math.min(
-                  AUTOSCROLL_MAX_PX,
-                  (intoBottom / AUTOSCROLL_EDGE_PX) * AUTOSCROLL_MAX_PX,
-                )
-              : 0
+        const speed = getEdgeScrollSpeed({
+          edge: AUTOSCROLL_EDGE_PX,
+          end: box.bottom,
+          max: AUTOSCROLL_MAX_PX,
+          pointer: pointerY,
+          start: box.top,
+        })
 
         if (speed !== 0) {
           const before = list.scrollTop
@@ -411,24 +406,7 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
                   }}
                   type={'button'}
                 >
-                  <svg
-                    aria-hidden={true}
-                    fill={'none'}
-                    height={16}
-                    stroke={'currentColor'}
-                    strokeLinecap={'round'}
-                    strokeLinejoin={'round'}
-                    strokeWidth={2}
-                    viewBox={'0 0 24 24'}
-                    width={16}
-                  >
-                    <circle cx={9} cy={5} r={1} />
-                    <circle cx={9} cy={12} r={1} />
-                    <circle cx={9} cy={19} r={1} />
-                    <circle cx={15} cy={5} r={1} />
-                    <circle cx={15} cy={12} r={1} />
-                    <circle cx={15} cy={19} r={1} />
-                  </svg>
+                  <GripVerticalIcon className={styles.grip} />
                 </button>
                 <span className={styles.text}>
                   <span className={styles.title}>{item.title}</span>
