@@ -1,9 +1,11 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { data, href, redirect } from 'react-router'
 
+import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
+import { isImageOverPixelBudget } from '~/utils/image-store/is-image-over-pixel-budget.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
@@ -69,6 +71,14 @@ export async function action({ request }: Route.ActionArgs) {
     state: existingPodcast.state,
     targetAuthorIds: [authorId],
   })
+
+  if (cover !== undefined && (await isImageOverPixelBudget(cover))) {
+    return {
+      submissionResult: submission.reply({
+        fieldErrors: { cover: [IMAGE_OVER_PIXEL_BUDGET_MESSAGE] },
+      }),
+    }
+  }
 
   await updatePodcast({
     actor: context,

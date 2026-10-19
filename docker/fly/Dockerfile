@@ -83,6 +83,9 @@ ENV HOST="0.0.0.0"
 ENV PORT="8080"
 # For WAL support: https://github.com/prisma/prisma-engines/issues/4675#issuecomment-1914383246
 ENV PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK="1"
+# Fewer glibc malloc arenas, so Sharp's freed memory is reused instead of piling
+# up on the 1 GB VM (see app/utils/sharp.server.ts).
+ENV MALLOC_ARENA_MAX="2"
 
 # Add shortcut for connecting to database CLI
 ADD scripts/database-cli.sh /usr/local/bin/database-cli

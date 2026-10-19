@@ -1,3 +1,4 @@
+import sharp from 'sharp'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { action } from './_action'
@@ -130,6 +131,39 @@ describe('photo action — the input', () => {
       imageError: 'Vyberte obrázek do 5 MB — tento je příliš velký.',
       status: 'invalid',
     })
+  })
+
+  test('a photo over the pixel budget is refused before it is stored', async () => {
+    const huge = new File(
+      [
+        await sharp({
+          create: {
+            background: '#fff',
+            channels: 3,
+            height: 8000,
+            width: 8000,
+          },
+        })
+          .png({ compressionLevel: 1 })
+          .toBuffer(),
+      ],
+      'huge.png',
+      { type: 'image/png' },
+    )
+    const response = await callAction(
+      buildRequest([
+        ['intent', 'upload'],
+        ['image', huge],
+      ]),
+    )
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({
+      imageError:
+        'Zmenšete rozlišení obrázku nebo vyberte jiný — tento má více než 40 megapixelů.',
+      status: 'invalid',
+    })
+    expect(mocks.saveUserImage).not.toHaveBeenCalled()
   })
 
   test('an unknown intent is refused', async () => {
