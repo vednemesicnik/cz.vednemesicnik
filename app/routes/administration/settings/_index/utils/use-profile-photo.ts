@@ -4,12 +4,11 @@ import { href, useRevalidator } from 'react-router'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import {
+  FAILED_MESSAGE,
   IMAGE_TOO_LARGE_MESSAGE,
   MAX_PROFILE_IMAGE_SIZE,
   NOT_AN_IMAGE_MESSAGE,
 } from '~/routes/administration/settings/photo/_schema'
-
-const FAILED_MESSAGE = 'Zkuste fotku nahrát znovu — nahrání se nezdařilo.'
 
 // Said once the profile has loaded again after a cancel (axz8tav5).
 const CANCELLED_ANNOUNCEMENT = 'Nahrávání zrušeno.'
@@ -21,7 +20,6 @@ type Answer =
   | { status: 'invalid' | 'failed'; imageError: string }
 
 type Upload = {
-  fileName: string
   /** The picked file, shown in the avatar while it uploads (29b). */
   previewUrl: string
   /** Whether a photo was there when it was picked. */
@@ -59,6 +57,9 @@ export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
   )
   const [imageError, setImageError] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState(false)
+  // Until a cancel has sent its removal and the profile loaded again, so a
+  // new pick cannot race it.
+  const [isCancelling, setIsCancelling] = useState(false)
   const [announcement, setAnnouncement] = useState('')
   const [cancelledFrom, setCancelledFrom] = useState<{
     previousSource: string | undefined
@@ -118,7 +119,6 @@ export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
     setLastOutcome(null)
     setAnnouncement('')
     showUpload({
-      fileName: file.name,
       previewUrl,
       previousSource: imageSource,
       replaces: hasImage,
@@ -162,9 +162,11 @@ export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
     controllerRef.current = null
     URL.revokeObjectURL(current.previewUrl)
     showUpload(null)
+    setIsCancelling(true)
 
     if (!current.replaces) await post({ intent: 'remove' })
     await revalidator.revalidate()
+    setIsCancelling(false)
     setCancelledFrom({ previousSource: current.previousSource })
   }
 
@@ -200,19 +202,24 @@ export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [])
 
-  useEffect(
-    () => () => {
-      if (uploadRef.current !== null) {
-        URL.revokeObjectURL(uploadRef.current.previewUrl)
-      }
-    },
-    [],
-  )
+  // Gone with an upload under way (no confirm let it go): it is cancelled
+  // like any other, a first photo with its removal.
+  const handleUnmount = useEffectEvent(() => {
+    const current = uploadRef.current
+    if (current === null) return
+    URL.revokeObjectURL(current.previewUrl)
+    if (controllerRef.current === null) return
+    controllerRef.current.abort()
+    controllerRef.current = null
+    if (!current.replaces) void post({ intent: 'remove' })
+  })
+  useEffect(() => () => handleUnmount(), [])
 
   return {
     announcement,
     cancel,
     imageError,
+    isCancelling,
     isRemoving,
     isUploading: upload !== null,
     lastOutcome,

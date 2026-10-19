@@ -7,6 +7,7 @@ import { getUserPermissionContext } from '~/utils/permissions/user/context/get-u
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
 
 import {
+  FAILED_MESSAGE,
   IMAGE_TOO_LARGE_MESSAGE,
   NOT_AN_IMAGE_MESSAGE,
   schema,
@@ -20,8 +21,6 @@ import {
 // A cancelled upload's client is gone; 499 is the code for that, by
 // convention, and nobody reads it.
 const CANCELLED_STATUS = 499
-
-const FAILED_MESSAGE = 'Zkuste fotku nahrát znovu — nahrání se nezdařilo.'
 
 // Only the upload is multipart; a file over the parser's limit throws.
 const readFormData = (request: Request) =>

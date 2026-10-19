@@ -67,13 +67,38 @@ export const ProfileDialog = ({
 }: Props) => {
   const photo = useProfilePhoto({ hasImage, imageSource: image.src })
   const [confirm, setConfirm] = useState<Confirm | null>(null)
+  // A close the browser no longer lets the page cancel (Esc again without a
+  // click between) reopens the profile over the confirm: a new key opens the
+  // confirm again on top.
+  const [closeConfirmKey, setCloseConfirmKey] = useState(0)
   // Set once a confirm let the profile go, so the close is not asked again.
   const mayCloseRef = useRef(false)
+  // Without a click between, the browser closes the profile together with a
+  // confirm whose Esc meant Zůstat: for that moment the profile stays, and
+  // focus goes where the confirm sends it.
+  const stayFocusRef = useRef<Element | null | undefined>(undefined)
+  // Set while an Esc a confirm received travels on to the profile.
+  const handedOnRef = useRef(false)
   // Esc and the footer's Zrušit ask while the photo uploads.
   const ref = useModalDialog(onClose, {
     shouldStayOpen: () => {
-      if (mayCloseRef.current || !photo.isUploading) return false
-      setConfirm((current) => current ?? 'close')
+      if (stayFocusRef.current !== undefined) {
+        const target = stayFocusRef.current
+        setTimeout(() => returnFocus(target))
+        return true
+      }
+      if (mayCloseRef.current) return false
+      // An Esc the browser hands on from a confirm was that confirm's.
+      if (handedOnRef.current) return true
+      // A close the page could not cancel reopens the profile over the
+      // confirm the same Esc opened: open it again on top.
+      if (confirm !== null || blocker.state === 'blocked') {
+        setCloseConfirmKey((key) => key + 1)
+        return true
+      }
+      if (!photo.isUploading) return false
+      setConfirm('close')
+      setCloseConfirmKey((key) => key + 1)
       return true
     },
   })
@@ -81,12 +106,30 @@ export const ProfileDialog = ({
   const formRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoRef = useRef<HTMLElement>(null)
+  const cancelButtonRef = useRef<HTMLButtonElement>(null)
+  const saveButtonRef = useRef<HTMLButtonElement>(null)
+  // Where focus was in the profile when a leave was blocked.
+  const leaveFocusRef = useRef<Element | null>(null)
+
+  useEffect(() => {
+    const handleCancel = (event: Event) => {
+      if (event.target === ref.current) return
+      handedOnRef.current = true
+      setTimeout(() => {
+        handedOnRef.current = false
+      })
+    }
+    document.addEventListener('cancel', handleCancel, true)
+    return () => document.removeEventListener('cancel', handleCancel, true)
+  }, [ref])
 
   // Leaving Nastavení cancels the upload, so it asks (29b).
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      photo.isUploading && currentLocation.pathname !== nextLocation.pathname,
-  )
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    const shouldBlock =
+      photo.isUploading && currentLocation.pathname !== nextLocation.pathname
+    if (shouldBlock) leaveFocusRef.current = document.activeElement
+    return shouldBlock
+  })
 
   const lastResult =
     profileFetcher.data !== undefined &&
@@ -167,7 +210,6 @@ export const ProfileDialog = ({
     if (photo.isUploading) void photo.cancel()
 
     if (trigger === 'save') {
-      mayCloseRef.current = true
       if (formRef.current !== null) {
         void profileFetcher.submit(formRef.current, { method: 'post' })
       }
@@ -181,6 +223,26 @@ export const ProfileDialog = ({
     if (photo.isUploading) void photo.cancel()
     mayCloseRef.current = true
     blocker.proceed?.()
+  }
+
+  // Zůstat or Esc in a confirm: back where the person asked from (29b). A
+  // target gone by then (the row, once the upload ended) falls back to the
+  // photo's first control.
+  const returnFocus = (target: Element | null) => {
+    if (target instanceof HTMLElement && target.isConnected) {
+      target.focus()
+      return
+    }
+    photoRef.current?.querySelector<HTMLButtonElement>('button')?.focus()
+  }
+
+  // Zůstat or Esc in a confirm.
+  const stay = (target: Element | null) => {
+    stayFocusRef.current = target
+    setTimeout(() => {
+      stayFocusRef.current = undefined
+    })
+    returnFocus(target)
   }
 
   const bioLength = fields.bio.value?.length ?? 0
@@ -236,7 +298,7 @@ export const ProfileDialog = ({
                 <div className={styles.photoActions}>
                   <Button
                     data-pick-photo={true}
-                    disabled={photo.isRemoving}
+                    disabled={photo.isRemoving || photo.isCancelling}
                     onClick={() => fileInputRef.current?.click()}
                     type={'button'}
                     variant={'outline'}
@@ -245,7 +307,7 @@ export const ProfileDialog = ({
                   </Button>
                   {hasImage && (
                     <TextButton
-                      disabled={photo.isRemoving}
+                      disabled={photo.isRemoving || photo.isCancelling}
                       onClick={() => void photo.remove()}
                     >
                       Odebrat
@@ -325,13 +387,19 @@ export const ProfileDialog = ({
               <Button
                 disabled={isSubmitting}
                 onClick={handleCancel}
+                ref={cancelButtonRef}
                 size={'sm'}
                 type={'button'}
                 variant={'ghost'}
               >
                 Zrušit
               </Button>
-              <Button disabled={isSubmitting} size={'sm'} type={'submit'}>
+              <Button
+                disabled={isSubmitting}
+                ref={saveButtonRef}
+                size={'sm'}
+                type={'submit'}
+              >
                 Uložit
               </Button>
             </AdminModalActions>
@@ -345,8 +413,12 @@ export const ProfileDialog = ({
             photo.isUploading ? 'Zrušit nahrávání a zavřít' : 'Zavřít'
           }
           isDanger={photo.isUploading}
+          key={closeConfirmKey}
           onConfirm={handleConfirm}
-          onStay={() => setConfirm(null)}
+          onStay={() => {
+            setConfirm(null)
+            stay(cancelButtonRef.current)
+          }}
           stayLabel={'Zůstat'}
           title={
             photo.isUploading
@@ -382,7 +454,10 @@ export const ProfileDialog = ({
           }
           isDanger={photo.isUploading}
           onConfirm={handleConfirm}
-          onStay={() => setConfirm(null)}
+          onStay={() => {
+            setConfirm(null)
+            stay(saveButtonRef.current)
+          }}
           stayLabel={'Zůstat'}
           title={
             photo.isUploading
@@ -405,7 +480,10 @@ export const ProfileDialog = ({
           }
           isDanger={photo.isUploading}
           onConfirm={handleLeave}
-          onStay={() => blocker.reset()}
+          onStay={() => {
+            blocker.reset?.()
+            stay(leaveFocusRef.current)
+          }}
           stayLabel={'Zůstat v Nastavení'}
           title={
             photo.isUploading

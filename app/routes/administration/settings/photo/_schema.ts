@@ -9,6 +9,9 @@ export const NOT_AN_IMAGE_MESSAGE =
 export const IMAGE_TOO_LARGE_MESSAGE =
   'Vyberte obrázek do 5 MB — tento je příliš velký.'
 
+export const FAILED_MESSAGE =
+  'Zkuste fotku nahrát znovu — nahrání se nezdařilo.'
+
 /** One change of the profile photo, saved on its own (design 29b). */
 export const schema = z.discriminatedUnion('intent', [
   z.object({
