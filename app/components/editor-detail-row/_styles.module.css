@@ -1,0 +1,52 @@
+/* `.vdm-editorrow`: name, value and chevron; the tone and the hairline reach
+   8 px past the text on both sides. */
+.editorDetailRow {
+  @layer component {
+    position: relative;
+    display: grid;
+    grid-template-columns: 90px minmax(0, 1fr) 20px;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+    width: calc(100% + 16px);
+    min-block-size: 48px;
+    margin-inline: -8px;
+    padding: 8px;
+    font: inherit;
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    color: var(--text-primary);
+    text-align: start;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset-inline: 8px;
+      inset-block-end: 0;
+      block-size: 1px;
+      background-color: var(--border);
+    }
+
+    &:hover,
+    &:active {
+      background-color: var(--bg-hover);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+.chevron {
+  @layer variant {
+    font-size: 20px;
+    color: var(--link-strong);
+  }
+}

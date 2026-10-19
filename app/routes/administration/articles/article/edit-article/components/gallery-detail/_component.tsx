@@ -2,12 +2,20 @@ import { clsx } from 'clsx'
 import { type ReactNode, useEffect, useId, useRef } from 'react'
 
 import { Button } from '~/components/button'
+import { EditorDetailRow } from '~/components/editor-detail-row'
+import { EditorDetailRowName } from '~/components/editor-detail-row-name'
+import { EditorDetailRowThumbnail } from '~/components/editor-detail-row-thumbnail'
+import { EditorDetailRowThumbnails } from '~/components/editor-detail-row-thumbnails'
+import { EditorDetailRowValue } from '~/components/editor-detail-row-value'
 
 import styles from './_styles.module.css'
 
 type Props = {
   /** The row's value on a phone (24f): „3 · ve zpracování: 1“. */
   summary: string
+  /** The row's thumbnails before the count: the first three stored images in
+   *  gallery order, the main one first (u94oosdp). */
+  thumbnails: string[]
   isOpen: boolean
   /** Another detail is open over it: out of reach (24f). */
   isInert: boolean
@@ -32,6 +40,7 @@ type Props = {
  */
 export const GalleryDetail = ({
   summary,
+  thumbnails,
   isOpen,
   isInert,
   onOpen,
@@ -81,15 +90,23 @@ export const GalleryDetail = ({
 
   return (
     <section className={styles.galleryDetail} inert={isInert}>
-      <button
+      <EditorDetailRow
         aria-haspopup={'dialog'}
         className={styles.row}
         onClick={onOpen}
-        type={'button'}
       >
-        <span className={styles.rowName}>Obrázky</span>
-        <span className={styles.rowValue}>{summary}</span>
-      </button>
+        <EditorDetailRowName>Obrázky</EditorDetailRowName>
+        <EditorDetailRowValue>
+          {thumbnails.length > 0 && (
+            <EditorDetailRowThumbnails>
+              {thumbnails.map((source, index) => (
+                <EditorDetailRowThumbnail key={index} source={source} />
+              ))}
+            </EditorDetailRowThumbnails>
+          )}
+          {summary}
+        </EditorDetailRowValue>
+      </EditorDetailRow>
 
       <div className={styles.column}>
         <div className={styles.columnHeading}>
