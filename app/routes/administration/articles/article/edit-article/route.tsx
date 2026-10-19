@@ -45,6 +45,7 @@ import { ImageTileFile } from '~/components/image-tile-file'
 import { ImageTileMedia } from '~/components/image-tile-media'
 import { ImageTileMenu } from '~/components/image-tile-menu'
 import { ImageTileMessage } from '~/components/image-tile-message'
+import { ImageTileOrder } from '~/components/image-tile-order'
 import { ImageTilePill } from '~/components/image-tile-pill'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
@@ -509,6 +510,15 @@ export default function RouteComponent({
       setMoveAnnouncement(`Pozice ${to + 1}, celkem ${count}.`)
     }
   }
+  // A new main image moves to the first place: said like a step, and the
+  // focus stays on its „⋯“ (yj2t50dd).
+  const featureImage = async (id: string, count: number) => {
+    setMovedImageId(id)
+    setMoveAnnouncement('')
+    if (await gallery.setFeatured(id)) {
+      setMoveAnnouncement(`Pozice 1, celkem ${count}.`)
+    }
+  }
   // After a removal the focus goes to the next tile's „⋯“, the previous
   // one's, or *Přidat obrázky*: never lost to the page.
   const [removedImageIndex, setRemovedImageIndex] = useState<number | null>(
@@ -943,12 +953,15 @@ export default function RouteComponent({
     (id) => gallery.tiles.get(id)?.status === 'stored',
   )
   // A tile with its „⋯“ is dragged by its preview too (24b); a drop moves
-  // and says the place as the „⋯“ does, the focus stays where it is.
+  // and says the place as the „⋯“ does, the focus stays where it is. The
+  // main image stands first and stays there (yj2t50dd).
+  const isFeaturedImage = (id: string) => gallery.featuredImageId === id
   const canDragImage = (id: string) => {
     const tile = gallery.tiles.get(id)
     return (
       !isLocked &&
       !isReadOnly &&
+      !isFeaturedImage(id) &&
       tile?.status === 'stored' &&
       !tile.isReplacing &&
       !tile.isRemoving
@@ -958,9 +971,16 @@ export default function RouteComponent({
     canDrag: canDragImage,
     handleSelector: `.${styles.imageHandle}`,
     ids: imageIds,
+    isPinned: isFeaturedImage,
     onDrop: (id, to) => void moveImage(id, to, storedImageIds.length),
     storedIds: storedImageIds,
   })
+  // A stored image's number is its place on the web, renumbered while a tile
+  // is dragged; the „⋯“'s name says the same number (yj2t50dd).
+  const shownStoredImageIds = galleryDrag.shownIds.filter((id) =>
+    storedImageIds.includes(id),
+  )
+  const getImageNumber = (id: string) => shownStoredImageIds.indexOf(id) + 1
   const gallerySummary = formatGallerySummary(
     imageFieldList.length,
     gallery.processingCount,
@@ -1520,6 +1540,9 @@ export default function RouteComponent({
                                 isProcessing={isProcessing}
                                 source={tile?.previewUrl}
                               >
+                                {tile?.status === 'stored' && !isProcessing && (
+                                  <ImageTileOrder number={getImageNumber(id)} />
+                                )}
                                 {gallery.featuredImageId === id && (
                                   <ImageTilePill>Hlavní</ImageTilePill>
                                 )}
@@ -1584,7 +1607,7 @@ export default function RouteComponent({
                     <p className={styles.gallerySummary}>{gallerySummary}</p>
                   )}
                   <GalleryGrid columns={3}>
-                    {imageFieldList.map((image, index) => {
+                    {imageFieldList.map((image) => {
                       const imageFields = image.getFieldset()
                       const id = imageFields.id.value ?? ''
                       const tile = gallery.tiles.get(id)
@@ -1657,6 +1680,7 @@ export default function RouteComponent({
                           {idInput}
                           <ImageTile
                             className={clsx(isLifted && styles.liftedImage)}
+                            isLifted={isLifted}
                           >
                             <ImageTileMedia
                               className={clsx(
@@ -1667,6 +1691,12 @@ export default function RouteComponent({
                               isProcessing={isProcessing}
                               source={tile?.previewUrl}
                             >
+                              {isStored && !isProcessing && (
+                                <ImageTileOrder
+                                  hasGrip={canDragImage(id)}
+                                  number={getImageNumber(id)}
+                                />
+                              )}
                               {isFeatured && (
                                 <ImageTilePill>Hlavní</ImageTilePill>
                               )}
@@ -1683,10 +1713,15 @@ export default function RouteComponent({
                                     <ActionMenu
                                       items={getImageMenuItems({
                                         count: storedImageIds.length,
+                                        hasFeatured:
+                                          gallery.featuredImageId !== null,
                                         index: storedImageIds.indexOf(id),
                                         isFeatured,
                                         onFeature: () =>
-                                          void gallery.setFeatured(id),
+                                          void featureImage(
+                                            id,
+                                            storedImageIds.length,
+                                          ),
                                         onMove: (to) => {
                                           setMovedImageId(id)
                                           void moveImage(
@@ -1701,9 +1736,9 @@ export default function RouteComponent({
                                           void gallery.setFeatured(null),
                                       })}
                                       // The tile has no name of its own: its
-                                      // place in the gallery tells it apart
-                                      // (copy hu5a658a).
-                                      label={`Další akce obrázku ${index + 1}`}
+                                      // number tells it apart (copy hu5a658a,
+                                      // yj2t50dd).
+                                      label={`Další akce obrázku ${getImageNumber(id)}`}
                                       variant={'chip'}
                                     />
                                   </ImageTileMenu>

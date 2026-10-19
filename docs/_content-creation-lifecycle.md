@@ -185,7 +185,9 @@ once to the `images` route, under an id made in the editor, and its row exists o
 file is processed. A file over 10 MB or not an image is refused at selection. *Odebrat* asks
 first and deletes at once; *Nahradit soubor* keeps the old file until the new one is processed.
 The main image and the order save at once; a tile moves by dragging its preview (a long press
-on a phone) or by *Posunout dopředu*, *Posunout dozadu*. Each change
+on a phone) or by *Posunout dopředu*, *Posunout dozadu*. Every stored image shows its number,
+its place on the web. The main image stands first, as on the web: setting one moves it there,
+and it is neither moved nor passed (yj2t50dd). Each change
 checks the hold in its own write and moves `updatedAt`. An upload under way still lands after *Zavřít* released the hold, on a draft nobody holds and
 not submitted since; never over someone else's hold. Processing and a failure show only in
 the open editor.

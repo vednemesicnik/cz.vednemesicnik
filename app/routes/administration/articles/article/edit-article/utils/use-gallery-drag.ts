@@ -23,6 +23,8 @@ type Options = {
   storedIds: string[]
   /** Whether a tile can be lifted now: a stored image with its „⋯“. */
   canDrag: (id: string) => boolean
+  /** A tile that keeps its place, so none lands on it (the main image). */
+  isPinned: (id: string) => boolean
   /** The part of a tile that is taken hold of: its preview. */
   handleSelector: string
   /** A tile was dropped at another place among the stored images. */
@@ -87,13 +89,15 @@ const getSlotBox = (tile: HTMLElement) => {
  *
  * @param options - The tiles, the stored images, which tile can be lifted,
  *   its preview's selector, and what to do with a drop.
- * @returns The lifted tile, each tile's CSS `order` while one is lifted, and
- *   the props of each tile's `<li>`.
+ * @returns The lifted tile, the tiles in the order shown (for their numbers),
+ *   each tile's CSS `order` while one is lifted, and the props of each
+ *   tile's `<li>`.
  */
 export const useGalleryDrag = ({
   ids,
   storedIds,
   canDrag,
+  isPinned,
   handleSelector,
   onDrop,
 }: Options) => {
@@ -115,8 +119,14 @@ export const useGalleryDrag = ({
   const preventLiftedScroll = useRef((event: TouchEvent) => {
     if (gestureRef.current?.isLifted) event.preventDefault()
   }).current
-  const optionsRef = useRef({ canDrag, handleSelector, onDrop, storedIds })
-  optionsRef.current = { canDrag, handleSelector, onDrop, storedIds }
+  const optionsRef = useRef({
+    canDrag,
+    handleSelector,
+    isPinned,
+    onDrop,
+    storedIds,
+  })
+  optionsRef.current = { canDrag, handleSelector, isPinned, onDrop, storedIds }
 
   const indexes =
     drag === null
@@ -165,7 +175,9 @@ export const useGalleryDrag = ({
     )
     const candidates = shownStoredIds.flatMap((id) => {
       const tile = tileRefs.current.get(id)
-      return id === current.id || tile === undefined
+      return id === current.id ||
+        tile === undefined ||
+        optionsRef.current.isPinned(id)
         ? []
         : [{ box: getSlotBox(tile), id }]
     })
@@ -468,5 +480,7 @@ export const useGalleryDrag = ({
         }
       },
     }),
+    /** The tiles in the order shown, the lifted one in its new place. */
+    shownIds: shownIds ?? ids,
   }
 }

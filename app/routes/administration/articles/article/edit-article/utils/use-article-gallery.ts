@@ -380,16 +380,35 @@ export const useArticleGallery = ({
     return true
   }
 
-  /** Sets the main image, or none with `null`. */
-  const setFeatured = async (id: string | null) => {
+  /**
+   * Sets the main image, or none with `null`. The main image stands first
+   * (yj2t50dd): a new one moves to the first place in the same change; none
+   * leaves the order as it is.
+   *
+   * @returns Whether it saved.
+   */
+  const setFeatured = async (id: string | null): Promise<boolean> => {
     const previous = featuredImageId
     setFeaturedImageId(id)
+
+    const ids = optionsRef.current.list.getIds()
+    const indexes =
+      id === null
+        ? null
+        : getStoredMoveIndexes(ids, ids.filter(isStored), id, 0)
+    if (indexes !== null) optionsRef.current.list.move(indexes.from, indexes.to)
 
     const result = await enqueue(() =>
       post({ intent: 'feature', ...(id === null ? {} : { imageId: id }) }),
     )
     setHasFailedChange(result.status !== 'saved')
-    if (result.status !== 'saved') setFeaturedImageId(previous)
+    if (result.status !== 'saved') {
+      setFeaturedImageId(previous)
+      if (indexes !== null) {
+        optionsRef.current.list.move(indexes.to, indexes.from)
+      }
+    }
+    return result.status === 'saved'
   }
 
   /**

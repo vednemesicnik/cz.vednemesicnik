@@ -45,36 +45,28 @@
   }
 }
 
-/* Where the lifted tile lands: dashed and tinted as in 22c, as far out as
-   the lifted tile's card. Above its neighbours, which slide past it. */
+/* Where the lifted tile lands: its own place, dashed and tinted as in 22c
+   (24b). Above its neighbours, which slide past it. */
 .imageLanding {
   @layer route {
     position: relative;
     z-index: 1;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background-color: var(--bg-accent);
-    box-shadow: 0 0 0 8px var(--bg-accent);
     outline: 1px dashed var(--border-accent);
-    outline-offset: 8px;
+    outline-offset: -1px;
     cursor: grabbing;
   }
 }
 
-/* The lifted tile follows the pointer (`--drag-x`, `--drag-y` from the
-   gallery's drag) on a card that leaves the layout as it is (22c). */
+/* The lifted tile (its card is `ImageTile isLifted`) follows the pointer:
+   `--drag-x`, `--drag-y` from the gallery's drag. */
 .liftedImage {
   @layer route {
     transform: translate(var(--drag-x, 0px), var(--drag-y, 0px));
-    cursor: grabbing;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
-    border-radius: var(--radius-md);
-    background-color: var(--bg-primary);
-    box-shadow:
-      0 0 0 8px var(--bg-primary),
-      0 0 0 9px var(--border-accent),
-      var(--shadow-lg);
   }
 }
 
