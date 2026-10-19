@@ -13,6 +13,9 @@ export type ImageVariantWidth = (typeof IMAGE_VARIANT_WIDTHS)[number]
 // pixels are what fill the 1 GB VM.
 export const MAX_IMAGE_PIXELS = 40_000_000
 
+// Said for an image over MAX_IMAGE_PIXELS (copy thread kzi8vzyj).
+export const IMAGE_OVER_PIXEL_BUDGET_MESSAGE = `Zmenšete rozlišení obrázku nebo vyberte jiný — tento má více než ${MAX_IMAGE_PIXELS / 1_000_000} megapixelů.`
+
 // Delivered formats: AVIF (primary, ~95%+ browser support) + JPEG (fallback).
 // WebP is intentionally dropped — its only benefit is browsers that support WebP
 // but not AVIF; those fall back to JPEG, which is functionally fine.

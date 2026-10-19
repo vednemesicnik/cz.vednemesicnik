@@ -1,10 +1,12 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { data, href, redirect } from 'react-router'
+import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
+import { isImageOverPixelBudget } from '~/utils/image-store/is-image-over-pixel-budget.server'
 import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
 import {
   deletePdfObject,
@@ -84,6 +86,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
     state: existingIssue.state,
     targetAuthorIds: [authorId],
   })
+
+  if (cover !== undefined && (await isImageOverPixelBudget(cover))) {
+    return {
+      submissionResult: submission.reply({
+        fieldErrors: { cover: [IMAGE_OVER_PIXEL_BUDGET_MESSAGE] },
+      }),
+    }
+  }
 
   const { label, releaseDate, coverAltText, pdfFileName } = getIssueData(
     ordinalNumber,
