@@ -1,8 +1,10 @@
 import type { ActionFunctionArgs } from 'react-router'
 
+import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { requireAuthentication } from '~/utils/auth.server'
 import { requireCSRF } from '~/utils/csrf.server'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
+import { isImageOverPixelBudget } from '~/utils/image-store/is-image-over-pixel-budget.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
 
@@ -83,6 +85,13 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
   if (parsed.data.intent === 'remove') {
     await deleteUserImage(userId)
     return Response.json({ status: 'removed' })
+  }
+
+  if (await isImageOverPixelBudget(parsed.data.image)) {
+    return Response.json(
+      { imageError: IMAGE_OVER_PIXEL_BUDGET_MESSAGE, status: 'invalid' },
+      { status: 400 },
+    )
   }
 
   let result: SaveUserImageResult

@@ -6,6 +6,7 @@ import type { GalleryTile } from './use-article-gallery'
 const tile: GalleryTile = {
   fileName: 'regal.jpg',
   hasReplaceFailed: false,
+  isOverPixelBudget: false,
   isRemoving: false,
   isUnconfirmed: false,
   previewUrl: '/preview.jpg',

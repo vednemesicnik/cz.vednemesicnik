@@ -56,6 +56,7 @@ import { TextField } from '~/components/text-field'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
+import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
@@ -1738,8 +1739,9 @@ export default function RouteComponent({
                             <ImageTile>
                               <ImageTileMedia isFailed />
                               <ImageTileMessage>
-                                Vyberte jiný soubor nebo obrázek odeberte —
-                                zpracování se nepodařilo.
+                                {tile.isOverPixelBudget
+                                  ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
+                                  : 'Vyberte jiný soubor nebo obrázek odeberte — zpracování se nepodařilo.'}
                               </ImageTileMessage>
                               {!isReadOnly && (
                                 <ImageTileActions>
@@ -1856,8 +1858,10 @@ export default function RouteComponent({
                             {tile?.hasReplaceFailed && (
                               <>
                                 <ImageTileMessage>
-                                  Nový soubor se nepodařilo zpracovat. Původní
-                                  obrázek zůstává.
+                                  {tile.isOverPixelBudget
+                                    ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
+                                    : 'Nový soubor se nepodařilo zpracovat.'}{' '}
+                                  Původní obrázek zůstává.
                                 </ImageTileMessage>
                                 {!isReadOnly && (
                                   <ImageTileActions>
