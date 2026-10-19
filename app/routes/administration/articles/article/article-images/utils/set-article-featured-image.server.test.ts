@@ -94,16 +94,36 @@ describe('setArticleFeaturedImage', () => {
     })
   })
 
-  test('clears the main image and leaves the order as it is', async () => {
-    const prepared = await run(null)
+  test('clears the main image and leaves it first, as the editor shows it', async () => {
+    const prepared = await setArticleFeaturedImage(request, {
+      articleId: 'article-1',
+      imageId: null,
+      tabId: 'tab-1',
+    }).then(() =>
+      mocks.saveArticleImageChange.mock.lastCall?.[1].prepare(context, {
+        featuredImageId: 'image-2',
+        slug: 'article',
+      }),
+    )
 
-    expect(mocks.articleImageFindMany).not.toHaveBeenCalled()
     expect(prepared.articleData).toEqual({ featuredImageId: null })
-    expect(prepared.writes).toEqual(['seo-write'])
+    expect(prepared.writes).toEqual([
+      'image-2@0',
+      'image-0@1',
+      'image-1@2',
+      'seo-write',
+    ])
     expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
       featuredImage: null,
       slug: 'article',
     })
+  })
+
+  test('clears no main image without touching the order', async () => {
+    const prepared = await run(null)
+
+    expect(mocks.articleImageFindMany).not.toHaveBeenCalled()
+    expect(prepared.writes).toEqual(['seo-write'])
   })
 
   test('writes no sharing preview for a draft without an address', async () => {

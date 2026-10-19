@@ -2,6 +2,7 @@ import { data } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
 
+import { putFeaturedFirst } from './put-featured-first'
 import { saveArticleImageChange } from './save-article-image-change.server'
 
 type Options = {
@@ -14,7 +15,8 @@ type Options = {
 /**
  * Saves the gallery's order at once, which is the order on the web (design
  * 24b). An image the list leaves out (one that landed after the editor sent
- * it) keeps its place after the listed ones.
+ * it) keeps its place after the listed ones. The main image stays first
+ * whatever the list says (yj2t50dd).
  *
  * @param request - The action's request.
  * @param options - The article, the tab and the image ids in order.
@@ -27,7 +29,7 @@ export async function reorderArticleImages(
 ) {
   return saveArticleImageChange(request, {
     articleId,
-    prepare: async () => {
+    prepare: async (_context, article) => {
       const storedImages = await prisma.articleImage.findMany({
         orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
         select: { id: true },
@@ -42,10 +44,10 @@ export async function reorderArticleImages(
         throw data(null, { status: 400 })
       }
 
-      const orderedIds = [
-        ...imageIds,
-        ...storedIds.filter((id) => !imageIds.includes(id)),
-      ]
+      const orderedIds = putFeaturedFirst(
+        [...imageIds, ...storedIds.filter((id) => !imageIds.includes(id))],
+        article.featuredImageId,
+      )
 
       return {
         answer: {},

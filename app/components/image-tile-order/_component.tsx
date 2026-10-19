@@ -1,5 +1,7 @@
 import { clsx } from 'clsx'
 
+import { GripVerticalIcon } from '~/components/icons/grip-vertical-icon'
+
 import styles from './_styles.module.css'
 
 type Props = {
@@ -26,26 +28,6 @@ export const ImageTileOrder = ({
     className={clsx(styles.imageTileOrder, hasGrip && styles.grip, className)}
   >
     {number}
-    {hasGrip && (
-      <svg
-        aria-hidden={true}
-        className={styles.icon}
-        fill={'none'}
-        height={16}
-        stroke={'currentColor'}
-        strokeLinecap={'round'}
-        strokeLinejoin={'round'}
-        strokeWidth={2}
-        viewBox={'0 0 24 24'}
-        width={16}
-      >
-        <circle cx={9} cy={5} r={1} />
-        <circle cx={9} cy={12} r={1} />
-        <circle cx={9} cy={19} r={1} />
-        <circle cx={15} cy={5} r={1} />
-        <circle cx={15} cy={12} r={1} />
-        <circle cx={15} cy={19} r={1} />
-      </svg>
-    )}
+    {hasGrip && <GripVerticalIcon className={styles.icon} />}
   </span>
 )

@@ -27,10 +27,11 @@
   }
 }
 
-/* A lifted tile colours its grip (`ImageTile isLifted`), as 22c does. */
+/* 16 px; a lifted tile colours it (`ImageTile isLifted`), as 22c does. */
 .icon {
-  @layer component {
+  @layer variant {
     flex: none;
+    font-size: 16px;
     color: var(--image-tile-grip-color, currentColor);
   }
 }

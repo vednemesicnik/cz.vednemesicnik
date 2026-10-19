@@ -1540,7 +1540,7 @@ export default function RouteComponent({
                                 isProcessing={isProcessing}
                                 source={tile?.previewUrl}
                               >
-                                {tile?.status === 'stored' && !isProcessing && (
+                                {tile?.status === 'stored' && (
                                   <ImageTileOrder number={getImageNumber(id)} />
                                 )}
                                 {gallery.featuredImageId === id && (
@@ -1691,7 +1691,9 @@ export default function RouteComponent({
                               isProcessing={isProcessing}
                               source={tile?.previewUrl}
                             >
-                              {isStored && !isProcessing && (
+                              {/* A replacement keeps the stored image's place, so
+                                  its number too; only a new upload has none. */}
+                              {isStored && (
                                 <ImageTileOrder
                                   hasGrip={canDragImage(id)}
                                   number={getImageNumber(id)}
