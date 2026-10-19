@@ -195,8 +195,9 @@ the open editor.
 An upload is one step under the tile's preview (#704, design 24b; decision
 [0029](./decisions/0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)):
 *Nahrává se* with an indeterminate bar, since `fetch` reports no progress, and *Zrušit* until it
-saves. A cancelled new image's tile goes; a cancelled replacement returns to the stored image, and
-the server stores nothing, a cancel during the commit included. *Zavřít* and a link out of the
+saves. A cancelled new image's tile goes, and the server keeps nothing of it. A cancelled
+replacement returns to the stored image; only one whose answer crossed the cancel stays replaced
+on the server. *Zavřít* and a link out of the
 editor ask while an image uploads, because leaving cancels it.
 
 Losing the hold is built in #671 (design 24h, 24i; decision

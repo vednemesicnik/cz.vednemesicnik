@@ -5,6 +5,7 @@ import { saveArticleImageChange } from './save-article-image-change.server'
 
 const mocks = vi.hoisted(() => ({
   articleFindUnique: vi.fn(),
+  articleFindUniqueOrThrow: vi.fn(),
   articleUpdate: vi.fn(),
   articleUpdateMany: vi.fn(),
   permissionContext: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock('~/utils/db.server', () => ({
     $transaction: mocks.transaction,
     article: {
       findUnique: mocks.articleFindUnique,
+      findUniqueOrThrow: mocks.articleFindUniqueOrThrow,
       update: mocks.articleUpdate,
       updateMany: mocks.articleUpdateMany,
     },
@@ -55,6 +57,7 @@ const storedArticle = {
 }
 
 const savedAt = new Date('2026-10-16T12:00:00Z')
+const previousSavedAt = new Date('2026-10-16T11:00:00Z')
 
 type Prepare = Parameters<typeof saveArticleImageChange>[1]['prepare']
 
@@ -91,14 +94,17 @@ beforeEach(() => {
   )
   mocks.articleFindUnique.mockResolvedValue(storedArticle)
   mocks.articleUpdate.mockReturnValue('update-article')
+  mocks.articleFindUniqueOrThrow.mockReturnValue('read-previous')
   mocks.articleUpdateMany.mockReturnValue('mark-first-content')
   mocks.transaction.mockImplementation(async (writes: unknown[]) =>
     writes.map((write) =>
       write === 'update-article'
         ? { updatedAt: savedAt }
-        : write === 'mark-first-content'
-          ? { count: 0 }
-          : {},
+        : write === 'read-previous'
+          ? { updatedAt: previousSavedAt }
+          : write === 'mark-first-content'
+            ? { count: 0 }
+            : {},
     ),
   )
 })
@@ -801,7 +807,11 @@ describe('saveArticleImageChange — a cancellable change (bxy8xxqs)', () => {
     mocks.transaction.mockImplementation(async (writes: unknown[]) => {
       cancel()
       return writes.map((write) =>
-        write === 'mark-first-content' ? { count: 1 } : { updatedAt: savedAt },
+        write === 'mark-first-content'
+          ? { count: 1 }
+          : write === 'read-previous'
+            ? { updatedAt: previousSavedAt }
+            : { updatedAt: savedAt },
       )
     })
 
@@ -814,9 +824,39 @@ describe('saveArticleImageChange — a cancellable change (bxy8xxqs)', () => {
       }),
     })
 
+    expect(mocks.transaction).toHaveBeenCalledWith([
+      'read-previous',
+      'mark-first-content',
+      'image-write',
+      'update-article',
+    ])
     expect(mocks.articleUpdateMany).toHaveBeenLastCalledWith({
-      data: { firstContentAt: null },
-      where: { id: 'article-1' },
+      data: { firstContentAt: null, updatedAt: previousSavedAt },
+      where: { id: 'article-1', updatedAt: savedAt },
+    })
+  })
+
+  test('a cancel during the commit puts the updatedAt back, unless something saved since', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    mocks.transaction.mockImplementation(async (writes: unknown[]) => {
+      cancel()
+      return writes.map((write) =>
+        write === 'read-previous'
+          ? { updatedAt: previousSavedAt }
+          : { updatedAt: savedAt },
+      )
+    })
+
+    await saveArticleImageChange(cancellableRequest, {
+      ...options,
+      isCancellable: true,
+      prepare: buildPrepare({ onCancelled: async () => undefined }),
+    })
+
+    // Conditional on the commit's own updatedAt: a later save keeps its own.
+    expect(mocks.articleUpdateMany).toHaveBeenLastCalledWith({
+      data: { updatedAt: previousSavedAt },
+      where: { id: 'article-1', updatedAt: savedAt },
     })
   })
 

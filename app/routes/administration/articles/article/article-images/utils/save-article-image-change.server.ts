@@ -54,7 +54,8 @@ type Options<Answer extends object> = {
   tabId: string
   /**
    * An upload already on its way still lands when the hold was released
-   * meanwhile (*Zavřít* during processing, 24b), never over someone else's.
+   * meanwhile (it expired, or the leave went without the cancel), never over
+   * someone else's.
    */
   landsWithoutHold?: boolean
   /**
@@ -166,7 +167,7 @@ export async function saveArticleImageChange<Answer extends object>(
       const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
       const isHeldByTab = (hold: StoredHold | null) =>
         hold?.heldByAuthorId === tab.authorId && hold.heldByTabId === tab.tabId
-      // Released by *Zavřít* during processing: a draft nobody holds, not
+      // Released while the upload was on its way: a draft nobody holds, not
       // submitted since. Leaving the draft clears the hold too (0021).
       const isFreeDraft = (hold: StoredHold | null) =>
         hold?.heldByTabId === null &&
@@ -227,10 +228,22 @@ export async function saveArticleImageChange<Answer extends object>(
           ]
         : []
 
+      // The article's `updatedAt` before this commit, read in it, for a
+      // cancel to put back.
+      const previousRead = isCancellable
+        ? [
+            prisma.article.findUniqueOrThrow({
+              select: { updatedAt: true },
+              where: { id: articleId },
+            }),
+          ]
+        : []
+
       let results: unknown[]
 
       try {
         results = await prisma.$transaction([
+          ...previousRead,
           ...firstContentWrite,
           ...prepared.writes,
           articleWrite,
@@ -255,19 +268,27 @@ export async function saveArticleImageChange<Answer extends object>(
 
       const isCreation =
         firstContentWrite.length > 0 &&
-        (results[0] as Prisma.BatchPayload).count === 1
+        (results[previousRead.length] as Prisma.BatchPayload).count === 1
 
-      // Cancelled during the commit: put back what it replaced, and the
-      // empty draft it would have filled stays empty (0020).
+      const { updatedAt } = results.at(-1) as { updatedAt: Date }
+
+      // Cancelled during the commit: put back what it replaced. Unless
+      // another change saved since, the article is as it was: the editor's
+      // `updatedAt` holds again, and the empty draft it would have filled
+      // stays empty (0020).
       if (isCancelled() && prepared.onCancelled) {
+        const { updatedAt: previousUpdatedAt } = results[0] as {
+          updatedAt: Date
+        }
         try {
           await prepared.onCancelled()
-          if (isCreation) {
-            await prisma.article.updateMany({
-              data: { firstContentAt: null },
-              where: { id: articleId },
-            })
-          }
+          await prisma.article.updateMany({
+            data: {
+              updatedAt: previousUpdatedAt,
+              ...(isCreation ? { firstContentAt: null } : {}),
+            },
+            where: { id: articleId, updatedAt },
+          })
         } catch (error) {
           console.error('Article image change left after a cancel', error)
         }
@@ -289,8 +310,6 @@ export async function saveArticleImageChange<Answer extends object>(
           isCreation,
         })
       }
-
-      const { updatedAt } = results.at(-1) as { updatedAt: Date }
 
       return { ...prepared.answer, status: 'saved', updatedAt }
     },

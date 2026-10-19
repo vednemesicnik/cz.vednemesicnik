@@ -260,7 +260,6 @@ export const useArticleGallery = ({
     const controller = new AbortController()
     uploadControllersRef.current.set(id, controller)
     uploadsInFlightRef.current += 1
-    const isReplacement = isStored(id)
     try {
       const result = await post(
         {
@@ -272,17 +271,8 @@ export const useArticleGallery = ({
         controller.signal,
       )
 
-      // The cancel settled the tile already. A new image the server saved
-      // before the cancel reached it is removed again; a replacement saved
-      // so is kept, the tile showing what the server has (bxy8xxqs).
-      if (controller.signal.aborted && result.status === 'saved') {
-        if (!isReplacement) {
-          void enqueue(() => post({ imageId: id, intent: 'remove' }))
-          return
-        }
-      } else if (controller.signal.aborted || result.status === 'cancelled') {
-        return
-      }
+      // The cancel settled the tile already, and its answer is lost.
+      if (controller.signal.aborted || result.status === 'cancelled') return
 
       if (result.status === 'saved') {
         // The server puts a new image last.
@@ -408,14 +398,11 @@ export const useArticleGallery = ({
     void upload(id, file)
   }
 
-  /**
-   * Cancels a tile's upload, at any point until it saves (24b, bxy8xxqs). A
-   * new image's tile goes, with what was typed in it; a replacement returns
-   * to the stored image. The server stores nothing.
-   *
-   * @returns Whether an upload was cancelled.
-   */
-  const cancelUpload = (id: string): boolean => {
+  // The server checks for the cancel up to its commit, but an answer already
+  // on its way is lost with the abort, so a new image is removed as well: one
+  // that never landed counts as removed (0027). A replacement whose answer
+  // crossed the cancel stays replaced.
+  const cancel = (id: string, { keepsList }: { keepsList: boolean }) => {
     const controller = uploadControllersRef.current.get(id)
     const tile = tilesRef.current.get(id)
     if (controller === undefined || tile === undefined) return false
@@ -426,17 +413,33 @@ export const useArticleGallery = ({
     if (tile.replaced) {
       updateTile(id, { ...tile.replaced, replaced: null })
     } else {
-      optionsRef.current.list.remove(id)
+      void enqueue(() => post({ imageId: id, intent: 'remove' }))
+      if (!keepsList) optionsRef.current.list.remove(id)
       dropTile(id)
     }
     return true
   }
 
-  /** Cancels every upload under way: the editor is about to close. */
-  const cancelUploads = () => {
+  /**
+   * Cancels a tile's upload, at any point until it saves (24b, bxy8xxqs). A
+   * new image's tile goes, with what was typed in it; a replacement returns
+   * to the stored image. The server keeps nothing.
+   *
+   * @returns Whether an upload was cancelled.
+   */
+  const cancelUpload = (id: string): boolean => cancel(id, { keepsList: false })
+
+  /**
+   * Cancels every upload under way: the editor is about to close, so the
+   * form's list stays as it is.
+   *
+   * @returns Settles once the server has heard of the cancels.
+   */
+  const cancelUploads = async () => {
     for (const id of [...uploadControllersRef.current.keys()]) {
-      cancelUpload(id)
+      cancel(id, { keepsList: true })
     }
+    await queueRef.current.catch(() => {})
   }
 
   /**

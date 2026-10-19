@@ -16,7 +16,9 @@ type Props = {
  */
 export const CompactUploadStatus = ({ className }: Props) => (
   <div className={clsx(styles.compactUploadStatus, className)}>
-    <span className={styles.label}>Nahrává se</span>
+    <span aria-hidden={true} className={styles.label}>
+      Nahrává se
+    </span>
     <UploadStatusBar className={styles.bar} />
   </div>
 )

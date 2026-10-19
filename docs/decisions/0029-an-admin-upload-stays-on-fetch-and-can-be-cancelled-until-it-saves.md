@@ -39,10 +39,16 @@ issue editor, the covers and the profile photo.
   cancels the upload. 0027's "Progress bars are #227" no longer holds.
 - An upload still lands without the hold (0027) when the hold is released while the request
   runs and the editor did not cancel it, e.g. after a long outage.
-- A first image cancelled during the commit leaves the empty draft empty: `firstContentAt` is
-  reset ([0020](0020-a-new-article-is-a-draft-created-on-click.md)).
-- If the editor's cancel crosses an answer already on its way, a new image the server saved is
-  removed again with a `remove` change. A replacement saved so is kept, and the tile shows it.
+- A cancel during the commit puts the article's `updatedAt` back, and a first image cancelled so
+  leaves the empty draft empty: `firstContentAt` is reset
+  ([0020](0020-a-new-article-is-a-draft-created-on-click.md)). Both only while nothing else
+  has saved since.
+- The abort loses an answer already on its way, so a cancelled new image is always sent a
+  `remove` change too; one that never landed counts as removed. A replacement whose answer
+  crossed the cancel is kept on the server, while the tile shows the old image until the editor
+  loads again.
+- The server sees the cancel only if the closed connection reaches it through the proxy; if it
+  does not, the upload saves, and a new image goes with its `remove`.
 - The issue cover and PDF (26c), the podcast and episode covers (27) and the profile photo (29)
   reuse `UploadStatus` and the same rules, each with its own route.
 - Revisit once `fetch` gets upload progress events (being specified, 2026): only the transport and

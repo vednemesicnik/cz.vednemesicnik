@@ -518,14 +518,16 @@ export default function RouteComponent({
   })
   uploadingCountRef.current = gallery.uploadingCount
   uploadFailureCountRef.current = gallery.uploadFailureCount
-  // The dialog's leave cancels what still uploads; once none runs it only
-  // closes.
+  // The dialog's leave cancels what still uploads, and goes once the server
+  // has heard of it; once none runs it only closes.
   const leaveDespiteUploads = () => {
     if (pendingLeave === null) return
-    gallery.cancelUploads()
+    const cancelled = gallery.cancelUploads()
     uploadingCountRef.current = 0
     setPendingLeave(null)
-    void leaveTo(pendingLeave.to, pendingLeave.go).finally(pendingLeave.stay)
+    void cancelled
+      .then(() => leaveTo(pendingLeave.to, pendingLeave.go))
+      .finally(pendingLeave.stay)
   }
   const stayDespiteUploads = () => {
     pendingLeave?.stay()
