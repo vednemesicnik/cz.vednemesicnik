@@ -7,46 +7,12 @@
   }
 }
 
+/* The row (EditorDetailRow) belongs to the phone only. */
 .row {
   @layer route {
-    display: none;
-
-    @media (width < 768px) {
-      display: grid;
-      grid-template-columns: 90px minmax(0, 1fr);
-      gap: 12px;
-      align-items: baseline;
-      min-block-size: 44px;
-      padding-block: 14px;
-      padding-inline: 0;
-      color: var(--text-primary);
-      font: inherit;
-      font-size: var(--font-size-sm);
-      text-align: start;
-      background: none;
-      border: 0;
-      border-block-end: 1px solid var(--border);
-      cursor: pointer;
-
-      &:focus-visible {
-        outline: none;
-        box-shadow: var(--focus-shadow);
-      }
+    @media (width >= 768px) {
+      display: none;
     }
-  }
-}
-
-.rowName {
-  @layer route {
-    color: var(--text-secondary);
-  }
-}
-
-.rowValue {
-  @layer route {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 }
 

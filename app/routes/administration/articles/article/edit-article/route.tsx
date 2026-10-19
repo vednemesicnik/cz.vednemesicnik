@@ -985,6 +985,11 @@ export default function RouteComponent({
     imageFieldList.length,
     gallery.processingCount,
   )
+  // The phone's row shows the first three stored images (u94oosdp).
+  const galleryThumbnails = shownStoredImageIds
+    .map((id) => gallery.tiles.get(id)?.previewUrl)
+    .filter((source) => typeof source === 'string')
+    .slice(0, 3)
   const perexLength = [...(fields.perex.value ?? '')].length
   const slugValue = fields.slug.value ?? ''
 
@@ -1597,6 +1602,7 @@ export default function RouteComponent({
                   )
                 }
                 summary={gallerySummary}
+                thumbnails={galleryThumbnails}
               >
                 <fieldset
                   className={clsx(styles.lock, styles.gallery)}

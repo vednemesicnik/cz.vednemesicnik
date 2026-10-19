@@ -1,0 +1,9 @@
+/* Inline in the value, 8 px before its text. */
+.editorDetailRowThumbnails {
+  @layer component {
+    display: inline-flex;
+    gap: 4px;
+    margin-inline-end: 8px;
+    vertical-align: middle;
+  }
+}
