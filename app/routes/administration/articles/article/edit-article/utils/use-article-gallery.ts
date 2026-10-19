@@ -24,6 +24,8 @@ export type GalleryTile = TileFile & {
   replaced: TileFile | null
   /** The new file of a replacement did not process; the old one stays. */
   hasReplaceFailed: boolean
+  /** The failed file is over the pixel budget: the tile says so (4al3quzt). */
+  isOverPixelBudget: boolean
   /**
    * A failed new image whose upload got no answer: it may have landed, so
    * removing it asks the server too.
@@ -47,11 +49,15 @@ type ChangeAnswer =
       fileName?: string
     }
   | { status: 'not-held'; heldByName: string | null }
-  | { status: 'failed' }
+  | ChangeFailure
+
+/** The file did not process; an image over the pixel budget says so. */
+type ChangeFailure = { status: 'failed'; reason?: 'over-pixel-budget' }
 
 type ChangeResult =
   | Extract<ChangeAnswer, { status: 'saved' }>
-  | { status: 'failed' | 'unsaved' | 'cancelled' }
+  | ChangeFailure
+  | { status: 'unsaved' | 'cancelled' }
 
 /** The gallery's list in the form, which carries the alt texts and captions. */
 type GalleryList = {
@@ -84,6 +90,7 @@ type Options = {
 const toTile = (image: StoredImage): GalleryTile => ({
   fileName: image.fileName,
   hasReplaceFailed: false,
+  isOverPixelBudget: false,
   isRemoving: false,
   isUnconfirmed: false,
   previewUrl: image.previewUrl,
@@ -215,7 +222,7 @@ export const useArticleGallery = ({
 
     // 422: the file did not process; anything else is no answer.
     return response.status === 422
-      ? { status: 'failed' }
+      ? { reason: answer.reason, status: 'failed' }
       : { status: 'unsaved' }
   }
 
@@ -284,6 +291,7 @@ export const useArticleGallery = ({
         updateTile(id, {
           fileName: result.fileName ?? file.name,
           hasReplaceFailed: false,
+          isOverPixelBudget: false,
           isUnconfirmed: false,
           previewUrl: result.previewUrl ?? null,
           replaced: null,
@@ -295,6 +303,8 @@ export const useArticleGallery = ({
 
       setUploadFailureCount((count) => count + 1)
       if (tilesRef.current.get(id)?.replaced) revokeObjectUrl(id)
+      const isOverPixelBudget =
+        result.status === 'failed' && result.reason === 'over-pixel-budget'
       setTiles((current) => {
         const tile = current.get(id)
         if (tile === undefined) return current
@@ -306,10 +316,12 @@ export const useArticleGallery = ({
                 ...tile,
                 ...tile.replaced,
                 hasReplaceFailed: true,
+                isOverPixelBudget,
                 replaced: null,
               }
             : {
                 ...tile,
+                isOverPixelBudget,
                 isUnconfirmed: result.status !== 'failed',
                 status: 'failed',
               },
@@ -354,6 +366,7 @@ export const useArticleGallery = ({
         new Map(current).set(id, {
           fileName: file.name,
           hasReplaceFailed: false,
+          isOverPixelBudget: false,
           isRemoving: false,
           isUnconfirmed: false,
           previewUrl,
@@ -390,10 +403,15 @@ export const useArticleGallery = ({
       updateTile(id, {
         ...picked,
         hasReplaceFailed: false,
+        isOverPixelBudget: false,
         replaced: { fileName: tile.fileName, previewUrl: tile.previewUrl },
       })
     } else {
-      updateTile(id, { ...picked, status: 'uploading' })
+      updateTile(id, {
+        ...picked,
+        isOverPixelBudget: false,
+        status: 'uploading',
+      })
     }
     void upload(id, file)
   }

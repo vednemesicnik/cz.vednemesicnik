@@ -1,4 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
+import sharp from 'sharp'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { ARTICLE_IMAGE_CONFIG } from '~/config/article-image-config'
@@ -274,6 +275,30 @@ describe('uploadArticleImage — a new image', () => {
     expect(prepared).toEqual({ status: 'failed' })
     expect(mocks.deleteImage).toHaveBeenCalledWith(imageId)
     expect(mocks.articleImageCreate).not.toHaveBeenCalled()
+  })
+
+  test('answers failed with the reason for an image over the pixel budget, storing nothing', async () => {
+    const huge = new File(
+      [
+        await sharp({
+          create: {
+            background: '#fff',
+            channels: 3,
+            height: 8000,
+            width: 8000,
+          },
+        })
+          .png({ compressionLevel: 1 })
+          .toBuffer(),
+      ],
+      'huge.png',
+      { type: 'image/png' },
+    )
+
+    const prepared = await run({ file: huge })
+
+    expect(prepared).toEqual({ reason: 'over-pixel-budget', status: 'failed' })
+    expect(mocks.storeImageVariants).not.toHaveBeenCalled()
   })
 
   test('a cancel during the commit deletes the row and its files (bxy8xxqs)', async () => {

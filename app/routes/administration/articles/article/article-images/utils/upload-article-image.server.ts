@@ -6,6 +6,7 @@ import { buildArticlePageSeoImageWrites } from '~/routes/administration/articles
 import { prisma } from '~/utils/db.server'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
 import { isImageIdOwnedElsewhere } from '~/utils/image-store/is-image-id-owned-elsewhere.server'
+import { isImageOverPixelBudget } from '~/utils/image-store/is-image-over-pixel-budget.server'
 import {
   deleteImage,
   deleteImageVersion,
@@ -39,7 +40,9 @@ type Options = {
  * @param options - The article, the tab, the image id, the file, and the alt
  *   text and caption typed while it was processed.
  * @returns `saved` with the stored preview's URL, `not-held`, `failed` when
- *   the file could not be processed, or `cancelled`.
+ *   the file could not be processed (with the reason `over-pixel-budget` for
+ *   an image over `MAX_IMAGE_PIXELS`, refused before it is stored), or
+ *   `cancelled`.
  * @throws A 400 response for a file that is not an image or is too big, or an
  *   id that is not a cuid or belongs to another record.
  */
@@ -96,6 +99,10 @@ export async function uploadArticleImage(
         } else if (version !== null && committed.version !== version) {
           await deleteImageVersion(imageId, version)
         }
+      }
+
+      if (await isImageOverPixelBudget(file)) {
+        return { reason: 'over-pixel-budget', status: 'failed' }
       }
 
       let meta: StoredImageMeta

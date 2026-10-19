@@ -38,13 +38,21 @@ export type PreparedImageChange<Answer extends object> = {
   answer: Answer
 }
 
+/**
+ * The file could not be processed; nothing was stored (24b). An image over
+ * the pixel budget says so, for the tile's sentence (4al3quzt).
+ */
+export type ImageChangeFailure = {
+  status: 'failed'
+  reason?: 'over-pixel-budget'
+}
+
 /** How an image operation ended, as the editor's gallery reads it. */
 export type ImageChangeResult<Answer extends object> =
   | ({ status: 'saved'; updatedAt: Date } & Answer)
   /** The tab does not hold the article; `heldByName` is who does, if anyone. */
   | { status: 'not-held'; heldByName: string | null }
-  /** The file could not be processed; nothing was stored (24b). */
-  | { status: 'failed' }
+  | ImageChangeFailure
   /** The editor cancelled the upload; nothing stays stored (bxy8xxqs). */
   | { status: 'cancelled' }
 
@@ -67,7 +75,7 @@ type Options<Answer extends object> = {
   prepare: (
     context: AuthorPermissionContext,
     article: ImageChangeArticle,
-  ) => Promise<PreparedImageChange<Answer> | { status: 'failed' }>
+  ) => Promise<PreparedImageChange<Answer> | ImageChangeFailure>
 }
 
 type StoredHold = EditHoldColumns & {
