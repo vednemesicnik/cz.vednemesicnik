@@ -47,8 +47,11 @@ issue editor, the covers and the profile photo.
   `remove` change too; one that never landed counts as removed. A replacement whose answer
   crossed the cancel is kept on the server, while the tile shows the old image until the editor
   loads again.
-- The server sees the cancel only if the closed connection reaches it through the proxy; if it
-  does not, the upload saves, and a new image goes with its `remove`.
+- In production the cancel reaches the server through Cloudflare and the Fly proxy (#713,
+  19 Oct 2026). Cloudflare forwards an upload only once its whole body has arrived, so a cancel
+  during the transfer never reaches the app. A cancel during processing closes the request at
+  the origin, and the upload stores nothing. Sharp still finishes its work first: the cancel
+  is read only before the files are stored.
 - The issue cover and PDF (26c), the podcast and episode covers (27) and the profile photo (29)
   reuse `UploadStatus` and the same rules, each with its own route.
 - Revisit once `fetch` gets upload progress events (being specified, 2026): only the transport and
