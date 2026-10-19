@@ -1,7 +1,7 @@
 /**
  * Where a stored image moves in the gallery's list when it goes to another
  * place among the stored images: it takes the place of the stored image it
- * passes, and an image still processing or failed keeps its tile where it is.
+ * passes, and an image still uploading or failed keeps its tile where it is.
  *
  * @param ids - Every tile, in the gallery's order.
  * @param storedIds - The stored images among them, in the same order.

@@ -6,8 +6,8 @@ import styles from './_styles.module.css'
 type Props = {
   /** The preview's URL; without one, the signature gradient. */
   source?: string | null
-  /** Being processed: dimmed (24b). */
-  isProcessing?: boolean
+  /** Uploading, from the pick to the save: lightened (24b). */
+  isUploading?: boolean
   /** Processing failed: rose, without the image (24b). */
   isFailed?: boolean
   /** The pills, then the „⋯“ (`ImageTilePill`, `ImageTileMenu`). */
@@ -21,7 +21,7 @@ type Props = {
  */
 export const ImageTileMedia = ({
   source,
-  isProcessing = false,
+  isUploading = false,
   isFailed = false,
   children,
   className,
@@ -30,7 +30,7 @@ export const ImageTileMedia = ({
     className={clsx(
       styles.imageTileMedia,
       !source && styles.empty,
-      isProcessing && styles.processing,
+      isUploading && styles.uploading,
       isFailed && styles.failed,
       className,
     )}

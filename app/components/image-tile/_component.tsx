@@ -15,9 +15,9 @@ type Props = {
  * images, later the issue and episode covers; design 24b, decision 0027). The
  * preview (`ImageTileMedia`) with its place (`ImageTileOrder`), pills and
  * „⋯“, then the alt text, the caption and the file name (`ImageTileFile`),
- * 10 px apart. A failed upload says so under the preview
- * (`ImageTileMessage`, `ImageTileActions`). The narrow column's shape is
- * `CompactImageTile`.
+ * 10 px apart. An upload under way shows `UploadStatus` under the preview;
+ * a failed one says so there (`ImageTileMessage`, `ImageTileActions`). The
+ * narrow column's shape is `CompactImageTile`.
  */
 export const ImageTile = ({ children, isLifted = false, className }: Props) => (
   <div className={clsx(styles.imageTile, isLifted && styles.lifted, className)}>

@@ -6,7 +6,7 @@ import { Button } from '~/components/button'
 import styles from './_styles.module.css'
 
 type Props = {
-  /** The row's value on a phone (24f): „3 · ve zpracování: 1“. */
+  /** The row's value on a phone (24f): „4 · nahrává se: 1“. */
   summary: string
   isOpen: boolean
   /** Another detail is open over it: out of reach (24f). */

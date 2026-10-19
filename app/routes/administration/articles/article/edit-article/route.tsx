@@ -37,6 +37,7 @@ import { Checkbox } from '~/components/checkbox'
 import { Chip } from '~/components/chip'
 import { ChipInput } from '~/components/chip-input'
 import { CompactImageTile } from '~/components/compact-image-tile'
+import { CompactUploadStatus } from '~/components/compact-upload-status'
 import { Form } from '~/components/form'
 import { ImageTile } from '~/components/image-tile'
 import { ImageTileActions } from '~/components/image-tile-actions'
@@ -52,6 +53,7 @@ import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { TextEditor } from '~/components/text-editor'
 import { TextField } from '~/components/text-field'
+import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
@@ -73,6 +75,7 @@ import { AuthorListItem } from './components/author-list-item'
 import { AuthorRemoveButton } from './components/author-remove-button'
 import { AuthorRow } from './components/author-row'
 import { AuthorRowButton } from './components/author-row-button'
+import { CancelUploadDialog } from './components/cancel-upload-dialog'
 import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditHoldDialog } from './components/edit-hold-dialog'
@@ -90,6 +93,7 @@ import { getEditorSentence } from './utils/get-editor-sentence'
 import { getImageMenuItems } from './utils/get-image-menu-items'
 import { getReadOnlyNotice } from './utils/get-read-only-notice'
 import { getSaveLineText } from './utils/get-save-line-text'
+import { isTileUploading } from './utils/is-tile-uploading'
 import { useArticleGallery } from './utils/use-article-gallery'
 import { useGalleryDrag } from './utils/use-gallery-drag'
 import { useRemovedIds } from './utils/use-removed-ids'
@@ -389,19 +393,48 @@ export default function RouteComponent({
     }
   }
 
+  // Leaving cancels the uploads under way, so *Zavřít* and a link out ask
+  // first while an image uploads (24b, bxy8xxqs). The dialog counts the
+  // failures from its opening on (moo05ljj). The gallery keeps both counts
+  // here, read ahead of a render.
+  const uploadingCountRef = useRef(0)
+  const uploadFailureCountRef = useRef(0)
+  const [pendingLeave, setPendingLeave] = useState<{
+    to: string
+    go: () => void
+    stay: () => void
+    failureCountAtOpen: number
+  } | null>(null)
+  const askBeforeLeaving = (
+    to: string,
+    go: () => void,
+    stay: () => void = () => {},
+  ) =>
+    setPendingLeave({
+      failureCountAtOpen: uploadFailureCountRef.current,
+      go,
+      stay,
+      to,
+    })
+
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       currentLocation.pathname !== nextLocation.pathname &&
-      autosave.hasUnsavedChanges(),
+      (autosave.hasUnsavedChanges() || uploadingCountRef.current > 0),
   )
   const handleBlocked = useEffectEvent(() => {
     if (blocker.state !== 'blocked') return
     const { pathname, search, hash } = blocker.location
     const to = `${pathname}${search}${hash}`
-
-    void leaveTo(to, () => blocker.proceed()).finally(() => {
+    const settle = () => {
       if (blocker.state === 'blocked') blocker.reset()
-    })
+    }
+
+    if (uploadingCountRef.current > 0) {
+      askBeforeLeaving(to, () => blocker.proceed(), settle)
+      return
+    }
+    void leaveTo(to, () => blocker.proceed()).finally(settle)
   })
   useEffect(() => {
     if (blocker.state === 'blocked') handleBlocked()
@@ -423,6 +456,10 @@ export default function RouteComponent({
 
   const handleClose = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
+    if (uploadingCountRef.current > 0) {
+      askBeforeLeaving(closeHref, () => navigate(closeHref))
+      return
+    }
     void leaveTo(closeHref, () => navigate(closeHref))
   }
 
@@ -479,6 +516,21 @@ export default function RouteComponent({
     onUploaded: () => autosave.markChanged(),
     tabId: editHold.tabId,
   })
+  uploadingCountRef.current = gallery.uploadingCount
+  uploadFailureCountRef.current = gallery.uploadFailureCount
+  // The dialog's leave cancels what still uploads; once none runs it only
+  // closes.
+  const leaveDespiteUploads = () => {
+    if (pendingLeave === null) return
+    gallery.cancelUploads()
+    uploadingCountRef.current = 0
+    setPendingLeave(null)
+    void leaveTo(pendingLeave.to, pendingLeave.go).finally(pendingLeave.stay)
+  }
+  const stayDespiteUploads = () => {
+    pendingLeave?.stay()
+    setPendingLeave(null)
+  }
   // The stored image whose removal waits for its dialog.
   const [removingImageId, setRemovingImageId] = useState<string | null>(null)
   // One file input for *Nahradit soubor* and *Vybrat jiný soubor*.
@@ -489,8 +541,8 @@ export default function RouteComponent({
     replaceInputRef.current?.click()
   }
   // After a step from the „⋯“, the focus stays on that tile's „⋯“ and a
-  // screen reader hears the new place (8kfn4ou3).
-  const [moveAnnouncement, setMoveAnnouncement] = useState('')
+  // screen reader hears the new place (8kfn4ou3); a cancel is said too.
+  const [galleryAnnouncement, setGalleryAnnouncement] = useState('')
   const [movedImageId, setMovedImageId] = useState<string | null>(null)
   useEffect(() => {
     if (movedImageId === null) return
@@ -505,18 +557,18 @@ export default function RouteComponent({
   // between. Said once it saved; emptied first, so the same words are said
   // again.
   const moveImage = async (id: string, to: number, count: number) => {
-    setMoveAnnouncement('')
+    setGalleryAnnouncement('')
     if (await gallery.move(id, to)) {
-      setMoveAnnouncement(`Pozice ${to + 1}, celkem ${count}.`)
+      setGalleryAnnouncement(`Pozice ${to + 1}, celkem ${count}.`)
     }
   }
   // A new main image moves to the first place: said like a step, and the
   // focus stays on its „⋯“ (yj2t50dd).
   const featureImage = async (id: string, count: number) => {
     setMovedImageId(id)
-    setMoveAnnouncement('')
+    setGalleryAnnouncement('')
     if (await gallery.setFeatured(id)) {
-      setMoveAnnouncement(`Pozice 1, celkem ${count}.`)
+      setGalleryAnnouncement(`Pozice 1, celkem ${count}.`)
     }
   }
   // After a removal the focus goes to the next tile's „⋯“, the previous
@@ -541,6 +593,36 @@ export default function RouteComponent({
   const removeImage = async (id: string) => {
     const index = getImageIds().indexOf(id)
     if (await gallery.remove(id)) setRemovedImageIndex(index)
+  }
+  // A cancelled new image's tile goes: the focus moves to the next tile, after
+  // the last one to *Přidat obrázky*. A cancelled replacement stays, so the
+  // focus goes to its „⋯“. Said either way (24b, bxy8xxqs).
+  const [cancelledImageIndex, setCancelledImageIndex] = useState<number | null>(
+    null,
+  )
+  useEffect(() => {
+    if (cancelledImageIndex === null) return
+    const panel = formRef.current?.querySelector('dialog[open]')
+    const target =
+      panel?.querySelectorAll('li[data-image-id]')[cancelledImageIndex]
+    const focusable =
+      target?.querySelector<HTMLElement>('[popovertarget], button') ??
+      panel?.querySelector<HTMLInputElement>('input[type="file"][multiple]')
+    focusable?.focus()
+    setCancelledImageIndex(null)
+  }, [cancelledImageIndex])
+  const cancelImageUpload = (id: string) => {
+    const index = getImageIds().indexOf(id)
+    const isReplacement = gallery.tiles.get(id)?.replaced != null
+    if (!gallery.cancelUpload(id)) return
+    if (isReplacement) {
+      setMovedImageId(id)
+    } else {
+      setCancelledImageIndex(index)
+    }
+    // Emptied first, so the same words are said again.
+    setGalleryAnnouncement('')
+    setTimeout(() => setGalleryAnnouncement('Nahrávání zrušeno.'), 100)
   }
   // Wherever a pick starts, it ends in the panel, in the first new image's
   // alt text (sa1x34z3). A pick that made no tile opens nothing.
@@ -963,7 +1045,7 @@ export default function RouteComponent({
       !isReadOnly &&
       !isFeaturedImage(id) &&
       tile?.status === 'stored' &&
-      !tile.isReplacing &&
+      !isTileUploading(tile) &&
       !tile.isRemoving
     )
   }
@@ -983,7 +1065,7 @@ export default function RouteComponent({
   const getImageNumber = (id: string) => shownStoredImageIds.indexOf(id) + 1
   const gallerySummary = formatGallerySummary(
     imageFieldList.length,
-    gallery.processingCount,
+    gallery.uploadingCount,
   )
   const perexLength = [...(fields.perex.value ?? '')].length
   const slugValue = fields.slug.value ?? ''
@@ -1055,6 +1137,18 @@ export default function RouteComponent({
             text článku.
           </p>
         </Callout>
+      )}
+
+      {pendingLeave !== null && (
+        <CancelUploadDialog
+          failedCount={
+            gallery.uploadFailureCount - pendingLeave.failureCountAtOpen
+          }
+          onLeave={leaveDespiteUploads}
+          onStay={stayDespiteUploads}
+          replacingCount={gallery.replacingCount}
+          uploadingCount={gallery.uploadingCount}
+        />
       )}
 
       {holdLoss?.dialog === 'taken' && (
@@ -1528,34 +1622,33 @@ export default function RouteComponent({
                         const tile = gallery.tiles.get(id)
                         const altText = imageFields.altText.value ?? ''
                         const isFailed = tile?.status === 'failed'
-                        const isProcessing =
-                          tile?.status === 'processing' ||
-                          tile?.isReplacing === true
+                        const isUploading =
+                          tile !== undefined && isTileUploading(tile)
 
                         return (
                           <li key={image.key}>
                             <CompactImageTile>
                               <ImageTileMedia
                                 isFailed={isFailed}
-                                isProcessing={isProcessing}
+                                isUploading={isUploading}
                                 source={tile?.previewUrl}
                               >
-                                {tile?.status === 'stored' && (
+                                {/* While it uploads, no number and no pill
+                                    (bxy8xxqs). */}
+                                {tile?.status === 'stored' && !isUploading && (
                                   <ImageTileOrder number={getImageNumber(id)} />
                                 )}
-                                {gallery.featuredImageId === id && (
-                                  <ImageTilePill>Hlavní</ImageTilePill>
-                                )}
-                                {isProcessing && (
-                                  <ImageTilePill isMuted>
-                                    Zpracovává se
-                                  </ImageTilePill>
-                                )}
+                                {gallery.featuredImageId === id &&
+                                  !isUploading && (
+                                    <ImageTilePill>Hlavní</ImageTilePill>
+                                  )}
                               </ImageTileMedia>
                               {isFailed ? (
                                 <ImageTileAltLine isFailed>
                                   Zpracování selhalo
                                 </ImageTileAltLine>
+                              ) : isUploading ? (
+                                <CompactUploadStatus />
                               ) : altText === '' ? (
                                 <ImageTileAltLine isMissing>
                                   Bez alt textu
@@ -1612,9 +1705,8 @@ export default function RouteComponent({
                       const id = imageFields.id.value ?? ''
                       const tile = gallery.tiles.get(id)
                       const isStored = tile?.status === 'stored'
-                      const isProcessing =
-                        tile?.status === 'processing' ||
-                        tile?.isReplacing === true
+                      const isUploading =
+                        tile !== undefined && isTileUploading(tile)
                       const idInput = (
                         <input
                           {...getInputProps(imageFields.id, {
@@ -1688,27 +1780,22 @@ export default function RouteComponent({
                                   !isLifted &&
                                   styles.imageHandle,
                               )}
-                              isProcessing={isProcessing}
+                              isUploading={isUploading}
                               source={tile?.previewUrl}
                             >
-                              {/* A replacement keeps the stored image's place, so
-                                  its number too; only a new upload has none. */}
-                              {isStored && (
+                              {/* While it uploads, a replacement too, the tile
+                                  has no number, pill or „⋯“ (bxy8xxqs). */}
+                              {isStored && !isUploading && (
                                 <ImageTileOrder
                                   hasGrip={canDragImage(id)}
                                   number={getImageNumber(id)}
                                 />
                               )}
-                              {isFeatured && (
+                              {isFeatured && !isUploading && (
                                 <ImageTilePill>Hlavní</ImageTilePill>
                               )}
-                              {isProcessing && (
-                                <ImageTilePill isMuted>
-                                  Zpracovává se
-                                </ImageTilePill>
-                              )}
                               {isStored &&
-                                !isProcessing &&
+                                !isUploading &&
                                 !tile?.isRemoving &&
                                 !isReadOnly && (
                                   <ImageTileMenu>
@@ -1746,6 +1833,18 @@ export default function RouteComponent({
                                   </ImageTileMenu>
                                 )}
                             </ImageTileMedia>
+                            {/* Zrušit takes the place of Odebrat while the
+                                file is on its way (bxy8xxqs). */}
+                            {isUploading && (
+                              <UploadStatus
+                                cancelLabel={
+                                  tile.fileName === null
+                                    ? 'Zrušit nahrávání'
+                                    : `Zrušit nahrávání ${tile.fileName}`
+                                }
+                                onCancel={() => cancelImageUpload(id)}
+                              />
+                            )}
                             {tile?.hasReplaceFailed && (
                               <>
                                 <ImageTileMessage>
@@ -1784,11 +1883,7 @@ export default function RouteComponent({
                               readOnly={isReadOnly}
                             />
                             {tile?.fileName != null && (
-                              <ImageTileFile>
-                                {tile.fileName}
-                                {tile.status === 'processing' &&
-                                  ' · zpracovává se'}
-                              </ImageTileFile>
+                              <ImageTileFile>{tile.fileName}</ImageTileFile>
                             )}
                           </ImageTile>
                         </li>
@@ -1821,7 +1916,7 @@ export default function RouteComponent({
                     type={'file'}
                   />
                   <span aria-live={'polite'} className={'screen-reader-only'}>
-                    {moveAnnouncement}
+                    {galleryAnnouncement}
                   </span>
                 </fieldset>
                 {removingImageId !== null && (
