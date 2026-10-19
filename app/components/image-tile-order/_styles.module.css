@@ -1,0 +1,37 @@
+/* `.vdm-imagetile__order`: a white chip as high as the „⋯“. */
+.imageTileOrder {
+  @layer component {
+    position: relative;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    box-sizing: border-box;
+    min-width: 20px;
+    height: 20px;
+    padding-inline: 6px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    pointer-events: none;
+  }
+}
+
+.grip {
+  @layer variant {
+    padding-inline-end: 2px;
+  }
+}
+
+/* 16 px; a lifted tile colours it (`ImageTile isLifted`), as 22c does. */
+.icon {
+  @layer variant {
+    flex: none;
+    font-size: 16px;
+    color: var(--image-tile-grip-color, currentColor);
+  }
+}

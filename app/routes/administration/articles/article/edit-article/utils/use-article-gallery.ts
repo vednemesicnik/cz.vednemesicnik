@@ -120,6 +120,9 @@ export const useArticleGallery = ({
   // the tiles' until the uploads settle.
   const isOrderStaleRef = useRef(false)
   const [featuredImageId, setFeaturedImageId] = useState(initialFeaturedImageId)
+  // The main image as the last change left it, ahead of a render.
+  const featuredImageIdRef = useRef(featuredImageId)
+  featuredImageIdRef.current = featuredImageId
   const [rejectedSentences, setRejectedSentences] = useState<string[]>([])
   // A removal, the main image or the order did not save, and was put back.
   const [hasFailedChange, setHasFailedChange] = useState(false)
@@ -213,6 +216,18 @@ export const useArticleGallery = ({
 
   // The stored images in the order the tiles show, read when it is sent.
   const getStoredOrder = () => optionsRef.current.list.getIds().filter(isStored)
+
+  // Moves a stored image to a place among the stored ones in the form's list
+  // as it stands now, so a put-back finds the tile wherever later changes
+  // left it. Returns the place it had, or -1 when it did not move.
+  const moveToStoredPlace = (id: string, to: number) => {
+    const ids = optionsRef.current.list.getIds()
+    const storedIds = ids.filter(isStored)
+    const indexes = getStoredMoveIndexes(ids, storedIds, id, to)
+    if (indexes === null) return -1
+    optionsRef.current.list.move(indexes.from, indexes.to)
+    return storedIds.indexOf(id)
+  }
 
   // Once no upload is under way, the server gets the tiles' order if a new
   // image landed out of turn.
@@ -380,16 +395,32 @@ export const useArticleGallery = ({
     return true
   }
 
-  /** Sets the main image, or none with `null`. */
-  const setFeatured = async (id: string | null) => {
-    const previous = featuredImageId
+  /**
+   * Sets the main image, or none with `null`. The main image stands first
+   * (yj2t50dd): a new one moves to the first place in the same change; none
+   * leaves the last one first. A refused change is put back by id, wherever
+   * later changes moved the tiles.
+   *
+   * @returns Whether it saved.
+   */
+  const setFeatured = async (id: string | null): Promise<boolean> => {
+    const previous = featuredImageIdRef.current
+    featuredImageIdRef.current = id
     setFeaturedImageId(id)
+    const from = id === null ? -1 : moveToStoredPlace(id, 0)
 
     const result = await enqueue(() =>
       post({ intent: 'feature', ...(id === null ? {} : { imageId: id }) }),
     )
     setHasFailedChange(result.status !== 'saved')
-    if (result.status !== 'saved') setFeaturedImageId(previous)
+    // Put back unless a later change set another main image meanwhile.
+    if (result.status !== 'saved' && featuredImageIdRef.current === id) {
+      featuredImageIdRef.current = previous
+      setFeaturedImageId(previous)
+      if (id !== null && from !== -1) moveToStoredPlace(id, from)
+      if (previous !== null) moveToStoredPlace(previous, 0)
+    }
+    return result.status === 'saved'
   }
 
   /**
@@ -401,21 +432,15 @@ export const useArticleGallery = ({
    * @returns Whether the new order saved.
    */
   const move = async (id: string, to: number): Promise<boolean> => {
-    const ids = optionsRef.current.list.getIds()
-    const indexes = getStoredMoveIndexes(ids, ids.filter(isStored), id, to)
-    if (indexes === null) return false
-
-    const { from: listFrom, to: listTo } = indexes
-    optionsRef.current.list.move(listFrom, listTo)
+    const from = moveToStoredPlace(id, to)
+    if (from === -1) return false
 
     // The order as it stands when the change goes, after those before it.
     const result = await enqueue(() =>
       post({ imageIds: getStoredOrder(), intent: 'reorder' }),
     )
     setHasFailedChange(result.status !== 'saved')
-    if (result.status !== 'saved') {
-      optionsRef.current.list.move(listTo, listFrom)
-    }
+    if (result.status !== 'saved') moveToStoredPlace(id, from)
     return result.status === 'saved'
   }
 

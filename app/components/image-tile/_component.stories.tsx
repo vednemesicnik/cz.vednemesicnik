@@ -11,6 +11,7 @@ import { ImageTileFile } from '~/components/image-tile-file'
 import { ImageTileMedia } from '~/components/image-tile-media'
 import { ImageTileMenu } from '~/components/image-tile-menu'
 import { ImageTileMessage } from '~/components/image-tile-message'
+import { ImageTileOrder } from '~/components/image-tile-order'
 import { ImageTilePill } from '~/components/image-tile-pill'
 import { TextField } from '~/components/text-field'
 
@@ -37,12 +38,16 @@ const menuItems = [
 
 const tileWidth = { width: '300px' }
 
-/** A stored image: the main one, its „⋯“, the alt text and the file (24b). */
+/**
+ * The main image: first, its number without a grip, its „⋯“, the alt text and
+ * the file (24b, yj2t50dd).
+ */
 export const Playground: Story = {
   render: () => (
     <div style={tileWidth}>
       <ImageTile>
         <ImageTileMedia>
+          <ImageTileOrder number={1} />
           <ImageTilePill>Hlavní</ImageTilePill>
           <ImageTileMenu>
             <ActionMenu
@@ -85,6 +90,41 @@ export const Processing: Story = {
   ),
 }
 
+/**
+ * A stored image that can be dragged, and the same tile taken hold of: a card
+ * with its grip coloured (24b „Během přetažení“, as 22c).
+ */
+export const Draggable: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'flex', gap: '32px' }}>
+      {[false, true].map((isLifted) => (
+        <div key={String(isLifted)} style={tileWidth}>
+          <ImageTile isLifted={isLifted}>
+            <ImageTileMedia>
+              <ImageTileOrder hasGrip number={2} />
+              <ImageTileMenu>
+                <ActionMenu
+                  items={menuItems}
+                  label={'Další akce obrázku 2'}
+                  variant={'chip'}
+                />
+              </ImageTileMenu>
+            </ImageTileMedia>
+            <TextField
+              defaultValue={'Čtenáři u okna'}
+              id={`image-tile-draggable-alt-${isLifted}`}
+              label={'Alt text'}
+              size={'sm'}
+            />
+            <ImageTileFile>ctenari.jpg</ImageTileFile>
+          </ImageTile>
+        </div>
+      ))}
+    </div>
+  ),
+}
+
 /** Processing failed: rose, a sentence and two ways out, no fields (24b). */
 export const Failed: Story = {
   render: () => (
@@ -110,10 +150,11 @@ export const ReplaceFailed: Story = {
     <div style={tileWidth}>
       <ImageTile>
         <ImageTileMedia>
+          <ImageTileOrder hasGrip number={2} />
           <ImageTileMenu>
             <ActionMenu
               items={menuItems}
-              label={'Další akce obrázku 1'}
+              label={'Další akce obrázku 2'}
               variant={'chip'}
             />
           </ImageTileMenu>
@@ -149,6 +190,7 @@ export const Compact: Story = {
     >
       <CompactImageTile>
         <ImageTileMedia>
+          <ImageTileOrder number={1} />
           <ImageTilePill>Hlavní</ImageTilePill>
         </ImageTileMedia>
         <ImageTileAltLine>Studovna městské knihovny</ImageTileAltLine>

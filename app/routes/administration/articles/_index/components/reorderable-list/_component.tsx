@@ -10,6 +10,7 @@ import {
 } from 'react'
 
 import { ActionMenu } from '~/components/action-menu'
+import { GripVerticalIcon } from '~/components/icons/grip-vertical-icon'
 
 import { getEdgeScrollSpeed } from '~/utils/get-edge-scroll-speed'
 import { moveListItem } from '~/utils/move-list-item'
@@ -405,24 +406,7 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
                   }}
                   type={'button'}
                 >
-                  <svg
-                    aria-hidden={true}
-                    fill={'none'}
-                    height={16}
-                    stroke={'currentColor'}
-                    strokeLinecap={'round'}
-                    strokeLinejoin={'round'}
-                    strokeWidth={2}
-                    viewBox={'0 0 24 24'}
-                    width={16}
-                  >
-                    <circle cx={9} cy={5} r={1} />
-                    <circle cx={9} cy={12} r={1} />
-                    <circle cx={9} cy={19} r={1} />
-                    <circle cx={15} cy={5} r={1} />
-                    <circle cx={15} cy={12} r={1} />
-                    <circle cx={15} cy={19} r={1} />
-                  </svg>
+                  <GripVerticalIcon className={styles.grip} />
                 </button>
                 <span className={styles.text}>
                   <span className={styles.title}>{item.title}</span>

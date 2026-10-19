@@ -23,14 +23,19 @@ vi.mock('./save-article-image-change.server', () => ({
 
 const request = new Request('https://test.local/')
 
-const run = async (imageIds: string[]) => {
+const context = { authorId: 'author-1', roleLevel: 1 }
+
+const run = async (
+  imageIds: string[],
+  featuredImageId: string | null = null,
+) => {
   await reorderArticleImages(request, {
     articleId: 'article-1',
     imageIds,
     tabId: 'tab-1',
   })
   const { prepare } = mocks.saveArticleImageChange.mock.lastCall?.[1] ?? {}
-  return prepare()
+  return prepare(context, { featuredImageId, slug: 'article' })
 }
 
 beforeEach(() => {
@@ -71,6 +76,12 @@ describe('reorderArticleImages', () => {
     const prepared = await run(['c'])
 
     expect(prepared.writes).toEqual(['c@0', 'a@1', 'b@2'])
+  })
+
+  test('keeps the main image first whatever the list says', async () => {
+    const prepared = await run(['a', 'c', 'b'], 'b')
+
+    expect(prepared.writes).toEqual(['b@0', 'a@1', 'c@2'])
   })
 
   test('answers 400 for a repeated id', async () => {
