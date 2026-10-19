@@ -6,16 +6,22 @@ import { FORM_CONFIG } from '~/config/form-config'
 
 import { getRejectedFileSentence } from './get-rejected-file-sentence'
 import { getStoredMoveIndexes } from './get-stored-move-indexes'
+import { isTileUploading } from './is-tile-uploading'
+
+type TileFile = {
+  fileName: string | null
+  previewUrl: string | null
+}
 
 /** One tile of the editor's gallery, as only the open editor knows it. */
-export type GalleryTile = {
-  /** `processing` and `failed` live only in the open editor (8kfn4ou3). */
-  status: 'stored' | 'processing' | 'failed'
-  fileName: string | null
-  /** The stored preview, or the browser's while the file processes. */
-  previewUrl: string | null
-  /** A stored image whose new file is processing; the old one stays. */
-  isReplacing: boolean
+export type GalleryTile = TileFile & {
+  /** `uploading` and `failed` live only in the open editor (8kfn4ou3). */
+  status: 'stored' | 'uploading' | 'failed'
+  /**
+   * A stored image whose new file uploads: the tile shows the new file, and
+   * a cancel or a failure returns to this one, which stays stored (24b).
+   */
+  replaced: TileFile | null
   /** The new file of a replacement did not process; the old one stays. */
   hasReplaceFailed: boolean
   /**
@@ -45,7 +51,7 @@ type ChangeAnswer =
 
 type ChangeResult =
   | Extract<ChangeAnswer, { status: 'saved' }>
-  | { status: 'failed' | 'unsaved' }
+  | { status: 'failed' | 'unsaved' | 'cancelled' }
 
 /** The gallery's list in the form, which carries the alt texts and captions. */
 type GalleryList = {
@@ -79,24 +85,24 @@ const toTile = (image: StoredImage): GalleryTile => ({
   fileName: image.fileName,
   hasReplaceFailed: false,
   isRemoving: false,
-  isReplacing: false,
   isUnconfirmed: false,
   previewUrl: image.previewUrl,
+  replaced: null,
   status: 'stored',
 })
 
 /**
  * The article editor's gallery, every change saved on its own (design 24b,
  * decision 0027). A picked image uploads at once, each by itself; a file over
- * the limit or not an image gets a sentence instead of a tile. Removal, the
- * main image and the order go one after another, in the order clicked, and a
- * refused one is put back. While an upload is under way the browser asks
- * before the page goes; *Zavřít* in the app does not wait.
+ * the limit or not an image gets a sentence instead of a tile. An upload can
+ * be cancelled until it saves (bxy8xxqs). Removal, the main image and the
+ * order go one after another, in the order clicked, and a refused one is put
+ * back. While an upload is under way the browser asks before the page goes.
  *
  * @param options - The endpoint, the stored images and main image, the tab,
  *   the form's list, and what to do with an answer.
  * @returns The tiles by id, the main image, the rejected files' sentences,
- *   whether a change failed, and the operations.
+ *   whether a change failed, the upload counts, and the operations.
  */
 export const useArticleGallery = ({
   action,
@@ -127,6 +133,10 @@ export const useArticleGallery = ({
   // A removal, the main image or the order did not save, and was put back.
   const [hasFailedChange, setHasFailedChange] = useState(false)
   const uploadsInFlightRef = useRef(0)
+  // Each upload under way, by tile, to cancel it (bxy8xxqs).
+  const uploadControllersRef = useRef(new Map<string, AbortController>())
+  // Uploads that failed in this opening, for the close dialog (moo05ljj).
+  const [uploadFailureCount, setUploadFailureCount] = useState(0)
   const queueRef = useRef<Promise<unknown>>(Promise.resolve())
   const objectUrlsRef = useRef(new Map<string, string>())
   const optionsRef = useRef({ list, onNotHeld, onSaved, onUploaded, tabId })
@@ -154,13 +164,16 @@ export const useArticleGallery = ({
   }
 
   // One change; a refusal for the hold goes once more after the editor
-  // settles it, like the whole-form save.
+  // settles it, like the whole-form save. An upload carries a signal that
+  // cancels it.
   const post = async (
     fields: Record<string, string | string[] | Blob>,
+    signal?: AbortSignal,
     isRetry = false,
   ): Promise<ChangeResult> => {
     const { tabId: currentTabId } = optionsRef.current
     if (currentTabId === null) return { status: 'unsaved' }
+    if (signal?.aborted) return { status: 'cancelled' }
 
     const body = new FormData()
     body.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
@@ -173,9 +186,9 @@ export const useArticleGallery = ({
 
     let response: Response
     try {
-      response = await fetch(action, { body, method: 'POST' })
+      response = await fetch(action, { body, method: 'POST', signal })
     } catch {
-      return { status: 'unsaved' }
+      return { status: signal?.aborted ? 'cancelled' : 'unsaved' }
     }
 
     // An expired session redirects to the sign-in page.
@@ -185,12 +198,14 @@ export const useArticleGallery = ({
     try {
       answer = (await response.json()) as ChangeAnswer
     } catch {
-      return { status: 'unsaved' }
+      return { status: signal?.aborted ? 'cancelled' : 'unsaved' }
     }
 
     if (answer.status === 'not-held') {
       const mayRetry = await optionsRef.current.onNotHeld(answer.heldByName)
-      return mayRetry && !isRetry ? post(fields, true) : { status: 'unsaved' }
+      return mayRetry && !isRetry
+        ? post(fields, signal, true)
+        : { status: 'unsaved' }
     }
 
     if (answer.status === 'saved') {
@@ -242,14 +257,22 @@ export const useArticleGallery = ({
 
   // Uploads go side by side; each tile waits only for its own file.
   const upload = async (id: string, file: File) => {
+    const controller = new AbortController()
+    uploadControllersRef.current.set(id, controller)
     uploadsInFlightRef.current += 1
     try {
-      const result = await post({
-        ...optionsRef.current.list.getTexts(id),
-        file,
-        imageId: id,
-        intent: 'upload',
-      })
+      const result = await post(
+        {
+          ...optionsRef.current.list.getTexts(id),
+          file,
+          imageId: id,
+          intent: 'upload',
+        },
+        controller.signal,
+      )
+
+      // The cancel settled the tile already, and its answer is lost.
+      if (controller.signal.aborted || result.status === 'cancelled') return
 
       if (result.status === 'saved') {
         // The server puts a new image last.
@@ -261,23 +284,30 @@ export const useArticleGallery = ({
         updateTile(id, {
           fileName: result.fileName ?? file.name,
           hasReplaceFailed: false,
-          isReplacing: false,
           isUnconfirmed: false,
           previewUrl: result.previewUrl ?? null,
+          replaced: null,
           status: 'stored',
         })
         optionsRef.current.onUploaded()
         return
       }
 
+      setUploadFailureCount((count) => count + 1)
+      if (tilesRef.current.get(id)?.replaced) revokeObjectUrl(id)
       setTiles((current) => {
         const tile = current.get(id)
         if (tile === undefined) return current
         // A replacement keeps the stored image as it is (8kfn4ou3 reply).
         return new Map(current).set(
           id,
-          tile.isReplacing
-            ? { ...tile, hasReplaceFailed: true, isReplacing: false }
+          tile.replaced
+            ? {
+                ...tile,
+                ...tile.replaced,
+                hasReplaceFailed: true,
+                replaced: null,
+              }
             : {
                 ...tile,
                 isUnconfirmed: result.status !== 'failed',
@@ -286,6 +316,9 @@ export const useArticleGallery = ({
         )
       })
     } finally {
+      if (uploadControllersRef.current.get(id) === controller) {
+        uploadControllersRef.current.delete(id)
+      }
       uploadsInFlightRef.current -= 1
       void syncOrderAfterUploads()
     }
@@ -322,10 +355,10 @@ export const useArticleGallery = ({
           fileName: file.name,
           hasReplaceFailed: false,
           isRemoving: false,
-          isReplacing: false,
           isUnconfirmed: false,
           previewUrl,
-          status: 'processing',
+          replaced: null,
+          status: 'uploading',
         }),
       )
       optionsRef.current.list.add(id)
@@ -348,16 +381,65 @@ export const useArticleGallery = ({
     const tile = tilesRef.current.get(id)
     if (sentence !== null || tile === undefined) return
 
+    // The tile shows the new file while it uploads (bxy8xxqs).
+    const picked = {
+      fileName: file.name,
+      previewUrl: rememberPreview(id, file),
+    }
     if (tile.status === 'stored') {
-      updateTile(id, { hasReplaceFailed: false, isReplacing: true })
-    } else {
       updateTile(id, {
-        fileName: file.name,
-        previewUrl: rememberPreview(id, file),
-        status: 'processing',
+        ...picked,
+        hasReplaceFailed: false,
+        replaced: { fileName: tile.fileName, previewUrl: tile.previewUrl },
       })
+    } else {
+      updateTile(id, { ...picked, status: 'uploading' })
     }
     void upload(id, file)
+  }
+
+  // The server checks for the cancel up to its commit, but an answer already
+  // on its way is lost with the abort, so a new image is removed as well: one
+  // that never landed counts as removed (0027). A replacement whose answer
+  // crossed the cancel stays replaced.
+  const cancel = (id: string, { keepsList }: { keepsList: boolean }) => {
+    const controller = uploadControllersRef.current.get(id)
+    const tile = tilesRef.current.get(id)
+    if (controller === undefined || tile === undefined) return false
+
+    controller.abort()
+    uploadControllersRef.current.delete(id)
+    revokeObjectUrl(id)
+    if (tile.replaced) {
+      updateTile(id, { ...tile.replaced, replaced: null })
+    } else {
+      void enqueue(() => post({ imageId: id, intent: 'remove' }))
+      if (!keepsList) optionsRef.current.list.remove(id)
+      dropTile(id)
+    }
+    return true
+  }
+
+  /**
+   * Cancels a tile's upload, at any point until it saves (24b, bxy8xxqs). A
+   * new image's tile goes, with what was typed in it; a replacement returns
+   * to the stored image. The server keeps nothing.
+   *
+   * @returns Whether an upload was cancelled.
+   */
+  const cancelUpload = (id: string): boolean => cancel(id, { keepsList: false })
+
+  /**
+   * Cancels every upload under way: the editor is about to close, so the
+   * form's list stays as it is.
+   *
+   * @returns Settles once the server has heard of the cancels.
+   */
+  const cancelUploads = async () => {
+    for (const id of [...uploadControllersRef.current.keys()]) {
+      cancel(id, { keepsList: true })
+    }
+    await queueRef.current.catch(() => {})
   }
 
   /**
@@ -425,7 +507,7 @@ export const useArticleGallery = ({
 
   /**
    * Moves a stored image to another place among the stored ones; an image
-   * still processing or failed keeps its tile where it is.
+   * still uploading or failed keeps its tile where it is.
    *
    * @param id - The stored image.
    * @param to - Its new place among the stored images.
@@ -444,9 +526,11 @@ export const useArticleGallery = ({
     return result.status === 'saved'
   }
 
-  // An upload on its way is lost with the page; the browser asks (24b).
+  // An upload on its way is lost with the page; the browser asks (24b). A
+  // cancelled one stops counting at once, so a leave after the dialog does
+  // not ask twice.
   const handleBeforeUnload = useEffectEvent((event: BeforeUnloadEvent) => {
-    if (uploadsInFlightRef.current === 0) return
+    if (uploadControllersRef.current.size === 0) return
     event.preventDefault()
     event.returnValue = ''
   })
@@ -464,20 +548,26 @@ export const useArticleGallery = ({
     }
   }, [])
 
-  const processingCount = [...tiles.values()].filter(
-    (tile) => tile.status === 'processing' || tile.isReplacing,
-  ).length
+  const uploadingTiles = [...tiles.values()].filter(isTileUploading)
 
   return {
     addFiles,
+    cancelUpload,
+    cancelUploads,
     featuredImageId,
     hasFailedChange,
     move,
-    processingCount,
     rejectedSentences,
     remove,
     replaceFile,
+    /** Replacements under way: their originals stay with the article. */
+    replacingCount: uploadingTiles.filter((tile) => tile.replaced !== null)
+      .length,
     setFeatured,
     tiles,
+    /** Uploads that failed since the editor opened; only ever grows. */
+    uploadFailureCount,
+    /** Images uploading, new and replacements alike (24b, 24f). */
+    uploadingCount: uploadingTiles.length,
   }
 }

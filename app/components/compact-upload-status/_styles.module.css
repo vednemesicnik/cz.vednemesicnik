@@ -1,0 +1,26 @@
+/* `.vdm-upload--compact`. */
+.compactUploadStatus {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+}
+
+.label {
+  @layer component {
+    overflow: hidden;
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    color: var(--text-secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.bar {
+  @layer variant {
+    --upload-status-bar-height: 3px;
+  }
+}

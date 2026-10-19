@@ -297,4 +297,65 @@ describe('article-images action — the status codes', () => {
     expect(response.status).toBe(422)
     expect(await response.json()).toEqual({ status: 'failed' })
   })
+
+  test('answers 499 for an upload the editor cancelled', async () => {
+    mocks.uploadArticleImage.mockResolvedValue({ status: 'cancelled' })
+
+    const response = await callAction(
+      buildRequest([
+        ['intent', 'upload'],
+        ['imageId', 'image-1'],
+        ['editTabId', 'tab-1'],
+        ['file', new File(['bytes'], 'photo.jpg', { type: 'image/jpeg' })],
+      ]),
+    )
+
+    expect(response.status).toBe(499)
+  })
+})
+
+describe('article-images action — a cancelled body (bxy8xxqs)', () => {
+  const buildAbortedRequest = () => {
+    const controller = new AbortController()
+    const body = new ReadableStream({
+      start: (streamController) => streamController.error(new Error('gone')),
+    })
+    const request = new Request(
+      'https://test.local/administration/articles/a/article-images',
+      {
+        body,
+        duplex: 'half',
+        headers: { 'Content-Type': 'multipart/form-data; boundary=boundary' },
+        method: 'POST',
+        signal: controller.signal,
+      } as RequestInit,
+    )
+    controller.abort()
+    return request
+  }
+
+  test('answers 499 and runs nothing when the editor cancelled mid-body', async () => {
+    const response = await callAction(buildAbortedRequest())
+
+    expect(response.status).toBe(499)
+    expect(mocks.requireCSRF).not.toHaveBeenCalled()
+    expect(mocks.uploadArticleImage).not.toHaveBeenCalled()
+  })
+
+  test('lets a body that broke for another reason through', async () => {
+    const body = new ReadableStream({
+      start: (streamController) => streamController.error(new Error('broke')),
+    })
+    const request = new Request(
+      'https://test.local/administration/articles/a/article-images',
+      {
+        body,
+        duplex: 'half',
+        headers: { 'Content-Type': 'multipart/form-data; boundary=boundary' },
+        method: 'POST',
+      } as RequestInit,
+    )
+
+    await expect(callAction(request)).rejects.toThrow()
+  })
 })

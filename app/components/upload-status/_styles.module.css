@@ -1,0 +1,46 @@
+/* `.vdm-upload`. */
+.uploadStatus {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+}
+
+.row {
+  @layer component {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}
+
+.label {
+  @layer component {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* `.vdm-upload__cancel`: under 768 px a 44 px touch area. */
+.cancel {
+  @layer variant {
+    position: relative;
+    flex: none;
+
+    @media (width < 768px) {
+      &::after {
+        content: "";
+        position: absolute;
+        inset: -13px -10px;
+      }
+    }
+  }
+}

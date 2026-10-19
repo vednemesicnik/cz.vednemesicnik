@@ -1,0 +1,39 @@
+/* `.vdm-upload__track` and `.vdm-upload__bar`. */
+.uploadStatusBar {
+  @layer component {
+    position: relative;
+    height: var(--upload-status-bar-height, 4px);
+    overflow: hidden;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+  }
+}
+
+.segment {
+  @layer component {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 30%;
+    background: var(--primary);
+    border-radius: inherit;
+    animation: slide 1.6s ease-in-out infinite;
+
+    /* Still, in the middle: at the left edge it would read as a measured
+       third (bxy8xxqs). */
+    @media (prefers-reduced-motion: reduce) {
+      left: 35%;
+      animation: none;
+    }
+  }
+}
+
+@keyframes slide {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(334%);
+  }
+}

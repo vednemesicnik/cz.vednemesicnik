@@ -83,7 +83,7 @@ const getSlotBox = (tile: HTMLElement) => {
  * mouse or pen takes hold of a tile's preview and moves, a finger holds it
  * first (a swipe still scrolls the panel). The tile follows the pointer, its
  * place stays marked, and it takes the place of each stored image it is moved
- * over; the others slide aside, a tile still processing or failed keeps its
+ * over; the others slide aside, a tile still uploading or failed keeps its
  * own. The form's list moves once, on the drop. Escape puts the tile back.
  * The „⋯“ moves a tile without dragging (WCAG 2.5.7).
  *

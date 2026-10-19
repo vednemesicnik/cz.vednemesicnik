@@ -30,7 +30,7 @@
   }
 }
 
-.processing {
+.uploading {
   @layer variant {
     opacity: 0.6;
   }

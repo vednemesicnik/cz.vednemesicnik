@@ -11,7 +11,7 @@ import { EditorDetailRowValue } from '~/components/editor-detail-row-value'
 import styles from './_styles.module.css'
 
 type Props = {
-  /** The row's value on a phone (24f): „3 · ve zpracování: 1“. */
+  /** The row's value on a phone (24f): „4 · nahrává se: 1“. */
   summary: string
   /** The row's thumbnails before the count: the first three stored images in
    *  gallery order, the main one first (u94oosdp). */
