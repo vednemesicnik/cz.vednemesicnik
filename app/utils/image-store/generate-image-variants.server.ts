@@ -1,10 +1,15 @@
 import { IMAGE_QUALITY_CONFIG } from '~/config/image-quality-config'
 import type { ImageVariantFormat } from '~/config/image-variants-config'
-import { LQIP_WIDTH } from '~/config/image-variants-config'
+import { LQIP_WIDTH, MAX_IMAGE_PIXELS } from '~/config/image-variants-config'
 import { getImageVersion } from '~/utils/hash.server'
 import { sharp } from '~/utils/sharp.server'
 
+import { createOneAtATimeQueue } from './create-one-at-a-time-queue'
 import { selectVariantWidths } from './select-variant-widths'
+
+// One image at a time: each runs Sharp at its peak, and side-by-side uploads
+// would add their peaks up.
+const imageQueue = createOneAtATimeQueue()
 
 export type GeneratedVariant = {
   width: number
@@ -30,6 +35,8 @@ const toBytes = (buffer: Buffer) => Uint8Array.from(buffer)
 // Runs Sharp once per input to produce the full variant matrix (widths × formats)
 // + inline LQIP. This is the only place Sharp runs on upload; the OG crop is
 // derived lazily (see ensureOgImage) and the read path just streams files.
+// An image over MAX_IMAGE_PIXELS is refused from its header, before it is
+// decoded; Sharp's own limit rejects the metadata read.
 export async function generateImageVariants(
   input: Uint8Array | File,
 ): Promise<GeneratedImage> {
@@ -39,7 +46,10 @@ export async function generateImageVariants(
   const version = getImageVersion(original)
 
   // Normalise EXIF orientation up front so every derived variant is upright.
-  const base = sharp(original, { failOn: 'none' }).rotate()
+  const base = sharp(original, {
+    failOn: 'none',
+    limitInputPixels: MAX_IMAGE_PIXELS,
+  }).rotate()
   const metadata = await base.metadata()
 
   // After `.rotate()`, orientation ≥ 5 means the displayed dimensions are swapped.
@@ -55,45 +65,47 @@ export async function generateImageVariants(
 
   const { avif, jpeg } = IMAGE_QUALITY_CONFIG
 
-  const variants: GeneratedVariant[] = []
-  for (const width of widths) {
-    const resized = base.clone().resize({ width, withoutEnlargement: true })
+  return imageQueue.run(async () => {
+    const variants: GeneratedVariant[] = []
+    for (const width of widths) {
+      const resized = base.clone().resize({ width, withoutEnlargement: true })
 
-    const [avifData, jpegData] = await Promise.all([
-      resized
-        .clone()
-        .avif({ effort: avif.effort, quality: avif.quality })
-        .toBuffer(),
-      resized
-        .clone()
-        .jpeg({
-          mozjpeg: jpeg.mozjpeg,
-          progressive: jpeg.progressive,
-          quality: jpeg.quality,
-        })
-        .toBuffer(),
-    ])
+      const [avifData, jpegData] = await Promise.all([
+        resized
+          .clone()
+          .avif({ effort: avif.effort, quality: avif.quality })
+          .toBuffer(),
+        resized
+          .clone()
+          .jpeg({
+            mozjpeg: jpeg.mozjpeg,
+            progressive: jpeg.progressive,
+            quality: jpeg.quality,
+          })
+          .toBuffer(),
+      ])
 
-    variants.push(
-      { data: toBytes(avifData), format: 'avif', width },
-      { data: toBytes(jpegData), format: 'jpeg', width },
-    )
-  }
+      variants.push(
+        { data: toBytes(avifData), format: 'avif', width },
+        { data: toBytes(jpegData), format: 'jpeg', width },
+      )
+    }
 
-  // LQIP: tiny JPEG inlined as a data URI, upscaled with `image-rendering:
-  // pixelated` on the client (no blur — the blocky look is intentional).
-  const lqipBuffer = await base
-    .clone()
-    .resize({ width: LQIP_WIDTH })
-    .jpeg({ quality: IMAGE_QUALITY_CONFIG.lqip.quality })
-    .toBuffer()
-  const placeholderDataUrl = `data:image/jpeg;base64,${lqipBuffer.toString('base64')}`
+    // LQIP: tiny JPEG inlined as a data URI, upscaled with `image-rendering:
+    // pixelated` on the client (no blur — the blocky look is intentional).
+    const lqipBuffer = await base
+      .clone()
+      .resize({ width: LQIP_WIDTH })
+      .jpeg({ quality: IMAGE_QUALITY_CONFIG.lqip.quality })
+      .toBuffer()
+    const placeholderDataUrl = `data:image/jpeg;base64,${lqipBuffer.toString('base64')}`
 
-  return {
-    intrinsicHeight,
-    intrinsicWidth,
-    placeholderDataUrl,
-    variants,
-    version,
-  }
+    return {
+      intrinsicHeight,
+      intrinsicWidth,
+      placeholderDataUrl,
+      variants,
+      version,
+    }
+  })
 }
