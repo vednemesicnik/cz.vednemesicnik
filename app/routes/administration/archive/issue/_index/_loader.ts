@@ -7,9 +7,15 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { getIssueOrderLabel } from '~/utils/issue/get-issue-order-label'
+import {
+  issueTitleSelect,
+  resolveIssueTitles,
+} from '~/utils/issue/resolve-issue-titles.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 
+import { buildIssuePermissionWhere } from '../../utils/build-issue-permission-where'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -47,7 +53,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       createdAt: true,
       id: true,
-      label: true,
+      ...issueTitleSelect,
       pdf: {
         select: {
           fileName: true,
@@ -55,7 +61,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         },
       },
       publishedAt: true,
-      releasedAt: true,
       reviews: {
         select: {
           createdAt: true,
@@ -90,6 +95,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     submittedAt: issue.submittedAt,
   })
 
+  const [{ title }] = await resolveIssueTitles(
+    [issue],
+    buildIssuePermissionWhere(context),
+  )
+
   return {
     issue: {
       author: issue.author,
@@ -102,14 +112,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         publishedAt: issue.publishedAt,
       }),
       id: issue.id,
-      label: issue.label,
+      orderLabel: getIssueOrderLabel(issue),
       pdfFileName: issue.pdf?.fileName ?? null,
       pdfUrl: issue.pdf
         ? href('/archive/:fileName', { fileName: issue.pdf.fileName })
         : null,
       publishedAt: createFormattedDate(issue.publishedAt),
-      releasedAt: createFormattedDate(issue.releasedAt),
       state: issue.state,
+      title,
     },
     ...flags,
     submission: flags.submission?.state ?? null,

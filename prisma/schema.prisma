@@ -350,29 +350,35 @@ enum AuthorPermissionAccess {
 }
 
 model Issue {
-  id            String       @id @default(cuid())
-  label         String
-  releasedAt    DateTime
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  publishedAt   DateTime?
-  state         ContentState @default(draft)
-  cover         IssueCover?
-  pdf           IssuePDF?
-  author        Author       @relation("IssueCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  authorId      String
-  reviews       Review[]     @relation("IssueReviews")
+  id             String       @id @default(cuid())
+  year           Int
+  order          Int
+  name           String?
+  supplement     String?
+  // The supplement's slug, "" for a main issue: SQLite treats NULLs as distinct in a
+  // unique index, so a nullable slug would let two main issues 3/2026 exist (design 26d).
+  supplementSlug String       @default("")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  publishedAt    DateTime?
+  state          ContentState @default(draft)
+  cover          IssueCover?
+  pdf            IssuePDF?
+  author         Author       @relation("IssueCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId       String
+  reviews        Review[]     @relation("IssueReviews")
   // A draft its author sent for review (design 07d); null when not submitted.
-  submittedAt   DateTime?
-  submittedById String?
-  submittedBy   Author?      @relation("IssueSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  submittedAt    DateTime?
+  submittedById  String?
+  submittedBy    Author?      @relation("IssueSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
+  @@unique([year, order, supplementSlug])
   // non-unique foreign key
   @@index([authorId])
   @@index([submittedById])
   // content-state query paths (own-access filtering, public list ordering)
   @@index([state, authorId])
-  @@index([state, releasedAt])
+  @@index([state, year, order])
 }
 
 model IssueCover {

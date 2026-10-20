@@ -6,22 +6,21 @@ import {
 
 export const loader = async () => {
   const latestIssue = await prisma.issue.findFirst({
-    orderBy: {
-      releasedAt: 'desc',
-    },
+    orderBy: [{ year: 'desc' }, { order: 'desc' }],
     select: {
       cover: {
         select: imageSourceSelect,
       },
-      label: true,
       pdf: {
         select: {
           fileName: true,
         },
       },
     },
+    // The latest issue, not a supplement printed alongside it.
     where: {
       state: 'published',
+      supplementSlug: '',
     },
   })
 

@@ -20,7 +20,8 @@ import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 
 type Props = {
   id: string
-  label: string
+  title: string
+  orderLabel: string
   state: StatusTagState
   createdAt: Date
   canView: boolean
@@ -32,7 +33,8 @@ type Props = {
 
 export const ItemRow = ({
   id,
-  label,
+  title,
+  orderLabel,
   state,
   createdAt,
   canView,
@@ -57,10 +59,11 @@ export const ItemRow = ({
       <TableSelectionCell
         checked={selected}
         disabled={!canDelete}
-        label={`Vybrat číslo ${label}`}
+        label={`Vybrat číslo ${title}`}
         onChange={onSelect}
       />
-      <TableCell>{label}</TableCell>
+      <TableCell>{title}</TableCell>
+      <TableCell>{orderLabel}</TableCell>
       <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell>
         <StatusTag state={state} />

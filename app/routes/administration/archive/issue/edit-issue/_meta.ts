@@ -7,7 +7,7 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
   const title =
     loaderData === undefined
       ? createAdminPageTitle('Upravit číslo')
-      : createAdminEditPageTitle(loaderData.issue.label)
+      : createAdminEditPageTitle(loaderData.issue.title)
 
   return [{ title }]
 }

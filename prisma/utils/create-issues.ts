@@ -1,15 +1,18 @@
 import type { PrismaClient } from '@generated/prisma/client'
 import type { ContentState } from '@generated/prisma/enums'
+import { slugify } from '~/utils/slugify'
 import { users } from '~~/data/users'
 
 import { storeSeedImage } from './store-seed-image'
 import { storeSeedPdf } from './store-seed-pdf'
 
 export type IssuesData = {
-  label: string
+  year: number
+  order: number
+  name?: string
+  supplement?: string
   publishedAt: Date
   state: ContentState
-  releasedAt: Date
   cover?: {
     altText: string
     filePath: string
@@ -41,7 +44,8 @@ export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
                 }),
               }
             : undefined,
-          label: issue.label,
+          name: issue.name,
+          order: issue.order,
           pdf: issue.pdf
             ? {
                 create: await storeSeedPdf({
@@ -51,8 +55,10 @@ export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
               }
             : undefined,
           publishedAt: issue.publishedAt,
-          releasedAt: issue.releasedAt,
           state: issue.state,
+          supplement: issue.supplement,
+          supplementSlug: issue.supplement ? slugify(issue.supplement) : '',
+          year: issue.year,
         },
       })
       .catch((error) => {

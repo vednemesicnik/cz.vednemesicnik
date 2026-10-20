@@ -35,6 +35,7 @@ import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
 import { getStateFilter } from '~/utils/get-state-filter'
+import { getIssueOrderLabel } from '~/utils/issue/get-issue-order-label'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
@@ -125,7 +126,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         />
         <FilterBar replaced={selection.selectedIds.length > 0}>
           <FilterBarGroup>
-            <FilterBarSearch defaultValue={query} placeholder={'Název'} />
+            <FilterBarSearch
+              defaultValue={query}
+              placeholder={'Název nebo doplněk'}
+            />
             <FilterBarFilters>
               <FilterMenu
                 attention={stateFilter.attention}
@@ -184,17 +188,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />
+            <TableHeaderCell>Číslo</TableHeaderCell>
             <TableSortableHeaderCell
               defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'label'}
+              defaultSort={'order'}
+              sortKey={'order'}
               sortKeys={SORT_KEYS}
             >
-              Název
+              Pořadí
             </TableSortableHeaderCell>
             <TableSortableHeaderCell
               defaultOrder={'desc'}
-              defaultSort={'createdAt'}
+              defaultSort={'order'}
               sortKey={'createdAt'}
               sortKeys={SORT_KEYS}
             >
@@ -212,10 +217,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 createdAt={issue.createdAt}
                 id={issue.id}
                 key={issue.id}
-                label={issue.label}
                 onSelect={() => selection.toggle(issue.id)}
+                orderLabel={getIssueOrderLabel(issue)}
                 selected={selection.isSelected(issue.id)}
                 state={issue.submission ?? issue.state}
+                title={issue.title}
               />
             ))}
           </TableBody>

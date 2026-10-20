@@ -126,7 +126,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 author={issue.author.name}
                 date={issue.submittedAt}
                 key={issue.id}
-                title={issue.label}
+                title={issue.title}
                 to={href('/administration/archive/:issueId', {
                   issueId: issue.id,
                 })}

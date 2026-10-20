@@ -19,7 +19,6 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
-import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -38,8 +37,8 @@ export default function RouteComponent({
     constraint: getZodConstraint(schema),
     defaultValue: {
       authorId: loaderData.selfAuthorId,
-      ordinalNumber: '',
-      releasedAt: getFormattedDateString(new Date()),
+      order: '',
+      year: loaderData.currentYear,
     },
     id: 'add-archived-issue',
     lastResult: actionData?.submissionResult,
@@ -76,16 +75,32 @@ export default function RouteComponent({
           legend={'Základní informace'}
         >
           <TextField
-            label={'Pořadové číslo'}
-            {...getInputProps(fields.ordinalNumber, { type: 'number' })}
-            errors={fields.ordinalNumber.errors}
-            placeholder={'1'}
+            label={'Rok'}
+            {...getInputProps(fields.year, { type: 'number' })}
+            errors={fields.year.errors}
             step={1}
           />
           <TextField
-            label={'Datum vydání'}
-            {...getInputProps(fields.releasedAt, { type: 'date' })}
-            errors={fields.releasedAt.errors}
+            label={'Pořadí v roce'}
+            {...getInputProps(fields.order, { type: 'number' })}
+            errors={fields.order.errors}
+            step={1}
+          />
+          <TextField
+            hint={'Bez roku. Z názvu podzim vznikne podzim 2026.'}
+            label={'Název'}
+            placeholder={'Nepovinné'}
+            {...getInputProps(fields.name, { type: 'text' })}
+            errors={fields.name.errors}
+          />
+          <TextField
+            hint={
+              'Pro samostatně vytištěný doplněk, třeba Maturitní ples. Zadejte rok a pořadí čísla, ke kterému patří.'
+            }
+            label={'Doplněk'}
+            placeholder={'Nepovinné'}
+            {...getInputProps(fields.supplement, { type: 'text' })}
+            errors={fields.supplement.errors}
           />
         </Fieldset>
 

@@ -13,7 +13,7 @@ export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { issueId } = match.params
 
-    const label = match.loaderData?.issue?.label ?? 'Neznámé číslo'
+    const label = match.loaderData?.issue?.title ?? 'Neznámé číslo'
     const path = href(`/administration/archive/:issueId`, { issueId })
 
     return { label, path }
