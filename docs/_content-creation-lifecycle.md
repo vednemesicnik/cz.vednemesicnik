@@ -261,7 +261,12 @@ or dropped, each on its own through the `files` route, with one *Nahrává se ·
 cancellable until they save (0029); *Nahradit* replaces a stored file, which stays until the new
 one saves, and leaving during an upload asks. The history gets *Obálka nahrána* and *PDF
 nahráno*. A PDF uploaded before the number is complete has no name, and so no address, until the
-editor's save names it (0033). The checks at submit are #718.
+editor's save names it (0033). *Odeslat ke schválení*, *Publikovat…* and *Schválit a
+publikovat…* need the year, the order, the cover and a named PDF; the name and the supplement are
+optional (26e, #718). The detail then says in one sentence what is missing, with *Doplnit v
+editoru*, and writes nothing. A PDF whose name another PDF still holds is reported as „Adresu PDF už
+používá jiné číslo.“ The Coordinator's edits of a submitted or approved issue keep its approvals,
+because the editor writes no reviews. Its author takes it back to a draft instead (07d).
 
 ---
 

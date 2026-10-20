@@ -432,6 +432,23 @@ describe('updateIssue — who may save', () => {
     })
   })
 
+  test('keeps the approvals of a submitted issue the Coordinator corrects (07d, 26e)', async () => {
+    mocks.getAuthorPermissionContext.mockResolvedValue({
+      authorId: 'author-1',
+      roleLevel: 1,
+    })
+    mocks.issueFindUnique.mockResolvedValue({
+      ...storedIssue,
+      submittedAt: new Date(),
+    })
+
+    expect(await updateIssue(request, options)).toMatchObject({
+      status: 'saved',
+    })
+    expect(savedData()).not.toHaveProperty('reviews')
+    expect(savedData()).not.toHaveProperty('submittedAt')
+  })
+
   test('is a 404 for a missing issue', async () => {
     mocks.issueFindUnique.mockResolvedValue(null)
 

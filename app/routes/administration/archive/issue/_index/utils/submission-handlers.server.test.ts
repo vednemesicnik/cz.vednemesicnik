@@ -45,10 +45,15 @@ vi.mock('~/utils/db.server', () => ({
 const request = new Request('https://test.local/')
 const target = { authorIds: ['contributor'], state: 'draft' as const }
 
+// A complete draft (26e).
 const draft = {
   author: { id: 'contributor', role: { level: 3 } },
+  cover: { id: 'cover-1' },
+  order: 4,
+  pdf: { fileName: 'VDM-2026-4.pdf' },
   state: 'draft',
   submittedAt: null,
+  year: 2026,
 }
 
 // Not while someone else than the actor edits it (decision 0019).
@@ -96,6 +101,23 @@ describe('issueSubmissionHandlers.submit', () => {
         submittedAt: null,
       },
     })
+  })
+
+  test('submits nothing of an issue that lacks its files, and says what (26e)', async () => {
+    mocks.issueFindUniqueOrThrow.mockResolvedValue({
+      ...draft,
+      cover: null,
+      pdf: null,
+    })
+
+    const result = await issueSubmissionHandlers.submit(request, {
+      id: 'i1',
+      target,
+    })
+
+    expect(result).toEqual({ missing: ['Chybí obálka a\u00a0PDF.'] })
+    expect(mocks.issueUpdateMany).not.toHaveBeenCalled()
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
   })
 
   test('refuses an issue someone else edits, naming them (26i)', async () => {

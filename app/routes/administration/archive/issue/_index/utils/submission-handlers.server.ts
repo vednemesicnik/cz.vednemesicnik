@@ -5,8 +5,12 @@ import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusa
 import { refuseWhenHeld } from '~/utils/edit-hold/refuse-when-held.server'
 
 import { findIssueHeldByName } from './find-issue-held-by-name.server'
+import { loadMissingIssueContent } from './load-missing-issue-content.server'
 
-/** Issue submission transitions (design 07d): single author. */
+/**
+ * Issue submission transitions (design 07d): single author. An issue is
+ * checked for completeness before it is submitted (design 26e).
+ */
 export const issueSubmissionHandlers = createSubmissionHandlers({
   clearSubmission: async (id, authorId) => {
     await refuseWhenHeld(
@@ -25,6 +29,8 @@ export const issueSubmissionHandlers = createSubmissionHandlers({
     )
   },
   entity: 'issue',
+
+  getMissing: loadMissingIssueContent,
 
   loadSubmissionState: async (id) => {
     const issue = await prisma.issue.findUniqueOrThrow({
