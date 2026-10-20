@@ -131,14 +131,20 @@ export const action = async ({ request }: Route.ActionArgs) => {
             contentType: PDF_CONTENT_TYPE,
             fileName: pdfFileName,
             id: pdfId,
+            originalFileName: pdf.name,
           },
         },
         supplementSlug,
       },
     })
 
+    // The files get their own rows, as when they are replaced (26b).
     await recordContentLog(
-      { entity: 'issue', entityId: issue.id, events: ['create'] },
+      {
+        entity: 'issue',
+        entityId: issue.id,
+        events: ['create', 'pdf_uploaded', 'cover_uploaded'],
+      },
       context,
     )
     publishContentEvent(

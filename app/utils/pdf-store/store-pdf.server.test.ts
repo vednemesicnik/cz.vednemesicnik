@@ -85,6 +85,8 @@ describe('preparePdfReplacement', () => {
       contentType: 'application/pdf',
       fileName: 'VDM-2025-1.pdf',
       id: 'newid',
+      originalFileName: 'file.pdf',
+      uploadedAt: expect.any(Date),
     })
     // The previous object stays until cleanup runs (delete-after-DB).
     expect(storeDelete).not.toHaveBeenCalled()

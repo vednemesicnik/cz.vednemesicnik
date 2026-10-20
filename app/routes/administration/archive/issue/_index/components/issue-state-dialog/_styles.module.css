@@ -1,0 +1,10 @@
+/* What the Coordinator skips, in full ink (23f). */
+.note {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    color: var(--text-primary);
+  }
+}
