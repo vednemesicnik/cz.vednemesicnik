@@ -27,12 +27,12 @@ type Props = {
 
 const INTENT_VALUE = FORM_CONFIG.intent.value
 
-// The article's dialogs (23e, 23f) said of an issue. It picks no publish date:
-// the archive is ordered by year and order.
+// The article's dialogs (23e, 23f) said of an issue (copy 5k0gp8ve). It picks
+// no publish date: the archive is ordered by year and order.
 const COPY = {
   'approve-and-publish': {
     confirmLabel: 'Schválit a publikovat',
-    description: 'Číslo bude publikováno na webu.',
+    description: 'Číslo bude publikováno v archivu na webu.',
     intent: INTENT_VALUE.publish,
     title: 'Schválit a publikovat?',
   },
@@ -45,7 +45,7 @@ const COPY = {
   },
   publish: {
     confirmLabel: 'Publikovat',
-    description: 'Číslo bude publikováno na webu.',
+    description: 'Číslo bude publikováno v archivu na webu.',
     intent: INTENT_VALUE.publish,
     title: 'Publikovat?',
   },
