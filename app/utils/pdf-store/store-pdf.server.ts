@@ -20,11 +20,13 @@ export async function deletePdfObject(id: string) {
 }
 
 // Row data for the IssuePDF update, spread into a Prisma `pdf.update.data`. The
-// store fields (new id + contentType) are present only when the file is replaced;
-// otherwise just the filename is written.
+// store fields (new id + contentType) and the upload's name and time are present
+// only when the file is replaced; otherwise just the filename is written.
 export type PdfUpdateData = { fileName: string } & Partial<{
   id: string
   contentType: string
+  originalFileName: string
+  uploadedAt: Date
 }>
 
 type PreparePdfReplacementArgs = {
@@ -60,6 +62,12 @@ export async function preparePdfReplacement({
     cleanup: async () => {
       await deletePdfObject(pdfId)
     },
-    data: { contentType: PDF_CONTENT_TYPE, fileName, id: newId },
+    data: {
+      contentType: PDF_CONTENT_TYPE,
+      fileName,
+      id: newId,
+      originalFileName: file.name,
+      uploadedAt: new Date(),
+    },
   }
 }
