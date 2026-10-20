@@ -47,7 +47,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <TileGrid>
         {renderableIssues.map((issue, index) => {
-          const { id, cover, pdf, label } = issue
+          const { id, cover, pdf, title } = issue
 
           const isLcpCandidate = index === 0
           const coverAlt = cover.altText
@@ -58,8 +58,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               key={id}
               {...getRevealProps(index - revealBatchStart)}
             >
-              <Link reloadDocument={true} title={label} to={pdfSrc}>
-                <Tile label={label}>
+              <Link reloadDocument={true} title={title} to={pdfSrc}>
+                <Tile label={title}>
                   <Image
                     {...cover.sources}
                     alt={coverAlt}

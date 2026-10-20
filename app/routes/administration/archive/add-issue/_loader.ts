@@ -26,6 +26,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return {
     authors,
+    // The year in Prague, so New Year's Eve after 23:00 UTC is already the new one.
+    currentYear: Number(
+      new Intl.DateTimeFormat('cs-CZ', {
+        timeZone: 'Europe/Prague',
+        year: 'numeric',
+      }).format(new Date()),
+    ),
     selfAuthorId: context.authorId,
   }
 }

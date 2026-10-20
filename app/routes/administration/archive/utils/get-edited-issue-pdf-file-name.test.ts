@@ -1,0 +1,26 @@
+import { describe, expect, test } from 'vitest'
+
+import { getEditedIssuePdfFileName } from './get-edited-issue-pdf-file-name'
+
+const number = { order: 1, supplementSlug: '', year: 2003 }
+const stored = { ...number, pdfFileName: 'VDM_2003_1.pdf' }
+
+describe('getEditedIssuePdfFileName', () => {
+  test('keeps an older name while the number stays', () => {
+    expect(getEditedIssuePdfFileName(stored, number)).toBe('VDM_2003_1.pdf')
+  })
+
+  test.each([
+    [{ ...number, year: 2004 }, 'VDM-2004-1.pdf'],
+    [{ ...number, order: 2 }, 'VDM-2003-2.pdf'],
+    [{ ...number, supplementSlug: 'ples' }, 'VDM-2003-1-ples.pdf'],
+  ])('renames when the number changes to %o', (edited, expected) => {
+    expect(getEditedIssuePdfFileName(stored, edited)).toBe(expected)
+  })
+
+  test('names a PDF the issue did not have', () => {
+    expect(
+      getEditedIssuePdfFileName({ ...stored, pdfFileName: null }, number),
+    ).toBe('VDM-2003-1.pdf')
+  })
+})

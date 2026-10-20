@@ -4,10 +4,11 @@ import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
-import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { isImageOverPixelBudget } from '~/utils/image-store/is-image-over-pixel-budget.server'
 import { prepareCoverReplacement } from '~/utils/image-store/store-image.server'
+import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
+import { getIssueCoverAltText } from '~/utils/issue/get-issue-cover-alt-text'
 import {
   deletePdfObject,
   preparePdfReplacement,
@@ -15,8 +16,11 @@ import {
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { slugify } from '~/utils/slugify'
 import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
+import { findIssueNumberConflict } from '../../utils/find-issue-number-conflict.server'
+import { getEditedIssuePdfFileName } from '../../utils/get-edited-issue-pdf-file-name'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -36,8 +40,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const {
     id,
-    ordinalNumber,
-    releasedAt,
+    year,
+    order,
+    name,
+    supplement,
     coverId,
     cover,
     pdfId,
@@ -47,7 +53,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   // Get permission context
   const context = await getAuthorPermissionContext(request, {
-    actions: ['update'],
+    actions: ['update', 'view'],
     entities: ['issue'],
   })
 
@@ -55,8 +61,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const existingIssue = await prisma.issue.findUniqueOrThrow({
     select: {
       authorId: true,
+      order: true,
+      pdf: { select: { fileName: true } },
       state: true,
       submittedAt: true,
+      supplementSlug: true,
+      year: true,
     },
     where: { id },
   })
@@ -95,9 +105,35 @@ export const action = async ({ request }: Route.ActionArgs) => {
     }
   }
 
-  const { label, releaseDate, coverAltText, pdfFileName } = getIssueData(
-    ordinalNumber,
-    releasedAt,
+  // An occupied number is said at its field before any file is written (26d).
+  const supplementSlug = supplement === undefined ? '' : slugify(supplement)
+  const numberKey = { order, supplementSlug, year }
+  const replyWithConflict = (conflict: { field: string; message: string }) => ({
+    submissionResult: submission.reply({
+      fieldErrors: { [conflict.field]: [conflict.message] },
+    }),
+  })
+
+  const conflict = await findIssueNumberConflict(context, {
+    ...numberKey,
+    excludeId: id,
+  })
+
+  if (conflict !== null) {
+    return replyWithConflict(conflict)
+  }
+
+  const issueFields = {
+    name: name ?? null,
+    order,
+    supplement: supplement ?? null,
+    year,
+  }
+  const coverAltText = getIssueCoverAltText(issueFields)
+
+  const pdfFileName = getEditedIssuePdfFileName(
+    { ...existingIssue, pdfFileName: existingIssue.pdf?.fileName ?? null },
+    numberKey,
   )
 
   // Remember the current cover version so its files can be removed once the new
@@ -130,8 +166,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
   })
 
   try {
+    // A Coordinator's correction keeps the approval (design 07d, 26e); the
+    // author can't edit a submitted issue at all.
     await prisma.issue.update({
       data: {
+        ...issueFields,
         authorId: authorId,
         cover: {
           update: {
@@ -139,16 +178,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
             where: { id: coverId },
           },
         },
-        label: label,
         pdf: {
           update: {
             data: pdfData,
             where: { id: pdfId },
           },
         },
-        // A Coordinator's correction keeps the approval (design 07d, 26e); the
-        // author can't edit a submitted issue at all.
-        releasedAt: releaseDate,
+        supplementSlug,
       },
       where: { id: id },
     })
@@ -185,6 +221,16 @@ export const action = async ({ request }: Route.ActionArgs) => {
     // surfacing the error. The cover's new version is intentionally left to the
     // store (its content-hash version may equal the still-referenced one).
     if (pdfData.id) await deletePdfObject(pdfData.id).catch(() => {})
+
+    // Taken between the check and the write.
+    const raceConflict = isUniqueConstraintError(error)
+      ? await findIssueNumberConflict(context, { ...numberKey, excludeId: id })
+      : null
+
+    if (raceConflict !== null) {
+      return replyWithConflict(raceConflict)
+    }
+
     throwDbError(error, 'Unable to update the archived issue.')
   }
 

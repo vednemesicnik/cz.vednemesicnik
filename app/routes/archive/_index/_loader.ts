@@ -4,6 +4,10 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import {
+  issueTitleSelect,
+  resolveIssueTitles,
+} from '~/utils/issue/resolve-issue-titles.server'
 import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 import {
   getWebContentVisibility,
@@ -23,15 +27,14 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const visibleIssues = visibility.where('issue', ownByAuthor)
 
   const issuesPromise = prisma.issue.findMany({
-    orderBy: {
-      releasedAt: 'desc',
-    },
+    // A supplement stands right after its issue (design 26a).
+    orderBy: [{ year: 'desc' }, { order: 'desc' }, { supplementSlug: 'asc' }],
     select: {
+      ...issueTitleSelect,
       cover: {
         select: imageSourceSelect,
       },
       id: true,
-      label: true,
       pdf: {
         select: {
           fileName: true,
@@ -52,7 +55,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     issuesCountPromise,
   ])
 
-  const issuesWithSources = issues.map((issue) => ({
+  const titledIssues = await resolveIssueTitles(issues, visibleIssues)
+
+  const issuesWithSources = titledIssues.map((issue) => ({
     ...issue,
     cover: issue.cover
       ? {

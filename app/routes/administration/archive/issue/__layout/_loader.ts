@@ -1,16 +1,28 @@
 import { data } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
+import {
+  issueTitleSelect,
+  resolveIssueTitles,
+} from '~/utils/issue/resolve-issue-titles.server'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+
+import { buildIssuePermissionWhere } from '../../utils/build-issue-permission-where'
 
 import type { Route } from './+types/route'
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { issueId } = params
+
+  const context = await getAuthorPermissionContext(request, {
+    actions: ['view'],
+    entities: ['issue'],
+  })
 
   const issue = await prisma.issue.findUnique({
     select: {
+      ...issueTitleSelect,
       id: true,
-      label: true,
     },
     where: { id: issueId },
   })
@@ -19,5 +31,10 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  return { issue }
+  const [titledIssue] = await resolveIssueTitles(
+    [issue],
+    buildIssuePermissionWhere(context),
+  )
+
+  return { issue: { id: titledIssue.id, title: titledIssue.title } }
 }

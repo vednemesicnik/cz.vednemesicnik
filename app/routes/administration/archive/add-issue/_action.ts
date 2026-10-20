@@ -5,7 +5,6 @@ import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
-import { getIssueData } from '~/utils/get-issue-data'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { isImageOverPixelBudget } from '~/utils/image-store/is-image-over-pixel-budget.server'
@@ -13,6 +12,9 @@ import {
   deleteImage,
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
+import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
+import { getIssueCoverAltText } from '~/utils/issue/get-issue-cover-alt-text'
+import { getIssuePdfFileName } from '~/utils/issue/get-issue-pdf-file-name'
 import {
   deletePdfObject,
   PDF_CONTENT_TYPE,
@@ -20,8 +22,10 @@ import {
 } from '~/utils/pdf-store/store-pdf.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
+import { slugify } from '~/utils/slugify'
 import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
+import { findIssueNumberConflict } from '../utils/find-issue-number-conflict.server'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -42,11 +46,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
     )
   }
 
-  const { ordinalNumber, releasedAt, cover, pdf, authorId } = submission.value
+  const { year, order, name, supplement, cover, pdf, authorId } =
+    submission.value
 
   // Check permissions
   const context = await getAuthorPermissionContext(request, {
-    actions: ['create'],
+    actions: ['create', 'view'],
     entities: ['issue'],
   })
 
@@ -68,10 +73,33 @@ export const action = async ({ request }: Route.ActionArgs) => {
     )
   }
 
-  const { releaseDate, label, pdfFileName, coverAltText } = getIssueData(
-    ordinalNumber,
-    releasedAt,
-  )
+  // An occupied number is said at its field before any file is written (26d).
+  const supplementSlug = supplement === undefined ? '' : slugify(supplement)
+  const numberKey = { order, supplementSlug, year }
+  const replyWithConflict = (conflict: { field: string; message: string }) =>
+    data(
+      {
+        submissionResult: submission.reply({
+          fieldErrors: { [conflict.field]: [conflict.message] },
+        }),
+      },
+      { status: 400 },
+    )
+
+  const conflict = await findIssueNumberConflict(context, numberKey)
+
+  if (conflict !== null) {
+    return replyWithConflict(conflict)
+  }
+
+  const issueFields = {
+    name: name ?? null,
+    order,
+    supplement: supplement ?? null,
+    year,
+  }
+  const coverAltText = getIssueCoverAltText(issueFields)
+  const pdfFileName = getIssuePdfFileName(numberKey)
 
   // Fresh ids up front so the cover/PDF object keys are known before the writes and
   // available to the cleanup in the catch.
@@ -86,6 +114,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
     const issue = await prisma.issue.create({
       data: {
+        ...issueFields,
         authorId: authorId,
         cover: {
           create: {
@@ -94,7 +123,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
             id: coverId,
           },
         },
-        label: label,
         pdf: {
           create: {
             contentType: PDF_CONTENT_TYPE,
@@ -102,7 +130,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
             id: pdfId,
           },
         },
-        releasedAt: releaseDate,
+        supplementSlug,
       },
     })
 
@@ -123,6 +151,16 @@ export const action = async ({ request }: Route.ActionArgs) => {
     // best-effort (fresh ids, so deleting them is safe and a no-op when nothing was
     // written) before surfacing the error.
     await Promise.allSettled([deleteImage(coverId), deletePdfObject(pdfId)])
+
+    // Taken between the check and the write.
+    const raceConflict = isUniqueConstraintError(error)
+      ? await findIssueNumberConflict(context, numberKey)
+      : null
+
+    if (raceConflict !== null) {
+      return replyWithConflict(raceConflict)
+    }
+
     throwDbError(error, 'Unable to add the archived issue.')
   }
 

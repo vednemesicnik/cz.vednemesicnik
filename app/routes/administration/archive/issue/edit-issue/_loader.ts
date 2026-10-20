@@ -1,11 +1,16 @@
 import { data } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
+import {
+  issueTitleSelect,
+  resolveIssueTitles,
+} from '~/utils/issue/resolve-issue-titles.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { requireContentUpdatePermission } from '~/utils/permissions/author/guards/require-content-update-permission.server'
 import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-authors-by-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 
+import { buildIssuePermissionWhere } from '../../utils/build-issue-permission-where'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -14,7 +19,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     entities: ['issue'],
   })
 
-  const issue = await prisma.issue.findUniqueOrThrow({
+  const storedIssue = await prisma.issue.findUniqueOrThrow({
     select: {
       author: {
         select: {
@@ -28,26 +33,30 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         },
       },
       id: true,
-      label: true,
+      ...issueTitleSelect,
       pdf: {
         select: {
           id: true,
         },
       },
       publishedAt: true,
-      releasedAt: true,
       state: true,
       submittedAt: true,
     },
     where: { id: params.issueId },
   })
 
+  const [issue] = await resolveIssueTitles(
+    [storedIssue],
+    buildIssuePermissionWhere(context),
+  )
+
   requireContentUpdatePermission(context, {
     authorIds: [issue.authorId],
     id: params.issueId,
     kind: 'issue',
     state: issue.state,
-    title: issue.label,
+    title: issue.title,
   })
 
   // A submitted draft is locked for its author until they take it back

@@ -87,7 +87,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <PageTitle>{issue.label}</PageTitle>
+      <PageTitle>{issue.title}</PageTitle>
 
       <AdminActionGroup>
         {canEdit && (
@@ -207,12 +207,12 @@ export default function RouteComponent({
 
       <AdminDetailSection title="Základní informace">
         <AdminDetailList>
-          <AdminDetailItem label="Název">{issue.label}</AdminDetailItem>
+          <AdminDetailItem label="Název">{issue.title}</AdminDetailItem>
           <AdminDetailItem label="Stav">
             <StatusTag state={submission ?? issue.state} />
           </AdminDetailItem>
-          <AdminDetailItem label="Datum vydání">
-            {issue.releasedAt.formatted}
+          <AdminDetailItem label="Pořadí v roce">
+            {issue.orderLabel}
           </AdminDetailItem>
           {issue.publishedAt.iso && (
             <AdminDetailItem label="Datum publikování">

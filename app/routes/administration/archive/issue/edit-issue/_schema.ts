@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
-const MAX_COVER_UPLOAD_SIZE = 1024 * 1024 * 5 // 5 kB
+import { slugify } from '~/utils/slugify'
+
+const MAX_COVER_UPLOAD_SIZE = 1024 * 1024 * 5 // 5 MB
 const MAX_PDF_UPLOAD_SIZE = 1024 * 1024 * 10 // 10 MB
 
 export const schema = z.object({
@@ -17,11 +19,15 @@ export const schema = z.object({
     }),
   coverId: z.string().readonly(),
   id: z.string(),
-  ordinalNumber: z
-    .number({ message: 'Pořadové číslo je povinné' })
-    .int({ message: 'Pořadové číslo musí být celé číslo' })
-    .min(1, { message: 'Pořadové číslo musí být větší než 0' })
-    .transform((value) => value.toString()),
+  name: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined),
+  order: z
+    .number({ message: 'Pořadí je povinné' })
+    .int({ message: 'Pořadí musí být celé číslo' })
+    .min(1, { message: 'Pořadí musí být větší než 0' }),
   pdf: z
     .instanceof(File)
     .optional()
@@ -35,7 +41,17 @@ export const schema = z.object({
       { message: 'PDF soubor by měl mít maximální velikost 10 MB' },
     ),
   pdfId: z.string().readonly(),
-  releasedAt: z
-    .string({ message: 'Datum vydání je povinný' })
-    .date('Datum vydání musí být ve formátu dd.mm.yyyy'),
+  supplement: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined)
+    .refine((value) => value === undefined || slugify(value) !== '', {
+      message: 'Doplněk musí obsahovat písmeno nebo číslici',
+    }),
+  year: z
+    .number({ message: 'Rok je povinný' })
+    .int({ message: 'Rok musí být celé číslo' })
+    .min(1000, { message: 'Rok musí mít čtyři číslice' })
+    .max(9999, { message: 'Rok musí mít čtyři číslice' }),
 })

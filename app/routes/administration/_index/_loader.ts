@@ -5,7 +5,7 @@ import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
-
+import { buildIssuePermissionWhere } from '../archive/utils/build-issue-permission-where'
 import { getPendingArticleCategories } from './utils/get-pending-article-categories.server'
 import { getPendingArticleTags } from './utils/get-pending-article-tags.server'
 import { getPendingArticles } from './utils/get-pending-articles.server'
@@ -96,7 +96,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       ? getPendingPodcastEpisodes(pendingOptions)
       : Promise.resolve(emptyResult),
     canViewIssueDrafts
-      ? getPendingIssues(pendingOptions)
+      ? getPendingIssues({
+          ...pendingOptions,
+          visibleWhere: buildIssuePermissionWhere(authorContext),
+        })
       : Promise.resolve(emptyResult),
     canViewArticleCategoryDrafts
       ? getPendingArticleCategories(pendingOptions)

@@ -19,8 +19,6 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
-import { getFormattedDateString } from '~/utils/get-formatted-date-string'
-import { getIssueOrdinalNumber } from '~/utils/get-issue-ordinal-number'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -39,9 +37,11 @@ export default function RouteComponent({
       authorId: issue.author.id,
       coverId: issue.cover?.id,
       id: issue.id,
-      ordinalNumber: getIssueOrdinalNumber(issue.label),
+      name: issue.name ?? '',
+      order: issue.order,
       pdfId: issue.pdf?.id,
-      releasedAt: getFormattedDateString(issue.releasedAt),
+      supplement: issue.supplement ?? '',
+      year: issue.year,
     },
     id: 'edit-archived-issue-form',
     lastResult: actionData?.submissionResult,
@@ -65,7 +65,7 @@ export default function RouteComponent({
 
   return (
     <AdminPage>
-      <PageTitle>Upravit číslo ({issue.label})</PageTitle>
+      <PageTitle>Upravit číslo ({issue.title})</PageTitle>
       <Form
         {...getFormProps(form)}
         encType={'multipart/form-data'}
@@ -79,15 +79,32 @@ export default function RouteComponent({
           legend={'Základní informace'}
         >
           <TextField
-            label={'Pořadové číslo'}
-            {...getInputProps(fields.ordinalNumber, { type: 'number' })}
-            errors={fields.ordinalNumber.errors}
+            label={'Rok'}
+            {...getInputProps(fields.year, { type: 'number' })}
+            errors={fields.year.errors}
             step={1}
           />
           <TextField
-            label={'Datum vydání'}
-            {...getInputProps(fields.releasedAt, { type: 'date' })}
-            errors={fields.releasedAt.errors}
+            label={'Pořadí v roce'}
+            {...getInputProps(fields.order, { type: 'number' })}
+            errors={fields.order.errors}
+            step={1}
+          />
+          <TextField
+            hint={'Bez roku. Z názvu podzim vznikne podzim 2026.'}
+            label={'Název'}
+            placeholder={'Nepovinné'}
+            {...getInputProps(fields.name, { type: 'text' })}
+            errors={fields.name.errors}
+          />
+          <TextField
+            hint={
+              'Pro samostatně vytištěný doplněk, třeba Maturitní ples. Zadejte rok a pořadí čísla, ke kterému patří.'
+            }
+            label={'Doplněk'}
+            placeholder={'Nepovinné'}
+            {...getInputProps(fields.supplement, { type: 'text' })}
+            errors={fields.supplement.errors}
           />
         </Fieldset>
 

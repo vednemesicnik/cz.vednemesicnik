@@ -13,15 +13,17 @@ import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
-import { getIssueYear } from '~/utils/get-issue-year'
+import {
+  issueTitleSelect,
+  resolveIssueTitles,
+} from '~/utils/issue/resolve-issue-titles.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
-import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
-
+import { buildIssuePermissionWhere } from '../utils/build-issue-permission-where'
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
 
@@ -34,7 +36,13 @@ const ORDER_BY: Record<
   (order: SortOrder) => Prisma.IssueOrderByWithRelationInput[]
 > = {
   createdAt: (order) => [{ createdAt: order }],
-  label: (order) => [{ label: order }, { createdAt: 'desc' }],
+  // A supplement stays right under its issue whichever way (design 26a).
+  order: (order) => [
+    { year: order },
+    { order: order },
+    { supplementSlug: 'asc' },
+    { createdAt: 'desc' },
+  ],
 }
 
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
@@ -51,51 +59,26 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     userId: context.userId,
   })
 
-  // Check view permissions for each state
-  const draftPerms = context.can({
-    action: 'view',
-    entity: 'issue',
-    state: 'draft',
-  })
-  const publishedPerms = context.can({
-    action: 'view',
-    entity: 'issue',
-    state: 'published',
-  })
-  const archivedPerms = context.can({
-    action: 'view',
-    entity: 'issue',
-    state: 'archived',
-  })
-
   const { order, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
-    defaultSort: 'createdAt',
+    defaultSort: 'order',
     sortKeys: SORT_KEYS,
   })
 
   const filters = parseAdminListFilters(request, TABLE_KEY)
 
-  const permissionWhere = {
-    OR: buildViewableStateFilters(
-      [
-        { rights: draftPerms, state: 'draft' },
-        { rights: publishedPerms, state: 'published' },
-        { rights: archivedPerms, state: 'archived' },
-      ],
-      { authorId: context.authorId },
-    ),
-  }
+  const permissionWhere = buildIssuePermissionWhere(context)
 
   // The years an issue is in (26a), offered whether or not the role may view
   // them, so a shared link means the same for everyone, as the article list's
-  // options do. An issue has no year of its own yet: it is its release's.
-  const issueYears = (
-    await prisma.issue.findMany({ select: { id: true, releasedAt: true } })
-  ).map((issue) => ({ id: issue.id, year: getIssueYear(issue.releasedAt) }))
-  const yearOptions = [...new Set(issueYears.map((issue) => issue.year))]
-    .sort((first, second) => second.localeCompare(first))
-    .map((year) => ({ label: year, value: year }))
+  // options do.
+  const yearOptions = (
+    await prisma.issue.findMany({
+      distinct: ['year'],
+      orderBy: { year: 'desc' },
+      select: { year: true },
+    })
+  ).map(({ year }) => ({ label: String(year), value: String(year) }))
 
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
   // match case-sensitively (accepted limitation). The field filters are ANDed
@@ -103,21 +86,22 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const where = {
     AND: [
       permissionWhere,
-      ...(query === '' ? [] : [{ label: { contains: query } }]),
+      ...(query === ''
+        ? []
+        : [
+            {
+              OR: [
+                { name: { contains: query } },
+                { supplement: { contains: query } },
+              ],
+            },
+          ]),
       ...(filters.state === undefined
         ? []
         : [{ OR: filters.state.map(buildContentQueueWhere) }]),
       ...(filters.year === undefined
         ? []
-        : [
-            {
-              id: {
-                in: issueYears
-                  .filter((issue) => filters.year?.includes(issue.year))
-                  .map((issue) => issue.id),
-              },
-            },
-          ]),
+        : [{ year: { in: filters.year.map(Number) } }]),
     ],
   }
 
@@ -147,7 +131,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         authorId: true,
         createdAt: true,
         id: true,
-        label: true,
+        ...issueTitleSelect,
         reviews: {
           select: {
             createdAt: true,
@@ -169,8 +153,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ),
   ])
 
+  const titledIssues = await resolveIssueTitles(rawIssues, permissionWhere)
+
   // Compute permissions for each issue
-  const issues = rawIssues.map(({ reviews, ...issue }) => {
+  const issues = titledIssues.map(({ reviews, ...issue }) => {
     return {
       ...issue,
       // A submitted draft is neither deleted nor edited by its author (07d).
