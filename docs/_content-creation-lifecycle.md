@@ -245,7 +245,8 @@ Built in #717 (epic #719, design 26c, 26d, 26i–26l; decision
 way as the article. *Nové číslo* posts to `add-issue`, which creates a draft with this year and
 the year's next free order and opens `edit-issue`. Until its first save or upload
 (`firstContentAt`) it is in no list, count or preview (`NON_EMPTY_ISSUE_WHERE`) and is deleted
-when its hold is released; each *Nové číslo* first deletes empty drafts whose hold expired. The
+when its hold is released; each *Nové číslo* first deletes empty drafts whose hold expired or that were never held
+for as long as a hold lasts. The
 editor saves Rok, Pořadí v roce, Název, Doplněk and, for the Coordinator only, Autor through the
 `save` route from the holding tab. The order follows the year until it is set by hand or a
 supplement is filled. A draft may lack its year and order; it is then named by what it lacks

@@ -26,8 +26,10 @@ stored both as required columns.
 - **The issue adopts 0019–0023.** `Issue` has the hold columns and `firstContentAt`. It uses
   `createEditHoldHandlers`, a `save` route of the article's shape and the shared hold dialogs.
 - ***Nové číslo* stores this year and the next free order at creation.** The next free order is
-  the year's highest main-issue order plus one. Empty drafts whose hold expired are deleted
-  first, so they don't hold a number.
+  the year's highest main-issue order plus one. Empty drafts are deleted first, so they don't
+  hold a number: one whose hold expired, and one never held for as long as a hold lasts (a
+  double click, an abandoned redirect), unlike the article's day. A save that meets an empty
+  draft holding its number sweeps too, never the issue being saved.
 - **The first save or upload ends the empty draft.** Autosave sends only after the editor
   touched the form, so any save is content. Until then the draft is in no list, count or
   preview, and it is deleted when its hold is released.

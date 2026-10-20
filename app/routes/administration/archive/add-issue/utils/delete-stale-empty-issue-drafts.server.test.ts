@@ -23,7 +23,7 @@ vi.mock('~/utils/content-log/delete-content-log.server', () => ({
 
 const now = new Date('2026-10-15T12:00:00Z')
 
-// Its hold expired, whatever its age (24e); or never held and a day old.
+// Its hold expired, whatever its age (24e); or never held for a hold's length.
 const staleWhere = {
   firstContentAt: null,
   OR: [
@@ -35,6 +35,7 @@ const staleWhere = {
       heldUntil: null,
     },
   ],
+  state: 'draft',
 }
 
 beforeEach(() => {
@@ -48,7 +49,7 @@ beforeEach(() => {
 
 describe('deleteStaleEmptyIssueDrafts', () => {
   test('looks for empty drafts whose hold expired, or never held for a day', async () => {
-    await deleteStaleEmptyIssueDrafts(now)
+    await deleteStaleEmptyIssueDrafts({ now })
 
     expect(mocks.findMany.mock.calls[0][0]).toEqual({
       select: { id: true },
@@ -57,7 +58,7 @@ describe('deleteStaleEmptyIssueDrafts', () => {
   })
 
   test('deletes them again only while they are still empty and free', async () => {
-    const count = await deleteStaleEmptyIssueDrafts(now)
+    const count = await deleteStaleEmptyIssueDrafts({ now })
 
     expect(mocks.deleteMany).toHaveBeenCalledWith({
       where: { ...staleWhere, id: { in: ['draft-1', 'draft-2'] } },
@@ -66,7 +67,7 @@ describe('deleteStaleEmptyIssueDrafts', () => {
   })
 
   test('takes their history rows with them', async () => {
-    await deleteStaleEmptyIssueDrafts(now)
+    await deleteStaleEmptyIssueDrafts({ now })
 
     expect(mocks.deleteContentLog.mock.calls).toEqual([
       [{ entity: 'issue', entityId: 'draft-1' }],
@@ -81,7 +82,7 @@ describe('deleteStaleEmptyIssueDrafts', () => {
       .mockResolvedValueOnce([{ id: 'draft-2' }])
     mocks.deleteMany.mockResolvedValue({ count: 1 })
 
-    await deleteStaleEmptyIssueDrafts(now)
+    await deleteStaleEmptyIssueDrafts({ now })
 
     expect(mocks.deleteContentLog.mock.calls).toEqual([
       [{ entity: 'issue', entityId: 'draft-1' }],
@@ -92,8 +93,16 @@ describe('deleteStaleEmptyIssueDrafts', () => {
     mocks.findMany.mockReset()
     mocks.findMany.mockResolvedValue([])
 
-    expect(await deleteStaleEmptyIssueDrafts(now)).toBe(0)
+    expect(await deleteStaleEmptyIssueDrafts({ now })).toBe(0)
     expect(mocks.deleteMany).not.toHaveBeenCalled()
     expect(mocks.deleteContentLog).not.toHaveBeenCalled()
+  })
+
+  test('leaves out the issue being saved', async () => {
+    await deleteStaleEmptyIssueDrafts({ excludeId: 'issue-1', now })
+
+    expect(mocks.findMany.mock.calls[0][0].where).toMatchObject({
+      id: { not: 'issue-1' },
+    })
   })
 })
