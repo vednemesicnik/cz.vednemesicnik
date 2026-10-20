@@ -40,6 +40,8 @@ migration, 20 Oct 2026).
   issue. The latest issue on `/links` excludes supplements.
 - The editor (#717) keeps the unique key and the occupied-number check at the field
   (design 26d); its prefill and „Použít 4“ build on the same three columns.
+- The archive's Rok filter reads the `year` column, which ends the interim source
+  (`getIssueYear`) that 0017 named until an issue had a year of its own.
 - Decision 0024 keeps its rule for a calendar day; its example, `releasedAt`, no longer
   exists, and nothing in the schema is a calendar day today.
 - Consistent with 0006: the issue stays the printed magazine; a supplement is a printed
