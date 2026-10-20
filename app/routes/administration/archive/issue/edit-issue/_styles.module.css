@@ -1,0 +1,214 @@
+/* The detail's header (26b, as 23a): the title with its tag, the save line
+   under it, Zavřít on the right (26c). */
+.header {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    inline-size: 100%;
+  }
+}
+
+.title {
+  @layer route {
+    display: grid;
+    gap: 8px;
+    min-inline-size: 0;
+  }
+}
+
+.titleLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+}
+
+/* The line under the heading, the only sign of saving (24e). */
+.saveLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+}
+
+/* Only a failure has a colour: someone has to act (24e). */
+.saveFailure {
+  @layer route {
+    color: var(--error-text);
+  }
+}
+
+/* One sentence over someone else's issue, not a banner (24c). */
+.sentence {
+  @layer route {
+    max-inline-size: 40rem;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+}
+
+/* Two tracks: the cover in a column of its own, the PDF beside it (26b,
+   26c). They stack once the section (an inline-size container) is narrow. */
+.files {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
+
+    @container (inline-size < 40rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+/* The cover and its caption under it. */
+.cover {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+  }
+}
+
+/* A printed page's proportions, so the slot stands before the image loads. */
+.coverImage {
+  @layer route {
+    aspect-ratio: 210 / 297;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* The picked cover while it uploads, dimmed (26c). */
+.uploading {
+  @layer route {
+    inline-size: 100%;
+    object-fit: cover;
+    opacity: 0.6;
+  }
+}
+
+/* Nahradit; Zkusit znovu and Vybrat jiný soubor after a failure (26d).
+   As tall as the upload row it takes turns with (UploadStatus: an 18 px line,
+   6 px gap, 4 px bar), so the caption under it stays put. */
+.fileActions {
+  @layer route {
+    min-block-size: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+.caption {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    font-weight: inherit;
+    color: var(--text-secondary);
+  }
+}
+
+.pdf {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+}
+
+.pdfName {
+  @layer route {
+    margin: 0;
+    font-weight: var(--font-weight-medium);
+    overflow-wrap: anywhere;
+  }
+}
+
+.uploaded {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    overflow-wrap: anywhere;
+  }
+}
+
+/* A fieldset only to lock its fields without the hold (07g): no frame. */
+.lock {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}
+
+/* Rok and Pořadí v roce side by side (26c). */
+.number {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+  }
+}
+
+.useFreeOrder {
+  @layer route {
+    justify-self: start;
+  }
+}
+
+/* Na webu jako under a line: the title, then the address (26c). */
+.webPreview {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding-block-start: 14px;
+    font-size: 13px;
+    border-block-start: 1px solid var(--border);
+
+    & dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
+.webPreviewLabel {
+  @layer route {
+    color: var(--text-secondary);
+  }
+}
+
+.tertiary {
+  @layer route {
+    color: var(--text-tertiary);
+  }
+}

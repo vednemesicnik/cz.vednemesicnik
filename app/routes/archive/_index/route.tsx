@@ -22,11 +22,12 @@ export { meta } from './_meta'
 type Issue = Route.ComponentProps['loaderData']['issues'][number]
 type RenderableIssue = Issue & {
   cover: NonNullable<Issue['cover']>
-  pdf: NonNullable<Issue['pdf']>
+  pdf: NonNullable<Issue['pdf']> & { fileName: string }
 }
 
+// A PDF without its name has no address yet (decision 0033).
 const isRenderable = (issue: Issue): issue is RenderableIssue =>
-  issue.cover !== null && issue.pdf !== null
+  issue.cover !== null && issue.pdf !== null && issue.pdf.fileName !== null
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { issues, issuesCount } = loaderData
@@ -47,7 +48,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <TileGrid>
         {renderableIssues.map((issue, index) => {
-          const { id, cover, pdf, label } = issue
+          const { id, cover, pdf, title } = issue
 
           const isLcpCandidate = index === 0
           const coverAlt = cover.altText
@@ -58,8 +59,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               key={id}
               {...getRevealProps(index - revealBatchStart)}
             >
-              <Link reloadDocument={true} title={label} to={pdfSrc}>
-                <Tile label={label}>
+              <Link reloadDocument={true} title={title} to={pdfSrc}>
+                <Tile label={title}>
                   <Image
                     {...cover.sources}
                     alt={coverAlt}

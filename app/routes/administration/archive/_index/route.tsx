@@ -1,17 +1,20 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
+import { Form, href } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
   TableBody,
+  TableGroupHeading,
   TableHeader,
   TableHeaderCell,
   TableSelectionHeaderCell,
   TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
 import { FilterBar } from '~/components/filter-bar'
@@ -20,7 +23,6 @@ import { FilterBarGroup } from '~/components/filter-bar-group'
 import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
-import { LinkButton } from '~/components/link-button'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -30,6 +32,8 @@ import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { ISSUE_NOUN } from '~/config/list-noun-config'
+import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
+import { useRevalidateAt } from '~/hooks/use-revalidate-at'
 import { formatBulkDeleteToast } from '~/utils/format-bulk-delete-toast'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
@@ -40,6 +44,10 @@ import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
 import { getIssueBulkDeleteConfirmation } from './utils/get-issue-bulk-delete-confirmation'
+import { groupIssuesByYear } from './utils/group-issues-by-year'
+
+// Selection, cover, Číslo, Pořadí, Stav, Akce (26a).
+const COLUMN_COUNT = 6
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -49,17 +57,25 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
     canCreate,
     currentFilterQuery,
+    currentPage,
     filters,
     isApprover,
     isContributor,
     issues,
     matchingFilterId,
     ownFilters,
+    pageSize,
     query,
     queueCounts,
     sharedFilters,
+    totalCount,
+    totalPages,
     yearOptions,
   } = loaderData
+  // „Číslo právě upravuje …“ after the editor of a held new draft (26i).
+  useAdminNoticeToast(loaderData)
+  // A hold's expiry sends no event; the list looks again then (26i).
+  useRevalidateAt(issues.map((issue) => issue.heldUntil))
 
   const pending = useAdminListPending()
 
@@ -103,15 +119,20 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     states,
   })
 
+  // Nové číslo creates the draft and opens it (decision 0020), so it posts.
+  const renderNewIssueButton = () =>
+    canCreate && (
+      <Form action={href('/administration/archive/add-issue')} method={'post'}>
+        <AuthenticityTokenInput />
+        <Button type={'submit'}>Nové číslo</Button>
+      </Form>
+    )
+
   return (
     <AdminPage>
       <ListHeader>
         <PageTitle>Archiv</PageTitle>
-        {canCreate && (
-          <LinkButton to={href('/administration/archive/add-issue')}>
-            Nové číslo
-          </LinkButton>
-        )}
+        {renderNewIssueButton()}
       </ListHeader>
       <FilterCell>
         <AdminBulkActionsBar
@@ -125,7 +146,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         />
         <FilterBar replaced={selection.selectedIds.length > 0}>
           <FilterBarGroup>
-            <FilterBarSearch defaultValue={query} placeholder={'Název'} />
+            <FilterBarSearch
+              defaultValue={query}
+              placeholder={'Název nebo doplněk'}
+            />
             <FilterBarFilters>
               <FilterMenu
                 attention={stateFilter.attention}
@@ -168,11 +192,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
           )}
-          {emptyMessage.action === 'create' && canCreate && (
-            <LinkButton to={href('/administration/archive/add-issue')}>
-              Nové číslo
-            </LinkButton>
-          )}
+          {emptyMessage.action === 'create' && renderNewIssueButton()}
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
         </ListEmptyCard>
       ) : (
@@ -184,51 +204,50 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />
+            <TableHeaderCell>
+              <span className={'screen-reader-only'}>Obálka</span>
+            </TableHeaderCell>
+            <TableHeaderCell>Číslo</TableHeaderCell>
             <TableSortableHeaderCell
               defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'label'}
+              defaultSort={'order'}
+              sortKey={'order'}
               sortKeys={SORT_KEYS}
             >
-              Název
-            </TableSortableHeaderCell>
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'createdAt'}
-              sortKeys={SORT_KEYS}
-            >
-              Vytvořeno
+              Pořadí
             </TableSortableHeaderCell>
             <TableHeaderCell>Stav</TableHeaderCell>
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>
-          <TableBody>
-            {issues.map((issue) => (
-              <ItemRow
-                canDelete={issue.canDelete}
-                canEdit={issue.canEdit}
-                canView={issue.canView}
-                createdAt={issue.createdAt}
-                id={issue.id}
-                key={issue.id}
-                label={issue.label}
-                onSelect={() => selection.toggle(issue.id)}
-                selected={selection.isSelected(issue.id)}
-                state={issue.submission ?? issue.state}
-              />
-            ))}
-          </TableBody>
+          {/* A heading over each year, again at the top of a page (26a). */}
+          {groupIssuesByYear(issues).map((group) => (
+            <TableBody key={group.year ?? 'none'}>
+              {group.year !== null && (
+                <TableGroupHeading colSpan={COLUMN_COUNT}>
+                  {group.year}
+                </TableGroupHeading>
+              )}
+              {group.issues.map((issue) => (
+                <ItemRow
+                  isApprover={isApprover}
+                  issue={issue}
+                  key={issue.id}
+                  onSelect={() => selection.toggle(issue.id)}
+                  selected={selection.isSelected(issue.id)}
+                />
+              ))}
+            </TableBody>
+          ))}
         </AdminTable>
       )}
       <Pagination
-        currentPage={1}
+        currentPage={currentPage}
         layout={'inline'}
         noun={ISSUE_NOUN.countForms}
-        pageSize={issues.length}
+        pageSize={pageSize}
         size={'sm'}
-        totalCount={issues.length}
-        totalPages={1}
+        totalCount={totalCount}
+        totalPages={totalPages}
       />
     </AdminPage>
   )

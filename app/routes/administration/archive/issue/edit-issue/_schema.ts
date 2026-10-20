@@ -1,41 +1,41 @@
 import { z } from 'zod'
 
-const MAX_COVER_UPLOAD_SIZE = 1024 * 1024 * 5 // 5 kB
-const MAX_PDF_UPLOAD_SIZE = 1024 * 1024 * 10 // 10 MB
+import { slugify } from '~/utils/slugify'
+
+// A draft saves incomplete (design 26e): a missing year or order is said at
+// submit, so a field is refused only for a value that can't be read (copy
+// xrtebq3m).
+const optionalText = z
+  .string()
+  .optional()
+  .transform((value) => value?.trim() ?? '')
+
+/** The fields that make the issue's number; they save as one (decision 0032). */
+export const ISSUE_NUMBER_FIELDS = ['year', 'order', 'supplement'] as const
 
 export const schema = z.object({
-  authorId: z.string({ message: 'Autor je povinný' }),
-  cover: z
-    .instanceof(File)
-    .optional()
+  // Sent only by the Coordinator, who chooses the author (design 26c).
+  authorId: z.string().min(1).optional(),
+  // The editor's tab, which holds the edit hold (design 24g).
+  editTabId: z.string().min(1),
+  name: optionalText,
+  order: z
+    .number({ message: 'Zadejte pořadí jako celé číslo.' })
+    .int({ message: 'Zadejte pořadí jako celé číslo.' })
+    .min(1, { message: 'Zadejte pořadí větší než nula.' })
+    .optional(),
+  supplement: optionalText.refine(
+    (value) => value === '' || slugify(value) !== '',
+    {
+      message: 'Zadejte název doplňku alespoň s jedním písmenem nebo číslicí.',
+    },
+  ),
+  year: z
+    .number({ message: 'Zadejte rok čtyřmi číslicemi.' })
+    // One check, so 26,5 gets the sentence once.
     .refine(
-      (file) => !file || file.type.startsWith('image/'),
-      'Formát souboru není podporován',
+      (value) => Number.isInteger(value) && value >= 1000 && value <= 9999,
+      { message: 'Zadejte rok čtyřmi číslicemi.' },
     )
-    .refine((file) => !file || file.size <= MAX_COVER_UPLOAD_SIZE, {
-      message: 'Obálka by měla mít maximální velikost 5 MB',
-    }),
-  coverId: z.string().readonly(),
-  id: z.string(),
-  ordinalNumber: z
-    .number({ message: 'Pořadové číslo je povinné' })
-    .int({ message: 'Pořadové číslo musí být celé číslo' })
-    .min(1, { message: 'Pořadové číslo musí být větší než 0' })
-    .transform((value) => value.toString()),
-  pdf: z
-    .instanceof(File)
-    .optional()
-    .refine((file) => !file || file.type === 'application/pdf', {
-      message: 'Formát souboru není podporován',
-    })
-    .refine(
-      (file) => {
-        return !file || file.size <= MAX_PDF_UPLOAD_SIZE
-      },
-      { message: 'PDF soubor by měl mít maximální velikost 10 MB' },
-    ),
-  pdfId: z.string().readonly(),
-  releasedAt: z
-    .string({ message: 'Datum vydání je povinný' })
-    .date('Datum vydání musí být ve formátu dd.mm.yyyy'),
+    .optional(),
 })

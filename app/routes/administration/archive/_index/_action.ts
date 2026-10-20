@@ -3,6 +3,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { FORM_CONFIG } from '~/config/form-config'
 import { requireCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
+import { readEditHeldRefusal } from '~/utils/edit-hold/read-edit-held-refusal'
 import { issueContentStateHandlers } from '../issue/_index/utils/content-state-handlers.server'
 import type { Route } from './+types/route'
 
@@ -43,16 +44,23 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   // Sequential on purpose: each delete runs its own permission check and
   // image/PDF-cleanup. Not atomic across items — the UI only offers deletable
-  // rows; the per-item check is defense in depth.
+  // rows; the per-item check is defense in depth. An issue someone is editing
+  // stays (decision 0019) and is not counted.
+  let deletedCount = 0
   for (const issue of issues) {
-    await issueContentStateHandlers.delete(request, {
-      id: issue.id,
-      target: { authorIds: [issue.authorId], state: issue.state },
-    })
+    try {
+      await issueContentStateHandlers.delete(request, {
+        id: issue.id,
+        target: { authorIds: [issue.authorId], state: issue.state },
+      })
+      deletedCount += 1
+    } catch (error) {
+      if (readEditHeldRefusal(error) === null) throw error
+    }
   }
 
   // App convention: the bulk-delete hook clears the selection only on an
   // explicit success. A denied item throws inside deleteIssue before we get
   // here, so the selection stays for retry.
-  return { deletedCount: issues.length, status: 'success' as const }
+  return { deletedCount, status: 'success' as const }
 }

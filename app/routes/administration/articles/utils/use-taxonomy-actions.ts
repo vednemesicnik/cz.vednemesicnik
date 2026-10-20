@@ -73,7 +73,7 @@ export const useTaxonomyActions = ({
     }),
     [copy, submittedAction],
   )
-  useContentActionResult(fetcher.data, toasts)
+  useContentActionResult(fetcher.data, { toasts })
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(

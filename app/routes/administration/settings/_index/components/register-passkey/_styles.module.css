@@ -1,9 +1,7 @@
 .unsupported {
   @layer route {
     margin: 0;
-    max-width: 16rem;
     font-size: var(--font-size-xs);
     color: var(--text-tertiary);
-    text-align: end;
   }
 }

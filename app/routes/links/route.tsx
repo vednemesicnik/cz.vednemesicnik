@@ -54,7 +54,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               </GraphicLink>
             </LinkGroupItem>
           )}
-          {latestIssue !== null && latestIssue.pdf !== null && (
+          {latestIssue?.pdf?.fileName != null && (
             <LinkGroupItem>
               <GraphicLink
                 image={latestIssueCoverImage}

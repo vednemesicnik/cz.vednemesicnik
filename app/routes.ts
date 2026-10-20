@@ -174,6 +174,21 @@ export default [
           'articles/:articleId/images',
           'routes/administration/articles/article/article-images/route.ts',
         ),
+        // The issue editor's edit hold and autosave (design 26c), as the
+        // article's.
+        route(
+          'archive/:issueId/edit-hold',
+          'routes/administration/archive/issue/edit-hold/route.ts',
+        ),
+        route(
+          'archive/:issueId/save',
+          'routes/administration/archive/issue/save-issue/route.ts',
+        ),
+        // Its cover and PDF, each saved on its own as it is picked (26c).
+        route(
+          'archive/:issueId/files',
+          'routes/administration/archive/issue/issue-files/route.ts',
+        ),
 
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [

@@ -1,5 +1,6 @@
 /* The design system's error line (`.vdm-field__error`): an icon, so the error
-   never relies on colour alone. The icon is 1em, 14 px at this size. */
+   never relies on colour alone. The icon is 1em, 14 px at this size, centred
+   on the first line however the message wraps. */
 .container {
   @layer component {
     display: flex;
@@ -23,6 +24,6 @@
 .icon {
   @layer component {
     flex-shrink: 0;
-    margin-block-start: 2px;
+    margin-block-start: calc((1lh - 1em) / 2);
   }
 }

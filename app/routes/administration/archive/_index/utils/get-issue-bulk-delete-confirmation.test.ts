@@ -4,11 +4,11 @@ import { getIssueBulkDeleteConfirmation } from './get-issue-bulk-delete-confirma
 
 const issue = (index: number) => ({
   id: `issue-${index}`,
-  label: `zima 202${index}`,
+  title: `zima 202${index}`,
 })
 
 describe('getIssueBulkDeleteConfirmation', () => {
-  it('counts two issues and lists their labels (26f)', () => {
+  it('counts two issues and lists their titles (26f)', () => {
     expect(getIssueBulkDeleteConfirmation([issue(5), issue(6)])).toEqual({
       confirmLabel: 'Smazat 2 čísla',
       description: 'Smažou se i jejich nahrané soubory. Vrátit to nejde.',

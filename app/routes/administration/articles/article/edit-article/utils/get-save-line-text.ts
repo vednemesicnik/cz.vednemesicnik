@@ -1,6 +1,6 @@
 import type { AutosaveStatus } from '~/hooks/use-autosave'
 
-import { formatSavedMoment } from './format-saved-moment'
+import { formatSavedMoment } from '~/utils/autosave/format-saved-moment'
 
 type Options = {
   status: AutosaveStatus

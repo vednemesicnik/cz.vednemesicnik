@@ -1,143 +1,23 @@
 // noinspection JSUnusedGlobalSymbols
 
-import {
-  getFormProps,
-  getInputProps,
-  getSelectProps,
-  useForm,
-} from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { href, useNavigation } from 'react-router'
-import { AdminPage } from '~/components/admin/admin-page'
-import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Button } from '~/components/button'
-import { Fieldset } from '~/components/fieldset'
-import { FileInput } from '~/components/file-input'
-import { Form } from '~/components/form'
-import { FormActions } from '~/components/form-actions'
-import { LinkButton } from '~/components/link-button'
-import { PageTitle } from '~/components/page-title'
-import { Select } from '~/components/select'
-import { TextField } from '~/components/text-field'
-import { getFormattedDateString } from '~/utils/get-formatted-date-string'
-import { schema } from './_schema'
+import { href, redirect } from 'react-router'
+import { requireCSRF } from '~/utils/csrf.server'
+
 import type { Route } from './+types/route'
+import { createDraftIssue } from './utils/create-draft-issue.server'
 
-export { action } from './_action'
-export { handle } from './_handle'
-export { loader } from './_loader'
-export { meta } from './_meta'
+// *Nové číslo* is an action, not a page (decision 0020, design 26c): the old
+// address leads to the list, and a POST creates the draft and opens it.
 
-export default function RouteComponent({
-  loaderData,
-  actionData,
-}: Route.ComponentProps) {
-  const { state } = useNavigation()
+export const loader = () => redirect(href('/administration/archive'))
 
-  const [form, fields] = useForm({
-    constraint: getZodConstraint(schema),
-    defaultValue: {
-      authorId: loaderData.selfAuthorId,
-      ordinalNumber: '',
-      releasedAt: getFormattedDateString(new Date()),
-    },
-    id: 'add-archived-issue',
-    lastResult: actionData?.submissionResult,
-    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
-    shouldDirtyConsider: (field) => {
-      return !field.startsWith('csrf')
-    },
-    shouldRevalidate: 'onBlur',
-    shouldValidate: 'onSubmit',
-  })
+export const action = async ({ request }: Route.ActionArgs) => {
+  const formData = await request.formData()
+  await requireCSRF(formData, request)
 
-  const handleFileChange = (name: string, dirty: boolean) => () => {
-    if (dirty) {
-      form.validate({ name })
-    }
-  }
+  const { issueId } = await createDraftIssue(request)
 
-  const isLoadingOrSubmitting = state !== 'idle'
-  const isSubmitting = state === 'submitting'
-  const canSubmit = !isLoadingOrSubmitting && form.valid
-
-  return (
-    <AdminPage>
-      <PageTitle>Nové číslo</PageTitle>
-
-      <Form
-        encType={'multipart/form-data'}
-        method={'post'}
-        {...getFormProps(form)}
-        errors={form.errors}
-      >
-        <Fieldset
-          disabled={isLoadingOrSubmitting}
-          legend={'Základní informace'}
-        >
-          <TextField
-            label={'Pořadové číslo'}
-            {...getInputProps(fields.ordinalNumber, { type: 'number' })}
-            errors={fields.ordinalNumber.errors}
-            placeholder={'1'}
-            step={1}
-          />
-          <TextField
-            label={'Datum vydání'}
-            {...getInputProps(fields.releasedAt, { type: 'date' })}
-            errors={fields.releasedAt.errors}
-          />
-        </Fieldset>
-
-        <Fieldset disabled={isLoadingOrSubmitting} legend={'Soubory'}>
-          <FileInput
-            errors={fields.cover.errors}
-            label={'Obálka'}
-            onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
-            {...getInputProps(fields.cover, { type: 'file' })}
-            accept={'image'}
-          />
-          <FileInput
-            errors={fields.pdf.errors}
-            label={'PDF'}
-            onChange={handleFileChange(fields.pdf.name, fields.pdf.dirty)}
-            {...getInputProps(fields.pdf, { type: 'file' })}
-            accept={'pdf'}
-          />
-        </Fieldset>
-
-        <Fieldset
-          disabled={isLoadingOrSubmitting}
-          legend={'Informace o autorovi'}
-        >
-          <Select
-            errors={fields.authorId.errors}
-            label={'Autor'}
-            {...getSelectProps(fields.authorId)}
-          >
-            {loaderData.authors.map((author) => (
-              <option key={author.id} value={author.id}>
-                {author.name}
-              </option>
-            ))}
-          </Select>
-        </Fieldset>
-
-        <AuthenticityTokenInput />
-
-        <FormActions>
-          <Button disabled={!canSubmit} type={'submit'}>
-            {isSubmitting ? 'Přidává se...' : 'Přidat'}
-          </Button>
-          <LinkButton
-            disabled={isLoadingOrSubmitting}
-            to={href('/administration/archive')}
-            variant={'outline'}
-          >
-            Zrušit
-          </LinkButton>
-        </FormActions>
-      </Form>
-    </AdminPage>
+  return redirect(
+    href('/administration/archive/:issueId/edit-issue', { issueId }),
   )
 }
