@@ -26,6 +26,7 @@ import { ActionMenu } from '~/components/action-menu'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
@@ -38,7 +39,10 @@ import { Chip } from '~/components/chip'
 import { ChipInput } from '~/components/chip-input'
 import { CompactImageTile } from '~/components/compact-image-tile'
 import { CompactUploadStatus } from '~/components/compact-upload-status'
+import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { Form } from '~/components/form'
+import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { ImageTile } from '~/components/image-tile'
 import { ImageTileActions } from '~/components/image-tile-actions'
 import { ImageTileAltLine } from '~/components/image-tile-alt-line'
@@ -60,6 +64,8 @@ import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
+import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
+import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
 import { foldForSearch } from '~/utils/fold-for-search'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
 import { slugify } from '~/utils/slugify'
@@ -70,7 +76,6 @@ import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { AddImagesTile } from './components/add-images-tile'
-import { ArticleChangedDialog } from './components/article-changed-dialog'
 import { AuthorList } from './components/author-list'
 import { AuthorListItem } from './components/author-list-item'
 import { AuthorRemoveButton } from './components/author-remove-button'
@@ -79,20 +84,16 @@ import { AuthorRowButton } from './components/author-row-button'
 import { CancelUploadDialog } from './components/cancel-upload-dialog'
 import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
-import { EditHoldDialog } from './components/edit-hold-dialog'
 import { EditorDetail } from './components/editor-detail'
 import { GalleryDetail } from './components/gallery-detail'
 import { GalleryGrid } from './components/gallery-grid'
-import { HoldTakenDialog } from './components/hold-taken-dialog'
 import { RemoveImageDialog } from './components/remove-image-dialog'
 import { formatArticleChangedDescription } from './utils/format-article-changed-description'
 import { formatFirstNameAndCount } from './utils/format-first-name-and-count'
 import { formatGallerySummary } from './utils/format-gallery-summary'
 import { formatHoldTakenDescription } from './utils/format-hold-taken-description'
-import { formatTakeOverDescription } from './utils/format-take-over-description'
 import { getEditorSentence } from './utils/get-editor-sentence'
 import { getImageMenuItems } from './utils/get-image-menu-items'
-import { getReadOnlyNotice } from './utils/get-read-only-notice'
 import { getSaveLineText } from './utils/get-save-line-text'
 import { isTileUploading } from './utils/is-tile-uploading'
 import { useArticleGallery } from './utils/use-article-gallery'
@@ -199,6 +200,11 @@ export default function RouteComponent({
       ? editHold.state
       : null
   const readOnlyNotice = getReadOnlyNotice(editHold.state)
+  // Changed meanwhile, and free to edit again here (24i).
+  const canReloadChanged =
+    editHold.state.status === 'changed' &&
+    editHold.state.holder === null &&
+    editHold.state.isEditable
   const [holdLoss, setHoldLoss] = useState<HoldLoss | null>(null)
 
   const closeHref = article.isEmptyDraft
@@ -1166,34 +1172,53 @@ export default function RouteComponent({
             now: new Date(),
             savedAt,
           })}
-          getContent={getContent}
-          hasUnsentChanges={holdLoss.hasUnsentChanges}
           holderName={holdLoss.holderName}
           onOpenDetail={() => navigate(closeHref)}
           onStay={closeHoldLossDialog}
-        />
+        >
+          {holdLoss.hasUnsentChanges && (
+            <>
+              <div className={styles.holdTakenCopy}>
+                <CopyArticleTextButton getContent={getContent} />
+                <CopyArticleTextHint />
+              </div>
+              <AdminModalDescription>
+                Před otevřením detailu si zkopírujte text článku.
+              </AdminModalDescription>
+            </>
+          )}
+        </HoldTakenDialog>
       )}
       {holdLoss?.dialog === 'changed' &&
         editHold.state.status === 'changed' && (
-          <ArticleChangedDialog
-            canReload={
-              editHold.state.holder === null && editHold.state.isEditable
-            }
-            description={formatArticleChangedDescription({
+          <ContentChangedDialog
+            canReload={canReloadChanged}
+            description={`${formatArticleChangedDescription({
               awayMilliseconds: editHold.state.awayMilliseconds,
               now: new Date(),
               savedAt,
-            })}
-            getContent={getContent}
+            })} ${
+              canReloadChanged
+                ? 'Před načtením aktuální verze si zkopírujte text článku.'
+                : 'Před otevřením detailu si zkopírujte text článku.'
+            }`}
             onClose={closeHoldLossDialog}
             onOpenDetail={() => navigate(closeHref)}
             onReload={reload}
+            rescueAction={
+              <CopyArticleTextButton
+                getContent={getContent}
+                variant={'ghost'}
+              />
+            }
+            title={'Článek se mezitím změnil'}
           />
         )}
 
       {/* Someone else's edit, only the Coordinator's to take (24g). */}
       {editHold.state.status === 'held-by-other' && isApprover && (
         <EditHoldDialog
+          content={'article'}
           description={formatTakeOverDescription(
             editHold.state.holder,
             new Date(),
@@ -1206,6 +1231,7 @@ export default function RouteComponent({
       )}
       {editHold.state.status === 'own-other-tab' && (
         <EditHoldDialog
+          content={'article'}
           key={editHold.attempt}
           kind={'other-tab'}
           onCancel={() => navigate(closeHref)}

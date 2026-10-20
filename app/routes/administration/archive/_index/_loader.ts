@@ -1,5 +1,5 @@
 import type { Prisma } from '@generated/prisma/client'
-import { redirect } from 'react-router'
+import { data, redirect } from 'react-router'
 
 import {
   CONTRIBUTOR_STATE_FILTER_QUEUES,
@@ -10,9 +10,11 @@ import {
   parseAdminListFilters,
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
+import { NON_EMPTY_ISSUE_WHERE } from '~/utils/issue/non-empty-issue-where'
 import {
   issueTitleSelect,
   resolveIssueTitles,
@@ -71,12 +73,13 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   // The years an issue is in (26a), offered whether or not the role may view
   // them, so a shared link means the same for everyone, as the article list's
-  // options do.
+  // options do. A draft without a year adds none (decision 0032).
   const yearOptions = (
     await prisma.issue.findMany({
       distinct: ['year'],
       orderBy: { year: 'desc' },
       select: { year: true },
+      where: { ...NON_EMPTY_ISSUE_WHERE, year: { not: null } },
     })
   ).map(({ year }) => ({ label: String(year), value: String(year) }))
 
@@ -189,20 +192,30 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     }
   })
 
-  return {
-    ...savedFilters,
-    canCreate: context.can({
-      action: 'create',
-      entity: 'issue',
-      state: 'draft',
-      targetAuthorIds: [context.authorId],
-    }).hasPermission,
-    filters,
-    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
-    isContributor,
-    issues,
-    query,
-    queueCounts,
-    yearOptions,
-  }
+  // Read only here: an earlier redirect must not use up the toast (26i).
+  const notice = await readAdminNotice(request)
+
+  return data(
+    {
+      ...savedFilters,
+      canCreate: context.can({
+        action: 'create',
+        entity: 'issue',
+        state: 'draft',
+        targetAuthorIds: [context.authorId],
+      }).hasPermission,
+      filters,
+      isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+      isContributor,
+      issues,
+      query,
+      queueCounts,
+      // „Číslo právě upravuje …“ after the editor of a held new draft (26i).
+      toast: notice.toast,
+      yearOptions,
+    },
+    notice.toast === null
+      ? undefined
+      : { headers: { 'Set-Cookie': notice.setCookie } },
+  )
 }

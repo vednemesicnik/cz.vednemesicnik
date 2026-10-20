@@ -127,4 +127,15 @@ describe('getIssueHeaderActions', () => {
       sentence: null,
     })
   })
+
+  test('while someone else edits it, only the Coordinator takes the edit over (26i)', () => {
+    expect(
+      getIssueHeaderActions({
+        ...nothingAllowed,
+        canTakeOver: true,
+        isHeldByOther: true,
+        state: 'draft',
+      }),
+    ).toEqual({ menu: [], outline: 'take-over', primary: null, sentence: null })
+  })
 })

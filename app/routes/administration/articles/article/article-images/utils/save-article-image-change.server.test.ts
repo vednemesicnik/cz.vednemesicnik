@@ -9,15 +9,14 @@ const mocks = vi.hoisted(() => ({
   articleUpdate: vi.fn(),
   articleUpdateMany: vi.fn(),
   permissionContext: vi.fn(),
-  recordArticleEditLog: vi.fn(),
+  recordEditLog: vi.fn(),
   transaction: vi.fn(),
   withAuthorPermission: vi.fn(),
 }))
 
-vi.mock(
-  '~/routes/administration/articles/utils/record-article-edit-log.server',
-  () => ({ recordArticleEditLog: mocks.recordArticleEditLog }),
-)
+vi.mock('~/utils/content-log/record-edit-log.server', () => ({
+  recordEditLog: mocks.recordEditLog,
+}))
 
 vi.mock(
   '~/utils/permissions/author/actions/with-author-permission.server',
@@ -420,7 +419,7 @@ describe('saveArticleImageChange — prepare', () => {
 
     expect(result).toEqual({ status: 'failed' })
     expect(mocks.transaction).not.toHaveBeenCalled()
-    expect(mocks.recordArticleEditLog).not.toHaveBeenCalled()
+    expect(mocks.recordEditLog).not.toHaveBeenCalled()
   })
 
   test('lets what prepare throws through', async () => {
@@ -497,7 +496,7 @@ describe('saveArticleImageChange — the transaction', () => {
     })
 
     expect(result).toMatchObject({ status: 'saved' })
-    expect(mocks.recordArticleEditLog).toHaveBeenCalledOnce()
+    expect(mocks.recordEditLog).toHaveBeenCalledOnce()
     consoleError.mockRestore()
   })
 
@@ -545,10 +544,11 @@ describe('saveArticleImageChange — the history', () => {
       prepare: buildPrepare({ addsContent: true }),
     })
 
-    expect(mocks.recordArticleEditLog).toHaveBeenCalledWith(
+    expect(mocks.recordEditLog).toHaveBeenCalledWith(
       { authorId: 'author-1', roleLevel: 1 },
       {
-        articleId: 'article-1',
+        entity: 'article',
+        entityId: 'article-1',
         heldSince: ownHold.heldSince,
         isCreation: true,
       },
@@ -568,7 +568,7 @@ describe('saveArticleImageChange — the history', () => {
 
     // The stored article was still empty, so it is no edit; and the mark
     // matched no row, so it is no creation.
-    expect(mocks.recordArticleEditLog).not.toHaveBeenCalled()
+    expect(mocks.recordEditLog).not.toHaveBeenCalled()
   })
 
   test('logs an edit of an article that already has content', async () => {
@@ -577,10 +577,11 @@ describe('saveArticleImageChange — the history', () => {
       prepare: buildPrepare(),
     })
 
-    expect(mocks.recordArticleEditLog).toHaveBeenCalledWith(
+    expect(mocks.recordEditLog).toHaveBeenCalledWith(
       { authorId: 'author-1', roleLevel: 1 },
       {
-        articleId: 'article-1',
+        entity: 'article',
+        entityId: 'article-1',
         heldSince: ownHold.heldSince,
         isCreation: false,
       },
@@ -598,7 +599,7 @@ describe('saveArticleImageChange — the history', () => {
       prepare: buildPrepare(),
     })
 
-    expect(mocks.recordArticleEditLog).not.toHaveBeenCalled()
+    expect(mocks.recordEditLog).not.toHaveBeenCalled()
   })
 })
 
@@ -624,7 +625,7 @@ describe('saveArticleImageChange — a refused write', () => {
     expect(result).toEqual({ heldByName: 'Jakub Novák', status: 'not-held' })
     expect(onRefused).toHaveBeenCalledOnce()
     expect(onCommitted).not.toHaveBeenCalled()
-    expect(mocks.recordArticleEditLog).not.toHaveBeenCalled()
+    expect(mocks.recordEditLog).not.toHaveBeenCalled()
     expect(mocks.articleFindUnique).toHaveBeenLastCalledWith({
       select: expect.objectContaining({ heldByTabId: true }),
       where: { id: 'article-1' },
@@ -795,7 +796,7 @@ describe('saveArticleImageChange — a cancellable change (bxy8xxqs)', () => {
     expect(result).toEqual({ status: 'cancelled' })
     expect(onCancelled).toHaveBeenCalledOnce()
     expect(onCommitted).not.toHaveBeenCalled()
-    expect(mocks.recordArticleEditLog).not.toHaveBeenCalled()
+    expect(mocks.recordEditLog).not.toHaveBeenCalled()
   })
 
   test('the empty draft a cancelled first image filled stays empty', async () => {

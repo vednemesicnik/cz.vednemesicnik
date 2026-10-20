@@ -31,6 +31,16 @@ describe('getEditedIssuePdfFileName', () => {
     ).toBe('VDM_2003_1.pdf')
   })
 
+  test.each([[{ ...number, year: null }], [{ ...number, order: null }]])(
+    'keeps the stored name without a full number %o',
+    (edited) => {
+      expect(getEditedIssuePdfFileName(stored, edited)).toBe('VDM_2003_1.pdf')
+      expect(
+        getEditedIssuePdfFileName({ ...stored, pdfFileName: null }, edited),
+      ).toBeNull()
+    },
+  )
+
   test('names a PDF the issue did not have', () => {
     expect(
       getEditedIssuePdfFileName({ ...stored, pdfFileName: null }, number),

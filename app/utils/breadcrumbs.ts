@@ -52,9 +52,10 @@ function hasBreadcrumb(
  * ```
  */
 export function getBreadcrumbs(matches: unknown[]): Breadcrumb[] {
-  return matches
-    .filter(hasBreadcrumb)
-    .map((match) => match.handle.breadcrumb(match))
+  return matches.filter(hasBreadcrumb).flatMap((match) => {
+    const breadcrumb = match.handle.breadcrumb(match)
+    return breadcrumb === null ? [] : [breadcrumb]
+  })
 }
 
 /**

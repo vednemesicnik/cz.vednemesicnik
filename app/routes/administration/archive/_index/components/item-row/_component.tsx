@@ -16,12 +16,15 @@ import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
+import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
+
+import type { action as issueAction } from '../../../issue/_index/_action'
 
 type Props = {
   id: string
   title: string
-  orderLabel: string
+  orderLabel: string | null
   state: StatusTagState
   createdAt: Date
   canView: boolean
@@ -46,8 +49,10 @@ export const ItemRow = ({
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const fetcherKey = `delete-issue-${id}`
 
-  const fetcher = useFetcher({ key: fetcherKey })
+  const fetcher = useFetcher<typeof issueAction>({ key: fetcherKey })
   const isDeleting = fetcher.state !== 'idle'
+  // A delete the edit hold refused says who edits the issue (26i).
+  useContentActionResult(fetcher.data, { heldSubject: 'číslo' })
 
   const { openDialog } = useAdminDeleteConfirmationDialog(dialogRef, {
     action: href('/administration/archive/:issueId', { issueId: id }),
@@ -63,7 +68,7 @@ export const ItemRow = ({
         onChange={onSelect}
       />
       <TableCell>{title}</TableCell>
-      <TableCell>{orderLabel}</TableCell>
+      <TableCell>{orderLabel ?? '—'}</TableCell>
       <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell>
         <StatusTag state={state} />

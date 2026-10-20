@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
+import { Form, href } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
@@ -12,6 +12,8 @@ import {
   TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
 import { FilterBar } from '~/components/filter-bar'
@@ -20,7 +22,6 @@ import { FilterBarGroup } from '~/components/filter-bar-group'
 import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
-import { LinkButton } from '~/components/link-button'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -30,6 +31,7 @@ import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { ISSUE_NOUN } from '~/config/list-noun-config'
+import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { formatBulkDeleteToast } from '~/utils/format-bulk-delete-toast'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
@@ -61,6 +63,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     sharedFilters,
     yearOptions,
   } = loaderData
+  // „Číslo právě upravuje …“ after the editor of a held new draft (26i).
+  useAdminNoticeToast(loaderData)
 
   const pending = useAdminListPending()
 
@@ -104,15 +108,20 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     states,
   })
 
+  // Nové číslo creates the draft and opens it (decision 0020), so it posts.
+  const renderNewIssueButton = () =>
+    canCreate && (
+      <Form action={href('/administration/archive/add-issue')} method={'post'}>
+        <AuthenticityTokenInput />
+        <Button type={'submit'}>Nové číslo</Button>
+      </Form>
+    )
+
   return (
     <AdminPage>
       <ListHeader>
         <PageTitle>Archiv</PageTitle>
-        {canCreate && (
-          <LinkButton to={href('/administration/archive/add-issue')}>
-            Nové číslo
-          </LinkButton>
-        )}
+        {renderNewIssueButton()}
       </ListHeader>
       <FilterCell>
         <AdminBulkActionsBar
@@ -172,11 +181,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
           )}
-          {emptyMessage.action === 'create' && canCreate && (
-            <LinkButton to={href('/administration/archive/add-issue')}>
-              Nové číslo
-            </LinkButton>
-          )}
+          {emptyMessage.action === 'create' && renderNewIssueButton()}
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
         </ListEmptyCard>
       ) : (

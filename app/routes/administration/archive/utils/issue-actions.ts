@@ -6,10 +6,10 @@ import {
 } from '../../articles/utils/article-actions'
 
 /**
- * An action on an issue in its detail's header (design 26b): the article's set
- * (07c) without a publish date to change, and without an edit hold to take over.
+ * An action on an issue in its detail's header (design 26b, 26i): the article's
+ * set (07c) without a publish date to change.
  */
-export type IssueAction = Exclude<ArticleAction, 'change-date' | 'take-over'>
+export type IssueAction = Exclude<ArticleAction, 'change-date'>
 
 /** An action that changes the web, confirmed in a dialog first (07c). */
 export type IssueStateAction = Extract<

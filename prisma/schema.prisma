@@ -282,6 +282,7 @@ model Author {
   // Content submitted for review
   submittedArticles          Article[]         @relation("ArticleSubmissions")
   heldArticles               Article[]         @relation("ArticleEditHolds")
+  heldIssues                 Issue[]           @relation("IssueEditHolds")
   submittedArticleTags       ArticleTag[]      @relation("ArticleTagSubmissions")
   submittedArticleCategories ArticleCategory[] @relation("ArticleCategorySubmissions")
   submittedIssues            Issue[]           @relation("IssueSubmissions")
@@ -351,8 +352,9 @@ enum AuthorPermissionAccess {
 
 model Issue {
   id             String       @id @default(cuid())
-  year           Int
-  order          Int
+  // Null in a draft that has none yet; submitting and publishing require both (design 26e).
+  year           Int?
+  order          Int?
   name           String?
   supplement     String?
   // The supplement's slug, "" for a main issue: SQLite treats NULLs as distinct in a
@@ -360,6 +362,8 @@ model Issue {
   supplementSlug String       @default("")
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  // The first save or upload; null is an empty draft (decisions 0020, 0032).
+  firstContentAt DateTime?
   publishedAt    DateTime?
   state          ContentState @default(draft)
   cover          IssueCover?
@@ -371,11 +375,18 @@ model Issue {
   submittedAt    DateTime?
   submittedById  String?
   submittedBy    Author?      @relation("IssueSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  // The edit hold (design 07g, decision 0019): free when there is no holder or heldUntil has passed.
+  heldByAuthorId String?
+  heldByAuthor   Author?      @relation("IssueEditHolds", fields: [heldByAuthorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  heldByTabId    String?
+  heldSince      DateTime?
+  heldUntil      DateTime?
 
   @@unique([year, order, supplementSlug])
   // non-unique foreign key
   @@index([authorId])
   @@index([submittedById])
+  @@index([heldByAuthorId])
   // content-state query paths (own-access filtering, public list ordering)
   @@index([state, authorId])
   @@index([state, year, order])

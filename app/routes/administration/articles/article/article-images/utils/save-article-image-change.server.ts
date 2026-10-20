@@ -1,7 +1,7 @@
 import type { Prisma } from '@generated/prisma/client'
 import { data } from 'react-router'
 
-import { recordArticleEditLog } from '~/routes/administration/articles/utils/record-article-edit-log.server'
+import { recordEditLog } from '~/utils/content-log/record-edit-log.server'
 import { prisma } from '~/utils/db.server'
 import { buildHeldByTabWhere } from '~/utils/edit-hold/build-held-by-tab-where'
 import type { EditHoldColumns } from '~/utils/edit-hold/edit-hold-columns'
@@ -312,8 +312,9 @@ export async function saveArticleImageChange<Answer extends object>(
 
       // An empty draft's history starts with its first content (0020).
       if (isCreation || storedArticle.firstContentAt !== null) {
-        await recordArticleEditLog(context, {
-          articleId,
+        await recordEditLog(context, {
+          entity: 'article',
+          entityId: articleId,
           heldSince: storedArticle.heldSince,
           isCreation,
         })
