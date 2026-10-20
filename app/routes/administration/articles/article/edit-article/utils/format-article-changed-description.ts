@@ -1,5 +1,5 @@
-import { formatAwayDuration } from './format-away-duration'
-import { formatSavedMoment } from './format-saved-moment'
+import { formatAwayDuration } from '~/utils/autosave/format-away-duration'
+import { formatSavedMoment } from '~/utils/autosave/format-saved-moment'
 
 const MINUTE = 60 * 1000
 

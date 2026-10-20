@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { type ReactNode, useRef } from 'react'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -8,17 +8,12 @@ import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
-import { CopyArticleTextButton } from '../copy-article-text-button'
-import { CopyArticleTextHint } from '../copy-article-text-hint'
-import styles from './_styles.module.css'
-
 type Props = {
   holderName: string
-  /** `formatHoldTakenDescription`: saved or not, the last save, read-only. */
+  /** Saved or not, the last save, read-only; the editor's own sentence. */
   description: string
-  hasUnsentChanges: boolean
-  /** Reads the text editor's value, for *Zkopírovat celý text*. */
-  getContent: () => string
+  /** What the editor offers to rescue when changes stayed unsent. */
+  children?: ReactNode
   onOpenDetail: () => void
   /** *Zůstat a číst*, or the dialog closed any other way. */
   onStay: () => void
@@ -27,17 +22,15 @@ type Props = {
 /**
  * Tells the editor whose hold went elsewhere who has it now (design 24h):
  * one's own other tab too, with one's own name. Without it, typing would
- * stop working unexplained. With changes that did not make it, it offers the
- * whole text to copy before anything reloads the article.
+ * stop working unexplained. With changes that did not make it, the editor
+ * offers what it can rescue before anything reloads the content.
  *
  * @param props.holderName - Who edits it now.
- * @param props.hasUnsentChanges - Something stayed unsent.
  */
 export const HoldTakenDialog = ({
   holderName,
   description,
-  hasUnsentChanges,
-  getContent,
+  children,
   onOpenDetail,
   onStay,
 }: Props) => {
@@ -52,18 +45,7 @@ export const HoldTakenDialog = ({
       <AdminModalContent>
         <AdminModalTitle>Úpravu přebírá {holderName}</AdminModalTitle>
         <AdminModalDescription>{description}</AdminModalDescription>
-
-        {hasUnsentChanges && (
-          <>
-            <div className={styles.copy}>
-              <CopyArticleTextButton getContent={getContent} />
-              <CopyArticleTextHint />
-            </div>
-            <AdminModalDescription>
-              Před otevřením detailu si zkopírujte text článku.
-            </AdminModalDescription>
-          </>
-        )}
+        {children}
 
         <AdminModalActions>
           <Button

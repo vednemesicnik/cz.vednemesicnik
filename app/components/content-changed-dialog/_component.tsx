@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { type ReactNode, useRef } from 'react'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
@@ -8,15 +8,17 @@ import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
-import { CopyArticleTextButton } from '../copy-article-text-button'
-
 type Props = {
-  /** `formatArticleChangedDescription`: away, the last save, nothing sent. */
+  /** „Článek se mezitím změnil“, „Číslo se mezitím změnilo“. */
+  title: string
+  /** Away, the last save, nothing sent; the editor's own sentence. */
   description: string
+  /** What the editor offers to rescue, under the description. */
+  children?: ReactNode
+  /** An action before the main one, such as *Zkopírovat celý text*. */
+  rescueAction?: ReactNode
   /** Free and still an editable draft: the current version can be loaded. */
   canReload: boolean
-  /** Reads the text editor's value, for *Zkopírovat celý text*. */
-  getContent: () => string
   onReload: () => void
   onOpenDetail: () => void
   /** Closed without leaving: the editor stays, only reading. */
@@ -24,17 +26,19 @@ type Props = {
 }
 
 /**
- * The article changed while the editor was away and its hold expired (design
- * 24i): it sent nothing, so as not to overwrite the newer text, and offers the
- * whole text to copy. *Načíst aktuální verzi* while nobody holds it, *Otevřít
+ * The content changed while the editor was away and its hold expired (design
+ * 24i): it sent nothing, so as not to overwrite the newer version, and offers
+ * what it can rescue. *Načíst aktuální verzi* while nobody holds it, *Otevřít
  * detail* while someone does or it is no longer an editable draft.
  *
  * @param props.canReload - Whether the current version can be edited here.
  */
-export const ArticleChangedDialog = ({
+export const ContentChangedDialog = ({
+  title,
   description,
+  children,
+  rescueAction,
   canReload,
-  getContent,
   onReload,
   onOpenDetail,
   onClose,
@@ -44,20 +48,16 @@ export const ArticleChangedDialog = ({
   const ref = useModalDialog(() => {
     if (!isLeavingRef.current) onClose()
   })
-  const advice = canReload
-    ? 'Před načtením aktuální verze si zkopírujte text článku.'
-    : 'Před otevřením detailu si zkopírujte text článku.'
 
   return (
     <AdminDialog ref={ref}>
       <AdminModalContent>
-        <AdminModalTitle>Článek se mezitím změnil</AdminModalTitle>
-        <AdminModalDescription>
-          {description} {advice}
-        </AdminModalDescription>
+        <AdminModalTitle>{title}</AdminModalTitle>
+        <AdminModalDescription>{description}</AdminModalDescription>
+        {children}
 
         <AdminModalActions>
-          <CopyArticleTextButton getContent={getContent} variant={'ghost'} />
+          {rescueAction}
           <Button
             onClick={() => {
               isLeavingRef.current = true

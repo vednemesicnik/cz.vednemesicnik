@@ -1,8 +1,7 @@
+import { formatSavedMoment } from '~/utils/autosave/format-saved-moment'
 import type { EditHolder } from '~/utils/edit-hold/edit-hold-result'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { formatTime } from '~/utils/format-time'
-
-import { formatSavedMoment } from './format-saved-moment'
 
 /**
  * The takeover dialog's text (design 24g, copy 940ikr3o): who edits, since
