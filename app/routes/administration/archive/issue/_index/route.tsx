@@ -203,7 +203,8 @@ export default function RouteComponent({
                     {...issue.cover.sources}
                     alt={issue.cover.altText}
                     className={styles.coverImage}
-                    sizes={'(min-width: 48rem) 220px, 100vw'}
+                    // The grid's breakpoint: a 220 px column beside the card, else full width.
+                    sizes={'(width >= 40rem) 220px, 100vw'}
                   />
                 )}
                 <figcaption className={styles.caption}>Obálka</figcaption>
@@ -219,7 +220,10 @@ export default function RouteComponent({
                     <p className={styles.pdfName}>{issue.pdf.fileName}</p>
                     {/* The name it was uploaded under tells the final version (26b). */}
                     <p className={styles.uploaded}>
-                      nahráno {issue.pdf.uploadedAt}
+                      nahráno{' '}
+                      <time dateTime={issue.pdf.uploadedAt.iso}>
+                        {issue.pdf.uploadedAt.formatted}
+                      </time>
                       {issue.pdf.originalFileName !== null && (
                         <> jako {issue.pdf.originalFileName}</>
                       )}

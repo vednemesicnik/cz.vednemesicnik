@@ -55,7 +55,8 @@ export const getIssueSupplementLinks = async (
   }
 
   const supplements = await prisma.issue.findMany({
-    orderBy: { supplement: 'asc' },
+    // By the slug, as the archive orders supplements (decision 0030).
+    orderBy: { supplementSlug: 'asc' },
     select: { id: true, supplement: true },
     where: {
       AND: [visibleWhere, { order, supplementSlug: { not: '' }, year }],

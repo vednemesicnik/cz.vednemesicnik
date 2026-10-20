@@ -1,11 +1,9 @@
-import { FORM_CONFIG } from '~/config/form-config'
-
-import type {
-  ArticleAction,
-  HeaderSentence,
+import {
+  ARTICLE_ACTION_LABELS,
+  ARTICLE_DIRECT_INTENTS,
+  type ArticleAction,
+  type HeaderSentence,
 } from '../../articles/utils/article-actions'
-
-const INTENT_VALUE = FORM_CONFIG.intent.value
 
 /**
  * An action on an issue in its detail's header (design 26b): the article's set
@@ -19,31 +17,16 @@ export type IssueStateAction = Extract<
   'approve-and-publish' | 'archive' | 'publish' | 'retract'
 >
 
-// Three dots announce a dialog (07c). The issue has no page of its own, so the
-// web shows the archive (26b, qjv38ti4).
+// The article's labels, dialogs and their dots included (07c). The issue has no
+// page of its own, so the web shows the archive (26b, qjv38ti4).
 export const ISSUE_ACTION_LABELS: Record<IssueAction, string> = {
-  approve: 'Schválit',
-  'approve-and-publish': 'Schválit a publikovat…',
-  archive: 'Archivovat…',
-  delete: 'Smazat…',
-  edit: 'Upravit',
-  publish: 'Publikovat…',
-  restore: 'Obnovit jako koncept',
-  retract: 'Stáhnout z publikace…',
-  return: 'Vrátit k úpravám',
-  submit: 'Odeslat ke schválení',
+  ...ARTICLE_ACTION_LABELS,
   'view-on-web': 'Zobrazit archiv na webu',
-  withdraw: 'Vzít zpět do konceptu',
 }
 
-// The actions that change the state in one click, without a dialog.
-export const ISSUE_DIRECT_INTENTS: Partial<Record<IssueAction, string>> = {
-  approve: INTENT_VALUE.review,
-  restore: INTENT_VALUE.restore,
-  return: INTENT_VALUE.returnForEdits,
-  submit: INTENT_VALUE.submitForReview,
-  withdraw: INTENT_VALUE.withdrawSubmission,
-}
+// The actions that change the state in one click, as on the article.
+export const ISSUE_DIRECT_INTENTS: Partial<Record<IssueAction, string>> =
+  ARTICLE_DIRECT_INTENTS
 
 // The article's sentences said of an issue, which has one author (26g, qjv38ti4).
 export const ISSUE_HEADER_SENTENCES: Record<HeaderSentence, string> = {

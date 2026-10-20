@@ -156,7 +156,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               path: href('/archive/:fileName', {
                 fileName: issue.pdf.fileName,
               }),
-              uploadedAt: formatNumericDate(issue.pdf.uploadedAt),
+              uploadedAt: {
+                formatted: formatNumericDate(issue.pdf.uploadedAt),
+                iso: issue.pdf.uploadedAt.toISOString(),
+              },
             },
       state: issue.state,
       title,
