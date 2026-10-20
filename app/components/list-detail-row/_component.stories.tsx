@@ -38,9 +38,21 @@ const PasskeyList = ({ count }: { count: number }) =>
             <span>{passkey.title}</span>
             <span>{passkey.details}</span>
           </span>
-          <Button size="sm" type="button" variant="ghost">
+          {/* A text link, as the settings route's TextButton draws it. */}
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--link)',
+              fontSize: 'var(--font-size-sm)',
+              padding: 0,
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px',
+            }}
+            type="button"
+          >
             Odebrat…
-          </Button>
+          </button>
         </li>
       ))}
     </ul>
@@ -66,7 +78,7 @@ const meta: Meta<typeof ListDetailRow> = {
     layout: 'padded',
   },
   tags: ['autodocs'],
-  title: 'Administration/ListDetailRow',
+  title: 'Components/ListDetailRow',
 }
 
 export default meta

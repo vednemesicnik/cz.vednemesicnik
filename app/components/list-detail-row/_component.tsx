@@ -20,7 +20,9 @@ type Props = {
  *
  * @param props.label - The name in the name column.
  * @param props.children - The value: the list and the notes under it.
- * @param props.actions - The row's action, after the value.
+ * @param props.actions - The row's action, after the value, in a wrapping
+ * row like `AdminDetailRow`'s actions; a full-width line takes
+ * `flex-basis: 100%`.
  */
 export const ListDetailRow = ({
   label,
