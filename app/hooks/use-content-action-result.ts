@@ -29,20 +29,30 @@ type ActionResult =
   | { intent: string; missing: string[]; heldByName?: string }
   | undefined
 
+type Options = {
+  /**
+   * Toasts that name the record, by intent (`Rubrika schválena`, design 25a);
+   * the other intents keep the generic one.
+   */
+  toasts?: Record<string, string>
+  /** What the content is called in a refused action's toast, `článek` by default. */
+  heldSubject?: 'článek' | 'číslo'
+}
+
 /**
  * Answers a content action's result once (design 23h): a toast, or the list of
  * what is missing before the content can be submitted or published.
  *
  * @param actionResult - The keyed fetcher's data, `{ intent, missing }`, and
  *   `heldByName` when the content's edit hold refused it.
- * @param toasts - Toasts that name the record, by intent (`Rubrika schválena`,
- *   design 25a); the other intents keep the generic one.
+ * @param options - The record's own toasts, and what a refused action's
+ *   toast calls the content.
  * @returns The missing list to show, `null` when there is none, and setters to
  *   show one up front (the detail checks before publishing) or close it.
  */
 export const useContentActionResult = (
   actionResult: ActionResult,
-  toasts?: Record<string, string>,
+  { toasts, heldSubject = 'článek' }: Options = {},
 ) => {
   const showToast = useToast()
   const [missingList, setMissingList] = useState<MissingList | null>(null)
@@ -59,10 +69,10 @@ export const useContentActionResult = (
     handledResultRef.current = actionResult
 
     // Someone took the edit hold meanwhile; nothing changed (07g, copy
-    // hgb3jeqj). Only the article has the hold so far.
+    // hgb3jeqj, ey73zhul).
     if (actionResult.heldByName !== undefined) {
       showToast(
-        `Zkuste akci později — článek právě upravuje ${actionResult.heldByName}. Akce se neprovedla.`,
+        `Zkuste akci později — ${heldSubject} právě upravuje ${actionResult.heldByName}. Akce se neprovedla.`,
       )
       return
     }
@@ -78,7 +88,7 @@ export const useContentActionResult = (
     const toast =
       toasts?.[actionResult.intent] ?? ACTION_TOASTS[actionResult.intent]
     if (toast !== undefined) showToast(toast)
-  }, [showToast, actionResult, toasts])
+  }, [showToast, actionResult, toasts, heldSubject])
 
   return {
     closeMissingList: () => setMissingList(null),

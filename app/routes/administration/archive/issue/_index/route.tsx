@@ -70,7 +70,7 @@ export default function RouteComponent({
   const fetcher = useFetcher<typeof issueAction>({ key: fetcherKey })
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
-  useContentActionResult(fetcher.data)
+  useContentActionResult(fetcher.data, { heldSubject: 'číslo' })
 
   const [stateDialog, setStateDialog] = useState<IssueStateAction | null>(null)
 
