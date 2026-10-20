@@ -14,7 +14,8 @@ type Options = {
 /**
  * Finds the issue that already holds the year, order and supplement slug — the
  * issue's unique key (design 26d) — and says so at the field that caused it.
- * The holder is named only when the viewer may see it.
+ * The holder is named and linked only when the viewer may see it; an empty
+ * draft, which no list shows, never is (decision 0020).
  *
  * @param context - The author permission context, built with `view` on `issue`.
  * @param options.supplement - The supplement as entered, named in place of a
@@ -29,6 +30,8 @@ export const findIssueNumberConflict = async (
   const holder = await prisma.issue.findFirst({
     select: {
       authorId: true,
+      firstContentAt: true,
+      id: true,
       name: true,
       order: true,
       state: true,
@@ -47,15 +50,23 @@ export const findIssueNumberConflict = async (
     return null
   }
 
-  const isVisible = context.can({
-    action: 'view',
-    entity: 'issue',
-    state: holder.state,
-    targetAuthorIds: [holder.authorId],
-  }).hasPermission
+  const isVisible =
+    holder.firstContentAt !== null &&
+    context.can({
+      action: 'view',
+      entity: 'issue',
+      state: holder.state,
+      targetAuthorIds: [holder.authorId],
+    }).hasPermission
 
   // The holder has the number it was found by.
-  const numberedHolder = { ...holder, order, year }
+  const numberedHolder = {
+    id: isVisible ? holder.id : null,
+    name: holder.name,
+    order,
+    supplement: holder.supplement,
+    year,
+  }
 
   return getIssueNumberConflictMessage(
     isVisible
