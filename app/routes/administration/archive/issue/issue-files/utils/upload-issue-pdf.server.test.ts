@@ -8,10 +8,11 @@ import { uploadIssuePdf } from './upload-issue-pdf.server'
 const mocks = vi.hoisted(() => ({
   createId: vi.fn(),
   deletePdfObject: vi.fn(),
+  issueFindUniqueOrThrow: vi.fn(),
   issuePdfCount: vi.fn(),
   issuePdfCreate: vi.fn(),
   issuePdfDelete: vi.fn(),
-  issuePdfFindUniqueOrThrow: vi.fn(),
+  issuePdfFindUnique: vi.fn(),
   issuePdfUpdate: vi.fn(),
   saveIssueFileChange: vi.fn(),
   storePdf: vi.fn(),
@@ -21,11 +22,12 @@ vi.mock('@paralleldrive/cuid2', () => ({ createId: mocks.createId }))
 
 vi.mock('~/utils/db.server', () => ({
   prisma: {
+    issue: { findUniqueOrThrow: mocks.issueFindUniqueOrThrow },
     issuePDF: {
       count: mocks.issuePdfCount,
       create: mocks.issuePdfCreate,
       delete: mocks.issuePdfDelete,
-      findUniqueOrThrow: mocks.issuePdfFindUniqueOrThrow,
+      findUnique: mocks.issuePdfFindUnique,
       update: mocks.issuePdfUpdate,
     },
   },
@@ -57,7 +59,13 @@ const issue: FileChangeIssue = {
 const pdfFile = () =>
   new File(['%PDF'], 'podzim_zlom_v3.pdf', { type: 'application/pdf' })
 
-const run = async (stored: Partial<FileChangeIssue> = {}) => {
+// `stored` is the issue as the change read it; `current` as it is once the
+// file is stored, which names it.
+const run = async (
+  stored: Partial<FileChangeIssue> = {},
+  current: Partial<FileChangeIssue> = stored,
+) => {
+  mocks.issueFindUniqueOrThrow.mockResolvedValue({ ...issue, ...current })
   await uploadIssuePdf(request, {
     file: pdfFile(),
     issueId: 'issue-1',
@@ -76,7 +84,7 @@ beforeEach(() => {
   mocks.issuePdfCount.mockResolvedValue(0)
   mocks.issuePdfCreate.mockReturnValue('create-pdf')
   mocks.issuePdfUpdate.mockReturnValue('update-pdf')
-  mocks.issuePdfFindUniqueOrThrow.mockResolvedValue({
+  mocks.issuePdfFindUnique.mockResolvedValue({
     contentType: 'application/pdf',
     fileName: 'VDM-2026-4.pdf',
     id: 'pdf-old',
@@ -156,6 +164,17 @@ describe('uploadIssuePdf — a new PDF', () => {
     expect(mocks.issuePdfCount).not.toHaveBeenCalled()
   })
 
+  test('is named by the number as it is once the file is stored', async () => {
+    // An autosave moved the order while the file was stored.
+    await run({}, { order: 5 })
+
+    expect(mocks.issuePdfCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ fileName: 'VDM-2026-5.pdf' }),
+      }),
+    )
+  })
+
   test('has no name while another PDF still has it', async () => {
     mocks.issuePdfCount.mockResolvedValue(1)
 
@@ -233,6 +252,15 @@ describe('uploadIssuePdf — a replacement', () => {
       select: { id: true },
       where: { id: 'pdf-new' },
     })
+    expect(mocks.deletePdfObject).toHaveBeenCalledWith('pdf-new')
+  })
+
+  test('a PDF removed while the file was stored fails and drops the object', async () => {
+    mocks.issuePdfFindUnique.mockResolvedValue(null)
+
+    const prepared = await run(stored)
+
+    expect(prepared).toEqual({ status: 'failed' })
     expect(mocks.deletePdfObject).toHaveBeenCalledWith('pdf-new')
   })
 

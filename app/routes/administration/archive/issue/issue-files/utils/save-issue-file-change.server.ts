@@ -294,6 +294,11 @@ export async function saveIssueFileChange(
         }
         try {
           await prepared.onCancelled()
+        } catch (error) {
+          console.error('Issue file change left after a cancel', error)
+        }
+        // On its own: files left behind must not keep the draft filled.
+        try {
           await prisma.issue.updateMany({
             data: {
               updatedAt: previousUpdatedAt,
@@ -302,7 +307,7 @@ export async function saveIssueFileChange(
             where: { id: issueId, updatedAt },
           })
         } catch (error) {
-          console.error('Issue file change left after a cancel', error)
+          console.error('Issue left changed after a cancel', error)
         }
         return { status: 'cancelled' }
       }
@@ -329,12 +334,13 @@ export async function saveIssueFileChange(
           { entity: 'issue', entityId: issueId, events: [prepared.logEvent] },
           context,
         )
-        if (!isCreation) {
-          publishContentEvent(
-            { change: 'update', entity: 'issue', entityId: issueId },
-            context,
-          )
-        }
+      }
+      // The open lists hear of an upload or a removal; the creation told them.
+      if (!isCreation && prepared.writes.length > 0) {
+        publishContentEvent(
+          { change: 'update', entity: 'issue', entityId: issueId },
+          context,
+        )
       }
 
       return { status: 'saved', updatedAt }

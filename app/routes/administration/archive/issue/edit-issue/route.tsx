@@ -14,6 +14,7 @@ import {
   type SubmitEvent,
   useEffect,
   useEffectEvent,
+  useId,
   useRef,
   useState,
 } from 'react'
@@ -77,6 +78,7 @@ import {
   UPLOADING_SENTENCE,
 } from './utils/issue-file-sentences'
 import { useIssueFileUpload } from './utils/use-issue-file-upload'
+import { useUploadFocus } from './utils/use-upload-focus'
 
 export { handle } from './_handle'
 export { loader } from './_loader'
@@ -368,6 +370,12 @@ export default function RouteComponent({
   }
   const coverInputRef = useRef<HTMLInputElement>(null)
   const pdfInputRef = useRef<HTMLInputElement>(null)
+  const coverRef = useRef<HTMLElement>(null)
+  const pdfRef = useRef<HTMLElement>(null)
+  useUploadFocus(coverUpload.isUploading, coverRef)
+  useUploadFocus(pdfUpload.isUploading, pdfRef)
+  // A refused pick's sentence describes its field (26d).
+  const rejectionIds = { cover: useId(), pdf: useId() }
 
   // The labels of the details that differ from this editor's last save; the
   // author only where the editor chooses it.
@@ -800,7 +808,9 @@ export default function RouteComponent({
     if (fileUpload.failure === null) {
       return (
         fileUpload.rejection !== null && (
-          <ErrorMessage>{fileUpload.rejection}</ErrorMessage>
+          <div id={rejectionIds[kind]}>
+            <ErrorMessage>{fileUpload.rejection}</ErrorMessage>
+          </div>
         )
       )
     }
@@ -811,7 +821,7 @@ export default function RouteComponent({
         {failure.replaces && (
           <p className={styles.uploaded}>{ORIGINAL_STAYED_SENTENCE[kind]}</p>
         )}
-        {!isLocked && (
+        {!isLocked && !fileUpload.isCancelling && (
           <div className={styles.fileActions}>
             {failure.canRetry && (
               <ButtonLink onClick={fileUpload.retry} type={'button'}>
@@ -985,7 +995,7 @@ export default function RouteComponent({
                     type={'file'}
                   />
 
-                  <figure className={styles.cover}>
+                  <figure className={styles.cover} ref={coverRef}>
                     {coverUpload.upload?.previewUrl ? (
                       // The picked cover, dimmed until it saves; the stored
                       // one stays with the issue meanwhile (26c).
@@ -1001,9 +1011,13 @@ export default function RouteComponent({
                       <>
                         <FileDropField
                           accept={'image/*'}
+                          errorId={
+                            coverUpload.rejection === null
+                              ? undefined
+                              : rejectionIds.cover
+                          }
                           hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
-                          isDisabled={isLocked}
-                          isInvalid={coverUpload.rejection !== null}
+                          isDisabled={isLocked || coverUpload.isCancelling}
                           isPage
                           label={'Vybrat obálku'}
                           onPick={coverUpload.pick}
@@ -1024,16 +1038,18 @@ export default function RouteComponent({
                         )}
                       </>
                     )}
-                    {coverUpload.upload !== null && (
+                    {/* The row and *Nahradit* take one slot, so the caption
+                        stays put when the upload ends. */}
+                    {coverUpload.upload !== null ? (
                       <UploadStatus
                         cancelLabel={'Zrušit nahrávání obálky'}
                         onCancel={() => void coverUpload.cancel()}
                       />
-                    )}
-                    <figcaption className={styles.caption}>Obálka</figcaption>
-                    {issue.cover !== null &&
-                      coverUpload.upload === null &&
-                      !isLocked && (
+                    ) : (
+                      issue.cover !== null &&
+                      !coverUpload.failure?.replaces &&
+                      !isLocked &&
+                      !coverUpload.isCancelling && (
                         <div className={styles.fileActions}>
                           <ButtonLink
                             onClick={() => coverInputRef.current?.click()}
@@ -1042,7 +1058,9 @@ export default function RouteComponent({
                             Nahradit
                           </ButtonLink>
                         </div>
-                      )}
+                      )
+                    )}
+                    <figcaption className={styles.caption}>Obálka</figcaption>
                     <span className={'screen-reader-only'} role={'status'}>
                       {coverUpload.announcement}
                     </span>
@@ -1050,7 +1068,7 @@ export default function RouteComponent({
 
                   {/* The PDF card as on the detail (26b); without a PDF the
                       dashed field stands in it (26c, 26d). */}
-                  <article className={styles.pdf}>
+                  <article className={styles.pdf} ref={pdfRef}>
                     <h3 className={styles.caption}>PDF</h3>
                     {pdfUpload.upload !== null ? (
                       <>
@@ -1078,9 +1096,13 @@ export default function RouteComponent({
                       <>
                         <FileDropField
                           accept={'application/pdf'}
+                          errorId={
+                            pdfUpload.rejection === null
+                              ? undefined
+                              : rejectionIds.pdf
+                          }
                           hint={'nebo ho sem přetáhněte · nejvýš 10 MB'}
-                          isDisabled={isLocked}
-                          isInvalid={pdfUpload.rejection !== null}
+                          isDisabled={isLocked || pdfUpload.isCancelling}
                           label={'Vybrat PDF'}
                           onPick={pdfUpload.pick}
                         />
@@ -1095,20 +1117,23 @@ export default function RouteComponent({
                         </p>
                         <p className={styles.uploaded}>
                           nahráno {issue.pdf.uploadedAt}
-                          {issue.pdf.originalFileName !== null && (
-                            <> jako {issue.pdf.originalFileName}</>
-                          )}
+                          {issue.pdf.fileName !== null &&
+                            issue.pdf.originalFileName !== null && (
+                              <> jako {issue.pdf.originalFileName}</>
+                            )}
                         </p>
-                        {!isLocked && (
-                          <div className={styles.fileActions}>
-                            <ButtonLink
-                              onClick={() => pdfInputRef.current?.click()}
-                              type={'button'}
-                            >
-                              Nahradit
-                            </ButtonLink>
-                          </div>
-                        )}
+                        {!isLocked &&
+                          !pdfUpload.failure?.replaces &&
+                          !pdfUpload.isCancelling && (
+                            <div className={styles.fileActions}>
+                              <ButtonLink
+                                onClick={() => pdfInputRef.current?.click()}
+                                type={'button'}
+                              >
+                                Nahradit
+                              </ButtonLink>
+                            </div>
+                          )}
                         {renderFileProblem(
                           'pdf',
                           pdfUpload.failure?.fileName ?? '',

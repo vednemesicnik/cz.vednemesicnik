@@ -244,9 +244,11 @@ export default function RouteComponent({
                       <time dateTime={issue.pdf.uploadedAt.iso}>
                         {issue.pdf.uploadedAt.formatted}
                       </time>
-                      {issue.pdf.originalFileName !== null && (
-                        <> jako {issue.pdf.originalFileName}</>
-                      )}
+                      {/* Without its name the line above says it already. */}
+                      {issue.pdf.fileName !== null &&
+                        issue.pdf.originalFileName !== null && (
+                          <> jako {issue.pdf.originalFileName}</>
+                        )}
                     </p>
                     {issue.pdf.path !== null && (
                       <Hyperlink

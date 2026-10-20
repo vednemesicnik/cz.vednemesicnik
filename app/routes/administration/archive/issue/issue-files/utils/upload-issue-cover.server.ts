@@ -80,7 +80,7 @@ export async function uploadIssueCover(
         meta = await storeImageVariants(coverId, file)
       } catch {
         // What made it to the store goes; a replaced cover keeps its version.
-        if (storedCover === null) await deleteImage(coverId)
+        if (storedCover === null) await deleteImage(coverId).catch(() => {})
         return { status: 'failed' }
       }
 

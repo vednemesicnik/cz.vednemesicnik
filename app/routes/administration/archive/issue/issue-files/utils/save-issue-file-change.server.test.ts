@@ -333,13 +333,23 @@ describe('saveIssueFileChange — the history (26b)', () => {
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 
-  test('a removal logs nothing', async () => {
+  test('a removal logs nothing, but the lists hear of it', async () => {
     await saveIssueFileChange(request, {
       ...options,
       prepare: buildPrepare({ logEvent: undefined }),
     })
 
     expect(mocks.recordContentLog).not.toHaveBeenCalled()
+    expect(mocks.publishContentEvent).toHaveBeenCalledOnce()
+  })
+
+  test('a removal of nothing tells nobody', async () => {
+    await saveIssueFileChange(request, {
+      ...options,
+      prepare: buildPrepare({ logEvent: undefined, writes: [] }),
+    })
+
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 })
 
@@ -421,5 +431,44 @@ describe('saveIssueFileChange — a cancellable change (bxy8xxqs)', () => {
     })
     expect(mocks.recordContentLog).not.toHaveBeenCalled()
     expect(mocks.recordEditLog).not.toHaveBeenCalled()
+  })
+
+  test('the draft is reset even when putting the files back fails', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    mocks.issueFindUnique.mockResolvedValue({
+      ...storedIssue,
+      firstContentAt: null,
+    })
+    mocks.transaction.mockImplementation(async (writes: unknown[]) => {
+      cancel()
+      return writes.map((write) =>
+        write === 'mark-first-content'
+          ? { count: 1 }
+          : write === 'read-previous'
+            ? { updatedAt: previousSavedAt }
+            : { updatedAt: savedAt },
+      )
+    })
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined)
+
+    const result = await saveIssueFileChange(cancellableRequest, {
+      ...options,
+      isCancellable: true,
+      prepare: buildPrepare({
+        addsContent: true,
+        onCancelled: async () => {
+          throw new Error('store down')
+        },
+      }),
+    })
+
+    expect(result).toEqual({ status: 'cancelled' })
+    expect(mocks.issueUpdateMany).toHaveBeenLastCalledWith({
+      data: { firstContentAt: null, updatedAt: previousSavedAt },
+      where: { id: 'issue-1', updatedAt: savedAt },
+    })
+    consoleError.mockRestore()
   })
 })

@@ -28,9 +28,13 @@ address (`/archive/:fileName`). Design 26j shows no address until the number is 
 ## Consequences
 
 - Code that builds the PDF's address checks for `null` first.
-- #718 checks the year and order before submitting. Once it lands, a published issue always has
-  a named PDF. Until then, a draft without a number that gets published stays off the public
-  archive.
+- A complete number is not enough for a name: a PDF stays nameless while another PDF still
+  holds its name (one that lost its order keeps it). So #718 checks the PDF's name at submit and
+  publish, not only the year and order. Until then, an issue published with a nameless PDF stays
+  off the public archive.
+- As in the article's gallery (0029), the compensating removal after a cancel whose upload had
+  already committed takes the file only: the history keeps *Obálka nahrána* / *PDF nahráno*,
+  and a first upload leaves the draft no longer empty.
 - The PDF card's first line without a number is provisional (the uploaded name) until design
   says otherwise.
 - The current state is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).

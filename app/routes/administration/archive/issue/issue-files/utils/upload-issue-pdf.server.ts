@@ -11,7 +11,6 @@ import {
 
 import { getEditedIssuePdfFileName } from '../../../utils/get-edited-issue-pdf-file-name'
 import {
-  type FileChangeIssue,
   type FileChangeResult,
   saveIssueFileChange,
 } from './save-issue-file-change.server'
@@ -24,8 +23,19 @@ type Options = {
 
 // The name the PDF is stored under: built from the year and the order, so
 // `null` until the issue has both, or while another PDF still has the name
-// (decision 0033). The editor's save names it once it can.
-const getPdfFileName = async (issue: FileChangeIssue) => {
+// (decision 0033). The editor's save names it once it can. Read after the
+// file is stored: an autosave may have changed the number meanwhile.
+const getPdfFileName = async (issueId: string) => {
+  const issue = await prisma.issue.findUniqueOrThrow({
+    select: {
+      order: true,
+      pdf: { select: { fileName: true, id: true } },
+      state: true,
+      supplementSlug: true,
+      year: true,
+    },
+    where: { id: issueId },
+  })
   const fileName = getEditedIssuePdfFileName(
     {
       order: issue.order,
@@ -90,8 +100,15 @@ export async function uploadIssuePdf(
         return { status: 'failed' }
       }
 
-      const fileName = await getPdfFileName(issue)
       const dropStored = () => deletePdfObject(pdfId)
+
+      let fileName: string | null
+      try {
+        fileName = await getPdfFileName(issueId)
+      } catch (error) {
+        await dropStored().catch(() => {})
+        throw error
+      }
 
       if (issue.pdf === null) {
         return {
@@ -120,7 +137,7 @@ export async function uploadIssuePdf(
         }
       }
 
-      const previousPdf = await prisma.issuePDF.findUniqueOrThrow({
+      const previousPdf = await prisma.issuePDF.findUnique({
         select: {
           contentType: true,
           fileName: true,
@@ -130,6 +147,12 @@ export async function uploadIssuePdf(
         },
         where: { id: issue.pdf.id },
       })
+
+      // Removed while the file was stored: nothing to replace.
+      if (previousPdf === null) {
+        await dropStored().catch(() => {})
+        return { status: 'failed' }
+      }
 
       return {
         logEvent: 'pdf_uploaded',

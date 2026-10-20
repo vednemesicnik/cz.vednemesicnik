@@ -13,8 +13,11 @@ type Props = {
   onPick: (file: File) => void
   /** Outside the edit hold nothing uploads. */
   isDisabled?: boolean
-  /** A pick was refused: the field in the error look, the sentence under it. */
-  isInvalid?: boolean
+  /**
+   * A refused pick's sentence under the field (26d): the field takes the error
+   * look and the sentence describes it.
+   */
+  errorId?: string
   /** The cover's field has a printed page's proportions (26c). */
   isPage?: boolean
 }
@@ -32,7 +35,7 @@ export const FileDropField = ({
   accept,
   onPick,
   isDisabled = false,
-  isInvalid = false,
+  errorId,
   isPage = false,
 }: Props) => {
   const inputId = useId()
@@ -50,8 +53,8 @@ export const FileDropField = ({
   const handleDragOver = (event: DragEvent) => {
     if (!event.dataTransfer.types.includes('Files')) return
     event.preventDefault()
+    event.dataTransfer.dropEffect = isDisabled ? 'none' : 'copy'
     if (isDisabled) return
-    event.dataTransfer.dropEffect = 'copy'
     setIsDragOver(true)
   }
   const handleDrop = (event: DragEvent) => {
@@ -67,14 +70,15 @@ export const FileDropField = ({
       className={clsx(
         styles.field,
         isPage && styles.page,
-        isInvalid && styles.invalid,
+        errorId !== undefined && styles.invalid,
         isDragOver && styles.dragOver,
       )}
     >
       <input
         accept={accept}
-        aria-describedby={hintId}
+        aria-describedby={clsx(hintId, errorId)}
         aria-disabled={isDisabled || undefined}
+        aria-invalid={errorId !== undefined || undefined}
         className={styles.input}
         // A pick saves on its own, never with the form's save.
         form={''}

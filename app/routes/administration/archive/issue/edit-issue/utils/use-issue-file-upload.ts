@@ -67,8 +67,8 @@ type Options = {
  * @param options - Which file, the route, the tab, the stored file, and what
  *   the editor does with a refusal for the hold and with a save.
  * @returns The upload under way, the last failure, the sentence of a refused
- *   pick, how many uploads failed, the announcement, and `pick`, `retry` and
- *   `cancel`.
+ *   pick, how many uploads failed, whether a cancel still settles, the
+ *   announcement, and `pick`, `retry` and `cancel`.
  */
 export const useIssueFileUpload = ({
   kind,
@@ -83,6 +83,13 @@ export const useIssueFileUpload = ({
   const revalidator = useRevalidator()
   const optionsRef = useRef({ action, onNotHeld, onSaved, tabId })
   optionsRef.current = { action, onNotHeld, onSaved, tabId }
+  const storedKeyRef = useRef(storedKey)
+  storedKeyRef.current = storedKey
+  // Settles a saved upload once the stored file has rendered.
+  const settleRef = useRef<{
+    keyAtPick: string | null
+    settle: () => void
+  } | null>(null)
 
   const controllerRef = useRef<AbortController | null>(null)
   const uploadRef = useRef<IssueFileUpload | null>(null)
@@ -92,7 +99,11 @@ export const useIssueFileUpload = ({
   const [failureCount, setFailureCount] = useState(0)
   const [rejection, setRejection] = useState<string | null>(null)
   const [announcement, setAnnouncement] = useState('')
-  // A cancelled replacement, until the issue has loaded again.
+  // Until a cancel has sent its removal and the issue loaded again, so a new
+  // pick cannot race it.
+  const isCancellingRef = useRef(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+  // A cancelled upload, until the issue has loaded again.
   const [cancelledFrom, setCancelledFrom] = useState<{
     storedKey: string | null
   } | null>(null)
@@ -175,11 +186,22 @@ export const useIssueFileUpload = ({
       replaces,
     })
 
+    const keyAtPick = storedKeyRef.current
     const answer = await post({ file, intent: 'upload' }, controller.signal)
 
-    // The upload lasts until the stored file has loaded.
+    // The upload lasts until the stored file has rendered: the revalidation
+    // resolves before React shows its data, and ending earlier would show the
+    // empty field for a moment. The same file again keeps its key, hence the
+    // limit.
     if (answer.status === 'saved' && !controller.signal.aborted) {
       await revalidator.revalidate()
+      if (storedKeyRef.current === keyAtPick) {
+        await new Promise<void>((resolve) => {
+          settleRef.current = { keyAtPick, settle: resolve }
+          setTimeout(resolve, 1000)
+        })
+        settleRef.current = null
+      }
     }
 
     // A cancel settled it already, and its answer is lost.
@@ -207,7 +229,7 @@ export const useIssueFileUpload = ({
 
   /** Uploads a picked or dropped file, unless it is refused at selection. */
   const pick = (file: File) => {
-    if (controllerRef.current !== null) return
+    if (controllerRef.current !== null || isCancellingRef.current) return
     const sentence = getRejectedIssueFileSentence(kind, file)
     if (sentence !== null) {
       setFailure(null)
@@ -220,7 +242,13 @@ export const useIssueFileUpload = ({
   /** Sends the failed file once more. */
   const retry = () => {
     const file = fileRef.current
-    if (file === null || controllerRef.current !== null) return
+    if (
+      file === null ||
+      controllerRef.current !== null ||
+      isCancellingRef.current
+    ) {
+      return
+    }
     void send(file, failure?.replaces ?? hasFile)
   }
 
@@ -236,11 +264,27 @@ export const useIssueFileUpload = ({
     controller.abort()
     endUpload()
     fileRef.current = null
+    isCancellingRef.current = true
+    setIsCancelling(true)
 
     if (!current.replaces) await post({ intent: 'remove' })
     await revalidator.revalidate()
+    isCancellingRef.current = false
+    setIsCancelling(false)
     setCancelledFrom({ storedKey })
   }
+
+  // A new file whose answer never came may have landed after all: once the
+  // issue loads with it, the stored file stands instead of the failure.
+  useEffect(() => {
+    if (storedKey === null) return
+    setFailure((current) => (current?.replaces === false ? null : current))
+  }, [storedKey])
+
+  useEffect(() => {
+    const pending = settleRef.current
+    if (pending !== null && storedKey !== pending.keyAtPick) pending.settle()
+  }, [storedKey])
 
   // The issue has loaded again: say what stayed.
   useEffect(() => {
@@ -283,6 +327,7 @@ export const useIssueFileUpload = ({
     cancel,
     failure,
     failureCount,
+    isCancelling,
     isUploading: upload !== null,
     pick,
     rejection,
