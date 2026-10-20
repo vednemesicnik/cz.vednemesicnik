@@ -26,8 +26,10 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { useContentEvents } from '~/hooks/use-content-events'
+import { useRevalidateAt } from '~/hooks/use-revalidate-at'
 
 import {
   ISSUE_ACTION_LABELS,
@@ -54,6 +56,8 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     headerActions,
+    heldByName,
+    heldUntil,
     isApprover,
     isOwnContent,
     issue,
@@ -65,6 +69,10 @@ export default function RouteComponent({
   useContentEvents({
     filter: (event) => event.entity === 'issue' && event.entityId === issueId,
   })
+  // An edit hold's expiry sends no event; the page looks again then (26i).
+  useRevalidateAt([heldUntil])
+  // „Číslo právě upravuje …“ after a direct address of its editor (26i).
+  useAdminNoticeToast(loaderData)
 
   const fetcherKey = `issue-action-${issueId}`
   const fetcher = useFetcher<typeof issueAction>({ key: fetcherKey })
@@ -110,6 +118,7 @@ export default function RouteComponent({
       case 'delete':
         return openDialog()
       case 'edit':
+      case 'take-over':
         return navigate(editHref)
       case 'view-on-web':
         return window.open(archivePath, '_blank', 'noopener')
@@ -121,10 +130,12 @@ export default function RouteComponent({
     variant: 'primary' | 'outline',
   ) => {
     switch (headerAction) {
+      // Taking over opens the editor, which asks first (26k).
       case 'edit':
+      case 'take-over':
         return (
           <LinkButton disabled={isSubmitting} to={editHref} variant={'outline'}>
-            {ISSUE_ACTION_LABELS.edit}
+            {ISSUE_ACTION_LABELS[headerAction]}
           </LinkButton>
         )
       case 'view-on-web':
@@ -167,6 +178,12 @@ export default function RouteComponent({
 
         {/* One primary, one outline, the rest in „⋯“; where the role may do nothing, who can (26g). */}
         <div className={styles.actions}>
+          {/* Someone else edits it: who, in place of the buttons (26i). */}
+          {heldByName !== null && (
+            <p className={styles.sentence}>
+              Číslo právě upravuje {heldByName}.
+            </p>
+          )}
           {headerActions.sentence !== null && (
             <p className={styles.sentence}>
               {ISSUE_HEADER_SENTENCES[headerActions.sentence]}

@@ -4,22 +4,22 @@ import type { IssueAction } from './issue-actions'
 
 type Options = Omit<
   Parameters<typeof getHeaderActions>[0],
-  'canChangePublishedAt' | 'isHeldByOther' | 'canTakeOver'
+  'canChangePublishedAt'
 >
 
 const isIssueAction = (action: ArticleAction): action is IssueAction =>
-  action !== 'change-date' && action !== 'take-over'
+  action !== 'change-date'
 
 const asIssueAction = (action: ArticleAction | null) =>
   action !== null && isIssueAction(action) ? action : null
 
 /**
- * An issue's detail header (design 26b, 26g): the article's (07c, 23d) without
- * a publish date to change, as the archive is ordered by year and order, and
- * without an edit hold.
+ * An issue's detail header (design 26b, 26g, 26i): the article's (07c, 23d)
+ * without a publish date to change, as the archive is ordered by year and
+ * order. While someone else edits it, only the Coordinator's *Převzít úpravu…*.
  *
- * @param options - The issue's state and submission, and what the signed-in
- *   author may do with it.
+ * @param options - The issue's state and submission, what the signed-in
+ *   author may do with it, and whether someone else holds its edit.
  * @returns The primary and outline action, the „⋯“ items in order, and the
  *   key of the sentence shown beside or instead of them.
  */
