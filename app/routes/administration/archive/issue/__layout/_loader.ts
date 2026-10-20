@@ -1,7 +1,7 @@
 import { data } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
-import { getIssueOrderLabel } from '~/utils/issue/get-issue-order-label'
+import { getIssueTitle } from '~/utils/issue/get-issue-title'
 import {
   issueTitleSelect,
   resolveIssueTitles,
@@ -45,7 +45,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   }).hasPermission
 
   if (!canView) {
-    return { issue: { id: issue.id, title: getIssueOrderLabel(issue) } }
+    return {
+      issue: {
+        id: issue.id,
+        title: getIssueTitle({ ...issue, name: null, supplement: null }),
+      },
+    }
   }
 
   const [titledIssue] = await resolveIssueTitles(

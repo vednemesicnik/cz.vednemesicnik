@@ -54,9 +54,16 @@ export const findIssueNumberConflict = async (
     targetAuthorIds: [holder.authorId],
   }).hasPermission
 
+  // The holder has the number it was found by.
+  const numberedHolder = { ...holder, order, year }
+
   return getIssueNumberConflictMessage(
     isVisible
-      ? holder
-      : { ...holder, name: null, supplement: supplement ?? holder.supplement },
+      ? numberedHolder
+      : {
+          ...numberedHolder,
+          name: null,
+          supplement: supplement ?? holder.supplement,
+        },
   )
 }

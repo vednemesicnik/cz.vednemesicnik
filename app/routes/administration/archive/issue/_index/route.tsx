@@ -247,7 +247,7 @@ export default function RouteComponent({
           <AdminDetailSection title={'Údaje'}>
             <AdminDetailList>
               <AdminDetailItem label={'Pořadí'}>
-                {issue.orderLabel}
+                {issue.orderLabel ?? '—'}
               </AdminDetailItem>
               <AdminDetailItem label={'Název'}>
                 {issue.name ?? '—'}
@@ -273,7 +273,7 @@ export default function RouteComponent({
                 <AdminDetailItem label={'Doplněk k'}>
                   {/* Without its issue, or one the viewer can't see, only the order (26b, wo02u3xq). */}
                   {supplementLinks.mainIssue === null ? (
-                    supplementLinks.orderLabel
+                    (supplementLinks.orderLabel ?? '—')
                   ) : (
                     <Link
                       to={href('/administration/archive/:issueId', {

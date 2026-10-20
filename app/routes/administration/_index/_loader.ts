@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from 'react-router'
 import { NON_EMPTY_ARTICLE_WHERE } from '~/routes/administration/articles/utils/non-empty-article-where'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
+import { NON_EMPTY_ISSUE_WHERE } from '~/utils/issue/non-empty-issue-where'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { buildIssuePermissionWhere } from '../archive/utils/build-issue-permission-where'
@@ -126,7 +127,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     prisma.podcast.count({ where: { state: 'published' } }),
     prisma.podcastEpisode.count(),
     prisma.podcastEpisode.count({ where: { state: 'published' } }),
-    prisma.issue.count(),
+    prisma.issue.count({ where: NON_EMPTY_ISSUE_WHERE }),
     prisma.issue.count({ where: { state: 'published' } }),
   ])
 

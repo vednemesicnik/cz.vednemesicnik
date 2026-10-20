@@ -26,7 +26,10 @@ export const resolveIssueTitles = async <Issue extends IssueTitleFields>(
   issues: Issue[],
   visibleWhere: Prisma.IssueWhereInput,
 ): Promise<(Issue & { title: string })[]> => {
-  const supplements = issues.filter((issue) => issue.supplement)
+  // A supplement without its number belongs to no main issue yet.
+  const supplements = issues.flatMap(({ supplement, year, order }) =>
+    supplement && year !== null && order !== null ? [{ order, year }] : [],
+  )
 
   const mainIssues =
     supplements.length === 0
@@ -38,7 +41,7 @@ export const resolveIssueTitles = async <Issue extends IssueTitleFields>(
               visibleWhere,
               {
                 name: { not: null },
-                OR: supplements.map(({ year, order }) => ({ order, year })),
+                OR: supplements,
                 supplementSlug: '',
               },
             ],

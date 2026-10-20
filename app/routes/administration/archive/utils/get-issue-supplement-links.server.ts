@@ -5,8 +5,8 @@ import { getIssueOrderLabel } from '~/utils/issue/get-issue-order-label'
 import { getIssueTitle } from '~/utils/issue/get-issue-title'
 
 type Issue = {
-  year: number
-  order: number
+  year: number | null
+  order: number | null
   supplement: string | null
 }
 
@@ -15,7 +15,7 @@ export type IssueSupplementLinks =
   | {
       kind: 'main-issue'
       mainIssue: { id: string; title: string } | null
-      orderLabel: string
+      orderLabel: string | null
     }
 
 /**
@@ -34,6 +34,13 @@ export const getIssueSupplementLinks = async (
   visibleWhere: Prisma.IssueWhereInput,
 ): Promise<IssueSupplementLinks> => {
   const { year, order } = issue
+
+  // Without its number an issue belongs with no other yet.
+  if (year === null || order === null) {
+    return issue.supplement
+      ? { kind: 'main-issue', mainIssue: null, orderLabel: null }
+      : { kind: 'supplements', supplements: [] }
+  }
 
   if (issue.supplement) {
     const mainIssue = await prisma.issue.findFirst({

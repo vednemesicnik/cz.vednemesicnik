@@ -21,7 +21,7 @@ import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 type Props = {
   id: string
   title: string
-  orderLabel: string
+  orderLabel: string | null
   state: StatusTagState
   createdAt: Date
   canView: boolean
@@ -63,7 +63,7 @@ export const ItemRow = ({
         onChange={onSelect}
       />
       <TableCell>{title}</TableCell>
-      <TableCell>{orderLabel}</TableCell>
+      <TableCell>{orderLabel ?? '—'}</TableCell>
       <TableCell>{getFormattedDateString(createdAt)}</TableCell>
       <TableCell>
         <StatusTag state={state} />

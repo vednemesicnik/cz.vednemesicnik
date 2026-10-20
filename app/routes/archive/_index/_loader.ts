@@ -4,6 +4,7 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { NON_EMPTY_ISSUE_WHERE } from '~/utils/issue/non-empty-issue-where'
 import {
   issueTitleSelect,
   resolveIssueTitles,
@@ -24,7 +25,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   )
 
   const visibility = await getWebContentVisibility(request, ['issue'])
-  const visibleIssues = visibility.where('issue', ownByAuthor)
+  // An empty draft never shows, not even as a preview (decision 0020).
+  const visibleIssues = {
+    AND: [visibility.where('issue', ownByAuthor), NON_EMPTY_ISSUE_WHERE],
+  }
 
   const issuesPromise = prisma.issue.findMany({
     // A supplement stands right after its issue (design 26a).
