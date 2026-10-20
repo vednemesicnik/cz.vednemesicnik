@@ -12,7 +12,7 @@ import { DialogBody } from '~/components/dialog-body'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
-import type { IssueStateAction } from '../../../../utils/issue-actions'
+import type { IssueStateAction } from '../../utils/issue-actions'
 import styles from './_styles.module.css'
 
 type Props = {

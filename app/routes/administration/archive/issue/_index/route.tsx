@@ -14,19 +14,15 @@ import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
-import { AdminModalDescription } from '~/components/admin/admin-modal-description'
-import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
-import { DialogBody } from '~/components/dialog-body'
 import { HistoryList } from '~/components/history-list'
 import { Hyperlink } from '~/components/hyperlink'
 import { Image } from '~/components/image'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
-import { MissingContentDialog } from '~/components/missing-content-dialog'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -35,6 +31,8 @@ import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { useContentEvents } from '~/hooks/use-content-events'
 import { useRevalidateAt } from '~/hooks/use-revalidate-at'
 
+import { IssueMissingDialog } from '../../components/issue-missing-dialog'
+import { IssueStateDialog } from '../../components/issue-state-dialog'
 import {
   ISSUE_ACTION_LABELS,
   ISSUE_DIRECT_INTENTS,
@@ -46,7 +44,6 @@ import {
 import type { action as issueAction } from './_action'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
-import { IssueStateDialog } from './components/issue-state-dialog'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
@@ -373,19 +370,11 @@ export default function RouteComponent({
       />
 
       {missingList !== null && (
-        <MissingContentDialog editHref={editHref} onClose={closeMissingList}>
-          <AdminModalTitle>
-            {missingList.intent === INTENT_VALUE.publish
-              ? 'Číslo ještě nejde publikovat'
-              : 'Číslo ještě nejde odeslat'}
-          </AdminModalTitle>
-          {/* One sentence, only what is missing (26e). */}
-          <DialogBody>
-            {missingList.items.map((item) => (
-              <AdminModalDescription key={item}>{item}</AdminModalDescription>
-            ))}
-          </DialogBody>
-        </MissingContentDialog>
+        <IssueMissingDialog
+          editHref={editHref}
+          missingList={missingList}
+          onClose={closeMissingList}
+        />
       )}
 
       {stateDialog !== null && (

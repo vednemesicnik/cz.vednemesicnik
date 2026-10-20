@@ -1,14 +1,11 @@
 import { getHeaderActions } from '../../articles/article/_index/utils/get-header-actions'
 import type { ArticleAction } from '../../articles/utils/article-actions'
-import type { IssueAction } from './issue-actions'
+import { isIssueAction } from './is-issue-action'
 
 type Options = Omit<
   Parameters<typeof getHeaderActions>[0],
   'canChangePublishedAt'
 >
-
-const isIssueAction = (action: ArticleAction): action is IssueAction =>
-  action !== 'change-date'
 
 const asIssueAction = (action: ArticleAction | null) =>
   action !== null && isIssueAction(action) ? action : null
