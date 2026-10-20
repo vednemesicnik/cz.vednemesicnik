@@ -7,7 +7,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px 24px;
-    width: 100%;
+    inline-size: 100%;
   }
 }
 
@@ -15,7 +15,7 @@
   @layer route {
     display: grid;
     gap: 8px;
-    min-width: 0;
+    min-inline-size: 0;
   }
 }
 
@@ -51,7 +51,7 @@
 /* One sentence over someone else's issue, not a banner (24c). */
 .sentence {
   @layer route {
-    max-width: 40rem;
+    max-inline-size: 40rem;
     margin: 0;
     font-size: var(--font-size-sm);
     line-height: 1.55;
@@ -59,7 +59,8 @@
   }
 }
 
-/* The cover in a column of its own, the PDF beside it (26b, 26c). */
+/* Two tracks: the cover in a column of its own, the PDF beside it (26b,
+   26c). They stack once the section (an inline-size container) is narrow. */
 .files {
   @layer route {
     display: grid;
@@ -67,16 +68,17 @@
     align-items: start;
     gap: 28px;
 
-    @media (width < 40rem) {
+    @container (inline-size < 40rem) {
       grid-template-columns: minmax(0, 1fr);
     }
   }
 }
 
-.cover,
-.pdfSlot {
+/* The cover and its caption under it. */
+.cover {
   @layer route {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
     margin: 0;
   }
@@ -89,45 +91,6 @@
     border-radius: 6px;
     overflow: hidden;
     box-shadow: var(--shadow-md);
-  }
-}
-
-/* The dashed field a file is picked or dropped into (26c, as 24b); the cover's
-   has the page's proportions. Picking comes with the uploads (#711). */
-.dropField {
-  @layer route {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    box-sizing: border-box;
-    min-block-size: 96px;
-    padding: 16px;
-    text-align: center;
-    border: 1px dashed var(--color-charcoal-400);
-    border-radius: var(--radius-md);
-  }
-}
-
-.cover .dropField {
-  @layer route {
-    aspect-ratio: 210 / 297;
-  }
-}
-
-.dropFieldAction {
-  @layer route {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--text-secondary);
-  }
-}
-
-.dropFieldHint {
-  @layer route {
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
   }
 }
 
@@ -144,11 +107,11 @@
   @layer route {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     padding: 16px;
     font-size: 14px;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
   }
 }
 
@@ -174,8 +137,8 @@
   @layer route {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    min-width: 0;
+    gap: 18px;
+    min-inline-size: 0;
     margin: 0;
     padding: 0;
     border: 0;
@@ -198,19 +161,32 @@
   }
 }
 
-/* Na webu jako: the title, the address under it (26c). */
-.stack {
+/* Na webu jako under a line: the title, then the address (26c). */
+.webPreview {
   @layer route {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
+    gap: 4px;
+    margin: 0;
+    padding-block-start: 14px;
+    font-size: 13px;
+    border-block-start: 1px solid var(--border);
+
+    & dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
+.webPreviewLabel {
+  @layer route {
+    color: var(--text-secondary);
   }
 }
 
 .tertiary {
   @layer route {
     color: var(--text-tertiary);
-    overflow-wrap: anywhere;
   }
 }

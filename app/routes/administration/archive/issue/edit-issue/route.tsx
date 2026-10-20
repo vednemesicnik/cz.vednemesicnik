@@ -18,9 +18,7 @@ import {
 } from 'react'
 import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
-import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
-import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
@@ -55,6 +53,7 @@ import type { IssueNumberConflict } from '../../utils/get-issue-number-conflict-
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { FileDropField } from './components/file-drop-field'
 import { formatIssueChangedDescription } from './utils/format-issue-changed-description'
 import { formatIssueHoldTakenDescription } from './utils/format-issue-hold-taken-description'
 import { formatUnsavedIssueFields } from './utils/format-unsaved-issue-fields'
@@ -73,9 +72,13 @@ type SaveResponse =
   | {
       status: 'saved'
       updatedAt: string
+      isNumberSaved: boolean
       numberConflict: NumberConflict | null
     }
   | { status: 'not-held'; heldByName: string | null }
+
+// The name of the button Conform submits its intents with.
+const CONFORM_INTENT_NAME = '__intent__'
 
 // The tab's own fields are no change of the issue.
 const SNAPSHOT_IGNORED_FIELDS = new Set<string>([
@@ -275,26 +278,31 @@ export default function RouteComponent({
       return 'failed'
     }
 
+    // A number taken or unread stayed as it was stored (decision 0032).
     const sentValues = readValues(formData)
-    savedValuesRef.current =
-      result.numberConflict === null
-        ? sentValues
-        : {
-            ...sentValues,
-            order: savedValuesRef.current.order,
-            supplement: savedValuesRef.current.supplement,
-            year: savedValuesRef.current.year,
-          }
+    savedValuesRef.current = result.isNumberSaved
+      ? sentValues
+      : {
+          ...sentValues,
+          order: savedValuesRef.current.order,
+          supplement: savedValuesRef.current.supplement,
+          year: savedValuesRef.current.year,
+        }
     acknowledgeSaved(result.updatedAt)
     setNumberConflict(result.numberConflict)
 
     // A new title reaches the breadcrumb and the tab title.
-    const savedTitle = getIssueTitle({
-      name: savedValuesRef.current.name || null,
-      order: parseNumber(savedValuesRef.current.order),
-      supplement: savedValuesRef.current.supplement || null,
-      year: parseNumber(savedValuesRef.current.year),
-    })
+    const savedYear = parseNumber(savedValuesRef.current.year)
+    const savedOrder = parseNumber(savedValuesRef.current.order)
+    const savedTitle = getIssueTitle(
+      {
+        name: savedValuesRef.current.name || null,
+        order: savedOrder,
+        supplement: savedValuesRef.current.supplement || null,
+        year: savedYear,
+      },
+      visibleNamesByNumber[`${savedYear}/${savedOrder}`] ?? null,
+    )
     if (savedTitle !== loadedTitleRef.current) void revalidator.revalidate()
 
     return 'saved'
@@ -430,11 +438,15 @@ export default function RouteComponent({
 
   const { onSubmit: conformOnSubmit, ...formProps } = getFormProps(form)
 
-  // Nothing posts the form: Enter in a field saves at once.
+  // Nothing posts the form: Enter in a field saves at once. Conform runs its
+  // own `update` as a submit (the order following the year, Použít N); that
+  // waits for the pause like typing.
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    const isConformIntent =
+      event.nativeEvent.submitter?.getAttribute('name') === CONFORM_INTENT_NAME
     conformOnSubmit(event)
     event.preventDefault()
-    void autosave.flush()
+    if (!isConformIntent) void autosave.flush()
   }
 
   const handleClose = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -594,13 +606,27 @@ export default function RouteComponent({
     ]
   }
 
-  // A value that can't be read leaves the number unsaved (decision 0032); the
-  // error says so for the field changed last (copy zuq3hyhf).
-  const withUnsavedChange = (errors: string[] | undefined) =>
-    errors?.map(
-      (error) =>
-        `${error} ${UNSAVED_NUMBER_CHANGE[lastNumberFieldRef.current]}`,
-    )
+  // A value that can't be read leaves the number unsaved (decision 0032). One
+  // error says so, for the field changed last (copy zuq3hyhf): under that
+  // field, or under the first one that can't be read when it reads well.
+  const numberErrors: Record<NumberField, string[] | undefined> = {
+    order: fields.order.errors,
+    supplement: fields.supplement.errors,
+    year: fields.year.errors,
+  }
+  const closingField: NumberField | undefined =
+    numberErrors[lastNumberFieldRef.current] !== undefined
+      ? lastNumberFieldRef.current
+      : (['year', 'order', 'supplement'] as const).find(
+          (field) => numberErrors[field] !== undefined,
+        )
+  const withUnsavedChange = (field: NumberField) =>
+    field === closingField
+      ? numberErrors[field]?.map(
+          (error) =>
+            `${error} ${UNSAVED_NUMBER_CHANGE[lastNumberFieldRef.current]}`,
+        )
+      : numberErrors[field]
 
   // A free order for a taken one: filled in and saved (26d, as 24d).
   const freeOrder =
@@ -741,15 +767,12 @@ export default function RouteComponent({
                 <div className={styles.files}>
                   <figure className={styles.cover}>
                     {issue.cover === null ? (
-                      // Uploading on pick comes with #711 (26c).
-                      <div className={styles.dropField}>
-                        <span className={styles.dropFieldAction}>
-                          Vybrat obálku
-                        </span>
-                        <span className={styles.dropFieldHint}>
-                          nebo ji sem přetáhněte · obrázek do 5 MB
-                        </span>
-                      </div>
+                      <FileDropField
+                        accept={'image/*'}
+                        hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
+                        isPage
+                        label={'Vybrat obálku'}
+                      />
                     ) : (
                       <Image
                         {...issue.cover.sources}
@@ -761,19 +784,18 @@ export default function RouteComponent({
                     <figcaption className={styles.caption}>Obálka</figcaption>
                   </figure>
 
-                  <div className={styles.pdfSlot}>
+                  {/* The PDF card as on the detail (26b); without a PDF the
+                      dashed field stands in it (26c, 26d). */}
+                  <article className={styles.pdf}>
                     <h3 className={styles.caption}>PDF</h3>
                     {issue.pdf === null ? (
-                      <div className={styles.dropField}>
-                        <span className={styles.dropFieldAction}>
-                          Vybrat PDF
-                        </span>
-                        <span className={styles.dropFieldHint}>
-                          nebo ho sem přetáhněte · nejvýš 10 MB
-                        </span>
-                      </div>
+                      <FileDropField
+                        accept={'application/pdf'}
+                        hint={'nebo ho sem přetáhněte · nejvýš 10 MB'}
+                        label={'Vybrat PDF'}
+                      />
                     ) : (
-                      <article className={styles.pdf}>
+                      <>
                         <p className={styles.pdfName}>{issue.pdf.fileName}</p>
                         <p className={styles.uploaded}>
                           nahráno {issue.pdf.uploadedAt}
@@ -781,9 +803,9 @@ export default function RouteComponent({
                             <> jako {issue.pdf.originalFileName}</>
                           )}
                         </p>
-                      </article>
+                      </>
                     )}
-                  </div>
+                  </article>
                 </div>
               </AdminDetailSection>
             </AdminDetailMain>
@@ -794,7 +816,7 @@ export default function RouteComponent({
                   <div className={styles.number}>
                     <TextField
                       {...getInputProps(fields.year, { type: 'text' })}
-                      errors={withUnsavedChange(fields.year.errors)}
+                      errors={withUnsavedChange('year')}
                       inputMode={'numeric'}
                       label={'Rok'}
                       onInput={handleYearInput}
@@ -803,7 +825,7 @@ export default function RouteComponent({
                       {...getInputProps(fields.order, { type: 'text' })}
                       errors={
                         renderNumberConflict('order') ??
-                        withUnsavedChange(fields.order.errors)
+                        withUnsavedChange('order')
                       }
                       inputMode={'numeric'}
                       label={'Pořadí v roce'}
@@ -829,7 +851,7 @@ export default function RouteComponent({
                     {...getInputProps(fields.supplement, { type: 'text' })}
                     errors={
                       renderNumberConflict('supplement') ??
-                      withUnsavedChange(fields.supplement.errors)
+                      withUnsavedChange('supplement')
                     }
                     hint={
                       'Název samostatně vytištěné části, která se do čísla nevešla. Zadejte rok a pořadí čísla, ke kterému patří.'
@@ -854,33 +876,29 @@ export default function RouteComponent({
                   )}
                 </fieldset>
 
-                <AdminDetailList>
-                  <AdminDetailItem label={'Na webu jako'}>
-                    <span className={styles.stack}>
-                      {webPreview.title !== null && (
-                        <span>
-                          {webPreview.title}
-                          {webPreview.orderLabel !== null && (
-                            <span className={styles.tertiary}>
-                              {' '}
-                              · {webPreview.orderLabel}
-                            </span>
-                          )}
-                        </span>
-                      )}
-                      {webPreview.address !== null && (
+                {/* What a reader sees, under a line, as 26c draws it. */}
+                <dl className={styles.webPreview}>
+                  <dt className={styles.webPreviewLabel}>Na webu jako</dt>
+                  {webPreview.title !== null && (
+                    <dd>
+                      {webPreview.title}
+                      {webPreview.orderLabel !== null && (
                         <span className={styles.tertiary}>
-                          {webPreview.address}
+                          {' '}
+                          · {webPreview.orderLabel}
                         </span>
                       )}
-                      {webPreview.missingNote !== null && (
-                        <span className={styles.tertiary}>
-                          {webPreview.missingNote}
-                        </span>
-                      )}
-                    </span>
-                  </AdminDetailItem>
-                </AdminDetailList>
+                    </dd>
+                  )}
+                  {webPreview.address !== null && (
+                    <dd className={styles.tertiary}>{webPreview.address}</dd>
+                  )}
+                  {webPreview.missingNote !== null && (
+                    <dd className={styles.tertiary}>
+                      {webPreview.missingNote}
+                    </dd>
+                  )}
+                </dl>
               </AdminDetailSection>
             </AdminDetailAside>
           </AdminDetailLayout>

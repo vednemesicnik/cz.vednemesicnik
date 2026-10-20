@@ -1,0 +1,64 @@
+/* The dashed field of 26c, as the gallery's tile in 24b: a centred column. */
+.field {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    gap: 4px;
+    box-sizing: border-box;
+    padding-block: 20px;
+    padding-inline: 16px;
+    text-align: center;
+    border: 1px dashed var(--color-charcoal-400);
+    border-radius: var(--radius-lg);
+
+    &:has(.input:focus-visible) {
+      box-shadow: var(--focus-shadow);
+    }
+  }
+}
+
+/* The cover's: a printed page's proportions, so the slot keeps its place. */
+.page {
+  @layer route {
+    aspect-ratio: 210 / 297;
+  }
+}
+
+/* Visually hidden; the label is what is read and clicked. */
+.input {
+  @layer route {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* The picker waits for the uploads (#711), so the label is not a link yet.
+   Its box covers the whole field (as the gallery's tile in 24b). */
+.label {
+  @layer route {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+    }
+  }
+}
+
+.hint {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}

@@ -49,14 +49,17 @@ describe('getIssueWebPreview', () => {
     })
   })
 
-  test('shows no title without the year', () => {
+  test('keeps the name alone without the year (26j)', () => {
     expect(getIssueWebPreview({ ...issue, order: null, year: null })).toEqual({
       address: null,
       missingNote:
         'Úplný náhled názvu a adresy PDF se zobrazí po doplnění roku a pořadí v roce.',
       orderLabel: null,
-      title: null,
+      title: 'podzim',
     })
+    expect(
+      getIssueWebPreview({ ...issue, name: null, year: null }).title,
+    ).toBeNull()
     expect(getIssueWebPreview({ ...issue, year: null }).missingNote).toBe(
       'Úplný náhled názvu a adresy PDF se zobrazí po doplnění roku.',
     )

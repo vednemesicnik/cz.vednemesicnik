@@ -59,8 +59,10 @@ export const getIssueWebPreview = ({
       address: null,
       missingNote: getMissingNote(year, order),
       orderLabel: null,
-      // Only a named main issue has a title without its order.
-      title: !supplement && name && year !== null ? `${name} ${year}` : null,
+      // Only a named main issue has a title without its number: the name
+      // alone without the year, with it when only the order is missing (26j).
+      title:
+        supplement || !name ? null : year === null ? name : `${name} ${year}`,
     }
   }
 

@@ -24,6 +24,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     select: {
       ...issueTitleSelect,
       authorId: true,
+      firstContentAt: true,
       id: true,
       state: true,
     },
@@ -51,6 +52,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         title: getIssueTitle({ ...issue, name: null, supplement: null }),
       },
     }
+  }
+
+  // A new draft is named as the button that made it until its first save
+  // (26c); its editor adds no crumb of its own.
+  if (issue.firstContentAt === null) {
+    return { issue: { id: issue.id, title: 'Nové číslo' } }
   }
 
   const [titledIssue] = await resolveIssueTitles(

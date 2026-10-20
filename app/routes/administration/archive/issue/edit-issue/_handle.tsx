@@ -10,8 +10,11 @@ type Match = BreadcrumbMatch<
 >
 
 export const handle = {
-  breadcrumb: (match: Match): Breadcrumb => {
+  breadcrumb: (match: Match): Breadcrumb | null => {
     const { issueId } = match.params
+
+    // A new draft's trail is „Archiv / Nové číslo“ (26c).
+    if (match.loaderData?.issue.isEmptyDraft) return null
 
     return {
       // The last crumb names the page, the record stands before it (copy 5yrb681l).
