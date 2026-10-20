@@ -254,6 +254,23 @@ describe('saveIssueFileChange — the transaction', () => {
     expect(onCommitted).toHaveBeenCalledOnce()
   })
 
+  test('keeps the approvals of a submitted issue the Coordinator corrects (07d, 26e)', async () => {
+    mocks.issueFindUnique.mockResolvedValue({
+      ...storedIssue,
+      submittedAt: new Date(),
+    })
+
+    const result = await saveIssueFileChange(request, {
+      ...options,
+      prepare: buildPrepare(),
+    })
+
+    expect(result).toMatchObject({ status: 'saved' })
+    expect(mocks.issueUpdate.mock.lastCall?.[0].data).not.toHaveProperty(
+      'reviews',
+    )
+  })
+
   test('returns a failed preparation without a transaction', async () => {
     const result = await saveIssueFileChange(request, {
       ...options,
