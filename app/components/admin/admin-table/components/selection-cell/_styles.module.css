@@ -10,8 +10,8 @@
   }
 }
 
-/* Drop the separator under the last body row */
-:where(tr:last-child) .cell {
+/* Drop the separator under the table's last row; a group's last row keeps it (26a). */
+:where(tbody:last-child > tr:last-child) .cell {
   @layer component {
     border-bottom: none;
   }

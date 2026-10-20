@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router'
 import { AdminTable } from './_component'
 import { TableBody } from './components/body'
 import { TableCell } from './components/cell'
+import { TableGroupHeading } from './components/group-heading'
 import { TableHeader } from './components/header'
 import { TableHeaderCell } from './components/header-cell'
 import { TableRow } from './components/row'
@@ -159,6 +160,40 @@ export const ArticleList: Story = {
           </TableRow>
         ))}
       </TableBody>
+    </AdminTable>
+  ),
+}
+
+/**
+ * Rows grouped under subheadings, as the archive groups issues by year (26a):
+ * one `TableBody` per group, its heading first.
+ */
+export const GroupedRows: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <AdminTable>
+      <TableHeader>
+        <TableHeaderCell>Číslo</TableHeaderCell>
+        <TableHeaderCell>Pořadí</TableHeaderCell>
+        <TableHeaderCell>Stav</TableHeaderCell>
+      </TableHeader>
+      {[
+        { issues: ['září 2026', 'červen 2026'], year: '2026' },
+        { issues: ['prosinec 2025'], year: '2025' },
+      ].map(({ issues, year }) => (
+        <TableBody key={year}>
+          <TableGroupHeading colSpan={3}>{year}</TableGroupHeading>
+          {issues.map((issue, index) => (
+            <TableRow key={issue}>
+              <TableCell>{issue}</TableCell>
+              <TableCell>
+                {issues.length - index}/{year}
+              </TableCell>
+              <TableCell>Publikováno</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      ))}
     </AdminTable>
   ),
 }

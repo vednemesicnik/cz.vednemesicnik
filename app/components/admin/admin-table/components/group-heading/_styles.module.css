@@ -1,0 +1,11 @@
+.groupHeading {
+  @layer component {
+    /* Small and semibold over the group's rows (26a). */
+    padding: 16px 8px 6px;
+    text-align: left;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+}
