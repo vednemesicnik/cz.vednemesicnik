@@ -117,6 +117,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const conflict = await findIssueNumberConflict(context, {
     ...numberKey,
     excludeId: id,
+    supplement,
   })
 
   if (conflict !== null) {
@@ -224,7 +225,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
     // Taken between the check and the write.
     const raceConflict = isUniqueConstraintError(error)
-      ? await findIssueNumberConflict(context, { ...numberKey, excludeId: id })
+      ? await findIssueNumberConflict(context, {
+          ...numberKey,
+          excludeId: id,
+          supplement,
+        })
       : null
 
     if (raceConflict !== null) {

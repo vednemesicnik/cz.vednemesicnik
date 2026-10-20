@@ -7,6 +7,7 @@ type Options = {
   year: number
   order: number
   supplementSlug: string
+  supplement?: string
   excludeId?: string
 }
 
@@ -16,12 +17,14 @@ type Options = {
  * The holder is named only when the viewer may see it.
  *
  * @param context - The author permission context, built with `view` on `issue`.
+ * @param options.supplement - The supplement as entered, named in place of a
+ *   holder the viewer may not see.
  * @param options.excludeId - The edited issue, which may keep its own number.
  * @returns The field and its message, or `null` when the number is free.
  */
 export const findIssueNumberConflict = async (
   context: Pick<AuthorPermissionContext, 'can'>,
-  { year, order, supplementSlug, excludeId }: Options,
+  { year, order, supplementSlug, supplement, excludeId }: Options,
 ) => {
   const holder = await prisma.issue.findFirst({
     select: {
@@ -51,8 +54,9 @@ export const findIssueNumberConflict = async (
     targetAuthorIds: [holder.authorId],
   }).hasPermission
 
-  return getIssueNumberConflictMessage({
-    ...holder,
-    name: isVisible ? holder.name : null,
-  })
+  return getIssueNumberConflictMessage(
+    isVisible
+      ? holder
+      : { ...holder, name: null, supplement: supplement ?? holder.supplement },
+  )
 }

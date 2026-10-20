@@ -188,7 +188,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />
-            <TableHeaderCell>Název</TableHeaderCell>
+            <TableHeaderCell>Číslo</TableHeaderCell>
             <TableSortableHeaderCell
               defaultOrder={'desc'}
               defaultSort={'order'}
