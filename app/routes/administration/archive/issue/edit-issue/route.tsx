@@ -594,6 +594,14 @@ export default function RouteComponent({
     ]
   }
 
+  // A value that can't be read leaves the number unsaved (decision 0032); the
+  // error says so for the field changed last (copy zuq3hyhf).
+  const withUnsavedChange = (errors: string[] | undefined) =>
+    errors?.map(
+      (error) =>
+        `${error} ${UNSAVED_NUMBER_CHANGE[lastNumberFieldRef.current]}`,
+    )
+
   // A free order for a taken one: filled in and saved (26d, as 24d).
   const freeOrder =
     numberConflict?.field === 'order' ? numberConflict.freeOrder : null
@@ -786,7 +794,7 @@ export default function RouteComponent({
                   <div className={styles.number}>
                     <TextField
                       {...getInputProps(fields.year, { type: 'text' })}
-                      errors={fields.year.errors}
+                      errors={withUnsavedChange(fields.year.errors)}
                       inputMode={'numeric'}
                       label={'Rok'}
                       onInput={handleYearInput}
@@ -794,7 +802,8 @@ export default function RouteComponent({
                     <TextField
                       {...getInputProps(fields.order, { type: 'text' })}
                       errors={
-                        renderNumberConflict('order') ?? fields.order.errors
+                        renderNumberConflict('order') ??
+                        withUnsavedChange(fields.order.errors)
                       }
                       inputMode={'numeric'}
                       label={'Pořadí v roce'}
@@ -813,23 +822,17 @@ export default function RouteComponent({
                   <TextField
                     {...getInputProps(fields.name, { type: 'text' })}
                     errors={fields.name.errors}
-                    // An example from the fields; without the year there is
-                    // nothing to put it together from (26j).
-                    hint={
-                      year === null
-                        ? undefined
-                        : `Bez roku. Z názvu ${name ?? 'podzim'} vznikne ${name ?? 'podzim'} ${year}.`
-                    }
+                    hint={'Bez roku. Rok se k názvu přidá automaticky.'}
                     label={'Název'}
                   />
                   <TextField
                     {...getInputProps(fields.supplement, { type: 'text' })}
                     errors={
                       renderNumberConflict('supplement') ??
-                      fields.supplement.errors
+                      withUnsavedChange(fields.supplement.errors)
                     }
                     hint={
-                      'Pro samostatně vytištěný doplněk, třeba Maturitní ples. Zadejte rok a pořadí čísla, ke kterému patří.'
+                      'Název samostatně vytištěné části, která se do čísla nevešla. Zadejte rok a pořadí čísla, ke kterému patří.'
                     }
                     label={'Doplněk'}
                     onInput={handleSupplementInput}
