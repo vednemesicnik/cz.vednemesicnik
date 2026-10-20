@@ -33,8 +33,8 @@ vi.mock('~/utils/db.server', () => ({
       update: mocks.issueUpdate,
       updateMany: mocks.issueUpdateMany,
     },
-    issueCover: { update: mocks.issueCoverUpdate },
-    issuePDF: { count: mocks.issuePdfCount, update: mocks.issuePdfUpdate },
+    issueCover: { updateMany: mocks.issueCoverUpdate },
+    issuePDF: { count: mocks.issuePdfCount, updateMany: mocks.issuePdfUpdate },
   },
 }))
 
@@ -317,8 +317,7 @@ describe('updateIssue — the number saves as one (decision 0032)', () => {
 
     expect(mocks.issuePdfUpdate).toHaveBeenCalledWith({
       data: { fileName: 'VDM-2026-4.pdf' },
-      select: { id: true },
-      where: { id: 'pdf-1' },
+      where: { issueId: 'issue-1' },
     })
   })
 

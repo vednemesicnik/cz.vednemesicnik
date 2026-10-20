@@ -184,6 +184,11 @@ export default [
           'archive/:issueId/save',
           'routes/administration/archive/issue/save-issue/route.ts',
         ),
+        // Its cover and PDF, each saved on its own as it is picked (26c).
+        route(
+          'archive/:issueId/files',
+          'routes/administration/archive/issue/issue-files/route.ts',
+        ),
 
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [

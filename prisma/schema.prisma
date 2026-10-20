@@ -408,7 +408,8 @@ model IssueCover {
 
 model IssuePDF {
   id               String   @id @default(cuid())
-  fileName         String   @unique
+  // Null until the issue has its year and order: the name is built from them (decision 0033).
+  fileName         String?  @unique
   // The name it was uploaded under, which tells the final version (design 26b);
   // null for a file uploaded before it was kept.
   originalFileName String?

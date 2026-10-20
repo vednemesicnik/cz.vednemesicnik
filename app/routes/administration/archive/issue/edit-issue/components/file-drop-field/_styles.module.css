@@ -39,20 +39,42 @@
   }
 }
 
-/* The picker waits for the uploads (#711), so the label is not a link yet.
-   Its box covers the whole field (as the gallery's tile in 24b). */
+/* A refused pick (26d). */
+.invalid {
+  @layer route {
+    border-color: var(--error);
+  }
+}
+
+/* A file held over the field, as the gallery's tile (24b). */
+.dragOver {
+  @layer route {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-accent);
+  }
+}
+
+/* The whole field picks: the label's box covers it (as 24b). */
 .label {
   @layer route {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
-    color: var(--text-secondary);
-    cursor: not-allowed;
+    color: var(--link-strong);
+    cursor: pointer;
 
     &::after {
       content: "";
       position: absolute;
       inset: 0;
     }
+  }
+}
+
+/* Outside the edit hold nothing uploads. */
+.disabled {
+  @layer route {
+    color: var(--text-secondary);
+    cursor: not-allowed;
   }
 }
 

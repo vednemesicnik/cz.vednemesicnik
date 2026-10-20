@@ -233,26 +233,33 @@ export default function RouteComponent({
                   <p className={styles.pdfName}>PDF zatím chybí</p>
                 ) : (
                   <>
-                    {/* The name the reader downloads it under. */}
-                    <p className={styles.pdfName}>{issue.pdf.fileName}</p>
+                    {/* The name the reader downloads it under; before the
+                        year and order it has none, so the uploaded one. */}
+                    <p className={styles.pdfName}>
+                      {issue.pdf.fileName ?? issue.pdf.originalFileName}
+                    </p>
                     {/* The name it was uploaded under tells the final version (26b). */}
                     <p className={styles.uploaded}>
                       nahráno{' '}
                       <time dateTime={issue.pdf.uploadedAt.iso}>
                         {issue.pdf.uploadedAt.formatted}
                       </time>
-                      {issue.pdf.originalFileName !== null && (
-                        <> jako {issue.pdf.originalFileName}</>
-                      )}
+                      {/* Without its name the line above says it already. */}
+                      {issue.pdf.fileName !== null &&
+                        issue.pdf.originalFileName !== null && (
+                          <> jako {issue.pdf.originalFileName}</>
+                        )}
                     </p>
-                    <Hyperlink
-                      className={styles.openPdf}
-                      href={issue.pdf.path}
-                      rel={'noopener'}
-                      target={'_blank'}
-                    >
-                      Otevřít PDF
-                    </Hyperlink>
+                    {issue.pdf.path !== null && (
+                      <Hyperlink
+                        className={styles.openPdf}
+                        href={issue.pdf.path}
+                        rel={'noopener'}
+                        target={'_blank'}
+                      >
+                        Otevřít PDF
+                      </Hyperlink>
+                    )}
                   </>
                 )}
               </article>
@@ -303,7 +310,7 @@ export default function RouteComponent({
                 </AdminDetailItem>
               )}
               <AdminDetailItem label={'Adresa'}>
-                {issue.pdf === null ? (
+                {issue.pdf?.path == null ? (
                   '—'
                 ) : issue.isPreviewable ? (
                   // Signed in, the web shows the draft in the archive (26b).

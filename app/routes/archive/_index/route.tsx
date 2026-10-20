@@ -22,11 +22,12 @@ export { meta } from './_meta'
 type Issue = Route.ComponentProps['loaderData']['issues'][number]
 type RenderableIssue = Issue & {
   cover: NonNullable<Issue['cover']>
-  pdf: NonNullable<Issue['pdf']>
+  pdf: NonNullable<Issue['pdf']> & { fileName: string }
 }
 
+// A PDF without its name has no address yet (decision 0033).
 const isRenderable = (issue: Issue): issue is RenderableIssue =>
-  issue.cover !== null && issue.pdf !== null
+  issue.cover !== null && issue.pdf !== null && issue.pdf.fileName !== null
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { issues, issuesCount } = loaderData

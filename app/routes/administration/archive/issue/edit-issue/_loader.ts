@@ -41,7 +41,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       name: true,
       order: true,
       pdf: {
-        select: { fileName: true, originalFileName: true, uploadedAt: true },
+        select: {
+          fileName: true,
+          id: true,
+          originalFileName: true,
+          uploadedAt: true,
+        },
       },
       reviews: {
         select: {
@@ -188,6 +193,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           ? null
           : {
               fileName: issue.pdf.fileName,
+              // New with every upload: tells a cancelled replacement from one
+              // that saved (decision 0029).
+              id: issue.pdf.id,
               originalFileName: issue.pdf.originalFileName,
               uploadedAt: formatNumericDate(issue.pdf.uploadedAt),
             },

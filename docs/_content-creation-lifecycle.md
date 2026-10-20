@@ -256,8 +256,12 @@ link to the issue that has it and *Použít N* for a free order. The PDF is rena
 number on a draft, and the cover's alt text follows the title. The hold, its takeover, the
 read-only editor, the detail's „upravuje …“ line and the refused transitions work as for the
 article; a bulk delete skips a held issue. The dialogs after a lost hold list the details that
-did not save instead of offering a copy. The file slots are drawn empty; uploading on pick is
-#711, the checks at submit #718.
+did not save instead of offering a copy. The cover and the PDF upload as soon as they are picked
+or dropped, each on its own through the `files` route, with one *Nahrává se · Zrušit* row and
+cancellable until they save (0029); *Nahradit* replaces a stored file, which stays until the new
+one saves, and leaving during an upload asks. The history gets *Obálka nahrána* and *PDF
+nahráno*. A PDF uploaded before the number is complete has no name, and so no address, until the
+editor's save names it (0033). The checks at submit are #718.
 
 ---
 

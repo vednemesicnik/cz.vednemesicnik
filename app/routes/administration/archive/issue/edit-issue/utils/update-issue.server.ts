@@ -324,15 +324,16 @@ export async function updateIssue(
       savedNumber.order === null
         ? []
         : [
-            prisma.issueCover.update({
+            // By the issue, not the row: an upload may have replaced or
+            // removed the file since it was read.
+            prisma.issueCover.updateMany({
               data: {
                 altText: getIssueCoverAltText({
                   ...savedNumber,
                   name: name === '' ? null : name,
                 }),
               },
-              select: { id: true },
-              where: { id: storedIssue.cover.id },
+              where: { issueId },
             }),
           ]),
       // The PDF is renamed only with its number (decision 0030).
@@ -341,10 +342,9 @@ export async function updateIssue(
       pdfFileName === storedIssue.pdf.fileName
         ? []
         : [
-            prisma.issuePDF.update({
+            prisma.issuePDF.updateMany({
               data: { fileName: pdfFileName },
-              select: { id: true },
-              where: { id: storedIssue.pdf.id },
+              where: { issueId },
             }),
           ]),
     ]

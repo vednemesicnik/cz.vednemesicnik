@@ -188,9 +188,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               }),
         history,
         id: issue.id,
-        // Signed in, the web shows a draft only with both files (26b).
+        // Signed in, the web shows a draft only with both files (26b), the
+        // PDF under its name (decision 0033).
         isPreviewable:
-          issue.state === 'draft' && issue.cover !== null && issue.pdf !== null,
+          issue.state === 'draft' &&
+          issue.cover !== null &&
+          issue.pdf?.fileName != null,
         name: issue.name,
         orderLabel: getIssueOrderLabel(issue),
         pdf:
@@ -199,9 +202,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
             : {
                 fileName: issue.pdf.fileName,
                 originalFileName: issue.pdf.originalFileName,
-                path: href('/archive/:fileName', {
-                  fileName: issue.pdf.fileName,
-                }),
+                // Without its name, before the year and order, it has no
+                // address yet (decision 0033).
+                path:
+                  issue.pdf.fileName === null
+                    ? null
+                    : href('/archive/:fileName', {
+                        fileName: issue.pdf.fileName,
+                      }),
                 uploadedAt: {
                   formatted: formatNumericDate(issue.pdf.uploadedAt),
                   iso: issue.pdf.uploadedAt.toISOString(),
