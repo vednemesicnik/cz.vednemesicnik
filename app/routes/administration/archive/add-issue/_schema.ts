@@ -25,9 +25,9 @@ export const schema = z.object({
     .optional()
     .transform((value) => value || undefined),
   order: z
-    .number({ message: 'Pořadí je povinné' })
-    .int({ message: 'Pořadí musí být celé číslo' })
-    .min(1, { message: 'Pořadí musí být větší než 0' }),
+    .number({ message: 'Zadejte pořadí v roce.' })
+    .int({ message: 'Zadejte pořadí jako celé číslo.' })
+    .min(1, { message: 'Zadejte pořadí větší než nula.' }),
   pdf: z
     .instanceof(File, { message: 'PDF soubor je povinný' })
     .refine((file) => file.type === 'application/pdf', {
@@ -45,11 +45,13 @@ export const schema = z.object({
     .optional()
     .transform((value) => value || undefined)
     .refine((value) => value === undefined || slugify(value) !== '', {
-      message: 'Doplněk musí obsahovat písmeno nebo číslici',
+      message: 'Zadejte název doplňku alespoň s jedním písmenem nebo číslicí.',
     }),
   year: z
-    .number({ message: 'Rok je povinný' })
-    .int({ message: 'Rok musí být celé číslo' })
-    .min(1000, { message: 'Rok musí mít čtyři číslice' })
-    .max(9999, { message: 'Rok musí mít čtyři číslice' }),
+    .number({ message: 'Zadejte rok.' })
+    // One check, so 26,5 gets the sentence once.
+    .refine(
+      (value) => Number.isInteger(value) && value >= 1000 && value <= 9999,
+      { message: 'Zadejte rok čtyřmi číslicemi.' },
+    ),
 })
