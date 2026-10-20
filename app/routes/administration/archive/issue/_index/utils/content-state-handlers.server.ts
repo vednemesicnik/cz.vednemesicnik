@@ -11,6 +11,7 @@ import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 import { deletePdfObject } from '~/utils/pdf-store/store-pdf.server'
 
 import { findIssueHeldByName } from './find-issue-held-by-name.server'
+import { loadMissingIssueContent } from './load-missing-issue-content.server'
 
 const RELEASED_HOLD = {
   heldByAuthorId: null,
@@ -21,8 +22,8 @@ const RELEASED_HOLD = {
 
 /**
  * Issue state-transition handlers: single author, cover image and PDF cleanup
- * on delete. None of them runs while someone else edits the issue (decision
- * 0019).
+ * on delete, and a publish only of a complete issue (design 26e). None of them
+ * runs while someone else edits the issue (decision 0019).
  */
 export const issueContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data, authorId) => {
@@ -108,6 +109,8 @@ export const issueContentStateHandlers = createContentStateHandlers({
     }
   },
   entity: 'issue',
+
+  getMissingBeforePublish: loadMissingIssueContent,
 
   loadPublishState: async (id) => {
     const issue = await prisma.issue.findUniqueOrThrow({

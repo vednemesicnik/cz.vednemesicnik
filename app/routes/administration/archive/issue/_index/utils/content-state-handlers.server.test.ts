@@ -46,12 +46,17 @@ const request = new Request('https://test.local/')
 const draftTarget = { authorIds: ['author-2'], state: 'draft' as const }
 const publishedTarget = { authorIds: ['author-2'], state: 'published' as const }
 
-// What a publish reads: the Coordinator's own approval is not needed.
+// What a publish reads: the Coordinator's own approval is not needed, and the
+// issue is complete (26e).
 const publishState = {
   author: { role: { level: 3 } },
+  cover: { id: 'cover-1' },
+  order: 4,
+  pdf: { fileName: 'VDM-2026-4.pdf' },
   publishedAt: null,
   reviews: [],
   submittedAt: null,
+  year: 2026,
 }
 
 // Not while someone else than the actor edits it (decision 0019).
@@ -66,6 +71,34 @@ beforeEach(() => {
   mocks.reviewFindFirst.mockResolvedValue({ id: 'review-1' })
   // Nobody holds it, unless a test says so.
   mocks.issueFindUnique.mockResolvedValue(null)
+})
+
+describe('issueContentStateHandlers — what a publish needs (26e)', () => {
+  test('publishes nothing of an issue without its PDF and says so', async () => {
+    mocks.issueFindUniqueOrThrow.mockResolvedValue({
+      ...publishState,
+      pdf: null,
+    })
+
+    const result = await issueContentStateHandlers.publish(request, {
+      id: 'i1',
+      target: draftTarget,
+    })
+
+    expect(result).toEqual({ missing: ['Chybí PDF.'] })
+    expect(mocks.issueUpdate).not.toHaveBeenCalled()
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+  })
+
+  test('publishes a complete issue', async () => {
+    const result = await issueContentStateHandlers.publish(request, {
+      id: 'i1',
+      target: draftTarget,
+    })
+
+    expect(result).toEqual({ missing: [] })
+    expect(mocks.issueUpdate).toHaveBeenCalled()
+  })
 })
 
 describe('issueContentStateHandlers — the edit hold', () => {
