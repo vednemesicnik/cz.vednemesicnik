@@ -16,8 +16,8 @@ type Props = {
 }
 
 /**
- * Why adding a passkey failed, in the Passkey row's value column under the
- * list (design 29d, „Řádek Passkey v 29a“).
+ * Why adding a passkey failed, on its own line under *Přidat passkey* (design
+ * 29d, „Řádek Passkey v 29a“, 0p3dlr4w).
  */
 export const PasskeyProblem = ({ problem, onRequireIdentityCheck }: Props) => (
   <p className={styles.problem} role={'alert'}>
