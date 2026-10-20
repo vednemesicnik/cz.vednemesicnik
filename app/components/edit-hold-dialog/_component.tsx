@@ -6,13 +6,11 @@ import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
+import type { EditHoldContent } from '~/utils/edit-hold/edit-hold-content'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
 /** Whose hold the editor met: someone else's, or one's own in another tab (24g). */
 export type EditHoldDialogKind = 'take-over' | 'other-tab'
-
-/** What the editor edits, for the other tab's title. */
-export type EditHoldContent = 'article' | 'issue'
 
 // The other tab's title per content (24g; copy ey73zhul for the issue).
 const OTHER_TAB_TITLE: Record<EditHoldContent, string> = {

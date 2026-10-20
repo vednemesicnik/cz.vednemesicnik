@@ -1,0 +1,216 @@
+/* The detail's header (26b, as 23a): the title with its tag, the save line
+   under it, Zavřít on the right (26c). */
+.header {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    width: 100%;
+  }
+}
+
+.title {
+  @layer route {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+}
+
+.titleLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+}
+
+/* The line under the heading, the only sign of saving (24e). */
+.saveLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+}
+
+/* Only a failure has a colour: someone has to act (24e). */
+.saveFailure {
+  @layer route {
+    color: var(--error-text);
+  }
+}
+
+/* One sentence over someone else's issue, not a banner (24c). */
+.sentence {
+  @layer route {
+    max-width: 40rem;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+}
+
+/* The cover in a column of its own, the PDF beside it (26b, 26c). */
+.files {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
+
+    @media (width < 40rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+.cover,
+.pdfSlot {
+  @layer route {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+  }
+}
+
+/* A printed page's proportions, so the slot stands before the image loads. */
+.coverImage {
+  @layer route {
+    aspect-ratio: 210 / 297;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* The dashed field a file is picked or dropped into (26c, as 24b); the cover's
+   has the page's proportions. Picking comes with the uploads (#711). */
+.dropField {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    box-sizing: border-box;
+    min-block-size: 96px;
+    padding: 16px;
+    text-align: center;
+    border: 1px dashed var(--color-charcoal-400);
+    border-radius: var(--radius-md);
+  }
+}
+
+.cover .dropField {
+  @layer route {
+    aspect-ratio: 210 / 297;
+  }
+}
+
+.dropFieldAction {
+  @layer route {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+  }
+}
+
+.dropFieldHint {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+.caption {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    font-weight: inherit;
+    color: var(--text-secondary);
+  }
+}
+
+.pdf {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+}
+
+.pdfName {
+  @layer route {
+    margin: 0;
+    font-weight: var(--font-weight-medium);
+    overflow-wrap: anywhere;
+  }
+}
+
+.uploaded {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    overflow-wrap: anywhere;
+  }
+}
+
+/* A fieldset only to lock its fields without the hold (07g): no frame. */
+.lock {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}
+
+/* Rok and Pořadí v roce side by side (26c). */
+.number {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+  }
+}
+
+.useFreeOrder {
+  @layer route {
+    justify-self: start;
+  }
+}
+
+/* Na webu jako: the title, the address under it (26c). */
+.stack {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
+
+.tertiary {
+  @layer route {
+    color: var(--text-tertiary);
+    overflow-wrap: anywhere;
+  }
+}

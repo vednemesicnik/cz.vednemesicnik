@@ -46,4 +46,21 @@ describe('getReadOnlyNotice', () => {
   test('holding: nothing', () => {
     expect(getReadOnlyNotice({ status: 'holding' })).toBeNull()
   })
+
+  test('names an issue and its stale details', () => {
+    expect(
+      getReadOnlyNotice({ holder, isEditable: true, status: 'lost' }, 'issue'),
+    ).toBe('Jen ke čtení. Číslo upravuje Marie Horáková.')
+    expect(
+      getReadOnlyNotice(
+        {
+          awayMilliseconds: 0,
+          holder: null,
+          isEditable: true,
+          status: 'changed',
+        },
+        'issue',
+      ),
+    ).toBe('Jen ke čtení. Zobrazené údaje nejsou aktuální.')
+  })
 })

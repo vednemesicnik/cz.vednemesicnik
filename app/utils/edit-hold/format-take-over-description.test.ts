@@ -36,4 +36,20 @@ describe('formatTakeOverDescription', () => {
       `Článek upravuje Jakub Novák od 14. 10. 2026 v 23:50. Poslední uložení 25. 9. 2026 v 14:02. ${ending}`,
     )
   })
+
+  test('names an issue', () => {
+    expect(
+      formatTakeOverDescription(
+        {
+          lastSavedAt: '2026-10-15T12:31:00.000Z',
+          name: 'Jakub Novák',
+          since: '2026-10-15T12:02:00.000Z',
+        },
+        now,
+        'issue',
+      ),
+    ).toBe(
+      `Číslo upravuje Jakub Novák od 14:02. Poslední uložení dnes v 14:31. ${ending}`,
+    )
+  })
 })

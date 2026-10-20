@@ -1,9 +1,11 @@
+import type { ReactNode } from 'react'
+
 import { ErrorIcon } from '~/components/icons/error-icon'
 
 import styles from './_styles.module.css'
 
 type Props = {
-  children: string
+  children: ReactNode
 }
 
 export const ErrorMessage = ({ children }: Props) => {

@@ -10,7 +10,7 @@ import styles from './_styles.module.css'
 type Props = Omit<ComponentProps<'input'>, 'size'> & {
   label: string
   hint?: ReactNode
-  errors?: string[]
+  errors?: ReactNode[]
   /** `sm`: the field of an image tile, 12 px label and a 13 px input (24b). */
   size?: 'md' | 'sm'
   /** The hint shows only while the field has the focus (24b alt text). */
