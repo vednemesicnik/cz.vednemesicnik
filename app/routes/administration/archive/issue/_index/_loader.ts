@@ -2,7 +2,7 @@ import { data, href } from 'react-router'
 
 import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
-import { createFormattedDate } from '~/utils/format-date'
+import { formatNumericDate } from '~/utils/format-numeric-date'
 import {
   createImageSources,
   imageSourceSelect,
@@ -14,8 +14,12 @@ import {
 } from '~/utils/issue/resolve-issue-titles.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
+import { getArticleFactLine } from '../../../articles/utils/get-article-fact-line'
 import { buildIssuePermissionWhere } from '../../utils/build-issue-permission-where'
+import { getIssueHeaderActions } from '../../utils/get-issue-header-actions'
+import { getIssueSupplementLinks } from '../../utils/get-issue-supplement-links.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -57,7 +61,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       pdf: {
         select: {
           fileName: true,
-          id: true,
+          originalFileName: true,
+          uploadedAt: true,
         },
       },
       publishedAt: true,
@@ -71,6 +76,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       state: true,
       submittedAt: true,
+      updatedAt: true,
     },
     where: { id: issueId },
   })
@@ -95,33 +101,67 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     submittedAt: issue.submittedAt,
   })
 
-  const [{ title }] = await resolveIssueTitles(
-    [issue],
-    buildIssuePermissionWhere(context),
-  )
+  const visibleWhere = buildIssuePermissionWhere(context)
+
+  const [[{ title }], supplementLinks, history] = await Promise.all([
+    resolveIssueTitles([issue], visibleWhere),
+    getIssueSupplementLinks(issue, visibleWhere),
+    getContentHistory({
+      createdAt: issue.createdAt,
+      entity: 'issue',
+      entityId: issue.id,
+      publishedAt: issue.publishedAt,
+    }),
+  ])
+
+  const submission = flags.submission?.state ?? null
 
   return {
+    headerActions: getIssueHeaderActions({
+      ...flags,
+      state: issue.state,
+      submission,
+    }),
+    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+    isOwnContent: flags.isOwnContent,
     issue: {
-      author: issue.author,
-      coverUrl: createImageSources('issue-cover', issue.cover).src ?? null,
-      hasCover: !!issue.cover,
-      history: await getContentHistory({
-        createdAt: issue.createdAt,
-        entity: 'issue',
-        entityId: issue.id,
+      authorName: issue.author.name,
+      cover:
+        issue.cover === null
+          ? null
+          : {
+              altText: issue.cover.altText,
+              sources: createImageSources('issue-cover', issue.cover),
+            },
+      factLine: getArticleFactLine({
+        now: new Date(),
         publishedAt: issue.publishedAt,
+        state: issue.state,
+        submission: flags.submission,
+        updatedAt: issue.updatedAt,
       }),
+      history,
       id: issue.id,
+      // Signed in, the web shows a draft only with both files (26b).
+      isPreviewable:
+        issue.state === 'draft' && issue.cover !== null && issue.pdf !== null,
+      name: issue.name,
       orderLabel: getIssueOrderLabel(issue),
-      pdfFileName: issue.pdf?.fileName ?? null,
-      pdfUrl: issue.pdf
-        ? href('/archive/:fileName', { fileName: issue.pdf.fileName })
-        : null,
-      publishedAt: createFormattedDate(issue.publishedAt),
+      pdf:
+        issue.pdf === null
+          ? null
+          : {
+              fileName: issue.pdf.fileName,
+              originalFileName: issue.pdf.originalFileName,
+              path: href('/archive/:fileName', {
+                fileName: issue.pdf.fileName,
+              }),
+              uploadedAt: formatNumericDate(issue.pdf.uploadedAt),
+            },
       state: issue.state,
       title,
     },
-    ...flags,
-    submission: flags.submission?.state ?? null,
+    submission,
+    supplementLinks,
   }
 }

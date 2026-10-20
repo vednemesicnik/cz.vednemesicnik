@@ -1,0 +1,168 @@
+/* The title, with the actions on the right (26b, as 23a). */
+.header {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    width: 100%;
+  }
+}
+
+/* The title with its state tag, and the author · one fact under it (23a). */
+.title {
+  @layer route {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+}
+
+.titleLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+}
+
+.subtitle {
+  @layer route {
+    font-size: 13px;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.actions {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+/* Who can act, in secondary text where the buttons would be (26g). */
+.sentence {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}
+
+/* The cover in a column of its own, the PDF card beside it (26b). */
+.files {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
+
+    @media (width < 40rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+.cover {
+  @layer route {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+  }
+}
+
+/* A printed page's proportions, so the slot stands before the image loads. */
+.coverImage,
+.coverMissing {
+  @layer route {
+    aspect-ratio: 210 / 297;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+}
+
+.coverImage {
+  @layer route {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.coverMissing {
+  @layer route {
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    font-size: 13px;
+    text-align: center;
+    color: var(--text-tertiary);
+    border: 1px dashed var(--border);
+  }
+}
+
+.caption {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    font-weight: inherit;
+    color: var(--text-secondary);
+  }
+}
+
+.pdf {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+}
+
+.pdfName {
+  @layer route {
+    margin: 0;
+    font-weight: var(--font-weight-medium);
+    overflow-wrap: anywhere;
+  }
+}
+
+.uploaded {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.openPdf {
+  @layer route {
+    align-self: flex-start;
+    font-size: 13px;
+  }
+}
+
+/* A value with a line under it: the address, the supplements (23a). */
+.stack {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
+
+.tertiary {
+  @layer route {
+    color: var(--text-tertiary);
+    overflow-wrap: anywhere;
+  }
+}
