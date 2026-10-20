@@ -8,6 +8,7 @@ import {
   useForm,
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
+import { clsx } from 'clsx'
 import {
   type MouseEvent,
   type SubmitEvent,
@@ -26,8 +27,10 @@ import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ButtonLink } from '~/components/button-link'
+import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
+import { ErrorMessage } from '~/components/error-message'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { Image } from '~/components/image'
@@ -37,6 +40,7 @@ import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
@@ -53,13 +57,26 @@ import type { IssueNumberConflict } from '../../utils/get-issue-number-conflict-
 import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { FailedFile } from './components/failed-file'
 import { FileDropField } from './components/file-drop-field'
 import { formatIssueChangedDescription } from './utils/format-issue-changed-description'
+import {
+  formatIssueFilesSentence,
+  type IssueFiles,
+} from './utils/format-issue-files-sentence'
 import { formatIssueHoldTakenDescription } from './utils/format-issue-hold-taken-description'
 import { formatUnsavedIssueFields } from './utils/format-unsaved-issue-fields'
 import { getIssueEditorSentence } from './utils/get-issue-editor-sentence'
 import { getIssueSaveLineText } from './utils/get-issue-save-line-text'
 import { getIssueWebPreview } from './utils/get-issue-web-preview'
+import {
+  FAILED_SENTENCE,
+  ORIGINAL_STAYED_SENTENCE,
+  ORIGINAL_STAYS_SENTENCE,
+  UPLOADING_LINE,
+  UPLOADING_SENTENCE,
+} from './utils/issue-file-sentences'
+import { useIssueFileUpload } from './utils/use-issue-file-upload'
 
 export { handle } from './_handle'
 export { loader } from './_loader'
@@ -316,6 +333,42 @@ export default function RouteComponent({
   })
   leaveSaveRef.current = autosave.getLeaveSave
 
+  // The cover and the PDF: each saves on its own as it is picked (26c,
+  // decision 0029). Refused for the hold: as the whole-form save does (24h,
+  // 24i).
+  const filesAction = href('/administration/archive/:issueId/files', {
+    issueId: params.issueId,
+  })
+  const handleFileNotHeld = async (heldByName: string | null) => {
+    if (heldByName === null) return editHold.retake()
+    await editHold.recheck()
+    return false
+  }
+  const coverUpload = useIssueFileUpload({
+    action: filesAction,
+    hasFile: issue.cover !== null,
+    kind: 'cover',
+    onNotHeld: handleFileNotHeld,
+    onSaved: acknowledgeSaved,
+    storedKey: issue.cover?.sources.src ?? null,
+    tabId: editHold.tabId,
+  })
+  const pdfUpload = useIssueFileUpload({
+    action: filesAction,
+    hasFile: issue.pdf !== null,
+    kind: 'pdf',
+    onNotHeld: handleFileNotHeld,
+    onSaved: acknowledgeSaved,
+    storedKey: issue.pdf?.id ?? null,
+    tabId: editHold.tabId,
+  })
+  const uploadingFiles: IssueFiles = {
+    cover: coverUpload.isUploading,
+    pdf: pdfUpload.isUploading,
+  }
+  const coverInputRef = useRef<HTMLInputElement>(null)
+  const pdfInputRef = useRef<HTMLInputElement>(null)
+
   // The labels of the details that differ from this editor's last save; the
   // author only where the editor chooses it.
   const getUnsentLabels = () =>
@@ -418,19 +471,67 @@ export default function RouteComponent({
     }
   }
 
+  // Leaving cancels the uploads under way, so *Zavřít* and a link out ask
+  // first while a file uploads (26c, bxy8xxqs). The dialog names the
+  // failures from its opening on (moo05ljj). Both counts are kept here, read
+  // ahead of a render.
+  const uploadingCountRef = useRef(0)
+  uploadingCountRef.current =
+    Number(coverUpload.isUploading) + Number(pdfUpload.isUploading)
+  const [pendingLeave, setPendingLeave] = useState<{
+    to: string
+    go: () => void
+    stay: () => void
+    failureCountsAtOpen: Record<keyof IssueFiles, number>
+  } | null>(null)
+  const askBeforeLeaving = (
+    to: string,
+    go: () => void,
+    stay: () => void = () => {},
+  ) =>
+    setPendingLeave({
+      failureCountsAtOpen: {
+        cover: coverUpload.failureCount,
+        pdf: pdfUpload.failureCount,
+      },
+      go,
+      stay,
+      to,
+    })
+  // The dialog's leave cancels what still uploads, and goes once the server
+  // has heard of it; once none runs it only closes.
+  const leaveDespiteUploads = () => {
+    if (pendingLeave === null) return
+    const cancelled = Promise.all([coverUpload.cancel(), pdfUpload.cancel()])
+    uploadingCountRef.current = 0
+    setPendingLeave(null)
+    void cancelled
+      .then(() => leaveTo(pendingLeave.to, pendingLeave.go))
+      .finally(pendingLeave.stay)
+  }
+  const stayDespiteUploads = () => {
+    pendingLeave?.stay()
+    setPendingLeave(null)
+  }
+
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       currentLocation.pathname !== nextLocation.pathname &&
-      autosave.hasUnsavedChanges(),
+      (autosave.hasUnsavedChanges() || uploadingCountRef.current > 0),
   )
   const handleBlocked = useEffectEvent(() => {
     if (blocker.state !== 'blocked') return
     const { pathname, search, hash } = blocker.location
-    void leaveTo(`${pathname}${search}${hash}`, () =>
-      blocker.proceed(),
-    ).finally(() => {
+    const to = `${pathname}${search}${hash}`
+    const settle = () => {
       if (blocker.state === 'blocked') blocker.reset()
-    })
+    }
+
+    if (uploadingCountRef.current > 0) {
+      askBeforeLeaving(to, () => blocker.proceed(), settle)
+      return
+    }
+    void leaveTo(to, () => blocker.proceed()).finally(settle)
   })
   useEffect(() => {
     if (blocker.state === 'blocked') handleBlocked()
@@ -451,6 +552,10 @@ export default function RouteComponent({
 
   const handleClose = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
+    if (uploadingCountRef.current > 0) {
+      askBeforeLeaving(closeHref, () => navigate(closeHref))
+      return
+    }
     void leaveTo(closeHref, () => navigate(closeHref))
   }
 
@@ -512,23 +617,25 @@ export default function RouteComponent({
     { name, order, supplement, year },
     visibleNamesByNumber[number] ?? null,
   )
+  // The name the PDF gets with the number shown; `null` without it (0033).
+  const editedPdfFileName = getEditedIssuePdfFileName(
+    {
+      order: issue.order,
+      pdfFileName: issue.pdf?.fileName ?? null,
+      state: issue.state,
+      supplementSlug: issue.supplementSlug,
+      year: issue.year,
+    },
+    {
+      order,
+      supplementSlug: supplement === null ? '' : slugify(supplement),
+      year,
+    },
+  )
   const webPreview = getIssueWebPreview({
     name,
     order,
-    pdfFileName: getEditedIssuePdfFileName(
-      {
-        order: issue.order,
-        pdfFileName: issue.pdf?.fileName ?? null,
-        state: issue.state,
-        supplementSlug: issue.supplementSlug,
-        year: issue.year,
-      },
-      {
-        order,
-        supplementSlug: supplement === null ? '' : slugify(supplement),
-        year,
-      },
-    ),
+    pdfFileName: editedPdfFileName,
     publishedMainIssueName: publishedNamesByNumber[number] ?? null,
     supplement,
     year,
@@ -544,6 +651,9 @@ export default function RouteComponent({
         ? 'idle'
         : autosave.status,
   })
+
+  // The files have their own words beside it (26c, 26j).
+  const uploadingLine = formatIssueFilesSentence(uploadingFiles, UPLOADING_LINE)
 
   // The only sign of saving, without a toast (24e); while only reading, who
   // edits it now, or that it is free again (24h).
@@ -572,7 +682,9 @@ export default function RouteComponent({
         </ButtonLink>
       </p>
     ) : (
-      <p className={styles.saveLine}>{saveLine}</p>
+      <p className={styles.saveLine}>
+        {uploadingLine === null ? saveLine : `${saveLine} · ${uploadingLine}`}
+      </p>
     )
 
   const editorSentence = getIssueEditorSentence({
@@ -638,6 +750,86 @@ export default function RouteComponent({
     isFlushOnChangeRef.current = true
   }
 
+  // What still uploads and what stays (26c); once none runs, how it ended
+  // (copy 2j4knkrm).
+  const renderLeaveDialog = ({
+    failureCountsAtOpen,
+  }: NonNullable<typeof pendingLeave>) => {
+    const isUploading = coverUpload.isUploading || pdfUpload.isUploading
+    const replacingFiles: IssueFiles = {
+      cover: coverUpload.upload?.replaces ?? false,
+      pdf: pdfUpload.upload?.replaces ?? false,
+    }
+    const failedFiles: IssueFiles = {
+      cover: coverUpload.failureCount > failureCountsAtOpen.cover,
+      pdf: pdfUpload.failureCount > failureCountsAtOpen.pdf,
+    }
+    const failedReplacements: IssueFiles = {
+      cover: failedFiles.cover && (coverUpload.failure?.replaces ?? false),
+      pdf: failedFiles.pdf && (pdfUpload.failure?.replaces ?? false),
+    }
+    const kept = isUploading
+      ? formatIssueFilesSentence(replacingFiles, ORIGINAL_STAYS_SENTENCE)
+      : formatIssueFilesSentence(failedReplacements, ORIGINAL_STAYED_SENTENCE)
+
+    return (
+      <CancelUploadDialog
+        isUploading={isUploading}
+        onLeave={leaveDespiteUploads}
+        onStay={stayDespiteUploads}
+      >
+        <AdminModalDescription>
+          {isUploading
+            ? formatIssueFilesSentence(uploadingFiles, UPLOADING_SENTENCE)
+            : (formatIssueFilesSentence(failedFiles, FAILED_SENTENCE) ??
+              'Nahrávání je dokončeno.')}
+        </AdminModalDescription>
+        {kept !== null && <AdminModalDescription>{kept}</AdminModalDescription>}
+      </CancelUploadDialog>
+    )
+  }
+
+  // Under a field: a refused pick, or a failed upload with what to do next
+  // (26d). A failed replacement keeps the stored file above it.
+  const renderFileProblem = (
+    kind: keyof IssueFiles,
+    failedFileName: string,
+  ) => {
+    const fileUpload = kind === 'cover' ? coverUpload : pdfUpload
+    const inputRef = kind === 'cover' ? coverInputRef : pdfInputRef
+    if (fileUpload.failure === null) {
+      return (
+        fileUpload.rejection !== null && (
+          <ErrorMessage>{fileUpload.rejection}</ErrorMessage>
+        )
+      )
+    }
+    const { failure } = fileUpload
+    return (
+      <FailedFile fileName={failedFileName}>
+        <ErrorMessage>{failure.sentence}</ErrorMessage>
+        {failure.replaces && (
+          <p className={styles.uploaded}>{ORIGINAL_STAYED_SENTENCE[kind]}</p>
+        )}
+        {!isLocked && (
+          <div className={styles.fileActions}>
+            {failure.canRetry && (
+              <ButtonLink onClick={fileUpload.retry} type={'button'}>
+                Zkusit znovu
+              </ButtonLink>
+            )}
+            <ButtonLink
+              onClick={() => inputRef.current?.click()}
+              type={'button'}
+            >
+              Vybrat jiný soubor
+            </ButtonLink>
+          </div>
+        )}
+      </FailedFile>
+    )
+  }
+
   // Úpravu přebírá … in its paragraphs (26l).
   const [holdTakenLead = '', ...holdTakenRest] =
     holdLoss?.dialog === 'taken'
@@ -671,6 +863,8 @@ export default function RouteComponent({
       {readOnlyNotice !== null && (
         <AdminParagraph>{readOnlyNotice}</AdminParagraph>
       )}
+
+      {pendingLeave !== null && renderLeaveDialog(pendingLeave)}
 
       {holdLoss?.dialog === 'taken' && (
         <HoldTakenDialog
@@ -765,46 +959,165 @@ export default function RouteComponent({
             <AdminDetailMain>
               <AdminDetailSection title={'Soubory'}>
                 <div className={styles.files}>
+                  {/* *Nahradit* and *Vybrat jiný soubor* open these. */}
+                  <input
+                    accept={'image/*'}
+                    form={''}
+                    hidden
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0]
+                      event.currentTarget.value = ''
+                      if (file !== undefined) coverUpload.pick(file)
+                    }}
+                    ref={coverInputRef}
+                    type={'file'}
+                  />
+                  <input
+                    accept={'application/pdf'}
+                    form={''}
+                    hidden
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0]
+                      event.currentTarget.value = ''
+                      if (file !== undefined) pdfUpload.pick(file)
+                    }}
+                    ref={pdfInputRef}
+                    type={'file'}
+                  />
+
                   <figure className={styles.cover}>
-                    {issue.cover === null ? (
-                      <FileDropField
-                        accept={'image/*'}
-                        hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
-                        isPage
-                        label={'Vybrat obálku'}
+                    {coverUpload.upload?.previewUrl ? (
+                      // The picked cover, dimmed until it saves; the stored
+                      // one stays with the issue meanwhile (26c).
+                      <img
+                        alt={''}
+                        className={clsx(styles.coverImage, styles.uploading)}
+                        src={coverUpload.upload.previewUrl}
                       />
+                    ) : coverUpload.failure !== null &&
+                      !coverUpload.failure.replaces ? (
+                      renderFileProblem('cover', coverUpload.failure.fileName)
+                    ) : issue.cover === null ? (
+                      <>
+                        <FileDropField
+                          accept={'image/*'}
+                          hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
+                          isDisabled={isLocked}
+                          isInvalid={coverUpload.rejection !== null}
+                          isPage
+                          label={'Vybrat obálku'}
+                          onPick={coverUpload.pick}
+                        />
+                        {renderFileProblem('cover', '')}
+                      </>
                     ) : (
-                      <Image
-                        {...issue.cover.sources}
-                        alt={issue.cover.altText}
-                        className={styles.coverImage}
-                        sizes={'(width >= 40rem) 220px, 100vw'}
+                      <>
+                        <Image
+                          {...issue.cover.sources}
+                          alt={issue.cover.altText}
+                          className={styles.coverImage}
+                          sizes={'(width >= 40rem) 220px, 100vw'}
+                        />
+                        {renderFileProblem(
+                          'cover',
+                          coverUpload.failure?.fileName ?? '',
+                        )}
+                      </>
+                    )}
+                    {coverUpload.upload !== null && (
+                      <UploadStatus
+                        cancelLabel={'Zrušit nahrávání obálky'}
+                        onCancel={() => void coverUpload.cancel()}
                       />
                     )}
                     <figcaption className={styles.caption}>Obálka</figcaption>
+                    {issue.cover !== null &&
+                      coverUpload.upload === null &&
+                      !isLocked && (
+                        <div className={styles.fileActions}>
+                          <ButtonLink
+                            onClick={() => coverInputRef.current?.click()}
+                            type={'button'}
+                          >
+                            Nahradit
+                          </ButtonLink>
+                        </div>
+                      )}
+                    <span className={'screen-reader-only'} role={'status'}>
+                      {coverUpload.announcement}
+                    </span>
                   </figure>
 
                   {/* The PDF card as on the detail (26b); without a PDF the
                       dashed field stands in it (26c, 26d). */}
                   <article className={styles.pdf}>
                     <h3 className={styles.caption}>PDF</h3>
-                    {issue.pdf === null ? (
-                      <FileDropField
-                        accept={'application/pdf'}
-                        hint={'nebo ho sem přetáhněte · nejvýš 10 MB'}
-                        label={'Vybrat PDF'}
-                      />
+                    {pdfUpload.upload !== null ? (
+                      <>
+                        {/* The name it gets, by the number (26c). */}
+                        <p className={styles.pdfName}>
+                          {issue.pdf?.fileName ??
+                            editedPdfFileName ??
+                            pdfUpload.upload.fileName}
+                        </p>
+                        <p className={styles.uploaded}>
+                          vybráno jako {pdfUpload.upload.fileName}
+                        </p>
+                        <UploadStatus
+                          cancelLabel={'Zrušit nahrávání PDF'}
+                          onCancel={() => void pdfUpload.cancel()}
+                        />
+                      </>
+                    ) : pdfUpload.failure !== null &&
+                      !pdfUpload.failure.replaces ? (
+                      renderFileProblem(
+                        'pdf',
+                        editedPdfFileName ?? pdfUpload.failure.fileName,
+                      )
+                    ) : issue.pdf === null ? (
+                      <>
+                        <FileDropField
+                          accept={'application/pdf'}
+                          hint={'nebo ho sem přetáhněte · nejvýš 10 MB'}
+                          isDisabled={isLocked}
+                          isInvalid={pdfUpload.rejection !== null}
+                          label={'Vybrat PDF'}
+                          onPick={pdfUpload.pick}
+                        />
+                        {renderFileProblem('pdf', '')}
+                      </>
                     ) : (
                       <>
-                        <p className={styles.pdfName}>{issue.pdf.fileName}</p>
+                        {/* Without its name, before the year and order, the
+                            name it was uploaded under (decision 0033). */}
+                        <p className={styles.pdfName}>
+                          {issue.pdf.fileName ?? issue.pdf.originalFileName}
+                        </p>
                         <p className={styles.uploaded}>
                           nahráno {issue.pdf.uploadedAt}
                           {issue.pdf.originalFileName !== null && (
                             <> jako {issue.pdf.originalFileName}</>
                           )}
                         </p>
+                        {!isLocked && (
+                          <div className={styles.fileActions}>
+                            <ButtonLink
+                              onClick={() => pdfInputRef.current?.click()}
+                              type={'button'}
+                            >
+                              Nahradit
+                            </ButtonLink>
+                          </div>
+                        )}
+                        {renderFileProblem(
+                          'pdf',
+                          pdfUpload.failure?.fileName ?? '',
+                        )}
                       </>
                     )}
+                    <span className={'screen-reader-only'} role={'status'}>
+                      {pdfUpload.announcement}
+                    </span>
                   </article>
                 </div>
               </AdminDetailSection>

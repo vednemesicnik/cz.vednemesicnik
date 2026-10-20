@@ -94,6 +94,25 @@
   }
 }
 
+/* The picked cover while it uploads, dimmed (26c). */
+.uploading {
+  @layer route {
+    inline-size: 100%;
+    object-fit: cover;
+    opacity: 0.6;
+  }
+}
+
+/* Nahradit; Zkusit znovu and Vybrat jiný soubor after a failure (26d). */
+.fileActions {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: var(--font-size-sm);
+  }
+}
+
 .caption {
   @layer route {
     margin: 0;
