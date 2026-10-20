@@ -26,6 +26,7 @@ import { buildIssuePermissionWhere } from '../../utils/build-issue-permission-wh
 import { getIssueHeaderActions } from '../../utils/get-issue-header-actions'
 import { getIssueSupplementLinks } from '../../utils/get-issue-supplement-links.server'
 import type { Route } from './+types/route'
+import { getMissingIssueContent } from './utils/get-missing-issue-content'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { issueId } = params
@@ -144,6 +145,17 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const submission = flags.submission?.state ?? null
 
+  // Publishing an incomplete issue opens the 26e sentence instead of the
+  // confirmation; only the Coordinator publishes, and the server checks again.
+  const missingBeforePublish = isApprover
+    ? getMissingIssueContent({
+        hasCover: issue.cover !== null,
+        order: issue.order,
+        pdf: issue.pdf,
+        year: issue.year,
+      })
+    : []
+
   // Read only here: an earlier redirect must not use up the toast (26i).
   const notice = await readAdminNotice(request)
 
@@ -218,6 +230,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         state: issue.state,
         title,
       },
+      missingBeforePublish,
       submission,
       supplementLinks,
       // „Číslo právě upravuje …“ after a direct address of its editor (26i).

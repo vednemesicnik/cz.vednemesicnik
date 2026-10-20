@@ -14,15 +14,19 @@ import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
+import { DialogBody } from '~/components/dialog-body'
 import { HistoryList } from '~/components/history-list'
 import { Hyperlink } from '~/components/hyperlink'
 import { Image } from '~/components/image'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
+import { MissingContentDialog } from '~/components/missing-content-dialog'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -45,6 +49,7 @@ import type { Route } from './+types/route'
 import { IssueStateDialog } from './components/issue-state-dialog'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
+const INTENT_VALUE = FORM_CONFIG.intent.value
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -61,6 +66,7 @@ export default function RouteComponent({
     isApprover,
     isOwnContent,
     issue,
+    missingBeforePublish,
     submission,
     supplementLinks,
   } = loaderData
@@ -78,7 +84,8 @@ export default function RouteComponent({
   const fetcher = useFetcher<typeof issueAction>({ key: fetcherKey })
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
-  useContentActionResult(fetcher.data, { heldSubject: 'číslo' })
+  const { closeMissingList, missingList, showMissingList } =
+    useContentActionResult(fetcher.data, { heldSubject: 'číslo' })
 
   const [stateDialog, setStateDialog] = useState<IssueStateAction | null>(null)
 
@@ -112,6 +119,14 @@ export default function RouteComponent({
     switch (headerAction) {
       case 'approve-and-publish':
       case 'publish':
+        // An incomplete issue says what it lacks instead (26e).
+        if (missingBeforePublish.length > 0) {
+          return showMissingList({
+            intent: INTENT_VALUE.publish,
+            items: missingBeforePublish,
+          })
+        }
+        return setStateDialog(headerAction)
       case 'retract':
       case 'archive':
         return setStateDialog(headerAction)
@@ -356,6 +371,22 @@ export default function RouteComponent({
             : 'Smazat koncept?'
         }
       />
+
+      {missingList !== null && (
+        <MissingContentDialog editHref={editHref} onClose={closeMissingList}>
+          <AdminModalTitle>
+            {missingList.intent === INTENT_VALUE.publish
+              ? 'Číslo ještě nejde publikovat'
+              : 'Číslo ještě nejde odeslat'}
+          </AdminModalTitle>
+          {/* One sentence, only what is missing (26e). */}
+          <DialogBody>
+            {missingList.items.map((item) => (
+              <AdminModalDescription key={item}>{item}</AdminModalDescription>
+            ))}
+          </DialogBody>
+        </MissingContentDialog>
+      )}
 
       {stateDialog !== null && (
         <IssueStateDialog
