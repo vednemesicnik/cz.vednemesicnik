@@ -33,6 +33,7 @@ import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
+import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { CaptionEditor } from '~/components/caption-editor'
 import { Checkbox } from '~/components/checkbox'
 import { Chip } from '~/components/chip'
@@ -81,7 +82,6 @@ import { AuthorListItem } from './components/author-list-item'
 import { AuthorRemoveButton } from './components/author-remove-button'
 import { AuthorRow } from './components/author-row'
 import { AuthorRowButton } from './components/author-row-button'
-import { CancelUploadDialog } from './components/cancel-upload-dialog'
 import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditorDetail } from './components/editor-detail'
@@ -89,9 +89,11 @@ import { GalleryDetail } from './components/gallery-detail'
 import { GalleryGrid } from './components/gallery-grid'
 import { RemoveImageDialog } from './components/remove-image-dialog'
 import { formatArticleChangedDescription } from './utils/format-article-changed-description'
+import { formatFailedUploadsSentence } from './utils/format-failed-uploads-sentence'
 import { formatFirstNameAndCount } from './utils/format-first-name-and-count'
 import { formatGallerySummary } from './utils/format-gallery-summary'
 import { formatHoldTakenDescription } from './utils/format-hold-taken-description'
+import { formatUploadingImagesSentence } from './utils/format-uploading-images-sentence'
 import { getEditorSentence } from './utils/get-editor-sentence'
 import { getImageMenuItems } from './utils/get-image-menu-items'
 import { getSaveLineText } from './utils/get-save-line-text'
@@ -1155,14 +1157,29 @@ export default function RouteComponent({
 
       {pendingLeave !== null && (
         <CancelUploadDialog
-          failedCount={
-            gallery.uploadFailureCount - pendingLeave.failureCountAtOpen
-          }
+          isUploading={gallery.uploadingCount > 0}
           onLeave={leaveDespiteUploads}
           onStay={stayDespiteUploads}
-          replacingCount={gallery.replacingCount}
-          uploadingCount={gallery.uploadingCount}
-        />
+        >
+          <AdminModalDescription>
+            {gallery.uploadingCount > 0
+              ? formatUploadingImagesSentence(gallery.uploadingCount)
+              : gallery.uploadFailureCount > pendingLeave.failureCountAtOpen
+                ? formatFailedUploadsSentence(
+                    gallery.uploadFailureCount -
+                      pendingLeave.failureCountAtOpen,
+                  )
+                : 'Nahrávání je dokončeno.'}
+          </AdminModalDescription>
+          {/* Only for replacements still running (fmsjg9oc). */}
+          {gallery.uploadingCount > 0 && gallery.replacingCount > 0 && (
+            <AdminModalDescription>
+              {gallery.replacingCount === 1
+                ? 'Původní obrázek zůstane u článku.'
+                : 'Původní obrázky zůstanou u článku.'}
+            </AdminModalDescription>
+          )}
+        </CancelUploadDialog>
       )}
 
       {holdLoss?.dialog === 'taken' && (
