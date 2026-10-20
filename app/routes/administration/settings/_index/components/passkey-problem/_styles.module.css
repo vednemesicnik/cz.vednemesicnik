@@ -1,5 +1,6 @@
 .problem {
   @layer route {
+    flex-basis: 100%;
     margin: 0;
     font-size: var(--font-size-sm);
     color: var(--error-text);

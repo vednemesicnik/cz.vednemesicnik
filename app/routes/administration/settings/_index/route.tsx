@@ -19,6 +19,7 @@ import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
+import { ListDetailRow } from '~/components/list-detail-row'
 import { PageTitle } from '~/components/page-title'
 import { SegmentedControl } from '~/components/segmented-control'
 import { useToast } from '~/components/toast-provider'
@@ -389,15 +390,23 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 </span>
               </AdminDetailRow>
 
-              <AdminDetailRow
+              <ListDetailRow
                 actions={
-                  <RegisterPasskey
-                    isRecentlyAuthenticated={isRecentlyAuthenticated}
-                    onRequireIdentityCheck={requireIdentityCheckForPasskey}
-                    registration={passkeyRegistration}
-                  />
+                  <>
+                    <RegisterPasskey
+                      isRecentlyAuthenticated={isRecentlyAuthenticated}
+                      onRequireIdentityCheck={requireIdentityCheckForPasskey}
+                      registration={passkeyRegistration}
+                    />
+                    {/* Under the button, where the click was (29d). */}
+                    {passkeyProblem !== null && (
+                      <PasskeyProblem
+                        onRequireIdentityCheck={requireIdentityCheckForPasskey}
+                        problem={passkeyProblem}
+                      />
+                    )}
+                  </>
                 }
-                align={'start'}
                 label={'Passkey'}
               >
                 {passkeys.length === 0 ? (
@@ -444,12 +453,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     })}
                   </ul>
                 )}
-                {passkeyProblem !== null && (
-                  <PasskeyProblem
-                    onRequireIdentityCheck={requireIdentityCheckForPasskey}
-                    problem={passkeyProblem}
-                  />
-                )}
                 <span className={clsx(styles.note, styles.passkeyDescription)}>
                   Přihlášení bez hesla pomocí passkey v zařízení nebo na
                   bezpečnostním klíči.
@@ -459,7 +462,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   Na sdíleném počítači ukládejte passkey do svého telefonu nebo
                   na svůj bezpečnostní klíč. Možnost vyberte v okně prohlížeče.
                 </span>
-              </AdminDetailRow>
+              </ListDetailRow>
             </div>
           </AdminDetailSection>
 

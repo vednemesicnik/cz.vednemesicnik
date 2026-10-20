@@ -61,14 +61,14 @@ export const Overview: Story = {
       <AdminDetailRow
         actions={
           <Button size="sm" type="button" variant="outline">
-            Přidat passkey
+            Změnit…
           </Button>
         }
         align="start"
-        label="Passkey"
+        label="Heslo"
       >
-        <span>Synchronizovaný · přidán 2. 10. 2026</span>
-        <span>Vázaný na zařízení · přidán 5. 10. 2026</span>
+        <span>nastavené</span>
+        <span>Heslo slouží jen pro nouzové přihlášení.</span>
       </AdminDetailRow>
     </div>
   ),
