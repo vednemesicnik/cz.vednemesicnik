@@ -68,3 +68,4 @@ in force.
 | [0029](0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md) | An admin upload stays on `fetch`, shows no progress, and can be cancelled until it saves | Accepted | 2026-10-19 |
 | [0030](0030-an-archive-issue-is-year-order-and-supplement-and-its-title-is-computed.md) | An archive issue is its year, order and supplement, and its title is computed, never stored | Accepted | 2026-10-20 |
 | [0031](0031-an-archive-issue-is-published-without-choosing-a-date.md) | An archive issue is published without choosing a date | Accepted | 2026-10-20 |
+| [0032](0032-a-new-archive-issue-is-a-draft-with-the-next-free-number.md) | A new archive issue is a draft with the next free number, and its number saves as one | Accepted | 2026-10-20 |

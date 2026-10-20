@@ -238,6 +238,28 @@ save.
 
 ---
 
+## Archive issue drafts and the edit hold
+
+Built in #717 (epic #719, design 26c, 26d, 26i–26l; decision
+[0032](./decisions/0032-a-new-archive-issue-is-a-draft-with-the-next-free-number.md)), the same
+way as the article. *Nové číslo* posts to `add-issue`, which creates a draft with this year and
+the year's next free order and opens `edit-issue`. Until its first save or upload
+(`firstContentAt`) it is in no list, count or preview (`NON_EMPTY_ISSUE_WHERE`) and is deleted
+when its hold is released; each *Nové číslo* first deletes empty drafts whose hold expired. The
+editor saves Rok, Pořadí v roce, Název, Doplněk and, for the Coordinator only, Autor through the
+`save` route from the holding tab. The order follows the year until it is set by hand or a
+supplement is filled. A draft may lack its year and order; it is then named by what it lacks
+(„Číslo 2026 bez pořadí“). The year, order and supplement save as one: one that can't be read,
+or a number another issue has, is left out while the rest saves, and the field says why, with a
+link to the issue that has it and *Použít N* for a free order. The PDF is renamed with its
+number on a draft, and the cover's alt text follows the title. The hold, its takeover, the
+read-only editor, the detail's „upravuje …“ line and the refused transitions work as for the
+article; a bulk delete skips a held issue. The dialogs after a lost hold list the details that
+did not save instead of offering a copy. The file slots are drawn empty; uploading on pick is
+#711, the checks at submit #718.
+
+---
+
 ## Decided for the redesign (not implemented yet)
 
 Decided on 28 Sep 2026 in the design project (`07 Stavy a akce obsahu`, questions `dj753f0j`
