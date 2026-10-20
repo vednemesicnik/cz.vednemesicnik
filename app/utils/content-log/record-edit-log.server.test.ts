@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { recordArticleEditLog } from './record-article-edit-log.server'
+import { recordEditLog } from './record-edit-log.server'
 
 const mocks = vi.hoisted(() => ({
   contentLogCount: vi.fn(),
@@ -27,10 +27,14 @@ vi.mock('~/utils/db.server', () => ({
 }))
 
 const context = { authorId: 'author-1', roleLevel: 3 } as Parameters<
-  typeof recordArticleEditLog
+  typeof recordEditLog
 >[0]
 
-const options = { articleId: 'article-1', isCreation: false }
+const options = {
+  entity: 'article',
+  entityId: 'article-1',
+  isCreation: false,
+} as const
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -38,9 +42,9 @@ beforeEach(() => {
   mocks.contentLogFindFirst.mockResolvedValue(null)
 })
 
-describe('recordArticleEditLog (07f)', () => {
+describe('recordEditLog (07f)', () => {
   test('logs the creation and announces it', async () => {
-    await recordArticleEditLog(context, {
+    await recordEditLog(context, {
       ...options,
       heldSince: new Date(),
       isCreation: true,
@@ -59,7 +63,7 @@ describe('recordArticleEditLog (07f)', () => {
   test('logs Upraveno once per hold, announces every save', async () => {
     mocks.contentLogCount.mockResolvedValue(1)
 
-    await recordArticleEditLog(context, { ...options, heldSince: new Date() })
+    await recordEditLog(context, { ...options, heldSince: new Date() })
 
     expect(mocks.recordContentLog).not.toHaveBeenCalled()
     expect(mocks.publishContentEvent).toHaveBeenCalledOnce()
@@ -71,7 +75,7 @@ describe('recordArticleEditLog (07f)', () => {
       event: 'update',
     })
 
-    await recordArticleEditLog(context, { ...options, heldSince: null })
+    await recordEditLog(context, { ...options, heldSince: null })
 
     expect(mocks.recordContentLog).not.toHaveBeenCalled()
   })
@@ -82,7 +86,7 @@ describe('recordArticleEditLog (07f)', () => {
       event: 'update',
     })
 
-    await recordArticleEditLog(context, { ...options, heldSince: null })
+    await recordEditLog(context, { ...options, heldSince: null })
 
     expect(mocks.recordContentLog).toHaveBeenCalledWith(
       { entity: 'article', entityId: 'article-1', events: ['update'] },

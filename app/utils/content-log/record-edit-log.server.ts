@@ -1,22 +1,29 @@
+import type { ContentLogEntity } from '@generated/prisma/enums'
+
 import { recordContentLog } from '~/utils/content-log/record-content-log.server'
 import { prisma } from '~/utils/db.server'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 type Options = {
-  articleId: string
+  /** A content type with an editor that saves as it goes (decision 0022). */
+  entity: Extract<ContentLogEntity, 'article' | 'issue'>
+  entityId: string
   /** The save made the empty draft's first content: its creation (0020). */
   isCreation: boolean
   /** When the editor's hold began; `null` when nobody holds it any more. */
   heldSince: Date | null
 }
 
-// Whether the article's latest history entry is this author's edit.
-const isLastEntryOwnEdit = async (authorId: string, articleId: string) => {
+// Whether the content's latest history entry is this author's edit.
+const isLastEntryOwnEdit = async (
+  authorId: string,
+  { entity, entityId }: Pick<Options, 'entity' | 'entityId'>,
+) => {
   const lastEntry = await prisma.contentLog.findFirst({
     orderBy: { createdAt: 'desc' },
     select: { actorId: true, event: true },
-    where: { entity: 'article', entityId: articleId },
+    where: { entity, entityId },
   })
   return (
     lastEntry?.actorId === authorId &&
@@ -25,17 +32,17 @@ const isLastEntryOwnEdit = async (authorId: string, articleId: string) => {
 }
 
 /**
- * Logs one saved edit of an article and tells the open lists (design 07f,
- * 24e): the creation once, then one *Upraveno* per hold, however often the
- * editor saves.
+ * Logs one saved edit of an article or an issue and tells the open lists
+ * (design 07f, 24e): the creation once, then one *Upraveno* per hold, however
+ * often the editor saves.
  *
  * @param context - Who saved.
- * @param options - The article, whether it is the creation, and the hold's
+ * @param options - The content, whether it is the creation, and the hold's
  *   start.
  */
-export const recordArticleEditLog = async (
+export const recordEditLog = async (
   context: AuthorPermissionContext,
-  { articleId, isCreation, heldSince }: Options,
+  { entity, entityId, isCreation, heldSince }: Options,
 ) => {
   const change = isCreation ? 'create' : 'update'
 
@@ -44,26 +51,20 @@ export const recordArticleEditLog = async (
   const isLoggedInThisHold =
     change === 'update' &&
     (heldSince === null
-      ? await isLastEntryOwnEdit(context.authorId, articleId)
+      ? await isLastEntryOwnEdit(context.authorId, { entity, entityId })
       : (await prisma.contentLog.count({
           where: {
             actorId: context.authorId,
             createdAt: { gte: heldSince },
-            entity: 'article',
-            entityId: articleId,
+            entity,
+            entityId,
             event: { in: ['create', 'update'] },
           },
         })) > 0)
 
   if (!isLoggedInThisHold) {
-    await recordContentLog(
-      { entity: 'article', entityId: articleId, events: [change] },
-      context,
-    )
+    await recordContentLog({ entity, entityId, events: [change] }, context)
   }
 
-  publishContentEvent(
-    { change, entity: 'article', entityId: articleId },
-    context,
-  )
+  publishContentEvent({ change, entity, entityId }, context)
 }
