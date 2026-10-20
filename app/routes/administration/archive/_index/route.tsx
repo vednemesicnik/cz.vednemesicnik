@@ -31,6 +31,7 @@ import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { ISSUE_NOUN } from '~/config/list-noun-config'
+import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { formatBulkDeleteToast } from '~/utils/format-bulk-delete-toast'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
@@ -62,6 +63,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     sharedFilters,
     yearOptions,
   } = loaderData
+  // „Číslo právě upravuje …“ after the editor of a held new draft (26i).
+  useAdminNoticeToast(loaderData)
 
   const pending = useAdminListPending()
 

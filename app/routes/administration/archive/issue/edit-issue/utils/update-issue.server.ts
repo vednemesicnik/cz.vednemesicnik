@@ -50,6 +50,8 @@ type UpdateIssueResult =
   | {
       status: 'saved'
       updatedAt: Date
+      /** Whether the year, order and supplement sent are the stored ones now. */
+      isNumberSaved: boolean
       numberConflict:
         | (IssueNumberConflict & { freeOrder: number | null })
         | null
@@ -236,11 +238,32 @@ export async function updateIssue(
   let numberConflict = await findConflict()
 
   // An empty draft left over from a click holds its number until the sweep;
-  // it gives the number up first.
-  if (numberConflict !== null && numberConflict.holder.id === null) {
-    await deleteStaleEmptyIssueDrafts().catch((error: unknown) => {
-      console.error('Failed to delete stale empty issue drafts', error)
+  // it gives the number up first. Only then: a holder the editor may not see
+  // is no reason to sweep, and the issue being saved never goes with it.
+  const isHeldByEmptyDraft = async () => {
+    if (requestedNumber === null) return false
+    const { year, order, supplementSlug } = requestedNumber
+    const count = await prisma.issue.count({
+      where: {
+        firstContentAt: null,
+        id: { not: issueId },
+        order,
+        supplementSlug,
+        year,
+      },
     })
+    return count > 0
+  }
+  if (
+    numberConflict !== null &&
+    numberConflict.holder.id === null &&
+    (await isHeldByEmptyDraft())
+  ) {
+    await deleteStaleEmptyIssueDrafts({ excludeId: issueId }).catch(
+      (error: unknown) => {
+        console.error('Failed to delete stale empty issue drafts', error)
+      },
+    )
     numberConflict = await findConflict()
   }
 
@@ -250,7 +273,7 @@ export async function updateIssue(
         ? { ...storedNumber, supplementSlug: storedIssue.supplementSlug }
         : requestedNumber
 
-    const pdfFileName = getEditedIssuePdfFileName(
+    const editedPdfFileName = getEditedIssuePdfFileName(
       {
         ...storedNumber,
         pdfFileName: storedIssue.pdf?.fileName ?? null,
@@ -259,6 +282,16 @@ export async function updateIssue(
       },
       savedNumber,
     )
+    // Another issue's PDF may still have the name (one that lost its order
+    // kept it, or an older name): then the stored name stays.
+    const isPdfFileNameTaken =
+      storedIssue.pdf !== null &&
+      editedPdfFileName !== null &&
+      editedPdfFileName !== storedIssue.pdf.fileName &&
+      (await prisma.issuePDF.count({
+        where: { fileName: editedPdfFileName, id: { not: storedIssue.pdf.id } },
+      })) > 0
+    const pdfFileName = isPdfFileNameTaken ? null : editedPdfFileName
 
     const issueWrite = prisma.issue.update({
       data: {
@@ -284,8 +317,11 @@ export async function updateIssue(
         where: { firstContentAt: null, id: issueId },
       }),
       issueWrite,
-      // The cover's alt text follows the title (design 26c, qjv38ti4).
-      ...(storedIssue.cover === null
+      // The cover's alt text follows the title (design 26c, qjv38ti4), once
+      // there is one: a draft without its number keeps the stored text.
+      ...(storedIssue.cover === null ||
+      savedNumber.year === null ||
+      savedNumber.order === null
         ? []
         : [
             prisma.issueCover.update({
@@ -370,6 +406,7 @@ export async function updateIssue(
   })
 
   return {
+    isNumberSaved: requestedNumber !== null && numberConflict === null,
     numberConflict,
     status: 'saved',
     updatedAt: saved.savedIssue.updatedAt,

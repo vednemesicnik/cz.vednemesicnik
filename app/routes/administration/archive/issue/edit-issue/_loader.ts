@@ -68,7 +68,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     id: issueId,
     kind: 'issue',
     state: issue.state,
-    title: issue.name ?? '',
+    // The denial (30d) names the issue as the list does.
+    title: getIssueTitle(issue),
   })
 
   // A submitted issue is locked for its author until they take it back

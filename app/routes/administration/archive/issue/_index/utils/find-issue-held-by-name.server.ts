@@ -3,7 +3,7 @@ import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 
 /**
  * Who else holds the issue's edit hold now (design 07g), for a refused
- * transition's „Číslo právě upravuje …“ (copy ey73zhul).
+ * transition's „Číslo právě upravuje …“ (copy zuq3hyhf).
  *
  * @param id - The issue.
  * @param authorId - The acting author; their own hold doesn't count.

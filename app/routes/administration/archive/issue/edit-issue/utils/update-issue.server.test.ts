@@ -11,9 +11,11 @@ const mocks = vi.hoisted(() => ({
   deleteStaleEmptyIssueDrafts: vi.fn(),
   findIssueNumberConflict: vi.fn(),
   getAuthorPermissionContext: vi.fn(),
+  issueCount: vi.fn(),
   issueCoverUpdate: vi.fn(),
   issueFindMany: vi.fn(),
   issueFindUnique: vi.fn(),
+  issuePdfCount: vi.fn(),
   issuePdfUpdate: vi.fn(),
   issueUpdate: vi.fn(),
   issueUpdateMany: vi.fn(),
@@ -25,13 +27,14 @@ vi.mock('~/utils/db.server', () => ({
   prisma: {
     $transaction: mocks.transaction,
     issue: {
+      count: mocks.issueCount,
       findMany: mocks.issueFindMany,
       findUnique: mocks.issueFindUnique,
       update: mocks.issueUpdate,
       updateMany: mocks.issueUpdateMany,
     },
     issueCover: { update: mocks.issueCoverUpdate },
-    issuePDF: { update: mocks.issuePdfUpdate },
+    issuePDF: { count: mocks.issuePdfCount, update: mocks.issuePdfUpdate },
   },
 }))
 
@@ -115,6 +118,9 @@ beforeEach(() => {
   mocks.findIssueNumberConflict.mockResolvedValue(null)
   mocks.issueFindUnique.mockResolvedValue(storedIssue)
   mocks.issueFindMany.mockResolvedValue([{ order: 1 }, { order: 4 }])
+  // No empty draft holds the number and no other PDF has the name.
+  mocks.issueCount.mockResolvedValue(0)
+  mocks.issuePdfCount.mockResolvedValue(0)
   mocks.issueUpdateMany.mockReturnValue('mark-first-content')
   mocks.issueUpdate.mockReturnValue('update-issue')
   mocks.issueCoverUpdate.mockReturnValue('update-cover')
@@ -131,6 +137,7 @@ beforeEach(() => {
 describe('updateIssue — the save', () => {
   test('saves the fields from the holding tab and keeps the hold', async () => {
     expect(await updateIssue(request, options)).toEqual({
+      isNumberSaved: true,
       numberConflict: null,
       status: 'saved',
       updatedAt: savedAt,
@@ -218,6 +225,7 @@ describe('updateIssue — the number saves as one (decision 0032)', () => {
     mocks.findIssueNumberConflict.mockResolvedValue(conflict)
 
     expect(await updateIssue(request, options)).toEqual({
+      isNumberSaved: false,
       numberConflict: { ...conflict, freeOrder: 5 },
       status: 'saved',
       updatedAt: savedAt,
@@ -251,13 +259,15 @@ describe('updateIssue — the number saves as one (decision 0032)', () => {
   })
 
   test('keeps the stored number when the editor sent one it could not read', async () => {
-    await updateIssue(request, { ...options, number: null })
+    const result = await updateIssue(request, { ...options, number: null })
 
+    expect(result).toMatchObject({ isNumberSaved: false })
     expect(savedData()).toMatchObject({ name: 'podzim', order: 3, year: 2026 })
     expect(mocks.findIssueNumberConflict).not.toHaveBeenCalled()
   })
 
   test('clears an empty draft left over from a click that holds the number', async () => {
+    mocks.issueCount.mockResolvedValue(1)
     mocks.findIssueNumberConflict
       .mockResolvedValueOnce({
         ...conflict,
@@ -267,7 +277,9 @@ describe('updateIssue — the number saves as one (decision 0032)', () => {
 
     const result = await updateIssue(request, options)
 
-    expect(mocks.deleteStaleEmptyIssueDrafts).toHaveBeenCalledOnce()
+    expect(mocks.deleteStaleEmptyIssueDrafts).toHaveBeenCalledWith({
+      excludeId: 'issue-1',
+    })
     expect(result).toMatchObject({ numberConflict: null })
     expect(savedData()).toMatchObject({ order: 4 })
   })
@@ -308,6 +320,44 @@ describe('updateIssue — the number saves as one (decision 0032)', () => {
       select: { id: true },
       where: { id: 'pdf-1' },
     })
+  })
+
+  test('sweeps nothing for a holder the editor may not see', async () => {
+    mocks.findIssueNumberConflict.mockResolvedValue({
+      ...conflict,
+      holder: { id: null, label: '4/2026' },
+    })
+
+    await updateIssue(request, options)
+
+    expect(mocks.deleteStaleEmptyIssueDrafts).not.toHaveBeenCalled()
+  })
+
+  test('keeps the PDF name another issue still has', async () => {
+    mocks.issueFindUnique.mockResolvedValue({
+      ...storedIssue,
+      pdf: { fileName: 'VDM-2026-3.pdf', id: 'pdf-1' },
+    })
+    mocks.issuePdfCount.mockResolvedValue(1)
+
+    await updateIssue(request, options)
+
+    expect(mocks.issuePdfUpdate).not.toHaveBeenCalled()
+    expect(savedData()).toMatchObject({ order: 4 })
+  })
+
+  test('keeps the cover alt text while the number is incomplete', async () => {
+    mocks.issueFindUnique.mockResolvedValue({
+      ...storedIssue,
+      cover: { id: 'cover-1' },
+    })
+
+    await updateIssue(request, {
+      ...options,
+      number: { order: null, supplement: null, year: 2026 },
+    })
+
+    expect(mocks.issueCoverUpdate).not.toHaveBeenCalled()
   })
 
   test('sets the cover alt text from the new title', async () => {
