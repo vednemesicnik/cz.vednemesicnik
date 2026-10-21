@@ -20,4 +20,10 @@
   /* The administration page's side padding from 768 px (22a, 31); the page,
      its breadcrumbs and the footer share it. */
   --admin-page-side-padding: 32px;
+  /* The page box at that width, padding included. */
+  --admin-page-max-width: calc(
+    var(--admin-content-max-width) +
+    2 *
+    var(--admin-page-side-padding)
+  );
 }

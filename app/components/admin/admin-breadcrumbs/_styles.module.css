@@ -6,11 +6,7 @@
     grid-auto-flow: row;
     width: 100%;
     /* On the page's edge and within its width (o5ha28nz, 31b). */
-    max-inline-size: calc(
-      var(--admin-content-max-width) +
-      2 *
-      var(--admin-page-side-padding)
-    );
+    max-inline-size: var(--admin-page-max-width);
     padding: 24px 24px 0;
 
     @media (width >= 768px) {
