@@ -572,14 +572,10 @@ export default function RouteComponent({
     void leaveTo(closeHref, () => navigate(closeHref))
   }
 
-  // The order follows the year with the next free one until the editor sets
-  // it, and never for a supplement, which takes its issue's order (26c).
-  const isOrderFollowingRef = useRef(
-    issue.supplement === '' &&
-      issue.year !== null &&
-      issue.order ===
-        getNextFreeIssueOrder(takenOrdersByYear[issue.year] ?? []),
-  )
+  // Only an order the offer set in this editor follows the year: a typed one,
+  // or one loaded from an earlier save, stays (decision 0034). Never for a
+  // supplement, which takes its issue's order (26c).
+  const isOrderFollowingRef = useRef(false)
   const handleYearInput = () => {
     lastNumberFieldRef.current = 'year'
     const input = formRef.current?.elements.namedItem(fields.year.name)

@@ -44,15 +44,17 @@ This record replaces 0032 and carries over what of it still holds.
 
 - An empty draft holds no number, so a save no longer sweeps one that holds its number, and
   `deleteStaleEmptyIssueDrafts` has no `excludeId`.
-- An order set by the offer follows a later change of the year, as one set by the year did
-  under 0032. A typed order stays.
+- An order the offer set in the open editor follows a later change of the year, as one set by
+  the year did under 0032. A typed order stays, and so does one loaded from an earlier save:
+  the editor cannot tell whether it was typed.
 - 0030 still holds: the unique key, the computed title, `supplementSlug` as `""` for a main
   issue, and the PDF naming. Its note that the editor's prefill builds on the three columns now
   means the offer. 0033 applies more often: a PDF uploaded to a new issue has no name until the
   number is confirmed.
 - This year is the calendar year in Prague, read when the editor loads (0024).
-- Design 26c still draws the prefill. The way the offer looks goes to the design project as a UX
-  question. Until it answers, the editor shows the offer like 26d's *Použít N*.
+- Design redrew 26c for it (whv8lr2m): the offer stands on a line under the year and the order
+  that is always there, with an intro and a *Použít …* button. 26d's *Použít N* for a taken
+  number shares that line. The wording is the copywriter's (k5m0j1ag, drawn in exxdkjaq).
 - Revisit if issues are ever created in bulk or imported, where the offer cannot be clicked.
 - The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
 

@@ -253,8 +253,8 @@ yet and a full number get no offer; a taken number's *Použít N* stands on the 
 when its hold is released; each *Nové číslo* first deletes empty drafts whose hold expired or that were never held
 for as long as a hold lasts. The
 editor saves Rok, Pořadí v roce, Název, Doplněk and, for the Coordinator only, Autor through the
-`save` route from the holding tab. An order that is the year's next free one, as the offer sets
-it, follows the year until it is set by hand or a supplement is filled. A draft may lack its year and order; it is then named by what it lacks
+`save` route from the holding tab. An order the offer set in the open editor follows the year
+until it is set by hand or a supplement is filled; a typed or reloaded one stays. A draft may lack its year and order; it is then named by what it lacks
 („Číslo 2026 bez pořadí“). The year, order and supplement save as one: one that can't be read,
 or a number another issue has, is left out while the rest saves, and the field says why, with a
 link to the issue that has it and *Použít N* for a free order. The PDF is renamed with its
