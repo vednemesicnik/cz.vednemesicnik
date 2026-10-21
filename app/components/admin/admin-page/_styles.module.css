@@ -3,10 +3,16 @@
     display: grid;
     grid-auto-flow: row;
     width: 100%;
+    /* One content width on every screen, left at the sidebar (o5ha28nz, 31). */
+    max-inline-size: var(--admin-page-max-width);
     justify-items: start;
     align-items: start;
     row-gap: 24px;
     padding-block: 24px;
     padding-inline: 24px;
+
+    @media (width >= 768px) {
+      padding-inline: var(--admin-page-side-padding);
+    }
   }
 }
