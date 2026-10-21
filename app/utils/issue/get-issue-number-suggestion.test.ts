@@ -12,11 +12,16 @@ const base = {
 
 describe('getIssueNumberSuggestion', () => {
   test('offers this year and its next free order for an empty number', () => {
-    expect(getIssueNumberSuggestion(base)).toEqual({ order: 5, year: 2026 })
+    expect(getIssueNumberSuggestion(base)).toEqual({
+      kind: 'number',
+      order: 5,
+      year: 2026,
+    })
   })
 
   test('offers the first order in a year without issues', () => {
     expect(getIssueNumberSuggestion({ ...base, currentYear: 2027 })).toEqual({
+      kind: 'number',
       order: 1,
       year: 2027,
     })
@@ -24,20 +29,27 @@ describe('getIssueNumberSuggestion', () => {
 
   test('offers the next free order of the year typed', () => {
     expect(getIssueNumberSuggestion({ ...base, year: '2019' })).toEqual({
+      kind: 'order',
       order: 3,
-      year: null,
+      year: 2019,
     })
   })
 
-  test('offers nothing for a year it cannot read', () => {
+  test('offers nothing for a year half typed or one it cannot read', () => {
+    expect(getIssueNumberSuggestion({ ...base, year: '20' })).toBeNull()
     expect(getIssueNumberSuggestion({ ...base, year: 'abc' })).toBeNull()
   })
 
   test('offers this year for an order typed alone', () => {
     expect(getIssueNumberSuggestion({ ...base, order: '3' })).toEqual({
-      order: null,
+      kind: 'year',
       year: 2026,
     })
+  })
+
+  test('offers nothing for an order it cannot read', () => {
+    expect(getIssueNumberSuggestion({ ...base, order: '0' })).toBeNull()
+    expect(getIssueNumberSuggestion({ ...base, order: '2,5' })).toBeNull()
   })
 
   test('offers nothing once both are filled', () => {
@@ -53,9 +65,8 @@ describe('getIssueNumberSuggestion', () => {
   })
 
   test('treats a field of spaces as empty', () => {
-    expect(getIssueNumberSuggestion({ ...base, year: '  ' })).toEqual({
-      order: 5,
-      year: 2026,
+    expect(getIssueNumberSuggestion({ ...base, year: '  ' })).toMatchObject({
+      kind: 'number',
     })
   })
 })

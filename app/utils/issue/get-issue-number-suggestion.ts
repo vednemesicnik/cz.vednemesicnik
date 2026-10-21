@@ -11,24 +11,34 @@ type Options = {
   takenOrdersByYear: Readonly<Record<number, readonly number[]>>
 }
 
-/** What *Použít …* fills in; `null` leaves that field as it is. */
-export type IssueNumberSuggestion = {
-  year: number | null
-  order: number | null
-}
+/**
+ * What *Použít …* fills in: the whole number, the order of the year typed
+ * (`year` names that year and stays as it is), or the year alone.
+ */
+export type IssueNumberSuggestion =
+  | { kind: 'number'; year: number; order: number }
+  | { kind: 'order'; year: number; order: number }
+  | { kind: 'year'; year: number }
 
 const isEmpty = (value: string) => value.trim() === ''
 
-const readYear = (value: string) => {
-  const year = Number(value)
-  return isEmpty(value) || !Number.isInteger(year) ? null : year
+// Read as the schema reads them: a year of four digits, an order from 1.
+const readInteger = (value: string, isValid: (number: number) => boolean) => {
+  const number = Number(value)
+  return isEmpty(value) || !Number.isInteger(number) || !isValid(number)
+    ? null
+    : number
 }
+const readYear = (value: string) =>
+  readInteger(value, (year) => year >= 1000 && year <= 9999)
+const readOrder = (value: string) => readInteger(value, (order) => order >= 1)
 
 /**
- * The number the issue editor offers for empty fields (decision 0034): this
- * year and its next free order, the next free order of the year typed, or
- * this year for an order typed alone. Nothing for a supplement, which takes
- * its issue's order, or when both fields are filled.
+ * The number the issue editor offers for empty fields (decision 0034, design
+ * 26c): this year and its next free order, the next free order of the year
+ * typed, or this year for an order typed alone. Nothing for a supplement,
+ * which takes its issue's order, for a value that can't be read yet (a year
+ * half typed), or when both fields are filled.
  *
  * @param options - The year, order and supplement shown, this year, and the
  *   other main issues' orders.
@@ -47,17 +57,23 @@ export const getIssueNumberSuggestion = ({
     getNextFreeIssueOrder(takenOrdersByYear[forYear] ?? [])
 
   if (isEmpty(year) && isEmpty(order)) {
-    return { order: nextFreeOrder(currentYear), year: currentYear }
+    return {
+      kind: 'number',
+      order: nextFreeOrder(currentYear),
+      year: currentYear,
+    }
   }
 
   if (isEmpty(order)) {
     const typedYear = readYear(year)
     return typedYear === null
       ? null
-      : { order: nextFreeOrder(typedYear), year: null }
+      : { kind: 'order', order: nextFreeOrder(typedYear), year: typedYear }
   }
 
-  if (isEmpty(year)) return { order: null, year: currentYear }
+  if (isEmpty(year) && readOrder(order) !== null) {
+    return { kind: 'year', year: currentYear }
+  }
 
   return null
 }

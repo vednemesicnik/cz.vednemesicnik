@@ -243,10 +243,12 @@ save.
 Built in #717 (epic #719, design 26c, 26d, 26i–26l; decision
 [0034](./decisions/0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md)),
 the same way as the article. *Nové číslo* posts to `add-issue`, which creates a draft without a
-year or an order and opens `edit-issue`. The editor offers the next free number, *Použít 5/2026*
-(this year and its next free order), the next free order of a typed year, or this year for an
-order typed alone; a click fills it in and saves it, and nothing else fills the number. A
-supplement gets no offer. Until its first save or upload
+year or an order and opens `edit-issue`. A line under the pair, always there so typing does not move
+the form, offers the next free number: *Další volné číslo: Použít 5/2026* (this year and its next
+free order), *Další volné pořadí v roce 2019: Použít 3* for a typed year, or *Letošní rok:
+Použít 2026* for an order typed alone. A click fills it in, saves it and moves the focus to the
+field it filled last; nothing else fills the number. A supplement, a value that can't be read
+yet and a full number get no offer; a taken number's *Použít N* stands on the same line. Until its first save or upload
 (`firstContentAt`) it is in no list, count or preview (`NON_EMPTY_ISSUE_WHERE`) and is deleted
 when its hold is released; each *Nové číslo* first deletes empty drafts whose hold expired or that were never held
 for as long as a hold lasts. The

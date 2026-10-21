@@ -167,6 +167,14 @@
   }
 }
 
+/* The pair and the line under it, closer than the other fields (26c). */
+.numberGroup {
+  @layer route {
+    display: grid;
+    gap: 8px;
+  }
+}
+
 /* Rok and Pořadí v roce side by side (26c). */
 .number {
   @layer route {
@@ -177,9 +185,26 @@
   }
 }
 
-.useNumber {
+/* Always there, empty too, so the form does not move while typing (26c). */
+.numberOffer {
   @layer route {
-    justify-self: start;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 4px;
+    min-block-size: 20px;
+    font-size: 13px;
+    line-height: 20px;
+
+    @media (width < 768px) {
+      min-block-size: 44px;
+    }
+  }
+}
+
+.numberOfferIntro {
+  @layer route {
+    color: var(--text-secondary);
   }
 }
 
