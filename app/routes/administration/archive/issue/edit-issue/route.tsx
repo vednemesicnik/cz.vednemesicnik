@@ -811,18 +811,20 @@ export default function RouteComponent({
 
     if (numberSuggestion === null) return null
 
+    // Copy k5m0j1ag: „Další“ continues after the last order without hinting
+    // at a gap; „Rok:“ stays true in an editor left open over New Year.
     const { intro, value } =
       numberSuggestion.kind === 'number'
         ? {
-            intro: 'Další volné číslo:',
+            intro: 'Další číslo:',
             value: `${numberSuggestion.order}/${numberSuggestion.year}`,
           }
         : numberSuggestion.kind === 'order'
           ? {
-              intro: `Další volné pořadí v roce ${numberSuggestion.year}:`,
+              intro: `Další pořadí pro rok ${numberSuggestion.year}:`,
               value: String(numberSuggestion.order),
             }
-          : { intro: 'Letošní rok:', value: String(numberSuggestion.year) }
+          : { intro: 'Rok:', value: String(numberSuggestion.year) }
 
     return (
       <>
