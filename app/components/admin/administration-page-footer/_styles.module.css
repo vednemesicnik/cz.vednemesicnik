@@ -4,7 +4,8 @@
     display: flex;
     align-items: center;
     padding-block: 12px;
-    padding-inline: 24px;
+    /* The link on the content's edge; the line runs the full width (31). */
+    padding-inline: var(--admin-page-side-padding);
     border-top: 1px solid var(--border);
 
     /* Below 768 px the link is the 44 px row (see .link), on the 16 px edge
