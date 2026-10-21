@@ -49,6 +49,10 @@ import { useEditHold } from '~/hooks/use-edit-hold'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
+import {
+  getIssueNumberSuggestion,
+  type IssueNumberSuggestion,
+} from '~/utils/issue/get-issue-number-suggestion'
 import { getIssueTitle } from '~/utils/issue/get-issue-title'
 import { getNextFreeIssueOrder } from '~/utils/issue/get-next-free-issue-order'
 import { slugify } from '~/utils/slugify'
@@ -86,7 +90,7 @@ export { meta } from './_meta'
 
 type NumberConflict = IssueNumberConflict & { freeOrder: number | null }
 
-// What the save route answers (decisions 0022, 0032).
+// What the save route answers (decisions 0022, 0034).
 type SaveResponse =
   | {
       status: 'saved'
@@ -159,6 +163,7 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     authors,
+    currentYear,
     isApprover,
     isOwn,
     issue,
@@ -230,7 +235,7 @@ export default function RouteComponent({
     defaultValue: loadedValues,
     id: 'edit-issue',
     // Parsed here, so a year or an order that can't be read is said at its
-    // field (copy xrtebq3m); the save leaves it out (decision 0032).
+    // field (copy xrtebq3m); the save leaves it out (decision 0034).
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldRevalidate: 'onInput',
     shouldValidate: 'onBlur',
@@ -297,7 +302,7 @@ export default function RouteComponent({
       return 'failed'
     }
 
-    // A number taken or unread stayed as it was stored (decision 0032).
+    // A number taken or unread stayed as it was stored (decision 0034).
     const sentValues = readValues(formData)
     savedValuesRef.current = result.isNumberSaved
       ? sentValues
@@ -726,7 +731,7 @@ export default function RouteComponent({
     ]
   }
 
-  // A value that can't be read leaves the number unsaved (decision 0032). One
+  // A value that can't be read leaves the number unsaved (decision 0034). One
   // error says so, for the field changed last (copy zuq3hyhf): under that
   // field, or under the first one that can't be read when it reads well.
   const numberErrors: Record<NumberField, string[] | undefined> = {
@@ -755,6 +760,34 @@ export default function RouteComponent({
     isOrderFollowingRef.current = false
     lastNumberFieldRef.current = 'order'
     form.update({ name: fields.order.name, value: String(value) })
+    isFlushOnChangeRef.current = true
+  }
+
+  // A new issue has no number until one is confirmed: the next free one is
+  // offered, filled in and saved on a click (decision 0034).
+  const numberSuggestion = getIssueNumberSuggestion({
+    currentYear,
+    order: shownValues.order,
+    supplement: shownValues.supplement,
+    takenOrdersByYear,
+    year: shownValues.year,
+  })
+  const numberSuggestionLabel =
+    numberSuggestion === null
+      ? null
+      : [numberSuggestion.order, numberSuggestion.year]
+          .filter((part) => part !== null)
+          .join('/')
+  const applyNumberSuggestion = ({ year, order }: IssueNumberSuggestion) => {
+    lastNumberFieldRef.current = order === null ? 'year' : 'order'
+    if (year !== null) {
+      form.update({ name: fields.year.name, value: String(year) })
+    }
+    if (order !== null) {
+      // A computed order follows the year, as one set by the year does.
+      isOrderFollowingRef.current = true
+      form.update({ name: fields.order.name, value: String(order) })
+    }
     isFlushOnChangeRef.current = true
   }
 
@@ -1170,15 +1203,28 @@ export default function RouteComponent({
                       onInput={handleOrderInput}
                     />
                   </div>
-                  {freeOrder !== null && !isReadOnly && (
-                    <ButtonLink
-                      className={styles.useFreeOrder}
-                      onClick={() => applyFreeOrder(freeOrder)}
-                      type={'button'}
-                    >
-                      Použít {freeOrder}
-                    </ButtonLink>
-                  )}
+                  {!isReadOnly &&
+                    (freeOrder !== null ? (
+                      <ButtonLink
+                        className={styles.useNumber}
+                        onClick={() => applyFreeOrder(freeOrder)}
+                        type={'button'}
+                      >
+                        Použít {freeOrder}
+                      </ButtonLink>
+                    ) : (
+                      numberSuggestion !== null && (
+                        <ButtonLink
+                          className={styles.useNumber}
+                          onClick={() =>
+                            applyNumberSuggestion(numberSuggestion)
+                          }
+                          type={'button'}
+                        >
+                          Použít {numberSuggestionLabel}
+                        </ButtonLink>
+                      )
+                    ))}
                   <TextField
                     {...getInputProps(fields.name, { type: 'text' })}
                     errors={fields.name.errors}

@@ -8,10 +8,8 @@ import { updateIssue } from './update-issue.server'
 // into the transaction.
 const mocks = vi.hoisted(() => ({
   checkAuthorPermission: vi.fn(),
-  deleteStaleEmptyIssueDrafts: vi.fn(),
   findIssueNumberConflict: vi.fn(),
   getAuthorPermissionContext: vi.fn(),
-  issueCount: vi.fn(),
   issueCoverUpdate: vi.fn(),
   issueFindMany: vi.fn(),
   issueFindUnique: vi.fn(),
@@ -27,7 +25,6 @@ vi.mock('~/utils/db.server', () => ({
   prisma: {
     $transaction: mocks.transaction,
     issue: {
-      count: mocks.issueCount,
       findMany: mocks.issueFindMany,
       findUnique: mocks.issueFindUnique,
       update: mocks.issueUpdate,
@@ -55,11 +52,6 @@ vi.mock('~/utils/content-log/record-edit-log.server', () => ({
 vi.mock('../../../utils/find-issue-number-conflict.server', () => ({
   findIssueNumberConflict: mocks.findIssueNumberConflict,
 }))
-
-vi.mock(
-  '../../../add-issue/utils/delete-stale-empty-issue-drafts.server',
-  () => ({ deleteStaleEmptyIssueDrafts: mocks.deleteStaleEmptyIssueDrafts }),
-)
 
 const request = new Request('https://test.local/')
 
@@ -118,14 +110,12 @@ beforeEach(() => {
   mocks.findIssueNumberConflict.mockResolvedValue(null)
   mocks.issueFindUnique.mockResolvedValue(storedIssue)
   mocks.issueFindMany.mockResolvedValue([{ order: 1 }, { order: 4 }])
-  // No empty draft holds the number and no other PDF has the name.
-  mocks.issueCount.mockResolvedValue(0)
+  // No other PDF has the name.
   mocks.issuePdfCount.mockResolvedValue(0)
   mocks.issueUpdateMany.mockReturnValue('mark-first-content')
   mocks.issueUpdate.mockReturnValue('update-issue')
   mocks.issueCoverUpdate.mockReturnValue('update-cover')
   mocks.issuePdfUpdate.mockReturnValue('update-pdf')
-  mocks.deleteStaleEmptyIssueDrafts.mockResolvedValue(0)
   // The first entry is the first-content mark; 0 rows: not the first save.
   mocks.transaction.mockImplementation(async (writes: unknown[]) =>
     writes.map((write) =>
@@ -220,7 +210,7 @@ describe('updateIssue — the save', () => {
   })
 })
 
-describe('updateIssue — the number saves as one (decision 0032)', () => {
+describe('updateIssue — the number saves as one (decision 0034)', () => {
   test('leaves a taken number out and saves the rest, with a free order', async () => {
     mocks.findIssueNumberConflict.mockResolvedValue(conflict)
 
@@ -266,24 +256,6 @@ describe('updateIssue — the number saves as one (decision 0032)', () => {
     expect(mocks.findIssueNumberConflict).not.toHaveBeenCalled()
   })
 
-  test('clears an empty draft left over from a click that holds the number', async () => {
-    mocks.issueCount.mockResolvedValue(1)
-    mocks.findIssueNumberConflict
-      .mockResolvedValueOnce({
-        ...conflict,
-        holder: { id: null, label: '4/2026' },
-      })
-      .mockResolvedValueOnce(null)
-
-    const result = await updateIssue(request, options)
-
-    expect(mocks.deleteStaleEmptyIssueDrafts).toHaveBeenCalledWith({
-      excludeId: 'issue-1',
-    })
-    expect(result).toMatchObject({ numberConflict: null })
-    expect(savedData()).toMatchObject({ order: 4 })
-  })
-
   test('saves without the number another issue took meanwhile', async () => {
     mocks.transaction
       .mockRejectedValueOnce(
@@ -319,17 +291,6 @@ describe('updateIssue — the number saves as one (decision 0032)', () => {
       data: { fileName: 'VDM-2026-4.pdf' },
       where: { issueId: 'issue-1' },
     })
-  })
-
-  test('sweeps nothing for a holder the editor may not see', async () => {
-    mocks.findIssueNumberConflict.mockResolvedValue({
-      ...conflict,
-      holder: { id: null, label: '4/2026' },
-    })
-
-    await updateIssue(request, options)
-
-    expect(mocks.deleteStaleEmptyIssueDrafts).not.toHaveBeenCalled()
   })
 
   test('keeps the PDF name another issue still has', async () => {

@@ -177,7 +177,7 @@
   }
 }
 
-.useFreeOrder {
+.useNumber {
   @layer route {
     justify-self: start;
   }

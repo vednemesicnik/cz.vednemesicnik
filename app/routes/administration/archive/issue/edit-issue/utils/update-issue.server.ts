@@ -14,7 +14,6 @@ import { getAuthorPermissionContext } from '~/utils/permissions/author/context/g
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { slugify } from '~/utils/slugify'
-import { deleteStaleEmptyIssueDrafts } from '../../../add-issue/utils/delete-stale-empty-issue-drafts.server'
 import { findIssueNumberConflict } from '../../../utils/find-issue-number-conflict.server'
 import { getEditedIssuePdfFileName } from '../../../utils/get-edited-issue-pdf-file-name'
 import type { IssueNumberConflict } from '../../../utils/get-issue-number-conflict-message'
@@ -30,7 +29,7 @@ type Options = {
   name: string
   /**
    * The year, order and supplement as the editor sends them, or `null` when one
-   * of them can't be read: then the stored number stays (decision 0032).
+   * of them can't be read: then the stored number stays (decision 0034).
    */
   number: IssueNumber | null
   /** Only the Coordinator sends the author (design 26c). */
@@ -72,7 +71,7 @@ const RELEASED_HOLD = {
 
 /**
  * Saves the issue editor's whole form, as autosave sends it (design 26c, 26d,
- * decisions 0022 and 0032). The permission is checked against the stored
+ * decisions 0022 and 0034). The permission is checked against the stored
  * author and state; only the Coordinator sets another author. Only the tab
  * holding the edit hold saves, checked again in the save's own write (0019),
  * and the save keeps the hold unless `releaseHold` asks for the end. A draft
@@ -236,36 +235,6 @@ export async function updateIssue(
   }
 
   let numberConflict = await findConflict()
-
-  // An empty draft left over from a click holds its number until the sweep;
-  // it gives the number up first. Only then: a holder the editor may not see
-  // is no reason to sweep, and the issue being saved never goes with it.
-  const isHeldByEmptyDraft = async () => {
-    if (requestedNumber === null) return false
-    const { year, order, supplementSlug } = requestedNumber
-    const count = await prisma.issue.count({
-      where: {
-        firstContentAt: null,
-        id: { not: issueId },
-        order,
-        supplementSlug,
-        year,
-      },
-    })
-    return count > 0
-  }
-  if (
-    numberConflict !== null &&
-    numberConflict.holder.id === null &&
-    (await isHeldByEmptyDraft())
-  ) {
-    await deleteStaleEmptyIssueDrafts({ excludeId: issueId }).catch(
-      (error: unknown) => {
-        console.error('Failed to delete stale empty issue drafts', error)
-      },
-    )
-    numberConflict = await findConflict()
-  }
 
   const saveInTransaction = async () => {
     const savedNumber =
