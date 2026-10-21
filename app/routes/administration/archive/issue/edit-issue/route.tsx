@@ -49,6 +49,10 @@ import { useEditHold } from '~/hooks/use-edit-hold'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
+import {
+  getIssueNumberSuggestion,
+  type IssueNumberSuggestion,
+} from '~/utils/issue/get-issue-number-suggestion'
 import { getIssueTitle } from '~/utils/issue/get-issue-title'
 import { getNextFreeIssueOrder } from '~/utils/issue/get-next-free-issue-order'
 import { slugify } from '~/utils/slugify'
@@ -86,7 +90,7 @@ export { meta } from './_meta'
 
 type NumberConflict = IssueNumberConflict & { freeOrder: number | null }
 
-// What the save route answers (decisions 0022, 0032).
+// What the save route answers (decisions 0022, 0034).
 type SaveResponse =
   | {
       status: 'saved'
@@ -159,6 +163,7 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     authors,
+    currentYear,
     isApprover,
     isOwn,
     issue,
@@ -230,7 +235,7 @@ export default function RouteComponent({
     defaultValue: loadedValues,
     id: 'edit-issue',
     // Parsed here, so a year or an order that can't be read is said at its
-    // field (copy xrtebq3m); the save leaves it out (decision 0032).
+    // field (copy xrtebq3m); the save leaves it out (decision 0034).
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldRevalidate: 'onInput',
     shouldValidate: 'onBlur',
@@ -297,7 +302,7 @@ export default function RouteComponent({
       return 'failed'
     }
 
-    // A number taken or unread stayed as it was stored (decision 0032).
+    // A number taken or unread stayed as it was stored (decision 0034).
     const sentValues = readValues(formData)
     savedValuesRef.current = result.isNumberSaved
       ? sentValues
@@ -567,14 +572,10 @@ export default function RouteComponent({
     void leaveTo(closeHref, () => navigate(closeHref))
   }
 
-  // The order follows the year with the next free one until the editor sets
-  // it, and never for a supplement, which takes its issue's order (26c).
-  const isOrderFollowingRef = useRef(
-    issue.supplement === '' &&
-      issue.year !== null &&
-      issue.order ===
-        getNextFreeIssueOrder(takenOrdersByYear[issue.year] ?? []),
-  )
+  // Only an order the offer set in this editor follows the year: a typed one,
+  // or one loaded from an earlier save, stays (decision 0034). Never for a
+  // supplement, which takes its issue's order (26c).
+  const isOrderFollowingRef = useRef(false)
   const handleYearInput = () => {
     lastNumberFieldRef.current = 'year'
     const input = formRef.current?.elements.namedItem(fields.year.name)
@@ -726,7 +727,7 @@ export default function RouteComponent({
     ]
   }
 
-  // A value that can't be read leaves the number unsaved (decision 0032). One
+  // A value that can't be read leaves the number unsaved (decision 0034). One
   // error says so, for the field changed last (copy zuq3hyhf): under that
   // field, or under the first one that can't be read when it reads well.
   const numberErrors: Record<NumberField, string[] | undefined> = {
@@ -748,6 +749,13 @@ export default function RouteComponent({
         )
       : numberErrors[field]
 
+  // The button goes once its value is in, so the focus moves to the field
+  // that got the value last, not to the top of the page (26c).
+  const focusNumberField = (field: 'year' | 'order') => {
+    const input = formRef.current?.elements.namedItem(fields[field].name)
+    if (input instanceof HTMLInputElement) input.focus()
+  }
+
   // A free order for a taken one: filled in and saved (26d, as 24d).
   const freeOrder =
     numberConflict?.field === 'order' ? numberConflict.freeOrder : null
@@ -756,6 +764,75 @@ export default function RouteComponent({
     lastNumberFieldRef.current = 'order'
     form.update({ name: fields.order.name, value: String(value) })
     isFlushOnChangeRef.current = true
+    focusNumberField('order')
+  }
+
+  // A new issue has no number until one is confirmed: the next free one is
+  // offered, filled in and saved on a click (decision 0034, design 26c).
+  const numberSuggestion = getIssueNumberSuggestion({
+    currentYear,
+    order: shownValues.order,
+    supplement: shownValues.supplement,
+    takenOrdersByYear,
+    year: shownValues.year,
+  })
+  const applyNumberSuggestion = (suggestion: IssueNumberSuggestion) => {
+    if (suggestion.kind !== 'order') {
+      form.update({ name: fields.year.name, value: String(suggestion.year) })
+    }
+    if (suggestion.kind === 'year') {
+      lastNumberFieldRef.current = 'year'
+    } else {
+      lastNumberFieldRef.current = 'order'
+      // A computed order follows the year, as one set by the year does.
+      isOrderFollowingRef.current = true
+      form.update({ name: fields.order.name, value: String(suggestion.order) })
+    }
+    isFlushOnChangeRef.current = true
+    focusNumberField(suggestion.kind === 'year' ? 'year' : 'order')
+  }
+
+  // The line under Rok and Pořadí v roce: a free order for a taken number
+  // first, then the offer with what it offers (26c, 26d).
+  const renderNumberOffer = () => {
+    if (isReadOnly) return null
+
+    if (freeOrder !== null) {
+      return (
+        <ButtonLink onClick={() => applyFreeOrder(freeOrder)} type={'button'}>
+          Použít {freeOrder}
+        </ButtonLink>
+      )
+    }
+
+    if (numberSuggestion === null) return null
+
+    // Copy k5m0j1ag: „Další“ continues after the last order without hinting
+    // at a gap; „Rok:“ stays true in an editor left open over New Year.
+    const { intro, value } =
+      numberSuggestion.kind === 'number'
+        ? {
+            intro: 'Další číslo:',
+            value: `${numberSuggestion.order}/${numberSuggestion.year}`,
+          }
+        : numberSuggestion.kind === 'order'
+          ? {
+              intro: `Další pořadí pro rok ${numberSuggestion.year}:`,
+              value: String(numberSuggestion.order),
+            }
+          : { intro: 'Rok:', value: String(numberSuggestion.year) }
+
+    return (
+      <>
+        <span className={styles.numberOfferIntro}>{intro}</span>
+        <ButtonLink
+          onClick={() => applyNumberSuggestion(numberSuggestion)}
+          type={'button'}
+        >
+          Použít {value}
+        </ButtonLink>
+      </>
+    )
   }
 
   // What still uploads and what stays (26c); once none runs, how it ended
@@ -1151,34 +1228,30 @@ export default function RouteComponent({
             <AdminDetailAside>
               <AdminDetailSection title={'Údaje'}>
                 <fieldset className={styles.lock} disabled={isLocked}>
-                  <div className={styles.number}>
-                    <TextField
-                      {...getInputProps(fields.year, { type: 'text' })}
-                      errors={withUnsavedChange('year')}
-                      inputMode={'numeric'}
-                      label={'Rok'}
-                      onInput={handleYearInput}
-                    />
-                    <TextField
-                      {...getInputProps(fields.order, { type: 'text' })}
-                      errors={
-                        renderNumberConflict('order') ??
-                        withUnsavedChange('order')
-                      }
-                      inputMode={'numeric'}
-                      label={'Pořadí v roce'}
-                      onInput={handleOrderInput}
-                    />
+                  <div className={styles.numberGroup}>
+                    <div className={styles.number}>
+                      <TextField
+                        {...getInputProps(fields.year, { type: 'text' })}
+                        errors={withUnsavedChange('year')}
+                        inputMode={'numeric'}
+                        label={'Rok'}
+                        onInput={handleYearInput}
+                      />
+                      <TextField
+                        {...getInputProps(fields.order, { type: 'text' })}
+                        errors={
+                          renderNumberConflict('order') ??
+                          withUnsavedChange('order')
+                        }
+                        inputMode={'numeric'}
+                        label={'Pořadí v roce'}
+                        onInput={handleOrderInput}
+                      />
+                    </div>
+                    <div className={styles.numberOffer}>
+                      {renderNumberOffer()}
+                    </div>
                   </div>
-                  {freeOrder !== null && !isReadOnly && (
-                    <ButtonLink
-                      className={styles.useFreeOrder}
-                      onClick={() => applyFreeOrder(freeOrder)}
-                      type={'button'}
-                    >
-                      Použít {freeOrder}
-                    </ButtonLink>
-                  )}
                   <TextField
                     {...getInputProps(fields.name, { type: 'text' })}
                     errors={fields.name.errors}

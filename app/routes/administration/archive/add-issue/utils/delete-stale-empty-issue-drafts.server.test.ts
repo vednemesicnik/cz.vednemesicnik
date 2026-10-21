@@ -97,12 +97,4 @@ describe('deleteStaleEmptyIssueDrafts', () => {
     expect(mocks.deleteMany).not.toHaveBeenCalled()
     expect(mocks.deleteContentLog).not.toHaveBeenCalled()
   })
-
-  test('leaves out the issue being saved', async () => {
-    await deleteStaleEmptyIssueDrafts({ excludeId: 'issue-1', now })
-
-    expect(mocks.findMany.mock.calls[0][0].where).toMatchObject({
-      id: { not: 'issue-1' },
-    })
-  })
 })

@@ -12,7 +12,7 @@ const isNumberField = (field: string) =>
 
 /**
  * Saves the issue editor's whole form for the tab holding the edit hold
- * (design 26c, decisions 0022 and 0032). A POST to a resource route runs only
+ * (design 26c, decisions 0022 and 0034). A POST to a resource route runs only
  * this action, so it requires the session itself (`requireCSRF`). A year,
  * order or supplement that can't be read leaves the stored number as it is and
  * the rest saves. Answers JSON for the editor's autosave: `saved` with the new
