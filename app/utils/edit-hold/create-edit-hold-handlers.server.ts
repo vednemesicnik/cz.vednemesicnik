@@ -99,41 +99,44 @@ const toOtherHolder = (
 export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
   const { entity } = config
 
-  const loadRow = async (id: string) => {
-    const row = await config.findHold(id)
-
-    if (row === null) throw data(null, { status: 404 })
-
-    return row
-  }
+  // A missing row answers `deleted` where it used to be a 404: the editor
+  // learns its content is gone (decision 0036). Nothing is checked first, so
+  // it says no more than the 404 did.
+  const DELETED = { status: 'deleted' } as const
 
   // Runs one attempt and, when its write found the row changed, one more on a
   // fresh read.
-  const retryOnce = async <Result>(
+  const retryOnce = async (
     id: string,
     firstRow: EditHoldRow,
-    attempt: (row: EditHoldRow) => Promise<Result | null>,
-  ): Promise<Result> => {
+    attempt: (row: EditHoldRow) => Promise<EditHoldResult | null>,
+  ): Promise<EditHoldResult> => {
     const result = await attempt(firstRow)
 
     if (result !== null) return result
 
-    const secondResult = await attempt(await loadRow(id))
+    const secondRow = await config.findHold(id)
+
+    if (secondRow === null) return DELETED
+
+    const secondResult = await attempt(secondRow)
 
     if (secondResult === null) throw data(null, { status: 409 })
 
     return secondResult
   }
 
-  const withEditPermission = async <Result>(
+  const withEditPermission = async (
     request: Request,
     id: string,
     execute: (
       context: AuthorPermissionContext,
       row: EditHoldRow,
-    ) => Promise<Result>,
-  ) => {
-    const row = await loadRow(id)
+    ) => Promise<EditHoldResult>,
+  ): Promise<EditHoldResult> => {
+    const row = await config.findHold(id)
+
+    if (row === null) return DELETED
 
     return withAuthorPermission(request, {
       action: 'update',
@@ -171,7 +174,7 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
       assertEditable(context, firstRow)
       const tab = { authorId: context.authorId, tabId }
 
-      return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
+      return retryOnce(id, firstRow, async (row) => {
         const now = new Date()
 
         if (
@@ -225,7 +228,7 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
     withEditPermission(request, id, (context, firstRow) => {
       const tab = { authorId: context.authorId, tabId }
 
-      return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
+      return retryOnce(id, firstRow, async (row) => {
         const now = new Date()
 
         // Published, archived or sent for review meanwhile: this editor may
@@ -285,7 +288,7 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
           return { status: 'released' }
         }
 
-        return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
+        return retryOnce(id, firstRow, async (row) => {
           if (
             row.heldByAuthorId !== tab.authorId ||
             row.heldByTabId !== tab.tabId
@@ -310,7 +313,7 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
         })
       }
 
-      return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
+      return retryOnce(id, firstRow, async (row) => {
         if (
           row.heldByAuthorId !== tab.authorId ||
           row.heldByTabId !== tab.tabId
@@ -346,7 +349,7 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
       assertEditable(context, firstRow)
       const tab = { authorId: context.authorId, tabId }
 
-      return retryOnce<EditHoldResult>(id, firstRow, async (row) => {
+      return retryOnce(id, firstRow, async (row) => {
         const now = new Date()
 
         // Saved since this editor loaded: taking it would edit old text.

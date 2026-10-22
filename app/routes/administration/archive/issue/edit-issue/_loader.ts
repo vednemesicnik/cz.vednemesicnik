@@ -3,6 +3,7 @@ import { data, href, redirect } from 'react-router'
 import { flashAdminNotice } from '~/utils/admin-notice/flash-admin-notice.server'
 import { prisma } from '~/utils/db.server'
 import { formatNumericDate } from '~/utils/format-numeric-date'
+import { getPragueYear } from '~/utils/get-prague-year'
 import {
   createImageSources,
   imageSourceSelect,
@@ -171,6 +172,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   return {
     authors,
+    // The year the editor offers for an empty number (decision 0034).
+    currentYear: getPragueYear(new Date()),
     isApprover,
     // One's own issue has no sentence over it (24c).
     isOwn: issue.author.id === context.authorId,

@@ -298,11 +298,11 @@ describe('updateArticle — the permission follows the stored article', () => {
     expect(pageSeo.update).not.toHaveProperty('state')
   })
 
-  test('answers a missing article with 404', async () => {
+  test('answers a missing article as deleted (0036)', async () => {
     mocks.articleFindUnique.mockResolvedValue(null)
 
-    await expect(updateArticle(request, options)).rejects.toMatchObject({
-      init: { status: 404 },
+    await expect(updateArticle(request, options)).resolves.toEqual({
+      status: 'deleted',
     })
     expect(mocks.withAuthorPermission).not.toHaveBeenCalled()
   })
@@ -577,6 +577,23 @@ describe('updateArticle — the edit hold (07g, decision 0019)', () => {
       status: 'not-held',
     })
     expect(mocks.recordContentLog).not.toHaveBeenCalled()
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+  })
+
+  test('deleted between the check and the write: answers deleted (0036)', async () => {
+    mocks.transaction.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    mocks.articleFindUnique
+      .mockResolvedValueOnce(storedArticle)
+      .mockResolvedValueOnce(null)
+
+    await expect(updateArticle(request, options)).resolves.toEqual({
+      status: 'deleted',
+    })
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 

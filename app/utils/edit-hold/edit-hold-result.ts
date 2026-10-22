@@ -22,3 +22,5 @@ export type EditHoldResult =
    */
   | { status: 'changed'; holder: EditHolder | null; isEditable: boolean }
   | { status: 'released' }
+  /** The content is gone: deleted meanwhile, or swept as an empty draft (0036). */
+  | { status: 'deleted' }

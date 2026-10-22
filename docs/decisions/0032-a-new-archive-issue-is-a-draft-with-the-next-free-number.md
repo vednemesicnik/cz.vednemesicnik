@@ -1,6 +1,6 @@
 # 0032. A new archive issue is a draft with the next free number, and its number saves as one
 
-- Status: Accepted
+- Status: Superseded by 0034
 - Date: 2026-10-20
 - Issues: #717, #719
 

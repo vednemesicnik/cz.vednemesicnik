@@ -4,13 +4,14 @@ import {
   createContentStateHandlers,
 } from '~/utils/content-state/create-content-state-handlers.server'
 import { prisma } from '~/utils/db.server'
+import { buildFreeHoldWhere } from '~/utils/edit-hold/build-free-hold-where'
 import { buildNotHeldByOthersWhere } from '~/utils/edit-hold/build-not-held-by-others-where'
 import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
 import { refuseWhenHeld } from '~/utils/edit-hold/refuse-when-held.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 import { deletePdfObject } from '~/utils/pdf-store/store-pdf.server'
 
-import { findIssueHeldByName } from './find-issue-held-by-name.server'
+import { findIssueHeldRefusal } from './find-issue-held-refusal.server'
 import { loadMissingIssueContent } from './load-missing-issue-content.server'
 
 const RELEASED_HOLD = {
@@ -23,7 +24,8 @@ const RELEASED_HOLD = {
 /**
  * Issue state-transition handlers: single author, cover image and PDF cleanup
  * on delete, and a publish only of a complete issue (design 26e). None of them
- * runs while someone else edits the issue (decision 0019).
+ * runs while someone else edits the issue (decision 0019), and a delete waits
+ * for one's own other tab too (0036).
  */
 export const issueContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data, authorId) => {
@@ -41,7 +43,7 @@ export const issueContentStateHandlers = createContentStateHandlers({
           select: { id: true },
           where: { AND: [buildNotHeldByOthersWhere(authorId, new Date())], id },
         }),
-      () => findIssueHeldByName(id, authorId),
+      () => findIssueHeldRefusal(id, authorId),
     )
   },
   approverPublishesWithoutReview: true,
@@ -62,13 +64,15 @@ export const issueContentStateHandlers = createContentStateHandlers({
       () =>
         refuseWhenHeld(
           () =>
+            // Not while any editor holds it, one's own in another tab too
+            // (decision 0036).
             prisma.issue.delete({
-              where: {
-                AND: [buildNotHeldByOthersWhere(context.authorId, new Date())],
-                id,
-              },
+              where: { AND: [buildFreeHoldWhere(new Date())], id },
             }),
-          () => findIssueHeldByName(id, context.authorId),
+          () =>
+            findIssueHeldRefusal(id, context.authorId, {
+              countsOwnOtherTab: true,
+            }),
         ),
     )
 
@@ -87,9 +91,9 @@ export const issueContentStateHandlers = createContentStateHandlers({
 
     // Nothing to write, but approving still waits for someone else's edit.
     if (existingReview) {
-      const heldByName = await findIssueHeldByName(id, reviewerId)
+      const refusal = await findIssueHeldRefusal(id, reviewerId)
 
-      if (heldByName !== null) throw createEditHeldRefusal(heldByName)
+      if (refusal !== null) throw createEditHeldRefusal(refusal)
     } else {
       // Through the issue, so the approval repeats its hold condition.
       await refuseWhenHeld(
@@ -104,7 +108,7 @@ export const issueContentStateHandlers = createContentStateHandlers({
               id,
             },
           }),
-        () => findIssueHeldByName(id, reviewerId),
+        () => findIssueHeldRefusal(id, reviewerId),
       )
     }
   },

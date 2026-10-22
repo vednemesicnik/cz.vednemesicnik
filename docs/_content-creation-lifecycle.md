@@ -214,6 +214,17 @@ waited, if nobody saved meanwhile. If someone did, it sends nothing and shows *�
 mezitím změnil* with *Zkopírovat celý text* and *Načíst aktuální verzi*, or *Otevřít detail*
 while someone holds it or it is no longer an editable draft.
 
+A deleted article or issue is built in #756 (design 24k, 26m, 23g, 26i; decision
+[0036](./decisions/0036-a-delete-waits-for-every-open-editor.md)). A delete waits for every
+open editor, one's own in another tab included: it repeats "the hold is free" in its own write,
+while the other transitions keep "not held by someone else". The detail answers *Smazat…* with
+a toast instead of the confirmation while one's own editor holds it, and a bulk delete skips
+the row. An editor whose content was deleted meanwhile (after an expired hold, or as a swept
+empty draft) learns it from its next save, renewal or the delete event. It shows *Článek byl
+smazán* (*Číslo bylo smazáno*) with *Přejít na seznam*, turns read-only for good with the line
+*smazáno*, and keeps a warning under the heading: the article's text to copy, the issue's
+values in the fields.
+
 Choosing authors is built in #674 (design 24j; decision
 [0026](./decisions/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
 The authors are rows with an avatar and a ×. Under them is *Přidat autora*, a search field (a
@@ -241,15 +252,20 @@ save.
 ## Archive issue drafts and the edit hold
 
 Built in #717 (epic #719, design 26c, 26d, 26i–26l; decision
-[0032](./decisions/0032-a-new-archive-issue-is-a-draft-with-the-next-free-number.md)), the same
-way as the article. *Nové číslo* posts to `add-issue`, which creates a draft with this year and
-the year's next free order and opens `edit-issue`. Until its first save or upload
+[0034](./decisions/0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md)),
+the same way as the article. *Nové číslo* posts to `add-issue`, which creates a draft without a
+year or an order and opens `edit-issue`. A line under the pair, always there so typing does not move
+the form, offers the next free number: *Další číslo: Použít 5/2026* (this year and its next free
+order), *Další pořadí pro rok 2019: Použít 3* for a typed year, or *Rok: Použít 2026* for an
+order typed alone (copy k5m0j1ag). A click fills it in, saves it and moves the focus to the
+field it filled last; nothing else fills the number. A supplement, a value that can't be read
+yet and a full number get no offer; a taken number's *Použít N* stands on the same line. Until its first save or upload
 (`firstContentAt`) it is in no list, count or preview (`NON_EMPTY_ISSUE_WHERE`) and is deleted
 when its hold is released; each *Nové číslo* first deletes empty drafts whose hold expired or that were never held
 for as long as a hold lasts. The
 editor saves Rok, Pořadí v roce, Název, Doplněk and, for the Coordinator only, Autor through the
-`save` route from the holding tab. The order follows the year until it is set by hand or a
-supplement is filled. A draft may lack its year and order; it is then named by what it lacks
+`save` route from the holding tab. An order the offer set in the open editor follows the year
+until it is set by hand or a supplement is filled; a typed or reloaded one stays. A draft may lack its year and order; it is then named by what it lacks
 („Číslo 2026 bez pořadí“). The year, order and supplement save as one: one that can't be read,
 or a number another issue has, is left out while the rest saves, and the field says why, with a
 link to the issue that has it and *Použít N* for a free order. The PDF is renamed with its

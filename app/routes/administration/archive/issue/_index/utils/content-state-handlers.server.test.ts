@@ -6,6 +6,7 @@ import { issueContentStateHandlers } from './content-state-handlers.server'
 // Pass-through permission wrapper and mocked Prisma, so this exercises the
 // issue config's writes and their hold condition (decision 0019).
 const mocks = vi.hoisted(() => ({
+  issueDelete: vi.fn(),
   issueFindUnique: vi.fn(),
   issueFindUniqueOrThrow: vi.fn(),
   issueUpdate: vi.fn(),
@@ -31,9 +32,22 @@ vi.mock(
   }),
 )
 
+// No store here: the row write is what is under test.
+vi.mock('~/utils/image-store/store-image.server', () => ({
+  deleteRowWithImages: (
+    _findImageIds: unknown,
+    deleteRow: () => Promise<unknown>,
+  ) => deleteRow(),
+}))
+
+vi.mock('~/utils/pdf-store/store-pdf.server', () => ({
+  deletePdfObject: vi.fn(),
+}))
+
 vi.mock('~/utils/db.server', () => ({
   prisma: {
     issue: {
+      delete: mocks.issueDelete,
       findUnique: mocks.issueFindUnique,
       findUniqueOrThrow: mocks.issueFindUniqueOrThrow,
       update: mocks.issueUpdate,
@@ -155,5 +169,64 @@ describe('issueContentStateHandlers — the edit hold', () => {
       init: { status: 409 },
     })
     expect(mocks.recordContentLog).not.toHaveBeenCalled()
+  })
+})
+
+describe('issueContentStateHandlers — a delete waits for every editor (0036)', () => {
+  beforeEach(() => {
+    mocks.issueFindUniqueOrThrow.mockResolvedValue({
+      ...publishState,
+      submittedAt: null,
+    })
+  })
+
+  test('the delete repeats “the hold is free”, one’s own hold included', async () => {
+    mocks.issueDelete.mockResolvedValue({ id: 'i1' })
+
+    await issueContentStateHandlers.delete(request, {
+      id: 'i1',
+      target: draftTarget,
+    })
+
+    expect(mocks.issueDelete).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          {
+            OR: [
+              { heldByAuthorId: null },
+              { heldUntil: null },
+              { heldUntil: { lte: expect.any(Date) } },
+            ],
+          },
+        ],
+        id: 'i1',
+      },
+    })
+  })
+
+  test('one’s own editor in another tab refuses it, saying so', async () => {
+    mocks.issueDelete.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    mocks.issueFindUnique.mockResolvedValue({
+      heldByAuthor: { name: 'Jakub Novák' },
+      heldByAuthorId: 'author-1',
+      heldByTabId: 'tab-1',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
+    await expect(
+      issueContentStateHandlers.delete(request, {
+        id: 'i1',
+        target: draftTarget,
+      }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Jakub Novák', isOwnOtherTab: true },
+      init: { status: 409 },
+    })
   })
 })

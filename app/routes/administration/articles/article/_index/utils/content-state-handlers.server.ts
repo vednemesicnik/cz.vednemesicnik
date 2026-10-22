@@ -4,12 +4,13 @@ import {
   createContentStateHandlers,
 } from '~/utils/content-state/create-content-state-handlers.server'
 import { prisma } from '~/utils/db.server'
+import { buildFreeHoldWhere } from '~/utils/edit-hold/build-free-hold-where'
 import { buildNotHeldByOthersWhere } from '~/utils/edit-hold/build-not-held-by-others-where'
 import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
 import { refuseWhenHeld } from '~/utils/edit-hold/refuse-when-held.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 
-import { findArticleHeldByName } from './find-article-held-by-name.server'
+import { findArticleHeldRefusal } from './find-article-held-refusal.server'
 import { getMissingArticleContent } from './get-missing-article-content'
 
 const buildPathname = (slug: string) => `/articles/${slug}`
@@ -46,7 +47,7 @@ export const articleContentStateHandlers = createContentStateHandlers({
           // Not while someone else edits it (decision 0019).
           where: { AND: [buildNotHeldByOthersWhere(authorId, new Date())], id },
         }),
-      () => findArticleHeldByName(id, authorId),
+      () => findArticleHeldRefusal(id, authorId),
     )
 
     // Mirror the same columns onto the standalone PageSEO row keyed by
@@ -87,17 +88,16 @@ export const articleContentStateHandlers = createContentStateHandlers({
                   where: { pathname: buildPathname(slug) },
                 })
               }
-              // Not while someone else edits it; the PageSEO delete rolls back.
+              // Not while any editor holds it, one's own in another tab too
+              // (decision 0036); the PageSEO delete rolls back.
               return transaction.article.delete({
-                where: {
-                  AND: [
-                    buildNotHeldByOthersWhere(context.authorId, new Date()),
-                  ],
-                  id,
-                },
+                where: { AND: [buildFreeHoldWhere(new Date())], id },
               })
             }),
-          () => findArticleHeldByName(id, context.authorId),
+          () =>
+            findArticleHeldRefusal(id, context.authorId, {
+              countsOwnOtherTab: true,
+            }),
         ),
     )
   },
@@ -109,9 +109,9 @@ export const articleContentStateHandlers = createContentStateHandlers({
 
     // Nothing to write, but approving still waits for someone else's edit.
     if (existingReview) {
-      const heldByName = await findArticleHeldByName(id, reviewerId)
+      const refusal = await findArticleHeldRefusal(id, reviewerId)
 
-      if (heldByName !== null) throw createEditHeldRefusal(heldByName)
+      if (refusal !== null) throw createEditHeldRefusal(refusal)
     } else {
       // Through the article, so the approval repeats its hold condition.
       await refuseWhenHeld(
@@ -126,7 +126,7 @@ export const articleContentStateHandlers = createContentStateHandlers({
               id,
             },
           }),
-        () => findArticleHeldByName(id, reviewerId),
+        () => findArticleHeldRefusal(id, reviewerId),
       )
     }
   },

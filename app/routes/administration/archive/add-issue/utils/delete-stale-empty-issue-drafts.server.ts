@@ -4,37 +4,30 @@ import { prisma } from '~/utils/db.server'
 
 /**
  * An empty issue draft never held for this long is left over: the editor
- * takes the hold as it opens, and the draft holds a number (decision 0032).
+ * takes the hold as it opens.
  */
 export const STALE_EMPTY_ISSUE_DRAFT_AGE_MILLISECONDS =
   EDIT_HOLD_CONFIG.durationMilliseconds
 
 type Options = {
   now?: Date
-  /** The issue being saved, which never goes with the sweep. */
-  excludeId?: string
 }
 
 /**
  * Deletes empty issue drafts (no first content, decision 0020) whose edit hold
  * expired without a release, whatever their age: an empty draft ends with its
- * hold (24e). One never held is deleted once a hold would have expired, so a
- * double click or an abandoned redirect gives its number back (0032). A system
- * clean-up: nothing is logged and no event is sent. An open editor renews its
- * hold, so its draft stays.
+ * hold (24e). One never held is deleted once a hold would have expired: a
+ * double click or an abandoned redirect. A system clean-up: nothing is logged
+ * and no event is sent. An open editor renews its hold, so its draft stays.
  *
- * @param options - The current time, and an issue to leave out.
+ * @param options - The current time.
  * @returns The number of deleted drafts.
  */
 export const deleteStaleEmptyIssueDrafts = async ({
   now = new Date(),
-  excludeId,
 }: Options = {}) => {
   const where = {
     firstContentAt: null,
-    // Only a draft is ever empty; nothing published goes with the sweep.
-    state: 'draft' as const,
-    ...(excludeId === undefined ? {} : { id: { not: excludeId } }),
     OR: [
       { heldUntil: { lt: now } },
       {
@@ -46,6 +39,8 @@ export const deleteStaleEmptyIssueDrafts = async ({
         heldUntil: null,
       },
     ],
+    // Only a draft is ever empty; nothing published goes with the sweep.
+    state: 'draft' as const,
   }
 
   const staleDrafts = await prisma.issue.findMany({

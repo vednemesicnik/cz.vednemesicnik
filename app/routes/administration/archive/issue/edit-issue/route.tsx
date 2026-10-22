@@ -28,8 +28,10 @@ import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ButtonLink } from '~/components/button-link'
+import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
 import { Form } from '~/components/form'
@@ -49,6 +51,10 @@ import { useEditHold } from '~/hooks/use-edit-hold'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
+import {
+  getIssueNumberSuggestion,
+  type IssueNumberSuggestion,
+} from '~/utils/issue/get-issue-number-suggestion'
 import { getIssueTitle } from '~/utils/issue/get-issue-title'
 import { getNextFreeIssueOrder } from '~/utils/issue/get-next-free-issue-order'
 import { slugify } from '~/utils/slugify'
@@ -86,7 +92,7 @@ export { meta } from './_meta'
 
 type NumberConflict = IssueNumberConflict & { freeOrder: number | null }
 
-// What the save route answers (decisions 0022, 0032).
+// What the save route answers (decisions 0022, 0034).
 type SaveResponse =
   | {
       status: 'saved'
@@ -159,6 +165,7 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const {
     authors,
+    currentYear,
     isApprover,
     isOwn,
     issue,
@@ -202,6 +209,8 @@ export default function RouteComponent({
     editHold.state.status === 'lost' || editHold.state.status === 'changed'
       ? editHold.state
       : null
+  // The issue is gone for good (26m, decision 0036).
+  const isDeleted = editHold.state.status === 'deleted'
   const readOnlyNotice = getReadOnlyNotice(editHold.state, 'issue')
   // Changed meanwhile, and free to edit again here (24i).
   const canReloadChanged =
@@ -210,9 +219,12 @@ export default function RouteComponent({
     editHold.state.isEditable
   const [holdLoss, setHoldLoss] = useState<HoldLoss | null>(null)
 
-  const closeHref = issue.isEmptyDraft
-    ? href('/administration/archive')
-    : href('/administration/archive/:issueId', { issueId: params.issueId })
+  const listHref = href('/administration/archive')
+  // Deleted, the detail is gone too (26m).
+  const closeHref =
+    issue.isEmptyDraft || isDeleted
+      ? listHref
+      : href('/administration/archive/:issueId', { issueId: params.issueId })
 
   const loadedValues: FieldValues = {
     authorId: issue.authorId,
@@ -230,7 +242,7 @@ export default function RouteComponent({
     defaultValue: loadedValues,
     id: 'edit-issue',
     // Parsed here, so a year or an order that can't be read is said at its
-    // field (copy xrtebq3m); the save leaves it out (decision 0032).
+    // field (copy xrtebq3m); the save leaves it out (decision 0034).
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldRevalidate: 'onInput',
     shouldValidate: 'onBlur',
@@ -273,6 +285,12 @@ export default function RouteComponent({
       return 'offline'
     }
 
+    // Deleted meanwhile (0036): the hold learns it and the editor only reads.
+    if (response.status === 410) {
+      await editHold.recheck()
+      return 'failed'
+    }
+
     // An expired session redirects to the sign-in page.
     if (response.redirected || (!response.ok && response.status !== 409)) {
       return 'failed'
@@ -297,7 +315,7 @@ export default function RouteComponent({
       return 'failed'
     }
 
-    // A number taken or unread stayed as it was stored (decision 0032).
+    // A number taken or unread stayed as it was stored (decision 0034).
     const sentValues = readValues(formData)
     savedValuesRef.current = result.isNumberSaved
       ? sentValues
@@ -417,6 +435,27 @@ export default function RouteComponent({
   useEffect(() => {
     if (lostStatus !== null) void handleHoldLoss()
   }, [lostStatus])
+
+  // Deleted: nothing more goes out, a file upload under way ends, and the
+  // dialog says so every time, with the details that stayed unsent (26m).
+  const [deletion, setDeletion] = useState<{
+    isDialogOpen: boolean
+    unsentLabels: string[]
+  } | null>(null)
+  const handleDeletion = useEffectEvent(async () => {
+    // A takeover before the delete has nothing left to say (26m).
+    setHoldLoss(null)
+    coverUpload.abandon()
+    pdfUpload.abandon()
+    const hasUnsentChanges = await autosave.stop()
+    setDeletion({
+      isDialogOpen: true,
+      unsentLabels: hasUnsentChanges ? getUnsentLabels() : [],
+    })
+  })
+  useEffect(() => {
+    if (isDeleted) void handleDeletion()
+  }, [isDeleted])
   const closeHoldLossDialog = () =>
     setHoldLoss((current) =>
       current === null ? null : { ...current, dialog: null },
@@ -567,14 +606,10 @@ export default function RouteComponent({
     void leaveTo(closeHref, () => navigate(closeHref))
   }
 
-  // The order follows the year with the next free one until the editor sets
-  // it, and never for a supplement, which takes its issue's order (26c).
-  const isOrderFollowingRef = useRef(
-    issue.supplement === '' &&
-      issue.year !== null &&
-      issue.order ===
-        getNextFreeIssueOrder(takenOrdersByYear[issue.year] ?? []),
-  )
+  // Only an order the offer set in this editor follows the year: a typed one,
+  // or one loaded from an earlier save, stays (decision 0034). Never for a
+  // supplement, which takes its issue's order (26c).
+  const isOrderFollowingRef = useRef(false)
   const handleYearInput = () => {
     lastNumberFieldRef.current = 'year'
     const input = formRef.current?.elements.namedItem(fields.year.name)
@@ -602,7 +637,7 @@ export default function RouteComponent({
   }
 
   const isLocked = !isHolding
-  const isReadOnly = lostHold !== null
+  const isReadOnly = lostHold !== null || isDeleted
 
   if (!isLocked) {
     shownValuesRef.current = {
@@ -666,7 +701,10 @@ export default function RouteComponent({
   // The only sign of saving, without a toast (24e); while only reading, who
   // edits it now, or that it is free again (24h).
   const renderSaveLine = () =>
-    lostHold !== null && lostHold.holder !== null ? (
+    // The last line, with nothing to offer (24e, 26m).
+    isDeleted ? (
+      <p className={styles.saveLine}>smazáno</p>
+    ) : lostHold !== null && lostHold.holder !== null ? (
       <p className={styles.saveLine}>
         {formatEditHoldLine({
           holderName: lostHold.holder.name,
@@ -726,7 +764,7 @@ export default function RouteComponent({
     ]
   }
 
-  // A value that can't be read leaves the number unsaved (decision 0032). One
+  // A value that can't be read leaves the number unsaved (decision 0034). One
   // error says so, for the field changed last (copy zuq3hyhf): under that
   // field, or under the first one that can't be read when it reads well.
   const numberErrors: Record<NumberField, string[] | undefined> = {
@@ -748,6 +786,13 @@ export default function RouteComponent({
         )
       : numberErrors[field]
 
+  // The button goes once its value is in, so the focus moves to the field
+  // that got the value last, not to the top of the page (26c).
+  const focusNumberField = (field: 'year' | 'order') => {
+    const input = formRef.current?.elements.namedItem(fields[field].name)
+    if (input instanceof HTMLInputElement) input.focus()
+  }
+
   // A free order for a taken one: filled in and saved (26d, as 24d).
   const freeOrder =
     numberConflict?.field === 'order' ? numberConflict.freeOrder : null
@@ -756,6 +801,75 @@ export default function RouteComponent({
     lastNumberFieldRef.current = 'order'
     form.update({ name: fields.order.name, value: String(value) })
     isFlushOnChangeRef.current = true
+    focusNumberField('order')
+  }
+
+  // A new issue has no number until one is confirmed: the next free one is
+  // offered, filled in and saved on a click (decision 0034, design 26c).
+  const numberSuggestion = getIssueNumberSuggestion({
+    currentYear,
+    order: shownValues.order,
+    supplement: shownValues.supplement,
+    takenOrdersByYear,
+    year: shownValues.year,
+  })
+  const applyNumberSuggestion = (suggestion: IssueNumberSuggestion) => {
+    if (suggestion.kind !== 'order') {
+      form.update({ name: fields.year.name, value: String(suggestion.year) })
+    }
+    if (suggestion.kind === 'year') {
+      lastNumberFieldRef.current = 'year'
+    } else {
+      lastNumberFieldRef.current = 'order'
+      // A computed order follows the year, as one set by the year does.
+      isOrderFollowingRef.current = true
+      form.update({ name: fields.order.name, value: String(suggestion.order) })
+    }
+    isFlushOnChangeRef.current = true
+    focusNumberField(suggestion.kind === 'year' ? 'year' : 'order')
+  }
+
+  // The line under Rok and Pořadí v roce: a free order for a taken number
+  // first, then the offer with what it offers (26c, 26d).
+  const renderNumberOffer = () => {
+    if (isReadOnly) return null
+
+    if (freeOrder !== null) {
+      return (
+        <ButtonLink onClick={() => applyFreeOrder(freeOrder)} type={'button'}>
+          Použít {freeOrder}
+        </ButtonLink>
+      )
+    }
+
+    if (numberSuggestion === null) return null
+
+    // Copy k5m0j1ag: „Další“ continues after the last order without hinting
+    // at a gap; „Rok:“ stays true in an editor left open over New Year.
+    const { intro, value } =
+      numberSuggestion.kind === 'number'
+        ? {
+            intro: 'Další číslo:',
+            value: `${numberSuggestion.order}/${numberSuggestion.year}`,
+          }
+        : numberSuggestion.kind === 'order'
+          ? {
+              intro: `Další pořadí pro rok ${numberSuggestion.year}:`,
+              value: String(numberSuggestion.order),
+            }
+          : { intro: 'Rok:', value: String(numberSuggestion.year) }
+
+    return (
+      <>
+        <span className={styles.numberOfferIntro}>{intro}</span>
+        <ButtonLink
+          onClick={() => applyNumberSuggestion(numberSuggestion)}
+          type={'button'}
+        >
+          Použít {value}
+        </ButtonLink>
+      </>
+    )
   }
 
   // What still uploads and what stays (26c); once none runs, how it ended
@@ -856,7 +970,10 @@ export default function RouteComponent({
         <div className={styles.title}>
           <div className={styles.titleLine}>
             <PageTitle>{title}</PageTitle>
-            <StatusTag state={issue.submission?.state ?? 'draft'} />
+            {/* A deleted issue has no state (26m). */}
+            {!isDeleted && (
+              <StatusTag state={issue.submission?.state ?? 'draft'} />
+            )}
           </div>
           {renderSaveLine()}
         </div>
@@ -866,7 +983,7 @@ export default function RouteComponent({
         </LinkButton>
       </header>
 
-      {editorSentence !== null && (
+      {editorSentence !== null && !isDeleted && (
         <p className={styles.sentence}>{editorSentence}</p>
       )}
 
@@ -874,9 +991,50 @@ export default function RouteComponent({
         <AdminParagraph>{readOnlyNotice}</AdminParagraph>
       )}
 
+      {/* Deleted, the details are only here; the files went with the issue
+          (26m; copy rvp9ojsm). */}
+      {isDeleted && (
+        <Callout className={styles.deletedWarning} tone={'warning'}>
+          <p className={styles.deletedTitle}>
+            Údaje čísla zůstaly jen v tomto editoru.
+          </p>
+          <p className={styles.deletedAdvice}>
+            Než stránku obnovíte, opustíte nebo editor zavřete, poznamenejte si
+            je.
+          </p>
+          <p className={styles.deletedAdvice}>
+            Soubory PDF a obálky byly smazány.
+          </p>
+        </Callout>
+      )}
+
       {pendingLeave !== null && renderLeaveDialog(pendingLeave)}
 
-      {holdLoss?.dialog === 'taken' && (
+      {deletion?.isDialogOpen && (
+        <ContentDeletedDialog
+          description={
+            'Číslo už nelze upravovat. Údaje zůstanou vidět jen do obnovení stránky, odchodu nebo zavření editoru. Soubory PDF a obálky byly smazány.'
+          }
+          onOpenList={() => navigate(listHref)}
+          onStay={() =>
+            setDeletion((current) =>
+              current === null ? null : { ...current, isDialogOpen: false },
+            )
+          }
+          title={'Číslo bylo smazáno'}
+        >
+          {deletion.unsentLabels.length > 0 && (
+            <AdminModalDescription>
+              {`Některé změny údajů se nestihly uložit. ${formatUnsavedIssueFields(deletion.unsentLabels)}`}
+            </AdminModalDescription>
+          )}
+          <AdminModalDescription>
+            Před odchodem na seznam si poznamenejte údaje.
+          </AdminModalDescription>
+        </ContentDeletedDialog>
+      )}
+
+      {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
           description={holdTakenLead}
           holderName={holdLoss.holderName}
@@ -995,6 +1153,8 @@ export default function RouteComponent({
                     type={'file'}
                   />
 
+                  {/* Deleted, the files went with the issue: no cover
+                      preview and nothing to pick (26m). */}
                   <figure className={styles.cover} ref={coverRef}>
                     {coverUpload.upload?.previewUrl ? (
                       // The picked cover, dimmed until it saves; the stored
@@ -1007,7 +1167,7 @@ export default function RouteComponent({
                     ) : coverUpload.failure !== null &&
                       !coverUpload.failure.replaces ? (
                       renderFileProblem('cover', coverUpload.failure.fileName)
-                    ) : issue.cover === null ? (
+                    ) : isDeleted ? null : issue.cover === null ? (
                       <>
                         <FileDropField
                           accept={'image/*'}
@@ -1092,7 +1252,8 @@ export default function RouteComponent({
                         'pdf',
                         editedPdfFileName ?? pdfUpload.failure.fileName,
                       )
-                    ) : issue.pdf === null ? (
+                    ) : issue.pdf === null && isDeleted ? null : issue.pdf ===
+                      null ? (
                       <>
                         <FileDropField
                           accept={'application/pdf'}
@@ -1151,34 +1312,30 @@ export default function RouteComponent({
             <AdminDetailAside>
               <AdminDetailSection title={'Údaje'}>
                 <fieldset className={styles.lock} disabled={isLocked}>
-                  <div className={styles.number}>
-                    <TextField
-                      {...getInputProps(fields.year, { type: 'text' })}
-                      errors={withUnsavedChange('year')}
-                      inputMode={'numeric'}
-                      label={'Rok'}
-                      onInput={handleYearInput}
-                    />
-                    <TextField
-                      {...getInputProps(fields.order, { type: 'text' })}
-                      errors={
-                        renderNumberConflict('order') ??
-                        withUnsavedChange('order')
-                      }
-                      inputMode={'numeric'}
-                      label={'Pořadí v roce'}
-                      onInput={handleOrderInput}
-                    />
+                  <div className={styles.numberGroup}>
+                    <div className={styles.number}>
+                      <TextField
+                        {...getInputProps(fields.year, { type: 'text' })}
+                        errors={withUnsavedChange('year')}
+                        inputMode={'numeric'}
+                        label={'Rok'}
+                        onInput={handleYearInput}
+                      />
+                      <TextField
+                        {...getInputProps(fields.order, { type: 'text' })}
+                        errors={
+                          renderNumberConflict('order') ??
+                          withUnsavedChange('order')
+                        }
+                        inputMode={'numeric'}
+                        label={'Pořadí v roce'}
+                        onInput={handleOrderInput}
+                      />
+                    </div>
+                    <div className={styles.numberOffer}>
+                      {renderNumberOffer()}
+                    </div>
                   </div>
-                  {freeOrder !== null && !isReadOnly && (
-                    <ButtonLink
-                      className={styles.useFreeOrder}
-                      onClick={() => applyFreeOrder(freeOrder)}
-                      type={'button'}
-                    >
-                      Použít {freeOrder}
-                    </ButtonLink>
-                  )}
                   <TextField
                     {...getInputProps(fields.name, { type: 'text' })}
                     errors={fields.name.errors}

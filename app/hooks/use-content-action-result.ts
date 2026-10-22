@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
+import { getOwnOtherTabDeleteRefusal } from '~/utils/edit-hold/get-own-other-tab-delete-refusal'
 
 const INTENT_VALUE = FORM_CONFIG.intent.value
 
@@ -26,7 +27,12 @@ export type MissingList = {
 }
 
 type ActionResult =
-  | { intent: string; missing: string[]; heldByName?: string }
+  | {
+      intent: string
+      missing: string[]
+      heldByName?: string
+      isHeldInOwnOtherTab?: boolean
+    }
   | undefined
 
 type Options = {
@@ -44,7 +50,8 @@ type Options = {
  * what is missing before the content can be submitted or published.
  *
  * @param actionResult - The keyed fetcher's data, `{ intent, missing }`, and
- *   `heldByName` when the content's edit hold refused it.
+ *   `heldByName` when the content's edit hold refused it, with
+ *   `isHeldInOwnOtherTab` when a delete waited for one's own other tab (0036).
  * @param options - The record's own toasts, and what a refused action's
  *   toast calls the content.
  * @returns The missing list to show, `null` when there is none, and setters to
@@ -67,6 +74,16 @@ export const useContentActionResult = (
       return
     }
     handledResultRef.current = actionResult
+
+    // One's own editor in another tab holds it; the delete waits (0036).
+    if (actionResult.isHeldInOwnOtherTab === true) {
+      showToast(
+        getOwnOtherTabDeleteRefusal(
+          heldSubject === 'číslo' ? 'issue' : 'article',
+        ),
+      )
+      return
+    }
 
     // Someone took the edit hold meanwhile; nothing changed (07g, copy
     // hgb3jeqj, ey73zhul).
