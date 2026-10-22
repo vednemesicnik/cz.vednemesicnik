@@ -127,6 +127,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           select: {
             email: true,
             id: true,
+            role: { select: { name: true } },
           },
         },
       },
@@ -139,7 +140,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // targetUserId is the user who owns this author profile (or undefined for external authors)
   const authors = rawAuthors.map(({ _count, ...author }) => {
     const targetUserId = author.user?.id
-    const deleteBlock = getAuthorDeleteBlock({ _count, user: author.user })
+    const deleteBlock = getAuthorDeleteBlock(
+      { _count, user: author.user },
+      context.userId,
+    )
     const mayDelete = context.can({
       action: 'delete',
       entity: 'author',

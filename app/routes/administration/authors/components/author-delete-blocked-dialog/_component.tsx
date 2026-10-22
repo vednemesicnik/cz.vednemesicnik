@@ -18,7 +18,7 @@ type Props = {
 
 /**
  * Why an author cannot be deleted, in place of the confirmation (design 28g,
- * copy 9w0473vu). The sentences follow what holds the author, so they come
+ * copy 9w0473vu, zq7c99v0). The sentences follow what holds the author, so they come
  * from one `block` rather than from the caller. The counts are text and the
  * only action is *Zavřít*: *Zobrazit obsah* waits for the author detail's
  * Obsah column (dksfb82t). Opens as it mounts.
@@ -44,9 +44,22 @@ export const AuthorDeleteBlockedDialog = ({ name, block, onClose }: Props) => {
               administraci změnit ani odebrat.
             </AdminModalDescription>
           )}
-          {block.hasAccount && (
+          {/* An account that can be deleted first, or one that never can (copy zq7c99v0). */}
+          {block.account === 'deletable' && (
             <AdminModalDescription>
-              Před smazáním autora je nutné smazat také jeho účet.
+              {contentCounts === '' && !block.hasApprovals
+                ? 'Před smazáním autora je nutné smazat jeho účet.'
+                : 'Před smazáním autora je nutné smazat také jeho účet.'}
+            </AdminModalDescription>
+          )}
+          {block.account === 'owner' && (
+            <AdminModalDescription>
+              Autor je propojen s účtem Vlastníka, který nelze smazat.
+            </AdminModalDescription>
+          )}
+          {block.account === 'own' && (
+            <AdminModalDescription>
+              Autor je propojen s vaším účtem. Vlastní účet nelze smazat.
             </AdminModalDescription>
           )}
         </DialogBody>

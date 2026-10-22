@@ -29,14 +29,14 @@ export const deleteAuthor = (request: Request, options: Options) =>
   withUserPermission(request, {
     action: 'delete',
     entity: 'author',
-    execute: () =>
+    execute: (context) =>
       prisma.$transaction(async (transaction): Promise<DeleteAuthorResult> => {
         const author = await transaction.author.findUniqueOrThrow({
           select: AUTHOR_REFERENCES_SELECT,
           where: { id: options.id },
         })
 
-        const deleteBlock = getAuthorDeleteBlock(author)
+        const deleteBlock = getAuthorDeleteBlock(author, context.userId)
 
         if (!deleteBlock.deletable) {
           return { deleteBlock, status: 'blocked' }

@@ -11,11 +11,29 @@ type AuthorReferences = Prisma.AuthorGetPayload<{
   select: typeof AUTHOR_REFERENCES_SELECT
 }>
 
+/**
+ * The account that holds an author: none, one that can be deleted first, the
+ * Owner's, or the viewer's own — the last two can never be deleted.
+ */
+export type AuthorAccount = 'none' | 'deletable' | 'owner' | 'own'
+
 export type AuthorDeleteBlock = {
   deletable: boolean
   contentCounts: Record<AuthorContentType, number>
   hasApprovals: boolean
-  hasAccount: boolean
+  account: AuthorAccount
+}
+
+const getAuthorAccount = (
+  user: AuthorReferences['user'],
+  viewerUserId: string,
+): AuthorAccount => {
+  if (user === null) return 'none'
+  // The Owner's account is never deleted, whoever looks (copy zq7c99v0).
+  if (user.role.name === 'owner') return 'owner'
+  if (user.id === viewerUserId) return 'own'
+
+  return 'deletable'
 }
 
 /**
@@ -24,11 +42,13 @@ export type AuthorDeleteBlock = {
  * from its authors (#767); the account goes first.
  *
  * @param author - The author read with `AUTHOR_REFERENCES_SELECT`.
+ * @param viewerUserId - The signed-in account, to tell its own author apart.
  * @returns `deletable` when nothing holds the author; otherwise the content
- *   counts, whether it gave approvals and whether it has an account.
+ *   counts, whether it gave approvals and which account it has.
  */
 export const getAuthorDeleteBlock = (
   author: AuthorReferences,
+  viewerUserId: string,
 ): AuthorDeleteBlock => {
   const contentCounts = Object.fromEntries(
     AUTHOR_CONTENT_TYPES.map((type) => [type, author._count[type]]),
@@ -38,12 +58,12 @@ export const getAuthorDeleteBlock = (
     (type) => contentCounts[type] > 0,
   )
   const hasApprovals = author._count.reviews > 0
-  const hasAccount = author.user !== null
+  const account = getAuthorAccount(author.user, viewerUserId)
 
   return {
+    account,
     contentCounts,
-    deletable: !hasContent && !hasApprovals && !hasAccount,
-    hasAccount,
+    deletable: !hasContent && !hasApprovals && account === 'none',
     hasApprovals,
   }
 }

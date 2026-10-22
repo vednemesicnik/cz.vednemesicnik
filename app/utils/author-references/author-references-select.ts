@@ -17,5 +17,5 @@ export const AUTHOR_REFERENCES_SELECT = {
       reviews: true,
     },
   },
-  user: { select: { id: true } },
+  user: { select: { id: true, role: { select: { name: true } } } },
 } satisfies Prisma.AuthorSelect

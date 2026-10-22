@@ -12,7 +12,7 @@ const NO_CONTENT = {
 }
 
 describe('formatAuthorContentCounts', () => {
-  // Intl.ListFormat keeps „a“ with the next word (a no-break space).
+  // No-break spaces keep each number with its noun and „a“ with the next word.
   it('names two kinds with „a“ (28g)', () => {
     expect(
       formatAuthorContentCounts({
@@ -20,7 +20,7 @@ describe('formatAuthorContentCounts', () => {
         articleCategories: 2,
         articles: 1,
       }),
-    ).toBe('1 článku a\u00a02 rubrik')
+    ).toBe('1\u00a0článku a\u00a02\u00a0rubrik')
   })
 
   it('names three kinds with a comma and „a“, in the 28g order', () => {
@@ -31,7 +31,7 @@ describe('formatAuthorContentCounts', () => {
         articles: 1,
         articleTags: 5,
       }),
-    ).toBe('1 článku, 2 rubrik a\u00a05 štítků')
+    ).toBe('1\u00a0článku, 2\u00a0rubrik a\u00a05\u00a0štítků')
   })
 
   it.each([
@@ -44,7 +44,7 @@ describe('formatAuthorContentCounts', () => {
     ['articleCategories', 1, '1 rubriky'],
   ] as const)('formats %s × %i as „%s“', (type, count, expected) => {
     expect(formatAuthorContentCounts({ ...NO_CONTENT, [type]: count })).toBe(
-      expected,
+      expected.replace(' ', '\u00a0'),
     )
   })
 

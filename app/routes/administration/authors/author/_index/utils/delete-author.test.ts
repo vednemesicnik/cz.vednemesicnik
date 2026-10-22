@@ -41,7 +41,7 @@ const NO_REFERENCES = {
 
 const storedAuthor = (
   counts: Partial<typeof NO_REFERENCES> = {},
-  user: { id: string } | null = null,
+  user: { id: string; role: { name: string } } | null = null,
 ) => ({ _count: { ...NO_REFERENCES, ...counts }, user })
 
 const remove = () =>
@@ -66,7 +66,10 @@ describe('deleteAuthor', () => {
     ['only on articles', storedAuthor({ articles: 1 })],
     ['referenced by a category', storedAuthor({ articleCategories: 1 })],
     ['referenced only by an approval', storedAuthor({ reviews: 1 })],
-    ['with an account', storedAuthor({}, { id: 'user-1' })],
+    [
+      'with an account',
+      storedAuthor({}, { id: 'user-1', role: { name: 'member' as const } }),
+    ],
   ])('refuses an author %s, and leaves it in place', async (_case, author) => {
     authorFindUniqueOrThrow.mockResolvedValue(author)
 

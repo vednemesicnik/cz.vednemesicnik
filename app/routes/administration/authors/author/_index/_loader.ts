@@ -35,6 +35,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: {
           email: true,
           id: true,
+          role: { select: { name: true } },
         },
       },
     },
@@ -82,7 +83,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     },
     canUpdate: updatePerms.hasPermission,
     // Smazat… confirms a deletable author and explains a blocked one (28g).
-    deleteBlock: getAuthorDeleteBlock(author),
+    deleteBlock: getAuthorDeleteBlock(author, context.userId),
     mayDelete: deletePerms.hasPermission,
   }
 }
