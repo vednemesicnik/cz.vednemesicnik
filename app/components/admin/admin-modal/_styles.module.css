@@ -7,6 +7,11 @@
     padding: 0;
     border: none;
     background-color: transparent;
+    /* A dialog a table row renders sits in its actions cell: don't inherit
+       the cell's right alignment, no-wrap and tabular figures. */
+    text-align: start;
+    white-space: normal;
+    font-variant-numeric: normal;
     opacity: 0;
     transform: scale(0.9);
 
