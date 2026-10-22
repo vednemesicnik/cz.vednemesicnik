@@ -240,8 +240,9 @@ export default function RouteComponent({
                     {...issue.cover.sources}
                     alt={issue.cover.altText}
                     className={styles.coverImage}
-                    // The grid's breakpoint: a 220 px column beside the card, else full width.
-                    sizes={'(width >= 40rem) 220px, 100vw'}
+                    // A 220 px column from a 480 px section (528 px window with
+                    // its 24 px padding), else full width.
+                    sizes={'(width >= 528px) 220px, 100vw'}
                   />
                 )}
                 <figcaption className={styles.caption}>Obálka</figcaption>

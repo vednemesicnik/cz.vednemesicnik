@@ -1190,7 +1190,7 @@ export default function RouteComponent({
                           {...issue.cover.sources}
                           alt={issue.cover.altText}
                           className={styles.coverImage}
-                          sizes={'(width >= 40rem) 220px, 100vw'}
+                          sizes={'(width >= 528px) 220px, 100vw'}
                         />
                         {renderFileProblem(
                           'cover',

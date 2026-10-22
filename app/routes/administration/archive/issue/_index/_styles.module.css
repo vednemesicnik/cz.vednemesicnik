@@ -55,7 +55,8 @@
   }
 }
 
-/* The cover in a column of its own, the PDF card beside it (26b). */
+/* The cover in a column of its own, the PDF card beside it (26b), as in the
+   editor. They stack once the section (an inline-size container) is narrow. */
 .files {
   @layer route {
     display: grid;
@@ -63,7 +64,7 @@
     align-items: start;
     gap: 28px;
 
-    @media (width < 40rem) {
+    @container (inline-size < 480px) {
       grid-template-columns: minmax(0, 1fr);
     }
   }
