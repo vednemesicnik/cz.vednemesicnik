@@ -242,10 +242,16 @@
 /* Deleted: what the editor still shows is the only copy (26m). */
 .deletedWarning {
   @layer route {
+    margin-block: 0;
+  }
+}
+
+/* Inside the callout, next to its icon (rmridl1f). */
+.deletedContent {
+  @layer route {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-block: 0;
   }
 }
 

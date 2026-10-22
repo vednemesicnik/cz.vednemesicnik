@@ -311,10 +311,16 @@
 
 .unsentWarning {
   @layer route {
+    margin-block: 0;
+  }
+}
+
+/* Inside the callout, next to its icon (rmridl1f). */
+.unsentContent {
+  @layer route {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-block: 0;
   }
 }
 
