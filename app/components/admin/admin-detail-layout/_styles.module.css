@@ -17,11 +17,16 @@
 }
 
 /* 480 px main + gap + right column = 820 px of container. Only a right column
-   with content (AdminDetailAside marks itself with data-column) earns one. */
+   with content (AdminDetailAside marks itself with data-column) earns one.
+   On a wide screen the two stay together at the sidebar, the main column at
+   its drawn width; the page around them still runs the full width. */
 .layout:has(> [data-column="aside"]:not(:empty)) {
   @layer variant {
     @container (width >= 820px) {
-      grid-template-columns: minmax(0, 1fr) var(--detail-aside-width);
+      grid-template-columns:
+        minmax(0, var(--detail-main-width))
+        var(--detail-aside-width);
+      justify-content: start;
     }
   }
 }
