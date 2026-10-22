@@ -41,13 +41,14 @@ the same validation (`authenticate-request.gs`, `is-allowed-email.gs`, `is-allow
 
 - A new e-mail or Google job first asks the four questions. A notice that goes to an address
   off the domain, or that a public form triggers, does not join `SCRIPT__Users__Notice_Send`;
-  it gets its own web app (the public forms of
-  [0008](0008-public-forms-carry-their-own-notice.md) already have theirs).
-- A web app name says what it does, `Area__Object_Action`, like `Publication__Approval_Send`.
-- Each web app registers in `constants/gas-endpoints.ts`, commits its schema under `schemas/`,
-  and has its own `GAS_*_URL` / `GAS_*_SECRET`; see
-  [`_deploy-to-fly.md`](../_deploy-to-fly.md). Which account deploys which repository lives in
-  the `apps-script-ops` repository.
+  it gets its own web app, as the donation confirmation request already has
+  (`SCRIPT__Donate__Request_Confirmation`).
+- A new web app's name says what it does: the area, then the object and the action
+  (`Users__Notice_Send`). Older names such as `Auth__Magic_Link` predate this.
+- Each web app the app calls registers in `constants/gas-endpoints.ts`, commits its schema
+  under `schemas/`, and has its own `GAS_*_URL` / `GAS_*_SECRET`; see
+  [`_deploy-to-fly.md`](../_deploy-to-fly.md). Which account deploys which repository lives
+  in the `apps-script-ops` repository.
 - Magic-link drops its `invitation` kind one release after the app sends invitations through
   `users-notice`. Moving magic-link off the domain administrator's account, and magic-link and
   Donate onto the Toolkit primitives, are open follow-ups, not part of this decision.
