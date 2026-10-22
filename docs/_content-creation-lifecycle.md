@@ -214,6 +214,17 @@ waited, if nobody saved meanwhile. If someone did, it sends nothing and shows *�
 mezitím změnil* with *Zkopírovat celý text* and *Načíst aktuální verzi*, or *Otevřít detail*
 while someone holds it or it is no longer an editable draft.
 
+A deleted article or issue is built in #756 (design 24k, 26m, 23g, 26i; decision
+[0036](./decisions/0036-a-delete-waits-for-every-open-editor.md)). A delete waits for every
+open editor, one's own in another tab included: it repeats "the hold is free" in its own write,
+while the other transitions keep "not held by someone else". The detail answers *Smazat…* with
+a toast instead of the confirmation while one's own editor holds it, and a bulk delete skips
+the row. An editor whose content was deleted meanwhile (after an expired hold, or as a swept
+empty draft) learns it from its next save, renewal or the delete event. It shows *Článek byl
+smazán* (*Číslo bylo smazáno*) with *Přejít na seznam*, turns read-only for good with the line
+*smazáno*, and keeps a warning under the heading: the article's text to copy, the issue's
+values in the fields.
+
 Choosing authors is built in #674 (design 24j; decision
 [0026](./decisions/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
 The authors are rows with an avatar and a ×. Under them is *Přidat autora*, a search field (a
