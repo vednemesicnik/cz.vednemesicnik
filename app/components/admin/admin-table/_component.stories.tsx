@@ -67,6 +67,11 @@ const Head = () => (
 
 const meta: Meta<typeof AdminTable> = {
   argTypes: {
+    columnsClassName: {
+      control: false,
+      description:
+        "A class from the list's CSS module that sets grid-template-columns for a table from 1280 px (31a).",
+    },
     pending: {
       control: 'boolean',
       description:
@@ -211,6 +216,31 @@ export const Pending: Story = {
         <Rows />
       </TableBody>
     </AdminTable>
+  ),
+}
+
+/**
+ * Widths by weight on a wide table (31a): from a 1280 px table the columns
+ * follow the list's template — Jméno 3, Role 1 with a 150 px minimum, Články
+ * and Akce fixed. Below 1280 px the table sizes itself natively. Widen the
+ * canvas past 1280 px to see it.
+ */
+export const WideColumns: Story = {
+  parameters: { controls: { disable: true }, layout: 'fullscreen' },
+  render: () => (
+    <>
+      <style>
+        {
+          '.admin-table-story-columns { grid-template-columns: minmax(0, 3fr) minmax(162px, 1fr) 92px 94px; }'
+        }
+      </style>
+      <AdminTable columnsClassName={'admin-table-story-columns'}>
+        <Head />
+        <TableBody>
+          <Rows />
+        </TableBody>
+      </AdminTable>
+    </>
   ),
 }
 
