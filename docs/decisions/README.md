@@ -73,3 +73,4 @@ in force.
 | [0034](0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md) | A new archive issue starts without a number, and the editor offers the next free one | Accepted | 2026-10-21 |
 | [0035](0035-every-administration-page-is-live.md) | Every administration page is live, and the article list's live row is the default on every list | Accepted | 2026-10-22 |
 | [0036](0036-a-delete-waits-for-every-open-editor.md) | A delete waits for every open editor, one's own included, and an editor whose content was deleted says so | Accepted | 2026-10-22 |
+| [0037](0037-apps-script-web-apps-are-split-by-privilege.md) | Apps Script web apps are split by privilege; magic-link sends only the sign-in link | Accepted | 2026-10-22 |
