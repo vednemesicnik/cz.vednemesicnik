@@ -20,6 +20,7 @@ import type { AuthorDeleteBlock } from '~/utils/author-references/get-author-del
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
 
 import { AuthorDeleteBlockedDialog } from '../../../components/author-delete-blocked-dialog'
+import { useAuthorDeleteRefusal } from '../../../utils/use-author-delete-refusal'
 
 type Props = {
   id: string
@@ -56,6 +57,7 @@ export const ItemRow = ({
 
   const fetcher = useFetcher({ key: fetcherKey })
   const isDeleting = fetcher.state !== 'idle'
+  const { dismiss, refusal } = useAuthorDeleteRefusal(fetcherKey)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(dialogRef, {
     action: href('/administration/authors/:authorId', { authorId: id }),
@@ -112,11 +114,14 @@ export const ItemRow = ({
                 {isDeleting ? 'Maže se...' : 'Smazat'}
               </AdminActionButton>
               <AdminDeleteConfirmationDialog ref={dialogRef} />
-              {isBlockedDialogOpen && (
+              {(isBlockedDialogOpen || refusal !== null) && (
                 <AuthorDeleteBlockedDialog
-                  block={deleteBlock}
+                  block={refusal ?? deleteBlock}
                   name={name}
-                  onClose={() => setIsBlockedDialogOpen(false)}
+                  onClose={() => {
+                    setIsBlockedDialogOpen(false)
+                    dismiss()
+                  }}
                 />
               )}
             </>

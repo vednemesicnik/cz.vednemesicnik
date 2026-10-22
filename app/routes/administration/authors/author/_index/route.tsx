@@ -20,6 +20,7 @@ import { PageTitle } from '~/components/page-title'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import { AuthorDeleteBlockedDialog } from '../../components/author-delete-blocked-dialog'
+import { useAuthorDeleteRefusal } from '../../utils/use-author-delete-refusal'
 
 import type { Route } from './+types/route'
 
@@ -36,11 +37,14 @@ export default function RouteComponent({
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
   const [isBlockedDialogOpen, setIsBlockedDialogOpen] = useState(false)
+  const deleteFetcherKey = `delete-author-${authorId}`
+  const { dismiss, refusal } = useAuthorDeleteRefusal(deleteFetcherKey)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
     {
       action: href('/administration/authors/:authorId', { authorId }),
+      key: deleteFetcherKey,
       withRedirect: true,
     },
   )
@@ -114,11 +118,14 @@ export default function RouteComponent({
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
 
       {/* Opened from the detail, it never offers Zobrazit obsah (dksfb82t). */}
-      {isBlockedDialogOpen && (
+      {(isBlockedDialogOpen || refusal !== null) && (
         <AuthorDeleteBlockedDialog
-          block={deleteBlock}
+          block={refusal ?? deleteBlock}
           name={author.name}
-          onClose={() => setIsBlockedDialogOpen(false)}
+          onClose={() => {
+            setIsBlockedDialogOpen(false)
+            dismiss()
+          }}
         />
       )}
     </AdminPage>

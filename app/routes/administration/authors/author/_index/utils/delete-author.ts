@@ -1,5 +1,8 @@
 import { AUTHOR_REFERENCES_SELECT } from '~/utils/author-references/author-references-select'
-import { getAuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
+import {
+  type AuthorDeleteBlock,
+  getAuthorDeleteBlock,
+} from '~/utils/author-references/get-author-delete-block'
 import { prisma } from '~/utils/db.server'
 import { withUserPermission } from '~/utils/permissions/user/actions/with-user-permission.server'
 
@@ -8,7 +11,9 @@ type Options = {
   target: Parameters<typeof withUserPermission>[1]['target']
 }
 
-export type DeleteAuthorResult = { status: 'deleted' } | { status: 'blocked' }
+export type DeleteAuthorResult =
+  | { status: 'deleted' }
+  | { status: 'blocked'; deleteBlock: AuthorDeleteBlock }
 
 /**
  * Deletes an author nothing holds (#767). The check and the delete share one
@@ -18,7 +23,7 @@ export type DeleteAuthorResult = { status: 'deleted' } | { status: 'blocked' }
  *
  * @param request - The request, for the permission check.
  * @param options - The author's id and the account it belongs to, if any.
- * @returns `deleted`, or `blocked` when something still holds the author.
+ * @returns `deleted`, or `blocked` with what holds the author now.
  */
 export const deleteAuthor = (request: Request, options: Options) =>
   withUserPermission(request, {
@@ -31,8 +36,10 @@ export const deleteAuthor = (request: Request, options: Options) =>
           where: { id: options.id },
         })
 
-        if (!getAuthorDeleteBlock(author).deletable) {
-          return { status: 'blocked' }
+        const deleteBlock = getAuthorDeleteBlock(author)
+
+        if (!deleteBlock.deletable) {
+          return { deleteBlock, status: 'blocked' }
         }
 
         await transaction.author.delete({ where: { id: options.id } })

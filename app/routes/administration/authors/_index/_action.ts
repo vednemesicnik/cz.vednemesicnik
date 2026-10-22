@@ -36,9 +36,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
     'Invalid selection size',
   )
 
+  // An author with an account is never deletable, so it is left out before the
+  // permission check: a forged id of an account the caller may not touch would
+  // otherwise stop the loop halfway.
   const authors = await prisma.author.findMany({
-    select: { id: true, user: { select: { id: true } } },
-    where: { id: { in: ids } },
+    select: { id: true },
+    where: { id: { in: ids }, user: null },
   })
 
   // Sequential on purpose: each delete runs its own permission check and its
@@ -49,7 +52,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   for (const author of authors) {
     const result = await deleteAuthor(request, {
       id: author.id,
-      target: { userId: author.user?.id },
+      target: { userId: undefined },
     })
 
     if (result.status === 'deleted') {

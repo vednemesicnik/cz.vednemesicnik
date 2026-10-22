@@ -40,9 +40,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         },
       })
 
-      // Something holds the author since the page loaded: returned, not
-      // thrown, so the fetcher stays on the page and the revalidated row
-      // explains it on the next click (28g).
+      // Something came to hold the author after the page loaded: returned,
+      // not thrown, so the fetcher stays on the page. A 4xx skips the loaders'
+      // revalidation, so the body carries the fresh block for the 28g
+      // explanation, and the page revalidates itself.
       if (result.status === 'blocked') {
         return data(result, { status: 409 })
       }

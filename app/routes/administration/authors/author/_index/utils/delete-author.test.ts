@@ -70,7 +70,10 @@ describe('deleteAuthor', () => {
   ])('refuses an author %s, and leaves it in place', async (_case, author) => {
     authorFindUniqueOrThrow.mockResolvedValue(author)
 
-    await expect(remove()).resolves.toEqual({ status: 'blocked' })
+    await expect(remove()).resolves.toMatchObject({
+      deleteBlock: { deletable: false },
+      status: 'blocked',
+    })
     expect(authorDelete).not.toHaveBeenCalled()
   })
 })
