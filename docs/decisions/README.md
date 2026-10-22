@@ -71,3 +71,4 @@ in force.
 | [0032](0032-a-new-archive-issue-is-a-draft-with-the-next-free-number.md) | A new archive issue is a draft with the next free number, and its number saves as one | Superseded by 0034 | 2026-10-20 |
 | [0033](0033-an-issue-pdf-has-no-file-name-until-its-number-is-complete.md) | An issue's PDF has no file name until its year and order are both there | Accepted | 2026-10-20 |
 | [0034](0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md) | A new archive issue starts without a number, and the editor offers the next free one | Accepted | 2026-10-21 |
+| [0035](0035-every-administration-page-is-live.md) | Every administration page is live, and the article list's live row is the default on every list | Accepted | 2026-10-22 |
