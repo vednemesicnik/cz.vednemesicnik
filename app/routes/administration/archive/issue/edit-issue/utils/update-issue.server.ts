@@ -57,6 +57,8 @@ type UpdateIssueResult =
     }
   /** The tab does not hold the issue; `heldByName` is who does, if anyone. */
   | { status: 'not-held'; heldByName: string | null }
+  /** The issue is gone: deleted meanwhile, or swept as an empty draft (0036). */
+  | { status: 'deleted' }
 
 type StoredHold = EditHoldColumns & {
   heldByAuthor: { name: string } | null
@@ -85,8 +87,8 @@ const RELEASED_HOLD = {
  * @param options - The issue id, the editor's tab and the edited fields.
  * @returns `saved` with the new `updatedAt` and the taken number, if any, or
  *   `not-held` with the holder's name when another tab or someone else holds
- *   the issue (nothing is written).
- * @throws A 404 response for a missing issue, or a 403 response for a denied
+ *   the issue (nothing is written), or `deleted` when it is gone (0036).
+ * @throws A 403 response for a denied
  *   edit, a locked submission or an author the editor may not set.
  */
 export async function updateIssue(
@@ -114,9 +116,8 @@ export async function updateIssue(
     where: { id: issueId },
   })
 
-  if (storedIssue === null) {
-    throw data(null, { status: 404 })
-  }
+  // Nothing is checked first, so it says no more than a 404 would (0036).
+  if (storedIssue === null) return { status: 'deleted' }
 
   const { state } = storedIssue
 
@@ -361,6 +362,9 @@ export async function updateIssue(
     ) {
       throw error
     }
+
+    // Deleted between the check and the write (0036).
+    if (currentHold === null) return { status: 'deleted' }
 
     // The hold moved between the check and the write.
     return toNotHeld(currentHold)

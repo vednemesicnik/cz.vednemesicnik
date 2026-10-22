@@ -410,11 +410,11 @@ describe('updateIssue — who may save', () => {
     expect(savedData()).not.toHaveProperty('submittedAt')
   })
 
-  test('is a 404 for a missing issue', async () => {
+  test('answers a missing issue as deleted (0036)', async () => {
     mocks.issueFindUnique.mockResolvedValue(null)
 
-    await expect(updateIssue(request, options)).rejects.toMatchObject({
-      init: { status: 404 },
+    await expect(updateIssue(request, options)).resolves.toEqual({
+      status: 'deleted',
     })
   })
 })

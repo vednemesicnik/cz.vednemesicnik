@@ -99,6 +99,15 @@ describe('save-article action (design 24e, decision 0022)', () => {
     })
   })
 
+  test('answers 410 when the article is gone (0036)', async () => {
+    mocks.updateArticle.mockResolvedValue({ status: 'deleted' })
+
+    const response = await callAction(buildRequest(validFields))
+
+    expect(response.status).toBe(410)
+    expect(await response.json()).toEqual({ status: 'deleted' })
+  })
+
   test('answers 400 for a form it cannot read', async () => {
     const { editTabId: _editTabId, ...withoutTab } = validFields
 

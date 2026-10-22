@@ -298,11 +298,11 @@ describe('updateArticle — the permission follows the stored article', () => {
     expect(pageSeo.update).not.toHaveProperty('state')
   })
 
-  test('answers a missing article with 404', async () => {
+  test('answers a missing article as deleted (0036)', async () => {
     mocks.articleFindUnique.mockResolvedValue(null)
 
-    await expect(updateArticle(request, options)).rejects.toMatchObject({
-      init: { status: 404 },
+    await expect(updateArticle(request, options)).resolves.toEqual({
+      status: 'deleted',
     })
     expect(mocks.withAuthorPermission).not.toHaveBeenCalled()
   })
