@@ -74,7 +74,7 @@ export default function RouteComponent({
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
-    <AdminPage>
+    <AdminPage measure={'form'}>
       <PageTitle>Upravit podcast ({podcast.title})</PageTitle>
       <Form
         {...getFormProps(form)}

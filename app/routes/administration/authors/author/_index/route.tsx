@@ -43,7 +43,7 @@ export default function RouteComponent({
   )
 
   return (
-    <AdminPage>
+    <AdminPage measure={'text'}>
       <PageTitle>{author.name}</PageTitle>
 
       <AdminActionGroup>

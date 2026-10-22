@@ -108,7 +108,7 @@ export default function RouteComponent({
   )
 
   return (
-    <AdminPage>
+    <AdminPage measure={'text'}>
       <PageTitle>{episode.title}</PageTitle>
 
       <AdminActionGroup>

@@ -51,7 +51,7 @@ const aside = (
   </AdminDetailAside>
 )
 
-// The right column stands beside the main one from 900 px of container.
+// Full columns from 900 px of container; from 732 px narrower ones.
 export const Playground: Story = {
   args: {
     children: (
@@ -90,8 +90,7 @@ export const WithoutAside: Story = {
   ],
 }
 
-// From 732 to 900 px the columns narrow (440 + 32 + 260); below, the right
-// column goes under the main one.
+// From 732 to 900 px the columns narrow (440 + 32 + 260).
 export const Narrow: Story = {
   args: {
     children: (
@@ -104,6 +103,25 @@ export const Narrow: Story = {
   decorators: [
     (Story) => (
       <div style={{ width: '760px' }}>
+        <Story />
+      </div>
+    ),
+  ],
+}
+
+// Under 732 px the right column goes under the main one.
+export const Stacked: Story = {
+  args: {
+    children: (
+      <>
+        {main}
+        {aside}
+      </>
+    ),
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '640px' }}>
         <Story />
       </div>
     ),

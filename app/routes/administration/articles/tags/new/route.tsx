@@ -16,7 +16,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { search } = useLocation()
 
   return (
-    <AdminPage>
+    <AdminPage measure={'form'}>
       <PageTitle>{TAG_RECORD_COPY.newTitle}</PageTitle>
       <NewTaxonomyRecordForm
         authors={loaderData.authors}

@@ -64,7 +64,7 @@ const meta: Meta<typeof ListDetailRow> = {
     children: { control: false },
   },
   component: ListDetailRow,
-  // The 480 px rule measures the section around the row; `width` narrows it.
+  // The 440 px rule measures the section around the row; `width` narrows it.
   decorators: [
     (Story, { parameters }) => (
       <div style={{ width: parameters.width }}>
@@ -126,7 +126,7 @@ export const Overview: Story = {
   ),
 }
 
-// Under 480 px the name stands above the value, the action still closes it.
+// Under 440 px the name stands above the value, the action still closes it.
 export const Narrow: Story = {
   args: Playground.args,
   parameters: { width: '300px' },

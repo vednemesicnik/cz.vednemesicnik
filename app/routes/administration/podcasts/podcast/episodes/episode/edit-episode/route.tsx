@@ -81,7 +81,7 @@ export default function RouteComponent({
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
-    <AdminPage>
+    <AdminPage measure={'form'}>
       <PageTitle>Upravit epizodu</PageTitle>
 
       <FormProvider context={form.context}>

@@ -2,7 +2,7 @@
   @layer route {
     display: grid;
     gap: 16px;
-    /* As wide as the narrowest main column of a detail (25c). */
+    /* 480 px as drawn in 25c. */
     width: min(480px, 100%);
   }
 }

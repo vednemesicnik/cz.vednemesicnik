@@ -1,4 +1,4 @@
-/* The container for the 480 px rule of rows and lists inside. */
+/* The container for the 440 px rule of rows and lists inside. */
 .section {
   @layer component {
     display: grid;
