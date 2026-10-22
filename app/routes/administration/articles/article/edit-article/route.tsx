@@ -1197,7 +1197,7 @@ export default function RouteComponent({
       )}
 
       {/* Stays until the editor closes: the only way back to the unsent text
-          (24h). */}
+          (24h; copy xtmvu5sj). */}
       {holdLoss?.hasUnsentChanges && !isDeleted && (
         <Callout className={styles.unsentWarning} tone={'warning'}>
           <p className={styles.unsentTitle}>
@@ -1208,8 +1208,8 @@ export default function RouteComponent({
             <CopyArticleTextHint />
           </div>
           <p className={styles.unsentAdvice}>
-            Než editor zavřete nebo budete pokračovat v úpravě, zkopírujte si
-            text článku.
+            Než stránku obnovíte, opustíte, editor zavřete nebo budete
+            pokračovat v úpravě, zkopírujte si text článku.
           </p>
         </Callout>
       )}
