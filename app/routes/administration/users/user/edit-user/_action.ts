@@ -10,12 +10,14 @@ import {
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
+import { hasEmailChanged } from '~/utils/has-email-changed'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
 
 import { schema } from './_schema'
 import { findEmailOwner } from './utils/find-email-owner.server'
 import { formatEmailTakenMessage } from './utils/format-email-taken-message'
+import { sendEmailChangeNotice } from './utils/send-email-change-notice.server'
 import { updateUser } from './utils/update-user'
 
 type ActionData = {
@@ -55,6 +57,7 @@ export const action = async ({
   const [targetUser, newRole] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       select: {
+        email: true,
         id: true,
         role: {
           select: {
@@ -130,6 +133,21 @@ export const action = async ({
   }
 
   await updateUser(submission.value)
+
+  // The old address always hears of a change, naming who made it (28f). The
+  // save stands whether or not the notice goes out.
+  if (hasEmailChanged(targetUser.email, submission.value.email)) {
+    const actor = await prisma.user.findUniqueOrThrow({
+      select: { author: { select: { name: true } } },
+      where: { id: context.userId },
+    })
+
+    await sendEmailChangeNotice({
+      changedByName: actor.author.name,
+      newEmail: submission.value.email,
+      oldEmail: targetUser.email,
+    })
+  }
 
   if (isChangingRole) {
     recordAuditLog({
