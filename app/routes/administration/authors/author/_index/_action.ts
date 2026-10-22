@@ -1,5 +1,5 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { href, redirect } from 'react-router'
+import { data, href, redirect } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
 import { requireCSRF } from '~/utils/csrf.server'
@@ -32,18 +32,26 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   })
 
   switch (intent) {
-    case INTENT_VALUE.delete:
-      await deleteAuthor(request, {
+    case INTENT_VALUE.delete: {
+      const result = await deleteAuthor(request, {
         id: authorId,
         target: {
           userId: author.user?.id,
         },
       })
 
+      // Something holds the author since the page loaded: returned, not
+      // thrown, so the fetcher stays on the page and the revalidated row
+      // explains it on the next click (28g).
+      if (result.status === 'blocked') {
+        return data(result, { status: 409 })
+      }
+
       if (withRedirect) {
         throw redirect(href('/administration/authors'))
       }
       break
+    }
 
     default:
       throw new Error(`Invalid intent: ${intent}`)
