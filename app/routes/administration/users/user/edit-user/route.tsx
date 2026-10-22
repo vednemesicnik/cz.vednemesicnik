@@ -67,13 +67,22 @@ export default function RouteComponent({
   )
 
   // The taken-address error names the other account as a link (28e), only
-  // while the field still shows it.
+  // while the field still shows it. The sentence comes from the server's
+  // message, split around the name, so its wording lives in one place.
   const emailOwner = actionData?.emailOwner ?? null
-  const emailErrors = fields.email.errors?.map((error) =>
-    emailOwner !== null &&
-    error === formatEmailTakenMessage(emailOwner.name) ? (
+  const emailErrors = fields.email.errors?.map((error) => {
+    if (
+      emailOwner === null ||
+      error !== formatEmailTakenMessage(emailOwner.name)
+    ) {
+      return error
+    }
+
+    const nameIndex = error.lastIndexOf(emailOwner.name)
+
+    return (
       <>
-        Zadejte jiný e-mail — tuto adresu už používá účet:{' '}
+        {error.slice(0, nameIndex)}
         <Link
           to={href('/administration/users/:userId', {
             userId: emailOwner.userId,
@@ -81,12 +90,10 @@ export default function RouteComponent({
         >
           {emailOwner.name}
         </Link>
-        .
+        {error.slice(nameIndex + emailOwner.name.length)}
       </>
-    ) : (
-      error
-    ),
-  )
+    )
+  })
 
   return (
     <AdminPage measure={'form'}>
@@ -98,7 +105,7 @@ export default function RouteComponent({
             label={'E-mail'}
             {...getInputProps(fields.email, { type: 'email' })}
             errors={emailErrors}
-            placeholder={'user@domain.name'}
+            placeholder={'jakub.novak@vednemesicnik.cz'}
           />
         </Fieldset>
 

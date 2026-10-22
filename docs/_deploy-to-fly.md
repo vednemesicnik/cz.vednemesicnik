@@ -118,8 +118,8 @@ fly secrets set GAS_MAGIC_LINK_URL="https://script.google.com/macros/s/.../exec"
 
 ### Account notices (Google Apps Script)
 
-The invitation of a new user goes through its own web app (see the
-`SCRIPT__Users__Notice_Send` repo; decision 0037). Required in production — `initEnv`
+The invitation of a new user and the notice of an e-mail change (#770) go through
+their own web app (see the `SCRIPT__Users__Notice_Send` repo; decision 0037). Required in production — `initEnv`
 fails at boot without it. `GAS_USERS_NOTICE_SECRET` must equal the script's
 `OWN_SECRET` property.
 
