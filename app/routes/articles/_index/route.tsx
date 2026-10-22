@@ -15,7 +15,6 @@ import { Hyperlink } from '~/components/hyperlink'
 import { NavRow } from '~/components/nav-row'
 import { Page } from '~/components/page'
 import { Pagination } from '~/components/pagination'
-import { Paragraph } from '~/components/paragraph'
 import { PostContentLink } from '~/components/post-content-link'
 import type { Route } from './+types/route'
 
@@ -93,13 +92,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       />
 
       <Callout>
-        <Paragraph>
-          Starší články si můžete přečíst na platformě{' '}
-          <Hyperlink href={'https://medium.com/vednemesicnik'}>
-            Medium
-          </Hyperlink>
-          .
-        </Paragraph>
+        Starší články si můžete přečíst na platformě{' '}
+        <Hyperlink href={'https://medium.com/vednemesicnik'}>Medium</Hyperlink>.
       </Callout>
     </Page>
   )

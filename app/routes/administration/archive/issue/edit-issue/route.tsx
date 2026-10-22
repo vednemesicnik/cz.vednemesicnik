@@ -995,16 +995,18 @@ export default function RouteComponent({
           (26m; copy rvp9ojsm). */}
       {isDeleted && (
         <Callout className={styles.deletedWarning} tone={'warning'}>
-          <p className={styles.deletedTitle}>
-            Údaje čísla zůstaly jen v tomto editoru.
-          </p>
-          <p className={styles.deletedAdvice}>
-            Než stránku obnovíte, opustíte nebo editor zavřete, poznamenejte si
-            je.
-          </p>
-          <p className={styles.deletedAdvice}>
-            Soubory PDF a obálky byly smazány.
-          </p>
+          <div className={styles.deletedContent}>
+            <p className={styles.deletedTitle}>
+              Údaje čísla zůstaly jen v tomto editoru.
+            </p>
+            <p className={styles.deletedAdvice}>
+              Než stránku obnovíte, opustíte nebo editor zavřete, poznamenejte
+              si je.
+            </p>
+            <p className={styles.deletedAdvice}>
+              Soubory PDF a obálky byly smazány.
+            </p>
+          </div>
         </Callout>
       )}
 

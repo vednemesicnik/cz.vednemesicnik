@@ -1,12 +1,16 @@
+/* Built like the card and the state tag: a tinted fill, a 1px border in the
+   tone and --radius-lg, no leading bar and no shadow (rmridl1f). */
 .callout {
   @layer component {
-    background: light-dark(#eff6ff, #1e3a5f);
-    border-inline-start: 4px solid var(--info);
-    /*border-radius: 0 var(--radius-lg) var(--radius-lg) 0;*/
-    box-shadow: var(--shadow-sm);
+    background: var(--callout-info-bg);
+    border: 1px solid var(--callout-info-border);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
     margin-block: 2rem;
-    padding-block: 1rem;
-    padding-inline: 1rem;
+    padding-block: 12px;
+    padding-inline: 16px;
     width: 100%;
 
     /* An outline button on the tint gets its own fill and a 3 : 1 border
@@ -19,20 +23,57 @@
 .callout.success {
   @layer variant {
     background: var(--callout-success-bg);
-    border-inline-start-color: var(--success);
+    border-color: var(--callout-success-border);
   }
 }
 
 .callout.warning {
   @layer variant {
     background: var(--callout-warning-bg);
-    border-inline-start-color: var(--warning);
+    border-color: var(--callout-warning-border);
   }
 }
 
 .callout.error {
   @layer variant {
     background: var(--callout-error-bg);
-    border-inline-start-color: var(--error);
+    border-color: var(--callout-error-border);
+  }
+}
+
+.callout.hasIcon {
+  @layer variant {
+    display: flex;
+    align-items: start;
+    gap: 8px;
+  }
+}
+
+/* 16 px, centred on the first line however the text wraps. The icon is
+   another component, so its restyling sits in the variant layer. */
+.icon {
+  @layer variant {
+    flex-shrink: 0;
+    font-size: 16px;
+    margin-block-start: calc((1lh - 1em) / 2);
+  }
+}
+
+.callout.warning .icon {
+  @layer variant {
+    color: var(--callout-warning-icon);
+  }
+}
+
+.callout.error .icon {
+  @layer variant {
+    color: var(--callout-error-icon);
+  }
+}
+
+.body {
+  @layer component {
+    flex: 1;
+    min-width: 0;
   }
 }

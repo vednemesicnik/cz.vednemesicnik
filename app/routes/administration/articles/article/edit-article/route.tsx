@@ -1182,17 +1182,19 @@ export default function RouteComponent({
           rvp9ojsm). */}
       {isDeleted && hasText && (
         <Callout className={styles.unsentWarning} tone={'warning'}>
-          <p className={styles.unsentTitle}>
-            Text článku zůstal jen v tomto editoru.
-          </p>
-          <div className={styles.unsentCopy}>
-            <CopyArticleTextButton getContent={getContent} />
-            <CopyArticleTextHint />
+          <div className={styles.unsentContent}>
+            <p className={styles.unsentTitle}>
+              Text článku zůstal jen v tomto editoru.
+            </p>
+            <div className={styles.unsentCopy}>
+              <CopyArticleTextButton getContent={getContent} />
+              <CopyArticleTextHint />
+            </div>
+            <p className={styles.unsentAdvice}>
+              Než stránku obnovíte, opustíte nebo editor zavřete, zkopírujte si
+              text článku.
+            </p>
           </div>
-          <p className={styles.unsentAdvice}>
-            Než stránku obnovíte, opustíte nebo editor zavřete, zkopírujte si
-            text článku.
-          </p>
         </Callout>
       )}
 
@@ -1200,17 +1202,19 @@ export default function RouteComponent({
           (24h; copy xtmvu5sj). */}
       {holdLoss?.hasUnsentChanges && !isDeleted && (
         <Callout className={styles.unsentWarning} tone={'warning'}>
-          <p className={styles.unsentTitle}>
-            Některé změny se nestihly uložit.
-          </p>
-          <div className={styles.unsentCopy}>
-            <CopyArticleTextButton getContent={getContent} />
-            <CopyArticleTextHint />
+          <div className={styles.unsentContent}>
+            <p className={styles.unsentTitle}>
+              Některé změny se nestihly uložit.
+            </p>
+            <div className={styles.unsentCopy}>
+              <CopyArticleTextButton getContent={getContent} />
+              <CopyArticleTextHint />
+            </div>
+            <p className={styles.unsentAdvice}>
+              Než stránku obnovíte, opustíte, editor zavřete nebo budete
+              pokračovat v úpravě, zkopírujte si text článku.
+            </p>
           </div>
-          <p className={styles.unsentAdvice}>
-            Než stránku obnovíte, opustíte, editor zavřete nebo budete
-            pokračovat v úpravě, zkopírujte si text článku.
-          </p>
         </Callout>
       )}
 
