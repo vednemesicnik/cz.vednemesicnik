@@ -40,6 +40,7 @@ import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
 import { getStateFilter } from '~/utils/get-state-filter'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
@@ -196,7 +197,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
         </ListEmptyCard>
       ) : (
-        <AdminTable pending={pending} stickyHeader={true}>
+        <AdminTable
+          columnsClassName={styles.columns}
+          pending={pending}
+          stickyHeader={true}
+        >
           <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
