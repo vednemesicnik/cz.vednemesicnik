@@ -7,6 +7,8 @@ type Item = {
  * The names of a row's categories or tags, the filtered ones first, so the row
  * shows why it is in the list (22a); the rest keep their order.
  *
+ * @param items - The row's categories or tags, in the order the loader read
+ *   them (alphabetical).
  * @param selectedSlugs - The slugs the list is filtered by, or `undefined`
  *   when it isn't.
  * @returns The names, filtered first.
