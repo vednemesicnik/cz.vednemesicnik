@@ -144,13 +144,19 @@ const TOKEN_GROUPS: TokenGroup[] = [
     ],
   },
   {
-    description: 'Podklady upozornění (callout).',
+    description: 'Podklady, rámečky a ikony upozornění (callout, rmridl1f).',
     title: 'Upozornění',
     tokens: [
       'callout-info-bg',
       'callout-success-bg',
       'callout-warning-bg',
       'callout-error-bg',
+      'callout-info-border',
+      'callout-success-border',
+      'callout-warning-border',
+      'callout-error-border',
+      'callout-warning-icon',
+      'callout-error-icon',
     ],
   },
   {
