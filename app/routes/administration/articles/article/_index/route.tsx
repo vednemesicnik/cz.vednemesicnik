@@ -25,11 +25,13 @@ import { Hyperlink } from '~/components/hyperlink'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
+import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { useContentEvents } from '~/hooks/use-content-events'
 import { useRevalidateAt } from '~/hooks/use-revalidate-at'
+import { getOwnTabDeleteRefusal } from '~/utils/edit-hold/get-own-tab-delete-refusal'
 import { ArticleChangeDateDialog } from '../../components/article-change-date-dialog'
 import { ArticleMissingDialog } from '../../components/article-missing-dialog'
 import { ArticlePublishDialog } from '../../components/article-publish-dialog'
@@ -69,6 +71,7 @@ export default function RouteComponent({
     heldByName,
     heldUntil,
     isApprover,
+    isHeldInOwnTab,
     isOwnContent,
     missingBeforePublish,
     submission,
@@ -88,6 +91,7 @@ export default function RouteComponent({
   const fetcher = useFetcher<typeof articleAction>({ key: fetcherKey })
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
+  const showToast = useToast()
 
   const headerActions = getHeaderActions({
     ...loaderData,
@@ -164,6 +168,9 @@ export default function RouteComponent({
       case 'change-date':
         return setIsChangeDateOpen(true)
       case 'delete':
+        // One's own editor in another tab: the delete waits, without asking
+        // first (23g, 26i; 0036). The server refuses it again in its write.
+        if (isHeldInOwnTab) return showToast(getOwnTabDeleteRefusal('article'))
         return openDialog()
       case 'edit':
       case 'take-over':

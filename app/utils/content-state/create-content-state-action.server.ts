@@ -62,6 +62,8 @@ type ContentStateActionResult = {
   intent: string
   missing: string[]
   heldByName?: string
+  /** The refusal came from one's own editor in another tab (a delete, 0036). */
+  isHeldInOwnTab?: boolean
 }
 
 const parsePublishedAt = (value: FormDataEntryValue | null) =>
@@ -79,7 +81,8 @@ const parsePublishDate = (formData: FormData) =>
  *
  * @returns `{ intent, missing }` so the page can toast or list what blocks a
  *   publish or a submission (23h), and `heldByName` when the content is held by
- *   someone else and nothing changed (07g, 23g) — returned, not thrown, so the
+ *   someone else and nothing changed (07g, 23g), with `isHeldInOwnTab` when a
+ *   delete waited for one's own other tab (0036) — returned, not thrown, so the
  *   page's fetcher stays out of the error boundary; a delete that requested it
  *   redirects instead.
  */
@@ -96,11 +99,16 @@ export const runContentStateAction = async (
   try {
     return await dispatchContentStateIntent(request, options, formData, intent)
   } catch (error) {
-    const heldByName = readEditHeldRefusal(error)
+    const refusal = readEditHeldRefusal(error)
 
-    if (heldByName === null) throw error
+    if (refusal === null) throw error
 
-    return { heldByName, intent, missing: [] }
+    return {
+      heldByName: refusal.heldByName,
+      intent,
+      isHeldInOwnTab: refusal.isOwnOtherTab,
+      missing: [],
+    }
   }
 }
 

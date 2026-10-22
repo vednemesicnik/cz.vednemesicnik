@@ -9,6 +9,7 @@ import { articleContentStateHandlers } from './content-state-handlers.server'
 // nested relation writes).
 const {
   withAuthorPermissionMock,
+  articleDeleteMock,
   articleFindUniqueMock,
   articleFindUniqueOrThrowMock,
   articleUpdateMock,
@@ -17,6 +18,7 @@ const {
   recordContentLogMock,
   reviewFindFirstMock,
 } = vi.hoisted(() => ({
+  articleDeleteMock: vi.fn(),
   articleFindUniqueMock: vi.fn(),
   articleFindUniqueOrThrowMock: vi.fn(),
   articleUpdateMock: vi.fn(),
@@ -26,6 +28,15 @@ const {
   reviewFindFirstMock: vi.fn(),
   withAuthorPermissionMock: vi.fn(),
 }))
+
+// A delete runs inside a transaction that also removes the PageSEO row.
+const transactionClient = {
+  article: {
+    delete: articleDeleteMock,
+    findUniqueOrThrow: vi.fn().mockResolvedValue({ slug: null }),
+  },
+  pageSEO: { deleteMany: vi.fn() },
+}
 
 // The content log has its own tests; here it only must not reach Prisma.
 vi.mock('~/utils/content-log/record-content-log.server', () => ({
@@ -48,6 +59,9 @@ vi.mock(
 
 vi.mock('~/utils/db.server', () => ({
   prisma: {
+    $transaction: (
+      callback: (client: typeof transactionClient) => Promise<unknown>,
+    ) => callback(transactionClient),
     article: {
       findUnique: articleFindUniqueMock,
       findUniqueOrThrow: articleFindUniqueOrThrowMock,
@@ -274,5 +288,93 @@ describe('articleContentStateHandlers — the edit hold (07g, decision 0019)', (
       }),
     ).rejects.toMatchObject({ data: { heldByName: 'Jakub Novák' } })
     expect(recordContentLogMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('articleContentStateHandlers — a delete waits for every editor (0036)', () => {
+  const draftTarget = { authorIds: ['author-1'], state: 'draft' as const }
+
+  beforeEach(() => {
+    articleFindUniqueOrThrowMock.mockResolvedValue({ submittedAt: null })
+    // Runs the row write the image clean-up wraps.
+    deleteRowWithImagesMock.mockImplementation(
+      (_findImageIds: unknown, deleteRow: () => Promise<unknown>) =>
+        deleteRow(),
+    )
+  })
+
+  test('the delete repeats “the hold is free”, one’s own hold included', async () => {
+    articleDeleteMock.mockResolvedValue({ id: 'a1' })
+
+    await articleContentStateHandlers.delete(request, {
+      id: 'a1',
+      target: draftTarget,
+    })
+
+    expect(articleDeleteMock).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          {
+            OR: [
+              { heldByAuthorId: null },
+              { heldUntil: null },
+              { heldUntil: { lte: expect.any(Date) } },
+            ],
+          },
+        ],
+        id: 'a1',
+      },
+    })
+  })
+
+  test('one’s own editor in another tab refuses it, saying so', async () => {
+    articleDeleteMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    articleFindUniqueMock.mockResolvedValue({
+      heldByAuthor: { name: 'Jakub Novák' },
+      heldByAuthorId: 'author-1',
+      heldByTabId: 'tab-1',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
+    await expect(
+      articleContentStateHandlers.delete(request, {
+        id: 'a1',
+        target: draftTarget,
+      }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Jakub Novák', isOwnOtherTab: true },
+      init: { status: 409 },
+    })
+  })
+
+  test('someone else’s editor refuses it as before', async () => {
+    articleDeleteMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    articleFindUniqueMock.mockResolvedValue({
+      heldByAuthor: { name: 'Marie Horáková' },
+      heldByAuthorId: 'author-2',
+      heldByTabId: 'tab-2',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
+    await expect(
+      articleContentStateHandlers.delete(request, {
+        id: 'a1',
+        target: draftTarget,
+      }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Marie Horáková', isOwnOtherTab: false },
+    })
   })
 })

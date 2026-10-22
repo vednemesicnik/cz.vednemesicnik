@@ -25,11 +25,13 @@ import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
+import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { useContentEvents } from '~/hooks/use-content-events'
 import { useRevalidateAt } from '~/hooks/use-revalidate-at'
+import { getOwnTabDeleteRefusal } from '~/utils/edit-hold/get-own-tab-delete-refusal'
 
 import { IssueMissingDialog } from '../../components/issue-missing-dialog'
 import { IssueStateDialog } from '../../components/issue-state-dialog'
@@ -61,6 +63,7 @@ export default function RouteComponent({
     heldByName,
     heldUntil,
     isApprover,
+    isHeldInOwnTab,
     isOwnContent,
     issue,
     missingBeforePublish,
@@ -81,6 +84,7 @@ export default function RouteComponent({
   const fetcher = useFetcher<typeof issueAction>({ key: fetcherKey })
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
+  const showToast = useToast()
   const { closeMissingList, missingList, showMissingList } =
     useContentActionResult(fetcher.data, { heldSubject: 'číslo' })
 
@@ -128,6 +132,9 @@ export default function RouteComponent({
       case 'archive':
         return setStateDialog(headerAction)
       case 'delete':
+        // One's own editor in another tab: the delete waits, without asking
+        // first (23g, 26i; 0036). The server refuses it again in its write.
+        if (isHeldInOwnTab) return showToast(getOwnTabDeleteRefusal('issue'))
         return openDialog()
       case 'edit':
       case 'take-over':

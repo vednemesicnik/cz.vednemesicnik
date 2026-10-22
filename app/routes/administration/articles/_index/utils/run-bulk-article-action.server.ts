@@ -104,14 +104,16 @@ export const runBulkArticleAction = async (
       isApprover,
     })
 
-    // Someone else edits it: the action waits (07g, 22f).
-    const isHeldByOther =
-      getEditHoldStatus(article, {
-        authorId: context.authorId,
-        now: new Date(),
-      }) === 'other'
+    // Someone else edits it: the action waits (07g, 22f). A delete waits for
+    // one's own other tab too (decision 0036).
+    const holdStatus = getEditHoldStatus(article, {
+      authorId: context.authorId,
+      now: new Date(),
+    })
+    const isHeld =
+      action === 'delete' ? holdStatus !== 'free' : holdStatus === 'other'
 
-    if (!bulkActions.includes(action) || isHeldByOther) {
+    if (!bulkActions.includes(action) || isHeld) {
       skippedCount += 1
       continue
     }

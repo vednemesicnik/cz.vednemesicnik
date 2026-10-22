@@ -236,11 +236,47 @@ describe('runBulkArticleAction — the edit hold (07g, 22f)', () => {
     expect(result).toMatchObject({ processedCount: 1, skippedCount: 1 })
   })
 
+  test('skips a delete one’s own other tab holds, archiving it still goes (0036)', async () => {
+    getAuthorPermissionContextMock.mockResolvedValue({
+      authorId: 'contributor',
+      can: () => ({ hasAny: true, hasOwn: true, hasPermission: true }),
+      roleLevel: 1,
+    })
+    findManyMock.mockResolvedValue([
+      article({ id: 'own-held', isHeld: true, state: 'draft' }),
+    ])
+
+    const deleted = await runBulkArticleAction(request, {
+      action: 'delete',
+      ids: ['own-held'],
+    })
+
+    expect(deleteMock).not.toHaveBeenCalled()
+    expect(deleted).toMatchObject({ processedCount: 0, skippedCount: 1 })
+
+    findManyMock.mockResolvedValue([
+      article({ id: 'own-held', isHeld: true, state: 'published' }),
+    ])
+
+    const archived = await runBulkArticleAction(request, {
+      action: 'archive',
+      ids: ['own-held'],
+    })
+
+    expect(archiveMock).toHaveBeenCalledOnce()
+    expect(archived).toMatchObject({ processedCount: 1, skippedCount: 0 })
+  })
+
   test('counts a transition its own write refused as skipped', async () => {
     findManyMock.mockResolvedValue([
       article({ id: 'taken-meanwhile', state: 'draft' }),
     ])
-    deleteMock.mockRejectedValue(createEditHeldRefusal('Jakub Novák'))
+    deleteMock.mockRejectedValue(
+      createEditHeldRefusal({
+        heldByName: 'Jakub Novák',
+        isOwnOtherTab: false,
+      }),
+    )
 
     const result = await runBulkArticleAction(request, {
       action: 'delete',

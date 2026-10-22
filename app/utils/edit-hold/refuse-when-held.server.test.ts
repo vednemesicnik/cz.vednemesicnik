@@ -20,11 +20,14 @@ describe('refuseWhenHeld', () => {
   test('a write someone else’s hold stopped becomes the held refusal', async () => {
     const refusal = await refuseWhenHeld(
       () => Promise.reject(notFound()),
-      async () => 'Jakub Novák',
+      async () => ({ heldByName: 'Jakub Novák', isOwnOtherTab: false }),
     ).catch((error: unknown) => error)
 
     expect(refusal).toMatchObject({ init: { status: 409 } })
-    expect(readEditHeldRefusal(refusal)).toBe('Jakub Novák')
+    expect(readEditHeldRefusal(refusal)).toEqual({
+      heldByName: 'Jakub Novák',
+      isOwnOtherTab: false,
+    })
   })
 
   test('a hold that ended before the read-back: the write runs once more', async () => {
@@ -49,10 +52,10 @@ describe('refuseWhenHeld', () => {
     ).rejects.toBe(missing)
 
     const failure = new Error('disk full')
-    const findHeldByName = vi.fn()
+    const findRefusal = vi.fn()
     await expect(
-      refuseWhenHeld(() => Promise.reject(failure), findHeldByName),
+      refuseWhenHeld(() => Promise.reject(failure), findRefusal),
     ).rejects.toBe(failure)
-    expect(findHeldByName).not.toHaveBeenCalled()
+    expect(findRefusal).not.toHaveBeenCalled()
   })
 })

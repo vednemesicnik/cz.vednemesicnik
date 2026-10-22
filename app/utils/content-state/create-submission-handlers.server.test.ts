@@ -121,7 +121,10 @@ describe('createSubmissionHandlers — an entity without a completeness check', 
     const config = createConfig()
     config.loadSubmissionState.mockResolvedValue({ ...draft, submittedAt })
     config.clearSubmission.mockRejectedValue(
-      createEditHeldRefusal('Marie Horáková'),
+      createEditHeldRefusal({
+        heldByName: 'Marie Horáková',
+        isOwnOtherTab: false,
+      }),
     )
 
     await expect(
