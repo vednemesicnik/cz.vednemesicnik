@@ -142,4 +142,21 @@ describe('sendUsersNotice', () => {
     expect(fetchMock).not.toHaveBeenCalled()
     expect(console.info).toHaveBeenCalledOnce()
   })
+
+  test('prints the new address and who changed it for an e-mail change notice', async () => {
+    delete process.env.GAS_USERS_NOTICE_URL
+
+    await expect(
+      sendUsersNotice({
+        changedByName: 'Petr Dvořák',
+        email: 'old@local.dev',
+        kind: 'email-change-notice',
+        newEmail: 'new@local.dev',
+      }),
+    ).resolves.toBe(true)
+
+    const [message] = vi.mocked(console.info).mock.calls[0]
+    expect(message).toContain('email-change-notice for old@local.dev')
+    expect(message).toContain('new@local.dev by Petr Dvořák')
+  })
 })

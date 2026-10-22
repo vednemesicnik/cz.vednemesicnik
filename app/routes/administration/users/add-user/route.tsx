@@ -47,7 +47,8 @@ export default function RouteComponent({
       return !field.startsWith('csrf')
     },
     shouldRevalidate: 'onBlur',
-    shouldValidate: 'onSubmit',
+    // The e-mail's domain and @ show as the field is left (design 28f).
+    shouldValidate: 'onBlur',
   })
 
   const isLoadingOrSubmitting = state !== 'idle'
