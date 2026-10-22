@@ -28,8 +28,10 @@ import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ButtonLink } from '~/components/button-link'
+import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
 import { Form } from '~/components/form'
@@ -207,6 +209,8 @@ export default function RouteComponent({
     editHold.state.status === 'lost' || editHold.state.status === 'changed'
       ? editHold.state
       : null
+  // The issue is gone for good (26m, decision 0036).
+  const isDeleted = editHold.state.status === 'deleted'
   const readOnlyNotice = getReadOnlyNotice(editHold.state, 'issue')
   // Changed meanwhile, and free to edit again here (24i).
   const canReloadChanged =
@@ -215,9 +219,12 @@ export default function RouteComponent({
     editHold.state.isEditable
   const [holdLoss, setHoldLoss] = useState<HoldLoss | null>(null)
 
-  const closeHref = issue.isEmptyDraft
-    ? href('/administration/archive')
-    : href('/administration/archive/:issueId', { issueId: params.issueId })
+  const listHref = href('/administration/archive')
+  // Deleted, the detail is gone too (26m).
+  const closeHref =
+    issue.isEmptyDraft || isDeleted
+      ? listHref
+      : href('/administration/archive/:issueId', { issueId: params.issueId })
 
   const loadedValues: FieldValues = {
     authorId: issue.authorId,
@@ -276,6 +283,12 @@ export default function RouteComponent({
       response = await fetch(saveAction, { body: formData, method: 'POST' })
     } catch {
       return 'offline'
+    }
+
+    // Deleted meanwhile (0036): the hold learns it and the editor only reads.
+    if (response.status === 410) {
+      await editHold.recheck()
+      return 'failed'
     }
 
     // An expired session redirects to the sign-in page.
@@ -422,6 +435,24 @@ export default function RouteComponent({
   useEffect(() => {
     if (lostStatus !== null) void handleHoldLoss()
   }, [lostStatus])
+
+  // Deleted: nothing more goes out, and the dialog says so every time, with
+  // the details that stayed unsent (26m). A file upload under way fails on its
+  // own: its cancel would reload the issue, which is gone.
+  const [deletion, setDeletion] = useState<{
+    isDialogOpen: boolean
+    unsentLabels: string[]
+  } | null>(null)
+  const handleDeletion = useEffectEvent(async () => {
+    const hasUnsentChanges = await autosave.stop()
+    setDeletion({
+      isDialogOpen: true,
+      unsentLabels: hasUnsentChanges ? getUnsentLabels() : [],
+    })
+  })
+  useEffect(() => {
+    if (isDeleted) void handleDeletion()
+  }, [isDeleted])
   const closeHoldLossDialog = () =>
     setHoldLoss((current) =>
       current === null ? null : { ...current, dialog: null },
@@ -603,7 +634,7 @@ export default function RouteComponent({
   }
 
   const isLocked = !isHolding
-  const isReadOnly = lostHold !== null
+  const isReadOnly = lostHold !== null || isDeleted
 
   if (!isLocked) {
     shownValuesRef.current = {
@@ -667,7 +698,10 @@ export default function RouteComponent({
   // The only sign of saving, without a toast (24e); while only reading, who
   // edits it now, or that it is free again (24h).
   const renderSaveLine = () =>
-    lostHold !== null && lostHold.holder !== null ? (
+    // The last line, with nothing to offer (24e, 26m).
+    isDeleted ? (
+      <p className={styles.saveLine}>smazáno</p>
+    ) : lostHold !== null && lostHold.holder !== null ? (
       <p className={styles.saveLine}>
         {formatEditHoldLine({
           holderName: lostHold.holder.name,
@@ -933,7 +967,10 @@ export default function RouteComponent({
         <div className={styles.title}>
           <div className={styles.titleLine}>
             <PageTitle>{title}</PageTitle>
-            <StatusTag state={issue.submission?.state ?? 'draft'} />
+            {/* A deleted issue has no state (26m). */}
+            {!isDeleted && (
+              <StatusTag state={issue.submission?.state ?? 'draft'} />
+            )}
           </div>
           {renderSaveLine()}
         </div>
@@ -951,7 +988,48 @@ export default function RouteComponent({
         <AdminParagraph>{readOnlyNotice}</AdminParagraph>
       )}
 
+      {/* Deleted, the details are only here; the files went with the issue
+          (26m; copy rvp9ojsm). */}
+      {isDeleted && (
+        <Callout className={styles.deletedWarning} tone={'warning'}>
+          <p className={styles.deletedTitle}>
+            Údaje čísla zůstaly jen v tomto editoru.
+          </p>
+          <p className={styles.deletedAdvice}>
+            Než stránku obnovíte, opustíte nebo editor zavřete, poznamenejte si
+            je.
+          </p>
+          <p className={styles.deletedAdvice}>
+            Soubory PDF a obálky byly smazány.
+          </p>
+        </Callout>
+      )}
+
       {pendingLeave !== null && renderLeaveDialog(pendingLeave)}
+
+      {deletion?.isDialogOpen && (
+        <ContentDeletedDialog
+          description={
+            'Číslo už nelze upravovat. Údaje zůstanou vidět jen do obnovení stránky, odchodu nebo zavření editoru. Soubory PDF a obálky byly smazány.'
+          }
+          onOpenList={() => navigate(listHref)}
+          onStay={() =>
+            setDeletion((current) =>
+              current === null ? null : { ...current, isDialogOpen: false },
+            )
+          }
+          title={'Číslo bylo smazáno'}
+        >
+          {deletion.unsentLabels.length > 0 && (
+            <AdminModalDescription>
+              {`Některé změny údajů se nestihly uložit. ${formatUnsavedIssueFields(deletion.unsentLabels)}`}
+            </AdminModalDescription>
+          )}
+          <AdminModalDescription>
+            Před odchodem na seznam si poznamenejte údaje.
+          </AdminModalDescription>
+        </ContentDeletedDialog>
+      )}
 
       {holdLoss?.dialog === 'taken' && (
         <HoldTakenDialog

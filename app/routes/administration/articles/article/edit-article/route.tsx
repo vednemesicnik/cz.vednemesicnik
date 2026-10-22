@@ -41,6 +41,7 @@ import { ChipInput } from '~/components/chip-input'
 import { CompactImageTile } from '~/components/compact-image-tile'
 import { CompactUploadStatus } from '~/components/compact-upload-status'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
@@ -106,7 +107,7 @@ export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-// What the save route answers (decision 0022).
+// What the save route answers (decision 0022); `deleted` comes as a 410.
 type SaveResponse =
   | { status: 'saved'; updatedAt: string; slugSuggestion: string | null }
   | { status: 'not-held'; heldByName: string | null }
@@ -201,6 +202,8 @@ export default function RouteComponent({
     editHold.state.status === 'lost' || editHold.state.status === 'changed'
       ? editHold.state
       : null
+  // The article is gone for good (24k, decision 0036).
+  const isDeleted = editHold.state.status === 'deleted'
   const readOnlyNotice = getReadOnlyNotice(editHold.state)
   // Changed meanwhile, and free to edit again here (24i).
   const canReloadChanged =
@@ -209,11 +212,14 @@ export default function RouteComponent({
     editHold.state.isEditable
   const [holdLoss, setHoldLoss] = useState<HoldLoss | null>(null)
 
-  const closeHref = article.isEmptyDraft
-    ? href('/administration/articles')
-    : href('/administration/articles/:articleId', {
-        articleId: params.articleId,
-      })
+  const listHref = href('/administration/articles')
+  // Deleted, the detail is gone too (24k).
+  const closeHref =
+    article.isEmptyDraft || isDeleted
+      ? listHref
+      : href('/administration/articles/:articleId', {
+          articleId: params.articleId,
+        })
 
   const [form, fields] = useForm({
     defaultValue: {
@@ -263,6 +269,12 @@ export default function RouteComponent({
       response = await fetch(saveAction, { body: formData, method: 'POST' })
     } catch {
       return 'offline'
+    }
+
+    // Deleted meanwhile (0036): the hold learns it and the editor only reads.
+    if (response.status === 410) {
+      await editHold.recheck()
+      return 'failed'
     }
 
     // An expired session redirects to the sign-in page.
@@ -338,6 +350,23 @@ export default function RouteComponent({
   useEffect(() => {
     if (lostStatus !== null) void handleHoldLoss()
   }, [lostStatus])
+
+  // Deleted: nothing more goes out, an upload under way ends, and the dialog
+  // says so every time (24k).
+  const [isDeletedDialogOpen, setIsDeletedDialogOpen] = useState(false)
+  // Read from the editor's own field: the form's value lags behind typing.
+  const [hasText, setHasText] = useState(false)
+  const handleDeletion = useEffectEvent(async () => {
+    for (const [id, tile] of gallery.tiles) {
+      if (isTileUploading(tile)) gallery.cancelUpload(id)
+    }
+    await autosave.stop()
+    setHasText(getContent().trim() !== '')
+    setIsDeletedDialogOpen(true)
+  })
+  useEffect(() => {
+    if (isDeleted) void handleDeletion()
+  }, [isDeleted])
   const closeHoldLossDialog = () =>
     setHoldLoss((current) =>
       current === null ? null : { ...current, dialog: null },
@@ -953,7 +982,7 @@ export default function RouteComponent({
   // Without the hold nothing can be changed (07g). Lost for good, the editor
   // also drops its toolbar and the buttons that would change something (24h).
   const isLocked = !isHolding
-  const isReadOnly = lostHold !== null
+  const isReadOnly = lostHold !== null || isDeleted
   // The text as the author sees it: the editor's own field, read at the click
   // (a disabled fieldset leaves it out of the form's data).
   const getContent = () => {
@@ -982,7 +1011,13 @@ export default function RouteComponent({
   // edits it now, or that it is free again (24h). The same line stands in the
   // header, in the phone's bar and over an open detail (24f).
   const renderSaveLine = (prefix?: string) =>
-    lostHold !== null && lostHold.holder !== null ? (
+    // The last line, with nothing to offer (24e, 24k).
+    isDeleted ? (
+      <p className={styles.saveLine}>
+        {prefix}
+        smazáno
+      </p>
+    ) : lostHold !== null && lostHold.holder !== null ? (
       <p className={styles.saveLine}>
         {prefix}
         {formatEditHoldLine({
@@ -1110,7 +1145,10 @@ export default function RouteComponent({
             <PageTitle>
               {isNewArticle ? 'Nový článek' : 'Úprava článku'}
             </PageTitle>
-            <StatusTag state={article.submission?.state ?? 'draft'} />
+            {/* A deleted article has no state (24k). */}
+            {!isDeleted && (
+              <StatusTag state={article.submission?.state ?? 'draft'} />
+            )}
           </div>
           <div className={styles.headerSaveLine}>
             {renderSaveLine(ownerPrefix)}
@@ -1135,6 +1173,24 @@ export default function RouteComponent({
 
       {readOnlyNotice !== null && (
         <AdminParagraph>{readOnlyNotice}</AdminParagraph>
+      )}
+
+      {/* Deleted, the text is only here, saved or not (24k; copy
+          rvp9ojsm). */}
+      {isDeleted && hasText && (
+        <Callout className={styles.unsentWarning} tone={'warning'}>
+          <p className={styles.unsentTitle}>
+            Text článku zůstal jen v tomto editoru.
+          </p>
+          <div className={styles.unsentCopy}>
+            <CopyArticleTextButton getContent={getContent} />
+            <CopyArticleTextHint />
+          </div>
+          <p className={styles.unsentAdvice}>
+            Než stránku obnovíte, opustíte nebo editor zavřete, zkopírujte si
+            text článku.
+          </p>
+        </Callout>
       )}
 
       {/* Stays until the editor closes: the only way back to the unsent text
@@ -1180,6 +1236,31 @@ export default function RouteComponent({
             </AdminModalDescription>
           )}
         </CancelUploadDialog>
+      )}
+
+      {isDeletedDialogOpen && (
+        <ContentDeletedDialog
+          description={
+            hasText
+              ? 'Článek už nelze upravovat. Text zůstal jen v tomto editoru. Při obnovení stránky, odchodu nebo zavření editoru se ztratí.'
+              : 'Článek už nelze upravovat.'
+          }
+          onOpenList={() => navigate(listHref)}
+          onStay={() => setIsDeletedDialogOpen(false)}
+          title={'Článek byl smazán'}
+        >
+          {hasText && (
+            <>
+              <div className={styles.holdTakenCopy}>
+                <CopyArticleTextButton getContent={getContent} />
+                <CopyArticleTextHint />
+              </div>
+              <AdminModalDescription>
+                Před odchodem na seznam si zkopírujte text článku.
+              </AdminModalDescription>
+            </>
+          )}
+        </ContentDeletedDialog>
       )}
 
       {holdLoss?.dialog === 'taken' && (

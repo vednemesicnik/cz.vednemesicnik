@@ -237,3 +237,31 @@
     color: var(--text-tertiary);
   }
 }
+
+/* Deleted: what the editor still shows is the only copy (26m). */
+.deletedWarning {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-block: 0;
+  }
+}
+
+.deletedTitle {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+}
+
+.deletedAdvice {
+  @layer route {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}
