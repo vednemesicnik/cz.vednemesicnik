@@ -92,7 +92,7 @@ export default function RouteComponent({
   )
 
   return (
-    <AdminPage>
+    <AdminPage measure={'text'}>
       <div className={styles.header}>
         <div className={styles.title}>
           <PageTitle>{user.author.name}</PageTitle>

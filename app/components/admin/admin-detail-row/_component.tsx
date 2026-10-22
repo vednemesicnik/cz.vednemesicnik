@@ -14,7 +14,7 @@ type Props = {
 /**
  * A row of an administration detail page (design bbih22nt): name · value ·
  * actions, with a hairline under it. The name stands above the value while
- * the section is narrower than 480 px.
+ * the section is narrower than 440 px.
  *
  * @param props.label - The name in the name column.
  * @param props.children - The value: a status, a note, a list.

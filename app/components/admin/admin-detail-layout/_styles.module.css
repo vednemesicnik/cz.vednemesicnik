@@ -16,12 +16,21 @@
   }
 }
 
-/* 480 px main + gap + right column = 820 px of container. Only a right column
-   with content (AdminDetailAside marks itself with data-column) earns one. */
+/* Only a right column with content (AdminDetailAside marks itself with
+   data-column) earns one. The columns narrow before they stack (8kd9crag):
+   from 732 px of container 440 px main + 32 + 260, from 900 px 560 px main
+   + 40 + 300. The page's block (AdministrationContent) caps the main column
+   at its measure. Every grid nested in the main column holds at 440 px. */
 .layout:has(> [data-column="aside"]:not(:empty)) {
   @layer variant {
-    @container (width >= 820px) {
+    @container (width >= 732px) {
+      grid-template-columns: minmax(0, 1fr) var(--detail-aside-width-narrow);
+      column-gap: var(--detail-column-gap-narrow);
+    }
+
+    @container (width >= 900px) {
       grid-template-columns: minmax(0, 1fr) var(--detail-aside-width);
+      column-gap: var(--detail-column-gap);
     }
   }
 }

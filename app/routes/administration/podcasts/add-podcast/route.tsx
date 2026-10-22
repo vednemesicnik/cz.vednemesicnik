@@ -68,7 +68,7 @@ export default function RouteComponent({
   const canSubmit = !isLoadingOrSubmitting && form.valid
 
   return (
-    <AdminPage>
+    <AdminPage measure={'form'}>
       <PageTitle>Nový podcast</PageTitle>
 
       <Form

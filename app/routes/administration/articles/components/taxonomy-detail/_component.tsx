@@ -139,7 +139,7 @@ export const TaxonomyDetail = ({
   }
 
   return (
-    <AdminPage>
+    <AdminPage measure={'text'}>
       <header className={styles.header}>
         <div className={styles.title}>
           <div className={styles.titleLine}>
