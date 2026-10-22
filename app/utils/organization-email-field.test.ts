@@ -23,7 +23,7 @@ describe('organizationEmailField', () => {
   })
 
   test('refuses another domain with the 28f message', () => {
-    expect(getMessages('jakub.novak@example.com')).toEqual([
+    expect(getMessages('jakub.novak@local.dev')).toEqual([
       'Zadejte adresu s doménou @vednemesicnik.cz.',
     ])
   })

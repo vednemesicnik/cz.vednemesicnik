@@ -27,7 +27,7 @@ describe('edit-user schema', () => {
   test('refuses another domain with the 28f message', () => {
     const result = schema.safeParse({
       ...validUser,
-      email: 'jakub.novak@example.com',
+      email: 'jakub.novak@local.dev',
     })
 
     expect(result.success).toBe(false)
