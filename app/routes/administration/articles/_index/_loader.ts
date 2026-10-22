@@ -33,6 +33,7 @@ import type { Route } from './+types/route'
 import { PINNED_ROWS_PARAM } from './pinned-rows'
 import { SORT_KEYS, type SortKey } from './sort'
 import { getBulkActions } from './utils/get-bulk-actions'
+import { orderFilteredFirst } from './utils/order-filtered-first'
 
 const PAGE_SIZE = 20
 
@@ -198,6 +199,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         slug: true,
         state: true,
         submittedAt: true,
+        // Their own column on a wide table (31a).
+        tags: {
+          orderBy: { name: 'asc' },
+          select: { name: true, slug: true },
+        },
         title: true,
         updatedAt: true,
       },
@@ -278,14 +284,13 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       isHeldByOther,
     })
 
-    // A filtered category first, so the row shows why it is there; else the
-    // alphabetical first (22a).
-    const isFilteredCategory = (category: { slug: string }) =>
-      filters.category?.includes(category.slug) ?? false
-    const categoryNames = [
-      ...article.categories.filter(isFilteredCategory),
-      ...article.categories.filter((category) => !isFilteredCategory(category)),
-    ].map((category) => category.name)
+    // A filtered category or tag first, so the row shows why it is there;
+    // else alphabetical (22a, 31a).
+    const categoryNames = orderFilteredFirst(
+      article.categories,
+      filters.category,
+    )
+    const tagNames = orderFilteredFirst(article.tags, filters.tag)
 
     const submission = flags.submission?.state ?? null
     const rowActions = getRowActions({
@@ -344,6 +349,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       publishedAt: article.publishedAt?.toISOString() ?? null,
       slug: article.slug,
       state: flags.submission?.state ?? article.state,
+      tagNames,
       title: article.title,
       updatedAt: formatNumericDate(article.updatedAt),
     }

@@ -52,7 +52,9 @@ type Props = {
 /**
  * A row of the article list (design 22a, 22b): the title opening the detail
  * with its first category, the author, the last update, the state tag with one
- * fact, and one action with the rest in „⋯“. Below 768 px it folds into three
+ * fact, and one action with the rest in „⋯“. From a 1280 px table the
+ * categories move from under the title into their own column, and from 1600 px
+ * the tags get one too (31a). Below 768 px it folds into three
  * lines — title, state, authors · categories — with the row action first in
  * „⋯“, and the whole row opens the detail (22g). A row someone else changed
  * while the list is open is tinted for a moment and says who changed it (22f);
@@ -184,6 +186,12 @@ export const ItemRow = ({
             </span>
           )}
         </span>
+      </TableCell>
+      <TableCell className={styles.categoriesCell}>
+        {article.categoryNames.join(', ')}
+      </TableCell>
+      <TableCell className={styles.tagsCell}>
+        {article.tagNames.join(', ')}
       </TableCell>
       {showAuthor && (
         <TableCell className={styles.wideOnly}>
