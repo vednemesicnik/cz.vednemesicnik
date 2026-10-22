@@ -24,6 +24,18 @@ describe('edit-user schema', () => {
     )
   })
 
+  test('refuses another domain with the 28f message', () => {
+    const result = schema.safeParse({
+      ...validUser,
+      email: 'jakub.novak@example.com',
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual([
+      'Zadejte adresu s doménou @vednemesicnik.cz.',
+    ])
+  })
+
   test('drops a submitted name and password (design 28f)', () => {
     const result = schema.safeParse({
       ...validUser,
