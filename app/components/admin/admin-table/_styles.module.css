@@ -60,6 +60,11 @@
       & :is(th, td) {
         width: auto;
         align-content: center;
+      }
+
+      /* A long word can't burst a track's minimum. Not in Akce, the last
+         cell: its dialogs and menus would inherit it. */
+      & :is(th, td):not(:last-child) {
         overflow-wrap: anywhere;
       }
 

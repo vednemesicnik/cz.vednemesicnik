@@ -17,7 +17,9 @@ type Props = {
  *
  * Below a 1280 px table the columns size themselves as a native table. From
  * 1280 px a table with `columnsClassName` lays out as a grid whose rows share
- * its tracks, so the list sets its widths by weight (design 31a).
+ * its tracks, so the list sets its widths by weight (design 31a). The wrapper
+ * is the `admin-table` inline-size container: a list's templates and cells
+ * query it by name, with literal widths.
  *
  * @param props.pending - Dims the table and shows a spinner during navigation.
  * @param props.stickyHeader - Sticks the header to the page where the table fits without sideways scroll (from 1024 px).

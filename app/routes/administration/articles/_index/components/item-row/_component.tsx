@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
@@ -190,7 +191,13 @@ export const ItemRow = ({
       <TableCell className={styles.categoriesCell}>
         {article.categoryNames.join(', ')}
       </TableCell>
-      <TableCell className={styles.tagsCell}>
+      {/* Secondary under the title's colour, unless the whole row is muted. */}
+      <TableCell
+        className={clsx(
+          styles.tagsCell,
+          article.state !== 'archived' && styles.tags,
+        )}
+      >
         {article.tagNames.join(', ')}
       </TableCell>
       {showAuthor && (

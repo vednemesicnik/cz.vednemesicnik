@@ -1,12 +1,15 @@
 /*
  * The wide table's columns (27b, 31a), read by AdminTable from a
- * 1280 px table: Název 3 and Vytvořeno 1 (min. 120); the checkbox, Stav
- * and Akce fixed.
+ * 1280 px table: Název 3 and Vytvořeno 1 (min. 120); the checkbox and
+ * Stav fixed. Akce is as wide as its buttons: the app has more of them
+ * than 27b draws.
  * Each track is the drawn width plus the cell's 12 px padding (14 px
  * at the row's ends).
  */
 .columns {
   @layer route {
-    grid-template-columns: 46px minmax(0, 3fr) minmax(132px, 1fr) 212px 164px;
+    grid-template-columns:
+      46px minmax(0, 3fr) minmax(132px, 1fr) 212px
+      max-content;
   }
 }

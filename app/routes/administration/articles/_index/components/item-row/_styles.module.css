@@ -58,11 +58,15 @@
 
 .tagsCell {
   @layer route {
-    color: var(--text-secondary);
-
     @container admin-table (width < 1600px) {
       display: none;
     }
+  }
+}
+
+.tags {
+  @layer route {
+    color: var(--text-secondary);
   }
 }
 
