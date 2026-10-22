@@ -148,17 +148,33 @@ LC_CTYPE=UTF-8 pbpaste | head -1
 
 ## 6. Report
 
-Where the files landed, what is on the clipboard and **which project's chat it goes into**, one
-line per question, and **the effort level to pick in the design chat**, with a one-line reason:
+**The report opens with one line of its own, bold and in capitals, before anything else** — the
+target project and the effort:
 
-- **medium** — the answer is decisions only: confirm, choose a variant, write a note.
-- **high** — the answer also has to draw or redraw a screen, change a component or a token in the
+```markdown
+**CÍL: APP PROJEKT · EFFORT: MEDIUM**
+**CÍL: DESIGN SYSTEM — ZDROJ · EFFORT: HIGH**
+```
+
+The target and the effort named in bold inside a sentence do not count: the person pasting reads
+this line and nothing else before switching chats. The effort comes from what the answer has to do:
+
+- **MEDIUM** — the answer is decisions only: confirm, choose a variant, write a note.
+- **HIGH** — the answer also has to draw or redraw a screen, change a component or a token in the
   design system, or split a document.
 
-Then **ask the user to confirm the paste** with `AskUserQuestion` (code, topic and target project
-in the question) — a plain report does not reach someone working on something else, a question does. A
-`reply` handed over the same way gets the same question. Then stop — the design chat is a separate
-conversation and this one does not wait for it.
+Under the line: where the files landed, what is on the clipboard, one line per question, and a
+one-line reason for the effort.
+
+Then **ask the user to confirm the paste** with `AskUserQuestion`. Its question text starts with
+the same `CÍL: … · EFFORT: …` line, then the code and the topic — a plain report does not reach
+someone working on something else, a question does. A `reply` handed over the same way gets the
+same line and the same question.
+
+**Two prompts for different projects go one at a time**: the second waits until the first is
+confirmed, and its line ends with `· POZOR, JINÝ PROJEKT NEŽ MINULE`.
+
+Then stop — the design chat is a separate conversation and this one does not wait for it.
 
 ## 7. `check` — read the answer back
 
