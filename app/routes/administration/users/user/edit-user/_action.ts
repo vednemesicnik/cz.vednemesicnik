@@ -1,3 +1,4 @@
+import type { SubmissionResult } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
 import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
@@ -13,9 +14,22 @@ import { getUserPermissionContext } from '~/utils/permissions/user/context/get-u
 import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
 
 import { schema } from './_schema'
+import { findEmailOwner } from './utils/find-email-owner.server'
+import { formatEmailTakenMessage } from './utils/format-email-taken-message'
 import { updateUser } from './utils/update-user'
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+type ActionData = {
+  emailOwner?: { name: string; userId: string }
+  submissionResult: SubmissionResult<string[]>
+}
+
+// Declared, because inference drops the taken-address branch: its data is a
+// subtype of the CSRF failure's, and TypeScript reduces the union to the latter.
+export const action = async ({
+  request,
+}: ActionFunctionArgs): Promise<
+  Response | ReturnType<typeof data<ActionData>>
+> => {
   const formData = await request.formData()
   const csrfFailure = await checkCSRF(formData, request)
   if (csrfFailure !== null) return csrfFailure
@@ -97,6 +111,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (!canEdit) {
     throw data(null, { status: 403 })
+  }
+
+  // A taken address is a field error naming the account (28e); the unique
+  // constraint in updateUser stays the fallback for a race.
+  const emailOwner = await findEmailOwner(submission.value)
+
+  if (emailOwner !== null) {
+    return data(
+      {
+        emailOwner,
+        submissionResult: submission.reply({
+          fieldErrors: { email: [formatEmailTakenMessage(emailOwner.name)] },
+        }),
+      },
+      { status: 400 },
+    )
   }
 
   await updateUser(submission.value)
