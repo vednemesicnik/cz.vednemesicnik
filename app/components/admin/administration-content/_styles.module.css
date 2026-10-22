@@ -8,3 +8,30 @@
     width: 100%;
   }
 }
+
+/* A detail or an editor (AdminPage with a measure) is one block with its
+   breadcrumbs: main column, gap and right column, centred in the area; the
+   free space splits on both sides (31b, 31c, 8kd9crag). */
+.page:has([data-measure]) {
+  @layer variant {
+    --detail-block-main-width: var(--detail-main-width);
+
+    justify-content: center;
+    grid-template-columns: minmax(
+        0,
+        calc(
+          var(--detail-block-main-width) +
+          var(--detail-column-gap) +
+          var(--detail-aside-width) +
+          2 *
+          var(--admin-page-side-padding)
+        )
+      );
+  }
+}
+
+.page:has([data-measure="form"]) {
+  @layer variant {
+    --detail-block-main-width: var(--editor-main-width);
+  }
+}

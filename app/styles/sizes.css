@@ -10,11 +10,15 @@
   /* The administration top bar and the menu's brand row, so nothing moves when
      the menu opens (tbi5qpq9): 12 px, a 30 px sm button, 12 px, the 1 px rule. */
   --top-bar-height: 55px;
-  /* The administration detail page (bbih22nt, o5ha28nz): main column, right
-     column, gap, name column. */
+  /* The administration detail page (bbih22nt, 8kd9crag): main column at the
+     text's measure or an editor's form's, right column, gap, name column; the
+     narrow right column and gap from 732 to 900 px of container. */
   --detail-main-width: 620px;
+  --editor-main-width: 640px;
   --detail-aside-width: 300px;
+  --detail-aside-width-narrow: 260px;
   --detail-column-gap: 40px;
+  --detail-column-gap-narrow: 32px;
   --detail-label-width: 160px;
   /* The administration page's side padding from 768 px (22a, 31); the page,
      its breadcrumbs and the footer share it. */

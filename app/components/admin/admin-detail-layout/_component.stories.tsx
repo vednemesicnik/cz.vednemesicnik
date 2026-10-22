@@ -51,7 +51,7 @@ const aside = (
   </AdminDetailAside>
 )
 
-// The right column stands beside the main one from 820 px of container.
+// The right column stands beside the main one from 900 px of container.
 export const Playground: Story = {
   args: {
     children: (
@@ -90,7 +90,8 @@ export const WithoutAside: Story = {
   ],
 }
 
-// Under 820 px the right column goes under the main one.
+// From 732 to 900 px the columns narrow (440 + 32 + 260); below, the right
+// column goes under the main one.
 export const Narrow: Story = {
   args: {
     children: (
