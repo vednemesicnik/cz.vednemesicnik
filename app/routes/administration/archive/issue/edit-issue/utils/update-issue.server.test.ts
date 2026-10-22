@@ -350,6 +350,20 @@ describe('updateIssue — who may save', () => {
     expect(mocks.transaction).not.toHaveBeenCalled()
   })
 
+  test('deleted between the check and the write: answers deleted (0036)', async () => {
+    mocks.transaction.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    mocks.issueFindUnique
+      .mockResolvedValueOnce(storedIssue)
+      .mockResolvedValueOnce(null)
+
+    expect(await updateIssue(request, options)).toEqual({ status: 'deleted' })
+  })
+
   test("refuses a Creator's other author", async () => {
     await expect(
       updateIssue(request, { ...options, authorId: 'author-2' }),
@@ -410,11 +424,11 @@ describe('updateIssue — who may save', () => {
     expect(savedData()).not.toHaveProperty('submittedAt')
   })
 
-  test('is a 404 for a missing issue', async () => {
+  test('answers a missing issue as deleted (0036)', async () => {
     mocks.issueFindUnique.mockResolvedValue(null)
 
-    await expect(updateIssue(request, options)).rejects.toMatchObject({
-      init: { status: 404 },
+    await expect(updateIssue(request, options)).resolves.toEqual({
+      status: 'deleted',
     })
   })
 })

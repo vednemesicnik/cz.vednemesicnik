@@ -4,7 +4,7 @@ import { buildNotHeldByOthersWhere } from '~/utils/edit-hold/build-not-held-by-o
 import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
 import { refuseWhenHeld } from '~/utils/edit-hold/refuse-when-held.server'
 
-import { findArticleHeldByName } from './find-article-held-by-name.server'
+import { findArticleHeldRefusal } from './find-article-held-refusal.server'
 import { getMissingArticleContent } from './get-missing-article-content'
 
 /**
@@ -25,7 +25,7 @@ export const articleSubmissionHandlers = createSubmissionHandlers({
           // Not while someone else edits it (decision 0019).
           where: { AND: [buildNotHeldByOthersWhere(authorId, new Date())], id },
         }),
-      () => findArticleHeldByName(id, authorId),
+      () => findArticleHeldRefusal(id, authorId),
     )
   },
   entity: 'article',
@@ -85,9 +85,9 @@ export const articleSubmissionHandlers = createSubmissionHandlers({
     })
 
     if (count === 0) {
-      const heldByName = await findArticleHeldByName(id, authorId)
+      const refusal = await findArticleHeldRefusal(id, authorId)
 
-      if (heldByName !== null) throw createEditHeldRefusal(heldByName)
+      if (refusal !== null) throw createEditHeldRefusal(refusal)
     }
 
     return count

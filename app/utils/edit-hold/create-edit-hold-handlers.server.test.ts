@@ -468,3 +468,41 @@ describe('createEditHoldHandlers — a page going away from an empty draft', () 
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 })
+
+describe('createEditHoldHandlers — deleted content (0036)', () => {
+  test('every operation on a missing row answers deleted, not a 404', async () => {
+    const config = createConfig(freeRow)
+    config.findHold.mockResolvedValue(null)
+    const handlers = createEditHoldHandlers(config)
+    const options = { id: 'a1', tabId: 'tab-1' }
+
+    await expect(handlers.take(request, options)).resolves.toEqual({
+      status: 'deleted',
+    })
+    await expect(handlers.renew(request, options)).resolves.toEqual({
+      status: 'deleted',
+    })
+    await expect(handlers.release(request, options)).resolves.toEqual({
+      status: 'deleted',
+    })
+    await expect(handlers.takeOver(request, options)).resolves.toEqual({
+      status: 'deleted',
+    })
+    expect(config.writeHold).not.toHaveBeenCalled()
+  })
+
+  test('a row deleted between the read and the write answers deleted', async () => {
+    const config = createConfig(heldBy('anna', 'tab-1', 'Anna Dvořáková'))
+    config.writeHold.mockResolvedValue(0)
+    config.findHold
+      .mockResolvedValueOnce(heldBy('anna', 'tab-1', 'Anna Dvořáková'))
+      .mockResolvedValueOnce(null)
+
+    await expect(
+      createEditHoldHandlers(config).renew(request, {
+        id: 'a1',
+        tabId: 'tab-1',
+      }),
+    ).resolves.toEqual({ status: 'deleted' })
+  })
+})

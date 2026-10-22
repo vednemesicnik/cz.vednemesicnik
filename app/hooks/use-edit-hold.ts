@@ -35,6 +35,11 @@ export type EditHoldState =
       isEditable: boolean
       awayMilliseconds: number
     }
+  /**
+   * The content is gone (24k, 26m; decision 0036). For good: the editor only
+   * reads and never asks for the hold again.
+   */
+  | { status: 'deleted' }
 
 type Options = {
   /** The hold endpoint (an action-only route). */
@@ -70,6 +75,8 @@ const NO_REVALIDATION = { revalidate: () => undefined, state: 'idle' }
  * itself: each renewal asks who holds it now, so it can say when it is free,
  * and the edit comes back with a reload. The one exception is an expiry while
  * away with nothing saved meanwhile: the hold is taken again silently (24i).
+ * An editor whose content was deleted only reads for good: it asks nothing
+ * more and never takes the hold again (24k, 26m; decision 0036).
  *
  * The tab id lives for one page load: a duplicated tab copies `sessionStorage`,
  * so it would share the hold with its original. Autosave reports each of its
@@ -189,6 +196,14 @@ export const useEditHold = ({
   const apply = (result: EditHoldResult | null, silence: number) => {
     if (result === null || result.status === 'released') return
 
+    // Deleted is final: an answer that crossed it changes nothing (0036).
+    if (stateRef.current.status === 'deleted') return
+
+    if (result.status === 'deleted') {
+      setState(result)
+      return
+    }
+
     // Holding again: a later leave goes out as usual.
     if (result.status === 'holding') isLeaveSaveSentRef.current = false
 
@@ -229,6 +244,7 @@ export const useEditHold = ({
       if (current.status !== 'lost' && current.status !== 'changed') {
         return current
       }
+      if (result?.status === 'deleted') return result
       if (result?.status === 'lost')
         return { ...current, holder: result.holder }
       if (result?.status === 'changed' && !result.isEditable) {
@@ -289,6 +305,9 @@ export const useEditHold = ({
 
   const renew = useEffectEvent(async () => {
     const { status } = stateRef.current
+
+    // Gone for good: nothing more to ask (0036).
+    if (status === 'deleted') return
 
     if (status === 'lost' || status === 'changed') {
       await watch()
@@ -360,7 +379,9 @@ export const useEditHold = ({
       // An editor that lost the hold only reads, also after coming back
       // (decision 0023): the edit returns only with a reload.
       const { status } = stateRef.current
-      if (status === 'lost' || status === 'changed') return
+      if (status === 'lost' || status === 'changed' || status === 'deleted') {
+        return
+      }
       if (isLeaveSaveSentRef.current) {
         window.location.reload()
       } else {
@@ -390,12 +411,13 @@ export const useEditHold = ({
     }
   }, [action])
 
-  // A takeover elsewhere reaches this tab at once, not with the next renewal.
+  // A takeover or a delete elsewhere reaches this tab at once, not with the
+  // next renewal (0036).
   useContentEvents({
     filter: (event) =>
       event.entity === entity &&
       event.entityId === id &&
-      event.change === 'hold',
+      (event.change === 'hold' || event.change === 'delete'),
     onEvent: () => void renew(),
     revalidator: NO_REVALIDATION,
   })

@@ -51,6 +51,8 @@ type UpdateArticleResult =
   | { status: 'saved'; updatedAt: Date; slugSuggestion: string | null }
   /** The tab does not hold the article; `heldByName` is who does, if anyone. */
   | { status: 'not-held'; heldByName: string | null }
+  /** The article is gone: deleted meanwhile, or swept as an empty draft (0036). */
+  | { status: 'deleted' }
 
 type StoredHold = EditHoldColumns & {
   heldByAuthor: { name: string } | null
@@ -82,10 +84,9 @@ const RELEASED_HOLD = {
  * @param options - The article id, the editor's tab and the edited fields.
  * @returns `saved` with the new `updatedAt` and a free address for a taken one,
  *   or `not-held` with the holder's name when another tab or someone else holds
- *   the article (nothing is written).
- * @throws A 404 response for a missing article, or a 403 response for a denied
- *   edit, a locked submission or authors the editor may not set (the
- *   association included).
+ *   the article (nothing is written), or `deleted` when it is gone (0036).
+ * @throws A 403 response for a denied edit, a locked submission or authors
+ *   the editor may not set (the association included).
  */
 export async function updateArticle(
   request: Request,
@@ -124,9 +125,8 @@ export async function updateArticle(
     where: { id: articleId },
   })
 
-  if (storedArticle === null) {
-    throw data(null, { status: 404 })
-  }
+  // Nothing is checked first, so it says no more than a 404 would (0036).
+  if (storedArticle === null) return { status: 'deleted' }
 
   const { state } = storedArticle
 
@@ -402,6 +402,9 @@ export async function updateArticle(
         ) {
           throw error
         }
+
+        // Deleted between the check and the write (0036).
+        if (currentHold === null) return { status: 'deleted' }
 
         // The hold moved between the check and the write.
         return toNotHeld(currentHold)

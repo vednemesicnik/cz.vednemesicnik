@@ -13,8 +13,8 @@ import type { Route } from './+types/route'
  * (design 24e, decisions 0019 and 0022). A POST to a resource route runs only
  * this action, so it requires the session itself (`requireCSRF`). Answers
  * JSON for the editor's autosave: `saved` with the new `updatedAt` and a free
- * address for a taken one, `not-held` (409) with who holds it, or `invalid`
- * (400).
+ * address for a taken one, `not-held` (409) with who holds it, `deleted`
+ * (410), or `invalid` (400).
  */
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const formData = await getMultipartFormData(request)
@@ -37,6 +37,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
   if (result.status === 'not-held') {
     return Response.json(result, { status: 409 })
+  }
+
+  // Gone meanwhile (decision 0036): the editor turns read-only and says so.
+  if (result.status === 'deleted') {
+    return Response.json(result, { status: 410 })
   }
 
   return Response.json(result)
