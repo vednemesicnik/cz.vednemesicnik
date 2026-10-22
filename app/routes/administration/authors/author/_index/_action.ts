@@ -1,5 +1,5 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { href, redirect } from 'react-router'
+import { data, href, redirect } from 'react-router'
 
 import { FORM_CONFIG } from '~/config/form-config'
 import { requireCSRF } from '~/utils/csrf.server'
@@ -32,18 +32,27 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   })
 
   switch (intent) {
-    case INTENT_VALUE.delete:
-      await deleteAuthor(request, {
+    case INTENT_VALUE.delete: {
+      const result = await deleteAuthor(request, {
         id: authorId,
         target: {
           userId: author.user?.id,
         },
       })
 
+      // Something came to hold the author after the page loaded: returned,
+      // not thrown, so the fetcher stays on the page. A 4xx skips the loaders'
+      // revalidation, so the body carries the fresh block for the 28g
+      // explanation, and the page revalidates itself.
+      if (result.status === 'blocked') {
+        return data(result, { status: 409 })
+      }
+
       if (withRedirect) {
         throw redirect(href('/administration/authors'))
       }
       break
+    }
 
     default:
       throw new Error(`Invalid intent: ${intent}`)

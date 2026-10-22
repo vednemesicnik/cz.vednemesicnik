@@ -3,16 +3,15 @@ import { href, useFetcher } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
 import { AdminActionGroup } from '~/components/admin/admin-action-group'
-import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
+import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { TableCell, TableRow } from '~/components/admin/admin-table'
 import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
 import { LinkButton } from '~/components/link-button'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
+
+import { UserDeleteConfirmationDialog } from '../../../components/user-delete-confirmation-dialog'
 
 type Props = {
   id: string
@@ -86,7 +85,7 @@ export const ItemRow = ({
                 <DeleteIcon />
                 {isDeleting ? 'Maže se...' : 'Smazat'}
               </AdminActionButton>
-              <AdminDeleteConfirmationDialog ref={dialogRef} />
+              <UserDeleteConfirmationDialog name={name} ref={dialogRef} />
             </>
           )}
         </AdminActionGroup>

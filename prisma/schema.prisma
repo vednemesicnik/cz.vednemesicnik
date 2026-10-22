@@ -644,8 +644,10 @@ model PageSEO {
   updatedAt       DateTime     @updatedAt
   publishedAt     DateTime?
   state           ContentState @default(draft)
-  authorId        String
-  author          Author       @relation("PageSeoCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  // Whoever first saved the page; nothing shows it, so deleting the author
+  // clears it rather than holding the author (#767).
+  authorId        String?
+  author          Author?      @relation("PageSeoCreator", fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   reviews         Review[]     @relation("PageSEOReviews")
 
   // non-unique foreign key

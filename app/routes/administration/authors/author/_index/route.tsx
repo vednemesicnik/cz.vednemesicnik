@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { href } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -19,6 +19,9 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
+import { AuthorDeleteBlockedDialog } from '../../components/author-delete-blocked-dialog'
+import { useAuthorDeleteRefusal } from '../../utils/use-author-delete-refusal'
+
 import type { Route } from './+types/route'
 
 export { action } from './_action'
@@ -29,15 +32,19 @@ export default function RouteComponent({
   loaderData,
   params,
 }: Route.ComponentProps) {
-  const { author, canUpdate, canDelete } = loaderData
+  const { author, canUpdate, deleteBlock, mayDelete } = loaderData
   const { authorId } = params
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
+  const [isBlockedDialogOpen, setIsBlockedDialogOpen] = useState(false)
+  const deleteFetcherKey = `delete-author-${authorId}`
+  const { dismiss, refusal } = useAuthorDeleteRefusal(deleteFetcherKey)
 
   const { openDialog } = useAdminDeleteConfirmationDialog(
     deleteConfirmationDialogRef,
     {
       action: href('/administration/authors/:authorId', { authorId }),
+      key: deleteFetcherKey,
       withRedirect: true,
     },
   )
@@ -58,8 +65,15 @@ export default function RouteComponent({
             Upravit
           </LinkButton>
         )}
-        {canDelete && (
-          <AdminActionButton action="delete" onClick={openDialog}>
+        {mayDelete && (
+          <AdminActionButton
+            action="delete"
+            onClick={
+              deleteBlock.deletable
+                ? openDialog
+                : () => setIsBlockedDialogOpen(true)
+            }
+          >
             <DeleteIcon />
             Smazat
           </AdminActionButton>
@@ -102,6 +116,18 @@ export default function RouteComponent({
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+
+      {/* Opened from the detail, it never offers Zobrazit obsah (dksfb82t). */}
+      {(isBlockedDialogOpen || refusal !== null) && (
+        <AuthorDeleteBlockedDialog
+          block={refusal ?? deleteBlock}
+          name={author.name}
+          onClose={() => {
+            setIsBlockedDialogOpen(false)
+            dismiss()
+          }}
+        />
+      )}
     </AdminPage>
   )
 }

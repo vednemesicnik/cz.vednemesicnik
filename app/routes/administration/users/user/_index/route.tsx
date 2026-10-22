@@ -4,10 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { href, useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
-import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
+import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
@@ -24,6 +21,8 @@ import { PageTitle } from '~/components/page-title'
 import { useToast } from '~/components/toast-provider'
 import { INVITATION_CONFIG } from '~/config/invitation-config'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
+
+import { UserDeleteConfirmationDialog } from '../../components/user-delete-confirmation-dialog'
 
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -212,7 +211,10 @@ export default function RouteComponent({
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+      <UserDeleteConfirmationDialog
+        name={user.author.name}
+        ref={deleteConfirmationDialogRef}
+      />
 
       {isEmergencyLinkDialogOpen && (
         <EmergencyLinkDialog
