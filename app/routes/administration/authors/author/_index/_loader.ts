@@ -1,5 +1,7 @@
 import { data } from 'react-router'
 
+import { AUTHOR_REFERENCES_SELECT } from '~/utils/author-references/author-references-select'
+import { getAuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
@@ -16,6 +18,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const author = await prisma.author.findUniqueOrThrow({
     select: {
+      ...AUTHOR_REFERENCES_SELECT,
       bio: true,
       createdAt: true,
       id: true,
@@ -32,6 +35,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: {
           email: true,
           id: true,
+          role: { select: { name: true } },
         },
       },
     },
@@ -77,8 +81,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       updatedAt: createFormattedDate(author.updatedAt),
       user: author.user,
     },
-    // Can only delete authors without linked User (onDelete: Restrict in schema)
-    canDelete: deletePerms.hasPermission && !author.user,
     canUpdate: updatePerms.hasPermission,
+    // Smazat… confirms a deletable author and explains a blocked one (28g).
+    deleteBlock: getAuthorDeleteBlock(author, context.userId),
+    mayDelete: deletePerms.hasPermission,
   }
 }

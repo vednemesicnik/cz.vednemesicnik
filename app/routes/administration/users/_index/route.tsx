@@ -25,6 +25,7 @@ import { SEARCH_PARAM } from '~/utils/admin-list-params'
 import { buildListSearch } from '~/utils/build-list-search'
 import { getUserRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
@@ -80,7 +81,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </LinkButton>
         </ListEmptyCard>
       ) : (
-        <AdminTable pending={pending} stickyHeader={true}>
+        <AdminTable
+          columnsClassName={styles.columns}
+          pending={pending}
+          stickyHeader={true}
+        >
           <TableHeader>
             <TableSortableHeaderCell
               defaultOrder={'desc'}

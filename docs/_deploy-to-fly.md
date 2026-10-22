@@ -116,6 +116,17 @@ Magic-link sign-in needs the Google Apps Script web app credentials (see the
 fly secrets set GAS_MAGIC_LINK_URL="https://script.google.com/macros/s/.../exec" GAS_MAGIC_LINK_SECRET="…" --app cz-vednemesicnik
 ```
 
+### Account notices (Google Apps Script)
+
+The invitation of a new user goes through its own web app (see the
+`SCRIPT__Users__Notice_Send` repo; decision 0037). Required in production — `initEnv`
+fails at boot without it. `GAS_USERS_NOTICE_SECRET` must equal the script's
+`OWN_SECRET` property.
+
+```shell
+fly secrets set GAS_USERS_NOTICE_URL="https://script.google.com/macros/s/.../exec" GAS_USERS_NOTICE_SECRET="…" --app cz-vednemesicnik
+```
+
 ### Passkeys / WebAuthn (`RELYING_PARTY_*`)
 
 Passkey sign-in needs the relying-party settings. They are **required in

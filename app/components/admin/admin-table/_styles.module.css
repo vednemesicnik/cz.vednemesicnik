@@ -2,6 +2,8 @@
   @layer component {
     /* No box: the rows sit on the page, divided by lines (22a). */
     position: relative;
+    /* The wide table's breakpoints ask its own width (31a). */
+    container: admin-table / inline-size;
     width: 100%;
     /* scroll horizontally on narrow viewports */
     overflow-x: auto;
@@ -32,6 +34,45 @@
     border-spacing: 0;
     /* On the base so both the fade-in and fade-out (class removal) animate */
     transition: opacity 0.15s ease;
+  }
+}
+
+/*
+ * From a 1280 px table the list shares the width by weight (31a): a grid whose
+ * row groups and rows take its tracks (subgrid), so a column is one width from
+ * the header down. The cells keep their padding and lines, so hover, the 22f
+ * tint and the sticky header work as below. A literal, as var() doesn't work
+ * in @container.
+ */
+.weighted {
+  @layer variant {
+    @container admin-table (width >= 1280px) {
+      display: grid;
+
+      & :is(thead, tbody, tr) {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
+      }
+
+      /* A cell fills its track; the native table's 1 % shrink would shrink
+         it inside the track instead. */
+      & :is(th, td) {
+        width: auto;
+        align-content: center;
+      }
+
+      /* A long word can't burst a track's minimum. Not in Akce, the last
+         cell: its dialogs and menus would inherit it. */
+      & :is(th, td):not(:last-child) {
+        overflow-wrap: anywhere;
+      }
+
+      /* colSpan does nothing in a grid: a group heading spans the row (26a). */
+      & th[colspan] {
+        grid-column: 1 / -1;
+      }
+    }
   }
 }
 

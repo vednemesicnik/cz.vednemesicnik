@@ -2,13 +2,14 @@ import { href } from 'react-router'
 
 import { createMagicLinkUrl } from '~/utils/magic-link/create-magic-link-url'
 import { createMagicLinkToken } from '~/utils/magic-link.server'
-import { sendMagicLinkEmail } from '~/utils/send-magic-link-email.server'
+import { sendUsersNotice } from '~/utils/users-notice/send-users-notice.server'
 
 /**
- * Sends the invitation of a new user (design 29e): the ordinary sign-in link,
- * landing in Settings, with the invitation text that names who sent it. Like
- * any sign-in link it is valid for 15 minutes and once; an expired one is
- * replaced from the sign-in page, never resent from here.
+ * Sends the invitation of a new user (design 29e) through the users-notice
+ * script: the ordinary sign-in link, landing in Settings, with the invitation
+ * text that names who sent it. Like any sign-in link it is valid for 15
+ * minutes and once; an expired one is replaced from the sign-in page, never
+ * resent from here.
  *
  * @param args.email - The new account's address, already lower-cased.
  * @param args.inviterName - The inviting Administrator's author name.
@@ -30,7 +31,7 @@ export const sendInvitation = async ({
 
   if (token === null) return false
 
-  return sendMagicLinkEmail({
+  return sendUsersNotice({
     email,
     inviterName,
     kind: 'invitation',

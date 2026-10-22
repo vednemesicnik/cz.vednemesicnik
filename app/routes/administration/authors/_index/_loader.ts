@@ -10,6 +10,8 @@ import {
   parseAdminListFilters,
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { AUTHOR_REFERENCES_SELECT } from '~/utils/author-references/author-references-select'
+import { getAuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
 import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
@@ -109,6 +111,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     prisma.author.findMany({
       orderBy: ORDER_BY[sort](order),
       select: {
+        ...AUTHOR_REFERENCES_SELECT,
         bio: true,
         createdAt: true,
         id: true,
@@ -124,6 +127,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           select: {
             email: true,
             id: true,
+            role: { select: { name: true } },
           },
         },
       },
@@ -134,18 +138,23 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   // Compute permissions for each author
   // targetUserId is the user who owns this author profile (or undefined for external authors)
-  const authors = rawAuthors.map((author) => {
+  const authors = rawAuthors.map(({ _count, ...author }) => {
     const targetUserId = author.user?.id
+    const deleteBlock = getAuthorDeleteBlock(
+      { _count, user: author.user },
+      context.userId,
+    )
+    const mayDelete = context.can({
+      action: 'delete',
+      entity: 'author',
+      targetUserId,
+    }).hasPermission
 
     return {
       ...author,
-      // Can only delete authors without linked User (onDelete: Restrict in schema)
-      canDelete:
-        context.can({
-          action: 'delete',
-          entity: 'author',
-          targetUserId,
-        }).hasPermission && !author.user,
+      // Smazat… confirms a deletable author and explains a blocked one (28g);
+      // only a deletable author can be selected for the bulk delete (28a).
+      canDelete: mayDelete && deleteBlock.deletable,
       canUpdate: context.can({
         action: 'update',
         entity: 'author',
@@ -156,6 +165,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         entity: 'author',
         targetUserId,
       }).hasPermission,
+      deleteBlock,
+      mayDelete,
     }
   })
 

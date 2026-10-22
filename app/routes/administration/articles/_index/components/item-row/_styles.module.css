@@ -32,12 +32,41 @@
   @layer route {
     font-size: var(--font-size-xs);
     color: var(--text-secondary);
+
+    /* From a 1280 px table the categories have their own column, so the
+       line under the title goes (31a). */
+    @container admin-table (width >= 1280px) {
+      display: none;
+    }
   }
 }
 
 .more {
   @layer route {
     color: var(--text-tertiary);
+  }
+}
+
+/* Rubriky from a 1280 px table, Štítky from 1600 px (31a). */
+.categoriesCell {
+  @layer route {
+    @container admin-table (width < 1280px) {
+      display: none;
+    }
+  }
+}
+
+.tagsCell {
+  @layer route {
+    @container admin-table (width < 1600px) {
+      display: none;
+    }
+  }
+}
+
+.tags {
+  @layer route {
+    color: var(--text-secondary);
   }
 }
 

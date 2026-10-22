@@ -36,25 +36,32 @@ export const action = async ({ request }: Route.ActionArgs) => {
     'Invalid selection size',
   )
 
-  // Only authors without a linked user are deletable (onDelete: Restrict on the
-  // user relation). Scoping to `user: null` mirrors the UI's `canDelete` gate
-  // and keeps forged ids for linked authors from hitting an FK error.
+  // An author with an account is never deletable, so it is left out before the
+  // permission check: a forged id of an account the caller may not touch would
+  // otherwise stop the loop halfway.
   const authors = await prisma.author.findMany({
     select: { id: true },
     where: { id: { in: ids }, user: null },
   })
 
-  // Sequential on purpose: each delete runs its own permission check. Not
-  // atomic across items — the per-item check is defense in depth.
+  // Sequential on purpose: each delete runs its own permission check and its
+  // own guard (#767). An author something holds is skipped, not an error: the
+  // selection offers only deletable authors, so it changed in the meantime.
+  let deletedCount = 0
+
   for (const author of authors) {
-    await deleteAuthor(request, {
+    const result = await deleteAuthor(request, {
       id: author.id,
       target: { userId: undefined },
     })
+
+    if (result.status === 'deleted') {
+      deletedCount += 1
+    }
   }
 
   // App convention: the bulk-delete hook clears the selection only on an
   // explicit success. A denied item throws inside deleteAuthor before we get
   // here, so the selection stays for retry.
-  return { deletedCount: authors.length, status: 'success' as const }
+  return { deletedCount, status: 'success' as const }
 }

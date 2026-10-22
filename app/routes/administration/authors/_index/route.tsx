@@ -38,6 +38,7 @@ import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
@@ -152,7 +153,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <ClearFiltersButton />
         </ListEmptyCard>
       ) : (
-        <AdminTable pending={pending} stickyHeader={true}>
+        <AdminTable
+          columnsClassName={styles.columns}
+          pending={pending}
+          stickyHeader={true}
+        >
           <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
@@ -201,8 +206,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 canUpdate={author.canUpdate}
                 canView={author.canView}
                 createdAt={author.createdAt}
+                deleteBlock={author.deleteBlock}
                 id={author.id}
                 key={author.id}
+                mayDelete={author.mayDelete}
                 name={author.name}
                 onSelect={() => selection.toggle(author.id)}
                 roleName={getAuthorRoleLabel(author.role.name)}

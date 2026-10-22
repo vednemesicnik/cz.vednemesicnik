@@ -8,12 +8,14 @@ type Props = {
   align?: 'left' | 'right'
   // "actions" right-aligns and shrinks the column to fit its controls
   variant?: 'default' | 'actions'
+  className?: string
 }
 
 export const TableHeaderCell = ({
   children,
   align = 'left',
   variant = 'default',
+  className,
 }: Props) => {
   return (
     <th
@@ -21,6 +23,7 @@ export const TableHeaderCell = ({
         styles.headerCell,
         align === 'right' && styles.alignRight,
         variant === 'actions' && styles.actions,
+        className,
       )}
     >
       {children}
