@@ -43,6 +43,15 @@ describe('getReadOnlyNotice', () => {
     ).toBe('Jen ke čtení.')
   })
 
+  test('deleted: says so, for the article and the issue (rvp9ojsm)', () => {
+    expect(getReadOnlyNotice({ status: 'deleted' })).toBe(
+      'Jen ke čtení. Článek byl smazán.',
+    )
+    expect(getReadOnlyNotice({ status: 'deleted' }, 'issue')).toBe(
+      'Jen ke čtení. Číslo bylo smazáno.',
+    )
+  })
+
   test('holding: nothing', () => {
     expect(getReadOnlyNotice({ status: 'holding' })).toBeNull()
   })
