@@ -42,6 +42,7 @@ import { TaxonomyItemRow } from '../../components/taxonomy-item-row'
 import { getTaxonomyBulkDeleteConfirmation } from '../../utils/get-taxonomy-bulk-delete-confirmation'
 import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
 import { CATEGORY_RECORD_COPY } from '../category-record-copy'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { SORT_KEYS } from './sort'
 
@@ -188,7 +189,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
         </ListEmptyCard>
       ) : (
-        <AdminTable pending={pending} stickyHeader={true}>
+        <AdminTable
+          columnsClassName={styles.columns}
+          pending={pending}
+          stickyHeader={true}
+        >
           <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}

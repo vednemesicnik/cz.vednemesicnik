@@ -9,6 +9,59 @@
   }
 }
 
+/*
+ * The wide table's columns (31a), read by AdminTable from a 1280 px table:
+ * the width shared by weight — Název 3, Rubriky 2, Štítky 2, Autor 1,
+ * Upraveno 1 — over the drawn minimums; the checkbox, Stav and Akce fixed.
+ * Each track is the drawn width plus the cell's 12 px padding (14 px at the
+ * row's ends). Štítky joins from 1600 px.
+ */
+.columns {
+  @layer route {
+    grid-template-columns:
+      46px minmax(332px, 3fr) minmax(172px, 2fr) minmax(162px, 1fr)
+      minmax(122px, 1fr) 182px 164px;
+
+    @container admin-table (width >= 1600px) {
+      grid-template-columns:
+        46px minmax(332px, 3fr) minmax(172px, 2fr) minmax(172px, 2fr)
+        minmax(162px, 1fr) minmax(122px, 1fr) 182px 164px;
+    }
+  }
+}
+
+/* The same without Autor: a Contributor is always the author (22i). */
+.columnsWithoutAuthor {
+  @layer route {
+    grid-template-columns:
+      46px minmax(332px, 3fr) minmax(172px, 2fr) minmax(122px, 1fr) 182px
+      164px;
+
+    @container admin-table (width >= 1600px) {
+      grid-template-columns:
+        46px minmax(332px, 3fr) minmax(172px, 2fr) minmax(172px, 2fr)
+        minmax(122px, 1fr) 182px 164px;
+    }
+  }
+}
+
+/* Below 1280 px the category stands under the title as in 22a (31a). */
+.categoriesColumn {
+  @layer route {
+    @container admin-table (width < 1280px) {
+      display: none;
+    }
+  }
+}
+
+.tagsColumn {
+  @layer route {
+    @container admin-table (width < 1600px) {
+      display: none;
+    }
+  }
+}
+
 @media (width >= 768px) {
   .newArticleBar {
     @layer route {

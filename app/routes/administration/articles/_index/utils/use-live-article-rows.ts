@@ -67,8 +67,17 @@ export const useLiveArticleRows = (loaderData: LoaderData) => {
   }
 
   useContentEvents({
-    filter: (event) => event.entity === 'article',
+    // A renamed or removed category or tag reloads the rows that name it,
+    // without a tint: the article itself did not change (0035, 31a).
+    filter: (event) =>
+      event.entity === 'article' ||
+      event.entity === 'article_category' ||
+      event.entity === 'article_tag',
     onEvent: (event) => {
+      if (event.entity !== 'article') {
+        return
+      }
+
       // Taking or releasing the edit hold is no change to react to (no tint),
       // but a running tint finishes; the line goes back to the row's fact,
       // which is newer than the change the hold covered (22f, 2txmjnaq).

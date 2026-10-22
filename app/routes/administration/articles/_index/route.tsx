@@ -241,6 +241,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           className={styles.table}
+          // A Contributor is always the author, so no Autor track (22i).
+          columnsClassName={
+            isContributor ? styles.columnsWithoutAuthor : styles.columns
+          }
           pending={pending}
           stickyHeader={true}
         >
@@ -259,6 +263,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             >
               Název
             </TableSortableHeaderCell>
+            {/* On a wide table categories and tags get columns (31a). */}
+            <TableHeaderCell className={styles.categoriesColumn}>
+              Rubriky
+            </TableHeaderCell>
+            <TableHeaderCell className={styles.tagsColumn}>
+              Štítky
+            </TableHeaderCell>
             {/* A Contributor is always the author (22i). */}
             {!isContributor && <TableHeaderCell>Autor</TableHeaderCell>}
             <TableSortableHeaderCell

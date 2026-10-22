@@ -1,0 +1,12 @@
+/*
+ * The wide table's columns (25a, 31a), read by AdminTable from a
+ * 1280 px table: Název 3 and Publikované články 1 (min. 110);
+ * the checkbox, Stav and Akce fixed.
+ * Each track is the drawn width plus the cell's 12 px padding (14 px
+ * at the row's ends).
+ */
+.columns {
+  @layer route {
+    grid-template-columns: 46px minmax(0, 3fr) minmax(122px, 1fr) 202px 164px;
+  }
+}
