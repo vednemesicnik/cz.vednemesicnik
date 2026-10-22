@@ -17,6 +17,9 @@ export const GAS_ENDPOINTS = {
   'magic-link': {
     urlEnvironmentVariable: ENV_KEYS.GAS_MAGIC_LINK_URL,
   },
+  'users-notice': {
+    urlEnvironmentVariable: ENV_KEYS.GAS_USERS_NOTICE_URL,
+  },
 } as const
 
 export type GasEndpointName = keyof typeof GAS_ENDPOINTS

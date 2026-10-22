@@ -48,6 +48,12 @@ const schema = z
     // superRefine below).
     [ENV_KEYS.GAS_MAGIC_LINK_URL]: z.string().optional(),
     [ENV_KEYS.GAS_MAGIC_LINK_SECRET]: z.string().optional(),
+    // Google Apps Script web app that sends notices to an administration user
+    // about their account — the invitation (see the SCRIPT__Users__Notice_Send
+    // repo). Optional locally (the notice is logged instead of emailed), required
+    // in production (see the superRefine below).
+    [ENV_KEYS.GAS_USERS_NOTICE_URL]: z.string().optional(),
+    [ENV_KEYS.GAS_USERS_NOTICE_SECRET]: z.string().optional(),
     // Google Apps Script web app that serves the editorial-board contacts (see
     // the SCRIPT__Editorial_Board__Contacts repo). Optional locally (the /redakce
     // page renders a fallback message), required in production (see the
@@ -97,6 +103,9 @@ const schema = z
           // Magic-link email (Google Apps Script)
           ENV_KEYS.GAS_MAGIC_LINK_URL,
           ENV_KEYS.GAS_MAGIC_LINK_SECRET,
+          // Account notices — the invitation (Google Apps Script)
+          ENV_KEYS.GAS_USERS_NOTICE_URL,
+          ENV_KEYS.GAS_USERS_NOTICE_SECRET,
           // Editorial-board contacts (Google Apps Script)
           ENV_KEYS.GAS_EDITORIAL_BOARD_URL,
           ENV_KEYS.GAS_EDITORIAL_BOARD_SECRET,
