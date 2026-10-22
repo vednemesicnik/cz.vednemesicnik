@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { href, useFetcher } from 'react-router'
 
 import { AdminActionButton } from '~/components/admin/admin-action-button'
@@ -16,7 +16,10 @@ import { DeleteIcon } from '~/components/icons/delete-icon'
 import { EditIcon } from '~/components/icons/edit-icon'
 import { VisibilityIcon } from '~/components/icons/visibility-icon'
 import { LinkButton } from '~/components/link-button'
+import type { AuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
 import { getFormattedDateString } from '~/utils/get-formatted-date-string'
+
+import { AuthorDeleteBlockedDialog } from '../../../components/author-delete-blocked-dialog'
 
 type Props = {
   id: string
@@ -27,6 +30,8 @@ type Props = {
   canView: boolean
   canUpdate: boolean
   canDelete: boolean
+  mayDelete: boolean
+  deleteBlock: AuthorDeleteBlock
   selected: boolean
   onSelect: () => void
 }
@@ -40,10 +45,13 @@ export const ItemRow = ({
   canView,
   canUpdate,
   canDelete,
+  mayDelete,
+  deleteBlock,
   selected,
   onSelect,
 }: Props) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const [isBlockedDialogOpen, setIsBlockedDialogOpen] = useState(false)
   const fetcherKey = `delete-author-${id}`
 
   const fetcher = useFetcher({ key: fetcherKey })
@@ -90,17 +98,27 @@ export const ItemRow = ({
               Upravit
             </LinkButton>
           )}
-          {canDelete && (
+          {/* A blocked author gets the 28g explanation in place of the confirmation. */}
+          {mayDelete && (
             <>
               <AdminActionButton
                 action={'delete'}
                 disabled={isDeleting}
-                onClick={openDialog}
+                onClick={
+                  canDelete ? openDialog : () => setIsBlockedDialogOpen(true)
+                }
               >
                 <DeleteIcon />
                 {isDeleting ? 'Maže se...' : 'Smazat'}
               </AdminActionButton>
               <AdminDeleteConfirmationDialog ref={dialogRef} />
+              {isBlockedDialogOpen && (
+                <AuthorDeleteBlockedDialog
+                  block={deleteBlock}
+                  name={name}
+                  onClose={() => setIsBlockedDialogOpen(false)}
+                />
+              )}
             </>
           )}
         </AdminActionGroup>

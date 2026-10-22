@@ -206,8 +206,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 canUpdate={author.canUpdate}
                 canView={author.canView}
                 createdAt={author.createdAt}
+                deleteBlock={author.deleteBlock}
                 id={author.id}
                 key={author.id}
+                mayDelete={author.mayDelete}
                 name={author.name}
                 onSelect={() => selection.toggle(author.id)}
                 roleName={getAuthorRoleLabel(author.role.name)}
