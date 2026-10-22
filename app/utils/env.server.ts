@@ -48,6 +48,12 @@ const schema = z
     // superRefine below).
     [ENV_KEYS.GAS_MAGIC_LINK_URL]: z.string().optional(),
     [ENV_KEYS.GAS_MAGIC_LINK_SECRET]: z.string().optional(),
+    // Google Apps Script web app that sends notices to an administration user
+    // about their account — the invitation (see the SCRIPT__Users__Notice_Send
+    // repo). Optional locally (the notice is logged instead of emailed), required
+    // in production (see the superRefine below).
+    [ENV_KEYS.GAS_USERS_NOTICE_URL]: z.string().optional(),
+    [ENV_KEYS.GAS_USERS_NOTICE_SECRET]: z.string().optional(),
     // Google Apps Script web app that serves the editorial-board contacts (see
     // the SCRIPT__Editorial_Board__Contacts repo). Optional locally (the /redakce
     // page renders a fallback message), required in production (see the
@@ -85,9 +91,10 @@ const schema = z
       }
     }
 
-    // Sign-in methods are always active in production and have no runtime guard, so
-    // fail fast at boot rather than at the first OAuth callback / magic-link email /
-    // WebAuthn ceremony with an empty credential.
+    // Sign-in methods and the Apps Script integrations are always active in
+    // production and have no runtime guard, so fail fast at boot rather than at the
+    // first OAuth callback / magic-link email / invitation / WebAuthn ceremony with
+    // an empty credential.
     if (env.NODE_ENV === 'production') {
       requireKeys(
         [
@@ -97,6 +104,9 @@ const schema = z
           // Magic-link email (Google Apps Script)
           ENV_KEYS.GAS_MAGIC_LINK_URL,
           ENV_KEYS.GAS_MAGIC_LINK_SECRET,
+          // Account notices — the invitation (Google Apps Script)
+          ENV_KEYS.GAS_USERS_NOTICE_URL,
+          ENV_KEYS.GAS_USERS_NOTICE_SECRET,
           // Editorial-board contacts (Google Apps Script)
           ENV_KEYS.GAS_EDITORIAL_BOARD_URL,
           ENV_KEYS.GAS_EDITORIAL_BOARD_SECRET,

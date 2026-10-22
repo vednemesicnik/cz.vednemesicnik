@@ -1,12 +1,12 @@
 /**
  * Sends the magic-link sign-in email through the Google Apps Script web app
- * (see the SCRIPT__Auth__Magic_Link repo), or, with `kind: 'invitation'`, the
- * same link as the invitation of a new user (design 29e). Best-effort: the
- * sign-in request action returns the same neutral response whether or not
- * delivery succeeds, so this never throws — failures are logged, reported to
- * Sentry, and swallowed. It resolves to whether the link went out; the identity
- * check of a signed-in user (design 29d) and the invitation (28e) tell the
- * person, sign-in never does.
+ * (see the SCRIPT__Auth__Magic_Link repo) — the sign-in link and nothing else;
+ * the invitation goes through `users-notice/send-users-notice.server.ts`
+ * (decision 0037). Best-effort: the sign-in request action returns the same
+ * neutral response whether or not delivery succeeds, so this never throws —
+ * failures are logged, reported to Sentry, and swallowed. It resolves to
+ * whether the link went out; the identity check of a signed-in user (design
+ * 29d) tells the person, sign-in never does.
  *
  * The request is **signed** rather than carrying the secret in its body, so
  * GAS_MAGIC_LINK_SECRET is a signing key and never travels — see
@@ -21,7 +21,6 @@
 
 import type {
   Envelope,
-  InvitationMagicLinkRequest,
   SignInMagicLinkRequest,
   SignInMagicLinkResponse,
 } from '@generated/magic-link/response'
@@ -31,7 +30,7 @@ import { postGasRequest } from './post-gas-request.server'
 import { signGasRequest } from './sign-gas-request.server'
 
 export const sendMagicLinkEmail = async (
-  request: SignInMagicLinkRequest | InvitationMagicLinkRequest,
+  request: SignInMagicLinkRequest,
 ): Promise<boolean> => {
   const { email, link } = request
 
@@ -48,11 +47,7 @@ export const sendMagicLinkEmail = async (
 
     // Local dev without a GAS deployment: print the link so the sign-in flow
     // is usable end-to-end without sending a real email.
-    console.info(
-      `[magic-link] GAS not configured — ${
-        'kind' in request ? request.kind : 'sign-in'
-      } link for ${email}: ${link}`,
-    )
+    console.info(`[magic-link] GAS not configured — link for ${email}: ${link}`)
     return true
   }
 
