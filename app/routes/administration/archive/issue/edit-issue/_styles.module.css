@@ -60,7 +60,8 @@
 }
 
 /* Two tracks: the cover in a column of its own, the PDF beside it (26b,
-   26c). They stack once the section (an inline-size container) is narrow. */
+   26c), down to the main column's narrowest 440 px (8kd9crag). They stack
+   below it, once the section (an inline-size container) is narrower. */
 .files {
   @layer route {
     display: grid;
@@ -68,7 +69,7 @@
     align-items: start;
     gap: 28px;
 
-    @container (inline-size < 40rem) {
+    @container (inline-size < 440px) {
       grid-template-columns: minmax(0, 1fr);
     }
   }

@@ -19,7 +19,7 @@ export default function RouteComponent({
   const { search } = useLocation()
 
   return (
-    <AdminPage>
+    <AdminPage measure={'form'}>
       <PageTitle>{CATEGORY_RECORD_COPY.editTitle}</PageTitle>
       <EditTaxonomyRecordForm
         authors={loaderData.authors}

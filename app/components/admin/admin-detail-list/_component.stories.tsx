@@ -11,7 +11,7 @@ const meta: Meta<typeof AdminDetailList> = {
     children: { control: false },
   },
   component: AdminDetailList,
-  // The 480 px rule measures the section around the list; `width` narrows it.
+  // The 440 px rule measures the section around the list; `width` narrows it.
   decorators: [
     (Story, { parameters }) => (
       <div style={{ width: parameters.width }}>
@@ -47,7 +47,7 @@ export const Playground: Story = {
   },
 }
 
-// Under 480 px the name stands above the value, as in the right column.
+// Under 440 px the name stands above the value, as in the right column.
 export const Narrow: Story = {
   args: {
     children: items,

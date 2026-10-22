@@ -79,7 +79,7 @@ export const Playground: Story = {
   },
 }
 
-// The main column's width, as on the user detail (28e) under 820 px.
+// The main column's width, as on the user detail (28e) under 732 px.
 export const Wide: Story = {
   args: Playground.args,
   parameters: { width: '640px' },

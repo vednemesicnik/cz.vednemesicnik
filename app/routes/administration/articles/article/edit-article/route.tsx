@@ -1125,7 +1125,7 @@ export default function RouteComponent({
   const slugValue = fields.slug.value ?? ''
 
   return (
-    <AdminPage className={styles.page}>
+    <AdminPage className={styles.page} measure={'form'}>
       {/* On a phone a bar that stays on top instead of the header's
           buttons: Zavřít and the save line (24f). */}
       <div className={styles.mobileBar} inert={isDetailOpen}>

@@ -312,7 +312,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   }`
 
   return (
-    <AdminPage>
+    <AdminPage measure={'text'}>
       <PageTitle>Nastavení</PageTitle>
 
       {showWelcome && welcomeFetcher.state === 'idle' && (
