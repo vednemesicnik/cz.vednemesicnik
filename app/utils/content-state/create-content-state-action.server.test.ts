@@ -2,6 +2,7 @@ import { isRouteErrorResponse } from 'react-router'
 import { describe, expect, test, vi } from 'vitest'
 
 import { FORM_CONFIG } from '~/config/form-config'
+import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
 
 import {
   runContentStateAction,
@@ -134,6 +135,32 @@ describe('runContentStateAction — delete redirect', () => {
       missing: [],
     })
     expect(handlers.delete).toHaveBeenCalled()
+  })
+})
+
+describe('runContentStateAction — a held refusal (0019, 0036)', () => {
+  test('answers who holds it, and whether it is one’s own other tab', async () => {
+    const handlers = createHandlers()
+    vi.mocked(handlers.delete).mockRejectedValue(
+      createEditHeldRefusal({ heldByName: 'Jakub Novák', isOwnOtherTab: true }),
+    )
+
+    await expect(
+      runContentStateAction(
+        buildRequest({ [INTENT_NAME]: INTENT_VALUE.delete }),
+        {
+          deleteRedirectTo: '/administration/articles',
+          handlers,
+          id: 'a1',
+          loadTarget: vi.fn().mockResolvedValue(target),
+        },
+      ),
+    ).resolves.toEqual({
+      heldByName: 'Jakub Novák',
+      intent: INTENT_VALUE.delete,
+      isHeldInOwnOtherTab: true,
+      missing: [],
+    })
   })
 })
 

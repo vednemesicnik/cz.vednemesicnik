@@ -345,8 +345,8 @@
   }
 }
 
-/* The copy offer in Úpravu přebírá … (24h). */
-.holdTakenCopy {
+/* The copy offer in Úpravu přebírá … and Článek byl smazán (24h, 24k). */
+.dialogCopy {
   @layer route {
     display: flex;
     flex-direction: column;

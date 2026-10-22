@@ -31,7 +31,7 @@ import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { useContentEvents } from '~/hooks/use-content-events'
 import { useRevalidateAt } from '~/hooks/use-revalidate-at'
-import { getOwnTabDeleteRefusal } from '~/utils/edit-hold/get-own-tab-delete-refusal'
+import { getOwnOtherTabDeleteRefusal } from '~/utils/edit-hold/get-own-other-tab-delete-refusal'
 import { ArticleChangeDateDialog } from '../../components/article-change-date-dialog'
 import { ArticleMissingDialog } from '../../components/article-missing-dialog'
 import { ArticlePublishDialog } from '../../components/article-publish-dialog'
@@ -71,7 +71,7 @@ export default function RouteComponent({
     heldByName,
     heldUntil,
     isApprover,
-    isHeldInOwnTab,
+    isHeldInOwnOtherTab,
     isOwnContent,
     missingBeforePublish,
     submission,
@@ -170,7 +170,8 @@ export default function RouteComponent({
       case 'delete':
         // One's own editor in another tab: the delete waits, without asking
         // first (23g, 26i; 0036). The server refuses it again in its write.
-        if (isHeldInOwnTab) return showToast(getOwnTabDeleteRefusal('article'))
+        if (isHeldInOwnOtherTab)
+          return showToast(getOwnOtherTabDeleteRefusal('article'))
         return openDialog()
       case 'edit':
       case 'take-over':

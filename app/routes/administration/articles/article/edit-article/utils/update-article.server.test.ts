@@ -580,6 +580,23 @@ describe('updateArticle — the edit hold (07g, decision 0019)', () => {
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
   })
 
+  test('deleted between the check and the write: answers deleted (0036)', async () => {
+    mocks.transaction.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    mocks.articleFindUnique
+      .mockResolvedValueOnce(storedArticle)
+      .mockResolvedValueOnce(null)
+
+    await expect(updateArticle(request, options)).resolves.toEqual({
+      status: 'deleted',
+    })
+    expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+  })
+
   test('logs Upraveno once per hold (07f), announces every save', async () => {
     await updateArticle(request, options)
     expect(mocks.contentLogCount).toHaveBeenCalledWith({

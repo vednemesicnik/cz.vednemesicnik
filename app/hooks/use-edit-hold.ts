@@ -75,6 +75,8 @@ const NO_REVALIDATION = { revalidate: () => undefined, state: 'idle' }
  * itself: each renewal asks who holds it now, so it can say when it is free,
  * and the edit comes back with a reload. The one exception is an expiry while
  * away with nothing saved meanwhile: the hold is taken again silently (24i).
+ * An editor whose content was deleted only reads for good: it asks nothing
+ * more and never takes the hold again (24k, 26m; decision 0036).
  *
  * The tab id lives for one page load: a duplicated tab copies `sessionStorage`,
  * so it would share the hold with its original. Autosave reports each of its
@@ -193,6 +195,9 @@ export const useEditHold = ({
   // `silence` is how long the editor heard nothing before the request.
   const apply = (result: EditHoldResult | null, silence: number) => {
     if (result === null || result.status === 'released') return
+
+    // Deleted is final: an answer that crossed it changes nothing (0036).
+    if (stateRef.current.status === 'deleted') return
 
     if (result.status === 'deleted') {
       setState(result)

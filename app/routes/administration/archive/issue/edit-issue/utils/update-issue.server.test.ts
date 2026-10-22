@@ -350,6 +350,20 @@ describe('updateIssue — who may save', () => {
     expect(mocks.transaction).not.toHaveBeenCalled()
   })
 
+  test('deleted between the check and the write: answers deleted (0036)', async () => {
+    mocks.transaction.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('No record', {
+        clientVersion: 'test',
+        code: 'P2025',
+      }),
+    )
+    mocks.issueFindUnique
+      .mockResolvedValueOnce(storedIssue)
+      .mockResolvedValueOnce(null)
+
+    expect(await updateIssue(request, options)).toEqual({ status: 'deleted' })
+  })
+
   test("refuses a Creator's other author", async () => {
     await expect(
       updateIssue(request, { ...options, authorId: 'author-2' }),

@@ -274,6 +274,19 @@ export const useIssueFileUpload = ({
     setCancelledFrom({ storedKey })
   }
 
+  /**
+   * Stops the upload for an issue that is gone (decision 0036): there is
+   * nothing to remove and nothing to load again.
+   */
+  const abandon = () => {
+    const controller = controllerRef.current
+    if (controller === null) return
+
+    controller.abort()
+    endUpload()
+    fileRef.current = null
+  }
+
   // A new file whose answer never came may have landed after all: once the
   // issue loads with it, the stored file stands instead of the failure.
   useEffect(() => {
@@ -323,6 +336,7 @@ export const useIssueFileUpload = ({
   useEffect(() => () => handleUnmount(), [])
 
   return {
+    abandon,
     announcement,
     cancel,
     failure,

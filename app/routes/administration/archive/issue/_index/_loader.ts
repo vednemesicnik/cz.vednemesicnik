@@ -173,7 +173,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       heldUntil: hold?.heldUntil.toISOString() ?? null,
       isApprover,
       // One's own editor in another tab: Smazat… waits and says so (23g, 0036).
-      isHeldInOwnTab: hold?.isOwn === true,
+      isHeldInOwnOtherTab: hold?.isOwn === true,
       isOwnContent: flags.isOwnContent,
       issue: {
         authorName: issue.author.name,

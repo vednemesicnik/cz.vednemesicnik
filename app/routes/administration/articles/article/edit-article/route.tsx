@@ -357,6 +357,8 @@ export default function RouteComponent({
   // Read from the editor's own field: the form's value lags behind typing.
   const [hasText, setHasText] = useState(false)
   const handleDeletion = useEffectEvent(async () => {
+    // A takeover before the delete has nothing left to say (24k).
+    setHoldLoss(null)
     for (const [id, tile] of gallery.tiles) {
       if (isTileUploading(tile)) gallery.cancelUpload(id)
     }
@@ -1055,7 +1057,8 @@ export default function RouteComponent({
     ? undefined
     : [
         article.authorNames.join(', '),
-        ...(article.submission === null
+        // Deleted, it has no submission either (24k).
+        ...(article.submission === null || isDeleted
           ? []
           : [
               formatSubmissionFact({
@@ -1165,7 +1168,7 @@ export default function RouteComponent({
         </LinkButton>
       </header>
 
-      {editorSentence !== null && (
+      {editorSentence !== null && !isDeleted && (
         <p className={styles.sentence} inert={isDetailOpen}>
           {editorSentence}
         </p>
@@ -1195,7 +1198,7 @@ export default function RouteComponent({
 
       {/* Stays until the editor closes: the only way back to the unsent text
           (24h). */}
-      {holdLoss?.hasUnsentChanges && (
+      {holdLoss?.hasUnsentChanges && !isDeleted && (
         <Callout className={styles.unsentWarning} tone={'warning'}>
           <p className={styles.unsentTitle}>
             Některé změny se nestihly uložit.
@@ -1251,7 +1254,7 @@ export default function RouteComponent({
         >
           {hasText && (
             <>
-              <div className={styles.holdTakenCopy}>
+              <div className={styles.dialogCopy}>
                 <CopyArticleTextButton getContent={getContent} />
                 <CopyArticleTextHint />
               </div>
@@ -1263,7 +1266,7 @@ export default function RouteComponent({
         </ContentDeletedDialog>
       )}
 
-      {holdLoss?.dialog === 'taken' && (
+      {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
           description={formatHoldTakenDescription({
             hasUnsentChanges: holdLoss.hasUnsentChanges,
@@ -1276,7 +1279,7 @@ export default function RouteComponent({
         >
           {holdLoss.hasUnsentChanges && (
             <>
-              <div className={styles.holdTakenCopy}>
+              <div className={styles.dialogCopy}>
                 <CopyArticleTextButton getContent={getContent} />
                 <CopyArticleTextHint />
               </div>

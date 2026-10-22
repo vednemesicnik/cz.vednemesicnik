@@ -29,17 +29,21 @@ other transitions leave the text in place, so the editor can react to them (0023
 
 - **A delete waits for every open editor, one's own in another tab included.** The article and
   issue delete repeat "the hold is free" (`buildFreeHoldWhere`) in their own conditional write,
-  the same write as before (0015, 0019). This narrows 07g for delete only. Every other
-  transition keeps "not held by someone else". Time still decides: an expired hold is free.
+  the same write as before (0015, 0019). This narrows 07g, and 0019's "every state transition
+  checks that the record is not held by someone else", for delete only, as 0021 narrowed
+  0019's "unexpired". Every other transition keeps "not held by someone else", and 0019 stays
+  in force otherwise. Time still decides: an expired hold is free.
 - **No role gets a "delete anyway".** The Coordinator takes the edit over (24g), leaves the
   editor and deletes from the detail, as 07g already says for every state action.
 - **The refusal says whose editor it is.** The held refusal carries `isOwnOtherTab` next to
   `heldByName`. The detail and the list show a toast for one's own tab
-  (`getOwnTabDeleteRefusal`). The detail knows its own hold when it loads and does not open
+  (`getOwnOtherTabDeleteRefusal`). The detail knows its own hold when it loads and does not open
   the confirmation (23g, 26i). A bulk delete counts the row as skipped.
 - **A missing row is a typed `deleted`, not a 404.** Take, renew, release and take over answer
   `{ status: 'deleted' }`, and the save answers it with a 410. Nothing is checked before the
-  answer, so it says no more than the 404 did.
+  answer, so it says no more than the 404 did. This narrows 0015's 404 for a missing record to
+  the article and issue autosave and hold routes; a record the author may not view keeps
+  0015's answer.
 - **`deleted` is final.** `useEditHold` stops asking. The editor turns read-only and shows the
   dialog (`ContentDeletedDialog`), the line *smazáno* and a warning. The article keeps its text
   to copy, the issue its values in the fields (24k, 26m). The editor never takes the hold
@@ -48,14 +52,15 @@ other transitions leave the text in place, so the editor can react to them (0023
 
 ## Consequences
 
-- Every content type that gets the edit hold (the episode in 27d, and podcast, category and
+- 0019 is not rewritten (an accepted record never is), so its consequence lives here:
+  every content type that gets the edit hold (the episode in 27d, and podcast, category and
   tag after it) repeats `buildFreeHoldWhere` in its delete and `buildNotHeldByOthersWhere` in
   its other transitions, and answers `deleted` from its hold and save routes.
 - A crashed browser's hold blocks one's own delete until it expires, about 2 minutes. *Upravit*
   → *Upravovat tady* → *Zavřít* releases it at once.
 - Once an editor knows its content is gone, it must not revalidate its own loader: the loader
-  is a 404 then. The issue editor therefore does not cancel a file upload under way, because
-  the cancel reloads the issue; the upload fails on its own.
+  is a 404 then. An upload under way therefore ends without the cancel's removal and reload
+  (`abandon` in the issue editor).
 - The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
 
 ## Alternatives considered

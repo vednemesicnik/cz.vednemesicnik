@@ -436,14 +436,17 @@ export default function RouteComponent({
     if (lostStatus !== null) void handleHoldLoss()
   }, [lostStatus])
 
-  // Deleted: nothing more goes out, and the dialog says so every time, with
-  // the details that stayed unsent (26m). A file upload under way fails on its
-  // own: its cancel would reload the issue, which is gone.
+  // Deleted: nothing more goes out, a file upload under way ends, and the
+  // dialog says so every time, with the details that stayed unsent (26m).
   const [deletion, setDeletion] = useState<{
     isDialogOpen: boolean
     unsentLabels: string[]
   } | null>(null)
   const handleDeletion = useEffectEvent(async () => {
+    // A takeover before the delete has nothing left to say (26m).
+    setHoldLoss(null)
+    coverUpload.abandon()
+    pdfUpload.abandon()
     const hasUnsentChanges = await autosave.stop()
     setDeletion({
       isDialogOpen: true,
@@ -980,7 +983,7 @@ export default function RouteComponent({
         </LinkButton>
       </header>
 
-      {editorSentence !== null && (
+      {editorSentence !== null && !isDeleted && (
         <p className={styles.sentence}>{editorSentence}</p>
       )}
 
@@ -1031,7 +1034,7 @@ export default function RouteComponent({
         </ContentDeletedDialog>
       )}
 
-      {holdLoss?.dialog === 'taken' && (
+      {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
           description={holdTakenLead}
           holderName={holdLoss.holderName}
@@ -1150,6 +1153,8 @@ export default function RouteComponent({
                     type={'file'}
                   />
 
+                  {/* Deleted, the files went with the issue: no cover
+                      preview and nothing to pick (26m). */}
                   <figure className={styles.cover} ref={coverRef}>
                     {coverUpload.upload?.previewUrl ? (
                       // The picked cover, dimmed until it saves; the stored
@@ -1162,7 +1167,7 @@ export default function RouteComponent({
                     ) : coverUpload.failure !== null &&
                       !coverUpload.failure.replaces ? (
                       renderFileProblem('cover', coverUpload.failure.fileName)
-                    ) : issue.cover === null ? (
+                    ) : isDeleted ? null : issue.cover === null ? (
                       <>
                         <FileDropField
                           accept={'image/*'}
@@ -1247,7 +1252,8 @@ export default function RouteComponent({
                         'pdf',
                         editedPdfFileName ?? pdfUpload.failure.fileName,
                       )
-                    ) : issue.pdf === null ? (
+                    ) : issue.pdf === null && isDeleted ? null : issue.pdf ===
+                      null ? (
                       <>
                         <FileDropField
                           accept={'application/pdf'}

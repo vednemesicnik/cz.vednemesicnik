@@ -86,8 +86,10 @@ export type ContentStateHandlersConfig = {
    */
   ensureApprovingReview: (id: string, reviewerId: string) => Promise<void>
   /**
-   * Delete the row and any entity-specific dependents (images, PDF, PageSEO);
-   * held content is refused as in `applyState`.
+   * Delete the row and any entity-specific dependents (images, PDF, PageSEO).
+   * The delete repeats "the hold is free" (`buildFreeHoldWhere`), one's own
+   * other tab included (decision 0036), and throws the held refusal when it
+   * fails.
    */
   deleteRow: (id: string, context: AuthorPermissionContext) => Promise<void>
   /**

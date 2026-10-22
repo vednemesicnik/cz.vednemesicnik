@@ -217,7 +217,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       isApprover,
       isHeldByOther,
       // One's own editor in another tab: Smazat… waits and says so (23g, 0036).
-      isHeldInOwnTab: hold?.isOwn === true,
+      isHeldInOwnOtherTab: hold?.isOwn === true,
       missingBeforePublish,
       submission: flags.submission?.state ?? null,
       // „Článek právě upravuje …“ after a direct address of its editor (23g).

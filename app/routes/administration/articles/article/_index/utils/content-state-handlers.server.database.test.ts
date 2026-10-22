@@ -50,7 +50,7 @@ const target = { authorIds: ['author-1'], state: 'draft' as const }
 const minutesFromNow = (minutes: number) =>
   new Date(Date.now() + minutes * 60_000)
 
-let cleanup: () => Promise<void>
+let cleanup: (() => Promise<void>) | undefined
 
 const prisma = () => {
   if (database.prisma === null) throw new Error('No test database')
@@ -96,7 +96,7 @@ beforeAll(async () => {
 }, 30_000)
 
 afterAll(async () => {
-  await cleanup()
+  await cleanup?.()
 })
 
 beforeEach(async () => {

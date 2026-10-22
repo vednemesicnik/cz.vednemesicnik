@@ -85,9 +85,8 @@ const RELEASED_HOLD = {
  * @returns `saved` with the new `updatedAt` and a free address for a taken one,
  *   or `not-held` with the holder's name when another tab or someone else holds
  *   the article (nothing is written), or `deleted` when it is gone (0036).
- * @throws A 403 response for a denied
- *   edit, a locked submission or authors the editor may not set (the
- *   association included).
+ * @throws A 403 response for a denied edit, a locked submission or authors
+ *   the editor may not set (the association included).
  */
 export async function updateArticle(
   request: Request,

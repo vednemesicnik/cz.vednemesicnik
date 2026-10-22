@@ -88,8 +88,8 @@ const RELEASED_HOLD = {
  * @returns `saved` with the new `updatedAt` and the taken number, if any, or
  *   `not-held` with the holder's name when another tab or someone else holds
  *   the issue (nothing is written), or `deleted` when it is gone (0036).
- * @throws A 403 response for a denied
- *   edit, a locked submission or an author the editor may not set.
+ * @throws A 403 response for a denied edit, a locked submission or an author
+ *   the editor may not set.
  */
 export async function updateIssue(
   request: Request,

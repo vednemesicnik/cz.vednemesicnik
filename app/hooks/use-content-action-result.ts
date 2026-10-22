@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
-import { getOwnTabDeleteRefusal } from '~/utils/edit-hold/get-own-tab-delete-refusal'
+import { getOwnOtherTabDeleteRefusal } from '~/utils/edit-hold/get-own-other-tab-delete-refusal'
 
 const INTENT_VALUE = FORM_CONFIG.intent.value
 
@@ -31,7 +31,7 @@ type ActionResult =
       intent: string
       missing: string[]
       heldByName?: string
-      isHeldInOwnTab?: boolean
+      isHeldInOwnOtherTab?: boolean
     }
   | undefined
 
@@ -51,7 +51,7 @@ type Options = {
  *
  * @param actionResult - The keyed fetcher's data, `{ intent, missing }`, and
  *   `heldByName` when the content's edit hold refused it, with
- *   `isHeldInOwnTab` when a delete waited for one's own other tab (0036).
+ *   `isHeldInOwnOtherTab` when a delete waited for one's own other tab (0036).
  * @param options - The record's own toasts, and what a refused action's
  *   toast calls the content.
  * @returns The missing list to show, `null` when there is none, and setters to
@@ -76,9 +76,11 @@ export const useContentActionResult = (
     handledResultRef.current = actionResult
 
     // One's own editor in another tab holds it; the delete waits (0036).
-    if (actionResult.isHeldInOwnTab === true) {
+    if (actionResult.isHeldInOwnOtherTab === true) {
       showToast(
-        getOwnTabDeleteRefusal(heldSubject === 'číslo' ? 'issue' : 'article'),
+        getOwnOtherTabDeleteRefusal(
+          heldSubject === 'číslo' ? 'issue' : 'article',
+        ),
       )
       return
     }

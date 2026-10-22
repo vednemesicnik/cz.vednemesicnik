@@ -15,5 +15,5 @@ const EDITOR: Record<EditHoldContent, string> = {
  * @returns „Před smazáním zavřete editor článku, a pokud už je zavřený, zkuste
  *   smazání za chvíli znovu.“
  */
-export const getOwnTabDeleteRefusal = (content: EditHoldContent) =>
+export const getOwnOtherTabDeleteRefusal = (content: EditHoldContent) =>
   `Před smazáním zavřete ${EDITOR[content]}, a pokud už je zavřený, zkuste smazání za chvíli znovu.`
