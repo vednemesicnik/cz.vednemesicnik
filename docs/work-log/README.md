@@ -32,7 +32,7 @@ Code comments cite an entry by its number (`log 0022`).
 
 | # | Entry | Date | Later |
 | --- | --- | --- | --- |
-| [0001](0001-record-decisions-in-the-repository.md) | Record decisions in the repository | 2026-10-13 | [0038](0038-decisions-are-kept-as-a-work-log.md) |
+| [0001](0001-keep-what-the-work-settles-in-the-repository.md) | Keep what the work settles in the repository | 2026-10-13 | [0038](0038-decisions-are-kept-as-a-work-log.md) |
 | [0002](0002-nonce-csp-deferred.md) | Defer the nonce-based Content-Security-Policy | 2026-07-09 |  |
 | [0003](0003-exactly-one-owner.md) | Exactly one Owner | 2026-07-10 |  |
 | [0004](0004-separate-auth-log-and-audit-log.md) | Separate the auth log from the audit log | 2026-07-10 |  |

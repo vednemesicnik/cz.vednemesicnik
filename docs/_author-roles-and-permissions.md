@@ -56,7 +56,7 @@ An article always has at least one author. With `update` on own content only, a 
 or Creator must stay among the authors they save, so they add and remove co-authors but never
 themselves. The Coordinator, with `update` on any content, picks any authors, without
 themselves too. Only the Coordinator adds the association, *Vedneměsíčník, z. s.* (the Owner's
-author); one already on the article stays on anyone's save (design 24j, decision
+author); one already on the article stays on anyone's save (design 24j, log
 [0026](./work-log/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
 
 ## Permissions Overview

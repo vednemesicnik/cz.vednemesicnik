@@ -27,8 +27,8 @@ type Options = {
 }
 
 /**
- * Stores one picked image as soon as it is chosen (design 24b, decision
- * 0027). A new id becomes the gallery's last image; an id the article already
+ * Stores one picked image as soon as it is chosen (design 24b, log 0027).
+ * A new id becomes the gallery's last image; an id the article already
  * has gets the new file, and the old version's files go only after the row
  * commits, so a failed replacement keeps the old image. The row exists only
  * once the file is processed. An upload under way lands after *Zavřít*

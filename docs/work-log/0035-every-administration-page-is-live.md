@@ -46,12 +46,12 @@ reads a stale issue list as current, or as broken. The cost #606 saved is one
 - Expiry still sends no event ([0019](0019-the-edit-lock-lives-on-the-content-row.md)): a page
   that shows a hold keeps `useRevalidateAt` for the moment it expires.
 - The account event's fields are settled in #750 against
-  [0012](0012-live-events-carry-the-actor-name-to-every-session.md). That record accepts
+  [0012](0012-live-events-carry-the-actor-name-to-every-session.md). That entry accepts
   author names because they are public. A field beyond the hint, or an actor whose name is not
   public, sends 0012 to its revisit clause first.
 - No topic document in `docs/` describes the live administration yet; the current state is
   `app/utils/sse/` and the hooks above.
-- Revisit this record if the administration grows past a handful of concurrent editors, so that
+- Revisit this entry if the administration grows past a handful of concurrent editors, so that
   revalidating whole pages on every event costs too much, or if it runs on more than one
   machine, which the in-memory broadcaster does not support.
 

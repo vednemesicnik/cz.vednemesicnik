@@ -1,9 +1,9 @@
 import { useRef } from 'react'
 
 /**
- * The values of one field the server reported as held by another record (log
- * 0039), for the editor's schema to turn into a field error. They only grow:
- * a value stays taken until the page loads again.
+ * The values of one field the server reported as held by another record
+ * (log 0039), for the editor's schema to turn into a field error. They only
+ * grow: a value stays taken until the page loads again.
  *
  * @param initialValues - What the loader reported.
  * @returns `has` for the schema and `add` for each save's answer.

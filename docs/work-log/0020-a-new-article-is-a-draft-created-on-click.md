@@ -42,7 +42,7 @@ with the first content.
 - No scheduler exists yet (#391), so the sweep runs on every *Nový článek*. A draft that is open
   in an editor without a lock for more than a day can be swept; the lock (#669) closes that.
 - The sweep deletes the draft's history rows too: an empty draft leaves nothing behind.
-- The issue (26c) and the episode (27d) are drawn the same way. They adopt this record in their
+- The issue (26c) and the episode (27d) are drawn the same way. They adopt this entry in their
   own redesigns, together with their own migrations.
 - Records, as 0016 defines them (categories, tags, authors, users), still have their `…/new`
   page. A *Dokument* creates its draft on click.

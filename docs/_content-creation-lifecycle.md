@@ -163,7 +163,7 @@ say „upravuje …“, live through the hold events and again when it expires. 
 one *Upraveno* per hold. Hold writes keep `updatedAt` as it was. Gallery images carry their
 `position`.
 
-Autosave is built in #670 (design 24e, 24d; decision
+Autosave is built in #670 (design 24e, 24d; log
 [0022](./work-log/0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md)). There is
 no *Uložit*, no leave dialog and no copy in the browser's storage. The editor sends the whole
 form about a second after the last change, at once on leaving a field and on ⌘S (Ctrl+S
@@ -184,7 +184,7 @@ waits first. When the page closes, the waiting save goes out with the release in
 The browser's own dialog asks only offline, after a failure, or when what waits cannot be sent
 while the page closes.
 
-The gallery saves image by image, built in #673 (design 24b; decision
+The gallery saves image by image, built in #673 (design 24b; log
 [0027](./work-log/0027-each-article-image-saves-on-its-own.md)). A picked image uploads at
 once to the `images` route, under an id made in the editor, and its row exists only once the
 file is processed. A file over 10 MB or not an image is refused at selection. *Odebrat* asks
@@ -197,7 +197,7 @@ checks the hold in its own write and moves `updatedAt`. An upload under way stil
 not submitted since; never over someone else's hold. An upload and a failure show only in
 the open editor.
 
-An upload is one step under the tile's preview (#704, design 24b; decision
+An upload is one step under the tile's preview (#704, design 24b; log
 [0029](./work-log/0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)):
 *Nahrává se* with an indeterminate bar, since `fetch` reports no progress, and *Zrušit* until it
 saves. A cancelled new image's tile goes, and the server keeps nothing of it. A cancelled
@@ -205,7 +205,7 @@ replacement returns to the stored image; only one whose answer crossed the cance
 on the server. *Zavřít* and a link out of the
 editor ask while an image uploads, because leaving cancels it.
 
-Losing the hold is built in #671 (design 24h, 24i; decision
+Losing the hold is built in #671 (design 24h, 24i; log
 [0023](./work-log/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold
 went to the Coordinator or to the same person's other tab shows *Úpravu přebírá …* and turns
 read-only: grey fields, no text toolbar, no buttons that change something. Autosave stops. It
@@ -219,7 +219,7 @@ waited, if nobody saved meanwhile. If someone did, it sends nothing and shows *�
 mezitím změnil* with *Zkopírovat celý text* and *Načíst aktuální verzi*, or *Otevřít detail*
 while someone holds it or it is no longer an editable draft.
 
-A deleted article or issue is built in #756 (design 24k, 26m, 23g, 26i; decision
+A deleted article or issue is built in #756 (design 24k, 26m, 23g, 26i; log
 [0036](./work-log/0036-a-delete-waits-for-every-open-editor.md)). A delete waits for every
 open editor, one's own in another tab included: it repeats "the hold is free" in its own write,
 while the other transitions keep "not held by someone else". The detail answers *Smazat…* with
@@ -230,7 +230,7 @@ smazán* (*Číslo bylo smazáno*) with *Přejít na seznam*, turns read-only fo
 *smazáno*, and keeps a warning under the heading: the article's text to copy, the issue's
 values in the fields.
 
-Choosing authors is built in #674 (design 24j; decision
+Choosing authors is built in #674 (design 24j; log
 [0026](./work-log/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
 The authors are rows with an avatar and a ×. Under them is *Přidat autora*, a search field (a
 `ChipInput` without chips) whose list opens with the focus and narrows through every author
@@ -256,7 +256,7 @@ save.
 
 ## Archive issue drafts and the edit hold
 
-Built in #717 (epic #719, design 26c, 26d, 26i–26l; decision
+Built in #717 (epic #719, design 26c, 26d, 26i–26l; log
 [0034](./work-log/0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md)),
 the same way as the article. *Nové číslo* posts to `add-issue`, which creates a draft without a
 year or an order and opens `edit-issue`. A line under the pair, always there so typing does not move

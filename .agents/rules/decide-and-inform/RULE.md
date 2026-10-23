@@ -20,14 +20,16 @@ decided. A question they would answer with your recommendation only stops their 
 
 ## How
 
-1. **Read first.** `docs/` and `docs/work-log/` settle most of the frame; a call they
-   already make is not a call unless there is a reason to change direction.
+1. **Read first.** `docs/` says how things are and `docs/work-log/` how they got that way.
+   Read them to know what a call changes and why things stand where they do, not as a reason
+   to keep them there: when today's code, design or needs call for something else, change
+   direction.
 2. **Weigh it.**
    - A small or easily reversed call: decide inline.
    - A weighty or hard-to-reverse one (a data model, permissions, authentication, routes, a
      migration, the order of work): first hand your recommendation to a subagent in a fresh
-     context, asked to refute it against `docs/` and the work log. Resolve its
-     objections, then decide.
+     context, asked to refute it, with `docs/` and the work log as context. An earlier entry
+     is a reason to explain a change, not to reject it. Resolve its objections, then decide.
 3. **Report it** in a line or two, with what you turned down:
 
    ```

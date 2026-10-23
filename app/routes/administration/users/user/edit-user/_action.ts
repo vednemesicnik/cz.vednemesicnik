@@ -115,8 +115,9 @@ export const action = async ({
     throw data(null, { status: 403 })
   }
 
-  // A taken address is a plain field error, without whose it is (28f, log
-  // 0039); the unique constraint in updateUser stays the fallback for a race.
+  // A taken address is a plain field error, without whose it is (28f,
+  // log 0039); the unique constraint in updateUser stays the fallback for a
+  // race.
   if (await isEmailTaken(submission.value)) {
     return data(
       {
