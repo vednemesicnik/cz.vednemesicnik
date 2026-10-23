@@ -1,0 +1,8 @@
+/* An inline-block takes no text decoration from the link, so the underline
+   stops before the arrow; the margin is the gap after the label. */
+.arrow {
+  @layer component {
+    display: inline-block;
+    margin-inline-start: 0.25em;
+  }
+}

@@ -58,5 +58,7 @@
   @layer route {
     grid-area: all;
     justify-self: start;
+    /* The arrow never wraps away from the label (jnd2p832). */
+    white-space: nowrap;
   }
 }
