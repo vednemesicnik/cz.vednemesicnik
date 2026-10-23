@@ -51,9 +51,9 @@ Code comments cite an entry by its number (`log 0022`).
 | [0017](0017-every-list-with-filters-has-saved-filters.md) | Every administration list with filters has saved filters, and Stav filters by queue | 2026-10-14 |  |
 | [0018](0018-agents-decide-and-inform.md) | Agents make architecture, product and security calls and report them | 2026-10-15 |  |
 | [0019](0019-the-edit-lock-lives-on-the-content-row.md) | The edit lock lives on the content row, and the article has it first | 2026-10-15 |  |
-| [0020](0020-a-new-article-is-a-draft-created-on-click.md) | A new article is a draft created on click, not a page | 2026-10-15 |  |
+| [0020](0020-a-new-article-is-a-draft-created-on-click.md) | A new article is a draft created on click, not a page | 2026-10-15 | [0039](0039-a-public-address-is-unique-only-once-published.md) |
 | [0021](0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md) | An edit hold belongs to one page load, and a hold write never moves `updatedAt` | 2026-10-15 |  |
-| [0022](0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md) | A Document autosaves its whole form from the holding tab, one save at a time | 2026-10-15 |  |
+| [0022](0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md) | A Document autosaves its whole form from the holding tab, one save at a time | 2026-10-15 | [0039](0039-a-public-address-is-unique-only-once-published.md) |
 | [0023](0023-a-lost-edit-hold-turns-the-editor-read-only.md) | A lost edit hold turns the editor read-only, and the edit comes back only through a reload | 2026-10-15 |  |
 | [0024](0024-dates-are-utc-instants-shown-in-prague-time-without-temporal.md) | Dates are UTC instants shown in Prague time, with `Date` and `Intl` until Temporal is Baseline | 2026-10-15 |  |
 | [0025](0025-a-save-removes-a-link-only-when-the-editor-sends-it-as-removed.md) | A save removes a category or tag link only when the editor sends it as removed | 2026-10-15 |  |
@@ -61,12 +61,13 @@ Code comments cite an entry by its number (`log 0022`).
 | [0027](0027-each-article-image-saves-on-its-own.md) | Each article image saves on its own | 2026-10-16 |  |
 | [0028](0028-the-main-image-stands-first-in-the-gallery.md) | The main image stands first in the gallery, in the editor as on the web | 2026-10-19 |  |
 | [0029](0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md) | An admin upload stays on `fetch`, shows no progress, and can be cancelled until it saves | 2026-10-19 |  |
-| [0030](0030-an-archive-issue-is-year-order-and-supplement-and-its-title-is-computed.md) | An archive issue is its year, order and supplement, and its title is computed, never stored | 2026-10-20 |  |
+| [0030](0030-an-archive-issue-is-year-order-and-supplement-and-its-title-is-computed.md) | An archive issue is its year, order and supplement, and its title is computed, never stored | 2026-10-20 | [0039](0039-a-public-address-is-unique-only-once-published.md) |
 | [0031](0031-an-archive-issue-is-published-without-choosing-a-date.md) | An archive issue is published without choosing a date | 2026-10-20 |  |
 | [0032](0032-a-new-archive-issue-is-a-draft-with-the-next-free-number.md) | A new archive issue is a draft with the next free number, and its number saves as one | 2026-10-20 | [0034](0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md) |
-| [0033](0033-an-issue-pdf-has-no-file-name-until-its-number-is-complete.md) | An issue's PDF has no file name until its year and order are both there | 2026-10-20 |  |
-| [0034](0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md) | A new archive issue starts without a number, and the editor offers the next free one | 2026-10-21 |  |
+| [0033](0033-an-issue-pdf-has-no-file-name-until-its-number-is-complete.md) | An issue's PDF has no file name until its year and order are both there | 2026-10-20 | [0039](0039-a-public-address-is-unique-only-once-published.md) |
+| [0034](0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md) | A new archive issue starts without a number, and the editor offers the next free one | 2026-10-21 | [0039](0039-a-public-address-is-unique-only-once-published.md) |
 | [0035](0035-every-administration-page-is-live.md) | Every administration page is live, and the article list's live row is the default on every list | 2026-10-22 |  |
 | [0036](0036-a-delete-waits-for-every-open-editor.md) | A delete waits for every open editor, one's own included, and an editor whose content was deleted says so | 2026-10-22 |  |
 | [0037](0037-apps-script-web-apps-are-split-by-privilege.md) | Apps Script web apps are split by privilege | 2026-10-22 |  |
 | [0038](0038-decisions-are-kept-as-a-work-log.md) | Decisions are kept as a work log, not as binding records | 2026-10-23 |  |
+| [0039](0039-a-public-address-is-unique-only-once-published.md) | A public address is unique only once it is published, and a Document keeps what was typed | 2026-10-23 |  |
