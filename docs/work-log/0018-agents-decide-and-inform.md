@@ -6,19 +6,18 @@
 
 The skills sent architecture, product and security calls to the user as questions, each with
 the agent's recommendation first: `/ask-design` for a product decision, `/review-idea` when the
-evidence left a verdict open, `/record-decision` when two records were in tension, and
-`/implement-issue` and `/ship-issue` when a plan left a fork open or a fix had several
-approaches. The user almost always picked the recommendation, the frame being already set by
-`docs/` and the decision records, and each question stopped work on both sides.
+evidence left a verdict open, `/record-decision` (now `/log-work`) when two entries were in
+tension, and `/implement-issue` and `/ship-issue` when a plan left a fork open or a fix had
+several approaches. The user almost always picked the recommendation, the frame being already
+set by `docs/` and the work log, and each question stopped work on both sides.
 
 ## Outcome
 
 An agent with a recommendation makes the call and then reports it, with what it turned down.
 A weighty or hard-to-reverse call (a data model, permissions, authentication, routes, a
 migration, the order of work) first goes to a subagent in a fresh context, asked to refute
-the recommendation against `docs/` and the decision records. A call that binds later changes
-gets a record, `Accepted` from the start. The user overrules a reported decision by saying
-so. The convention is the rule `.agents/rules/decide-and-inform/RULE.md`.
+the recommendation against `docs/` and the work log. A call that shapes later work gets a
+work-log entry. The user overrules a reported decision by saying so. The convention is the rule `.agents/rules/decide-and-inform/RULE.md`.
 
 The agent still asks about outward or irreversible actions (a merge, closing an issue, a
 comment, a deploy, deleting data), about facts only the user has (people, the organization,
@@ -26,11 +25,11 @@ money, agreements), and when it hands over something the user has to paste.
 
 ## What follows
 
-- `/ask-design`, `/review-idea`, `/record-decision`, `/implement-issue` and `/ship-issue` point
+- `/ask-design`, `/review-idea`, `/log-work`, `/implement-issue` and `/ship-issue` point
   at the rule instead of asking. The merge question in `/ship-issue` and the handover
   confirmations stay.
 - The check moves from a question up front to the report and the pull request: a decision is
-  visible in the agent's report, in the PR and, when it binds, in a record.
+  visible in the agent's report, in the PR and, when it shapes later work, in a work-log entry.
 - UX stays with the design project and Czech with the copywriter. Deciding whether something is
   a page or a dialog ([0016](0016-records-are-added-and-edited-on-their-own-page.md)) is one of
   the calls the agent now makes.

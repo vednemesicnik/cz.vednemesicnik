@@ -50,7 +50,7 @@ the same validation (`authenticate-request.gs`, `is-allowed-email.gs`, `is-allow
   in the `apps-script-ops` repository.
 - Magic-link drops its `invitation` kind one release after the app sends invitations through
   `users-notice`. Moving magic-link off the domain administrator's account, and magic-link and
-  Donate onto the Toolkit primitives, are open follow-ups, not part of this decision.
+  Donate onto the Toolkit primitives, are open follow-ups, not part of this entry.
 
 ## Turned down
 
@@ -66,4 +66,4 @@ the same validation (`authenticate-request.gs`, `is-allowed-email.gs`, `is-allow
 - **A web app per notice.** The invitation and the e-mail change notice share every privilege;
   splitting them doubles repositories, deployments and secrets for no added bound.
 - **Deploying under the notifications mailbox or the domain administrator.** Turned down for
-  the reasons in the Decision above.
+  the reasons in the Outcome above.

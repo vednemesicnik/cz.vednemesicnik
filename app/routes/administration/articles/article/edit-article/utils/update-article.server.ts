@@ -44,8 +44,8 @@ type Options = {
 type UpdateArticleResult =
   /**
    * `takenSlug` is the saved address when another article holds it as
-   * published, with `slugSuggestion` a free one to offer (design 24d, log
-   * 0039); both `null` when it is free.
+   * published, with `slugSuggestion` a free one to offer (design 24d, log 0039);
+   * both `null` when it is free.
    */
   | {
       status: 'saved'
@@ -70,8 +70,8 @@ const RELEASED_HOLD = {
 }
 
 /**
- * Saves the editor's whole article, as autosave sends it (design 24e, decision
- * 0022). The permission is checked against the stored authors and state, never
+ * Saves the editor's whole article, as autosave sends it (design 24e, log 0022).
+ * The permission is checked against the stored authors and state, never
  * against the ones the form sends, and the new authors must be ones the editor
  * may set; only the Coordinator adds the association (log 0026). An edit
  * never changes the state. Only the tab holding the edit hold
@@ -80,8 +80,8 @@ const RELEASED_HOLD = {
  * incomplete, and its address saves as typed even when another article holds
  * it as published; the answer says so (24d, log 0039). A category or a tag goes only when the editor sends it as removed,
  * so an archived one stays (log 0025). Of the gallery only the alt texts
- * and captions go with it; every image change saves on its own (decision
- * 0027). The history gets one *Upraveno* per hold (07f). The caller has
+ * and captions go with it; every image change saves on its own (log 0027).
+ * The history gets one *Upraveno* per hold (07f). The caller has
  * checked the session (`requireCSRF`).
  *
  * @param request - The action's request.
@@ -207,8 +207,8 @@ export async function updateArticle(
       })
 
       // 3. A save removes a category or a tag only when the editor sends it
-      // as removed, so an archived one it never offered stays (decision
-      // 0025, design 24a). An id that names nothing is left out.
+      // as removed, so an archived one it never offered stays (log 0025,
+      // design 24a). An id that names nothing is left out.
       const [existingCategories, existingTags] = await Promise.all([
         prisma.articleCategory.findMany({
           select: { id: true },

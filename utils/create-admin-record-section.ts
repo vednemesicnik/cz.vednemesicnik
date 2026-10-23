@@ -8,7 +8,7 @@ type Args = {
 }
 
 /**
- * Routes of a record section (design 30a addresses, decision 0016): the list,
+ * Routes of a record section (design 30a addresses, log 0016): the list,
  * `new` and the record's detail and `edit`, each its own page. The old
  * `add-<entry>` and `edit-<entry>` addresses stay as redirects (30b).
  *

@@ -30,7 +30,7 @@ state.
   alone resolves to nothing for a receiver who may not see the content; its loaders still decide
   access.
 - Everyone signed in to the administration is a member of the editorial team.
-- Revisit this record before an event carries anything that describes the content (a title, an
+- Revisit this entry before an event carries anything that describes the content (a title, an
   excerpt, a state a receiver may not see), or before the stream is opened to anyone outside the
   editorial team. Either change needs filtering per receiver, or the name read through a loader,
   as below.

@@ -11,7 +11,7 @@ saves by itself, about a second after typing, at once on leaving a field and on 
 shortcut. One line under the heading says where it stands, and there is no dialog of its own
 when leaving. The issue (26c) and episode (27d) editors will follow the same pattern.
 
-The edit hold (decisions [0019](0019-the-edit-lock-lives-on-the-content-row.md) and
+The edit hold (log [0019](0019-the-edit-lock-lives-on-the-content-row.md) and
 [0021](0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)) already says who
 may save. Five more things had to be settled:
 

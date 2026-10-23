@@ -113,10 +113,10 @@ const publishAddress = async (
 
 /**
  * Article state-transition handlers. The article is the only entity that mirrors
- * every transition onto its standalone PageSEO row, written at publish (log
- * 0039), it accepts an approver
- * backdate on publish, the Coordinator publishes it without a prior review, and an
- * incomplete article is not published (design 23h).
+ * every transition onto its standalone PageSEO row, written at publish
+ * (log 0039), it accepts an approver backdate on publish, the Coordinator
+ * publishes it without a prior review, and an incomplete article is not
+ * published (design 23h).
  */
 export const articleContentStateHandlers = createContentStateHandlers({
   allowBackdating: true,

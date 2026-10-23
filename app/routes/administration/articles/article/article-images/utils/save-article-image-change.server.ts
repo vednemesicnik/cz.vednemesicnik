@@ -97,8 +97,8 @@ const HOLD_SELECT = {
 } as const
 
 /**
- * Saves one change of the article's gallery on its own (design 24b, decision
- * 0027): an upload, a removal, the main image or the order. The permission is
+ * Saves one change of the article's gallery on its own (design 24b, log 0027):
+ * an upload, a removal, the main image or the order. The permission is
  * checked against the stored authors and state, and only the tab holding the
  * edit hold saves, checked again in the change's own conditional write
  * (log 0019), which also moves the article's `updatedAt`. The history gets

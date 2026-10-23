@@ -51,7 +51,7 @@ other transitions leave the text in place, so the editor can react to them (0023
 
 ## What follows
 
-- 0019 is not rewritten (an accepted record never is), so its consequence lives here:
+- 0019 keeps its text as history, so its consequence lives here:
   every content type that gets the edit hold (the episode in 27d, and podcast, category and
   tag after it) repeats `buildFreeHoldWhere` in its delete and `buildNotHeldByOthersWhere` in
   its other transitions, and answers `deleted` from its hold and save routes.

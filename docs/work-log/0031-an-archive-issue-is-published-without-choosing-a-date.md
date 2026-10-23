@@ -27,7 +27,7 @@ does today, and the issue has no *Změnit datum publikace…*.
 
 - `publishedAt` on an issue is a record of when it went public: the detail's fact line and the
   history show it, and nothing orders by it. A later change that orders issues by it has to
-  revisit this record first.
+  revisit this entry first.
 - The editor (#717), the submit checks (#718) and any bulk publish of issues keep the dialog
   without a date. `getIssueHeaderActions` passes `canChangePublishedAt: false`.
 - The dialog's sentence „Číslo bude publikováno v archivu na webu.“ (copy 5k0gp8ve) holds only

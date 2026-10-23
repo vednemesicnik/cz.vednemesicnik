@@ -1,8 +1,8 @@
 import { buildFreeHoldWhere } from './build-free-hold-where'
 
 /**
- * The condition every state transition repeats in its own write (decision
- * 0019): the content is not held by someone else. One's own hold, in any tab,
+ * The condition every state transition repeats in its own write (log 0019):
+ * the content is not held by someone else. One's own hold, in any tab,
  * does not stop one's own actions (design 07g).
  *
  * @param authorId - The acting author.

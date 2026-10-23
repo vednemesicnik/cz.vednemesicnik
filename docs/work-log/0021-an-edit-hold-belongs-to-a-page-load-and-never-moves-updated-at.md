@@ -5,7 +5,7 @@
 
 ## Context
 
-Decision [0019](0019-the-edit-lock-lives-on-the-content-row.md) puts the edit hold on the
+[0019](0019-the-edit-lock-lives-on-the-content-row.md) puts the edit hold on the
 content row (`heldByAuthorId`, `heldByTabId`, `heldSince`, `heldUntil`) and leaves open two
 things every holder of it has to agree on.
 
@@ -64,7 +64,7 @@ The shared logic lives in `app/utils/edit-hold/`: the `where` builders, the stat
   and its „uloženo“ line can rely on `updatedAt`.
 - A tab cannot survive a reload as the same holder. If that becomes a need, the id would have
   to tell a reload from a duplicated tab, which `sessionStorage` cannot.
-- Revisit this record if `updatedAt` stops being the moment of the last save, for example a
+- Revisit this entry if `updatedAt` stops being the moment of the last save, for example a
   separate saved-at column. Then hold writes may use `updateMany` freely.
 - The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
 

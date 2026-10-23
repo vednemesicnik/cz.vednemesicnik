@@ -9,8 +9,8 @@ import { sendUsersNotice } from '~/utils/users-notice/send-users-notice.server'
  * the save.
  *
  * An old address off the organisation's domain (an account saved before the
- * domain check) gets nothing: the script sends only on the domain (decision
- * 0037), so the refusal would only report an expected failure to Sentry.
+ * domain check) gets nothing: the script sends only on the domain (log 0037),
+ * so the refusal would only report an expected failure to Sentry.
  *
  * @param args.oldEmail - The address before the change, the recipient.
  * @param args.newEmail - The saved address, already lower-cased.
