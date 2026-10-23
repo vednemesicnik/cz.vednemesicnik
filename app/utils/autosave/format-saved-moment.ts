@@ -1,4 +1,4 @@
-import { formatNumericDate } from '~/utils/format-numeric-date'
+import { formatNumericDateOrToday } from '~/utils/format-numeric-date-or-today'
 import { formatTime } from '~/utils/format-time'
 
 /**
@@ -9,11 +9,5 @@ import { formatTime } from '~/utils/format-time'
  * @param now - The current time, which decides „dnes“.
  * @returns „dnes v 14:31“, another day „25. 9. 2026 v 14:31“.
  */
-export const formatSavedMoment = (savedAt: Date, now: Date) => {
-  const date =
-    formatNumericDate(savedAt) === formatNumericDate(now)
-      ? 'dnes'
-      : formatNumericDate(savedAt)
-
-  return `${date} v ${formatTime(savedAt)}`
-}
+export const formatSavedMoment = (savedAt: Date, now: Date) =>
+  `${formatNumericDateOrToday(savedAt, now)} v ${formatTime(savedAt)}`
