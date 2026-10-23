@@ -1,6 +1,7 @@
 /**
  * The words of Nový autor and Upravit autora (design 28c; copy 9w0473vu C,
- * fzqkfmeg). The toasts follow the categories' „Rubrika vytvořena / uložena“.
+ * fzqkfmeg). The toasts follow the categories' „Rubrika vytvořena / uložena“
+ * (copy 4wozro76).
  */
 export const AUTHOR_RECORD_COPY = {
   editTitle: 'Upravit autora',
