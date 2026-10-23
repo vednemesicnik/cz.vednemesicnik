@@ -1,15 +1,15 @@
 /*
  * The wide table's columns (28d, 31a), read by AdminTable from a
- * 1280 px table: E-mail 3; Jméno (min. 150), Role (min. 130) and
- * Vytvořeno (min. 110) 1 each. Akce is as wide as its buttons: the app
- * has more of them than 28d draws.
+ * 1280 px table: Jméno 3; Uživatelská role (min. 130), Autorská role
+ * (min. 200) and Poslední přihlášení (min. 170, so its value stays on one
+ * line, sdyic0se) 1 each; Akce as wide as its „⋯“.
  * Each track is the drawn width plus the cell's 12 px padding (14 px
  * at the row's ends).
  */
 .columns {
   @layer route {
     grid-template-columns:
-      minmax(0, 3fr) minmax(162px, 1fr) minmax(142px, 1fr)
-      minmax(122px, 1fr) max-content;
+      minmax(0, 3fr) minmax(142px, 1fr) minmax(212px, 1fr)
+      minmax(182px, 1fr) max-content;
   }
 }
