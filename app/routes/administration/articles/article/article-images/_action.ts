@@ -21,7 +21,7 @@ const STATUS_CODES = {
 
 /**
  * Saves one change of the article editor's gallery for the tab holding the
- * edit hold (design 24b, decision 0027): an upload, a removal, the main image
+ * edit hold (design 24b, log 0027): an upload, a removal, the main image
  * or the order. A POST to a resource route runs only this action, so it
  * requires the session itself (`requireCSRF`). Answers JSON: `saved` with the
  * new `updatedAt` (and an upload's preview), `not-held` (409) with who holds

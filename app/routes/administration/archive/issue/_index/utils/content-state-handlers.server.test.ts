@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { issueContentStateHandlers } from './content-state-handlers.server'
 
 // Pass-through permission wrapper and mocked Prisma, so this exercises the
-// issue config's writes and their hold condition (decision 0019).
+// issue config's writes and their hold condition (log 0019).
 const mocks = vi.hoisted(() => ({
   issueDelete: vi.fn(),
   issueFindUnique: vi.fn(),
@@ -73,7 +73,7 @@ const publishState = {
   year: 2026,
 }
 
-// Not while someone else than the actor edits it (decision 0019).
+// Not while someone else than the actor edits it (log 0019).
 const notHeldByOthers = {
   AND: [{ OR: expect.arrayContaining([{ heldByAuthorId: 'author-1' }]) }],
 }

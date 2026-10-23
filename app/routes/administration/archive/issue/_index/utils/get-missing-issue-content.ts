@@ -12,7 +12,7 @@ type Options = {
  * What an issue still lacks before it can be submitted for review or published
  * (design 26e, copy qjv38ti4): the year, the order, the cover and the PDF, in
  * one sentence; the name and the supplement are not required. A PDF without a
- * name has no address yet (decision 0033). With the year and the order there,
+ * name has no address yet (log 0033). With the year and the order there,
  * another PDF holds its name (copy di9tlre3).
  *
  * @param options - The issue's year and order, whether it has a cover, and its PDF.

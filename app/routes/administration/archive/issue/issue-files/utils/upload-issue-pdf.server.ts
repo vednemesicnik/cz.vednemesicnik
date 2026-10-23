@@ -23,7 +23,7 @@ type Options = {
 
 // The name the PDF is stored under: built from the year and the order, so
 // `null` until the issue has both, or while another PDF still has the name
-// (decision 0033). The editor's save names it once it can. Read after the
+// (log 0033). The editor's save names it once it can. Read after the
 // file is stored: an autosave may have changed the number meanwhile.
 const getPdfFileName = async (issueId: string) => {
   const issue = await prisma.issue.findUniqueOrThrow({
@@ -62,7 +62,7 @@ const getPdfFileName = async (issueId: string) => {
 }
 
 /**
- * Stores a picked PDF as soon as it is chosen (design 26c, decision 0029).
+ * Stores a picked PDF as soon as it is chosen (design 26c, log 0029).
  * Every upload is stored under a fresh id, so a replacement leaves the
  * previous PDF untouched until the row points at the new one; the old object
  * goes only after the commit. The editor can cancel it until it saves: a

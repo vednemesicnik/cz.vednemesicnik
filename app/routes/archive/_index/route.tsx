@@ -25,7 +25,7 @@ type RenderableIssue = Issue & {
   pdf: NonNullable<Issue['pdf']> & { fileName: string }
 }
 
-// A PDF without its name has no address yet (decision 0033).
+// A PDF without its name has no address yet (log 0033).
 const isRenderable = (issue: Issue): issue is RenderableIssue =>
   issue.cover !== null && issue.pdf !== null && issue.pdf.fileName !== null
 

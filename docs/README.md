@@ -17,4 +17,4 @@ This is the documentation for the project.
 - [Editorial Board from a Google Sheet](_editorial-board-google-sheet.md)
 - [The Design Project](_design-project.md)
 - [Copy Context](_copy-context.md)
-- [Decisions](decisions/README.md)
+- [Work log](work-log/README.md)

@@ -92,7 +92,7 @@ export { meta } from './_meta'
 
 type NumberConflict = IssueNumberConflict & { freeOrder: number | null }
 
-// What the save route answers (decisions 0022, 0034).
+// What the save route answers (logs 0022, 0034).
 type SaveResponse =
   | {
       status: 'saved'
@@ -209,7 +209,7 @@ export default function RouteComponent({
     editHold.state.status === 'lost' || editHold.state.status === 'changed'
       ? editHold.state
       : null
-  // The issue is gone for good (26m, decision 0036).
+  // The issue is gone for good (26m, log 0036).
   const isDeleted = editHold.state.status === 'deleted'
   const readOnlyNotice = getReadOnlyNotice(editHold.state, 'issue')
   // Changed meanwhile, and free to edit again here (24i).
@@ -242,7 +242,7 @@ export default function RouteComponent({
     defaultValue: loadedValues,
     id: 'edit-issue',
     // Parsed here, so a year or an order that can't be read is said at its
-    // field (copy xrtebq3m); the save leaves it out (decision 0034).
+    // field (copy xrtebq3m); the save leaves it out (log 0034).
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
     shouldRevalidate: 'onInput',
     shouldValidate: 'onBlur',
@@ -315,7 +315,7 @@ export default function RouteComponent({
       return 'failed'
     }
 
-    // A number taken or unread stayed as it was stored (decision 0034).
+    // A number taken or unread stayed as it was stored (log 0034).
     const sentValues = readValues(formData)
     savedValuesRef.current = result.isNumberSaved
       ? sentValues
@@ -354,7 +354,7 @@ export default function RouteComponent({
   leaveSaveRef.current = autosave.getLeaveSave
 
   // The cover and the PDF: each saves on its own as it is picked (26c,
-  // decision 0029). Refused for the hold: as the whole-form save does (24h,
+  // log 0029). Refused for the hold: as the whole-form save does (24h,
   // 24i).
   const filesAction = href('/administration/archive/:issueId/files', {
     issueId: params.issueId,
@@ -607,7 +607,7 @@ export default function RouteComponent({
   }
 
   // Only an order the offer set in this editor follows the year: a typed one,
-  // or one loaded from an earlier save, stays (decision 0034). Never for a
+  // or one loaded from an earlier save, stays (log 0034). Never for a
   // supplement, which takes its issue's order (26c).
   const isOrderFollowingRef = useRef(false)
   const handleYearInput = () => {
@@ -764,7 +764,7 @@ export default function RouteComponent({
     ]
   }
 
-  // A value that can't be read leaves the number unsaved (decision 0034). One
+  // A value that can't be read leaves the number unsaved (log 0034). One
   // error says so, for the field changed last (copy zuq3hyhf): under that
   // field, or under the first one that can't be read when it reads well.
   const numberErrors: Record<NumberField, string[] | undefined> = {
@@ -805,7 +805,7 @@ export default function RouteComponent({
   }
 
   // A new issue has no number until one is confirmed: the next free one is
-  // offered, filled in and saved on a click (decision 0034, design 26c).
+  // offered, filled in and saved on a click (log 0034, design 26c).
   const numberSuggestion = getIssueNumberSuggestion({
     currentYear,
     order: shownValues.order,
@@ -1274,7 +1274,7 @@ export default function RouteComponent({
                     ) : (
                       <>
                         {/* Without its name, before the year and order, the
-                            name it was uploaded under (decision 0033). */}
+                            name it was uploaded under (log 0033). */}
                         <p className={styles.pdfName}>
                           {issue.pdf.fileName ?? issue.pdf.originalFileName}
                         </p>

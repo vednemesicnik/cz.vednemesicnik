@@ -46,7 +46,7 @@ beforeEach(() => {
   })
 })
 
-describe('save-article action (design 24e, decision 0022)', () => {
+describe('save-article action (design 24e, log 0022)', () => {
   test('requires the session and saves for the editor’s tab', async () => {
     const response = await callAction(buildRequest(validFields))
 

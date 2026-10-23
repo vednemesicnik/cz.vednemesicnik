@@ -24,7 +24,7 @@ type Options = {
 }
 
 /**
- * Stores a picked cover as soon as it is chosen (design 26c, decision 0029).
+ * Stores a picked cover as soon as it is chosen (design 26c, log 0029).
  * A new cover gets its row once its variants are stored; a replacement keeps
  * the cover's id and gets a new version, whose predecessor goes only after the
  * row commits, so a failed replacement keeps the old cover. The alt text is

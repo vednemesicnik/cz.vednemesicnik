@@ -121,7 +121,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // An empty draft has no detail yet (decision 0020): its editor is the page.
+  // An empty draft has no detail yet (log 0020): its editor is the page.
   if (article.firstContentAt === null) {
     throw redirect(
       href('/administration/articles/:articleId/edit-article', { articleId }),

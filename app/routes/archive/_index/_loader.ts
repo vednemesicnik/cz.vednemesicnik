@@ -25,7 +25,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   )
 
   const visibility = await getWebContentVisibility(request, ['issue'])
-  // An empty draft never shows, not even as a preview (decision 0020).
+  // An empty draft never shows, not even as a preview (log 0020).
   const visibleIssues = {
     AND: [visibility.where('issue', ownByAuthor), NON_EMPTY_ISSUE_WHERE],
   }

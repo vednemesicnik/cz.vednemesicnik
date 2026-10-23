@@ -35,7 +35,7 @@ type Options = {
 }
 
 /**
- * The profile photo's upload (design 29b, decision 0029): it goes on `fetch`
+ * The profile photo's upload (design 29b, log 0029): it goes on `fetch`
  * as soon as it is picked and can be cancelled until it saves. A cancelled
  * first photo is always sent a removal too, because the abort loses an answer
  * already on its way; a replacement whose answer crossed the cancel stays.

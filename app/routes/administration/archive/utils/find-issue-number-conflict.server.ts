@@ -15,7 +15,7 @@ type Options = {
  * Finds the issue that already holds the year, order and supplement slug — the
  * issue's unique key (design 26d) — and says so at the field that caused it.
  * The holder is named and linked only when the viewer may see it; an empty
- * draft, which no list shows, never is (decision 0020).
+ * draft, which no list shows, never is (log 0020).
  *
  * @param context - The author permission context, built with `view` on `issue`.
  * @param options.supplement - The supplement as entered, named in place of a

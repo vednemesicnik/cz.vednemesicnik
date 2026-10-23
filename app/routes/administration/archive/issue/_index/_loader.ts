@@ -106,7 +106,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // An empty draft has no detail yet (decision 0020): its editor is the page.
+  // An empty draft has no detail yet (log 0020): its editor is the page.
   if (issue.firstContentAt === null) {
     throw redirect(
       href('/administration/archive/:issueId/edit-issue', { issueId }),
@@ -203,7 +203,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         history,
         id: issue.id,
         // Signed in, the web shows a draft only with both files (26b), the
-        // PDF under its name (decision 0033).
+        // PDF under its name (log 0033).
         isPreviewable:
           issue.state === 'draft' &&
           issue.cover !== null &&
@@ -217,7 +217,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
                 fileName: issue.pdf.fileName,
                 originalFileName: issue.pdf.originalFileName,
                 // Without its name, before the year and order, it has no
-                // address yet (decision 0033).
+                // address yet (log 0033).
                 path:
                   issue.pdf.fileName === null
                     ? null

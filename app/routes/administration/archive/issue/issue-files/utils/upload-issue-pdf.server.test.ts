@@ -153,7 +153,7 @@ describe('uploadIssuePdf — a new PDF', () => {
     })
   })
 
-  test('has no name without the year or the order (decision 0033)', async () => {
+  test('has no name without the year or the order (log 0033)', async () => {
     await run({ year: null })
 
     expect(mocks.issuePdfCreate).toHaveBeenCalledWith(

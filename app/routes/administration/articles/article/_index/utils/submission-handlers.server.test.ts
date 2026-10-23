@@ -65,7 +65,7 @@ const completeDraft = {
 const signInAs = (authorId: string, roleLevel: number) =>
   mocks.permissionContext.mockReturnValue({ authorId, roleLevel })
 
-// Not while someone else than the actor edits it (decision 0019).
+// Not while someone else than the actor edits it (log 0019).
 const notHeldByOthers = (authorId: string) => ({
   AND: [{ OR: expect.arrayContaining([{ heldByAuthorId: authorId }]) }],
 })

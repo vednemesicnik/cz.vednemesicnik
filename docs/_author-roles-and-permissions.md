@@ -57,7 +57,7 @@ or Creator must stay among the authors they save, so they add and remove co-auth
 themselves. The Coordinator, with `update` on any content, picks any authors, without
 themselves too. Only the Coordinator adds the association, *Vedneměsíčník, z. s.* (the Owner's
 author); one already on the article stays on anyone's save (design 24j, decision
-[0026](./decisions/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
+[0026](./work-log/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
 
 ## Permissions Overview
 
@@ -117,11 +117,11 @@ author); one already on the article stays on anyone's save (design 24j, decision
 
 ## The edit hold (articles)
 
-Built in #669 (design 07g, decisions 0019 and 0021). One browser tab of one person edits a
+Built in #669 (design 07g, logs 0019 and 0021). One browser tab of one person edits a
 draft at a time. While someone else holds it, nobody else edits it or changes its state;
 only the Coordinator may take the edit over. Anyone may move their own edit from another tab
 to this one, without a log. One's own hold never blocks one's own actions, except a delete,
-which waits for one's own editor in another tab too (decision 0036).
+which waits for one's own editor in another tab too (log 0036).
 
 Reviews are recorded as `Review` rows (a reviewer plus a `ReviewState`); there is no
 `reviewed` boolean field on content.

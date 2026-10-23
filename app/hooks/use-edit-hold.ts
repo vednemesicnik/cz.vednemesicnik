@@ -36,7 +36,7 @@ export type EditHoldState =
       awayMilliseconds: number
     }
   /**
-   * The content is gone (24k, 26m; decision 0036). For good: the editor only
+   * The content is gone (24k, 26m; log 0036). For good: the editor only
    * reads and never asks for the hold again.
    */
   | { status: 'deleted' }
@@ -52,7 +52,7 @@ type Options = {
   isEmpty: boolean
   /**
    * What autosave still has to send when the page goes away: that save, which
-   * also ends the hold, goes instead of the release (decision 0022).
+   * also ends the hold, goes instead of the release (log 0022).
    */
   leaveSave?: { action: string; getFormData: () => FormData | null }
 }
@@ -62,7 +62,7 @@ const NO_REVALIDATION = { revalidate: () => undefined, state: 'idle' }
 
 /**
  * Holds the edit for this tab while the editor is open (design 07g, 24g;
- * decision 0019). Takes the hold once the page runs, renews it about every
+ * log 0019). Takes the hold once the page runs, renews it about every
  * 30 s, on coming back to the tab and whenever someone else touches it, and
  * releases it when the editor goes away, the tab closes or the page is hidden
  * in the back/forward cache. Every take and takeover carries the content's
@@ -76,7 +76,7 @@ const NO_REVALIDATION = { revalidate: () => undefined, state: 'idle' }
  * and the edit comes back with a reload. The one exception is an expiry while
  * away with nothing saved meanwhile: the hold is taken again silently (24i).
  * An editor whose content was deleted only reads for good: it asks nothing
- * more and never takes the hold again (24k, 26m; decision 0036).
+ * more and never takes the hold again (24k, 26m; log 0036).
  *
  * The tab id lives for one page load: a duplicated tab copies `sessionStorage`,
  * so it would share the hold with its original. Autosave reports each of its
@@ -166,7 +166,7 @@ export const useEditHold = ({
 
   // A waiting save goes out instead of the release and ends the hold itself.
   // Sent from `beforeunload`, before a reload asks for the new page, so the
-  // reload more likely loads it (decision 0022). Its answer can come while the
+  // reload more likely loads it (log 0022). Its answer can come while the
   // page is still going away, so it only learns the save: a page that stays
   // after all takes the hold again with its next renewal.
   const sendLeaveSave = useEffectEvent((): boolean => {
@@ -377,7 +377,7 @@ export const useEditHold = ({
     const handlePageShow = (event: PageTransitionEvent) => {
       if (!event.persisted) return
       // An editor that lost the hold only reads, also after coming back
-      // (decision 0023): the edit returns only with a reload.
+      // (log 0023): the edit returns only with a reload.
       const { status } = stateRef.current
       if (status === 'lost' || status === 'changed' || status === 'deleted') {
         return

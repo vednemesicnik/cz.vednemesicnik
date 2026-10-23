@@ -107,7 +107,7 @@ export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-// What the save route answers (decision 0022); `deleted` comes as a 410.
+// What the save route answers (log 0022); `deleted` comes as a 410.
 type SaveResponse =
   | { status: 'saved'; updatedAt: string; slugSuggestion: string | null }
   | { status: 'not-held'; heldByName: string | null }
@@ -202,7 +202,7 @@ export default function RouteComponent({
     editHold.state.status === 'lost' || editHold.state.status === 'changed'
       ? editHold.state
       : null
-  // The article is gone for good (24k, decision 0036).
+  // The article is gone for good (24k, log 0036).
   const isDeleted = editHold.state.status === 'deleted'
   const readOnlyNotice = getReadOnlyNotice(editHold.state)
   // Changed meanwhile, and free to edit again here (24i).
@@ -227,7 +227,7 @@ export default function RouteComponent({
       categoryIds: article.categoryIds,
       content: article.content,
       // The gallery's alt texts and captions save with the form; the images
-      // save on their own (decision 0027).
+      // save on their own (log 0027).
       images: article.images.map((image) => ({
         altText: image.altText,
         description: image.description,
@@ -503,7 +503,7 @@ export default function RouteComponent({
     void leaveTo(closeHref, () => navigate(closeHref))
   }
 
-  // The gallery: every image change saves on its own (24b, decision 0027).
+  // The gallery: every image change saves on its own (24b, log 0027).
   const imageFieldList = fields.images.getFieldList()
   const readImageField = (index: number, name: string) => {
     const input = formRef.current?.elements.namedItem(
@@ -767,7 +767,7 @@ export default function RouteComponent({
     loaderData.authors.map((author) => [author.id, author]),
   )
   // The authors a search offers: not chosen yet, the association only to the
-  // Coordinator (decision 0026).
+  // Coordinator (log 0026).
   const getAuthorSuggestions = (query: string) =>
     loaderData.authors
       .filter(

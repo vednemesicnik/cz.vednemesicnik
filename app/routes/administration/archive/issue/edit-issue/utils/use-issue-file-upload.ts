@@ -57,7 +57,7 @@ type Options = {
 }
 
 /**
- * The upload of the issue's cover or PDF (design 26c, 26d, decision 0029): it
+ * The upload of the issue's cover or PDF (design 26c, 26d, log 0029): it
  * goes on `fetch` as soon as it is picked, alone, and can be cancelled until it
  * saves. A cancelled new file is always sent a removal too, because the abort
  * loses an answer already on its way; a replacement whose answer crossed the
@@ -275,7 +275,7 @@ export const useIssueFileUpload = ({
   }
 
   /**
-   * Stops the upload for an issue that is gone (decision 0036): there is
+   * Stops the upload for an issue that is gone (log 0036): there is
    * nothing to remove and nothing to load again.
    */
   const abandon = () => {

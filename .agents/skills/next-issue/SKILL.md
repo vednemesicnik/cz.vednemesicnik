@@ -90,9 +90,9 @@ Report what each step did or why it was a no-op.
 
 Run the `remember:remember` skill. Not a summary of the work — git and the PR hold that — but:
 
-- **decisions that bind the next change** — a design answer, a token, a convention settled
-  mid-issue. One that belongs in `docs/decisions/` and did not make it into the PR is
-  offered as `/record-decision`; memory keeps only a pointer to the record;
+- **what the next change should know** — a design answer, a token, a convention settled
+  mid-issue. One that belongs in `docs/work-log/` and did not make it into the PR is
+  offered as `/log-work`; memory keeps only a pointer to the entry;
 - **anything still open** — a design question awaiting an answer, a branch left unmerged on
   purpose, a deploy not yet verified;
 - **the leftovers** from 1.7 and the pairs from 1.8.

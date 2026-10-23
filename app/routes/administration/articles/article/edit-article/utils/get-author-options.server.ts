@@ -9,7 +9,7 @@ import { getAuthorRoleLabel } from '~/utils/role-labels'
 /**
  * Every author an article's authors are chosen from, by name (design 24j):
  * the search goes through the whole list, for everyone. Who may add the
- * association is the editor's and the save's call (decision 0026).
+ * association is the editor's and the save's call (log 0026).
  *
  * @returns Each author with the avatar's image, the role to show beside the
  *   name (none for the association) and whether it is the association.

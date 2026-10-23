@@ -29,12 +29,12 @@ type Options = {
   name: string
   /**
    * The year, order and supplement as the editor sends them, or `null` when one
-   * of them can't be read: then the stored number stays (decision 0034).
+   * of them can't be read: then the stored number stays (log 0034).
    */
   number: IssueNumber | null
   /** Only the Coordinator sends the author (design 26c). */
   authorId?: string
-  /** The editor's tab, which must hold the edit hold (decision 0019). */
+  /** The editor's tab, which must hold the edit hold (log 0019). */
   tabId: string
   /** The last save of a page going away also ends its hold. */
   releaseHold?: boolean
@@ -73,7 +73,7 @@ const RELEASED_HOLD = {
 
 /**
  * Saves the issue editor's whole form, as autosave sends it (design 26c, 26d,
- * decisions 0022 and 0034). The permission is checked against the stored
+ * logs 0022 and 0034). The permission is checked against the stored
  * author and state; only the Coordinator sets another author. Only the tab
  * holding the edit hold saves, checked again in the save's own write (0019),
  * and the save keeps the hold unless `releaseHold` asks for the end. A draft
@@ -275,7 +275,7 @@ export async function updateIssue(
         ...(releaseHold ? RELEASED_HOLD : {}),
       },
       select: { updatedAt: true },
-      // Only the holding tab saves a draft (decision 0019); otherwise the
+      // Only the holding tab saves a draft (log 0019); otherwise the
       // whole transaction rolls back.
       where: { id: issueId, state: 'draft', ...buildHeldByTabWhere(tab) },
     })
@@ -306,7 +306,7 @@ export async function updateIssue(
               where: { issueId },
             }),
           ]),
-      // The PDF is renamed only with its number (decision 0030).
+      // The PDF is renamed only with its number (log 0030).
       ...(storedIssue.pdf === null ||
       pdfFileName === null ||
       pdfFileName === storedIssue.pdf.fileName

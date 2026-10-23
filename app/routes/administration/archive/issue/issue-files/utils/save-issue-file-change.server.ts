@@ -64,7 +64,7 @@ export type FileChangeResult =
 
 type Options = {
   issueId: string
-  /** The editor's tab, which must hold the edit hold (decision 0019). */
+  /** The editor's tab, which must hold the edit hold (log 0019). */
   tabId: string
   /**
    * An upload already on its way still lands when the hold was released
@@ -101,10 +101,10 @@ const HOLD_SELECT = {
 
 /**
  * Saves one change of the issue's cover or PDF on its own (design 26c,
- * decision 0029), as the article's gallery saves an image. The permission is
+ * log 0029), as the article's gallery saves an image. The permission is
  * checked against the stored author and state, and only the tab holding the
  * edit hold saves, checked again in the change's own conditional write
- * (decision 0019), which also moves the issue's `updatedAt`. The history gets
+ * (log 0019), which also moves the issue's `updatedAt`. The history gets
  * the creation, if this is the first content, and *PDF nahráno* or *Obálka
  * nahrána* (26b). The caller has checked the session (`requireCSRF`).
  *
@@ -225,7 +225,7 @@ export async function saveIssueFileChange(
       const issueWrite = prisma.issue.update({
         data: { updatedAt: new Date() },
         select: { updatedAt: true },
-        // Only the holding tab changes a draft (decision 0019); otherwise
+        // Only the holding tab changes a draft (log 0019); otherwise
         // the whole transaction rolls back.
         where: { id: issueId, state: 'draft', ...holdWhere },
       })

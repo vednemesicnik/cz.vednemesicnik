@@ -10,7 +10,7 @@ type Context = Pick<AuthorPermissionContext, 'authorId' | 'can'>
 /**
  * The articles the signed-in author may view, as a Prisma condition: every
  * state their role views, scoped to their own articles where its access is
- * `own`, without empty drafts (decision 0020). The article list and a
+ * `own`, without empty drafts (log 0020). The article list and a
  * category's or tag's detail count the same set (design 22a, 25b).
  *
  * @param context - The author permission context, built with `view` on `article`.

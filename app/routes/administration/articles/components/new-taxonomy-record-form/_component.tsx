@@ -20,7 +20,7 @@ type Props = {
 }
 
 /**
- * Adds a category or tag (design 25c, decision 0016): saved as a draft, or at
+ * Adds a category or tag (design 25c, log 0016): saved as a draft, or at
  * once published by the Coordinator or submitted for review by anyone else
  * (07c). Publishing is not confirmed: a new record has no articles, so the
  * website does not change (39aqwklv).

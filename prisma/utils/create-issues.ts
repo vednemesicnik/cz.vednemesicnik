@@ -44,7 +44,7 @@ export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
                 }),
               }
             : undefined,
-          // A seeded issue has content: it is no empty draft (decision 0020).
+          // A seeded issue has content: it is no empty draft (log 0020).
           firstContentAt: new Date(),
           name: issue.name,
           order: issue.order,

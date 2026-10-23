@@ -44,7 +44,7 @@ the review runs on the local diff. `/ship-issue` runs the same review as its Pha
 
 3. **Hand the review to the `implementation-reviewer` agent** (`.claude/agents/`). It reads
    every hunk in a fresh context — the session that wrote the code does not grade its own
-   work — against the rules, `AGENTS.md`, the decision records and the issue's acceptance
+   work — against the rules, `AGENTS.md`, the work log and the issue's acceptance
    criteria. Give it the issue number, the base (`dev`, or the parent branch when stacked)
    and the design file, if any. On a large diff, spawn one per area in parallel and say which
    paths each one owns.

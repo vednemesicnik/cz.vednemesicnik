@@ -14,7 +14,7 @@ type Options = {
 }
 
 /**
- * Deletes empty issue drafts (no first content, decision 0020) whose edit hold
+ * Deletes empty issue drafts (no first content, log 0020) whose edit hold
  * expired without a release, whatever their age: an empty draft ends with its
  * hold (24e). One never held is deleted once a hold would have expired: a
  * double click or an abandoned redirect. A system clean-up: nothing is logged

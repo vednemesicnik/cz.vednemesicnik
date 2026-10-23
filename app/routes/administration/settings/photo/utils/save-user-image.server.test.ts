@@ -112,7 +112,7 @@ describe('saveUserImage — a save', () => {
   })
 })
 
-describe('saveUserImage — a cancel (decision 0029)', () => {
+describe('saveUserImage — a cancel (log 0029)', () => {
   test('before any file is stored, nothing happens', async () => {
     controller.abort()
 

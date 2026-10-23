@@ -3,7 +3,7 @@ import { buildHeldByTabWhere } from '~/utils/edit-hold/build-held-by-tab-where'
 import { buildHoldConditionWhere } from '~/utils/edit-hold/build-hold-condition-where'
 import { createEditHoldHandlers } from '~/utils/edit-hold/create-edit-hold-handlers.server'
 
-/** The article's edit hold (design 07g, 24g; decision 0019). */
+/** The article's edit hold (design 07g, 24g; log 0019). */
 export const articleEditHoldHandlers = createEditHoldHandlers({
   deleteEmpty: async (id, tab) => {
     const { count } = await prisma.article.deleteMany({

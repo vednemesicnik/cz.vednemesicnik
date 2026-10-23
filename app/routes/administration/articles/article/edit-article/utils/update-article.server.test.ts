@@ -92,7 +92,7 @@ const options = {
   title: 'Article',
 } satisfies Parameters<typeof updateArticle>[1]
 
-// The saving tab holds the article (decision 0019).
+// The saving tab holds the article (log 0019).
 const heldSince = new Date(Date.now() - 60_000)
 const ownHold = {
   heldByAuthor: { name: 'Marie Horáková' },
@@ -319,7 +319,7 @@ describe('updateArticle — a successful save', () => {
   })
 })
 
-describe('updateArticle — the gallery (design 24b, decision 0027)', () => {
+describe('updateArticle — the gallery (design 24b, log 0027)', () => {
   test('saves the alt texts and captions of the article’s own images', async () => {
     await updateArticle(request, {
       ...options,
@@ -413,7 +413,7 @@ describe('updateArticle — a submitted article', () => {
   })
 })
 
-describe('updateArticle — the first content of a new draft (decision 0020)', () => {
+describe('updateArticle — the first content of a new draft (log 0020)', () => {
   const emptyDraft = { ...storedArticle, firstContentAt: null, slug: null }
 
   test('marks the first content only where none is stored yet', async () => {
@@ -500,7 +500,7 @@ describe('updateArticle — the PageSEO row follows the address', () => {
   })
 })
 
-describe('updateArticle — the edit hold (07g, decision 0019)', () => {
+describe('updateArticle — the edit hold (07g, log 0019)', () => {
   test('saves only in the holding tab, checked in the write, and keeps the hold', async () => {
     await expect(updateArticle(request, options)).resolves.toEqual({
       slugSuggestion: null,
@@ -714,7 +714,7 @@ describe('updateArticle — a missing row that is not the hold', () => {
   })
 })
 
-describe('updateArticle — categories and tags (design 24a, decision 0025)', () => {
+describe('updateArticle — categories and tags (design 24a, log 0025)', () => {
   const linkedIds = () => {
     const [{ data: written }] = mocks.articleUpdate.mock.lastCall as [
       {

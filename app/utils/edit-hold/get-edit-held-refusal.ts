@@ -9,12 +9,12 @@ type HeldContent = EditHoldColumns & {
 type Viewer = {
   authorId: string
   now: Date
-  /** A delete waits for one's own other tab too (decision 0036). */
+  /** A delete waits for one's own other tab too (log 0036). */
   countsOwnOtherTab: boolean
 }
 
 /**
- * Whose hold stops the acting author's write (design 07g, decision 0036):
+ * Whose hold stops the acting author's write (design 07g, log 0036):
  * someone else's always, one's own in another tab only for a delete.
  *
  * @param content - The hold columns and the holder's name.

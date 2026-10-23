@@ -138,8 +138,8 @@ its own creation and publish dates, without names.
 
 ## New article drafts and the edit hold
 
-Built in #668 (epic #667, decisions [0019](./decisions/0019-the-edit-lock-lives-on-the-content-row.md)
-and [0020](./decisions/0020-a-new-article-is-a-draft-created-on-click.md)). *Nový článek* posts
+Built in #668 (epic #667, logs [0019](./work-log/0019-the-edit-lock-lives-on-the-content-row.md)
+and [0020](./work-log/0020-a-new-article-is-a-draft-created-on-click.md)). *Nový článek* posts
 to `add-article`, which creates an empty draft of the signed-in author and opens its edit page.
 The draft has no title, text or address (`slug` is null) and no history; `firstContentAt` stays
 null until the first save with content, which logs *Vytvořeno*. Until then the draft is in no
@@ -147,8 +147,8 @@ administration list or count (`NON_EMPTY_ARTICLE_WHERE`), and the public web lis
 with an address. Each *Nový článek* also deletes empty drafts older than a day whose edit hold
 is free.
 
-The edit hold is built in #669 (design 07g, 24g; decisions 0019 and
-[0021](./decisions/0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)).
+The edit hold is built in #669 (design 07g, 24g; logs 0019 and
+[0021](./work-log/0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)).
 Only a draft is held, by one browser tab. The editor takes the hold when it opens and the hold
 is free (no holder, or `heldUntil` passed), renews it about every 30 s, and releases it when it
 closes and when the tab closes. Without a signal it expires
@@ -164,7 +164,7 @@ one *Upraveno* per hold. Hold writes keep `updatedAt` as it was. Gallery images 
 `position`.
 
 Autosave is built in #670 (design 24e, 24d; decision
-[0022](./decisions/0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md)). There is
+[0022](./work-log/0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md)). There is
 no *Uložit*, no leave dialog and no copy in the browser's storage. The editor sends the whole
 form about a second after the last change, at once on leaving a field and on ⌘S (Ctrl+S
 elsewhere). One save is on its way at a time, to the `save` route, which takes it only from the
@@ -180,7 +180,7 @@ The browser's own dialog asks only offline, after a failure, or when what waits 
 while the page closes.
 
 The gallery saves image by image, built in #673 (design 24b; decision
-[0027](./decisions/0027-each-article-image-saves-on-its-own.md)). A picked image uploads at
+[0027](./work-log/0027-each-article-image-saves-on-its-own.md)). A picked image uploads at
 once to the `images` route, under an id made in the editor, and its row exists only once the
 file is processed. A file over 10 MB or not an image is refused at selection. *Odebrat* asks
 first and deletes at once; *Nahradit soubor* keeps the old file until the new one is processed.
@@ -193,7 +193,7 @@ not submitted since; never over someone else's hold. An upload and a failure sho
 the open editor.
 
 An upload is one step under the tile's preview (#704, design 24b; decision
-[0029](./decisions/0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)):
+[0029](./work-log/0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)):
 *Nahrává se* with an indeterminate bar, since `fetch` reports no progress, and *Zrušit* until it
 saves. A cancelled new image's tile goes, and the server keeps nothing of it. A cancelled
 replacement returns to the stored image; only one whose answer crossed the cancel stays replaced
@@ -201,7 +201,7 @@ on the server. *Zavřít* and a link out of the
 editor ask while an image uploads, because leaving cancels it.
 
 Losing the hold is built in #671 (design 24h, 24i; decision
-[0023](./decisions/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold
+[0023](./work-log/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold
 went to the Coordinator or to the same person's other tab shows *Úpravu přebírá …* and turns
 read-only: grey fields, no text toolbar, no buttons that change something. Autosave stops. It
 says *Všechny změny jsou uložené.* only when nothing was waiting; otherwise *Některé změny se
@@ -215,7 +215,7 @@ mezitím změnil* with *Zkopírovat celý text* and *Načíst aktuální verzi*,
 while someone holds it or it is no longer an editable draft.
 
 A deleted article or issue is built in #756 (design 24k, 26m, 23g, 26i; decision
-[0036](./decisions/0036-a-delete-waits-for-every-open-editor.md)). A delete waits for every
+[0036](./work-log/0036-a-delete-waits-for-every-open-editor.md)). A delete waits for every
 open editor, one's own in another tab included: it repeats "the hold is free" in its own write,
 while the other transitions keep "not held by someone else". The detail answers *Smazat…* with
 a toast instead of the confirmation while one's own editor holds it, and a bulk delete skips
@@ -226,7 +226,7 @@ smazán* (*Číslo bylo smazáno*) with *Přejít na seznam*, turns read-only fo
 values in the fields.
 
 Choosing authors is built in #674 (design 24j; decision
-[0026](./decisions/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
+[0026](./work-log/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
 The authors are rows with an avatar and a ×. Under them is *Přidat autora*, a search field (a
 `ChipInput` without chips) whose list opens with the focus and narrows through every author
 while typing. An article always has at least one author, a draft too, and the last row has no
@@ -252,7 +252,7 @@ save.
 ## Archive issue drafts and the edit hold
 
 Built in #717 (epic #719, design 26c, 26d, 26i–26l; decision
-[0034](./decisions/0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md)),
+[0034](./work-log/0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md)),
 the same way as the article. *Nové číslo* posts to `add-issue`, which creates a draft without a
 year or an order and opens `edit-issue`. A line under the pair, always there so typing does not move
 the form, offers the next free number: *Další číslo: Použít 5/2026* (this year and its next free

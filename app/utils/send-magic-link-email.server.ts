@@ -2,7 +2,7 @@
  * Sends the magic-link sign-in email through the Google Apps Script web app
  * (see the SCRIPT__Auth__Magic_Link repo) — the sign-in link and nothing else;
  * the invitation goes through `users-notice/send-users-notice.server.ts`
- * (decision 0037). Best-effort: the sign-in request action returns the same
+ * (log 0037). Best-effort: the sign-in request action returns the same
  * neutral response whether or not delivery succeeds, so this never throws —
  * failures are logged, reported to Sentry, and swallowed. It resolves to
  * whether the link went out; the identity check of a signed-in user (design

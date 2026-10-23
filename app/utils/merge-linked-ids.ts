@@ -9,7 +9,7 @@ type Options = {
 
 /**
  * The links a save leaves on a record: every stored one the editor did not
- * send as removed, and every one it sends as picked (decision 0025). A link
+ * send as removed, and every one it sends as picked (log 0025). A link
  * the editor never showed, such as an archived category, survives the save
  * (design 24a, iq3nur0e).
  *

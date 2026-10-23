@@ -24,20 +24,20 @@ type Options = {
   perex?: string
   /**
    * The gallery's alt texts and captions; the images themselves save on their
-   * own (decision 0027).
+   * own (log 0027).
    */
   images?: Array<{
     id: string
     altText: string
     description?: string
   }>
-  /** Links the editor removed; any other stored one stays (decision 0025). */
+  /** Links the editor removed; any other stored one stays (log 0025). */
   removedCategoryIds?: string[]
   removedTagIds?: string[]
   slug: string
   tagIds?: string[]
   title: string
-  /** The editor's tab, which must hold the edit hold (decision 0019). */
+  /** The editor's tab, which must hold the edit hold (log 0019). */
   tabId: string
   /** The last save of a page going away also ends its hold. */
   releaseHold?: boolean
@@ -69,13 +69,13 @@ const RELEASED_HOLD = {
  * Saves the editor's whole article, as autosave sends it (design 24e, decision
  * 0022). The permission is checked against the stored authors and state, never
  * against the ones the form sends, and the new authors must be ones the editor
- * may set; only the Coordinator adds the association (decision 0026). An edit
+ * may set; only the Coordinator adds the association (log 0026). An edit
  * never changes the state. Only the tab holding the edit hold
- * saves, checked again in the save's own write (decision 0019), and the save
+ * saves, checked again in the save's own write (log 0019), and the save
  * keeps the hold unless `releaseHold` asks for the end. A draft saves
  * incomplete; an address another article has is left out and the rest saves
  * (24d). A category or a tag goes only when the editor sends it as removed,
- * so an archived one stays (decision 0025). Of the gallery only the alt texts
+ * so an archived one stays (log 0025). Of the gallery only the alt texts
  * and captions go with it; every image change saves on its own (decision
  * 0027). The history gets one *Upraveno* per hold (07f). The caller has
  * checked the session (`requireCSRF`).
@@ -175,7 +175,7 @@ export async function updateArticle(
       })
 
       // Only the Coordinator adds the association; one already stored stays
-      // on anyone's save (decision 0026).
+      // on anyone's save (log 0026).
       const storedAuthorIds = storedArticle.authors.map(({ id }) => id)
       const addedAuthorIds = authorIds.filter(
         (id) => !storedAuthorIds.includes(id),
@@ -190,7 +190,7 @@ export async function updateArticle(
         throw data(null, { status: 403 })
       }
 
-      // 1. The gallery's images save on their own (decision 0027); the form
+      // 1. The gallery's images save on their own (log 0027); the form
       // carries only their alt texts and captions. A new PageSEO record
       // starts with the stored main image as its sharing preview.
       const [storedImageCount, { ogImageUrl, twitterImageUrl }] =
@@ -249,7 +249,7 @@ export async function updateArticle(
       })
 
       // The first save with a title, text or image ends the empty draft and
-      // is its creation in the history (decision 0020, design 07f).
+      // is its creation in the history (log 0020, design 07f).
       const hasContent = title !== '' || content !== '' || storedImageCount > 0
 
       // 4. In one transaction: the alt texts and captions, the article and its
@@ -328,7 +328,7 @@ export async function updateArticle(
             ...(releaseHold ? RELEASED_HOLD : {}),
           },
           select: { id: true, updatedAt: true },
-          // Only the holding tab saves a draft (decision 0019); otherwise
+          // Only the holding tab saves a draft (log 0019); otherwise
           // the whole transaction rolls back.
           where: {
             id: articleId,

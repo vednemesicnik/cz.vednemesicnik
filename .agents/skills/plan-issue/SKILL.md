@@ -75,9 +75,9 @@ You are the **planning stage** of the issue pipeline:
      Quote a design decision rather than paraphrase it.
    - **Scope** — what changes, what stays out.
    - **Implementation steps** — concrete files, referencing existing utilities to reuse.
-     When the plan settles a decision that binds later changes (see `/record-decision`),
-     its last step writes the record in the same PR. Check `docs/decisions/` first: a plan
-     that contradicts an accepted record says so in **In short**.
+     When the plan settles something later work should know (see `/log-work`), its last
+     step writes the entry in the same PR. Read `docs/work-log/` first: a plan that changes
+     direction from an entry says so and why in **In short**, and logs the change.
    - **Verification** — `pnpm app:typecheck` and `pnpm test`, plus how to see it in the app
      when the change is user-visible.
 

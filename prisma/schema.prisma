@@ -362,7 +362,7 @@ model Issue {
   supplementSlug String       @default("")
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  // The first save or upload; null is an empty draft (decisions 0020, 0032).
+  // The first save or upload; null is an empty draft (logs 0020, 0032).
   firstContentAt DateTime?
   publishedAt    DateTime?
   state          ContentState @default(draft)
@@ -375,7 +375,7 @@ model Issue {
   submittedAt    DateTime?
   submittedById  String?
   submittedBy    Author?      @relation("IssueSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  // The edit hold (design 07g, decision 0019): free when there is no holder or heldUntil has passed.
+  // The edit hold (design 07g, log 0019): free when there is no holder or heldUntil has passed.
   heldByAuthorId String?
   heldByAuthor   Author?      @relation("IssueEditHolds", fields: [heldByAuthorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   heldByTabId    String?
@@ -408,7 +408,7 @@ model IssueCover {
 
 model IssuePDF {
   id               String   @id @default(cuid())
-  // Null until the issue has its year and order: the name is built from them (decision 0033).
+  // Null until the issue has its year and order: the name is built from them (log 0033).
   fileName         String?  @unique
   // The name it was uploaded under, which tells the final version (design 26b);
   // null for a file uploaded before it was kept.
@@ -532,7 +532,7 @@ model Article {
   content         String
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
-  // The first save with a title, text or image; null is an empty draft (decision 0020).
+  // The first save with a title, text or image; null is an empty draft (log 0020).
   firstContentAt  DateTime?
   publishedAt     DateTime?
   state           ContentState      @default(draft)
@@ -547,7 +547,7 @@ model Article {
   submittedAt     DateTime?
   submittedById   String?
   submittedBy     Author?           @relation("ArticleSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  // The edit hold (design 07g, decision 0019): free when there is no holder or heldUntil has passed.
+  // The edit hold (design 07g, log 0019): free when there is no holder or heldUntil has passed.
   heldByAuthorId  String?
   heldByAuthor    Author?           @relation("ArticleEditHolds", fields: [heldByAuthorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   heldByTabId     String?

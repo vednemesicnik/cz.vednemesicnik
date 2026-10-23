@@ -19,7 +19,7 @@ export type SaveUserImageResult = {
  * Stores a new profile photo for the user, replacing the previous one. The
  * variants are written before the row (files before DB), and the previous
  * version's files are removed only after the row has committed. The person
- * can cancel it until it saves (design 29b, decision 0029): the aborted
+ * can cancel it until it saves (design 29b, log 0029): the aborted
  * request is checked before the files are stored, right before the commit
  * and once more after it, where a first photo is deleted and a replaced one
  * put back.

@@ -5,7 +5,7 @@ import { requireAuthorPermission } from '~/utils/permissions/author/guards/requi
 import { deleteStaleEmptyDrafts } from './delete-stale-empty-drafts.server'
 
 /**
- * Creates an empty draft owned by the signed-in author (decision 0020): no
+ * Creates an empty draft owned by the signed-in author (log 0020): no
  * title, text, address or history yet, so nobody sees it until it has
  * content. Also clears empty drafts left over from earlier clicks.
  *

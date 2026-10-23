@@ -62,7 +62,7 @@ const options = {
   tabId: 'tab-1',
 } satisfies Parameters<typeof updateIssue>[1]
 
-// The saving tab holds the issue (decision 0019).
+// The saving tab holds the issue (log 0019).
 const heldSince = new Date(Date.now() - 60_000)
 const ownHold = {
   heldByAuthor: { name: 'Marie Horáková' },
@@ -210,7 +210,7 @@ describe('updateIssue — the save', () => {
   })
 })
 
-describe('updateIssue — the number saves as one (decision 0034)', () => {
+describe('updateIssue — the number saves as one (log 0034)', () => {
   test('leaves a taken number out and saves the rest, with a free order', async () => {
     mocks.findIssueNumberConflict.mockResolvedValue(conflict)
 
