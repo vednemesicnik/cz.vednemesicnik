@@ -1,9 +1,18 @@
-/* At the end of the row. */
-.remove {
-  @layer route {
-    display: inline-flex;
+/* At the end of the row; right after Změnit when the row has it (28f). */
+.anchor {
+  @layer variant {
     flex: none;
     margin-inline-start: auto;
+
+    [data-author-row-button] + & {
+      margin-inline-start: 0;
+    }
+  }
+}
+
+.remove {
+  @layer component {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 6px;
@@ -26,7 +35,7 @@
 }
 
 .icon {
-  @layer route {
+  @layer component {
     inline-size: 14px;
     block-size: 14px;
   }

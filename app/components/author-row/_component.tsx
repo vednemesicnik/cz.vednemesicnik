@@ -14,8 +14,9 @@ type Props = {
   /** A word after the name, such as the author's role (28f). */
   note?: string
   /**
-   * At most one action at the end, never disabled (24j): an
-   * `AuthorRemoveButton` or an `AuthorRowButton`. Without one the row has none.
+   * The actions at the end, never disabled: one in 24j, an
+   * `AuthorRemoveButton` or an `AuthorRowButton`; in 28f *Změnit* and then
+   * the × (nstqrn5g). Without one the row has none.
    */
   children?: ReactNode
   className?: string
@@ -23,7 +24,8 @@ type Props = {
 
 /**
  * An author's row (design 24j, 28f): the avatar, the name, *vy* for one's own
- * row or a note such as the role, and the row's one action at the end.
+ * row or a note such as the role, and the row's actions at the end. Short of
+ * room, the note moves under the name before a word breaks.
  */
 export const AuthorRow = ({
   name,
@@ -35,9 +37,11 @@ export const AuthorRow = ({
 }: Props) => (
   <div className={clsx(styles.row, className)}>
     <Avatar image={image} name={name} size={28} />
-    <span className={styles.name}>{name}</span>
-    {isOwn && <span className={styles.note}>vy</span>}
-    {note !== undefined && <span className={styles.note}>{note}</span>}
+    <span className={styles.text}>
+      <span className={styles.name}>{name}</span>
+      {isOwn && <span className={styles.note}>vy</span>}
+      {note !== undefined && <span className={styles.note}>{note}</span>}
+    </span>
     {children}
   </div>
 )

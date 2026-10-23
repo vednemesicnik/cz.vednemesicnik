@@ -2,6 +2,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
+import { AuthorRemoveButton } from '~/components/author-remove-button'
 import { AuthorRowButton } from '~/components/author-row-button'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
 
@@ -43,12 +44,18 @@ export const Own: Story = {
 }
 
 /**
- * A new account's author with its role and Změnit (design 28f).
+ * A new account's author with its role, Změnit and the × (design 28f,
+ * nstqrn5g).
  */
-export const WithNoteAndAction: Story = {
+export const WithNoteAndActions: Story = {
   args: {
     ...Playground.args,
-    children: <AuthorRowButton>Změnit</AuthorRowButton>,
+    children: (
+      <>
+        <AuthorRowButton>Změnit</AuthorRowButton>
+        <AuthorRemoveButton name={'Pavel Říha'} onClick={() => {}} />
+      </>
+    ),
     note: 'Přispěvatel',
   },
   decorators: [

@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react'
 
+import { AuthorRemoveButton } from '~/components/author-remove-button'
 import { AuthorRow } from '~/components/author-row'
 import { AuthorRowButton } from '~/components/author-row-button'
 import { ChipInput } from '~/components/chip-input'
@@ -41,9 +42,10 @@ type Props = {
 
 /**
  * The existing author of Nový uživatel (design 28f): the chosen author with
- * their role and Změnit, which searches the authors without an account, as
- * the article's author search does (24j). With no author chosen yet, only the
- * search; with none left, a line that says so instead.
+ * their role, Změnit, which searches the authors without an account, as the
+ * article's author search does (24j), and × to drop the choice (nstqrn5g).
+ * With no author chosen, only the search; with none left, a line that says
+ * so instead.
  */
 export const ExistingAuthorField = ({
   authors,
@@ -110,6 +112,13 @@ export const ExistingAuthorField = ({
     setAuthorId(chosenAuthorId)
     stopChanging({ refocus: true })
   }
+  // × drops the choice: the empty search with the focus in it, the removed
+  // author offered again (nstqrn5g).
+  const remove = () => {
+    setAuthorId(null)
+    setQuery('')
+    focusTargetRef.current = 'search'
+  }
 
   // Esc cancels at once, the open list included, as in 24j.
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -173,14 +182,21 @@ export const ExistingAuthorField = ({
                 Zrušit
               </AuthorRowButton>
             ) : (
-              <AuthorRowButton
-                aria-label={`Změnit autora: ${author.name}`}
-                key={'change'}
-                onClick={startChanging}
-                ref={changeRef}
-              >
-                Změnit
-              </AuthorRowButton>
+              <>
+                <AuthorRowButton
+                  aria-label={`Změnit autora: ${author.name}`}
+                  key={'change'}
+                  onClick={startChanging}
+                  ref={changeRef}
+                >
+                  Změnit
+                </AuthorRowButton>
+                <AuthorRemoveButton
+                  key={'remove'}
+                  name={author.name}
+                  onClick={remove}
+                />
+              </>
             )}
           </AuthorRow>
           {search}
