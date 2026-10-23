@@ -1,3 +1,5 @@
+import { MISSING_SLUG_ITEM, TAKEN_SLUG_ITEM } from './slug-items'
+
 const pluralRules = new Intl.PluralRules('cs')
 
 const MISSING_ALT_TEXT: Record<Intl.LDMLPluralRule, string> = {
@@ -16,15 +18,19 @@ type Options = {
   content: string
   authorCount: number
   images: { altText: string }[]
+  /** Another article holds the address as published (log 0039). */
+  isSlugTaken: boolean
 }
 
 const isBlank = (value: string | null) => value === null || value.trim() === ''
 
 /**
- * What an article still lacks before it can be submitted for review or published
- * (design 23h). Completeness is checked on submit and publish, not on save.
+ * What an article still lacks before it can be submitted for review, approved
+ * or published (design 23h). Completeness is checked then, not on save; an
+ * address another article holds is the last item (log 0039).
  *
- * @param options - The article's fields, its author count and its images.
+ * @param options - The article's fields, its author count, its images and
+ *   whether its address is taken.
  * @returns One sentence per missing item, in the order of 23h; empty when complete.
  */
 export const getMissingArticleContent = ({
@@ -34,11 +40,12 @@ export const getMissingArticleContent = ({
   content,
   authorCount,
   images,
+  isSlugTaken,
 }: Options): string[] => {
   const missing: string[] = []
 
   if (isBlank(title)) missing.push('Chybí název.')
-  if (isBlank(slug)) missing.push('Chybí adresa.')
+  if (isBlank(slug)) missing.push(MISSING_SLUG_ITEM)
   if (isBlank(content)) missing.push('Chybí text.')
   if (isBlank(perex)) missing.push('Chybí perex.')
   if (authorCount === 0) missing.push('Článek nemá autora.')
@@ -52,6 +59,8 @@ export const getMissingArticleContent = ({
       `${missingAltTextCount} ${MISSING_ALT_TEXT[pluralRules.select(missingAltTextCount)]}`,
     )
   }
+
+  if (isSlugTaken) missing.push(TAKEN_SLUG_ITEM)
 
   return missing
 }

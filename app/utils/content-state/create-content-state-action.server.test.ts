@@ -29,7 +29,7 @@ const createHandlers = (): ContentStateHandlers => ({
   publish: vi.fn().mockResolvedValue({ missing: [] }),
   restore: vi.fn().mockResolvedValue(undefined),
   retract: vi.fn().mockResolvedValue(undefined),
-  review: vi.fn().mockResolvedValue(undefined),
+  review: vi.fn().mockResolvedValue({ missing: [] }),
 })
 
 const target = { authorIds: ['author-1'], state: 'draft' as const }

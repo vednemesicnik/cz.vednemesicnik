@@ -48,7 +48,7 @@ export async function removeArticleImage(
         article.featuredImageId === imageId
           ? await buildArticlePageSeoImageWrites({
               featuredImage: null,
-              slug: article.slug,
+              publishedSlug: article.publishedSlug,
             })
           : []
 

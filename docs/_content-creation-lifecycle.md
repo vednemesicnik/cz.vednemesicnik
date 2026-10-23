@@ -172,9 +172,14 @@ holding tab and keeps the hold. A draft saves incomplete; what is missing is sai
 publish (23h). Of the gallery, the save carries only the alt texts and captions.
 The line under the heading is the only sign: *Zatím prázdné*, *ukládá se* (at least 300 ms),
 *uloženo dnes v 14:02* (another day with the date), *bez připojení · čeká na uložení* (it sends
-again when the network is back) or *Nepodařilo se uložit.* with *Zkusit znovu*. An address
-another article has does not save, while the rest does. The line adds *· adresa neuložena*, and
-the field offers *Použít …* with a free address. *Zavřít* and every other way out send what
+again when the network is back) or *Nepodařilo se uložit.* with *Zkusit znovu*. The address
+saves as typed even when another article holds it as published (log
+[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)): only the address an
+article holds since its last publish (`publishedSlug`) is unique, and only publish writes it, with
+the article's PageSEO record. Retract and archive keep it. The field then says *Zadejte jinou
+adresu — tato je obsazená.* through Conform and offers *Použít …* with a free address. Submit,
+approve and publish list *Adresa je obsazená.* in the 23h dialog. A draft's web preview names the
+article by its id (`?id=`). *Zavřít* and every other way out send what
 waits first. When the page closes, the waiting save goes out with the release in one request.
 The browser's own dialog asks only offline, after a failure, or when what waits cannot be sent
 while the page closes.
@@ -279,7 +284,7 @@ one saves, and leaving during an upload asks. The history gets *Obálka nahrána
 nahráno*. A PDF uploaded before the number is complete has no name, and so no address, until the
 editor's save names it (0033). *Odeslat ke schválení*, *Publikovat…* and *Schválit a
 publikovat…* need the year, the order, the cover and a named PDF; the name and the supplement are
-optional (26e, #718). The detail then says in one sentence what is missing, with *Doplnit v
+optional (26e, #718). The detail then says in one sentence what is missing, with *Upravit v
 editoru*, and writes nothing. A PDF whose name another PDF still holds is reported as „Adresu PDF už
 používá jiné číslo.“ The Coordinator's edits of a submitted or approved issue keep its approvals,
 because the editor writes no reviews. Its author takes it back to a draft instead (07d).

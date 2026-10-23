@@ -12,6 +12,7 @@ import { getAuthorPermissionContext } from '~/utils/permissions/author/context/g
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
+import { findPublishedSlugConflict } from '../../utils/find-published-slug-conflict.server'
 import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
 import { getArticleFactLine } from '../../utils/get-article-fact-line'
 import { getArticleHold } from '../../utils/get-article-hold'
@@ -147,6 +148,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         authorCount: article.authors.length,
         content: article.content,
         images: article.images,
+        isSlugTaken:
+          (await findPublishedSlugConflict({
+            articleId,
+            slug: article.slug,
+          })) !== null,
         perex: article.perex,
         slug: article.slug,
         title: article.title,

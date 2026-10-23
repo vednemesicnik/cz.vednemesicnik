@@ -6,7 +6,6 @@ const now = new Date('2026-10-15T12:30:00Z')
 
 const base = {
   isEmpty: false,
-  isSlugUnsaved: false,
   now,
   savedAt: new Date('2026-10-15T12:02:00Z'),
   status: 'saved' as const,
@@ -56,12 +55,6 @@ describe('getSaveLineText (design 24e)', () => {
     )
     expect(getSaveLineText({ ...base, status: 'failed' })).toBe(
       'Nepodařilo se uložit.',
-    )
-  })
-
-  test('a taken address (24d)', () => {
-    expect(getSaveLineText({ ...base, isSlugUnsaved: true })).toBe(
-      'uloženo dnes v 14:02 · adresa neuložena',
     )
   })
 })

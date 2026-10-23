@@ -1,6 +1,7 @@
 # 0034. A new archive issue starts without a number, and the editor offers the next free one
 
 - Date: 2026-10-21
+- Later: 0039
 
 ## Context
 

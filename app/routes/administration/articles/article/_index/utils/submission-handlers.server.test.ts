@@ -6,6 +6,7 @@ import { articleSubmissionHandlers } from './submission-handlers.server'
 // Pass-through permission wrapper (the role grant is tested elsewhere) with a
 // switchable signed-in author, and mocked Prisma writes.
 const mocks = vi.hoisted(() => ({
+  articleFindMany: vi.fn(),
   articleFindUnique: vi.fn(),
   articleFindUniqueOrThrow: vi.fn(),
   articleUpdate: vi.fn(),
@@ -36,6 +37,7 @@ vi.mock(
 vi.mock('~/utils/db.server', () => ({
   prisma: {
     article: {
+      findMany: mocks.articleFindMany,
       findUnique: mocks.articleFindUnique,
       findUniqueOrThrow: mocks.articleFindUniqueOrThrow,
       update: mocks.articleUpdate,
@@ -101,6 +103,8 @@ beforeEach(() => {
   mocks.articleUpdate.mockResolvedValue({ id: 'a1' })
   // Nobody holds it, unless a test says so.
   mocks.articleFindUnique.mockResolvedValue(null)
+  // No other article holds its address as published (log 0039).
+  mocks.articleFindMany.mockResolvedValue([])
 })
 
 describe('articleSubmissionHandlers.submit', () => {
@@ -153,6 +157,20 @@ describe('articleSubmissionHandlers.submit', () => {
     await expect(
       articleSubmissionHandlers.submit(request, { id: 'a1', target }),
     ).resolves.toEqual({ missing: ['Chybí perex.'] })
+    expect(mocks.articleUpdateMany).not.toHaveBeenCalled()
+  })
+
+  test('lists an address another article holds as published (log 0039)', async () => {
+    mocks.articleFindUniqueOrThrow.mockResolvedValue(completeDraft)
+    mocks.articleFindMany.mockResolvedValue([{ publishedSlug: 'clanek' }])
+
+    await expect(
+      articleSubmissionHandlers.submit(request, { id: 'a1', target }),
+    ).resolves.toEqual({ missing: ['Adresa je obsazená.'] })
+    expect(mocks.articleFindMany).toHaveBeenCalledWith({
+      select: { publishedSlug: true },
+      where: { id: { not: 'a1' }, publishedSlug: { startsWith: 'clanek' } },
+    })
     expect(mocks.articleUpdateMany).not.toHaveBeenCalled()
   })
 

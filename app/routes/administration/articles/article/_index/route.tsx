@@ -298,7 +298,9 @@ export default function RouteComponent({
                 ) : (
                   <span className={styles.stack}>
                     <Hyperlink
-                      href={articlePath}
+                      // Only a published address is unique: the id says which
+                      // draft to show (log 0039).
+                      href={`${articlePath}?id=${articleId}`}
                       rel={'noopener'}
                       target={'_blank'}
                     >
