@@ -11,6 +11,7 @@ import {
 } from '~/utils/image-store/create-image-sources'
 import { getIssueOrderLabel } from '~/utils/issue/get-issue-order-label'
 import { getIssuePdfFileName } from '~/utils/issue/get-issue-pdf-file-name'
+import { getIssuePublishedNumber } from '~/utils/issue/get-issue-published-number'
 import {
   issueTitleSelect,
   resolveIssueTitles,
@@ -80,6 +81,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         },
       },
       publishedAt: true,
+      publishedNumber: true,
       reviews: {
         select: {
           createdAt: true,
@@ -165,17 +167,26 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     : []
 
   // A draft's PDF has no name until publish: its provisional one, unless the
-  // number is incomplete or taken (26j, log 0039).
+  // number is incomplete or taken (26j, log 0039). Back with the number it
+  // holds, it keeps its name, as publish does (log 0030).
+  const getDraftPdfFileName = () => {
+    if (issue.year === null || issue.order === null || isNumberTaken) {
+      return null
+    }
+    const number = {
+      order: issue.order,
+      supplementSlug: issue.supplementSlug,
+      year: issue.year,
+    }
+    return issue.pdf?.fileName != null &&
+      issue.publishedNumber === getIssuePublishedNumber(number)
+      ? issue.pdf.fileName
+      : getIssuePdfFileName(number)
+  }
   const pdfFileName =
-    issue.state !== 'draft'
-      ? (issue.pdf?.fileName ?? null)
-      : issue.year === null || issue.order === null || isNumberTaken
-        ? null
-        : getIssuePdfFileName({
-            order: issue.order,
-            supplementSlug: issue.supplementSlug,
-            year: issue.year,
-          })
+    issue.state === 'draft'
+      ? getDraftPdfFileName()
+      : (issue.pdf?.fileName ?? null)
 
   // Read only here: an earlier redirect must not use up the toast (26i).
   const notice = await readAdminNotice(request)

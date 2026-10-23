@@ -276,8 +276,8 @@ is left out while the rest saves, and the field says why. A number another issue
 published saves as typed (log
 [0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)): only the number an
 issue holds since its last publish (`publishedNumber`, `2026-4` or `2026-2-maturitni-ples`) is
-unique, and only publish writes it. Retract and archive keep it. The field changed last, or
-*Pořadí v roce*, then says *Zadejte jiné pořadí — číslo 3/2026 je obsazené.* (the year and
+unique, and only publish writes it. Retract and archive keep it. The field changed last (before
+any change *Pořadí v roce*, or *Doplněk* for a supplement) then says *Zadejte jiné pořadí — číslo 3/2026 je obsazené.* (the year and
 supplement forms in copy q34nuf6c, d288tkdf) through Conform, with *Použít N* for a free order
 of a main issue. The cover's alt text follows the title. The hold, its takeover, the
 read-only editor, the detail's „upravuje …“ line and the refused transitions work as for the

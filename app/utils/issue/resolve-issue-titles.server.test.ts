@@ -34,7 +34,7 @@ describe('resolveIssueTitles', () => {
     const issues = await resolveIssueTitles([supplement], VISIBLE_WHERE)
 
     expect(findManyMock.mock.lastCall?.[0]).toMatchObject({
-      orderBy: { publishedNumber: 'desc' },
+      orderBy: [{ publishedNumber: 'desc' }, { name: 'desc' }],
       where: {
         AND: [
           VISIBLE_WHERE,

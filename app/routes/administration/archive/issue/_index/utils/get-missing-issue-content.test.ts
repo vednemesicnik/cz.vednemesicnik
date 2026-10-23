@@ -21,7 +21,7 @@ describe('getMissingIssueContent', () => {
     [{ order: null }, 'Chybí pořadí v roce.'],
     [{ hasCover: false }, 'Chybí obálka.'],
     [{ hasPdf: false }, 'Chybí PDF.'],
-    [{ hasCover: false, hasPdf: false }, 'Chybí obálka a PDF.'],
+    [{ hasCover: false, hasPdf: false }, 'Chybí obálka a\u00a0PDF.'],
   ])('names only what is missing (%o)', (change, sentence) => {
     expect(getMissingIssueContent({ ...COMPLETE, ...change })).toEqual([
       sentence,
@@ -37,7 +37,7 @@ describe('getMissingIssueContent', () => {
         order: null,
         year: null,
       }),
-    ).toEqual(['Chybí rok, pořadí v roce, obálka a PDF.'])
+    ).toEqual(['Chybí rok, pořadí v roce, obálka a\u00a0PDF.'])
   })
 
   test('says a taken number on its own', () => {

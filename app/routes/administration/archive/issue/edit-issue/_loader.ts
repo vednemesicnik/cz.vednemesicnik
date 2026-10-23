@@ -127,6 +127,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         firstContentAt: true,
         name: true,
         order: true,
+        publishedNumber: true,
         state: true,
         supplementSlug: true,
         year: true,
@@ -159,13 +160,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   }
   // A supplement names its main issue as far as its viewer sees it
   // (wo02u3xq): the editor by permission, a reader on the web only a
-  // published one.
+  // published one. Of drafts sharing the number, the issue holding it names
+  // it, a nameless one too, then a named one, as `resolveIssueTitles` does
+  // (log 0039).
   const visibleNamesByNumber: Record<string, string> = {}
   const publishedNamesByNumber: Record<string, string> = {}
-  for (const main of mainIssues) {
-    if (main.name === null || main.firstContentAt === null) continue
+  const namedNumbers = new Set<string>()
+  const rank = (main: (typeof mainIssues)[number]) =>
+    (main.publishedNumber === null ? 2 : 0) + (main.name === null ? 1 : 0)
+  for (const main of [...mainIssues].sort((a, b) => rank(a) - rank(b))) {
+    if (main.firstContentAt === null) continue
     const number = `${main.year}/${main.order}`
     if (
+      !namedNumbers.has(number) &&
       context.can({
         action: 'view',
         entity: 'issue',
@@ -173,9 +180,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         targetAuthorIds: [main.authorId],
       }).hasPermission
     ) {
-      visibleNamesByNumber[number] = main.name
+      namedNumbers.add(number)
+      if (main.name !== null) visibleNamesByNumber[number] = main.name
     }
-    if (main.state === 'published') publishedNamesByNumber[number] = main.name
+    if (main.state === 'published' && main.name !== null) {
+      publishedNamesByNumber[number] = main.name
+    }
   }
 
   const submission = getSubmissionState(issue)

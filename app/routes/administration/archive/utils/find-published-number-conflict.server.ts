@@ -42,23 +42,36 @@ export const findPublishedNumberConflict = async ({
   if (supplementSlug !== '') return { freeOrder: null, takenNumber }
 
   // After every other main issue of the year, drafts included, as the
-  // editor's offer counts them (26c).
-  const mainIssues = await prisma.issue.findMany({
-    select: { order: true },
-    where: {
-      id: { not: issueId },
-      order: { not: null },
-      supplementSlug: '',
-      year,
-    },
+  // editor's offer counts them (26c), and after every main number of the
+  // year an issue holds, one since numbered otherwise too.
+  const [mainIssues, holders] = await Promise.all([
+    prisma.issue.findMany({
+      select: { order: true },
+      where: {
+        id: { not: issueId },
+        order: { not: null },
+        supplementSlug: '',
+        year,
+      },
+    }),
+    prisma.issue.findMany({
+      select: { publishedNumber: true },
+      where: { publishedNumber: { startsWith: `${year}-` } },
+    }),
+  ])
+  const mainNumberPattern = new RegExp(`^${year}-(\\d+)$`)
+  const heldOrders = holders.flatMap(({ publishedNumber }) => {
+    const match = mainNumberPattern.exec(publishedNumber ?? '')
+    return match === null ? [] : [Number(match[1])]
   })
 
   return {
-    freeOrder: getNextFreeIssueOrder(
-      mainIssues.flatMap(({ order: mainOrder }) =>
+    freeOrder: getNextFreeIssueOrder([
+      ...mainIssues.flatMap(({ order: mainOrder }) =>
         mainOrder === null ? [] : [mainOrder],
       ),
-    ),
+      ...heldOrders,
+    ]),
     takenNumber,
   }
 }

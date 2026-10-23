@@ -36,8 +36,9 @@ export const resolveIssueTitles = async <Issue extends IssueTitleFields>(
     supplements.length === 0
       ? []
       : await prisma.issue.findMany({
-          // The holder first: SQLite sorts nulls last when descending.
-          orderBy: { publishedNumber: 'desc' },
+          // The holder first, then a named draft: SQLite sorts nulls last
+          // when descending.
+          orderBy: [{ publishedNumber: 'desc' }, { name: 'desc' }],
           select: { name: true, order: true, year: true },
           where: {
             AND: [

@@ -254,8 +254,8 @@ export default function RouteComponent({
                   <p className={styles.pdfName}>PDF zatím chybí</p>
                 ) : (
                   <>
-                    {/* The name the reader downloads it under; before the
-                        year and order it has none, so the uploaded one. */}
+                    {/* The name the reader downloads it under; before
+                        publish it has none, so the uploaded one (log 0039). */}
                     <p className={styles.pdfName}>
                       {issue.pdf.fileName ?? issue.pdf.originalFileName}
                     </p>

@@ -45,8 +45,9 @@ export const getIssueSupplementLinks = async (
 
   if (issue.supplement) {
     const mainIssue = await prisma.issue.findFirst({
-      // The holder first: SQLite sorts nulls last when descending.
-      orderBy: { publishedNumber: 'desc' },
+      // The holder first, then a named draft: SQLite sorts nulls last when
+      // descending.
+      orderBy: [{ publishedNumber: 'desc' }, { name: 'desc' }],
       select: { id: true, name: true, order: true, year: true },
       where: { AND: [visibleWhere, { order, supplementSlug: '', year }] },
     })

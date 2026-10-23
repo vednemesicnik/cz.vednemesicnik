@@ -23,8 +23,11 @@ vi.mock('~/utils/pdf-store/pdf-store.server', () => ({
 
 // A previewer who may see drafts: the clause is a marker the test follows.
 const VISIBLE = { OR: [{ state: 'published' }, { state: 'draft' }] }
+// An anonymous visitor sees only what is published.
+const PUBLISHED_ONLY = { OR: [{ state: 'published' }] }
+const visibilityMock = vi.hoisted(() => ({ where: vi.fn() }))
 vi.mock('~/utils/permissions/author/get-web-content-visibility.server', () => ({
-  getWebContentVisibility: async () => ({ where: () => VISIBLE }),
+  getWebContentVisibility: async () => visibilityMock,
   ownByAuthor: (authorId: string) => ({ authorId }),
 }))
 
@@ -51,6 +54,7 @@ beforeEach(() => {
   mocks.issuePdfFindUnique.mockResolvedValue(null)
   mocks.issuePdfFindFirst.mockResolvedValue(null)
   mocks.getStream.mockResolvedValue(new ReadableStream())
+  visibilityMock.where.mockReturnValue(VISIBLE)
 })
 
 describe('the issue PDF middleware', () => {
@@ -100,6 +104,22 @@ describe('the issue PDF middleware', () => {
     expect(
       mocks.issuePdfFindFirst.mock.lastCall?.[0].where.issue.AND[0],
     ).toEqual({ ...VISIBLE, id: 'issue-7' })
+  })
+
+  test('an anonymous visitor looks for a draft only among published issues', async () => {
+    visibilityMock.where.mockReturnValue(PUBLISHED_ONLY)
+
+    await serve('VDM-2026-4.pdf')
+
+    // Published only, and a draft: a clause nothing matches.
+    expect(mocks.issuePdfFindFirst.mock.lastCall?.[0].where).toEqual({
+      issue: {
+        AND: [
+          PUBLISHED_ONLY,
+          { order: 4, state: 'draft', supplementSlug: '', year: 2026 },
+        ],
+      },
+    })
   })
 
   test('leaves a name no number gives to the 404', async () => {

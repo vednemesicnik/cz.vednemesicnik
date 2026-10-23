@@ -51,6 +51,15 @@ describe('createEditorSchema', () => {
     })
   })
 
+  test("says a supplement's at Doplněk when nothing changed (6dlnv2de)", () => {
+    const submission = parseWithZod(
+      buildFormData({ order: '2', supplement: 'Maturitní ples', year: '2026' }),
+      { schema: createEditorSchema(isNumberTaken, 'supplement') },
+    )
+
+    expect(Object.keys(submission.reply().error ?? {})).toEqual(['supplement'])
+  })
+
   test.each([
     { order: '4', year: '2026' },
     { order: '2', year: '2026' },

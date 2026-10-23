@@ -53,7 +53,7 @@ describe('getIssueSupplementLinks', () => {
 
     expect(findFirstMock.mock.lastCall?.[0]).toMatchObject({
       // Of drafts sharing the number, the one holding it (log 0039).
-      orderBy: { publishedNumber: 'desc' },
+      orderBy: [{ publishedNumber: 'desc' }, { name: 'desc' }],
       where: {
         AND: [VISIBLE_WHERE, { order: 2, supplementSlug: '', year: 2026 }],
       },

@@ -239,8 +239,12 @@ export default function RouteComponent({
   // Numbers another issue holds as published (26d, log 0039); the schema
   // turns them into the error of the field changed last.
   const takenNumbers = useTakenValues([issue.takenNumber])
-  // The field the editor changed last among the three that make the number.
-  const lastNumberFieldRef = useRef<IssueNumberField>('order')
+  // The field the editor changed last among the three that make the number;
+  // before any change, *Doplněk* for a supplement and *Pořadí v roce*
+  // otherwise, where the taken number's error stands (6dlnv2de).
+  const lastNumberFieldRef = useRef<IssueNumberField>(
+    issue.supplement === '' ? 'order' : 'supplement',
+  )
 
   const [form, fields] = useForm({
     defaultValue: loadedValues,
@@ -697,17 +701,14 @@ export default function RouteComponent({
     { name, order, supplement, year },
     visibleNamesByNumber[number] ?? null,
   )
-  // Another issue holds the number shown as published (log 0039).
+  // Another issue holds the number shown as published (log 0039); a
+  // supplement that can't be read has its own error.
+  const supplementSlug = supplement === null ? '' : slugify(supplement)
   const isNumberTaken =
     year !== null &&
     order !== null &&
-    takenNumbers.has(
-      getIssuePublishedNumber({
-        order,
-        supplementSlug: supplement === null ? '' : slugify(supplement),
-        year,
-      }),
-    )
+    (supplement === null || supplementSlug !== '') &&
+    takenNumbers.has(getIssuePublishedNumber({ order, supplementSlug, year }))
   const webPreview = getIssueWebPreview({
     isNumberTaken,
     name,
