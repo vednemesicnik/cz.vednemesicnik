@@ -11,6 +11,8 @@ type Props = {
   image: ImageSources
   /** The signed-in author's row, marked *vy*. */
   isOwn?: boolean
+  /** A word after the name, such as the author's role (28f). */
+  note?: string
   /**
    * At most one action at the end, never disabled (24j): an
    * `AuthorRemoveButton` or an `AuthorRowButton`. Without one the row has none.
@@ -20,20 +22,22 @@ type Props = {
 }
 
 /**
- * An author's row (design 24j): the avatar, the name, *vy* for one's own row,
- * and the row's one action at the end.
+ * An author's row (design 24j, 28f): the avatar, the name, *vy* for one's own
+ * row or a note such as the role, and the row's one action at the end.
  */
 export const AuthorRow = ({
   name,
   image,
   isOwn = false,
+  note,
   children,
   className,
 }: Props) => (
   <div className={clsx(styles.row, className)}>
     <Avatar image={image} name={name} size={28} />
     <span className={styles.name}>{name}</span>
-    {isOwn && <span className={styles.own}>vy</span>}
+    {isOwn && <span className={styles.note}>vy</span>}
+    {note !== undefined && <span className={styles.note}>{note}</span>}
     {children}
   </div>
 )
