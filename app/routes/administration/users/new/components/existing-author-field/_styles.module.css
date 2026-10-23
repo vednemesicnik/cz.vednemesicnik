@@ -1,0 +1,34 @@
+/* Under the radio's sentence, past the radio and its gap (28f). */
+.field {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    margin-inline-start: 24px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* The chosen author, framed like a field's value (28f). */
+.frame {
+  @layer route {
+    padding-block: 2px;
+    padding-inline: 12px 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+}
+
+/* Changing: the row and the search in one frame, as replacing in 24j. */
+.frame.changing {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-block: 4px 8px;
+    padding-inline: 8px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+  }
+}

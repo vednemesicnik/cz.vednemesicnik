@@ -146,7 +146,8 @@ export const ItemRow = ({
                     label: 'Založit účet…',
                     onSelect: () =>
                       navigate(
-                        `${href('/administration/users/add-user')}?${new URLSearchParams({ author: id })}`,
+                        `${href('/administration/users/new')}?${new URLSearchParams({ author: id })}`,
+                        { state: RETURN_TO_OPENER_STATE },
                       ),
                   },
                 ]

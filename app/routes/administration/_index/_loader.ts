@@ -1,6 +1,7 @@
-import type { LoaderFunctionArgs } from 'react-router'
+import { data, type LoaderFunctionArgs } from 'react-router'
 
 import { NON_EMPTY_ARTICLE_WHERE } from '~/routes/administration/articles/utils/non-empty-article-where'
+import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { NON_EMPTY_ISSUE_WHERE } from '~/utils/issue/non-empty-issue-where'
@@ -198,9 +199,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }).hasPermission,
   }
 
-  return {
-    pendingReviewItems,
-    permissions,
-    statistics,
-  }
+  // „Uživatel uložen“ after removing one's own administration (28g).
+  const notice = await readAdminNotice(request)
+
+  return data(
+    {
+      pendingReviewItems,
+      permissions,
+      statistics,
+      toast: notice.toast,
+    },
+    notice.toast === null
+      ? undefined
+      : { headers: { 'Set-Cookie': notice.setCookie } },
+  )
 }
