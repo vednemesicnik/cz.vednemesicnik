@@ -1,4 +1,4 @@
-import { TAKEN_SLUG_ITEM } from './taken-slug-item'
+import { MISSING_SLUG_ITEM, TAKEN_SLUG_ITEM } from './slug-items'
 
 const pluralRules = new Intl.PluralRules('cs')
 
@@ -45,7 +45,7 @@ export const getMissingArticleContent = ({
   const missing: string[] = []
 
   if (isBlank(title)) missing.push('Chybí název.')
-  if (isBlank(slug)) missing.push('Chybí adresa.')
+  if (isBlank(slug)) missing.push(MISSING_SLUG_ITEM)
   if (isBlank(content)) missing.push('Chybí text.')
   if (isBlank(perex)) missing.push('Chybí perex.')
   if (authorCount === 0) missing.push('Článek nemá autora.')

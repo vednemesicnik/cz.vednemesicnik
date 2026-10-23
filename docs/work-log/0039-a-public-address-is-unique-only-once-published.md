@@ -85,7 +85,9 @@ about a taken value needs to say only that it is taken.
 - **The article goes first; the archive issue follows** in its own PR of #780, with
   `publishedNumber`, the PDF named at publish and its draft preview at the provisional address.
 - **A draft's web preview** goes by the address with the article's id (`?id=`), since two drafts
-  may share an address.
+  may share an address. The public lists, which show a signed-in author's drafts too, still link
+  by the address alone: a draft that shares a published article's address opens the published
+  one there. The administration's preview link opens the draft.
 - **Episodes follow the same rule when their editor is rebuilt (27d):** `publishedNumber` per
   podcast and `publishedSlug`. So does any later Document whose working value becomes a unique
   public address. A *Záznam* form, saved with a button (categories, tags, users), may simply

@@ -251,6 +251,8 @@ export default function RouteComponent({
     // address is taken.
     onValidate: ({ formData }) =>
       parseWithZod(formData, { schema: createEditorSchema(takenSlugs.has) }),
+    // A taken address's error goes as soon as the address changes (24d).
+    shouldRevalidate: 'onInput',
   })
 
   // Taken when the page loads, the field says so once the editor holds the

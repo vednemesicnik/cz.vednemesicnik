@@ -17,7 +17,7 @@ import { findPublishedSlugConflict } from '../../../utils/find-published-slug-co
 import { resolveArticleFeaturedImageSeo } from '../../../utils/resolve-article-featured-image-seo.server'
 import { findArticleHeldRefusal } from './find-article-held-refusal.server'
 import { getMissingArticleContent } from './get-missing-article-content'
-import { TAKEN_SLUG_ITEM } from './taken-slug-item'
+import { MISSING_SLUG_ITEM, TAKEN_SLUG_ITEM } from './slug-items'
 
 const buildPathname = (slug: string) => `/articles/${slug}`
 
@@ -57,14 +57,18 @@ const publishAddress = async (
               select: { publishedSlug: true, slug: true },
               where: { id },
             })
+
+          // Cleared since the check before it: publishing needs an address
+          // (23h), and nothing is written.
+          if (slug === null) {
+            throw createMissingContentError([MISSING_SLUG_ITEM])
+          }
+
           const article = await transaction.article.update({
             data: { ...articleData, publishedSlug: slug },
             select: { perex: true, title: true },
             where: notHeldWhere,
           })
-
-          // Publishing needs an address (23h); without one there is no page.
-          if (slug === null) return
 
           const pathname = buildPathname(slug)
 

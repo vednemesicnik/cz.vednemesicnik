@@ -398,6 +398,23 @@ describe('articleContentStateHandlers — the published address (log 0039)', () 
     expect(recordContentLogMock).not.toHaveBeenCalled()
   })
 
+  test('an address cleared since the check publishes nothing', async () => {
+    articleFindUniqueOrThrowMock.mockResolvedValue(completeArticle)
+    transactionFindUniqueOrThrowMock.mockResolvedValue({
+      publishedSlug: 'stary-clanek',
+      slug: null,
+    })
+
+    const result = await articleContentStateHandlers.publish(request, {
+      id: 'a1',
+      target: draftTarget,
+    })
+
+    expect(result).toEqual({ missing: ['Chybí adresa.'] })
+    expect(articleUpdateMock).not.toHaveBeenCalled()
+    expect(pageSeoUpsertMock).not.toHaveBeenCalled()
+  })
+
   test('an address another article holds blocks the approval', async () => {
     articleFindUniqueOrThrowMock.mockResolvedValue({
       ...completeArticle,
