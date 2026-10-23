@@ -64,3 +64,11 @@
     }
   }
 }
+
+/* The CloseIcon in the remove button: 12 px in the 18 px button (n0kx6u98). */
+.removeIcon {
+  @layer variant {
+    inline-size: 12px;
+    block-size: 12px;
+  }
+}

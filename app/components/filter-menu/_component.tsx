@@ -11,6 +11,8 @@ import { Form, useNavigate, useSearchParams } from 'react-router'
 
 import { Button } from '~/components/button'
 import { Checkbox } from '~/components/checkbox'
+import { ArrowDropDownIcon } from '~/components/icons/arrow-drop-down-icon'
+import { CheckIcon } from '~/components/icons/check-icon'
 import { buildListSearch } from '~/utils/build-list-search'
 import { foldForSearch } from '~/utils/fold-for-search'
 import { getFilterButtonText } from '~/utils/get-filter-button-text'
@@ -294,18 +296,7 @@ export const FilterMenu = ({
             </span>
           )}
           {/* The chevron of the drawing (22d), not the select's triangle. */}
-          <svg
-            aria-hidden={'true'}
-            className={styles.chevron}
-            fill={'none'}
-            stroke={'currentColor'}
-            strokeLinecap={'round'}
-            strokeLinejoin={'round'}
-            strokeWidth={2}
-            viewBox={'0 0 24 24'}
-          >
-            <path d={'m6 9 6 6 6-6'} />
-          </svg>
+          <ArrowDropDownIcon className={styles.chevron} />
         </span>
       </button>
 
@@ -391,7 +382,9 @@ export const FilterMenu = ({
                       className={styles.checkboxTarget}
                       onClick={(event) => handleCheckboxClick(event, rowIndex)}
                     >
-                      <span className={styles.checkbox} />
+                      <span className={styles.checkbox}>
+                        <CheckIcon className={styles.checkMark} />
+                      </span>
                     </span>
                     <span className={styles.optionLabel}>{option.label}</span>
                     {option.count !== undefined && (

@@ -1,7 +1,7 @@
 The UI icons in this folder (all but the facebook-icon and instagram-icon brand
-marks) and the copy and check icons in app/components/copy-button are copied from
-Lucide (https://lucide.dev), lucide-icons/lucide v1.61.0, and
-keep its licence below (design decision n0kx6u98).
+marks) are copied from Lucide (https://lucide.dev), lucide-icons/lucide v1.61.0; list
+and list-ordered come from an earlier release, as the design system draws them
+(jb81di02). They keep the licence below (design decision n0kx6u98).
 
 ISC License
 

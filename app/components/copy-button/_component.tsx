@@ -1,13 +1,11 @@
 import { clsx } from 'clsx'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 
+import { CheckIcon } from '~/components/icons/check-icon'
+import { CopyIcon } from '~/components/icons/copy-icon'
 import { Tooltip } from '~/components/tooltip'
 
 import styles from './_styles.module.css'
-
-// Lucide copy and check (n0kx6u98).
-const COPY_PATH = 'M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'
-const CHECK_PATH = 'M20 6 9 17l-5-5'
 
 const LABEL = 'Kopírovat'
 const COPIED_LABEL = 'Zkopírováno'
@@ -69,21 +67,8 @@ export const CopyButton = ({ value, children, className }: Props) => {
           <span className={styles.visuallyHidden}>{` ${LABEL}`}</span>
         </>
       )}
-      <svg
-        aria-hidden={true}
-        className={clsx(styles.icon, isCopied && styles.hidden)}
-        viewBox={'0 0 24 24'}
-      >
-        <rect height={14} rx={2} ry={2} width={14} x={8} y={8} />
-        <path d={COPY_PATH} />
-      </svg>
-      <svg
-        aria-hidden={true}
-        className={clsx(styles.icon, !isCopied && styles.hidden)}
-        viewBox={'0 0 24 24'}
-      >
-        <path d={CHECK_PATH} />
-      </svg>
+      <CopyIcon className={clsx(styles.icon, isCopied && styles.hidden)} />
+      <CheckIcon className={clsx(styles.icon, !isCopied && styles.hidden)} />
     </button>
   )
 

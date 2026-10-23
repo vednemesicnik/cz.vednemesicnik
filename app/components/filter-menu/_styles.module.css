@@ -83,8 +83,9 @@
   }
 }
 
+/* Restyles the ArrowDropDownIcon it renders. */
 .chevron {
-  @layer component {
+  @layer variant {
     display: block;
     flex: none;
     inline-size: 14px;
@@ -223,6 +224,8 @@
 .checkbox {
   @layer component {
     box-sizing: border-box;
+    display: grid;
+    place-items: center;
     inline-size: 16px;
     block-size: 16px;
     border: 1.5px solid var(--border-strong);
@@ -234,11 +237,22 @@
   @layer component {
     background-color: var(--primary);
     border-color: var(--primary);
-    /* A check mark drawn in CSS: the box is a drawing, hidden from readers. */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 12px;
+  }
+}
+
+/* The CheckIcon in the box: 12 px, white, only on a selected option. */
+.checkMark {
+  @layer variant {
+    inline-size: 12px;
+    block-size: 12px;
+    color: var(--text-on-accent);
+    visibility: hidden;
+  }
+}
+
+.option[aria-selected="true"] .checkMark {
+  @layer variant {
+    visibility: visible;
   }
 }
 

@@ -52,8 +52,9 @@
   }
 }
 
+/* Restyles the ArrowUpwardIcon it renders. */
 .icon {
-  @layer component {
+  @layer variant {
     /* Inactive: hidden until the header is hovered/focused, so sortability is
        discoverable without cluttering every column. */
     opacity: 0;
