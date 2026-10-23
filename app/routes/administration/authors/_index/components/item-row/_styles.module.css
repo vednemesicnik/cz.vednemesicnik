@@ -2,15 +2,15 @@
 .name {
   @layer route {
     display: flex;
-    align-items: center;
+    align-items: safe center;
     gap: 10px;
-    min-width: 0;
+    min-inline-size: 0;
   }
 }
 
 .link {
   @layer route {
-    min-width: 0;
+    min-inline-size: 0;
     font-weight: var(--font-weight-medium);
     color: inherit;
     text-decoration: none;
@@ -27,6 +27,13 @@
       box-shadow: var(--focus-shadow);
       border-radius: var(--radius-sm);
     }
+  }
+}
+
+/* The signed-in person's own row, as in the author picker (28a, 24j). */
+.own {
+  @layer route {
+    color: var(--text-secondary);
   }
 }
 

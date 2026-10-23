@@ -207,6 +207,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       image: createImageSources('user-image', user?.image),
       // The association is the Owner's author (log 0026).
       isAssociation: user?.role.name === 'owner',
+      // The signed-in person's own author, marked „vy“ (28a).
+      isOwn: user?.id === context.userId,
       mayDelete,
       publishedCount: publishedCountById.get(author.id) ?? 0,
     }

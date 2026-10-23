@@ -198,13 +198,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             >
               Účet
             </TableSortableHeaderCell>
-            {/* The sum covers three types, so the header says which (28a, copy 9w0473vu). */}
+            {/* The sum covers three types, so the header says which (28a, copy 9w0473vu); no native title (jb81di02). */}
             <TableHeaderCell>
-              <span
-                className={styles.hint}
-                title={'Publikované články, epizody a čísla'}
-              >
-                Publikováno
+              Publikováno
+              <span className={styles.visuallyHidden}>
+                {' '}
+                (Publikované články, epizody a čísla)
               </span>
             </TableHeaderCell>
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
@@ -221,6 +220,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 id={author.id}
                 image={author.image}
                 isAssociation={author.isAssociation}
+                isOwn={author.isOwn}
                 key={author.id}
                 mayDelete={author.mayDelete}
                 name={author.name}

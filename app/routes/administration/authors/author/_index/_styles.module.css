@@ -6,25 +6,26 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px 24px;
-    width: 100%;
+    inline-size: 100%;
   }
 }
 
 .identity {
   @layer route {
     display: flex;
-    align-items: center;
+    align-items: safe center;
     gap: 16px;
-    min-width: 0;
+    min-inline-size: 0;
   }
 }
 
 /* The name, and the author role · creation date under it. */
 .title {
   @layer route {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 6px;
-    min-width: 0;
+    min-inline-size: 0;
   }
 }
 
@@ -48,19 +49,26 @@
   @layer route {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    column-gap: 8px;
     margin: 0;
     font-size: 13px;
     color: var(--text-secondary);
   }
 }
 
-/* The last five items: type, title, state tag (28b). */
+/*
+ * The last five items: type, title, state tag (28b). The list holds the
+ * tracks and each item takes them as a subgrid, so types and tags line up
+ * across rows at the width of the longest one.
+ */
 .items {
   @layer route {
     display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    column-gap: 12px;
     margin: 0;
     padding: 0;
+    font-size: var(--font-size-sm);
     list-style: none;
   }
 }
@@ -68,10 +76,9 @@
 .item {
   @layer route {
     display: grid;
-    grid-template-columns: 70px minmax(0, 1fr) 170px;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
     align-items: center;
-    justify-items: start;
-    gap: 12px;
     padding-block: 12px;
     border-block-end: 1px solid var(--border);
   }

@@ -26,6 +26,7 @@ type Props = {
   name: string
   image: ImageSources
   isAssociation: boolean
+  isOwn: boolean
   roleName: string
   email: string | null
   publishedCount: number
@@ -50,6 +51,7 @@ export const ItemRow = ({
   name,
   image,
   isAssociation,
+  isOwn,
   roleName,
   email,
   publishedCount,
@@ -101,6 +103,7 @@ export const ItemRow = ({
           ) : (
             name
           )}
+          {isOwn && <span className={styles.own}>vy</span>}
         </span>
       </TableCell>
       <TableCell>{roleName}</TableCell>
