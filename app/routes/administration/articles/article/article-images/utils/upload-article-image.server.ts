@@ -118,7 +118,7 @@ export async function uploadArticleImage(
       const seoWrites = isFeatured
         ? await buildArticlePageSeoImageWrites({
             featuredImage: { id: imageId, ...meta },
-            slug: article.slug,
+            publishedSlug: article.publishedSlug,
           })
         : []
 
@@ -182,7 +182,7 @@ export async function uploadArticleImage(
           const previousSeoWrites = isFeatured
             ? await buildArticlePageSeoImageWrites({
                 featuredImage: { id: imageId, ...previousMeta },
-                slug: article.slug,
+                publishedSlug: article.publishedSlug,
               })
             : []
           await prisma.$transaction([

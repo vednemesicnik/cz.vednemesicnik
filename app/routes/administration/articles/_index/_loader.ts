@@ -273,6 +273,20 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
 
+  // Who holds each listed address as published (log 0039): a draft with an
+  // address another article holds is skipped by bulk publishing too.
+  const holders = await prisma.article.findMany({
+    select: { id: true, publishedSlug: true },
+    where: {
+      publishedSlug: {
+        in: rawArticles.flatMap(({ slug }) => (slug === null ? [] : [slug])),
+      },
+    },
+  })
+  const holderIdBySlug = new Map(
+    holders.map(({ id, publishedSlug }) => [publishedSlug, id]),
+  )
+
   const articles = rawArticles.map((article) => {
     const unheldFlags = getContentActionFlags(context, 'article', article)
     const hold = getArticleHold(article, { authorId: context.authorId, now })
@@ -336,6 +350,9 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           authorCount: article.authors.length,
           content: article.content,
           images: article.images,
+          isSlugTaken:
+            article.slug !== null &&
+            (holderIdBySlug.get(article.slug) ?? article.id) !== article.id,
           perex: article.perex,
           slug: article.slug,
           title: article.title,

@@ -4,6 +4,7 @@ import { buildNotHeldByOthersWhere } from '~/utils/edit-hold/build-not-held-by-o
 import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
 import { refuseWhenHeld } from '~/utils/edit-hold/refuse-when-held.server'
 
+import { findPublishedSlugConflict } from '../../../utils/find-published-slug-conflict.server'
 import { findArticleHeldRefusal } from './find-article-held-refusal.server'
 import { getMissingArticleContent } from './get-missing-article-content'
 
@@ -47,6 +48,11 @@ export const articleSubmissionHandlers = createSubmissionHandlers({
       authorCount: article.authors.length,
       content: article.content,
       images: article.images,
+      isSlugTaken:
+        (await findPublishedSlugConflict({
+          articleId: id,
+          slug: article.slug,
+        })) !== null,
       perex: article.perex,
       slug: article.slug,
       title: article.title,

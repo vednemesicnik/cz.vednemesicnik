@@ -1,7 +1,6 @@
 import { href } from 'react-router'
 import { grants } from '~/data/grants'
 import { prisma } from '~/utils/db.server'
-import { hasSlug } from '~/utils/has-slug'
 import {
   createSitemapResponse,
   createSitemapXml,
@@ -16,7 +15,8 @@ export const loader = async () => {
   const [articles, podcasts, episodes] = await Promise.all([
     prisma.article.findMany({
       orderBy: { publishedAt: 'desc' },
-      select: { slug: true, updatedAt: true },
+      // The address an article holds since its publish (log 0039).
+      select: { publishedSlug: true, updatedAt: true },
       where: { state: 'published' },
     }),
     prisma.podcast.findMany({
@@ -52,12 +52,18 @@ export const loader = async () => {
     ...grants.map((grant) => ({
       loc: toAbsoluteUrl(href('/grants/:grantSlug', { grantSlug: grant.slug })),
     })),
-    ...articles.filter(hasSlug).map((article) => ({
-      lastmod: article.updatedAt,
-      loc: toAbsoluteUrl(
-        href('/articles/:articleSlug', { articleSlug: article.slug }),
-      ),
-    })),
+    ...articles.flatMap(({ publishedSlug, updatedAt }) =>
+      publishedSlug === null
+        ? []
+        : [
+            {
+              lastmod: updatedAt,
+              loc: toAbsoluteUrl(
+                href('/articles/:articleSlug', { articleSlug: publishedSlug }),
+              ),
+            },
+          ],
+    ),
     ...podcasts.map((podcast) => ({
       lastmod: podcast.updatedAt,
       loc: toAbsoluteUrl(

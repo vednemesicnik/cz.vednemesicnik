@@ -525,8 +525,10 @@ model PodcastEpisodeCover {
 
 model Article {
   id              String            @id @default(cuid())
-  // Null until the draft has an address (design 24a); submitting and publishing require it.
-  slug            String?           @unique
+  // What the editor typed, not unique; null until the draft has an address (design 24a).
+  slug            String?
+  // The address the article holds since its last publish; only publish writes it (log 0039).
+  publishedSlug   String?           @unique
   title           String
   perex           String?
   content         String
@@ -556,6 +558,8 @@ model Article {
 
   // content-state query path (public list ordering; authors are M:N, no authorId FK)
   @@index([state, publishedAt])
+  // a draft's web preview finds it by the typed address
+  @@index([slug])
   // non-unique foreign keys
   @@index([submittedById])
   @@index([heldByAuthorId])

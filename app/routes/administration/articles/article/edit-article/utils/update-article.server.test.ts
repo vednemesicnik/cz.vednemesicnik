@@ -18,8 +18,6 @@ const mocks = vi.hoisted(() => ({
   authorCount: vi.fn(),
   checkAuthorPermission: vi.fn(),
   contentLogCount: vi.fn(),
-  pageSeoDeleteMany: vi.fn(),
-  pageSeoUpsert: vi.fn(),
   permissionContext: vi.fn(),
   publishContentEvent: vi.fn(),
   recordContentLog: vi.fn(),
@@ -63,22 +61,8 @@ vi.mock('~/utils/db.server', () => ({
     articleTag: { findMany: mocks.articleTagFindMany },
     author: { count: mocks.authorCount },
     contentLog: { count: mocks.contentLogCount },
-    pageSEO: {
-      deleteMany: mocks.pageSeoDeleteMany,
-      upsert: mocks.pageSeoUpsert,
-    },
   },
 }))
-
-vi.mock(
-  '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server',
-  () => ({
-    resolveArticleFeaturedImageSeo: async () => ({
-      ogImageUrl: null,
-      twitterImageUrl: null,
-    }),
-  }),
-)
 
 const request = new Request('https://test.local/')
 
@@ -134,7 +118,7 @@ beforeEach(() => {
   mocks.articleFindUnique.mockResolvedValue(storedArticle)
   mocks.articleImageUpdateMany.mockReturnValue('update-image-text')
   mocks.articleUpdate.mockReturnValue('update-article')
-  // No other article has the address.
+  // No other article holds the address as published (log 0039).
   mocks.articleFindMany.mockResolvedValue([])
   // Every category and tag the form sends exists.
   const echoIds = async ({ where }: { where: { id: { in: string[] } } }) =>
@@ -144,8 +128,6 @@ beforeEach(() => {
   // The article has a stored image.
   mocks.articleImageCount.mockResolvedValue(1)
   mocks.articleUpdateMany.mockReturnValue('mark-first-content')
-  mocks.pageSeoDeleteMany.mockReturnValue('delete-orphan-page-seo')
-  mocks.pageSeoUpsert.mockReturnValue('upsert-page-seo')
   // The first entry is the first-content mark; 0 rows: not the first save.
   // The article write answers with its new updatedAt.
   mocks.transaction.mockImplementation(async (writes: unknown[]) =>
@@ -293,9 +275,6 @@ describe('updateArticle — the permission follows the stored article', () => {
     expect(mocks.articleUpdate.mock.calls[0][0].data).not.toHaveProperty(
       'state',
     )
-    const pageSeo = mocks.pageSeoUpsert.mock.calls[0][0]
-    expect(pageSeo.create.state).toBe('archived')
-    expect(pageSeo.update).not.toHaveProperty('state')
   })
 
   test('answers a missing article as deleted (0036)', async () => {
@@ -345,11 +324,9 @@ describe('updateArticle — the gallery (design 24b, log 0027)', () => {
     ])
     expect(mocks.transaction).toHaveBeenCalledWith([
       'mark-first-content',
-      'delete-orphan-page-seo',
       'update-image-text',
       'update-image-text',
       'update-article',
-      'upsert-page-seo',
     ])
   })
 
@@ -359,15 +336,6 @@ describe('updateArticle — the gallery (design 24b, log 0027)', () => {
     expect(mocks.articleUpdate.mock.calls[0][0].data).not.toHaveProperty(
       'featuredImageId',
     )
-  })
-
-  test('never rewrites the sharing image of an existing PageSEO record', async () => {
-    await updateArticle(request, options)
-
-    const pageSeo = mocks.pageSeoUpsert.mock.lastCall?.[0]
-    expect(pageSeo.update).not.toHaveProperty('ogImageUrl')
-    expect(pageSeo.update).not.toHaveProperty('twitterImageUrl')
-    expect(pageSeo.create).toHaveProperty('ogImageUrl')
   })
 
   test('a stored image is content of an untitled draft', async () => {
@@ -472,39 +440,12 @@ describe('updateArticle — the first content of a new draft (log 0020)', () => 
   })
 })
 
-describe('updateArticle — the PageSEO row follows the address', () => {
-  test('creates it at the first address of a draft', async () => {
-    mocks.articleFindUnique.mockResolvedValue({ ...storedArticle, slug: null })
-
-    await updateArticle(request, options)
-
-    const pageSeo = mocks.pageSeoUpsert.mock.lastCall?.[0]
-    expect(pageSeo.where).toEqual({ pathname: '/articles/article' })
-    expect(pageSeo.create.pathname).toBe('/articles/article')
-  })
-
-  test('moves it when the address changes', async () => {
-    await updateArticle(request, { ...options, slug: 'renamed' })
-
-    const pageSeo = mocks.pageSeoUpsert.mock.lastCall?.[0]
-    expect(pageSeo.where).toEqual({ pathname: '/articles/article' })
-    expect(pageSeo.update.pathname).toBe('/articles/renamed')
-    expect(mocks.pageSeoDeleteMany).toHaveBeenCalledWith({
-      where: {
-        AND: [
-          { pathname: '/articles/renamed' },
-          { pathname: { not: '/articles/article' } },
-        ],
-      },
-    })
-  })
-})
-
 describe('updateArticle — the edit hold (07g, log 0019)', () => {
   test('saves only in the holding tab, checked in the write, and keeps the hold', async () => {
     await expect(updateArticle(request, options)).resolves.toEqual({
       slugSuggestion: null,
       status: 'saved',
+      takenSlug: null,
       updatedAt: savedAt,
     })
 
@@ -615,11 +556,11 @@ describe('updateArticle — the edit hold (07g, log 0019)', () => {
   })
 })
 
-describe('updateArticle — a taken address (design 24d)', () => {
-  test('saves the rest, keeps the stored address and offers a free one', async () => {
+describe('updateArticle — a taken address (design 24d, log 0039)', () => {
+  test('saves it as typed, says it is taken and offers a free one', async () => {
     mocks.articleFindMany.mockResolvedValue([
-      { slug: 'deset-knih-na-podzim' },
-      { slug: 'deset-knih-na-podzim-3' },
+      { publishedSlug: 'deset-knih-na-podzim' },
+      { publishedSlug: 'deset-knih-na-podzim-3' },
     ])
 
     await expect(
@@ -631,71 +572,35 @@ describe('updateArticle — a taken address (design 24d)', () => {
     ).resolves.toEqual({
       slugSuggestion: 'deset-knih-na-podzim-2',
       status: 'saved',
+      takenSlug: 'deset-knih-na-podzim',
       updatedAt: savedAt,
     })
 
+    // Only another article's published address counts, not a draft's.
     expect(mocks.articleFindMany).toHaveBeenCalledWith({
-      select: { slug: true },
+      select: { publishedSlug: true },
       where: {
         id: { not: 'article-1' },
-        slug: { startsWith: 'deset-knih-na-podzim' },
+        publishedSlug: { startsWith: 'deset-knih-na-podzim' },
       },
     })
     const articleData = mocks.articleUpdate.mock.lastCall?.[0].data
-    expect(articleData.slug).toBe('article')
+    expect(articleData.slug).toBe('deset-knih-na-podzim')
     expect(articleData.title).toBe('Deset knih na podzim')
-    expect(mocks.pageSeoUpsert.mock.lastCall?.[0].update.pathname).toBe(
-      '/articles/article',
-    )
   })
 
-  test('a new draft stays without an address and without a PageSEO row', async () => {
-    mocks.articleFindUnique.mockResolvedValue({ ...storedArticle, slug: null })
-    mocks.articleFindMany.mockResolvedValue([{ slug: 'article' }])
-
-    const result = await updateArticle(request, options)
-
-    expect(result).toMatchObject({ slugSuggestion: 'article-2' })
-    expect(mocks.articleUpdate.mock.lastCall?.[0].data.slug).toBeNull()
-    expect(mocks.pageSeoUpsert).not.toHaveBeenCalled()
-  })
-
-  test('taken between the check and the write: saved again without it', async () => {
-    const uniqueError = new Prisma.PrismaClientKnownRequestError('Unique', {
-      clientVersion: 'test',
-      code: 'P2002',
-    })
-    mocks.transaction
-      .mockRejectedValueOnce(uniqueError)
-      .mockImplementationOnce(async (writes: unknown[]) =>
-        writes.map((write) =>
-          write === 'update-article' ? { updatedAt: savedAt } : { count: 0 },
-        ),
-      )
-    mocks.articleFindMany
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ slug: 'renamed' }])
-
+  test('a free address saves without a report', async () => {
     await expect(
       updateArticle(request, { ...options, slug: 'renamed' }),
-    ).resolves.toMatchObject({ slugSuggestion: 'renamed-2', status: 'saved' })
-    expect(mocks.articleUpdate.mock.lastCall?.[0].data.slug).toBe('article')
+    ).resolves.toMatchObject({ slugSuggestion: null, takenSlug: null })
+    expect(mocks.articleUpdate.mock.lastCall?.[0].data.slug).toBe('renamed')
   })
 
-  test('its own address is not checked', async () => {
-    await updateArticle(request, options)
-
-    expect(mocks.articleFindMany).not.toHaveBeenCalled()
-  })
-
-  test('a cleared address saves none and drops its PageSEO row', async () => {
+  test('a cleared address saves none and is not checked', async () => {
     await updateArticle(request, { ...options, slug: '' })
 
     expect(mocks.articleUpdate.mock.lastCall?.[0].data.slug).toBeNull()
-    expect(mocks.pageSeoUpsert).not.toHaveBeenCalled()
-    expect(mocks.pageSeoDeleteMany).toHaveBeenCalledWith({
-      where: { pathname: '/articles/article' },
-    })
+    expect(mocks.articleFindMany).not.toHaveBeenCalled()
   })
 })
 

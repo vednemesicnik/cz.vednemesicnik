@@ -1,3 +1,4 @@
+import type { Prisma } from '@generated/prisma/client'
 import { data } from 'react-router'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
@@ -22,53 +23,73 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     'article_tag',
   ])
 
-  const article = await prisma.article.findUnique({
-    select: {
-      authors: {
-        select: {
-          name: true,
-        },
+  const select = {
+    authors: {
+      select: {
+        name: true,
       },
-      // Only taxonomy whose own page opens for this reader (design 25d).
-      categories: {
-        select: {
-          name: true,
-          slug: true,
-        },
-        where: visibility.where('article_category', ownByAuthor),
-      },
-      content: true,
-      createdAt: true,
-      featuredImage: {
-        select: {
-          ...imageSourceSelect,
-          description: true,
-        },
-      },
-      images: {
-        orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
-        select: {
-          ...imageSourceSelect,
-          description: true,
-        },
-      },
-      perex: true,
-      publishedAt: true,
-      tags: {
-        select: {
-          name: true,
-          slug: true,
-        },
-        where: visibility.where('article_tag', ownByAuthor),
-      },
-      title: true,
-      updatedAt: true,
     },
-    where: {
-      slug: articleSlug,
-      ...visibility.where('article', ownArticle, ['draft', 'archived']),
+    // Only taxonomy whose own page opens for this reader (design 25d).
+    categories: {
+      select: {
+        name: true,
+        slug: true,
+      },
+      where: visibility.where('article_category', ownByAuthor),
     },
-  })
+    content: true,
+    createdAt: true,
+    featuredImage: {
+      select: {
+        ...imageSourceSelect,
+        description: true,
+      },
+    },
+    images: {
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+      select: {
+        ...imageSourceSelect,
+        description: true,
+      },
+    },
+    perex: true,
+    publishedAt: true,
+    tags: {
+      select: {
+        name: true,
+        slug: true,
+      },
+      where: visibility.where('article_tag', ownByAuthor),
+    },
+    title: true,
+    updatedAt: true,
+  } satisfies Prisma.ArticleSelect
+
+  const previewId = new URL(request.url).searchParams.get('id')
+  const visibleWhere = visibility.where('article', ownArticle, [
+    'draft',
+    'archived',
+  ])
+
+  // Only a published address is unique (log 0039): the administration's
+  // preview names the article by its id, a reader gets the published one, and
+  // a draft or an archived article shows to whoever may see it.
+  const article =
+    (previewId === null
+      ? null
+      : await prisma.article.findFirst({
+          select,
+          where: { AND: [{ id: previewId, slug: articleSlug }, visibleWhere] },
+        })) ??
+    (await prisma.article.findFirst({
+      select,
+      where: { publishedSlug: articleSlug, state: 'published' },
+    })) ??
+    (await prisma.article.findFirst({
+      orderBy: { updatedAt: 'desc' },
+      select,
+      where: { AND: [{ slug: articleSlug }, visibleWhere] },
+    }))
 
   if (!article) {
     throw data(null, { status: 404 })

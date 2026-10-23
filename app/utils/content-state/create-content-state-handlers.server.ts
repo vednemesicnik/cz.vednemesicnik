@@ -20,6 +20,7 @@ import type { ContentEventChange } from '~/utils/sse/content-event'
 import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 import { assertCanSetPublishedAt } from './assert-can-set-published-at'
+import { isMissingContentError } from './is-missing-content-error'
 
 type RoleLevel = { level: number }
 
@@ -108,8 +109,8 @@ export type ContentStateHandlersConfig = {
   approverPublishesWithoutReview?: boolean
   /**
    * What the content still lacks before it can be published (design 23h,
-   * 26e); a non-empty list blocks the publish without writing. The article and
-   * the archive issue.
+   * 26e); a non-empty list blocks the publish and the approval without
+   * writing. The article and the archive issue.
    */
   getMissingBeforePublish?: (id: string) => Promise<string[]>
 }
@@ -136,7 +137,11 @@ export type ContentStateHandlers = {
   retract: (request: Request, options: TransitionOptions) => Promise<void>
   archive: (request: Request, options: TransitionOptions) => Promise<void>
   restore: (request: Request, options: TransitionOptions) => Promise<void>
-  review: (request: Request, options: TransitionOptions) => Promise<void>
+  /** `missing` lists what blocks the approval (23h, 26e), empty once approved. */
+  review: (
+    request: Request,
+    options: TransitionOptions,
+  ) => Promise<{ missing: string[] }>
   delete: (request: Request, options: TransitionOptions) => Promise<void>
   changePublishedAt: (
     request: Request,
@@ -235,11 +240,18 @@ export const createContentStateHandlers = (
           const publishedAt =
             requestedPublishedAt ?? publishState.publishedAt ?? new Date()
 
-          await config.applyState(
-            options.id,
-            { publishedAt, state: 'published' },
-            context.authorId,
-          )
+          // A value another record took since the check above blocks it the
+          // same way (log 0039).
+          try {
+            await config.applyState(
+              options.id,
+              { publishedAt, state: 'published' },
+              context.authorId,
+            )
+          } catch (error) {
+            if (isMissingContentError(error)) return { missing: error.missing }
+            throw error
+          }
 
           // Auto-approve when an approver publishes: their publishing act is the
           // approval, so record it once (idempotent) to satisfy the review gate
@@ -329,7 +341,7 @@ export const createContentStateHandlers = (
       action: 'review',
       entity,
       execute: announceOnSuccess(
-        { change: 'review', id: options.id },
+        { change: 'review', hasChanged: isPublished, id: options.id },
         async (context) => {
           // Approval reads a submitted text (design 07c); a draft nobody
           // submitted is published directly instead.
@@ -339,8 +351,18 @@ export const createContentStateHandlers = (
             throw data(null, { status: 403 })
           }
 
+          // What blocks a publish blocks its approval too (23h, 26e).
+          const missing =
+            (await config.getMissingBeforePublish?.(options.id)) ?? []
+
+          if (missing.length > 0) {
+            return { missing }
+          }
+
           await config.ensureApprovingReview(options.id, context.authorId)
           await recordLog(options.id, ['approve'], context)
+
+          return { missing }
         },
       ),
       target: options.target,

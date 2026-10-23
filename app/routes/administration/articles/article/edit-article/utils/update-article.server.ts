@@ -1,7 +1,7 @@
 import type { Prisma } from '@generated/prisma/client'
 import { data } from 'react-router'
 import { canChooseRecordAuthor } from '~/routes/administration/articles/utils/can-choose-record-author'
-import { resolveArticleFeaturedImageSeo } from '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server'
+import { findPublishedSlugConflict } from '~/routes/administration/articles/utils/find-published-slug-conflict.server'
 import { ASSOCIATION_AUTHOR_WHERE } from '~/utils/association-author-where'
 import { recordEditLog } from '~/utils/content-log/record-edit-log.server'
 import { prisma } from '~/utils/db.server'
@@ -9,8 +9,6 @@ import { buildHeldByTabWhere } from '~/utils/edit-hold/build-held-by-tab-where'
 import type { EditHoldColumns } from '~/utils/edit-hold/edit-hold-columns'
 import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import { isRecordNotFoundError } from '~/utils/edit-hold/is-record-not-found-error.server'
-import { getFreeSlugSuggestion } from '~/utils/get-free-slug-suggestion'
-import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
 import { mergeLinkedIds } from '~/utils/merge-linked-ids'
 import { withAuthorPermission } from '~/utils/permissions/author/actions/with-author-permission.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
@@ -45,10 +43,16 @@ type Options = {
 
 type UpdateArticleResult =
   /**
-   * `slugSuggestion` is a free address offered for a taken one, which was not
-   * saved (design 24d); `null` when the address saved.
+   * `takenSlug` is the saved address when another article holds it as
+   * published, with `slugSuggestion` a free one to offer (design 24d, log
+   * 0039); both `null` when it is free.
    */
-  | { status: 'saved'; updatedAt: Date; slugSuggestion: string | null }
+  | {
+      status: 'saved'
+      updatedAt: Date
+      takenSlug: string | null
+      slugSuggestion: string | null
+    }
   /** The tab does not hold the article; `heldByName` is who does, if anyone. */
   | { status: 'not-held'; heldByName: string | null }
   /** The article is gone: deleted meanwhile, or swept as an empty draft (0036). */
@@ -73,8 +77,8 @@ const RELEASED_HOLD = {
  * never changes the state. Only the tab holding the edit hold
  * saves, checked again in the save's own write (log 0019), and the save
  * keeps the hold unless `releaseHold` asks for the end. A draft saves
- * incomplete; an address another article has is left out and the rest saves
- * (24d). A category or a tag goes only when the editor sends it as removed,
+ * incomplete, and its address saves as typed even when another article holds
+ * it as published; the answer says so (24d, log 0039). A category or a tag goes only when the editor sends it as removed,
  * so an archived one stays (log 0025). Of the gallery only the alt texts
  * and captions go with it; every image change saves on its own (decision
  * 0027). The history gets one *Upraveno* per hold (07f). The caller has
@@ -82,7 +86,7 @@ const RELEASED_HOLD = {
  *
  * @param request - The action's request.
  * @param options - The article id, the editor's tab and the edited fields.
- * @returns `saved` with the new `updatedAt` and a free address for a taken one,
+ * @returns `saved` with the new `updatedAt`, and a taken address with a free one,
  *   or `not-held` with the holder's name when another tab or someone else holds
  *   the article (nothing is written), or `deleted` when it is gone (0036).
  * @throws A 403 response for a denied edit, a locked submission or authors
@@ -110,14 +114,12 @@ export async function updateArticle(
     select: {
       authors: { select: { id: true } },
       categories: { select: { id: true } },
-      featuredImageId: true,
       firstContentAt: true,
       heldByAuthor: { select: { name: true } },
       heldByAuthorId: true,
       heldByTabId: true,
       heldSince: true,
       heldUntil: true,
-      slug: true,
       state: true,
       submittedAt: true,
       tags: { select: { id: true } },
@@ -191,38 +193,18 @@ export async function updateArticle(
       }
 
       // 1. The gallery's images save on their own (log 0027); the form
-      // carries only their alt texts and captions. A new PageSEO record
-      // starts with the stored main image as its sharing preview.
-      const [storedImageCount, { ogImageUrl, twitterImageUrl }] =
-        await Promise.all([
-          prisma.articleImage.count({ where: { articleId } }),
-          resolveArticleFeaturedImageSeo(storedArticle.featuredImageId),
-        ])
+      // carries only their alt texts and captions.
+      const storedImageCount = await prisma.articleImage.count({
+        where: { articleId },
+      })
 
-      // 2. An address another article has is not saved; the rest is (24d).
-      // Until the author picks another, the article keeps its address, or has
-      // none when it is new.
-      const findSlugSuggestion = async (requestedSlug: string) => {
-        const otherArticles = await prisma.article.findMany({
-          select: { slug: true },
-          where: {
-            id: { not: articleId },
-            slug: { startsWith: requestedSlug },
-          },
-        })
-        const takenSlugs = otherArticles.flatMap((otherArticle) =>
-          otherArticle.slug === null ? [] : [otherArticle.slug],
-        )
-        return takenSlugs.includes(requestedSlug)
-          ? getFreeSlugSuggestion(requestedSlug, takenSlugs)
-          : null
-      }
-
-      const requestedSlug = slug === '' ? null : slug
-      let slugSuggestion =
-        requestedSlug === null || requestedSlug === storedArticle.slug
-          ? null
-          : await findSlugSuggestion(requestedSlug)
+      // 2. The address saves as typed; whether another article holds it as
+      // published is only reported (24d, log 0039).
+      const savedSlug = slug === '' ? null : slug
+      const slugConflict = await findPublishedSlugConflict({
+        articleId,
+        slug: savedSlug,
+      })
 
       // 3. A save removes a category or a tag only when the editor sends it
       // as removed, so an archived one it never offered stays (decision
@@ -252,63 +234,9 @@ export async function updateArticle(
       // is its creation in the history (log 0020, design 07f).
       const hasContent = title !== '' || content !== '' || storedImageCount > 0
 
-      // 4. In one transaction: the alt texts and captions, the article and its
-      // PageSEO record.
+      // 4. In one transaction: the alt texts and captions and the article. A
+      // draft has no PageSEO record; publish writes it (log 0039).
       const saveInTransaction = async () => {
-        const savedSlug =
-          slugSuggestion === null ? requestedSlug : storedArticle.slug
-        // The PageSEO row moves with the address; a draft without one has none.
-        const pathname = savedSlug === null ? null : `/articles/${savedSlug}`
-        const storedPathname =
-          storedArticle.slug === null
-            ? pathname
-            : `/articles/${storedArticle.slug}`
-
-        const pageSeoWrites =
-          pathname === null
-            ? // A cleared address takes its PageSEO row with it.
-              storedPathname === null
-              ? []
-              : [
-                  prisma.pageSEO.deleteMany({
-                    where: { pathname: storedPathname },
-                  }),
-                ]
-            : [
-                prisma.pageSEO.upsert({
-                  create: {
-                    authorId: context.authorId,
-                    description: perex || null,
-                    ogImageUrl,
-                    pathname,
-                    state,
-                    title,
-                    twitterImageUrl,
-                  },
-                  // The state belongs to the state transitions, not to an edit;
-                  // the sharing image to the gallery's own saves (0027), which
-                  // a save that read the main image earlier must not undo.
-                  update: {
-                    description: perex || null,
-                    pathname,
-                    title,
-                  },
-                  where: { pathname: storedPathname ?? pathname },
-                }),
-              ]
-
-        const orphanWrites =
-          pathname === null || storedPathname === null
-            ? []
-            : [
-                // An orphan left at the new address by an earlier rename.
-                prisma.pageSEO.deleteMany({
-                  where: {
-                    AND: [{ pathname }, { pathname: { not: storedPathname } }],
-                  },
-                }),
-              ]
-
         const articleWrite = prisma.article.update({
           data: {
             authors: {
@@ -343,7 +271,6 @@ export async function updateArticle(
             data: { firstContentAt: hasContent ? new Date() : null },
             where: { firstContentAt: null, id: articleId },
           }),
-          ...orphanWrites,
           // An image not stored yet (still processing) or another article's
           // changes nothing.
           ...images.map(({ id, altText, description }) =>
@@ -353,7 +280,6 @@ export async function updateArticle(
             }),
           ),
           articleWrite,
-          ...pageSeoWrites,
         ]
         const articleWriteIndex = writes.indexOf(articleWrite)
 
@@ -368,18 +294,7 @@ export async function updateArticle(
       let saved: Awaited<ReturnType<typeof saveInTransaction>>
 
       try {
-        try {
-          saved = await saveInTransaction()
-        } catch (error) {
-          // Another article took the address between the check and the write:
-          // once more without it.
-          if (!isUniqueConstraintError(error) || requestedSlug === null) {
-            throw error
-          }
-          slugSuggestion = await findSlugSuggestion(requestedSlug)
-          if (slugSuggestion === null) throw error
-          saved = await saveInTransaction()
-        }
+        saved = await saveInTransaction()
       } catch (error) {
         if (!isRecordNotFoundError(error)) throw error
 
@@ -411,8 +326,9 @@ export async function updateArticle(
       }
 
       const savedResult = {
-        slugSuggestion,
+        slugSuggestion: slugConflict?.freeSlug ?? null,
         status: 'saved',
+        takenSlug: slugConflict === null ? null : savedSlug,
         updatedAt: saved.savedArticle.updatedAt,
       } as const
 

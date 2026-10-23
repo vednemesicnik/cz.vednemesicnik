@@ -15,7 +15,8 @@ import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-l
 /** What an image operation reads of the stored article. */
 export type ImageChangeArticle = {
   featuredImageId: string | null
-  slug: string | null
+  /** The address it holds since its publish, where its PageSEO record is (log 0039). */
+  publishedSlug: string | null
 }
 
 /** One image operation, ready to commit with the hold check. */
@@ -133,7 +134,7 @@ export async function saveArticleImageChange<Answer extends object>(
       featuredImageId: true,
       firstContentAt: true,
       ...HOLD_SELECT,
-      slug: true,
+      publishedSlug: true,
     },
     where: { id: articleId },
   })
@@ -195,7 +196,7 @@ export async function saveArticleImageChange<Answer extends object>(
 
       const prepared = await prepare(context, {
         featuredImageId: storedArticle.featuredImageId,
-        slug: storedArticle.slug,
+        publishedSlug: storedArticle.publishedSlug,
       })
 
       if ('status' in prepared) return prepared

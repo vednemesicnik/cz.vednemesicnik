@@ -183,9 +183,10 @@ const dispatchContentStateIntent = async (
       await handlers.retract(request, { id, target })
       return { intent, missing: [] }
 
-    case INTENT_VALUE.review:
-      await handlers.review(request, { id, target })
-      return { intent, missing: [] }
+    case INTENT_VALUE.review: {
+      const { missing } = await handlers.review(request, { id, target })
+      return { intent, missing }
+    }
 
     case INTENT_VALUE.submitForReview: {
       if (submissionHandlers === undefined) {

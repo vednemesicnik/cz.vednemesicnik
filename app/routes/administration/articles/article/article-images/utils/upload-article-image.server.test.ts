@@ -83,7 +83,10 @@ const buildOptions = (overrides: Record<string, unknown> = {}) => ({
 
 const run = async (
   overrides: Record<string, unknown> = {},
-  article = { featuredImageId: null as string | null, slug: 'article' },
+  article = {
+    featuredImageId: null as string | null,
+    publishedSlug: 'article',
+  },
 ) => {
   await uploadArticleImage(request, buildOptions(overrides))
   const { prepare } = mocks.saveArticleImageChange.mock.lastCall?.[1] ?? {}
@@ -316,7 +319,7 @@ describe('uploadArticleImage — a new image', () => {
   test('adds no sharing preview for an image that is not the main one', async () => {
     const prepared = await run(
       {},
-      { featuredImageId: 'other', slug: 'article' },
+      { featuredImageId: 'other', publishedSlug: 'article' },
     )
 
     expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
@@ -326,12 +329,12 @@ describe('uploadArticleImage — a new image', () => {
   test('points the sharing preview at the new version of the main image', async () => {
     const prepared = await run(
       {},
-      { featuredImageId: imageId, slug: 'article' },
+      { featuredImageId: imageId, publishedSlug: 'article' },
     )
 
     expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
       featuredImage: { id: imageId, ...meta },
-      slug: 'article',
+      publishedSlug: 'article',
     })
     expect(prepared.writes).toEqual(['create-image', 'seo-write'])
   })
@@ -372,7 +375,7 @@ describe('uploadArticleImage — a stored image', () => {
   test('a cancelled main image points the sharing preview back', async () => {
     const prepared = await run(
       {},
-      { featuredImageId: imageId, slug: 'article' },
+      { featuredImageId: imageId, publishedSlug: 'article' },
     )
     mocks.articleImageUpdate.mockReturnValue('restore-image')
     mocks.buildArticlePageSeoImageWrites.mockResolvedValue(['previous-seo'])
@@ -381,7 +384,7 @@ describe('uploadArticleImage — a stored image', () => {
 
     expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenLastCalledWith({
       featuredImage: { id: imageId, ...previousMeta },
-      slug: 'article',
+      publishedSlug: 'article',
     })
     expect(mocks.transaction).toHaveBeenCalledWith([
       'restore-image',
@@ -450,12 +453,12 @@ describe('uploadArticleImage — a stored image', () => {
   test('points the sharing preview at the new version of the main image', async () => {
     const prepared = await run(
       {},
-      { featuredImageId: imageId, slug: 'article' },
+      { featuredImageId: imageId, publishedSlug: 'article' },
     )
 
     expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
       featuredImage: { id: imageId, ...meta },
-      slug: 'article',
+      publishedSlug: 'article',
     })
     expect(prepared.writes).toEqual(['update-image', 'seo-write'])
   })
