@@ -33,13 +33,18 @@ export default function RouteComponent({
   actionData,
 }: Route.ComponentProps) {
   const { state } = useNavigation()
-  const [authorMode, setAuthorMode] = useState<'new' | 'existing'>('new')
+  const { preselectedAuthorId } = loaderData
+  const [authorMode, setAuthorMode] = useState<'new' | 'existing'>(
+    preselectedAuthorId === null ? 'new' : 'existing',
+  )
 
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
-    defaultValue: {
-      authorMode: 'new',
-    },
+    // Opened from an author's Založit účet…, the form starts with that author (28a, 28b).
+    defaultValue:
+      preselectedAuthorId === null
+        ? { authorMode: 'new' }
+        : { authorMode: 'existing', existingAuthorId: preselectedAuthorId },
     id: 'add-user',
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),

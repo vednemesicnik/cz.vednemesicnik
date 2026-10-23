@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react'
-import { href, useFetcher } from 'react-router'
+import { href, useFetcher, useNavigate } from 'react-router'
 
-import { AdminActionButton } from '~/components/admin/admin-action-button'
-import { AdminActionGroup } from '~/components/admin/admin-action-group'
+import { ActionMenu } from '~/components/action-menu'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
@@ -12,24 +11,27 @@ import {
   TableRow,
   TableSelectionCell,
 } from '~/components/admin/admin-table'
-import { DeleteIcon } from '~/components/icons/delete-icon'
-import { EditIcon } from '~/components/icons/edit-icon'
-import { VisibilityIcon } from '~/components/icons/visibility-icon'
-import { LinkButton } from '~/components/link-button'
+import { BaseLink } from '~/components/base-link'
 import type { AuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
-import { getFormattedDateString } from '~/utils/get-formatted-date-string'
+import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
+import { AuthorAvatar } from '../../../components/author-avatar'
 import { AuthorDeleteBlockedDialog } from '../../../components/author-delete-blocked-dialog'
+import { AUTHOR_CONTENT_SECTION_ID } from '../../../utils/author-content-section-id'
 import { useAuthorDeleteRefusal } from '../../../utils/use-author-delete-refusal'
+import styles from './_styles.module.css'
 
 type Props = {
   id: string
   name: string
+  image: ImageSources
+  isAssociation: boolean
   roleName: string
-  userEmail: string | null
-  createdAt: Date
+  email: string | null
+  publishedCount: number
   canView: boolean
   canUpdate: boolean
+  canCreateUser: boolean
   canDelete: boolean
   mayDelete: boolean
   deleteBlock: AuthorDeleteBlock
@@ -37,14 +39,23 @@ type Props = {
   onSelect: () => void
 }
 
+/**
+ * A row of the author list (design 28a): the avatar and the name opening the
+ * detail, the author role, the account or „bez účtu“, the published count
+ * leading to the detail, and every action in „⋯“ — an author has no state
+ * waiting on a step, so the row has no primary action.
+ */
 export const ItemRow = ({
   id,
   name,
+  image,
+  isAssociation,
   roleName,
-  userEmail,
-  createdAt,
+  email,
+  publishedCount,
   canView,
   canUpdate,
+  canCreateUser,
   canDelete,
   mayDelete,
   deleteBlock,
@@ -54,13 +65,16 @@ export const ItemRow = ({
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const [isBlockedDialogOpen, setIsBlockedDialogOpen] = useState(false)
   const fetcherKey = `delete-author-${id}`
+  const navigate = useNavigate()
 
   const fetcher = useFetcher({ key: fetcherKey })
   const isDeleting = fetcher.state !== 'idle'
   const { dismiss, refusal } = useAuthorDeleteRefusal(fetcherKey)
 
+  const detailHref = href('/administration/authors/:authorId', { authorId: id })
+
   const { openDialog } = useAdminDeleteConfirmationDialog(dialogRef, {
-    action: href('/administration/authors/:authorId', { authorId: id }),
+    action: detailHref,
     key: fetcherKey,
   })
 
@@ -72,61 +86,98 @@ export const ItemRow = ({
         label={`Vybrat autora ${name}`}
         onChange={onSelect}
       />
-      <TableCell>{name}</TableCell>
+      <TableCell>
+        <span className={styles.name}>
+          <AuthorAvatar
+            image={image}
+            isAssociation={isAssociation}
+            name={name}
+            size={28}
+          />
+          {canView ? (
+            <BaseLink className={styles.link} to={detailHref}>
+              {name}
+            </BaseLink>
+          ) : (
+            name
+          )}
+        </span>
+      </TableCell>
       <TableCell>{roleName}</TableCell>
-      <TableCell>{userEmail ?? '—'}</TableCell>
-      <TableCell>{getFormattedDateString(createdAt)}</TableCell>
+      <TableCell>
+        {email ?? <span className={styles.tertiary}>bez účtu</span>}
+      </TableCell>
+      <TableCell>
+        {/* The detail breaks the count down by type (28a, 28b); a zero leads nowhere (25a). */}
+        {publishedCount === 0 || !canView ? (
+          <span className={publishedCount === 0 ? styles.tertiary : undefined}>
+            {publishedCount.toLocaleString('cs-CZ')}
+          </span>
+        ) : (
+          <BaseLink className={styles.count} to={detailHref}>
+            {publishedCount.toLocaleString('cs-CZ')}
+          </BaseLink>
+        )}
+      </TableCell>
       <TableCell variant={'actions'}>
-        <AdminActionGroup>
-          {canView && (
-            <LinkButton
-              disabled={isDeleting}
-              to={href('/administration/authors/:authorId', { authorId: id })}
-              variant={'outline'}
-            >
-              <VisibilityIcon />
-              Zobrazit
-            </LinkButton>
+        <ActionMenu
+          items={[
+            ...(canUpdate
+              ? [
+                  {
+                    label: 'Upravit',
+                    onSelect: () =>
+                      navigate(
+                        href('/administration/authors/:authorId/edit-author', {
+                          authorId: id,
+                        }),
+                      ),
+                  },
+                ]
+              : []),
+            ...(canCreateUser
+              ? [
+                  {
+                    label: 'Založit účet…',
+                    onSelect: () =>
+                      navigate(
+                        `${href('/administration/users/add-user')}?${new URLSearchParams({ author: id })}`,
+                      ),
+                  },
+                ]
+              : []),
+            // A blocked author gets the 28g explanation in place of the confirmation.
+            ...(mayDelete && !isDeleting
+              ? [
+                  {
+                    danger: true,
+                    label: 'Smazat…',
+                    onSelect: canDelete
+                      ? openDialog
+                      : () => setIsBlockedDialogOpen(true),
+                  },
+                ]
+              : []),
+          ]}
+          label={`Další akce s autorem ${name}`}
+          size={'sm'}
+        />
+
+        {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
+        <div className={styles.dialogs}>
+          {mayDelete && <AdminDeleteConfirmationDialog ref={dialogRef} />}
+          {(isBlockedDialogOpen || refusal !== null) && (
+            <AuthorDeleteBlockedDialog
+              block={refusal ?? deleteBlock}
+              contentHref={`${detailHref}#${AUTHOR_CONTENT_SECTION_ID}`}
+              name={name}
+              onClose={() => {
+                setIsBlockedDialogOpen(false)
+                dismiss()
+              }}
+            />
           )}
-          {canUpdate && (
-            <LinkButton
-              disabled={isDeleting}
-              to={href('/administration/authors/:authorId/edit-author', {
-                authorId: id,
-              })}
-              variant={'outline'}
-            >
-              <EditIcon />
-              Upravit
-            </LinkButton>
-          )}
-          {/* A blocked author gets the 28g explanation in place of the confirmation. */}
-          {mayDelete && (
-            <>
-              <AdminActionButton
-                action={'delete'}
-                disabled={isDeleting}
-                onClick={
-                  canDelete ? openDialog : () => setIsBlockedDialogOpen(true)
-                }
-              >
-                <DeleteIcon />
-                {isDeleting ? 'Maže se...' : 'Smazat'}
-              </AdminActionButton>
-              <AdminDeleteConfirmationDialog ref={dialogRef} />
-              {(isBlockedDialogOpen || refusal !== null) && (
-                <AuthorDeleteBlockedDialog
-                  block={refusal ?? deleteBlock}
-                  name={name}
-                  onClose={() => {
-                    setIsBlockedDialogOpen(false)
-                    dismiss()
-                  }}
-                />
-              )}
-            </>
-          )}
-        </AdminActionGroup>
+        </div>
       </TableCell>
     </TableRow>
   )

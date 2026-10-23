@@ -13,6 +13,10 @@ import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { AUTHOR_REFERENCES_SELECT } from '~/utils/author-references/author-references-select'
 import { getAuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
 import { prisma } from '~/utils/db.server'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
@@ -22,22 +26,29 @@ import { SORT_KEYS, type SortKey } from './sort'
 
 const TABLE_KEY = 'authors'
 
-// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
-// equal values keep a deterministic order across reloads.
+// Every sort appends the name and then `createdAt desc` as tie-breakers so
+// rows with equal values keep a deterministic order across reloads.
 const ORDER_BY: Record<
   SortKey,
   (order: SortOrder) => Prisma.AuthorOrderByWithRelationInput[]
 > = {
-  createdAt: (order) => [{ createdAt: order }],
-  email: (order) => [{ user: { email: order } }, { createdAt: 'desc' }],
+  account: (order) => [
+    { user: { email: order } },
+    { name: 'asc' },
+    { createdAt: 'desc' },
+  ],
   name: (order) => [{ name: order }, { createdAt: 'desc' }],
-  role: (order) => [{ role: { level: order } }, { createdAt: 'desc' }],
+  role: (order) => [
+    { role: { level: order } },
+    { name: 'asc' },
+    { createdAt: 'desc' },
+  ],
 }
 
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const context = await getUserPermissionContext(request, {
     actions: ['view', 'create', 'update', 'delete'],
-    entities: ['author'],
+    entities: ['author', 'user'],
   })
 
   // Before any query: a bare visit with a default preset never renders this list,
@@ -62,8 +73,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   }
 
   const { order, query, sort } = parseAdminListParams(request, {
-    defaultOrder: 'desc',
-    defaultSort: 'createdAt',
+    defaultOrder: 'asc',
+    defaultSort: 'name',
     sortKeys: SORT_KEYS,
   })
 
@@ -107,13 +118,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ],
   }
 
-  const [rawAuthors, savedFilters] = await Promise.all([
+  const [rawAuthors, publishedCounts, savedFilters] = await Promise.all([
     prisma.author.findMany({
       orderBy: ORDER_BY[sort](order),
       select: {
         ...AUTHOR_REFERENCES_SELECT,
-        bio: true,
-        createdAt: true,
         id: true,
         name: true,
         role: {
@@ -127,23 +136,50 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           select: {
             email: true,
             id: true,
+            image: { select: imageSourceSelect },
             role: { select: { name: true } },
           },
         },
       },
       where,
     }),
+    // Publikováno: the published articles, episodes and issues (28a). A second
+    // query, since a select holds one `_count` and the first counts every state.
+    prisma.author.findMany({
+      select: {
+        _count: {
+          select: {
+            articles: { where: { state: 'published' } },
+            issues: { where: { state: 'published' } },
+            podcastEpisodes: { where: { state: 'published' } },
+          },
+        },
+        id: true,
+      },
+      where,
+    }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
   ])
 
+  const publishedCountById = new Map(
+    publishedCounts.map(({ _count, id }) => [
+      id,
+      _count.articles + _count.issues + _count.podcastEpisodes,
+    ]),
+  )
+
+  // Založit účet… opens the new user with the author chosen (28a, 28f).
+  const canCreateUser = context.can({
+    action: 'create',
+    entity: 'user',
+    targetUserId: context.userId,
+  }).hasPermission
+
   // Compute permissions for each author
   // targetUserId is the user who owns this author profile (or undefined for external authors)
-  const authors = rawAuthors.map(({ _count, ...author }) => {
-    const targetUserId = author.user?.id
-    const deleteBlock = getAuthorDeleteBlock(
-      { _count, user: author.user },
-      context.userId,
-    )
+  const authors = rawAuthors.map(({ _count, user, ...author }) => {
+    const targetUserId = user?.id
+    const deleteBlock = getAuthorDeleteBlock({ _count, user }, context.userId)
     const mayDelete = context.can({
       action: 'delete',
       entity: 'author',
@@ -152,6 +188,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
     return {
       ...author,
+      canCreateUser: user === null && canCreateUser,
       // Smazat… confirms a deletable author and explains a blocked one (28g);
       // only a deletable author can be selected for the bulk delete (28a).
       canDelete: mayDelete && deleteBlock.deletable,
@@ -166,7 +203,12 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         targetUserId,
       }).hasPermission,
       deleteBlock,
+      email: user?.email ?? null,
+      image: createImageSources('user-image', user?.image),
+      // The association is the Owner's author (log 0026).
+      isAssociation: user?.role.name === 'owner',
       mayDelete,
+      publishedCount: publishedCountById.get(author.id) ?? 0,
     }
   })
 

@@ -1,8 +1,7 @@
 /*
  * The wide table's columns (28a, 31a), read by AdminTable from a
- * 1280 px table: Jméno 3; Role (min. 130), E-mail (min. 230) and
- * Vytvořeno (min. 110) 1 each; the checkbox fixed. Akce is as wide as
- * its buttons: the app has more of them than 28a draws.
+ * 1280 px table: Jméno 3; Autorská role (min. 130), Účet (min. 230) and
+ * Publikováno (min. 90) 1 each; the checkbox fixed; Akce as wide as its „⋯“.
  * Each track is the drawn width plus the cell's 12 px padding (14 px
  * at the row's ends).
  */
@@ -10,6 +9,15 @@
   @layer route {
     grid-template-columns:
       46px minmax(0, 3fr) minmax(142px, 1fr) minmax(242px, 1fr)
-      minmax(122px, 1fr) max-content;
+      minmax(102px, 1fr) max-content;
+  }
+}
+
+/* The header's hint, marked as one the way 28a draws it. */
+.hint {
+  @layer route {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    cursor: help;
   }
 }

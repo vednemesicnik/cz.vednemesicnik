@@ -30,6 +30,7 @@ import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { AUTHOR_COUNT_FORMS } from '~/config/list-noun-config'
+import { useContentEvents } from '~/hooks/use-content-events'
 import {
   ACCOUNT_OPTIONS,
   AUTHOR_ROLE_OPTIONS,
@@ -60,6 +61,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   } = loaderData
 
   const pending = useAdminListPending()
+
+  // Publikováno follows publishing anywhere; events carry no authors (log 0035).
+  useContentEvents({
+    filter: (event) =>
+      event.entity === 'article' ||
+      event.entity === 'issue' ||
+      event.entity === 'podcast_episode',
+  })
 
   const deletableIds = authors
     .filter((author) => author.canDelete)
@@ -166,55 +175,59 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               onChange={selection.toggleAll}
             />
             <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
+              defaultOrder={'asc'}
+              defaultSort={'name'}
               sortKey={'name'}
               sortKeys={SORT_KEYS}
             >
               Jméno
             </TableSortableHeaderCell>
             <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
+              defaultOrder={'asc'}
+              defaultSort={'name'}
               sortKey={'role'}
               sortKeys={SORT_KEYS}
             >
-              Role
+              Autorská role
             </TableSortableHeaderCell>
             <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'email'}
+              defaultOrder={'asc'}
+              defaultSort={'name'}
+              sortKey={'account'}
               sortKeys={SORT_KEYS}
             >
-              E-mail uživatele
+              Účet
             </TableSortableHeaderCell>
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'createdAt'}
-              sortKeys={SORT_KEYS}
-            >
-              Vytvořeno
-            </TableSortableHeaderCell>
+            {/* The sum covers three types, so the header says which (28a, copy 9w0473vu). */}
+            <TableHeaderCell>
+              <span
+                className={styles.hint}
+                title={'Publikované články, epizody a čísla'}
+              >
+                Publikováno
+              </span>
+            </TableHeaderCell>
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>
           <TableBody>
             {authors.map((author) => (
               <ItemRow
+                canCreateUser={author.canCreateUser}
                 canDelete={author.canDelete}
                 canUpdate={author.canUpdate}
                 canView={author.canView}
-                createdAt={author.createdAt}
                 deleteBlock={author.deleteBlock}
+                email={author.email}
                 id={author.id}
+                image={author.image}
+                isAssociation={author.isAssociation}
                 key={author.id}
                 mayDelete={author.mayDelete}
                 name={author.name}
                 onSelect={() => selection.toggle(author.id)}
+                publishedCount={author.publishedCount}
                 roleName={getAuthorRoleLabel(author.role.name)}
                 selected={selection.isSelected(author.id)}
-                userEmail={author.user?.email ?? null}
               />
             ))}
           </TableBody>
