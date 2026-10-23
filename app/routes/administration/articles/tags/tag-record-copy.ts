@@ -55,7 +55,7 @@ export const TAG_RECORD_COPY: TaxonomyRecordCopy = {
   selectLabel: (name) => `Vybrat štítek ${name}`,
   takenName:
     'Zadejte jiný název — tento už má jiný štítek. Velikost písmen nerozhoduje.',
-  takenSlug: 'Zadejte jinou adresu — tuto už má jiný štítek.',
+  takenSlug: 'Zadejte jinou adresu — tato je obsazená.',
   toasts: {
     approved: 'Štítek schválen',
     approvedAndPublished: 'Štítek schválen a publikován',
