@@ -54,11 +54,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     authors,
     canCreate,
     currentFilterQuery,
+    currentPage,
     filters,
     matchingFilterId,
     ownFilters,
+    pageSize,
     query,
     sharedFilters,
+    totalCount,
+    totalPages,
   } = loaderData
 
   const pending = useAdminListPending()
@@ -235,13 +239,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminTable>
       )}
       <Pagination
-        currentPage={1}
+        currentPage={currentPage}
         layout={'inline'}
         noun={AUTHOR_COUNT_FORMS}
-        pageSize={authors.length}
+        pageSize={pageSize}
         size={'sm'}
-        totalCount={authors.length}
-        totalPages={1}
+        totalCount={totalCount}
+        totalPages={totalPages}
       />
     </AdminPage>
   )
