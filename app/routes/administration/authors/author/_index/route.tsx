@@ -1,28 +1,42 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { useRef, useState } from 'react'
-import { href } from 'react-router'
+import { Fragment, useRef, useState } from 'react'
+import { href, useNavigate } from 'react-router'
 
-import { AdminActionButton } from '~/components/admin/admin-action-button'
-import { AdminActionGroup } from '~/components/admin/admin-action-group'
+import { ActionMenu } from '~/components/action-menu'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
+import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
+import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminPage } from '~/components/admin/admin-page'
-import { DeleteIcon } from '~/components/icons/delete-icon'
-import { EditIcon } from '~/components/icons/edit-icon'
+import { BaseLink } from '~/components/base-link'
+import { HistoryList } from '~/components/history-list'
+import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
+import { StatusTag } from '~/components/status-tag'
+import { useContentEvents } from '~/hooks/use-content-events'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
+import { AuthorAvatar } from '../../components/author-avatar'
 import { AuthorDeleteBlockedDialog } from '../../components/author-delete-blocked-dialog'
+import { AUTHOR_CONTENT_SECTION_ID } from '../../utils/author-content-section-id'
 import { useAuthorDeleteRefusal } from '../../utils/use-author-delete-refusal'
 
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+
+const ITEM_TYPE_LABELS = {
+  article: 'Článek',
+  episode: 'Epizoda',
+  issue: 'Číslo',
+} as const
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -32,8 +46,23 @@ export default function RouteComponent({
   loaderData,
   params,
 }: Route.ComponentProps) {
-  const { author, canUpdate, deleteBlock, mayDelete } = loaderData
+  const {
+    author,
+    canCreateUser,
+    canUpdate,
+    contentCounts,
+    deleteBlock,
+    history,
+    mayDelete,
+    recentContent,
+  } = loaderData
   const { authorId } = params
+
+  const navigate = useNavigate()
+
+  // Content events carry no authors, so every change to a type the page
+  // counts reloads it (log 0035).
+  useContentEvents()
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
   const [isBlockedDialogOpen, setIsBlockedDialogOpen] = useState(false)
@@ -49,71 +78,146 @@ export default function RouteComponent({
     },
   )
 
+  const roleLabel = getAuthorRoleLabel(author.role.name)
+
   return (
     <AdminPage measure={'text'}>
-      <PageTitle>{author.name}</PageTitle>
+      <div className={styles.header}>
+        <div className={styles.identity}>
+          <AuthorAvatar
+            image={author.image}
+            isAssociation={author.isAssociation}
+            name={author.name}
+            size={56}
+          />
+          <div className={styles.title}>
+            <PageTitle>{author.name}</PageTitle>
+            <span className={styles.subtitle}>
+              {roleLabel} · vytvořeno {author.createdAt}
+            </span>
+          </div>
+        </div>
 
-      <AdminActionGroup>
-        {canUpdate && (
-          <LinkButton
-            to={href('/administration/authors/:authorId/edit-author', {
-              authorId,
-            })}
-            variant={'outline'}
-          >
-            <EditIcon />
-            Upravit
-          </LinkButton>
-        )}
-        {mayDelete && (
-          <AdminActionButton
-            action="delete"
-            onClick={
-              deleteBlock.deletable
-                ? openDialog
-                : () => setIsBlockedDialogOpen(true)
-            }
-          >
-            <DeleteIcon />
-            Smazat
-          </AdminActionButton>
-        )}
-      </AdminActionGroup>
-
-      <AdminDetailSection title="Základní informace">
-        <AdminDetailList>
-          <AdminDetailItem label="Jméno">{author.name}</AdminDetailItem>
-          <AdminDetailItem label="Bio">{author.bio ?? '—'}</AdminDetailItem>
-          <AdminDetailItem label="Role">
-            {getAuthorRoleLabel(author.role.name)}
-          </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
-
-      <AdminDetailSection title="Propojený uživatel">
-        <AdminDetailList>
-          {author.user ? (
-            <AdminDetailItem label="E-mail">
-              {author.user.email}
-            </AdminDetailItem>
-          ) : (
-            <AdminDetailItem label="Uživatel">
-              Autor není propojen s uživatelským účtem
-            </AdminDetailItem>
+        {/* No primary action: an author has no state waiting on a step (28a, 28b). */}
+        <div className={styles.actions}>
+          <ActionMenu
+            items={[
+              ...(canCreateUser
+                ? [
+                    {
+                      label: 'Založit účet…',
+                      onSelect: () =>
+                        navigate(
+                          `${href('/administration/users/add-user')}?${new URLSearchParams({ author: authorId })}`,
+                        ),
+                    },
+                  ]
+                : []),
+              ...(mayDelete
+                ? [
+                    {
+                      danger: true,
+                      label: 'Smazat…',
+                      onSelect: deleteBlock.deletable
+                        ? openDialog
+                        : () => setIsBlockedDialogOpen(true),
+                    },
+                  ]
+                : []),
+            ]}
+            label={'Další akce s autorem'}
+          />
+          {canUpdate && (
+            <LinkButton
+              to={href('/administration/authors/:authorId/edit-author', {
+                authorId,
+              })}
+              variant={'outline'}
+            >
+              Upravit
+            </LinkButton>
           )}
-        </AdminDetailList>
-      </AdminDetailSection>
+        </div>
+      </div>
 
-      <AdminDetailSection title="Metadata">
-        <AdminDetailList>
-          <AdminDetailItem label="Vytvořeno">
-            {author.createdAt.formatted}
-          </AdminDetailItem>
-          <AdminDetailItem label="Naposledy upraveno">
-            {author.updatedAt.formatted}
-          </AdminDetailItem>
-        </AdminDetailList>
-      </AdminDetailSection>
+      {/* Left what the author stands on, right its data and history (28b). */}
+      <AdminDetailLayout>
+        <AdminDetailMain>
+          <AdminDetailSection id={AUTHOR_CONTENT_SECTION_ID} title={'Obsah'}>
+            {contentCounts.length === 0 ? (
+              <p className={styles.empty}>Zatím u ničeho nestojí.</p>
+            ) : (
+              <>
+                {/* Only the article count is a link: no other list filters by author (dksfb82t). */}
+                <p className={styles.counts}>
+                  {contentCounts.map((count, index) => (
+                    <Fragment key={count.type}>
+                      {index > 0 && <span aria-hidden>·</span>}
+                      {count.type === 'articles' ? (
+                        <Link
+                          to={`${href('/administration/articles')}?${new URLSearchParams({ author: authorId })}`}
+                        >
+                          {count.label}
+                        </Link>
+                      ) : (
+                        <span>{count.label}</span>
+                      )}
+                    </Fragment>
+                  ))}
+                </p>
+                {recentContent.length > 0 && (
+                  <ul className={styles.items}>
+                    {recentContent.map((item) => (
+                      <li className={styles.item} key={item.id}>
+                        <span className={styles.type}>
+                          {ITEM_TYPE_LABELS[item.type]}
+                        </span>
+                        <BaseLink className={styles.itemLink} to={item.href}>
+                          {item.title}
+                        </BaseLink>
+                        <StatusTag state={item.state} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </AdminDetailSection>
+        </AdminDetailMain>
+
+        <AdminDetailAside>
+          <AdminDetailSection title={'Údaje'}>
+            <AdminDetailList>
+              <AdminDetailItem label={'Autorská role'}>
+                {roleLabel}
+              </AdminDetailItem>
+              <AdminDetailItem label={'Účet'}>
+                {author.user === null ? (
+                  'Bez účtu'
+                ) : (
+                  <Link
+                    to={href('/administration/users/:userId', {
+                      userId: author.user.id,
+                    })}
+                  >
+                    {author.user.email}
+                  </Link>
+                )}
+              </AdminDetailItem>
+              <AdminDetailItem label={'Bio'}>
+                {author.bio ?? '—'}
+              </AdminDetailItem>
+            </AdminDetailList>
+          </AdminDetailSection>
+
+          {/* An author older than the log, never changed, has none (as 28e). */}
+          {history.length > 0 && (
+            <AdminDetailSection title={'Historie'}>
+              <HistoryList entries={history} />
+            </AdminDetailSection>
+          )}
+        </AdminDetailAside>
+      </AdminDetailLayout>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
 

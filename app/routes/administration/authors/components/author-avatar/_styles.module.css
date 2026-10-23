@@ -1,0 +1,7 @@
+/* The logo in the avatar's square, never shrinking beside a long name. */
+.logo {
+  @layer route {
+    display: inline-flex;
+    flex: none;
+  }
+}

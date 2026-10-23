@@ -15,7 +15,7 @@ type SimpleEvent = Exclude<AuditLogEvent, RoleChangeEvent>
 type AuditLogBase = {
   request: Request
   actorId: string // user id of the administrator performing the action
-  targetId: string // user id (or author id for author_role_changed) of the affected account
+  targetId: string // user id (or author id for author_created and author_role_changed) of the affected account
 }
 
 // Discriminated on `event`: role-change events require a `detail` describing the

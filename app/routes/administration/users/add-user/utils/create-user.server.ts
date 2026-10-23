@@ -20,7 +20,7 @@ type Data = DataWithNewAuthor | DataWithExistingAuthor
 
 export const createUser = async (data: Data) => {
   try {
-    const user = await prisma.$transaction(async (prisma) => {
+    return await prisma.$transaction(async (prisma) => {
       let authorId: string
 
       if (data.authorMode === 'new') {
@@ -39,7 +39,7 @@ export const createUser = async (data: Data) => {
         authorId = data.existingAuthorId
       }
 
-      return prisma.user.create({
+      const user = await prisma.user.create({
         data: {
           author: {
             connect: {
@@ -59,9 +59,12 @@ export const createUser = async (data: Data) => {
           id: true,
         },
       })
-    })
 
-    return { userId: user.id }
+      return {
+        createdAuthorId: data.authorMode === 'new' ? authorId : null,
+        userId: user.id,
+      }
+    })
   } catch (error) {
     return throwDbError(error, 'Unable to create the user.')
   }

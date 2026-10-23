@@ -746,6 +746,7 @@ enum AuditLogEvent {
   user_role_changed
   author_role_changed
   emergency_link_issued
+  author_created
 }
 
 // Administrative audit log (user management, role changes). Deliberately has no
@@ -756,7 +757,7 @@ model AuditLog {
   createdAt DateTime      @default(now())
   event     AuditLogEvent
   actorId   String // user id of the administrator performing the action
-  targetId  String // user id (or author id for author_role_changed) of the affected account
+  targetId  String // user id (or author id for author_created and author_role_changed) of the affected account
   detail    String? // e.g. "role: member → administrator"
   ipAddress String?
 
