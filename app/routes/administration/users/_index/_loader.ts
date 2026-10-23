@@ -1,9 +1,12 @@
-import type { Prisma } from '@generated/prisma/client'
-import { data } from 'react-router'
+import { data, redirect } from 'react-router'
 
 import { adminUsersSectionDeniedData } from '~/components/boundary-error/utils/boundary-copy'
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { prisma } from '~/utils/db.server'
+import { getOrderedPage } from '~/utils/get-ordered-page'
+import { isPagePastLast } from '~/utils/is-page-past-last'
+import { nameCollator } from '~/utils/name-collator'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { canDeleteUser } from '~/utils/permissions/user/guards/can-delete-user'
 import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
@@ -12,27 +15,36 @@ import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
 import { getLastSignIn } from './utils/get-last-sign-in'
 
-// Every sort appends the name and then `createdAt desc` as tie-breakers so
-// rows with equal values keep a deterministic order across reloads.
-const ORDER_BY: Record<
-  SortKey,
-  (order: SortOrder) => Prisma.UserOrderByWithRelationInput[]
-> = {
-  authorRole: (order) => [
-    { author: { role: { level: order } } },
-    { author: { name: 'asc' } },
-    { createdAt: 'desc' },
-  ],
-  // The name belongs to the author (design 28f).
-  name: (order) => [{ author: { name: order } }, { createdAt: 'desc' }],
-  role: (order) => [
-    { role: { level: order } },
-    { author: { name: 'asc' } },
-    { createdAt: 'desc' },
-  ],
+const PAGE_SIZE = 20
+
+type SortRow = {
+  id: string
+  name: string
+  roleLevel: number
+  authorRoleLevel: number
 }
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+const byName = (first: SortRow, second: SortRow) =>
+  nameCollator.compare(first.name, second.name)
+
+// Ordered in memory, names the Czech way (SQLite compares bytes); every other
+// sort breaks ties by name, so equal values keep one order across reloads. The
+// name belongs to the author (design 28f).
+const COMPARE: Record<
+  SortKey,
+  (order: SortOrder) => (first: SortRow, second: SortRow) => number
+> = {
+  authorRole: (order) => (first, second) =>
+    (order === 'asc' ? 1 : -1) *
+      (first.authorRoleLevel - second.authorRoleLevel) || byName(first, second),
+  name: (order) => (first, second) =>
+    (order === 'asc' ? 1 : -1) * byName(first, second),
+  role: (order) => (first, second) =>
+    (order === 'asc' ? 1 : -1) * (first.roleLevel - second.roleLevel) ||
+    byName(first, second),
+}
+
+export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const context = await getUserPermissionContext(request, {
     actions: ['view', 'create', 'update', 'delete'],
     entities: ['user', 'author'],
@@ -50,7 +62,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     throw data(adminUsersSectionDeniedData, { status: 403 })
   }
 
-  const { order, query, sort } = parseAdminListParams(request, {
+  const { order, page, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'asc',
     defaultSort: 'name',
     sortKeys: SORT_KEYS,
@@ -77,9 +89,37 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // member still gets their own account at most.
   const where = { AND: [permissionWhere, ...searchWhere] }
 
-  // Fetch users based on permissions
-  const rawUsers = await prisma.user.findMany({
-    orderBy: ORDER_BY[sort](order),
+  const matchingUsers = await prisma.user.findMany({
+    select: {
+      author: {
+        select: { name: true, role: { select: { level: true } } },
+      },
+      id: true,
+      role: { select: { level: true } },
+    },
+    where,
+  })
+
+  // One page of 20, ordered here: names in Czech order (dj753f0j, 28d).
+  const { pageIds, totalCount } = getOrderedPage(
+    matchingUsers.map((user) => ({
+      authorRoleLevel: user.author.role.level,
+      id: user.id,
+      name: user.author.name,
+      roleLevel: user.role.level,
+    })),
+    COMPARE[sort](order),
+    { page, pageSize: PAGE_SIZE },
+  )
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+  // Deleting the last row on the last page revalidates a URL past the end.
+  if (isPagePastLast(page, totalPages)) {
+    throw redirect(buildLastPageRedirect(url, totalPages))
+  }
+
+  const pageUsers = await prisma.user.findMany({
     select: {
       author: {
         select: {
@@ -99,8 +139,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         },
       },
     },
-    where,
+    where: { id: { in: pageIds } },
   })
+
+  // The page's rows in the page's order; `in` returns them as SQLite has them.
+  const rawUsers = [...pageUsers].sort(
+    (first, second) => pageIds.indexOf(first.id) - pageIds.indexOf(second.id),
+  )
 
   // Poslední přihlášení: the newest sign-in of every listed account in one
   // query (28d).
@@ -153,9 +198,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       entity: 'user',
       targetUserId: context.userId,
     }).hasPermission,
+    currentPage: page,
     // Decides „dnes“ in Poslední přihlášení.
     now,
+    pageSize: PAGE_SIZE,
     query,
+    totalCount,
+    totalPages,
     users,
   }
 }

@@ -34,7 +34,16 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { canCreate, now, query, users } = loaderData
+  const {
+    canCreate,
+    currentPage,
+    now,
+    pageSize,
+    query,
+    totalCount,
+    totalPages,
+    users,
+  } = loaderData
 
   const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
@@ -137,13 +146,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminTable>
       )}
       <Pagination
-        currentPage={1}
+        currentPage={currentPage}
         layout={'inline'}
         noun={USER_COUNT_FORMS}
-        pageSize={users.length}
+        pageSize={pageSize}
         size={'sm'}
-        totalCount={users.length}
-        totalPages={1}
+        totalCount={totalCount}
+        totalPages={totalPages}
       />
     </AdminPage>
   )
