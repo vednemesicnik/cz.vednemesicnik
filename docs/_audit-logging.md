@@ -8,9 +8,11 @@ account deletion.
 
 - **Volume:** high — every sign-in attempt (including anonymous failures) and every
   sign-out.
-- **Retention:** 90 days, auto-pruned. An in-process retention loop
+- **Retention:** 90 days (`AUTH_LOG_CONFIG.retentionDays` in
+  `app/config/auth-log-config.ts`), auto-pruned. An in-process retention loop
   (`startAuthLogRetention` in `app/utils/auth-log.server.ts`, started once from
-  `app/entry.server.tsx`) prunes on startup and then daily.
+  `app/entry.server.tsx`) prunes on startup and then daily. The users list reads its
+  last sign-in from the newest `sign_in_success` within that window (log 0040).
 - **Written by:** `recordAuthLog(...)` — fire-and-forget; a logging failure never
   breaks sign-in / sign-out.
 - **`event` values:** `sign_in_success`, `sign_in_failure`, `two_factor_failure`,

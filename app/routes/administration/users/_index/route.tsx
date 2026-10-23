@@ -23,7 +23,7 @@ import { Pagination } from '~/components/pagination'
 import { USER_COUNT_FORMS } from '~/config/list-noun-config'
 import { SEARCH_PARAM } from '~/utils/admin-list-params'
 import { buildListSearch } from '~/utils/build-list-search'
-import { getUserRoleLabel } from '~/utils/role-labels'
+import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -34,7 +34,7 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { canCreate, query, users } = loaderData
+  const { canCreate, now, query, users } = loaderData
 
   const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
@@ -88,50 +88,48 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         >
           <TableHeader>
             <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'email'}
-              sortKeys={SORT_KEYS}
-            >
-              E-mail
-            </TableSortableHeaderCell>
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
+              defaultOrder={'asc'}
+              defaultSort={'name'}
               sortKey={'name'}
               sortKeys={SORT_KEYS}
             >
               Jméno
             </TableSortableHeaderCell>
             <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
+              defaultOrder={'asc'}
+              defaultSort={'name'}
               sortKey={'role'}
               sortKeys={SORT_KEYS}
             >
-              Role
+              Uživatelská role
             </TableSortableHeaderCell>
             <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'createdAt'}
+              defaultOrder={'asc'}
+              defaultSort={'name'}
+              sortKey={'authorRole'}
               sortKeys={SORT_KEYS}
             >
-              Vytvořeno
+              Autorská role
             </TableSortableHeaderCell>
+            <TableHeaderCell>Poslední přihlášení</TableHeaderCell>
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
               <ItemRow
+                authorId={user.author.id}
+                authorRoleName={getAuthorRoleLabel(user.author.role.name)}
                 canDelete={user.canDelete}
                 canUpdate={user.canUpdate}
                 canView={user.canView}
-                createdAt={user.createdAt}
+                canViewAuthor={user.canViewAuthor}
                 email={user.email}
                 id={user.id}
+                isOwn={user.isOwn}
                 key={user.id}
+                lastSignIn={user.lastSignIn}
                 name={user.author.name}
+                now={now}
                 roleName={getUserRoleLabel(user.role.name)}
               />
             ))}
