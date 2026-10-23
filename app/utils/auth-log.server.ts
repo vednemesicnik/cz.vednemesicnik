@@ -2,6 +2,7 @@ import { setInterval } from 'node:timers'
 import { remember } from '@epic-web/remember'
 
 import type { AuthLogEvent, AuthMethod } from '@generated/prisma/enums'
+import { AUTH_LOG_CONFIG } from '~/config/auth-log-config'
 import { prisma } from '~/utils/db.server'
 import { getClientIp } from '~/utils/rate-limit.server'
 
@@ -25,9 +26,6 @@ type AuthLogBase = {
 type RecordAuthLogArgs =
   | (AuthLogBase & { event: SignInEvent; method: AuthMethod })
   | (AuthLogBase & { event: SignOutEvent; method?: never })
-
-// Retention window for auth logs (see cleanupOldAuthLogs).
-const RETENTION_DAYS = 90
 
 // How often the retention loop prunes once running (see startAuthLogRetention).
 const RETENTION_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000
@@ -68,7 +66,9 @@ export const recordAuthLog = ({
  * token hashes don't pile up. Fire-and-forget; driven by startAuthLogRetention.
  */
 export const cleanupOldAuthLogs = (): void => {
-  const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000)
+  const cutoff = new Date(
+    Date.now() - AUTH_LOG_CONFIG.retentionDays * 24 * 60 * 60 * 1000,
+  )
 
   void prisma.authLog
     .deleteMany({ where: { createdAt: { lt: cutoff } } })
