@@ -6,7 +6,7 @@ import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
 
-import { RETURN_TO_OPENER_STATE } from './return-to-opener-state'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import {
   type ConfirmAction,
   TAXONOMY_ACTION_LABELS,

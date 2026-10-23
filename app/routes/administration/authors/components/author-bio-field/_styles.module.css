@@ -1,0 +1,6 @@
+.optional {
+  @layer route {
+    font-weight: var(--font-weight-regular);
+    color: var(--text-secondary);
+  }
+}

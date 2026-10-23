@@ -1,12 +1,7 @@
 import { type SubmissionResult, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { type MouseEvent, useEffect, useRef } from 'react'
-import {
-  useFetcher,
-  useLocation,
-  useNavigate,
-  useNavigation,
-} from 'react-router'
+import { useEffect, useRef } from 'react'
+import { useFetcher, useNavigate, useNavigation } from 'react-router'
 
 import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -17,8 +12,8 @@ import {
 import { isNameTaken } from '~/utils/is-name-taken'
 import { recentChangeTints } from '~/utils/recent-change-tints'
 import { slugify } from '~/utils/slugify'
+import { useReturnToOpener } from '~/utils/use-return-to-opener'
 import { getListPathShowingRecord } from './get-list-path-showing-record'
-import { RETURN_TO_OPENER_STATE } from './return-to-opener-state'
 import type { TaxonomyRecordCopy } from './taxonomy-record-copy'
 import { taxonomyRecordSchema } from './taxonomy-record-schema'
 
@@ -91,31 +86,9 @@ export const useTaxonomyRecordForm = ({
 }: Options) => {
   const navigate = useNavigate()
   const navigation = useNavigation()
-  const location = useLocation()
   const showToast = useToast()
   const fetcher = useFetcher<ActionData>()
-
-  const returnsToOpener =
-    location.state?.returnsToOpener === RETURN_TO_OPENER_STATE.returnsToOpener
-  const leave = () =>
-    returnsToOpener ? navigate(-1) : navigate(parentPath, { replace: true })
-
-  // Zrušit is a link to the parent; opened from a page of the app, a plain
-  // click goes back to that page instead, with its scroll position. A click
-  // that opens a new tab stays a link.
-  const handleCancel = (event: MouseEvent) => {
-    const opensElsewhere =
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey
-
-    if (!returnsToOpener || opensElsewhere) return
-
-    event.preventDefault()
-    navigate(-1)
-  }
+  const { handleCancel, leave, returnsToOpener } = useReturnToOpener(parentPath)
 
   const lastResult =
     fetcher.data !== undefined && 'submissionResult' in fetcher.data

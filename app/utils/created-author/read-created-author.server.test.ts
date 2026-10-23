@@ -10,7 +10,7 @@ const requestWith = (setCookie: string) =>
 
 const flash = () =>
   flashCreatedAuthor(
-    new Request('https://test.local/administration/authors/add-author'),
+    new Request('https://test.local/administration/authors/new'),
     { articleId: 'a1', authorId: 'author-new', replacedAuthorId: 'author-old' },
   )
 

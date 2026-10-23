@@ -258,11 +258,9 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       // Smazat… confirms a deletable author and explains a blocked one (28g);
       // only a deletable author can be selected for the bulk delete (28a).
       canDelete: mayDelete && deleteBlock.deletable,
-      canUpdate: context.can({
-        action: 'update',
-        entity: 'author',
-        targetUserId,
-      }).hasPermission,
+      // Any author: a Member edits their own name and bio in Settings (28c).
+      canUpdate: context.can({ action: 'update', entity: 'author' })
+        .hasPermission,
       canView: context.can({
         action: 'view',
         entity: 'author',

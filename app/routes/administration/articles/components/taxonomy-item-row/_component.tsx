@@ -10,7 +10,7 @@ import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
 
-import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import {
   TAXONOMY_ACTION_LABELS,
   type TaxonomyAction,

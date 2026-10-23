@@ -22,6 +22,7 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { useContentEvents } from '~/hooks/use-content-events'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import { AuthorAvatar } from '../../components/author-avatar'
@@ -129,7 +130,8 @@ export default function RouteComponent({
           />
           {canUpdate && (
             <LinkButton
-              to={href('/administration/authors/:authorId/edit-author', {
+              state={RETURN_TO_OPENER_STATE}
+              to={href('/administration/authors/:authorId/edit', {
                 authorId,
               })}
               variant={'outline'}

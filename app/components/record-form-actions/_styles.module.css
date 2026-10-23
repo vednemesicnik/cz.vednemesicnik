@@ -1,0 +1,21 @@
+.actions {
+  @layer component {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-block-start: 8px;
+
+    @media (width < 768px) {
+      flex-direction: column-reverse;
+    }
+  }
+}
+
+/* The buttons are other components: full width one layer above them. */
+.actions > * {
+  @layer variant {
+    @media (width < 768px) {
+      width: 100%;
+    }
+  }
+}

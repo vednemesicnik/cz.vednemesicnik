@@ -20,9 +20,8 @@ import {
   StatusTag,
   type StatusTagState,
 } from '~/components/status-tag'
-
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import type { HeaderSentence } from '../../utils/article-actions'
-import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
 import {
   TAXONOMY_ACTION_LABELS,
   type TaxonomyAction,

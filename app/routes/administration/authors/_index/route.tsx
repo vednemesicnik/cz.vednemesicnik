@@ -38,6 +38,7 @@ import {
 } from '~/utils/admin-filter-options'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import styles from './_styles.module.css'
@@ -106,7 +107,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <ListHeader>
         <PageTitle>Autoři</PageTitle>
         {canCreate && (
-          <LinkButton to={href('/administration/authors/add-author')}>
+          <LinkButton
+            state={RETURN_TO_OPENER_STATE}
+            to={href('/administration/authors/new')}
+          >
             Nový autor
           </LinkButton>
         )}

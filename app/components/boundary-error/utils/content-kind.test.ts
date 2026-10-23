@@ -48,7 +48,7 @@ describe('getAdminContentKind', () => {
       { kind: 'episode', podcastId: 'p1' },
     ],
     ['/administration/users/u1', { kind: 'user' }],
-    ['/administration/authors/a1/edit-author', { kind: 'author' }],
+    ['/administration/authors/a1/edit', { kind: 'author' }],
   ])('%s → %o', (pathname, match) => {
     expect(getAdminContentKind(pathname)).toEqual(match)
   })
