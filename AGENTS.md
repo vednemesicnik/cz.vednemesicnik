@@ -288,6 +288,9 @@ URL-friendly slugs are generated using `app/utils/slugify.ts` for articles, podc
 ### Testing
 
 Tests use Vitest and are co-located with utilities (e.g., `slugify.test.ts`, `get-user-rights.test.ts`).
+They run in Node; a hook or component test opts into jsdom with the docblock
+`// @vitest-environment jsdom` and renders with React Testing Library (`renderHook`, `render`),
+calling `cleanup` in `afterEach`.
 
 ## Documentation
 
