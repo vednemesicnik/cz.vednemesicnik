@@ -11,10 +11,16 @@
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
     color: var(--link-strong);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    text-decoration: none;
 
-    &:hover {
+    /* Only the parent's name is underlined; the "‹" stays outside the line,
+       like the "→" after a link that leads on (jnd2p832). */
+    & > :last-child {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    &:hover > :last-child {
       text-decoration-thickness: 2px;
     }
 

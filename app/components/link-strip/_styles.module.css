@@ -33,5 +33,7 @@
 .more {
   @layer variant {
     margin-inline-start: auto;
+    /* The arrow never wraps away from the label (jnd2p832). */
+    white-space: nowrap;
   }
 }

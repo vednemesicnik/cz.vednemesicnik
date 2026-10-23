@@ -13,6 +13,7 @@ import { Heading } from '~/components/heading'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Link } from '~/components/link'
+import { LinkArrow } from '~/components/link-arrow'
 import { Page } from '~/components/page'
 import { PostContentLink } from '~/components/post-content-link'
 import { Subheadline } from '~/components/subheadline'
@@ -78,7 +79,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             ))}
           </ContentList>
           <Link className={styles.allArticles} to={href('/articles')}>
-            Všechny články →
+            Všechny články
+            <LinkArrow />
           </Link>
         </section>
       )}

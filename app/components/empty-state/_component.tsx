@@ -1,6 +1,7 @@
 import { clsx } from 'clsx'
 import type { ComponentProps, ReactNode } from 'react'
 import { Link } from '~/components/link'
+import { LinkArrow } from '~/components/link-arrow'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -24,8 +25,9 @@ export const EmptyState = ({ children, className, link }: Props) => {
   return (
     <div className={clsx(styles.emptyState, className)}>
       <p className={styles.text}>{children}</p>
-      <Link to={link.to}>
-        {link.label} <span aria-hidden={true}>→</span>
+      <Link className={styles.link} to={link.to}>
+        {link.label}
+        <LinkArrow />
       </Link>
     </div>
   )
