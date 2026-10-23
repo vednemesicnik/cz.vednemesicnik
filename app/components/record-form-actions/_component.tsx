@@ -11,7 +11,7 @@ type Props = {
 }
 
 /**
- * The actions under a category's or tag's form (design 25c): Zrušit, a link
+ * The actions under a record's add or edit form (design 25c, 28c): Zrušit, a link
  * back, then the submit buttons, the primary last at the right edge, as in
  * Dialog. Below 768 px they stack full width with the primary on top.
  *
@@ -19,7 +19,7 @@ type Props = {
  * @param props.onCancel - Lets Zrušit go back in history instead.
  * @param props.children - The submit buttons, primary last.
  */
-export const TaxonomyRecordActions = ({
+export const RecordFormActions = ({
   cancelPath,
   onCancel,
   disabled,

@@ -1,10 +1,10 @@
 import { Button } from '~/components/button'
+import { RecordForm } from '~/components/record-form'
+import { RecordFormActions } from '~/components/record-form-actions'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { TaxonomyRecordCopy } from '../../utils/taxonomy-record-copy'
 import { useTaxonomyRecordForm } from '../../utils/use-taxonomy-record-form'
-import { TaxonomyRecordActions } from '../taxonomy-record-actions'
 import { TaxonomyRecordFields } from '../taxonomy-record-fields'
-import { TaxonomyRecordForm } from '../taxonomy-record-form'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
@@ -45,7 +45,7 @@ export const NewTaxonomyRecordForm = ({
     })
 
   return (
-    <TaxonomyRecordForm fetcher={fetcher} form={form}>
+    <RecordForm fetcher={fetcher} form={form}>
       <TaxonomyRecordFields
         authors={authors}
         copy={copy}
@@ -56,7 +56,7 @@ export const NewTaxonomyRecordForm = ({
         slugSuggestion={slugSuggestion}
       />
 
-      <TaxonomyRecordActions
+      <RecordFormActions
         cancelPath={parentPath}
         disabled={isSubmitting}
         onCancel={handleCancel}
@@ -80,7 +80,7 @@ export const NewTaxonomyRecordForm = ({
             ? 'Publikovat'
             : 'Odeslat ke schválení'}
         </Button>
-      </TaxonomyRecordActions>
-    </TaxonomyRecordForm>
+      </RecordFormActions>
+    </RecordForm>
   )
 }

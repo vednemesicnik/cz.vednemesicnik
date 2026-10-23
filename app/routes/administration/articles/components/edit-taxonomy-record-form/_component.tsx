@@ -1,9 +1,9 @@
 import { Button } from '~/components/button'
+import { RecordForm } from '~/components/record-form'
+import { RecordFormActions } from '~/components/record-form-actions'
 import type { TaxonomyRecordCopy } from '../../utils/taxonomy-record-copy'
 import { useTaxonomyRecordForm } from '../../utils/use-taxonomy-record-form'
-import { TaxonomyRecordActions } from '../taxonomy-record-actions'
 import { TaxonomyRecordFields } from '../taxonomy-record-fields'
-import { TaxonomyRecordForm } from '../taxonomy-record-form'
 
 type Props = {
   copy: TaxonomyRecordCopy
@@ -39,7 +39,7 @@ export const EditTaxonomyRecordForm = ({
     })
 
   return (
-    <TaxonomyRecordForm fetcher={fetcher} form={form}>
+    <RecordForm fetcher={fetcher} form={form}>
       <TaxonomyRecordFields
         authors={authors}
         copy={copy}
@@ -50,7 +50,7 @@ export const EditTaxonomyRecordForm = ({
         slugSuggestion={slugSuggestion}
       />
 
-      <TaxonomyRecordActions
+      <RecordFormActions
         cancelPath={parentPath}
         disabled={isSubmitting}
         onCancel={handleCancel}
@@ -58,7 +58,7 @@ export const EditTaxonomyRecordForm = ({
         <Button disabled={isSubmitting} type={'submit'}>
           Uložit
         </Button>
-      </TaxonomyRecordActions>
-    </TaxonomyRecordForm>
+      </RecordFormActions>
+    </RecordForm>
   )
 }
