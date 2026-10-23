@@ -7,6 +7,7 @@ import { TableCell, TableRow } from '~/components/admin/admin-table'
 import { BaseLink } from '~/components/base-link'
 import { AUTH_LOG_CONFIG } from '~/config/auth-log-config'
 import { formatNumericDateOrToday } from '~/utils/format-numeric-date-or-today'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 
 import { UserDeleteConfirmationDialog } from '../../../components/user-delete-confirmation-dialog'
 import type { LastSignIn } from '../../utils/get-last-sign-in'
@@ -121,9 +122,10 @@ export const ItemRow = ({
                     label: 'Upravit',
                     onSelect: () =>
                       navigate(
-                        href('/administration/users/:userId/edit-user', {
+                        href('/administration/users/:userId/edit', {
                           userId: id,
                         }),
+                        { state: RETURN_TO_OPENER_STATE },
                       ),
                   },
                 ]

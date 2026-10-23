@@ -23,6 +23,7 @@ import { Pagination } from '~/components/pagination'
 import { USER_COUNT_FORMS } from '~/config/list-noun-config'
 import { SEARCH_PARAM } from '~/utils/admin-list-params'
 import { buildListSearch } from '~/utils/build-list-search'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import styles from './_styles.module.css'
@@ -53,7 +54,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <ListHeader>
         <PageTitle>Uživatelé</PageTitle>
         {canCreate && (
-          <LinkButton to={href('/administration/users/add-user')}>
+          <LinkButton
+            state={RETURN_TO_OPENER_STATE}
+            to={href('/administration/users/new')}
+          >
             Nový uživatel
           </LinkButton>
         )}

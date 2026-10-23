@@ -2,7 +2,7 @@ import { ALLOWED_EMAIL_DOMAIN } from '@constants/auth'
 import { z } from 'zod'
 
 /**
- * An account's e-mail, as add-user and edit-user take it (design 28f): trimmed,
+ * An account's e-mail, as Nový uživatel and Upravit uživatele take it (design 28f): trimmed,
  * lower-cased and on the organisation's domain, since sign-in by link and
  * Google accept no other (9gdcrwph). One message at a time — the missing `@`,
  * then the format, then the domain.

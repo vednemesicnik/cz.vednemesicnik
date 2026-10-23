@@ -105,6 +105,7 @@ When assigning roles, users can only assign roles with a level greater than or e
 - **Restrictions**:
   - Cannot assign roles with level < 2 (cannot assign Owner role).
   - Cannot create, update, or delete **Owner** accounts (level 1 is protected by role hierarchy).
+  - Removing their own administration (unticking „Spravuje uživatele a autory“ on their own account) asks for confirmation first, since only another Administrator or the Owner can give it back (design 28g).
 
 ### **Owner** (User Role - Level 1)
 
@@ -115,6 +116,6 @@ When assigning roles, users can only assign roles with a level greater than or e
   - Can create, view, update, and delete user accounts and author profiles.
 - **Restrictions**:
   - Exactly one **Owner** exists, created from the database seed.
-  - The Owner role cannot be assigned to anyone, nor changed away from the Owner account (enforced server-side).
+  - The Owner role cannot be assigned to anyone, nor changed away from the Owner account (enforced server-side); the Owner's own edit form has no user role.
   - The sole Owner account cannot be deleted.
 

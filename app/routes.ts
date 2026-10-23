@@ -244,7 +244,7 @@ export default [
           ),
 
           // Users
-          ...createAdminEntriesSection(
+          ...createAdminRecordSection(
             {
               entry: 'user',
               id: 'userId',

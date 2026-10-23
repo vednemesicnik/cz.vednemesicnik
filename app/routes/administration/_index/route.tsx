@@ -9,6 +9,7 @@ import { AdminPage } from '~/components/admin/admin-page'
 import { AdminPendingItem } from '~/components/admin/admin-pending-item'
 import { AdminStatCard } from '~/components/admin/admin-stat-card'
 import { PageTitle } from '~/components/page-title'
+import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useContentEvents } from '~/hooks/use-content-events'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -18,6 +19,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   // Any change can move the pending list or the statistics.
   useContentEvents()
+  useAdminNoticeToast(loaderData)
 
   const {
     canViewUsers,

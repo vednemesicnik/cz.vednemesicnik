@@ -1,6 +1,0 @@
-/* At the end of the row. */
-.action {
-  @layer route {
-    margin-inline-start: auto;
-  }
-}

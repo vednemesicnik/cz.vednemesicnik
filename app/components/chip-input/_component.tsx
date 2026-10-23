@@ -48,6 +48,8 @@ type Props = {
   createNote?: string
   onCreate?: () => void
   disabled?: boolean
+  /** The id of the error shown for the field: the search reads as invalid. */
+  errorId?: string
   /**
    * The picked values as `Chip`s. Without them the field only searches, and
    * the picked values are shown elsewhere, as the author rows (ivyin4kr).
@@ -84,6 +86,7 @@ export const ChipInput = ({
   createNote,
   onCreate,
   disabled = false,
+  errorId,
   children,
   ref,
   className,
@@ -197,8 +200,10 @@ export const ChipInput = ({
           aria-activedescendant={hasActive ? optionId(active) : undefined}
           aria-autocomplete={'list'}
           aria-controls={listboxId}
+          aria-describedby={errorId}
           // Expanded only with options: the empty line is said by the status.
           aria-expanded={hasActive}
+          aria-invalid={errorId !== undefined || undefined}
           autoComplete={'off'}
           className={styles.input}
           disabled={disabled}

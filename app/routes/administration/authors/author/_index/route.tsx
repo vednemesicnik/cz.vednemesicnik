@@ -109,7 +109,8 @@ export default function RouteComponent({
                       label: 'Založit účet…',
                       onSelect: () =>
                         navigate(
-                          `${href('/administration/users/add-user')}?${new URLSearchParams({ author: authorId })}`,
+                          `${href('/administration/users/new')}?${new URLSearchParams({ author: authorId })}`,
+                          { state: RETURN_TO_OPENER_STATE },
                         ),
                     },
                   ]
