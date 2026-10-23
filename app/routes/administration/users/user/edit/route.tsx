@@ -115,9 +115,11 @@ export default function RouteComponent({
         id: result.currentRoleId,
         isAdministrator: result.isAdministrator,
       })
+      // As the box sends it: Conform turns `false` into `null`, which
+      // leaves the box ticked.
       form.update({
         name: fields.isAdministrator.name,
-        value: result.isAdministrator,
+        value: result.isAdministrator ? 'on' : '',
       })
       return
     }

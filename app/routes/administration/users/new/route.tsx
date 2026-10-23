@@ -109,6 +109,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               {...getInputProps(fields.name, { type: 'text' })}
               errors={fields.name.errors}
               hint={AUTHOR_RECORD_COPY.nameHint}
+              // Required for a new author only, which the union's constraint
+              // can't say.
+              required
             />
 
             <RadioGroup legend={AUTHOR_RECORD_COPY.roleLegend}>
