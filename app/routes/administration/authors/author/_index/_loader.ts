@@ -1,19 +1,28 @@
 import { data } from 'react-router'
 
+import { getAuthorHistory } from '~/utils/audit-log/get-author-history.server'
 import { AUTHOR_REFERENCES_SELECT } from '~/utils/author-references/author-references-select'
+import { getAuthorContentCounts } from '~/utils/author-references/get-author-content-counts'
 import { getAuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
 import { prisma } from '~/utils/db.server'
-import { createFormattedDate } from '~/utils/format-date'
+import { formatNumericDate } from '~/utils/format-numeric-date'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
+import { isAssociationAuthor } from '~/utils/is-association-author'
+import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
+import { getRecentAuthorContent } from '../../utils/get-recent-author-content.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { authorId } = params
 
   const context = await getUserPermissionContext(request, {
-    actions: ['view', 'update', 'delete'],
-    entities: ['author'],
+    actions: ['view', 'create', 'update', 'delete'],
+    entities: ['author', 'user'],
   })
 
   const author = await prisma.author.findUniqueOrThrow({
@@ -30,11 +39,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           name: true,
         },
       },
-      updatedAt: true,
       user: {
         select: {
           email: true,
           id: true,
+          image: { select: imageSourceSelect },
           role: { select: { name: true } },
         },
       },
@@ -71,19 +80,45 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetUserId,
   })
 
+  // The recent items cover what the viewer may see; the counts are everything
+  // the author stands on, as the 28g dialog counts it (28b).
+  const contentContext = await getAuthorPermissionContext(request, {
+    actions: ['view'],
+    entities: ['article', 'issue', 'podcast_episode'],
+  })
+
+  const [recentContent, history] = await Promise.all([
+    getRecentAuthorContent(contentContext, author.id),
+    getAuthorHistory(author.id),
+  ])
+
+  const deleteBlock = getAuthorDeleteBlock(author, context.userId)
+
   return {
     author: {
       bio: author.bio,
-      createdAt: createFormattedDate(author.createdAt),
+      createdAt: formatNumericDate(author.createdAt),
       id: author.id,
+      image: createImageSources('user-image', author.user?.image),
+      isAssociation: isAssociationAuthor(author),
       name: author.name,
       role: author.role,
-      updatedAt: createFormattedDate(author.updatedAt),
-      user: author.user,
+      user: author.user && { email: author.user.email, id: author.user.id },
     },
+    // Založit účet… opens the new user with this author chosen (28b, 28f).
+    canCreateUser:
+      author.user === null &&
+      context.can({
+        action: 'create',
+        entity: 'user',
+        targetUserId: context.userId,
+      }).hasPermission,
     canUpdate: updatePerms.hasPermission,
+    contentCounts: getAuthorContentCounts(deleteBlock.contentCounts),
     // Smazat… confirms a deletable author and explains a blocked one (28g).
-    deleteBlock: getAuthorDeleteBlock(author, context.userId),
+    deleteBlock,
+    history,
     mayDelete: deletePerms.hasPermission,
+    recentContent,
   }
 }

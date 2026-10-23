@@ -1,20 +1,22 @@
 /**
  * Sends a notice to an administration user about their account through the
- * Google Apps Script web app (see the SCRIPT__Users__Notice_Send repo) — today
- * the invitation of a new user (design 29e). Best-effort: it never throws;
+ * Google Apps Script web app (see the SCRIPT__Users__Notice_Send repo): the
+ * invitation of a new user (design 29e) or the notice of an e-mail change to
+ * the old address (28f). Best-effort: it never throws;
  * failures are logged, reported to Sentry, and swallowed, and it resolves to
  * whether the notice went out, for the caller to tell the person (28e).
  *
  * The request is **signed** with GAS_USERS_NOTICE_SECRET (see
  * `sign-gas-request.server.ts`), which never travels. The script sends through
  * the notifications mailbox's Mailer; `SCRIPT__Auth__Magic_Link` sends only the
- * sign-in link (decision 0037).
+ * sign-in link (log 0037).
  *
  * No-ops when GAS_USERS_NOTICE_URL / GAS_USERS_NOTICE_SECRET are unset (local
  * development), so the flow can be exercised without a live GAS deployment.
  */
 
 import type {
+  EmailChangeNoticeRequest,
   Envelope,
   InvitationRequest,
   UsersNoticeResponse,
@@ -29,7 +31,7 @@ import { signGasRequest } from '~/utils/sign-gas-request.server'
  * @returns Whether the notice went out; never throws.
  */
 export const sendUsersNotice = async (
-  request: InvitationRequest,
+  request: InvitationRequest | EmailChangeNoticeRequest,
 ): Promise<boolean> => {
   const url = process.env.GAS_USERS_NOTICE_URL
   const secret = process.env.GAS_USERS_NOTICE_SECRET
@@ -44,8 +46,12 @@ export const sendUsersNotice = async (
 
     // Local dev without a GAS deployment: print the notice so the flow is
     // usable end-to-end without sending a real email.
+    const detail =
+      request.kind === 'invitation'
+        ? request.link
+        : `${request.newEmail} by ${request.changedByName}`
     console.info(
-      `[users-notice] GAS not configured — ${request.kind} for ${request.email}: ${request.link}`,
+      `[users-notice] GAS not configured — ${request.kind} for ${request.email}: ${detail}`,
     )
     return true
   }

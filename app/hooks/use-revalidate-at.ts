@@ -14,7 +14,7 @@ const MAX_RETRIES = 6
 
 /**
  * Reloads the page's data once the earliest of the given moments passes. An
- * edit hold's expiry sends no event (decision 0019), so a page showing
+ * edit hold's expiry sends no event (log 0019), so a page showing
  * „upravuje …“ looks again when it should end; a renewed hold then sets the
  * next moment. When the same moment is still there after a reload (the
  * browser's clock runs ahead of the server's), it looks again a few times.

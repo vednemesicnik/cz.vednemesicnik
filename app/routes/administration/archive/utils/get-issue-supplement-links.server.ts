@@ -20,7 +20,8 @@ export type IssueSupplementLinks =
 
 /**
  * What an issue's details link to (design 26b, qjv38ti4): a main issue to its
- * supplements, a supplement to the issue with the same year and order. Only
+ * supplements, a supplement to the issue with the same year and order, the
+ * one holding it as published among drafts that share it (log 0039). Only
  * issues the viewer may see are named (wo02u3xq).
  *
  * @param issue - The issue's year, order and supplement.
@@ -44,6 +45,9 @@ export const getIssueSupplementLinks = async (
 
   if (issue.supplement) {
     const mainIssue = await prisma.issue.findFirst({
+      // The holder first, then a named draft: SQLite sorts nulls last when
+      // descending.
+      orderBy: [{ publishedNumber: 'desc' }, { name: 'desc' }],
       select: { id: true, name: true, order: true, year: true },
       where: { AND: [visibleWhere, { order, supplementSlug: '', year }] },
     })
@@ -62,7 +66,7 @@ export const getIssueSupplementLinks = async (
   }
 
   const supplements = await prisma.issue.findMany({
-    // By the slug, as the archive orders supplements (decision 0030).
+    // By the slug, as the archive orders supplements (log 0030).
     orderBy: { supplementSlug: 'asc' },
     select: { id: true, supplement: true },
     where: {

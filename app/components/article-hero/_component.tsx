@@ -1,5 +1,6 @@
 import { BaseLink } from '~/components/base-link'
 import { Image } from '~/components/image'
+import { LinkArrow } from '~/components/link-arrow'
 import type { FormattedDate } from '~/utils/format-date'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
@@ -60,7 +61,10 @@ export const ArticleHero = ({
               )}
             </p>
           </div>
-          <span className={styles.cta}>Přečíst článek →</span>
+          <span className={styles.cta}>
+            Přečíst článek
+            <LinkArrow />
+          </span>
         </div>
       </article>
     </BaseLink>

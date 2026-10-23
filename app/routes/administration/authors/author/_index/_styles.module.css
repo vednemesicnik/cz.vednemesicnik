@@ -1,0 +1,121 @@
+/* The avatar and name, with the actions on the right (28b). */
+.header {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    inline-size: 100%;
+  }
+}
+
+.identity {
+  @layer route {
+    display: flex;
+    align-items: safe center;
+    gap: 16px;
+    min-inline-size: 0;
+  }
+}
+
+/* The name, and the author role · creation date under it. */
+.title {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-inline-size: 0;
+  }
+}
+
+.subtitle {
+  @layer route {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+}
+
+.actions {
+  @layer route {
+    display: flex;
+    flex-shrink: 0;
+    gap: 8px;
+  }
+}
+
+/* The counts by type on one line, only the articles a link (28b, dksfb82t). */
+.counts {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 8px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+}
+
+/*
+ * The last five items: type, title, state tag (28b). The list holds the
+ * tracks and each item takes them as a subgrid, so types and tags line up
+ * across rows at the width of the longest one.
+ */
+.items {
+  @layer route {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    column-gap: 12px;
+    margin: 0;
+    padding: 0;
+    font-size: var(--font-size-sm);
+    list-style: none;
+  }
+}
+
+.item {
+  @layer route {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: center;
+    padding-block: 12px;
+    border-block-end: 1px solid var(--border);
+  }
+}
+
+.type {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+.itemLink {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: inherit;
+    text-decoration: none;
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
+
+    &:hover {
+      color: var(--link-strong);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
+    }
+  }
+}
+
+.empty {
+  @layer route {
+    margin: 0;
+    color: var(--text-secondary);
+  }
+}

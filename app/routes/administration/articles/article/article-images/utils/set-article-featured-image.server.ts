@@ -62,7 +62,7 @@ export async function setArticleFeaturedImage(
           ),
           ...(await buildArticlePageSeoImageWrites({
             featuredImage: imageId,
-            slug: article.slug,
+            publishedSlug: article.publishedSlug,
           })),
         ],
       }

@@ -9,9 +9,8 @@ type Props = Pick<ComponentProps<'svg'>, 'className'>
 export const LinkIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-label={'Ikona odkazu'}
+      aria-hidden={true}
       className={clsx(styles.icon, className)}
-      role={'img'}
       viewBox={'0 0 24 24'}
       xmlns={'http://www.w3.org/2000/svg'}
     >

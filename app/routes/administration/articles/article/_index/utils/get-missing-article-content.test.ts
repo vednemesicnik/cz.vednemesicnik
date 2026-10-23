@@ -6,6 +6,7 @@ const complete = {
   authorCount: 1,
   content: 'Text článku',
   images: [{ altText: 'Popis' }],
+  isSlugTaken: false,
   perex: 'Perex',
   slug: 'clanek',
   title: 'Článek',
@@ -31,6 +32,7 @@ describe('getMissingArticleContent', () => {
         authorCount: 0,
         content: '',
         images: [{ altText: '' }],
+        isSlugTaken: false,
         perex: null,
         slug: '',
         title: '',
@@ -43,6 +45,12 @@ describe('getMissingArticleContent', () => {
       'Článek nemá autora.',
       '1 obrázek nemá alt text.',
     ])
+  })
+
+  test('an address another article holds is the last item (log 0039)', () => {
+    expect(
+      getMissingArticleContent({ ...complete, isSlugTaken: true, perex: null }),
+    ).toEqual(['Chybí perex.', 'Adresa je obsazená.'])
   })
 
   test('counts images without alt text in the Czech plural', () => {

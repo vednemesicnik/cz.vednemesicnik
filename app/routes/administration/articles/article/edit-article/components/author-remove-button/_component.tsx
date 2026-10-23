@@ -1,5 +1,7 @@
 import { clsx } from 'clsx'
 
+import { CloseIcon } from '~/components/icons/close-icon'
+
 import styles from './_styles.module.css'
 
 type Props = {
@@ -20,18 +22,6 @@ export const AuthorRemoveButton = ({ name, onClick, className }: Props) => (
     onClick={onClick}
     type={'button'}
   >
-    <svg
-      aria-hidden={'true'}
-      fill={'none'}
-      height={14}
-      stroke={'currentColor'}
-      strokeLinecap={'round'}
-      strokeWidth={2}
-      viewBox={'0 0 24 24'}
-      width={14}
-    >
-      <path d={'M18 6 6 18'} />
-      <path d={'m6 6 12 12'} />
-    </svg>
+    <CloseIcon className={styles.icon} />
   </button>
 )

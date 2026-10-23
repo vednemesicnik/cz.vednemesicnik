@@ -5,20 +5,26 @@ import styles from './_styles.module.css'
 
 type Props = Pick<ComponentProps<'svg'>, 'className'>
 
+/**
+ * Lucide's file-up (n0kx6u98). Always decorative: the control around it
+ * carries the name.
+ */
 export const UploadFileIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-label={'Ikona nahrání souboru'}
+      aria-hidden={true}
       className={clsx(styles.icon, className)}
-      role={'img'}
-      viewBox={'0 -960 960 960'}
+      viewBox={'0 0 24 24'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
       <path
         d={
-          'M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z'
+          'M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z'
         }
       />
+      <path d={'M14 2v5a1 1 0 0 0 1 1h5'} />
+      <path d={'M12 12v6'} />
+      <path d={'m15 15-3-3-3 3'} />
     </svg>
   )
 }

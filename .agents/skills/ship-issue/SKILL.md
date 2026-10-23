@@ -63,7 +63,7 @@ the review is `review-implementation`'s, the PR lifecycle is
 
 Run the review exactly as `.agents/skills/review-implementation/SKILL.md` describes: the
 design extracted here, the diff read by the `implementation-reviewer` agent against
-`self-review-before-pr`, the rules, `AGENTS.md`, the decision records and the issue's
+`self-review-before-pr`, the rules, `AGENTS.md`, the work log and the issue's
 acceptance criteria. Not the `code-review:code-review` plugin (it needs a PR and adds an
 attribution footer); the built-in `/code-review` is user-triggered. One ranked report,
 most-severe first.

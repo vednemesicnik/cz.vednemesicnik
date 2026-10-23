@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-
 import {
   type ContentStateHandlersConfig,
   clearReviewsOnDraft,
@@ -9,6 +8,7 @@ import {
   type PermissionTarget,
   type StateTransitionData,
 } from './create-content-state-handlers.server'
+import { createMissingContentError } from './create-missing-content-error'
 
 // Replace the permission wrapper with a pass-through that runs `execute` with a
 // caller-controlled context, so these tests exercise the factory's own logic
@@ -224,6 +224,39 @@ describe('createContentStateHandlers — completeness (23h)', () => {
     expect(config.ensureApprovingReview).not.toHaveBeenCalled()
   })
 
+  test('missing content the write finds blocks it the same way (log 0039)', async () => {
+    const config = createConfig({
+      applyState: vi
+        .fn()
+        .mockRejectedValue(createMissingContentError(['Adresa je obsazená.'])),
+      loadPublishState,
+    })
+    runAs(APPROVER)
+
+    recordContentLogMock.mockClear()
+
+    const result = await createContentStateHandlers(config).publish(request, {
+      id: 'a1',
+      target,
+    })
+
+    expect(result).toEqual({ missing: ['Adresa je obsazená.'] })
+    expect(config.ensureApprovingReview).not.toHaveBeenCalled()
+    expect(recordContentLogMock).not.toHaveBeenCalled()
+  })
+
+  test('any other failure of the write still fails the publish', async () => {
+    const config = createConfig({
+      applyState: vi.fn().mockRejectedValue(new Error('Database down')),
+      loadPublishState,
+    })
+    runAs(APPROVER)
+
+    await expect(
+      createContentStateHandlers(config).publish(request, { id: 'a1', target }),
+    ).rejects.toThrow('Database down')
+  })
+
   test('an entity without the check publishes as before', async () => {
     const config = createConfig({ loadPublishState })
     runAs(APPROVER)
@@ -424,6 +457,22 @@ describe('createContentStateHandlers — transition matrix', () => {
       'a1',
       'reviewer-9',
     )
+  })
+
+  test('review of an incomplete text approves nothing and says what is missing', async () => {
+    const config = submittedConfig()
+    config.getMissingBeforePublish = vi
+      .fn()
+      .mockResolvedValue(['Adresa je obsazená.'])
+    const handlers = createContentStateHandlers(config)
+    runAs(APPROVER, 'reviewer-9')
+    publishContentEventMock.mockClear()
+
+    await expect(
+      handlers.review(request, { id: 'a1', target }),
+    ).resolves.toEqual({ missing: ['Adresa je obsazená.'] })
+    expect(config.ensureApprovingReview).not.toHaveBeenCalled()
+    expect(publishContentEventMock).not.toHaveBeenCalled()
   })
 
   test('review refuses a draft nobody submitted', async () => {

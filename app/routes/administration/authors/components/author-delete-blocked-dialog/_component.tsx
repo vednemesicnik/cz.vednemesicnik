@@ -5,6 +5,7 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import { DialogBody } from '~/components/dialog-body'
+import { LinkButton } from '~/components/link-button'
 import { formatAuthorContentCounts } from '~/utils/author-references/format-author-content-counts'
 import type { AuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
 import { useModalDialog } from '~/utils/use-modal-dialog'
@@ -13,17 +14,27 @@ type Props = {
   name: string
   /** What holds the author, from the loader's `getAuthorDeleteBlock`. */
   block: AuthorDeleteBlock
+  /**
+   * The author detail's Obsah section, from a list. Opened on the detail
+   * itself there is none: the content is on the page (dksfb82t).
+   */
+  contentHref?: string
   onClose: () => void
 }
 
 /**
  * Why an author cannot be deleted, in place of the confirmation (design 28g,
  * copy 9w0473vu, zq7c99v0). The sentences follow what holds the author, so they come
- * from one `block` rather than from the caller. The counts are text and the
- * only action is *Zavřít*: *Zobrazit obsah* waits for the author detail's
- * Obsah column (dksfb82t). Opens as it mounts.
+ * from one `block` rather than from the caller. The counts are text; the way
+ * on is *Zobrazit obsah*, only when content holds the author: approvals can't
+ * be changed, so for them there is only *Zavřít* (fzqkfmeg). Opens as it mounts.
  */
-export const AuthorDeleteBlockedDialog = ({ name, block, onClose }: Props) => {
+export const AuthorDeleteBlockedDialog = ({
+  name,
+  block,
+  contentHref,
+  onClose,
+}: Props) => {
   const ref = useModalDialog(onClose)
   const contentCounts = formatAuthorContentCounts(block.contentCounts)
 
@@ -72,6 +83,11 @@ export const AuthorDeleteBlockedDialog = ({ name, block, onClose }: Props) => {
           >
             Zavřít
           </Button>
+          {contentHref !== undefined && contentCounts !== '' && (
+            <LinkButton size={'sm'} to={contentHref} variant={'outline'}>
+              Zobrazit obsah
+            </LinkButton>
+          )}
         </AdminModalActions>
       </AdminModalContent>
     </AdminDialog>

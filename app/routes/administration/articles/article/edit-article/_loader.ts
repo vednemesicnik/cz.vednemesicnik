@@ -15,6 +15,7 @@ import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-l
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
 import { canChooseRecordAuthor } from '../../utils/can-choose-record-author'
+import { findPublishedSlugConflict } from '../../utils/find-published-slug-conflict.server'
 import { getArticleHold } from '../../utils/get-article-hold'
 import type { Route } from './+types/route'
 import { getAuthorOptions } from './utils/get-author-options.server'
@@ -149,6 +150,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const authorIds = article.authors.map((author) => author.id)
   const submission = getSubmissionState(article)
+  // Another article holds the address as published: the field says so from
+  // the start (24d, log 0039).
+  const slugConflict = await findPublishedSlugConflict({
+    articleId,
+    slug: article.slug,
+  })
 
   return data(
     {
@@ -175,22 +182,26 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
             id: image.id,
             previewUrl: createImageSources('article-image', image).src ?? null,
           })),
-        // An empty draft (decision 0020) has no address and is left for the list.
+        // An empty draft (log 0020) has no address and is left for the list.
         isEmptyDraft: article.firstContentAt === null,
         perex: article.perex || '',
         slug: article.slug ?? '',
+        // A free address to offer for a taken one (24d).
+        slugSuggestion: slugConflict?.freeSlug ?? null,
         // Sent for approval, or approved: the tag and the line of 24c.
         submission:
           submission === null
             ? null
             : { date: submission.date.toISOString(), state: submission.state },
         tagIds,
+        // The address, when another article holds it as published.
+        takenSlug: slugConflict === null ? null : article.slug,
         title: article.title,
         // The last save, which the editor's hold takes back only over (24i).
         updatedAt: article.updatedAt.toISOString(),
       },
       authors,
-      // Without itself and as the association too (24j, decision 0026).
+      // Without itself and as the association too (24j, log 0026).
       canChooseAuthorsFreely: canChooseRecordAuthor(context.roleLevel),
       // Offered for a name the search does not find (24j, 2re069d4).
       canCreateAuthor: userContext.can({ action: 'create', entity: 'author' })

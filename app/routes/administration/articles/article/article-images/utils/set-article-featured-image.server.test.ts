@@ -31,7 +31,7 @@ vi.mock('./save-article-image-change.server', () => ({
 
 const request = new Request('https://test.local/')
 const context = { authorId: 'author-1', roleLevel: 1 }
-const article = { featuredImageId: null, slug: 'article' }
+const article = { featuredImageId: null, publishedSlug: 'article' }
 
 const run = async (imageId: string | null) => {
   await setArticleFeaturedImage(request, {
@@ -90,7 +90,7 @@ describe('setArticleFeaturedImage', () => {
     })
     expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
       featuredImage: 'image-1',
-      slug: 'article',
+      publishedSlug: 'article',
     })
   })
 
@@ -102,7 +102,7 @@ describe('setArticleFeaturedImage', () => {
     }).then(() =>
       mocks.saveArticleImageChange.mock.lastCall?.[1].prepare(context, {
         featuredImageId: 'image-2',
-        slug: 'article',
+        publishedSlug: 'article',
       }),
     )
 
@@ -115,7 +115,7 @@ describe('setArticleFeaturedImage', () => {
     ])
     expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
       featuredImage: null,
-      slug: 'article',
+      publishedSlug: 'article',
     })
   })
 

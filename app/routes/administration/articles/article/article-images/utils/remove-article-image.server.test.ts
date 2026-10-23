@@ -39,9 +39,9 @@ const options = { articleId: 'article-1', imageId: 'image-1', tabId: 'tab-1' }
 const context = { authorId: 'author-1', roleLevel: 1 }
 
 const run = async (
-  article: { featuredImageId: string | null; slug: string } = {
+  article: { featuredImageId: string | null; publishedSlug: string } = {
     featuredImageId: null,
-    slug: 'article',
+    publishedSlug: 'article',
   },
 ) => {
   await removeArticleImage(request, options)
@@ -109,18 +109,24 @@ describe('removeArticleImage', () => {
   })
 
   test('leaves the sharing preview alone for an image that is not the main one', async () => {
-    const prepared = await run({ featuredImageId: 'image-2', slug: 'article' })
+    const prepared = await run({
+      featuredImageId: 'image-2',
+      publishedSlug: 'article',
+    })
 
     expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
     expect(prepared.writes).toEqual(['delete-image'])
   })
 
   test('clears the sharing preview when it was the main image', async () => {
-    const prepared = await run({ featuredImageId: 'image-1', slug: 'article' })
+    const prepared = await run({
+      featuredImageId: 'image-1',
+      publishedSlug: 'article',
+    })
 
     expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
       featuredImage: null,
-      slug: 'article',
+      publishedSlug: 'article',
     })
     expect(prepared.writes).toEqual(['delete-image', 'seo-write'])
   })

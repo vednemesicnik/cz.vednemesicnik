@@ -65,6 +65,7 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
+import { useTakenValues } from '~/hooks/use-taken-values'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
@@ -74,7 +75,6 @@ import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
 import { formatSubmissionFact } from '../../utils/format-submission-fact'
-import { schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { AddImagesTile } from './components/add-images-tile'
@@ -89,6 +89,7 @@ import { EditorDetail } from './components/editor-detail'
 import { GalleryDetail } from './components/gallery-detail'
 import { GalleryGrid } from './components/gallery-grid'
 import { RemoveImageDialog } from './components/remove-image-dialog'
+import { createEditorSchema } from './utils/create-editor-schema'
 import { formatArticleChangedDescription } from './utils/format-article-changed-description'
 import { formatFailedUploadsSentence } from './utils/format-failed-uploads-sentence'
 import { formatFirstNameAndCount } from './utils/format-first-name-and-count'
@@ -107,9 +108,14 @@ export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-// What the save route answers (decision 0022); `deleted` comes as a 410.
+// What the save route answers (log 0022); `deleted` comes as a 410.
 type SaveResponse =
-  | { status: 'saved'; updatedAt: string; slugSuggestion: string | null }
+  | {
+      status: 'saved'
+      updatedAt: string
+      takenSlug: string | null
+      slugSuggestion: string | null
+    }
   | { status: 'not-held'; heldByName: string | null }
 
 // The tab's own fields are no change of the article.
@@ -120,9 +126,6 @@ const SNAPSHOT_IGNORED_FIELDS = new Set<string>([
 
 // The name of the button Conform submits its intents with.
 const CONFORM_INTENT_NAME = '__intent__'
-
-const TAKEN_SLUG_HINT =
-  'Zvolte jinou adresu — tuto už má jiný článek. Změna adresy se neuložila.'
 
 // Up to this length a search engine shows the perex whole (24a).
 const PEREX_RECOMMENDED_LENGTH = 160
@@ -202,7 +205,7 @@ export default function RouteComponent({
     editHold.state.status === 'lost' || editHold.state.status === 'changed'
       ? editHold.state
       : null
-  // The article is gone for good (24k, decision 0036).
+  // The article is gone for good (24k, log 0036).
   const isDeleted = editHold.state.status === 'deleted'
   const readOnlyNotice = getReadOnlyNotice(editHold.state)
   // Changed meanwhile, and free to edit again here (24i).
@@ -221,13 +224,17 @@ export default function RouteComponent({
           articleId: params.articleId,
         })
 
+  // Addresses another article holds as published (24d, log 0039); the
+  // schema turns them into the field's error.
+  const takenSlugs = useTakenValues([article.takenSlug])
+
   const [form, fields] = useForm({
     defaultValue: {
       authorIds: article.authorIds,
       categoryIds: article.categoryIds,
       content: article.content,
       // The gallery's alt texts and captions save with the form; the images
-      // save on their own (decision 0027).
+      // save on their own (log 0027).
       images: article.images.map((image) => ({
         altText: image.altText,
         description: image.description,
@@ -240,9 +247,22 @@ export default function RouteComponent({
     },
     id: 'edit-article',
     // Parsed here so Conform runs `update`, `insert` and `remove` in the page;
-    // the schema refuses nothing a draft may lack (24d).
-    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
+    // the schema refuses nothing a draft may lack (24d), and says when the
+    // address is taken.
+    onValidate: ({ formData }) =>
+      parseWithZod(formData, { schema: createEditorSchema(takenSlugs.has) }),
+    // A taken address's error goes as soon as the address changes (24d).
+    shouldRevalidate: 'onInput',
   })
+
+  // Taken when the page loads, the field says so once the editor holds the
+  // edit: a locked fieldset leaves its fields out of the form (24d).
+  const validateTakenSlug = useEffectEvent(() => {
+    if (article.takenSlug !== null) form.validate({ name: fields.slug.name })
+  })
+  useEffect(() => {
+    if (isHolding) validateTakenSlug()
+  }, [isHolding])
 
   // The article's last save, as the line under the heading says it (24e).
   const [savedAt, setSavedAt] = useState(() => new Date(article.updatedAt))
@@ -255,8 +275,8 @@ export default function RouteComponent({
     editHold.acknowledgeSave(updatedAt)
     setSavedAt(new Date(updatedAt))
   }
-  // A free address for a taken one, which did not save (24d).
-  const [slugSuggestion, setSlugSuggestion] = useState<string | null>(null)
+  // A free address to offer for a taken one (24d).
+  const [slugSuggestion, setSlugSuggestion] = useState(article.slugSuggestion)
 
   // One save of the whole form; the server takes it only from this tab.
   const send = async (
@@ -305,6 +325,12 @@ export default function RouteComponent({
 
     acknowledgeSaved(result.updatedAt)
     setSlugSuggestion(result.slugSuggestion)
+    // The address saved, and another article holds it: the field says so
+    // until it changes (24d, log 0039).
+    if (result.takenSlug !== null) {
+      takenSlugs.add(result.takenSlug)
+      form.validate({ name: fields.slug.name })
+    }
 
     // A new title reaches the breadcrumb and the tab title.
     const savedTitle = String(formData.get(fields.title.name) ?? '').trim()
@@ -503,7 +529,7 @@ export default function RouteComponent({
     void leaveTo(closeHref, () => navigate(closeHref))
   }
 
-  // The gallery: every image change saves on its own (24b, decision 0027).
+  // The gallery: every image change saves on its own (24b, log 0027).
   const imageFieldList = fields.images.getFieldList()
   const readImageField = (index: number, name: string) => {
     const input = formRef.current?.elements.namedItem(
@@ -767,7 +793,7 @@ export default function RouteComponent({
     loaderData.authors.map((author) => [author.id, author]),
   )
   // The authors a search offers: not chosen yet, the association only to the
-  // Coordinator (decision 0026).
+  // Coordinator (log 0026).
   const getAuthorSuggestions = (query: string) =>
     loaderData.authors
       .filter(
@@ -997,7 +1023,6 @@ export default function RouteComponent({
 
   const saveLine = getSaveLineText({
     isEmpty,
-    isSlugUnsaved: slugSuggestion !== null,
     now,
     savedAt,
     // Without the hold nothing goes out: the line says the last save, and
@@ -1182,17 +1207,19 @@ export default function RouteComponent({
           rvp9ojsm). */}
       {isDeleted && hasText && (
         <Callout className={styles.unsentWarning} tone={'warning'}>
-          <p className={styles.unsentTitle}>
-            Text článku zůstal jen v tomto editoru.
-          </p>
-          <div className={styles.unsentCopy}>
-            <CopyArticleTextButton getContent={getContent} />
-            <CopyArticleTextHint />
+          <div className={styles.unsentContent}>
+            <p className={styles.unsentTitle}>
+              Text článku zůstal jen v tomto editoru.
+            </p>
+            <div className={styles.unsentCopy}>
+              <CopyArticleTextButton getContent={getContent} />
+              <CopyArticleTextHint />
+            </div>
+            <p className={styles.unsentAdvice}>
+              Než stránku obnovíte, opustíte nebo editor zavřete, zkopírujte si
+              text článku.
+            </p>
           </div>
-          <p className={styles.unsentAdvice}>
-            Než stránku obnovíte, opustíte nebo editor zavřete, zkopírujte si
-            text článku.
-          </p>
         </Callout>
       )}
 
@@ -1200,17 +1227,19 @@ export default function RouteComponent({
           (24h; copy xtmvu5sj). */}
       {holdLoss?.hasUnsentChanges && !isDeleted && (
         <Callout className={styles.unsentWarning} tone={'warning'}>
-          <p className={styles.unsentTitle}>
-            Některé změny se nestihly uložit.
-          </p>
-          <div className={styles.unsentCopy}>
-            <CopyArticleTextButton getContent={getContent} />
-            <CopyArticleTextHint />
+          <div className={styles.unsentContent}>
+            <p className={styles.unsentTitle}>
+              Některé změny se nestihly uložit.
+            </p>
+            <div className={styles.unsentCopy}>
+              <CopyArticleTextButton getContent={getContent} />
+              <CopyArticleTextHint />
+            </div>
+            <p className={styles.unsentAdvice}>
+              Než stránku obnovíte, opustíte, editor zavřete nebo budete
+              pokračovat v úpravě, zkopírujte si text článku.
+            </p>
           </div>
-          <p className={styles.unsentAdvice}>
-            Než stránku obnovíte, opustíte, editor zavřete nebo budete
-            pokračovat v úpravě, zkopírujte si text článku.
-          </p>
         </Callout>
       )}
 
@@ -1422,9 +1451,7 @@ export default function RouteComponent({
                 <fieldset className={styles.lock} disabled={isLocked}>
                   <TextField
                     {...getInputProps(fields.slug, { type: 'text' })}
-                    errors={
-                      slugSuggestion === null ? undefined : [TAKEN_SLUG_HINT]
-                    }
+                    errors={fields.slug.errors}
                     hint={
                       isSlugFollowing ? (
                         'Podle názvu, dokud ji nezměníte.'
@@ -1445,23 +1472,25 @@ export default function RouteComponent({
                     onInput={handleInput}
                   />
                   {/* A taken address: a free one, filled in and saved (24d). */}
-                  {slugSuggestion !== null && !isReadOnly && (
-                    <ButtonLink
-                      onClick={() => {
-                        // A chosen address no longer follows the title.
-                        handleInput()
-                        form.update({
-                          name: fields.slug.name,
-                          value: slugSuggestion,
-                        })
-                        // Saved at once (24d), once the field holds it.
-                        isFlushOnChangeRef.current = true
-                      }}
-                      type={'button'}
-                    >
-                      Použít {slugSuggestion}
-                    </ButtonLink>
-                  )}
+                  {fields.slug.errors !== undefined &&
+                    slugSuggestion !== null &&
+                    !isReadOnly && (
+                      <ButtonLink
+                        onClick={() => {
+                          // A chosen address no longer follows the title.
+                          handleInput()
+                          form.update({
+                            name: fields.slug.name,
+                            value: slugSuggestion,
+                          })
+                          // Saved at once (24d), once the field holds it.
+                          isFlushOnChangeRef.current = true
+                        }}
+                        type={'button'}
+                      >
+                        Použít {slugSuggestion}
+                      </ButtonLink>
+                    )}
                   {/* The whole address, as the reader will see it (24a). */}
                   {slugValue !== '' && (
                     <span className={styles.path}>/articles/{slugValue}</span>

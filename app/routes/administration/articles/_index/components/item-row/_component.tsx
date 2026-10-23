@@ -124,8 +124,10 @@ export const ItemRow = ({
         return navigate(editHref)
       case 'view-on-web':
         if (article.slug === null) return
+        // Only a published address is unique: the id says which draft to
+        // show (log 0039).
         return window.open(
-          href('/articles/:articleSlug', { articleSlug: article.slug }),
+          `${href('/articles/:articleSlug', { articleSlug: article.slug })}?id=${article.id}`,
           '_blank',
           'noopener',
         )

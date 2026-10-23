@@ -4,7 +4,7 @@ import { isRecordNotFoundError } from './is-record-not-found-error.server'
 
 /**
  * Runs a write whose `where` repeats the hold condition: "not held by someone
- * else" (decision 0019), or "free" for a delete (0036). When it matches no row
+ * else" (log 0019), or "free" for a delete (0036). When it matches no row
  * because the content is held, it throws the held refusal naming the holder.
  * When the hold ended before it could ask who held it, the write runs once
  * more; any other failure goes on as it was.

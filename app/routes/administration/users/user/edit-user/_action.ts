@@ -1,3 +1,4 @@
+import type { SubmissionResult } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
 import { invariantResponse } from '@epic-web/invariant'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
@@ -9,13 +10,27 @@ import {
 import { checkCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
+import { hasEmailChanged } from '~/utils/has-email-changed'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
 
 import { schema } from './_schema'
+import { EMAIL_TAKEN_MESSAGE } from './utils/email-taken-message'
+import { isEmailTaken } from './utils/is-email-taken.server'
+import { sendEmailChangeNotice } from './utils/send-email-change-notice.server'
 import { updateUser } from './utils/update-user'
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+type ActionData = {
+  submissionResult: SubmissionResult<string[]>
+}
+
+// Declared, because inference drops the taken-address branch: its data is a
+// subtype of the CSRF failure's, and TypeScript reduces the union to the latter.
+export const action = async ({
+  request,
+}: ActionFunctionArgs): Promise<
+  Response | ReturnType<typeof data<ActionData>>
+> => {
   const formData = await request.formData()
   const csrfFailure = await checkCSRF(formData, request)
   if (csrfFailure !== null) return csrfFailure
@@ -41,6 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const [targetUser, newRole] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       select: {
+        email: true,
         id: true,
         role: {
           select: {
@@ -99,7 +115,35 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     throw data(null, { status: 403 })
   }
 
+  // A taken address is a plain field error, without whose it is (28f, log
+  // 0039); the unique constraint in updateUser stays the fallback for a race.
+  if (await isEmailTaken(submission.value)) {
+    return data(
+      {
+        submissionResult: submission.reply({
+          fieldErrors: { email: [EMAIL_TAKEN_MESSAGE] },
+        }),
+      },
+      { status: 400 },
+    )
+  }
+
   await updateUser(submission.value)
+
+  // The old address always hears of a change, naming who made it (28f). The
+  // save stands whether or not the notice goes out.
+  if (hasEmailChanged(targetUser.email, submission.value.email)) {
+    const actor = await prisma.user.findUniqueOrThrow({
+      select: { author: { select: { name: true } } },
+      where: { id: context.userId },
+    })
+
+    await sendEmailChangeNotice({
+      changedByName: actor.author.name,
+      newEmail: submission.value.email,
+      oldEmail: targetUser.email,
+    })
+  }
 
   if (isChangingRole) {
     recordAuditLog({

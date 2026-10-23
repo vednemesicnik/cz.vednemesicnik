@@ -8,7 +8,7 @@ const EDITOR: Record<EditHoldContent, string> = {
 
 /**
  * The toast of a delete that waits for one's own editor in another tab (design
- * 23g, 26i; decision 0036; copy rvp9ojsm). It says no more about where the
+ * 23g, 26i; log 0036; copy rvp9ojsm). It says no more about where the
  * editor runs: the app cannot tell a live tab from a crashed browser's hold.
  *
  * @param content - What the editor edits.

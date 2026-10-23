@@ -36,7 +36,7 @@ beforeEach(() => {
   mocks.authorFindMany.mockResolvedValue(authors)
 })
 
-describe('getAuthorOptions (design 24j, decision 0026)', () => {
+describe('getAuthorOptions (design 24j, log 0026)', () => {
   test('marks the association and gives it no role', async () => {
     mocks.authorFindFirst.mockResolvedValue({ id: 'association' })
 

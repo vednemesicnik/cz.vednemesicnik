@@ -17,7 +17,7 @@ type Options = {
 /**
  * Removes the issue's cover or PDF with its files, which go only after the row
  * is deleted. The editor sends it after cancelling a new file, because the
- * abort loses an answer already on its way (decision 0029); like that upload,
+ * abort loses an answer already on its way (log 0029); like that upload,
  * it lands after *Zavřít* released the hold, never over someone else's.
  *
  * @param request - The action's request.

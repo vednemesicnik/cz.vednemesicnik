@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 /**
  * The links the editor removed: every one it had at open or picked since,
  * and no longer has. A save sends them, so the server drops only these and
- * keeps an archived link the editor never showed (decision 0025).
+ * keeps an archived link the editor never showed (log 0025).
  *
  * @param initialIds - The links at open.
  * @param selectedIds - The links picked now.

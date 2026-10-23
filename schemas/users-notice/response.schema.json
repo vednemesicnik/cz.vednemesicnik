@@ -1,12 +1,37 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "EmailChangeNoticeRequest": {
+      "additionalProperties": false,
+      "description": "The notice of an e-mail change, sent to the old address every time an Administrator or the Owner changes an account's e-mail. It names the new address and who changed it, and carries no link.",
+      "properties": {
+        "changedByName": {
+          "description": "Who changed the address, as one string in the nominative: a single line with no e-mail address or link.",
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string"
+        },
+        "email": {
+          "description": "The old address, the recipient; must be on the vednemesicnik.cz domain.",
+          "type": "string"
+        },
+        "kind": {
+          "const": "email-change-notice"
+        },
+        "newEmail": {
+          "description": "The new address the notice names; must be on the vednemesicnik.cz domain.",
+          "type": "string"
+        }
+      },
+      "required": ["kind", "email", "newEmail", "changedByName"],
+      "type": "object"
+    },
     "Envelope": {
       "additionalProperties": false,
       "description": "How a request travels. `payload` is a notice request serialised to a string, and it is signed as that exact string — never re-serialised, so the signature does not depend on JSON key order agreeing between the two ends. OWN_SECRET is the signing key and never leaves either end.",
       "properties": {
         "payload": {
-          "description": "JSON of a notice request (InvitationRequest).",
+          "description": "JSON of a notice request (InvitationRequest or EmailChangeNoticeRequest).",
           "type": "string"
         },
         "signature": {
@@ -102,6 +127,6 @@
       ]
     }
   },
-  "description": "Contract for the Vedneměsíčník users-notice web app: notices to a user of the administration about their account. POST a signed Envelope whose payload is one notice — today an InvitationRequest; the response is a UsersNoticeResponse. The send is delegated to the Mailer, whose reason is surfaced in mailerError when error is \"mailer_send_failed\".",
+  "description": "Contract for the Vedneměsíčník users-notice web app: notices to a user of the administration about their account. POST a signed Envelope whose payload is one notice — an InvitationRequest or an EmailChangeNoticeRequest; the response is a UsersNoticeResponse. The send is delegated to the Mailer, whose reason is surfaced in mailerError when error is \"mailer_send_failed\".",
   "title": "UsersNotice"
 }

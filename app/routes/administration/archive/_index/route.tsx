@@ -120,7 +120,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     states,
   })
 
-  // Nové číslo creates the draft and opens it (decision 0020), so it posts.
+  // Nové číslo creates the draft and opens it (log 0020), so it posts.
   const renderNewIssueButton = () =>
     canCreate && (
       <Form action={href('/administration/archive/add-issue')} method={'post'}>

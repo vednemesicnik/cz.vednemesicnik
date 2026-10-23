@@ -8,13 +8,10 @@ import { updateIssue } from './update-issue.server'
 // into the transaction.
 const mocks = vi.hoisted(() => ({
   checkAuthorPermission: vi.fn(),
-  findIssueNumberConflict: vi.fn(),
+  findPublishedNumberConflict: vi.fn(),
   getAuthorPermissionContext: vi.fn(),
   issueCoverUpdate: vi.fn(),
-  issueFindMany: vi.fn(),
   issueFindUnique: vi.fn(),
-  issuePdfCount: vi.fn(),
-  issuePdfUpdate: vi.fn(),
   issueUpdate: vi.fn(),
   issueUpdateMany: vi.fn(),
   recordEditLog: vi.fn(),
@@ -25,13 +22,11 @@ vi.mock('~/utils/db.server', () => ({
   prisma: {
     $transaction: mocks.transaction,
     issue: {
-      findMany: mocks.issueFindMany,
       findUnique: mocks.issueFindUnique,
       update: mocks.issueUpdate,
       updateMany: mocks.issueUpdateMany,
     },
     issueCover: { updateMany: mocks.issueCoverUpdate },
-    issuePDF: { count: mocks.issuePdfCount, updateMany: mocks.issuePdfUpdate },
   },
 }))
 
@@ -49,8 +44,8 @@ vi.mock('~/utils/content-log/record-edit-log.server', () => ({
   recordEditLog: mocks.recordEditLog,
 }))
 
-vi.mock('../../../utils/find-issue-number-conflict.server', () => ({
-  findIssueNumberConflict: mocks.findIssueNumberConflict,
+vi.mock('../../../utils/find-published-number-conflict.server', () => ({
+  findPublishedNumberConflict: mocks.findPublishedNumberConflict,
 }))
 
 const request = new Request('https://test.local/')
@@ -62,7 +57,7 @@ const options = {
   tabId: 'tab-1',
 } satisfies Parameters<typeof updateIssue>[1]
 
-// The saving tab holds the issue (decision 0019).
+// The saving tab holds the issue (log 0019).
 const heldSince = new Date(Date.now() - 60_000)
 const ownHold = {
   heldByAuthor: { name: 'Marie Horáková' },
@@ -88,13 +83,6 @@ const storedIssue = {
   year: 2026,
 }
 
-const conflict = {
-  after: ' už existuje.',
-  before: 'Zvolte jiné pořadí — číslo ',
-  field: 'order',
-  holder: { id: 'issue-4', label: '4/2026' },
-}
-
 // What the issue write sent as its data.
 const savedData = () => mocks.issueUpdate.mock.lastCall?.[0].data
 
@@ -106,16 +94,12 @@ beforeEach(() => {
   })
   // clearAllMocks keeps implementations; a test's denial must not leak.
   mocks.checkAuthorPermission.mockReset()
-  mocks.findIssueNumberConflict.mockReset()
-  mocks.findIssueNumberConflict.mockResolvedValue(null)
+  mocks.findPublishedNumberConflict.mockReset()
+  mocks.findPublishedNumberConflict.mockResolvedValue(null)
   mocks.issueFindUnique.mockResolvedValue(storedIssue)
-  mocks.issueFindMany.mockResolvedValue([{ order: 1 }, { order: 4 }])
-  // No other PDF has the name.
-  mocks.issuePdfCount.mockResolvedValue(0)
   mocks.issueUpdateMany.mockReturnValue('mark-first-content')
   mocks.issueUpdate.mockReturnValue('update-issue')
   mocks.issueCoverUpdate.mockReturnValue('update-cover')
-  mocks.issuePdfUpdate.mockReturnValue('update-pdf')
   // The first entry is the first-content mark; 0 rows: not the first save.
   mocks.transaction.mockImplementation(async (writes: unknown[]) =>
     writes.map((write) =>
@@ -127,9 +111,9 @@ beforeEach(() => {
 describe('updateIssue — the save', () => {
   test('saves the fields from the holding tab and keeps the hold', async () => {
     expect(await updateIssue(request, options)).toEqual({
-      isNumberSaved: true,
-      numberConflict: null,
+      freeOrder: null,
       status: 'saved',
+      takenNumber: null,
       updatedAt: savedAt,
     })
 
@@ -157,7 +141,6 @@ describe('updateIssue — the save', () => {
     })
 
     expect(savedData()).toMatchObject({ name: null, order: null, year: null })
-    expect(mocks.findIssueNumberConflict).not.toHaveBeenCalled()
   })
 
   test('slugs the supplement for the unique key', async () => {
@@ -210,100 +193,51 @@ describe('updateIssue — the save', () => {
   })
 })
 
-describe('updateIssue — the number saves as one (decision 0034)', () => {
-  test('leaves a taken number out and saves the rest, with a free order', async () => {
-    mocks.findIssueNumberConflict.mockResolvedValue(conflict)
+describe('updateIssue — the number saves as one (log 0034)', () => {
+  test('saves a taken number as typed and says so, with a free order (log 0039)', async () => {
+    mocks.findPublishedNumberConflict.mockResolvedValue({
+      freeOrder: 5,
+      takenNumber: '2026-4',
+    })
 
     expect(await updateIssue(request, options)).toEqual({
-      isNumberSaved: false,
-      numberConflict: { ...conflict, freeOrder: 5 },
+      freeOrder: 5,
       status: 'saved',
+      takenNumber: '2026-4',
       updatedAt: savedAt,
     })
     expect(savedData()).toMatchObject({
       name: 'podzim',
-      order: 3,
+      order: 4,
       supplementSlug: '',
       year: 2026,
     })
-    expect(mocks.issueFindMany.mock.lastCall?.[0].where).toEqual({
-      id: { not: 'issue-1' },
-      order: { not: null },
+    expect(mocks.findPublishedNumberConflict).toHaveBeenCalledWith({
+      issueId: 'issue-1',
+      order: 4,
       supplementSlug: '',
       year: 2026,
     })
   })
 
-  test('offers no free order for a taken supplement', async () => {
-    mocks.findIssueNumberConflict.mockResolvedValue({
-      ...conflict,
-      field: 'supplement',
-    })
-
-    const result = await updateIssue(request, {
+  test('checks a supplement by its slug', async () => {
+    await updateIssue(request, {
       ...options,
       number: { order: 2, supplement: 'Maturitní ples', year: 2026 },
     })
 
-    expect(result).toMatchObject({ numberConflict: { freeOrder: null } })
+    expect(mocks.findPublishedNumberConflict).toHaveBeenCalledWith(
+      expect.objectContaining({ supplementSlug: 'maturitni-ples' }),
+    )
   })
 
   test('keeps the stored number when the editor sent one it could not read', async () => {
-    const result = await updateIssue(request, { ...options, number: null })
+    await updateIssue(request, { ...options, number: null })
 
-    expect(result).toMatchObject({ isNumberSaved: false })
     expect(savedData()).toMatchObject({ name: 'podzim', order: 3, year: 2026 })
-    expect(mocks.findIssueNumberConflict).not.toHaveBeenCalled()
-  })
-
-  test('saves without the number another issue took meanwhile', async () => {
-    mocks.transaction
-      .mockRejectedValueOnce(
-        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-          clientVersion: 'test',
-          code: 'P2002',
-        }),
-      )
-      .mockImplementation(async (writes: unknown[]) =>
-        writes.map((write) =>
-          write === 'update-issue' ? { updatedAt: savedAt } : { count: 0 },
-        ),
-      )
-    mocks.findIssueNumberConflict
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(conflict)
-
-    const result = await updateIssue(request, options)
-
-    expect(result).toMatchObject({ numberConflict: { field: 'order' } })
-    expect(savedData()).toMatchObject({ order: 3 })
-  })
-
-  test('renames the PDF of a draft with its number', async () => {
-    mocks.issueFindUnique.mockResolvedValue({
-      ...storedIssue,
-      pdf: { fileName: 'VDM-2026-3.pdf', id: 'pdf-1' },
-    })
-
-    await updateIssue(request, options)
-
-    expect(mocks.issuePdfUpdate).toHaveBeenCalledWith({
-      data: { fileName: 'VDM-2026-4.pdf' },
-      where: { issueId: 'issue-1' },
-    })
-  })
-
-  test('keeps the PDF name another issue still has', async () => {
-    mocks.issueFindUnique.mockResolvedValue({
-      ...storedIssue,
-      pdf: { fileName: 'VDM-2026-3.pdf', id: 'pdf-1' },
-    })
-    mocks.issuePdfCount.mockResolvedValue(1)
-
-    await updateIssue(request, options)
-
-    expect(mocks.issuePdfUpdate).not.toHaveBeenCalled()
-    expect(savedData()).toMatchObject({ order: 4 })
+    expect(mocks.findPublishedNumberConflict).toHaveBeenCalledWith(
+      expect.objectContaining({ order: 3, year: 2026 }),
+    )
   })
 
   test('keeps the cover alt text while the number is incomplete', async () => {

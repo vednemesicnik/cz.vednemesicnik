@@ -5,7 +5,7 @@ import { prisma } from '~/utils/db.server'
 export const STALE_EMPTY_DRAFT_AGE_MILLISECONDS = 24 * 60 * 60 * 1000
 
 /**
- * Deletes empty drafts (no first content, decision 0020) whose edit hold
+ * Deletes empty drafts (no first content, log 0020) whose edit hold
  * expired without a release, whatever their age: an empty draft ends with its
  * hold (24e). One never held is deleted a day after it was created. A system
  * clean-up: nothing is logged and no event is sent. An open editor renews its

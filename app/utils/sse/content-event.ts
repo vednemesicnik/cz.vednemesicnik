@@ -20,7 +20,7 @@ export type ContentEventChange =
   | 'submission'
   | 'create'
   | 'update'
-  // The edit hold was taken, taken over or released (decision 0019).
+  // The edit hold was taken, taken over or released (log 0019).
   | 'hold'
 
 /** The author whose action changed the content. */

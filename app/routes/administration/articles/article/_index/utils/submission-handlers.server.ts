@@ -4,6 +4,7 @@ import { buildNotHeldByOthersWhere } from '~/utils/edit-hold/build-not-held-by-o
 import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
 import { refuseWhenHeld } from '~/utils/edit-hold/refuse-when-held.server'
 
+import { findPublishedSlugConflict } from '../../../utils/find-published-slug-conflict.server'
 import { findArticleHeldRefusal } from './find-article-held-refusal.server'
 import { getMissingArticleContent } from './get-missing-article-content'
 
@@ -22,7 +23,7 @@ export const articleSubmissionHandlers = createSubmissionHandlers({
             submittedById: null,
           },
           select: { id: true },
-          // Not while someone else edits it (decision 0019).
+          // Not while someone else edits it (log 0019).
           where: { AND: [buildNotHeldByOthersWhere(authorId, new Date())], id },
         }),
       () => findArticleHeldRefusal(id, authorId),
@@ -47,6 +48,11 @@ export const articleSubmissionHandlers = createSubmissionHandlers({
       authorCount: article.authors.length,
       content: article.content,
       images: article.images,
+      isSlugTaken:
+        (await findPublishedSlugConflict({
+          articleId: id,
+          slug: article.slug,
+        })) !== null,
       perex: article.perex,
       slug: article.slug,
       title: article.title,
@@ -76,7 +82,7 @@ export const articleSubmissionHandlers = createSubmissionHandlers({
         submittedById: authorId,
       },
       where: {
-        // Not while someone else edits it (decision 0019).
+        // Not while someone else edits it (log 0019).
         AND: [buildNotHeldByOthersWhere(authorId, new Date())],
         id,
         state: 'draft',

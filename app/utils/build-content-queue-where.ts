@@ -4,7 +4,7 @@ import type { ContentQueue } from '~/config/content-queue-config'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
 /**
- * The fields every content model shares for its queue (decision 0013), so the
+ * The fields every content model shares for its queue (log 0013), so the
  * condition fits any of their `WhereInput`s.
  */
 type ContentQueueWhere = {

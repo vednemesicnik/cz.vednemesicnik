@@ -50,6 +50,8 @@ const formatRoleChange = (
 }
 
 const labels: Record<HistoryEvent, (detail: string | null) => string> = {
+  // The author's detail only (28b); the account has Účet založen.
+  author_created: () => 'Vytvořeno',
   author_role_changed: (detail) =>
     formatRoleChange('Autorská role', detail, (name) =>
       isAuthorRoleName(name) ? getAuthorRoleLabel(name) : null,

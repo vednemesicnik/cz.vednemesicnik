@@ -22,7 +22,7 @@ export const issueSubmissionHandlers = createSubmissionHandlers({
             submittedById: null,
           },
           select: { id: true },
-          // Not while someone else edits it (decision 0019).
+          // Not while someone else edits it (log 0019).
           where: { AND: [buildNotHeldByOthersWhere(authorId, new Date())], id },
         }),
       () => findIssueHeldRefusal(id, authorId),
@@ -62,7 +62,7 @@ export const issueSubmissionHandlers = createSubmissionHandlers({
         submittedById: authorId,
       },
       where: {
-        // Not while someone else edits it (decision 0019).
+        // Not while someone else edits it (log 0019).
         AND: [buildNotHeldByOthersWhere(authorId, new Date())],
         id,
         state: 'draft',

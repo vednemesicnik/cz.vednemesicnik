@@ -83,8 +83,7 @@ export const AdminSplitButton = ({
               onClick={() => handleSelect(option.id)}
               type={'button'}
             >
-              {/* Decorative: aria-pressed already conveys the selected state,
-                  so hide the check (which has its own accessible name) from AT. */}
+              {/* Decorative: aria-pressed already conveys the selected state. */}
               <span
                 aria-hidden={'true'}
                 className={clsx(

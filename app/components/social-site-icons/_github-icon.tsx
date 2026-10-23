@@ -5,10 +5,9 @@ type Props = {
 export const GithubIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-label={'Ikona GitHubu'}
+      aria-hidden={true}
       className={className}
       height={'100%'}
-      role={'img'}
       style={{
         clipRule: 'evenodd',
         fill: '#ffffff',

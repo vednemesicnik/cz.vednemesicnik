@@ -15,7 +15,8 @@ import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-l
 /** What an image operation reads of the stored article. */
 export type ImageChangeArticle = {
   featuredImageId: string | null
-  slug: string | null
+  /** The address it holds since its publish, where its PageSEO record is (log 0039). */
+  publishedSlug: string | null
 }
 
 /** One image operation, ready to commit with the hold check. */
@@ -58,7 +59,7 @@ export type ImageChangeResult<Answer extends object> =
 
 type Options<Answer extends object> = {
   articleId: string
-  /** The editor's tab, which must hold the edit hold (decision 0019). */
+  /** The editor's tab, which must hold the edit hold (log 0019). */
   tabId: string
   /**
    * An upload already on its way still lands when the hold was released
@@ -100,7 +101,7 @@ const HOLD_SELECT = {
  * 0027): an upload, a removal, the main image or the order. The permission is
  * checked against the stored authors and state, and only the tab holding the
  * edit hold saves, checked again in the change's own conditional write
- * (decision 0019), which also moves the article's `updatedAt`. The history gets
+ * (log 0019), which also moves the article's `updatedAt`. The history gets
  * the creation or one *Upraveno* per hold (07f). The caller has checked the
  * session (`requireCSRF`).
  *
@@ -133,7 +134,7 @@ export async function saveArticleImageChange<Answer extends object>(
       featuredImageId: true,
       firstContentAt: true,
       ...HOLD_SELECT,
-      slug: true,
+      publishedSlug: true,
     },
     where: { id: articleId },
   })
@@ -195,7 +196,7 @@ export async function saveArticleImageChange<Answer extends object>(
 
       const prepared = await prepare(context, {
         featuredImageId: storedArticle.featuredImageId,
-        slug: storedArticle.slug,
+        publishedSlug: storedArticle.publishedSlug,
       })
 
       if ('status' in prepared) return prepared
@@ -221,7 +222,7 @@ export async function saveArticleImageChange<Answer extends object>(
       const articleWrite = prisma.article.update({
         data: { ...prepared.articleData, updatedAt: new Date() },
         select: { updatedAt: true },
-        // Only the holding tab changes a draft (decision 0019); otherwise
+        // Only the holding tab changes a draft (log 0019); otherwise
         // the whole transaction rolls back.
         where: { id: articleId, state: 'draft', ...holdWhere },
       })

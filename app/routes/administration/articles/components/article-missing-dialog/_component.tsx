@@ -24,7 +24,9 @@ export const ArticleMissingDialog = ({
     <AdminModalTitle>
       {missingList.intent === FORM_CONFIG.intent.value.publish
         ? 'Článek ještě nejde publikovat'
-        : 'Článek ještě nejde odeslat'}
+        : missingList.intent === FORM_CONFIG.intent.value.review
+          ? 'Článek ještě nejde schválit'
+          : 'Článek ještě nejde odeslat'}
     </AdminModalTitle>
     <BulletedList>
       {missingList.items.map((item) => (

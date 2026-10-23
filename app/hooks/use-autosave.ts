@@ -29,7 +29,7 @@ type Options = {
 }
 
 /**
- * Saves a Document by itself (design 24e, decision 0022): about a second after
+ * Saves a Document by itself (design 24e, log 0022): about a second after
  * the last change, at once with `flush` (leaving a field, the save shortcut,
  * *Zavřít*). Every save sends the whole form; one is on its way at a time, and
  * changes made meanwhile go with the next. A file goes until a save has it.

@@ -8,7 +8,7 @@ type Context = Pick<AuthorPermissionContext, 'authorId' | 'can'>
 /**
  * The issues the signed-in author may view, as a Prisma condition: every state
  * their role views, scoped to their own issues where its access is `own`. An
- * empty draft is left out (decision 0020).
+ * empty draft is left out (log 0020).
  *
  * @param context - The author permission context, built with `view` on `issue`.
  * @returns The condition to AND with any filter; `OR: []` matches nothing.

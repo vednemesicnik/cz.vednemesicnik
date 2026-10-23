@@ -50,7 +50,7 @@ const storedArticle = {
   featuredImageId: 'image-featured',
   firstContentAt: new Date('2026-09-20T10:00:00Z'),
   ...ownHold,
-  slug: 'article',
+  publishedSlug: 'article',
   state: 'draft',
   submittedAt: null,
 }
@@ -405,7 +405,7 @@ describe('saveArticleImageChange — prepare', () => {
 
     expect(prepare).toHaveBeenCalledWith(
       { authorId: 'author-1', roleLevel: 1 },
-      { featuredImageId: 'image-featured', slug: 'article' },
+      { featuredImageId: 'image-featured', publishedSlug: 'article' },
     )
   })
 

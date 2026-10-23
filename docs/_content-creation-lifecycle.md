@@ -138,8 +138,8 @@ its own creation and publish dates, without names.
 
 ## New article drafts and the edit hold
 
-Built in #668 (epic #667, decisions [0019](./decisions/0019-the-edit-lock-lives-on-the-content-row.md)
-and [0020](./decisions/0020-a-new-article-is-a-draft-created-on-click.md)). *Nový článek* posts
+Built in #668 (epic #667, logs [0019](./work-log/0019-the-edit-lock-lives-on-the-content-row.md)
+and [0020](./work-log/0020-a-new-article-is-a-draft-created-on-click.md)). *Nový článek* posts
 to `add-article`, which creates an empty draft of the signed-in author and opens its edit page.
 The draft has no title, text or address (`slug` is null) and no history; `firstContentAt` stays
 null until the first save with content, which logs *Vytvořeno*. Until then the draft is in no
@@ -147,8 +147,8 @@ administration list or count (`NON_EMPTY_ARTICLE_WHERE`), and the public web lis
 with an address. Each *Nový článek* also deletes empty drafts older than a day whose edit hold
 is free.
 
-The edit hold is built in #669 (design 07g, 24g; decisions 0019 and
-[0021](./decisions/0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)).
+The edit hold is built in #669 (design 07g, 24g; logs 0019 and
+[0021](./work-log/0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)).
 Only a draft is held, by one browser tab. The editor takes the hold when it opens and the hold
 is free (no holder, or `heldUntil` passed), renews it about every 30 s, and releases it when it
 closes and when the tab closes. Without a signal it expires
@@ -164,7 +164,7 @@ one *Upraveno* per hold. Hold writes keep `updatedAt` as it was. Gallery images 
 `position`.
 
 Autosave is built in #670 (design 24e, 24d; decision
-[0022](./decisions/0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md)). There is
+[0022](./work-log/0022-a-document-autosaves-its-whole-form-from-the-holding-tab.md)). There is
 no *Uložit*, no leave dialog and no copy in the browser's storage. The editor sends the whole
 form about a second after the last change, at once on leaving a field and on ⌘S (Ctrl+S
 elsewhere). One save is on its way at a time, to the `save` route, which takes it only from the
@@ -172,15 +172,20 @@ holding tab and keeps the hold. A draft saves incomplete; what is missing is sai
 publish (23h). Of the gallery, the save carries only the alt texts and captions.
 The line under the heading is the only sign: *Zatím prázdné*, *ukládá se* (at least 300 ms),
 *uloženo dnes v 14:02* (another day with the date), *bez připojení · čeká na uložení* (it sends
-again when the network is back) or *Nepodařilo se uložit.* with *Zkusit znovu*. An address
-another article has does not save, while the rest does. The line adds *· adresa neuložena*, and
-the field offers *Použít …* with a free address. *Zavřít* and every other way out send what
+again when the network is back) or *Nepodařilo se uložit.* with *Zkusit znovu*. The address
+saves as typed even when another article holds it as published (log
+[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)): only the address an
+article holds since its last publish (`publishedSlug`) is unique, and only publish writes it, with
+the article's PageSEO record. Retract and archive keep it. The field then says *Zadejte jinou
+adresu — tato je obsazená.* through Conform and offers *Použít …* with a free address. Submit,
+approve and publish list *Adresa je obsazená.* in the 23h dialog. A draft's web preview names the
+article by its id (`?id=`). *Zavřít* and every other way out send what
 waits first. When the page closes, the waiting save goes out with the release in one request.
 The browser's own dialog asks only offline, after a failure, or when what waits cannot be sent
 while the page closes.
 
 The gallery saves image by image, built in #673 (design 24b; decision
-[0027](./decisions/0027-each-article-image-saves-on-its-own.md)). A picked image uploads at
+[0027](./work-log/0027-each-article-image-saves-on-its-own.md)). A picked image uploads at
 once to the `images` route, under an id made in the editor, and its row exists only once the
 file is processed. A file over 10 MB or not an image is refused at selection. *Odebrat* asks
 first and deletes at once; *Nahradit soubor* keeps the old file until the new one is processed.
@@ -193,7 +198,7 @@ not submitted since; never over someone else's hold. An upload and a failure sho
 the open editor.
 
 An upload is one step under the tile's preview (#704, design 24b; decision
-[0029](./decisions/0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)):
+[0029](./work-log/0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)):
 *Nahrává se* with an indeterminate bar, since `fetch` reports no progress, and *Zrušit* until it
 saves. A cancelled new image's tile goes, and the server keeps nothing of it. A cancelled
 replacement returns to the stored image; only one whose answer crossed the cancel stays replaced
@@ -201,7 +206,7 @@ on the server. *Zavřít* and a link out of the
 editor ask while an image uploads, because leaving cancels it.
 
 Losing the hold is built in #671 (design 24h, 24i; decision
-[0023](./decisions/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold
+[0023](./work-log/0023-a-lost-edit-hold-turns-the-editor-read-only.md)). An editor whose hold
 went to the Coordinator or to the same person's other tab shows *Úpravu přebírá …* and turns
 read-only: grey fields, no text toolbar, no buttons that change something. Autosave stops. It
 says *Všechny změny jsou uložené.* only when nothing was waiting; otherwise *Některé změny se
@@ -215,7 +220,7 @@ mezitím změnil* with *Zkopírovat celý text* and *Načíst aktuální verzi*,
 while someone holds it or it is no longer an editable draft.
 
 A deleted article or issue is built in #756 (design 24k, 26m, 23g, 26i; decision
-[0036](./decisions/0036-a-delete-waits-for-every-open-editor.md)). A delete waits for every
+[0036](./work-log/0036-a-delete-waits-for-every-open-editor.md)). A delete waits for every
 open editor, one's own in another tab included: it repeats "the hold is free" in its own write,
 while the other transitions keep "not held by someone else". The detail answers *Smazat…* with
 a toast instead of the confirmation while one's own editor holds it, and a bulk delete skips
@@ -226,7 +231,7 @@ smazán* (*Číslo bylo smazáno*) with *Přejít na seznam*, turns read-only fo
 values in the fields.
 
 Choosing authors is built in #674 (design 24j; decision
-[0026](./decisions/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
+[0026](./work-log/0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md)).
 The authors are rows with an avatar and a ×. Under them is *Přidat autora*, a search field (a
 `ChipInput` without chips) whose list opens with the focus and narrows through every author
 while typing. An article always has at least one author, a draft too, and the last row has no
@@ -252,7 +257,7 @@ save.
 ## Archive issue drafts and the edit hold
 
 Built in #717 (epic #719, design 26c, 26d, 26i–26l; decision
-[0034](./decisions/0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md)),
+[0034](./work-log/0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md)),
 the same way as the article. *Nové číslo* posts to `add-issue`, which creates a draft without a
 year or an order and opens `edit-issue`. A line under the pair, always there so typing does not move
 the form, offers the next free number: *Další číslo: Použít 5/2026* (this year and its next free
@@ -266,22 +271,30 @@ for as long as a hold lasts. The
 editor saves Rok, Pořadí v roce, Název, Doplněk and, for the Coordinator only, Autor through the
 `save` route from the holding tab. An order the offer set in the open editor follows the year
 until it is set by hand or a supplement is filled; a typed or reloaded one stays. A draft may lack its year and order; it is then named by what it lacks
-(„Číslo 2026 bez pořadí“). The year, order and supplement save as one: one that can't be read,
-or a number another issue has, is left out while the rest saves, and the field says why, with a
-link to the issue that has it and *Použít N* for a free order. The PDF is renamed with its
-number on a draft, and the cover's alt text follows the title. The hold, its takeover, the
+(„Číslo 2026 bez pořadí“). The year, order and supplement save as one: one that can't be read
+is left out while the rest saves, and the field says why. A number another issue holds as
+published saves as typed (log
+[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)): only the number an
+issue holds since its last publish (`publishedNumber`, `2026-4` or `2026-2-maturitni-ples`) is
+unique, and only publish writes it. Retract and archive keep it. The field changed last (before
+any change *Pořadí v roce*, or *Doplněk* for a supplement) then says *Zadejte jiné pořadí — číslo 3/2026 je obsazené.* (the year and
+supplement forms in copy q34nuf6c, d288tkdf) through Conform, with *Použít N* for a free order
+of a main issue. The cover's alt text follows the title. The hold, its takeover, the
 read-only editor, the detail's „upravuje …“ line and the refused transitions work as for the
 article; a bulk delete skips a held issue. The dialogs after a lost hold list the details that
 did not save instead of offering a copy. The cover and the PDF upload as soon as they are picked
 or dropped, each on its own through the `files` route, with one *Nahrává se · Zrušit* row and
 cancellable until they save (0029); *Nahradit* replaces a stored file, which stays until the new
 one saves, and leaving during an upload asks. The history gets *Obálka nahrána* and *PDF
-nahráno*. A PDF uploaded before the number is complete has no name, and so no address, until the
-editor's save names it (0033). *Odeslat ke schválení*, *Publikovat…* and *Schválit a
-publikovat…* need the year, the order, the cover and a named PDF; the name and the supplement are
-optional (26e, #718). The detail then says in one sentence what is missing, with *Doplnit v
-editoru*, and writes nothing. A PDF whose name another PDF still holds is reported as „Adresu PDF už
-používá jiné číslo.“ The Coordinator's edits of a submitted or approved issue keep its approvals,
+nahráno*. A PDF has no name until publish gives it one by the number, in the same transaction
+(`VDM-2026-4.pdf`; 0033, 0039); it keeps its name while the issue holds that number. Until then
+*Na webu jako* shows the provisional address with *· předběžná adresa*, or for a taken number
+*Náhled adresy PDF se zobrazí po zadání neobsazeného čísla.*, and a signed-in previewer opens the
+draft's PDF there (by the number in the name, or `?id=` among drafts sharing it). *Odeslat ke
+schválení*, *Schválit*, *Publikovat…* and *Schválit a publikovat…* need the year, the order, the
+cover and the PDF; the name and the supplement are optional (26e, #718). The detail then says in
+one sentence what is missing, with *Upravit v editoru*, and writes nothing; a taken number
+follows as its own sentence, *Číslo 3/2026 je obsazené.* The Coordinator's edits of a submitted or approved issue keep its approvals,
 because the editor writes no reviews. Its author takes it back to a draft instead (07d).
 
 ---

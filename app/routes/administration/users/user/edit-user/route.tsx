@@ -12,6 +12,7 @@ import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { Callout } from '~/components/callout'
 import { Fieldset } from '~/components/fieldset'
 import { Form } from '~/components/form'
 import { FormActions } from '~/components/form-actions'
@@ -20,6 +21,7 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { TextField } from '~/components/text-field'
+import { hasEmailChanged } from '~/utils/has-email-changed'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
 
@@ -50,12 +52,18 @@ export default function RouteComponent({
       return !field.startsWith('csrf')
     },
     shouldRevalidate: 'onBlur',
-    shouldValidate: 'onSubmit',
+    // The domain and the @ show as the field is left; a taken address after
+    // Save (design 28f).
+    shouldValidate: 'onBlur',
   })
 
   const isLoadingOrSubmitting = state !== 'idle'
   const isSubmitting = state === 'submitting'
   const canSubmit = !isLoadingOrSubmitting && form.valid
+  const isEmailChanged = hasEmailChanged(
+    loaderData.user.email,
+    fields.email.value,
+  )
 
   return (
     <AdminPage measure={'form'}>
@@ -67,7 +75,7 @@ export default function RouteComponent({
             label={'E-mail'}
             {...getInputProps(fields.email, { type: 'email' })}
             errors={fields.email.errors}
-            placeholder={'user@domain.name'}
+            placeholder={'jakub.novak@vednemesicnik.cz'}
           />
         </Fieldset>
 
@@ -103,6 +111,13 @@ export default function RouteComponent({
 
         <input {...getInputProps(fields.userId, { type: 'hidden' })} />
         <AuthenticityTokenInput />
+
+        {isEmailChanged && (
+          <Callout tone={'warning'}>
+            K přihlášení e-mailem bude sloužit nová adresa. Na původní adresu
+            přijde oznámení o změně.
+          </Callout>
+        )}
 
         <FormActions>
           <Button disabled={!canSubmit} type={'submit'}>

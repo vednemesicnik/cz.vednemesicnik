@@ -1,51 +1,48 @@
+import { getTakenIssueNumberItem } from '../../../utils/get-taken-issue-number-item'
+
 const listFormat = new Intl.ListFormat('cs', { type: 'conjunction' })
 
 type Options = {
   year: number | null
   order: number | null
+  supplement: string | null
   hasCover: boolean
-  /** The issue's PDF, `null` without one. */
-  pdf: { fileName: string | null } | null
+  hasPdf: boolean
+  /** Whether another issue holds the number as published (log 0039). */
+  isNumberTaken: boolean
 }
 
 /**
- * What an issue still lacks before it can be submitted for review or published
+ * What an issue still lacks before it can be submitted, approved or published
  * (design 26e, copy qjv38ti4): the year, the order, the cover and the PDF, in
- * one sentence; the name and the supplement are not required. A PDF without a
- * name has no address yet (decision 0033). With the year and the order there,
- * another PDF holds its name (copy di9tlre3).
+ * one sentence; the name and the supplement are not required. A number another
+ * issue holds follows as a sentence of its own (copy q34nuf6c).
  *
- * @param options - The issue's year and order, whether it has a cover, and its PDF.
- * @returns One sentence, e.g. „Chybí rok, pořadí v roce, obálka a PDF.“; empty
+ * @param options - The issue's number, whether it has a cover and a PDF, and
+ *   whether its number is taken.
+ * @returns E.g. „Chybí obálka a PDF.“ and „Číslo 3/2026 je obsazené.“; empty
  *   when complete.
  */
 export const getMissingIssueContent = ({
   year,
   order,
+  supplement,
   hasCover,
-  pdf,
+  hasPdf,
+  isNumberTaken,
 }: Options): string[] => {
   const missing: string[] = []
 
   if (year === null) missing.push('rok')
   if (order === null) missing.push('pořadí v roce')
   if (!hasCover) missing.push('obálka')
-  if (pdf === null) missing.push('PDF')
+  if (!hasPdf) missing.push('PDF')
 
-  // Without the year or the order the name waits for them, said above.
-  if (
-    year !== null &&
-    order !== null &&
-    pdf !== null &&
-    pdf.fileName === null
-  ) {
-    return [
-      missing.length === 0
-        ? 'Adresu PDF už používá jiné číslo.'
-        : // Bound to the next word with a no-break space, as the list joins.
-          `Chybí ${listFormat.format(missing)} a adresu PDF už používá jiné číslo.`,
-    ]
-  }
-
-  return missing.length === 0 ? [] : [`Chybí ${listFormat.format(missing)}.`]
+  return [
+    ...(missing.length === 0 ? [] : [`Chybí ${listFormat.format(missing)}.`]),
+    // Only a whole number can be taken.
+    ...(isNumberTaken && year !== null && order !== null
+      ? [getTakenIssueNumberItem({ order, supplement, year })]
+      : []),
+  ]
 }

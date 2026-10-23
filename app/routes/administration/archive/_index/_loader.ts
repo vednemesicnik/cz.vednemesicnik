@@ -37,6 +37,7 @@ import { getArticleHold } from '../../articles/utils/get-article-hold'
 import { getHeldActionFlags } from '../../articles/utils/get-held-action-flags'
 import { getMissingIssueContent } from '../issue/_index/utils/get-missing-issue-content'
 import { buildIssuePermissionWhere } from '../utils/build-issue-permission-where'
+import { findTakenIssueIds } from '../utils/find-taken-issue-ids.server'
 import { getIssueFactLine } from '../utils/get-issue-fact-line'
 import { getIssueRowActions } from '../utils/get-issue-row-actions'
 import type { Route } from './+types/route'
@@ -98,7 +99,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   // The years an issue is in (26a), offered whether or not the role may view
   // them, so a shared link means the same for everyone, as the article list's
-  // options do. A draft without a year adds none (decision 0034).
+  // options do. A draft without a year adds none (log 0034).
   const yearOptions = (
     await prisma.issue.findMany({
       distinct: ['year'],
@@ -179,6 +180,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         state: true,
         submittedAt: true,
         submittedBy: { select: { name: true } },
+        supplementSlug: true,
         updatedAt: true,
       },
       skip: (page - 1) * PAGE_SIZE,
@@ -203,7 +205,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
-  const titledIssues = await resolveIssueTitles(rawIssues, permissionWhere)
+  const [titledIssues, takenIds] = await Promise.all([
+    resolveIssueTitles(rawIssues, permissionWhere),
+    // Numbers another issue holds as published (log 0039).
+    findTakenIssueIds(rawIssues),
+  ])
 
   const now = new Date()
   const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
@@ -267,14 +273,16 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       missingBeforePublish: isApprover
         ? getMissingIssueContent({
             hasCover: issue.cover !== null,
+            hasPdf: issue.pdf !== null,
+            isNumberTaken: takenIds.has(issue.id),
             order: issue.order,
-            pdf: issue.pdf,
+            supplement: issue.supplement,
             year: issue.year,
           })
         : [],
       orderLabel: getIssueOrderLabel(issue),
-      // The name the reader downloads it under; before the year and order it
-      // has none, so the uploaded one, as on the detail (26b).
+      // The name the reader downloads it under; before publish it has none,
+      // so the uploaded one, as on the detail (26b, log 0039).
       pdfFileName: issue.pdf?.fileName ?? issue.pdf?.originalFileName ?? null,
       state: issue.state,
       submission,

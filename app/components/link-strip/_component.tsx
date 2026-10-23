@@ -1,6 +1,7 @@
 import { clsx } from 'clsx'
 import type { ComponentProps, ReactNode } from 'react'
 import { Link } from '~/components/link'
+import { LinkArrow } from '~/components/link-arrow'
 import styles from './_styles.module.css'
 
 type LinkStripItem = {
@@ -38,7 +39,8 @@ export const LinkStrip = ({ children, className, links, more }: Props) => {
         </span>
       )}
       <Link className={styles.more} to={more.to}>
-        {more.label} <span aria-hidden={true}>→</span>
+        {more.label}
+        <LinkArrow />
       </Link>
     </aside>
   )

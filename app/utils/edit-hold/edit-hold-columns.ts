@@ -1,4 +1,4 @@
-/** The edit hold's columns on a content row (decision 0019). */
+/** The edit hold's columns on a content row (log 0019). */
 export type EditHoldColumns = {
   heldByAuthorId: string | null
   heldByTabId: string | null

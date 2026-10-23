@@ -14,13 +14,13 @@ import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
-import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
+import { buildEpisodePermissionWhere } from '../utils/build-episode-permission-where'
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
 
@@ -56,23 +56,6 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
     userId: context.userId,
   })
 
-  // Check view permissions for each state
-  const draftPerms = context.can({
-    action: 'view',
-    entity: 'podcast_episode',
-    state: 'draft',
-  })
-  const publishedPerms = context.can({
-    action: 'view',
-    entity: 'podcast_episode',
-    state: 'published',
-  })
-  const archivedPerms = context.can({
-    action: 'view',
-    entity: 'podcast_episode',
-    state: 'archived',
-  })
-
   const { order, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'createdAt',
@@ -81,16 +64,7 @@ export const loader = async ({ params, request, url }: Route.LoaderArgs) => {
 
   const filters = parseAdminListFilters(request, TABLE_KEY)
 
-  const permissionWhere = {
-    OR: buildViewableStateFilters(
-      [
-        { rights: draftPerms, state: 'draft' },
-        { rights: publishedPerms, state: 'published' },
-        { rights: archivedPerms, state: 'archived' },
-      ],
-      { authorId: context.authorId },
-    ),
-  }
+  const permissionWhere = buildEpisodePermissionWhere(context)
 
   // The query matches the title or the slug — public URLs expose the slug.
   // Search, sort and the field filter apply to the nested episodes include, not a

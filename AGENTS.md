@@ -288,6 +288,9 @@ URL-friendly slugs are generated using `app/utils/slugify.ts` for articles, podc
 ### Testing
 
 Tests use Vitest and are co-located with utilities (e.g., `slugify.test.ts`, `get-user-rights.test.ts`).
+They run in Node; a hook or component test opts into jsdom with the docblock
+`// @vitest-environment jsdom` and renders with React Testing Library (`renderHook`, `render`),
+calling `cleanup` in `afterEach`.
 
 ## Documentation
 
@@ -305,7 +308,7 @@ Comprehensive project documentation is in the `docs/` directory:
 - `docs/_prisma-studio-on-production.md` - Running Prisma Studio against the production database over a Fly tunnel
 - `docs/_design-project.md` - The Claude Design project and design system (ids, documents, `questions/`), and reading a screen with `pnpm design:screen`
 - `docs/_copy-context.md` - Context the copywriter gets in every `/ask-copy` thread: terms, content states, roles, voice (Czech)
-- `docs/decisions/` - Numbered decision records: what was decided, when and why (index and format in `README.md`, template in `_template.md`)
+- `docs/work-log/` - Numbered work log: what the work settled on, when and why, and what was turned down; context, not rules (index and format in `README.md`, template in `_template.md`)
 
 ## Environment
 
@@ -389,9 +392,9 @@ From an idea to a merged PR, one issue per context window:
 - `.agents/skills/ship-issue/SKILL.md` — review, PR, Copilot loop, green CI, then ask and merge.
 - `.agents/skills/next-issue/SKILL.md` — after the merge: aftermath, handoff, pick the next issue.
 
-A decision that binds later changes gets a record in `docs/decisions/`:
+What the work settles that later work should know gets an entry in `docs/work-log/`:
 
-- `.agents/skills/record-decision/SKILL.md` — write a numbered decision record or supersede one, checked against every accepted record first; `/plan-issue`, `/review-idea` and `/next-issue` ask whether one is due.
+- `.agents/skills/log-work/SKILL.md` — write a numbered work-log entry, or log a change of direction from an earlier one; `/plan-issue`, `/review-idea` and `/next-issue` ask whether one is due.
 
 ### Design and Copy
 
@@ -404,7 +407,7 @@ Loops for decisions this repository does not own. Load when a screen, component 
 
 Mandatory conventions that apply to all tasks. Read the relevant rule file before acting.
 A rule is one short convention with a single trigger; guidance made of several references
-for one body of work, such as building UI, is a skill (decision 0014).
+for one body of work, such as building UI, is a skill (log 0014).
 
 ### Package Versions
 

@@ -1,16 +1,9 @@
-import { ALLOWED_EMAIL_DOMAIN } from '@constants/auth'
 import { z } from 'zod'
 
+import { organizationEmailField } from '~/utils/organization-email-field'
+
 const baseSchema = z.object({
-  // Invitations go only to the organisation's domain (design 28f, 9gdcrwph).
-  email: z
-    .string({ message: 'E-mail je povinný' })
-    .trim()
-    .toLowerCase()
-    .email({ message: 'Neplatný formát e-mailu' })
-    .refine((email) => email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`), {
-      message: `Zadejte adresu s doménou @${ALLOWED_EMAIL_DOMAIN}.`,
-    }),
+  email: organizationEmailField,
   name: z
     .string({ message: 'Jméno je povinné' })
     .min(3, { message: 'Jméno musí mít alespoň 3 znaky' })

@@ -5,28 +5,37 @@ import { adminUsersSectionDeniedData } from '~/components/boundary-error/utils/b
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { prisma } from '~/utils/db.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { canDeleteUser } from '~/utils/permissions/user/guards/can-delete-user'
 import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
 
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
+import { getLastSignIn } from './utils/get-last-sign-in'
 
-// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
-// equal values keep a deterministic order across reloads.
+// Every sort appends the name and then `createdAt desc` as tie-breakers so
+// rows with equal values keep a deterministic order across reloads.
 const ORDER_BY: Record<
   SortKey,
   (order: SortOrder) => Prisma.UserOrderByWithRelationInput[]
 > = {
-  createdAt: (order) => [{ createdAt: order }],
-  email: (order) => [{ email: order }, { createdAt: 'desc' }],
+  authorRole: (order) => [
+    { author: { role: { level: order } } },
+    { author: { name: 'asc' } },
+    { createdAt: 'desc' },
+  ],
   // The name belongs to the author (design 28f).
   name: (order) => [{ author: { name: order } }, { createdAt: 'desc' }],
-  role: (order) => [{ role: { level: order } }, { createdAt: 'desc' }],
+  role: (order) => [
+    { role: { level: order } },
+    { author: { name: 'asc' } },
+    { createdAt: 'desc' },
+  ],
 }
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const context = await getUserPermissionContext(request, {
     actions: ['view', 'create', 'update', 'delete'],
-    entities: ['user'],
+    entities: ['user', 'author'],
   })
 
   // Check view permission - check if user can view at least themselves
@@ -42,8 +51,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   }
 
   const { order, query, sort } = parseAdminListParams(request, {
-    defaultOrder: 'desc',
-    defaultSort: 'createdAt',
+    defaultOrder: 'asc',
+    defaultSort: 'name',
     sortKeys: SORT_KEYS,
   })
 
@@ -72,7 +81,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const rawUsers = await prisma.user.findMany({
     orderBy: ORDER_BY[sort](order),
     select: {
-      author: { select: { name: true } },
+      author: {
+        select: {
+          id: true,
+          name: true,
+          role: { select: { name: true } },
+        },
+      },
       createdAt: true,
       email: true,
       id: true,
@@ -87,26 +102,48 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     where,
   })
 
+  // Poslední přihlášení: the newest sign-in of every listed account in one
+  // query (28d).
+  const lastSignIns = await prisma.authLog.groupBy({
+    _max: { createdAt: true },
+    by: ['userId'],
+    where: {
+      event: 'sign_in_success',
+      userId: { in: rawUsers.map((user) => user.id) },
+    },
+  })
+
+  const lastSignInAtByUserId = new Map(
+    lastSignIns.map(({ _max, userId }) => [userId, _max.createdAt]),
+  )
+
+  const now = new Date()
+
   // Compute permissions for each user
   const users = rawUsers.map((user) => {
+    const target = {
+      targetUserId: user.id,
+      targetUserRoleLevel: user.role.level,
+    }
+
     return {
       ...user,
-      canDelete: context.can({
-        action: 'delete',
-        entity: 'user',
-        targetUserId: user.id,
-        targetUserRoleLevel: user.role.level,
-      }).hasPermission,
-      canUpdate: canEditUser(context, {
-        targetUserId: user.id,
-        targetUserRoleLevel: user.role.level,
-      }),
-      canView: context.can({
+      canDelete: canDeleteUser(context, target),
+      canUpdate: canEditUser(context, target),
+      canView: context.can({ action: 'view', entity: 'user', ...target })
+        .hasPermission,
+      canViewAuthor: context.can({
         action: 'view',
-        entity: 'user',
+        entity: 'author',
         targetUserId: user.id,
-        targetUserRoleLevel: user.role.level,
       }).hasPermission,
+      // The signed-in person's own account, marked „vy“ (28d, as 28a).
+      isOwn: user.id === context.userId,
+      lastSignIn: getLastSignIn({
+        accountCreatedAt: user.createdAt,
+        lastSignInAt: lastSignInAtByUserId.get(user.id) ?? null,
+        now,
+      }),
     }
   })
 
@@ -116,6 +153,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       entity: 'user',
       targetUserId: context.userId,
     }).hasPermission,
+    // Decides „dnes“ in Poslední přihlášení.
+    now,
     query,
     users,
   }

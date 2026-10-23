@@ -24,3 +24,10 @@
     }
   }
 }
+
+.icon {
+  @layer route {
+    inline-size: 14px;
+    block-size: 14px;
+  }
+}

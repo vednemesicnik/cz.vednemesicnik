@@ -33,13 +33,18 @@ export default function RouteComponent({
   actionData,
 }: Route.ComponentProps) {
   const { state } = useNavigation()
-  const [authorMode, setAuthorMode] = useState<'new' | 'existing'>('new')
+  const { preselectedAuthorId } = loaderData
+  const [authorMode, setAuthorMode] = useState<'new' | 'existing'>(
+    preselectedAuthorId === null ? 'new' : 'existing',
+  )
 
   const [form, fields] = useForm({
     constraint: getZodConstraint(schema),
-    defaultValue: {
-      authorMode: 'new',
-    },
+    // Opened from an author's Založit účet…, the form starts with that author (28a, 28b).
+    defaultValue:
+      preselectedAuthorId === null
+        ? { authorMode: 'new' }
+        : { authorMode: 'existing', existingAuthorId: preselectedAuthorId },
     id: 'add-user',
     lastResult: actionData?.submissionResult,
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
@@ -47,7 +52,8 @@ export default function RouteComponent({
       return !field.startsWith('csrf')
     },
     shouldRevalidate: 'onBlur',
-    shouldValidate: 'onSubmit',
+    // The e-mail's domain and @ show as the field is left (design 28f).
+    shouldValidate: 'onBlur',
   })
 
   const isLoadingOrSubmitting = state !== 'idle'

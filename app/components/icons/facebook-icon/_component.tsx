@@ -8,9 +8,8 @@ type Props = Pick<ComponentProps<'svg'>, 'className'>
 export const FacebookIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-label={'Ikona Facebooku'}
+      aria-hidden={true}
       className={clsx(styles.icon, className)}
-      role={'img'}
       viewBox={'0 0 400 400'}
       xmlns={'http://www.w3.org/2000/svg'}
     >

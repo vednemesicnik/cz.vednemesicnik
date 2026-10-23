@@ -100,7 +100,7 @@ const toTile = (image: StoredImage): GalleryTile => ({
 
 /**
  * The article editor's gallery, every change saved on its own (design 24b,
- * decision 0027). A picked image uploads at once, each by itself; a file over
+ * log 0027). A picked image uploads at once, each by itself; a file over
  * the limit or not an image gets a sentence instead of a tile. An upload can
  * be cancelled until it saves (bxy8xxqs). Removal, the main image and the
  * order go one after another, in the order clicked, and a refused one is put

@@ -6,8 +6,11 @@ import {
 } from './resolve-article-featured-image-seo.server'
 
 type Options = {
-  /** The article's address; a draft without one has no PageSEO record. */
-  slug: string | null
+  /**
+   * The address the article holds since its publish; one never published has
+   * no PageSEO record (log 0039).
+   */
+  publishedSlug: string | null
   /**
    * The main image after the change: an id the database already has the
    * stored version of, the stored metadata of a version not committed yet, or
@@ -25,13 +28,13 @@ type Options = {
  * before, so the write can go into the change's transaction.
  *
  * @param options - The address and the main image after the change.
- * @returns The PageSEO write, or none for a draft without an address.
+ * @returns The PageSEO write, or none for an article never published.
  */
 export const buildArticlePageSeoImageWrites = async ({
-  slug,
+  publishedSlug,
   featuredImage,
 }: Options) => {
-  if (slug === null) return []
+  if (publishedSlug === null) return []
 
   const { ogImageUrl, twitterImageUrl } =
     featuredImage === null || typeof featuredImage === 'string'
@@ -45,7 +48,7 @@ export const buildArticlePageSeoImageWrites = async ({
   return [
     prisma.pageSEO.updateMany({
       data: { ogImageUrl, twitterImageUrl },
-      where: { pathname: `/articles/${slug}` },
+      where: { pathname: `/articles/${publishedSlug}` },
     }),
   ]
 }

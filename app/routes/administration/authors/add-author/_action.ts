@@ -1,6 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
 
+import { recordAuditLog } from '~/utils/audit-log.server'
 import { flashCreatedAuthor } from '~/utils/created-author/flash-created-author.server'
 import { checkCSRF } from '~/utils/csrf.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
@@ -39,6 +40,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   })
 
   const { authorId } = await createAuthor(submission.value)
+
+  // The author's detail names who created it (28b).
+  recordAuditLog({
+    actorId: context.userId,
+    event: 'author_created',
+    request,
+    targetId: authorId,
+  })
 
   // From an article's author search, back to the editor, which chooses the
   // new author, in place of the replaced one if any (design 24j, ivyin4kr).

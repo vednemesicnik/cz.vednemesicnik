@@ -41,7 +41,7 @@ export const MissingContentDialog = ({
             Zavřít
           </Button>
           <LinkButton size={'sm'} to={editHref}>
-            Doplnit v editoru
+            Upravit v editoru
           </LinkButton>
         </AdminModalActions>
       </AdminModalContent>

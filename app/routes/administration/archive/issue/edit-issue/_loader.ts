@@ -18,6 +18,7 @@ import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-l
 
 import { canChooseRecordAuthor } from '../../../articles/utils/can-choose-record-author'
 import { getArticleHold } from '../../../articles/utils/get-article-hold'
+import { findPublishedNumberConflict } from '../../utils/find-published-number-conflict.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -49,6 +50,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           uploadedAt: true,
         },
       },
+      publishedNumber: true,
       reviews: {
         select: {
           createdAt: true,
@@ -116,7 +118,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const canChooseAuthor = canChooseRecordAuthor(context.roleLevel)
 
-  const [otherIssues, authors] = await Promise.all([
+  const [otherIssues, authors, numberConflict] = await Promise.all([
     // The other issues' numbers: the free order follows them (26c) and a
     // supplement is named after its main issue (wo02u3xq).
     prisma.issue.findMany({
@@ -125,6 +127,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         firstContentAt: true,
         name: true,
         order: true,
+        publishedNumber: true,
         state: true,
         supplementSlug: true,
         year: true,
@@ -139,6 +142,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     canChooseAuthor
       ? getAuthorsByPermission(context, 'issue', 'update', issue.state)
       : Promise.resolve(null),
+    // Another issue holds the number as published: the field says so from
+    // the start (26d, log 0039).
+    findPublishedNumberConflict({
+      issueId,
+      order: issue.order,
+      supplementSlug: issue.supplementSlug,
+      year: issue.year,
+    }),
   ])
 
   const mainIssues = otherIssues.filter((other) => other.supplementSlug === '')
@@ -149,13 +160,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   }
   // A supplement names its main issue as far as its viewer sees it
   // (wo02u3xq): the editor by permission, a reader on the web only a
-  // published one.
+  // published one. Of drafts sharing the number, the issue holding it names
+  // it, a nameless one too, then a named one, as `resolveIssueTitles` does
+  // (log 0039).
   const visibleNamesByNumber: Record<string, string> = {}
   const publishedNamesByNumber: Record<string, string> = {}
-  for (const main of mainIssues) {
-    if (main.name === null || main.firstContentAt === null) continue
+  const namedNumbers = new Set<string>()
+  const rank = (main: (typeof mainIssues)[number]) =>
+    (main.publishedNumber === null ? 2 : 0) + (main.name === null ? 1 : 0)
+  for (const main of [...mainIssues].sort((a, b) => rank(a) - rank(b))) {
+    if (main.firstContentAt === null) continue
     const number = `${main.year}/${main.order}`
     if (
+      !namedNumbers.has(number) &&
       context.can({
         action: 'view',
         entity: 'issue',
@@ -163,16 +180,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         targetAuthorIds: [main.authorId],
       }).hasPermission
     ) {
-      visibleNamesByNumber[number] = main.name
+      namedNumbers.add(number)
+      if (main.name !== null) visibleNamesByNumber[number] = main.name
     }
-    if (main.state === 'published') publishedNamesByNumber[number] = main.name
+    if (main.state === 'published' && main.name !== null) {
+      publishedNamesByNumber[number] = main.name
+    }
   }
 
   const submission = getSubmissionState(issue)
 
   return {
     authors,
-    // The year the editor offers for an empty number (decision 0034).
+    // The year the editor offers for an empty number (log 0034).
     currentYear: getPragueYear(new Date()),
     isApprover,
     // One's own issue has no sentence over it (24c).
@@ -187,7 +207,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               altText: issue.cover.altText,
               sources: createImageSources('issue-cover', issue.cover),
             },
-      // An empty draft (decision 0020) is left for the list.
+      // A free order to offer for a taken main issue (26d).
+      freeOrder: numberConflict?.freeOrder ?? null,
+      // An empty draft (log 0020) is left for the list.
       isEmptyDraft: issue.firstContentAt === null,
       name: issue.name ?? '',
       order: issue.order,
@@ -197,11 +219,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           : {
               fileName: issue.pdf.fileName,
               // New with every upload: tells a cancelled replacement from one
-              // that saved (decision 0029).
+              // that saved (log 0029).
               id: issue.pdf.id,
               originalFileName: issue.pdf.originalFileName,
               uploadedAt: formatNumericDate(issue.pdf.uploadedAt),
             },
+      // The number it holds since it was published, which keeps the PDF's
+      // name (log 0039).
+      publishedNumber: issue.publishedNumber,
       state: issue.state,
       // Sent for approval, or approved: the tag and the line of 24c.
       submission:
@@ -210,6 +235,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           : { date: submission.date.toISOString(), state: submission.state },
       supplement: issue.supplement ?? '',
       supplementSlug: issue.supplementSlug,
+      // The number (`getIssuePublishedNumber`), when another issue holds it
+      // as published.
+      takenNumber: numberConflict?.takenNumber ?? null,
       // As loaded, for the tab's title; the heading follows the fields.
       title: getIssueTitle(
         issue,

@@ -1,0 +1,94 @@
+/* The name over the e-mail (28d). */
+.title {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-inline-size: 0;
+  }
+}
+
+.name {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    overflow-wrap: anywhere;
+  }
+}
+
+.link {
+  @layer route {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--link-strong);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
+    }
+  }
+}
+
+/* The signed-in person's own row, as in 28a. */
+.own {
+  @layer route {
+    font-weight: var(--font-weight-regular);
+    color: var(--text-secondary);
+  }
+}
+
+.email {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    overflow-wrap: anywhere;
+  }
+}
+
+/* The author role leads to the author (28d, 28b). */
+.authorRole {
+  @layer route {
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      color: var(--link-strong);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+      border-radius: var(--radius-sm);
+    }
+  }
+}
+
+/* One line, so the row doesn't grow (sdyic0se). */
+.lastSignIn {
+  @layer route {
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+}
+
+/* An invitation nobody has taken up yet waits for the Administrator (cylr6mg1). */
+.never {
+  @layer route {
+    color: var(--state-attention-text);
+    white-space: nowrap;
+  }
+}
+
+.dialogs {
+  @layer route {
+    display: contents;
+    text-align: start;
+    white-space: normal;
+  }
+}

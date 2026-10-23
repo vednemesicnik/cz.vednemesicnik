@@ -15,3 +15,10 @@
     color: var(--text-secondary);
   }
 }
+
+/* The arrow never wraps away from the label (jnd2p832). */
+.link {
+  @layer variant {
+    white-space: nowrap;
+  }
+}

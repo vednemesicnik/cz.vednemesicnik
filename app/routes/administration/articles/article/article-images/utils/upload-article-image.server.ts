@@ -77,7 +77,7 @@ export async function uploadArticleImage(
       })
 
       // The store keys files by the id alone, so an id another record owns
-      // is refused (decision 0022).
+      // is refused (log 0022).
       if (
         storedImage === null
           ? await isImageIdOwnedElsewhere([imageId])
@@ -118,7 +118,7 @@ export async function uploadArticleImage(
       const seoWrites = isFeatured
         ? await buildArticlePageSeoImageWrites({
             featuredImage: { id: imageId, ...meta },
-            slug: article.slug,
+            publishedSlug: article.publishedSlug,
           })
         : []
 
@@ -182,7 +182,7 @@ export async function uploadArticleImage(
           const previousSeoWrites = isFeatured
             ? await buildArticlePageSeoImageWrites({
                 featuredImage: { id: imageId, ...previousMeta },
-                slug: article.slug,
+                publishedSlug: article.publishedSlug,
               })
             : []
           await prisma.$transaction([

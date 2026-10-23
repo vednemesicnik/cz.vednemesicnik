@@ -123,7 +123,7 @@ export default function RouteComponent({
   )
 
   const authorNames = article.authors.map((author) => author.name)
-  // A draft without an address has no page on the web yet (decision 0020).
+  // A draft without an address has no page on the web yet (log 0020).
   const articlePath =
     article.slug === null
       ? null
@@ -298,7 +298,9 @@ export default function RouteComponent({
                 ) : (
                   <span className={styles.stack}>
                     <Hyperlink
-                      href={articlePath}
+                      // Only a published address is unique: the id says which
+                      // draft to show (log 0039).
+                      href={`${articlePath}?id=${articleId}`}
                       rel={'noopener'}
                       target={'_blank'}
                     >
