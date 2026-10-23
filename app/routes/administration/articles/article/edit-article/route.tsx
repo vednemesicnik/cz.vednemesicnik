@@ -71,6 +71,7 @@ import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-de
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
 import { foldForSearch } from '~/utils/fold-for-search'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
@@ -821,13 +822,14 @@ export default function RouteComponent({
   const createAuthor = canCreateAuthor
     ? (query: string, replacedAuthorId?: string) =>
         navigate(
-          `${href('/administration/authors/add-author')}?${new URLSearchParams({
+          `${href('/administration/authors/new')}?${new URLSearchParams({
             article: params.articleId,
             name: query.trim(),
             ...(replacedAuthorId === undefined
               ? {}
               : { replace: replacedAuthorId }),
           })}`,
+          { state: RETURN_TO_OPENER_STATE },
         )
     : undefined
   const noAuthorFound =

@@ -14,6 +14,7 @@ import {
 import { BaseLink } from '~/components/base-link'
 import type { AuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 
 import { AuthorAvatar } from '../../../components/author-avatar'
 import { AuthorDeleteBlockedDialog } from '../../../components/author-delete-blocked-dialog'
@@ -131,9 +132,10 @@ export const ItemRow = ({
                     label: 'Upravit',
                     onSelect: () =>
                       navigate(
-                        href('/administration/authors/:authorId/edit-author', {
+                        href('/administration/authors/:authorId/edit', {
                           authorId: id,
                         }),
+                        { state: RETURN_TO_OPENER_STATE },
                       ),
                   },
                 ]

@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { type ActionFunctionArgs, data, href, redirect } from 'react-router'
+import { data, href, redirect } from 'react-router'
 
 import { recordAuditLog } from '~/utils/audit-log.server'
 import { flashCreatedAuthor } from '~/utils/created-author/flash-created-author.server'
@@ -7,19 +7,16 @@ import { checkCSRF } from '~/utils/csrf.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
-
-import { schema } from './_schema'
+import { authorRecordSchema } from '../utils/author-record-schema'
+import type { Route } from './+types/route'
 import { createAuthor } from './utils/create-author.server'
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await request.formData()
   const csrfFailure = await checkCSRF(formData, request)
   if (csrfFailure !== null) return csrfFailure
 
-  const submission = await parseWithZod(formData, {
-    async: true,
-    schema,
-  })
+  const submission = parseWithZod(formData, { schema: authorRecordSchema })
 
   if (submission.status !== 'success') {
     return data(
@@ -33,11 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     entities: ['author'],
   })
 
-  // Check if user can create authors
-  checkUserPermission(context, {
-    action: 'create',
-    entity: 'author',
-  })
+  checkUserPermission(context, { action: 'create', entity: 'author' })
 
   const { authorId } = await createAuthor(submission.value)
 
@@ -73,5 +66,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     )
   }
 
-  return redirect(href('/administration/authors/:authorId', { authorId }))
+  return { id: authorId, status: 'success' as const }
 }

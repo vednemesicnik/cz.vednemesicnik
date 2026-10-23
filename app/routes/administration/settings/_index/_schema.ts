@@ -1,9 +1,10 @@
 import { ColorScheme } from '@generated/prisma/enums'
 import { z } from 'zod'
 
+import { AUTHOR_CONFIG } from '~/config/author-config'
 import { COLOR_SCHEME_CONFIG } from '~/config/color-scheme-config'
 
-export const BIO_MAX_LENGTH = 500
+export const BIO_MAX_LENGTH = AUTHOR_CONFIG.bioMaxLength
 
 export const profileSchema = z.object({
   bio: z
