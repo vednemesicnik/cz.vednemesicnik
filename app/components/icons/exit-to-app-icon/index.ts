@@ -1,1 +1,0 @@
-export { ExitToAppIcon } from './_component'

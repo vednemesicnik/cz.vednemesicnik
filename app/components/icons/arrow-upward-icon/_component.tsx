@@ -5,20 +5,20 @@ import styles from './_styles.module.css'
 
 type Props = Pick<ComponentProps<'svg'>, 'className'>
 
+/**
+ * Lucide's arrow-up (n0kx6u98). Always decorative: the control around it
+ * carries the name.
+ */
 export const ArrowUpwardIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-label={'Ikona šipky nahoru'}
+      aria-hidden={true}
       className={clsx(styles.icon, className)}
-      role={'img'}
-      viewBox={'0 -960 960 960'}
+      viewBox={'0 0 24 24'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
-      <path
-        d={
-          'M440-160v-487L216-423l-56-57 320-320 320 320-56 57-224-224v487h-80Z'
-        }
-      />
+      <path d={'m5 12 7-7 7 7'} />
+      <path d={'M12 19V5'} />
     </svg>
   )
 }

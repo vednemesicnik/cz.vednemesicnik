@@ -52,7 +52,11 @@
     grid-area: icon;
     width: 1em;
     height: 1em;
-    fill: currentColor;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     transition: opacity 200ms ease-out;
   }
 }

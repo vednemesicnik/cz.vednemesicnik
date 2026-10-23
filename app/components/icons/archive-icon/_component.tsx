@@ -5,20 +5,21 @@ import styles from './_styles.module.css'
 
 type Props = Pick<ComponentProps<'svg'>, 'className'>
 
+/**
+ * Lucide's archive (n0kx6u98). Always decorative: the control around it
+ * carries the name.
+ */
 export const ArchiveIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-label={'Ikona archivu'}
+      aria-hidden={true}
       className={clsx(styles.icon, className)}
-      role={'img'}
-      viewBox={'0 -960 960 960'}
+      viewBox={'0 0 24 24'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
-      <path
-        d={
-          'm480-240 160-160-56-56-64 64v-168h-80v168l-64-64-56 56 160 160ZM200-640v440h560v-440H200Zm0 520q-33 0-56.5-23.5T120-200v-499q0-14 4.5-27t13.5-24l50-61q11-14 27.5-21.5T250-840h460q18 0 34.5 7.5T772-811l50 61q9 11 13.5 24t4.5 27v499q0 33-23.5 56.5T760-120H200Zm16-600h528l-34-40H250l-34 40Zm264 300Z'
-        }
-      />
+      <rect height={5} rx={1} width={20} x={2} y={3} />
+      <path d={'M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8'} />
+      <path d={'M10 12h4'} />
     </svg>
   )
 }

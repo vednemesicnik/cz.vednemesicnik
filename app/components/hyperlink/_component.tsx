@@ -21,7 +21,7 @@ export const Hyperlink = ({ children, ...rest }: Props): JSX.Element => {
     <BaseHyperlink {...rest}>
       {children}
       <BaseHyperlinkIcon>
-        <OpenInNewIcon decorative />
+        <OpenInNewIcon />
       </BaseHyperlinkIcon>
       <span className={'screen-reader-only'}> (otevře se v nové záložce)</span>
     </BaseHyperlink>

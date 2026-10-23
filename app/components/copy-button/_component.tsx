@@ -5,9 +5,9 @@ import { Tooltip } from '~/components/tooltip'
 
 import styles from './_styles.module.css'
 
-const COPY_PATH =
-  'M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z'
-const CHECK_PATH = 'M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z'
+// Lucide copy and check (n0kx6u98).
+const COPY_PATH = 'M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'
+const CHECK_PATH = 'M20 6 9 17l-5-5'
 
 const LABEL = 'Kopírovat'
 const COPIED_LABEL = 'Zkopírováno'
@@ -72,14 +72,15 @@ export const CopyButton = ({ value, children, className }: Props) => {
       <svg
         aria-hidden={true}
         className={clsx(styles.icon, isCopied && styles.hidden)}
-        viewBox={'0 -960 960 960'}
+        viewBox={'0 0 24 24'}
       >
+        <rect height={14} rx={2} ry={2} width={14} x={8} y={8} />
         <path d={COPY_PATH} />
       </svg>
       <svg
         aria-hidden={true}
         className={clsx(styles.icon, !isCopied && styles.hidden)}
-        viewBox={'0 -960 960 960'}
+        viewBox={'0 0 24 24'}
       >
         <path d={CHECK_PATH} />
       </svg>

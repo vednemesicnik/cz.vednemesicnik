@@ -94,8 +94,9 @@
   }
 }
 
+/* Restyles the UploadFileIcon it renders, so it sits above the icon's own layer. */
 .fileIcon {
-  @layer component {
+  @layer variant {
     width: 48px;
     height: 48px;
   }
