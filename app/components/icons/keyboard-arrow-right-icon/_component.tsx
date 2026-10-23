@@ -5,16 +5,19 @@ import styles from './_styles.module.css'
 
 type Props = Pick<ComponentProps<'svg'>, 'className'>
 
+/**
+ * Lucide's chevron-right (n0kx6u98). Always decorative: the control around it
+ * carries the name.
+ */
 export const KeyboardArrowRightIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-label={'Ikona šipky vpravo'}
+      aria-hidden={true}
       className={clsx(styles.icon, className)}
-      role={'img'}
-      viewBox={'0 -960 960 960'}
+      viewBox={'0 0 24 24'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
-      <path d={'M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z'} />
+      <path d={'m9 18 6-6-6-6'} />
     </svg>
   )
 }

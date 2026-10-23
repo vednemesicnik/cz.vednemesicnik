@@ -5,20 +5,22 @@ import styles from './_styles.module.css'
 
 type Props = Pick<ComponentProps<'svg'>, 'className'>
 
+/**
+ * Lucide's refresh-cw (n0kx6u98). Always decorative: the control around it
+ * carries the name.
+ */
 export const RefreshIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-label={'Ikona obnovení'}
+      aria-hidden={true}
       className={clsx(styles.icon, className)}
-      role={'img'}
-      viewBox={'0 -960 960 960'}
+      viewBox={'0 0 24 24'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
-      <path
-        d={
-          'M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z'
-        }
-      />
+      <path d={'M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'} />
+      <path d={'M21 3v5h-5'} />
+      <path d={'M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'} />
+      <path d={'M8 16H3v5'} />
     </svg>
   )
 }

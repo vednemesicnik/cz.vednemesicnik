@@ -3,27 +3,23 @@ import type { ComponentProps } from 'react'
 
 import styles from './_styles.module.css'
 
-type Props = Pick<ComponentProps<'svg'>, 'className'> & {
-  // Hidden from screen readers when the link around it already says it opens a new
-  // tab (design tyxr2jqk: one icon for every link that opens a new tab).
-  decorative?: boolean
-}
+type Props = Pick<ComponentProps<'svg'>, 'className'>
 
-export const OpenInNewIcon = ({ className, decorative = false }: Props) => {
+/**
+ * Lucide's external-link (n0kx6u98). Always decorative: the control around it
+ * carries the name.
+ */
+export const OpenInNewIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-hidden={decorative ? true : undefined}
-      aria-label={decorative ? undefined : 'Ikona otevření v novém okně'}
+      aria-hidden={true}
       className={clsx(styles.icon, className)}
-      role={decorative ? undefined : 'img'}
-      viewBox={'0 -960 960 960'}
+      viewBox={'0 0 24 24'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
-      <path
-        d={
-          'M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z'
-        }
-      />
+      <path d={'M15 3h6v6'} />
+      <path d={'M10 14 21 3'} />
+      <path d={'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'} />
     </svg>
   )
 }

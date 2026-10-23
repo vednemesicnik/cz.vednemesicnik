@@ -47,12 +47,10 @@
   }
 }
 
+/* Places the CopyIcon and CheckIcon it renders; their drawing is their own. */
 .icon {
-  @layer component {
+  @layer variant {
     grid-area: icon;
-    width: 1em;
-    height: 1em;
-    fill: currentColor;
     transition: opacity 200ms ease-out;
   }
 }

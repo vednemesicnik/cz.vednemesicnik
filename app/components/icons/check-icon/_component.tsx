@@ -5,16 +5,19 @@ import styles from './_styles.module.css'
 
 type Props = Pick<ComponentProps<'svg'>, 'className'>
 
+/**
+ * Lucide's check (n0kx6u98). Always decorative: the control around it
+ * carries the name.
+ */
 export const CheckIcon = ({ className }: Props) => {
   return (
     <svg
-      aria-label={'Ikona zaškrtnutí'}
+      aria-hidden={true}
       className={clsx(styles.icon, className)}
-      role={'img'}
-      viewBox={'0 -960 960 960'}
+      viewBox={'0 0 24 24'}
       xmlns={'http://www.w3.org/2000/svg'}
     >
-      <path d={'M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z'} />
+      <path d={'M20 6 9 17l-5-5'} />
     </svg>
   )
 }
