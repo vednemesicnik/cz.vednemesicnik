@@ -351,38 +351,41 @@ enum AuthorPermissionAccess {
 }
 
 model Issue {
-  id             String       @id @default(cuid())
+  id              String       @id @default(cuid())
   // Null in a draft that has none yet; submitting and publishing require both (design 26e).
-  year           Int?
-  order          Int?
-  name           String?
-  supplement     String?
-  // The supplement's slug, "" for a main issue: SQLite treats NULLs as distinct in a
-  // unique index, so a nullable slug would let two main issues 3/2026 exist (design 26d).
-  supplementSlug String       @default("")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  year            Int?
+  order           Int?
+  name            String?
+  supplement      String?
+  // The supplement's slug, "" for a main issue, so the number is one key (design 26d).
+  supplementSlug  String       @default("")
+  // The number the issue holds once published (log 0039), `${year}-${order}` plus
+  // `-${supplementSlug}`: the only unique one, written by publish and kept by
+  // retract and archive. Two drafts may share a number.
+  publishedNumber String?      @unique
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   // The first save or upload; null is an empty draft (logs 0020, 0032).
-  firstContentAt DateTime?
-  publishedAt    DateTime?
-  state          ContentState @default(draft)
-  cover          IssueCover?
-  pdf            IssuePDF?
-  author         Author       @relation("IssueCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  authorId       String
-  reviews        Review[]     @relation("IssueReviews")
+  firstContentAt  DateTime?
+  publishedAt     DateTime?
+  state           ContentState @default(draft)
+  cover           IssueCover?
+  pdf             IssuePDF?
+  author          Author       @relation("IssueCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId        String
+  reviews         Review[]     @relation("IssueReviews")
   // A draft its author sent for review (design 07d); null when not submitted.
-  submittedAt    DateTime?
-  submittedById  String?
-  submittedBy    Author?      @relation("IssueSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  submittedAt     DateTime?
+  submittedById   String?
+  submittedBy     Author?      @relation("IssueSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
   // The edit hold (design 07g, log 0019): free when there is no holder or heldUntil has passed.
-  heldByAuthorId String?
-  heldByAuthor   Author?      @relation("IssueEditHolds", fields: [heldByAuthorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  heldByTabId    String?
-  heldSince      DateTime?
-  heldUntil      DateTime?
+  heldByAuthorId  String?
+  heldByAuthor    Author?      @relation("IssueEditHolds", fields: [heldByAuthorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  heldByTabId     String?
+  heldSince       DateTime?
+  heldUntil       DateTime?
 
-  @@unique([year, order, supplementSlug])
+  @@index([year, order, supplementSlug])
   // non-unique foreign key
   @@index([authorId])
   @@index([submittedById])
@@ -408,7 +411,8 @@ model IssueCover {
 
 model IssuePDF {
   id               String   @id @default(cuid())
-  // Null until the issue has its year and order: the name is built from them (log 0033).
+  // Null until publish names it by the issue's number (logs 0033, 0039); a
+  // retracted or archived issue keeps it.
   fileName         String?  @unique
   // The name it was uploaded under, which tells the final version (design 26b);
   // null for a file uploaded before it was kept.

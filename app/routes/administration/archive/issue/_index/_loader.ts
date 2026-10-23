@@ -10,6 +10,8 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getIssueOrderLabel } from '~/utils/issue/get-issue-order-label'
+import { getIssuePdfFileName } from '~/utils/issue/get-issue-pdf-file-name'
+import { getIssuePublishedNumber } from '~/utils/issue/get-issue-published-number'
 import {
   issueTitleSelect,
   resolveIssueTitles,
@@ -23,6 +25,7 @@ import { getArticleFactLine } from '../../../articles/utils/get-article-fact-lin
 import { getArticleHold } from '../../../articles/utils/get-article-hold'
 import { getHeldActionFlags } from '../../../articles/utils/get-held-action-flags'
 import { buildIssuePermissionWhere } from '../../utils/build-issue-permission-where'
+import { findTakenIssueIds } from '../../utils/find-taken-issue-ids.server'
 import { getIssueHeaderActions } from '../../utils/get-issue-header-actions'
 import { getIssueSupplementLinks } from '../../utils/get-issue-supplement-links.server'
 import type { Route } from './+types/route'
@@ -78,6 +81,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         },
       },
       publishedAt: true,
+      publishedNumber: true,
       reviews: {
         select: {
           createdAt: true,
@@ -88,6 +92,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
       state: true,
       submittedAt: true,
+      supplementSlug: true,
       updatedAt: true,
     },
     where: { id: issueId },
@@ -132,7 +137,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const visibleWhere = buildIssuePermissionWhere(context)
 
-  const [[{ title }], supplementLinks, history] = await Promise.all([
+  const [[{ title }], supplementLinks, history, takenIds] = await Promise.all([
     resolveIssueTitles([issue], visibleWhere),
     getIssueSupplementLinks(issue, visibleWhere),
     getContentHistory({
@@ -141,7 +146,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       entityId: issue.id,
       publishedAt: issue.publishedAt,
     }),
+    findTakenIssueIds([issue]),
   ])
+  // Another issue holds the number as published (log 0039).
+  const isNumberTaken = takenIds.has(issue.id)
 
   const submission = flags.submission?.state ?? null
 
@@ -150,11 +158,35 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const missingBeforePublish = isApprover
     ? getMissingIssueContent({
         hasCover: issue.cover !== null,
+        hasPdf: issue.pdf !== null,
+        isNumberTaken,
         order: issue.order,
-        pdf: issue.pdf,
+        supplement: issue.supplement,
         year: issue.year,
       })
     : []
+
+  // A draft's PDF has no name until publish: its provisional one, unless the
+  // number is incomplete or taken (26j, log 0039). Back with the number it
+  // holds, it keeps its name, as publish does (log 0030).
+  const getDraftPdfFileName = () => {
+    if (issue.year === null || issue.order === null || isNumberTaken) {
+      return null
+    }
+    const number = {
+      order: issue.order,
+      supplementSlug: issue.supplementSlug,
+      year: issue.year,
+    }
+    return issue.pdf?.fileName != null &&
+      issue.publishedNumber === getIssuePublishedNumber(number)
+      ? issue.pdf.fileName
+      : getIssuePdfFileName(number)
+  }
+  const pdfFileName =
+    issue.state === 'draft'
+      ? getDraftPdfFileName()
+      : (issue.pdf?.fileName ?? null)
 
   // Read only here: an earlier redirect must not use up the toast (26i).
   const notice = await readAdminNotice(request)
@@ -203,11 +235,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         history,
         id: issue.id,
         // Signed in, the web shows a draft only with both files (26b), the
-        // PDF under its name (log 0033).
+        // PDF at its provisional address (log 0039).
         isPreviewable:
           issue.state === 'draft' &&
           issue.cover !== null &&
-          issue.pdf?.fileName != null,
+          issue.pdf !== null &&
+          pdfFileName !== null,
         name: issue.name,
         orderLabel: getIssueOrderLabel(issue),
         pdf:
@@ -215,15 +248,21 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
             ? null
             : {
                 fileName: issue.pdf.fileName,
-                originalFileName: issue.pdf.originalFileName,
-                // Without its name, before the year and order, it has no
-                // address yet (log 0033).
-                path:
-                  issue.pdf.fileName === null
+                // Only a published number is unique: the id says which draft
+                // to open (log 0039).
+                openHref:
+                  pdfFileName === null
                     ? null
-                    : href('/archive/:fileName', {
-                        fileName: issue.pdf.fileName,
-                      }),
+                    : issue.state === 'draft'
+                      ? `${href('/archive/:fileName', { fileName: pdfFileName })}?id=${issue.id}`
+                      : href('/archive/:fileName', { fileName: pdfFileName }),
+                originalFileName: issue.pdf.originalFileName,
+                // Without a whole, free number it has no address yet (logs
+                // 0033, 0039).
+                path:
+                  pdfFileName === null
+                    ? null
+                    : href('/archive/:fileName', { fileName: pdfFileName }),
                 uploadedAt: {
                   formatted: formatNumericDate(issue.pdf.uploadedAt),
                   iso: issue.pdf.uploadedAt.toISOString(),

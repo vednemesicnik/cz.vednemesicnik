@@ -1,5 +1,8 @@
 import { getIssueOrderLabel } from '~/utils/issue/get-issue-order-label'
+import { getIssuePdfFileName } from '~/utils/issue/get-issue-pdf-file-name'
+import { getIssuePublishedNumber } from '~/utils/issue/get-issue-published-number'
 import { getIssueTitle } from '~/utils/issue/get-issue-title'
+import { slugify } from '~/utils/slugify'
 
 type Options = {
   year: number | null
@@ -8,8 +11,12 @@ type Options = {
   supplement: string | null
   /** The published main issue's name, which a supplement names (wo02u3xq). */
   publishedMainIssueName: string | null
-  /** The PDF's name after this edit, `null` without a full number. */
-  pdfFileName: string | null
+  /** Whether another issue holds the number as published (log 0039). */
+  isNumberTaken: boolean
+  /** The number the issue holds since it was published, `null` if never. */
+  publishedNumber: string | null
+  /** The PDF's stored name, which publish gave it; `null` before. */
+  storedPdfFileName: string | null
 }
 
 type IssueWebPreview = {
@@ -17,7 +24,7 @@ type IssueWebPreview = {
   title: string | null
   /** The order beside a named main issue's title (26c). */
   orderLabel: string | null
-  /** The PDF's address, never a partial one. */
+  /** The PDF's address, never a partial one; before publish, provisional. */
   address: string | null
   /** What is missing for the rest of the preview. */
   missingNote: string | null
@@ -34,15 +41,22 @@ const getMissingNote = (year: number | null, order: number | null) => {
   return 'Úplný náhled názvu a adresy PDF se zobrazí po doplnění pořadí v roce.'
 }
 
+// Copy d288tkdf.
+const TAKEN_NUMBER_NOTE =
+  'Náhled adresy PDF se zobrazí po zadání neobsazeného čísla.'
+const PROVISIONAL_SUFFIX = ' · předběžná adresa'
+
 /**
- * *Na webu jako* in the issue editor (design 26c, wo02u3xq, copy ey73zhul): the
- * title as a reader sees it, with the order beside a named issue, and the
- * PDF's address. Without the year or the order, whatever title can still be
- * put together, and what is missing.
+ * *Na webu jako* in the issue editor (design 26c, 26j, wo02u3xq, copy ey73zhul
+ * and d288tkdf): the title as a reader sees it, with the order beside a named
+ * issue, and the PDF's address. Publish names the PDF (log 0039), so until
+ * then the address is provisional; the number the issue holds keeps its
+ * name. A taken number gets no address. Without the year or the order,
+ * whatever title can still be put together, and what is missing.
  *
  * @returns `{ title: 'podzim 2026', orderLabel: '4/2026', address:
- *   '/archive/VDM-2026-4.pdf' }`, or without the order `{ title: 'podzim
- *   2026', address: null, missingNote }`.
+ *   '/archive/VDM-2026-4.pdf · předběžná adresa' }`, or without the order
+ *   `{ title: 'podzim 2026', address: null, missingNote }`.
  */
 export const getIssueWebPreview = ({
   year,
@@ -50,11 +64,13 @@ export const getIssueWebPreview = ({
   name,
   supplement,
   publishedMainIssueName,
-  pdfFileName,
+  isNumberTaken,
+  publishedNumber,
+  storedPdfFileName,
 }: Options): IssueWebPreview => {
   const orderLabel = getIssueOrderLabel({ order, year })
 
-  if (orderLabel === null) {
+  if (orderLabel === null || year === null || order === null) {
     return {
       address: null,
       missingNote: getMissingNote(year, order),
@@ -71,10 +87,40 @@ export const getIssueWebPreview = ({
     publishedMainIssueName,
   )
 
+  const orderLabelBeside = !supplement && name ? orderLabel : null
+
+  if (isNumberTaken) {
+    return {
+      address: null,
+      missingNote: TAKEN_NUMBER_NOTE,
+      orderLabel: orderLabelBeside,
+      title,
+    }
+  }
+
+  const number = {
+    order,
+    supplementSlug: supplement ? slugify(supplement) : '',
+    year,
+  }
+
+  // Published with this number, the PDF keeps its name (log 0030).
+  if (
+    storedPdfFileName !== null &&
+    publishedNumber === getIssuePublishedNumber(number)
+  ) {
+    return {
+      address: `/archive/${storedPdfFileName}`,
+      missingNote: null,
+      orderLabel: orderLabelBeside,
+      title,
+    }
+  }
+
   return {
-    address: pdfFileName === null ? null : `/archive/${pdfFileName}`,
+    address: `/archive/${getIssuePdfFileName(number)}${PROVISIONAL_SUFFIX}`,
     missingNote: null,
-    orderLabel: !supplement && name ? orderLabel : null,
+    orderLabel: orderLabelBeside,
     title,
   }
 }

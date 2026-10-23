@@ -254,8 +254,8 @@ export default function RouteComponent({
                   <p className={styles.pdfName}>PDF zatím chybí</p>
                 ) : (
                   <>
-                    {/* The name the reader downloads it under; before the
-                        year and order it has none, so the uploaded one. */}
+                    {/* The name the reader downloads it under; before
+                        publish it has none, so the uploaded one (log 0039). */}
                     <p className={styles.pdfName}>
                       {issue.pdf.fileName ?? issue.pdf.originalFileName}
                     </p>
@@ -271,10 +271,10 @@ export default function RouteComponent({
                           <> jako {issue.pdf.originalFileName}</>
                         )}
                     </p>
-                    {issue.pdf.path !== null && (
+                    {issue.pdf.openHref !== null && (
                       <Hyperlink
                         className={styles.openPdf}
-                        href={issue.pdf.path}
+                        href={issue.pdf.openHref}
                         rel={'noopener'}
                         target={'_blank'}
                       >

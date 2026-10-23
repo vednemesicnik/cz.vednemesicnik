@@ -28,22 +28,33 @@ describe('resolveIssueTitles', () => {
     expect(issues[0].title).toBe('červen 2026')
   })
 
-  test('looks up only named main issues the viewer may see', async () => {
+  test('looks up only main issues the viewer may see, the holder first', async () => {
     findManyMock.mockResolvedValue([{ name: 'červen', order: 2, year: 2026 }])
 
     const issues = await resolveIssueTitles([supplement], VISIBLE_WHERE)
 
-    expect(findManyMock.mock.lastCall?.[0].where).toEqual({
-      AND: [
-        VISIBLE_WHERE,
-        {
-          name: { not: null },
-          OR: [{ order: 2, year: 2026 }],
-          supplementSlug: '',
-        },
-      ],
+    expect(findManyMock.mock.lastCall?.[0]).toMatchObject({
+      orderBy: [{ publishedNumber: 'desc' }, { name: 'desc' }],
+      where: {
+        AND: [
+          VISIBLE_WHERE,
+          { OR: [{ order: 2, year: 2026 }], supplementSlug: '' },
+        ],
+      },
     })
     expect(issues[0].title).toBe('Maturitní ples · doplněk k číslu červen 2026')
+  })
+
+  test('takes the name of the issue that holds the number (log 0039)', async () => {
+    // A draft sharing the number comes after the holder.
+    findManyMock.mockResolvedValue([
+      { name: null, order: 2, year: 2026 },
+      { name: 'koncept', order: 2, year: 2026 },
+    ])
+
+    const issues = await resolveIssueTitles([supplement], VISIBLE_WHERE)
+
+    expect(issues[0].title).toBe('Maturitní ples · doplněk k číslu 2/2026')
   })
 
   test('names a supplement by the order when its main issue is not found', async () => {

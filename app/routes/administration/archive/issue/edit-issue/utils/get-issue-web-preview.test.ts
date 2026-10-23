@@ -3,18 +3,20 @@ import { describe, expect, test } from 'vitest'
 import { getIssueWebPreview } from './get-issue-web-preview'
 
 const issue = {
+  isNumberTaken: false,
   name: 'podzim',
   order: 4,
-  pdfFileName: 'VDM-2026-4.pdf',
   publishedMainIssueName: null,
+  publishedNumber: null,
+  storedPdfFileName: null,
   supplement: null,
   year: 2026,
 }
 
 describe('getIssueWebPreview', () => {
-  test('the title with its order and the address', () => {
+  test('the title with its order and the provisional address (26j)', () => {
     expect(getIssueWebPreview(issue)).toEqual({
-      address: '/archive/VDM-2026-4.pdf',
+      address: '/archive/VDM-2026-4.pdf · předběžná adresa',
       missingNote: null,
       orderLabel: '4/2026',
       title: 'podzim 2026',
@@ -65,9 +67,39 @@ describe('getIssueWebPreview', () => {
     )
   })
 
-  test('shows no address before the issue has a PDF name', () => {
-    expect(getIssueWebPreview({ ...issue, pdfFileName: null }).address).toBe(
-      null,
-    )
+  test("a supplement's provisional address has its slug", () => {
+    expect(
+      getIssueWebPreview({ ...issue, supplement: 'Maturitní ples' }).address,
+    ).toBe('/archive/VDM-2026-4-maturitni-ples.pdf · předběžná adresa')
+  })
+
+  test('says a taken number gets no address (copy d288tkdf)', () => {
+    expect(getIssueWebPreview({ ...issue, isNumberTaken: true })).toEqual({
+      address: null,
+      missingNote: 'Náhled adresy PDF se zobrazí po zadání neobsazeného čísla.',
+      orderLabel: '4/2026',
+      title: 'podzim 2026',
+    })
+  })
+
+  test('the address of the number it holds, without the qualifier', () => {
+    expect(
+      getIssueWebPreview({
+        ...issue,
+        publishedNumber: '2026-4',
+        storedPdfFileName: 'VDM_2026_4.pdf',
+      }).address,
+    ).toBe('/archive/VDM_2026_4.pdf')
+  })
+
+  test('a provisional address again once its number changed', () => {
+    expect(
+      getIssueWebPreview({
+        ...issue,
+        order: 5,
+        publishedNumber: '2026-4',
+        storedPdfFileName: 'VDM-2026-4.pdf',
+      }).address,
+    ).toBe('/archive/VDM-2026-5.pdf · předběžná adresa')
   })
 })

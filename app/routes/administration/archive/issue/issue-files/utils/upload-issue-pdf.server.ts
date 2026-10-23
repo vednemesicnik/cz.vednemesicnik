@@ -9,7 +9,6 @@ import {
   storePdf,
 } from '~/utils/pdf-store/store-pdf.server'
 
-import { getEditedIssuePdfFileName } from '../../../utils/get-edited-issue-pdf-file-name'
 import {
   type FileChangeResult,
   saveIssueFileChange,
@@ -21,51 +20,12 @@ type Options = {
   file: File
 }
 
-// The name the PDF is stored under: built from the year and the order, so
-// `null` until the issue has both, or while another PDF still has the name
-// (log 0033). The editor's save names it once it can. Read after the
-// file is stored: an autosave may have changed the number meanwhile.
-const getPdfFileName = async (issueId: string) => {
-  const issue = await prisma.issue.findUniqueOrThrow({
-    select: {
-      order: true,
-      pdf: { select: { fileName: true, id: true } },
-      state: true,
-      supplementSlug: true,
-      year: true,
-    },
-    where: { id: issueId },
-  })
-  const fileName = getEditedIssuePdfFileName(
-    {
-      order: issue.order,
-      pdfFileName: issue.pdf?.fileName ?? null,
-      state: issue.state,
-      supplementSlug: issue.supplementSlug,
-      year: issue.year,
-    },
-    {
-      order: issue.order,
-      supplementSlug: issue.supplementSlug,
-      year: issue.year,
-    },
-  )
-  if (fileName === null || fileName === issue.pdf?.fileName) return fileName
-
-  const takenCount = await prisma.issuePDF.count({
-    where: {
-      fileName,
-      ...(issue.pdf === null ? {} : { id: { not: issue.pdf.id } }),
-    },
-  })
-  return takenCount > 0 ? null : fileName
-}
-
 /**
  * Stores a picked PDF as soon as it is chosen (design 26c, log 0029).
  * Every upload is stored under a fresh id, so a replacement leaves the
  * previous PDF untouched until the row points at the new one; the old object
- * goes only after the commit. The editor can cancel it until it saves: a
+ * goes only after the commit. A new PDF has no name until publish gives it
+ * one (log 0039); a replacement keeps the name of the one it replaces. The editor can cancel it until it saves: a
  * cancel during the commit deletes a new PDF and puts a replaced one back
  * (bxy8xxqs).
  *
@@ -102,14 +62,6 @@ export async function uploadIssuePdf(
 
       const dropStored = () => deletePdfObject(pdfId)
 
-      let fileName: string | null
-      try {
-        fileName = await getPdfFileName(issueId)
-      } catch (error) {
-        await dropStored().catch(() => {})
-        throw error
-      }
-
       if (issue.pdf === null) {
         return {
           addsContent: true,
@@ -126,7 +78,6 @@ export async function uploadIssuePdf(
             prisma.issuePDF.create({
               data: {
                 contentType: PDF_CONTENT_TYPE,
-                fileName,
                 id: pdfId,
                 issueId,
                 originalFileName: file.name,
@@ -172,7 +123,6 @@ export async function uploadIssuePdf(
           prisma.issuePDF.update({
             data: {
               contentType: PDF_CONTENT_TYPE,
-              fileName: fileName ?? previousPdf.fileName,
               id: pdfId,
               originalFileName: file.name,
               uploadedAt: new Date(),

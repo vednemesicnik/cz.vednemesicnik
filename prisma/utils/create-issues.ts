@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@generated/prisma/client'
 import type { ContentState } from '@generated/prisma/enums'
+import { getIssuePublishedNumber } from '~/utils/issue/get-issue-published-number'
 import { slugify } from '~/utils/slugify'
 import { users } from '~~/data/users'
 
@@ -30,6 +31,8 @@ export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
   })
 
   for (const issue of data) {
+    const supplementSlug = issue.supplement ? slugify(issue.supplement) : ''
+
     await prisma.issue
       .create({
         data: {
@@ -57,9 +60,18 @@ export const createIssues = async (prisma: PrismaClient, data: IssuesData) => {
               }
             : undefined,
           publishedAt: issue.publishedAt,
+          // Published once, it holds its number (log 0039).
+          publishedNumber:
+            issue.state === 'draft'
+              ? null
+              : getIssuePublishedNumber({
+                  order: issue.order,
+                  supplementSlug,
+                  year: issue.year,
+                }),
           state: issue.state,
           supplement: issue.supplement,
-          supplementSlug: issue.supplement ? slugify(issue.supplement) : '',
+          supplementSlug,
           year: issue.year,
         },
       })

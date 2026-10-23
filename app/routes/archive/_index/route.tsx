@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href, Link, useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
@@ -22,12 +22,12 @@ export { meta } from './_meta'
 type Issue = Route.ComponentProps['loaderData']['issues'][number]
 type RenderableIssue = Issue & {
   cover: NonNullable<Issue['cover']>
-  pdf: NonNullable<Issue['pdf']> & { fileName: string }
+  pdfPath: string
 }
 
-// A PDF without its name has no address yet (log 0033).
+// Without both files, or the PDF's address, there is nothing to open.
 const isRenderable = (issue: Issue): issue is RenderableIssue =>
-  issue.cover !== null && issue.pdf !== null && issue.pdf.fileName !== null
+  issue.cover !== null && issue.pdfPath !== null
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { issues, issuesCount } = loaderData
@@ -48,18 +48,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <TileGrid>
         {renderableIssues.map((issue, index) => {
-          const { id, cover, pdf, title } = issue
+          const { id, cover, pdfPath, title } = issue
 
           const isLcpCandidate = index === 0
           const coverAlt = cover.altText
-          const pdfSrc = href('/archive/:fileName', { fileName: pdf.fileName })
 
           return (
             <TileGridItem
               key={id}
               {...getRevealProps(index - revealBatchStart)}
             >
-              <Link reloadDocument={true} title={title} to={pdfSrc}>
+              <Link reloadDocument={true} title={title} to={pdfPath}>
                 <Tile label={title}>
                   <Image
                     {...cover.sources}
