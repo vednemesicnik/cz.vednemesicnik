@@ -25,9 +25,13 @@ account deletion.
   fire-and-forget; recorded only after the mutation succeeds. The actor comes from
   the permission context.
 - **`event` values:** `user_created`, `user_deleted`, `user_role_changed`,
-  `author_role_changed`. Role-change events carry a `detail`
-  (`"role: <old> → <new>"`, via `formatRoleChangeDetail`); create/delete do not.
+  `author_created`, `author_role_changed`, `emergency_link_issued`. Role-change
+  events carry a `detail` (`"role: <old> → <new>"`, via `formatRoleChangeDetail`);
+  the others do not.
 - **`targetId`:** the affected user id — or the **author id** for
-  `author_role_changed`.
+  `author_created` and `author_role_changed`.
 
-Both models are write-only for now; there is no UI to browse them.
+There is no screen to browse the logs as such. `AuditLog` feeds the Historie of
+the user detail (28e, `getAccountHistory`) and of the author detail (28b,
+`getAuthorHistory`); `AuthLog` feeds the sign-in attempts in Settings (29a) and
+on the user detail (28e).

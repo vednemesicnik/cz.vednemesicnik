@@ -29,6 +29,7 @@ import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
+import { VisuallyHidden } from '~/components/visually-hidden'
 import { AUTHOR_COUNT_FORMS } from '~/config/list-noun-config'
 import { useContentEvents } from '~/hooks/use-content-events'
 import {
@@ -201,10 +202,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {/* The sum covers three types, so the header says which (28a, copy 9w0473vu); no native title (jb81di02). */}
             <TableHeaderCell>
               Publikováno
-              <span className={styles.visuallyHidden}>
+              <VisuallyHidden>
                 {' '}
                 (Publikované články, epizody a čísla)
-              </span>
+              </VisuallyHidden>
             </TableHeaderCell>
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>

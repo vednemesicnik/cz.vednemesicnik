@@ -10,6 +10,7 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { isAssociationAuthor } from '~/utils/is-association-author'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 
@@ -99,8 +100,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       createdAt: formatNumericDate(author.createdAt),
       id: author.id,
       image: createImageSources('user-image', author.user?.image),
-      // The association is the Owner's author (log 0026).
-      isAssociation: author.user?.role.name === 'owner',
+      isAssociation: isAssociationAuthor(author),
       name: author.name,
       role: author.role,
       user: author.user && { email: author.user.email, id: author.user.id },

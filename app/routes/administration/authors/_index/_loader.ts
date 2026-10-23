@@ -17,6 +17,7 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { isAssociationAuthor } from '~/utils/is-association-author'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
@@ -205,8 +206,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       deleteBlock,
       email: user?.email ?? null,
       image: createImageSources('user-image', user?.image),
-      // The association is the Owner's author (log 0026).
-      isAssociation: user?.role.name === 'owner',
+      isAssociation: isAssociationAuthor({ user }),
       // The signed-in person's own author, marked „vy“ (28a).
       isOwn: user?.id === context.userId,
       mayDelete,
