@@ -15,13 +15,12 @@ import { getUserPermissionContext } from '~/utils/permissions/user/context/get-u
 import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
 
 import { schema } from './_schema'
-import { findEmailOwner } from './utils/find-email-owner.server'
-import { formatEmailTakenMessage } from './utils/format-email-taken-message'
+import { EMAIL_TAKEN_MESSAGE } from './utils/email-taken-message'
+import { isEmailTaken } from './utils/is-email-taken.server'
 import { sendEmailChangeNotice } from './utils/send-email-change-notice.server'
 import { updateUser } from './utils/update-user'
 
 type ActionData = {
-  emailOwner?: { name: string; userId: string }
   submissionResult: SubmissionResult<string[]>
 }
 
@@ -116,16 +115,13 @@ export const action = async ({
     throw data(null, { status: 403 })
   }
 
-  // A taken address is a field error naming the account (28e); the unique
-  // constraint in updateUser stays the fallback for a race.
-  const emailOwner = await findEmailOwner(submission.value)
-
-  if (emailOwner !== null) {
+  // A taken address is a plain field error, without whose it is (28f, log
+  // 0039); the unique constraint in updateUser stays the fallback for a race.
+  if (await isEmailTaken(submission.value)) {
     return data(
       {
-        emailOwner,
         submissionResult: submission.reply({
-          fieldErrors: { email: [formatEmailTakenMessage(emailOwner.name)] },
+          fieldErrors: { email: [EMAIL_TAKEN_MESSAGE] },
         }),
       },
       { status: 400 },

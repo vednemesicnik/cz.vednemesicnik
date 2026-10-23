@@ -58,7 +58,7 @@ export const CATEGORY_RECORD_COPY: TaxonomyRecordCopy = {
   selectLabel: (name) => `Vybrat rubriku ${name}`,
   takenName:
     'Zadejte jiný název — tento už má jiná rubrika. Velikost písmen nerozhoduje.',
-  takenSlug: 'Zadejte jinou adresu — tuto už má jiná rubrika.',
+  takenSlug: 'Zadejte jinou adresu — tato je obsazená.',
   toasts: {
     approved: 'Rubrika schválena',
     approvedAndPublished: 'Rubrika schválena a publikována',

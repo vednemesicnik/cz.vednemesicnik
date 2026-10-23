@@ -24,7 +24,6 @@ import { TextField } from '~/components/text-field'
 import { hasEmailChanged } from '~/utils/has-email-changed'
 import { schema } from './_schema'
 import type { Route } from './+types/route'
-import { formatEmailTakenMessage } from './utils/format-email-taken-message'
 
 export { action } from './_action'
 export { handle } from './_handle'
@@ -66,35 +65,6 @@ export default function RouteComponent({
     fields.email.value,
   )
 
-  // The taken-address error names the other account as a link (28e), only
-  // while the field still shows it. The sentence comes from the server's
-  // message, split around the name, so its wording lives in one place.
-  const emailOwner = actionData?.emailOwner ?? null
-  const emailErrors = fields.email.errors?.map((error) => {
-    if (
-      emailOwner === null ||
-      error !== formatEmailTakenMessage(emailOwner.name)
-    ) {
-      return error
-    }
-
-    const nameIndex = error.lastIndexOf(emailOwner.name)
-
-    return (
-      <>
-        {error.slice(0, nameIndex)}
-        <Link
-          to={href('/administration/users/:userId', {
-            userId: emailOwner.userId,
-          })}
-        >
-          {emailOwner.name}
-        </Link>
-        {error.slice(nameIndex + emailOwner.name.length)}
-      </>
-    )
-  })
-
   return (
     <AdminPage measure={'form'}>
       <PageTitle>Upravit uživatele</PageTitle>
@@ -104,7 +74,7 @@ export default function RouteComponent({
           <TextField
             label={'E-mail'}
             {...getInputProps(fields.email, { type: 'email' })}
-            errors={emailErrors}
+            errors={fields.email.errors}
             placeholder={'jakub.novak@vednemesicnik.cz'}
           />
         </Fieldset>
