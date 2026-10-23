@@ -22,10 +22,13 @@ type SortRow = {
   name: string
   roleLevel: number
   authorRoleLevel: number
+  createdAt: Date
 }
 
+// Names repeat, so the newest first breaks a tie: a row never shows on two pages.
 const byName = (first: SortRow, second: SortRow) =>
-  nameCollator.compare(first.name, second.name)
+  nameCollator.compare(first.name, second.name) ||
+  second.createdAt.getTime() - first.createdAt.getTime()
 
 // Ordered in memory, names the Czech way (SQLite compares bytes); every other
 // sort breaks ties by name, so equal values keep one order across reloads. The
@@ -94,6 +97,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       author: {
         select: { name: true, role: { select: { level: true } } },
       },
+      createdAt: true,
       id: true,
       role: { select: { level: true } },
     },
@@ -104,6 +108,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const { pageIds, totalCount } = getOrderedPage(
     matchingUsers.map((user) => ({
       authorRoleLevel: user.author.role.level,
+      createdAt: user.createdAt,
       id: user.id,
       name: user.author.name,
       roleLevel: user.role.level,

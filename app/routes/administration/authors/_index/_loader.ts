@@ -37,10 +37,13 @@ type SortRow = {
   name: string
   roleLevel: number
   email: string | null
+  createdAt: Date
 }
 
+// Names repeat, so the newest first breaks a tie: a row never shows on two pages.
 const byName = (first: SortRow, second: SortRow) =>
-  nameCollator.compare(first.name, second.name)
+  nameCollator.compare(first.name, second.name) ||
+  second.createdAt.getTime() - first.createdAt.getTime()
 
 // Ordered in memory, names the Czech way (SQLite compares bytes); every other
 // sort breaks ties by name, so equal values keep one order across reloads.
@@ -145,6 +148,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const [matchingAuthors, savedFilters] = await Promise.all([
     prisma.author.findMany({
       select: {
+        createdAt: true,
         id: true,
         name: true,
         role: { select: { level: true } },
@@ -158,6 +162,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // One page of 20, ordered here: names in Czech order (dj753f0j, 28a).
   const { pageIds, totalCount } = getOrderedPage(
     matchingAuthors.map((author) => ({
+      createdAt: author.createdAt,
       email: author.user?.email ?? null,
       id: author.id,
       name: author.name,
