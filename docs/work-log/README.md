@@ -72,3 +72,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0038](0038-decisions-are-kept-as-a-work-log.md) | Decisions are kept as a work log, not as binding records | 2026-10-23 |  |
 | [0039](0039-a-public-address-is-unique-only-once-published.md) | A public address is unique only once it is published, and a Document keeps what was typed | 2026-10-23 |  |
 | [0040](0040-a-missing-sign-in-record-means-never-only-inside-the-retention-window.md) | A missing sign-in record means "never" only inside the retention window | 2026-10-23 |  |
+| [0041](0041-a-role-edit-writes-the-role-only-while-it-is-the-one-the-form-loaded.md) | A role edit writes the role only while it is the one the form loaded | 2026-10-23 |  |

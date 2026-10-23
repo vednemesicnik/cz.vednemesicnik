@@ -243,7 +243,7 @@ jiného autora* under the row and hides *Přidat autora*; the pick replaces the 
 save, and *Zrušit*, Esc or a click outside closes it. Adding, removing or replacing saves at
 once, without a dialog. Administrators and Owners get *Založit autora „…“* as the last option
 while the typed name is no author's (in the replace field with a second line, *Po uložení
-nahradí současného autora.*); it opens `add-author` with the name and comes back to the
+nahradí současného autora.*); it opens `/administration/authors/new` with the name and comes back to the
 editor with the new author chosen, or put in place of the replaced one. The new author comes
 back in a one-time cookie, not in the address, so no link can change an article's authors.
 When the search finds
