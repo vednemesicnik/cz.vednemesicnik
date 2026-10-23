@@ -34,11 +34,13 @@ export const AdminTextarea = <FieldType extends string | undefined = string>({
 }: Props<FieldType>) => {
   const hasErrors = field.errors !== undefined && field.errors.length > 0
   const hintId = hint !== undefined ? `${field.id}-hint` : undefined
+  const counterId = counter !== undefined ? `${field.id}-counter` : undefined
   const textareaProps = getTextareaProps(field)
-  // Keep the error description Conform sets and add the hint to it.
+  // Keep the error description Conform sets and add the hint and counter.
   const describedBy =
-    [textareaProps['aria-describedby'], hintId].filter(Boolean).join(' ') ||
-    undefined
+    [textareaProps['aria-describedby'], hintId, counterId]
+      .filter(Boolean)
+      .join(' ') || undefined
 
   return (
     <section className={clsx(styles.container, className)}>
@@ -72,6 +74,7 @@ export const AdminTextarea = <FieldType extends string | undefined = string>({
           {counter !== undefined && (
             <span
               className={clsx(styles.counter, hasErrors && styles.counterError)}
+              id={counterId}
             >
               {counter}
             </span>
