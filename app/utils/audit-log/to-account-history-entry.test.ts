@@ -64,6 +64,15 @@ describe('toAccountHistoryEntry', () => {
     ).toBe('Uživatelská role')
   })
 
+  test("labels the author's creation", () => {
+    expect(
+      toAccountHistoryEntry(
+        { createdAt, detail: null, event: 'author_created', id: 'row' },
+        'Petr Dvořák',
+      )?.label,
+    ).toBe('Vytvořeno')
+  })
+
   test('labels every emergency link issued', () => {
     expect(
       toAccountHistoryEntry(

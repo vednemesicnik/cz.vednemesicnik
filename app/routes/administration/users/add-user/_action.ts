@@ -57,7 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     targetUserRoleLevel: targetRole.level,
   })
 
-  const { userId } = await createUser(submission.value)
+  const { createdAuthorId, userId } = await createUser(submission.value)
 
   recordAuditLog({
     actorId: context.userId,
@@ -65,6 +65,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     request,
     targetId: userId,
   })
+
+  // Only a new author was created here; an existing one only got the account (28b).
+  if (createdAuthorId !== null) {
+    recordAuditLog({
+      actorId: context.userId,
+      event: 'author_created',
+      request,
+      targetId: createdAuthorId,
+    })
+  }
 
   // The account exists either way; the detail says whether the invitation
   // went out (design 28e). Who invites is named by their author name.

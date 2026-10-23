@@ -1,9 +1,7 @@
 import { prisma } from '~/utils/db.server'
 
-import {
-  type AccountHistoryEntry,
-  toAccountHistoryEntry,
-} from './to-account-history-entry'
+import type { AccountHistoryEntry } from './to-account-history-entry'
+import { toHistoryEntries } from './to-history-entries.server'
 
 /**
  * Reads an account's history from `AuditLog`, newest first (design 28e): its
@@ -45,16 +43,5 @@ export const getAccountHistory = async ({
     },
   })
 
-  const actors = await prisma.user.findMany({
-    select: { author: { select: { name: true } }, id: true },
-    where: { id: { in: [...new Set(rows.map((row) => row.actorId))] } },
-  })
-  const actorNames = new Map(
-    actors.map((actor) => [actor.id, actor.author.name]),
-  )
-
-  return rows.flatMap(
-    (row) =>
-      toAccountHistoryEntry(row, actorNames.get(row.actorId) ?? null) ?? [],
-  )
+  return toHistoryEntries(rows)
 }
