@@ -4,6 +4,7 @@ import { issueSubmissionHandlers } from './submission-handlers.server'
 
 // Pass-through permission wrapper with the signed-in author, and mocked Prisma.
 const mocks = vi.hoisted(() => ({
+  issueFindMany: vi.fn(),
   issueFindUnique: vi.fn(),
   issueFindUniqueOrThrow: vi.fn(),
   issueUpdate: vi.fn(),
@@ -34,6 +35,7 @@ vi.mock(
 vi.mock('~/utils/db.server', () => ({
   prisma: {
     issue: {
+      findMany: mocks.issueFindMany,
       findUnique: mocks.issueFindUnique,
       findUniqueOrThrow: mocks.issueFindUniqueOrThrow,
       update: mocks.issueUpdate,
@@ -50,9 +52,11 @@ const draft = {
   author: { id: 'contributor', role: { level: 3 } },
   cover: { id: 'cover-1' },
   order: 4,
-  pdf: { fileName: 'VDM-2026-4.pdf' },
+  pdf: { id: 'pdf-1' },
   state: 'draft',
   submittedAt: null,
+  supplement: null,
+  supplementSlug: '',
   year: 2026,
 }
 
@@ -77,6 +81,8 @@ beforeEach(() => {
   })
   mocks.issueFindUniqueOrThrow.mockResolvedValue(draft)
   mocks.issueUpdateMany.mockResolvedValue({ count: 1 })
+  // No other issue holds its number (log 0039).
+  mocks.issueFindMany.mockResolvedValue([])
   // Nobody holds it, unless a test says so.
   mocks.issueFindUnique.mockResolvedValue(null)
 })
@@ -118,6 +124,23 @@ describe('issueSubmissionHandlers.submit', () => {
     expect(result).toEqual({ missing: ['Chybí obálka a\u00a0PDF.'] })
     expect(mocks.issueUpdateMany).not.toHaveBeenCalled()
     expect(mocks.recordContentLog).not.toHaveBeenCalled()
+  })
+
+  test('submits nothing of an issue whose number another one holds (log 0039)', async () => {
+    mocks.issueFindMany.mockResolvedValue([
+      { id: 'i2', publishedNumber: '2026-4' },
+    ])
+
+    const result = await issueSubmissionHandlers.submit(request, {
+      id: 'i1',
+      target,
+    })
+
+    expect(result).toEqual({ missing: ['Číslo 4/2026 je obsazené.'] })
+    expect(mocks.issueFindMany.mock.lastCall?.[0].where).toEqual({
+      publishedNumber: { in: ['2026-4'] },
+    })
+    expect(mocks.issueUpdateMany).not.toHaveBeenCalled()
   })
 
   test('refuses an issue someone else edits, naming them (26i)', async () => {

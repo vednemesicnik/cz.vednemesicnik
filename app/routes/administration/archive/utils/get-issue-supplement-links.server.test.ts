@@ -51,8 +51,12 @@ describe('getIssueSupplementLinks', () => {
 
     const links = await getIssueSupplementLinks(supplement, VISIBLE_WHERE)
 
-    expect(findFirstMock.mock.lastCall?.[0].where).toEqual({
-      AND: [VISIBLE_WHERE, { order: 2, supplementSlug: '', year: 2026 }],
+    expect(findFirstMock.mock.lastCall?.[0]).toMatchObject({
+      // Of drafts sharing the number, the one holding it (log 0039).
+      orderBy: { publishedNumber: 'desc' },
+      where: {
+        AND: [VISIBLE_WHERE, { order: 2, supplementSlug: '', year: 2026 }],
+      },
     })
     expect(links).toEqual({
       kind: 'main-issue',

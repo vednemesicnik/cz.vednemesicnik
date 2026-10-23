@@ -271,22 +271,30 @@ for as long as a hold lasts. The
 editor saves Rok, Pořadí v roce, Název, Doplněk and, for the Coordinator only, Autor through the
 `save` route from the holding tab. An order the offer set in the open editor follows the year
 until it is set by hand or a supplement is filled; a typed or reloaded one stays. A draft may lack its year and order; it is then named by what it lacks
-(„Číslo 2026 bez pořadí“). The year, order and supplement save as one: one that can't be read,
-or a number another issue has, is left out while the rest saves, and the field says why, with a
-link to the issue that has it and *Použít N* for a free order. The PDF is renamed with its
-number on a draft, and the cover's alt text follows the title. The hold, its takeover, the
+(„Číslo 2026 bez pořadí“). The year, order and supplement save as one: one that can't be read
+is left out while the rest saves, and the field says why. A number another issue holds as
+published saves as typed (log
+[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)): only the number an
+issue holds since its last publish (`publishedNumber`, `2026-4` or `2026-2-maturitni-ples`) is
+unique, and only publish writes it. Retract and archive keep it. The field changed last, or
+*Pořadí v roce*, then says *Zadejte jiné pořadí — číslo 3/2026 je obsazené.* (the year and
+supplement forms in copy q34nuf6c, d288tkdf) through Conform, with *Použít N* for a free order
+of a main issue. The cover's alt text follows the title. The hold, its takeover, the
 read-only editor, the detail's „upravuje …“ line and the refused transitions work as for the
 article; a bulk delete skips a held issue. The dialogs after a lost hold list the details that
 did not save instead of offering a copy. The cover and the PDF upload as soon as they are picked
 or dropped, each on its own through the `files` route, with one *Nahrává se · Zrušit* row and
 cancellable until they save (0029); *Nahradit* replaces a stored file, which stays until the new
 one saves, and leaving during an upload asks. The history gets *Obálka nahrána* and *PDF
-nahráno*. A PDF uploaded before the number is complete has no name, and so no address, until the
-editor's save names it (0033). *Odeslat ke schválení*, *Publikovat…* and *Schválit a
-publikovat…* need the year, the order, the cover and a named PDF; the name and the supplement are
-optional (26e, #718). The detail then says in one sentence what is missing, with *Upravit v
-editoru*, and writes nothing. A PDF whose name another PDF still holds is reported as „Adresu PDF už
-používá jiné číslo.“ The Coordinator's edits of a submitted or approved issue keep its approvals,
+nahráno*. A PDF has no name until publish gives it one by the number, in the same transaction
+(`VDM-2026-4.pdf`; 0033, 0039); it keeps its name while the issue holds that number. Until then
+*Na webu jako* shows the provisional address with *· předběžná adresa*, or for a taken number
+*Náhled adresy PDF se zobrazí po zadání neobsazeného čísla.*, and a signed-in previewer opens the
+draft's PDF there (by the number in the name, or `?id=` among drafts sharing it). *Odeslat ke
+schválení*, *Schválit*, *Publikovat…* and *Schválit a publikovat…* need the year, the order, the
+cover and the PDF; the name and the supplement are optional (26e, #718). The detail then says in
+one sentence what is missing, with *Upravit v editoru*, and writes nothing; a taken number
+follows as its own sentence, *Číslo 3/2026 je obsazené.* The Coordinator's edits of a submitted or approved issue keep its approvals,
 because the editor writes no reviews. Its author takes it back to a draft instead (07d).
 
 ---

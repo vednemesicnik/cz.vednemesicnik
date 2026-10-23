@@ -7,16 +7,12 @@ import { buildHeldByTabWhere } from '~/utils/edit-hold/build-held-by-tab-where'
 import type { EditHoldColumns } from '~/utils/edit-hold/edit-hold-columns'
 import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import { isRecordNotFoundError } from '~/utils/edit-hold/is-record-not-found-error.server'
-import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
 import { getIssueCoverAltText } from '~/utils/issue/get-issue-cover-alt-text'
-import { getNextFreeIssueOrder } from '~/utils/issue/get-next-free-issue-order'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
 import { slugify } from '~/utils/slugify'
-import { findIssueNumberConflict } from '../../../utils/find-issue-number-conflict.server'
-import { getEditedIssuePdfFileName } from '../../../utils/get-edited-issue-pdf-file-name'
-import type { IssueNumberConflict } from '../../../utils/get-issue-number-conflict-message'
+import { findPublishedNumberConflict } from '../../../utils/find-published-number-conflict.server'
 
 type IssueNumber = {
   year: number | null
@@ -41,19 +37,16 @@ type Options = {
 }
 
 type UpdateIssueResult =
-  /**
-   * `numberConflict` is the issue holding the number sent, which was not saved
-   * (design 26d), with the year's next free order for a main issue; `null`
-   * when the number saved or was left out unread.
-   */
   | {
       status: 'saved'
       updatedAt: Date
-      /** Whether the year, order and supplement sent are the stored ones now. */
-      isNumberSaved: boolean
-      numberConflict:
-        | (IssueNumberConflict & { freeOrder: number | null })
-        | null
+      /**
+       * The saved number (`getIssuePublishedNumber`) when another issue holds
+       * it as published (log 0039), `null` when it is free or incomplete.
+       */
+      takenNumber: string | null
+      /** The year's next free order to offer for a taken main issue (26d). */
+      freeOrder: number | null
     }
   /** The tab does not hold the issue; `heldByName` is who does, if anyone. */
   | { status: 'not-held'; heldByName: string | null }
@@ -77,9 +70,9 @@ const RELEASED_HOLD = {
  * author and state; only the Coordinator sets another author. Only the tab
  * holding the edit hold saves, checked again in the save's own write (0019),
  * and the save keeps the hold unless `releaseHold` asks for the end. A draft
- * saves without its year or order. The year, order and supplement save as one:
- * a number another issue has is left out and the rest saves, with that issue
- * and a free order in the answer. The first save ends the empty draft and is
+ * saves without its year or order. The year, order and supplement save as one,
+ * as typed: a number another issue holds as published saves too, and the
+ * answer says so, with a free order (log 0039). The first save ends the empty draft and is
  * its creation in the history; then one *Upraveno* per hold (07f). The caller
  * has checked the session (`requireCSRF`).
  *
@@ -106,7 +99,6 @@ export async function updateIssue(
       heldSince: true,
       heldUntil: true,
       order: true,
-      pdf: { select: { fileName: true, id: true } },
       state: true,
       submittedAt: true,
       supplement: true,
@@ -122,7 +114,7 @@ export async function updateIssue(
   const { state } = storedIssue
 
   const context = await getAuthorPermissionContext(request, {
-    actions: ['update', 'view'],
+    actions: ['update'],
     entities: ['issue'],
   })
 
@@ -178,91 +170,23 @@ export async function updateIssue(
     })
   }
 
-  const storedNumber = {
-    order: storedIssue.order,
-    supplement: storedIssue.supplement,
-    year: storedIssue.year,
-  }
-
-  // The number sent, with its slug; a missing year or order never collides.
-  const requestedNumber =
+  // The number sent, with its slug; one that can't be read leaves the stored
+  // number as it is (log 0034).
+  const savedNumber =
     number === null
-      ? null
+      ? {
+          order: storedIssue.order,
+          supplement: storedIssue.supplement,
+          supplementSlug: storedIssue.supplementSlug,
+          year: storedIssue.year,
+        }
       : {
           ...number,
           supplementSlug:
             number.supplement === null ? '' : slugify(number.supplement),
         }
 
-  const findConflict = async () => {
-    if (
-      requestedNumber === null ||
-      requestedNumber.year === null ||
-      requestedNumber.order === null
-    ) {
-      return null
-    }
-
-    const { year, order, supplementSlug } = requestedNumber
-    const conflict = await findIssueNumberConflict(context, {
-      excludeId: issueId,
-      order,
-      supplement: requestedNumber.supplement ?? undefined,
-      supplementSlug,
-      year,
-    })
-
-    if (conflict === null) return null
-
-    // A supplement belongs to one issue, so it gets no free order (26d).
-    if (conflict.field === 'supplement') return { ...conflict, freeOrder: null }
-
-    const mainIssues = await prisma.issue.findMany({
-      select: { order: true },
-      where: {
-        id: { not: issueId },
-        order: { not: null },
-        supplementSlug: '',
-        year,
-      },
-    })
-
-    return {
-      ...conflict,
-      freeOrder: getNextFreeIssueOrder(
-        mainIssues.flatMap(({ order }) => (order === null ? [] : [order])),
-      ),
-    }
-  }
-
-  let numberConflict = await findConflict()
-
   const saveInTransaction = async () => {
-    const savedNumber =
-      requestedNumber === null || numberConflict !== null
-        ? { ...storedNumber, supplementSlug: storedIssue.supplementSlug }
-        : requestedNumber
-
-    const editedPdfFileName = getEditedIssuePdfFileName(
-      {
-        ...storedNumber,
-        pdfFileName: storedIssue.pdf?.fileName ?? null,
-        state,
-        supplementSlug: storedIssue.supplementSlug,
-      },
-      savedNumber,
-    )
-    // Another issue's PDF may still have the name (one that lost its order
-    // kept it, or an older name): then the stored name stays.
-    const isPdfFileNameTaken =
-      storedIssue.pdf !== null &&
-      editedPdfFileName !== null &&
-      editedPdfFileName !== storedIssue.pdf.fileName &&
-      (await prisma.issuePDF.count({
-        where: { fileName: editedPdfFileName, id: { not: storedIssue.pdf.id } },
-      })) > 0
-    const pdfFileName = isPdfFileNameTaken ? null : editedPdfFileName
-
     const issueWrite = prisma.issue.update({
       data: {
         authorId: savedAuthorId,
@@ -306,17 +230,6 @@ export async function updateIssue(
               where: { issueId },
             }),
           ]),
-      // The PDF is renamed only with its number (log 0030).
-      ...(storedIssue.pdf === null ||
-      pdfFileName === null ||
-      pdfFileName === storedIssue.pdf.fileName
-        ? []
-        : [
-            prisma.issuePDF.updateMany({
-              data: { fileName: pdfFileName },
-              where: { issueId },
-            }),
-          ]),
     ]
 
     const results = await prisma.$transaction(writes)
@@ -330,16 +243,7 @@ export async function updateIssue(
   let saved: Awaited<ReturnType<typeof saveInTransaction>>
 
   try {
-    try {
-      saved = await saveInTransaction()
-    } catch (error) {
-      // Another issue took the number between the check and the write: once
-      // more without it.
-      if (!isUniqueConstraintError(error)) throw error
-      numberConflict = await findConflict()
-      if (numberConflict === null) throw error
-      saved = await saveInTransaction()
-    }
+    saved = await saveInTransaction()
   } catch (error) {
     if (!isRecordNotFoundError(error)) throw error
 
@@ -378,10 +282,18 @@ export async function updateIssue(
     isCreation: saved.firstContent.count === 1,
   })
 
+  // Saved as typed; the field says it is taken (26d, log 0039).
+  const conflict = await findPublishedNumberConflict({
+    issueId,
+    order: savedNumber.order,
+    supplementSlug: savedNumber.supplementSlug,
+    year: savedNumber.year,
+  })
+
   return {
-    isNumberSaved: requestedNumber !== null && numberConflict === null,
-    numberConflict,
+    freeOrder: conflict?.freeOrder ?? null,
     status: 'saved',
+    takenNumber: conflict?.takenNumber ?? null,
     updatedAt: saved.savedIssue.updatedAt,
   }
 }

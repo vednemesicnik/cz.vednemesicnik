@@ -37,7 +37,6 @@ import { ErrorMessage } from '~/components/error-message'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { Image } from '~/components/image'
-import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
@@ -48,6 +47,7 @@ import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
+import { useTakenValues } from '~/hooks/use-taken-values'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
@@ -55,17 +55,17 @@ import {
   getIssueNumberSuggestion,
   type IssueNumberSuggestion,
 } from '~/utils/issue/get-issue-number-suggestion'
+import { getIssuePublishedNumber } from '~/utils/issue/get-issue-published-number'
 import { getIssueTitle } from '~/utils/issue/get-issue-title'
 import { getNextFreeIssueOrder } from '~/utils/issue/get-next-free-issue-order'
 import { slugify } from '~/utils/slugify'
 import { formatEditHoldLine } from '../../../articles/utils/format-edit-hold-line'
-import { getEditedIssuePdfFileName } from '../../utils/get-edited-issue-pdf-file-name'
-import type { IssueNumberConflict } from '../../utils/get-issue-number-conflict-message'
-import { schema } from './_schema'
+import { ISSUE_NUMBER_FIELDS, schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { FailedFile } from './components/failed-file'
 import { FileDropField } from './components/file-drop-field'
+import { createEditorSchema } from './utils/create-editor-schema'
 import { formatIssueChangedDescription } from './utils/format-issue-changed-description'
 import {
   formatIssueFilesSentence,
@@ -76,6 +76,7 @@ import { formatUnsavedIssueFields } from './utils/format-unsaved-issue-fields'
 import { getIssueEditorSentence } from './utils/get-issue-editor-sentence'
 import { getIssueSaveLineText } from './utils/get-issue-save-line-text'
 import { getIssueWebPreview } from './utils/get-issue-web-preview'
+import type { IssueNumberField } from './utils/get-taken-issue-number-message'
 import {
   FAILED_SENTENCE,
   ORIGINAL_STAYED_SENTENCE,
@@ -90,15 +91,13 @@ export { handle } from './_handle'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-type NumberConflict = IssueNumberConflict & { freeOrder: number | null }
-
-// What the save route answers (logs 0022, 0034).
+// What the save route answers (logs 0022, 0034, 0039).
 type SaveResponse =
   | {
       status: 'saved'
       updatedAt: string
-      isNumberSaved: boolean
-      numberConflict: NumberConflict | null
+      takenNumber: string | null
+      freeOrder: number | null
     }
   | { status: 'not-held'; heldByName: string | null }
 
@@ -124,10 +123,9 @@ const FIELD_LABELS = {
 type FieldName = keyof typeof FIELD_LABELS
 type FieldValues = Record<FieldName, string>
 
-type NumberField = 'year' | 'order' | 'supplement'
-
-// The closing sentence names the field whose change collided (design 26d).
-const UNSAVED_NUMBER_CHANGE: Record<NumberField, string> = {
+// The closing sentence names the field changed last, after a value that
+// can't be read (log 0034, copy zuq3hyhf).
+const UNSAVED_NUMBER_CHANGE: Record<IssueNumberField, string> = {
   order: 'Změna pořadí se neuložila.',
   supplement: 'Změna doplňku se neuložila.',
   year: 'Změna roku se neuložila.',
@@ -238,15 +236,46 @@ export default function RouteComponent({
   // the list of unsent details keep the values the editor last showed (07g).
   const shownValuesRef = useRef(loadedValues)
 
+  // Numbers another issue holds as published (26d, log 0039); the schema
+  // turns them into the error of the field changed last.
+  const takenNumbers = useTakenValues([issue.takenNumber])
+  // The field the editor changed last among the three that make the number.
+  const lastNumberFieldRef = useRef<IssueNumberField>('order')
+
   const [form, fields] = useForm({
     defaultValue: loadedValues,
     id: 'edit-issue',
     // Parsed here, so a year or an order that can't be read is said at its
-    // field (copy xrtebq3m); the save leaves it out (log 0034).
-    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
+    // field (copy xrtebq3m), the save leaving it out (log 0034), and so is a
+    // taken number, which saves.
+    onValidate: ({ formData }) =>
+      parseWithZod(formData, {
+        schema: createEditorSchema(
+          takenNumbers.has,
+          lastNumberFieldRef.current,
+        ),
+      }),
     shouldRevalidate: 'onInput',
     shouldValidate: 'onBlur',
   })
+
+  // A taken number's error shows at the field changed last once it counts
+  // as validated (26d).
+  const validateLastNumberField = () => {
+    const field = lastNumberFieldRef.current
+    if (field === 'year') form.validate({ name: fields.year.name })
+    else if (field === 'order') form.validate({ name: fields.order.name })
+    else form.validate({ name: fields.supplement.name })
+  }
+
+  // Taken when the page loads, the field says so once the editor holds the
+  // edit: a locked fieldset leaves its fields out of the form (26d).
+  const validateTakenNumber = useEffectEvent(() => {
+    if (issue.takenNumber !== null) validateLastNumberField()
+  })
+  useEffect(() => {
+    if (isHolding) validateTakenNumber()
+  }, [isHolding])
 
   // The issue's last save, as the line under the heading says it (24e). A new
   // draft has none until its first save.
@@ -265,12 +294,8 @@ export default function RouteComponent({
     setHasSaved(true)
   }
 
-  // A taken number, which did not save (26d), and the field the editor
-  // changed last among the three that make it.
-  const [numberConflict, setNumberConflict] = useState<NumberConflict | null>(
-    null,
-  )
-  const lastNumberFieldRef = useRef<NumberField>('order')
+  // A free order to offer for a taken main issue (26d).
+  const [freeOrder, setFreeOrder] = useState(issue.freeOrder)
 
   // One save of the whole form; the server takes it only from this tab.
   const send = async (
@@ -315,18 +340,30 @@ export default function RouteComponent({
       return 'failed'
     }
 
-    // A number taken or unread stayed as it was stored (log 0034).
+    // A number that can't be read stayed as it was stored (log 0034).
     const sentValues = readValues(formData)
-    savedValuesRef.current = result.isNumberSaved
-      ? sentValues
-      : {
+    const parsed = parseWithZod(formData, { schema })
+    const isNumberUnread =
+      parsed.status !== 'success' &&
+      Object.keys(parsed.error ?? {}).some((field) =>
+        (ISSUE_NUMBER_FIELDS as readonly string[]).includes(field),
+      )
+    savedValuesRef.current = isNumberUnread
+      ? {
           ...sentValues,
           order: savedValuesRef.current.order,
           supplement: savedValuesRef.current.supplement,
           year: savedValuesRef.current.year,
         }
+      : sentValues
     acknowledgeSaved(result.updatedAt)
-    setNumberConflict(result.numberConflict)
+    setFreeOrder(result.freeOrder)
+    // The number saved, and another issue holds it: the field changed last
+    // says so until the number changes (26d, log 0039).
+    if (result.takenNumber !== null) {
+      takenNumbers.add(result.takenNumber)
+      validateLastNumberField()
+    }
 
     // A new title reaches the breadcrumb and the tab title.
     const savedYear = parseNumber(savedValuesRef.current.year)
@@ -660,26 +697,24 @@ export default function RouteComponent({
     { name, order, supplement, year },
     visibleNamesByNumber[number] ?? null,
   )
-  // The name the PDF gets with the number shown; `null` without it (0033).
-  const editedPdfFileName = getEditedIssuePdfFileName(
-    {
-      order: issue.order,
-      pdfFileName: issue.pdf?.fileName ?? null,
-      state: issue.state,
-      supplementSlug: issue.supplementSlug,
-      year: issue.year,
-    },
-    {
-      order,
-      supplementSlug: supplement === null ? '' : slugify(supplement),
-      year,
-    },
-  )
+  // Another issue holds the number shown as published (log 0039).
+  const isNumberTaken =
+    year !== null &&
+    order !== null &&
+    takenNumbers.has(
+      getIssuePublishedNumber({
+        order,
+        supplementSlug: supplement === null ? '' : slugify(supplement),
+        year,
+      }),
+    )
   const webPreview = getIssueWebPreview({
+    isNumberTaken,
     name,
     order,
-    pdfFileName: editedPdfFileName,
     publishedMainIssueName: publishedNamesByNumber[number] ?? null,
+    publishedNumber: issue.publishedNumber,
+    storedPdfFileName: issue.pdf?.fileName ?? null,
     supplement,
     year,
   })
@@ -738,47 +773,23 @@ export default function RouteComponent({
     isSubmitted: issue.submission !== null,
   })
 
-  // A taken number at its field (26d): the issue that has it, as a link when
-  // the editor may see it, and the change that did not save.
-  const renderNumberConflict = (field: NumberConflict['field']) => {
-    if (numberConflict === null || numberConflict.field !== field) return null
-
-    const { before, holder, after } = numberConflict
-
-    return [
-      <>
-        {before}
-        {holder.id === null ? (
-          holder.label
-        ) : (
-          <Link
-            to={href('/administration/archive/:issueId', {
-              issueId: holder.id,
-            })}
-          >
-            {holder.label}
-          </Link>
-        )}
-        {after} {UNSAVED_NUMBER_CHANGE[lastNumberFieldRef.current]}
-      </>,
-    ]
-  }
-
   // A value that can't be read leaves the number unsaved (log 0034). One
   // error says so, for the field changed last (copy zuq3hyhf): under that
   // field, or under the first one that can't be read when it reads well.
-  const numberErrors: Record<NumberField, string[] | undefined> = {
+  // A taken number reads well, so its error stands alone (26d).
+  const numberErrors: Record<IssueNumberField, string[] | undefined> = {
     order: fields.order.errors,
     supplement: fields.supplement.errors,
     year: fields.year.errors,
   }
-  const closingField: NumberField | undefined =
-    numberErrors[lastNumberFieldRef.current] !== undefined
+  const closingField: IssueNumberField | undefined = isNumberTaken
+    ? undefined
+    : numberErrors[lastNumberFieldRef.current] !== undefined
       ? lastNumberFieldRef.current
       : (['year', 'order', 'supplement'] as const).find(
           (field) => numberErrors[field] !== undefined,
         )
-  const withUnsavedChange = (field: NumberField) =>
+  const withUnsavedChange = (field: IssueNumberField) =>
     field === closingField
       ? numberErrors[field]?.map(
           (error) =>
@@ -794,8 +805,6 @@ export default function RouteComponent({
   }
 
   // A free order for a taken one: filled in and saved (26d, as 24d).
-  const freeOrder =
-    numberConflict?.field === 'order' ? numberConflict.freeOrder : null
   const applyFreeOrder = (value: number) => {
     isOrderFollowingRef.current = false
     lastNumberFieldRef.current = 'order'
@@ -834,7 +843,7 @@ export default function RouteComponent({
   const renderNumberOffer = () => {
     if (isReadOnly) return null
 
-    if (freeOrder !== null) {
+    if (isNumberTaken && supplement === null && freeOrder !== null) {
       return (
         <ButtonLink onClick={() => applyFreeOrder(freeOrder)} type={'button'}>
           Použít {freeOrder}
@@ -1234,11 +1243,10 @@ export default function RouteComponent({
                     <h3 className={styles.caption}>PDF</h3>
                     {pdfUpload.upload !== null ? (
                       <>
-                        {/* The name it gets, by the number (26c). */}
+                        {/* The name it has, or the one picked: publish
+                            names it by the number (26c, log 0039). */}
                         <p className={styles.pdfName}>
-                          {issue.pdf?.fileName ??
-                            editedPdfFileName ??
-                            pdfUpload.upload.fileName}
+                          {issue.pdf?.fileName ?? pdfUpload.upload.fileName}
                         </p>
                         <p className={styles.uploaded}>
                           vybráno jako {pdfUpload.upload.fileName}
@@ -1250,10 +1258,7 @@ export default function RouteComponent({
                       </>
                     ) : pdfUpload.failure !== null &&
                       !pdfUpload.failure.replaces ? (
-                      renderFileProblem(
-                        'pdf',
-                        editedPdfFileName ?? pdfUpload.failure.fileName,
-                      )
+                      renderFileProblem('pdf', pdfUpload.failure.fileName)
                     ) : issue.pdf === null && isDeleted ? null : issue.pdf ===
                       null ? (
                       <>
@@ -1273,8 +1278,8 @@ export default function RouteComponent({
                       </>
                     ) : (
                       <>
-                        {/* Without its name, before the year and order, the
-                            name it was uploaded under (log 0033). */}
+                        {/* Without its name, before publish, the name it was
+                            uploaded under (logs 0033, 0039). */}
                         <p className={styles.pdfName}>
                           {issue.pdf.fileName ?? issue.pdf.originalFileName}
                         </p>
@@ -1325,10 +1330,7 @@ export default function RouteComponent({
                       />
                       <TextField
                         {...getInputProps(fields.order, { type: 'text' })}
-                        errors={
-                          renderNumberConflict('order') ??
-                          withUnsavedChange('order')
-                        }
+                        errors={withUnsavedChange('order')}
                         inputMode={'numeric'}
                         label={'Pořadí v roce'}
                         onInput={handleOrderInput}
@@ -1346,10 +1348,7 @@ export default function RouteComponent({
                   />
                   <TextField
                     {...getInputProps(fields.supplement, { type: 'text' })}
-                    errors={
-                      renderNumberConflict('supplement') ??
-                      withUnsavedChange('supplement')
-                    }
+                    errors={withUnsavedChange('supplement')}
                     hint={
                       'Název samostatně vytištěné části, která se do čísla nevešla. Zadejte rok a pořadí čísla, ke kterému patří.'
                     }

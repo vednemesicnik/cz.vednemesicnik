@@ -4,8 +4,10 @@ import { getMissingIssueContent } from './get-missing-issue-content'
 
 const COMPLETE = {
   hasCover: true,
+  hasPdf: true,
+  isNumberTaken: false,
   order: 4,
-  pdf: { fileName: 'VDM-2026-4.pdf' },
+  supplement: null,
   year: 2026,
 }
 
@@ -18,8 +20,8 @@ describe('getMissingIssueContent', () => {
     [{ year: null }, 'Chybí rok.'],
     [{ order: null }, 'Chybí pořadí v roce.'],
     [{ hasCover: false }, 'Chybí obálka.'],
-    [{ pdf: null }, 'Chybí PDF.'],
-    [{ hasCover: false, pdf: null }, 'Chybí obálka a\u00a0PDF.'],
+    [{ hasPdf: false }, 'Chybí PDF.'],
+    [{ hasCover: false, hasPdf: false }, 'Chybí obálka a PDF.'],
   ])('names only what is missing (%o)', (change, sentence) => {
     expect(getMissingIssueContent({ ...COMPLETE, ...change })).toEqual([
       sentence,
@@ -29,37 +31,39 @@ describe('getMissingIssueContent', () => {
   test('names all four in one sentence (26e)', () => {
     expect(
       getMissingIssueContent({
+        ...COMPLETE,
         hasCover: false,
+        hasPdf: false,
         order: null,
-        pdf: null,
         year: null,
       }),
-    ).toEqual(['Chybí rok, pořadí v roce, obálka a\u00a0PDF.'])
+    ).toEqual(['Chybí rok, pořadí v roce, obálka a PDF.'])
   })
 
-  test('says another issue uses the address of a nameless PDF', () => {
+  test('says a taken number on its own', () => {
     expect(
-      getMissingIssueContent({ ...COMPLETE, pdf: { fileName: null } }),
-    ).toEqual(['Adresu PDF už používá jiné číslo.'])
+      getMissingIssueContent({ ...COMPLETE, isNumberTaken: true }),
+    ).toEqual(['Číslo 4/2026 je obsazené.'])
   })
 
-  test('says it after the missing cover', () => {
+  test('says it after what is missing, as a sentence of its own', () => {
     expect(
       getMissingIssueContent({
         ...COMPLETE,
         hasCover: false,
-        pdf: { fileName: null },
+        isNumberTaken: true,
       }),
-    ).toEqual(['Chybí obálka a\u00a0adresu PDF už používá jiné číslo.'])
+    ).toEqual(['Chybí obálka.', 'Číslo 4/2026 je obsazené.'])
   })
 
-  test('leaves a nameless PDF to the missing year', () => {
+  test("names a supplement's taken name", () => {
     expect(
       getMissingIssueContent({
         ...COMPLETE,
-        pdf: { fileName: null },
-        year: null,
+        isNumberTaken: true,
+        order: 2,
+        supplement: 'Maturitní ples',
       }),
-    ).toEqual(['Chybí rok.'])
+    ).toEqual(['Název „Maturitní ples“ je pro číslo 2/2026 obsazený.'])
   })
 })

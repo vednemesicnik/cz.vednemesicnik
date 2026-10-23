@@ -1,6 +1,9 @@
+import type { Prisma } from '@generated/prisma/client'
+
 import { checkCacheValidation } from '~/utils/cache.server'
 import { prisma } from '~/utils/db.server'
 import { getContentHash } from '~/utils/hash.server'
+import { parseIssuePdfFileName } from '~/utils/issue/parse-issue-pdf-file-name'
 import { buildPdfKey } from '~/utils/pdf-store/pdf-key'
 import { pdfStore } from '~/utils/pdf-store/pdf-store.server'
 import {
@@ -13,6 +16,23 @@ import {
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 
 import type { Route } from './+types/route'
+
+const pdfSelect = { contentType: true, id: true, updatedAt: true } as const
+
+/**
+ * A draft's PDF at its provisional address (26j, log 0039): it has no name
+ * until publish, so a previewer finds it by the number the name stands for.
+ */
+const findDraftPdf = (fileName: string, draftWhere: Prisma.IssueWhereInput) => {
+  const number = parseIssuePdfFileName(fileName)
+  if (number === null) return null
+
+  return prisma.issuePDF.findFirst({
+    orderBy: { issue: { updatedAt: 'desc' } },
+    select: pdfSelect,
+    where: { issue: { AND: [draftWhere, { ...number, state: 'draft' }] } },
+  })
+}
 
 /**
  * Serves the issue PDF without calling `next()`. A missing PDF calls `next()` instead,
@@ -28,17 +48,30 @@ const serveIssuePdf: Route.MiddlewareFunction = async (
   const { fileName } = params
 
   const visibility = await getWebContentVisibility(request, ['issue'])
+  // Only a published number is unique (log 0039): a preview link names the
+  // issue among drafts that share it, or whose number another one holds.
+  const id = new URL(request.url).searchParams.get('id')
+  const idWhere = id === null ? {} : { id }
 
   // `id` builds the object-store key, `updatedAt` drives cache validation, and
   // `contentType` sets the response header — the PDF bytes live in the object store.
-  // Only the PDF of an issue the web may show: published, or previewed by rights.
-  const pdf = await prisma.issuePDF.findUnique({
-    select: { contentType: true, id: true, updatedAt: true },
-    where: {
-      fileName,
-      issue: visibility.where('issue', ownByAuthor, ['draft', 'archived']),
-    },
-  })
+  // Only the PDF of an issue the web may show: published, or previewed by
+  // rights, a draft by its provisional address too.
+  const pdf =
+    (await prisma.issuePDF.findUnique({
+      select: pdfSelect,
+      where: {
+        fileName,
+        issue: {
+          ...visibility.where('issue', ownByAuthor, ['draft', 'archived']),
+          ...idWhere,
+        },
+      },
+    })) ??
+    (await findDraftPdf(fileName, {
+      ...visibility.where('issue', ownByAuthor),
+      ...idWhere,
+    }))
 
   if (pdf === null) return next()
 

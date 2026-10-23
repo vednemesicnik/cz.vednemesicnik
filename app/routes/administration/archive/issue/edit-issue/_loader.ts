@@ -18,6 +18,7 @@ import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-l
 
 import { canChooseRecordAuthor } from '../../../articles/utils/can-choose-record-author'
 import { getArticleHold } from '../../../articles/utils/get-article-hold'
+import { findPublishedNumberConflict } from '../../utils/find-published-number-conflict.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -49,6 +50,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           uploadedAt: true,
         },
       },
+      publishedNumber: true,
       reviews: {
         select: {
           createdAt: true,
@@ -116,7 +118,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const canChooseAuthor = canChooseRecordAuthor(context.roleLevel)
 
-  const [otherIssues, authors] = await Promise.all([
+  const [otherIssues, authors, numberConflict] = await Promise.all([
     // The other issues' numbers: the free order follows them (26c) and a
     // supplement is named after its main issue (wo02u3xq).
     prisma.issue.findMany({
@@ -139,6 +141,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     canChooseAuthor
       ? getAuthorsByPermission(context, 'issue', 'update', issue.state)
       : Promise.resolve(null),
+    // Another issue holds the number as published: the field says so from
+    // the start (26d, log 0039).
+    findPublishedNumberConflict({
+      issueId,
+      order: issue.order,
+      supplementSlug: issue.supplementSlug,
+      year: issue.year,
+    }),
   ])
 
   const mainIssues = otherIssues.filter((other) => other.supplementSlug === '')
@@ -187,6 +197,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               altText: issue.cover.altText,
               sources: createImageSources('issue-cover', issue.cover),
             },
+      // A free order to offer for a taken main issue (26d).
+      freeOrder: numberConflict?.freeOrder ?? null,
       // An empty draft (log 0020) is left for the list.
       isEmptyDraft: issue.firstContentAt === null,
       name: issue.name ?? '',
@@ -202,6 +214,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               originalFileName: issue.pdf.originalFileName,
               uploadedAt: formatNumericDate(issue.pdf.uploadedAt),
             },
+      // The number it holds since it was published, which keeps the PDF's
+      // name (log 0039).
+      publishedNumber: issue.publishedNumber,
       state: issue.state,
       // Sent for approval, or approved: the tag and the line of 24c.
       submission:
@@ -210,6 +225,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           : { date: submission.date.toISOString(), state: submission.state },
       supplement: issue.supplement ?? '',
       supplementSlug: issue.supplementSlug,
+      // The number (`getIssuePublishedNumber`), when another issue holds it
+      // as published.
+      takenNumber: numberConflict?.takenNumber ?? null,
       // As loaded, for the tab's title; the heading follows the fields.
       title: getIssueTitle(
         issue,

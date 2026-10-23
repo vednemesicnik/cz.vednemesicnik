@@ -271,10 +271,10 @@ export default function RouteComponent({
                           <> jako {issue.pdf.originalFileName}</>
                         )}
                     </p>
-                    {issue.pdf.path !== null && (
+                    {issue.pdf.openHref !== null && (
                       <Hyperlink
                         className={styles.openPdf}
-                        href={issue.pdf.path}
+                        href={issue.pdf.openHref}
                         rel={'noopener'}
                         target={'_blank'}
                       >
