@@ -25,8 +25,10 @@ current role with the collision above its buttons.
 
 The „Změna: …“ line reads the newest `author_role_changed` row of `AuditLog` for the author
 (`app/utils/audit-log/get-latest-role-change.server.ts`): the actor's author name and the moment
-in Prague time. Without a row (a change made outside the app) or with the actor's account gone,
-the line is left out and the sentence stays.
+in Prague time, and only when that row ended on the stored role (its `detail` reads
+`role: from → to`). When the newest row ended elsewhere (a change made outside the app, or a row
+not written yet), when there is none, or when the actor's account is gone, the line is left out
+and the sentence stays.
 
 The permission still comes from the stored record (log 0015): the edit page and its action need
 `update author` with `any`, so only the Administrator and the Owner reach them.
@@ -39,8 +41,9 @@ The permission still comes from the stored record (log 0015): the edit page and 
   from what they saw, so they check it before saving it again.
 - Name and bio have no version (lj22mnbm): the last save wins. A reason to revisit is a design
   answer that asks for it.
-- `recordAuditLog` is fire-and-forget, so a collision right after a change may find no row yet
-  and leave the line out.
+- `recordAuditLog` is fire-and-forget, so a collision right after a change may not find its row
+  yet; the check against the stored role then leaves the line out rather than naming an older
+  change.
 - See `docs/_user-roles-and-permissions.md` for who edits authors.
 
 ## Turned down

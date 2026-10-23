@@ -19,7 +19,11 @@ type Result =
       previousRoleName: AuthorRoleName
       roleName: AuthorRoleName
     }
-  | { status: 'role-conflict'; currentRoleId: string }
+  | {
+      status: 'role-conflict'
+      currentRoleId: string
+      currentRoleName: AuthorRoleName
+    }
 
 /**
  * Saves Upravit autora (design 28c). Name and bio are written as sent; the
@@ -53,7 +57,11 @@ export const updateAuthor = async ({
       })
 
       if (stored.role.id !== loadedRoleId) {
-        return { currentRoleId: stored.role.id, status: 'role-conflict' }
+        return {
+          currentRoleId: stored.role.id,
+          currentRoleName: stored.role.name,
+          status: 'role-conflict',
+        }
       }
 
       if (roleId === loadedRoleId) return { status: 'saved' }
@@ -75,11 +83,15 @@ export const updateAuthor = async ({
 
       if (count === 0) {
         const current = await transaction.author.findUniqueOrThrow({
-          select: { roleId: true },
+          select: { role: { select: { id: true, name: true } } },
           where: { id: authorId },
         })
 
-        return { currentRoleId: current.roleId, status: 'role-conflict' }
+        return {
+          currentRoleId: current.role.id,
+          currentRoleName: current.role.name,
+          status: 'role-conflict',
+        }
       }
 
       return {

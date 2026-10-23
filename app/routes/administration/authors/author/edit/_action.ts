@@ -54,6 +54,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       currentRoleId: result.currentRoleId,
       roleChange: await getLatestRoleChange({
         event: 'author_role_changed',
+        roleName: result.currentRoleName,
         targetId: authorId,
       }),
       status: 'role-conflict' as const,

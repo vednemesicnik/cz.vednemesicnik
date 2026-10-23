@@ -23,11 +23,13 @@ describe('getLatestRoleChange', () => {
     auditLogFindFirst.mockResolvedValue({
       actorId: 'admin',
       createdAt: new Date('2026-09-25T12:05:00.000Z'),
+      detail: 'role: creator → coordinator',
     })
     userFindUnique.mockResolvedValue({ author: { name: 'Petr Dvořák' } })
 
     const change = await getLatestRoleChange({
       event: 'author_role_changed',
+      roleName: 'coordinator',
       targetId: 'author',
     })
 
@@ -47,7 +49,28 @@ describe('getLatestRoleChange', () => {
     auditLogFindFirst.mockResolvedValue(null)
 
     await expect(
-      getLatestRoleChange({ event: 'author_role_changed', targetId: 'author' }),
+      getLatestRoleChange({
+        event: 'author_role_changed',
+        roleName: 'coordinator',
+        targetId: 'author',
+      }),
+    ).resolves.toBeNull()
+    expect(userFindUnique).not.toHaveBeenCalled()
+  })
+
+  test('is null when the newest row did not end on the stored role', async () => {
+    auditLogFindFirst.mockResolvedValue({
+      actorId: 'admin',
+      createdAt: new Date('2026-09-25T12:05:00.000Z'),
+      detail: 'role: coordinator → creator',
+    })
+
+    await expect(
+      getLatestRoleChange({
+        event: 'author_role_changed',
+        roleName: 'contributor',
+        targetId: 'author',
+      }),
     ).resolves.toBeNull()
     expect(userFindUnique).not.toHaveBeenCalled()
   })
@@ -56,11 +79,16 @@ describe('getLatestRoleChange', () => {
     auditLogFindFirst.mockResolvedValue({
       actorId: 'deleted',
       createdAt: new Date('2026-09-25T12:05:00.000Z'),
+      detail: 'role: creator → coordinator',
     })
     userFindUnique.mockResolvedValue(null)
 
     await expect(
-      getLatestRoleChange({ event: 'author_role_changed', targetId: 'author' }),
+      getLatestRoleChange({
+        event: 'author_role_changed',
+        roleName: 'coordinator',
+        targetId: 'author',
+      }),
     ).resolves.toBeNull()
   })
 })

@@ -91,6 +91,7 @@ describe('updateAuthor', () => {
 
     expect(result).toEqual({
       currentRoleId: 'coordinator-id',
+      currentRoleName: 'coordinator',
       status: 'role-conflict',
     })
     expect(mocks.authorUpdate).toHaveBeenCalled()
@@ -108,6 +109,7 @@ describe('updateAuthor', () => {
 
     expect(result).toEqual({
       currentRoleId: 'coordinator-id',
+      currentRoleName: 'coordinator',
       status: 'role-conflict',
     })
   })
@@ -117,7 +119,7 @@ describe('updateAuthor', () => {
     mocks.authorRoleFindUnique.mockResolvedValue({ name: 'coordinator' })
     mocks.authorUpdateMany.mockResolvedValue({ count: 0 })
     mocks.authorFindUniqueOrThrow.mockResolvedValueOnce({
-      roleId: 'contributor-id',
+      role: { id: 'contributor-id', name: 'contributor' },
     })
 
     const result = await updateAuthor({
@@ -128,6 +130,7 @@ describe('updateAuthor', () => {
 
     expect(result).toEqual({
       currentRoleId: 'contributor-id',
+      currentRoleName: 'contributor',
       status: 'role-conflict',
     })
   })
