@@ -95,6 +95,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             <ExistingAuthorField
               authors={authorsWithoutUser}
               defaultAuthorId={preselectedAuthorId}
+              errorId={fields.existingAuthorId.errorId}
               errors={fields.existingAuthorId.errors}
               id={fields.existingAuthorId.id}
               name={fields.existingAuthorId.name}

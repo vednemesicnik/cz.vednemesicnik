@@ -4,8 +4,14 @@ import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  /** For the field the errors belong to, as its `aria-describedby`. */
+  id?: string
 }
 
-export const ErrorMessageGroup = ({ children }: Props) => {
-  return <div className={styles.container}>{children}</div>
+export const ErrorMessageGroup = ({ children, id }: Props) => {
+  return (
+    <div className={styles.container} id={id}>
+      {children}
+    </div>
+  )
 }

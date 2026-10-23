@@ -35,6 +35,8 @@ type Props = {
   name: string
   id: string
   errors?: string[]
+  /** The errors' id, which the search points to while they show. */
+  errorId: string
 }
 
 /**
@@ -49,6 +51,7 @@ export const ExistingAuthorField = ({
   name,
   id,
   errors,
+  errorId,
 }: Props) => {
   const [authorId, setAuthorId] = useState(defaultAuthorId)
   const [isChanging, setIsChanging] = useState(false)
@@ -60,6 +63,7 @@ export const ExistingAuthorField = ({
 
   const author = authors.find((candidate) => candidate.id === authorId)
   const isSearching = author === undefined || isChanging
+  const hasErrors = errors !== undefined && errors.length > 0
 
   useEffect(() => {
     const target = focusTargetRef.current
@@ -67,6 +71,12 @@ export const ExistingAuthorField = ({
     if (target === 'search') searchRef.current?.focus()
     if (target === 'change') changeRef.current?.focus()
   })
+
+  // Sent without an author: the search takes the focus, as an invalid field
+  // would; the hidden input it stands for is not there to take it.
+  useEffect(() => {
+    if (hasErrors) searchRef.current?.focus()
+  }, [hasErrors])
 
   if (authors.length === 0) {
     return <p className={styles.field}>{USER_RECORD_COPY.author.noneLeft}</p>
@@ -124,6 +134,7 @@ export const ExistingAuthorField = ({
   const search = isSearching && (
     <ChipInput
       emptyLabel={USER_RECORD_COPY.author.noneMatching}
+      errorId={hasErrors ? errorId : undefined}
       id={id}
       isLabelHidden
       label={USER_RECORD_COPY.author.searchLabel}
@@ -180,8 +191,8 @@ export const ExistingAuthorField = ({
         <input name={name} type={'hidden'} value={author.id} />
       )}
 
-      {errors !== undefined && errors.length > 0 && (
-        <ErrorMessageGroup>
+      {errors !== undefined && hasErrors && (
+        <ErrorMessageGroup id={errorId}>
           {errors.map((error) => (
             <ErrorMessage key={error}>{error}</ErrorMessage>
           ))}
