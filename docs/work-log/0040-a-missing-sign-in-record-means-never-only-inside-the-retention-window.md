@@ -29,7 +29,9 @@ records for the whole list come from one `groupBy` query. Design decided the sta
 
 ## What follows
 
-Changing `retentionDays` moves the prune, the boundary and the text together. Sorting the list
+Changing `retentionDays` moves the prune, the boundary and the text together; a new value
+needs the copywriter first, since the text was approved for 90 days and the Czech noun
+changes form below five. Sorting the list
 by last sign-in is not possible without a relation from `AuthLog` to `User`, which 0004 rules
 out on purpose. A reason to revisit: the Administrator needs to tell "never" from "long ago"
 for old accounts, which would need data kept beyond the window. The current state of both logs
