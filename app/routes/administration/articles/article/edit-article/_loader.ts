@@ -175,7 +175,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
             id: image.id,
             previewUrl: createImageSources('article-image', image).src ?? null,
           })),
-        // An empty draft (decision 0020) has no address and is left for the list.
+        // An empty draft (log 0020) has no address and is left for the list.
         isEmptyDraft: article.firstContentAt === null,
         perex: article.perex || '',
         slug: article.slug ?? '',
@@ -190,7 +190,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         updatedAt: article.updatedAt.toISOString(),
       },
       authors,
-      // Without itself and as the association too (24j, decision 0026).
+      // Without itself and as the association too (24j, log 0026).
       canChooseAuthorsFreely: canChooseRecordAuthor(context.roleLevel),
       // Offered for a name the search does not find (24j, 2re069d4).
       canCreateAuthor: userContext.can({ action: 'create', entity: 'author' })

@@ -120,7 +120,7 @@ describe('articleContentStateHandlers — retract review clearing', () => {
         submittedById: null,
       },
       select: { slug: true },
-      // Not while someone else edits it (decision 0019).
+      // Not while someone else edits it (log 0019).
       where: {
         AND: [{ OR: expect.arrayContaining([{ heldByAuthorId: 'author-1' }]) }],
         id: 'a1',
@@ -207,7 +207,7 @@ describe('articleContentStateHandlers — submission', () => {
   })
 })
 
-describe('articleContentStateHandlers — the edit hold (07g, decision 0019)', () => {
+describe('articleContentStateHandlers — the edit hold (07g, log 0019)', () => {
   test('publishing ends one’s own hold with the draft', async () => {
     articleFindUniqueOrThrowMock.mockResolvedValue(completeArticle)
 

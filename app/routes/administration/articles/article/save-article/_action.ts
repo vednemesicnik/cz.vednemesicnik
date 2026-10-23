@@ -10,7 +10,7 @@ import type { Route } from './+types/route'
 
 /**
  * Saves the article editor's whole form for the tab holding the edit hold
- * (design 24e, decisions 0019 and 0022). A POST to a resource route runs only
+ * (design 24e, logs 0019 and 0022). A POST to a resource route runs only
  * this action, so it requires the session itself (`requireCSRF`). Answers
  * JSON for the editor's autosave: `saved` with the new `updatedAt` and a free
  * address for a taken one, `not-held` (409) with who holds it, `deleted`
@@ -39,7 +39,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     return Response.json(result, { status: 409 })
   }
 
-  // Gone meanwhile (decision 0036): the editor turns read-only and says so.
+  // Gone meanwhile (log 0036): the editor turns read-only and says so.
   if (result.status === 'deleted') {
     return Response.json(result, { status: 410 })
   }

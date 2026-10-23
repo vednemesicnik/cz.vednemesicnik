@@ -12,7 +12,7 @@ type Props = {
 
 /**
  * The design system's `ImageTile`: one image of an editor's gallery (article
- * images, later the issue and episode covers; design 24b, decision 0027). The
+ * images, later the issue and episode covers; design 24b, log 0027). The
  * preview (`ImageTileMedia`) with its place (`ImageTileOrder`), pills and
  * „⋯“, then the alt text, the caption and the file name (`ImageTileFile`),
  * 10 px apart. An upload under way shows `UploadStatus` under the preview;

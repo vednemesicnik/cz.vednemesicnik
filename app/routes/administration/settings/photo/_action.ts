@@ -36,7 +36,7 @@ const readFormData = (request: Request) =>
  * the form. A POST to a resource route runs only this action, so it requires
  * the session itself (`requireCSRF`). Answers JSON: `saved`, `removed`,
  * `invalid` (400, 413) or `failed` (422) with the sentence to show. An upload
- * the person cancelled (decision 0029) stores nothing and is no error, even
+ * the person cancelled (log 0029) stores nothing and is no error, even
  * when it was cancelled while its body was still arriving.
  */
 export const action = async ({ request, url }: ActionFunctionArgs) => {

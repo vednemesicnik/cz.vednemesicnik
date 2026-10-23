@@ -95,7 +95,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     (filter) => filter.id === matchingFilterId,
   )?.name
 
-  // Nový článek creates the draft and opens it (decision 0020), so it posts.
+  // Nový článek creates the draft and opens it (log 0020), so it posts.
   const renderNewArticleButton = (className?: string) =>
     canCreate && (
       <Form

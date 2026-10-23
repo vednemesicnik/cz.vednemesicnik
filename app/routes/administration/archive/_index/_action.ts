@@ -45,7 +45,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   // Sequential on purpose: each delete runs its own permission check and
   // image/PDF-cleanup. Not atomic across items — the UI only offers deletable
   // rows; the per-item check is defense in depth. An issue any editor holds,
-  // one's own other tab included, stays (decisions 0019, 0036) and is not
+  // one's own other tab included, stays (logs 0019, 0036) and is not
   // counted.
   let deletedCount = 0
   for (const issue of issues) {

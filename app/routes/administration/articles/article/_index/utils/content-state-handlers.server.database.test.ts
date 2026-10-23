@@ -13,7 +13,7 @@ import { createTestDatabase } from '~/utils/testing/create-test-database.server'
 
 import { articleContentStateHandlers } from './content-state-handlers.server'
 
-// The delete's hold condition (decision 0036) against a real SQLite row: the
+// The delete's hold condition (log 0036) against a real SQLite row: the
 // expiry is a date compared by the adapter, which a mock never runs (0021).
 const database = vi.hoisted(() => ({ prisma: null as PrismaClient | null }))
 

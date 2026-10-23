@@ -73,7 +73,7 @@ export type ContentStateHandlersConfig = {
   /**
    * Write a state transition to the entity row (and any mirrored rows). An
    * entity with an edit hold repeats "not held by someone else than `authorId`"
-   * in that write and throws the held refusal when it fails (decision 0019).
+   * in that write and throws the held refusal when it fails (log 0019).
    */
   applyState: (
     id: string,
@@ -88,7 +88,7 @@ export type ContentStateHandlersConfig = {
   /**
    * Delete the row and any entity-specific dependents (images, PDF, PageSEO).
    * The delete repeats "the hold is free" (`buildFreeHoldWhere`), one's own
-   * other tab included (decision 0036), and throws the held refusal when it
+   * other tab included (log 0036), and throws the held refusal when it
    * fails.
    */
   deleteRow: (id: string, context: AuthorPermissionContext) => Promise<void>

@@ -33,7 +33,7 @@ If the argument is empty, ask what is being weighed and stop. Otherwise restate 
 one sentence and name the surfaces it touches — public website, administration, e‑mail, a
 form. If it does not fit one sentence, that is the first finding.
 
-Read what exists before weighing: the decision records in `docs/decisions/`, the design screens
+Read what exists before weighing: the work log in `docs/work-log/`, the design screens
 that cover it (`DesignSync`, app project `60d13daa-be98-47ec-95e1-e8913a86fef4`, one screen at a
 time per `docs/_design-project.md`), the code it would sit in, and the open issues — half of these
 proposals are already an issue under another name.
@@ -88,7 +88,7 @@ verdict.
   not to `/plan-issue`.
 - **Drop it.** 4 or 5 failed, or 1 and 2 came out against it. Record the reasoning **where the
   next person will hit it** — a comment on the issue it would have duplicated, or on the
-  proposal's own issue. A no that settles the product model also gets `/record-decision`. A
+  proposal's own issue. A no that settles the product model is also logged with `/log-work`. A
   no that leaves no trace gets proposed again in a month.
 
 Never soften a drop into "we could do a smaller version". A smaller version is a different

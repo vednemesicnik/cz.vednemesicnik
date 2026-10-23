@@ -172,7 +172,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   return {
     authors,
-    // The year the editor offers for an empty number (decision 0034).
+    // The year the editor offers for an empty number (log 0034).
     currentYear: getPragueYear(new Date()),
     isApprover,
     // One's own issue has no sentence over it (24c).
@@ -187,7 +187,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               altText: issue.cover.altText,
               sources: createImageSources('issue-cover', issue.cover),
             },
-      // An empty draft (decision 0020) is left for the list.
+      // An empty draft (log 0020) is left for the list.
       isEmptyDraft: issue.firstContentAt === null,
       name: issue.name ?? '',
       order: issue.order,
@@ -197,7 +197,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           : {
               fileName: issue.pdf.fileName,
               // New with every upload: tells a cancelled replacement from one
-              // that saved (decision 0029).
+              // that saved (log 0029).
               id: issue.pdf.id,
               originalFileName: issue.pdf.originalFileName,
               uploadedAt: formatNumericDate(issue.pdf.uploadedAt),

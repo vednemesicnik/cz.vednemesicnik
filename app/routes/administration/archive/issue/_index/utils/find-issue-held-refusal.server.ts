@@ -2,7 +2,7 @@ import { prisma } from '~/utils/db.server'
 import { getEditHeldRefusal } from '~/utils/edit-hold/get-edit-held-refusal'
 
 type Options = {
-  /** A delete waits for one's own other tab too (decision 0036). */
+  /** A delete waits for one's own other tab too (log 0036). */
   countsOwnOtherTab?: boolean
 }
 

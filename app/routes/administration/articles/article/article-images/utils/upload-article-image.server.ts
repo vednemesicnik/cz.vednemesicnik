@@ -77,7 +77,7 @@ export async function uploadArticleImage(
       })
 
       // The store keys files by the id alone, so an id another record owns
-      // is refused (decision 0022).
+      // is refused (log 0022).
       if (
         storedImage === null
           ? await isImageIdOwnedElsewhere([imageId])

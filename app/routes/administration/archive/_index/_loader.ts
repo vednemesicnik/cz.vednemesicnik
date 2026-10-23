@@ -98,7 +98,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   // The years an issue is in (26a), offered whether or not the role may view
   // them, so a shared link means the same for everyone, as the article list's
-  // options do. A draft without a year adds none (decision 0034).
+  // options do. A draft without a year adds none (log 0034).
   const yearOptions = (
     await prisma.issue.findMany({
       distinct: ['year'],

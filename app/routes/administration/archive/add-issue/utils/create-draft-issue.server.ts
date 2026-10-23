@@ -7,7 +7,7 @@ import { deleteStaleEmptyIssueDrafts } from './delete-stale-empty-issue-drafts.s
 /**
  * Creates an empty draft owned by the signed-in author, without a year or an
  * order: the editor offers the next free number, and only a confirmed one
- * saves (decisions 0020 and 0034). Nobody sees it until its first save or
+ * saves (logs 0020 and 0034). Nobody sees it until its first save or
  * upload. Empty drafts left over from earlier clicks are cleared first.
  *
  * @param request - The action's request; the caller has checked the session.

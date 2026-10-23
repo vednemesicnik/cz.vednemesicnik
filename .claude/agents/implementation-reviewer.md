@@ -1,6 +1,6 @@
 ---
 name: implementation-reviewer
-description: Review a feature branch's diff before its PR — every hunk against the repo rules, AGENTS.md, the accepted decision records and the GitHub issue's acceptance criteria — in a fresh context, so the session that wrote the code does not grade its own work. Read-only; returns one ranked report. Spawned by /review-implementation and /ship-issue Phase A with the issue number and the base branch.
+description: Review a feature branch's diff before its PR — every hunk against the repo rules, AGENTS.md, the work log and the GitHub issue's acceptance criteria — in a fresh context, so the session that wrote the code does not grade its own work. Read-only; returns one ranked report. Spawned by /review-implementation and /ship-issue Phase A with the issue number and the base branch.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Edit, Write, NotebookEdit, Agent
 model: opus
@@ -36,8 +36,9 @@ doing the same thing (add and edit, list and detail), the loader that feeds the 
   modules, stories;
 - `.agents/skills/component-authoring/` references when the diff adds markup or changes a
   component — its API, semantic elements, layout shift, reuse;
-- the **Accepted** records in `docs/decisions/` — a change that contradicts one is a finding,
-  whatever the code looks like;
+- the entries in `docs/work-log/` for the areas the diff touches — context, not rules. A
+  change that departs from one is a finding only when nothing says why: the issue, the PR or a
+  new entry;
 - **no real data** in fixtures, tests and docs — example addresses use `priklad.cz`, people
   are invented;
 - the design notes, when given: the screen decides, not the issue's summary of it.
@@ -72,6 +73,6 @@ One report, most severe first, nothing before or after it:
 - `file:line` · severity · problem · proposed fix
 ```
 
-Severity is `high` (wrong behaviour, data loss, security, a broken decision record), `medium`
+Severity is `high` (wrong behaviour, data loss, security, an unexplained departure from the work log), `medium`
 (a rule broken, a parallel path out of step) or `low` (naming, comments, hygiene). An empty
 section says `None.`

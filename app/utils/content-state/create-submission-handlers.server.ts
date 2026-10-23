@@ -35,7 +35,7 @@ type SubmissionHandlersConfig = {
  *   an unsubmitted draft, so a submit racing another transition can't overwrite
  *   it; resolves to the number of rows written. An entity with an edit hold
  *   repeats "not held by someone else than `authorId`" in that write and throws
- *   the held refusal when it fails (decision 0019).
+ *   the held refusal when it fails (log 0019).
  * @param config.clearSubmission - Ends the submission and deletes the reviews: a
  *   taken back or returned draft is unsubmitted and unapproved (design 07b).
  *   Held content is refused as in `markSubmitted`.

@@ -24,7 +24,7 @@ const RELEASED_HOLD = {
 /**
  * Issue state-transition handlers: single author, cover image and PDF cleanup
  * on delete, and a publish only of a complete issue (design 26e). None of them
- * runs while someone else edits the issue (decision 0019), and a delete waits
+ * runs while someone else edits the issue (log 0019), and a delete waits
  * for one's own other tab too (0036).
  */
 export const issueContentStateHandlers = createContentStateHandlers({
@@ -65,7 +65,7 @@ export const issueContentStateHandlers = createContentStateHandlers({
         refuseWhenHeld(
           () =>
             // Not while any editor holds it, one's own in another tab too
-            // (decision 0036).
+            // (log 0036).
             prisma.issue.delete({
               where: { AND: [buildFreeHoldWhere(new Date())], id },
             }),

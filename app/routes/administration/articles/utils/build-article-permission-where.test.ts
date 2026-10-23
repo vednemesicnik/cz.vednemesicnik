@@ -58,7 +58,7 @@ describe('buildArticlePermissionWhere', () => {
     ).toEqual({ ...nonEmpty, OR: [{ state: 'published' }] })
   })
 
-  test('an empty draft is in no state the role views (decision 0020)', () => {
+  test('an empty draft is in no state the role views (log 0020)', () => {
     expect(
       buildArticlePermissionWhere(
         createContext({ archived: any, draft: any, published: any }),

@@ -18,7 +18,7 @@ import { getEditHoldStatus } from './get-edit-hold-status'
 export type EditHoldRow = EditHoldColumns & {
   authorIds: string[]
   heldByName: string | null
-  /** An empty draft is deleted when its hold ends (decision 0020). */
+  /** An empty draft is deleted when its hold ends (log 0020). */
   isEmpty: boolean
   state: ContentState
   submittedAt: Date | null
@@ -83,16 +83,16 @@ const toOtherHolder = (
 
 /**
  * Builds the edit hold's operations for one content type (design 07g, 24g,
- * decision 0019): take, renew, release and take over. The entity's callbacks
+ * log 0019): take, renew, release and take over. The entity's callbacks
  * carry the Prisma work; the factory owns the permission, the rules and the
  * events.
  *
  * A hold write moves only the hold columns and sends back the `updatedAt` it
- * read, in its `where` too, so it never passes for a save (decision 0021). A
+ * read, in its `where` too, so it never passes for a save (log 0021). A
  * save landing between the read and the write fails that condition; the
  * operation reads again and tries once more.
  *
- * Taking, taking over and releasing are content events (decision 0012); a
+ * Taking, taking over and releasing are content events (log 0012); a
  * renewal and an expiry are not. Only a takeover of someone else's valid hold
  * goes into the history (07f).
  */
@@ -100,7 +100,7 @@ export const createEditHoldHandlers = (config: EditHoldHandlersConfig) => {
   const { entity } = config
 
   // A missing row answers `deleted` where it used to be a 404: the editor
-  // learns its content is gone (decision 0036). Nothing is checked first, so
+  // learns its content is gone (log 0036). Nothing is checked first, so
   // it says no more than the 404 did.
   const DELETED = { status: 'deleted' } as const
 

@@ -16,17 +16,17 @@ description: |
 
 When you have a recommendation, the call is yours: decide, then tell the user what you
 decided. A question they would answer with your recommendation only stops their work
-(decision 0018).
+(log 0018).
 
 ## How
 
-1. **Read first.** `docs/` and `docs/decisions/` settle most of the frame; a call they
-   already make is not a call.
+1. **Read first.** `docs/` and `docs/work-log/` settle most of the frame; a call they
+   already make is not a call unless there is a reason to change direction.
 2. **Weigh it.**
    - A small or easily reversed call: decide inline.
    - A weighty or hard-to-reverse one (a data model, permissions, authentication, routes, a
      migration, the order of work): first hand your recommendation to a subagent in a fresh
-     context, asked to refute it against `docs/` and the decision records. Resolve its
+     context, asked to refute it against `docs/` and the work log. Resolve its
      objections, then decide.
 3. **Report it** in a line or two, with what you turned down:
 
@@ -35,7 +35,7 @@ decided. A question they would answer with your recommendation only stops their 
    version that was sent. Turned down: a JSON snapshot column, which nothing could query.
    ```
 
-4. **Record it** with `/record-decision` when it binds later changes.
+4. **Log it** with `/log-work` when later work should know it.
 
 The user can overrule any reported decision; that is the check, not a question up front.
 

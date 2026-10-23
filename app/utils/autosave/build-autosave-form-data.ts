@@ -1,6 +1,6 @@
 /**
  * The form as one autosave sends it: every field, but no file a save already
- * stored and no empty file input (decision 0022).
+ * stored and no empty file input (log 0022).
  *
  * @param formData - The form's current fields.
  * @param savedFiles - The files earlier saves carried.

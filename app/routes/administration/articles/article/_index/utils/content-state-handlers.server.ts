@@ -44,7 +44,7 @@ export const articleContentStateHandlers = createContentStateHandlers({
               : {}),
           },
           select: { slug: true },
-          // Not while someone else edits it (decision 0019).
+          // Not while someone else edits it (log 0019).
           where: { AND: [buildNotHeldByOthersWhere(authorId, new Date())], id },
         }),
       () => findArticleHeldRefusal(id, authorId),
@@ -89,7 +89,7 @@ export const articleContentStateHandlers = createContentStateHandlers({
                 })
               }
               // Not while any editor holds it, one's own in another tab too
-              // (decision 0036); the PageSEO delete rolls back.
+              // (log 0036); the PageSEO delete rolls back.
               return transaction.article.delete({
                 where: { AND: [buildFreeHoldWhere(new Date())], id },
               })

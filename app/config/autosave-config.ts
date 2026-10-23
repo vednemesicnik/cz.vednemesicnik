@@ -1,4 +1,4 @@
-// Autosave of a Document (design 24e, decision 0022).
+// Autosave of a Document (design 24e, log 0022).
 export const AUTOSAVE_CONFIG = {
   // A save goes about a second after the last keystroke.
   debounceMilliseconds: 1000,

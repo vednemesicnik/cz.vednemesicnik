@@ -4,7 +4,7 @@ import { prisma } from '~/utils/db.server'
  * Whether a cover or a profile picture already owns one of these image ids.
  * The image store keys every image by its row id alone, so a new article image
  * under such an id would share, and on removal wipe, that record's files
- * (decision 0022). A model that stores images under its own id belongs here.
+ * (log 0022). A model that stores images under its own id belongs here.
  *
  * @param ids - Image ids the editor made, not yet stored as article images.
  * @returns `true` when any of them is an issue, podcast or episode cover, or a

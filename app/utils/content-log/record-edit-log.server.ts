@@ -6,7 +6,7 @@ import type { AuthorPermissionContext } from '~/utils/permissions/author/context
 import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 type Options = {
-  /** A content type with an editor that saves as it goes (decision 0022). */
+  /** A content type with an editor that saves as it goes (log 0022). */
   entity: Extract<ContentLogEntity, 'article' | 'issue'>
   entityId: string
   /** The save made the empty draft's first content: its creation (0020). */

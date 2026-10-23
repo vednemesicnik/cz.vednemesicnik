@@ -34,7 +34,7 @@ const readYear = (value: string) =>
 const readOrder = (value: string) => readInteger(value, (order) => order >= 1)
 
 /**
- * The number the issue editor offers for empty fields (decision 0034, design
+ * The number the issue editor offers for empty fields (log 0034, design
  * 26c): this year and its next free order, the next free order of the year
  * typed, or this year for an order typed alone. Nothing for a supplement,
  * which takes its issue's order, for a value that can't be read yet (a year

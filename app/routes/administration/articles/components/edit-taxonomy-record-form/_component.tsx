@@ -14,7 +14,7 @@ type Props = {
 }
 
 /**
- * Edits a category or tag (design 25c, decision 0016). The address no longer
+ * Edits a category or tag (design 25c, log 0016). The address no longer
  * follows the name; a changed address of a draft published before warns that
  * the old one stops working.
  *

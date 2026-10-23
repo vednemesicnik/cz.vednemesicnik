@@ -18,7 +18,7 @@ export const schema = z.object({
   // The editor's tab, which holds the edit hold (design 24g).
   editTabId: z.string().min(1),
   // The gallery's alt texts and captions; every image change saves on its
-  // own (design 24b, decision 0027).
+  // own (design 24b, log 0027).
   images: z
     .array(
       z.object({
@@ -30,7 +30,7 @@ export const schema = z.object({
     .optional(),
   perex: optionalText,
   // The links the editor had at open and no longer has; any other stored
-  // link stays, an archived one included (decision 0025).
+  // link stays, an archived one included (log 0025).
   removedCategoryIds: z.array(z.string()).optional(),
   removedTagIds: z.array(z.string()).optional(),
   slug: optionalText.transform(slugify),

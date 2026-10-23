@@ -20,7 +20,7 @@ const STATUS_CODES = {
 
 /**
  * Saves one change of the issue editor's files for the tab holding the edit
- * hold (design 26c, decision 0029): the cover or the PDF uploaded, or removed.
+ * hold (design 26c, log 0029): the cover or the PDF uploaded, or removed.
  * A POST to a resource route runs only this action, so it requires the
  * session itself (`requireCSRF`). Answers JSON: `saved` with the new
  * `updatedAt`, `not-held` (409) with who holds it, `failed` (422) for a file

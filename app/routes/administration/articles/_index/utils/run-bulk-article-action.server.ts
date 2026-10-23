@@ -105,7 +105,7 @@ export const runBulkArticleAction = async (
     })
 
     // Someone else edits it: the action waits (07g, 22f). A delete waits for
-    // one's own other tab too (decision 0036).
+    // one's own other tab too (log 0036).
     const holdStatus = getEditHoldStatus(article, {
       authorId: context.authorId,
       now: new Date(),

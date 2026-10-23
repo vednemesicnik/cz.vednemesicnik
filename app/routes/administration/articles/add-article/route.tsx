@@ -6,7 +6,7 @@ import { requireCSRF } from '~/utils/csrf.server'
 import type { Route } from './+types/route'
 import { createDraftArticle } from './utils/create-draft-article.server'
 
-// *Nový článek* is an action, not a page (decision 0020): the old address leads
+// *Nový článek* is an action, not a page (log 0020): the old address leads
 // to the list, and a POST creates the draft and opens it.
 
 export const loader = () => redirect(href('/administration/articles'))

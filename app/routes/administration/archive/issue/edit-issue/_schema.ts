@@ -10,7 +10,7 @@ const optionalText = z
   .optional()
   .transform((value) => value?.trim() ?? '')
 
-/** The fields that make the issue's number; they save as one (decision 0034). */
+/** The fields that make the issue's number; they save as one (log 0034). */
 export const ISSUE_NUMBER_FIELDS = ['year', 'order', 'supplement'] as const
 
 export const schema = z.object({

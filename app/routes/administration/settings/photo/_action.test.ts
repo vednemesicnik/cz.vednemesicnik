@@ -215,7 +215,7 @@ describe('photo action — the status codes', () => {
   })
 })
 
-describe('photo action — a cancelled body (decision 0029)', () => {
+describe('photo action — a cancelled body (log 0029)', () => {
   const buildBrokenRequest = (signal?: AbortSignal) =>
     new Request(PHOTO_URL, {
       body: new ReadableStream({
