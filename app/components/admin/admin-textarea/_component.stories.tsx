@@ -62,22 +62,34 @@ export const Required: Story = {
 }
 
 /**
- * Textarea with a hint below, linked to the textarea for screen readers; the
- * hint may carry a counter on the other side.
+ * Textarea with a hint below, linked to the textarea for screen readers, and
+ * a counter at the row's end.
  */
 export const WithHint: Story = {
   args: {
+    counter: '39 / 500',
     field: createMockField({ id: 'bio', name: 'bio' }),
-    hint: (
-      <>
-        <span>Zatím se na webu nezobrazuje.</span>
-        <span>39 / 500</span>
-      </>
-    ),
+    hint: 'Zatím se na webu nezobrazuje.',
     label: 'Bio',
     textareaProps: {
       defaultValue: 'Fotí a píše reportáže ze školních akcí.',
     },
+  },
+}
+
+/**
+ * Over the limit: the error at the row's start, the counter in the error
+ * colour at its end (design 28c).
+ */
+export const WithCounterError: Story = {
+  args: {
+    counter: '512 / 500',
+    field: createMockField({
+      errors: ['Zkraťte bio na nejvýše 500 znaků.'],
+      id: 'bio-over',
+      name: 'bio',
+    }),
+    label: 'Bio',
   },
 }
 

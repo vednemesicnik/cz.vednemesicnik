@@ -8,14 +8,53 @@
   }
 }
 
+.footer {
+  @layer component {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 16px;
+    width: 100%;
+  }
+}
+
+.messages {
+  @layer component {
+    display: grid;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.hint,
+.counter {
+  @layer component {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+  }
+}
+
+/* A hint may still carry its own end, as the perex's advisory count (24a). */
 .hint {
   @layer component {
     display: flex;
     justify-content: space-between;
     gap: 16px;
-    width: 100%;
-    font-size: var(--font-size-sm);
-    color: var(--text-tertiary);
+  }
+}
+
+.counter {
+  @layer component {
+    flex: none;
+    margin-inline-start: auto;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.counter.counterError {
+  @layer variant {
+    color: var(--error-text);
   }
 }
 

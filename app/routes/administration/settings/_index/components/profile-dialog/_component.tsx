@@ -366,15 +366,9 @@ export const ProfileDialog = ({
               hint={'Zobrazuje se u článků na webu a v panelu administrace.'}
             />
             <AdminTextarea
+              counter={`${bioLength} / ${BIO_MAX_LENGTH}`}
               field={fields.bio}
-              hint={
-                <>
-                  <span>Zatím se na webu nezobrazuje.</span>
-                  <span>
-                    {bioLength} / {BIO_MAX_LENGTH}
-                  </span>
-                </>
-              }
+              hint={'Zatím se na webu nezobrazuje.'}
               label={
                 <>
                   Bio <span className={styles.optional}>nepovinné</span>
