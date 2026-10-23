@@ -6,6 +6,8 @@ import styles from './_styles.module.css'
  * icon. It is hidden from screen readers, so the link's name is its label, and
  * as an inline-block it takes no underline, so the line ends with the label.
  * The link around it should not wrap.
+ *
+ * @returns The hidden arrow glyph
  */
 export const LinkArrow = () => (
   <span aria-hidden={true} className={styles.arrow}>
