@@ -3,6 +3,7 @@ import { href, useRevalidator } from 'react-router'
 
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useWaitForChange } from '~/hooks/use-wait-for-change'
 import {
   FAILED_MESSAGE,
   IMAGE_TOO_LARGE_MESSAGE,
@@ -49,6 +50,7 @@ type Options = {
 export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
   const authenticityToken = useAuthenticityToken()
   const revalidator = useRevalidator()
+  const waitForStoredPhoto = useWaitForChange(imageSource)
   const controllerRef = useRef<AbortController | null>(null)
   const uploadRef = useRef<Upload | null>(null)
   const [upload, setUpload] = useState<Upload | null>(null)
@@ -115,12 +117,13 @@ export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
     const controller = new AbortController()
     controllerRef.current = controller
     const previewUrl = URL.createObjectURL(file)
+    const sourceAtPick = imageSource
     setImageError(null)
     setLastOutcome(null)
     setAnnouncement('')
     showUpload({
       previewUrl,
-      previousSource: imageSource,
+      previousSource: sourceAtPick,
       replaces: hasImage,
     })
 
@@ -129,9 +132,12 @@ export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
       controller.signal,
     )
 
-    // The upload lasts until the new photo has loaded.
+    // The upload lasts until the new photo has rendered: the revalidation
+    // resolves before React shows its data, and ending earlier would show the
+    // previous photo for a moment.
     if (answer.status === 'saved' && !controller.signal.aborted) {
       await revalidator.revalidate()
+      await waitForStoredPhoto(sourceAtPick)
     }
 
     // A cancel settled it already, and its answer is lost.
