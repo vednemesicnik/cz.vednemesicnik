@@ -22,4 +22,6 @@ export const handle = {
       path: href('/administration/archive/:issueId/edit-issue', { issueId }),
     }
   },
+  // The edit hold keeps the editor current; a reload could lose unsent text (log 0042).
+  skipsOwnAccountReload: true,
 }

@@ -45,6 +45,12 @@ account's display name falls back to its e-mail address when the author name is 
 - The own-account reload also reaches Settings and the edit forms, which 0035 keeps from
   listening to other people's changes. A reload does not remount the page, so typed values
   stay.
+- The article and issue editors stay out of it (`handle.skipsOwnAccountReload`). An editor
+  under an edit hold must not revalidate once its hold is lost or its content deleted
+  ([0023](0023-a-lost-edit-hold-turns-the-editor-read-only.md),
+  [0036](0036-a-delete-waits-for-every-open-editor.md)): the loader's 404, redirect or 403 would
+  replace the text kept for copying. The hold and the autosave keep the editor current, and the
+  next page after it loads fresh. Every editor that gets the edit hold sets the flag.
 - Content pages that print an author's name (the dashboard's queue, the article list) do not
   follow an author rename. A rename is rare, and the next content event or navigation shows
   it.

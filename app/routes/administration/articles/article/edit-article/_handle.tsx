@@ -15,4 +15,6 @@ export const handle = {
   },
   // On a phone the editor's own bar replaces the top bar (24f).
   hasOwnMobileBar: true,
+  // The edit hold keeps the editor current; a reload could lose unsent text (log 0042).
+  skipsOwnAccountReload: true,
 }

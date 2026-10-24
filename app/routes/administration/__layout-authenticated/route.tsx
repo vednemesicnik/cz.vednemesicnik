@@ -23,6 +23,7 @@ import { ToastProvider } from '~/components/toast-provider'
 import { useAccountEvents } from '~/hooks/use-account-events'
 import { useFullScreenMenu } from '~/hooks/use-full-screen-menu'
 import { hasOwnMobileBar } from '~/utils/has-own-mobile-bar'
+import { skipsOwnAccountReload } from '~/utils/skips-own-account-reload'
 import { isOwnAccountEvent } from '~/utils/sse/is-own-account-event'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -47,9 +48,12 @@ export default function RouteComponent({
   const { account, permissions, user } = loaderData
 
   // A role, a name or a photo changed elsewhere for this account: the sidebar,
-  // the permissions and the page follow (log 0042).
+  // the permissions and the page follow, except in an editor (log 0042).
   useAccountEvents({
-    filter: (event) => account !== null && isOwnAccountEvent(event, account),
+    filter: (event) =>
+      account !== null &&
+      isOwnAccountEvent(event, account) &&
+      !skipsOwnAccountReload(matches),
   })
 
   // Order per design 22a: content on top, people below the rule.
