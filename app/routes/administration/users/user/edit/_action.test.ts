@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   flashAdminNotice: vi.fn(),
   getLatestRoleChange: vi.fn(),
   isEmailTaken: vi.fn(),
+  publishAccountEvent: vi.fn(),
   recordAuditLog: vi.fn(),
   updateUser: vi.fn(),
   userFindUnique: vi.fn(),
@@ -12,6 +13,9 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('~/utils/csrf.server', () => ({ checkCSRF: mocks.checkCSRF }))
+vi.mock('~/utils/sse/publish-account-event.server', () => ({
+  publishAccountEvent: mocks.publishAccountEvent,
+}))
 vi.mock('~/utils/audit-log.server', () => ({
   formatRoleChangeDetail: (from: string, to: string) => `role: ${from} → ${to}`,
   recordAuditLog: mocks.recordAuditLog,
@@ -157,6 +161,11 @@ describe('Upravit uživatele action (design 28f, 28g)', () => {
 
     expect(result).toEqual({ status: 'success' })
     expect(mocks.flashAdminNotice).not.toHaveBeenCalled()
+    expect(mocks.publishAccountEvent).toHaveBeenCalledWith({
+      change: 'update',
+      entity: 'user',
+      entityId: 'jakub',
+    })
   })
 
   test('a collision returns the current role and its change', async () => {
@@ -188,6 +197,8 @@ describe('Upravit uživatele action (design 28f, 28g)', () => {
       targetId: 'jakub',
     })
     expect(mocks.recordAuditLog).not.toHaveBeenCalled()
+    // The e-mail is saved on a collision too (log 0042).
+    expect(mocks.publishAccountEvent).toHaveBeenCalledOnce()
   })
 
   test("the Owner's role is never sent, and a sent one is refused", async () => {
@@ -208,6 +219,7 @@ describe('Upravit uživatele action (design 28f, 28g)', () => {
       403,
     )
     expect(mocks.updateUser).not.toHaveBeenCalled()
+    expect(mocks.publishAccountEvent).not.toHaveBeenCalled()
   })
 
   test("the Owner's e-mail saves without a role", async () => {

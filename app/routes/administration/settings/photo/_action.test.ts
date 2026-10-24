@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   checkUserPermission: vi.fn(),
   deleteUserImage: vi.fn(),
   getUserPermissionContext: vi.fn(),
+  publishAccountEvent: vi.fn(),
   requireAuthentication: vi.fn(),
   requireCSRF: vi.fn(),
   saveUserImage: vi.fn(),
@@ -26,6 +27,10 @@ vi.mock(
 
 vi.mock('~/utils/permissions/user/guards/check-user-permission.server', () => ({
   checkUserPermission: mocks.checkUserPermission,
+}))
+
+vi.mock('~/utils/sse/publish-account-event.server', () => ({
+  publishAccountEvent: mocks.publishAccountEvent,
 }))
 
 vi.mock('./utils/delete-user-image.server', () => ({
@@ -82,6 +87,12 @@ describe('photo action — the dispatch', () => {
       file: expect.any(File),
       userId: 'user-1',
     })
+    // The account pages show the photo (log 0042).
+    expect(mocks.publishAccountEvent).toHaveBeenCalledWith({
+      change: 'update',
+      entity: 'user',
+      entityId: 'user-1',
+    })
   })
 
   test('a removal removes the photo of the signed-in user', async () => {
@@ -90,6 +101,7 @@ describe('photo action — the dispatch', () => {
     await expect(response.json()).resolves.toEqual({ status: 'removed' })
     expect(mocks.deleteUserImage).toHaveBeenCalledWith('user-1')
     expect(mocks.saveUserImage).not.toHaveBeenCalled()
+    expect(mocks.publishAccountEvent).toHaveBeenCalledOnce()
   })
 })
 
@@ -200,6 +212,7 @@ describe('photo action — the status codes', () => {
     )
 
     expect(response.status).toBe(422)
+    expect(mocks.publishAccountEvent).not.toHaveBeenCalled()
   })
 
   test('a cancelled upload answers 499', async () => {
@@ -212,6 +225,7 @@ describe('photo action — the status codes', () => {
     )
 
     expect(response.status).toBe(499)
+    expect(mocks.publishAccountEvent).not.toHaveBeenCalled()
   })
 })
 
