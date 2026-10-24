@@ -48,6 +48,17 @@ describe('useWaitForChange', () => {
     expect(wait.isSettled).toBe(true)
   })
 
+  test('settles every wait that is under way', async () => {
+    const { result, rerender } = renderWait('old')
+
+    const first = track(result.current('old'))
+    const second = track(result.current('old'))
+    await act(async () => rerender({ value: 'new' }))
+
+    expect(first.isSettled).toBe(true)
+    expect(second.isSettled).toBe(true)
+  })
+
   test('settles after a second when the value stays', async () => {
     const { result, rerender } = renderWait('same')
 
