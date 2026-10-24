@@ -13,6 +13,7 @@ import { prisma } from '~/utils/db.server'
 import { getPasskeyKind } from '~/utils/passkey/get-passkey-kind'
 import { getPasskeyName } from '~/utils/passkey/get-passkey-name'
 import { isRequestRecentlyAuthenticated } from '~/utils/recent-authentication.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   if (!(await isRequestRecentlyAuthenticated(request))) {
@@ -79,6 +80,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           },
         },
       },
+    })
+
+    // The user's detail shows the sign-in methods.
+    publishAccountEvent({
+      change: 'update',
+      entity: 'user',
+      entityId: session.userId,
     })
 
     return { status: 'success', verified: true }

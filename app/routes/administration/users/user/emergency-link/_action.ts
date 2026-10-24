@@ -9,6 +9,7 @@ import { formatTime } from '~/utils/format-time'
 import { isEmergencySignInEnabled } from '~/utils/is-emergency-sign-in-enabled.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { canIssueEmergencySignInLink } from '~/utils/permissions/user/guards/can-issue-emergency-sign-in-link'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 
 import { schema } from './_schema'
 import type { Route } from './+types/route'
@@ -67,6 +68,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     request,
     targetId: user.id,
   })
+
+  // The user's detail shows the link that still works.
+  publishAccountEvent({ change: 'update', entity: 'user', entityId: user.id })
 
   return data(
     {

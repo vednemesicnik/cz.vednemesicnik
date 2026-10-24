@@ -73,3 +73,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0039](0039-a-public-address-is-unique-only-once-published.md) | A public address is unique only once it is published, and a Document keeps what was typed | 2026-10-23 |  |
 | [0040](0040-a-missing-sign-in-record-means-never-only-inside-the-retention-window.md) | A missing sign-in record means "never" only inside the retention window | 2026-10-23 |  |
 | [0041](0041-a-role-edit-writes-the-role-only-while-it-is-the-one-the-form-loaded.md) | A role edit writes the role only while it is the one the form loaded | 2026-10-23 |  |
+| [0042](0042-an-account-event-is-a-bare-hint-and-a-session-reloads-on-its-own-account.md) | An account event is a bare hint, and every page reloads on its own account's event | 2026-10-24 |  |

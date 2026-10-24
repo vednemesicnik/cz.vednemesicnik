@@ -13,6 +13,7 @@ import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-
 import { hasEmailChanged } from '~/utils/has-email-changed'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { canEditUser } from '~/utils/permissions/user/guards/can-edit-user'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 import { USER_RECORD_COPY } from '../../user-record-copy'
 import { EMAIL_TAKEN_MESSAGE } from '../../utils/email-taken-message'
 import { isEmailTaken } from '../../utils/is-email-taken.server'
@@ -109,6 +110,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         : { ...requestedRole, loadedRoleId },
     userId,
   })
+
+  // The e-mail is saved even when the role collides.
+  publishAccountEvent({ change: 'update', entity: 'user', entityId: userId })
 
   // The old address always hears of a change, naming who made it (28f). The
   // save stands whether or not the notice goes out; the e-mail is saved on a

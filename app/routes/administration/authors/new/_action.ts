@@ -7,6 +7,7 @@ import { checkCSRF } from '~/utils/csrf.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 import { authorRecordSchema } from '../utils/author-record-schema'
 import type { Route } from './+types/route'
 import { createAuthor } from './utils/create-author.server'
@@ -40,6 +41,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
     event: 'author_created',
     request,
     targetId: authorId,
+  })
+
+  publishAccountEvent({
+    change: 'create',
+    entity: 'author',
+    entityId: authorId,
   })
 
   // From an article's author search, back to the editor, which chooses the

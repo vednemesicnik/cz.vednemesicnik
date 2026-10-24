@@ -7,6 +7,7 @@ import { getUserPermissionContext } from '~/utils/permissions/user/context/get-u
 import { canUseEmergencyPassword } from '~/utils/permissions/user/guards/can-use-emergency-password'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
 import { requireRecentAuthentication } from '~/utils/recent-authentication.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 
 import { schema } from './_schema'
 import { changePassword } from './utils/change-password.server'
@@ -54,6 +55,13 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
   }
 
   await changePassword(context.userId, submission.value.newPassword)
+
+  // The user's detail shows the sign-in methods.
+  publishAccountEvent({
+    change: 'update',
+    entity: 'user',
+    entityId: context.userId,
+  })
 
   return { status: 'success' as const }
 }

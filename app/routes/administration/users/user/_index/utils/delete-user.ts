@@ -2,6 +2,7 @@ import { recordAuditLog } from '~/utils/audit-log.server'
 import { checkLastOwner } from '~/utils/check-last-owner.server'
 import { prisma } from '~/utils/db.server'
 import { withUserPermission } from '~/utils/permissions/user/actions/with-user-permission.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 
 type Options = {
   id: string
@@ -23,6 +24,12 @@ export const deleteUser = (request: Request, options: Options) =>
         event: 'user_deleted',
         request,
         targetId: options.id,
+      })
+
+      publishAccountEvent({
+        change: 'delete',
+        entity: 'user',
+        entityId: options.id,
       })
     },
     target: options.target,

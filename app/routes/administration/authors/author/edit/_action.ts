@@ -10,6 +10,7 @@ import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 import { editAuthorRecordSchema } from '../../utils/author-record-schema'
 import type { Route } from './+types/route'
 import { updateAuthor } from './utils/update-author.server'
@@ -47,6 +48,13 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   }
 
   const result = await updateAuthor({ authorId, ...submission.value })
+
+  // Name and bio are saved even when the role collides.
+  publishAccountEvent({
+    change: 'update',
+    entity: 'author',
+    entityId: authorId,
+  })
 
   if (result.status === 'role-conflict') {
     // Name and bio are saved; the role waits for a second look (lj22mnbm).

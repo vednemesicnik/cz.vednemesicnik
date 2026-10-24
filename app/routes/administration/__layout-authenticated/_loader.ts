@@ -12,6 +12,7 @@ import {
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
+import type { OwnAccount } from '~/utils/sse/is-own-account-event'
 
 import type { Route } from './+types/route'
 import { canListPeople } from './utils/can-list-people'
@@ -32,6 +33,9 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   let colorScheme: ColorScheme = 'system'
 
+  // Every page reloads when an event is about this account (log 0042).
+  let account: OwnAccount | null = null
+
   if (sessionId !== undefined) {
     const session = await prisma.session.findUnique({
       select: {
@@ -39,10 +43,15 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         user: {
           select: {
             author: {
-              select: { name: true, role: { select: { name: true } } },
+              select: {
+                id: true,
+                name: true,
+                role: { select: { name: true } },
+              },
             },
             colorScheme: true,
             email: true,
+            id: true,
             image: { select: imageSourceSelect },
           },
         },
@@ -53,6 +62,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     })
 
     if (session) {
+      account = { authorId: session.user.author.id, userId: session.user.id }
       colorScheme = session.user.colorScheme
       user = {
         image: createImageSources('user-image', session.user.image),
@@ -108,6 +118,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   return data(
     {
+      account,
       colorScheme,
       csrfToken,
       isAuthenticated,
