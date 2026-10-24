@@ -1,12 +1,5 @@
 import { clsx } from 'clsx'
-import {
-  type FocusEvent,
-  type KeyboardEvent,
-  type MouseEvent,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { AuthorRemoveButton } from '~/components/author-remove-button'
 import { AuthorRow } from '~/components/author-row'
@@ -14,6 +7,7 @@ import { AuthorRowButton } from '~/components/author-row-button'
 import { ChipInput } from '~/components/chip-input'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
+import { useReplaceFrame } from '~/hooks/use-replace-frame'
 import { foldForSearch } from '~/utils/fold-for-search'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
 import { USER_RECORD_COPY } from '../../../user-record-copy'
@@ -56,14 +50,25 @@ export const ExistingAuthorField = ({
   errorId,
 }: Props) => {
   const [authorId, setAuthorId] = useState(defaultAuthorId)
-  const [isChanging, setIsChanging] = useState(false)
-  const [query, setQuery] = useState('')
-  const searchRef = useRef<HTMLInputElement>(null)
   const changeRef = useRef<HTMLButtonElement>(null)
-  // Where the focus goes once the row or the search is rendered.
+  // Zrušit, Esc and a choice return the focus to Změnit, as in 24j.
+  const {
+    frameProps,
+    query,
+    replacingKey,
+    searchRef,
+    setQuery,
+    start: startChanging,
+    stop: stopChanging,
+  } = useReplaceFrame<string>({
+    onRefocus: () => changeRef.current?.focus(),
+  })
+  // Outside the frame, where the focus goes once the row or the search is
+  // rendered: the search after ×, Změnit after the first choice.
   const focusTargetRef = useRef<'search' | 'change' | null>(null)
 
   const author = authors.find((candidate) => candidate.id === authorId)
+  const isChanging = replacingKey !== null
   const isSearching = author === undefined || isChanging
   const hasErrors = errors !== undefined && errors.length > 0
 
@@ -78,7 +83,7 @@ export const ExistingAuthorField = ({
   // would; the hidden input it stands for is not there to take it.
   useEffect(() => {
     if (hasErrors) searchRef.current?.focus()
-  }, [hasErrors])
+  }, [hasErrors, searchRef])
 
   if (authors.length === 0) {
     return <p className={styles.field}>{USER_RECORD_COPY.author.noneLeft}</p>
@@ -97,20 +102,14 @@ export const ExistingAuthorField = ({
       value: candidate.id,
     }))
 
-  const startChanging = () => {
-    setQuery('')
-    setIsChanging(true)
-    focusTargetRef.current = 'search'
-  }
-  // Zrušit and Esc return the focus to Změnit; leaving the frame (a click or
-  // Tab elsewhere) keeps it where it went.
-  const stopChanging = ({ refocus }: { refocus: boolean }) => {
-    setIsChanging(false)
-    focusTargetRef.current = refocus ? 'change' : null
-  }
   const choose = (chosenAuthorId: string) => {
     setAuthorId(chosenAuthorId)
-    stopChanging({ refocus: true })
+    // The first choice has no frame to end, so the field moves the focus.
+    if (isChanging) {
+      stopChanging({ refocus: true })
+    } else {
+      focusTargetRef.current = 'change'
+    }
   }
   // × drops the choice: the empty search with the focus in it, the removed
   // author offered again (nstqrn5g).
@@ -118,26 +117,6 @@ export const ExistingAuthorField = ({
     setAuthorId(null)
     setQuery('')
     focusTargetRef.current = 'search'
-  }
-
-  // Esc cancels at once, the open list included, as in 24j.
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Escape') return
-    event.preventDefault()
-    event.stopPropagation()
-    stopChanging({ refocus: true })
-  }
-  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) {
-      stopChanging({ refocus: false })
-    }
-  }
-  // A press anywhere in the frame but the field keeps the focus in the field:
-  // a click that does not focus (Zrušit in Safari, the name) is no leaving.
-  const handleMouseDown = (event: MouseEvent<HTMLDivElement>) => {
-    if (!(event.target instanceof Element && event.target.closest('input'))) {
-      event.preventDefault()
-    }
   }
 
   const search = isSearching && (
@@ -161,12 +140,9 @@ export const ExistingAuthorField = ({
       {author === undefined ? (
         search
       ) : (
-        // biome-ignore lint/a11y/noStaticElementInteractions: the frame only watches its row and search
         <div
           className={clsx(styles.frame, isChanging && styles.changing)}
-          onBlur={isChanging ? handleBlur : undefined}
-          onKeyDownCapture={isChanging ? handleKeyDown : undefined}
-          onMouseDown={isChanging ? handleMouseDown : undefined}
+          {...frameProps}
         >
           <AuthorRow
             image={NO_IMAGE}
@@ -186,7 +162,7 @@ export const ExistingAuthorField = ({
                 <AuthorRowButton
                   aria-label={`Změnit autora: ${author.name}`}
                   key={'change'}
-                  onClick={startChanging}
+                  onClick={() => startChanging(author.id)}
                   ref={changeRef}
                 >
                   Změnit
