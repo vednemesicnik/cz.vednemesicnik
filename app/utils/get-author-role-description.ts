@@ -9,7 +9,8 @@ const descriptions: Record<AuthorRoleName, string> = {
 }
 
 /**
- * The sentence under an author role where the role is chosen (design 28c, 28f).
+ * The sentence under an author role where the role is chosen (design 28c, 28f)
+ * and under the role in Settings (29a, rdqylvw7).
  *
  * @param roleName - The author role.
  * @returns What the role allows.

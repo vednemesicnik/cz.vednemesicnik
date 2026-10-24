@@ -89,8 +89,8 @@ jiné slovo pro tentýž čin. Je to známá nesrovnalost, ne dva různé kroky.
 Dvě nezávislé osy. **Autorská role** říká, co člověk smí s obsahem; **uživatelská role**, co
 smí s účty.
 
-- Autor: `Přispěvatel` (jen vlastní koncepty) · `Tvůrce` (vlastní obsah, vidí cizí koncepty) ·
-  `Koordinátor` (všechno, schvaluje).
+- Autor: `Přispěvatel` (píše vlastní koncepty a odesílá je ke schválení) · `Tvůrce` (totéž
+  a vidí i cizí koncepty) · `Koordinátor` (schvaluje a publikuje veškerý obsah).
 - Uživatel: `Člen` (jen vlastní účet) · `Administrátor` (účty kromě vlastníka) · `Vlastník`
   (jeden jediný).
 

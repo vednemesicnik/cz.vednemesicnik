@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { AuthorRoleName, ColorScheme } from '@generated/prisma/enums'
+import type { ColorScheme } from '@generated/prisma/enums'
 import { clsx } from 'clsx'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { href, useFetcher, useLocation, useNavigate } from 'react-router'
@@ -26,6 +26,7 @@ import { useToast } from '~/components/toast-provider'
 import { COLOR_SCHEME_CONFIG } from '~/config/color-scheme-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useColorScheme } from '~/hooks/use-color-scheme'
+import { getAuthorRoleDescription } from '~/utils/get-author-role-description'
 import type { IdentityCheckFailure } from '~/utils/identity-check/parse-identity-check-failure'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 import { runWithViewTransition } from '~/utils/run-with-view-transition'
@@ -56,14 +57,6 @@ import type { SettingsContinue } from './utils/parse-settings-continue'
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
-
-// What each author role may do today, after the role name (design 29a,
-// kacrd6y7: no „posílá ke schválení“ until that step exists).
-const authorRoleDescriptions: Record<AuthorRoleName, string> = {
-  contributor: 'spravuje vlastní koncepty',
-  coordinator: 'spravuje veškerý obsah a schvaluje',
-  creator: 'spravuje vlastní obsah, vidí i cizí koncepty',
-}
 
 // The colour scheme choices (design 29a, wording from copy thread 64fd5tyk).
 const colorSchemeOptions = [
@@ -307,10 +300,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ? null
       : getPasskeyLabel(removedPasskey)
 
-  const authorRole = `${getAuthorRoleLabel(user.authorRoleName)} · ${
-    authorRoleDescriptions[user.authorRoleName]
-  }`
-
   return (
     <AdminPage measure={'text'}>
       <PageTitle>Nastavení</PageTitle>
@@ -356,8 +345,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             </div>
 
             <AdminDetailList>
+              {/* The role, and under it the sentence from 28c (29a, rdqylvw7). */}
               <AdminDetailItem label={'Autorská role'}>
-                {authorRole}
+                <div className={styles.authorRole}>
+                  <span>{getAuthorRoleLabel(user.authorRoleName)}</span>
+                  <span className={styles.note}>
+                    {getAuthorRoleDescription(user.authorRoleName)}
+                  </span>
+                </div>
               </AdminDetailItem>
               <AdminDetailItem label={'Uživatelská role'}>
                 {getUserRoleLabel(user.userRoleName)}
