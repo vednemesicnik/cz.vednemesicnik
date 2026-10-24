@@ -228,8 +228,10 @@ export const ChipInput = ({
           value={query}
         />
       </div>
-      {/* Over what follows, so nothing moves while it shows. */}
-      <div className={styles.popup} hidden={!isOpen}>
+      {/* Over what follows, so nothing moves while it shows. Out of the Tab
+          order: Chrome makes a scroller focusable, and Tab would land in the
+          list, which closes with the field's blur and drops the focus. */}
+      <div className={styles.popup} hidden={!isOpen} tabIndex={-1}>
         <div
           aria-label={label}
           className={styles.listbox}
