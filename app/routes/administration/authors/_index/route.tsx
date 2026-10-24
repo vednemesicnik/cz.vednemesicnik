@@ -31,6 +31,7 @@ import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { VisuallyHidden } from '~/components/visually-hidden'
 import { AUTHOR_COUNT_FORMS } from '~/config/list-noun-config'
+import { useAccountEvents } from '~/hooks/use-account-events'
 import { useContentEvents } from '~/hooks/use-content-events'
 import {
   ACCOUNT_OPTIONS,
@@ -75,6 +76,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       event.entity === 'issue' ||
       event.entity === 'podcast_episode',
   })
+
+  // A row shows the account's e-mail and photo next to the author's.
+  useAccountEvents()
 
   const deletableIds = authors
     .filter((author) => author.canDelete)

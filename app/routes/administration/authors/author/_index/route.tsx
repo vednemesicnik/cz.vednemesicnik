@@ -21,6 +21,7 @@ import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
+import { useAccountEvents } from '~/hooks/use-account-events'
 import { useContentEvents } from '~/hooks/use-content-events'
 import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
@@ -64,6 +65,7 @@ export default function RouteComponent({
   // Content events carry no authors, so every change to a type the page
   // counts reloads it (log 0035).
   useContentEvents()
+  useAccountEvents()
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
   const [isBlockedDialogOpen, setIsBlockedDialogOpen] = useState(false)

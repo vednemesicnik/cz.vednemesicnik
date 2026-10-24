@@ -5,6 +5,7 @@ import {
 } from '~/utils/author-references/get-author-delete-block'
 import { prisma } from '~/utils/db.server'
 import { withUserPermission } from '~/utils/permissions/user/actions/with-user-permission.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 
 type Options = {
   id: string
@@ -29,22 +30,36 @@ export const deleteAuthor = (request: Request, options: Options) =>
   withUserPermission(request, {
     action: 'delete',
     entity: 'author',
-    execute: (context) =>
-      prisma.$transaction(async (transaction): Promise<DeleteAuthorResult> => {
-        const author = await transaction.author.findUniqueOrThrow({
-          select: AUTHOR_REFERENCES_SELECT,
-          where: { id: options.id },
+    execute: async (context) => {
+      const result = await prisma.$transaction(
+        async (transaction): Promise<DeleteAuthorResult> => {
+          const author = await transaction.author.findUniqueOrThrow({
+            select: AUTHOR_REFERENCES_SELECT,
+            where: { id: options.id },
+          })
+
+          const deleteBlock = getAuthorDeleteBlock(author, context.userId)
+
+          if (!deleteBlock.deletable) {
+            return { deleteBlock, status: 'blocked' }
+          }
+
+          await transaction.author.delete({ where: { id: options.id } })
+
+          return { status: 'deleted' }
+        },
+      )
+
+      // After the commit, so no receiver reloads before the author is gone.
+      if (result.status === 'deleted') {
+        publishAccountEvent({
+          change: 'delete',
+          entity: 'author',
+          entityId: options.id,
         })
+      }
 
-        const deleteBlock = getAuthorDeleteBlock(author, context.userId)
-
-        if (!deleteBlock.deletable) {
-          return { deleteBlock, status: 'blocked' }
-        }
-
-        await transaction.author.delete({ where: { id: options.id } })
-
-        return { status: 'deleted' }
-      }),
+      return result
+    },
     target: options.target,
   })

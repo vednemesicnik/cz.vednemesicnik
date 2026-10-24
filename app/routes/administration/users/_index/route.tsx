@@ -21,6 +21,7 @@ import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { USER_COUNT_FORMS } from '~/config/list-noun-config'
+import { useAccountEvents } from '~/hooks/use-account-events'
 import { SEARCH_PARAM } from '~/utils/admin-list-params'
 import { buildListSearch } from '~/utils/build-list-search'
 import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
@@ -45,6 +46,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     totalPages,
     users,
   } = loaderData
+
+  // A row shows the author's name and role next to the account's.
+  useAccountEvents()
 
   const [searchParams] = useSearchParams()
   const pending = useAdminListPending()

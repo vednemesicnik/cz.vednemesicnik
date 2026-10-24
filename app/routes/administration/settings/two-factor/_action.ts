@@ -10,6 +10,7 @@ import { getUserPermissionContext } from '~/utils/permissions/user/context/get-u
 import { canUseEmergencyPassword } from '~/utils/permissions/user/guards/can-use-emergency-password'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
 import { requireRecentAuthentication } from '~/utils/recent-authentication.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 import { verifyTOTP } from '~/utils/totp.server'
 import {
   disableUserTwoFactor,
@@ -54,10 +55,19 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
 
   const intent = formData.get(FORM_CONFIG.intent.name)
 
+  // The user's detail shows two-factor and the unused backup codes.
+  const publishSignInMethodsChange = () =>
+    publishAccountEvent({
+      change: 'update',
+      entity: 'user',
+      entityId: context.userId,
+    })
+
   // Disabling 2FA removes the stored Verification row and any backup codes
   // (atomically), which are meaningless without an enrolled second factor.
   if (intent === FORM_CONFIG.intent.value.delete) {
     await disableUserTwoFactor(context.userId)
+    publishSignInMethodsChange()
 
     return { status: 'disabled' as const }
   }
@@ -70,6 +80,7 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
     }
 
     const backupCodes = await regenerateBackupCodes(context.userId)
+    publishSignInMethodsChange()
 
     return data(
       { backupCodes, status: 'codes' as const },
@@ -167,6 +178,7 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
   // Enable 2FA and issue the initial backup codes atomically, so enrollment and
   // codes can't fall out of sync on a transient failure.
   const backupCodes = await enableUserTwoFactor(context.userId, config)
+  publishSignInMethodsChange()
 
   // Surface the codes once and clear the now-confirmed enrollment cookie.
   return data(

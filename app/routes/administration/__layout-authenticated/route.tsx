@@ -20,8 +20,10 @@ import { SidebarHighlightProvider } from '~/components/admin/sidebar-highlight-p
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
 import { RootBoundaryError } from '~/components/root-boundary-error'
 import { ToastProvider } from '~/components/toast-provider'
+import { useAccountEvents } from '~/hooks/use-account-events'
 import { useFullScreenMenu } from '~/hooks/use-full-screen-menu'
 import { hasOwnMobileBar } from '~/utils/has-own-mobile-bar'
+import { isOwnAccountEvent } from '~/utils/sse/is-own-account-event'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -42,7 +44,13 @@ export default function RouteComponent({
   loaderData,
   matches,
 }: Route.ComponentProps) {
-  const { permissions, user } = loaderData
+  const { account, permissions, user } = loaderData
+
+  // A role, a name or a photo changed elsewhere for this account: the sidebar,
+  // the permissions and the page follow (log 0042).
+  useAccountEvents({
+    filter: (event) => account !== null && isOwnAccountEvent(event, account),
+  })
 
   // Order per design 22a: content on top, people below the rule.
   const contentItems: NavigationItem[] = [

@@ -8,6 +8,7 @@ import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 import { EMAIL_TAKEN_MESSAGE } from '../utils/email-taken-message'
 import { isEmailTaken } from '../utils/is-email-taken.server'
 import { schema } from './_schema'
@@ -78,6 +79,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
     request,
     targetId: userId,
   })
+
+  // One event for the user and the author it may bring: the account pages
+  // listen to both entities.
+  publishAccountEvent({ change: 'create', entity: 'user', entityId: userId })
 
   // Only a new author was created here; an existing one only got the account (28b).
   if (createdAuthorId !== null) {

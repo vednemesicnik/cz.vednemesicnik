@@ -9,6 +9,7 @@ import { prisma } from '~/utils/db.server'
 import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-submission-status'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 import { throwDbError } from '~/utils/throw-db-error.server'
 
 import { colorSchemeSchema, profileSchema } from './_schema'
@@ -109,6 +110,12 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
   }
 
   await updateOwnProfile({ authorId: context.authorId, ...submission.value })
+
+  publishAccountEvent({
+    change: 'update',
+    entity: 'author',
+    entityId: context.authorId,
+  })
 
   return { status: 'profile-saved' as const }
 }

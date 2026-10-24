@@ -1,104 +1,16 @@
-import { useEffect, useEffectEvent } from 'react'
-import { useRevalidator } from 'react-router'
-
-import { adminEventSource } from '~/utils/sse/admin-event-source'
 import type { ContentEvent } from '~/utils/sse/content-event'
 
-const REVALIDATION_DELAY_MILLISECONDS = 300
-
-/** What reloads the page's data; `useRevalidator()` and a fetcher both fit. */
-type Revalidator = {
-  revalidate: () => unknown
-  state: string
-}
-
-type Options = {
-  filter?: (event: ContentEvent) => boolean
-  onEvent?: (event: ContentEvent) => void
-  revalidator?: Revalidator
-}
-
-const parseContentEvent = (data: string): ContentEvent | null => {
-  try {
-    return JSON.parse(data) as ContentEvent
-  } catch {
-    return null
-  }
-}
+import { type AdminEventsOptions, useAdminEvents } from './use-admin-events'
 
 /**
- * Re-runs the page's loaders when content changes elsewhere, debounced by
- * {@link REVALIDATION_DELAY_MILLISECONDS}. While the tab is hidden the changes
- * wait and revalidate once on return. Keeps the shared administration stream open
- * while the calling page is mounted.
+ * Re-runs the page's loaders when content changes elsewhere; see
+ * {@link useAdminEvents} for the debounce and the hidden tab.
  *
  * @param options - `filter` narrows which content events concern the page;
  *   `onEvent` hears each of them at once, before the debounced revalidation;
  *   `revalidator` replaces the page's revalidation (the article list loads only
  *   the rows on screen, 22f).
  */
-export const useContentEvents = (options?: Options): void => {
-  const pageRevalidator = useRevalidator()
-  const revalidator = options?.revalidator ?? pageRevalidator
-
-  const isRelevant = useEffectEvent(
-    (event: ContentEvent) => options?.filter?.(event) ?? true,
-  )
-  const isRevalidating = useEffectEvent(() => revalidator.state !== 'idle')
-  const revalidate = useEffectEvent(() => revalidator.revalidate())
-  const handleEvent = useEffectEvent((event: ContentEvent) =>
-    options?.onEvent?.(event),
-  )
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined
-    let hasHiddenChange = false
-
-    const scheduleRevalidation = () => {
-      clearTimeout(timer)
-      timer = setTimeout(() => {
-        timer = undefined
-
-        if (document.visibilityState === 'hidden') {
-          hasHiddenChange = true
-          return
-        }
-
-        // A running revalidation may predate the change; try again after it.
-        if (isRevalidating()) {
-          scheduleRevalidation()
-          return
-        }
-
-        hasHiddenChange = false
-        void revalidate()
-      }, REVALIDATION_DELAY_MILLISECONDS)
-    }
-
-    const unsubscribe = adminEventSource.subscribe(
-      'content-change',
-      (message) => {
-        const event = parseContentEvent(message.data)
-
-        if (event !== null && isRelevant(event)) {
-          handleEvent(event)
-          scheduleRevalidation()
-        }
-      },
-    )
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && hasHiddenChange) {
-        scheduleRevalidation()
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      unsubscribe()
-      clearTimeout(timer)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [])
-}
+export const useContentEvents = (
+  options?: AdminEventsOptions<ContentEvent>,
+): void => useAdminEvents('content-change', options)

@@ -7,6 +7,7 @@ import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { isImageOverPixelBudget } from '~/utils/image-store/is-image-over-pixel-budget.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 
 import {
   FAILED_MESSAGE,
@@ -84,6 +85,7 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
 
   if (parsed.data.intent === 'remove') {
     await deleteUserImage(userId)
+    publishAccountEvent({ change: 'update', entity: 'user', entityId: userId })
     return Response.json({ status: 'removed' })
   }
 
@@ -114,6 +116,9 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
       { status: 422 },
     )
   }
+
+  // The account pages show the photo.
+  publishAccountEvent({ change: 'update', entity: 'user', entityId: userId })
 
   return Response.json(result)
 }
