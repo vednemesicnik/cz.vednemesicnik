@@ -33,9 +33,7 @@ type Story = StoryObj<typeof meta>
 
 const items = (
   <>
-    <AdminDetailItem label="Autorská role">
-      Koordinátor · spravuje veškerý obsah a schvaluje
-    </AdminDetailItem>
+    <AdminDetailItem label="Autorská role">Koordinátor</AdminDetailItem>
     <AdminDetailItem label="Uživatelská role">Administrátor</AdminDetailItem>
     <AdminDetailItem label="Účet od">12. 3. 2024</AdminDetailItem>
   </>

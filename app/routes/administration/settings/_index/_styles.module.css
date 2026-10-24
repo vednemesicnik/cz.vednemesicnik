@@ -36,6 +36,14 @@
   }
 }
 
+.authorRole {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
 .note {
   @layer route {
     font-size: var(--font-size-xs);
