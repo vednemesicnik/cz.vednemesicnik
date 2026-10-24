@@ -12,11 +12,16 @@ afterEach(() => {
 type HarnessProps = {
   onOuterKeyDown?: () => void
   onRefocus?: (key: string) => void
+  onSearchKeyDown?: () => void
 }
 
 // A row with Vyměnit, the frame with Zrušit, the name and the search while
 // replacing, and a button outside the frame.
-const Harness = ({ onOuterKeyDown, onRefocus }: HarnessProps) => {
+const Harness = ({
+  onOuterKeyDown,
+  onRefocus,
+  onSearchKeyDown,
+}: HarnessProps) => {
   const replaceRef = useRef<HTMLButtonElement>(null)
   const frame = useReplaceFrame<string>({
     onRefocus: (key) => {
@@ -48,6 +53,7 @@ const Harness = ({ onOuterKeyDown, onRefocus }: HarnessProps) => {
           <input
             aria-label={'Vybrat jiného autora'}
             onChange={(event) => frame.setQuery(event.target.value)}
+            onKeyDown={onSearchKeyDown}
             ref={frame.searchRef}
             value={frame.query}
           />
@@ -81,7 +87,16 @@ describe('useReplaceFrame (24j, 28f)', () => {
   test('Esc ends it, refocuses the row and goes no further', () => {
     const onOuterKeyDown = vi.fn()
     const onRefocus = vi.fn()
-    render(<Harness onOuterKeyDown={onOuterKeyDown} onRefocus={onRefocus} />)
+    // The search's own Esc (ChipInput closing just the list) never runs: the
+    // frame takes it in the capture phase, the open list included.
+    const onSearchKeyDown = vi.fn()
+    render(
+      <Harness
+        onOuterKeyDown={onOuterKeyDown}
+        onRefocus={onRefocus}
+        onSearchKeyDown={onSearchKeyDown}
+      />,
+    )
 
     startReplacing()
     fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Escape' })
@@ -92,6 +107,7 @@ describe('useReplaceFrame (24j, 28f)', () => {
       screen.getByRole('button', { name: 'Vyměnit' }),
     )
     expect(onOuterKeyDown).not.toHaveBeenCalled()
+    expect(onSearchKeyDown).not.toHaveBeenCalled()
   })
 
   test('another key in the frame changes nothing', () => {
@@ -117,7 +133,7 @@ describe('useReplaceFrame (24j, 28f)', () => {
     )
   })
 
-  test('leaving the frame ends it and leaves the focus where it went', () => {
+  test('leaving the frame ends it without refocusing the row', () => {
     const onRefocus = vi.fn()
     render(<Harness onRefocus={onRefocus} />)
 

@@ -30,9 +30,11 @@ type FrameProps = {
  *
  * @param options.onRefocus - Focuses the row's button once it is back after
  *   Zrušit or Esc; gets the key the replacing started with.
- * @returns `frameProps` to spread on the frame, empty while nothing is being
- *   replaced, and `searchRef` for the search, which takes the focus when
- *   replacing starts.
+ * @returns `replacingKey`, the row being replaced or `null`; `start(key)`,
+ *   which empties `query` and, once rendered, puts the focus in the search
+ *   (`searchRef`); `stop({ refocus })`; `query` and `setQuery` for the
+ *   search; and `frameProps` to spread on the frame, empty while nothing is
+ *   being replaced.
  */
 export const useReplaceFrame = <Key>({ onRefocus }: Options<Key>) => {
   const [replacingKey, setReplacingKey] = useState<Key | null>(null)
