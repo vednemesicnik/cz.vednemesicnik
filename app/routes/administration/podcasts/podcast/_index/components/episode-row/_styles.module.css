@@ -1,0 +1,22 @@
+/* The number, by which the editors and the listeners know the episode (27b). */
+.number {
+  @layer route {
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+  }
+}
+
+/* The focus ring hugs the title, not the column. */
+.link {
+  @layer route {
+    align-self: flex-start;
+  }
+}
+
+.dialogs {
+  @layer route {
+    display: contents;
+    text-align: start;
+    white-space: normal;
+  }
+}

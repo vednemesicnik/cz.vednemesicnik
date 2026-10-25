@@ -44,6 +44,8 @@ export default function RouteComponent({
     defaultValue: {
       authorId: loaderData.selfAuthorId,
       description: '',
+      // The next free number in the podcast (27b, 27d).
+      number: String(loaderData.nextNumber),
       podcastId: loaderData.podcast.id,
     },
     id: 'add-episode',
@@ -178,9 +180,7 @@ export default function RouteComponent({
             </Button>
             <LinkButton
               disabled={isLoadingOrSubmitting}
-              to={href('/administration/podcasts/:podcastId/episodes', {
-                podcastId,
-              })}
+              to={href('/administration/podcasts/:podcastId', { podcastId })}
               variant={'outline'}
             >
               Zrušit

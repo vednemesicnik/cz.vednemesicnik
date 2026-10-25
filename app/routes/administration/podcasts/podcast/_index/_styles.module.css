@@ -1,0 +1,31 @@
+/* The Epizody heading over the 22a filter block (27b). */
+.episodes {
+  @layer route {
+    display: grid;
+    gap: 12px;
+  }
+}
+
+.heading {
+  @layer route {
+    margin: 0;
+    font-size: 18px;
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/*
+ * The wide table's columns (27b, 31a), read by AdminTable from a
+ * 1280 px table: Epizoda takes the rest; the checkbox, Číslo,
+ * Publikováno, Stav and Akce fixed. Akce holds the row action and „⋯“,
+ * as the article's (22a).
+ * Each track is the drawn width plus the cell's 12 px padding (14 px
+ * at the row's ends).
+ */
+.columns {
+  @layer route {
+    grid-template-columns:
+      46px 60px minmax(0, 1fr) 132px 212px
+      164px;
+  }
+}

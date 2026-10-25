@@ -11,7 +11,8 @@ export const action = ({ request, params }: Route.ActionArgs) => {
   const { podcastId, episodeId } = params
 
   return runContentStateAction(request, {
-    deleteRedirectTo: href('/administration/podcasts/:podcastId/episodes', {
+    // The podcast's page holds its episodes (27b).
+    deleteRedirectTo: href('/administration/podcasts/:podcastId', {
       podcastId,
     }),
     handlers: episodeContentStateHandlers,
