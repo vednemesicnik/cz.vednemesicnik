@@ -118,8 +118,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   // save stands whether or not the notice goes out; the e-mail is saved on a
   // role collision too.
   if (hasEmailChanged(targetUser.email, email)) {
-    // The notice is best-effort, the record is not; it holds no address, as
-    // the log outlives the account (28e, ol7vu3mn).
+    // The record is written whether or not the notice goes out; it holds no
+    // address, as the log outlives the account (28e, ol7vu3mn).
     recordAuditLog({
       actorId: context.userId,
       event: 'user_email_changed',
