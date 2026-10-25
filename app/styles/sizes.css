@@ -24,6 +24,8 @@
      16 px on a phone (22g, 32). The page, its breadcrumbs, the footer and
      everything that runs past the gutter to the screen's edges share it. */
   --admin-page-side-padding: 32px;
+  /* The space between the administration page's blocks (22a). */
+  --admin-page-row-gap: 24px;
 }
 
 @media (width < 768px) {

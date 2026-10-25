@@ -6,9 +6,13 @@
     inline-size: 100%;
     margin-block-end: 16px;
 
-    /* On a phone the list follows closely; it sets the space itself (22g). */
+    /* On a phone a folded list starts 6 px under the filters (22g, 32): the
+       page's row gap pulled up. A table that doesn't fold, or an empty
+       list's card, keeps the usual space. */
     @media (width < 768px) {
-      margin-block-end: 0;
+      &:has(+ [data-folds-on-phone]) {
+        margin-block-end: calc(6px - var(--admin-page-row-gap));
+      }
     }
   }
 }
