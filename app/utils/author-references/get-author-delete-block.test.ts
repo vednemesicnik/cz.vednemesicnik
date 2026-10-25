@@ -7,6 +7,7 @@ const NO_REFERENCES = {
   articleCategories: 0,
   articles: 0,
   articleTags: 0,
+  contentLogs: 0,
   issues: 0,
   podcastEpisodes: 0,
   podcasts: 0,
@@ -39,6 +40,7 @@ describe('getAuthorDeleteBlock', () => {
       },
       deletable: true,
       hasApprovals: false,
+      hasHistory: false,
     })
   })
 
@@ -65,6 +67,17 @@ describe('getAuthorDeleteBlock', () => {
 
     expect(block.deletable).toBe(false)
     expect(block.hasApprovals).toBe(true)
+    expect(
+      Object.values(block.contentCounts).every((count) => count === 0),
+    ).toBe(true)
+  })
+
+  it('holds an author who stands only in content history', () => {
+    const block = getAuthorDeleteBlock(author({ contentLogs: 4 }), VIEWER_ID)
+
+    expect(block.deletable).toBe(false)
+    expect(block.hasHistory).toBe(true)
+    expect(block.hasApprovals).toBe(false)
     expect(
       Object.values(block.contentCounts).every((count) => count === 0),
     ).toBe(true)

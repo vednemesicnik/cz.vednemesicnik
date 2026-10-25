@@ -1,9 +1,9 @@
 import type { Prisma } from '@generated/prisma/client'
 
 /**
- * What holds an author (#767): the content it stands on, the approvals it gave
- * and its account. Spread into a query's `select` and read with
- * `getAuthorDeleteBlock`.
+ * What holds an author (#767, #810): the content it stands on, the approvals
+ * it gave, the content history it stands in and its account. Spread into a
+ * query's `select` and read with `getAuthorDeleteBlock`.
  */
 export const AUTHOR_REFERENCES_SELECT = {
   _count: {
@@ -11,6 +11,7 @@ export const AUTHOR_REFERENCES_SELECT = {
       articleCategories: true,
       articles: true,
       articleTags: true,
+      contentLogs: true,
       issues: true,
       podcastEpisodes: true,
       podcasts: true,

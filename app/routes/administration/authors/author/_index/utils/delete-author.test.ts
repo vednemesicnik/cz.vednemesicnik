@@ -39,6 +39,7 @@ const NO_REFERENCES = {
   articleCategories: 0,
   articles: 0,
   articleTags: 0,
+  contentLogs: 0,
   issues: 0,
   podcastEpisodes: 0,
   podcasts: 0,
@@ -77,6 +78,7 @@ describe('deleteAuthor', () => {
     ['only on articles', storedAuthor({ articles: 1 })],
     ['referenced by a category', storedAuthor({ articleCategories: 1 })],
     ['referenced only by an approval', storedAuthor({ reviews: 1 })],
+    ['standing only in content history', storedAuthor({ contentLogs: 1 })],
     [
       'with an account',
       storedAuthor({}, { id: 'user-1', role: { name: 'member' as const } }),
