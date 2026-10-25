@@ -40,8 +40,11 @@ also draws its titles at 16 px, while the app drew them at 14 px.
   wait for their desktop lists (27a, 27b) before 32c and 32d. Once they fold, the prop can go
   and folding becomes the default.
 - Moving every phone page to the drawn 16 px gutter is one change, made in `AdminPage`, the
-  article tabs, the folding table's `-24px` bleed with its row padding, and `ListActionBar`.
-- A new list row composes the parts. It writes no phone CSS of its own.
+  article tabs, the folding table's `-24px` bleed with its row padding and the year
+  heading's padding, and `ListActionBar`.
+- The parts style themselves for the phone only inside a table that sets `foldsOnPhone`
+  (`data-folds-on-phone`), so a list can compose them before it folds.
+- A new list row composes the parts and writes no phone CSS of its own.
 
 ## Turned down
 

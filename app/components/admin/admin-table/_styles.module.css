@@ -31,7 +31,8 @@
  * page's 24 px gutter (design 32, 22g): no header, no selection, and each row
  * a grid of its parts — the image, then the name, the state and the details
  * one under another, then „⋯“. A cell that is no part (`data-phone-part`)
- * leaves: the checkbox, a date, every column the details repeat.
+ * leaves: the checkbox, a date, every column the details repeat. The parts
+ * read `data-folds-on-phone`, so outside a folding table they stay cells.
  */
 .foldsOnPhone {
   @layer variant {
@@ -71,7 +72,9 @@
         border-block-end: none;
       }
 
+      /* The grid sizes the cells; the actions column's 1 % would shrink. */
       & td {
+        width: auto;
         padding: 0;
         border: none;
       }

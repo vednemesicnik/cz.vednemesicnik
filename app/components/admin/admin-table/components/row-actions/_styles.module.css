@@ -5,7 +5,9 @@
     gap: 6px;
 
     @media (width < 768px) {
-      display: none;
+      :where([data-folds-on-phone]) & {
+        display: none;
+      }
     }
   }
 }

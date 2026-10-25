@@ -1,7 +1,9 @@
 .cell {
   @layer variant {
     @media (width < 768px) {
-      grid-column: -3 / -2;
+      :where([data-folds-on-phone]) & {
+        grid-column: -3 / -2;
+      }
     }
   }
 }
@@ -15,8 +17,10 @@
     min-width: 0;
 
     @media (width < 768px) {
-      gap: 6px;
-      font-size: var(--font-size-md);
+      :where([data-folds-on-phone]) & {
+        gap: 6px;
+        font-size: var(--font-size-md);
+      }
     }
   }
 }

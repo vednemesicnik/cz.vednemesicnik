@@ -5,7 +5,9 @@
     color: var(--text-tertiary);
 
     @media (width < 768px) {
-      display: none;
+      :where([data-folds-on-phone]) & {
+        display: none;
+      }
     }
   }
 }

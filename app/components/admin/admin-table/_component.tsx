@@ -51,6 +51,8 @@ export const AdminTable = ({
         foldsOnPhone && styles.foldsOnPhone,
         className,
       )}
+      // The folded row's parts style themselves only inside it.
+      data-folds-on-phone={foldsOnPhone || undefined}
     >
       <table
         className={clsx(

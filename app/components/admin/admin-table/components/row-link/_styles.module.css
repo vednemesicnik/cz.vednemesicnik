@@ -18,7 +18,7 @@
 
     /* The folded row is relative: the link covers it (22g). */
     @media (width < 768px) {
-      &::after {
+      :where([data-folds-on-phone]) &::after {
         content: "";
         position: absolute;
         inset: 0;

@@ -1,8 +1,10 @@
 .cell {
   @layer variant {
     @media (width < 768px) {
-      grid-column: 1;
-      grid-row: 1 / span 3;
+      :where([data-folds-on-phone]) & {
+        grid-column: 1;
+        grid-row: 1 / span 3;
+      }
     }
   }
 }

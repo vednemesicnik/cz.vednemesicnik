@@ -1,10 +1,15 @@
 .menu {
   @layer component {
     display: inline-flex;
+  }
+}
 
-    /* The column is 44 px wide, so the larger target overlaps nothing. */
+/* The ActionMenu's trigger gets a finger's target; the column is 44 px wide,
+   so the larger target overlaps nothing. */
+.menu {
+  @layer variant {
     @media (width < 768px) {
-      & > * > button {
+      :where([data-folds-on-phone]) & > * > button {
         position: relative;
 
         &::after {
@@ -21,10 +26,15 @@
   }
 }
 
+/* Only a folded row shows it, in place of `TableRowActions`. */
 .phoneOnly {
   @layer variant {
-    @media (width >= 768px) {
-      display: none;
+    display: none;
+
+    @media (width < 768px) {
+      :where([data-folds-on-phone]) & {
+        display: inline-flex;
+      }
     }
   }
 }

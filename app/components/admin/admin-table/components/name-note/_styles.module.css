@@ -7,7 +7,9 @@
 
     /* As the folded row's other lines (32f). */
     @media (width < 768px) {
-      color: var(--text-secondary);
+      :where([data-folds-on-phone]) & {
+        color: var(--text-secondary);
+      }
     }
   }
 }

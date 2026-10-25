@@ -260,8 +260,8 @@ export const WideColumns: Story = {
  * Rows that fold on a phone (design 32, 22g): below 768 px each row is its
  * parts — the image, the name, the state, the details — beside one „⋯“, and
  * a tap on the row opens the detail. The checkbox and the plain cells leave.
- * The first row has a cover, the second no state, the third neither. Switch
- * the viewport to a phone to see it.
+ * The first row has a cover; the second has no state and the third no
+ * „⋯“. Switch the viewport to a desktop to see the same rows as cells.
  */
 export const FoldsOnPhone: Story = {
   decorators: [
@@ -271,6 +271,7 @@ export const FoldsOnPhone: Story = {
       </MemoryRouter>
     ),
   ],
+  globals: { viewport: { isRotated: false, value: 'mobile1' } },
   parameters: { controls: { disable: true } },
   render: () => (
     <AdminTable foldsOnPhone={true}>
