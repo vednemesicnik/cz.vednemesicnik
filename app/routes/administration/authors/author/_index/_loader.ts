@@ -44,7 +44,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           email: true,
           id: true,
           image: { select: imageSourceSelect },
-          role: { select: { name: true } },
+          role: { select: { level: true, name: true } },
         },
       },
     },
@@ -110,6 +110,16 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         targetUserId: context.userId,
       }).hasPermission,
     canUpdate: updatePerms.hasPermission,
+    // The account e-mail links only to a user the viewer may open; the Owner
+    // is plain text for an Administrator (28d).
+    canViewUser:
+      author.user !== null &&
+      context.can({
+        action: 'view',
+        entity: 'user',
+        targetUserId: author.user.id,
+        targetUserRoleLevel: author.user.role.level,
+      }).hasPermission,
     contentCounts: getAuthorContentCounts(deleteBlock.contentCounts),
     // Smazat… confirms a deletable author and explains a blocked one (28g).
     deleteBlock,

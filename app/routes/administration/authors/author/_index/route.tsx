@@ -52,6 +52,7 @@ export default function RouteComponent({
     author,
     canCreateUser,
     canUpdate,
+    canViewUser,
     contentCounts,
     deleteBlock,
     history,
@@ -199,6 +200,8 @@ export default function RouteComponent({
               <AdminDetailItem label={'Účet'}>
                 {author.user === null ? (
                   'Bez účtu'
+                ) : !canViewUser ? (
+                  author.user.email
                 ) : (
                   <Link
                     to={href('/administration/users/:userId', {
