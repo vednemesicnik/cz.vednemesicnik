@@ -75,4 +75,5 @@ Code comments cite an entry by its number (`log 0022`).
 | [0041](0041-a-role-edit-writes-the-role-only-while-it-is-the-one-the-form-loaded.md) | A role edit writes the role only while it is the one the form loaded | 2026-10-23 |  |
 | [0042](0042-an-account-event-is-a-bare-hint-and-a-session-reloads-on-its-own-account.md) | An account event is a bare hint, and every page reloads on its own account's event | 2026-10-24 |  |
 | [0043](0043-content-history-holds-an-author-and-an-e-mail-change-is-recorded.md) | Content history holds an author like an approval, and an e-mail change is recorded without an address | 2026-10-25 |  |
-| [0044](0044-a-list-row-folds-on-a-phone-through-the-admin-table-parts.md) | A list row folds on a phone through the admin-table parts, and the phone rows keep the 24 px page gutter | 2026-10-25 |  |
+| [0044](0044-a-list-row-folds-on-a-phone-through-the-admin-table-parts.md) | A list row folds on a phone through the admin-table parts, and the phone rows keep the 24 px page gutter | 2026-10-25 | [0045](0045-the-phone-page-gutter-is-16-px-from-one-token.md) |
+| [0045](0045-the-phone-page-gutter-is-16-px-from-one-token.md) | The phone page gutter is 16 px, from one token | 2026-10-25 |  |

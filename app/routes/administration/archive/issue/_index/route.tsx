@@ -240,9 +240,10 @@ export default function RouteComponent({
                     {...issue.cover.sources}
                     alt={issue.cover.altText}
                     className={styles.coverImage}
-                    // A 220 px column from a 440 px section (488 px window with
-                    // its 24 px padding), else full width.
-                    sizes={'(width >= 488px) 220px, 100vw'}
+                    // A 220 px column from a 440 px section (472 px window with
+                    // the page's 16 px gutter, --admin-page-side-padding),
+                    // else full width.
+                    sizes={'(width >= 472px) 220px, 100vw'}
                   />
                 )}
                 <figcaption className={styles.caption}>Obálka</figcaption>

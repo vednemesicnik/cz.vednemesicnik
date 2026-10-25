@@ -20,7 +20,14 @@
   --detail-column-gap: 40px;
   --detail-column-gap-narrow: 32px;
   --detail-label-width: 160px;
-  /* The administration page's side padding from 768 px (22a, 31); the page,
-     its breadcrumbs and the footer share it. */
+  /* The administration page's side padding: 32 px from 768 px (22a, 31),
+     16 px on a phone (22g, 32). The page, its breadcrumbs, the footer and
+     everything that runs past the gutter to the screen's edges share it. */
   --admin-page-side-padding: 32px;
+}
+
+@media (width < 768px) {
+  :root {
+    --admin-page-side-padding: 16px;
+  }
 }
