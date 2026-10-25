@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport" >
+<meta content="noindex" name="robots" >
+<title>Od založení vydání po podklady pro tisk</title>
+<link href="/favicon.ico" rel="icon" sizes="32x32">
+<link href="/favicon.svg" rel="icon" type="image/svg+xml">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}</style>
+<link href="https://fonts.googleapis.com" rel="preconnect" >
+<link crossorigin href="https://fonts.gstatic.com" rel="preconnect" >
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" >
+<style>
+/* Layout: one column flow chart — vydání → rozcestí (článek / skupina) → dvě dráhy (text, obrazová díla) → brána souhlasu → podklady pro tisk; pod tím časté chyby. */
+:root {
+  --bg: #F3F6F9;
+  --surface: #FFFFFF;
+  --ink: #0F1D2A;
+  --muted: #506273;
+  --rule: #D3DCE5;
+  --rule-strong: #9FB0BF;
+  --text: #0068B8;
+  --text-soft: #E3F0FB;
+  --art: #0B8466;
+  --art-soft: #DDF6EC;
+  --ok-bg: #D4F8E4;
+  --ok-fg: #0A5A3C;
+  --warn-bg: #FDEBD3;
+  --warn-fg: #8F4405;
+  --no-bg: #FDE4E1;
+  --no-fg: #A61F14;
+  --chip-bg: #E8EEF3;
+  --chip-fg: #33475A;
+  --brand-a: #0068B8;
+  --brand-b: #43D6A9;
+  --brand-c: #5CFFA3;
+
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --gap: 28px;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C1620; --surface: #122130; --ink: #E6EEF5; --muted: #9AB0C2;
+    --rule: #24384A; --rule-strong: #4A6378;
+    --text: #62AEEE; --text-soft: #13314B;
+    --art: #43D6A9; --art-soft: #0F3A30;
+    --ok-bg: #0F3C2A; --ok-fg: #7DF5B5;
+    --warn-bg: #3B2814; --warn-fg: #F5B26B;
+    --no-bg: #3D1A17; --no-fg: #FF9A90;
+    --chip-bg: #1B2D3E; --chip-fg: #B9CAD8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C1620; --surface: #122130; --ink: #E6EEF5; --muted: #9AB0C2;
+  --rule: #24384A; --rule-strong: #4A6378;
+  --text: #62AEEE; --text-soft: #13314B;
+  --art: #43D6A9; --art-soft: #0F3A30;
+  --ok-bg: #0F3C2A; --ok-fg: #7DF5B5;
+  --warn-bg: #3B2814; --warn-fg: #F5B26B;
+  --no-bg: #3D1A17; --no-fg: #FF9A90;
+  --chip-bg: #1B2D3E; --chip-fg: #B9CAD8;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+p { margin: 0; }
+
+/* Header */
+header { display: flex; flex-direction: column; gap: 14px; max-width: 46rem; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700;
+}
+.mark {
+  width: 22px; height: 22px; border-radius: 5px;
+  background: linear-gradient(45deg, var(--brand-a), var(--brand-b) 52%, var(--brand-c));
+}
+h1 { font-size: clamp(32px, 5.2vw, 50px); font-weight: 800; letter-spacing: -.01em; }
+.term { font-size: 15px; color: var(--muted); }
+.lede { font-size: 19px; color: var(--muted); max-width: 40rem; }
+.lede strong { color: var(--ink); }
+
+/* Shared bits */
+.ui {
+  font-family: var(--f-mono); font-size: 13px;
+  background: var(--chip-bg); color: var(--chip-fg);
+  padding: 2px 7px; border-radius: 6px; white-space: nowrap;
+}
+.status {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 13px; font-weight: 700;
+  background: var(--chip-bg); color: var(--chip-fg);
+  padding: 2px 10px; border-radius: 999px; white-space: nowrap;
+}
+.status.ok { background: var(--ok-bg); color: var(--ok-fg); }
+.status.warn { background: var(--warn-bg); color: var(--warn-fg); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  display: flex; flex-direction: column; gap: 10px;
+  min-width: 0;
+}
+.card h3 { font-size: 22px; font-weight: 800; }
+.card .who { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700; }
+.card .result { color: var(--muted); font-size: 15px; }
+
+/* Flow */
+.flow { display: flex; flex-direction: column; }
+.start { max-width: 520px; width: 100%; margin: 0 auto; }
+.stem { width: 2px; height: 28px; background: var(--rule-strong); margin: 0 auto; }
+.question {
+  align-self: center;
+  font-family: var(--f-display); font-weight: 800; font-size: 18px;
+  border: 2px solid var(--rule-strong); border-radius: 999px;
+  padding: 6px 18px; background: var(--bg);
+}
+.fork {
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap);
+  position: relative; padding-top: 32px;
+}
+.fork::before {
+  content: ""; position: absolute; top: 0; left: calc(50% - 1px);
+  height: 16px; width: 2px; background: var(--rule-strong);
+}
+.fork::after {
+  content: ""; position: absolute; top: 16px; height: 2px; background: var(--rule-strong);
+  left: calc(25% - var(--gap) / 4); right: calc(25% - var(--gap) / 4);
+}
+.branch { position: relative; }
+.branch::before {
+  content: ""; position: absolute; top: -16px; left: calc(50% - 1px);
+  height: 16px; width: 2px; background: var(--rule-strong);
+}
+.branch.article { border-top: 4px solid var(--text); }
+.branch.group { border-top: 4px solid var(--art); }
+.branch .use { font-size: 16px; }
+.branch .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+
+.dont {
+  margin-top: 6px;
+  background: var(--no-bg); color: var(--no-fg);
+  border-radius: 10px; padding: 10px 12px; font-size: 14.5px;
+  display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start;
+}
+.dont b { font-weight: 700; }
+.dont .x {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--no-fg); color: var(--no-bg);
+  display: grid; place-items: center; font-weight: 700; font-size: 14px; line-height: 1;
+}
+
+/* Connector between fork and lanes (desktop) */
+.join { position: relative; height: 64px; }
+.join svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.join path { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.join .t { stroke: var(--text); }
+.join .a { stroke: var(--art); }
+.join .dash { stroke-dasharray: 6 5; }
+.join-label {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  font-size: 13px; font-weight: 700; color: var(--art);
+  background: var(--bg); padding: 2px 8px; border-radius: 6px; white-space: nowrap;
+}
+.join-mobile { display: none; }
+
+/* Lanes */
+.lanes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); align-items: stretch; }
+.lane {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+}
+.lane-head { padding: 16px 22px 14px; display: flex; flex-direction: column; gap: 2px; }
+.lane.text .lane-head { background: var(--text-soft); }
+.lane.art .lane-head { background: var(--art-soft); }
+.lane-head h2 { font-size: 22px; font-weight: 800; }
+.lane.text h2 { color: var(--text); }
+.lane.art h2 { color: var(--art); }
+.lane-head .scope { font-size: 14px; color: var(--muted); font-weight: 700; }
+
+.stops { list-style: none; margin: 0; padding: 18px 22px 8px; display: flex; flex-direction: column; flex: 1; counter-reset: stop; }
+.stop {
+  position: relative; padding: 0 0 22px 44px;
+  display: flex; flex-direction: column; gap: 6px;
+  counter-increment: stop;
+}
+.stop::before {
+  content: counter(stop);
+  position: absolute; left: 0; top: 0;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 14px;
+  color: var(--surface);
+}
+.lane.text .stop::before { background: var(--text); }
+.lane.art .stop::before { background: var(--art); }
+.stop::after {
+  content: ""; position: absolute; left: 13px; top: 32px; bottom: 4px; width: 2px;
+}
+.lane.text .stop::after { background: var(--text); opacity: .35; }
+.lane.art .stop::after { background: var(--art); opacity: .35; }
+.stop:last-child::after { display: none; }
+.stop h3 { font-family: var(--f-body); font-size: 17px; font-weight: 700; }
+.stop p { font-size: 15px; color: var(--muted); }
+.stop .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.arrow { color: var(--rule-strong); }
+
+.lane-foot {
+  margin: 0 22px 20px; padding: 12px 14px; border-radius: 10px;
+  background: var(--ok-bg); color: var(--ok-fg);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.lane-foot b { font-size: 15px; }
+.lane-foot span { font-size: 14px; }
+.tip {
+  margin: -6px 22px 20px; font-size: 14px; color: var(--muted);
+  border-left: 3px solid var(--art); padding-left: 10px;
+}
+
+/* Merge + print */
+.merge { position: relative; height: 72px; }
+.merge svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.merge path { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.merge .t { stroke: var(--text); }
+.merge .a { stroke: var(--art); }
+.merge .n { stroke: var(--ink); }
+
+.print-zone { padding: 14px; position: relative; max-width: 720px; width: 100%; margin: 0 auto; }
+.crop { position: absolute; width: 18px; height: 18px; border-color: var(--ink); border-style: solid; border-width: 0; }
+.crop.tl { top: 0; left: 0; border-top-width: 1.5px; border-left-width: 1.5px; }
+.crop.tr { top: 0; right: 0; border-top-width: 1.5px; border-right-width: 1.5px; }
+.crop.bl { bottom: 0; left: 0; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.crop.br { bottom: 0; right: 0; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+.print {
+  background: var(--surface); border: 2px solid var(--ink); border-radius: 4px;
+  padding: 24px 26px; display: flex; flex-direction: column; gap: 14px;
+}
+.print h2 { font-size: clamp(26px, 4vw, 34px); font-weight: 800; }
+.print .folder { font-family: var(--f-mono); font-size: 14px; color: var(--muted); }
+.rule-box { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rule-box > div { border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.rule-box .t { background: var(--text-soft); }
+.rule-box .a { background: var(--art-soft); }
+.rule-box b { font-size: 15px; }
+.rule-box .t b { color: var(--text); }
+.rule-box .a b { color: var(--art); }
+.rule-box span { font-size: 15px; }
+.print .after { font-size: 15px; color: var(--muted); }
+.gatebar {
+  align-self: center; margin-bottom: 0;
+  font-family: var(--f-display); font-weight: 800; font-size: 17px;
+  background: var(--ink); color: var(--bg);
+  padding: 7px 18px; border-radius: 999px;
+}
+
+/* Pitfalls */
+.pitfalls { display: flex; flex-direction: column; gap: 18px; }
+.pitfalls > h2 { font-size: 30px; font-weight: 800; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pit { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pit h3 { font-family: var(--f-body); font-size: 17px; font-weight: 700; }
+.pit p { font-size: 15px; color: var(--muted); }
+.pit p + p { margin-top: 2px; }
+.pit .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 15px; color: var(--muted); }
+
+.legend { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+
+@media (max-width: 720px) {
+  :root { --gap: 20px; }
+  .wrap { padding-block: 28px 48px; gap: 44px; }
+  .fork { grid-template-columns: 1fr; padding-top: 20px; }
+  .fork::after { display: none; }
+  .fork::before { height: 20px; }
+  .branch::before { top: -20px; height: 20px; }
+  .branch + .branch::before { top: calc(-1 * var(--gap)); height: var(--gap); }
+  .join { display: none; }
+  .join-mobile {
+    display: block; text-align: center; font-size: 14px; color: var(--muted);
+    padding: 14px 0; border-left: 0;
+  }
+  .lanes { grid-template-columns: 1fr; }
+  .merge { display: none; }
+  .merge-mobile { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .rule-box, .grid2 { grid-template-columns: 1fr; }
+  .lede { font-size: 17px; }
+}
+@media (min-width: 721px) {
+  .merge-mobile .stem { display: none; }
+}
+:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow"><span aria-hidden="true" class="mark" ></span>Vedneměsíčník · pro šéfredakci</span>
+    <h1>Od založení vydání po podklady pro tisk</h1>
+    <p class="lede">Text a obrázky mají každý svou cestu. <strong>Do podkladů pro tisk se dostanou až se souhlasem:</strong> text od všech autorů, obrázky od toho, kdo je nahrál.</p>
+    <p class="term">Obrázky v nástrojích najdete pod názvem „obrazová díla“.</p>
+    <div class="legend">
+      <span><span class="status">Rozpracováno</span> = stav v tabulce Evidence</span>
+      <span><span class="ui">✦ Publikace › …</span> = příkaz v menu dokumentu článku</span>
+    </div>
+  </header>
+
+  <section aria-label="Postup od vydání k tisku" class="flow" >
+    <div class="card start">
+      <span class="who">Na začátku</span>
+      <h3>Nové vydání</h3>
+      <p>Založíte vydání, třeba <span class="ui">VDM_2026_4</span>. Vznikne složka vydání, tabulka <b>Evidence</b> a dva odkazy: <b>Odkaz pro vytvoření článku</b> a <b>Odkaz pro vytvoření skupiny obrazových děl</b>. Oba najdete i v Registru vydání.</p>
+    </div>
+
+    <div aria-hidden="true" class="stem" ></div>
+    <div class="question">Co přidáváte?</div>
+
+    <div class="fork">
+      <div class="card branch article">
+        <span class="who">Odkaz pro vytvoření článku</span>
+        <h3>Článek</h3>
+        <p class="use">Máte <b>text</b> a jeho <b>autory</b>. K článku můžete přidat i obrázky.</p>
+        <p class="result">Vznikne dokument článku. Každý autor dostane e-mail s odkazem na dokument a na nahrání obrázků k článku.</p>
+      </div>
+      <div class="card branch group">
+        <span class="who">Odkaz pro vytvoření skupiny obrazových děl</span>
+        <h3>Skupina obrazových děl</h3>
+        <p class="use">Máte <b>obrázky bez vlastního článku</b>: třeba ilustrace k více textům, obálku nebo fotku na zadní stranu.</p>
+        <p class="result">Nevzniká dokument článku. Získáte odkaz pro nahrání obrázků. Pošlete ho tomu, kdo je dodá. E-mail se mu sám nepošle.</p>
+        <div class="dont">
+          <span aria-hidden="true" class="x" >×</span>
+          <span><b>Pro obrázky, které nepatří k žádnému článku, založte skupinu obrazových děl.</b> Fiktivní článek bez textu by pletl korektory a korektorky. Obrázky ke skutečnému článku nahrávejte přes odkaz k tomuto článku.</span>
+        </div>
+      </div>
+    </div>
+
+    <div aria-hidden="true" class="join" >
+      <svg aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 100 64" >
+        <path class="t" d="M24.2 0 V64"/>
+        <path class="a dash" d="M24.2 0 C24.2 34, 75.8 30, 75.8 64"/>
+        <path class="a" d="M75.8 0 V64"/>
+      </svg>
+      <span class="join-label">článek může mít i obrázky</span>
+    </div>
+    <p class="join-mobile">Článek má cestu textu a případně i cestu obrazových děl. Skupina obrazových děl má jen cestu obrazových děl.</p>
+
+    <div class="lanes">
+      <div class="lane text">
+        <div class="lane-head">
+          <h2>Text</h2>
+          <span class="scope">jen u článku</span>
+        </div>
+        <ol class="stops">
+          <li class="stop">
+            <h3>Psaní a připomínky</h3>
+            <p>Autoři píšou v dokumentu článku, redakce komentuje a navrhuje úpravy.</p>
+            <div class="meta"><span class="status">Rozpracováno</span></div>
+          </li>
+          <li class="stop">
+            <h3>Korektura</h3>
+            <p>Korektor nebo korektorka provede první opravy a navrhne úpravy. Pak článek označí. Autoři reagují na návrhy a text se dál ladí.</p>
+            <div class="meta"><span class="ui">✦ Publikace › Označit probíhající korekturu</span></div>
+            <div class="meta"><span class="status">Korektura probíhá</span></div>
+          </li>
+          <li class="stop">
+            <h3>Finalizace</h3>
+            <p>Tuhle verzi posíláte autorům ke schválení pro tisk.</p>
+            <div class="meta"><span class="ui">✦ Publikace › Označit finální verzi</span></div>
+            <div class="meta"><span class="status">K finalizaci</span></div>
+          </li>
+          <li class="stop">
+            <h3>Souhlas autorů</h3>
+            <p>Každý autor dostane e-mail s finální verzí (redakční doložku). Pro souhlas odpoví přesně <b>„Souhlasím“</b>.</p>
+            <div class="meta"><span class="status">Čeká na odpověď</span><span class="arrow">→</span><span class="status ok">Souhlas udělen</span></div>
+          </li>
+        </ol>
+        <div class="lane-foot"><b>✓ Text je schválený</b><span>až souhlasí všichni jeho autoři</span></div>
+      </div>
+
+      <div class="lane art">
+        <div class="lane-head">
+          <h2>Obrazová díla</h2>
+          <span class="scope">u článku i u skupiny</span>
+        </div>
+        <ol class="stops">
+          <li class="stop">
+            <h3>Nahrání</h3>
+            <p>Ten, kdo obrázky dodává, otevře odkaz a nahraje soubory. U každého může uvést autora a zdroj.</p>
+            <div class="meta"><span class="ui">Odeslat díla</span></div>
+          </li>
+          <li class="stop">
+            <h3>Souhlas s užitím</h3>
+            <p>Tomu, kdo obrázky nahrál, přijde e-mail se žádostí o souhlas a licencemi v příloze. Pro souhlas odpoví přesně <b>„Souhlasím“</b>.</p>
+            <div class="meta"><span class="status">Čeká na odpověď</span><span class="arrow">→</span><span class="status ok">Souhlas udělen</span></div>
+          </li>
+        </ol>
+        <p class="tip">Souhlas dává ten, kdo obrázky nahrál. Odpovídá za to, že smí udělit svolení k jejich užití. Uvedený autor slouží pro podpis obrázku.</p>
+        <div class="lane-foot"><b>✓ Obrázek má souhlas k užití</b><span>od toho, kdo ho nahrál</span></div>
+      </div>
+    </div>
+
+    <div aria-hidden="true" class="merge" >
+      <svg aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 100 72" >
+        <path class="t" d="M24.2 0 V24 Q24.2 36 36 36 H50"/>
+        <path class="a" d="M75.8 0 V24 Q75.8 36 64 36 H50"/>
+        <path class="n" d="M50 36 V72"/>
+      </svg>
+    </div>
+    <div aria-hidden="true" class="merge-mobile" ><div class="stem"></div></div>
+
+    <div class="gatebar">Každé se svým souhlasem</div>
+    <div aria-hidden="true" class="stem" ></div>
+
+    <div class="print-zone">
+      <span aria-hidden="true" class="crop tl" ></span><span aria-hidden="true" class="crop tr" ></span>
+      <span aria-hidden="true" class="crop bl" ></span><span aria-hidden="true" class="crop br" ></span>
+      <div class="print">
+        <span class="folder">složka vydání › _Podklady_pro_tisk</span>
+        <h2>Podklady pro tisk</h2>
+        <p>Složku plní <b>systém</b>. Nasdílejte ji grafikovi. Najde v ní schválené texty a obrázky i tabulku <b>Podklady</b> s autory a zdroji pro popisky.</p>
+        <div class="rule-box">
+          <div class="t"><b>Text článku</b><span>se objeví, až souhlasí <b>všichni</b> jeho autoři.</span></div>
+          <div class="a"><b>Obrázek</b><span>se objeví, až souhlasí ten, kdo ho nahrál.</span></div>
+        </div>
+        <p class="after">Chvíli to trvá: systém kontroluje odpovědi každých 30 minut a podklady doplňuje každých 6 hodin.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="pitfalls">
+    <h2>Na co si dát pozor</h2>
+    <div class="grid2">
+      <div class="pit">
+        <h3>Odpověď přesně „Souhlasím“</h3>
+        <p>Systém automaticky pozná jen tuto odpověď. Jiná, třeba „Souhlas, díky!“, dostane stav <span class="status warn">Odpověď ke kontrole</span> a musí ji přečíst člověk.</p>
+        <p>Je to souhlas? Nastavte <span class="status">Souhlas k archivaci</span>. Je to dotaz? Odpovězte v e-mailu.</p>
+      </div>
+      <div class="pit">
+        <h3>Změněný text potřebuje nový souhlas</h3>
+        <p>Po úpravě textu zůstává v podkladech poslední schválená verze. Pokud ještě žádná schválená není, text tam zatím nebude.</p>
+        <div class="row">Znovu zvolte <span class="ui">✦ Publikace › Označit finální verzi</span>. Nová verze se do podkladů dostane až po novém souhlasu všech autorů.</div>
+      </div>
+      <div class="pit">
+        <h3>Nenastavujte ručně „Souhlas udělen“</h3>
+        <p>Systém tento stav nastaví po uložení e-mailového souhlasu do složky <b>Licence</b>. Ruční změna na <span class="status ok">Souhlas udělen</span> doklad neuloží.</p>
+        <p>Když po přečtení odpovědi potvrdíte, že jde o souhlas, nastavte <span class="status">Souhlas k archivaci</span>.</p>
+      </div>
+      <div class="pit">
+        <h3>Průběh najdete v Evidenci</h3>
+        <p>Ve složce vydání otevřete tabulku <b>Evidence</b>: <b>Články</b> ukazují stav textů, <b>Redakční doložky</b> souhlasy autorů a <b>Obrazová díla</b> souhlasy k obrázkům.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+</body>
+</html>
