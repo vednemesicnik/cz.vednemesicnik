@@ -27,9 +27,11 @@ account deletion.
   fire-and-forget; recorded only after the mutation succeeds. The actor comes from
   the permission context.
 - **`event` values:** `user_created`, `user_deleted`, `user_role_changed`,
-  `author_created`, `author_role_changed`, `emergency_link_issued`. Role-change
-  events carry a `detail` (`"role: <old> → <new>"`, via `formatRoleChangeDetail`);
-  the others do not.
+  `user_email_changed`, `author_created`, `author_role_changed`,
+  `emergency_link_issued`. Role-change events carry a `detail` (`"role: <old> →
+  <new>"`, via `formatRoleChangeDetail`); the others do not.
+  `user_email_changed` carries no address either: the log outlives the account, and
+  the old address would stay after the person has left.
 - **`targetId`:** the affected user id — or the **author id** for
   `author_created` and `author_role_changed`.
 

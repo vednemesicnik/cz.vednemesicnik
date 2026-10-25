@@ -751,6 +751,7 @@ enum AuditLogEvent {
   author_role_changed
   emergency_link_issued
   author_created
+  user_email_changed
 }
 
 // Administrative audit log (user management, role changes). Deliberately has no
