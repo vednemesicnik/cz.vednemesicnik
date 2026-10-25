@@ -6,11 +6,7 @@
     grid-auto-flow: row;
     width: 100%;
     /* On the page's edge (31b). */
-    padding: 24px 24px 0;
-
-    @media (width >= 768px) {
-      padding-inline: var(--admin-page-side-padding);
-    }
+    padding: 24px var(--admin-page-side-padding) 0;
   }
 }
 

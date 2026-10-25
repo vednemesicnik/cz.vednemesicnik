@@ -28,7 +28,7 @@
 
 /*
  * Below 768 px a folding table is rows across the whole width, past the
- * page's 24 px gutter (design 32, 22g): no header, no selection, and each row
+ * page's gutter (design 32, 22g): no header, no selection, and each row
  * a grid of its parts — the image, then the name, the state and the details
  * one under another, then „⋯“. A cell that is no part (`data-phone-part`)
  * leaves: the checkbox, a date, every column the details repeat. The parts
@@ -38,8 +38,8 @@
   @layer variant {
     @media (width < 768px) {
       box-sizing: border-box;
-      inline-size: calc(100% + 48px);
-      margin-inline: -24px;
+      inline-size: calc(100% + 2 * var(--admin-page-side-padding));
+      margin-inline: calc(-1 * var(--admin-page-side-padding));
       overflow: visible;
       border-block: 1px solid var(--border);
 
@@ -59,7 +59,7 @@
         grid-template-columns: minmax(0, 1fr) 44px;
         column-gap: 10px;
         align-items: start;
-        padding: 14px 24px;
+        padding: 14px var(--admin-page-side-padding);
         border-block-end: 1px solid var(--border);
 
         &:has(> [data-phone-part="image"]) {
@@ -90,7 +90,7 @@
 
       & th {
         display: block;
-        padding-inline: 24px;
+        padding-inline: var(--admin-page-side-padding);
       }
     }
   }
