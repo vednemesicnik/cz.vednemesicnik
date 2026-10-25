@@ -1,0 +1,26 @@
+.cell {
+  @layer variant {
+    @media (width < 768px) {
+      :where([data-folds-on-phone]) & {
+        grid-column: -3 / -2;
+      }
+    }
+  }
+}
+
+/* The name over its second line (22a). */
+.name {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+
+    @media (width < 768px) {
+      :where([data-folds-on-phone]) & {
+        gap: 6px;
+        font-size: var(--font-size-md);
+      }
+    }
+  }
+}

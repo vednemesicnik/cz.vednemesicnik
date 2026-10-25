@@ -21,6 +21,7 @@ import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -110,19 +111,22 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     states,
   })
 
+  const newTagButton = canCreate && (
+    <LinkButton
+      state={RETURN_TO_OPENER_STATE}
+      to={`${href('/administration/articles/tags/new')}${search}`}
+    >
+      Nový štítek
+    </LinkButton>
+  )
+
   return (
     <AdminPage>
       <ArticlesTabs />
-      <ListHeader>
+      {/* On a phone Nový štítek waits at the bottom (32a). */}
+      <ListHeader foldsOnPhone={true}>
         <PageTitle>Štítky</PageTitle>
-        {canCreate && (
-          <LinkButton
-            state={RETURN_TO_OPENER_STATE}
-            to={`${href('/administration/articles/tags/new')}${search}`}
-          >
-            Nový štítek
-          </LinkButton>
-        )}
+        {newTagButton}
       </ListHeader>
       <FilterCell>
         <AdminBulkActionsBar
@@ -131,6 +135,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             selectedTags,
             TAG_RECORD_COPY,
           )}
+          foldsOnPhone={true}
           formatToast={TAG_RECORD_COPY.bulkDelete.toast}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
@@ -176,19 +181,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
           )}
-          {emptyMessage.action === 'create' && canCreate && (
-            <LinkButton
-              state={RETURN_TO_OPENER_STATE}
-              to={`${href('/administration/articles/tags/new')}${search}`}
-            >
-              Nový štítek
-            </LinkButton>
-          )}
+          {emptyMessage.action === 'create' && newTagButton}
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
         </ListEmptyCard>
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
+          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >
@@ -243,6 +242,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         totalCount={totalCount}
         totalPages={totalPages}
       />
+      {/* Unless the empty list already offers it (22e). */}
+      {canCreate && (totalCount > 0 || emptyMessage.action !== 'create') && (
+        <ListActionBar>{newTagButton}</ListActionBar>
+      )}
     </AdminPage>
   )
 }

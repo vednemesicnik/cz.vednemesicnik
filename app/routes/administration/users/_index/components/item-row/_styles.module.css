@@ -1,36 +1,8 @@
-/* The name over the e-mail (28d). */
-.title {
-  @layer route {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-inline-size: 0;
-  }
-}
-
+/* The name, medium, with „vy“ beside it (28d). */
 .name {
   @layer route {
     font-weight: var(--font-weight-medium);
     overflow-wrap: anywhere;
-  }
-}
-
-.link {
-  @layer route {
-    color: inherit;
-    text-decoration: none;
-
-    &:hover {
-      color: var(--link-strong);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: var(--focus-shadow);
-      border-radius: var(--radius-sm);
-    }
   }
 }
 
@@ -39,14 +11,6 @@
   @layer route {
     font-weight: var(--font-weight-regular);
     color: var(--text-secondary);
-  }
-}
-
-.email {
-  @layer route {
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-    overflow-wrap: anywhere;
   }
 }
 

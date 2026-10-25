@@ -3,16 +3,28 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
+import { ActionMenu } from '~/components/action-menu'
+import { StatusTag } from '~/components/status-tag'
+
 import { AdminTable } from './_component'
+import { TableActionsCell } from './components/actions-cell'
 import { TableBody } from './components/body'
 import { TableCell } from './components/cell'
+import { TableDetailsCell } from './components/details-cell'
+import { TableDetailsLine } from './components/details-line'
 import { TableGroupHeading } from './components/group-heading'
 import { TableHeader } from './components/header'
 import { TableHeaderCell } from './components/header-cell'
+import { TableImageCell } from './components/image-cell'
+import { TableNameAddress } from './components/name-address'
+import { TableNameCell } from './components/name-cell'
 import { TableRow } from './components/row'
+import { TableRowLink } from './components/row-link'
+import { TableRowMenu } from './components/row-menu'
 import { TableSelectionCell } from './components/selection-cell'
 import { TableSelectionHeaderCell } from './components/selection-header-cell'
 import { TableSortableHeaderCell } from './components/sortable-header-cell'
+import { TableStateCell } from './components/state-cell'
 
 const sampleArticles = [
   {
@@ -241,6 +253,131 @@ export const WideColumns: Story = {
         </TableBody>
       </AdminTable>
     </>
+  ),
+}
+
+/**
+ * Rows that fold on a phone (design 32, 22g): below 768 px each row is its
+ * parts — the image, the name, the state, the details — beside one „⋯“, and
+ * a tap on the row opens the detail. The checkbox and the plain cells leave.
+ * The first row has a cover; the second has no state and the third no
+ * „⋯“. Switch the viewport to a desktop to see the same rows as cells.
+ */
+export const FoldsOnPhone: Story = {
+  decorators: [
+    (Story) => (
+      <MemoryRouter>
+        <Story />
+      </MemoryRouter>
+    ),
+  ],
+  globals: { viewport: { isRotated: false, value: 'mobile1' } },
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <AdminTable foldsOnPhone={true}>
+      <TableHeader>
+        <TableSelectionHeaderCell
+          checked={false}
+          indeterminate={false}
+          onChange={() => {}}
+        />
+        <TableHeaderCell>
+          <span className={'screen-reader-only'}>Obálka</span>
+        </TableHeaderCell>
+        <TableHeaderCell>Název</TableHeaderCell>
+        <TableHeaderCell>Pořadí</TableHeaderCell>
+        <TableHeaderCell>Stav</TableHeaderCell>
+        <TableHeaderCell variant="actions">Akce</TableHeaderCell>
+      </TableHeader>
+      <TableBody>
+        <TableRow>
+          <TableSelectionCell
+            checked={false}
+            label={'Vybrat číslo září 2026'}
+            onChange={() => {}}
+          />
+          <TableImageCell>
+            <div
+              style={{
+                aspectRatio: '210 / 297',
+                background: 'var(--bg-tertiary)',
+                width: 40,
+              }}
+            />
+          </TableImageCell>
+          <TableNameCell>
+            <TableRowLink to={'/'}>září 2026</TableRowLink>
+            <TableNameAddress>vdm-2026-3.pdf</TableNameAddress>
+          </TableNameCell>
+          <TableCell>3/2026</TableCell>
+          <TableStateCell>
+            <StatusTag
+              detail={'Odesláno · Jakub Novák · 26. 9. 2026'}
+              state={'pending'}
+            />
+          </TableStateCell>
+          <TableDetailsCell>
+            <TableDetailsLine>3/2026</TableDetailsLine>
+          </TableDetailsCell>
+          <TableActionsCell>
+            <TableRowMenu>
+              <ActionMenu
+                items={[{ label: 'Schválit', onSelect: () => {} }]}
+                label={'Další akce s číslem září 2026'}
+                size={'sm'}
+              />
+            </TableRowMenu>
+          </TableActionsCell>
+        </TableRow>
+        <TableRow>
+          <TableSelectionCell
+            checked={false}
+            label={'Vybrat autora Jakub Novák'}
+            onChange={() => {}}
+          />
+          <TableCell>{null}</TableCell>
+          <TableNameCell>
+            <TableRowLink to={'/'}>Jakub Novák</TableRowLink>
+          </TableNameCell>
+          <TableCell>—</TableCell>
+          <TableCell>Tvůrce</TableCell>
+          <TableDetailsCell>
+            <TableDetailsLine>Tvůrce</TableDetailsLine>
+            <TableDetailsLine>
+              Publikované články, epizody a čísla: 21
+            </TableDetailsLine>
+          </TableDetailsCell>
+          <TableActionsCell>
+            <TableRowMenu>
+              <ActionMenu
+                items={[{ label: 'Upravit', onSelect: () => {} }]}
+                label={'Další akce s autorem Jakub Novák'}
+                size={'sm'}
+              />
+            </TableRowMenu>
+          </TableActionsCell>
+        </TableRow>
+        <TableRow>
+          <TableSelectionCell
+            checked={false}
+            label={'Vybrat rubriku Kultura'}
+            onChange={() => {}}
+          />
+          <TableCell>{null}</TableCell>
+          <TableNameCell>
+            <TableRowLink to={'/'}>Kultura</TableRowLink>
+          </TableNameCell>
+          <TableCell>—</TableCell>
+          <TableStateCell>
+            <StatusTag state={'published'} />
+          </TableStateCell>
+          <TableDetailsCell>
+            <TableDetailsLine>18 publikovaných článků</TableDetailsLine>
+          </TableDetailsCell>
+          <TableActionsCell>{null}</TableActionsCell>
+        </TableRow>
+      </TableBody>
+    </AdminTable>
   ),
 }
 

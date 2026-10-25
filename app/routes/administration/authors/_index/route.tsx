@@ -21,6 +21,7 @@ import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -111,23 +112,27 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     query,
   })
 
+  const newAuthorButton = canCreate && (
+    <LinkButton
+      state={RETURN_TO_OPENER_STATE}
+      to={href('/administration/authors/new')}
+    >
+      Nový autor
+    </LinkButton>
+  )
+
   return (
     <AdminPage>
-      <ListHeader>
+      {/* On a phone Nový autor waits at the bottom (32e). */}
+      <ListHeader foldsOnPhone={true}>
         <PageTitle>Autoři</PageTitle>
-        {canCreate && (
-          <LinkButton
-            state={RETURN_TO_OPENER_STATE}
-            to={href('/administration/authors/new')}
-          >
-            Nový autor
-          </LinkButton>
-        )}
+        {newAuthorButton}
       </ListHeader>
       <FilterCell>
         <AdminBulkActionsBar
           action={href('/administration/authors')}
           confirmation={getAuthorBulkDeleteConfirmation(selectedAuthors)}
+          foldsOnPhone={true}
           formatToast={AUTHOR_RECORD_COPY.bulkDelete.toast}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
@@ -184,6 +189,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
+          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >
@@ -262,6 +268,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         totalCount={totalCount}
         totalPages={totalPages}
       />
+      {/* The empty list offers only clearing the filters (22e). */}
+      {canCreate && <ListActionBar>{newAuthorButton}</ListActionBar>}
     </AdminPage>
   )
 }

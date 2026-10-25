@@ -1,0 +1,13 @@
+.cell {
+  @layer variant {
+    @media (width < 768px) {
+      :where([data-folds-on-phone]) & {
+        position: relative;
+        z-index: 1;
+        grid-column: -2 / -1;
+        grid-row: 1 / span 3;
+        justify-self: center;
+      }
+    }
+  }
+}

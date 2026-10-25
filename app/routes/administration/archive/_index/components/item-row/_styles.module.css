@@ -22,7 +22,7 @@
   }
 }
 
-/* The title over its file; the order over „doplněk“ (26a). */
+/* The order over „doplněk“ (26a). */
 .title {
   @layer route {
     display: flex;
@@ -32,24 +32,10 @@
   }
 }
 
+/* The focus ring hugs the title, not the column. */
 .link {
   @layer route {
     align-self: flex-start;
-    font-weight: var(--font-weight-medium);
-    color: inherit;
-    text-decoration: none;
-
-    &:hover {
-      color: var(--link-strong);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: var(--focus-shadow);
-      border-radius: var(--radius-sm);
-    }
   }
 }
 
@@ -77,14 +63,6 @@
   @layer route {
     font-size: var(--font-size-xs);
     color: var(--text-tertiary);
-  }
-}
-
-.actions {
-  @layer route {
-    display: inline-flex;
-    justify-content: flex-end;
-    gap: 6px;
   }
 }
 

@@ -21,6 +21,7 @@ import { FilterBarGroup } from '~/components/filter-bar-group'
 import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -96,11 +97,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   )?.name
 
   // Nový článek creates the draft and opens it (log 0020), so it posts.
-  const renderNewArticleButton = (className?: string) =>
+  const renderNewArticleButton = () =>
     canCreate && (
       <Form
         action={href('/administration/articles/add-article')}
-        className={className}
         method={'post'}
       >
         <AuthenticityTokenInput />
@@ -152,9 +152,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <ArticlesTabs />
       {/* On a phone Nový článek waits at the bottom, in reach of the thumb,
           and the top bar names the page (22g). */}
-      <ListHeader className={styles.header}>
-        <PageTitle className={styles.headline}>Články</PageTitle>
-        {renderNewArticleButton(styles.topNewArticle)}
+      <ListHeader foldsOnPhone={true}>
+        <PageTitle>Články</PageTitle>
+        {renderNewArticleButton()}
       </ListHeader>
       {/* Once a row is checked, the selection bar takes the filter row's place
           in the same cell, so the table does not move (22c, cioukqn6); on a
@@ -240,15 +240,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </ListEmptyCard>
       ) : (
         <AdminTable
-          className={styles.table}
           // A Contributor is always the author, so no Autor track (22i).
           columnsClassName={
             isContributor ? styles.columnsWithoutAuthor : styles.columns
           }
+          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >
-          <TableHeader className={styles.tableHeader}>
+          <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
               disabled={selectableIds.length === 0}
@@ -310,7 +310,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       {/* A bar that stays at the bottom of a phone's screen (22g, d9en8oih),
           unless the empty list already offers it (22e). */}
       {canCreate && (totalCount > 0 || emptyMessage.action !== 'create') && (
-        <div className={styles.newArticleBar}>{renderNewArticleButton()}</div>
+        <ListActionBar>{renderNewArticleButton()}</ListActionBar>
       )}
     </AdminPage>
   )

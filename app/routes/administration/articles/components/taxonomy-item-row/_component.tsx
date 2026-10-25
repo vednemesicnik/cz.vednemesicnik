@@ -1,9 +1,18 @@
 import { ActionMenu } from '~/components/action-menu'
 import {
+  TableActionsCell,
   TableCell,
+  TableDetailsCell,
+  TableDetailsLine,
+  TableNameAddress,
+  TableNameCell,
   TableRow,
+  TableRowActions,
+  TableRowLink,
+  TableRowMenu,
   type TableRowTint,
   TableSelectionCell,
+  TableStateCell,
 } from '~/components/admin/admin-table'
 import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
@@ -11,6 +20,7 @@ import { LinkButton } from '~/components/link-button'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
 
 import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
+import { formatPublishedArticleCount } from '../../utils/format-published-article-count'
 import {
   TAXONOMY_ACTION_LABELS,
   type TaxonomyAction,
@@ -49,7 +59,9 @@ type Props = {
  * A row of the category or tag list (design 25a, 25e): the name opening the
  * detail, for a category with its address under it; the published articles
  * linking to the article list; the state tag with one fact; and one action
- * with the rest in „⋯“, as the article's row (22a).
+ * with the rest in „⋯“, as the article's row (22a). Below 768 px it folds
+ * into the name, the state and the published articles in words, beside one
+ * „⋯“ with the row action first (32a).
  *
  * @param props.publishedArticlesHref - The article list filtered to the record
  *   and `state=published`, the set the count counts.
@@ -78,6 +90,14 @@ export const TaxonomyItemRow = ({
   const { getLabel, isSubmitting, runAction } = actions
 
   const rowAction = record.row
+  const toMenuItem = (menuAction: TaxonomyAction) => ({
+    danger: menuAction === 'delete',
+    label: getLabel(menuAction),
+    onSelect: () => runAction(menuAction),
+  })
+  // On a phone „⋯“ stands alone, the row action first in it (32a).
+  const phoneMenu =
+    rowAction === null ? record.menu : [rowAction, ...record.menu]
 
   return (
     <TableRow muted={record.state === 'archived'} tint={tint}>
@@ -87,15 +107,10 @@ export const TaxonomyItemRow = ({
         label={copy.selectLabel(record.name)}
         onChange={onSelect}
       />
-      <TableCell>
-        {/* Zobrazit is gone: the name opens the detail (22a). */}
-        <span className={styles.name}>
-          <BaseLink className={styles.link} to={detailHref}>
-            {record.name}
-          </BaseLink>
-          {showSlug && <span className={styles.slug}>{record.slug}</span>}
-        </span>
-      </TableCell>
+      <TableNameCell>
+        <TableRowLink to={detailHref}>{record.name}</TableRowLink>
+        {showSlug && <TableNameAddress>{record.slug}</TableNameAddress>}
+      </TableNameCell>
       <TableCell>
         {/* Zero is tertiary and leads nowhere (25a). */}
         {record.publishedArticleCount === 0 ? (
@@ -106,11 +121,25 @@ export const TaxonomyItemRow = ({
           </BaseLink>
         )}
       </TableCell>
-      <TableCell>
+      <TableStateCell>
         <StatusTag detail={record.factLine ?? undefined} state={record.state} />
-      </TableCell>
-      <TableCell variant={'actions'}>
-        <span className={styles.actions}>
+      </TableStateCell>
+      <TableDetailsCell>
+        <TableDetailsLine>
+          {formatPublishedArticleCount(record.publishedArticleCount)}
+        </TableDetailsLine>
+      </TableDetailsCell>
+      <TableActionsCell>
+        {phoneMenu.length > 0 && (
+          <TableRowMenu phoneOnly={true}>
+            <ActionMenu
+              items={phoneMenu.map(toMenuItem)}
+              label={copy.menuLabel(record.name)}
+              size={'sm'}
+            />
+          </TableRowMenu>
+        )}
+        <TableRowActions>
           {rowAction === 'edit' && (
             <LinkButton
               disabled={isSubmitting}
@@ -135,16 +164,12 @@ export const TaxonomyItemRow = ({
           )}
           {record.menu.length > 0 && (
             <ActionMenu
-              items={record.menu.map((menuAction) => ({
-                danger: menuAction === 'delete',
-                label: getLabel(menuAction),
-                onSelect: () => runAction(menuAction),
-              }))}
+              items={record.menu.map(toMenuItem)}
               label={copy.menuLabel(record.name)}
               size={'sm'}
             />
           )}
-        </span>
+        </TableRowActions>
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
@@ -153,7 +178,7 @@ export const TaxonomyItemRow = ({
             canDelete={record.menu.includes('delete')}
           />
         </div>
-      </TableCell>
+      </TableActionsCell>
     </TableRow>
   )
 }

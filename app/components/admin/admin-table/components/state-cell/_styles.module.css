@@ -1,0 +1,18 @@
+.cell {
+  @layer variant {
+    @media (width < 768px) {
+      :where([data-folds-on-phone]) & {
+        grid-column: -3 / -2;
+        margin-block-start: 6px;
+
+        /* The tag with its fact beside it, not under it. */
+        & > :first-child {
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 4px 8px;
+        }
+      }
+    }
+  }
+}

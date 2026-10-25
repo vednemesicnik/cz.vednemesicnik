@@ -10,3 +10,26 @@
     min-block-size: 44px;
   }
 }
+
+/* Only the visually hidden title is left: no row of its own, or an empty one
+   would still cost the page a gap (22g). */
+.foldsOnPhone {
+  @layer variant {
+    @media (width < 768px) {
+      display: contents;
+
+      & > :first-child {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      & > :not(:first-child) {
+        display: none;
+      }
+    }
+  }
+}
