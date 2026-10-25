@@ -35,6 +35,7 @@ describe('getAccountHistory', () => {
                 in: [
                   'user_created',
                   'user_role_changed',
+                  'user_email_changed',
                   'emergency_link_issued',
                 ],
               },

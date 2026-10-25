@@ -7,8 +7,10 @@ const mocks = vi.hoisted(() => ({
   isEmailTaken: vi.fn(),
   publishAccountEvent: vi.fn(),
   recordAuditLog: vi.fn(),
+  sendEmailChangeNotice: vi.fn(),
   updateUser: vi.fn(),
   userFindUnique: vi.fn(),
+  userFindUniqueOrThrow: vi.fn(),
   userRoleFindUniqueOrThrow: vi.fn(),
 }))
 
@@ -28,7 +30,10 @@ vi.mock('~/utils/admin-notice/flash-admin-notice.server', () => ({
 }))
 vi.mock('~/utils/db.server', () => ({
   prisma: {
-    user: { findUnique: mocks.userFindUnique },
+    user: {
+      findUnique: mocks.userFindUnique,
+      findUniqueOrThrow: mocks.userFindUniqueOrThrow,
+    },
     userRole: { findUniqueOrThrow: mocks.userRoleFindUniqueOrThrow },
   },
 }))
@@ -36,6 +41,9 @@ vi.mock('../../utils/is-email-taken.server', () => ({
   isEmailTaken: mocks.isEmailTaken,
 }))
 vi.mock('./utils/update-user.server', () => ({ updateUser: mocks.updateUser }))
+vi.mock('./utils/send-email-change-notice.server', () => ({
+  sendEmailChangeNotice: mocks.sendEmailChangeNotice,
+}))
 vi.mock(
   '~/utils/permissions/user/context/get-user-permission-context.server',
   () => ({
@@ -95,6 +103,10 @@ describe('Upravit uživatele action (design 28f, 28g)', () => {
     mocks.checkCSRF.mockResolvedValue(null)
     mocks.isEmailTaken.mockResolvedValue(false)
     mocks.flashAdminNotice.mockResolvedValue('notice=flashed')
+    mocks.sendEmailChangeNotice.mockResolvedValue(true)
+    mocks.userFindUniqueOrThrow.mockResolvedValue({
+      author: { name: 'Petr Dvořák' },
+    })
     mocks.userRoleFindUniqueOrThrow.mockImplementation(
       async ({ where }: { where: { name: keyof typeof roles } }) =>
         roles[where.name],
@@ -199,6 +211,58 @@ describe('Upravit uživatele action (design 28f, 28g)', () => {
     expect(mocks.recordAuditLog).not.toHaveBeenCalled()
     // The e-mail is saved on a collision too (log 0042).
     expect(mocks.publishAccountEvent).toHaveBeenCalledOnce()
+  })
+
+  test('a changed e-mail is recorded without an address (28e)', async () => {
+    storeUser('jakub', 'member')
+    mocks.updateUser.mockResolvedValue({ status: 'saved' })
+
+    await save({
+      fields: { email: 'jakub2@vednemesicnik.cz' },
+      userId: 'jakub',
+    })
+
+    expect(mocks.recordAuditLog).toHaveBeenCalledOnce()
+    expect(mocks.recordAuditLog).toHaveBeenCalledWith({
+      actorId: 'admin',
+      event: 'user_email_changed',
+      request: expect.any(Request),
+      targetId: 'jakub',
+    })
+    expect(mocks.sendEmailChangeNotice).toHaveBeenCalledOnce()
+  })
+
+  test('an unchanged e-mail records nothing', async () => {
+    storeUser('jakub', 'member')
+    mocks.updateUser.mockResolvedValue({ status: 'saved' })
+
+    await save({
+      fields: { email: 'jakub@vednemesicnik.cz' },
+      userId: 'jakub',
+    })
+
+    expect(mocks.recordAuditLog).not.toHaveBeenCalled()
+    expect(mocks.sendEmailChangeNotice).not.toHaveBeenCalled()
+  })
+
+  test('a role collision still records the saved e-mail', async () => {
+    storeUser('jakub', 'administrator')
+    mocks.updateUser.mockResolvedValue({
+      currentRoleId: 'administrator-id',
+      currentRoleName: 'administrator',
+      status: 'role-conflict',
+    })
+    mocks.getLatestRoleChange.mockResolvedValue(null)
+
+    await save({
+      fields: { email: 'jakub2@vednemesicnik.cz', loadedRoleId: 'member-id' },
+      userId: 'jakub',
+    })
+
+    expect(mocks.recordAuditLog).toHaveBeenCalledOnce()
+    expect(mocks.recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'user_email_changed' }),
+    )
   })
 
   test("the Owner's role is never sent, and a sent one is refused", async () => {

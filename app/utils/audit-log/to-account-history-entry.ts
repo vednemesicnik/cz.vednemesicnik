@@ -58,6 +58,8 @@ const labels: Record<HistoryEvent, (detail: string | null) => string> = {
     ),
   emergency_link_issued: () => 'Nouzový odkaz vydán',
   user_created: () => 'Účet založen',
+  // No address: the current one stands under the name (28e, copy 2zn4atua).
+  user_email_changed: () => 'Přihlašovací e-mail změněn',
   user_role_changed: (detail) =>
     formatRoleChange('Uživatelská role', detail, (name) =>
       isUserRoleName(name) ? getUserRoleLabel(name) : null,
