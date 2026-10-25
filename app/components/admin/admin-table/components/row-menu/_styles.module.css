@@ -1,0 +1,30 @@
+.menu {
+  @layer component {
+    display: inline-flex;
+
+    /* The column is 44 px wide, so the larger target overlaps nothing. */
+    @media (width < 768px) {
+      & > * > button {
+        position: relative;
+
+        &::after {
+          content: "";
+          position: absolute;
+          inset-block-start: 50%;
+          inset-inline-start: 50%;
+          inline-size: 44px;
+          block-size: 44px;
+          translate: -50% -50%;
+        }
+      }
+    }
+  }
+}
+
+.phoneOnly {
+  @layer variant {
+    @media (width >= 768px) {
+      display: none;
+    }
+  }
+}

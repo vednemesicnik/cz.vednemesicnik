@@ -26,6 +26,73 @@
   }
 }
 
+/*
+ * Below 768 px a folding table is rows across the whole width, past the
+ * page's 24 px gutter (design 32, 22g): no header, no selection, and each row
+ * a grid of its parts — the image, then the name, the state and the details
+ * one under another, then „⋯“. A cell that is no part (`data-phone-part`)
+ * leaves: the checkbox, a date, every column the details repeat.
+ */
+.foldsOnPhone {
+  @layer variant {
+    @media (width < 768px) {
+      box-sizing: border-box;
+      inline-size: calc(100% + 48px);
+      margin-inline: -24px;
+      overflow: visible;
+      border-block: 1px solid var(--border);
+
+      & :is(table, tbody) {
+        display: block;
+      }
+
+      & thead {
+        display: none;
+      }
+
+      /* The text of a row lines up with the filters above, on the page's
+         gutter. */
+      & tr:has(> td) {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 44px;
+        column-gap: 10px;
+        align-items: start;
+        padding: 14px 24px;
+        border-block-end: 1px solid var(--border);
+
+        &:has(> [data-phone-part="image"]) {
+          grid-template-columns: auto minmax(0, 1fr) 44px;
+          column-gap: 12px;
+        }
+      }
+
+      & tbody:last-child > tr:last-child {
+        border-block-end: none;
+      }
+
+      & td {
+        padding: 0;
+        border: none;
+      }
+
+      & td:not([data-phone-part]) {
+        display: none;
+      }
+
+      /* A year over its issues spans the row and doesn't stick (32b). */
+      & tr:has(> th) {
+        display: block;
+      }
+
+      & th {
+        display: block;
+        padding-inline: 24px;
+      }
+    }
+  }
+}
+
 .table {
   @layer component {
     width: 100%;

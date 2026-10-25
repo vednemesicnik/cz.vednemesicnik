@@ -1,0 +1,13 @@
+.note {
+  @layer component {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-regular);
+    color: var(--text-tertiary);
+    overflow-wrap: anywhere;
+
+    /* As the folded row's other lines (32f). */
+    @media (width < 768px) {
+      color: var(--text-secondary);
+    }
+  }
+}

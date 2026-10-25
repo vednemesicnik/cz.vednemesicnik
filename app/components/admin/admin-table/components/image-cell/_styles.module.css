@@ -1,0 +1,8 @@
+.cell {
+  @layer variant {
+    @media (width < 768px) {
+      grid-column: 1;
+      grid-row: 1 / span 3;
+    }
+  }
+}

@@ -1,0 +1,11 @@
+.actions {
+  @layer component {
+    display: inline-flex;
+    justify-content: flex-end;
+    gap: 6px;
+
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}

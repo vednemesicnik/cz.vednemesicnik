@@ -1,0 +1,6 @@
+.line {
+  @layer component {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+}
