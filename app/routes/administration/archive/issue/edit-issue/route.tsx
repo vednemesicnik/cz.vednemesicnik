@@ -1202,7 +1202,8 @@ export default function RouteComponent({
                           {...issue.cover.sources}
                           alt={issue.cover.altText}
                           className={styles.coverImage}
-                          sizes={'(width >= 488px) 220px, 100vw'}
+                          // As on the detail: a 440 px section from a 472 px window.
+                          sizes={'(width >= 472px) 220px, 100vw'}
                         />
                         {renderFileProblem(
                           'cover',

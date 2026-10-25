@@ -17,7 +17,9 @@ text lined up with the filters (0044). Moving everything to 16 px was the follow
 - `AdminPage`, the breadcrumbs and the footer read it.
 - Anything that runs past the gutter to the screen's edges bleeds and pads by the same token:
   the folding table and its rows and year headings, `ListActionBar`, the article tabs, and the
-  article editor's phone bar.
+  filter row, which scrolls to the screen's edges. The article editor's phone bar bleeds by
+  the token but keeps its own 16 px padding, like the top bar.
+- The issue cover's `sizes` breakpoint follows the gutter: 472 px.
 - The vertical 24 px on a phone (the page's padding and row gap) is unchanged.
 
 ## What follows
