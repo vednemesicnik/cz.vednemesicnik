@@ -1,0 +1,62 @@
+/* A 44 px square cover (27a): the platforms want it square. */
+.cover,
+.coverMissing {
+  @layer route {
+    width: 44px;
+    aspect-ratio: 1;
+    border-radius: 4px;
+  }
+}
+
+.cover {
+  @layer route {
+    box-shadow: var(--shadow-xs);
+  }
+}
+
+/* No cover: a dashed frame, as the issue's (26a). */
+.coverMissing {
+  @layer route {
+    box-sizing: border-box;
+    border: 1px dashed var(--border-strong);
+  }
+}
+
+/* The focus ring hugs the title, not the column. */
+.link {
+  @layer route {
+    align-self: flex-start;
+  }
+}
+
+/* The episodes on the web over what is in progress or the latest one (27a). */
+.episodes {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+}
+
+.detail {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+/* Something waits for approval (27a). */
+.pending {
+  @layer route {
+    color: var(--state-attention-text);
+  }
+}
+
+.dialogs {
+  @layer route {
+    display: contents;
+    text-align: start;
+    white-space: normal;
+  }
+}

@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableHeaderCell,
   TableSelectionHeaderCell,
-  TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
@@ -38,7 +37,6 @@ import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
-import { SORT_KEYS } from './sort'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -62,7 +60,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const pending = useAdminListPending()
 
   const deletableIds = podcasts
-    .filter((podcast) => podcast.canDelete)
+    .filter((podcast) => podcast.canSelect)
     .map((podcast) => podcast.id)
   const selection = useAdminTableSelection(deletableIds)
 
@@ -174,38 +172,21 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'title'}
-              sortKeys={SORT_KEYS}
-            >
-              Název
-            </TableSortableHeaderCell>
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'createdAt'}
-              sortKeys={SORT_KEYS}
-            >
-              Vytvořeno
-            </TableSortableHeaderCell>
+            <TableHeaderCell>
+              <span className={'screen-reader-only'}>Obálka</span>
+            </TableHeaderCell>
+            <TableHeaderCell>Podcast</TableHeaderCell>
+            <TableHeaderCell>Epizody</TableHeaderCell>
             <TableHeaderCell>Stav</TableHeaderCell>
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>
           <TableBody>
             {podcasts.map((podcast) => (
               <ItemRow
-                canDelete={podcast.canDelete}
-                canEdit={podcast.canEdit}
-                canView={podcast.canView}
-                createdAt={podcast.createdAt}
-                id={podcast.id}
                 key={podcast.id}
                 onSelect={() => selection.toggle(podcast.id)}
+                podcast={podcast}
                 selected={selection.isSelected(podcast.id)}
-                state={podcast.submission ?? podcast.state}
-                title={podcast.title}
               />
             ))}
           </TableBody>

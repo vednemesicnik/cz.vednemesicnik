@@ -1,15 +1,16 @@
 /*
  * The wide table's columns (27a, 31a), read by AdminTable from a
- * 1280 px table: Název 3 and Vytvořeno 1 (min. 110, a date as in 22a);
- * the checkbox and Stav fixed. Akce is as wide as its buttons: the app
- * has more of them than 27a draws.
+ * 1280 px table: Podcast takes the rest; the checkbox, cover, Epizody,
+ * Stav and Akce fixed. Stav is 200 px as the archive's, not the drawn
+ * 170: its fact is the same line (Odesláno · Jakub Novák · 26. 9. 2026).
+ * Akce holds only „⋯“.
  * Each track is the drawn width plus the cell's 12 px padding (14 px
  * at the row's ends).
  */
 .columns {
   @layer route {
     grid-template-columns:
-      46px minmax(0, 3fr) minmax(122px, 1fr) 182px
-      max-content;
+      46px 56px minmax(0, 1fr) 232px 212px
+      124px;
   }
 }
