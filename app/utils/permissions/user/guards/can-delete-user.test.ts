@@ -32,6 +32,7 @@ const makeContext = (roleName: 'member' | 'administrator' | 'owner') => {
         targetId: config.targetUserId,
       })
       const isAboveLevel =
+        config.action !== 'view' &&
         config.targetUserRoleLevel !== undefined &&
         config.targetUserRoleLevel < role.level
 
