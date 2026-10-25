@@ -75,8 +75,11 @@ over saved results by the newest `mtime`, not by the path inside the file.
   that stands in that screen because of this decision. `tidy` greps for it instead of re-reading
   the answer.
 
-Only `/ask-design` writes the index, and only under `questions/`. Read it fresh before every
-write — the design chat does not edit it, but another session may have.
+`/ask-design` keeps the index, and writes only under `questions/`. The design chat sometimes
+fills in an entry itself when it answers (`answered`, `wroteTo`) and sometimes forgets, and
+another session may have written too. Read it fresh before every write, and at `check` treat an
+entry design filled in as a draft: confirm each witness with `pnpm design:screen` before keeping
+it.
 
 ## Uploaded material
 
