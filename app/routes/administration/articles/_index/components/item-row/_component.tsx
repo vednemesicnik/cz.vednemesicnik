@@ -8,12 +8,19 @@ import {
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
 import {
+  TableActionsCell,
   TableCell,
+  TableDetailsCell,
+  TableDetailsLine,
+  TableNameCell,
   TableRow,
+  TableRowActions,
+  TableRowLink,
+  TableRowMenu,
   TableSelectionCell,
+  TableStateCell,
 } from '~/components/admin/admin-table'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
-import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
@@ -153,7 +160,6 @@ export const ItemRow = ({
 
   return (
     <TableRow
-      className={styles.row}
       muted={article.state === 'archived'}
       // A tint held back for a hidden tab has none yet.
       tint={
@@ -167,29 +173,23 @@ export const ItemRow = ({
     >
       <TableSelectionCell
         checked={selected}
-        className={styles.wideOnly}
         disabled={article.bulkActions.length === 0}
         label={`Vybrat článek ${article.title}`}
         onChange={onSelect}
       />
-      <TableCell className={styles.titleCell}>
-        {/* Zobrazit is gone: the title opens the detail (22a). */}
-        <span className={styles.title}>
-          <BaseLink className={styles.link} to={action}>
-            {article.title}
-          </BaseLink>
-          {firstCategory !== undefined && (
-            <span className={styles.categories}>
-              {firstCategory}
-              {otherCategories.length > 0 && (
-                <span className={styles.more}>
-                  {` +${otherCategories.length}`}
-                </span>
-              )}
-            </span>
-          )}
-        </span>
-      </TableCell>
+      <TableNameCell>
+        <TableRowLink to={action}>{article.title}</TableRowLink>
+        {firstCategory !== undefined && (
+          <span className={styles.categories}>
+            {firstCategory}
+            {otherCategories.length > 0 && (
+              <span className={styles.more}>
+                {` +${otherCategories.length}`}
+              </span>
+            )}
+          </span>
+        )}
+      </TableNameCell>
       <TableCell className={styles.categoriesCell}>
         {article.categoryNames.join(', ')}
       </TableCell>
@@ -202,15 +202,10 @@ export const ItemRow = ({
       >
         {article.tagNames.join(', ')}
       </TableCell>
-      {showAuthor && (
-        <TableCell className={styles.wideOnly}>
-          {article.authorNames.join(', ')}
-        </TableCell>
-      )}
-      <TableCell className={styles.wideOnly}>{article.updatedAt}</TableCell>
-      <TableCell className={styles.stateCell}>
+      {showAuthor && <TableCell>{article.authorNames.join(', ')}</TableCell>}
+      <TableCell>{article.updatedAt}</TableCell>
+      <TableStateCell>
         <StatusTag
-          className={styles.state}
           // Who edits it comes first: it changes what the row allows (22f).
           detail={
             article.holdLine ??
@@ -224,18 +219,21 @@ export const ItemRow = ({
           }
           state={article.state}
         />
-      </TableCell>
+      </TableStateCell>
       {meta !== null && (
-        <TableCell className={styles.metaCell}>{meta}</TableCell>
+        <TableDetailsCell>
+          <TableDetailsLine>{meta}</TableDetailsLine>
+        </TableDetailsCell>
       )}
-      <TableCell className={styles.actionsCell} variant={'actions'}>
-        <ActionMenu
-          className={styles.phoneMenu}
-          items={phoneMenu.map(toMenuItem)}
-          label={`Další akce s článkem ${article.title}`}
-          size={'sm'}
-        />
-        <span className={styles.actions}>
+      <TableActionsCell>
+        <TableRowMenu phoneOnly={true}>
+          <ActionMenu
+            items={phoneMenu.map(toMenuItem)}
+            label={`Další akce s článkem ${article.title}`}
+            size={'sm'}
+          />
+        </TableRowMenu>
+        <TableRowActions>
           {rowAction === 'edit' && (
             <LinkButton
               disabled={isSubmitting}
@@ -262,7 +260,7 @@ export const ItemRow = ({
             label={`Další akce s článkem ${article.title}`}
             size={'sm'}
           />
-        </span>
+        </TableRowActions>
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
@@ -317,7 +315,7 @@ export const ItemRow = ({
             />
           )}
         </div>
-      </TableCell>
+      </TableActionsCell>
     </TableRow>
   )
 }

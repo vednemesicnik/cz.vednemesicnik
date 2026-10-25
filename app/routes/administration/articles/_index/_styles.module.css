@@ -62,74 +62,11 @@
   }
 }
 
-@media (width >= 768px) {
-  .newArticleBar {
-    @layer route {
-      display: none;
-    }
-  }
-}
-
-/* A phone has no selection; the list is rows across the whole width with
-   Nový článek under it, in reach of the thumb (22g). */
+/* A phone has no selection (22g). */
 @media (width < 768px) {
-  .selectionBar,
-  .topNewArticle,
-  .tableHeader {
+  .selectionBar {
     @layer route {
       display: none;
-    }
-  }
-
-  /* Only the visually hidden headline is left: no row of its own, or an
-     empty one would still cost the page a gap. */
-  .header {
-    @layer route {
-      display: contents;
-    }
-  }
-
-  /* The top bar names the page; the headline stays for screen readers. */
-  .headline {
-    @layer route {
-      position: absolute;
-      inline-size: 1px;
-      block-size: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
-  }
-
-  /* The rows run edge to edge, past the page's 24 px gutter. */
-  .table {
-    @layer route {
-      box-sizing: border-box;
-      inline-size: calc(100% + 48px);
-      margin-inline: -24px;
-      overflow: visible;
-      border-block: 1px solid var(--border);
-
-      & :is(table, tbody) {
-        display: block;
-      }
-    }
-  }
-
-  /* Always in reach of the thumb, never hiding: the page's main action
-     (d9en8oih). It stays in the flow after the pagination, so at the end of
-     the list it settles on the footer, bridging the page's 24 px padding. */
-  .newArticleBar {
-    @layer route {
-      position: sticky;
-      inset-block-end: 0;
-      z-index: 1;
-      justify-self: stretch;
-      margin-inline: -24px;
-      margin-block-end: -24px;
-      padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
-      background-color: var(--bg-primary);
-      border-block-start: 1px solid var(--border);
     }
   }
 }
