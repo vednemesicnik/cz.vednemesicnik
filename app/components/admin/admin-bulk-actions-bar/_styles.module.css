@@ -9,6 +9,15 @@
   }
 }
 
+/* A phone has no selection (design 32, 22g). */
+.foldsOnPhone {
+  @layer variant {
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}
+
 /* The selected records in the confirmation, as 22c lists articles. */
 .items {
   @layer component {

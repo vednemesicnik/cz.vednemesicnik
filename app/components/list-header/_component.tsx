@@ -5,6 +5,7 @@ import styles from './_styles.module.css'
 
 type Props = {
   children: ReactNode
+  foldsOnPhone?: boolean
   className?: string
 }
 
@@ -16,8 +17,25 @@ type Props = {
  *
  * @param props.children - The `PageTitle`, then the main action, usually a
  * primary `LinkButton`.
+ * @param props.foldsOnPhone - Below 768 px the top bar names the page, so the
+ *   title stays for screen readers only, and the main action waits in a
+ *   `ListActionBar` at the bottom (22g, design 32).
  * @returns The header
  */
-export const ListHeader = ({ children, className }: Props) => {
-  return <header className={clsx(styles.row, className)}>{children}</header>
+export const ListHeader = ({
+  children,
+  foldsOnPhone = false,
+  className,
+}: Props) => {
+  return (
+    <header
+      className={clsx(
+        styles.row,
+        foldsOnPhone && styles.foldsOnPhone,
+        className,
+      )}
+    >
+      {children}
+    </header>
+  )
 }
