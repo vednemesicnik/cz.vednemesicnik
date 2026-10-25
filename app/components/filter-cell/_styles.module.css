@@ -5,6 +5,11 @@
     gap: 8px;
     inline-size: 100%;
     margin-block-end: 16px;
+
+    /* On a phone the list follows closely; it sets the space itself (22g). */
+    @media (width < 768px) {
+      margin-block-end: 0;
+    }
   }
 }
 
