@@ -21,6 +21,7 @@ export type AuthorDeleteBlock = {
   deletable: boolean
   contentCounts: Record<AuthorContentType, number>
   hasApprovals: boolean
+  hasHistory: boolean
   account: AuthorAccount
 }
 
@@ -39,12 +40,16 @@ const getAuthorAccount = (
 /**
  * Whether an author can be deleted, and what holds it if not (design 28g).
  * Content and approvals hold it on the database, and an article would lose it
- * from its authors (#767); the account goes first.
+ * from its authors (#767); the account goes first. Content history holds it
+ * like an approval: the log keeps the actor as a link that a delete would
+ * blank (ol7vu3mn). A deleted content's history goes with it
+ * (`deleteContentLog`), so what counts is the history of content that exists.
  *
  * @param author - The author read with `AUTHOR_REFERENCES_SELECT`.
  * @param viewerUserId - The signed-in account, to tell its own author apart.
  * @returns `deletable` when nothing holds the author; otherwise the content
- *   counts, whether it gave approvals and which account it has.
+ *   counts, whether it gave approvals or stands in content history, and
+ *   which account it has.
  */
 export const getAuthorDeleteBlock = (
   author: AuthorReferences,
@@ -58,12 +63,15 @@ export const getAuthorDeleteBlock = (
     (type) => contentCounts[type] > 0,
   )
   const hasApprovals = author._count.reviews > 0
+  const hasHistory = author._count.contentLogs > 0
   const account = getAuthorAccount(author.user, viewerUserId)
 
   return {
     account,
     contentCounts,
-    deletable: !hasContent && !hasApprovals && account === 'none',
+    deletable:
+      !hasContent && !hasApprovals && !hasHistory && account === 'none',
     hasApprovals,
+    hasHistory,
   }
 }

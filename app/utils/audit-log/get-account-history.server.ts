@@ -5,10 +5,10 @@ import { toHistoryEntries } from './to-history-entries.server'
 
 /**
  * Reads an account's history from `AuditLog`, newest first (design 28e): its
- * creation, user role changes and emergency links issued for it by the user
- * id, author role changes by the
- * id of the author that belongs to the account. The actor's name is their
- * author name; a deleted actor has none.
+ * creation, user role changes, sign-in e-mail changes and emergency links
+ * issued for it by the user id, author role changes by the id of the author
+ * that belongs to the account. The actor's name is their author name; a
+ * deleted actor has none.
  *
  * @param account.userId - The account's user id.
  * @param account.authorId - The id of the account's author.
@@ -34,7 +34,12 @@ export const getAccountHistory = async ({
       OR: [
         {
           event: {
-            in: ['user_created', 'user_role_changed', 'emergency_link_issued'],
+            in: [
+              'user_created',
+              'user_role_changed',
+              'user_email_changed',
+              'emergency_link_issued',
+            ],
           },
           targetId: userId,
         },

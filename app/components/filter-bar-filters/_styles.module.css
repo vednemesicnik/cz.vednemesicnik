@@ -14,8 +14,9 @@
       display: flex;
       align-items: safe center;
       gap: 8px;
-      margin-inline: -16px;
-      padding-inline: 16px;
+      /* The row scrolls to the screen's edges, past the page's gutter (22g). */
+      margin-inline: calc(-1 * var(--admin-page-side-padding));
+      padding-inline: var(--admin-page-side-padding);
       overflow-x: auto;
       scrollbar-width: none;
     }

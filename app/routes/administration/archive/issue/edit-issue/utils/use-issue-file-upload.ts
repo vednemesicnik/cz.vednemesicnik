@@ -4,6 +4,7 @@ import { useRevalidator } from 'react-router'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
+import { useWaitForChange } from '~/hooks/use-wait-for-change'
 
 import type { IssueFileKind } from '../../issue-files/_schema'
 import { getRejectedIssueFileSentence } from './get-rejected-issue-file-sentence'
@@ -85,11 +86,7 @@ export const useIssueFileUpload = ({
   optionsRef.current = { action, onNotHeld, onSaved, tabId }
   const storedKeyRef = useRef(storedKey)
   storedKeyRef.current = storedKey
-  // Settles a saved upload once the stored file has rendered.
-  const settleRef = useRef<{
-    keyAtPick: string | null
-    settle: () => void
-  } | null>(null)
+  const waitForStoredFile = useWaitForChange(storedKey)
 
   const controllerRef = useRef<AbortController | null>(null)
   const uploadRef = useRef<IssueFileUpload | null>(null)
@@ -191,17 +188,10 @@ export const useIssueFileUpload = ({
 
     // The upload lasts until the stored file has rendered: the revalidation
     // resolves before React shows its data, and ending earlier would show the
-    // empty field for a moment. The same file again keeps its key, hence the
-    // limit.
+    // empty field for a moment.
     if (answer.status === 'saved' && !controller.signal.aborted) {
       await revalidator.revalidate()
-      if (storedKeyRef.current === keyAtPick) {
-        await new Promise<void>((resolve) => {
-          settleRef.current = { keyAtPick, settle: resolve }
-          setTimeout(resolve, 1000)
-        })
-        settleRef.current = null
-      }
+      await waitForStoredFile(keyAtPick)
     }
 
     // A cancel settled it already, and its answer is lost.
@@ -292,11 +282,6 @@ export const useIssueFileUpload = ({
   useEffect(() => {
     if (storedKey === null) return
     setFailure((current) => (current?.replaces === false ? null : current))
-  }, [storedKey])
-
-  useEffect(() => {
-    const pending = settleRef.current
-    if (pending !== null && storedKey !== pending.keyAtPick) pending.settle()
   }, [storedKey])
 
   // The issue has loaded again: say what stayed.

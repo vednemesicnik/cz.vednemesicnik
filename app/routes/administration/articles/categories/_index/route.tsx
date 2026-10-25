@@ -21,6 +21,7 @@ import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -36,11 +37,11 @@ import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
 import { getStateFilter } from '~/utils/get-state-filter'
 import { recentChangeTints } from '~/utils/recent-change-tints'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../../components/articles-tabs'
 import { TaxonomyItemRow } from '../../components/taxonomy-item-row'
 import { getTaxonomyBulkDeleteConfirmation } from '../../utils/get-taxonomy-bulk-delete-confirmation'
-import { RETURN_TO_OPENER_STATE } from '../../utils/return-to-opener-state'
 import { CATEGORY_RECORD_COPY } from '../category-record-copy'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -112,19 +113,22 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     states,
   })
 
+  const newCategoryButton = canCreate && (
+    <LinkButton
+      state={RETURN_TO_OPENER_STATE}
+      to={`${href('/administration/articles/categories/new')}${search}`}
+    >
+      Nová rubrika
+    </LinkButton>
+  )
+
   return (
     <AdminPage>
       <ArticlesTabs />
-      <ListHeader>
+      {/* On a phone Nová rubrika waits at the bottom (32a). */}
+      <ListHeader foldsOnPhone={true}>
         <PageTitle>Rubriky</PageTitle>
-        {canCreate && (
-          <LinkButton
-            state={RETURN_TO_OPENER_STATE}
-            to={`${href('/administration/articles/categories/new')}${search}`}
-          >
-            Nová rubrika
-          </LinkButton>
-        )}
+        {newCategoryButton}
       </ListHeader>
       <FilterCell>
         <AdminBulkActionsBar
@@ -133,6 +137,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             selectedCategories,
             CATEGORY_RECORD_COPY,
           )}
+          foldsOnPhone={true}
           formatToast={CATEGORY_RECORD_COPY.bulkDelete.toast}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
@@ -178,19 +183,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
           )}
-          {emptyMessage.action === 'create' && canCreate && (
-            <LinkButton
-              state={RETURN_TO_OPENER_STATE}
-              to={`${href('/administration/articles/categories/new')}${search}`}
-            >
-              Nová rubrika
-            </LinkButton>
-          )}
+          {emptyMessage.action === 'create' && newCategoryButton}
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
         </ListEmptyCard>
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
+          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >
@@ -246,6 +245,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         totalCount={totalCount}
         totalPages={totalPages}
       />
+      {/* Unless the empty list already offers it (22e). */}
+      {canCreate && (totalCount > 0 || emptyMessage.action !== 'create') && (
+        <ListActionBar>{newCategoryButton}</ListActionBar>
+      )}
     </AdminPage>
   )
 }

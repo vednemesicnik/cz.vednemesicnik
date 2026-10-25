@@ -1,0 +1,15 @@
+/* In the form, the Callouts take the form's own spacing (28c). */
+.callout {
+  @layer route {
+    margin-block: 0;
+  }
+}
+
+/* The collision on one line, who changed the role on its own (lj22mnbm). */
+.lines {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}

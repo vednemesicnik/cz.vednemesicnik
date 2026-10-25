@@ -1,4 +1,3 @@
-import type { Prisma } from '@generated/prisma/client'
 import { data, redirect } from 'react-router'
 
 import {
@@ -12,38 +11,65 @@ import {
 import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { AUTHOR_REFERENCES_SELECT } from '~/utils/author-references/author-references-select'
 import { getAuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
+import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { prisma } from '~/utils/db.server'
+import { getOrderedPage } from '~/utils/get-ordered-page'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { isAssociationAuthor } from '~/utils/is-association-author'
+import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
+import { nameCollator } from '~/utils/name-collator'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
 
+const PAGE_SIZE = 20
+
 const TABLE_KEY = 'authors'
 
-// Every sort appends the name and then `createdAt desc` as tie-breakers so
-// rows with equal values keep a deterministic order across reloads.
-const ORDER_BY: Record<
+type SortRow = {
+  id: string
+  name: string
+  roleLevel: number
+  email: string | null
+  createdAt: Date
+}
+
+// Names repeat, so the newest first breaks a tie: a row never shows on two pages.
+const byName = (first: SortRow, second: SortRow) =>
+  nameCollator.compare(first.name, second.name) ||
+  second.createdAt.getTime() - first.createdAt.getTime()
+
+// Ordered in memory, names the Czech way (SQLite compares bytes); every other
+// sort breaks ties by name, so equal values keep one order across reloads.
+const COMPARE: Record<
   SortKey,
-  (order: SortOrder) => Prisma.AuthorOrderByWithRelationInput[]
+  (order: SortOrder) => (first: SortRow, second: SortRow) => number
 > = {
-  account: (order) => [
-    { user: { email: order } },
-    { name: 'asc' },
-    { createdAt: 'desc' },
-  ],
-  name: (order) => [{ name: order }, { createdAt: 'desc' }],
-  role: (order) => [
-    { role: { level: order } },
-    { name: 'asc' },
-    { createdAt: 'desc' },
-  ],
+  // Authors without an account last, whichever the direction.
+  account: (order) => (first, second) => {
+    if (first.email === null || second.email === null) {
+      return (
+        Number(first.email === null) - Number(second.email === null) ||
+        byName(first, second)
+      )
+    }
+
+    return (
+      (order === 'asc' ? 1 : -1) *
+        nameCollator.compare(first.email, second.email) || byName(first, second)
+    )
+  },
+  name: (order) => (first, second) =>
+    (order === 'asc' ? 1 : -1) * byName(first, second),
+  role: (order) => (first, second) =>
+    (order === 'asc' ? 1 : -1) * (first.roleLevel - second.roleLevel) ||
+    byName(first, second),
 }
 
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
@@ -73,7 +99,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     throw data(null, { status: 403 })
   }
 
-  const { order, query, sort } = parseAdminListParams(request, {
+  const { order, page, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'asc',
     defaultSort: 'name',
     sortKeys: SORT_KEYS,
@@ -119,9 +145,44 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ],
   }
 
-  const [rawAuthors, publishedCounts, savedFilters] = await Promise.all([
+  const [matchingAuthors, savedFilters] = await Promise.all([
     prisma.author.findMany({
-      orderBy: ORDER_BY[sort](order),
+      select: {
+        createdAt: true,
+        id: true,
+        name: true,
+        role: { select: { level: true } },
+        user: { select: { email: true } },
+      },
+      where,
+    }),
+    loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
+  ])
+
+  // One page of 20, ordered here: names in Czech order (dj753f0j, 28a).
+  const { pageIds, totalCount } = getOrderedPage(
+    matchingAuthors.map((author) => ({
+      createdAt: author.createdAt,
+      email: author.user?.email ?? null,
+      id: author.id,
+      name: author.name,
+      roleLevel: author.role.level,
+    })),
+    COMPARE[sort](order),
+    { page, pageSize: PAGE_SIZE },
+  )
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+  // Deleting the last row on the last page revalidates a URL past the end.
+  if (isPagePastLast(page, totalPages)) {
+    throw redirect(buildLastPageRedirect(url, totalPages))
+  }
+
+  const pageWhere = { id: { in: pageIds } }
+
+  const [pageAuthors, publishedCounts] = await Promise.all([
+    prisma.author.findMany({
       select: {
         ...AUTHOR_REFERENCES_SELECT,
         id: true,
@@ -142,7 +203,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           },
         },
       },
-      where,
+      where: pageWhere,
     }),
     // Publikováno: the published articles, episodes and issues (28a). A second
     // query, since a select holds one `_count` and the first counts every state.
@@ -157,10 +218,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         },
         id: true,
       },
-      where,
+      where: pageWhere,
     }),
-    loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
   ])
+
+  // The page's rows in the page's order; `in` returns them as SQLite has them.
+  const rawAuthors = [...pageAuthors].sort(
+    (first, second) => pageIds.indexOf(first.id) - pageIds.indexOf(second.id),
+  )
 
   const publishedCountById = new Map(
     publishedCounts.map(({ _count, id }) => [
@@ -193,11 +258,9 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       // Smazat… confirms a deletable author and explains a blocked one (28g);
       // only a deletable author can be selected for the bulk delete (28a).
       canDelete: mayDelete && deleteBlock.deletable,
-      canUpdate: context.can({
-        action: 'update',
-        entity: 'author',
-        targetUserId,
-      }).hasPermission,
+      // Any author: a Member edits their own name and bio in Settings (28c).
+      canUpdate: context.can({ action: 'update', entity: 'author' })
+        .hasPermission,
       canView: context.can({
         action: 'view',
         entity: 'author',
@@ -224,7 +287,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ...savedFilters,
     authors,
     canCreate: createPerms.hasAny, // Only "any" access can create new authors
+    currentPage: page,
     filters,
+    pageSize: PAGE_SIZE,
     query,
+    totalCount,
+    totalPages,
   }
 }

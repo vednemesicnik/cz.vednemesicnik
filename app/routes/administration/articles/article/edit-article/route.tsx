@@ -11,7 +11,6 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import type { ContentState } from '@generated/prisma/enums'
 import { clsx } from 'clsx'
 import {
-  type FocusEvent,
   type FormEvent,
   type MouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -31,6 +30,9 @@ import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { AuthorRemoveButton } from '~/components/author-remove-button'
+import { AuthorRow } from '~/components/author-row'
+import { AuthorRowButton } from '~/components/author-row-button'
 import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
@@ -65,12 +67,14 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
+import { useReplaceFrame } from '~/hooks/use-replace-frame'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
 import { foldForSearch } from '~/utils/fold-for-search'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
@@ -80,9 +84,6 @@ import type { Route } from './+types/route'
 import { AddImagesTile } from './components/add-images-tile'
 import { AuthorList } from './components/author-list'
 import { AuthorListItem } from './components/author-list-item'
-import { AuthorRemoveButton } from './components/author-remove-button'
-import { AuthorRow } from './components/author-row'
-import { AuthorRowButton } from './components/author-row-button'
 import { CopyArticleTextButton } from './components/copy-article-text-button'
 import { CopyArticleTextHint } from './components/copy-article-text-hint'
 import { EditorDetail } from './components/editor-detail'
@@ -821,13 +822,14 @@ export default function RouteComponent({
   const createAuthor = canCreateAuthor
     ? (query: string, replacedAuthorId?: string) =>
         navigate(
-          `${href('/administration/authors/add-author')}?${new URLSearchParams({
+          `${href('/administration/authors/new')}?${new URLSearchParams({
             article: params.articleId,
             name: query.trim(),
             ...(replacedAuthorId === undefined
               ? {}
               : { replace: replacedAuthorId }),
           })}`,
+          { state: RETURN_TO_OPENER_STATE },
         )
     : undefined
   const noAuthorFound =
@@ -864,70 +866,19 @@ export default function RouteComponent({
   }
 
   // Replacing: the row gets the Vybrat jiného autora field, Přidat autora steps aside
-  // (ivyin4kr). The pick replaces the author in one save.
-  const [replacingAuthorId, setReplacingAuthorId] = useState<string | null>(
-    null,
-  )
-  const [replaceQuery, setReplaceQuery] = useState('')
-  const replaceSearchRef = useRef<HTMLInputElement>(null)
-  const startReplacing = (authorId: string) => {
-    setReplaceQuery('')
-    setReplacingAuthorId(authorId)
-  }
-  // Zrušit and Esc return the focus to Vyměnit; leaving the frame (a click or
-  // Tab elsewhere) keeps it where it went.
-  const cancelFocusIndexRef = useRef<number | null>(null)
-  const cancelReplacing = (
-    index: number,
-    { refocus }: { refocus: boolean },
-  ) => {
-    cancelFocusIndexRef.current = refocus ? index : null
-    setReplacingAuthorId(null)
-  }
-  // Esc cancels at once, the open list included, and goes no further: on a
-  // phone it would also close the Autoři panel (24f).
-  const handleReplaceKeyDown =
-    (index: number) => (event: ReactKeyboardEvent<HTMLLIElement>) => {
-      if (event.key !== 'Escape') return
-      event.preventDefault()
-      event.stopPropagation()
-      cancelReplacing(index, { refocus: true })
-    }
-  const handleReplaceBlur =
-    (index: number) => (event: FocusEvent<HTMLLIElement>) => {
-      if (!event.currentTarget.contains(event.relatedTarget)) {
-        cancelReplacing(index, { refocus: false })
-      }
-    }
-  // A press anywhere in the frame but the field keeps the focus in the field:
-  // a click that does not focus (Zrušit in Safari, the name) is no leaving.
-  const handleReplaceMouseDown = (event: MouseEvent<HTMLLIElement>) => {
-    if (!(event.target instanceof Element && event.target.closest('input'))) {
-      event.preventDefault()
-    }
-  }
+  // (ivyin4kr). The pick replaces the author in one save. Zrušit and Esc
+  // return the focus to Vyměnit.
+  const authorReplaceFrame = useReplaceFrame<string>({
+    onRefocus: (authorId) =>
+      focusAuthorRow(selectedAuthorIds.indexOf(authorId)),
+  })
   const replaceAuthor = (replacedAuthorId: string, authorId: string) => {
     authorFocusIndexRef.current = selectedAuthorIds.indexOf(replacedAuthorId)
-    setReplacingAuthorId(null)
+    authorReplaceFrame.stop({ refocus: false })
     setSelectedAuthorIds(
       selectedAuthorIds.map((id) => (id === replacedAuthorId ? authorId : id)),
     )
   }
-  // After the commit: into the field when replacing starts, back to Vyměnit
-  // when Zrušit or Esc ended it.
-  const handleReplacingChange = useEffectEvent((isReplacing: boolean) => {
-    if (isReplacing) {
-      replaceSearchRef.current?.focus()
-      return
-    }
-    const index = cancelFocusIndexRef.current
-    if (index === null) return
-    cancelFocusIndexRef.current = null
-    focusAuthorRow(index)
-  })
-  useEffect(() => {
-    handleReplacingChange(replacingAuthorId !== null)
-  }, [replacingAuthorId])
 
   // An added or removed author saves at once, without a dialog (24j): once
   // the hidden inputs carry the change.
@@ -1516,23 +1467,16 @@ export default function RouteComponent({
                       const name = author?.name ?? authorId
                       // Without the hold nothing is replaced (07g).
                       const isReplacing =
-                        replacingAuthorId === authorId && !isReadOnly
+                        authorReplaceFrame.replacingKey === authorId &&
+                        !isReadOnly
 
                       return (
                         <AuthorListItem
                           isReplacing={isReplacing}
                           key={authorId}
-                          onBlur={
-                            isReplacing ? handleReplaceBlur(index) : undefined
-                          }
-                          onKeyDownCapture={
-                            isReplacing
-                              ? handleReplaceKeyDown(index)
-                              : undefined
-                          }
-                          onMouseDown={
-                            isReplacing ? handleReplaceMouseDown : undefined
-                          }
+                          {...(isReplacing
+                            ? authorReplaceFrame.frameProps
+                            : {})}
                         >
                           {/* At most one action, each its own node, so a
                               click meant for one never lands on another. */}
@@ -1546,7 +1490,7 @@ export default function RouteComponent({
                                 aria-label={'Zrušit výměnu autora'}
                                 key={'cancel'}
                                 onClick={() =>
-                                  cancelReplacing(index, { refocus: true })
+                                  authorReplaceFrame.stop({ refocus: true })
                                 }
                               >
                                 Zrušit
@@ -1563,7 +1507,9 @@ export default function RouteComponent({
                               <AuthorRowButton
                                 aria-label={`Vyměnit autora: ${name}`}
                                 key={'replace'}
-                                onClick={() => startReplacing(authorId)}
+                                onClick={() =>
+                                  authorReplaceFrame.start(authorId)
+                                }
                               >
                                 Vyměnit
                               </AuthorRowButton>
@@ -1571,7 +1517,9 @@ export default function RouteComponent({
                           </AuthorRow>
                           {isReplacing && (
                             <ChipInput
-                              createLabel={getCreateAuthorLabel(replaceQuery)}
+                              createLabel={getCreateAuthorLabel(
+                                authorReplaceFrame.query,
+                              )}
                               createNote={
                                 'Po uložení nahradí současného autora.'
                               }
@@ -1583,16 +1531,22 @@ export default function RouteComponent({
                               onCreate={
                                 createAuthor === undefined
                                   ? undefined
-                                  : () => createAuthor(replaceQuery, authorId)
+                                  : () =>
+                                      createAuthor(
+                                        authorReplaceFrame.query,
+                                        authorId,
+                                      )
                               }
-                              onQueryChange={setReplaceQuery}
+                              onQueryChange={authorReplaceFrame.setQuery}
                               onSelect={(newAuthorId) =>
                                 replaceAuthor(authorId, newAuthorId)
                               }
-                              options={getAuthorSuggestions(replaceQuery)}
+                              options={getAuthorSuggestions(
+                                authorReplaceFrame.query,
+                              )}
                               placeholder={'Vybrat jiného autora'}
-                              query={replaceQuery}
-                              ref={replaceSearchRef}
+                              query={authorReplaceFrame.query}
+                              ref={authorReplaceFrame.searchRef}
                             />
                           )}
                         </AuthorListItem>
@@ -1610,7 +1564,7 @@ export default function RouteComponent({
                   {/* ChipInput without chips: the authors are the rows
                       above. One label for every role, as it only adds; it
                       steps aside while a row is replaced (ivyin4kr). */}
-                  {!isReadOnly && replacingAuthorId === null && (
+                  {!isReadOnly && authorReplaceFrame.replacingKey === null && (
                     <ChipInput
                       createLabel={getCreateAuthorLabel(authorQuery)}
                       disabled={isLocked}

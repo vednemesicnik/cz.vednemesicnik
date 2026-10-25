@@ -2,21 +2,27 @@ import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
-import {
+  TableActionsCell,
   TableCell,
+  TableDetailsCell,
+  TableDetailsLine,
+  TableImageCell,
+  TableNameCell,
   TableRow,
+  TableRowLink,
+  TableRowMenu,
   TableSelectionCell,
 } from '~/components/admin/admin-table'
 import { BaseLink } from '~/components/base-link'
 import type { AuthorDeleteBlock } from '~/utils/author-references/get-author-delete-block'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 
 import { AuthorAvatar } from '../../../components/author-avatar'
 import { AuthorDeleteBlockedDialog } from '../../../components/author-delete-blocked-dialog'
+import { AuthorDeleteConfirmationDialog } from '../../../components/author-delete-confirmation-dialog'
 import { AUTHOR_CONTENT_SECTION_ID } from '../../../utils/author-content-section-id'
 import { useAuthorDeleteRefusal } from '../../../utils/use-author-delete-refusal'
 import styles from './_styles.module.css'
@@ -44,7 +50,9 @@ type Props = {
  * A row of the author list (design 28a): the avatar and the name opening the
  * detail, the author role, the account or „bez účtu“, the published count
  * leading to the detail, and every action in „⋯“ — an author has no state
- * waiting on a step, so the row has no primary action.
+ * waiting on a step, so the row has no primary action. Below 768 px it folds
+ * into the avatar beside the name, the role, the published count in words
+ * and the account, each on a line of its own (32e, myx395rj).
  */
 export const ItemRow = ({
   id,
@@ -88,24 +96,35 @@ export const ItemRow = ({
         label={`Vybrat autora ${name}`}
         onChange={onSelect}
       />
-      <TableCell>
+      {/* A phone has the avatar in a column of its own (32e). */}
+      <TableImageCell className={styles.phoneImage}>
+        <AuthorAvatar
+          image={image}
+          isAssociation={isAssociation}
+          name={name}
+          size={28}
+        />
+      </TableImageCell>
+      <TableNameCell>
         <span className={styles.name}>
-          <AuthorAvatar
-            image={image}
-            isAssociation={isAssociation}
-            name={name}
-            size={28}
-          />
+          <span className={styles.wideAvatar}>
+            <AuthorAvatar
+              image={image}
+              isAssociation={isAssociation}
+              name={name}
+              size={28}
+            />
+          </span>
           {canView ? (
-            <BaseLink className={styles.link} to={detailHref}>
+            <TableRowLink className={styles.link} to={detailHref}>
               {name}
-            </BaseLink>
+            </TableRowLink>
           ) : (
             name
           )}
           {isOwn && <span className={styles.own}>vy</span>}
         </span>
-      </TableCell>
+      </TableNameCell>
       <TableCell>{roleName}</TableCell>
       <TableCell>
         {email ?? <span className={styles.tertiary}>bez účtu</span>}
@@ -122,53 +141,69 @@ export const ItemRow = ({
           </BaseLink>
         )}
       </TableCell>
-      <TableCell variant={'actions'}>
-        <ActionMenu
-          items={[
-            ...(canUpdate
-              ? [
-                  {
-                    label: 'Upravit',
-                    onSelect: () =>
-                      navigate(
-                        href('/administration/authors/:authorId/edit-author', {
-                          authorId: id,
-                        }),
-                      ),
-                  },
-                ]
-              : []),
-            ...(canCreateUser
-              ? [
-                  {
-                    label: 'Založit účet…',
-                    onSelect: () =>
-                      navigate(
-                        `${href('/administration/users/add-user')}?${new URLSearchParams({ author: id })}`,
-                      ),
-                  },
-                ]
-              : []),
-            // A blocked author gets the 28g explanation in place of the confirmation.
-            ...(mayDelete && !isDeleting
-              ? [
-                  {
-                    danger: true,
-                    label: 'Smazat…',
-                    onSelect: canDelete
-                      ? openDialog
-                      : () => setIsBlockedDialogOpen(true),
-                  },
-                ]
-              : []),
-          ]}
-          label={`Další akce s autorem ${name}`}
-          size={'sm'}
-        />
+      <TableDetailsCell>
+        <TableDetailsLine>{roleName}</TableDetailsLine>
+        {/* The desktop column's hint, word for word (myx395rj). */}
+        <TableDetailsLine>
+          {`Publikované články, epizody a čísla: ${publishedCount.toLocaleString('cs-CZ')}`}
+        </TableDetailsLine>
+        <TableDetailsLine>
+          {email ?? <span className={styles.tertiary}>bez účtu</span>}
+        </TableDetailsLine>
+      </TableDetailsCell>
+      <TableActionsCell>
+        <TableRowMenu>
+          <ActionMenu
+            items={[
+              ...(canUpdate
+                ? [
+                    {
+                      label: 'Upravit',
+                      onSelect: () =>
+                        navigate(
+                          href('/administration/authors/:authorId/edit', {
+                            authorId: id,
+                          }),
+                          { state: RETURN_TO_OPENER_STATE },
+                        ),
+                    },
+                  ]
+                : []),
+              ...(canCreateUser
+                ? [
+                    {
+                      label: 'Založit účet…',
+                      onSelect: () =>
+                        navigate(
+                          `${href('/administration/users/new')}?${new URLSearchParams({ author: id })}`,
+                          { state: RETURN_TO_OPENER_STATE },
+                        ),
+                    },
+                  ]
+                : []),
+              // A blocked author gets the 28g explanation in place of the confirmation.
+              ...(mayDelete && !isDeleting
+                ? [
+                    {
+                      danger: true,
+                      label: 'Smazat…',
+                      onSelect: canDelete
+                        ? openDialog
+                        : () => setIsBlockedDialogOpen(true),
+                    },
+                  ]
+                : []),
+            ]}
+            label={`Další akce s autorem ${name}`}
+            size={'sm'}
+          />
+        </TableRowMenu>
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
-          {mayDelete && <AdminDeleteConfirmationDialog ref={dialogRef} />}
+          {mayDelete && (
+            <AuthorDeleteConfirmationDialog name={name} ref={dialogRef} />
+          )}
           {(isBlockedDialogOpen || refusal !== null) && (
             <AuthorDeleteBlockedDialog
               block={refusal ?? deleteBlock}
@@ -181,7 +216,7 @@ export const ItemRow = ({
             />
           )}
         </div>
-      </TableCell>
+      </TableActionsCell>
     </TableRow>
   )
 }

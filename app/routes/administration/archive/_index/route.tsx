@@ -23,6 +23,7 @@ import { FilterBarGroup } from '~/components/filter-bar-group'
 import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -131,7 +132,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <AdminPage>
-      <ListHeader>
+      {/* On a phone Nové číslo waits at the bottom (32b). */}
+      <ListHeader foldsOnPhone={true}>
         <PageTitle>Archiv</PageTitle>
         {renderNewIssueButton()}
       </ListHeader>
@@ -139,6 +141,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <AdminBulkActionsBar
           action={href('/administration/archive')}
           confirmation={getIssueBulkDeleteConfirmation(selectedIssues)}
+          foldsOnPhone={true}
           formatToast={(deletedCount) =>
             formatBulkDeleteToast(deletedCount, ISSUE_NOUN.countForms)
           }
@@ -199,6 +202,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
+          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >
@@ -254,6 +258,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         totalCount={totalCount}
         totalPages={totalPages}
       />
+      {/* Unless the empty list already offers it (22e). */}
+      {canCreate && (issues.length > 0 || emptyMessage.action !== 'create') && (
+        <ListActionBar>{renderNewIssueButton()}</ListActionBar>
+      )}
     </AdminPage>
   )
 }

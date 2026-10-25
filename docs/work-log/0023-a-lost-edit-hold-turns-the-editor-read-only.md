@@ -5,7 +5,7 @@
 
 ## Context
 
-The edit hold (decisions [0019](0019-the-edit-lock-lives-on-the-content-row.md) and
+The edit hold (log [0019](0019-the-edit-lock-lives-on-the-content-row.md) and
 [0021](0021-an-edit-hold-belongs-to-a-page-load-and-never-moves-updated-at.md)) can leave an
 open editor in two ways:
 

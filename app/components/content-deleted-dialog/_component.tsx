@@ -21,8 +21,8 @@ type Props = {
 }
 
 /**
- * The content the editor had open was deleted (design 24k, 26m; decision
- * 0036): after its hold expired, after a takeover, or as an empty draft. Who
+ * The content the editor had open was deleted (design 24k, 26m; log 0036):
+ * after its hold expired, after a takeover, or as an empty draft. Who
  * deleted it is not said. The detail is gone too, so the way out is the list.
  *
  * @param props.title - What was deleted.

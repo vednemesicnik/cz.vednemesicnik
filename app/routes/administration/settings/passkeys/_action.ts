@@ -7,6 +7,7 @@ import { getStatusCodeFromSubmissionStatus } from '~/utils/get-status-code-from-
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
 import { checkUserPermission } from '~/utils/permissions/user/guards/check-user-permission.server'
 import { requireRecentAuthentication } from '~/utils/recent-authentication.server'
+import { publishAccountEvent } from '~/utils/sse/publish-account-event.server'
 
 import { schema } from './_schema'
 
@@ -40,6 +41,13 @@ export const action = async ({ request, url }: ActionFunctionArgs) => {
   // never be used to remove another account's passkey.
   await prisma.passkey.deleteMany({
     where: { id: submission.value.passkeyId, userId: context.userId },
+  })
+
+  // The user's detail shows the sign-in methods.
+  publishAccountEvent({
+    change: 'update',
+    entity: 'user',
+    entityId: context.userId,
   })
 
   return { status: 'success' as const }

@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-const { authorDelete, authorFindUniqueOrThrow } = vi.hoisted(() => ({
-  authorDelete: vi.fn(),
-  authorFindUniqueOrThrow: vi.fn(),
+const { authorDelete, authorFindUniqueOrThrow, publishAccountEvent } =
+  vi.hoisted(() => ({
+    authorDelete: vi.fn(),
+    authorFindUniqueOrThrow: vi.fn(),
+    publishAccountEvent: vi.fn(),
+  }))
+
+vi.mock('~/utils/sse/publish-account-event.server', () => ({
+  publishAccountEvent,
 }))
 
 vi.mock('~/utils/db.server', () => {
@@ -33,6 +39,7 @@ const NO_REFERENCES = {
   articleCategories: 0,
   articles: 0,
   articleTags: 0,
+  contentLogs: 0,
   issues: 0,
   podcastEpisodes: 0,
   podcasts: 0,
@@ -60,12 +67,18 @@ describe('deleteAuthor', () => {
 
     await expect(remove()).resolves.toEqual({ status: 'deleted' })
     expect(authorDelete).toHaveBeenCalledWith({ where: { id: 'a1' } })
+    expect(publishAccountEvent).toHaveBeenCalledWith({
+      change: 'delete',
+      entity: 'author',
+      entityId: 'a1',
+    })
   })
 
   test.each([
     ['only on articles', storedAuthor({ articles: 1 })],
     ['referenced by a category', storedAuthor({ articleCategories: 1 })],
     ['referenced only by an approval', storedAuthor({ reviews: 1 })],
+    ['standing only in content history', storedAuthor({ contentLogs: 1 })],
     [
       'with an account',
       storedAuthor({}, { id: 'user-1', role: { name: 'member' as const } }),
@@ -78,5 +91,6 @@ describe('deleteAuthor', () => {
       status: 'blocked',
     })
     expect(authorDelete).not.toHaveBeenCalled()
+    expect(publishAccountEvent).not.toHaveBeenCalled()
   })
 })

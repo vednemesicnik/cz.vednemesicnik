@@ -1,1 +1,1 @@
-export { TableCell } from './_component'
+export { TableCell, type TablePhonePart } from './_component'

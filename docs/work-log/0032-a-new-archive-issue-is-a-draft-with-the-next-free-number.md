@@ -14,9 +14,9 @@ taken year, order and supplement is refused at the field, and the other fields s
 (qjv38ti4). Design 26e lists the year and the order among what a draft may still lack when it
 is submitted („Chybí rok, pořadí v roce, obálka a PDF.“).
 
-Decisions [0019](0019-the-edit-lock-lives-on-the-content-row.md) to
+[0019](0019-the-edit-lock-lives-on-the-content-row.md) to
 [0023](0023-a-lost-edit-hold-turns-the-editor-read-only.md) built the hold, the empty draft and
-autosave for the article and left the issue to its own redesign. Decision
+autosave for the article and left the issue to its own redesign.
 [0030](0030-an-archive-issue-is-year-order-and-supplement-and-its-title-is-computed.md) made the
 issue its year, order and supplement, with the unique key `year + order + supplementSlug`, and
 stored both as required columns.
@@ -57,7 +57,7 @@ stored both as required columns.
 - The closing sentence „Změna roku / pořadí / doplňku se neuložila.“ names the field the editor
   changed last. Only the editor knows which field that is; the server returns the taken number.
 - Uploads (#711) also set `firstContentAt`, because a draft with a file is not empty.
-- Revisit this record if an issue's number has to save field by field, for example once a
+- Revisit this entry if an issue's number has to save field by field, for example once a
   supplement links to its main issue.
 - The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
 

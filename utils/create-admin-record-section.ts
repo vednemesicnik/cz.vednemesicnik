@@ -1,4 +1,10 @@
-import { index, layout, prefix, route } from '@react-router/dev/routes'
+import {
+  index,
+  layout,
+  prefix,
+  type RouteConfigEntry,
+  route,
+} from '@react-router/dev/routes'
 
 type Args = {
   name: string
@@ -8,7 +14,7 @@ type Args = {
 }
 
 /**
- * Routes of a record section (design 30a addresses, decision 0016): the list,
+ * Routes of a record section (design 30a addresses, log 0016): the list,
  * `new` and the record's detail and `edit`, each its own page. The old
  * `add-<entry>` and `edit-<entry>` addresses stay as redirects (30b).
  *
@@ -16,8 +22,13 @@ type Args = {
  * @param args.entry - The record's name, e.g. `category`.
  * @param args.path - The section's route directory.
  * @param args.id - The record's id parameter, e.g. `categoryId`.
+ * @param additionalRouteConfigEntries - Routes under the record, next to
+ *   its detail and `edit`.
  */
-export const createAdminRecordSection = ({ name, entry, path, id }: Args) => [
+export const createAdminRecordSection = (
+  { name, entry, path, id }: Args,
+  ...additionalRouteConfigEntries: RouteConfigEntry[]
+) => [
   ...prefix(name, [
     layout(`${path}/__layout/route.tsx`, [
       index(`${path}/_index/route.tsx`),
@@ -28,6 +39,7 @@ export const createAdminRecordSection = ({ name, entry, path, id }: Args) => [
           index(`${path}/${entry}/_index/route.tsx`),
           route('edit', `${path}/${entry}/edit/route.tsx`),
           route(`edit-${entry}`, `${path}/${entry}/edit-${entry}/route.ts`),
+          ...additionalRouteConfigEntries,
         ]),
       ]),
     ]),

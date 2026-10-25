@@ -1,14 +1,23 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-const { checkCSRF, issueEmergencySignInLink, recordAuditLog, userFindUnique } =
-  vi.hoisted(() => ({
-    checkCSRF: vi.fn(),
-    issueEmergencySignInLink: vi.fn(),
-    recordAuditLog: vi.fn(),
-    userFindUnique: vi.fn(),
-  }))
+const {
+  checkCSRF,
+  issueEmergencySignInLink,
+  publishAccountEvent,
+  recordAuditLog,
+  userFindUnique,
+} = vi.hoisted(() => ({
+  checkCSRF: vi.fn(),
+  issueEmergencySignInLink: vi.fn(),
+  publishAccountEvent: vi.fn(),
+  recordAuditLog: vi.fn(),
+  userFindUnique: vi.fn(),
+}))
 
 vi.mock('~/utils/csrf.server', () => ({ checkCSRF }))
+vi.mock('~/utils/sse/publish-account-event.server', () => ({
+  publishAccountEvent,
+}))
 vi.mock('~/utils/audit-log.server', () => ({ recordAuditLog }))
 vi.mock('~/utils/db.server', () => ({
   prisma: { user: { findUnique: userFindUnique } },
@@ -99,6 +108,12 @@ describe('issuing an emergency link', () => {
         targetId: 'member',
       }),
     )
+    // The user's detail shows the link that still works (log 0042).
+    expect(publishAccountEvent).toHaveBeenCalledWith({
+      change: 'update',
+      entity: 'user',
+      entityId: 'member',
+    })
   })
 
   test('creates no link before the identity check is ticked', async () => {
@@ -106,6 +121,7 @@ describe('issuing an emergency link', () => {
 
     expect(result.init?.status).toBe(400)
     expect(issueEmergencySignInLink).not.toHaveBeenCalled()
+    expect(publishAccountEvent).not.toHaveBeenCalled()
   })
 
   test('refuses the own account and the Owner as not found', async () => {

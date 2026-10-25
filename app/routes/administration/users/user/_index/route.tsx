@@ -20,6 +20,8 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { useToast } from '~/components/toast-provider'
 import { INVITATION_CONFIG } from '~/config/invitation-config'
+import { useAccountEvents } from '~/hooks/use-account-events'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 
 import { UserDeleteConfirmationDialog } from '../../components/user-delete-confirmation-dialog'
@@ -48,6 +50,9 @@ export default function RouteComponent({
     user,
   } = loaderData
   const { userId } = params
+
+  // The detail shows the author's name and role next to the account's.
+  useAccountEvents()
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
   const [isEmergencyLinkDialogOpen, setIsEmergencyLinkDialogOpen] =
@@ -120,7 +125,8 @@ export default function RouteComponent({
           />
           {canUpdate && (
             <LinkButton
-              to={href('/administration/users/:userId/edit-user', {
+              state={RETURN_TO_OPENER_STATE}
+              to={href('/administration/users/:userId/edit', {
                 userId,
               })}
               variant={'outline'}

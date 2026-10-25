@@ -4,10 +4,7 @@ import { Fragment, useRef, useState } from 'react'
 import { href, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
-import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
+import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
@@ -21,11 +18,14 @@ import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
+import { useAccountEvents } from '~/hooks/use-account-events'
 import { useContentEvents } from '~/hooks/use-content-events'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import { AuthorAvatar } from '../../components/author-avatar'
 import { AuthorDeleteBlockedDialog } from '../../components/author-delete-blocked-dialog'
+import { AuthorDeleteConfirmationDialog } from '../../components/author-delete-confirmation-dialog'
 import { AUTHOR_CONTENT_SECTION_ID } from '../../utils/author-content-section-id'
 import { useAuthorDeleteRefusal } from '../../utils/use-author-delete-refusal'
 
@@ -63,6 +63,7 @@ export default function RouteComponent({
   // Content events carry no authors, so every change to a type the page
   // counts reloads it (log 0035).
   useContentEvents()
+  useAccountEvents()
 
   const deleteConfirmationDialogRef = useRef<HTMLDialogElement>(null)
   const [isBlockedDialogOpen, setIsBlockedDialogOpen] = useState(false)
@@ -108,7 +109,8 @@ export default function RouteComponent({
                       label: 'Založit účet…',
                       onSelect: () =>
                         navigate(
-                          `${href('/administration/users/add-user')}?${new URLSearchParams({ author: authorId })}`,
+                          `${href('/administration/users/new')}?${new URLSearchParams({ author: authorId })}`,
+                          { state: RETURN_TO_OPENER_STATE },
                         ),
                     },
                   ]
@@ -129,7 +131,8 @@ export default function RouteComponent({
           />
           {canUpdate && (
             <LinkButton
-              to={href('/administration/authors/:authorId/edit-author', {
+              state={RETURN_TO_OPENER_STATE}
+              to={href('/administration/authors/:authorId/edit', {
                 authorId,
               })}
               variant={'outline'}
@@ -219,7 +222,10 @@ export default function RouteComponent({
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+      <AuthorDeleteConfirmationDialog
+        name={author.name}
+        ref={deleteConfirmationDialogRef}
+      />
 
       {/* Opened from the detail, it never offers Zobrazit obsah (dksfb82t). */}
       {(isBlockedDialogOpen || refusal !== null) && (

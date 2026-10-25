@@ -1,0 +1,21 @@
+/* On a phone the bar bridges the page's padding to the footer and the
+   screen's edges (22g). */
+.bar {
+  @layer component {
+    display: none;
+
+    @media (width < 768px) {
+      position: sticky;
+      inset-block-end: 0;
+      z-index: 1;
+      display: block;
+      justify-self: stretch;
+      margin-inline: calc(-1 * var(--admin-page-side-padding));
+      margin-block-end: -24px;
+      padding: 12px var(--admin-page-side-padding)
+        calc(12px + env(safe-area-inset-bottom));
+      background-color: var(--bg-primary);
+      border-block-start: 1px solid var(--border);
+    }
+  }
+}

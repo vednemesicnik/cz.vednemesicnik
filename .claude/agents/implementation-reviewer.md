@@ -37,8 +37,8 @@ doing the same thing (add and edit, list and detail), the loader that feeds the 
 - `.agents/skills/component-authoring/` references when the diff adds markup or changes a
   component — its API, semantic elements, layout shift, reuse;
 - the entries in `docs/work-log/` for the areas the diff touches — context, not rules. A
-  change that departs from one is a finding only when nothing says why: the issue, the PR or a
-  new entry;
+  change may depart from one; when nothing says why (the issue, the PR or a new entry), report
+  it as `low` and ask for the reason, so the change of direction gets logged;
 - **no real data** in fixtures, tests and docs — example addresses use `priklad.cz`, people
   are invented;
 - the design notes, when given: the screen decides, not the issue's summary of it.
@@ -73,6 +73,6 @@ One report, most severe first, nothing before or after it:
 - `file:line` · severity · problem · proposed fix
 ```
 
-Severity is `high` (wrong behaviour, data loss, security, an unexplained departure from the work log), `medium`
-(a rule broken, a parallel path out of step) or `low` (naming, comments, hygiene). An empty
-section says `None.`
+Severity is `high` (wrong behaviour, data loss, security), `medium` (a rule broken, a parallel
+path out of step) or `low` (naming, comments, hygiene, a departure from the work log nothing
+explains). An empty section says `None.`

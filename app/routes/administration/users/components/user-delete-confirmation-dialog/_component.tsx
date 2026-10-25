@@ -9,8 +9,9 @@ type Props = {
 }
 
 /**
- * Confirms deleting an account (design 28g, copy 9w0473vu): the author stays,
- * which „smazat Terezu“ would not say on its own.
+ * Confirms deleting an account (design 28g, jh9c3a7n; copy 9w0473vu,
+ * 0t7rbimg): the author stays, which „smazat Terezu“ would not say on its own.
+ * The name follows a colon: in the 1st case, „účet Jana“ reads as Jan's.
  */
 export const UserDeleteConfirmationDialog = ({ ref, name }: Props) => (
   <AdminDeleteConfirmationDialog
@@ -19,6 +20,6 @@ export const UserDeleteConfirmationDialog = ({ ref, name }: Props) => (
       'Tímto účtem se už nepůjde přihlásit. Autor i jméno u obsahu zůstanou zachovány. Vrátit to nejde.'
     }
     ref={ref}
-    title={`Smazat účet ${name}?`}
+    title={`Smazat účet: ${name}?`}
   />
 )

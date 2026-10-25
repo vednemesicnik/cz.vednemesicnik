@@ -4,8 +4,8 @@
 
 ## Context
 
-[0001](0001-record-decisions-in-the-repository.md) kept decisions as records with a status, in
-the style of architecture decision records:
+[0001](0001-keep-what-the-work-settles-in-the-repository.md) kept decisions as records with a
+status, in the style of architecture decision records:
 
 - an accepted record was never rewritten;
 - a new one had to be checked against every accepted record before it could be accepted;

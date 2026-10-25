@@ -1,0 +1,6 @@
+/* At the end of the row. */
+.action {
+  @layer variant {
+    margin-inline-start: auto;
+  }
+}

@@ -66,12 +66,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  // Check update permission
-  const updatePerms = context.can({
-    action: 'update',
-    entity: 'author',
-    targetUserId,
-  })
+  // Any author: a Member edits their own name and bio in Settings (28c).
+  const updatePerms = context.can({ action: 'update', entity: 'author' })
 
   // Check delete permission - cannot delete own author profile
   const deletePerms = context.can({

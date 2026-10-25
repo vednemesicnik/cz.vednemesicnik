@@ -244,7 +244,7 @@ export default [
           ),
 
           // Users
-          ...createAdminEntriesSection(
+          ...createAdminRecordSection(
             {
               entry: 'user',
               id: 'userId',
@@ -259,7 +259,7 @@ export default [
           ),
 
           // Authors
-          ...createAdminEntriesSection({
+          ...createAdminRecordSection({
             entry: 'author',
             id: 'authorId',
             name: 'authors',

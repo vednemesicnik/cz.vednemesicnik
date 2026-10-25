@@ -14,6 +14,7 @@ import { FilterBarGroup } from '~/components/filter-bar-group'
 import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { LinkButton } from '~/components/link-button'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -21,8 +22,10 @@ import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { USER_COUNT_FORMS } from '~/config/list-noun-config'
+import { useAccountEvents } from '~/hooks/use-account-events'
 import { SEARCH_PARAM } from '~/utils/admin-list-params'
 import { buildListSearch } from '~/utils/build-list-search'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel, getUserRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import styles from './_styles.module.css'
@@ -34,20 +37,38 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { canCreate, now, query, users } = loaderData
+  const {
+    canCreate,
+    currentPage,
+    now,
+    pageSize,
+    query,
+    totalCount,
+    totalPages,
+    users,
+  } = loaderData
+
+  // A row shows the author's name and role next to the account's.
+  useAccountEvents()
 
   const [searchParams] = useSearchParams()
   const pending = useAdminListPending()
 
+  const newUserButton = canCreate && (
+    <LinkButton
+      state={RETURN_TO_OPENER_STATE}
+      to={href('/administration/users/new')}
+    >
+      Nový uživatel
+    </LinkButton>
+  )
+
   return (
     <AdminPage>
-      <ListHeader>
+      {/* On a phone Nový uživatel waits at the bottom (32f). */}
+      <ListHeader foldsOnPhone={true}>
         <PageTitle>Uživatelé</PageTitle>
-        {canCreate && (
-          <LinkButton to={href('/administration/users/add-user')}>
-            Nový uživatel
-          </LinkButton>
-        )}
+        {newUserButton}
       </ListHeader>
       {/* Only the search: no filters to save or clear (28d). */}
       <FilterCell>
@@ -83,6 +104,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
+          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >
@@ -137,14 +159,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminTable>
       )}
       <Pagination
-        currentPage={1}
+        currentPage={currentPage}
         layout={'inline'}
         noun={USER_COUNT_FORMS}
-        pageSize={users.length}
+        pageSize={pageSize}
         size={'sm'}
-        totalCount={users.length}
-        totalPages={1}
+        totalCount={totalCount}
+        totalPages={totalPages}
       />
+      {/* Also on a short list without pages (32f); the empty list offers
+          only cancelling the search. */}
+      {canCreate && <ListActionBar>{newUserButton}</ListActionBar>}
     </AdminPage>
   )
 }

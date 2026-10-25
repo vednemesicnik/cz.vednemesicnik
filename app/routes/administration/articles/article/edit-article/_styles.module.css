@@ -105,8 +105,8 @@
       box-sizing: border-box;
       block-size: var(--editor-bar-height);
       /* Across the page's gutters, to the screen's edges. */
-      inline-size: calc(100% + 48px);
-      margin-inline: -24px;
+      inline-size: calc(100% + 2 * var(--admin-page-side-padding));
+      margin-inline: calc(-1 * var(--admin-page-side-padding));
       padding-inline: 16px;
       background-color: var(--bg-primary);
       border-block-end: 1px solid var(--border);

@@ -32,7 +32,7 @@ Code comments cite an entry by its number (`log 0022`).
 
 | # | Entry | Date | Later |
 | --- | --- | --- | --- |
-| [0001](0001-record-decisions-in-the-repository.md) | Record decisions in the repository | 2026-10-13 | [0038](0038-decisions-are-kept-as-a-work-log.md) |
+| [0001](0001-keep-what-the-work-settles-in-the-repository.md) | Keep what the work settles in the repository | 2026-10-13 | [0038](0038-decisions-are-kept-as-a-work-log.md) |
 | [0002](0002-nonce-csp-deferred.md) | Defer the nonce-based Content-Security-Policy | 2026-07-09 |  |
 | [0003](0003-exactly-one-owner.md) | Exactly one Owner | 2026-07-10 |  |
 | [0004](0004-separate-auth-log-and-audit-log.md) | Separate the auth log from the audit log | 2026-07-10 |  |
@@ -72,3 +72,8 @@ Code comments cite an entry by its number (`log 0022`).
 | [0038](0038-decisions-are-kept-as-a-work-log.md) | Decisions are kept as a work log, not as binding records | 2026-10-23 |  |
 | [0039](0039-a-public-address-is-unique-only-once-published.md) | A public address is unique only once it is published, and a Document keeps what was typed | 2026-10-23 |  |
 | [0040](0040-a-missing-sign-in-record-means-never-only-inside-the-retention-window.md) | A missing sign-in record means "never" only inside the retention window | 2026-10-23 |  |
+| [0041](0041-a-role-edit-writes-the-role-only-while-it-is-the-one-the-form-loaded.md) | A role edit writes the role only while it is the one the form loaded | 2026-10-23 |  |
+| [0042](0042-an-account-event-is-a-bare-hint-and-a-session-reloads-on-its-own-account.md) | An account event is a bare hint, and every page reloads on its own account's event | 2026-10-24 |  |
+| [0043](0043-content-history-holds-an-author-and-an-e-mail-change-is-recorded.md) | Content history holds an author like an approval, and an e-mail change is recorded without an address | 2026-10-25 |  |
+| [0044](0044-a-list-row-folds-on-a-phone-through-the-admin-table-parts.md) | A list row folds on a phone through the admin-table parts, and the phone rows keep the 24 px page gutter | 2026-10-25 | [0045](0045-the-phone-page-gutter-is-16-px-from-one-token.md) |
+| [0045](0045-the-phone-page-gutter-is-16-px-from-one-token.md) | The phone page gutter is 16 px, from one token | 2026-10-25 |  |

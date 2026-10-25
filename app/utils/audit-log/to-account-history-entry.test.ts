@@ -82,6 +82,30 @@ describe('toAccountHistoryEntry', () => {
     ).toBe('Nouzový odkaz vydán')
   })
 
+  test('labels a sign-in e-mail change, without an address', () => {
+    expect(
+      toAccountHistoryEntry(
+        { createdAt, detail: null, event: 'user_email_changed', id: 'row' },
+        'Petr Dvořák',
+      ),
+    ).toEqual({
+      actorName: 'Petr Dvořák',
+      dateTime: '2026-02-03T09:05:00.000Z',
+      formattedDateTime: '3. 2. 2026, 10:05',
+      id: 'row',
+      label: 'Přihlašovací e-mail změněn',
+    })
+  })
+
+  test('labels an e-mail change by a deleted actor alone', () => {
+    expect(
+      toAccountHistoryEntry(
+        { createdAt, detail: null, event: 'user_email_changed', id: 'row' },
+        null,
+      ),
+    ).toMatchObject({ actorName: null, label: 'Přihlašovací e-mail změněn' })
+  })
+
   test('leaves out a deletion', () => {
     expect(
       toAccountHistoryEntry(

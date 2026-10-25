@@ -21,6 +21,7 @@ import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -31,6 +32,7 @@ import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { VisuallyHidden } from '~/components/visually-hidden'
 import { AUTHOR_COUNT_FORMS } from '~/config/list-noun-config'
+import { useAccountEvents } from '~/hooks/use-account-events'
 import { useContentEvents } from '~/hooks/use-content-events'
 import {
   ACCOUNT_OPTIONS,
@@ -38,12 +40,15 @@ import {
 } from '~/utils/admin-filter-options'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
+import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
+import { AUTHOR_RECORD_COPY } from '../author-record-copy'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
+import { getAuthorBulkDeleteConfirmation } from './utils/get-author-bulk-delete-confirmation'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -54,11 +59,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     authors,
     canCreate,
     currentFilterQuery,
+    currentPage,
     filters,
     matchingFilterId,
     ownFilters,
+    pageSize,
     query,
     sharedFilters,
+    totalCount,
+    totalPages,
   } = loaderData
 
   const pending = useAdminListPending()
@@ -71,10 +80,16 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       event.entity === 'podcast_episode',
   })
 
+  // A row shows the account's e-mail and photo next to the author's.
+  useAccountEvents()
+
   const deletableIds = authors
     .filter((author) => author.canDelete)
     .map((author) => author.id)
   const selection = useAdminTableSelection(deletableIds)
+  const selectedAuthors = authors.filter((author) =>
+    selection.selectedIds.includes(author.id),
+  )
 
   const isDefault =
     query === '' && filters.role === undefined && filters.account === undefined
@@ -97,19 +112,28 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     query,
   })
 
+  const newAuthorButton = canCreate && (
+    <LinkButton
+      state={RETURN_TO_OPENER_STATE}
+      to={href('/administration/authors/new')}
+    >
+      Nový autor
+    </LinkButton>
+  )
+
   return (
     <AdminPage>
-      <ListHeader>
+      {/* On a phone Nový autor waits at the bottom (32e). */}
+      <ListHeader foldsOnPhone={true}>
         <PageTitle>Autoři</PageTitle>
-        {canCreate && (
-          <LinkButton to={href('/administration/authors/add-author')}>
-            Nový autor
-          </LinkButton>
-        )}
+        {newAuthorButton}
       </ListHeader>
       <FilterCell>
         <AdminBulkActionsBar
           action={href('/administration/authors')}
+          confirmation={getAuthorBulkDeleteConfirmation(selectedAuthors)}
+          foldsOnPhone={true}
+          formatToast={AUTHOR_RECORD_COPY.bulkDelete.toast}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
         />
@@ -165,6 +189,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
+          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >
@@ -235,14 +260,16 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminTable>
       )}
       <Pagination
-        currentPage={1}
+        currentPage={currentPage}
         layout={'inline'}
         noun={AUTHOR_COUNT_FORMS}
-        pageSize={authors.length}
+        pageSize={pageSize}
         size={'sm'}
-        totalCount={authors.length}
-        totalPages={1}
+        totalCount={totalCount}
+        totalPages={totalPages}
       />
+      {/* The empty list offers only clearing the filters (22e). */}
+      {canCreate && <ListActionBar>{newAuthorButton}</ListActionBar>}
     </AdminPage>
   )
 }

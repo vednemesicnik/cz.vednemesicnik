@@ -13,7 +13,7 @@ the actions that change the state wait. The same pattern is drawn for the archiv
 (26c) and the podcast episode editor (27d).
 
 Today there is no lock. `updateArticle` checks the stored article and then writes it, so a
-publish or a submission between the two still lets an edit land. Decision
+publish or a submission between the two still lets an edit land.
 [0015](0015-edits-check-the-stored-record-not-the-form.md) leaves that race to this lock. The
 category and tag edits close it with one conditional write whose `where` repeats the stored
 state (`app/routes/administration/articles/categories/utils/update-category.server.ts`).
@@ -51,7 +51,7 @@ own redesigns (26, 27), with their own columns.
 - History writes one *Upraveno* per lock session and the takeover as its own event (07f). The
   update utilities therefore stop logging every save.
 - Deleting a record takes its lock with it. No table holds orphaned locks.
-- Revisit this record if a content type needs more than one holder, or a history of past locks.
+- Revisit this entry if a content type needs more than one holder, or a history of past locks.
   Neither fits on the row.
 - The current lifecycle is in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
 

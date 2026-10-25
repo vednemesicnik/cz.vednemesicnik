@@ -8,11 +8,10 @@
     padding-inline: var(--admin-page-side-padding);
     border-top: 1px solid var(--border);
 
-    /* Below 768 px the link is the 44 px row (see .link), on the 16 px edge
-       (design 22g, tyxr2jqk). */
+    /* Below 768 px the link is the 44 px row (see .link), on the page's
+       16 px edge (design 22g, tyxr2jqk). */
     @media (width < 768px) {
       padding-block: 0;
-      padding-inline: 16px;
     }
   }
 }

@@ -1,0 +1,25 @@
+/* The fieldset draws nothing itself; the legend is set like Label. */
+.group {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}
+
+/* Floated, the legend is laid out as the group's first item, so the gap
+   spaces it from the radios as a label from its control. */
+.legend {
+  @layer component {
+    float: inline-start;
+    padding: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-sm);
+  }
+}

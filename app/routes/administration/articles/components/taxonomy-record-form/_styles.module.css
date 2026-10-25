@@ -1,8 +1,0 @@
-.form {
-  @layer route {
-    display: grid;
-    gap: 16px;
-    /* 480 px as drawn in 25c. */
-    width: min(480px, 100%);
-  }
-}

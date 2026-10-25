@@ -5,7 +5,7 @@
 
 ## Context
 
-Decision [0032](0032-a-new-archive-issue-is-a-draft-with-the-next-free-number.md) had
+[0032](0032-a-new-archive-issue-is-a-draft-with-the-next-free-number.md) had
 *Nové číslo* store this year and the year's next free order at creation, as design 26c draws
 the prefill. A stored prefill is a number nobody confirmed. When it is wrong, it saves and
 stays until someone notices it: December's issue created in January gets the new year, and an
@@ -14,7 +14,7 @@ safety, because submitting and publishing require the year and the order (26e, #
 two typed fields in the common case, the next issue of the year.
 
 The product decided on 21 Oct 2026 to keep the convenience without storing anything unconfirmed.
-This record replaces 0032 and carries over what of it still holds.
+This entry changes direction from 0032 and carries over what of it still holds.
 
 ## Outcome
 
