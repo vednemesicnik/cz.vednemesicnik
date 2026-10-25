@@ -42,10 +42,12 @@ import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
 import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
+import { AUTHOR_RECORD_COPY } from '../author-record-copy'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
+import { getAuthorBulkDeleteConfirmation } from './utils/get-author-bulk-delete-confirmation'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -84,6 +86,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     .filter((author) => author.canDelete)
     .map((author) => author.id)
   const selection = useAdminTableSelection(deletableIds)
+  const selectedAuthors = authors.filter((author) =>
+    selection.selectedIds.includes(author.id),
+  )
 
   const isDefault =
     query === '' && filters.role === undefined && filters.account === undefined
@@ -122,6 +127,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <FilterCell>
         <AdminBulkActionsBar
           action={href('/administration/authors')}
+          confirmation={getAuthorBulkDeleteConfirmation(selectedAuthors)}
+          formatToast={AUTHOR_RECORD_COPY.bulkDelete.toast}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
         />

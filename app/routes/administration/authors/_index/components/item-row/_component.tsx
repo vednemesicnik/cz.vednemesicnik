@@ -2,10 +2,7 @@ import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
-import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
+import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import {
   TableCell,
   TableRow,
@@ -18,6 +15,7 @@ import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 
 import { AuthorAvatar } from '../../../components/author-avatar'
 import { AuthorDeleteBlockedDialog } from '../../../components/author-delete-blocked-dialog'
+import { AuthorDeleteConfirmationDialog } from '../../../components/author-delete-confirmation-dialog'
 import { AUTHOR_CONTENT_SECTION_ID } from '../../../utils/author-content-section-id'
 import { useAuthorDeleteRefusal } from '../../../utils/use-author-delete-refusal'
 import styles from './_styles.module.css'
@@ -171,7 +169,9 @@ export const ItemRow = ({
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
-          {mayDelete && <AdminDeleteConfirmationDialog ref={dialogRef} />}
+          {mayDelete && (
+            <AuthorDeleteConfirmationDialog name={name} ref={dialogRef} />
+          )}
           {(isBlockedDialogOpen || refusal !== null) && (
             <AuthorDeleteBlockedDialog
               block={refusal ?? deleteBlock}
