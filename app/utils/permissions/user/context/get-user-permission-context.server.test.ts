@@ -1,81 +1,88 @@
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+import { userRoles } from '~~/data/user-roles'
 
 import { getUserPermissionContext } from './get-user-permission-context.server'
 
-const OWNER_LEVEL = 1
-const ADMINISTRATOR_LEVEL = 2
-const MEMBER_LEVEL = 3
+const { findUniqueOrThrowMock } = vi.hoisted(() => ({
+  findUniqueOrThrowMock: vi.fn(),
+}))
 
 vi.mock('~/utils/auth.server', () => ({
   requireSession: vi.fn(async () => ({ sessionId: 'session-1' })),
 }))
 
 vi.mock('~/utils/db.server', () => ({
-  prisma: {
-    session: {
-      findUniqueOrThrow: vi.fn(async () => ({
-        user: {
-          authorId: 'author-1',
-          id: 'administrator-1',
-          role: {
-            level: ADMINISTRATOR_LEVEL,
-            name: 'administrator',
-            permissions: (['view', 'update', 'delete'] as const).map(
-              (action) => ({ access: 'any', action, entity: 'user' }),
-            ),
-          },
-        },
-      })),
-    },
-  },
+  prisma: { session: { findUniqueOrThrow: findUniqueOrThrowMock } },
 }))
 
-const getAdministratorContext = () =>
-  getUserPermissionContext(new Request('https://x/administration'), {
-    actions: ['view', 'update', 'delete'],
-    entities: ['user'],
+const OWNER_LEVEL = 1
+const ADMINISTRATOR_LEVEL = 2
+const MEMBER_LEVEL = 3
+
+let roleName: 'member' | 'administrator' = 'administrator'
+
+// The session user signed in with the seeded role's permission rows.
+beforeEach(() => {
+  findUniqueOrThrowMock.mockImplementation(async () => {
+    const role = userRoles.find((userRole) => userRole.name === roleName)
+    if (role === undefined) throw new Error(`Missing role ${roleName}`)
+
+    return {
+      user: {
+        authorId: 'author-1',
+        id: 'user-1',
+        role: {
+          level: role.level,
+          name: role.name,
+          permissions: role.permissions.flatMap(({ access, actions, entity }) =>
+            actions.map((action) => ({ access, action, entity })),
+          ),
+        },
+      },
+    }
   })
+})
+
+const canOnUser = async (
+  signedInAs: typeof roleName,
+  action: 'view' | 'update' | 'delete',
+  targetUserRoleLevel: number,
+) => {
+  roleName = signedInAs
+  const context = await getUserPermissionContext(
+    new Request('https://x/administration'),
+    { actions: ['view', 'update', 'delete'], entities: ['user'] },
+  )
+
+  return context.can({
+    action,
+    entity: 'user',
+    targetUserId: 'user-2',
+    targetUserRoleLevel,
+  }).hasPermission
+}
 
 describe('getUserPermissionContext role hierarchy', () => {
   test('an Administrator views the Owner account', async () => {
-    const context = await getAdministratorContext()
-
-    expect(
-      context.can({
-        action: 'view',
-        entity: 'user',
-        targetUserId: 'owner-1',
-        targetUserRoleLevel: OWNER_LEVEL,
-      }).hasPermission,
-    ).toBe(true)
+    expect(await canOnUser('administrator', 'view', OWNER_LEVEL)).toBe(true)
   })
 
   test.each(['update', 'delete'] as const)(
     'an Administrator cannot %s the Owner account',
     async (action) => {
-      const context = await getAdministratorContext()
-
-      expect(
-        context.can({
-          action,
-          entity: 'user',
-          targetUserId: 'owner-1',
-          targetUserRoleLevel: OWNER_LEVEL,
-        }).hasPermission,
-      ).toBe(false)
+      expect(await canOnUser('administrator', action, OWNER_LEVEL)).toBe(false)
     },
   )
 
   test('an Administrator updates a Member account', async () => {
-    const context = await getAdministratorContext()
-
-    expect(
-      context.can({
-        action: 'update',
-        entity: 'user',
-        targetUserId: 'member-1',
-        targetUserRoleLevel: MEMBER_LEVEL,
-      }).hasPermission,
-    ).toBe(true)
+    expect(await canOnUser('administrator', 'update', MEMBER_LEVEL)).toBe(true)
   })
+
+  test.each([OWNER_LEVEL, ADMINISTRATOR_LEVEL])(
+    'a Member does not view another account of level %i',
+    async (level) => {
+      expect(await canOnUser('member', 'view', level)).toBe(false)
+    },
+  )
 })
