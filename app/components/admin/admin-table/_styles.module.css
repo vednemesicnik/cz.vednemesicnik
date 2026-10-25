@@ -41,7 +41,9 @@
       inline-size: calc(100% + 2 * var(--admin-page-side-padding));
       margin-inline: calc(-1 * var(--admin-page-side-padding));
       overflow: visible;
-      border-block: 1px solid var(--border);
+      /* No line over the first row, which starts 6 px under the filters
+         (22g, 32; FilterCell pulls the list up). */
+      border-block-end: 1px solid var(--border);
 
       & :is(table, tbody) {
         display: block;

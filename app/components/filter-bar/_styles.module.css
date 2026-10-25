@@ -7,11 +7,15 @@
   }
 }
 
-/* The search at full width over a row of filters that scrolls sideways (22g). */
+/* The search at full width over a row of filters that scrolls sideways (22g).
+   A column, not a block: there the saved-filters menu, whose button stands in
+   the filter row, would still open an empty line under it. */
 @media (width < 768px) {
   .filterBar {
     @layer component {
-      display: block;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
     }
   }
 }
