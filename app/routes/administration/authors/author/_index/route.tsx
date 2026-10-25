@@ -4,10 +4,7 @@ import { Fragment, useRef, useState } from 'react'
 import { href, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
-import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
+import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
@@ -28,6 +25,7 @@ import { getAuthorRoleLabel } from '~/utils/role-labels'
 
 import { AuthorAvatar } from '../../components/author-avatar'
 import { AuthorDeleteBlockedDialog } from '../../components/author-delete-blocked-dialog'
+import { AuthorDeleteConfirmationDialog } from '../../components/author-delete-confirmation-dialog'
 import { AUTHOR_CONTENT_SECTION_ID } from '../../utils/author-content-section-id'
 import { useAuthorDeleteRefusal } from '../../utils/use-author-delete-refusal'
 
@@ -224,7 +222,10 @@ export default function RouteComponent({
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+      <AuthorDeleteConfirmationDialog
+        name={author.name}
+        ref={deleteConfirmationDialogRef}
+      />
 
       {/* Opened from the detail, it never offers Zobrazit obsah (dksfb82t). */}
       {(isBlockedDialogOpen || refusal !== null) && (
