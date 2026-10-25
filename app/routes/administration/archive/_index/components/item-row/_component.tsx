@@ -7,12 +7,21 @@ import {
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
 import {
+  TableActionsCell,
   TableCell,
+  TableDetailsCell,
+  TableDetailsLine,
+  TableImageCell,
+  TableNameAddress,
+  TableNameCell,
   TableRow,
+  TableRowActions,
+  TableRowLink,
+  TableRowMenu,
   TableSelectionCell,
+  TableStateCell,
 } from '~/components/admin/admin-table'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
-import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
@@ -47,7 +56,9 @@ type Props = {
  * detail over the PDF as the reader downloads it, the order, the state tag with
  * one fact, and one action with the rest in „⋯“, as the article's row (22a). A
  * supplement is its own row under its issue, tagged *Doplněk*. While someone
- * else edits it, the row says who (26i).
+ * else edits it, the row says who (26i). Below 768 px it folds into the
+ * cover beside the name, the state and the order, with „⋯“ holding the row
+ * action first (32b).
  */
 export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
   const { id } = issue
@@ -112,6 +123,19 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
   }
 
   const rowAction = issue.row
+  const toMenuItem = (menuAction: IssueAction) => ({
+    danger: menuAction === 'delete',
+    label: ISSUE_ACTION_LABELS[menuAction],
+    onSelect: () => runAction(menuAction),
+  })
+  // On a phone „⋯“ stands alone, the row action first in it (32b).
+  const phoneMenu = rowAction === null ? issue.menu : [rowAction, ...issue.menu]
+  // The file's name is an address, which a phone leaves out; a missing file
+  // still says so, at the end (32b, k7d1vqm1).
+  const phoneDetails = [
+    issue.orderLabel,
+    issue.pdfFileName === null ? 'PDF zatím chybí' : null,
+  ].filter((part) => part !== null)
 
   return (
     <TableRow muted={issue.state === 'archived'}>
@@ -121,35 +145,30 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
         label={`Vybrat číslo ${issue.title}`}
         onChange={onSelect}
       />
-      <TableCell>
+      <TableImageCell>
         {/* The editorial board knows an issue by its cover first (26a). */}
         {issue.cover === null ? (
           <div className={styles.coverMissing} />
         ) : (
           <Image {...issue.cover} className={styles.cover} sizes={'40px'} />
         )}
-      </TableCell>
-      <TableCell>
-        {/* Zobrazit is gone: the title opens the detail (22a). */}
-        <span className={styles.title}>
-          {issue.supplement === null ? (
-            <BaseLink className={styles.link} to={detailHref}>
-              {issue.title}
-            </BaseLink>
-          ) : (
-            // A supplement is named by its own name beside the tag (26a).
-            <span className={styles.supplement}>
-              <span className={styles.supplementTag}>Doplněk</span>
-              <BaseLink className={styles.link} to={detailHref}>
-                {issue.supplement}
-              </BaseLink>
-            </span>
-          )}
-          <span className={styles.secondLine}>
-            {issue.pdfFileName ?? 'PDF zatím chybí'}
+      </TableImageCell>
+      <TableNameCell>
+        {issue.supplement === null ? (
+          <TableRowLink className={styles.link} to={detailHref}>
+            {issue.title}
+          </TableRowLink>
+        ) : (
+          // A supplement is named by its own name beside the tag (26a).
+          <span className={styles.supplement}>
+            <span className={styles.supplementTag}>Doplněk</span>
+            <TableRowLink to={detailHref}>{issue.supplement}</TableRowLink>
           </span>
-        </span>
-      </TableCell>
+        )}
+        <TableNameAddress>
+          {issue.pdfFileName ?? 'PDF zatím chybí'}
+        </TableNameAddress>
+      </TableNameCell>
       <TableCell>
         <span className={styles.title}>
           {issue.orderLabel ?? '—'}
@@ -158,15 +177,29 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
           )}
         </span>
       </TableCell>
-      <TableCell>
+      <TableStateCell>
         <StatusTag
           // Who edits it comes first: it changes what the row allows (26i).
           detail={issue.holdLine ?? issue.factLine ?? undefined}
           state={issue.submission ?? issue.state}
         />
-      </TableCell>
-      <TableCell variant={'actions'}>
-        <span className={styles.actions}>
+      </TableStateCell>
+      {phoneDetails.length > 0 && (
+        <TableDetailsCell>
+          <TableDetailsLine>{phoneDetails.join(' · ')}</TableDetailsLine>
+        </TableDetailsCell>
+      )}
+      <TableActionsCell>
+        {phoneMenu.length > 0 && (
+          <TableRowMenu phoneOnly={true}>
+            <ActionMenu
+              items={phoneMenu.map(toMenuItem)}
+              label={`Další akce s číslem ${issue.title}`}
+              size={'sm'}
+            />
+          </TableRowMenu>
+        )}
+        <TableRowActions>
           {rowAction === 'edit' && (
             <LinkButton
               disabled={isSubmitting}
@@ -190,16 +223,12 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
           )}
           {issue.menu.length > 0 && (
             <ActionMenu
-              items={issue.menu.map((menuAction) => ({
-                danger: menuAction === 'delete',
-                label: ISSUE_ACTION_LABELS[menuAction],
-                onSelect: () => runAction(menuAction),
-              }))}
+              items={issue.menu.map(toMenuItem)}
               label={`Další akce s číslem ${issue.title}`}
               size={'sm'}
             />
           )}
-        </span>
+        </TableRowActions>
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
@@ -239,7 +268,7 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
             />
           )}
         </div>
-      </TableCell>
+      </TableActionsCell>
     </TableRow>
   )
 }

@@ -11,21 +11,27 @@
 .link {
   @layer route {
     min-inline-size: 0;
-    font-weight: var(--font-weight-medium);
-    color: inherit;
-    text-decoration: none;
     overflow-wrap: anywhere;
+  }
+}
 
-    &:hover {
-      color: var(--link-strong);
-      text-decoration: underline;
-      text-underline-offset: 2px;
+/* The avatar beside the name on a wide screen, in its own column on a
+   phone (32e). */
+.wideAvatar {
+  @layer route {
+    display: flex;
+    flex: none;
+
+    @media (width < 768px) {
+      display: none;
     }
+  }
+}
 
-    &:focus-visible {
-      outline: none;
-      box-shadow: var(--focus-shadow);
-      border-radius: var(--radius-sm);
+.phoneImage {
+  @layer route {
+    @media (width >= 768px) {
+      display: none;
     }
   }
 }

@@ -1,40 +1,3 @@
-/* The name over its address (25a). */
-.name {
-  @layer route {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-  }
-}
-
-.link {
-  @layer route {
-    font-weight: var(--font-weight-medium);
-    color: inherit;
-    text-decoration: none;
-
-    &:hover {
-      color: var(--link-strong);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: var(--focus-shadow);
-      border-radius: var(--radius-sm);
-    }
-  }
-}
-
-.slug {
-  @layer route {
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-  }
-}
-
 /* The count is a link to the articles it counts (25a). */
 .count {
   @layer route {
@@ -57,14 +20,6 @@
 .zero {
   @layer route {
     color: var(--text-tertiary);
-  }
-}
-
-.actions {
-  @layer route {
-    display: inline-flex;
-    justify-content: flex-end;
-    gap: 6px;
   }
 }
 
