@@ -72,10 +72,12 @@ export async function getUserPermissionContext(
 
       // Role hierarchy protection: Users can only modify accounts with level >= their level
       // Administrators (level 2) cannot modify Owner accounts (level 1)
-      // because 1 < 2 (Owner level is lower/more powerful than Administrator level)
+      // because 1 < 2 (Owner level is lower/more powerful than Administrator level).
+      // Viewing is not modifying: an Administrator opens the Owner's account (28d).
       let hasPermission = hasOwn || hasAny
 
       if (
+        config.action !== 'view' &&
         config.targetUserRoleLevel !== undefined &&
         config.targetUserRoleLevel < user.role.level
       ) {
