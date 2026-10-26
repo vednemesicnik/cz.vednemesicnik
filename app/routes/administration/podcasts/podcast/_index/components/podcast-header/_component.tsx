@@ -37,7 +37,8 @@ type Props = {
  * The podcast's header over its episode table (design 27b): the cover, the
  * title with its state, the author · publish date · address, the description,
  * and „⋯“ (Historie first), *Zobrazit na webu* on a published podcast,
- * *Upravit* on a draft and *Nová epizoda*.
+ * *Upravit* on a draft and *Nová epizoda*, which on a phone waits in the
+ * page's `ListActionBar` instead (32d).
  */
 export const PodcastHeader = ({
   podcast,
@@ -110,6 +111,7 @@ export const PodcastHeader = ({
         )}
         {canCreateEpisode && (
           <LinkButton
+            className={styles.newEpisode}
             to={href(
               '/administration/podcasts/:podcastId/episodes/add-episode',
               {

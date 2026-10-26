@@ -124,7 +124,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <AdminPage>
       <ArticlesTabs />
       {/* On a phone Nový štítek waits at the bottom (32a). */}
-      <ListHeader foldsOnPhone={true}>
+      <ListHeader>
         <PageTitle>Štítky</PageTitle>
         {newTagButton}
       </ListHeader>
@@ -135,7 +135,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             selectedTags,
             TAG_RECORD_COPY,
           )}
-          foldsOnPhone={true}
           formatToast={TAG_RECORD_COPY.bulkDelete.toast}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
@@ -187,7 +186,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
-          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >

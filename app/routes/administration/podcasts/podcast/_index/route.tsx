@@ -23,6 +23,7 @@ import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -271,6 +272,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           />
         )}
       </section>
+      {/* On a phone Nová epizoda waits at the bottom, unless the empty list
+          already offers it (32d, 22e). */}
+      {canCreateEpisode &&
+        (episodes.length > 0 || emptyMessage.action !== 'create') && (
+          <ListActionBar>
+            <LinkButton to={newEpisodeHref}>Nová epizoda</LinkButton>
+          </ListActionBar>
+        )}
 
       <PodcastActionDialogs
         actions={actions}

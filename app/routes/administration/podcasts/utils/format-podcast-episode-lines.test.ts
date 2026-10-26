@@ -27,7 +27,7 @@ describe('formatPodcastEpisodeLines', () => {
           publishedCount: 11,
         }),
       }),
-    ).toEqual({
+    ).toMatchObject({
       count: '11 na webu',
       detail: '1 ke schválení · 1 koncept',
       isPending: true,
@@ -46,7 +46,7 @@ describe('formatPodcastEpisodeLines', () => {
           publishedCount: 24,
         }),
       }),
-    ).toEqual({
+    ).toMatchObject({
       count: '24 na webu',
       detail: '5 ke schválení · 2 schválené · 5 konceptů',
       isPending: true,
@@ -60,7 +60,11 @@ describe('formatPodcastEpisodeLines', () => {
         podcastState: 'published',
         summary: summary({ approvedCount: 1, publishedCount: 3 }),
       }),
-    ).toEqual({ count: '3 na webu', detail: '1 schválená', isPending: false })
+    ).toMatchObject({
+      count: '3 na webu',
+      detail: '1 schválená',
+      isPending: false,
+    })
   })
 
   it("gives a Contributor's submitted episodes one word, unmarked", () => {
@@ -75,7 +79,7 @@ describe('formatPodcastEpisodeLines', () => {
           publishedCount: 11,
         }),
       }),
-    ).toEqual({
+    ).toMatchObject({
       count: '11 na webu',
       detail: '2 odeslané · 2 koncepty',
       isPending: false,
@@ -92,7 +96,7 @@ describe('formatPodcastEpisodeLines', () => {
           publishedCount: 24,
         }),
       }),
-    ).toEqual({
+    ).toMatchObject({
       count: '24 na webu',
       detail: 'poslední 19. 9. 2026',
       isPending: false,
@@ -109,7 +113,7 @@ describe('formatPodcastEpisodeLines', () => {
           publishedCount: 6,
         }),
       }),
-    ).toEqual({
+    ).toMatchObject({
       count: '6 epizod',
       detail: 'poslední 2. 10. 2025',
       isPending: false,
@@ -123,7 +127,7 @@ describe('formatPodcastEpisodeLines', () => {
         podcastState: 'draft',
         summary: summary({}),
       }),
-    ).toEqual({ count: 'žádné na webu', detail: null, isPending: false })
+    ).toMatchObject({ count: 'žádné na webu', detail: null, isPending: false })
   })
 
   it('counts only the drafts the summary holds for a Contributor', () => {
@@ -133,6 +137,31 @@ describe('formatPodcastEpisodeLines', () => {
         podcastState: 'draft',
         summary: summary({ draftCount: 1 }),
       }),
-    ).toEqual({ count: 'žádné na webu', detail: '1 koncept', isPending: false })
+    ).toMatchObject({
+      count: 'žádné na webu',
+      detail: '1 koncept',
+      isPending: false,
+    })
   })
+
+  // A phone has no column header, so the count names the episodes (32c).
+  it.each([
+    ['published', 11, '11 epizod na webu'],
+    ['published', 1, '1 epizoda na webu'],
+    ['published', 3, '3 epizody na webu'],
+    ['published', 0, 'žádné epizody na webu'],
+    ['archived', 6, '6 epizod'],
+    ['draft', 0, 'žádné epizody na webu'],
+  ] as const)(
+    'names the episodes on a phone: %s podcast, %i published, "%s"',
+    (podcastState, publishedCount, phoneCount) => {
+      expect(
+        formatPodcastEpisodeLines({
+          isContributor: false,
+          podcastState,
+          summary: summary({ publishedCount }),
+        }).phoneCount,
+      ).toBe(phoneCount)
+    },
+  )
 })

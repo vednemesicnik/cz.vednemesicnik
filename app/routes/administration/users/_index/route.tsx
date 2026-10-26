@@ -66,7 +66,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       {/* On a phone Nový uživatel waits at the bottom (32f). */}
-      <ListHeader foldsOnPhone={true}>
+      <ListHeader>
         <PageTitle>Uživatelé</PageTitle>
         {newUserButton}
       </ListHeader>
@@ -104,7 +104,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
-          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >

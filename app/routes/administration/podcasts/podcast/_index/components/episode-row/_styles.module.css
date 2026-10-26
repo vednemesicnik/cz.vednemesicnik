@@ -6,6 +6,19 @@
   }
 }
 
+/* Before the title only on a phone, where Číslo has no column (32d). */
+.phoneNumber {
+  @layer route {
+    display: none;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+
+    @media (width < 768px) {
+      display: inline;
+    }
+  }
+}
+
 /* The publish date in tertiary ink, as 27b draws it. */
 .date {
   @layer route {

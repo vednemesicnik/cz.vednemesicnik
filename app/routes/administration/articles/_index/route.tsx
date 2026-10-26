@@ -152,7 +152,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <ArticlesTabs />
       {/* On a phone Nový článek waits at the bottom, in reach of the thumb,
           and the top bar names the page (22g). */}
-      <ListHeader foldsOnPhone={true}>
+      <ListHeader>
         <PageTitle>Články</PageTitle>
         {renderNewArticleButton()}
       </ListHeader>
@@ -244,7 +244,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           columnsClassName={
             isContributor ? styles.columnsWithoutAuthor : styles.columns
           }
-          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >

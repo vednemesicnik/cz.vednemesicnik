@@ -81,6 +81,15 @@
   }
 }
 
+/* On a phone Nová epizoda waits in the sticky bar at the bottom (32d). */
+.newEpisode {
+  @layer route {
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}
+
 .actions {
   @layer route {
     display: flex;

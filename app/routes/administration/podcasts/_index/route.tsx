@@ -20,6 +20,7 @@ import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
 import { LinkButton } from '~/components/link-button'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -95,15 +96,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     states,
   })
 
+  const newPodcastButton = canCreate && (
+    <LinkButton to={href('/administration/podcasts/add-podcast')}>
+      Nový podcast
+    </LinkButton>
+  )
+
   return (
     <AdminPage>
+      {/* On a phone Nový podcast waits at the bottom (32c). */}
       <ListHeader>
         <PageTitle>Podcasty</PageTitle>
-        {canCreate && (
-          <LinkButton to={href('/administration/podcasts/add-podcast')}>
-            Nový podcast
-          </LinkButton>
-        )}
+        {newPodcastButton}
       </ListHeader>
       <FilterCell>
         <AdminBulkActionsBar
@@ -202,6 +206,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         totalCount={podcasts.length}
         totalPages={1}
       />
+      {/* Unless the empty list already offers it (22e). */}
+      {canCreate &&
+        (podcasts.length > 0 || emptyMessage.action !== 'create') && (
+          <ListActionBar>{newPodcastButton}</ListActionBar>
+        )}
     </AdminPage>
   )
 }

@@ -7,7 +7,6 @@ type Props = {
   children: ReactNode
   pending?: boolean
   stickyHeader?: boolean
-  foldsOnPhone?: boolean
   columnsClassName?: string
   className?: string
 }
@@ -22,12 +21,12 @@ type Props = {
  * is the `admin-table` inline-size container: a list's templates and cells
  * query it by name, with literal widths.
  *
+ * Below 768 px the rows run edge to edge and fold into lines beside one „⋯“
+ * (design 32, 22g): no header, and only the cells of the folded row's parts
+ * (`TableNameCell`, `TableStateCell`, …) show.
+ *
  * @param props.pending - Dims the table and shows a spinner during navigation.
  * @param props.stickyHeader - Sticks the header to the page where the table fits without sideways scroll (from 1024 px).
- * @param props.foldsOnPhone - Below 768 px the rows run edge to edge and fold
- *   into lines beside one „⋯“ (design 32, 22g): no header, and only the cells
- *   of the folded row's parts (`TableNameCell`, `TableStateCell`, …) show.
- *   Without it the table scrolls sideways, as the podcast lists still do.
  * @param props.columnsClassName - A class from the list's CSS module that sets
  *   `grid-template-columns` for the wide table: one track per visible column,
  *   each cell's 12 px padding included (14 px at the row's ends). Without it
@@ -38,7 +37,6 @@ export const AdminTable = ({
   children,
   pending = false,
   stickyHeader = false,
-  foldsOnPhone = false,
   columnsClassName,
   className,
 }: Props) => {
@@ -48,11 +46,11 @@ export const AdminTable = ({
       className={clsx(
         styles.scrollArea,
         stickyHeader && styles.stickyArea,
-        foldsOnPhone && styles.foldsOnPhone,
+        styles.foldsOnPhone,
         className,
       )}
       // The folded row's parts style themselves only inside it.
-      data-folds-on-phone={foldsOnPhone || undefined}
+      data-folds-on-phone={true}
     >
       <table
         className={clsx(

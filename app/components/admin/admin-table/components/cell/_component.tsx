@@ -19,8 +19,7 @@ type Props = {
  * A cell of the administration table.
  *
  * @param props.phonePart - Set by the folded row's parts (`TableNameCell`, …):
- *   in a table that folds on a phone, a cell without one is hidden below
- *   768 px.
+ *   below 768 px, where the table folds, a cell without one is hidden.
  */
 export const TableCell = ({
   children,

@@ -124,7 +124,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       {/* On a phone Nový autor waits at the bottom (32e). */}
-      <ListHeader foldsOnPhone={true}>
+      <ListHeader>
         <PageTitle>Autoři</PageTitle>
         {newAuthorButton}
       </ListHeader>
@@ -132,7 +132,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <AdminBulkActionsBar
           action={href('/administration/authors')}
           confirmation={getAuthorBulkDeleteConfirmation(selectedAuthors)}
-          foldsOnPhone={true}
           formatToast={AUTHOR_RECORD_COPY.bulkDelete.toast}
           onDone={selection.clear}
           selectedIds={selection.selectedIds}
@@ -189,7 +188,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
-          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >

@@ -28,19 +28,17 @@ type Props = {
   onDone: () => void
   confirmation?: BulkDeleteConfirmation
   formatToast?: (deletedCount: number) => string
-  foldsOnPhone?: boolean
 }
 
 /**
- * The selection bar of a list whose only bulk action is delete (22c).
+ * The selection bar of a list whose only bulk action is delete (22c). A
+ * phone has no selection (design 32, 22g), so the bar stays hidden below
+ * 768 px, even for a selection carried over from a wider window.
  *
  * @param props.confirmation - The list's own dialog text; without it the
  *   generic confirmation, for lists the design has not drawn yet.
  * @param props.formatToast - The toast after a successful delete, from the
  *   number of records actually deleted; without it no toast.
- * @param props.foldsOnPhone - A phone has no selection (design 32, 22g), so
- *   the bar stays hidden below 768 px, even for a selection carried over from
- *   a wider window.
  */
 export const AdminBulkActionsBar = ({
   action,
@@ -48,7 +46,6 @@ export const AdminBulkActionsBar = ({
   onDone,
   confirmation,
   formatToast,
-  foldsOnPhone = false,
 }: Props) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null)
 
@@ -63,7 +60,7 @@ export const AdminBulkActionsBar = ({
     <>
       {selectedIds.length > 0 && (
         <AdminSelectionBar
-          className={clsx(styles.bar, foldsOnPhone && styles.foldsOnPhone)}
+          className={clsx(styles.bar, styles.foldsOnPhone)}
           count={selectedIds.length}
           onClear={onDone}
         >
