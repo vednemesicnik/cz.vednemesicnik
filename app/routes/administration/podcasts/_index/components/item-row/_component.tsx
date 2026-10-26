@@ -1,4 +1,5 @@
 import { clsx } from 'clsx'
+import { Fragment } from 'react'
 import { href } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
@@ -49,6 +50,19 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
     podcast,
   })
 
+  // Only the waiting part is amber, the rest in the line's own colour (27a,
+  // 32c; tbrpv6cr).
+  const detailParts = podcast.episodeLines.detail.map((part, index) => (
+    <Fragment key={part.text}>
+      {index > 0 && ' · '}
+      {part.isPending ? (
+        <span className={styles.pending}>{part.text}</span>
+      ) : (
+        part.text
+      )}
+    </Fragment>
+  ))
+
   return (
     <TableRow muted={podcast.state === 'archived'}>
       <TableSelectionCell
@@ -90,15 +104,8 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
       <TableCell>
         <span className={styles.episodes}>
           {podcast.episodeLines.count}
-          {podcast.episodeLines.detail !== null && (
-            <span
-              className={clsx(
-                styles.detail,
-                podcast.episodeLines.isPending && styles.pending,
-              )}
-            >
-              {podcast.episodeLines.detail}
-            </span>
+          {detailParts.length > 0 && (
+            <span className={styles.detail}>{detailParts}</span>
           )}
         </span>
       </TableCell>
@@ -113,18 +120,7 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
       <TableDetailsCell>
         <TableDetailsLine>
           {podcast.episodeLines.phoneCount}
-          {podcast.episodeLines.detail !== null && (
-            <>
-              {' · '}
-              <span
-                className={clsx(
-                  podcast.episodeLines.isPending && styles.pending,
-                )}
-              >
-                {podcast.episodeLines.detail}
-              </span>
-            </>
-          )}
+          {detailParts.length > 0 && <> · {detailParts}</>}
           {podcast.cover === null && ' · obálka zatím chybí'}
         </TableDetailsLine>
       </TableDetailsCell>

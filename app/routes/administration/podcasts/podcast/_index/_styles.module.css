@@ -9,6 +9,15 @@
   }
 }
 
+/* The filter block beside the heading; before .toolbar, which reaches
+   into it on a phone. */
+.filters {
+  @layer route {
+    flex: 1 1 30rem;
+    min-inline-size: 0;
+  }
+}
+
 /* The Epizody heading on the 22a filter block's line; the filters wrap
    under it when the line is short (27b). */
 .toolbar {
@@ -41,13 +50,6 @@
     padding-block-start: 7px;
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-semibold);
-  }
-}
-
-.filters {
-  @layer route {
-    flex: 1 1 30rem;
-    min-inline-size: 0;
   }
 }
 
