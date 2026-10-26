@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { slugify } from '~/utils/slugify'
 
-const MAX_COVER_UPLOAD_SIZE = 1024 * 200 // 200 kB
+const MAX_COVER_UPLOAD_SIZE = 1024 * 1024 * 5 // 5 MB (design 27e)
 
 export const schema = z.object({
   authorId: z.string(),
@@ -15,7 +15,7 @@ export const schema = z.object({
     )
     .refine(
       (file) => !file || file.size <= MAX_COVER_UPLOAD_SIZE,
-      'Cover image should have a 200 kB maximum size',
+      'Cover image should have a 5 MB maximum size',
     ),
   coverId: z.string(),
   description: z.string({ message: 'Description is required' }),
