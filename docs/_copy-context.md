@@ -52,6 +52,9 @@ rozpojí.
   k číslům nepatří. V aplikaci se dnes pro totéž píše i **vydání** (*Datum
   vydání*, *Správa vydání časopisu*) — to je nesjednocené, ne dva různé pojmy. Nový návrh
   *vydání* u článku ani epizody nepoužívá: jejich datum je **datum publikace**.
+  U epizody je *číslo* její číselný údaj v podcastu (popisek pole `Číslo`, v nadpisu `#13`), ne
+  tištěné číslo; rozliší je obrazovka a tvar hodnoty (`#13` proti `3/2026`). Jiné slovo pro něj
+  nehledej (rozhodnuto 26. 10. 2026).
 - **Archiv** (sekce) vs. **archivováno** (stav) — dvě různé věci. *Archiv* jsou tištěná čísla;
   *archivovaný* je obsah stažený z oběhu. Věta, která je smíchá, je nepravda.
   Velké *A* jen jako jméno v menu a v nadpisu; v běžném textu malé: `tištěná čísla jsou
