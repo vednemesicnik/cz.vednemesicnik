@@ -160,7 +160,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           Epizody
         </h2>
         {!hasNoEpisodes && (
-          <FilterCell>
+          <FilterCell className={styles.filters}>
             <AdminBulkActionsBar
               action={href('/administration/podcasts/:podcastId/episodes', {
                 podcastId: podcast.id,

@@ -4,13 +4,20 @@
   @layer route {
     width: 44px;
     aspect-ratio: 1;
-    border-radius: 4px;
+    border-radius: var(--radius-md);
   }
 }
 
 .cover {
   @layer route {
     box-shadow: var(--shadow-xs);
+  }
+}
+
+/* An archived podcast's cover fades with its row (27a). */
+.coverArchived {
+  @layer route {
+    opacity: 0.4;
   }
 }
 

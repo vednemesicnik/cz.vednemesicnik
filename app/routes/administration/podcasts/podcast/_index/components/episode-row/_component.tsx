@@ -157,8 +157,9 @@ export const EpisodeRow = ({
             : episode.linkLabels.join(' · ')}
         </TableNameNote>
       </TableNameCell>
-      <TableCell>
-        {episode.publishedAt === null || episode.state !== 'published'
+      {/* A draft has none yet; an archived one keeps its date (27b). */}
+      <TableCell className={styles.date}>
+        {episode.publishedAt === null || episode.state === 'draft'
           ? '—'
           : formatNumericDate(new Date(episode.publishedAt))}
       </TableCell>

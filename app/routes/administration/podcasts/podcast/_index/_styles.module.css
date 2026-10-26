@@ -1,16 +1,32 @@
-/* The Epizody heading over the 22a filter block (27b). */
+/* The episodes under a hairline, the Epizody heading on the 22a filter
+   block's line; the filters wrap under it when the line is short (27b). */
 .episodes {
   @layer route {
-    display: grid;
-    gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px 20px;
+    inline-size: 100%;
+    border-block-start: 1px solid var(--border);
+    padding-block-start: 20px;
   }
 }
 
+/* Its line centred on the search field's. */
 .heading {
   @layer route {
+    flex: none;
     margin: 0;
-    font-size: 18px;
+    padding-block-start: 7px;
+    font-size: var(--font-size-lg);
     font-weight: var(--font-weight-semibold);
+  }
+}
+
+.filters {
+  @layer route {
+    flex: 1 1 30rem;
+    min-inline-size: 0;
   }
 }
 

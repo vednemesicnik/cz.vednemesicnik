@@ -59,7 +59,14 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
         {podcast.cover === null ? (
           <div className={styles.coverMissing} />
         ) : (
-          <Image {...podcast.cover} className={styles.cover} sizes={'44px'} />
+          <Image
+            {...podcast.cover}
+            className={clsx(
+              styles.cover,
+              podcast.state === 'archived' && styles.coverArchived,
+            )}
+            sizes={'44px'}
+          />
         )}
       </TableImageCell>
       <TableNameCell>

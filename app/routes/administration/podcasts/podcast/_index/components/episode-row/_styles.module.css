@@ -6,6 +6,13 @@
   }
 }
 
+/* The publish date in tertiary ink, as 27b draws it. */
+.date {
+  @layer route {
+    color: var(--text-tertiary);
+  }
+}
+
 /* The focus ring hugs the title, not the column. */
 .link {
   @layer route {
