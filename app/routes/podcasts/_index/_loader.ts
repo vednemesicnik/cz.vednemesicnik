@@ -17,6 +17,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     'podcast_episode',
   ])
 
+  const podcastWhere = visibility.where('podcast', ownByAuthor)
+
   const podcastsPromise = prisma.podcast.findMany({
     orderBy: {
       publishedAt: 'desc',
@@ -29,7 +31,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       slug: true,
       title: true,
     },
-    where: visibility.where('podcast', ownByAuthor),
+    where: podcastWhere,
   })
 
   const episodesPromise = prisma.podcastEpisode.findMany({
@@ -54,7 +56,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       title: true,
     },
     take: 10,
-    where: visibility.where('podcast_episode', ownByAuthor),
+    // Only episodes of a podcast listed here: the episode page 404s otherwise (27f).
+    where: {
+      ...visibility.where('podcast_episode', ownByAuthor),
+      podcast: podcastWhere,
+    },
   })
 
   const [podcasts, episodes] = await Promise.all([
