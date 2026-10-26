@@ -57,6 +57,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       podcast: {
         select: {
           id: true,
+          state: true,
           title: true,
         },
       },
@@ -97,9 +98,16 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     submittedAt: episode.submittedAt,
   })
 
+  // Until its podcast is published, an episode is neither submitted nor
+  // published (27f); the server refuses both too.
+  const isPodcastPublished = episode.podcast.state === 'published'
+  const canPublish = flags.canPublish && isPodcastPublished
+
   return {
-    canPublishBackdated:
-      flags.canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
+    ...flags,
+    canPublish,
+    canPublishBackdated: canPublish && context.roleLevel <= APPROVER_ROLE_LEVEL,
+    canSubmit: flags.canSubmit && isPodcastPublished,
     episode: {
       author: episode.author,
       coverUrl:
@@ -121,7 +129,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       state: episode.state,
       title: episode.title,
     },
-    ...flags,
     submission: flags.submission?.state ?? null,
   }
 }

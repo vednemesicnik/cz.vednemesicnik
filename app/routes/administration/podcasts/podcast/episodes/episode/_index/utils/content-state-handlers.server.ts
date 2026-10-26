@@ -3,13 +3,29 @@ import {
   clearReviewsOnDraft,
   createContentStateHandlers,
 } from '~/utils/content-state/create-content-state-handlers.server'
+import { createMissingContentError } from '~/utils/content-state/create-missing-content-error'
 import { prisma } from '~/utils/db.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 
-/** Episode state-transition handlers: single author, cover image cleanup on delete. */
+import { loadUnpublishedPodcastItems } from '../../../utils/load-unpublished-podcast-items.server'
+
+/**
+ * Episode state-transition handlers: single author, cover image cleanup on
+ * delete, and a publish only in a published podcast (design 27f).
+ */
 export const episodeContentStateHandlers = createContentStateHandlers({
   allowBackdating: true,
   applyState: async (id, data) => {
+    // Not in getMissingBeforePublish: an approval leaves the episode off the
+    // web, so it stays allowed (27b). Nothing is written.
+    if (data.state === 'published') {
+      const unpublishedPodcastItems = await loadUnpublishedPodcastItems(id)
+
+      if (unpublishedPodcastItems.length > 0) {
+        throw createMissingContentError(unpublishedPodcastItems)
+      }
+    }
+
     await prisma.podcastEpisode.update({
       data: clearSubmissionOnStateChange(clearReviewsOnDraft(data)),
       where: { id },
