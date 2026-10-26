@@ -13,11 +13,15 @@ type Options = {
   isContributor: boolean
 }
 
+type DetailPart = {
+  text: string
+  isPending: boolean
+}
+
 type PodcastEpisodeLines = {
   count: string
   phoneCount: string
-  detail: string | null
-  isPending: boolean
+  detail: DetailPart[]
 }
 
 const adjectiveForms = (
@@ -48,10 +52,11 @@ const SUBMITTED_FORMS = adjectiveForms('odeslaná', 'odeslané', 'odeslaných')
  *   Odeslané (22i).
  * @returns The count (`11 na webu`, `žádné na webu`, `6 epizod`), and as a
  *   phone has no column header, the count naming the episodes
- *   (`11 epizod na webu`, `žádné epizody na webu`; 32c, copy myx395rj); under
- *   it what is in progress (`1 ke schválení · 1 schválená · 1 koncept`), else
- *   the latest episode's date (`poslední 19. 9. 2026`), else nothing; and
- *   whether an episode waits for approval, which the row marks.
+ *   (`11 epizod na webu`, `žádné epizody na webu`; 32c, copy myx395rj); and
+ *   the parts of the line under it, joined by ` · `: what is in progress
+ *   (`1 ke schválení`, `1 schválená`, `1 koncept`), else the latest episode's
+ *   date (`poslední 19. 9. 2026`), else none. Only the waiting part is
+ *   marked, which the row shows in amber (27a, 32c; tbrpv6cr).
  */
 export const formatPodcastEpisodeLines = ({
   summary,
@@ -77,43 +82,54 @@ export const formatPodcastEpisodeLines = ({
         : episodes
 
   const submittedCount = summary.pendingCount + summary.approvedCount
-  const progress = (
-    isContributor
-      ? [
-          submittedCount > 0
-            ? formatListCount(submittedCount, SUBMITTED_FORMS)
-            : null,
-        ]
-      : [
-          summary.pendingCount > 0
-            ? `${summary.pendingCount.toLocaleString('cs-CZ')} ke schválení`
-            : null,
-          summary.approvedCount > 0
-            ? formatListCount(summary.approvedCount, APPROVED_FORMS)
-            : null,
-        ]
-  )
+  // A Contributor's submitted episodes wait on nobody they can act for, so
+  // they are not marked (copy djni9qbc).
+  const progress: (DetailPart | null)[] = isContributor
+    ? [
+        submittedCount > 0
+          ? {
+              isPending: false,
+              text: formatListCount(submittedCount, SUBMITTED_FORMS),
+            }
+          : null,
+      ]
+    : [
+        summary.pendingCount > 0
+          ? {
+              isPending: true,
+              text: `${summary.pendingCount.toLocaleString('cs-CZ')} ke schválení`,
+            }
+          : null,
+        summary.approvedCount > 0
+          ? {
+              isPending: false,
+              text: formatListCount(summary.approvedCount, APPROVED_FORMS),
+            }
+          : null,
+      ]
+  const detail = progress
     .concat(
-      summary.draftCount > 0 ? formatDraftCount(summary.draftCount) : null,
+      summary.draftCount > 0
+        ? { isPending: false, text: formatDraftCount(summary.draftCount) }
+        : null,
     )
     .filter((part) => part !== null)
 
-  if (progress.length > 0) {
-    return {
-      count,
-      detail: progress.join(' · '),
-      isPending: !isContributor && summary.pendingCount > 0,
-      phoneCount,
-    }
+  if (detail.length > 0) {
+    return { count, detail, phoneCount }
   }
 
   return {
     count,
     detail:
       summary.latestPublishedAt === null
-        ? null
-        : `poslední ${formatNumericDate(summary.latestPublishedAt)}`,
-    isPending: false,
+        ? []
+        : [
+            {
+              isPending: false,
+              text: `poslední ${formatNumericDate(summary.latestPublishedAt)}`,
+            },
+          ],
     phoneCount,
   }
 }

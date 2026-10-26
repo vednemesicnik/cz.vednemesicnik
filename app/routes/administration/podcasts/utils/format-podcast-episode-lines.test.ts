@@ -14,8 +14,11 @@ const summary = (
   ...overrides,
 })
 
+const pending = (text: string) => ({ isPending: true, text })
+const plain = (text: string) => ({ isPending: false, text })
+
 describe('formatPodcastEpisodeLines', () => {
-  it('says what is in progress, marked while something waits', () => {
+  it('says what is in progress, only the waiting part marked', () => {
     expect(
       formatPodcastEpisodeLines({
         isContributor: false,
@@ -29,8 +32,7 @@ describe('formatPodcastEpisodeLines', () => {
       }),
     ).toMatchObject({
       count: '11 na webu',
-      detail: '1 ke schválení · 1 koncept',
-      isPending: true,
+      detail: [pending('1 ke schválení'), plain('1 koncept')],
     })
   })
 
@@ -48,8 +50,11 @@ describe('formatPodcastEpisodeLines', () => {
       }),
     ).toMatchObject({
       count: '24 na webu',
-      detail: '5 ke schválení · 2 schválené · 5 konceptů',
-      isPending: true,
+      detail: [
+        pending('5 ke schválení'),
+        plain('2 schválené'),
+        plain('5 konceptů'),
+      ],
     })
   })
 
@@ -60,11 +65,7 @@ describe('formatPodcastEpisodeLines', () => {
         podcastState: 'published',
         summary: summary({ approvedCount: 1, publishedCount: 3 }),
       }),
-    ).toMatchObject({
-      count: '3 na webu',
-      detail: '1 schválená',
-      isPending: false,
-    })
+    ).toMatchObject({ count: '3 na webu', detail: [plain('1 schválená')] })
   })
 
   it("gives a Contributor's submitted episodes one word, unmarked", () => {
@@ -81,8 +82,7 @@ describe('formatPodcastEpisodeLines', () => {
       }),
     ).toMatchObject({
       count: '11 na webu',
-      detail: '2 odeslané · 2 koncepty',
-      isPending: false,
+      detail: [plain('2 odeslané'), plain('2 koncepty')],
     })
   })
 
@@ -98,8 +98,7 @@ describe('formatPodcastEpisodeLines', () => {
       }),
     ).toMatchObject({
       count: '24 na webu',
-      detail: 'poslední 19. 9. 2026',
-      isPending: false,
+      detail: [plain('poslední 19. 9. 2026')],
     })
   })
 
@@ -115,8 +114,7 @@ describe('formatPodcastEpisodeLines', () => {
       }),
     ).toMatchObject({
       count: '6 epizod',
-      detail: 'poslední 2. 10. 2025',
-      isPending: false,
+      detail: [plain('poslední 2. 10. 2025')],
     })
   })
 
@@ -127,7 +125,7 @@ describe('formatPodcastEpisodeLines', () => {
         podcastState: 'draft',
         summary: summary({}),
       }),
-    ).toMatchObject({ count: 'žádné na webu', detail: null, isPending: false })
+    ).toMatchObject({ count: 'žádné na webu', detail: [] })
   })
 
   it('counts only the drafts the summary holds for a Contributor', () => {
@@ -137,11 +135,7 @@ describe('formatPodcastEpisodeLines', () => {
         podcastState: 'draft',
         summary: summary({ draftCount: 1 }),
       }),
-    ).toMatchObject({
-      count: 'žádné na webu',
-      detail: '1 koncept',
-      isPending: false,
-    })
+    ).toMatchObject({ count: 'žádné na webu', detail: [plain('1 koncept')] })
   })
 
   // A phone has no column header, so the count names the episodes (32c).
