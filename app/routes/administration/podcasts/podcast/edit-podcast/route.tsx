@@ -39,6 +39,8 @@ export default function RouteComponent({
       coverId: podcast.cover?.id,
       description: podcast.description,
       id: podcast.id,
+      slug: podcast.slug,
+      title: podcast.title,
     },
     id: 'edit-podcast-form',
     lastResult: actionData?.submissionResult,
