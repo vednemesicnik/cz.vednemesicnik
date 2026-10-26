@@ -27,9 +27,10 @@ export const loader = async () => {
     // An episode page also needs its podcast to be published, otherwise it 404s.
     prisma.podcastEpisode.findMany({
       orderBy: { publishedAt: 'desc' },
+      // The address an episode holds in its podcast since its publish (log 0039).
       select: {
         podcast: { select: { slug: true } },
-        slug: true,
+        publishedSlug: true,
         updatedAt: true,
       },
       where: { podcast: { state: 'published' }, state: 'published' },
@@ -70,15 +71,21 @@ export const loader = async () => {
         href('/podcasts/:podcastSlug', { podcastSlug: podcast.slug }),
       ),
     })),
-    ...episodes.map((episode) => ({
-      lastmod: episode.updatedAt,
-      loc: toAbsoluteUrl(
-        href('/podcasts/:podcastSlug/:episodeSlug', {
-          episodeSlug: episode.slug,
-          podcastSlug: episode.podcast.slug,
-        }),
-      ),
-    })),
+    ...episodes.flatMap(({ podcast, publishedSlug, updatedAt }) =>
+      publishedSlug === null
+        ? []
+        : [
+            {
+              lastmod: updatedAt,
+              loc: toAbsoluteUrl(
+                href('/podcasts/:podcastSlug/:episodeSlug', {
+                  episodeSlug: publishedSlug,
+                  podcastSlug: podcast.slug,
+                }),
+              ),
+            },
+          ],
+    ),
   ]
 
   return createSitemapResponse(createSitemapXml(entries))

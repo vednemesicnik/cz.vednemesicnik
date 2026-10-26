@@ -40,7 +40,8 @@ export const loader = async () => {
           slug: true,
         },
       },
-      slug: true,
+      // The address the episode holds in its podcast since its publish (log 0039).
+      publishedSlug: true,
     },
     where: {
       state: 'published',

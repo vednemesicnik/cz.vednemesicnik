@@ -42,6 +42,8 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
           },
           number: true,
           publishedAt: true,
+          // The typed address: a signed-in author sees drafts here too, and a
+          // published episode's is the one it holds (log 0039).
           slug: true,
           title: true,
         },

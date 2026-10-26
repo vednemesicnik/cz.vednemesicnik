@@ -468,7 +468,10 @@ model PodcastCover {
 
 model PodcastEpisode {
   id            String               @id @default(cuid())
-  slug          String               @unique
+  // What the editor typed, not unique.
+  slug          String
+  // The address the episode holds in its podcast since its last publish; only publish writes it (log 0039).
+  publishedSlug String?
   number        Int
   title         String
   description   String
@@ -490,6 +493,10 @@ model PodcastEpisode {
 
   // episode number should be unique within a podcast
   @@unique([podcastId, number])
+  // the public address is the podcast's and the episode's (/podcasts/:podcastSlug/:episodeSlug)
+  @@unique([podcastId, publishedSlug])
+  // a draft's web preview finds it by the typed address
+  @@index([podcastId, slug])
   // non-unique foreign key
   @@index([podcastId])
   @@index([authorId])

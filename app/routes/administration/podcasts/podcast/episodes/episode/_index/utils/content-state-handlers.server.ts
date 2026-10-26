@@ -1,3 +1,4 @@
+import { TAKEN_SLUG_ITEM } from '~/routes/administration/articles/article/_index/utils/slug-items'
 import { clearSubmissionOnStateChange } from '~/utils/content-state/clear-submission-on-state-change'
 import {
   clearReviewsOnDraft,
@@ -6,30 +7,55 @@ import {
 import { createMissingContentError } from '~/utils/content-state/create-missing-content-error'
 import { prisma } from '~/utils/db.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
-
+import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
+import { loadTakenEpisodeSlugItems } from '../../../utils/load-taken-episode-slug-items.server'
 import { loadUnpublishedPodcastItems } from '../../../utils/load-unpublished-podcast-items.server'
 
 /**
  * Episode state-transition handlers: single author, cover image cleanup on
- * delete, and a publish only in a published podcast (design 27f).
+ * delete, a publish only in a published podcast (design 27f), and an address
+ * unique within the podcast only once published (log 0039).
  */
 export const episodeContentStateHandlers = createContentStateHandlers({
   allowBackdating: true,
   applyState: async (id, data) => {
-    // Not in getMissingBeforePublish: an approval leaves the episode off the
-    // web, so it stays allowed (27b). Nothing is written.
-    if (data.state === 'published') {
-      const unpublishedPodcastItems = await loadUnpublishedPodcastItems(id)
+    const episodeData = clearSubmissionOnStateChange(clearReviewsOnDraft(data))
 
-      if (unpublishedPodcastItems.length > 0) {
-        throw createMissingContentError(unpublishedPodcastItems)
-      }
+    if (data.state !== 'published') {
+      // Retract, archive and restore keep the address the episode holds.
+      await prisma.podcastEpisode.update({ data: episodeData, where: { id } })
+      return
     }
 
-    await prisma.podcastEpisode.update({
-      data: clearSubmissionOnStateChange(clearReviewsOnDraft(data)),
-      where: { id },
-    })
+    // Not in getMissingBeforePublish: an approval leaves the episode off the
+    // web, so it stays allowed (27b). Nothing is written.
+    const unpublishedPodcastItems = await loadUnpublishedPodcastItems(id)
+
+    if (unpublishedPodcastItems.length > 0) {
+      throw createMissingContentError(unpublishedPodcastItems)
+    }
+
+    // The episode takes its typed address as the one it holds; an address
+    // another episode of the podcast took since the check before it blocks
+    // the publish as missing content.
+    try {
+      await prisma.$transaction(async (transaction) => {
+        const { slug } = await transaction.podcastEpisode.findUniqueOrThrow({
+          select: { slug: true },
+          where: { id },
+        })
+
+        await transaction.podcastEpisode.update({
+          data: { ...episodeData, publishedSlug: slug },
+          where: { id },
+        })
+      })
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        throw createMissingContentError([TAKEN_SLUG_ITEM])
+      }
+      throw error
+    }
   },
   approverPublishesWithoutReview: true,
 
@@ -58,6 +84,9 @@ export const episodeContentStateHandlers = createContentStateHandlers({
     }
   },
   entity: 'podcast_episode',
+
+  // A taken address blocks the approval too (24d).
+  getMissingBeforePublish: loadTakenEpisodeSlugItems,
 
   loadPublishState: async (id) => {
     const episode = await prisma.podcastEpisode.findUniqueOrThrow({

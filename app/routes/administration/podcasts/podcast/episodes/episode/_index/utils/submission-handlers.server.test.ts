@@ -7,6 +7,7 @@ import { episodeSubmissionHandlers } from './submission-handlers.server'
 const mocks = vi.hoisted(() => ({
   episodeFindUniqueOrThrow: vi.fn(),
   episodeUpdateMany: vi.fn(),
+  loadTakenEpisodeSlugItems: vi.fn(),
   loadUnpublishedPodcastItems: vi.fn(),
   permissionContext: vi.fn(),
   publishContentEvent: vi.fn(),
@@ -30,6 +31,10 @@ vi.mock(
     ) => options.execute(mocks.permissionContext()),
   }),
 )
+
+vi.mock('../../../utils/load-taken-episode-slug-items.server', () => ({
+  loadTakenEpisodeSlugItems: mocks.loadTakenEpisodeSlugItems,
+}))
 
 vi.mock('../../../utils/load-unpublished-podcast-items.server', () => ({
   loadUnpublishedPodcastItems: mocks.loadUnpublishedPodcastItems,
@@ -59,6 +64,7 @@ beforeEach(() => {
     submittedAt: null,
   })
   mocks.episodeUpdateMany.mockResolvedValue({ count: 1 })
+  mocks.loadTakenEpisodeSlugItems.mockResolvedValue([])
   mocks.loadUnpublishedPodcastItems.mockResolvedValue([])
 })
 
@@ -91,5 +97,24 @@ describe('episodeSubmissionHandlers — submit in an unpublished podcast (27f)',
         where: { id: 'e1', state: 'draft', submittedAt: null },
       }),
     )
+  })
+})
+
+describe('episodeSubmissionHandlers — submit under a taken address (log 0039)', () => {
+  test('refuses it, the address said after the podcast', async () => {
+    mocks.loadUnpublishedPodcastItems.mockResolvedValue([
+      'Podcast Přestávka není publikovaný.',
+    ])
+    mocks.loadTakenEpisodeSlugItems.mockResolvedValue(['Adresa je obsazená.'])
+
+    const result = await episodeSubmissionHandlers.submit(request, {
+      id: 'e1',
+      target,
+    })
+
+    expect(result).toEqual({
+      missing: ['Podcast Přestávka není publikovaný.', 'Adresa je obsazená.'],
+    })
+    expect(mocks.episodeUpdateMany).not.toHaveBeenCalled()
   })
 })
