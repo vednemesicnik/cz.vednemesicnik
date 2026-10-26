@@ -31,8 +31,10 @@ import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
+import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { useContentEvents } from '~/hooks/use-content-events'
 
+import { EpisodeMissingDialog } from '../../components/episode-missing-dialog'
 import type { Route } from './+types/route'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
@@ -83,6 +85,7 @@ export default function RouteComponent({
   const { Form } = fetcher
 
   const isSubmitting = fetcher.state !== 'idle'
+  const { closeMissingList, missingList } = useContentActionResult(fetcher.data)
 
   const submittingIntent =
     fetcher.state !== 'idle' && fetcher.formData
@@ -351,6 +354,17 @@ export default function RouteComponent({
       </AdminDetailSection>
 
       <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef} />
+
+      {missingList !== null && (
+        <EpisodeMissingDialog
+          editHref={href(
+            '/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode',
+            { episodeId, podcastId },
+          )}
+          missingList={missingList}
+          onClose={closeMissingList}
+        />
+      )}
 
       <AdminPublishDateDialog
         action={actionUrl}
