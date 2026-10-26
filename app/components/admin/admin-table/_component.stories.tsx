@@ -274,7 +274,7 @@ export const FoldsOnPhone: Story = {
   globals: { viewport: { isRotated: false, value: 'mobile1' } },
   parameters: { controls: { disable: true } },
   render: () => (
-    <AdminTable foldsOnPhone={true}>
+    <AdminTable>
       <TableHeader>
         <TableSelectionHeaderCell
           checked={false}

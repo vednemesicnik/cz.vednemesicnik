@@ -133,7 +133,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage>
       {/* On a phone Nové číslo waits at the bottom (32b). */}
-      <ListHeader foldsOnPhone={true}>
+      <ListHeader>
         <PageTitle>Archiv</PageTitle>
         {renderNewIssueButton()}
       </ListHeader>
@@ -141,7 +141,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         <AdminBulkActionsBar
           action={href('/administration/archive')}
           confirmation={getIssueBulkDeleteConfirmation(selectedIssues)}
-          foldsOnPhone={true}
           formatToast={(deletedCount) =>
             formatBulkDeleteToast(deletedCount, ISSUE_NOUN.countForms)
           }
@@ -202,7 +201,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
-          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >
