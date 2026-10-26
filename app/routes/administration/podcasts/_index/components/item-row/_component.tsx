@@ -5,12 +5,14 @@ import { ActionMenu } from '~/components/action-menu'
 import {
   TableActionsCell,
   TableCell,
+  TableDetailsCell,
+  TableDetailsLine,
   TableImageCell,
   TableNameAddress,
   TableNameCell,
   TableRow,
-  TableRowActions,
   TableRowLink,
+  TableRowMenu,
   TableSelectionCell,
   TableStateCell,
 } from '~/components/admin/admin-table'
@@ -37,7 +39,8 @@ type Props = {
  * the podcast's page over its address, the episodes on the web with what is
  * in progress or the latest one's date, the state tag with one fact, and
  * every action in „⋯“ — the row has no main action, Nová epizoda belongs on
- * the podcast's page.
+ * the podcast's page. Below 768 px it folds into the cover beside the name,
+ * the state and the episodes, with a missing cover said last (32c).
  */
 export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
   const actions = usePodcastActions({
@@ -105,8 +108,28 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
           state={podcast.submission ?? podcast.state}
         />
       </TableStateCell>
+      {/* The episodes on a phone, which has no Epizody column; the address
+          goes, a missing cover is said last (32c, k7d1vqm1). */}
+      <TableDetailsCell>
+        <TableDetailsLine>
+          {podcast.episodeLines.phoneCount}
+          {podcast.episodeLines.detail !== null && (
+            <>
+              {' · '}
+              <span
+                className={clsx(
+                  podcast.episodeLines.isPending && styles.pending,
+                )}
+              >
+                {podcast.episodeLines.detail}
+              </span>
+            </>
+          )}
+          {podcast.cover === null && ' · obálka zatím chybí'}
+        </TableDetailsLine>
+      </TableDetailsCell>
       <TableActionsCell>
-        <TableRowActions>
+        <TableRowMenu>
           {podcast.actions.length > 0 && (
             <ActionMenu
               items={podcast.actions.map((action) => ({
@@ -118,7 +141,7 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
               size={'sm'}
             />
           )}
-        </TableRowActions>
+        </TableRowMenu>
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>

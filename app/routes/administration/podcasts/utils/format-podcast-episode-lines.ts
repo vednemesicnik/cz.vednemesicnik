@@ -15,6 +15,7 @@ type Options = {
 
 type PodcastEpisodeLines = {
   count: string
+  phoneCount: string
   detail: string | null
   isPending: boolean
 }
@@ -45,8 +46,10 @@ const SUBMITTED_FORMS = adjectiveForms('odeslaná', 'odeslané', 'odeslaných')
  * @param options.isContributor - A Contributor approves nothing: their
  *   waiting and approved episodes are one `odeslaná`, as the Stav filter's
  *   Odeslané (22i).
- * @returns The count (`11 na webu`, `žádné na webu`, `6 epizod`); under it
- *   what is in progress (`1 ke schválení · 1 schválená · 1 koncept`), else
+ * @returns The count (`11 na webu`, `žádné na webu`, `6 epizod`), and as a
+ *   phone has no column header, the count naming the episodes
+ *   (`11 epizod na webu`, `žádné epizody na webu`; 32c, copy myx395rj); under
+ *   it what is in progress (`1 ke schválení · 1 schválená · 1 koncept`), else
  *   the latest episode's date (`poslední 19. 9. 2026`), else nothing; and
  *   whether an episode waits for approval, which the row marks.
  */
@@ -55,12 +58,23 @@ export const formatPodcastEpisodeLines = ({
   podcastState,
   isContributor,
 }: Options): PodcastEpisodeLines => {
+  const episodes = formatListCount(
+    summary.publishedCount,
+    EPISODE_NOUN.countForms,
+  )
+  const isOnWeb = podcastState === 'published'
   const count =
     summary.publishedCount === 0
       ? 'žádné na webu'
-      : podcastState === 'published'
+      : isOnWeb
         ? `${summary.publishedCount.toLocaleString('cs-CZ')} na webu`
-        : formatListCount(summary.publishedCount, EPISODE_NOUN.countForms)
+        : episodes
+  const phoneCount =
+    summary.publishedCount === 0
+      ? 'žádné epizody na webu'
+      : isOnWeb
+        ? `${episodes} na webu`
+        : episodes
 
   const submittedCount = summary.pendingCount + summary.approvedCount
   const progress = (
@@ -89,6 +103,7 @@ export const formatPodcastEpisodeLines = ({
       count,
       detail: progress.join(' · '),
       isPending: !isContributor && summary.pendingCount > 0,
+      phoneCount,
     }
   }
 
@@ -99,5 +114,6 @@ export const formatPodcastEpisodeLines = ({
         ? null
         : `poslední ${formatNumericDate(summary.latestPublishedAt)}`,
     isPending: false,
+    phoneCount,
   }
 }

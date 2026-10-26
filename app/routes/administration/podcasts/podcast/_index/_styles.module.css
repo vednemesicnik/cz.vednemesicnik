@@ -17,6 +17,14 @@
     flex-wrap: wrap;
     align-items: flex-start;
     gap: 8px 20px;
+
+    /* On a phone the folded list starts 6 px under the filters, as on the
+       other lists (32d; FilterCell does it where it is the table's sibling). */
+    @media (width < 768px) {
+      &:has(+ [data-folds-on-phone]) {
+        margin-block-end: calc(6px - var(--admin-page-row-gap));
+      }
+    }
   }
 }
 
@@ -35,6 +43,10 @@
   @layer route {
     flex: 1 1 30rem;
     min-inline-size: 0;
+
+    @media (width < 768px) {
+      margin-block-end: 0;
+    }
   }
 }
 

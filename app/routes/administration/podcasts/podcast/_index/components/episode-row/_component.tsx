@@ -9,11 +9,14 @@ import {
 import {
   TableActionsCell,
   TableCell,
+  TableDetailsCell,
+  TableDetailsLine,
+  TableNameAddress,
   TableNameCell,
-  TableNameNote,
   TableRow,
   TableRowActions,
   TableRowLink,
+  TableRowMenu,
   TableSelectionCell,
   TableStateCell,
 } from '~/components/admin/admin-table'
@@ -54,7 +57,9 @@ type Props = {
  * A row of a podcast's episode table (design 27b): the number, the title
  * opening the episode over its platforms (or that the links are missing), the
  * publish date, the state tag with its author and one fact, and one action
- * with the rest in „⋯“, as the article's row (22a).
+ * with the rest in „⋯“, as the article's row (22a). Below 768 px it folds
+ * into the number before the title, the state and the platforms, with „⋯“
+ * holding the row action first and no publish date (32d).
  */
 export const EpisodeRow = ({
   episode,
@@ -134,6 +139,19 @@ export const EpisodeRow = ({
   }
 
   const rowAction = episode.row
+  const toMenuItem = (menuAction: EpisodeAction) => ({
+    danger: menuAction === 'delete',
+    label: EPISODE_ACTION_LABELS[menuAction],
+    onSelect: () => runAction(menuAction),
+  })
+  // On a phone „⋯“ stands alone, the row action first in it (32d).
+  const phoneMenu =
+    rowAction === null ? episode.menu : [rowAction, ...episode.menu]
+  // Without a link, the episode can't be heard on the web (27b).
+  const platforms =
+    episode.linkLabels.length === 0
+      ? 'odkazy zatím chybí'
+      : episode.linkLabels.join(' · ')
 
   return (
     <TableRow muted={episode.state === 'archived'}>
@@ -148,14 +166,13 @@ export const EpisodeRow = ({
       </TableCell>
       <TableNameCell>
         <TableRowLink className={styles.link} to={action}>
+          {/* A phone has no Číslo column: the number leads the title (32d). */}
+          <span className={styles.phoneNumber}>#{episode.number} </span>
           {episode.title}
         </TableRowLink>
-        {/* Without a link, the episode can't be heard on the web (27b). */}
-        <TableNameNote>
-          {episode.linkLabels.length === 0
-            ? 'odkazy zatím chybí'
-            : episode.linkLabels.join(' · ')}
-        </TableNameNote>
+        {/* Under the title on a wide screen; a phone moves it to the third
+            line, under the state (32d). */}
+        <TableNameAddress>{platforms}</TableNameAddress>
       </TableNameCell>
       {/* A draft has none yet; an archived one keeps its date (27b). */}
       <TableCell className={styles.date}>
@@ -169,7 +186,19 @@ export const EpisodeRow = ({
           state={episode.submission ?? episode.state}
         />
       </TableStateCell>
+      <TableDetailsCell>
+        <TableDetailsLine>{platforms}</TableDetailsLine>
+      </TableDetailsCell>
       <TableActionsCell>
+        {phoneMenu.length > 0 && (
+          <TableRowMenu phoneOnly={true}>
+            <ActionMenu
+              items={phoneMenu.map(toMenuItem)}
+              label={`Další akce s epizodou ${title}`}
+              size={'sm'}
+            />
+          </TableRowMenu>
+        )}
         <TableRowActions>
           {rowAction === 'edit' && (
             <LinkButton
@@ -194,11 +223,7 @@ export const EpisodeRow = ({
           )}
           {episode.menu.length > 0 && (
             <ActionMenu
-              items={episode.menu.map((menuAction) => ({
-                danger: menuAction === 'delete',
-                label: EPISODE_ACTION_LABELS[menuAction],
-                onSelect: () => runAction(menuAction),
-              }))}
+              items={episode.menu.map(toMenuItem)}
               label={`Další akce s epizodou ${title}`}
               size={'sm'}
             />
