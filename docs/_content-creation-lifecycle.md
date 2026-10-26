@@ -299,6 +299,20 @@ because the editor writes no reviews. Its author takes it back to a draft instea
 
 ---
 
+## Episode address
+
+An episode's address is unique within its podcast once published (#830, log
+[0047](./work-log/0047-an-episode-address-is-unique-within-its-podcast-once-published.md), after
+[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)). The editor saves
+any slug. Only publishing writes it to `publishedSlug`, which is unique together with the podcast,
+and retract, archive and restore keep it. *Odeslat ke schválení*, *Schválit* and *Publikovat…*
+refuse a slug another episode of the podcast holds and write nothing. The episode's dialog (27h)
+then says *Adresa je obsazená.*, after *Podcast … není publikovaný.* when the podcast is off the
+web too. The episode page reads `publishedSlug` for a reader, the typed slug for a signed-in
+previewer, and a draft's preview by its id (`?id=`).
+
+---
+
 ## Decided for the redesign (not implemented yet)
 
 Decided on 28 Sep 2026 in the design project (`07 Stavy a akce obsahu`, questions `dj753f0j`
