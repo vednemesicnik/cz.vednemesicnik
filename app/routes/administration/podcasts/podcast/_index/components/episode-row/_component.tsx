@@ -28,6 +28,7 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 
+import { EpisodeMissingDialog } from '../../../episodes/components/episode-missing-dialog'
 import { EpisodePublishDialog } from '../../../episodes/components/episode-publish-dialog'
 import {
   EpisodeStateDialog,
@@ -88,7 +89,7 @@ export const EpisodeRow = ({
   const isSubmitting = fetcher.state !== 'idle'
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
-  useContentActionResult(fetcher.data)
+  const { closeMissingList, missingList } = useContentActionResult(fetcher.data)
 
   const [stateDialog, setStateDialog] = useState<EpisodeStateDialogKind | null>(
     null,
@@ -127,11 +128,13 @@ export const EpisodeRow = ({
       case 'edit':
         return navigate(editHref)
       case 'view-on-web':
+        // Only a published address is unique: the id says which draft to
+        // show (log 0039).
         return window.open(
-          href('/podcasts/:podcastSlug/:episodeSlug', {
+          `${href('/podcasts/:podcastSlug/:episodeSlug', {
             episodeSlug: episode.slug,
             podcastSlug,
-          }),
+          })}?id=${id}`,
           '_blank',
           'noopener',
         )
@@ -252,6 +255,13 @@ export const EpisodeRow = ({
               isApprover={isApprover}
               kind={stateDialog}
               onClose={() => setStateDialog(null)}
+            />
+          )}
+          {missingList !== null && (
+            <EpisodeMissingDialog
+              editHref={editHref}
+              missingList={missingList}
+              onClose={closeMissingList}
             />
           )}
           {publishDialog !== null && (

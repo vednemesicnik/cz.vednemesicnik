@@ -41,12 +41,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       </Header>
       <Content>
         <LinkGroup>
-          {latestPodcastEpisode !== null && (
+          {latestPodcastEpisode?.publishedSlug != null && (
             <LinkGroupItem>
               <GraphicLink
                 image={latestEpisodeCoverImage}
                 to={href('/podcasts/:podcastSlug/:episodeSlug', {
-                  episodeSlug: latestPodcastEpisode.slug,
+                  episodeSlug: latestPodcastEpisode.publishedSlug,
                   podcastSlug: latestPodcastEpisode.podcast.slug,
                 })}
               >

@@ -5,13 +5,12 @@ import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ArrowUpwardIcon } from '~/components/icons/arrow-upward-icon'
 import { UndoIcon } from '~/components/icons/undo-icon'
 import { FORM_CONFIG } from '~/config/form-config'
-import { useContentActionResult } from '~/hooks/use-content-action-result'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
 const INTENT_VALUE = FORM_CONFIG.intent.value
 
 type Props = {
-  contentId: string
+  fetcherKey: string
   canSubmit: boolean
   canWithdraw: boolean
   canReturn: boolean
@@ -20,22 +19,19 @@ type Props = {
 /**
  * The submission buttons of a content detail (design 07d): Odeslat ke schválení
  * and Vzít zpět do konceptu for its author, Vrátit k úpravám for the Coordinator.
- * They post to the page's action on their own fetcher and confirm with a toast.
+ * They post to the page's action on the page's fetcher, so the page answers
+ * every action's result in one place: a toast, or what blocks it (23h, 27h).
  *
- * @param props.contentId - The content the page shows; keys the fetcher.
+ * @param props.fetcherKey - The key of the page's action fetcher.
  */
 export const AdminSubmissionActions = ({
-  contentId,
+  fetcherKey,
   canSubmit,
   canWithdraw,
   canReturn,
 }: Props) => {
-  const fetcher = useFetcher<{ intent: string; missing: string[] }>({
-    key: `submission-${contentId}`,
-  })
+  const fetcher = useFetcher({ key: fetcherKey })
   const { Form } = fetcher
-
-  useContentActionResult(fetcher.data)
 
   const isSubmitting = fetcher.state !== 'idle'
   const submittingIntent = isSubmitting

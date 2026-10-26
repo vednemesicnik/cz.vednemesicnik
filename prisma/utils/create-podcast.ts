@@ -67,6 +67,9 @@ export const createPodcast = async (
             },
             number: episode.number,
             publishedAt: episode.publishedAt,
+            // Only publish writes the held address (log 0039); a seeded
+            // published or archived episode holds it already.
+            publishedSlug: episode.state === 'draft' ? null : episode.slug,
             slug: episode.slug,
             state: episode.state,
             title: episode.title,
