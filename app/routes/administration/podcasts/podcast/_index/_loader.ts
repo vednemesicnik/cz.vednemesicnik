@@ -98,8 +98,16 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
     submission,
   })
 
-  const [episodeTable, history, publishedEpisodeCount] = await Promise.all([
-    loadEpisodeTable({ context, podcast, request, url }),
+  // First: the table's default or stale filter redirects before the rest
+  // of the page is loaded.
+  const episodeTable = await loadEpisodeTable({
+    context,
+    podcast,
+    request,
+    url,
+  })
+
+  const [history, publishedEpisodeCount] = await Promise.all([
     getContentHistory({
       createdAt: podcast.createdAt,
       entity: 'podcast',

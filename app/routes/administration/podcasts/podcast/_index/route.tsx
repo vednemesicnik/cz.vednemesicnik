@@ -156,119 +156,121 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       />
 
       <section aria-labelledby={'episodes-heading'} className={styles.episodes}>
-        <h2 className={styles.heading} id={'episodes-heading'}>
-          Epizody
-        </h2>
-        {!hasNoEpisodes && (
-          <FilterCell className={styles.filters}>
-            <AdminBulkActionsBar
-              action={href('/administration/podcasts/:podcastId/episodes', {
-                podcastId: podcast.id,
-              })}
-              onDone={selection.clear}
-              selectedIds={selection.selectedIds}
-            />
-            <FilterBar replaced={selection.selectedIds.length > 0}>
-              <FilterBarGroup>
-                <FilterBarSearch
-                  defaultValue={query}
-                  placeholder={'Název nebo adresa'}
-                />
-                <FilterBarFilters>
-                  <FilterMenu
-                    attention={stateFilter.attention}
-                    clearLabel={'Vše'}
-                    label={'Stav'}
-                    name={'state'}
-                    options={stateFilter.options}
-                    selectedValues={states}
-                  />
-                  {!isDefault && <ClearFiltersLink />}
-                  <SavedFiltersTrigger
-                    matchingFilterName={matchingFilterName}
-                    placement={'filters'}
-                  />
-                </FilterBarFilters>
-              </FilterBarGroup>
-              <SavedFiltersMenu
-                currentQuery={currentFilterQuery}
-                defaultHint={EPISODE_NOUN.defaultFilterHint}
-                matchingFilterId={matchingFilterId}
-                matchingFilterName={matchingFilterName}
-                ownFilters={ownFilters}
-                sharedFilters={sharedFilters}
-                summaryLines={summaryLines}
-                tableKey={'podcast_episodes'}
+        <div className={styles.toolbar}>
+          <h2 className={styles.heading} id={'episodes-heading'}>
+            Epizody
+          </h2>
+          {!hasNoEpisodes && (
+            <FilterCell className={styles.filters}>
+              <AdminBulkActionsBar
+                action={href('/administration/podcasts/:podcastId/episodes', {
+                  podcastId: podcast.id,
+                })}
+                onDone={selection.clear}
+                selectedIds={selection.selectedIds}
               />
-            </FilterBar>
-          </FilterCell>
+              <FilterBar replaced={selection.selectedIds.length > 0}>
+                <FilterBarGroup>
+                  <FilterBarSearch
+                    defaultValue={query}
+                    placeholder={'Název nebo adresa'}
+                  />
+                  <FilterBarFilters>
+                    <FilterMenu
+                      attention={stateFilter.attention}
+                      clearLabel={'Vše'}
+                      label={'Stav'}
+                      name={'state'}
+                      options={stateFilter.options}
+                      selectedValues={states}
+                    />
+                    {!isDefault && <ClearFiltersLink />}
+                    <SavedFiltersTrigger
+                      matchingFilterName={matchingFilterName}
+                      placement={'filters'}
+                    />
+                  </FilterBarFilters>
+                </FilterBarGroup>
+                <SavedFiltersMenu
+                  currentQuery={currentFilterQuery}
+                  defaultHint={EPISODE_NOUN.defaultFilterHint}
+                  matchingFilterId={matchingFilterId}
+                  matchingFilterName={matchingFilterName}
+                  ownFilters={ownFilters}
+                  sharedFilters={sharedFilters}
+                  summaryLines={summaryLines}
+                  tableKey={'podcast_episodes'}
+                />
+              </FilterBar>
+            </FilterCell>
+          )}
+        </div>
+
+        {episodes.length === 0 ? (
+          // The table's head goes too; one sentence stands in its body (22e, 27g).
+          <ListEmptyCard>
+            <ListEmptyCardTitle>{emptyMessage.title}</ListEmptyCardTitle>
+            {emptyMessage.text !== null && (
+              <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
+            )}
+            {emptyMessage.action === 'create' && canCreateEpisode && (
+              <LinkButton to={newEpisodeHref}>Nová epizoda</LinkButton>
+            )}
+            {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
+          </ListEmptyCard>
+        ) : (
+          <AdminTable
+            columnsClassName={styles.columns}
+            pending={pending}
+            stickyHeader={true}
+          >
+            <TableHeader>
+              <TableSelectionHeaderCell
+                checked={selection.allSelected}
+                disabled={deletableIds.length === 0}
+                indeterminate={selection.someSelected}
+                onChange={selection.toggleAll}
+              />
+              <TableSortableHeaderCell
+                defaultOrder={'desc'}
+                defaultSort={'number'}
+                sortKey={'number'}
+                sortKeys={SORT_KEYS}
+              >
+                Číslo
+              </TableSortableHeaderCell>
+              <TableHeaderCell>Epizoda</TableHeaderCell>
+              <TableHeaderCell>Publikováno</TableHeaderCell>
+              <TableHeaderCell>Stav</TableHeaderCell>
+              <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {episodes.map((episode) => (
+                <EpisodeRow
+                  episode={episode}
+                  isApprover={isApprover}
+                  key={episode.id}
+                  onSelect={() => selection.toggle(episode.id)}
+                  podcastId={podcast.id}
+                  podcastSlug={podcast.slug}
+                  selected={selection.isSelected(episode.id)}
+                />
+              ))}
+            </TableBody>
+          </AdminTable>
+        )}
+        {!hasNoEpisodes && (
+          <Pagination
+            currentPage={currentPage}
+            layout={'inline'}
+            noun={EPISODE_NOUN.countForms}
+            pageSize={pageSize}
+            size={'sm'}
+            totalCount={totalCount}
+            totalPages={totalPages}
+          />
         )}
       </section>
-
-      {episodes.length === 0 ? (
-        // The table's head goes too; one sentence stands in its body (22e, 27g).
-        <ListEmptyCard>
-          <ListEmptyCardTitle>{emptyMessage.title}</ListEmptyCardTitle>
-          {emptyMessage.text !== null && (
-            <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
-          )}
-          {emptyMessage.action === 'create' && canCreateEpisode && (
-            <LinkButton to={newEpisodeHref}>Nová epizoda</LinkButton>
-          )}
-          {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
-        </ListEmptyCard>
-      ) : (
-        <AdminTable
-          columnsClassName={styles.columns}
-          pending={pending}
-          stickyHeader={true}
-        >
-          <TableHeader>
-            <TableSelectionHeaderCell
-              checked={selection.allSelected}
-              disabled={deletableIds.length === 0}
-              indeterminate={selection.someSelected}
-              onChange={selection.toggleAll}
-            />
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'number'}
-              sortKey={'number'}
-              sortKeys={SORT_KEYS}
-            >
-              Číslo
-            </TableSortableHeaderCell>
-            <TableHeaderCell>Epizoda</TableHeaderCell>
-            <TableHeaderCell>Publikováno</TableHeaderCell>
-            <TableHeaderCell>Stav</TableHeaderCell>
-            <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
-          </TableHeader>
-          <TableBody>
-            {episodes.map((episode) => (
-              <EpisodeRow
-                episode={episode}
-                isApprover={isApprover}
-                key={episode.id}
-                onSelect={() => selection.toggle(episode.id)}
-                podcastId={podcast.id}
-                podcastSlug={podcast.slug}
-                selected={selection.isSelected(episode.id)}
-              />
-            ))}
-          </TableBody>
-        </AdminTable>
-      )}
-      {!hasNoEpisodes && (
-        <Pagination
-          currentPage={currentPage}
-          layout={'inline'}
-          noun={EPISODE_NOUN.countForms}
-          pageSize={pageSize}
-          size={'sm'}
-          totalCount={totalCount}
-          totalPages={totalPages}
-        />
-      )}
 
       <PodcastActionDialogs
         actions={actions}

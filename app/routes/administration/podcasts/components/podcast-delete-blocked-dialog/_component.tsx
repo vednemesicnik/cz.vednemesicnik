@@ -23,7 +23,6 @@ const EPISODE_ACCUSATIVE_FORMS: CountForms = {
 type Props = {
   podcastTitle: string
   episodeCount: number
-  /** The podcast's page, from a list; on the page itself the episodes are there. */
   episodesHref?: string
   isApprover: boolean
   onClose: () => void
@@ -34,6 +33,8 @@ type Props = {
  * confirmation (design 27f, tly4a163): its episodes hold it, every state
  * counted. The count leads to the episode table. Opens as it mounts.
  *
+ * @param props.episodesHref - The podcast's page, from a list; on the page
+ *   itself the episodes are there, so the count is plain text.
  * @param props.isApprover - Whether the person deletes every episode. The
  *   author of a draft podcast may not see or delete episodes others added,
  *   so they are sent to the Coordinator (copy 29cqctr6).

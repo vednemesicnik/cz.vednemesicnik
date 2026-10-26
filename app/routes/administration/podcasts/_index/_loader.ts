@@ -186,8 +186,12 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       state: true,
       submittedAt: true,
     },
+    // The summary counts no archived episode, so none is loaded.
     where: {
-      OR: [{ state: 'published' }, episodePermissionWhere],
+      OR: [
+        { state: 'published' },
+        { AND: [episodePermissionWhere, { state: 'draft' }] },
+      ],
       podcastId: { in: podcastIds },
     },
   })

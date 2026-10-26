@@ -7,7 +7,6 @@ import { PodcastDeleteBlockedDialog } from '../podcast-delete-blocked-dialog'
 type Props = {
   actions: ReturnType<typeof usePodcastActions>
   canDelete: boolean
-  /** From a list, the count in the 27f sentence leads to the podcast's page. */
   linksEpisodes: boolean
   isApprover: boolean
 }
@@ -18,6 +17,8 @@ type Props = {
  *
  * @param props.actions - The podcast's `usePodcastActions`.
  * @param props.canDelete - Whether Smazat… is offered, so its dialog exists.
+ * @param props.linksEpisodes - From a list, the count in the 27f sentence
+ *   leads to the podcast's page.
  * @param props.isApprover - Whether the person is the Coordinator, who
  *   deletes every episode.
  */
