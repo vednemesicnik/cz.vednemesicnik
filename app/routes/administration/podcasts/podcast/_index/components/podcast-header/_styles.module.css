@@ -1,0 +1,91 @@
+/* The cover, the text beside it and the actions on the right (27b). */
+.header {
+  @layer route {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 24px;
+    width: 100%;
+
+    /* The actions go under the text before they squeeze it: beside the
+       sidebar, the page is under 900 px wide below a 1200 px screen. */
+    @media (width < 1200px) {
+      grid-template-columns: 112px minmax(0, 1fr);
+
+      & > :last-child {
+        grid-column: 1 / -1;
+      }
+    }
+  }
+}
+
+/* A square cover, as the platforms want it (27a). */
+.cover,
+.coverMissing {
+  @layer route {
+    width: 112px;
+    aspect-ratio: 1;
+    border-radius: 8px;
+  }
+}
+
+.cover {
+  @layer route {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* No cover: a dashed frame, as in the list. */
+.coverMissing {
+  @layer route {
+    box-sizing: border-box;
+    border: 1px dashed var(--border-strong);
+  }
+}
+
+.text {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+}
+
+.titleLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+}
+
+/* Author · publish date · address (27b). */
+.meta {
+  @layer route {
+    font-size: 13px;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.description {
+  @layer route {
+    margin: 0;
+    max-width: 640px;
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+}
+
+.actions {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+}

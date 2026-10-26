@@ -33,10 +33,22 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     },
   })
 
-  const [podcast, authors] = await Promise.all([podcastPromise, authorsPromise])
+  // The highest number + 1, an archived episode's included: the number is
+  // unique in the podcast whatever the state (27d).
+  const highestNumberPromise = prisma.podcastEpisode.aggregate({
+    _max: { number: true },
+    where: { podcastId },
+  })
+
+  const [podcast, authors, highestNumber] = await Promise.all([
+    podcastPromise,
+    authorsPromise,
+    highestNumberPromise,
+  ])
 
   return {
     authors,
+    nextNumber: (highestNumber._max.number ?? 0) + 1,
     podcast,
     selfAuthorId: context.authorId,
   }

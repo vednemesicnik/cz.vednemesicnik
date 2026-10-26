@@ -27,6 +27,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       },
       description: true,
       episodes: {
+        // By number, the newest first: the number is how listeners know an
+        // episode (27b).
+        orderBy: [{ number: 'desc' }],
         select: {
           description: true,
           id: true,
