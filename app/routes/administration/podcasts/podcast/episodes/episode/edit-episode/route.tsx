@@ -52,6 +52,8 @@ export default function RouteComponent({
       })),
       number: loaderData.episode.number,
       podcastId: loaderData.podcastId,
+      slug: loaderData.episode.slug,
+      title: loaderData.episode.title,
     },
     id: 'edit-episode',
     lastResult: actionData?.submissionResult,
