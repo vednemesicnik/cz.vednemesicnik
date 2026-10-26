@@ -9,13 +9,15 @@ import { prisma } from '~/utils/db.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
 
+import { loadMissingEpisodeLinkItems } from '../../../utils/load-missing-episode-link-items.server'
 import { loadTakenEpisodeSlugItems } from '../../../utils/load-taken-episode-slug-items.server'
 import { loadUnpublishedPodcastItems } from '../../../utils/load-unpublished-podcast-items.server'
 
 /**
  * Episode state-transition handlers: single author, cover image cleanup on
- * delete, a publish only in a published podcast (design 27f), and an address
- * unique within the podcast only once published (log 0039).
+ * delete, a publish only in a published podcast (design 27f) and with a link
+ * (27h), and an address unique within the podcast only once published (log
+ * 0039).
  */
 export const episodeContentStateHandlers = createContentStateHandlers({
   allowBackdating: true,
@@ -86,8 +88,12 @@ export const episodeContentStateHandlers = createContentStateHandlers({
   },
   entity: 'podcast_episode',
 
-  // A taken address blocks the approval too (24d).
-  getMissingBeforePublish: loadTakenEpisodeSlugItems,
+  // A missing link and a taken address block the approval too (27h, 24d),
+  // the address said last.
+  getMissingBeforePublish: async (id) => [
+    ...(await loadMissingEpisodeLinkItems(id)),
+    ...(await loadTakenEpisodeSlugItems(id)),
+  ],
 
   loadPublishState: async (id) => {
     const episode = await prisma.podcastEpisode.findUniqueOrThrow({

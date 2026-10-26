@@ -7,6 +7,7 @@ import { episodeSubmissionHandlers } from './submission-handlers.server'
 const mocks = vi.hoisted(() => ({
   episodeFindUniqueOrThrow: vi.fn(),
   episodeUpdateMany: vi.fn(),
+  loadMissingEpisodeLinkItems: vi.fn(),
   loadTakenEpisodeSlugItems: vi.fn(),
   loadUnpublishedPodcastItems: vi.fn(),
   permissionContext: vi.fn(),
@@ -31,6 +32,10 @@ vi.mock(
     ) => options.execute(mocks.permissionContext()),
   }),
 )
+
+vi.mock('../../../utils/load-missing-episode-link-items.server', () => ({
+  loadMissingEpisodeLinkItems: mocks.loadMissingEpisodeLinkItems,
+}))
 
 vi.mock('../../../utils/load-taken-episode-slug-items.server', () => ({
   loadTakenEpisodeSlugItems: mocks.loadTakenEpisodeSlugItems,
@@ -64,6 +69,7 @@ beforeEach(() => {
     submittedAt: null,
   })
   mocks.episodeUpdateMany.mockResolvedValue({ count: 1 })
+  mocks.loadMissingEpisodeLinkItems.mockResolvedValue([])
   mocks.loadTakenEpisodeSlugItems.mockResolvedValue([])
   mocks.loadUnpublishedPodcastItems.mockResolvedValue([])
 })
@@ -116,5 +122,44 @@ describe('episodeSubmissionHandlers — submit under a taken address (log 0039)'
       missing: ['Podcast Přestávka není publikovaný.', 'Adresa je obsazená.'],
     })
     expect(mocks.episodeUpdateMany).not.toHaveBeenCalled()
+  })
+})
+
+describe('episodeSubmissionHandlers — submit without a link (27h)', () => {
+  test('refuses it and records no submission', async () => {
+    mocks.loadMissingEpisodeLinkItems.mockResolvedValue([
+      'Chybí odkaz na epizodu.',
+    ])
+
+    const result = await episodeSubmissionHandlers.submit(request, {
+      id: 'e1',
+      target,
+    })
+
+    expect(result).toEqual({ missing: ['Chybí odkaz na epizodu.'] })
+    expect(mocks.episodeUpdateMany).not.toHaveBeenCalled()
+  })
+
+  test('says the missing link after the podcast and before the address', async () => {
+    mocks.loadUnpublishedPodcastItems.mockResolvedValue([
+      'Podcast Přestávka není publikovaný.',
+    ])
+    mocks.loadMissingEpisodeLinkItems.mockResolvedValue([
+      'Chybí odkaz na epizodu.',
+    ])
+    mocks.loadTakenEpisodeSlugItems.mockResolvedValue(['Adresa je obsazená.'])
+
+    const result = await episodeSubmissionHandlers.submit(request, {
+      id: 'e1',
+      target,
+    })
+
+    expect(result).toEqual({
+      missing: [
+        'Podcast Přestávka není publikovaný.',
+        'Chybí odkaz na epizodu.',
+        'Adresa je obsazená.',
+      ],
+    })
   })
 })
