@@ -312,6 +312,10 @@ web too. The episode page shows the episode published at the address, else one i
 see by the typed slug, and a draft's preview by its id (`?id=`). Published episodes are not
 edited, so their typed slug is the one they hold, and the public lists link by it.
 
+An episode is published only with at least one link (27h), so the web needs no empty
+*Kde poslouchat* (13d). *Odeslat ke schválení*, *Schválit* and *Publikovat…* refuse an episode
+without one and write nothing; the dialog says *Chybí odkaz na epizodu.*, before a taken address.
+
 ---
 
 ## Decided for the redesign (not implemented yet)

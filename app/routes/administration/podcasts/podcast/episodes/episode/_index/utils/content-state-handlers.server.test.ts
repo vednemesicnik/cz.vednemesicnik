@@ -8,6 +8,7 @@ import { episodeContentStateHandlers } from './content-state-handlers.server'
 const mocks = vi.hoisted(() => ({
   episodeFindUniqueOrThrow: vi.fn(),
   episodeUpdate: vi.fn(),
+  loadMissingEpisodeLinkItems: vi.fn(),
   loadTakenEpisodeSlugItems: vi.fn(),
   loadUnpublishedPodcastItems: vi.fn(),
   permissionContext: vi.fn(),
@@ -34,6 +35,10 @@ vi.mock(
     ) => options.execute(mocks.permissionContext()),
   }),
 )
+
+vi.mock('../../../utils/load-missing-episode-link-items.server', () => ({
+  loadMissingEpisodeLinkItems: mocks.loadMissingEpisodeLinkItems,
+}))
 
 vi.mock('../../../utils/load-taken-episode-slug-items.server', () => ({
   loadTakenEpisodeSlugItems: mocks.loadTakenEpisodeSlugItems,
@@ -65,6 +70,7 @@ const request = new Request('https://test.local/')
 const draftTarget = { authorIds: ['creator'], state: 'draft' as const }
 
 const notPublished = 'Podcast Přestávka není publikovaný.'
+const NO_LINK = 'Chybí odkaz na epizodu.'
 const TAKEN = 'Adresa je obsazená.'
 
 beforeEach(() => {
@@ -81,8 +87,45 @@ beforeEach(() => {
     state: 'draft',
     submittedAt: null,
   })
+  mocks.loadMissingEpisodeLinkItems.mockResolvedValue([])
   mocks.loadTakenEpisodeSlugItems.mockResolvedValue([])
   mocks.loadUnpublishedPodcastItems.mockResolvedValue([])
+})
+
+describe('episodeContentStateHandlers — an episode without a link (27h)', () => {
+  test('refuses a publish and writes nothing', async () => {
+    mocks.loadMissingEpisodeLinkItems.mockResolvedValue([NO_LINK])
+
+    const result = await episodeContentStateHandlers.publish(request, {
+      id: 'e1',
+      target: draftTarget,
+    })
+
+    expect(result).toEqual({ missing: [NO_LINK] })
+    expect(mocks.episodeUpdate).not.toHaveBeenCalled()
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+  })
+
+  test('refuses an approval, the missing link said before the address', async () => {
+    mocks.episodeFindUniqueOrThrow.mockResolvedValue({
+      author: { id: 'creator', role: { level: 2 } },
+      publishedAt: null,
+      reviews: [],
+      slug: 'uvod',
+      state: 'draft',
+      submittedAt: new Date('2026-10-26T10:00:00Z'),
+    })
+    mocks.loadMissingEpisodeLinkItems.mockResolvedValue([NO_LINK])
+    mocks.loadTakenEpisodeSlugItems.mockResolvedValue([TAKEN])
+
+    const result = await episodeContentStateHandlers.review(request, {
+      id: 'e1',
+      target: draftTarget,
+    })
+
+    expect(result).toEqual({ missing: [NO_LINK, TAKEN] })
+    expect(mocks.reviewCreate).not.toHaveBeenCalled()
+  })
 })
 
 describe('episodeContentStateHandlers — publish in an unpublished podcast (27f)', () => {

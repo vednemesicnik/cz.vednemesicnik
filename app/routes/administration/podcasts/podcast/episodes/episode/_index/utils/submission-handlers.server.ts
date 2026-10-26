@@ -1,13 +1,14 @@
 import { createSubmissionHandlers } from '~/utils/content-state/create-submission-handlers.server'
 import { prisma } from '~/utils/db.server'
 
+import { loadMissingEpisodeLinkItems } from '../../../utils/load-missing-episode-link-items.server'
 import { loadTakenEpisodeSlugItems } from '../../../utils/load-taken-episode-slug-items.server'
 import { loadUnpublishedPodcastItems } from '../../../utils/load-unpublished-podcast-items.server'
 
 /**
  * Episode submission transitions (design 07d): single author, submitted only
- * in a published podcast (27f) and under an address no other episode of the
- * podcast holds (log 0039).
+ * in a published podcast (27f), with a link (27h) and under an address no
+ * other episode of the podcast holds (log 0039).
  */
 export const episodeSubmissionHandlers = createSubmissionHandlers({
   clearSubmission: async (id) => {
@@ -24,6 +25,7 @@ export const episodeSubmissionHandlers = createSubmissionHandlers({
   // The taken address is said last (24d).
   getMissing: async (id) => [
     ...(await loadUnpublishedPodcastItems(id)),
+    ...(await loadMissingEpisodeLinkItems(id)),
     ...(await loadTakenEpisodeSlugItems(id)),
   ],
 
