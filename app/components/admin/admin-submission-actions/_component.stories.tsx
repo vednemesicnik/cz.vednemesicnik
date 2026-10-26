@@ -56,7 +56,7 @@ export const Playground: Story = {
     canReturn: false,
     canSubmit: true,
     canWithdraw: false,
-    contentId: 'content-1',
+    fetcherKey: 'content-action-1',
   },
 }
 

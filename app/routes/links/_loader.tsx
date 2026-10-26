@@ -44,6 +44,7 @@ export const loader = async () => {
       publishedSlug: true,
     },
     where: {
+      publishedSlug: { not: null },
       state: 'published',
     },
   })

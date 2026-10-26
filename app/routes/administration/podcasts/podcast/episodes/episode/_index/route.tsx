@@ -132,7 +132,7 @@ export default function RouteComponent({
           canReturn={canReturn}
           canSubmit={canSubmit}
           canWithdraw={canWithdraw}
-          contentId={episode.id}
+          fetcherKey={fetcherKey}
         />
         {canApprove && (
           <Form method="post">

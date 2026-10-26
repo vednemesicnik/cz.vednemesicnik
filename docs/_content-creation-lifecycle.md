@@ -308,8 +308,9 @@ any slug. Only publishing writes it to `publishedSlug`, which is unique together
 and retract, archive and restore keep it. *Odeslat ke schválení*, *Schválit* and *Publikovat…*
 refuse a slug another episode of the podcast holds and write nothing. The episode's dialog (27h)
 then says *Adresa je obsazená.*, after *Podcast … není publikovaný.* when the podcast is off the
-web too. The episode page reads `publishedSlug` for a reader, the typed slug for a signed-in
-previewer, and a draft's preview by its id (`?id=`).
+web too. The episode page shows the episode published at the address, else one its viewer may
+see by the typed slug, and a draft's preview by its id (`?id=`). Published episodes are not
+edited, so their typed slug is the one they hold, and the public lists link by it.
 
 ---
 

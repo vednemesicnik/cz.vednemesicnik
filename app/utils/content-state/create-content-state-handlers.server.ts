@@ -110,7 +110,7 @@ export type ContentStateHandlersConfig = {
   /**
    * What the content still lacks before it can be published (design 23h,
    * 26e); a non-empty list blocks the publish and the approval without
-   * writing. The article and the archive issue.
+   * writing. The article, the archive issue and the episode.
    */
   getMissingBeforePublish?: (id: string) => Promise<string[]>
 }
