@@ -183,6 +183,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <TableBody>
             {podcasts.map((podcast) => (
               <ItemRow
+                isApprover={isApprover}
                 key={podcast.id}
                 onSelect={() => selection.toggle(podcast.id)}
                 podcast={podcast}

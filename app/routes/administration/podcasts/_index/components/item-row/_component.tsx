@@ -27,6 +27,7 @@ type Podcast = Route.ComponentProps['loaderData']['podcasts'][number]
 
 type Props = {
   podcast: Podcast
+  isApprover: boolean
   selected: boolean
   onSelect: () => void
 }
@@ -38,7 +39,7 @@ type Props = {
  * every action in „⋯“ — the row has no main action, Nová epizoda belongs on
  * the podcast's page.
  */
-export const ItemRow = ({ podcast, selected, onSelect }: Props) => {
+export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
   const actions = usePodcastActions({
     deleteRedirects: false,
     fetcherKey: `podcast-row-${podcast.id}`,
@@ -117,6 +118,7 @@ export const ItemRow = ({ podcast, selected, onSelect }: Props) => {
           <PodcastActionDialogs
             actions={actions}
             canDelete={podcast.actions.includes('delete')}
+            isApprover={isApprover}
             linksEpisodes={true}
           />
         </div>

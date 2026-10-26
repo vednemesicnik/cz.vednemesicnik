@@ -25,6 +25,7 @@ type Props = {
   episodeCount: number
   /** The podcast's page, from a list; on the page itself the episodes are there. */
   episodesHref?: string
+  isApprover: boolean
   onClose: () => void
 }
 
@@ -32,11 +33,16 @@ type Props = {
  * Why a podcast with episodes cannot be deleted, in place of the
  * confirmation (design 27f, tly4a163): its episodes hold it, every state
  * counted. The count leads to the episode table. Opens as it mounts.
+ *
+ * @param props.isApprover - Whether the person deletes every episode. The
+ *   author of a draft podcast may not see or delete episodes others added,
+ *   so they are sent to the Coordinator (copy 29cqctr6).
  */
 export const PodcastDeleteBlockedDialog = ({
   podcastTitle,
   episodeCount,
   episodesHref,
+  isApprover,
   onClose,
 }: Props) => {
   const ref = useModalDialog(onClose)
@@ -56,6 +62,11 @@ export const PodcastDeleteBlockedDialog = ({
             )}
             . Smazat ho lze až po smazání všech jeho epizod.
           </AdminModalDescription>
+          {!isApprover && (
+            <AdminModalDescription>
+              Některé epizody nemusíte vidět. Obraťte se na Koordinátora.
+            </AdminModalDescription>
+          )}
         </DialogBody>
         <AdminModalActions>
           <Button

@@ -9,6 +9,7 @@ type Props = {
   canDelete: boolean
   /** From a list, the count in the 27f sentence leads to the podcast's page. */
   linksEpisodes: boolean
+  isApprover: boolean
 }
 
 /**
@@ -17,11 +18,14 @@ type Props = {
  *
  * @param props.actions - The podcast's `usePodcastActions`.
  * @param props.canDelete - Whether Smazat… is offered, so its dialog exists.
+ * @param props.isApprover - Whether the person is the Coordinator, who
+ *   deletes every episode.
  */
 export const PodcastActionDialogs = ({
   actions,
   canDelete,
   linksEpisodes,
+  isApprover,
 }: Props) => {
   const { podcast } = actions
 
@@ -52,6 +56,7 @@ export const PodcastActionDialogs = ({
         <PodcastDeleteBlockedDialog
           episodeCount={podcast.episodeCount}
           episodesHref={linksEpisodes ? actions.podcastHref : undefined}
+          isApprover={isApprover}
           onClose={actions.closeDeleteBlocked}
           podcastTitle={podcast.title}
         />

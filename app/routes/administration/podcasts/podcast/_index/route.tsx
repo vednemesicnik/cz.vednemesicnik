@@ -273,6 +273,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <PodcastActionDialogs
         actions={actions}
         canDelete={menu.includes('delete')}
+        isApprover={isApprover}
         linksEpisodes={false}
       />
       {isHistoryOpen && (
