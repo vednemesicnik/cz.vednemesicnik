@@ -4,11 +4,8 @@ import { data, href } from 'react-router'
 import type { NotFoundEpisodeData } from '~/components/boundary-error'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
-import {
-  getWebContentVisibility,
-  ownByAuthor,
-} from '~/utils/permissions/author/get-web-content-visibility.server'
-import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
+import { getWebContentVisibility } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { buildWebVisibleEpisodeWhere } from '~/utils/podcast-episode/build-web-visible-episode-where'
 
 import type { Route } from './+types/route'
 
@@ -19,10 +16,8 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     'podcast_episode',
   ])
 
-  const podcastWhere = {
-    slug: podcastSlug,
-    ...visibility.where('podcast', ownByAuthor, ['draft', 'archived']),
-  }
+  const visible = buildWebVisibleEpisodeWhere(visibility)
+  const podcastWhere = { slug: podcastSlug, ...visible.podcast }
 
   const select = {
     cover: {
@@ -55,11 +50,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const previewId = new URL(request.url).searchParams.get('id')
   // An empty draft never shows, not even as a preview (log 0020).
-  const visibleWhere = {
-    podcast: podcastWhere,
-    ...visibility.where('podcast_episode', ownByAuthor, ['draft', 'archived']),
-    ...NON_EMPTY_EPISODE_WHERE,
-  }
+  const visibleWhere = { podcast: podcastWhere, ...visible.episode }
 
   // Only a published address is unique, and only within its podcast (log
   // 0039, 27f): the administration's preview names the episode by its id, a
