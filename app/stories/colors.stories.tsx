@@ -166,29 +166,9 @@ const TOKEN_GROUPS: TokenGroup[] = [
   },
   {
     description:
-      'Role mimo design systém. Zmizí s komponentou, která je ještě používá (odznak, tlačítka akcí životního cyklu).',
+      'Role mimo design systém. Zmizí s komponentou, která je ještě používá (odznak).',
     title: 'Před redesignem',
-    tokens: [
-      'badge-bg',
-      'badge-text',
-      'badge-bg-hover',
-      'badge-border',
-      'action-publish',
-      'action-publish-hover',
-      'action-publish-active',
-      'action-retract',
-      'action-retract-hover',
-      'action-retract-active',
-      'action-archive',
-      'action-archive-hover',
-      'action-archive-active',
-      'action-restore',
-      'action-restore-hover',
-      'action-restore-active',
-      'action-review',
-      'action-review-hover',
-      'action-review-active',
-    ],
+    tokens: ['badge-bg', 'badge-text', 'badge-bg-hover', 'badge-border'],
   },
 ]
 
