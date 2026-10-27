@@ -64,9 +64,6 @@ const RowContext = createContext<RowContextValue | undefined>(undefined)
 // A click on the row is not a drag until the pointer moves this far.
 const DRAG_THRESHOLD_PX = 4
 
-// Matches the list's gap in the stylesheet.
-const ROW_GAP_PX = 6
-
 // How far past the midpoint the pointer goes before a swap, either way.
 const SWAP_HYSTERESIS_PX = 8
 
@@ -272,6 +269,11 @@ export const ReorderableList = <Item extends { id: string }>({
     let startY = drag.startY - scrolledBy
     // One direction per move: a leftover past the last swap never turns back.
     const direction = Math.sign(offsetY)
+    // The gap as rendered: a caller may set its own (27d).
+    const rowGap =
+      listRef.current === null
+        ? 0
+        : Number.parseFloat(getComputedStyle(listRef.current).rowGap) || 0
 
     while (direction !== 0 && Math.sign(remaining) === direction) {
       const neighbour = shownItems[target + direction]
@@ -284,12 +286,12 @@ export const ReorderableList = <Item extends { id: string }>({
       const step = neighbourRow?.offsetHeight ?? 0
       if (
         neighbourRow === undefined ||
-        Math.abs(remaining) <= (step + ROW_GAP_PX) / 2 + SWAP_HYSTERESIS_PX
+        Math.abs(remaining) <= (step + rowGap) / 2 + SWAP_HYSTERESIS_PX
       ) {
         break
       }
 
-      const shift = (step + ROW_GAP_PX) * direction
+      const shift = (step + rowGap) * direction
       target += direction
       remaining -= shift
       startY += shift
@@ -427,9 +429,13 @@ export const ReorderableList = <Item extends { id: string }>({
 
   return (
     <>
-      {/* The rows' controls reach and scroll it; the list itself is no stop. */}
+      {/* The rows' controls reach and scroll it; the list itself is no stop.
+          The rows keep the caller's order in the DOM while one moves, and
+          stand in the moving order by `order`: a moved node would lose the
+          pointer's capture and the focus. */}
       <ol className={clsx(styles.list, className)} ref={listRef} tabIndex={-1}>
-        {shownItems.map((item, index) => {
+        {items.map((item) => {
+          const index = indexOf(item.id)
           const isDragged = drag?.id === item.id && drag.isMoving
           const isLifted = isDragged || lifted?.id === item.id
 
@@ -441,6 +447,7 @@ export const ReorderableList = <Item extends { id: string }>({
                 if (element === null) slotRefs.current.delete(item.id)
                 else slotRefs.current.set(item.id, element)
               }}
+              style={{ order: index }}
             >
               <div
                 className={clsx(
