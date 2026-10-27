@@ -1,0 +1,55 @@
+/* A scroll box clips on every side, so the dashed landing place, the lifted
+   row's shift and its shadow get 8 px of room, given back by the margin. */
+.list {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: -8px;
+    padding: 8px;
+    list-style: none;
+  }
+}
+
+.slot {
+  @layer component {
+    border-radius: 8px;
+  }
+}
+
+/* Where the lifted row lands: dashed (22c). Above its neighbours, which slide
+   past it on a swap and would otherwise paint over it. */
+.landing {
+  @layer variant {
+    position: relative;
+    z-index: 1;
+    outline: 1px dashed var(--border-accent);
+    background-color: var(--bg-accent);
+  }
+}
+
+.row {
+  @layer component {
+    border-radius: 8px;
+    background-color: var(--card-bg);
+  }
+}
+
+/* Dragged as a whole: a press anywhere outside its controls lifts it. */
+.row.isRowDragged {
+  @layer variant {
+    cursor: grab;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+.row.lifted {
+  @layer variant {
+    position: relative;
+    border-color: var(--border-accent);
+    box-shadow: var(--shadow-lg);
+    cursor: grabbing;
+  }
+}

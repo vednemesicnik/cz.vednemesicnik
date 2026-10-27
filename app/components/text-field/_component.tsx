@@ -15,6 +15,8 @@ type Props = Omit<ComponentProps<'input'>, 'size'> & {
   size?: 'md' | 'sm'
   /** The hint shows only while the field has the focus (24b alt text). */
   isHintOnFocus?: boolean
+  /** Something around the field already names it; the label stays for readers. */
+  isLabelHidden?: boolean
 }
 
 /**
@@ -37,6 +39,7 @@ export const TextField = ({
   required,
   size = 'md',
   isHintOnFocus = false,
+  isLabelHidden = false,
   className,
   ...rest
 }: Props) => {
@@ -56,7 +59,11 @@ export const TextField = ({
         className,
       )}
     >
-      <Label className={styles.label} htmlFor={id} required={required}>
+      <Label
+        className={clsx(styles.label, isLabelHidden && 'screen-reader-only')}
+        htmlFor={id}
+        required={required}
+      >
         {label}
       </Label>
       <input

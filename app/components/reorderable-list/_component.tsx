@@ -1,7 +1,11 @@
 import { clsx } from 'clsx'
 import {
+  createContext,
+  type FocusEvent,
   type KeyboardEvent,
   type PointerEvent,
+  type ReactNode,
+  useContext,
   useEffect,
   useId,
   useLayoutEffect,
@@ -9,23 +13,34 @@ import {
   useState,
 } from 'react'
 
-import { ActionMenu } from '~/components/action-menu'
-import { GripVerticalIcon } from '~/components/icons/grip-vertical-icon'
-
 import { getEdgeScrollSpeed } from '~/utils/get-edge-scroll-speed'
 import { moveListItem } from '~/utils/move-list-item'
 
 import styles from './_styles.module.css'
 
-type Item = {
-  id: string
-  title: string
-  detail: string
+type Row<Item> = {
+  item: Item
+  index: number
+  count: number
+  /** Lifted by the keyboard or dragged by the pointer. */
+  isLifted: boolean
+  /** Moves the row with a single action, no dragging (WCAG 2.5.7). */
+  moveTo: (target: number) => void
 }
 
-type Props = {
+type Props<Item extends { id: string }> = {
   items: Item[]
-  onReorder: (items: Item[]) => void
+  /** Receives the one move a drag, a drop or `moveTo` made. */
+  onReorder: (from: number, to: number) => void
+  /** The item's name in the announcements; „Zvednuto: {name}. …“. */
+  getName: (item: Item) => string
+  /** How the handle is used, read by a screen reader with every handle. */
+  instruction: string
+  /** Where a pointer drag starts: the whole row, or only its handle. */
+  dragArea?: 'row' | 'handle'
+  className?: string
+  rowClassName?: string
+  children: (row: Row<Item>) => ReactNode
 }
 
 type Drag = {
@@ -35,6 +50,16 @@ type Drag = {
   offsetY: number
   isMoving: boolean
 }
+
+type RowContextValue = {
+  isLifted: boolean
+  instructionId: string
+  onBlur: (event: FocusEvent<HTMLButtonElement>) => void
+  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void
+  setHandle: (element: HTMLButtonElement | null) => void
+}
+
+const RowContext = createContext<RowContextValue | undefined>(undefined)
 
 // A click on the row is not a drag until the pointer moves this far.
 const DRAG_THRESHOLD_PX = 4
@@ -53,29 +78,46 @@ const AUTOSCROLL_MAX_PX = 12
 // How long a row slides into its new place after a swap.
 const SWAP_MS = 150
 
+// A press here clicks or types; only the handle drags from a control.
+const CONTROL_SELECTOR =
+  'a, button:not([data-reorder-handle]), input, select, textarea, [contenteditable], [popover]'
+
 const position = (index: number, count: number) =>
   `Pozice ${index + 1}, celkem ${count}.`
 
 /**
- * The articles of a bulk publish in the order they will stand on the website
- * (design 22c): the number, a handle, the title with its state and a „⋯“. A
- * row is dragged as a whole; the handle is a button for the keyboard — Space
- * lifts and drops, the arrows move, Escape puts it back; the „⋯“ moves it with
- * a single click, no dragging (WCAG 2.5.7, 5mehib4t). A screen reader hears
- * every step (copy bhmem1jc, 8e0nd23z).
+ * A list whose rows change order (design 22c, 27d): dragged by the pointer,
+ * or from the {@link ReorderableListHandle} by the keyboard — Space lifts and
+ * drops, the arrows move, Escape puts the row back. A screen reader hears
+ * every step (copy bhmem1jc, 8e0nd23z, ahizoh4o). The row's content is the
+ * caller's; while a row moves, the list keeps the order itself and reports
+ * the one move when the row lands.
  *
- * @param props.items - The articles, top first.
- * @param props.onReorder - Receives the new order.
+ * @param props.items - The rows, top first, each with a stable `id`.
+ * @param props.dragArea - `'handle'` for rows that hold fields, so a press in
+ *   a field types and the page still scrolls under a finger.
+ * @param props.children - Renders a row's content, with its handle.
  */
-export const ReorderableList = ({ items, onReorder }: Props) => {
+export const ReorderableList = <Item extends { id: string }>({
+  items,
+  onReorder,
+  getName,
+  instruction,
+  dragArea = 'row',
+  className,
+  rowClassName,
+  children,
+}: Props<Item>) => {
   const instructionId = useId()
   const [drag, setDrag] = useState<Drag | null>(null)
   const [lifted, setLifted] = useState<{ id: string; from: number } | null>(
     null,
   )
+  // The order while a row moves; the caller's once it lands.
+  const [movingOrder, setMovingOrder] = useState<string[] | null>(null)
   const [announcement, setAnnouncement] = useState('')
-  // The row moved from its „⋯“, whose trigger keeps the focus.
-  const [menuMovedId, setMenuMovedId] = useState<string | null>(null)
+  // The control a single-action move came from keeps the focus.
+  const [refocused, setRefocused] = useState<HTMLElement | null>(null)
   const rowRefs = useRef(new Map<string, HTMLDivElement>())
   const handleRefs = useRef(new Map<string, HTMLButtonElement>())
   const slotRefs = useRef(new Map<string, HTMLLIElement>())
@@ -85,18 +127,39 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
   const listRef = useRef<HTMLOListElement>(null)
   const lastPointerYRef = useRef<number | null>(null)
 
-  const count = items.length
-  const indexOf = (id: string) => items.findIndex((item) => item.id === id)
+  const itemById = new Map(items.map((item) => [item.id, item]))
+  const shownItems =
+    movingOrder === null
+      ? items
+      : movingOrder.flatMap((id) => {
+          const item = itemById.get(id)
+          return item === undefined ? [] : [item]
+        })
+  const count = shownItems.length
+  const indexOf = (id: string) => shownItems.findIndex((item) => item.id === id)
+  const shownOrder = shownItems.map((item) => item.id).join(' ')
+
+  const moveShown = (from: number, to: number) =>
+    setMovingOrder(moveListItem(shownItems, from, to).map((item) => item.id))
+
+  // Lands the moving row: the caller gets the one move it made.
+  const land = (id: string) => {
+    const from = items.findIndex((item) => item.id === id)
+    const to = indexOf(id)
+    setMovingOrder(null)
+    if (from !== -1 && from !== to) onReorder(from, to)
+  }
 
   // A swap slides the rows into their new places instead of jumping, which
   // flickers (FLIP). The dragged row is held under the pointer by the inverse
   // movement added on top of its own offset.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the order changes
   useLayoutEffect(() => {
     const isReduced = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches
 
-    for (const item of items) {
+    for (const item of shownItems) {
       const slot = slotRefs.current.get(item.id)
       if (slot === undefined) continue
 
@@ -127,69 +190,59 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
           )
       }
     }
-  }, [items])
+  }, [shownOrder])
 
-  // A moved node can lose focus as React reorders the list; keep it on the handle.
+  // A moved node can lose focus as React reorders the list; keep it on the
+  // handle while the row moves, not on every render of the page around it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the row moves
   useEffect(() => {
     if (lifted === null) return
     const handle = handleRefs.current.get(lifted.id)
     if (handle !== undefined && document.activeElement !== handle) {
       handle.focus()
     }
-  })
+  }, [lifted, shownOrder])
 
-  // A moved row's „⋯“ keeps the focus, though React moved the row (5mehib4t).
+  // A single-action move keeps the focus on its control, though React moved
+  // the row (5mehib4t).
   useEffect(() => {
-    if (menuMovedId === null) return
-    rowRefs.current
-      .get(menuMovedId)
-      ?.querySelector<HTMLButtonElement>('[popovertarget]')
-      ?.focus()
-    setMenuMovedId(null)
-  }, [menuMovedId])
+    if (refocused === null) return
+    refocused.focus()
+    setRefocused(null)
+  }, [refocused])
 
-  const moveFromMenu = (id: string, target: number) => {
-    onReorder(moveListItem(items, indexOf(id), target))
-    setMenuMovedId(id)
-    setAnnouncement(position(target, count))
+  const moveWithoutDragging = (id: string, target: number) => {
+    // While a row moves, positions are the list's own, not the caller's.
+    if (movingOrder !== null) return
+    const from = indexOf(id)
+    if (from === -1) return
+    const focused = document.activeElement
+    onReorder(from, Math.max(0, Math.min(count - 1, target)))
+    if (focused instanceof HTMLElement) setRefocused(focused)
+    setAnnouncement(position(Math.max(0, Math.min(count - 1, target)), count))
   }
-
-  // Only the steps that change something (22c).
-  const getMenuItems = (id: string, index: number) => [
-    ...(index > 0
-      ? [
-          {
-            label: 'Posunout nahoru',
-            onSelect: () => moveFromMenu(id, index - 1),
-          },
-        ]
-      : []),
-    ...(index < count - 1
-      ? [
-          {
-            label: 'Posunout dolů',
-            onSelect: () => moveFromMenu(id, index + 1),
-          },
-        ]
-      : []),
-    ...(index > 1
-      ? [{ label: 'Na začátek', onSelect: () => moveFromMenu(id, 0) }]
-      : []),
-    ...(index < count - 2
-      ? [{ label: 'Na konec', onSelect: () => moveFromMenu(id, count - 1) }]
-      : []),
-  ]
 
   const handlePointerDown = (
     event: PointerEvent<HTMLDivElement>,
     id: string,
   ) => {
     if (event.button !== 0 || lifted !== null) return
-    // The „⋯“ and its menu are clicked, not dragged; capturing the pointer
-    // would take their click.
+    if (!(event.target instanceof Element)) return
+    // A disabled handle locks its row, also against the pointer: a disabled
+    // control still gets the press.
     if (
-      event.target instanceof Element &&
-      event.target.closest('[data-reorder-menu]') !== null
+      event.currentTarget.querySelector<HTMLButtonElement>(
+        '[data-reorder-handle]',
+      )?.disabled
+    ) {
+      return
+    }
+    // A control in the row is clicked or typed in; capturing the pointer
+    // would take its click.
+    if (event.target.closest(CONTROL_SELECTOR) !== null) return
+    if (
+      dragArea === 'handle' &&
+      event.target.closest('[data-reorder-handle]') === null
     ) {
       return
     }
@@ -221,7 +274,7 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
     const direction = Math.sign(offsetY)
 
     while (direction !== 0 && Math.sign(remaining) === direction) {
-      const neighbour = items[target + direction]
+      const neighbour = shownItems[target + direction]
       const neighbourRow =
         neighbour === undefined ? undefined : rowRefs.current.get(neighbour.id)
 
@@ -251,9 +304,7 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
           ? 0
           : remaining
 
-    if (target !== from) {
-      onReorder(moveListItem(items, from, target))
-    }
+    if (target !== from) moveShown(from, target)
 
     setDrag({ ...drag, isMoving: true, offsetY: clampedOffsetY, startY })
   }
@@ -267,7 +318,7 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
   }
 
   // While a row is dragged near the list's edge, the list scrolls by itself,
-  // so a row can travel past what the list shows (a batch has 10–20 articles).
+  // so a row can travel past what the list shows.
   useEffect(() => {
     if (drag?.isMoving !== true) return
 
@@ -306,12 +357,27 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
 
     lastPointerYRef.current = null
     if (drag.isMoving) {
-      const item = items[indexOf(drag.id)]
+      const index = indexOf(drag.id)
       setAnnouncement(
-        `Přesunuto: ${item.title}. ${position(indexOf(drag.id), count)}`,
+        `Přesunuto: ${getName(shownItems[index])}. ${position(index, count)}`,
       )
+      land(drag.id)
     }
     setDrag(null)
+  }
+
+  // Leaving the handle puts a lifted row down where it is: the focus is
+  // elsewhere, and so is the next key.
+  const handleHandleBlur = (
+    event: FocusEvent<HTMLButtonElement>,
+    id: string,
+  ) => {
+    if (lifted?.id !== id) return
+    // React moving the row blurs it too; the focus comes back to it.
+    if (event.relatedTarget === null && document.hasFocus()) return
+    setLifted(null)
+    land(id)
+    setAnnouncement(`Položeno. ${position(indexOf(id), count)}`)
   }
 
   const handleKeyDown = (
@@ -319,16 +385,18 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
     id: string,
   ) => {
     const index = indexOf(id)
-    const item = items[index]
+    const item = shownItems[index]
 
     if (event.key === ' ') {
       event.preventDefault()
 
       if (lifted === null) {
         setLifted({ from: index, id })
-        setAnnouncement(`Zvednuto: ${item.title}. ${position(index, count)}`)
+        setMovingOrder(shownItems.map((shown) => shown.id))
+        setAnnouncement(`Zvednuto: ${getName(item)}. ${position(index, count)}`)
       } else {
         setLifted(null)
+        land(id)
         setAnnouncement(`Položeno. ${position(index, count)}`)
       }
       return
@@ -342,16 +410,16 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
         0,
         Math.min(count - 1, index + (event.key === 'ArrowUp' ? -1 : 1)),
       )
-      onReorder(moveListItem(items, index, target))
+      moveShown(index, target)
       setAnnouncement(position(target, count))
       return
     }
 
     if (event.key === 'Escape') {
-      // Escape puts the row back and must not close the dialog.
+      // Escape puts the row back and must not close a dialog around it.
       event.preventDefault()
       event.stopPropagation()
-      onReorder(moveListItem(items, index, lifted.from))
+      setMovingOrder(null)
       setLifted(null)
       setAnnouncement(`Přesun zrušen. ${position(lifted.from, count)}`)
     }
@@ -359,9 +427,9 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
 
   return (
     <>
-      {/* The rows' buttons reach and scroll it; the scroll box itself is no stop. */}
-      <ol className={styles.list} ref={listRef} tabIndex={-1}>
-        {items.map((item, index) => {
+      {/* The rows' controls reach and scroll it; the list itself is no stop. */}
+      <ol className={clsx(styles.list, className)} ref={listRef} tabIndex={-1}>
+        {shownItems.map((item, index) => {
           const isDragged = drag?.id === item.id && drag.isMoving
           const isLifted = isDragged || lifted?.id === item.id
 
@@ -375,7 +443,14 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
               }}
             >
               <div
-                className={clsx(styles.row, isLifted && styles.lifted)}
+                className={clsx(
+                  styles.row,
+                  dragArea === 'row' && styles.isRowDragged,
+                  isLifted && styles.lifted,
+                  rowClassName,
+                )}
+                // For a row's own look of the lift, e.g. its border.
+                data-lifted={isLifted || undefined}
                 onLostPointerCapture={handlePointerEnd}
                 onPointerCancel={handlePointerEnd}
                 onPointerDown={(event) => handlePointerDown(event, item.id)}
@@ -391,46 +466,55 @@ export const ReorderableList = ({ items, onReorder }: Props) => {
                     : undefined
                 }
               >
-                <span aria-hidden={true} className={styles.number}>
-                  {index + 1}
-                </span>
-                <button
-                  aria-describedby={instructionId}
-                  aria-label={`Přesunout článek: ${item.title}`}
-                  aria-pressed={lifted?.id === item.id}
-                  className={styles.handle}
-                  onKeyDown={(event) => handleKeyDown(event, item.id)}
-                  ref={(element) => {
-                    if (element === null) handleRefs.current.delete(item.id)
-                    else handleRefs.current.set(item.id, element)
+                <RowContext.Provider
+                  value={{
+                    instructionId,
+                    isLifted: lifted?.id === item.id,
+                    onBlur: (event) => handleHandleBlur(event, item.id),
+                    onKeyDown: (event) => handleKeyDown(event, item.id),
+                    setHandle: (element) => {
+                      if (element === null) handleRefs.current.delete(item.id)
+                      else handleRefs.current.set(item.id, element)
+                    },
                   }}
-                  type={'button'}
                 >
-                  <GripVerticalIcon className={styles.grip} />
-                </button>
-                <span className={styles.text}>
-                  <span className={styles.title}>{item.title}</span>
-                  <span className={styles.detail}>{item.detail}</span>
-                </span>
-                <span className={styles.menu} data-reorder-menu={true}>
-                  <ActionMenu
-                    items={getMenuItems(item.id, index)}
-                    label={`Změnit pořadí článku: ${item.title}`}
-                    size={'sm'}
-                  />
-                </span>
+                  {children({
+                    count,
+                    index,
+                    isLifted,
+                    item,
+                    moveTo: (target) => moveWithoutDragging(item.id, target),
+                  })}
+                </RowContext.Provider>
               </div>
             </li>
           )
         })}
       </ol>
       <span className={'screen-reader-only'} id={instructionId}>
-        Mezerníkem článek zvednete i položíte, šipkami nahoru a dolů posunete a
-        klávesou Escape přesun zrušíte.
+        {instruction}
       </span>
       <span aria-live={'assertive'} className={'screen-reader-only'}>
         {announcement}
       </span>
     </>
   )
+}
+
+/**
+ * What a row of the list shares with its handle: the keyboard, the
+ * instruction and whether the row is lifted.
+ *
+ * @returns The row's context.
+ */
+export const useReorderableListRow = () => {
+  const context = useContext(RowContext)
+
+  if (context === undefined) {
+    throw new Error(
+      'useReorderableListRow must be used within a ReorderableList row',
+    )
+  }
+
+  return context
 }

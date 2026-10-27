@@ -1,0 +1,44 @@
+/* The grip is 16 px, the target 24 × 24 (44 × 44 to a finger); negative
+   margins keep the row's layout (o482br61). A drag from it never scrolls
+   the page. */
+.handle {
+  @layer component {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 24px;
+    block-size: 24px;
+    margin: -4px;
+    padding: 0;
+    position: relative;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: var(--text-secondary);
+    cursor: grab;
+    touch-action: none;
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+
+    &[aria-pressed="true"] {
+      color: var(--link-strong);
+    }
+
+    @media (pointer: coarse) {
+      &::after {
+        content: "";
+        position: absolute;
+        inset: -10px;
+      }
+    }
+  }
+}
+
+.grip {
+  @layer component {
+    font-size: 16px;
+  }
+}

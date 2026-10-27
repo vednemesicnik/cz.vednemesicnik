@@ -112,3 +112,51 @@
     color: var(--text-primary);
   }
 }
+
+/* Over eight rows the order scrolls, the heading and buttons stay (22c). */
+.orderList {
+  @layer route {
+    max-block-size: calc(8 * 54px + 16px);
+    overflow-y: auto;
+  }
+}
+
+.orderRow {
+  @layer route {
+    display: grid;
+    grid-template-columns: 16px 16px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    font-size: var(--font-size-sm);
+
+    &[data-lifted] {
+      border-color: var(--border-accent);
+    }
+  }
+}
+
+/* Secondary, not tertiary as drawn: the number and the grip need 4.5:1 and 3:1. */
+.orderNumber {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.title {
+  @layer route {
+    color: var(--text-primary);
+  }
+}
+
+/* The „⋯“ that moves a row without dragging (WCAG 2.5.7, 5mehib4t). */
+.orderMenu {
+  @layer route {
+    display: flex;
+    cursor: auto;
+  }
+}

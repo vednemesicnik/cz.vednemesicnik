@@ -22,7 +22,6 @@ import { FilterBarGroup } from '~/components/filter-bar-group'
 import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
-import { LinkButton } from '~/components/link-button'
 import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
@@ -43,6 +42,7 @@ import { usePodcastActions } from '../../utils/use-podcast-actions'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { EpisodeRow } from './components/episode-row'
+import { NewEpisodeButton } from './components/new-episode-button'
 import { PodcastHeader } from './components/podcast-header'
 import { PodcastHistoryDialog } from './components/podcast-history-dialog'
 import { SORT_KEYS } from './sort'
@@ -137,11 +137,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       })
     : getListEmptyMessage({ hasOtherFilters, noun: EPISODE_NOUN, states })
 
-  const newEpisodeHref = href(
-    '/administration/podcasts/:podcastId/episodes/add-episode',
-    { podcastId: podcast.id },
-  )
-
   return (
     <AdminPage>
       <PodcastHeader
@@ -215,7 +210,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
             )}
             {emptyMessage.action === 'create' && canCreateEpisode && (
-              <LinkButton to={newEpisodeHref}>Nová epizoda</LinkButton>
+              <NewEpisodeButton podcastId={podcast.id} />
             )}
             {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
           </ListEmptyCard>
@@ -277,7 +272,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       {canCreateEpisode &&
         (episodes.length > 0 || emptyMessage.action !== 'create') && (
           <ListActionBar>
-            <LinkButton to={newEpisodeHref}>Nová epizoda</LinkButton>
+            <NewEpisodeButton podcastId={podcast.id} />
           </ListActionBar>
         )}
 
