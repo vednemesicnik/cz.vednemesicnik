@@ -3,6 +3,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { FORM_CONFIG } from '~/config/form-config'
 import { requireCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
+import { readEditHeldRefusal } from '~/utils/edit-hold/read-edit-held-refusal'
 import { podcastContentStateHandlers } from '../podcast/_index/utils/content-state-handlers.server'
 import type { Route } from './+types/route'
 
@@ -43,16 +44,23 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   // Sequential on purpose: each delete runs its own permission check and
   // image-cleanup transaction. Not atomic across items — the UI only offers
-  // deletable rows; the per-item check is defense in depth.
+  // deletable rows; the per-item check is defense in depth. A podcast whose
+  // empty episode draft an editor holds stays (log 0036) and is not counted.
+  let deletedCount = 0
   for (const podcast of podcasts) {
-    await podcastContentStateHandlers.delete(request, {
-      id: podcast.id,
-      target: { authorIds: [podcast.authorId], state: podcast.state },
-    })
+    try {
+      await podcastContentStateHandlers.delete(request, {
+        id: podcast.id,
+        target: { authorIds: [podcast.authorId], state: podcast.state },
+      })
+      deletedCount += 1
+    } catch (error) {
+      if (readEditHeldRefusal(error) === null) throw error
+    }
   }
 
   // App convention: the bulk-delete hook clears the selection only on an
   // explicit success. A denied item throws inside deletePodcast before we get
   // here, so the selection stays for retry.
-  return { deletedCount: podcasts.length, status: 'success' as const }
+  return { deletedCount, status: 'success' as const }
 }

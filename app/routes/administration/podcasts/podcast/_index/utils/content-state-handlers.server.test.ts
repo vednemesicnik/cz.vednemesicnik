@@ -7,11 +7,13 @@ import { podcastContentStateHandlers } from './content-state-handlers.server'
 const {
   withAuthorPermissionMock,
   episodeDeleteManyMock,
+  episodeFindFirstMock,
   podcastDeleteMock,
   podcastFindUniqueOrThrowMock,
   podcastUpdateMock,
 } = vi.hoisted(() => ({
   episodeDeleteManyMock: vi.fn(),
+  episodeFindFirstMock: vi.fn(),
   podcastDeleteMock: vi.fn(),
   podcastFindUniqueOrThrowMock: vi.fn(),
   podcastUpdateMock: vi.fn(),
@@ -48,7 +50,10 @@ vi.mock('~/utils/db.server', () => {
       findUniqueOrThrow: podcastFindUniqueOrThrowMock,
       update: podcastUpdateMock,
     },
-    podcastEpisode: { deleteMany: episodeDeleteManyMock },
+    podcastEpisode: {
+      deleteMany: episodeDeleteManyMock,
+      findFirst: episodeFindFirstMock,
+    },
   }
 
   return { prisma }
@@ -58,6 +63,8 @@ const request = new Request('https://test.local/')
 const target = { authorIds: ['author-1'], state: 'published' as const }
 
 beforeEach(() => {
+  vi.clearAllMocks()
+  episodeFindFirstMock.mockResolvedValue(null)
   podcastUpdateMock.mockResolvedValue(undefined)
   withAuthorPermissionMock.mockImplementation(
     (
@@ -165,5 +172,29 @@ describe('podcastContentStateHandlers — delete', () => {
     expect(episodeDeleteManyMock.mock.invocationCallOrder[0]).toBeLessThan(
       podcastDeleteMock.mock.invocationCallOrder[0],
     )
+  })
+
+  test('waits for an editor that holds an empty episode draft (log 0036)', async () => {
+    podcastFindUniqueOrThrowMock.mockResolvedValue({
+      ...publishState,
+      submittedAt: null,
+    })
+    episodeFindFirstMock.mockResolvedValue({
+      heldByAuthor: { name: 'Marie Horáková' },
+      heldByAuthorId: 'author-2',
+      heldByTabId: 'tab-1',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
+    await expect(
+      podcastContentStateHandlers.delete(request, {
+        id: 'p1',
+        target: draftTarget,
+      }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Marie Horáková', isOwnOtherTab: false },
+    })
+    expect(podcastDeleteMock).not.toHaveBeenCalled()
   })
 })

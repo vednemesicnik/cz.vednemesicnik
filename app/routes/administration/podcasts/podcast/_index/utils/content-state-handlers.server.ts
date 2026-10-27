@@ -5,6 +5,8 @@ import {
 } from '~/utils/content-state/create-content-state-handlers.server'
 import { prisma } from '~/utils/db.server'
 import { buildFreeHoldWhere } from '~/utils/edit-hold/build-free-hold-where'
+import { createEditHeldRefusal } from '~/utils/edit-hold/create-edit-held-refusal.server'
+import { getEditHeldRefusal } from '~/utils/edit-hold/get-edit-held-refusal'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 
 /**
@@ -20,7 +22,7 @@ export const podcastContentStateHandlers = createContentStateHandlers({
   },
   approverPublishesWithoutReview: true,
 
-  deleteRow: async (id) => {
+  deleteRow: async (id, context) => {
     await deleteRowWithImages(
       async () => {
         const podcast = await prisma.podcast.findUnique({
@@ -31,17 +33,41 @@ export const podcastContentStateHandlers = createContentStateHandlers({
       },
       () =>
         prisma.$transaction(async (transaction) => {
+          const now = new Date()
+          const emptyDraftWhere = {
+            firstContentAt: null,
+            podcastId: id,
+            state: 'draft' as const,
+          }
+
           // An empty episode draft is nothing to keep, and it would block the
-          // delete (log 0020); one an editor holds right now stays, and so
-          // the delete fails as with any episode.
+          // delete (log 0020).
           await transaction.podcastEpisode.deleteMany({
-            where: {
-              AND: [buildFreeHoldWhere(new Date())],
-              firstContentAt: null,
-              podcastId: id,
-              state: 'draft',
-            },
+            where: { ...emptyDraftWhere, AND: [buildFreeHoldWhere(now)] },
           })
+
+          // One an editor holds right now stays, and the delete waits for
+          // it, one's own other tab included (log 0036).
+          const heldDraft = await transaction.podcastEpisode.findFirst({
+            select: {
+              heldByAuthor: { select: { name: true } },
+              heldByAuthorId: true,
+              heldByTabId: true,
+              heldSince: true,
+              heldUntil: true,
+            },
+            where: emptyDraftWhere,
+          })
+          const refusal =
+            heldDraft === null
+              ? null
+              : getEditHeldRefusal(heldDraft, {
+                  authorId: context.authorId,
+                  countsOwnOtherTab: true,
+                  now,
+                })
+
+          if (refusal !== null) throw createEditHeldRefusal(refusal)
 
           await transaction.podcast.delete({ where: { id } })
         }),
