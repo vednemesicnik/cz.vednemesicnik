@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { getLinkLabelState } from './get-link-label-state'
 
 const SPOTIFY = 'https://open.spotify.com/episode/7hT2'
-const UNKNOWN = 'https://kabinet.example/epizody/13'
+const UNKNOWN = 'https://kabinet.priklad.cz/epizody/13'
 
 describe('getLinkLabelState', () => {
   test('the platform of the address is filled from it', () => {
@@ -14,7 +14,10 @@ describe('getLinkLabelState', () => {
     expect(getLinkLabelState({ label: 'Poslechněte si', url: SPOTIFY })).toBe(
       'manual',
     )
-    expect(getLinkLabelState({ label: 'Kabinet', url: UNKNOWN })).toBe('manual')
+  })
+
+  test('a name for another platform needs no sentence', () => {
+    expect(getLinkLabelState({ label: 'Kabinet', url: UNKNOWN })).toBeNull()
   })
 
   test('a valid address without a name asks for one', () => {

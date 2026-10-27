@@ -55,7 +55,6 @@ export const EpisodeLinkRow = ({
   const labelRef = useRef<HTMLInputElement>(null)
   // The address the label followed last, for the next change of it.
   const previousUrlRef = useRef(url.value ?? '')
-  const isPastingRef = useRef(false)
   const [isFocused, setIsFocused] = useState(false)
 
   const labelValue = label.value ?? ''
@@ -82,13 +81,12 @@ export const EpisodeLinkRow = ({
     // A pasted address of another platform: the name is the next thing to
     // write (27d).
     if (
-      isPastingRef.current &&
+      (event.nativeEvent as InputEvent).inputType === 'insertFromPaste' &&
       nextLabel === '' &&
       getLinkLabelState({ label: '', url: nextUrl }) === 'missing'
     ) {
       labelRef.current?.focus()
     }
-    isPastingRef.current = false
   }
 
   return (
@@ -111,9 +109,9 @@ export const EpisodeLinkRow = ({
       />
       <TextField
         {...getInputProps(label, { type: 'text' })}
-        className={styles.labelField}
         errors={label.errors}
         hint={hint}
+        isLabelHidden
         label={'Název platformy'}
         ref={labelRef}
       />
@@ -123,11 +121,9 @@ export const EpisodeLinkRow = ({
         data-link-url={true}
         errors={url.errors}
         inputMode={'url'}
+        isLabelHidden
         label={'Adresa'}
         onInput={handleUrlInput}
-        onPaste={() => {
-          isPastingRef.current = true
-        }}
       />
       {!isReadOnly && (
         <ButtonLink className={styles.remove} onClick={onRemove}>

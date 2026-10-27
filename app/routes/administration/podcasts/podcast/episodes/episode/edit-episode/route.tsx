@@ -95,8 +95,7 @@ const SNAPSHOT_IGNORED_FIELDS = new Set<string>([
   EDIT_HOLD_CONFIG.tabIdName,
 ])
 
-// The fields in the form's order, by the labels a list of unsent ones uses
-// (copy ahizoh4o).
+// The labels a list of unsent fields uses (copy ahizoh4o).
 const FIELD_LABELS = {
   authorId: 'Autor',
   description: 'Popis',
@@ -108,6 +107,16 @@ const FIELD_LABELS = {
 
 type FieldName = keyof typeof FIELD_LABELS
 type FieldValues = Record<FieldName, string>
+
+// The fields in the form's order, as a list of unsent ones names them.
+const FIELD_ORDER: FieldName[] = [
+  'title',
+  'description',
+  'links',
+  'number',
+  'slug',
+  'authorId',
+]
 
 // The closing sentence after a number that can't be read (copy ahizoh4o).
 const UNSAVED_NUMBER_CHANGE = 'Změna čísla se neuložila.'
@@ -383,6 +392,7 @@ export default function RouteComponent({
     // with content ends the empty draft (0020).
     const saved = savedValuesRef.current
     const savedTitle =
+      loadedTitleRef.current === null &&
       (saved.title ?? '') === '' &&
       (saved.description ?? '') === '' &&
       saved.links === '[]'
@@ -407,16 +417,14 @@ export default function RouteComponent({
   // The labels of the fields that differ from this editor's last save; the
   // author only where the editor chooses it.
   const getUnsentLabels = () =>
-    (Object.keys(FIELD_LABELS) as FieldName[])
-      .filter(
-        (field) =>
-          (field !== 'authorId' || authors !== null) &&
-          (field === 'links'
-            ? shownValuesRef.current.links
-            : shownValuesRef.current[field].trim()) !==
-            (savedValuesRef.current[field] ?? ''),
-      )
-      .map((field) => FIELD_LABELS[field])
+    FIELD_ORDER.filter(
+      (field) =>
+        (field !== 'authorId' || authors !== null) &&
+        (field === 'links'
+          ? shownValuesRef.current.links
+          : shownValuesRef.current[field].trim()) !==
+          (savedValuesRef.current[field] ?? ''),
+    ).map((field) => FIELD_LABELS[field])
 
   // The hold went elsewhere: nothing more goes out, and the editor says
   // which fields stayed unsent (24h, 24i).
@@ -906,6 +914,7 @@ export default function RouteComponent({
                   <AdminTextarea
                     className={styles.titleField}
                     field={fields.title}
+                    isLabelHidden
                     label={'Název'}
                     textareaProps={{
                       className: styles.titleInput,

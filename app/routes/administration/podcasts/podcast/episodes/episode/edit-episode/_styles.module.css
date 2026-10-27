@@ -3,7 +3,7 @@
   @layer route {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 16px 24px;
     inline-size: 100%;
@@ -16,6 +16,8 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 8px 12px;
+    /* Zavřít's height, so the tag and the line stand on its middle. */
+    min-block-size: 44px;
     min-inline-size: 0;
   }
 }
@@ -89,16 +91,6 @@
   @layer route {
     flex: 1 1 auto;
     min-inline-size: 0;
-
-    /* The field is the heading: its name is for a screen reader (27d). */
-    & > label {
-      position: absolute;
-      inline-size: 1px;
-      block-size: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
   }
 }
 

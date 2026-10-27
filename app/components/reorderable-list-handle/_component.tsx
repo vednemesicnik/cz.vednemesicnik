@@ -18,7 +18,7 @@ type Props = {
  * to a finger, o482br61).
  */
 export const ReorderableListHandle = ({ label, className }: Props) => {
-  const { instructionId, isLifted, onKeyDown, setHandle } =
+  const { instructionId, isLifted, onBlur, onKeyDown, setHandle } =
     useReorderableListRow()
 
   return (
@@ -28,6 +28,7 @@ export const ReorderableListHandle = ({ label, className }: Props) => {
       aria-pressed={isLifted}
       className={clsx(styles.handle, className)}
       data-reorder-handle={true}
+      onBlur={onBlur}
       onKeyDown={onKeyDown}
       ref={setHandle}
       type={'button'}

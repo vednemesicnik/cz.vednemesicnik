@@ -1,6 +1,7 @@
 import { clsx } from 'clsx'
 import {
   createContext,
+  type FocusEvent,
   type KeyboardEvent,
   type PointerEvent,
   type ReactNode,
@@ -53,6 +54,7 @@ type Drag = {
 type RowContextValue = {
   isLifted: boolean
   instructionId: string
+  onBlur: (event: FocusEvent<HTMLButtonElement>) => void
   onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void
   setHandle: (element: HTMLButtonElement | null) => void
 }
@@ -190,14 +192,16 @@ export const ReorderableList = <Item extends { id: string }>({
     }
   }, [shownOrder])
 
-  // A moved node can lose focus as React reorders the list; keep it on the handle.
+  // A moved node can lose focus as React reorders the list; keep it on the
+  // handle while the row moves, not on every render of the page around it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the row moves
   useEffect(() => {
     if (lifted === null) return
     const handle = handleRefs.current.get(lifted.id)
     if (handle !== undefined && document.activeElement !== handle) {
       handle.focus()
     }
-  })
+  }, [lifted, shownOrder])
 
   // A single-action move keeps the focus on its control, though React moved
   // the row (5mehib4t).
@@ -208,6 +212,8 @@ export const ReorderableList = <Item extends { id: string }>({
   }, [refocused])
 
   const moveWithoutDragging = (id: string, target: number) => {
+    // While a row moves, positions are the list's own, not the caller's.
+    if (movingOrder !== null) return
     const from = indexOf(id)
     if (from === -1) return
     const focused = document.activeElement
@@ -222,6 +228,15 @@ export const ReorderableList = <Item extends { id: string }>({
   ) => {
     if (event.button !== 0 || lifted !== null) return
     if (!(event.target instanceof Element)) return
+    // A disabled handle locks its row, also against the pointer: a disabled
+    // control still gets the press.
+    if (
+      event.currentTarget.querySelector<HTMLButtonElement>(
+        '[data-reorder-handle]',
+      )?.disabled
+    ) {
+      return
+    }
     // A control in the row is clicked or typed in; capturing the pointer
     // would take its click.
     if (event.target.closest(CONTROL_SELECTOR) !== null) return
@@ -351,6 +366,20 @@ export const ReorderableList = <Item extends { id: string }>({
     setDrag(null)
   }
 
+  // Leaving the handle puts a lifted row down where it is: the focus is
+  // elsewhere, and so is the next key.
+  const handleHandleBlur = (
+    event: FocusEvent<HTMLButtonElement>,
+    id: string,
+  ) => {
+    if (lifted?.id !== id) return
+    // React moving the row blurs it too; the focus comes back to it.
+    if (event.relatedTarget === null && document.hasFocus()) return
+    setLifted(null)
+    land(id)
+    setAnnouncement(`Položeno. ${position(indexOf(id), count)}`)
+  }
+
   const handleKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
     id: string,
@@ -441,6 +470,7 @@ export const ReorderableList = <Item extends { id: string }>({
                   value={{
                     instructionId,
                     isLifted: lifted?.id === item.id,
+                    onBlur: (event) => handleHandleBlur(event, item.id),
                     onKeyDown: (event) => handleKeyDown(event, item.id),
                     setHandle: (element) => {
                       if (element === null) handleRefs.current.delete(item.id)

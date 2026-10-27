@@ -13,6 +13,8 @@ type Props<FieldType extends string | undefined = string> = {
   field: FieldMetadata<FieldType>
   hint?: ReactNode
   counter?: ReactNode
+  /** Something around the field already names it; the label stays for readers. */
+  isLabelHidden?: boolean
 }
 
 /**
@@ -31,6 +33,7 @@ export const AdminTextarea = <FieldType extends string | undefined = string>({
   field,
   hint,
   counter,
+  isLabelHidden = false,
 }: Props<FieldType>) => {
   const hasErrors = field.errors !== undefined && field.errors.length > 0
   const hintId = hint !== undefined ? `${field.id}-hint` : undefined
@@ -44,7 +47,11 @@ export const AdminTextarea = <FieldType extends string | undefined = string>({
 
   return (
     <section className={clsx(styles.container, className)}>
-      <Label htmlFor={field.id} required={field.required}>
+      <Label
+        className={isLabelHidden ? 'screen-reader-only' : undefined}
+        htmlFor={field.id}
+        required={field.required}
+      >
         {label}
       </Label>
       <textarea

@@ -6,7 +6,7 @@ import { isValidEpisodeLinkUrl } from './is-valid-episode-link-url'
  * from the label and the address, never stored:
  * - `filled` — the platform's name, from the address: *Doplněno podle
  *   adresy.*, and the label keeps following it;
- * - `manual` — any other name: *Změněno ručně.*;
+ * - `manual` — another name beside a known platform: *Změněno ručně.*;
  * - `missing` — no name for a valid address, typically of another platform:
  *   *Doplňte název platformy.*, a description, not an error;
  * - `null` — nothing, also for an invalid address, whose error says enough.
@@ -28,7 +28,10 @@ export const getLinkLabelState = ({
   const address = url.trim()
 
   if (name !== '') {
-    return name === getLinkPlatform(address) ? 'filled' : 'manual'
+    const platform = getLinkPlatform(address)
+    // A name for another platform was never filled in, so nothing changed it.
+    if (platform === null) return null
+    return name === platform ? 'filled' : 'manual'
   }
 
   // A known platform's name fills itself, unless it was cleared by hand.
