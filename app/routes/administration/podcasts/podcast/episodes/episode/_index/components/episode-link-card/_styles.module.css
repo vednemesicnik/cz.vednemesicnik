@@ -1,0 +1,40 @@
+/* The platform on the left, its address on the right, on a framed card (27c). */
+.card {
+  @layer route {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+}
+
+.platform {
+  @layer route {
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+}
+
+/* The link shrinks with its address; the new-tab icon stays after it. */
+.link {
+  @layer route {
+    display: flex;
+    align-items: baseline;
+    min-width: 0;
+  }
+}
+
+/* The rest of a long address gives way to an ellipsis, never to the name. */
+.address {
+  @layer route {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

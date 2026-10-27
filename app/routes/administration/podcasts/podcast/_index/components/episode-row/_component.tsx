@@ -29,6 +29,7 @@ import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
 
+import { ArticleChangeDateDialog } from '../../../../../articles/components/article-change-date-dialog'
 import { EpisodeMissingDialog } from '../../../episodes/components/episode-missing-dialog'
 import { EpisodePublishDialog } from '../../../episodes/components/episode-publish-dialog'
 import {
@@ -37,6 +38,7 @@ import {
 } from '../../../episodes/components/episode-state-dialog'
 import {
   EPISODE_ACTION_LABELS,
+  EPISODE_CHANGE_DATE_DESCRIPTION,
   EPISODE_DIRECT_INTENTS,
   type EpisodeAction,
 } from '../../../episodes/utils/episode-actions'
@@ -101,6 +103,7 @@ export const EpisodeRow = ({
   const [publishDialog, setPublishDialog] = useState<{
     isApproval: boolean
   } | null>(null)
+  const [isChangeDateOpen, setIsChangeDateOpen] = useState(false)
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(
@@ -127,6 +130,8 @@ export const EpisodeRow = ({
       case 'retract':
       case 'archive':
         return setStateDialog(episodeAction)
+      case 'change-date':
+        return setIsChangeDateOpen(true)
       case 'delete':
         return openDeleteDialog()
       case 'edit':
@@ -281,6 +286,16 @@ export const EpisodeRow = ({
               isApproval={publishDialog.isApproval}
               onClose={() => setPublishDialog(null)}
               originalPublishedAt={episode.publishedAt}
+            />
+          )}
+          {isChangeDateOpen && (
+            <ArticleChangeDateDialog
+              action={action}
+              description={EPISODE_CHANGE_DATE_DESCRIPTION}
+              fetcherKey={fetcherKey}
+              onClose={() => setIsChangeDateOpen(false)}
+              publishedAt={episode.publishedAt}
+              title={title}
             />
           )}
         </div>

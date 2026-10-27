@@ -1,6 +1,7 @@
 import { href } from 'react-router'
 
 import type { Breadcrumb, BreadcrumbMatch } from '~/types/breadcrumb'
+import { getEpisodeDisplayTitle } from '~/utils/podcast-episode/get-episode-display-title'
 
 import type { Route } from './+types/route'
 
@@ -16,11 +17,14 @@ export const handle = {
     // The number, as the web shows it before the title (27c); a draft
     // without one goes by its title (27h).
     const episode = match.loaderData?.episode
-    const label = episode?.isEmptyDraft
-      ? 'Nová epizoda'
-      : episode?.number != null
-        ? `#${episode.number}`
-        : episode?.title || 'Neznámá epizoda'
+    const label =
+      episode === undefined
+        ? 'Neznámá epizoda'
+        : episode.isEmptyDraft
+          ? 'Nová epizoda'
+          : episode.number !== null
+            ? `#${episode.number}`
+            : getEpisodeDisplayTitle(episode.title)
     const path = href(
       `/administration/podcasts/:podcastId/episodes/:episodeId`,
       { episodeId, podcastId },

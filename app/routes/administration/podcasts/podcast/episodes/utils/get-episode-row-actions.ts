@@ -2,10 +2,7 @@ import type { ArticleAction } from '../../../../articles/utils/article-actions'
 import { getRowActions } from '../../../../articles/utils/get-row-actions'
 import type { EpisodeAction } from './episode-actions'
 
-type Options = Omit<
-  Parameters<typeof getRowActions>[0],
-  'canChangePublishedAt'
-> & {
+type Options = Parameters<typeof getRowActions>[0] & {
   isPodcastPublished: boolean
 }
 
@@ -18,16 +15,15 @@ const NEEDS_PUBLISHED_PODCAST = new Set<ArticleAction>([
   'view-on-web',
 ])
 
-const isEpisodeAction = (
+const isEpisodeRowAction = (
   action: ArticleAction,
   isPodcastPublished: boolean,
 ): action is EpisodeAction =>
-  action !== 'change-date' &&
-  action !== 'take-over' &&
-  (isPodcastPublished || !NEEDS_PUBLISHED_PODCAST.has(action))
+  isPodcastPublished || !NEEDS_PUBLISHED_PODCAST.has(action)
 
 /**
- * An episode's row actions (design 27b: as the article row's, 22a, 07c).
+ * An episode's row actions (design 27b: as the article row's, 22a, 07c),
+ * *Změnit datum publikace…* of a published one included (27c).
  *
  * @param options - The episode's state and submission, what the signed-in
  *   author may do with it, and whether its podcast is published.
@@ -37,13 +33,13 @@ export const getEpisodeRowActions = ({
   isPodcastPublished,
   ...options
 }: Options) => {
-  const { menu, row } = getRowActions({
-    ...options,
-    canChangePublishedAt: false,
-  })
+  const { menu, row } = getRowActions(options)
 
   return {
-    menu: menu.filter((action) => isEpisodeAction(action, isPodcastPublished)),
-    row: row !== null && isEpisodeAction(row, isPodcastPublished) ? row : null,
+    menu: menu.filter((action) =>
+      isEpisodeRowAction(action, isPodcastPublished),
+    ),
+    row:
+      row !== null && isEpisodeRowAction(row, isPodcastPublished) ? row : null,
   }
 }
