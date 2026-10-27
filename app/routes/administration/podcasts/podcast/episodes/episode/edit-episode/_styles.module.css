@@ -169,22 +169,94 @@
   }
 }
 
-/* The podcast's cover, muted: the episode goes out with it (27d). */
+/* The cover's field: the image and its actions, the hint under them (27d). */
+.coverField {
+  @layer route {
+    display: grid;
+    gap: 6px;
+  }
+}
+
 .cover {
   @layer route {
-    display: flex;
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
   }
 }
 
+/* Square, as on the web, which crops a cover that is not (27d). */
 .coverImage {
   @layer route {
-    inline-size: 48px;
+    inline-size: 72px;
     aspect-ratio: 1;
     border-radius: 6px;
     overflow: hidden;
+
+    /* Image's own unlayered `height: auto` would keep the natural ratio. */
+    & img {
+      min-block-size: 100%;
+      max-block-size: 100%;
+      object-fit: cover;
+    }
+  }
+}
+
+/* The podcast's cover: the episode goes out with it (27d). */
+.coverMuted {
+  @layer route {
+    opacity: 0.5;
+  }
+}
+
+/* A podcast without a cover keeps the slot. */
+.coverEmpty {
+  @layer route {
+    display: block;
+    background-color: var(--bg-tertiary);
+  }
+}
+
+/* The picked cover, dimmed until it saves (as 26c). */
+.coverUploading {
+  @layer route {
+    object-fit: cover;
     opacity: 0.6;
+  }
+}
+
+.coverText {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* While a change saves, the actions only say they wait. */
+.coverAction {
+  @layer route {
+    &[aria-disabled="true"] {
+      cursor: progress;
+      opacity: 0.5;
+    }
+  }
+}
+
+.coverHint {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+.coverProblem {
+  @layer route {
+    display: grid;
+    gap: 4px;
+    justify-items: start;
   }
 }
 

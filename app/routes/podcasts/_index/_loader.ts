@@ -40,6 +40,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       publishedAt: 'desc',
     },
     select: {
+      cover: {
+        select: imageSourceSelect,
+      },
       id: true,
       number: true,
       podcast: {
@@ -74,15 +77,20 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   ])
 
   return {
-    episodes: episodes.map((episode) => ({
+    episodes: episodes.map(({ cover, podcast, ...episode }) => ({
       ...episode,
-      podcast: {
-        ...episode.podcast,
-        cover: {
-          altText: episode.podcast.cover?.altText ?? '',
-          sources: createImageSources('podcast-cover', episode.podcast.cover),
-        },
-      },
+      // The episode's own cover, otherwise the podcast's (13a).
+      cover:
+        cover === null
+          ? {
+              altText: podcast.cover?.altText ?? '',
+              sources: createImageSources('podcast-cover', podcast.cover),
+            }
+          : {
+              altText: cover.altText,
+              sources: createImageSources('podcast-episode-cover', cover),
+            },
+      podcast: { id: podcast.id, slug: podcast.slug, title: podcast.title },
       publishedAt: createFormattedDate(episode.publishedAt),
     })),
     podcasts: podcasts.map((podcast) => ({

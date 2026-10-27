@@ -28,6 +28,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const episode = await prisma.podcastEpisode.findUnique({
     select: {
       author: { select: { id: true, name: true } },
+      cover: { select: imageSourceSelect },
       description: true,
       firstContentAt: true,
       heldByAuthor: { select: { name: true } },
@@ -145,6 +146,18 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     authors,
     episode: {
       authorId: episode.author.id,
+      // Its own cover, if any; without it the episode goes out with the
+      // podcast's (27d).
+      cover:
+        episode.cover === null
+          ? null
+          : {
+              altText: episode.cover.altText,
+              sources: createImageSources(
+                'podcast-episode-cover',
+                episode.cover,
+              ),
+            },
       description: episode.description,
       freeNumber: conflict.freeNumber,
       // An empty draft (log 0020) is left for the podcast's list.
