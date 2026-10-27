@@ -20,10 +20,14 @@ import styles from './_styles.module.css'
 type Props = {
   action: string
   fetcherKey: string
-  articleTitle: string
+  title: string
+  description?: string
   publishedAt: string | null
   onClose: () => void
 }
+
+const ARTICLE_DESCRIPTION =
+  'Datum a čas publikace určují pořadí článku na webu.'
 
 const FUTURE_ERROR = 'Zadejte datum a čas, které nejsou v budoucnosti.'
 
@@ -41,17 +45,20 @@ const toLocalMoment = (day: string, time: string) => {
 }
 
 /**
- * Změnit datum publikace… of a published article, the Coordinator's (design
- * 23f): the article by its title, a date and a time prefilled with the current
- * publish date, never in the future. The date and time set the article's place
- * on the web.
+ * Změnit datum publikace… of a published article or episode, the
+ * Coordinator's (design 23f, 27c): the content by its title, a date and a time
+ * prefilled with the current publish date, never in the future.
  *
+ * @param props.title - The article's title, or the episode's with its number.
+ * @param props.description - What the date decides; the article's sentence
+ *   by default, the episode has its own (copy v0m112v3).
  * @param props.publishedAt - The stored publish date (ISO); `null` starts at now.
  */
 export const ArticleChangeDateDialog = ({
   action,
   fetcherKey,
-  articleTitle,
+  title,
+  description = ARTICLE_DESCRIPTION,
   publishedAt,
   onClose,
 }: Props) => {
@@ -96,10 +103,8 @@ export const ArticleChangeDateDialog = ({
     <AdminDialog ref={ref}>
       <AdminModalContent>
         <AdminModalTitle>Změnit datum publikace?</AdminModalTitle>
-        <AdminModalSubject>{articleTitle}</AdminModalSubject>
-        <AdminModalDescription>
-          Datum a čas publikace určují pořadí článku na webu.
-        </AdminModalDescription>
+        <AdminModalSubject>{title}</AdminModalSubject>
+        <AdminModalDescription>{description}</AdminModalDescription>
 
         <fetcher.Form
           action={action}

@@ -10,4 +10,13 @@ describe('formatEpisodeTitle', () => {
   test('leaves the title alone without a number', () => {
     expect(formatEpisodeTitle({ number: null, title: 'Úvod' })).toBe('Úvod')
   })
+
+  test('names an episode without a title', () => {
+    expect(formatEpisodeTitle({ number: 14, title: '' })).toBe(
+      '#14 Epizoda bez názvu',
+    )
+    expect(formatEpisodeTitle({ number: null, title: '' })).toBe(
+      'Epizoda bez názvu',
+    )
+  })
 })

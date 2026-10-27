@@ -26,6 +26,7 @@ type Props = {
   episodeTitle: string
   authorName: string
   isApproval: boolean
+  note: string | null
   originalPublishedAt: string | null
   onClose: () => void
 }
@@ -38,6 +39,8 @@ type Props = {
  * (fge4es3p). Opens as it mounts.
  *
  * @param props.isApproval - Schválit a publikovat? instead of Publikovat?
+ * @param props.note - A line in full ink before the date, e.g. that nobody
+ *   submitted the episode (23f).
  * @param props.originalPublishedAt - The stored publish date (ISO), or `null`.
  */
 export const EpisodePublishDialog = ({
@@ -46,6 +49,7 @@ export const EpisodePublishDialog = ({
   episodeTitle,
   authorName,
   isApproval,
+  note,
   originalPublishedAt,
   onClose,
 }: Props) => {
@@ -88,6 +92,7 @@ export const EpisodePublishDialog = ({
         <AdminModalDescription>
           Epizoda bude publikována na webu.
         </AdminModalDescription>
+        {note !== null && <p className={styles.note}>{note}</p>}
 
         <fetcher.Form
           action={action}

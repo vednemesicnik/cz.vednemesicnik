@@ -392,10 +392,10 @@ export default function RouteComponent({
       {isChangeDateOpen && (
         <ArticleChangeDateDialog
           action={href('/administration/articles/:articleId', { articleId })}
-          articleTitle={article.title}
           fetcherKey={fetcherKey}
           onClose={() => setIsChangeDateOpen(false)}
           publishedAt={article.publishedAt.iso}
+          title={article.title}
         />
       )}
     </AdminPage>

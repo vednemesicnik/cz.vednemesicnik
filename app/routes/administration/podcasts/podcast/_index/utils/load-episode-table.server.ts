@@ -207,6 +207,12 @@ export const loadEpisodeTable = async ({
         updatedAt: episode.updatedAt,
       }),
       id: episode.id,
+      // Publishing it, the dialog says nobody submitted it (23f).
+      isNotSubmitted:
+        episode.state === 'draft' &&
+        flags.submission === null &&
+        flags.isSubmittable &&
+        !flags.isOwnContent,
       linkLabels: episode.links.map((link) => link.label),
       number: episode.number,
       publishedAt: episode.publishedAt?.toISOString() ?? null,

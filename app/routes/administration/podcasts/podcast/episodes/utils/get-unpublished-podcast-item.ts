@@ -1,5 +1,7 @@
 import type { ContentState } from '@generated/prisma/enums'
 
+import { getUnpublishedPodcastPredicate } from './get-unpublished-podcast-predicate'
+
 type Options = {
   state: ContentState
   title: string
@@ -17,9 +19,7 @@ export const getUnpublishedPodcastItem = ({
   state,
   title,
 }: Options): string | null => {
-  if (state === 'published') return null
+  const predicate = getUnpublishedPodcastPredicate(state)
 
-  return state === 'archived'
-    ? `Podcast ${title} je archivovaný.`
-    : `Podcast ${title} není publikovaný.`
+  return predicate === null ? null : `Podcast ${title} ${predicate}`
 }

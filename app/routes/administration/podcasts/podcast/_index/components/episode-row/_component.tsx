@@ -28,7 +28,9 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
+import { getEpisodeDisplayTitle } from '~/utils/podcast-episode/get-episode-display-title'
 
+import { ArticleChangeDateDialog } from '../../../../../articles/components/article-change-date-dialog'
 import { EpisodeMissingDialog } from '../../../episodes/components/episode-missing-dialog'
 import { EpisodePublishDialog } from '../../../episodes/components/episode-publish-dialog'
 import {
@@ -37,7 +39,9 @@ import {
 } from '../../../episodes/components/episode-state-dialog'
 import {
   EPISODE_ACTION_LABELS,
+  EPISODE_CHANGE_DATE_DESCRIPTION,
   EPISODE_DIRECT_INTENTS,
+  EPISODE_HEADER_SENTENCES,
   type EpisodeAction,
 } from '../../../episodes/utils/episode-actions'
 import type { Route } from '../../+types/route'
@@ -101,6 +105,7 @@ export const EpisodeRow = ({
   const [publishDialog, setPublishDialog] = useState<{
     isApproval: boolean
   } | null>(null)
+  const [isChangeDateOpen, setIsChangeDateOpen] = useState(false)
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(
@@ -127,6 +132,8 @@ export const EpisodeRow = ({
       case 'retract':
       case 'archive':
         return setStateDialog(episodeAction)
+      case 'change-date':
+        return setIsChangeDateOpen(true)
       case 'delete':
         return openDeleteDialog()
       case 'edit':
@@ -179,7 +186,7 @@ export const EpisodeRow = ({
           {episode.number !== null && (
             <span className={styles.phoneNumber}>#{episode.number} </span>
           )}
-          {episode.title}
+          {getEpisodeDisplayTitle(episode.title)}
         </TableRowLink>
         {/* Under the title on a wide screen; a phone moves it to the third
             line, under the state (32d). */}
@@ -279,8 +286,23 @@ export const EpisodeRow = ({
               episodeTitle={title}
               fetcherKey={fetcherKey}
               isApproval={publishDialog.isApproval}
+              note={
+                episode.isNotSubmitted
+                  ? EPISODE_HEADER_SENTENCES['not-submitted']
+                  : null
+              }
               onClose={() => setPublishDialog(null)}
               originalPublishedAt={episode.publishedAt}
+            />
+          )}
+          {isChangeDateOpen && (
+            <ArticleChangeDateDialog
+              action={action}
+              description={EPISODE_CHANGE_DATE_DESCRIPTION}
+              fetcherKey={fetcherKey}
+              onClose={() => setIsChangeDateOpen(false)}
+              publishedAt={episode.publishedAt}
+              title={title}
             />
           )}
         </div>

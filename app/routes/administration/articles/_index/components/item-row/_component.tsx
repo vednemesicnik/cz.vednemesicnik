@@ -279,10 +279,10 @@ export const ItemRow = ({
           {isChangeDateOpen && (
             <ArticleChangeDateDialog
               action={action}
-              articleTitle={article.title}
               fetcherKey={fetcherKey}
               onClose={() => setIsChangeDateOpen(false)}
               publishedAt={article.publishedAt}
+              title={article.title}
             />
           )}
           {stateDialog !== null && (

@@ -5,6 +5,7 @@ import { getEpisodeRowActions } from './get-episode-row-actions'
 const none = {
   canApprove: false,
   canArchive: false,
+  canChangePublishedAt: false,
   canDelete: false,
   canEdit: false,
   canPublish: false,
@@ -49,17 +50,21 @@ describe('getEpisodeRowActions', () => {
     })
   })
 
-  test('a published episode: no row action, its date changes on its page', () => {
+  test('a published episode: no row action, its date in „⋯“ (27c)', () => {
     expect(
       getEpisodeRowActions({
         ...none,
         canArchive: true,
+        canChangePublishedAt: true,
         canRetract: true,
         isPodcastPublished: true,
         state: 'published',
         submission: null,
       }),
-    ).toEqual({ menu: ['view-on-web', 'retract', 'archive'], row: null })
+    ).toEqual({
+      menu: ['view-on-web', 'change-date', 'retract', 'archive'],
+      row: null,
+    })
   })
 
   test('an unpublished podcast offers no submit and no publish (27f)', () => {
