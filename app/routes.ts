@@ -199,6 +199,11 @@ export default [
           'podcasts/:podcastId/episodes/:episodeId/save',
           'routes/administration/podcasts/podcast/episodes/episode/save-episode/route.ts',
         ),
+        // Its own cover, saved on its own as it is picked (27d).
+        route(
+          'podcasts/:podcastId/episodes/:episodeId/cover',
+          'routes/administration/podcasts/podcast/episodes/episode/episode-cover/route.ts',
+        ),
 
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [

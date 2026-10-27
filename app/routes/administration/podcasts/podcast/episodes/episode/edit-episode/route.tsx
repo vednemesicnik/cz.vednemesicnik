@@ -8,14 +8,17 @@ import {
   useForm,
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
+import { clsx } from 'clsx'
 import {
   type FocusEvent,
   type FormEvent,
   type MouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
+  type RefObject,
   type SubmitEvent,
   useEffect,
   useEffectEvent,
+  useId,
   useRef,
   useState,
 } from 'react'
@@ -34,6 +37,7 @@ import { Callout } from '~/components/callout'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
+import { ErrorMessage } from '~/components/error-message'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { Image } from '~/components/image'
@@ -66,9 +70,13 @@ import {
 } from './utils/create-editor-schema'
 import { formatEpisodeChangedDescription } from './utils/format-episode-changed-description'
 import { formatEpisodeHoldTakenDescription } from './utils/format-episode-hold-taken-description'
-import { formatUnsavedEpisodeAdvice } from './utils/format-unsaved-episode-advice'
+import {
+  COVER_LABEL,
+  formatUnsavedEpisodeAdvice,
+} from './utils/format-unsaved-episode-advice'
 import { getEpisodeEditorSentence } from './utils/get-episode-editor-sentence'
 import { getEpisodeSaveLineText } from './utils/get-episode-save-line-text'
+import { useEpisodeCoverUpload } from './utils/use-episode-cover-upload'
 
 export { handle } from './_handle'
 export { loader } from './_loader'
@@ -190,6 +198,8 @@ export default function RouteComponent({
 
   // Autosave is set up after the hold; a closing page asks it through this.
   const leaveSaveRef = useRef<() => FormData | null>(() => null)
+  // The cover upload is set up after the hold too; the hold reads this.
+  const [isCoverUploading, setIsCoverUploading] = useState(false)
 
   // One tab edits at a time (07g, 24g).
   const editHold = useEditHold({
@@ -199,7 +209,9 @@ export default function RouteComponent({
     ),
     entity: 'podcast_episode',
     id: episodeId,
-    isEmpty: episode.isEmptyDraft,
+    // A first cover on its way is content: the release must not delete the
+    // draft under it.
+    isEmpty: episode.isEmptyDraft && !isCoverUploading,
     leaveSave: {
       action: saveAction,
       getFormData: () => leaveSaveRef.current(),
@@ -414,6 +426,41 @@ export default function RouteComponent({
   })
   leaveSaveRef.current = autosave.getLeaveSave
 
+  // The own cover saves on its own as it is picked (27d, as 26c). Refused
+  // for the hold: as the whole-form save does (24h, 24i).
+  const coverUpload = useEpisodeCoverUpload({
+    episodeId,
+    onDeleted: editHold.recheck,
+    onNotHeld: async (heldByName) => {
+      if (heldByName === null) return editHold.retake()
+      await editHold.recheck()
+      return false
+    },
+    onSaved: acknowledgeSaved,
+    podcastId,
+    storedKey: episode.cover?.sources.src ?? null,
+    tabId: editHold.tabId,
+  })
+  useEffect(() => {
+    setIsCoverUploading(coverUpload.isUploading)
+  }, [coverUpload.isUploading])
+  const coverInputRef = useRef<HTMLInputElement>(null)
+  // A refused or failed pick's sentence describes the field (26d).
+  const coverProblemId = useId()
+  // The field's first action, which takes the focus back once a change
+  // ended: the action that had it may be gone.
+  const firstCoverActionRef = useRef<HTMLButtonElement>(null)
+  const wasCoverBusyRef = useRef(false)
+  useEffect(() => {
+    const wasBusy = wasCoverBusyRef.current
+    wasCoverBusyRef.current = coverUpload.isBusy
+    if (!wasBusy || coverUpload.isBusy) return
+    const focused = document.activeElement
+    if (focused === null || focused === document.body) {
+      firstCoverActionRef.current?.focus()
+    }
+  }, [coverUpload.isBusy])
+
   // The labels of the fields that differ from this editor's last save; the
   // author only where the editor chooses it.
   const getUnsentLabels = () =>
@@ -425,6 +472,12 @@ export default function RouteComponent({
           : shownValuesRef.current[field].trim()) !==
           (savedValuesRef.current[field] ?? ''),
     ).map((field) => FIELD_LABELS[field])
+  // A cover upload under way or failed at that moment did not save, and
+  // comes last (copy ahizoh4o).
+  const getUnsentCoverLabels = () =>
+    coverUpload.isUploading || coverUpload.failure?.change === 'upload'
+      ? [COVER_LABEL]
+      : []
 
   // The hold went elsewhere: nothing more goes out, and the editor says
   // which fields stayed unsent (24h, 24i).
@@ -433,7 +486,10 @@ export default function RouteComponent({
     if (state.status !== 'lost' && state.status !== 'changed') return
 
     const hasUnsentChanges = await autosave.stop()
-    const unsentLabels = hasUnsentChanges ? getUnsentLabels() : []
+    const unsentLabels = [
+      ...(hasUnsentChanges ? getUnsentLabels() : []),
+      ...getUnsentCoverLabels(),
+    ]
     const isChangedDialog =
       state.status === 'changed' && unsentLabels.length > 0
 
@@ -461,15 +517,20 @@ export default function RouteComponent({
     isDialogOpen: boolean
     unsentLabels: string[]
     hadSavedLinks: boolean
+    hadOwnCover: boolean
   } | null>(null)
   const handleDeletion = useEffectEvent(async () => {
     // A takeover before the delete has nothing left to say (24k).
     setHoldLoss(null)
     const hasUnsentChanges = await autosave.stop()
     setDeletion({
+      hadOwnCover: episode.cover !== null,
       hadSavedLinks: (savedValuesRef.current.links ?? '[]') !== '[]',
       isDialogOpen: true,
-      unsentLabels: hasUnsentChanges ? getUnsentLabels() : [],
+      unsentLabels: [
+        ...(hasUnsentChanges ? getUnsentLabels() : []),
+        ...getUnsentCoverLabels(),
+      ],
     })
   })
   useEffect(() => {
@@ -720,6 +781,34 @@ export default function RouteComponent({
     if (slugify(event.currentTarget.value) === '') resumeSlug()
   }
 
+  // The cover's actions. Without the hold they are disabled like the form's
+  // fields (07g); while a change saves they only say so, so the focus stays
+  // on the one that started it.
+  const openCoverPicker = () => coverInputRef.current?.click()
+  const renderCoverAction = (
+    label: string,
+    onClick: () => void,
+    ref?: RefObject<HTMLButtonElement | null>,
+  ) => (
+    <ButtonLink
+      aria-describedby={
+        coverUpload.rejection !== null || coverUpload.failure !== null
+          ? coverProblemId
+          : undefined
+      }
+      aria-disabled={coverUpload.isBusy || undefined}
+      className={styles.coverAction}
+      disabled={isLocked}
+      onClick={() => {
+        if (!coverUpload.isBusy) onClick()
+      }}
+      ref={ref}
+      type={'button'}
+    >
+      {label}
+    </ButtonLink>
+  )
+
   // Úpravu přebírá … in its paragraphs (24h).
   const [holdTakenLead = '', ...holdTakenRest] =
     holdLoss?.dialog === 'taken'
@@ -791,6 +880,11 @@ export default function RouteComponent({
           {deletion.hadSavedLinks && (
             <AdminModalDescription>
               Odkazy na epizodu byly smazány.
+            </AdminModalDescription>
+          )}
+          {deletion.hadOwnCover && (
+            <AdminModalDescription>
+              Vlastní obálka epizody byla smazána.
             </AdminModalDescription>
           )}
           {deletion.unsentLabels.length > 0 && (
@@ -952,19 +1046,114 @@ export default function RouteComponent({
                     <dd>{podcast.title}</dd>
                   </div>
                   {/* Without its own cover the episode goes out with the
-                      podcast's, shown muted (27d). */}
+                      podcast's, shown muted; its own uploads as it is
+                      picked (27d). */}
                   <div className={styles.fact}>
                     <dt className={styles.factLabel}>Obálka</dt>
-                    <dd className={styles.cover}>
-                      {podcast.cover !== null && (
-                        <Image
-                          {...podcast.cover.sources}
-                          alt={''}
-                          className={styles.coverImage}
-                          sizes={'48px'}
-                        />
+                    <dd
+                      aria-busy={coverUpload.isBusy || undefined}
+                      className={styles.coverField}
+                    >
+                      {/* *Vybrat vlastní* and *Vyměnit* open it; a pick
+                          saves on its own, never with the form. */}
+                      <input
+                        accept={'image/*'}
+                        form={''}
+                        hidden
+                        onChange={(event) => {
+                          const file = event.currentTarget.files?.[0]
+                          // The same file picked again still changes.
+                          event.currentTarget.value = ''
+                          if (file !== undefined) coverUpload.pick(file)
+                        }}
+                        ref={coverInputRef}
+                        type={'file'}
+                      />
+                      <div className={styles.cover}>
+                        {coverUpload.previewUrl !== null ? (
+                          // The picked cover, dimmed until it saves.
+                          <img
+                            alt={''}
+                            className={clsx(
+                              styles.coverImage,
+                              styles.coverUploading,
+                            )}
+                            src={coverUpload.previewUrl}
+                          />
+                        ) : episode.cover !== null ? (
+                          <Image
+                            {...episode.cover.sources}
+                            alt={episode.cover.altText}
+                            className={styles.coverImage}
+                            sizes={'72px'}
+                          />
+                        ) : podcast.cover !== null ? (
+                          <Image
+                            {...podcast.cover.sources}
+                            alt={''}
+                            className={clsx(
+                              styles.coverImage,
+                              styles.coverMuted,
+                            )}
+                            sizes={'72px'}
+                          />
+                        ) : (
+                          <span
+                            className={clsx(
+                              styles.coverImage,
+                              styles.coverEmpty,
+                            )}
+                          />
+                        )}
+                        <div className={styles.coverText}>
+                          {episode.cover === null && (
+                            <span className={styles.secondary}>
+                              Obálka podcastu
+                            </span>
+                          )}
+                          {/* The picker keeps its place as its label changes,
+                              so it keeps the focus too. */}
+                          {!isReadOnly &&
+                            renderCoverAction(
+                              episode.cover === null
+                                ? 'Vybrat vlastní'
+                                : 'Vyměnit',
+                              openCoverPicker,
+                              firstCoverActionRef,
+                            )}
+                          {!isReadOnly &&
+                            episode.cover !== null &&
+                            renderCoverAction(
+                              'Použít obálku podcastu',
+                              () => void coverUpload.remove(),
+                            )}
+                        </div>
+                      </div>
+                      {!isReadOnly && (
+                        <span className={styles.coverHint}>
+                          Nepovinná. Obrázek do 5 MB. Nečtvercový se na webu
+                          ořízne.
+                        </span>
                       )}
-                      <span className={styles.secondary}>Obálka podcastu</span>
+                      {/* A refused pick, or a failed upload (26d). */}
+                      {(coverUpload.rejection !== null ||
+                        coverUpload.failure !== null) && (
+                        <div
+                          className={styles.coverProblem}
+                          id={coverProblemId}
+                        >
+                          <ErrorMessage>
+                            {coverUpload.failure?.sentence ??
+                              coverUpload.rejection}
+                          </ErrorMessage>
+                          {coverUpload.failure?.canRetry &&
+                            !isReadOnly &&
+                            renderCoverAction(
+                              'Zkusit znovu',
+                              coverUpload.retry,
+                            )}
+                        </div>
+                      )}
                     </dd>
                   </div>
                 </dl>
