@@ -10,6 +10,7 @@ import { isRecordNotFoundError } from '~/utils/edit-hold/is-record-not-found-err
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { checkAuthorPermission } from '~/utils/permissions/author/guards/check-author-permission.server'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { getEpisodeCoverAltText } from '~/utils/podcast-episode/get-episode-cover-alt-text'
 import { slugify } from '~/utils/slugify'
 
 import { findPublishedEpisodeConflict } from '../../../utils/find-published-episode-conflict.server'
@@ -105,6 +106,7 @@ export async function updateEpisode(
   const storedEpisode = await prisma.podcastEpisode.findUnique({
     select: {
       authorId: true,
+      cover: { select: { id: true } },
       firstContentAt: true,
       heldByAuthor: { select: { name: true } },
       heldByAuthorId: true,
@@ -229,6 +231,18 @@ export async function updateEpisode(
           url: link.url,
         })),
       }),
+      // The own cover's alt text follows the title (27d, as 26c). By the
+      // episode, not the row: an upload may have replaced or removed it.
+      ...(storedEpisode.cover === null
+        ? []
+        : [
+            prisma.podcastEpisodeCover.updateMany({
+              data: {
+                altText: getEpisodeCoverAltText({ number: savedNumber, title }),
+              },
+              where: { episodeId },
+            }),
+          ]),
     ]
 
     const results = await prisma.$transaction(writes)

@@ -8,6 +8,7 @@ import { updateEpisode } from './update-episode.server'
 // into the transaction.
 const mocks = vi.hoisted(() => ({
   checkAuthorPermission: vi.fn(),
+  coverUpdateMany: vi.fn(),
   episodeFindUnique: vi.fn(),
   episodeUpdate: vi.fn(),
   episodeUpdateMany: vi.fn(),
@@ -27,6 +28,7 @@ vi.mock('~/utils/db.server', () => ({
       update: mocks.episodeUpdate,
       updateMany: mocks.episodeUpdateMany,
     },
+    podcastEpisodeCover: { updateMany: mocks.coverUpdateMany },
     podcastEpisodeLink: {
       createMany: mocks.linkCreateMany,
       deleteMany: mocks.linkDeleteMany,
@@ -78,6 +80,7 @@ const savedAt = new Date('2026-10-27T12:06:00Z')
 
 const storedEpisode = {
   authorId: 'author-1',
+  cover: null,
   firstContentAt: new Date('2026-10-27T10:00:00Z'),
   ...ownHold,
   number: 13,
@@ -120,6 +123,7 @@ beforeEach(() => {
   mocks.episodeUpdate.mockReturnValue('update-episode')
   mocks.linkDeleteMany.mockReturnValue('delete-links')
   mocks.linkCreateMany.mockReturnValue('create-links')
+  mocks.coverUpdateMany.mockReturnValue('update-cover-alt-text')
   answerTransaction(0)
 })
 
@@ -180,6 +184,29 @@ describe('updateEpisode — the save', () => {
         url: 'open.spotify/13',
       },
     ])
+  })
+
+  test('keeps an own cover’s alt text with the title (27d)', async () => {
+    mocks.episodeFindUnique.mockResolvedValue({
+      ...storedEpisode,
+      cover: { id: 'cover-1' },
+    })
+
+    await updateEpisode(request, options)
+
+    expect(mocks.transaction.mock.lastCall?.[0]).toContain(
+      'update-cover-alt-text',
+    )
+    expect(mocks.coverUpdateMany).toHaveBeenCalledWith({
+      data: { altText: 'Obálka epizody #14 Školník, který ví všechno' },
+      where: { episodeId: 'episode-1' },
+    })
+  })
+
+  test('leaves the alt text alone without an own cover', async () => {
+    await updateEpisode(request, options)
+
+    expect(mocks.coverUpdateMany).not.toHaveBeenCalled()
   })
 
   test('gives a titled episode the title’s address when none is sent', async () => {
