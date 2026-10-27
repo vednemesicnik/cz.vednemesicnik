@@ -34,6 +34,8 @@ export async function createEpisode({
           connect: { id: authorId },
         },
         description,
+        // Created with content, so no empty draft (log 0020).
+        firstContentAt: new Date(),
         links: {
           create: links.map((link, index) => ({
             label: link.label,

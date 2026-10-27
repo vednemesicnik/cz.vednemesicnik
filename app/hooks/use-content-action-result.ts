@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
+import type { EditHoldContent } from '~/utils/edit-hold/edit-hold-content'
 import { getOwnOtherTabDeleteRefusal } from '~/utils/edit-hold/get-own-other-tab-delete-refusal'
 
 const INTENT_VALUE = FORM_CONFIG.intent.value
@@ -42,8 +43,18 @@ type Options = {
    */
   toasts?: Record<string, string>
   /** What the content is called in a refused action's toast, `článek` by default. */
-  heldSubject?: 'článek' | 'číslo'
+  heldSubject?: HeldSubject
 }
+
+// The refused action's toast names the content in the accusative (copy
+// hgb3jeqj, ey73zhul, ahizoh4o).
+const HELD_CONTENT = {
+  epizodu: 'episode',
+  článek: 'article',
+  číslo: 'issue',
+} as const satisfies Record<string, EditHoldContent>
+
+type HeldSubject = keyof typeof HELD_CONTENT
 
 /**
  * Answers a content action's result once (design 23h): a toast, or the list of
@@ -77,11 +88,7 @@ export const useContentActionResult = (
 
     // One's own editor in another tab holds it; the delete waits (0036).
     if (actionResult.isHeldInOwnOtherTab === true) {
-      showToast(
-        getOwnOtherTabDeleteRefusal(
-          heldSubject === 'číslo' ? 'issue' : 'article',
-        ),
-      )
+      showToast(getOwnOtherTabDeleteRefusal(HELD_CONTENT[heldSubject]))
       return
     }
 

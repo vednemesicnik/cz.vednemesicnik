@@ -11,6 +11,7 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
     select: {
       id: true,
       number: true,
+      title: true,
     },
     where: { id: episodeId },
   })

@@ -3,7 +3,7 @@ import type { EditHoldState } from '~/hooks/use-edit-hold'
 import type { EditHoldContent } from './edit-hold-content'
 
 // Who edits it and what the stale view shows, per content (copy ey73zhul for
-// the issue).
+// the issue, ahizoh4o for the episode).
 const COPY: Record<
   EditHoldContent,
   { subject: string; stale: string; deleted: string }
@@ -12,6 +12,11 @@ const COPY: Record<
     deleted: 'Článek byl smazán.',
     stale: 'Zobrazený text není aktuální.',
     subject: 'Článek',
+  },
+  episode: {
+    deleted: 'Epizoda byla smazána.',
+    stale: 'Zobrazená epizoda není aktuální.',
+    subject: 'Epizodu',
   },
   issue: {
     deleted: 'Číslo bylo smazáno.',

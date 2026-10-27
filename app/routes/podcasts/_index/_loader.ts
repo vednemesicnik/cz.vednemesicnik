@@ -8,6 +8,7 @@ import {
   getWebContentVisibility,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 
 import type { Route } from './+types/route'
 
@@ -61,6 +62,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     // Only episodes of a podcast listed here: the episode page 404s otherwise (27f).
     where: {
       ...visibility.where('podcast_episode', ownByAuthor),
+      // An empty draft never shows, not even as a preview (log 0020).
+      ...NON_EMPTY_EPISODE_WHERE,
       podcast: podcastWhere,
     },
   })

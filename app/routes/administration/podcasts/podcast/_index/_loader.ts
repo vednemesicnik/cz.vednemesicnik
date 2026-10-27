@@ -10,6 +10,7 @@ import {
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 
 import { getPodcastActions } from '../../utils/get-podcast-actions'
 import { getPodcastHeaderMenu } from '../../utils/get-podcast-header-menu'
@@ -36,7 +37,8 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
 
   const podcast = await prisma.podcast.findUniqueOrThrow({
     select: {
-      _count: { select: { episodes: true } },
+      // An empty draft never counts, nor blocks the delete (log 0020).
+      _count: { select: { episodes: { where: NON_EMPTY_EPISODE_WHERE } } },
       author: {
         select: {
           id: true,

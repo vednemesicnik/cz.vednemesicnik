@@ -6,10 +6,12 @@ import { podcastContentStateHandlers } from './content-state-handlers.server'
 // so this exercises the podcast config's applyState and delete guard directly.
 const {
   withAuthorPermissionMock,
+  episodeDeleteManyMock,
   podcastDeleteMock,
   podcastFindUniqueOrThrowMock,
   podcastUpdateMock,
 } = vi.hoisted(() => ({
+  episodeDeleteManyMock: vi.fn(),
   podcastDeleteMock: vi.fn(),
   podcastFindUniqueOrThrowMock: vi.fn(),
   podcastUpdateMock: vi.fn(),
@@ -35,16 +37,22 @@ vi.mock(
   }),
 )
 
-vi.mock('~/utils/db.server', () => ({
-  prisma: {
+vi.mock('~/utils/db.server', () => {
+  const prisma = {
+    // The transaction runs on the same mocked client.
+    $transaction: (run: (transaction: unknown) => Promise<unknown>) =>
+      run(prisma),
     podcast: {
       delete: podcastDeleteMock,
       findUnique: vi.fn().mockResolvedValue({ cover: null }),
       findUniqueOrThrow: podcastFindUniqueOrThrowMock,
       update: podcastUpdateMock,
     },
-  },
-}))
+    podcastEpisode: { deleteMany: episodeDeleteManyMock },
+  }
+
+  return { prisma }
+})
 
 const request = new Request('https://test.local/')
 const target = { authorIds: ['author-1'], state: 'published' as const }
@@ -133,5 +141,29 @@ describe('podcastContentStateHandlers — delete', () => {
     })
 
     expect(podcastDeleteMock).toHaveBeenCalledWith({ where: { id: 'p1' } })
+  })
+
+  test("takes the podcast's free empty episode drafts along (log 0020)", async () => {
+    podcastFindUniqueOrThrowMock.mockResolvedValue({
+      ...publishState,
+      submittedAt: null,
+    })
+
+    await podcastContentStateHandlers.delete(request, {
+      id: 'p1',
+      target: draftTarget,
+    })
+
+    expect(episodeDeleteManyMock).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        AND: expect.any(Array),
+        firstContentAt: null,
+        podcastId: 'p1',
+        state: 'draft',
+      }),
+    })
+    expect(episodeDeleteManyMock.mock.invocationCallOrder[0]).toBeLessThan(
+      podcastDeleteMock.mock.invocationCallOrder[0],
+    )
   })
 })

@@ -2,6 +2,7 @@ import type { Prisma } from '@generated/prisma/client'
 
 import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 
 type Context = Pick<AuthorPermissionContext, 'authorId' | 'can'>
 
@@ -16,6 +17,7 @@ type Context = Pick<AuthorPermissionContext, 'authorId' | 'can'>
 export const buildEpisodePermissionWhere = (
   context: Context,
 ): Prisma.PodcastEpisodeWhereInput => ({
+  ...NON_EMPTY_EPISODE_WHERE,
   OR: buildViewableStateFilters(
     (['draft', 'published', 'archived'] as const).map((state) => ({
       rights: context.can({ action: 'view', entity: 'podcast_episode', state }),

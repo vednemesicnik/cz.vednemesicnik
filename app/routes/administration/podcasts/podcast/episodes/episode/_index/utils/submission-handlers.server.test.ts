@@ -5,10 +5,10 @@ import { episodeSubmissionHandlers } from './submission-handlers.server'
 // Pass-through permission wrapper as the Creator, mocked Prisma, and the
 // podcast's state through its loader (27f).
 const mocks = vi.hoisted(() => ({
+  episodeFindUnique: vi.fn(),
   episodeFindUniqueOrThrow: vi.fn(),
   episodeUpdateMany: vi.fn(),
-  loadMissingEpisodeLinkItems: vi.fn(),
-  loadTakenEpisodeSlugItems: vi.fn(),
+  loadMissingEpisodeContent: vi.fn(),
   loadUnpublishedPodcastItems: vi.fn(),
   permissionContext: vi.fn(),
   publishContentEvent: vi.fn(),
@@ -33,12 +33,8 @@ vi.mock(
   }),
 )
 
-vi.mock('../../../utils/load-missing-episode-link-items.server', () => ({
-  loadMissingEpisodeLinkItems: mocks.loadMissingEpisodeLinkItems,
-}))
-
-vi.mock('../../../utils/load-taken-episode-slug-items.server', () => ({
-  loadTakenEpisodeSlugItems: mocks.loadTakenEpisodeSlugItems,
+vi.mock('../../../utils/load-missing-episode-content.server', () => ({
+  loadMissingEpisodeContent: mocks.loadMissingEpisodeContent,
 }))
 
 vi.mock('../../../utils/load-unpublished-podcast-items.server', () => ({
@@ -48,6 +44,7 @@ vi.mock('../../../utils/load-unpublished-podcast-items.server', () => ({
 vi.mock('~/utils/db.server', () => ({
   prisma: {
     podcastEpisode: {
+      findUnique: mocks.episodeFindUnique,
       findUniqueOrThrow: mocks.episodeFindUniqueOrThrow,
       updateMany: mocks.episodeUpdateMany,
     },
@@ -69,8 +66,8 @@ beforeEach(() => {
     submittedAt: null,
   })
   mocks.episodeUpdateMany.mockResolvedValue({ count: 1 })
-  mocks.loadMissingEpisodeLinkItems.mockResolvedValue([])
-  mocks.loadTakenEpisodeSlugItems.mockResolvedValue([])
+  mocks.episodeFindUnique.mockResolvedValue(null)
+  mocks.loadMissingEpisodeContent.mockResolvedValue([])
   mocks.loadUnpublishedPodcastItems.mockResolvedValue([])
 })
 
@@ -100,7 +97,12 @@ describe('episodeSubmissionHandlers — submit in an unpublished podcast (27f)',
     expect(result).toEqual({ missing: [] })
     expect(mocks.episodeUpdateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'e1', state: 'draft', submittedAt: null },
+        where: expect.objectContaining({
+          AND: expect.any(Array),
+          id: 'e1',
+          state: 'draft',
+          submittedAt: null,
+        }),
       }),
     )
   })
@@ -111,7 +113,7 @@ describe('episodeSubmissionHandlers — submit under a taken address (log 0039)'
     mocks.loadUnpublishedPodcastItems.mockResolvedValue([
       'Podcast Přestávka není publikovaný.',
     ])
-    mocks.loadTakenEpisodeSlugItems.mockResolvedValue(['Adresa je obsazená.'])
+    mocks.loadMissingEpisodeContent.mockResolvedValue(['Adresa je obsazená.'])
 
     const result = await episodeSubmissionHandlers.submit(request, {
       id: 'e1',
@@ -125,9 +127,9 @@ describe('episodeSubmissionHandlers — submit under a taken address (log 0039)'
   })
 })
 
-describe('episodeSubmissionHandlers — submit without a link (27h)', () => {
+describe('episodeSubmissionHandlers — submit an incomplete episode (27h)', () => {
   test('refuses it and records no submission', async () => {
-    mocks.loadMissingEpisodeLinkItems.mockResolvedValue([
+    mocks.loadMissingEpisodeContent.mockResolvedValue([
       'Chybí odkaz na epizodu.',
     ])
 
@@ -140,14 +142,14 @@ describe('episodeSubmissionHandlers — submit without a link (27h)', () => {
     expect(mocks.episodeUpdateMany).not.toHaveBeenCalled()
   })
 
-  test('says the missing link after the podcast and before the address', async () => {
+  test('says what is missing after the podcast and before the address', async () => {
     mocks.loadUnpublishedPodcastItems.mockResolvedValue([
       'Podcast Přestávka není publikovaný.',
     ])
-    mocks.loadMissingEpisodeLinkItems.mockResolvedValue([
+    mocks.loadMissingEpisodeContent.mockResolvedValue([
       'Chybí odkaz na epizodu.',
+      'Adresa je obsazená.',
     ])
-    mocks.loadTakenEpisodeSlugItems.mockResolvedValue(['Adresa je obsazená.'])
 
     const result = await episodeSubmissionHandlers.submit(request, {
       id: 'e1',

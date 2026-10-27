@@ -4,9 +4,13 @@ import {
   createContentStateHandlers,
 } from '~/utils/content-state/create-content-state-handlers.server'
 import { prisma } from '~/utils/db.server'
+import { buildFreeHoldWhere } from '~/utils/edit-hold/build-free-hold-where'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 
-/** Podcast state-transition handlers: single author, cover image cleanup on delete. */
+/**
+ * Podcast state-transition handlers: single author, cover image cleanup on
+ * delete, which takes the podcast's empty episode drafts along.
+ */
 export const podcastContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
     await prisma.podcast.update({
@@ -25,7 +29,22 @@ export const podcastContentStateHandlers = createContentStateHandlers({
         })
         return podcast?.cover ? [podcast.cover.id] : []
       },
-      () => prisma.podcast.delete({ where: { id } }),
+      () =>
+        prisma.$transaction(async (transaction) => {
+          // An empty episode draft is nothing to keep, and it would block the
+          // delete (log 0020); one an editor holds right now stays, and so
+          // the delete fails as with any episode.
+          await transaction.podcastEpisode.deleteMany({
+            where: {
+              AND: [buildFreeHoldWhere(new Date())],
+              firstContentAt: null,
+              podcastId: id,
+              state: 'draft',
+            },
+          })
+
+          await transaction.podcast.delete({ where: { id } })
+        }),
     )
   },
 

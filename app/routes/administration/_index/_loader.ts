@@ -7,6 +7,7 @@ import { createFormattedDate } from '~/utils/format-date'
 import { NON_EMPTY_ISSUE_WHERE } from '~/utils/issue/non-empty-issue-where'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
+import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 import { buildIssuePermissionWhere } from '../archive/utils/build-issue-permission-where'
 import { getPendingArticleCategories } from './utils/get-pending-article-categories.server'
 import { getPendingArticleTags } from './utils/get-pending-article-tags.server'
@@ -126,7 +127,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     prisma.article.count({ where: { state: 'published' } }),
     prisma.podcast.count(),
     prisma.podcast.count({ where: { state: 'published' } }),
-    prisma.podcastEpisode.count(),
+    prisma.podcastEpisode.count({ where: NON_EMPTY_EPISODE_WHERE }),
     prisma.podcastEpisode.count({ where: { state: 'published' } }),
     prisma.issue.count({ where: NON_EMPTY_ISSUE_WHERE }),
     prisma.issue.count({ where: { state: 'published' } }),
