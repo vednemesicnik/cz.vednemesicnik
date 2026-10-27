@@ -47,6 +47,10 @@ rozpojí.
 - **štítek** — volnější označení článku; článek jich má obvykle víc.
 - **podcast** / **epizoda** — podcast je pořad, epizoda jeden díl. V rozhraní jen *podcast*,
   ne *pořad*.
+- **název platformy** — jméno odkazu epizody, jak ho čtenář vidí na webu (`Spotify`,
+  `YouTube`). U známé adresy ho aplikace doplní sama, jinak ho redaktor napíše. Nese ho pole
+  i věty o neúplných odkazech (`2 odkazy nemají název platformy.`); ne *název odkazu* ani
+  *text odkazu* (rozhodnuto 26.–27. 10. 2026).
 - **číslo** — **tištěné** číslo časopisu v PDF, v sekci **Archiv**. Obsahem jsou tytéž články
   jako na webu, aplikace je ale s číslem nepropojuje: není to skupina článků na webu a články
   k číslům nepatří. V aplikaci se dnes pro totéž píše i **vydání** (*Datum

@@ -141,7 +141,7 @@ describe('uploadEpisodeCover — a new cover', () => {
     expect(mocks.coverCreate).toHaveBeenCalledWith({
       data: {
         ...meta,
-        altText: 'Obálka epizody #14 Školník, který ví všechno',
+        altText: 'Obálka epizody 14: Školník, který ví všechno',
         episodeId: 'episode-1',
         id: 'cover-new',
       },
