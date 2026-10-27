@@ -110,8 +110,7 @@ const SNAPSHOT_IGNORED_FIELDS = new Set<string>([
   EDIT_HOLD_CONFIG.tabIdName,
 ])
 
-// The details in the form's order, by the labels a list of unsent ones uses
-// (copy ey73zhul).
+// The labels a list of unsent details uses (copy ey73zhul).
 const FIELD_LABELS = {
   authorId: 'Autor',
   name: 'Název',
@@ -122,6 +121,15 @@ const FIELD_LABELS = {
 
 type FieldName = keyof typeof FIELD_LABELS
 type FieldValues = Record<FieldName, string>
+
+// The details in the form's order, as a list of unsent ones names them.
+const FIELD_ORDER: FieldName[] = [
+  'year',
+  'order',
+  'name',
+  'supplement',
+  'authorId',
+]
 
 // The closing sentence names the field changed last, after a value that
 // can't be read (log 0034, copy zuq3hyhf).
@@ -143,7 +151,7 @@ type HoldLoss = {
 const readValues = (formData: FormData | null): Partial<FieldValues> => {
   if (formData === null) return {}
   const values: Partial<FieldValues> = {}
-  for (const field of Object.keys(FIELD_LABELS) as FieldName[]) {
+  for (const field of FIELD_ORDER) {
     const value = formData.get(field)
     if (typeof value === 'string') values[field] = value.trim()
   }
@@ -439,14 +447,12 @@ export default function RouteComponent({
   // The labels of the details that differ from this editor's last save; the
   // author only where the editor chooses it.
   const getUnsentLabels = () =>
-    (Object.keys(FIELD_LABELS) as FieldName[])
-      .filter(
-        (field) =>
-          (field !== 'authorId' || authors !== null) &&
-          shownValuesRef.current[field].trim() !==
-            (savedValuesRef.current[field] ?? ''),
-      )
-      .map((field) => FIELD_LABELS[field])
+    FIELD_ORDER.filter(
+      (field) =>
+        (field !== 'authorId' || authors !== null) &&
+        shownValuesRef.current[field].trim() !==
+          (savedValuesRef.current[field] ?? ''),
+    ).map((field) => FIELD_LABELS[field])
 
   // The hold went elsewhere: nothing more goes out, and the editor says
   // which details stayed unsent (24h, 24i).
