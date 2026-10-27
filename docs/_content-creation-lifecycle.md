@@ -329,6 +329,13 @@ waits for one's own other tab too (log 0036). An empty episode draft (no `firstC
 log 0020) is in no list, count or preview, and a podcast's delete takes its free empty drafts
 along.
 
+*Nová epizoda* creates a draft with the podcast's next number, the highest plus one (27d, log
+[0048](./work-log/0048-an-episode-is-a-draft-with-the-next-number-unique-only-once-published.md)),
+and opens the editor, which saves as it goes under the edit hold. The first save with a title, a
+description or a link ends the empty draft. A taken number or address saves and is said at its
+field with *Použít …* (27f). A link saves as typed, without its platform name or with an invalid
+address; only a fully empty row is not saved. With a title the episode always has an address.
+
 ---
 
 ## Decided for the redesign (not implemented yet)

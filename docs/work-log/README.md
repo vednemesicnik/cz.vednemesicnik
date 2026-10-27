@@ -78,4 +78,5 @@ Code comments cite an entry by its number (`log 0022`).
 | [0044](0044-a-list-row-folds-on-a-phone-through-the-admin-table-parts.md) | A list row folds on a phone through the admin-table parts, and the phone rows keep the 24 px page gutter | 2026-10-25 | [0045](0045-the-phone-page-gutter-is-16-px-from-one-token.md), [0046](0046-every-administration-list-folds-on-a-phone.md) |
 | [0045](0045-the-phone-page-gutter-is-16-px-from-one-token.md) | The phone page gutter is 16 px, from one token | 2026-10-25 |  |
 | [0046](0046-every-administration-list-folds-on-a-phone.md) | Every administration list folds on a phone; folding is no longer an option | 2026-10-26 |  |
-| [0047](0047-an-episode-address-is-unique-within-its-podcast-once-published.md) | An episode's address is unique within its podcast once published, ahead of its editor | 2026-10-26 |  |
+| [0047](0047-an-episode-address-is-unique-within-its-podcast-once-published.md) | An episode's address is unique within its podcast once published, ahead of its editor | 2026-10-26 | [0048](0048-an-episode-is-a-draft-with-the-next-number-unique-only-once-published.md) |
+| [0048](0048-an-episode-is-a-draft-with-the-next-number-unique-only-once-published.md) | An episode is a draft with the next number, unique only once published, and its links save as typed | 2026-10-27 |  |
