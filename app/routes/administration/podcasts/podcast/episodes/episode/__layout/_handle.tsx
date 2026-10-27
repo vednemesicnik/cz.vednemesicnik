@@ -17,11 +17,9 @@ export const handle = {
     // without one goes by its title (27h).
     const episode = match.loaderData?.episode
     const label =
-      episode === undefined
-        ? 'Neznámá epizoda'
-        : episode.number === null
-          ? episode.title
-          : `#${episode.number}`
+      episode?.number != null
+        ? `#${episode.number}`
+        : episode?.title || 'Neznámá epizoda'
     const path = href(
       `/administration/podcasts/:podcastId/episodes/:episodeId`,
       { episodeId, podcastId },

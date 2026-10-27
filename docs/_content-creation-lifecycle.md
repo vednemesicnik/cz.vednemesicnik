@@ -310,8 +310,8 @@ shows the episode published at the address, else one its viewer may see by the t
 draft's preview by its id (`?id=`). Published episodes are not edited, so their typed number and
 slug are the ones they hold, and the public lists show them.
 
-*Odeslat ke schválení*, *Schválit* and *Publikovat…*, single and bulk, refuse an incomplete
-episode and write nothing (27h). The dialog says, one sentence each and in the editor's order:
+*Odeslat ke schválení*, *Schválit* and *Publikovat…* refuse an incomplete episode and write
+nothing (27h). The dialog says, one sentence each and in the editor's order:
 
 - *Podcast … není publikovaný.* when the podcast is off the web (27f);
 - what is missing of the number, the title, the description and a link, in one sentence
