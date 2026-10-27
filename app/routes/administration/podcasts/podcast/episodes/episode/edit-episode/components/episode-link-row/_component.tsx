@@ -122,7 +122,8 @@ export const EpisodeLinkRow = ({
         errors={url.errors}
         inputMode={'url'}
         isLabelHidden
-        label={'Adresa'}
+        // Not the episode's own Adresa beside it (copy 0s5hhaqz).
+        label={'Adresa odkazu'}
         onInput={handleUrlInput}
       />
       {!isReadOnly && (

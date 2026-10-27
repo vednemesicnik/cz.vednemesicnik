@@ -198,7 +198,7 @@ describe('updateEpisode — the save', () => {
       'update-cover-alt-text',
     )
     expect(mocks.coverUpdateMany).toHaveBeenCalledWith({
-      data: { altText: 'Obálka epizody #14 Školník, který ví všechno' },
+      data: { altText: 'Obálka epizody 14: Školník, který ví všechno' },
       where: { episodeId: 'episode-1' },
     })
   })
