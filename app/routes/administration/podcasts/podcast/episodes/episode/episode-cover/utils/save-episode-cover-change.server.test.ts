@@ -278,6 +278,38 @@ describe('saveEpisodeCoverChange — the edit hold', () => {
     expect(onRefused).toHaveBeenCalledOnce()
   })
 
+  test('answers deleted when a new cover’s row failed on the episode gone meanwhile', async () => {
+    mocks.transaction.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Foreign key', {
+        clientVersion: 'test',
+        code: 'P2003',
+      }),
+    )
+    mocks.episodeFindUnique.mockResolvedValueOnce(storedEpisode)
+    mocks.episodeFindUnique.mockResolvedValueOnce(null)
+    const onRefused = vi.fn(async () => {})
+
+    expect(
+      await saveEpisodeCoverChange(request, {
+        ...options,
+        prepare: buildPrepare({ onRefused }),
+      }),
+    ).toEqual({ status: 'deleted' })
+    expect(onRefused).toHaveBeenCalledOnce()
+  })
+
+  test('rethrows another failure while the episode is there', async () => {
+    const failure = new Error('disk full')
+    mocks.transaction.mockRejectedValue(failure)
+
+    await expect(
+      saveEpisodeCoverChange(request, {
+        ...options,
+        prepare: buildPrepare(),
+      }),
+    ).rejects.toBe(failure)
+  })
+
   test('answers deleted when the episode went before the write', async () => {
     mocks.transaction.mockRejectedValue(notFoundError())
     mocks.episodeFindUnique.mockResolvedValueOnce(storedEpisode)

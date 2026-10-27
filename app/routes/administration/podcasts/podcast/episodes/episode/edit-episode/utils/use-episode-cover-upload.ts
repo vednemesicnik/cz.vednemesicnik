@@ -11,16 +11,21 @@ import { getRejectedEpisodeCoverSentence } from './get-rejected-episode-cover-se
 // Said under the field once an upload failed (copy yzyd9p1l).
 const FAILED_UPLOAD_SENTENCE =
   'Zkuste soubor nahrát znovu — nahrání se nepovedlo.'
+// Said once *Použít obálku podcastu* did not save, as the save line says it
+// (24e, copy yzyd9p1l).
+const FAILED_REMOVAL_SENTENCE = 'Nepodařilo se uložit.'
 
 type Answer =
   | { status: 'saved'; updatedAt: string }
   | { status: 'failed'; reason?: 'over-pixel-budget' }
   | { status: 'unsaved' }
 
-/** The last upload that failed, until another pick or a retry. */
+/** The last change that failed, until another pick or a retry. */
 export type EpisodeCoverFailure = {
+  /** What *Zkusit znovu* repeats. */
+  change: 'upload' | 'remove'
   sentence: string
-  /** The same file again: not for one over the pixel budget. */
+  /** The same change again: not for an image over the pixel budget. */
   canRetry: boolean
 }
 
@@ -174,6 +179,7 @@ export const useEpisodeCoverUpload = ({
       answer.status === 'failed' && answer.reason === 'over-pixel-budget'
     setFailure({
       canRetry: !isOverPixelBudget,
+      change: 'upload',
       sentence: isOverPixelBudget
         ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
         : FAILED_UPLOAD_SENTENCE,
@@ -192,8 +198,12 @@ export const useEpisodeCoverUpload = ({
     void send(file)
   }
 
-  /** Sends the failed file once more. */
+  /** Repeats the failed change: the file once more, or the removal. */
   const retry = () => {
+    if (failure?.change === 'remove') {
+      void remove()
+      return
+    }
     const file = fileRef.current
     if (file === null || isBusyRef.current) return
     void send(file)
@@ -208,8 +218,18 @@ export const useEpisodeCoverUpload = ({
     setRejection(null)
 
     const keyAtStart = storedKeyRef.current
-    await settle(await post({ intent: 'remove' }), keyAtStart)
+    const answer = await post({ intent: 'remove' })
+    await settle(answer, keyAtStart)
     setBusy(false)
+
+    // The own cover stays on screen; the field says the click did not save.
+    if (answer.status !== 'saved') {
+      setFailure({
+        canRetry: true,
+        change: 'remove',
+        sentence: FAILED_REMOVAL_SENTENCE,
+      })
+    }
   }
 
   // An upload on its way is lost with the page; the browser asks.

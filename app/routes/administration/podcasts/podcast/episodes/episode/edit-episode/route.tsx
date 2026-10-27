@@ -14,6 +14,7 @@ import {
   type FormEvent,
   type MouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
+  type RefObject,
   type SubmitEvent,
   useEffect,
   useEffectEvent,
@@ -197,6 +198,8 @@ export default function RouteComponent({
 
   // Autosave is set up after the hold; a closing page asks it through this.
   const leaveSaveRef = useRef<() => FormData | null>(() => null)
+  // The cover upload is set up after the hold too; the hold reads this.
+  const [isCoverUploading, setIsCoverUploading] = useState(false)
 
   // One tab edits at a time (07g, 24g).
   const editHold = useEditHold({
@@ -206,7 +209,9 @@ export default function RouteComponent({
     ),
     entity: 'podcast_episode',
     id: episodeId,
-    isEmpty: episode.isEmptyDraft,
+    // A first cover on its way is content: the release must not delete the
+    // draft under it.
+    isEmpty: episode.isEmptyDraft && !isCoverUploading,
     leaveSave: {
       action: saveAction,
       getFormData: () => leaveSaveRef.current(),
@@ -436,9 +441,25 @@ export default function RouteComponent({
     storedKey: episode.cover?.sources.src ?? null,
     tabId: editHold.tabId,
   })
+  useEffect(() => {
+    setIsCoverUploading(coverUpload.isUploading)
+  }, [coverUpload.isUploading])
   const coverInputRef = useRef<HTMLInputElement>(null)
   // A refused or failed pick's sentence describes the field (26d).
   const coverProblemId = useId()
+  // The field's first action, which takes the focus back once a change
+  // ended: the action that had it may be gone.
+  const firstCoverActionRef = useRef<HTMLButtonElement>(null)
+  const wasCoverBusyRef = useRef(false)
+  useEffect(() => {
+    const wasBusy = wasCoverBusyRef.current
+    wasCoverBusyRef.current = coverUpload.isBusy
+    if (!wasBusy || coverUpload.isBusy) return
+    const focused = document.activeElement
+    if (focused === null || focused === document.body) {
+      firstCoverActionRef.current?.focus()
+    }
+  }, [coverUpload.isBusy])
 
   // The labels of the fields that differ from this editor's last save; the
   // author only where the editor chooses it.
@@ -454,7 +475,9 @@ export default function RouteComponent({
   // A cover upload under way or failed at that moment did not save, and
   // comes last (copy ahizoh4o).
   const getUnsentCoverLabels = () =>
-    coverUpload.isUploading || coverUpload.failure !== null ? [COVER_LABEL] : []
+    coverUpload.isUploading || coverUpload.failure?.change === 'upload'
+      ? [COVER_LABEL]
+      : []
 
   // The hold went elsewhere: nothing more goes out, and the editor says
   // which fields stayed unsent (24h, 24i).
@@ -762,7 +785,11 @@ export default function RouteComponent({
   // fields (07g); while a change saves they only say so, so the focus stays
   // on the one that started it.
   const openCoverPicker = () => coverInputRef.current?.click()
-  const renderCoverAction = (label: string, onClick: () => void) => (
+  const renderCoverAction = (
+    label: string,
+    onClick: () => void,
+    ref?: RefObject<HTMLButtonElement | null>,
+  ) => (
     <ButtonLink
       aria-describedby={
         coverUpload.rejection !== null || coverUpload.failure !== null
@@ -775,6 +802,7 @@ export default function RouteComponent({
       onClick={() => {
         if (!coverUpload.isBusy) onClick()
       }}
+      ref={ref}
       type={'button'}
     >
       {label}
@@ -1083,21 +1111,22 @@ export default function RouteComponent({
                               Obálka podcastu
                             </span>
                           )}
+                          {/* The picker keeps its place as its label changes,
+                              so it keeps the focus too. */}
                           {!isReadOnly &&
-                            (episode.cover === null ? (
-                              renderCoverAction(
-                                'Vybrat vlastní',
-                                openCoverPicker,
-                              )
-                            ) : (
-                              <>
-                                {renderCoverAction('Vyměnit', openCoverPicker)}
-                                {renderCoverAction(
-                                  'Použít obálku podcastu',
-                                  () => void coverUpload.remove(),
-                                )}
-                              </>
-                            ))}
+                            renderCoverAction(
+                              episode.cover === null
+                                ? 'Vybrat vlastní'
+                                : 'Vyměnit',
+                              openCoverPicker,
+                              firstCoverActionRef,
+                            )}
+                          {!isReadOnly &&
+                            episode.cover !== null &&
+                            renderCoverAction(
+                              'Použít obálku podcastu',
+                              () => void coverUpload.remove(),
+                            )}
                         </div>
                       </div>
                       {!isReadOnly && (

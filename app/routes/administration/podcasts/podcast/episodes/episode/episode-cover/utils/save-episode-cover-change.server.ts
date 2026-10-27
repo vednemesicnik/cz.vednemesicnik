@@ -224,15 +224,16 @@ export async function saveEpisodeCoverChange(
       } catch (error) {
         await prepared.onRefused?.()
 
-        if (!isRecordNotFoundError(error)) throw error
-
         const currentHold = await prisma.podcastEpisode.findUnique({
           select: HOLD_SELECT,
           where: { id: episodeId },
         })
 
-        // Deleted between the check and the write (0036).
+        // Deleted between the check and the write (0036): a new cover's row
+        // fails on its foreign key, the rest on the missing episode.
         if (currentHold === null) return { status: 'deleted' }
+
+        if (!isRecordNotFoundError(error)) throw error
 
         // Still allowed: another row was missing (the cover's, say), not the
         // hold, so the change failed.
