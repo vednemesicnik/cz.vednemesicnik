@@ -100,12 +100,15 @@ beforeEach(() => {
   })
   mocks.episodeFindUniqueOrThrow.mockResolvedValue({
     author: { id: 'creator', role: { level: 2 } },
+    description: 'Popis',
+    links: [{ label: 'Spotify', url: 'https://open.spotify.com/episode/1' }],
     number: 13,
     publishedAt: null,
     reviews: [],
     slug: 'uvod',
     state: 'draft',
     submittedAt: null,
+    title: 'Úvod',
   })
   mocks.episodeFindUnique.mockResolvedValue(null)
   mocks.loadMissingEpisodeContent.mockResolvedValue([])
@@ -346,5 +349,32 @@ describe('episodeContentStateHandlers — the edit hold (logs 0019, 0036)', () =
     expect(mocks.episodeDelete).toHaveBeenCalledWith({
       where: expect.objectContaining({ AND: expect.any(Array), id: 'e1' }),
     })
+  })
+})
+
+describe('episodeContentStateHandlers — incomplete since the check (27h)', () => {
+  test('refuses the publish inside its transaction and writes nothing', async () => {
+    mocks.episodeFindUniqueOrThrow.mockResolvedValue({
+      author: { id: 'creator', role: { level: 2 } },
+      description: 'Popis',
+      links: [{ label: '', url: 'https://kabinet.priklad.cz/13' }],
+      number: null,
+      publishedAt: null,
+      reviews: [],
+      slug: 'uvod',
+      state: 'draft',
+      submittedAt: null,
+      title: 'Úvod',
+    })
+
+    const result = await episodeContentStateHandlers.publish(request, {
+      id: 'e1',
+      target: draftTarget,
+    })
+
+    expect(result).toEqual({
+      missing: ['Chybí číslo.', '1 odkaz nemá název platformy.'],
+    })
+    expect(mocks.episodeUpdate).not.toHaveBeenCalled()
   })
 })

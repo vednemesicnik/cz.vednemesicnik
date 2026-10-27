@@ -13,6 +13,7 @@ import { refuseWhenHeld } from '~/utils/edit-hold/refuse-when-held.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
 
+import { getMissingEpisodeContent } from '../../../utils/get-missing-episode-content'
 import { loadMissingEpisodeContent } from '../../../utils/load-missing-episode-content.server'
 import { loadUnpublishedPodcastItems } from '../../../utils/load-unpublished-podcast-items.server'
 import { findEpisodeHeldRefusal } from './find-episode-held-refusal.server'
@@ -78,11 +79,26 @@ export const episodeContentStateHandlers = createContentStateHandlers({
       await refuseWhenHeld(
         () =>
           prisma.$transaction(async (transaction) => {
-            const { number, slug } =
-              await transaction.podcastEpisode.findUniqueOrThrow({
-                select: { number: true, slug: true },
-                where: { id },
-              })
+            const episode = await transaction.podcastEpisode.findUniqueOrThrow({
+              select: {
+                description: true,
+                links: { select: { label: true, url: true } },
+                number: true,
+                slug: true,
+                title: true,
+              },
+              where: { id },
+            })
+            const { number, slug } = episode
+
+            // Incomplete since the check before it: nothing is written (27h).
+            const missing = getMissingEpisodeContent({
+              ...episode,
+              isNumberTaken: false,
+              isSlugTaken: false,
+            })
+
+            if (missing.length > 0) throw createMissingContentError(missing)
 
             await transaction.podcastEpisode.update({
               data: {
