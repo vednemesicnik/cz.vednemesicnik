@@ -299,22 +299,35 @@ because the editor writes no reviews. Its author takes it back to a draft instea
 
 ---
 
-## Episode address
+## Episode number and address
 
-An episode's address is unique within its podcast once published (#830, log
+An episode's number and address are unique within its podcast once published (#830, #837, log
 [0047](./work-log/0047-an-episode-address-is-unique-within-its-podcast-once-published.md), after
 [0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)). The editor saves
-any slug. Only publishing writes it to `publishedSlug`, which is unique together with the podcast,
-and retract, archive and restore keep it. *Odeslat ke schválení*, *Schválit* and *Publikovat…*
-refuse a slug another episode of the podcast holds and write nothing. The episode's dialog (27h)
-then says *Adresa je obsazená.*, after *Podcast … není publikovaný.* when the podcast is off the
-web too. The episode page shows the episode published at the address, else one its viewer may
-see by the typed slug, and a draft's preview by its id (`?id=`). Published episodes are not
-edited, so their typed slug is the one they hold, and the public lists link by it.
+any number and slug. Only publishing writes them to `publishedNumber` and `publishedSlug`, each
+unique together with the podcast, and retract, archive and restore keep them. The episode page
+shows the episode published at the address, else one its viewer may see by the typed slug, and a
+draft's preview by its id (`?id=`). Published episodes are not edited, so their typed number and
+slug are the ones they hold, and the public lists show them.
 
-An episode is published only with at least one link (27h), so the web needs no empty
-*Kde poslouchat* (13d). *Odeslat ke schválení*, *Schválit* and *Publikovat…* refuse an episode
-without one and write nothing; the dialog says *Chybí odkaz na epizodu.*, before a taken address.
+*Odeslat ke schválení*, *Schválit* and *Publikovat…*, single and bulk, refuse an incomplete
+episode and write nothing (27h). The dialog says, one sentence each and in the editor's order:
+
+- *Podcast … není publikovaný.* when the podcast is off the web (27f);
+- what is missing of the number, the title, the description and a link, in one sentence
+  (*Chybí číslo, název, popis a odkaz na epizodu.*), the link only when none is saved;
+- how many links lack a platform name or a valid `http://`/`https://` address (*1 odkaz nemá
+  název platformy.*); a published episode never drops one;
+- *Číslo 13 je obsazené.* and *Adresa je obsazená.* for a value another episode of the podcast
+  holds.
+
+Every published episode has a link, so the web needs no empty *Kde poslouchat* (13d). The cover
+is not required.
+
+None of the transitions runs while someone else holds the episode's edit hold, and a delete
+waits for one's own other tab too (log 0036). An empty episode draft (no `firstContentAt`,
+log 0020) is in no list, count or preview, and a podcast's delete takes its free empty drafts
+along.
 
 ---
 
