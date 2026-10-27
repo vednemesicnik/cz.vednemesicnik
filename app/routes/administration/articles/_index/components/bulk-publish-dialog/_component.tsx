@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
-
+import { ActionMenu } from '~/components/action-menu'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -8,18 +8,19 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
+import { ReorderableList } from '~/components/reorderable-list'
+import { ReorderableListHandle } from '~/components/reorderable-list-handle'
 import { FORM_CONFIG } from '~/config/form-config'
 import { formatArticleCount } from '~/utils/format-article-count'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { getMomentOnDay } from '~/utils/get-moment-on-day'
+import { moveListItem } from '~/utils/move-list-item'
 import { toLocalDayValue } from '~/utils/to-local-day-value'
 import { useModalDialog } from '~/utils/use-modal-dialog'
-
 import {
   type PublishDateChoice,
   PublishDateFieldset,
 } from '../../../components/publish-date-fieldset'
-import { ReorderableList } from '../reorderable-list'
 
 import styles from './_styles.module.css'
 
@@ -28,6 +29,24 @@ type Article = {
   title: string
   detail: string
 }
+
+// The „⋯“ of a row in the order: only the steps that change something (22c).
+const getOrderMenuItems = (
+  index: number,
+  count: number,
+  moveTo: (target: number) => void,
+) => [
+  ...(index > 0
+    ? [{ label: 'Posunout nahoru', onSelect: () => moveTo(index - 1) }]
+    : []),
+  ...(index < count - 1
+    ? [{ label: 'Posunout dolů', onSelect: () => moveTo(index + 1) }]
+    : []),
+  ...(index > 1 ? [{ label: 'Na začátek', onSelect: () => moveTo(0) }] : []),
+  ...(index < count - 2
+    ? [{ label: 'Na konec', onSelect: () => moveTo(count - 1) }]
+    : []),
+]
 
 type KeptArticle = Article & {
   publishedAt: string
@@ -129,7 +148,42 @@ export const BulkPublishDialog = ({
                 Na webu budou články v tomto pořadí: nahoře nejnovější, dole
                 nejstarší. Pořadí změníte přetažením nebo v nabídce u článku.
               </AdminModalDescription>
-              <ReorderableList items={ordered} onReorder={setOrdered} />
+              {/* A row is dragged as a whole; the „⋯“ moves it with a
+                  single click, no dragging (WCAG 2.5.7, 5mehib4t). */}
+              <ReorderableList
+                className={styles.orderList}
+                getName={(article) => article.title}
+                instruction={
+                  'Mezerníkem článek zvednete i položíte, šipkami nahoru a dolů posunete a klávesou Escape přesun zrušíte.'
+                }
+                items={ordered}
+                onReorder={(from, to) =>
+                  setOrdered((current) => moveListItem(current, from, to))
+                }
+                rowClassName={styles.orderRow}
+              >
+                {({ item: article, index, count, moveTo }) => (
+                  <>
+                    <span aria-hidden={true} className={styles.orderNumber}>
+                      {index + 1}
+                    </span>
+                    <ReorderableListHandle
+                      label={`Přesunout článek: ${article.title}`}
+                    />
+                    <span className={styles.text}>
+                      <span className={styles.title}>{article.title}</span>
+                      <span className={styles.detail}>{article.detail}</span>
+                    </span>
+                    <span className={styles.orderMenu}>
+                      <ActionMenu
+                        items={getOrderMenuItems(index, count, moveTo)}
+                        label={`Změnit pořadí článku: ${article.title}`}
+                        size={'sm'}
+                      />
+                    </span>
+                  </>
+                )}
+              </ReorderableList>
             </div>
           )}
 

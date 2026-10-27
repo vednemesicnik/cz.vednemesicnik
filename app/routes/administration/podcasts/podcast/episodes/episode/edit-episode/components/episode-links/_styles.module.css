@@ -1,0 +1,17 @@
+/* The rows lay out by the section's width, not the window's. */
+.links {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    container-type: inline-size;
+  }
+}
+
+.add {
+  @layer route {
+    align-self: flex-start;
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+  }
+}

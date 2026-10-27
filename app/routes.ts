@@ -189,6 +189,16 @@ export default [
           'archive/:issueId/files',
           'routes/administration/archive/issue/issue-files/route.ts',
         ),
+        // The episode editor's edit hold and autosave (design 27d), as the
+        // issue's.
+        route(
+          'podcasts/:podcastId/episodes/:episodeId/edit-hold',
+          'routes/administration/podcasts/podcast/episodes/episode/edit-hold/route.ts',
+        ),
+        route(
+          'podcasts/:podcastId/episodes/:episodeId/save',
+          'routes/administration/podcasts/podcast/episodes/episode/save-episode/route.ts',
+        ),
 
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [

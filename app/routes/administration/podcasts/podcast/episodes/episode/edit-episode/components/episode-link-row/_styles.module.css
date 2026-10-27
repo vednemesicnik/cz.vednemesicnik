@@ -1,0 +1,59 @@
+/* The handle, the name, the address and Odebrat on one line (27d), the
+   sentences under their fields. The handle and Odebrat stand on the fields'
+   line, which is always there. Narrower, the address goes under the name. */
+.row {
+  @layer route {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 180px) minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px 10px;
+
+    @container (inline-size < 480px) {
+      grid-template-columns: 16px minmax(0, 1fr) auto;
+    }
+  }
+}
+
+/* On an input's middle, so they stand on the fields' line. */
+.handle,
+.remove {
+  @layer route {
+    margin-block-start: 10px;
+  }
+}
+
+.remove {
+  @layer route {
+    font-size: 13px;
+    line-height: 24px;
+
+    @container (inline-size < 480px) {
+      grid-column: 3;
+      grid-row: 1;
+    }
+  }
+}
+
+/* The row's fields need no visible label: the section names them (27d). */
+.labelField,
+.urlField {
+  @layer route {
+    & > label {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+}
+
+.urlField {
+  @layer route {
+    @container (inline-size < 480px) {
+      grid-column: 2;
+      grid-row: 2;
+    }
+  }
+}

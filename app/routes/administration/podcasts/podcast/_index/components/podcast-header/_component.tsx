@@ -12,6 +12,7 @@ import {
   PODCAST_ACTION_LABELS,
   type PodcastMenuItem,
 } from '../../../../utils/podcast-actions'
+import { NewEpisodeButton } from '../new-episode-button'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -110,17 +111,10 @@ export const PodcastHeader = ({
           </LinkButton>
         )}
         {canCreateEpisode && (
-          <LinkButton
+          <NewEpisodeButton
             className={styles.newEpisode}
-            to={href(
-              '/administration/podcasts/:podcastId/episodes/add-episode',
-              {
-                podcastId: podcast.id,
-              },
-            )}
-          >
-            Nová epizoda
-          </LinkButton>
+            podcastId={podcast.id}
+          />
         )}
       </div>
     </header>
