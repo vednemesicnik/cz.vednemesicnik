@@ -150,7 +150,7 @@ describe('updateEpisode — the save', () => {
     await updateEpisode(request, {
       ...options,
       links: [
-        { label: '', url: 'https://kabinet.example/13' },
+        { label: '', url: 'https://kabinet.priklad.cz/13' },
         { label: '', url: '' },
         { label: 'Spotify', url: 'open.spotify/13' },
       ],
@@ -171,7 +171,7 @@ describe('updateEpisode — the save', () => {
         episodeId: 'episode-1',
         label: '',
         order: 0,
-        url: 'https://kabinet.example/13',
+        url: 'https://kabinet.priklad.cz/13',
       },
       {
         episodeId: 'episode-1',

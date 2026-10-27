@@ -35,6 +35,7 @@ import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { useContentEvents } from '~/hooks/use-content-events'
 
 import { EpisodeMissingDialog } from '../../components/episode-missing-dialog'
+import { isValidEpisodeLinkUrl } from '../../utils/is-valid-episode-link-url'
 import type { Route } from './+types/route'
 
 const INTENT_NAME = FORM_CONFIG.intent.name
@@ -337,7 +338,12 @@ export default function RouteComponent({
           {episode.links.length > 0 ? (
             episode.links.map((link) => (
               <AdminDetailItem key={link.id} label={link.label}>
-                <Hyperlink href={link.url}>{link.url}</Hyperlink>
+                {/* A draft saves any address (2o0uwhgp); only a valid one is a link. */}
+                {isValidEpisodeLinkUrl(link.url) ? (
+                  <Hyperlink href={link.url}>{link.url}</Hyperlink>
+                ) : (
+                  link.url
+                )}
               </AdminDetailItem>
             ))
           ) : (

@@ -58,7 +58,7 @@ describe('createEditorSchema', () => {
       'links[1].label': 'Apple Podcasts',
       'links[1].url': '',
       'links[2].label': '',
-      'links[2].url': 'https://kabinet.example/13',
+      'links[2].url': 'https://kabinet.priklad.cz/13',
     })
 
     expect(submission.reply().error).toEqual({

@@ -18,15 +18,15 @@ import { deleteStaleEmptyEpisodeDrafts } from './delete-stale-empty-episode-draf
  * @param podcastId - The podcast the episode belongs to; it never changes.
  * @returns The new draft's id.
  * @throws A 403 response when the author may not create episodes, a 404 one
- *   when the podcast is gone.
+ *   when the podcast is gone or the author may not see it.
  */
 export const createDraftEpisode = async (
   request: Request,
   podcastId: string,
 ) => {
   const context = await getAuthorPermissionContext(request, {
-    actions: ['create'],
-    entities: ['podcast_episode'],
+    actions: ['create', 'view'],
+    entities: ['podcast_episode', 'podcast'],
   })
 
   requireAuthorPermission(context, {
@@ -37,10 +37,21 @@ export const createDraftEpisode = async (
   })
 
   const podcast = await prisma.podcast.findUnique({
-    select: { id: true },
+    select: { authorId: true, state: true },
     where: { id: podcastId },
   })
-  if (podcast === null) throw data(null, { status: 404 })
+  // A podcast the author may not see is a 404, like a missing one (30e).
+  if (
+    podcast === null ||
+    !context.can({
+      action: 'view',
+      entity: 'podcast',
+      state: podcast.state,
+      targetAuthorIds: [podcast.authorId],
+    }).hasPermission
+  ) {
+    throw data(null, { status: 404 })
+  }
 
   // Housekeeping never fails the click: the next one clears what is left.
   await deleteStaleEmptyEpisodeDrafts().catch((error: unknown) => {

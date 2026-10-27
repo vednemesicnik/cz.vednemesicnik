@@ -482,7 +482,7 @@ model PodcastEpisode {
   links           PodcastEpisodeLink[]
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
-  // The first save or upload; null is an empty draft (log 0020).
+  // The first save with a title, description or link, or a cover upload; null is an empty draft (logs 0020, 0048).
   firstContentAt  DateTime?
   publishedAt     DateTime?
   state           ContentState         @default(draft)

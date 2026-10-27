@@ -28,6 +28,8 @@ export const schema = z.object({
     .number({ message: UNREADABLE_NUMBER_MESSAGE })
     .int({ message: UNREADABLE_NUMBER_MESSAGE })
     .min(1, { message: UNREADABLE_NUMBER_MESSAGE })
+    // The column is a 32-bit integer; a longer one can't be stored.
+    .max(2_147_483_647, { message: UNREADABLE_NUMBER_MESSAGE })
     .optional(),
   slug: optionalText.transform(slugify),
   title: optionalText,

@@ -17,7 +17,7 @@ describe('getLinkPlatform', () => {
   })
 
   test.each([
-    'https://kabinet.example/epizody/13',
+    'https://kabinet.priklad.cz/epizody/13',
     'open.spotify/epizoda-13',
     'ftp://open.spotify.com/episode/1',
     '',

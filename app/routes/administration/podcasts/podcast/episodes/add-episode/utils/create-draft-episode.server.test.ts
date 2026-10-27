@@ -40,13 +40,17 @@ vi.mock('./delete-stale-empty-episode-drafts.server', () => ({
 }))
 
 const request = new Request('https://test.local/')
-const context = { authorId: 'author-1' }
+const context = { authorId: 'author-1', can: vi.fn() }
 
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.requireAuthorPermission.mockReset()
   mocks.getAuthorPermissionContext.mockResolvedValue(context)
-  mocks.podcastFindUnique.mockResolvedValue({ id: 'podcast-1' })
+  context.can.mockReturnValue({ hasPermission: true })
+  mocks.podcastFindUnique.mockResolvedValue({
+    authorId: 'author-2',
+    state: 'published',
+  })
   mocks.getNextFreeEpisodeNumber.mockResolvedValue(14)
   mocks.create.mockResolvedValue({ id: 'draft-1' })
   mocks.deleteStaleEmptyEpisodeDrafts.mockResolvedValue(0)
@@ -99,6 +103,21 @@ describe('createDraftEpisode', () => {
     await expect(
       createDraftEpisode(request, 'podcast-1'),
     ).rejects.toMatchObject({ init: { status: 404 } })
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  test('creates nothing in a podcast the author may not see', async () => {
+    context.can.mockReturnValue({ hasPermission: false })
+
+    await expect(
+      createDraftEpisode(request, 'podcast-1'),
+    ).rejects.toMatchObject({ init: { status: 404 } })
+    expect(context.can).toHaveBeenCalledWith({
+      action: 'view',
+      entity: 'podcast',
+      state: 'published',
+      targetAuthorIds: ['author-2'],
+    })
     expect(mocks.create).not.toHaveBeenCalled()
   })
 

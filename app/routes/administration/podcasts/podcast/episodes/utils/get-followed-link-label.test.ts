@@ -4,7 +4,7 @@ import { getFollowedLinkLabel } from './get-followed-link-label'
 
 const SPOTIFY = 'https://open.spotify.com/episode/7hT2'
 const APPLE = 'https://podcasts.apple.com/cz/podcast/kabinet/id17'
-const UNKNOWN = 'https://kabinet.example/epizody/13'
+const UNKNOWN = 'https://kabinet.priklad.cz/epizody/13'
 
 describe('getFollowedLinkLabel', () => {
   test('an empty label fills from a known address', () => {
