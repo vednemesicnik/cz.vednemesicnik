@@ -20,7 +20,8 @@ type Props = {
 
 /**
  * *Odkazy na epizodu* in the episode editor (design 27d): the links in the
- * order the web lists them, dragged by their handles into another, with
+ * order the web lists them, dragged by their handles or moved from their „⋯“
+ * into another (91abjimg), with
  * *Přidat odkaz* under them. A new row takes the focus in its address, which
  * is pasted first; the name follows from it.
  */
@@ -50,6 +51,7 @@ export const EpisodeLinks = ({ name, isReadOnly }: Props) => {
   return (
     <div className={styles.links} ref={listRef}>
       <ReorderableList
+        className={styles.list}
         dragArea={'handle'}
         getName={({ row }) => {
           const label = row.getFieldset().label.value?.trim() ?? ''
@@ -60,8 +62,9 @@ export const EpisodeLinks = ({ name, isReadOnly }: Props) => {
         }
         items={items}
         onReorder={(from, to) => form.reorder({ from, name, to })}
+        rowClassName={styles.row}
       >
-        {({ item: { row }, index, count }) => (
+        {({ item: { row }, index, count, moveTo }) => (
           <EpisodeLinkRow
             count={count}
             field={row}
@@ -70,6 +73,7 @@ export const EpisodeLinks = ({ name, isReadOnly }: Props) => {
             onLabelChange={(labelName, value) =>
               form.update({ name: labelName, value })
             }
+            onMove={moveTo}
             onRemove={() => {
               focusAfterChangeRef.current = 'add'
               form.remove({ index, name })

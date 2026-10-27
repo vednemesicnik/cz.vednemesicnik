@@ -14,6 +14,7 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { formatArticleCount } from '~/utils/format-article-count'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { getMomentOnDay } from '~/utils/get-moment-on-day'
+import { getOrderMenuItems } from '~/utils/get-order-menu-items'
 import { moveListItem } from '~/utils/move-list-item'
 import { toLocalDayValue } from '~/utils/to-local-day-value'
 import { useModalDialog } from '~/utils/use-modal-dialog'
@@ -29,24 +30,6 @@ type Article = {
   title: string
   detail: string
 }
-
-// The „⋯“ of a row in the order: only the steps that change something (22c).
-const getOrderMenuItems = (
-  index: number,
-  count: number,
-  moveTo: (target: number) => void,
-) => [
-  ...(index > 0
-    ? [{ label: 'Posunout nahoru', onSelect: () => moveTo(index - 1) }]
-    : []),
-  ...(index < count - 1
-    ? [{ label: 'Posunout dolů', onSelect: () => moveTo(index + 1) }]
-    : []),
-  ...(index > 1 ? [{ label: 'Na začátek', onSelect: () => moveTo(0) }] : []),
-  ...(index < count - 2
-    ? [{ label: 'Na konec', onSelect: () => moveTo(count - 1) }]
-    : []),
-]
 
 type KeptArticle = Article & {
   publishedAt: string
