@@ -997,27 +997,27 @@ export default function RouteComponent({
           <AdminDetailLayout>
             <AdminDetailMain>
               <fieldset className={styles.lock} disabled={isLocked}>
-                {/* The grey number before the title, which is the heading
-                    (27d). */}
-                <div className={styles.heading}>
-                  {number !== null && (
-                    <span aria-hidden={true} className={styles.number}>
-                      #{number}
-                    </span>
-                  )}
-                  <AdminTextarea
-                    className={styles.titleField}
-                    field={fields.title}
-                    isLabelHidden
-                    label={'Název'}
-                    textareaProps={{
-                      className: styles.titleInput,
-                      onInput: handleTitleInput,
-                      onKeyDown: handleTitleKeyDown,
-                      rows: 1,
-                    }}
-                  />
-                </div>
+                {/* The field as the article's, the grey number after its
+                    label; the field Číslo names it (27d, 1iqapiz2). */}
+                <AdminTextarea
+                  field={fields.title}
+                  label={
+                    <>
+                      Název
+                      {number !== null && (
+                        <span aria-hidden={true} className={styles.number}>
+                          #{number}
+                        </span>
+                      )}
+                    </>
+                  }
+                  textareaProps={{
+                    className: styles.titleInput,
+                    onInput: handleTitleInput,
+                    onKeyDown: handleTitleKeyDown,
+                    rows: 1,
+                  }}
+                />
                 <AdminTextarea
                   field={fields.description}
                   hint={

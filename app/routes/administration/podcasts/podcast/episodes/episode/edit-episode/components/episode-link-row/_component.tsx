@@ -1,9 +1,11 @@
 import { type FieldMetadata, getInputProps } from '@conform-to/react'
-import { type FormEvent, useRef, useState } from 'react'
+import { type FormEvent, useRef } from 'react'
 
-import { ButtonLink } from '~/components/button-link'
+import { ActionMenu } from '~/components/action-menu'
 import { ReorderableListHandle } from '~/components/reorderable-list-handle'
 import { TextField } from '~/components/text-field'
+import { getOrderMenuItems } from '~/utils/get-order-menu-items'
+import { useFocusWithin } from '~/utils/use-focus-within'
 
 import { getFollowedLinkLabel } from '../../../../utils/get-followed-link-label'
 import {
@@ -25,6 +27,8 @@ type Props = {
   isReadOnly: boolean
   /** Fills the label as its address says, without a save of its own. */
   onLabelChange: (name: string, value: string) => void
+  /** Moves the row without dragging, from its „⋯“ (91abjimg). */
+  onMove: (target: number) => void
   onRemove: () => void
 }
 
@@ -36,12 +40,13 @@ const LABEL_HINT: Record<NonNullable<LinkLabelState>, string> = {
 }
 
 /**
- * One link of the episode (design 27d, 2o0uwhgp): its handle, the platform's
- * name and the address, and *Odebrat*. The name follows the address until
- * changed by hand. A valid address the editor doesn't know asks for the name
- * at once, a description, not an error, and a pasted one moves the focus to
- * the empty name. Where the name came from shows while the row is being
- * worked on; the request for a name always.
+ * One link of the episode (design 27d, 2o0uwhgp, 91abjimg): its handle, the
+ * platform's name and the address, and a „⋯“ that moves the row without
+ * dragging and removes it. The name follows the address until changed by
+ * hand. A valid address the editor doesn't know asks for the name at once, a
+ * description, not an error, and a pasted one moves the focus to the empty
+ * name. A name filled from the address says so while the row is being worked
+ * on; one changed by hand and the request for a name always (1iqapiz2).
  */
 export const EpisodeLinkRow = ({
   field,
@@ -49,13 +54,16 @@ export const EpisodeLinkRow = ({
   count,
   isReadOnly,
   onLabelChange,
+  onMove,
   onRemove,
 }: Props) => {
   const { label, url } = field.getFieldset()
   const labelRef = useRef<HTMLInputElement>(null)
   // The address the label followed last, for the next change of it.
   const previousUrlRef = useRef(url.value ?? '')
-  const [isFocused, setIsFocused] = useState(false)
+  // A press that takes the focus away hides the sentence only when it ends,
+  // so the rows under it don't move under the pointer.
+  const { isFocusWithin, onBlurCapture, onFocusCapture } = useFocusWithin()
 
   const labelValue = label.value ?? ''
   const urlValue = url.value ?? ''
@@ -63,7 +71,9 @@ export const EpisodeLinkRow = ({
   const labelState = getLinkLabelState({ label: labelValue, url: urlValue })
   // An invalid address has its error, which says enough (2o0uwhgp).
   const hint =
-    labelState === 'missing' || (labelState !== null && isFocused)
+    labelState === 'missing' ||
+    labelState === 'manual' ||
+    (labelState === 'filled' && isFocusWithin)
       ? LABEL_HINT[labelState]
       : undefined
 
@@ -92,12 +102,8 @@ export const EpisodeLinkRow = ({
   return (
     <div
       className={styles.row}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setIsFocused(false)
-        }
-      }}
-      onFocusCapture={() => setIsFocused(true)}
+      onBlurCapture={onBlurCapture}
+      onFocusCapture={onFocusCapture}
     >
       <ReorderableListHandle
         className={styles.handle}
@@ -126,11 +132,24 @@ export const EpisodeLinkRow = ({
         label={'Adresa odkazu'}
         onInput={handleUrlInput}
       />
-      {!isReadOnly && (
-        <ButtonLink className={styles.remove} onClick={onRemove}>
-          Odebrat
-        </ButtonLink>
-      )}
+      {/* The moves of 22c, then Odebrat; read-only, no „⋯“ (copy 25ayrk1j). */}
+      <ActionMenu
+        className={styles.menu}
+        items={
+          isReadOnly
+            ? []
+            : [
+                ...getOrderMenuItems(index, count, onMove),
+                { danger: true, label: 'Odebrat', onSelect: onRemove },
+              ]
+        }
+        label={
+          name === ''
+            ? 'Další akce odkazu bez názvu'
+            : `Další akce odkazu: ${name}`
+        }
+        size={'sm'}
+      />
     </div>
   )
 }

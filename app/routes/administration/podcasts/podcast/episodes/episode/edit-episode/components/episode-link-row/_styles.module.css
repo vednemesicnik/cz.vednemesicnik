@@ -1,6 +1,7 @@
-/* The handle, the name, the address and Odebrat on one line (27d), the
-   sentences under their fields. The handle and Odebrat stand on the fields'
-   line, which is always there. Narrower, the address goes under the name. */
+/* The handle, the name, the address and the „⋯“ on one line (27d, 91abjimg),
+   the sentences under their fields. The handle and the „⋯“ stand on the
+   fields' line, which is always there. Narrower, the address goes under the
+   name. */
 .row {
   @layer route {
     display: grid;
@@ -14,18 +15,16 @@
   }
 }
 
-/* On an input's middle, so they stand on the fields' line. */
-.handle,
-.remove {
+/* On an input's middle, so it stands on the fields' line. */
+.handle {
   @layer route {
     margin-block-start: 10px;
   }
 }
 
-.remove {
+.menu {
   @layer route {
-    font-size: 13px;
-    line-height: 24px;
+    margin-block-start: 6px;
 
     @container (inline-size < 480px) {
       grid-column: 3;
