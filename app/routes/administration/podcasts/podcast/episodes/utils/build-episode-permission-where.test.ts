@@ -25,6 +25,7 @@ describe('buildEpisodePermissionWhere', () => {
         createContext({ archived: own, draft: own, published: own }),
       ),
     ).toEqual({
+      firstContentAt: { not: null },
       OR: [
         { state: 'draft', ...mine },
         { state: 'published', ...mine },
@@ -39,6 +40,7 @@ describe('buildEpisodePermissionWhere', () => {
         createContext({ archived: own, draft: any, published: any }),
       ),
     ).toEqual({
+      firstContentAt: { not: null },
       OR: [
         { state: 'draft' },
         { state: 'published' },
@@ -52,7 +54,10 @@ describe('buildEpisodePermissionWhere', () => {
       buildEpisodePermissionWhere(
         createContext({ archived: none, draft: none, published: any }),
       ),
-    ).toEqual({ OR: [{ state: 'published' }] })
+    ).toEqual({
+      firstContentAt: { not: null },
+      OR: [{ state: 'published' }],
+    })
   })
 
   test('a role that views nothing matches nothing', () => {
@@ -60,6 +65,6 @@ describe('buildEpisodePermissionWhere', () => {
       buildEpisodePermissionWhere(
         createContext({ archived: none, draft: none, published: none }),
       ),
-    ).toEqual({ OR: [] })
+    ).toEqual({ firstContentAt: { not: null }, OR: [] })
   })
 })

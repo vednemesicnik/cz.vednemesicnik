@@ -6,10 +6,11 @@ import { episodeContentStateHandlers } from './content-state-handlers.server'
 // Pass-through permission wrapper as the Coordinator, mocked Prisma, and the
 // podcast's state through its loader (27f).
 const mocks = vi.hoisted(() => ({
+  episodeDelete: vi.fn(),
+  episodeFindUnique: vi.fn(),
   episodeFindUniqueOrThrow: vi.fn(),
   episodeUpdate: vi.fn(),
-  loadMissingEpisodeLinkItems: vi.fn(),
-  loadTakenEpisodeSlugItems: vi.fn(),
+  loadMissingEpisodeContent: vi.fn(),
   loadUnpublishedPodcastItems: vi.fn(),
   permissionContext: vi.fn(),
   publishContentEvent: vi.fn(),
@@ -36,12 +37,15 @@ vi.mock(
   }),
 )
 
-vi.mock('../../../utils/load-missing-episode-link-items.server', () => ({
-  loadMissingEpisodeLinkItems: mocks.loadMissingEpisodeLinkItems,
+vi.mock('../../../utils/load-missing-episode-content.server', () => ({
+  loadMissingEpisodeContent: mocks.loadMissingEpisodeContent,
 }))
 
-vi.mock('../../../utils/load-taken-episode-slug-items.server', () => ({
-  loadTakenEpisodeSlugItems: mocks.loadTakenEpisodeSlugItems,
+vi.mock('~/utils/image-store/store-image.server', () => ({
+  deleteRowWithImages: async (
+    _loadImageIds: () => Promise<string[]>,
+    deleteRow: () => Promise<unknown>,
+  ) => deleteRow(),
 }))
 
 vi.mock('../../../utils/load-unpublished-podcast-items.server', () => ({
@@ -54,6 +58,8 @@ vi.mock('~/utils/db.server', () => {
     $transaction: (run: (transaction: unknown) => Promise<unknown>) =>
       run(prisma),
     podcastEpisode: {
+      delete: mocks.episodeDelete,
+      findUnique: mocks.episodeFindUnique,
       findUniqueOrThrow: mocks.episodeFindUniqueOrThrow,
       update: mocks.episodeUpdate,
     },
@@ -72,6 +78,19 @@ const draftTarget = { authorIds: ['creator'], state: 'draft' as const }
 const notPublished = 'Podcast Přestávka není publikovaný.'
 const NO_LINK = 'Chybí odkaz na epizodu.'
 const TAKEN = 'Adresa je obsazená.'
+const TAKEN_NUMBER = 'Číslo 13 je obsazené.'
+
+const uniqueConstraintError = () =>
+  new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+    clientVersion: 'test',
+    code: 'P2002',
+  })
+
+const notFoundError = () =>
+  new Prisma.PrismaClientKnownRequestError('Record not found', {
+    clientVersion: 'test',
+    code: 'P2025',
+  })
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -81,20 +100,24 @@ beforeEach(() => {
   })
   mocks.episodeFindUniqueOrThrow.mockResolvedValue({
     author: { id: 'creator', role: { level: 2 } },
+    description: 'Popis',
+    links: [{ label: 'Spotify', url: 'https://open.spotify.com/episode/1' }],
+    number: 13,
     publishedAt: null,
     reviews: [],
     slug: 'uvod',
     state: 'draft',
     submittedAt: null,
+    title: 'Úvod',
   })
-  mocks.loadMissingEpisodeLinkItems.mockResolvedValue([])
-  mocks.loadTakenEpisodeSlugItems.mockResolvedValue([])
+  mocks.episodeFindUnique.mockResolvedValue(null)
+  mocks.loadMissingEpisodeContent.mockResolvedValue([])
   mocks.loadUnpublishedPodcastItems.mockResolvedValue([])
 })
 
 describe('episodeContentStateHandlers — an episode without a link (27h)', () => {
   test('refuses a publish and writes nothing', async () => {
-    mocks.loadMissingEpisodeLinkItems.mockResolvedValue([NO_LINK])
+    mocks.loadMissingEpisodeContent.mockResolvedValue([NO_LINK])
 
     const result = await episodeContentStateHandlers.publish(request, {
       id: 'e1',
@@ -115,8 +138,7 @@ describe('episodeContentStateHandlers — an episode without a link (27h)', () =
       state: 'draft',
       submittedAt: new Date('2026-10-26T10:00:00Z'),
     })
-    mocks.loadMissingEpisodeLinkItems.mockResolvedValue([NO_LINK])
-    mocks.loadTakenEpisodeSlugItems.mockResolvedValue([TAKEN])
+    mocks.loadMissingEpisodeContent.mockResolvedValue([NO_LINK, TAKEN])
 
     const result = await episodeContentStateHandlers.review(request, {
       id: 'e1',
@@ -152,7 +174,7 @@ describe('episodeContentStateHandlers — publish in an unpublished podcast (27f
     expect(mocks.episodeUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ state: 'published' }),
-        where: { id: 'e1' },
+        where: expect.objectContaining({ id: 'e1' }),
       }),
     )
   })
@@ -174,8 +196,8 @@ describe('episodeContentStateHandlers — publish in an unpublished podcast (27f
   })
 })
 
-describe('episodeContentStateHandlers — the published address (log 0039)', () => {
-  test('publishing writes the typed address as the one the episode holds', async () => {
+describe('episodeContentStateHandlers — the published number and address (log 0039)', () => {
+  test('publishing writes the typed number and address as the ones the episode holds', async () => {
     await episodeContentStateHandlers.publish(request, {
       id: 'e1',
       target: draftTarget,
@@ -184,16 +206,17 @@ describe('episodeContentStateHandlers — the published address (log 0039)', () 
     expect(mocks.episodeUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
+          publishedNumber: 13,
           publishedSlug: 'uvod',
           state: 'published',
         }),
-        where: { id: 'e1' },
+        where: expect.objectContaining({ id: 'e1' }),
       }),
     )
   })
 
   test('refuses a publish under a taken address and writes nothing', async () => {
-    mocks.loadTakenEpisodeSlugItems.mockResolvedValue([TAKEN])
+    mocks.loadMissingEpisodeContent.mockResolvedValue([TAKEN])
 
     const result = await episodeContentStateHandlers.publish(request, {
       id: 'e1',
@@ -205,12 +228,7 @@ describe('episodeContentStateHandlers — the published address (log 0039)', () 
   })
 
   test('an address taken since the check comes back as missing content', async () => {
-    mocks.episodeUpdate.mockRejectedValueOnce(
-      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-        clientVersion: 'test',
-        code: 'P2002',
-      }),
-    )
+    mocks.episodeUpdate.mockRejectedValueOnce(uniqueConstraintError())
 
     const result = await episodeContentStateHandlers.publish(request, {
       id: 'e1',
@@ -230,7 +248,7 @@ describe('episodeContentStateHandlers — the published address (log 0039)', () 
       state: 'draft',
       submittedAt: new Date('2026-10-26T10:00:00Z'),
     })
-    mocks.loadTakenEpisodeSlugItems.mockResolvedValue([TAKEN])
+    mocks.loadMissingEpisodeContent.mockResolvedValue([TAKEN])
 
     const result = await episodeContentStateHandlers.review(request, {
       id: 'e1',
@@ -241,7 +259,7 @@ describe('episodeContentStateHandlers — the published address (log 0039)', () 
     expect(mocks.reviewCreate).not.toHaveBeenCalled()
   })
 
-  test('retracting keeps the address the episode holds', async () => {
+  test('retracting keeps the number and address the episode holds', async () => {
     await episodeContentStateHandlers.retract(request, {
       id: 'e1',
       target: { ...draftTarget, state: 'published' },
@@ -249,8 +267,114 @@ describe('episodeContentStateHandlers — the published address (log 0039)', () 
 
     expect(mocks.episodeUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.not.objectContaining({ publishedSlug: expect.anything() }),
+        data: expect.not.objectContaining({
+          publishedNumber: expect.anything(),
+          publishedSlug: expect.anything(),
+        }),
       }),
     )
+  })
+})
+
+describe('episodeContentStateHandlers — a number taken since the check (log 0039)', () => {
+  test('comes back as the taken number', async () => {
+    mocks.episodeUpdate.mockRejectedValueOnce(uniqueConstraintError())
+    mocks.loadMissingEpisodeContent
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([TAKEN_NUMBER])
+
+    const result = await episodeContentStateHandlers.publish(request, {
+      id: 'e1',
+      target: draftTarget,
+    })
+
+    expect(result).toEqual({ missing: [TAKEN_NUMBER] })
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+  })
+})
+
+describe('episodeContentStateHandlers — the edit hold (logs 0019, 0036)', () => {
+  test('a transition repeats that nobody else holds the episode', async () => {
+    await episodeContentStateHandlers.retract(request, {
+      id: 'e1',
+      target: { ...draftTarget, state: 'published' },
+    })
+
+    expect(mocks.episodeUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ AND: expect.any(Array), id: 'e1' }),
+      }),
+    )
+  })
+
+  test('refuses a transition while someone else edits the episode', async () => {
+    mocks.episodeUpdate.mockRejectedValueOnce(notFoundError())
+    mocks.episodeFindUnique.mockResolvedValue({
+      heldByAuthor: { name: 'Marie Horáková' },
+      heldByAuthorId: 'creator',
+      heldByTabId: 'tab-1',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
+    await expect(
+      episodeContentStateHandlers.retract(request, {
+        id: 'e1',
+        target: { ...draftTarget, state: 'published' },
+      }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Marie Horáková', isOwnOtherTab: false },
+    })
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+  })
+
+  test("a delete waits for every open editor, one's own included", async () => {
+    mocks.episodeDelete.mockRejectedValueOnce(notFoundError())
+    mocks.episodeFindUnique.mockResolvedValue({
+      heldByAuthor: { name: 'Jakub Novák' },
+      heldByAuthorId: 'coordinator',
+      heldByTabId: 'tab-2',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
+    await expect(
+      episodeContentStateHandlers.delete(request, {
+        id: 'e1',
+        target: draftTarget,
+      }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Jakub Novák', isOwnOtherTab: true },
+    })
+    expect(mocks.episodeDelete).toHaveBeenCalledWith({
+      where: expect.objectContaining({ AND: expect.any(Array), id: 'e1' }),
+    })
+  })
+})
+
+describe('episodeContentStateHandlers — incomplete since the check (27h)', () => {
+  test('refuses the publish inside its transaction and writes nothing', async () => {
+    mocks.episodeFindUniqueOrThrow.mockResolvedValue({
+      author: { id: 'creator', role: { level: 2 } },
+      description: 'Popis',
+      links: [{ label: '', url: 'https://kabinet.priklad.cz/13' }],
+      number: null,
+      publishedAt: null,
+      reviews: [],
+      slug: 'uvod',
+      state: 'draft',
+      submittedAt: null,
+      title: 'Úvod',
+    })
+
+    const result = await episodeContentStateHandlers.publish(request, {
+      id: 'e1',
+      target: draftTarget,
+    })
+
+    expect(result).toEqual({
+      missing: ['Chybí číslo.', '1 odkaz nemá název platformy.'],
+    })
+    expect(mocks.episodeUpdate).not.toHaveBeenCalled()
   })
 })

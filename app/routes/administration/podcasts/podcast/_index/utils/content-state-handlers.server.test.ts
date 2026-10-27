@@ -6,10 +6,14 @@ import { podcastContentStateHandlers } from './content-state-handlers.server'
 // so this exercises the podcast config's applyState and delete guard directly.
 const {
   withAuthorPermissionMock,
+  episodeDeleteManyMock,
+  episodeFindFirstMock,
   podcastDeleteMock,
   podcastFindUniqueOrThrowMock,
   podcastUpdateMock,
 } = vi.hoisted(() => ({
+  episodeDeleteManyMock: vi.fn(),
+  episodeFindFirstMock: vi.fn(),
   podcastDeleteMock: vi.fn(),
   podcastFindUniqueOrThrowMock: vi.fn(),
   podcastUpdateMock: vi.fn(),
@@ -35,21 +39,32 @@ vi.mock(
   }),
 )
 
-vi.mock('~/utils/db.server', () => ({
-  prisma: {
+vi.mock('~/utils/db.server', () => {
+  const prisma = {
+    // The transaction runs on the same mocked client.
+    $transaction: (run: (transaction: unknown) => Promise<unknown>) =>
+      run(prisma),
     podcast: {
       delete: podcastDeleteMock,
       findUnique: vi.fn().mockResolvedValue({ cover: null }),
       findUniqueOrThrow: podcastFindUniqueOrThrowMock,
       update: podcastUpdateMock,
     },
-  },
-}))
+    podcastEpisode: {
+      deleteMany: episodeDeleteManyMock,
+      findFirst: episodeFindFirstMock,
+    },
+  }
+
+  return { prisma }
+})
 
 const request = new Request('https://test.local/')
 const target = { authorIds: ['author-1'], state: 'published' as const }
 
 beforeEach(() => {
+  vi.clearAllMocks()
+  episodeFindFirstMock.mockResolvedValue(null)
   podcastUpdateMock.mockResolvedValue(undefined)
   withAuthorPermissionMock.mockImplementation(
     (
@@ -133,5 +148,53 @@ describe('podcastContentStateHandlers — delete', () => {
     })
 
     expect(podcastDeleteMock).toHaveBeenCalledWith({ where: { id: 'p1' } })
+  })
+
+  test("takes the podcast's free empty episode drafts along (log 0020)", async () => {
+    podcastFindUniqueOrThrowMock.mockResolvedValue({
+      ...publishState,
+      submittedAt: null,
+    })
+
+    await podcastContentStateHandlers.delete(request, {
+      id: 'p1',
+      target: draftTarget,
+    })
+
+    expect(episodeDeleteManyMock).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        AND: expect.any(Array),
+        firstContentAt: null,
+        podcastId: 'p1',
+        state: 'draft',
+      }),
+    })
+    expect(episodeDeleteManyMock.mock.invocationCallOrder[0]).toBeLessThan(
+      podcastDeleteMock.mock.invocationCallOrder[0],
+    )
+  })
+
+  test('waits for an editor that holds an empty episode draft (log 0036)', async () => {
+    podcastFindUniqueOrThrowMock.mockResolvedValue({
+      ...publishState,
+      submittedAt: null,
+    })
+    episodeFindFirstMock.mockResolvedValue({
+      heldByAuthor: { name: 'Marie Horáková' },
+      heldByAuthorId: 'author-2',
+      heldByTabId: 'tab-1',
+      heldSince: new Date(Date.now() - 60_000),
+      heldUntil: new Date(Date.now() + 60_000),
+    })
+
+    await expect(
+      podcastContentStateHandlers.delete(request, {
+        id: 'p1',
+        target: draftTarget,
+      }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Marie Horáková', isOwnOtherTab: false },
+    })
+    expect(podcastDeleteMock).not.toHaveBeenCalled()
   })
 })

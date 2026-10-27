@@ -33,8 +33,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     },
   })
 
-  // The highest number + 1, an archived episode's included: the number is
-  // unique in the podcast whatever the state (27d).
+  // The highest number + 1, an archived episode's included (27d); only a
+  // published number is unique in the podcast (log 0039).
   const highestNumberPromise = prisma.podcastEpisode.aggregate({
     _max: { number: true },
     where: { podcastId },

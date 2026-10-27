@@ -13,9 +13,13 @@ export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { podcastId, episodeId } = match.params
 
-    // The number, as the web shows it before the title (27c).
-    const number = match.loaderData?.episode.number
-    const label = number === undefined ? 'Neznámá epizoda' : `#${number}`
+    // The number, as the web shows it before the title (27c); a draft
+    // without one goes by its title (27h).
+    const episode = match.loaderData?.episode
+    const label =
+      episode?.number != null
+        ? `#${episode.number}`
+        : episode?.title || 'Neznámá epizoda'
     const path = href(
       `/administration/podcasts/:podcastId/episodes/:episodeId`,
       { episodeId, podcastId },

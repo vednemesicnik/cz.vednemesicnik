@@ -27,6 +27,7 @@ import { StatusTag } from '~/components/status-tag'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { formatNumericDate } from '~/utils/format-numeric-date'
+import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
 
 import { EpisodeMissingDialog } from '../../../episodes/components/episode-missing-dialog'
 import { EpisodePublishDialog } from '../../../episodes/components/episode-publish-dialog'
@@ -82,14 +83,17 @@ export const EpisodeRow = ({
     '/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode',
     { episodeId: id, podcastId },
   )
-  const title = `#${episode.number} ${episode.title}`
+  const title = formatEpisodeTitle(episode)
 
   const fetcherKey = `episode-row-${id}`
   const fetcher = useFetcher({ key: fetcherKey })
   const isSubmitting = fetcher.state !== 'idle'
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
-  const { closeMissingList, missingList } = useContentActionResult(fetcher.data)
+  const { closeMissingList, missingList } = useContentActionResult(
+    fetcher.data,
+    { heldSubject: 'epizodu' },
+  )
 
   const [stateDialog, setStateDialog] = useState<EpisodeStateDialogKind | null>(
     null,
@@ -165,12 +169,16 @@ export const EpisodeRow = ({
         onChange={onSelect}
       />
       <TableCell>
-        <span className={styles.number}>#{episode.number}</span>
+        {episode.number !== null && (
+          <span className={styles.number}>#{episode.number}</span>
+        )}
       </TableCell>
       <TableNameCell>
         <TableRowLink className={styles.link} to={action}>
           {/* A phone has no Číslo column: the number leads the title (32d). */}
-          <span className={styles.phoneNumber}>#{episode.number} </span>
+          {episode.number !== null && (
+            <span className={styles.phoneNumber}>#{episode.number} </span>
+          )}
           {episode.title}
         </TableRowLink>
         {/* Under the title on a wide screen; a phone moves it to the third

@@ -10,6 +10,7 @@ import {
   getWebContentVisibility,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 
 import type { Route } from './+types/route'
 
@@ -47,7 +48,11 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
           slug: true,
           title: true,
         },
-        where: visibility.where('podcast_episode', ownByAuthor),
+        // An empty draft never shows, not even as a preview (log 0020).
+        where: {
+          AND: [visibility.where('podcast_episode', ownByAuthor)],
+          ...NON_EMPTY_EPISODE_WHERE,
+        },
       },
       id: true,
       slug: true,

@@ -5,6 +5,7 @@ import { prisma } from '~/utils/db.server'
 import { getIssueTitle } from '~/utils/issue/get-issue-title'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
+import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
 
 import { buildIssuePermissionWhere } from '../../archive/utils/build-issue-permission-where'
 import { buildArticlePermissionWhere } from '../../articles/utils/build-article-permission-where'
@@ -109,7 +110,7 @@ export const getRecentAuthorContent = async (
       }),
       id: episode.id,
       state: getState(episode),
-      title: `#${episode.number} ${episode.title}`,
+      title: formatEpisodeTitle(episode),
       type: 'episode' as const,
       updatedAt: episode.updatedAt,
     })),

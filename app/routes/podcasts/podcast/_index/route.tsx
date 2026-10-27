@@ -39,7 +39,7 @@ export default function PodcastPage({
               <MediaContentLink
                 to={`/podcasts/${podcast.slug}/${episode.slug}`}
               >
-                <ContentLinkTitle number={episode.number}>
+                <ContentLinkTitle number={episode.number ?? undefined}>
                   {episode.title}
                 </ContentLinkTitle>
                 <ContentLinkFooter>

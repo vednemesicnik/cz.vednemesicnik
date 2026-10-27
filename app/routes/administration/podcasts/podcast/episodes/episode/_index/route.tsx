@@ -85,7 +85,10 @@ export default function RouteComponent({
   const { Form } = fetcher
 
   const isSubmitting = fetcher.state !== 'idle'
-  const { closeMissingList, missingList } = useContentActionResult(fetcher.data)
+  const { closeMissingList, missingList } = useContentActionResult(
+    fetcher.data,
+    { heldSubject: 'epizodu' },
+  )
 
   const submittingIntent =
     fetcher.state !== 'idle' && fetcher.formData

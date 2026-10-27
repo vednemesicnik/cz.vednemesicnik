@@ -48,7 +48,11 @@ export const usePodcastActions = ({
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
 
-  useContentActionResult(fetcher.data, { toasts: PODCAST_TOASTS })
+  useContentActionResult(fetcher.data, {
+    // Only an empty episode draft open in an editor holds up a podcast (0036).
+    heldSubject: 'epizodu',
+    toasts: PODCAST_TOASTS,
+  })
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(

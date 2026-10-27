@@ -21,6 +21,7 @@ import { buildViewableStateFilters } from '~/utils/permissions/author/build-view
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { buildEpisodePermissionWhere } from '../podcast/episodes/utils/build-episode-permission-where'
@@ -132,7 +133,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     prisma.podcast.findMany({
       orderBy: [{ createdAt: 'desc' }],
       select: {
-        _count: { select: { episodes: true } },
+        // An empty draft never counts, nor blocks the delete (log 0020).
+        _count: { select: { episodes: { where: NON_EMPTY_EPISODE_WHERE } } },
         author: {
           select: { id: true, name: true, role: { select: { level: true } } },
         },

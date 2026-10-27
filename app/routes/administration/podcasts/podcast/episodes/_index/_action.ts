@@ -3,6 +3,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { FORM_CONFIG } from '~/config/form-config'
 import { requireCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
+import { readEditHeldRefusal } from '~/utils/edit-hold/read-edit-held-refusal'
 import { episodeContentStateHandlers } from '../episode/_index/utils/content-state-handlers.server'
 import type { Route } from './+types/route'
 
@@ -49,16 +50,24 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
   // Sequential on purpose: each delete runs its own permission check and
   // image-cleanup transaction. Not atomic across items — the UI only offers
-  // deletable rows; the per-item check is defense in depth.
+  // deletable rows; the per-item check is defense in depth. An episode any
+  // editor holds, one's own other tab included, stays (logs 0019, 0036) and
+  // is not counted.
+  let deletedCount = 0
   for (const episode of episodes) {
-    await episodeContentStateHandlers.delete(request, {
-      id: episode.id,
-      target: { authorIds: [episode.authorId], state: episode.state },
-    })
+    try {
+      await episodeContentStateHandlers.delete(request, {
+        id: episode.id,
+        target: { authorIds: [episode.authorId], state: episode.state },
+      })
+      deletedCount += 1
+    } catch (error) {
+      if (readEditHeldRefusal(error) === null) throw error
+    }
   }
 
   // App convention: the bulk-delete hook clears the selection only on an
   // explicit success. A denied item throws inside deleteEpisode before we get
   // here, so the selection stays for retry.
-  return { deletedCount: episodes.length, status: 'success' as const }
+  return { deletedCount, status: 'success' as const }
 }

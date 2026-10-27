@@ -15,6 +15,7 @@ export type EditHoldDialogKind = 'take-over' | 'other-tab'
 // The other tab's title per content (24g; copy ey73zhul for the issue).
 const OTHER_TAB_TITLE: Record<EditHoldContent, string> = {
   article: 'Článek máte otevřený v jiné záložce',
+  episode: 'Epizodu máte otevřenou v jiné záložce',
   issue: 'Číslo máte otevřené v jiné záložce',
 }
 
