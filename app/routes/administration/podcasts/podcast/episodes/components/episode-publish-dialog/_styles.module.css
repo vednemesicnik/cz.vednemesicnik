@@ -16,6 +16,17 @@
   }
 }
 
+/* That nobody submitted it, in full ink before the date (23f). */
+.note {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    color: var(--text-primary);
+  }
+}
+
 .form {
   @layer route {
     display: grid;

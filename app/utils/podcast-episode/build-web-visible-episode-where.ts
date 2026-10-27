@@ -6,11 +6,12 @@ import {
 import { NON_EMPTY_EPISODE_WHERE } from './non-empty-episode-where'
 
 /**
- * Which episodes the public web shows to this request (design 13c, 27c): an
- * episode only under a podcast the visitor can see, and drafts and archived
- * ones of either only as far as the signed-in author may view them in
- * administration. An empty draft never shows (log 0020). The administration
- * offers a link to the web only where this finds the episode (tly4a163).
+ * Which episodes the public episode page opens for this request (design 13c,
+ * 27c): an episode only under a podcast the visitor can see, and drafts and
+ * archived ones of either only as far as the signed-in author may view them
+ * in administration. An empty draft never shows (log 0020). The
+ * administration offers a link to the web only where this finds the episode
+ * (tly4a163). The public lists preview drafts only; they don't use it.
  *
  * @param visibility - What the web may show, from `getWebContentVisibility`
  *   for `podcast` and `podcast_episode`.

@@ -78,18 +78,16 @@ přejmenování termínu je změna aplikace na všech místech naráz.
 Každý obsah (článek, rubrika, štítek, podcast, epizoda, číslo) je v právě jednom stavu. Štítky
 stavů jsou `Koncept` · `Publikováno` · `Archivováno`.
 
-Akce, jak je dnes nese administrace: `Schválit` · `Zveřejnit` (a `Zveřejnit zpětně` s dřívějším
-datem) · `Stáhnout z publikace` (vrátí do konceptu) · `Archivovat` · `Obnovit` (z archivu zpět
-do konceptu, jen Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinátor). U článku
-navíc `Odeslat ke schválení` a `Vzít zpět do konceptu` (autor) · `Vrátit k úpravám`
-(Koordinátor); odeslaný článek má štítek `Čeká na schválení`, schválený `Schváleno`.
+Akce, jak je dnes nese administrace: `Odeslat ke schválení` a `Vzít zpět do konceptu` (autor) ·
+`Schválit` · `Vrátit k úpravám` (Koordinátor) · `Publikovat…` · `Stáhnout z publikace` (vrátí
+do konceptu) · `Archivovat` · `Obnovit jako koncept` (z archivu zpět do konceptu, jen
+Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinátor). Odeslaný obsah má štítek
+`Čeká na schválení`, schválený `Schváleno`.
 
-Článek už má akce nového návrhu: `Publikovat…` a `Schválit a publikovat…` otevřou dialog s
-datem publikace (`Dnes` · `Jiný den`, u dříve publikovaného navíc `Původní datum`), zpětné
-datum se volí tam, ne zvláštním tlačítkem.
-
-Pozor na dvojici **Zveřejnit / Publikováno**: u ostatního obsahu tlačítko a stav dnes používají
-jiné slovo pro tentýž čin. Je to známá nesrovnalost, ne dva různé kroky.
+U článku a epizody otevřou `Publikovat…` a `Schválit a publikovat…` dialog s datem publikace
+(`Dnes` · `Jiný den`, u dříve publikovaného navíc `Původní datum`); zpětné datum se volí tam,
+ne zvláštním tlačítkem. Publikovaný článek a epizoda mají v „⋯“ `Změnit datum publikace…`.
+Tlačítko `Zveřejnit` aplikace už nemá: čin i stav se jmenují *publikovat* / `Publikováno`.
 
 ## Role
 

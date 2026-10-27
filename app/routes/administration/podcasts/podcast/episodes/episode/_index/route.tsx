@@ -229,9 +229,6 @@ export default function RouteComponent({
     }
   }
 
-  // The podcast by name, a link to its page, in 27f's first sentence.
-  const podcastLead = `Podcast ${episode.podcast.title}`
-
   return (
     <AdminPage measure={'text'}>
       <header className={styles.header}>
@@ -259,14 +256,14 @@ export default function RouteComponent({
               Epizodu právě upravuje {heldByName}.
             </p>
           )}
-          {/* The podcast is off the web: why, in place of submit and publish (27f). */}
-          {podcastUnpublished !== null && podcastUnpublished.item !== null && (
-            <p className={styles.sentence}>
-              Podcast <Link to={podcastHref}>{episode.podcast.title}</Link>
-              {podcastUnpublished.item.slice(podcastLead.length)}{' '}
-              {podcastUnpublished.advice}
-            </p>
-          )}
+          {/* The podcast is off the web: why, with a link to it, in place of submit and publish (27f). */}
+          {podcastUnpublished !== null &&
+            podcastUnpublished.predicate !== null && (
+              <p className={styles.sentence}>
+                Podcast <Link to={podcastHref}>{episode.podcast.title}</Link>{' '}
+                {podcastUnpublished.predicate} {podcastUnpublished.advice}
+              </p>
+            )}
           {headerActions.sentence !== null && (
             <p className={styles.sentence}>
               {EPISODE_HEADER_SENTENCES[headerActions.sentence]}
@@ -430,6 +427,12 @@ export default function RouteComponent({
           episodeTitle={title}
           fetcherKey={fetcherKey}
           isApproval={publishDialog.isApproval}
+          // A draft nobody submitted is published from „⋯“ (23d); the dialog says so.
+          note={
+            headerActions.menu.includes('publish')
+              ? EPISODE_HEADER_SENTENCES['not-submitted']
+              : null
+          }
           onClose={() => setPublishDialog(null)}
           originalPublishedAt={episode.publishedAt}
         />

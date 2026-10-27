@@ -19,13 +19,13 @@ import { getArticleHold } from '../../../../../articles/utils/get-article-hold'
 import { getHeldActionFlags } from '../../../../../articles/utils/get-held-action-flags'
 import { getEpisodeHeaderActions } from '../../utils/get-episode-header-actions'
 import { getUnpublishedPodcastAdvice } from '../../utils/get-unpublished-podcast-advice'
-import { getUnpublishedPodcastItem } from '../../utils/get-unpublished-podcast-item'
+import { getUnpublishedPodcastPredicate } from '../../utils/get-unpublished-podcast-predicate'
 import { isValidEpisodeLinkUrl } from '../../utils/is-valid-episode-link-url'
 import { loadMissingEpisodeContent } from '../../utils/load-missing-episode-content.server'
 import type { Route } from './+types/route'
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const { episodeId } = params
+  const { episodeId, podcastId } = params
 
   const context = await getAuthorPermissionContext(request, {
     actions: [
@@ -106,8 +106,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     targetAuthorIds: [episode.author.id],
   })
 
-  // A record the person may not see is a 404, like a deleted one (design 30e).
-  if (!canView) {
+  // A record the person may not see is a 404, like a deleted one (design 30e);
+  // so is an episode under another podcast's address, as in its editor.
+  if (!canView || episode.podcast.id !== podcastId) {
     throw data(null, { status: 404 })
   }
 
@@ -134,8 +135,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   })
 
   // Until its podcast is published, an episode is neither submitted nor
-  // published (27f); the server refuses both too. Where the role could, the
-  // header says why instead.
+  // published (27f); the server refuses both too, and the header leaves them
+  // out. Where the role could, it says why instead.
   const isPodcastPublished = episode.podcast.state === 'published'
   const isPodcastUnpublishedShown =
     !isPodcastPublished &&
@@ -145,12 +146,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // While someone else edits it, its edit and state actions wait (07g, 27c);
   // the transitions check it again in their own writes.
-  const heldFlags = getHeldActionFlags(roleFlags, { isApprover, isHeldByOther })
-  const flags = {
-    ...heldFlags,
-    canPublish: heldFlags.canPublish && isPodcastPublished,
-    canSubmit: heldFlags.canSubmit && isPodcastPublished,
-  }
+  const flags = getHeldActionFlags(roleFlags, { isApprover, isHeldByOther })
   const submission = flags.submission?.state ?? null
 
   // The link to the web only where the public page would open the episode
@@ -177,7 +173,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         }),
     // Publishing an incomplete episode opens the 27h sentence instead of the
     // date; only the Coordinator publishes, and the server checks again.
-    flags.canPublish && episode.state === 'draft'
+    flags.canPublish && isPodcastPublished && episode.state === 'draft'
       ? loadMissingEpisodeContent(episode.id)
       : [],
   ])
@@ -249,6 +245,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         ...flags,
         isHeldByOther,
         isOnWeb,
+        isPodcastPublished,
         isPodcastUnpublishedShown,
         state: episode.state,
         submission,
@@ -271,7 +268,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               isApprover,
               podcastState: episode.podcast.state,
             }),
-            item: getUnpublishedPodcastItem(episode.podcast),
+            predicate: getUnpublishedPodcastPredicate(episode.podcast.state),
           }
         : null,
       submission,

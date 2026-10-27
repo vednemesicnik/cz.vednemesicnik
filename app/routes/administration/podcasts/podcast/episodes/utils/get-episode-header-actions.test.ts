@@ -16,6 +16,7 @@ const none = {
   canWithdraw: false,
   isOnWeb: true,
   isOwnContent: false,
+  isPodcastPublished: true,
   isPodcastUnpublishedShown: false,
   isSubmittable: true,
 }
@@ -65,6 +66,48 @@ describe('getEpisodeHeaderActions', () => {
       menu: ['return', 'edit'],
       outline: 'approve',
       primary: 'approve-and-publish',
+      sentence: null,
+    })
+  })
+
+  test('an unpublished podcast keeps Schválit, Vrátit and Upravit for a waiting episode (27f, log 0047)', () => {
+    expect(
+      getEpisodeHeaderActions({
+        ...none,
+        canApprove: true,
+        canEdit: true,
+        canPublish: true,
+        canReturn: true,
+        isPodcastPublished: false,
+        isPodcastUnpublishedShown: true,
+        state: 'draft',
+        submission: 'pending',
+      }),
+    ).toEqual({
+      menu: ['return', 'edit'],
+      outline: null,
+      primary: 'approve',
+      sentence: null,
+    })
+  })
+
+  test('an unpublished podcast leaves no submit and no publish on a draft (27f)', () => {
+    expect(
+      getEpisodeHeaderActions({
+        ...none,
+        canDelete: true,
+        canEdit: true,
+        canPublish: true,
+        isOwnContent: true,
+        isPodcastPublished: false,
+        isPodcastUnpublishedShown: true,
+        state: 'draft',
+        submission: null,
+      }),
+    ).toEqual({
+      menu: ['delete'],
+      outline: 'edit',
+      primary: null,
       sentence: null,
     })
   })
