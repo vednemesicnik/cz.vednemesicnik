@@ -85,7 +85,7 @@ const getDraftActions = (options: Options): HeaderActions => {
     }
   }
 
-  // A draft nobody submitted is published from „⋯“, with the sentence beside (23d).
+  // A draft not submitted is published from „⋯“, with the sentence beside (23d).
   if (options.canPublish) {
     return {
       menu: ['publish', ...only('delete', options.canDelete)],

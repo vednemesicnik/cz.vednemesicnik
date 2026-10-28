@@ -207,7 +207,7 @@ export const loadEpisodeTable = async ({
         updatedAt: episode.updatedAt,
       }),
       id: episode.id,
-      // Publishing it, the dialog says nobody submitted it (23f).
+      // Publishing it, the dialog says it isn't submitted (23f).
       isNotSubmitted:
         episode.state === 'draft' &&
         flags.submission === null &&

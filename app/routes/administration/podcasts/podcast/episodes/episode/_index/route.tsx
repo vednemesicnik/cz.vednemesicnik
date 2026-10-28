@@ -427,7 +427,7 @@ export default function RouteComponent({
           episodeTitle={title}
           fetcherKey={fetcherKey}
           isApproval={publishDialog.isApproval}
-          // A draft nobody submitted is published from „⋯“ (23d); the dialog says so.
+          // A draft not submitted is published from „⋯“ (23d); the dialog says so.
           note={
             headerActions.menu.includes('publish')
               ? EPISODE_HEADER_SENTENCES['not-submitted']

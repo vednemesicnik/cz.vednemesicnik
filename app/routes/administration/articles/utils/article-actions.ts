@@ -53,7 +53,7 @@ export const NOT_SUBMITTED_NOTE = 'Článek není odeslaný ke schválení.'
 
 /**
  * The sentence a detail header shows beside or instead of its buttons (23d):
- * who may do what the role may not, or that a draft wasn't submitted.
+ * who may do what the role may not, or that a draft isn't submitted.
  */
 export type HeaderSentence =
   | 'not-submitted'
