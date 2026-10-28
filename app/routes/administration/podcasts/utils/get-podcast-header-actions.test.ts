@@ -114,15 +114,40 @@ describe('getPodcastHeaderActions', () => {
     })
   })
 
+  // As the loader masks the flags while held, with the takeover as canEdit.
+  const heldForCoordinator = {
+    ...nothingAllowed,
+    canEdit: true,
+    canTakeOver: true,
+    isHeldByOther: true,
+    state: 'draft' as const,
+  }
+
   test('a draft someone else edits keeps only Upravit for the Coordinator (07g, 24g)', () => {
-    // As the loader masks the flags while held, with the takeover as canEdit.
+    expect(getPodcastHeaderActions(heldForCoordinator)).toEqual({
+      menu: ['history'],
+      outline: 'edit',
+      primary: null,
+    })
+  })
+
+  test('a waiting draft someone else edits keeps Upravit for the Coordinator too (24g)', () => {
+    expect(
+      getPodcastHeaderActions({
+        ...heldForCoordinator,
+        submission: 'pending',
+      }),
+    ).toEqual({ menu: ['history'], outline: 'edit', primary: null })
+  })
+
+  test('a draft someone else edits leaves the others nothing but Historie (07g)', () => {
     expect(
       getPodcastHeaderActions({
         ...nothingAllowed,
-        canEdit: true,
+        isHeldByOther: true,
         state: 'draft',
       }),
-    ).toEqual({ menu: ['history'], outline: 'edit', primary: null })
+    ).toEqual({ menu: ['history'], outline: null, primary: null })
   })
 
   test('Historie stands even when the role may do nothing else (27j)', () => {

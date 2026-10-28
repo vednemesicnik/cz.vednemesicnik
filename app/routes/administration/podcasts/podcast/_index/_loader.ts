@@ -164,6 +164,7 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
       // One primary, one outline beside Nová epizoda, the rest in „⋯“ (27b, 27i).
       headerActions: getPodcastHeaderActions({
         ...flags,
+        isHeldByOther,
         state: podcast.state,
         submission,
       }),
