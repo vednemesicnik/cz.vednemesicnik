@@ -15,6 +15,9 @@ export const COVER_CANCEL_CROSSED_ANNOUNCEMENT = {
     'Nová obálka už je uložená u podcastu. Nahrávání se nepodařilo zrušit.',
 }
 
+/** After the save line while it uploads, as the issue's (26c; cfs3v5ka). */
+export const COVER_UPLOADING_LINE = 'obálka se nahrává'
+
 /** The close dialog, while it uploads: closing cancels it. */
 export const COVER_UPLOADING_SENTENCE =
   'Obálka se ještě nahrává. Po zavření se její nahrávání zruší.'

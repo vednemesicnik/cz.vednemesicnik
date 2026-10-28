@@ -58,6 +58,7 @@ import {
   COVER_FAILED_SENTENCE,
   COVER_UPLOAD_CANCELLED_ANNOUNCEMENT,
   COVER_UPLOAD_DONE_SENTENCE,
+  COVER_UPLOADING_LINE,
   COVER_UPLOADING_SENTENCE,
   ORIGINAL_COVER_STAYED_SENTENCE,
   ORIGINAL_COVER_STAYS_SENTENCE,
@@ -685,7 +686,12 @@ export default function RouteComponent({
         </ButtonLink>
       </p>
     ) : (
-      <p className={styles.saveLine}>{saveLine}</p>
+      <p className={styles.saveLine}>
+        {/* The cover has its words after it while it uploads (cfs3v5ka). */}
+        {coverUpload.isUploading
+          ? `${saveLine} · ${COVER_UPLOADING_LINE}`
+          : saveLine}
+      </p>
     )
 
   const editorSentence = getPodcastEditorSentence({
