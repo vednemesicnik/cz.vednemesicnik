@@ -16,7 +16,7 @@
   }
 }
 
-/* That nobody submitted it, in full ink before the date (23f). */
+/* That it isn't submitted, in full ink before the date (23f). */
 .note {
   @layer route {
     margin: 0;

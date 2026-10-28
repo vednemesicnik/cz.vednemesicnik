@@ -41,7 +41,7 @@ export const CATEGORY_RECORD_COPY: TaxonomyRecordCopy = {
   deleteTitle: (name) => `Smazat rubriku „${name}“?`,
   editTitle: 'Upravit rubriku',
   headerSentences: {
-    'not-submitted': 'Rubrika nebyla odeslána ke schválení.',
+    'not-submitted': 'Rubrika není odeslaná ke schválení.',
     'who-approves': 'Schválit může Koordinátor.',
     'who-edits': 'Upravovat mohou autor rubriky a Koordinátor.',
     'who-publishes': 'Publikovat může Koordinátor.',

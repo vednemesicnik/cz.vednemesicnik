@@ -26,9 +26,9 @@ export const EPISODE_ACTION_LABELS: Record<EpisodeAction, string> =
 export const EPISODE_DIRECT_INTENTS: Partial<Record<EpisodeAction, string>> =
   ARTICLE_DIRECT_INTENTS
 
-// The article's sentences said of an episode, which has one author (27c, copy v0m112v3).
+// The article's sentences said of an episode, which has one author (27c, copy v0m112v3, s9xbwd3w).
 export const EPISODE_HEADER_SENTENCES: Record<HeaderSentence, string> = {
-  'not-submitted': 'Epizoda nebyla odeslána ke schválení.',
+  'not-submitted': 'Epizoda není odeslaná ke schválení.',
   'who-approves': 'Schválit může Koordinátor.',
   'who-edits': 'Upravovat mohou autor epizody a Koordinátor.',
   'who-publishes': 'Publikovat může Koordinátor.',

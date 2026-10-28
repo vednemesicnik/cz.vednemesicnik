@@ -20,12 +20,12 @@ const pick = (count: number, forms: Forms) => {
  * The sentences under the bulk publish dialog's list (design 22c), each only
  * when the selection holds such an article. Waiting and not submitted count
  * only the articles that will be published; incomplete ones are skipped and
- * said apart (copy bhmem1jc).
+ * said apart (copy bhmem1jc, s9xbwd3w).
  *
  * @param options - How many of the articles to publish wait for approval, and
- *   how many nobody submitted; how many selected articles are incomplete.
+ *   how many are not submitted; how many selected articles are incomplete.
  * @returns `notes` — „1 článek čeká na schválení. Publikováním ho schválíte.“
- *   and „2 články nebyly odeslány ke schválení.“ in one line, or `null`;
+ *   and „2 články nejsou odeslané ke schválení.“ in one line, or `null`;
  *   `skipped` — „1 článek je neúplný. Přeskočí se.“, or `null`.
  */
 export const getBulkPublishNotes = ({
@@ -47,9 +47,9 @@ export const getBulkPublishNotes = ({
       ? []
       : [
           `${formatArticleCount(notSubmittedCount)} ${pick(notSubmittedCount, {
-            few: 'nebyly odeslány ke schválení.',
-            one: 'nebyl odeslán ke schválení.',
-            other: 'nebylo odesláno ke schválení.',
+            few: 'nejsou odeslané ke schválení.',
+            one: 'není odeslaný ke schválení.',
+            other: 'není odeslaných ke schválení.',
           })}`,
         ]),
   ]

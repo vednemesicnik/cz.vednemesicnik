@@ -123,10 +123,10 @@ nedělá**. Poznají se jen podle modelu:
   a vlastní archivovaný, Koordinátor všechno. Nepřihlášený čtenář vidí jen publikované.
 - **Číslo nenese články.** Viz termíny.
 
-## Nový návrh administrace (rozhodnuto, zatím nepostaveno)
+## Nový návrh administrace (rozhodnuto, postaveno)
 
-Administrace se překresluje. Otázka vždycky řekne, jestli jde o texty dnešní aplikace, nebo
-o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše tohle (rozhodnuto 27.–28. 9. 2026):
+Administrace je překreslená podle nového návrhu. Kde se s ním části výše rozcházejí, platí
+tohle (rozhodnuto 27.–28. 9. 2026):
 
 - **Odeslat ke schválení existuje.** Autor hotový koncept odešle. Štítky jsou pak `Koncept` ·
   `Čeká na schválení` · `Schváleno` · `Publikováno` · `Archivováno`. V datech zůstávají tři stavy,
@@ -159,7 +159,7 @@ o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše to
   (`zima` → zobrazeně `zima 2026`) a vzácně doplněk: samostatně vytištěná část, která se do
   čísla nevešla (ne dotisk).
 
-Týká se to i veřejného webu:
+Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
 
 - **Náhled konceptu na webu zůstává, ale je vidět, že je to koncept.** Vidí ho jen ten, kdo daný
   obsah vidí v administraci: Přispěvatel jen vlastní koncepty, Tvůrce a Koordinátor jakékoli. Pro

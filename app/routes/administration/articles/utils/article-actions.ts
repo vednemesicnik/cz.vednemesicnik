@@ -47,12 +47,13 @@ export const ARTICLE_DIRECT_INTENTS: Partial<Record<ArticleAction, string>> = {
   withdraw: INTENT_VALUE.withdrawSubmission,
 }
 
-// A draft nobody submitted, published by the Coordinator (23d, 23f).
-export const NOT_SUBMITTED_NOTE = 'Článek nebyl odeslán ke schválení.'
+// A draft not submitted now, published by the Coordinator (23d, 23f). The
+// present tense, as a withdrawal clears the submission (copy s9xbwd3w).
+export const NOT_SUBMITTED_NOTE = 'Článek není odeslaný ke schválení.'
 
 /**
  * The sentence a detail header shows beside or instead of its buttons (23d):
- * who may do what the role may not, or that a draft wasn't submitted.
+ * who may do what the role may not, or that a draft isn't submitted.
  */
 export type HeaderSentence =
   | 'not-submitted'

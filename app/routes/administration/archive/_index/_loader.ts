@@ -262,7 +262,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
               now,
             }),
       id: issue.id,
-      // Publishing it, the dialog says nobody submitted it (26h).
+      // Publishing it, the dialog says it isn't submitted (26h).
       isNotSubmitted:
         issue.state === 'draft' &&
         flags.submission === null &&

@@ -65,7 +65,7 @@ const COPY = {
  * @param props.kind - Publish, approve and publish, retract or archive.
  * @param props.isApprover - Whether the person publishes; otherwise a retract
  *   says the Coordinator can publish the issue again.
- * @param props.note - What a publish skips, such as a draft nobody submitted.
+ * @param props.note - What a publish skips, such as a draft not submitted.
  */
 export const IssueStateDialog = ({
   kind,

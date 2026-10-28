@@ -21,7 +21,7 @@ describe('getBulkPublishNotes', () => {
         pendingCount: 1,
       }).notes,
     ).toBe(
-      '1 článek čeká na schválení. Publikováním ho schválíte. 1 článek nebyl odeslán ke schválení.',
+      '1 článek čeká na schválení. Publikováním ho schválíte. 1 článek není odeslaný ke schválení.',
     )
   })
 
@@ -39,8 +39,8 @@ describe('getBulkPublishNotes', () => {
   })
 
   test.each([
-    [2, '2 články nebyly odeslány ke schválení.'],
-    [5, '5 článků nebylo odesláno ke schválení.'],
+    [2, '2 články nejsou odeslané ke schválení.'],
+    [5, '5 článků není odeslaných ke schválení.'],
   ])('not submitted: %i', (notSubmittedCount, expected) => {
     expect(
       getBulkPublishNotes({
