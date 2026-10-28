@@ -50,6 +50,7 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { useTakenValues } from '~/hooks/use-taken-values'
+import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
@@ -85,7 +86,6 @@ import {
   UPLOADING_SENTENCE,
 } from './utils/issue-file-sentences'
 import { useIssueFileUpload } from './utils/use-issue-file-upload'
-import { useUploadFocus } from './utils/use-upload-focus'
 
 export { handle } from './_handle'
 export { loader } from './_loader'

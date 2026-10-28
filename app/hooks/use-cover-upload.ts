@@ -51,6 +51,8 @@ type Options = {
   storedKey: string | null
   /** For a screen reader, once the content loaded again after a cancel. */
   cancelledAnnouncement: string
+  /** As `cancelledAnnouncement`, for a cancelled cover that replaced none. */
+  cancelledNewAnnouncement?: string
   /** For a screen reader, a cancel whose replacement had already saved. */
   crossedAnnouncement: string
   /** Refused for the hold: `true` when the editor took it back and may retry. */
@@ -84,6 +86,7 @@ export const useCoverUpload = ({
   tabId,
   storedKey,
   cancelledAnnouncement,
+  cancelledNewAnnouncement,
   crossedAnnouncement,
   onNotHeld,
   onDeleted,
@@ -98,9 +101,14 @@ export const useCoverUpload = ({
   // Read once a cancel has settled, which may be renders later.
   const announcementsRef = useRef({
     cancelledAnnouncement,
+    cancelledNewAnnouncement,
     crossedAnnouncement,
   })
-  announcementsRef.current = { cancelledAnnouncement, crossedAnnouncement }
+  announcementsRef.current = {
+    cancelledAnnouncement,
+    cancelledNewAnnouncement,
+    crossedAnnouncement,
+  }
   const waitForStoredCover = useWaitForChange(storedKey)
 
   // One change at a time.
@@ -308,19 +316,31 @@ export const useCoverUpload = ({
 
     if (!current.replaces) await post({ intent: 'remove' })
     await revalidator.revalidate()
-    // The content has loaded again: say what stayed. A replacement whose
-    // answer crossed the cancel shows once its cover has rendered, which a
-    // revalidation does not wait for.
-    if (current.replaces) await waitForStoredCover(current.keyAtPick)
-    const { cancelledAnnouncement: cancelled, crossedAnnouncement: crossed } =
-      announcementsRef.current
-    setAnnouncement(
-      current.replaces && storedKeyRef.current !== current.keyAtPick
-        ? crossed
-        : cancelled,
-    )
     isCancellingRef.current = false
     setIsCancelling(false)
+    void announceCancel(current)
+  }
+
+  // The content has loaded again: say what stayed. A cancelled new cover is
+  // always removed; a replacement whose answer crossed the cancel shows once
+  // its cover has rendered, which a revalidation does not wait for, and the
+  // editor does not wait for the announcement either.
+  const announceCancel = async (current: CoverUpload) => {
+    const {
+      cancelledAnnouncement,
+      cancelledNewAnnouncement,
+      crossedAnnouncement,
+    } = announcementsRef.current
+    if (!current.replaces) {
+      setAnnouncement(cancelledNewAnnouncement ?? cancelledAnnouncement)
+      return
+    }
+    await waitForStoredCover(current.keyAtPick)
+    setAnnouncement(
+      storedKeyRef.current === current.keyAtPick
+        ? cancelledAnnouncement
+        : crossedAnnouncement,
+    )
   }
 
   /**

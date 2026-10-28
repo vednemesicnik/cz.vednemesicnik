@@ -54,6 +54,7 @@ import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useCoverUpload } from '~/hooks/use-cover-upload'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { useTakenValues } from '~/hooks/use-taken-values'
+import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
@@ -447,10 +448,11 @@ export default function RouteComponent({
       '/administration/podcasts/:podcastId/episodes/:episodeId/cover',
       { episodeId, podcastId },
     ),
-    // Without its own cover the episode goes out with the podcast's, when
-    // the podcast has one (hx72s8sv).
-    cancelledAnnouncement:
-      episode.cover === null && podcast.cover !== null
+    cancelledAnnouncement: COVER_UPLOAD_CANCELLED_ANNOUNCEMENT,
+    // A cancelled first own cover leaves the episode with the podcast's,
+    // when the podcast has one (hx72s8sv).
+    cancelledNewAnnouncement:
+      podcast.cover !== null
         ? `${COVER_UPLOAD_CANCELLED_ANNOUNCEMENT} ${EPISODE_PODCAST_COVER_SENTENCE.stayed}`
         : COVER_UPLOAD_CANCELLED_ANNOUNCEMENT,
     crossedAnnouncement: COVER_CANCEL_CROSSED_ANNOUNCEMENT.episode,
@@ -486,10 +488,7 @@ export default function RouteComponent({
   // On the pick the focus goes to the row's *Zrušit* (26c), which stands
   // where the actions were.
   const coverFieldRef = useRef<HTMLElement>(null)
-  useEffect(() => {
-    if (!coverUpload.isUploading) return
-    coverFieldRef.current?.querySelector<HTMLElement>('button')?.focus()
-  }, [coverUpload.isUploading])
+  useUploadFocus(coverUpload.isUploading, coverFieldRef)
 
   // The labels of the fields that differ from this editor's last save; the
   // author only where the editor chooses it.
@@ -1193,7 +1192,12 @@ export default function RouteComponent({
                   <div className={styles.fact}>
                     <dt className={styles.factLabel}>Obálka</dt>
                     <dd
-                      aria-busy={coverUpload.isBusy || undefined}
+                      // The upload row says it on its own; a busy ancestor
+                      // would hold back its announcement.
+                      aria-busy={
+                        (coverUpload.isBusy && !coverUpload.isUploading) ||
+                        undefined
+                      }
                       className={styles.coverField}
                       ref={coverFieldRef}
                     >

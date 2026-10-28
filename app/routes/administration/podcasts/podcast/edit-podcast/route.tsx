@@ -48,6 +48,7 @@ import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useCoverUpload } from '~/hooks/use-cover-upload'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { useTakenValues } from '~/hooks/use-taken-values'
+import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
@@ -374,10 +375,7 @@ export default function RouteComponent({
   }, [coverUpload.isBusy])
   // On the pick the focus goes to the row's *Zrušit* (26c), as the control
   // that had it is gone.
-  useEffect(() => {
-    if (!coverUpload.isUploading) return
-    coverRef.current?.querySelector<HTMLElement>('button')?.focus()
-  }, [coverUpload.isUploading])
+  useUploadFocus(coverUpload.isUploading, coverRef)
 
   // The labels of the fields that differ from this editor's last save; the
   // author only where the editor chooses it.
@@ -843,21 +841,26 @@ export default function RouteComponent({
         {uploadStatus ||
           (coverFailure !== null
             ? renderCoverFailureActions()
-            : !isReadOnly &&
-              !coverUpload.isCancelling && (
+            : !isReadOnly && (
                 <div className={styles.coverActions}>
-                  {/* While it uploads it only says it waits, so it keeps the
-                    focus. */}
+                  {/* While it uploads, or a cancel settles, it only says it
+                    waits, so it keeps the focus. */}
                   <ButtonLink
                     aria-describedby={
                       coverUpload.rejection === null
                         ? undefined
                         : coverProblemId
                     }
-                    aria-disabled={coverUpload.isBusy || undefined}
+                    aria-disabled={
+                      coverUpload.isBusy ||
+                      coverUpload.isCancelling ||
+                      undefined
+                    }
                     disabled={isLocked}
                     onClick={() => {
-                      if (!coverUpload.isBusy) openCoverPicker()
+                      if (!coverUpload.isBusy && !coverUpload.isCancelling) {
+                        openCoverPicker()
+                      }
                     }}
                     type={'button'}
                   >
@@ -1086,7 +1089,11 @@ export default function RouteComponent({
               {/* The cover with its caption, as the issue's (26c); 27e draws
                   no caption, so it is only read. */}
               <figure
-                aria-busy={coverUpload.isBusy || undefined}
+                // The upload row says it on its own; a busy ancestor would
+                // hold back its announcement.
+                aria-busy={
+                  (coverUpload.isBusy && !coverUpload.isUploading) || undefined
+                }
                 className={styles.coverColumn}
                 ref={coverRef}
               >

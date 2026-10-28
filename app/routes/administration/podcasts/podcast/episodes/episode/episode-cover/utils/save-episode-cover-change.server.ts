@@ -209,9 +209,22 @@ export async function saveEpisodeCoverChange(
 
       if ('status' in prepared) return prepared
 
+      // Files left behind are only litter: the answer still says what
+      // happened to the change.
+      const dropRefused = async () => {
+        try {
+          await prepared.onRefused?.()
+        } catch (error) {
+          console.error(
+            'Episode cover files left after a refused change',
+            error,
+          )
+        }
+      }
+
       // Cancelled while the files were stored: they go, nothing commits.
       if (isCancelled()) {
-        await prepared.onRefused?.()
+        await dropRefused()
         return { status: 'cancelled' }
       }
 
@@ -266,7 +279,7 @@ export async function saveEpisodeCoverChange(
           episodeWrite,
         ])
       } catch (error) {
-        await prepared.onRefused?.()
+        await dropRefused()
 
         const currentHold = await prisma.podcastEpisode.findUnique({
           select: HOLD_SELECT,
