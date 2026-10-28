@@ -30,7 +30,9 @@ type Options = {
  * replacement keeps the cover's id and gets a new version, whose predecessor
  * goes only after the row commits, so a failed replacement keeps the old
  * cover. The alt text is composed from the title. An upload on its way still
- * lands after *Zavřít* released the hold. Cancelling it is #712.
+ * lands after *Zavřít* released the hold, and the editor can cancel it until
+ * it saves (bxy8xxqs): a new cover goes again, a replacement gets its previous
+ * version back.
  *
  * @param request - The action's request.
  * @param options - The podcast, the episode, the tab and the file.
@@ -52,6 +54,7 @@ export async function uploadEpisodeCover(
 
   return saveEpisodeCoverChange(request, {
     episodeId,
+    isCancellable: true,
     landsWithoutHold: true,
     podcastId,
     prepare: async (episode) => {
@@ -63,7 +66,13 @@ export async function uploadEpisodeCover(
         episode.cover === null
           ? null
           : await prisma.podcastEpisodeCover.findUnique({
-              select: { id: true, version: true },
+              select: {
+                id: true,
+                intrinsicHeight: true,
+                intrinsicWidth: true,
+                placeholderDataUrl: true,
+                version: true,
+              },
               where: { id: episode.cover.id },
             })
 
@@ -82,6 +91,13 @@ export async function uploadEpisodeCover(
         return {
           addsContent: true,
           isUpload: true,
+          onCancelled: async () => {
+            await prisma.podcastEpisodeCover.delete({
+              select: { id: true },
+              where: { id: coverId },
+            })
+            await deleteImage(coverId)
+          },
           onRefused: () => deleteImage(coverId),
           writes: [
             prisma.podcastEpisodeCover.create({
@@ -97,13 +113,30 @@ export async function uploadEpisodeCover(
         }
       }
 
-      const previousVersion = storedCover.version
-      const isNewVersion = previousVersion !== meta.version
+      const previousMeta: StoredImageMeta = {
+        intrinsicHeight: storedCover.intrinsicHeight,
+        intrinsicWidth: storedCover.intrinsicWidth,
+        placeholderDataUrl: storedCover.placeholderDataUrl,
+        version: storedCover.version,
+      }
+      const isNewVersion = previousMeta.version !== meta.version
 
       return {
         isUpload: true,
+        // The previous version's files are still there: the row points back
+        // at them, and the new version's go.
+        onCancelled: async () => {
+          await prisma.podcastEpisodeCover.update({
+            data: previousMeta,
+            select: { id: true },
+            where: { id: coverId },
+          })
+          if (isNewVersion) await deleteImageVersion(coverId, meta.version)
+        },
         onCommitted: async () => {
-          if (isNewVersion) await deleteImageVersion(coverId, previousVersion)
+          if (isNewVersion) {
+            await deleteImageVersion(coverId, previousMeta.version)
+          }
         },
         onRefused: async () => {
           if (isNewVersion) await deleteImageVersion(coverId, meta.version)

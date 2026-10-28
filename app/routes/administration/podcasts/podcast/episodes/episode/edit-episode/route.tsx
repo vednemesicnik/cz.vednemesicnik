@@ -34,6 +34,7 @@ import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
+import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
@@ -46,16 +47,30 @@ import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useCoverUpload } from '~/hooks/use-cover-upload'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { useTakenValues } from '~/hooks/use-taken-values'
+import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
+import {
+  CANCEL_COVER_UPLOAD_LABEL,
+  COVER_CANCEL_CROSSED_ANNOUNCEMENT,
+  COVER_FAILED_SENTENCE,
+  COVER_UPLOAD_CANCELLED_ANNOUNCEMENT,
+  COVER_UPLOAD_DONE_SENTENCE,
+  COVER_UPLOADING_LINE,
+  COVER_UPLOADING_SENTENCE,
+  EPISODE_PODCAST_COVER_SENTENCE,
+  ORIGINAL_COVER_STAYED_SENTENCE,
+  ORIGINAL_COVER_STAYS_SENTENCE,
+} from '~/utils/podcast/cover-upload-sentences'
 import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
@@ -433,6 +448,14 @@ export default function RouteComponent({
       '/administration/podcasts/:podcastId/episodes/:episodeId/cover',
       { episodeId, podcastId },
     ),
+    cancelledAnnouncement: COVER_UPLOAD_CANCELLED_ANNOUNCEMENT,
+    // A cancelled first own cover leaves the episode with the podcast's,
+    // when the podcast has one (hx72s8sv).
+    cancelledNewAnnouncement:
+      podcast.cover !== null
+        ? `${COVER_UPLOAD_CANCELLED_ANNOUNCEMENT} ${EPISODE_PODCAST_COVER_SENTENCE.stayed}`
+        : COVER_UPLOAD_CANCELLED_ANNOUNCEMENT,
+    crossedAnnouncement: COVER_CANCEL_CROSSED_ANNOUNCEMENT.episode,
     onDeleted: editHold.recheck,
     onNotHeld: async (heldByName) => {
       if (heldByName === null) return editHold.retake()
@@ -462,6 +485,10 @@ export default function RouteComponent({
       firstCoverActionRef.current?.focus()
     }
   }, [coverUpload.isBusy])
+  // On the pick the focus goes to the row's *Zrušit* (26c), which stands
+  // where the actions were.
+  const coverFieldRef = useRef<HTMLElement>(null)
+  useUploadFocus(coverUpload.isUploading, coverFieldRef)
 
   // The labels of the fields that differ from this editor's last save; the
   // author only where the editor chooses it.
@@ -524,6 +551,9 @@ export default function RouteComponent({
   const handleDeletion = useEffectEvent(async () => {
     // A takeover before the delete has nothing left to say (24k).
     setHoldLoss(null)
+    // An upload under way did not save; it ends with nothing to remove.
+    const unsentCoverLabels = getUnsentCoverLabels()
+    coverUpload.abandon()
     const hasUnsentChanges = await autosave.stop()
     setDeletion({
       hadOwnCover: episode.cover !== null,
@@ -531,7 +561,7 @@ export default function RouteComponent({
       isDialogOpen: true,
       unsentLabels: [
         ...(hasUnsentChanges ? getUnsentLabels() : []),
-        ...getUnsentCoverLabels(),
+        ...unsentCoverLabels,
       ],
     })
   })
@@ -600,19 +630,63 @@ export default function RouteComponent({
     }
   }
 
+  // Leaving cancels the upload under way, so *Zavřít* and a link out ask
+  // first while the cover uploads (26c, bxy8xxqs). The dialog names a failure
+  // from its opening on (moo05ljj). The flag is kept here, read ahead of a
+  // render.
+  const isCoverUploadingRef = useRef(false)
+  isCoverUploadingRef.current = coverUpload.isUploading
+  const [pendingLeave, setPendingLeave] = useState<{
+    to: string
+    go: () => void
+    stay: () => void
+    failureCountAtOpen: number
+  } | null>(null)
+  const askBeforeLeaving = (
+    to: string,
+    go: () => void,
+    stay: () => void = () => {},
+  ) =>
+    setPendingLeave({
+      failureCountAtOpen: coverUpload.failureCount,
+      go,
+      stay,
+      to,
+    })
+  // The dialog's leave cancels the upload if it still runs, and goes once the
+  // server has heard of it; once it no longer runs it only closes.
+  const leaveDespiteUpload = () => {
+    if (pendingLeave === null) return
+    const cancelled = coverUpload.cancel()
+    isCoverUploadingRef.current = false
+    setPendingLeave(null)
+    void cancelled
+      .then(() => leaveTo(pendingLeave.to, pendingLeave.go))
+      .finally(pendingLeave.stay)
+  }
+  const stayDespiteUpload = () => {
+    pendingLeave?.stay()
+    setPendingLeave(null)
+  }
+
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       currentLocation.pathname !== nextLocation.pathname &&
-      autosave.hasUnsavedChanges(),
+      (autosave.hasUnsavedChanges() || isCoverUploadingRef.current),
   )
   const handleBlocked = useEffectEvent(() => {
     if (blocker.state !== 'blocked') return
     const { pathname, search, hash } = blocker.location
-    void leaveTo(`${pathname}${search}${hash}`, () =>
-      blocker.proceed(),
-    ).finally(() => {
+    const to = `${pathname}${search}${hash}`
+    const settle = () => {
       if (blocker.state === 'blocked') blocker.reset()
-    })
+    }
+
+    if (isCoverUploadingRef.current) {
+      askBeforeLeaving(to, () => blocker.proceed(), settle)
+      return
+    }
+    void leaveTo(to, () => blocker.proceed()).finally(settle)
   })
   useEffect(() => {
     if (blocker.state === 'blocked') handleBlocked()
@@ -633,6 +707,10 @@ export default function RouteComponent({
 
   const handleClose = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
+    if (isCoverUploadingRef.current) {
+      askBeforeLeaving(closeHref, () => navigate(closeHref))
+      return
+    }
     void leaveTo(closeHref, () => navigate(closeHref))
   }
 
@@ -736,7 +814,12 @@ export default function RouteComponent({
         </ButtonLink>
       </p>
     ) : (
-      <p className={styles.saveLine}>{saveLine}</p>
+      <p className={styles.saveLine}>
+        {/* The cover has its words after it while it uploads (cfs3v5ka). */}
+        {coverUpload.isUploading
+          ? `${saveLine} · ${COVER_UPLOADING_LINE}`
+          : saveLine}
+      </p>
     )
 
   const editorSentence = getEpisodeEditorSentence({
@@ -798,11 +881,13 @@ export default function RouteComponent({
           ? coverProblemId
           : undefined
       }
-      aria-disabled={coverUpload.isBusy || undefined}
+      aria-disabled={
+        coverUpload.isBusy || coverUpload.isCancelling || undefined
+      }
       className={styles.coverAction}
       disabled={isLocked}
       onClick={() => {
-        if (!coverUpload.isBusy) onClick()
+        if (!coverUpload.isBusy && !coverUpload.isCancelling) onClick()
       }}
       ref={ref}
       type={'button'}
@@ -820,6 +905,58 @@ export default function RouteComponent({
           unsentLabels: holdLoss.unsentLabels,
         })
       : []
+
+  // What still uploads and what stays (26c); once it no longer runs, how it
+  // ended. Without its own cover the episode goes out with the podcast's,
+  // when the podcast has one (copy hx72s8sv).
+  const renderLeaveDialog = ({
+    failureCountAtOpen,
+  }: NonNullable<typeof pendingLeave>) => {
+    const isUploading = coverUpload.upload !== null
+    const hasFailed = coverUpload.failureCount > failureCountAtOpen
+    const getKeptSentence = (
+      replaces: boolean,
+      sentences: { replaces: string; podcastCover: string },
+    ) =>
+      replaces
+        ? sentences.replaces
+        : podcast.cover !== null
+          ? sentences.podcastCover
+          : null
+    const paragraphs = isUploading
+      ? [
+          COVER_UPLOADING_SENTENCE,
+          getKeptSentence(coverUpload.upload?.replaces ?? false, {
+            podcastCover: EPISODE_PODCAST_COVER_SENTENCE.uploading,
+            replaces: ORIGINAL_COVER_STAYS_SENTENCE.episode,
+          }),
+        ]
+      : hasFailed
+        ? [
+            COVER_FAILED_SENTENCE,
+            getKeptSentence(coverUpload.failure?.replaces ?? false, {
+              podcastCover: EPISODE_PODCAST_COVER_SENTENCE.stayed,
+              replaces: ORIGINAL_COVER_STAYED_SENTENCE.episode,
+            }),
+          ]
+        : [COVER_UPLOAD_DONE_SENTENCE]
+
+    return (
+      <CancelUploadDialog
+        isUploading={isUploading}
+        onLeave={leaveDespiteUpload}
+        onStay={stayDespiteUpload}
+      >
+        {paragraphs
+          .filter((paragraph) => paragraph !== null)
+          .map((paragraph) => (
+            <AdminModalDescription key={paragraph}>
+              {paragraph}
+            </AdminModalDescription>
+          ))}
+      </CancelUploadDialog>
+    )
+  }
 
   return (
     <AdminPage measure={'form'}>
@@ -865,6 +1002,8 @@ export default function RouteComponent({
           </div>
         </Callout>
       )}
+
+      {pendingLeave !== null && renderLeaveDialog(pendingLeave)}
 
       {deletion?.isDialogOpen && (
         <ContentDeletedDialog
@@ -1053,8 +1192,14 @@ export default function RouteComponent({
                   <div className={styles.fact}>
                     <dt className={styles.factLabel}>Obálka</dt>
                     <dd
-                      aria-busy={coverUpload.isBusy || undefined}
+                      // The upload row says it on its own; a busy ancestor
+                      // would hold back its announcement.
+                      aria-busy={
+                        (coverUpload.isBusy && !coverUpload.isUploading) ||
+                        undefined
+                      }
                       className={styles.coverField}
+                      ref={coverFieldRef}
                     >
                       {/* *Vybrat vlastní* and *Vyměnit* open it; a pick
                           saves on its own, never with the form. */}
@@ -1108,29 +1253,45 @@ export default function RouteComponent({
                           />
                         )}
                         <div className={styles.coverText}>
-                          {episode.cover === null && (
-                            <span className={styles.secondary}>
-                              Obálka podcastu
-                            </span>
-                          )}
-                          {/* The picker keeps its place as its label changes,
+                          {/* The row takes the label's and the actions'
+                              place while the picked cover uploads, as in
+                              26c; the label would name the podcast's. */}
+                          {coverUpload.upload !== null ? (
+                            <UploadStatus
+                              cancelLabel={CANCEL_COVER_UPLOAD_LABEL}
+                              className={styles.coverUploadStatus}
+                              onCancel={() => void coverUpload.cancel()}
+                            />
+                          ) : (
+                            <>
+                              {episode.cover === null && (
+                                <span className={styles.secondary}>
+                                  Obálka podcastu
+                                </span>
+                              )}
+                              {/* The picker keeps its place as its label changes,
                               so it keeps the focus too. */}
-                          {!isReadOnly &&
-                            renderCoverAction(
-                              episode.cover === null
-                                ? 'Vybrat vlastní'
-                                : 'Vyměnit',
-                              openCoverPicker,
-                              firstCoverActionRef,
-                            )}
-                          {!isReadOnly &&
-                            episode.cover !== null &&
-                            renderCoverAction(
-                              'Použít obálku podcastu',
-                              () => void coverUpload.remove(),
-                            )}
+                              {!isReadOnly &&
+                                renderCoverAction(
+                                  episode.cover === null
+                                    ? 'Vybrat vlastní'
+                                    : 'Vyměnit',
+                                  openCoverPicker,
+                                  firstCoverActionRef,
+                                )}
+                              {!isReadOnly &&
+                                episode.cover !== null &&
+                                renderCoverAction(
+                                  'Použít obálku podcastu',
+                                  () => void coverUpload.remove(),
+                                )}
+                            </>
+                          )}
                         </div>
                       </div>
+                      <span className={'screen-reader-only'} role={'status'}>
+                        {coverUpload.announcement}
+                      </span>
                       {!isReadOnly && (
                         <span className={styles.coverHint}>
                           Nepovinná. Obrázek do 5 MB. Nečtvercový se na webu

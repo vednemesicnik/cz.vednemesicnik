@@ -33,6 +33,11 @@ export type PreparedCoverChange = {
   onCommitted?: () => Promise<void>
   /** Runs when the writes did not commit: drops files the change stored. */
   onRefused?: () => Promise<void>
+  /**
+   * Runs when a cancellable change was cancelled after its writes committed,
+   * before `onCommitted`: puts back what the change replaced (bxy8xxqs).
+   */
+  onCancelled?: () => Promise<void>
 }
 
 /**
@@ -52,6 +57,8 @@ export type CoverChangeResult =
   /** The episode is gone: deleted meanwhile (0036). */
   | { status: 'deleted' }
   | CoverChangeFailure
+  /** The editor cancelled the upload; nothing stays stored (bxy8xxqs). */
+  | { status: 'cancelled' }
 
 type Options = {
   podcastId: string
@@ -63,6 +70,12 @@ type Options = {
    * meanwhile, never over someone else's.
    */
   landsWithoutHold?: boolean
+  /**
+   * An upload the editor can cancel until it saves (bxy8xxqs): the aborted
+   * request is checked before the files are stored, right before the commit,
+   * and once more after it, where `onCancelled` puts things back.
+   */
+  isCancellable?: boolean
   prepare: (
     episode: CoverChangeEpisode,
   ) => Promise<PreparedCoverChange | CoverChangeFailure>
@@ -97,18 +110,28 @@ const HOLD_SELECT = {
  *
  * @param request - The action's request.
  * @param options - The podcast and the episode, the editor's tab, whether the
- *   change lands without the hold, and `prepare`, which checks the input,
- *   stores any files and returns the writes.
+ *   change lands without the hold or can be cancelled, and `prepare`, which
+ *   checks the input, stores any files and returns the writes.
  * @returns `saved` with the new `updatedAt`, `not-held` with the holder's
- *   name (nothing is written), `deleted` when the episode is gone, or
- *   `failed` for an image that could not be processed.
+ *   name (nothing is written), `deleted` when the episode is gone, `failed`
+ *   for an image that could not be processed, or `cancelled` for a
+ *   cancellable change whose request was aborted.
  * @throws A 403 response for a denied edit or a locked submission, and
  *   whatever `prepare` throws.
  */
 export async function saveEpisodeCoverChange(
   request: Request,
-  { podcastId, episodeId, tabId, landsWithoutHold = false, prepare }: Options,
+  {
+    podcastId,
+    episodeId,
+    tabId,
+    landsWithoutHold = false,
+    isCancellable = false,
+    prepare,
+  }: Options,
 ): Promise<CoverChangeResult> {
+  const isCancelled = () => isCancellable && request.signal.aborted
+
   const storedEpisode = await prisma.podcastEpisode.findUnique({
     select: {
       authorId: true,
@@ -174,6 +197,9 @@ export async function saveEpisodeCoverChange(
         return toNotHeld(storedEpisode)
       }
 
+      // Cancelled before any file is stored.
+      if (isCancelled()) return { status: 'cancelled' }
+
       const prepared = await prepare({
         cover: storedEpisode.cover,
         number: storedEpisode.number,
@@ -182,6 +208,25 @@ export async function saveEpisodeCoverChange(
       })
 
       if ('status' in prepared) return prepared
+
+      // Files left behind are only litter: the answer still says what
+      // happened to the change.
+      const dropRefused = async () => {
+        try {
+          await prepared.onRefused?.()
+        } catch (error) {
+          console.error(
+            'Episode cover files left after a refused change',
+            error,
+          )
+        }
+      }
+
+      // Cancelled while the files were stored: they go, nothing commits.
+      if (isCancelled()) {
+        await dropRefused()
+        return { status: 'cancelled' }
+      }
 
       const holdWhere = landsWithoutHold
         ? {
@@ -213,16 +258,28 @@ export async function saveEpisodeCoverChange(
           ]
         : []
 
+      // The episode's `updatedAt` before this commit, read in it, for a cancel
+      // to put back.
+      const previousRead = isCancellable
+        ? [
+            prisma.podcastEpisode.findUniqueOrThrow({
+              select: { updatedAt: true },
+              where: { id: episodeId },
+            }),
+          ]
+        : []
+
       let results: unknown[]
 
       try {
         results = await prisma.$transaction([
+          ...previousRead,
           ...firstContentWrite,
           ...prepared.writes,
           episodeWrite,
         ])
       } catch (error) {
-        await prepared.onRefused?.()
+        await dropRefused()
 
         const currentHold = await prisma.podcastEpisode.findUnique({
           select: HOLD_SELECT,
@@ -245,9 +302,37 @@ export async function saveEpisodeCoverChange(
 
       const isCreation =
         firstContentWrite.length > 0 &&
-        (results[0] as Prisma.BatchPayload).count === 1
+        (results[previousRead.length] as Prisma.BatchPayload).count === 1
 
       const { updatedAt } = results.at(-1) as { updatedAt: Date }
+
+      // Cancelled during the commit: put back what it replaced. Unless
+      // another change saved since, the episode is as it was: the editor's
+      // `updatedAt` holds again, and the empty draft it would have filled
+      // stays empty (0020).
+      if (isCancelled() && prepared.onCancelled) {
+        const { updatedAt: previousUpdatedAt } = results[0] as {
+          updatedAt: Date
+        }
+        try {
+          await prepared.onCancelled()
+        } catch (error) {
+          console.error('Episode cover change left after a cancel', error)
+        }
+        // On its own: files left behind must not keep the draft filled.
+        try {
+          await prisma.podcastEpisode.updateMany({
+            data: {
+              updatedAt: previousUpdatedAt,
+              ...(isCreation ? { firstContentAt: null } : {}),
+            },
+            where: { id: episodeId, updatedAt },
+          })
+        } catch (error) {
+          console.error('Episode left changed after a cancel', error)
+        }
+        return { status: 'cancelled' }
+      }
 
       // The change is saved; files it left behind are only litter.
       try {

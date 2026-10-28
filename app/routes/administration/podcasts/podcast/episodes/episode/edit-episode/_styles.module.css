@@ -217,6 +217,13 @@
   }
 }
 
+/* The row fills the text column while the picked cover uploads (26c). */
+.coverUploadStatus {
+  @layer route {
+    align-self: stretch;
+  }
+}
+
 /* While a change saves, the actions only say they wait. */
 .coverAction {
   @layer route {
