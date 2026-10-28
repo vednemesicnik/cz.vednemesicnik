@@ -89,6 +89,7 @@
     flex-direction: column;
     gap: 8px;
     max-inline-size: 220px;
+    margin: 0;
   }
 }
 

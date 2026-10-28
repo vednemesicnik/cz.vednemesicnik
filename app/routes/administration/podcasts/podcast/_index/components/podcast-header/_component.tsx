@@ -23,6 +23,8 @@ type Props = {
     state: ContentState
     authorName: string
     publishedDate: string | null
+    /** Who edits it while held: „upravuje Jakub Novák od 14:02“ (23g). */
+    holdLine: string | null
     description: string
     cover: ImageSources | null
   }
@@ -38,7 +40,8 @@ type Props = {
 
 /**
  * The podcast's header over its episode table (design 27b): the cover, the
- * title with its state, the author · publish date · address, the description,
+ * title with its state, the author · publish date or who edits it · address,
+ * the description,
  * and „⋯“ (Historie first), *Zobrazit na webu* on a published podcast,
  * *Upravit* on a draft and *Nová epizoda*, which on a phone waits in the
  * page's `ListActionBar` instead (32d).
@@ -58,9 +61,11 @@ export const PodcastHeader = ({
   })
   const meta = [
     podcast.authorName,
-    podcast.publishedDate === null
-      ? null
-      : `publikováno ${podcast.publishedDate}`,
+    // Only a draft is held, and it has no publish date to show (07g).
+    podcast.holdLine ??
+      (podcast.publishedDate === null
+        ? null
+        : `publikováno ${podcast.publishedDate}`),
     // A draft may have no address yet (27i).
     podcast.slug === '' ? null : publicPath,
   ].filter((part) => part !== null)

@@ -1,5 +1,6 @@
 import { data, href, redirect } from 'react-router'
 
+import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
 import { getArticleHold } from '~/routes/administration/articles/utils/get-article-hold'
 import { getHeldActionFlags } from '~/routes/administration/articles/utils/get-held-action-flags'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
@@ -104,10 +105,8 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
   }
 
   const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
-  const hold = getArticleHold(podcast, {
-    authorId: context.authorId,
-    now: new Date(),
-  })
+  const now = new Date()
+  const hold = getArticleHold(podcast, { authorId: context.authorId, now })
   const isHeldByOther = hold !== null && !hold.isOwn
 
   // While someone else edits it, its edit and state actions wait (07g); the
@@ -187,6 +186,16 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
         description: podcast.description,
         episodeCount: podcast._count.episodes,
         history,
+        // Who edits it while held, in the meta line (as 27c, 23g).
+        holdLine:
+          hold === null
+            ? null
+            : formatEditHoldLine({
+                holderName: hold.heldByName,
+                isOwn: hold.isOwn,
+                now,
+                since: hold.heldSince,
+              }),
         id: podcast.id,
         // The date only of a podcast on the web (27b).
         publishedDate:

@@ -21,7 +21,7 @@ describe('getPodcastSaveLineText', () => {
     ).toBe('uloženo dnes v 14:02')
   })
 
-  test('a new draft before its first save', () => {
+  test('a new draft before its first save says only that', () => {
     expect(
       getPodcastSaveLineText({
         hasCover: false,
@@ -29,7 +29,7 @@ describe('getPodcastSaveLineText', () => {
         savedAt: null,
         status: 'idle',
       }),
-    ).toBe('Zatím neuloženo · obálka zatím chybí')
+    ).toBe('Zatím neuloženo')
   })
 
   test.each([

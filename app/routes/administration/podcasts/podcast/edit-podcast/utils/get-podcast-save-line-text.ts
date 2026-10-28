@@ -13,7 +13,8 @@ type Options = {
 /**
  * The line under the podcast editor's heading, the only sign of saving
  * (design 27e, 24e): the last save, with *obálka zatím chybí* after it until
- * the podcast has a cover, which 27i asks for at submit.
+ * the podcast has a cover, which 27i asks for at submit. A new draft says
+ * only that nothing saved yet: 27e draws the note after a save.
  *
  * @returns „Zatím neuloženo“, „ukládá se“, „uloženo dnes v 14:02 · obálka
  *   zatím chybí“, „bez připojení · čeká na uložení“ or „Nepodařilo se
@@ -34,10 +35,8 @@ export const getPodcastSaveLineText = ({
     case 'saving':
       return 'ukládá se'
     default: {
-      const saved =
-        savedAt === null
-          ? 'Zatím neuloženo'
-          : `uloženo ${formatSavedMoment(savedAt, now)}`
+      if (savedAt === null) return 'Zatím neuloženo'
+      const saved = `uloženo ${formatSavedMoment(savedAt, now)}`
       return hasCover ? saved : `${saved} · obálka zatím chybí`
     }
   }

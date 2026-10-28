@@ -28,9 +28,10 @@ of #836 (#849) moved the podcast's address to `publishedSlug`
 - **The cover saves on its own as it is picked** ([0029](0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md)),
   up to 5 MB, with 40 MP refused after the upload (4al3quzt). It is replaced, never removed:
   episodes without their own take it over, and 27i requires it at submit.
-- **One drop field and one upload hook serve the issue, the episode and the podcast.**
-  `FileDropField` and `FailedFile` live in `app/components/`, and `useCoverUpload` in
-  `app/hooks/`. #712 (the upload row and *Zrušit*) changes them once for both podcast covers.
+- **The drop field serves the issue and the podcast, and one upload hook the episode and the
+  podcast.** `FileDropField` and `FailedFile` live in `app/components/`, and `useCoverUpload`
+  in `app/hooks/`; the issue keeps its own upload hook, which cancels. #712 (the upload row and
+  *Zrušit*) changes the hook once for both podcast covers.
 - **A refusal can name another content's editor.** A podcast's delete waits for its own editor
   and for an editor of one of its empty episode drafts. `EditHeldRefusal.content` says which, so
   the toast names the right editor (0036).

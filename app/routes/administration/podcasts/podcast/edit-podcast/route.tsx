@@ -340,6 +340,23 @@ export default function RouteComponent({
   const coverInputRef = useRef<HTMLInputElement>(null)
   // A refused or failed pick's sentence describes the field (26d).
   const coverProblemId = useId()
+  // The control that started an upload is gone once its preview stands in
+  // the slot; when the upload ends, the cover's first control takes the focus
+  // back, unless the author moved on.
+  const coverRef = useRef<HTMLElement>(null)
+  const wasCoverBusyRef = useRef(false)
+  useEffect(() => {
+    const wasBusy = wasCoverBusyRef.current
+    wasCoverBusyRef.current = coverUpload.isBusy
+    if (!wasBusy || coverUpload.isBusy) return
+    const focused = document.activeElement
+    if (focused !== null && focused !== document.body) return
+    coverRef.current
+      ?.querySelector<HTMLElement>(
+        'button:not([disabled]), input[type="file"]:not([hidden])',
+      )
+      ?.focus()
+  }, [coverUpload.isBusy])
 
   // The labels of the fields that differ from this editor's last save; the
   // author only where the editor chooses it.
@@ -664,15 +681,16 @@ export default function RouteComponent({
   const renderCover = () => {
     if (isDeleted) return null
 
-    if (coverUpload.previewUrl !== null) {
-      return (
-        <img
-          alt={''}
-          className={clsx(styles.coverImage, styles.coverUploading)}
-          src={coverUpload.previewUrl}
-        />
-      )
-    }
+    // The picked cover, dimmed until it saves (26c).
+    const preview = coverUpload.previewUrl !== null && (
+      <img
+        alt={''}
+        className={clsx(styles.coverImage, styles.coverUploading)}
+        src={coverUpload.previewUrl}
+      />
+    )
+
+    if (podcast.cover === null && preview !== false) return preview
 
     if (podcast.cover === null && coverFailure?.change === 'upload') {
       return (
@@ -706,14 +724,18 @@ export default function RouteComponent({
       )
     }
 
+    // A replacement on its way takes the image's place only: the actions and
+    // the note keep theirs, so nothing under them moves.
     return (
       <>
-        <Image
-          {...podcast.cover.sources}
-          alt={podcast.cover.altText}
-          className={styles.coverImage}
-          sizes={'220px'}
-        />
+        {preview || (
+          <Image
+            {...podcast.cover.sources}
+            alt={podcast.cover.altText}
+            className={styles.coverImage}
+            sizes={'220px'}
+          />
+        )}
         {/* A failed or refused replacement: the stored cover stays above it. */}
         {(coverFailure !== null || coverUpload.rejection !== null) && (
           <div id={coverProblemId}>
@@ -726,12 +748,17 @@ export default function RouteComponent({
           ? renderCoverFailureActions()
           : !isReadOnly && (
               <div className={styles.coverActions}>
+                {/* While it uploads it only says it waits, so it keeps the
+                    focus. */}
                 <ButtonLink
                   aria-describedby={
                     coverUpload.rejection === null ? undefined : coverProblemId
                   }
+                  aria-disabled={coverUpload.isBusy || undefined}
                   disabled={isLocked}
-                  onClick={openCoverPicker}
+                  onClick={() => {
+                    if (!coverUpload.isBusy) openCoverPicker()
+                  }}
                   type={'button'}
                 >
                   Vyměnit
@@ -917,11 +944,14 @@ export default function RouteComponent({
           {/* The cover left, the details right (27e, as 26c). */}
           <div className={styles.layout}>
             <div className={styles.columns}>
-              <section
+              {/* The cover with its caption, as the issue's (26c); 27e draws
+                  no caption, so it is only read. */}
+              <figure
                 aria-busy={coverUpload.isBusy || undefined}
-                aria-label={'Obálka'}
                 className={styles.coverColumn}
+                ref={coverRef}
               >
+                <figcaption className={'screen-reader-only'}>Obálka</figcaption>
                 {/* *Vyměnit* and *Vybrat jiný soubor* open it; a pick saves
                   on its own, never with the form. */}
                 <input
@@ -948,7 +978,7 @@ export default function RouteComponent({
                     </p>
                   </>
                 )}
-              </section>
+              </figure>
 
               <div className={styles.details}>
                 <fieldset className={styles.lock} disabled={isLocked}>
