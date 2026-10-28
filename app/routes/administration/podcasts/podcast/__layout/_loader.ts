@@ -9,7 +9,6 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
 
   const podcast = await prisma.podcast.findUnique({
     select: {
-      firstContentAt: true,
       id: true,
       title: true,
     },
@@ -23,9 +22,6 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
   return {
     podcast: {
       id: podcast.id,
-      // A new draft is named as the button that made it until its first save
-      // (27e); its editor adds no crumb of its own.
-      isEmptyDraft: podcast.firstContentAt === null,
       title: podcast.title,
     },
   }

@@ -10,11 +10,9 @@ type Match = BreadcrumbMatch<
 >
 
 export const handle = {
-  breadcrumb: (match: Match): Breadcrumb | null => {
+  // „Podcasty / Podcast bez názvu / Úprava“ for the empty draft too (27e, jri2vk3h).
+  breadcrumb: (match: Match): Breadcrumb => {
     const { podcastId } = match.params
-
-    // A new draft's trail is „Podcasty / Nový podcast“ (27e).
-    if (match.loaderData?.podcast.isEmptyDraft) return null
 
     return {
       // The last crumb names the page, the record stands before it (copy 5yrb681l).

@@ -9,8 +9,8 @@ describe('getArticleDisplayTitle', () => {
     )
   })
 
-  test('names a draft without a title Nový článek', () => {
-    expect(getArticleDisplayTitle('')).toBe('Nový článek')
-    expect(getArticleDisplayTitle('   ')).toBe('Nový článek')
+  test('names a draft without a title Článek bez názvu', () => {
+    expect(getArticleDisplayTitle('')).toBe('Článek bez názvu')
+    expect(getArticleDisplayTitle('   ')).toBe('Článek bez názvu')
   })
 })

@@ -178,7 +178,12 @@ export const ItemRow = ({
         onChange={onSelect}
       />
       <TableNameCell>
-        <TableRowLink to={action}>{article.title}</TableRowLink>
+        <TableRowLink
+          className={clsx(article.isUntitled && styles.untitled)}
+          to={action}
+        >
+          {article.title}
+        </TableRowLink>
         {firstCategory !== undefined && (
           <span className={styles.categories}>
             {firstCategory}

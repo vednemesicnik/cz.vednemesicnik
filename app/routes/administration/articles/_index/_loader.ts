@@ -25,6 +25,7 @@ import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
 import { buildArticlePermissionWhere } from '../utils/build-article-permission-where'
 import { formatEditHoldLine } from '../utils/format-edit-hold-line'
+import { getArticleDisplayTitle } from '../utils/get-article-display-title'
 import { getArticleFactLine } from '../utils/get-article-fact-line'
 import { getArticleHold } from '../utils/get-article-hold'
 import { getHeldActionFlags } from '../utils/get-held-action-flags'
@@ -363,11 +364,13 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         flags.submission === null &&
         flags.isSubmittable &&
         !flags.isOwnContent,
+      // A draft without a title goes by its name, said quieter (22f).
+      isUntitled: article.title.trim() === '',
       publishedAt: article.publishedAt?.toISOString() ?? null,
       slug: article.slug,
       state: flags.submission?.state ?? article.state,
       tagNames,
-      title: article.title,
+      title: getArticleDisplayTitle(article.title),
       updatedAt: formatNumericDate(article.updatedAt),
     }
   })

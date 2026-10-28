@@ -5,12 +5,11 @@ import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title
 import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = ({ loaderData }) => {
+  // Without a title, the empty draft included, Epizoda bez názvu (jri2vk3h).
   const title =
     loaderData === undefined
       ? createAdminPageTitle('Upravit epizodu')
-      : loaderData.episode.isEmptyDraft
-        ? createAdminPageTitle('Nová epizoda')
-        : createAdminEditPageTitle(formatEpisodeTitle(loaderData.episode))
+      : createAdminEditPageTitle(formatEpisodeTitle(loaderData.episode))
 
   return [{ title }]
 }

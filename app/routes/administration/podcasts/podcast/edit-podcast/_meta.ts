@@ -5,14 +5,13 @@ import { getPodcastDisplayTitle } from '~/utils/podcast/get-podcast-display-titl
 import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = ({ loaderData }) => {
+  // Without a title, the empty draft included, Podcast bez názvu (jri2vk3h).
   const title =
     loaderData === undefined
       ? createAdminPageTitle('Upravit podcast')
-      : loaderData.podcast.isEmptyDraft
-        ? createAdminPageTitle('Nový podcast')
-        : createAdminEditPageTitle(
-            getPodcastDisplayTitle(loaderData.podcast.title),
-          )
+      : createAdminEditPageTitle(
+          getPodcastDisplayTitle(loaderData.podcast.title),
+        )
 
   return [{ title }]
 }

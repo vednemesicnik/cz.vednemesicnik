@@ -14,6 +14,7 @@ import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
 import { findPublishedSlugConflict } from '../../utils/find-published-slug-conflict.server'
 import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
+import { getArticleDisplayTitle } from '../../utils/get-article-display-title'
 import { getArticleFactLine } from '../../utils/get-article-fact-line'
 import { getArticleHold } from '../../utils/get-article-hold'
 import { getHeldActionFlags } from '../../utils/get-held-action-flags'
@@ -212,7 +213,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         slug: article.slug,
         state: article.state,
         tags: article.tags,
-        title: article.title,
+        // The heading, the tab and the dialogs (24a, jri2vk3h).
+        title: getArticleDisplayTitle(article.title),
       },
       ...flags,
       // „Článek právě upravuje …“ in place of the buttons (23g), and when the

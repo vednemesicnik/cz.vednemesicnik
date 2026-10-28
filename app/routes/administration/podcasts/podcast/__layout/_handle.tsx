@@ -14,13 +14,12 @@ export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { podcastId } = match.params
 
+    // Without a title, the empty draft included, Podcast bez názvu (27e, jri2vk3h).
     const podcast = match.loaderData?.podcast
     const label =
       podcast === undefined
         ? 'Neznámý podcast'
-        : podcast.isEmptyDraft
-          ? 'Nový podcast'
-          : getPodcastDisplayTitle(podcast.title)
+        : getPodcastDisplayTitle(podcast.title)
     const path = href(`/administration/podcasts/:podcastId`, { podcastId })
 
     return { label, path }
