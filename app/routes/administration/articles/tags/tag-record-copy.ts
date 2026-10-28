@@ -38,7 +38,7 @@ export const TAG_RECORD_COPY: TaxonomyRecordCopy = {
   deleteTitle: (name) => `Smazat štítek „${name}“?`,
   editTitle: 'Upravit štítek',
   headerSentences: {
-    'not-submitted': 'Štítek nebyl odeslán ke schválení.',
+    'not-submitted': 'Štítek není odeslaný ke schválení.',
     'who-approves': 'Schválit může Koordinátor.',
     'who-edits': 'Upravovat mohou autor štítku a Koordinátor.',
     'who-publishes': 'Publikovat může Koordinátor.',
