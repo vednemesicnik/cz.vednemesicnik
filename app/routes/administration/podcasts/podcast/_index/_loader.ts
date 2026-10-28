@@ -1,4 +1,4 @@
-import { data } from 'react-router'
+import { data, href, redirect } from 'react-router'
 
 import { getContentHistory } from '~/utils/content-log/get-content-history.server'
 import { prisma } from '~/utils/db.server'
@@ -55,6 +55,7 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
       },
       createdAt: true,
       description: true,
+      firstContentAt: true,
       id: true,
       publishedAt: true,
       reviews: {
@@ -84,6 +85,13 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
   // A record the person may not see is a 404, like a deleted one (design 30e).
   if (!canView) {
     throw data(null, { status: 404 })
+  }
+
+  // An empty draft has no detail yet (log 0020): its editor is the page.
+  if (podcast.firstContentAt === null) {
+    throw redirect(
+      href('/administration/podcasts/:podcastId/edit-podcast', { podcastId }),
+    )
   }
 
   const flags = getContentActionFlags(context, 'podcast', {

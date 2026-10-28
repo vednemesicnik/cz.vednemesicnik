@@ -21,15 +21,16 @@ export const loader = async () => {
     }),
     prisma.podcast.findMany({
       orderBy: { publishedAt: 'desc' },
-      select: { slug: true, updatedAt: true },
+      // The address a podcast holds since its publish (log 0039).
+      select: { publishedSlug: true, updatedAt: true },
       where: { state: 'published' },
     }),
     // An episode page also needs its podcast to be published, otherwise it 404s.
     prisma.podcastEpisode.findMany({
       orderBy: { publishedAt: 'desc' },
-      // The address an episode holds in its podcast since its publish (log 0039).
+      // The addresses the episode and its podcast hold since their publish (log 0039).
       select: {
-        podcast: { select: { slug: true } },
+        podcast: { select: { publishedSlug: true } },
         publishedSlug: true,
         updatedAt: true,
       },
@@ -65,14 +66,20 @@ export const loader = async () => {
             },
           ],
     ),
-    ...podcasts.map((podcast) => ({
-      lastmod: podcast.updatedAt,
-      loc: toAbsoluteUrl(
-        href('/podcasts/:podcastSlug', { podcastSlug: podcast.slug }),
-      ),
-    })),
-    ...episodes.flatMap(({ podcast, publishedSlug, updatedAt }) =>
+    ...podcasts.flatMap(({ publishedSlug, updatedAt }) =>
       publishedSlug === null
+        ? []
+        : [
+            {
+              lastmod: updatedAt,
+              loc: toAbsoluteUrl(
+                href('/podcasts/:podcastSlug', { podcastSlug: publishedSlug }),
+              ),
+            },
+          ],
+    ),
+    ...episodes.flatMap(({ podcast, publishedSlug, updatedAt }) =>
+      publishedSlug === null || podcast.publishedSlug === null
         ? []
         : [
             {
@@ -80,7 +87,7 @@ export const loader = async () => {
               loc: toAbsoluteUrl(
                 href('/podcasts/:podcastSlug/:episodeSlug', {
                   episodeSlug: publishedSlug,
-                  podcastSlug: podcast.slug,
+                  podcastSlug: podcast.publishedSlug,
                 }),
               ),
             },

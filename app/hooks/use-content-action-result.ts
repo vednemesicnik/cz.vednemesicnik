@@ -33,6 +33,8 @@ type ActionResult =
       missing: string[]
       heldByName?: string
       isHeldInOwnOtherTab?: boolean
+      /** What the holding editor edits, when it is not the content acted on. */
+      heldContent?: EditHoldContent
     }
   | undefined
 
@@ -50,11 +52,16 @@ type Options = {
 // hgb3jeqj, ey73zhul, ahizoh4o).
 const HELD_CONTENT = {
   epizodu: 'episode',
+  podcast: 'podcast',
   článek: 'article',
   číslo: 'issue',
 } as const satisfies Record<string, EditHoldContent>
 
 type HeldSubject = keyof typeof HELD_CONTENT
+
+const HELD_SUBJECT = Object.fromEntries(
+  Object.entries(HELD_CONTENT).map(([subject, content]) => [content, subject]),
+) as Record<EditHoldContent, HeldSubject>
 
 /**
  * Answers a content action's result once (design 23h): a toast, or the list of
@@ -86,9 +93,16 @@ export const useContentActionResult = (
     }
     handledResultRef.current = actionResult
 
+    // The holding editor's content, which may be another than the one acted
+    // on (an empty episode draft holds up its podcast's delete).
+    const subject =
+      actionResult.heldContent === undefined
+        ? heldSubject
+        : HELD_SUBJECT[actionResult.heldContent]
+
     // One's own editor in another tab holds it; the delete waits (0036).
     if (actionResult.isHeldInOwnOtherTab === true) {
-      showToast(getOwnOtherTabDeleteRefusal(HELD_CONTENT[heldSubject]))
+      showToast(getOwnOtherTabDeleteRefusal(HELD_CONTENT[subject]))
       return
     }
 
@@ -96,7 +110,7 @@ export const useContentActionResult = (
     // hgb3jeqj, ey73zhul).
     if (actionResult.heldByName !== undefined) {
       showToast(
-        `Zkuste akci později — ${heldSubject} právě upravuje ${actionResult.heldByName}. Akce se neprovedla.`,
+        `Zkuste akci později — ${subject} právě upravuje ${actionResult.heldByName}. Akce se neprovedla.`,
       )
       return
     }

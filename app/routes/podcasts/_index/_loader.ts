@@ -8,6 +8,7 @@ import {
   getWebContentVisibility,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { NON_EMPTY_PODCAST_WHERE } from '~/utils/podcast/non-empty-podcast-where'
 import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 
 import type { Route } from './+types/route'
@@ -18,7 +19,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     'podcast_episode',
   ])
 
-  const podcastWhere = visibility.where('podcast', ownByAuthor)
+  // An empty draft never shows, not even as a preview (log 0020).
+  const podcastWhere = {
+    AND: [visibility.where('podcast', ownByAuthor)],
+    ...NON_EMPTY_PODCAST_WHERE,
+  }
 
   const podcastsPromise = prisma.podcast.findMany({
     orderBy: {
@@ -29,6 +34,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         select: imageSourceSelect,
       },
       id: true,
+      // The typed address: a signed-in author sees drafts here too, and a
+      // published podcast's is the one it holds (log 0039).
       slug: true,
       title: true,
     },

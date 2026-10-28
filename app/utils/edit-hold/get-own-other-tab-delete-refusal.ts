@@ -5,6 +5,7 @@ const EDITOR: Record<EditHoldContent, string> = {
   article: 'editor článku',
   episode: 'editor epizody',
   issue: 'editor čísla',
+  podcast: 'editor podcastu',
 }
 
 /**

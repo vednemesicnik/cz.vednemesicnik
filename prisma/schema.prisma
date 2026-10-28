@@ -283,6 +283,7 @@ model Author {
   submittedArticles          Article[]         @relation("ArticleSubmissions")
   heldArticles               Article[]         @relation("ArticleEditHolds")
   heldIssues                 Issue[]           @relation("IssueEditHolds")
+  heldPodcasts               Podcast[]         @relation("PodcastEditHolds")
   heldPodcastEpisodes        PodcastEpisode[]  @relation("PodcastEpisodeEditHolds")
   submittedArticleTags       ArticleTag[]      @relation("ArticleTagSubmissions")
   submittedArticleCategories ArticleCategory[] @relation("ArticleCategorySubmissions")
@@ -427,27 +428,41 @@ model IssuePDF {
 }
 
 model Podcast {
-  id            String           @id @default(cuid())
-  slug          String           @unique
-  title         String
-  description   String
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  publishedAt   DateTime?
-  state         ContentState     @default(draft)
-  episodes      PodcastEpisode[]
-  cover         PodcastCover?
-  author        Author           @relation("PodcastCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  authorId      String
-  reviews       Review[]         @relation("PodcastReviews")
+  id             String           @id @default(cuid())
+  // What the editor typed, not unique; "" until the draft has an address (design 27i).
+  slug           String           @default("")
+  // The address the podcast holds since its last publish; only publish writes it (log 0039).
+  publishedSlug  String?          @unique
+  title          String           @default("")
+  description    String           @default("")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  // The first save with a title or description, or a cover upload; null is an empty draft (log 0020).
+  firstContentAt DateTime?
+  publishedAt    DateTime?
+  state          ContentState     @default(draft)
+  episodes       PodcastEpisode[]
+  cover          PodcastCover?
+  author         Author           @relation("PodcastCreator", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorId       String
+  reviews        Review[]         @relation("PodcastReviews")
   // A draft its author sent for review (design 07d); null when not submitted.
-  submittedAt   DateTime?
-  submittedById String?
-  submittedBy   Author?          @relation("PodcastSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  submittedAt    DateTime?
+  submittedById  String?
+  submittedBy    Author?          @relation("PodcastSubmissions", fields: [submittedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  // The edit hold (design 07g, log 0019): free when there is no holder or heldUntil has passed.
+  heldByAuthorId String?
+  heldByAuthor   Author?          @relation("PodcastEditHolds", fields: [heldByAuthorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  heldByTabId    String?
+  heldSince      DateTime?
+  heldUntil      DateTime?
 
+  // a draft's web preview by the typed address
+  @@index([slug])
   // non-unique foreign key
   @@index([authorId])
   @@index([submittedById])
+  @@index([heldByAuthorId])
   // content-state query paths (own-access filtering, public list ordering)
   @@index([state, authorId])
   @@index([state, publishedAt])

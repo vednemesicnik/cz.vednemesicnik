@@ -4,6 +4,7 @@ import { redirect } from 'react-router'
 import { FORM_CONFIG } from '~/config/form-config'
 import { flashAdminNotice } from '~/utils/admin-notice/flash-admin-notice.server'
 import { requireCSRF } from '~/utils/csrf.server'
+import type { EditHoldContent } from '~/utils/edit-hold/edit-hold-content'
 import { readEditHeldRefusal } from '~/utils/edit-hold/read-edit-held-refusal'
 
 import type {
@@ -64,6 +65,8 @@ type ContentStateActionResult = {
   heldByName?: string
   /** The refusal came from one's own editor in another tab (a delete, 0036). */
   isHeldInOwnOtherTab?: boolean
+  /** What the holding editor edits, when it is not the content acted on. */
+  heldContent?: EditHoldContent
 }
 
 const parsePublishedAt = (value: FormDataEntryValue | null) =>
@@ -108,6 +111,9 @@ export const runContentStateAction = async (
       intent,
       isHeldInOwnOtherTab: refusal.isOwnOtherTab,
       missing: [],
+      ...(refusal.content === undefined
+        ? {}
+        : { heldContent: refusal.content }),
     }
   }
 }

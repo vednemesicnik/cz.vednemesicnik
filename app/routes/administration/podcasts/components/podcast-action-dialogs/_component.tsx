@@ -1,8 +1,11 @@
+import { href } from 'react-router'
+
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 
 import type { usePodcastActions } from '../../utils/use-podcast-actions'
 import { PodcastArchiveDialog } from '../podcast-archive-dialog'
 import { PodcastDeleteBlockedDialog } from '../podcast-delete-blocked-dialog'
+import { PodcastMissingDialog } from '../podcast-missing-dialog'
 
 type Props = {
   actions: ReturnType<typeof usePodcastActions>
@@ -12,8 +15,9 @@ type Props = {
 }
 
 /**
- * The dialogs of a podcast's actions (design 27a, 27f): Archivovat…, Smazat…,
- * and why a podcast with episodes cannot be deleted.
+ * The dialogs of a podcast's actions (design 27a, 27f, 27i): Archivovat…,
+ * Smazat…, what blocks a submission or a publish, and why a podcast with
+ * episodes cannot be deleted.
  *
  * @param props.actions - The podcast's `usePodcastActions`.
  * @param props.canDelete - Whether Smazat… is offered, so its dialog exists.
@@ -51,6 +55,15 @@ export const PodcastActionDialogs = ({
           onClose={actions.closeArchive}
           podcastTitle={podcast.title}
           publishedEpisodeCount={podcast.publishedEpisodeCount}
+        />
+      )}
+      {actions.missingList !== null && (
+        <PodcastMissingDialog
+          editHref={href('/administration/podcasts/:podcastId/edit-podcast', {
+            podcastId: podcast.id,
+          })}
+          missingList={actions.missingList}
+          onClose={actions.closeMissingList}
         />
       )}
       {actions.isDeleteBlockedOpen && (

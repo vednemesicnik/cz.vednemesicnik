@@ -41,19 +41,20 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       </Header>
       <Content>
         <LinkGroup>
-          {latestPodcastEpisode?.publishedSlug != null && (
-            <LinkGroupItem>
-              <GraphicLink
-                image={latestEpisodeCoverImage}
-                to={href('/podcasts/:podcastSlug/:episodeSlug', {
-                  episodeSlug: latestPodcastEpisode.publishedSlug,
-                  podcastSlug: latestPodcastEpisode.podcast.slug,
-                })}
-              >
-                Nový díl 🎙🌸
-              </GraphicLink>
-            </LinkGroupItem>
-          )}
+          {latestPodcastEpisode?.publishedSlug != null &&
+            latestPodcastEpisode.podcast.publishedSlug !== null && (
+              <LinkGroupItem>
+                <GraphicLink
+                  image={latestEpisodeCoverImage}
+                  to={href('/podcasts/:podcastSlug/:episodeSlug', {
+                    episodeSlug: latestPodcastEpisode.publishedSlug,
+                    podcastSlug: latestPodcastEpisode.podcast.publishedSlug,
+                  })}
+                >
+                  Nový díl 🎙🌸
+                </GraphicLink>
+              </LinkGroupItem>
+            )}
           {latestIssue?.pdf?.fileName != null && (
             <LinkGroupItem>
               <GraphicLink

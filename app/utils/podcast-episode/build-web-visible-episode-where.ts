@@ -3,13 +3,14 @@ import {
   type WebContentVisibility,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 
+import { NON_EMPTY_PODCAST_WHERE } from '../podcast/non-empty-podcast-where'
 import { NON_EMPTY_EPISODE_WHERE } from './non-empty-episode-where'
 
 /**
  * Which episodes the public episode page opens for this request (design 13c,
  * 27c): an episode only under a podcast the visitor can see, and drafts and
  * archived ones of either only as far as the signed-in author may view them
- * in administration. An empty draft never shows (log 0020). The
+ * in administration. An empty draft of either never shows (log 0020). The
  * administration offers a link to the web only where this finds the episode
  * (tly4a163). The public lists preview drafts only; they don't use it.
  *
@@ -25,5 +26,8 @@ export const buildWebVisibleEpisodeWhere = (
     ...visibility.where('podcast_episode', ownByAuthor, ['draft', 'archived']),
     ...NON_EMPTY_EPISODE_WHERE,
   },
-  podcast: visibility.where('podcast', ownByAuthor, ['draft', 'archived']),
+  podcast: {
+    ...visibility.where('podcast', ownByAuthor, ['draft', 'archived']),
+    ...NON_EMPTY_PODCAST_WHERE,
+  },
 })
