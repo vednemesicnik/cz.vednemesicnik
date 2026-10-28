@@ -27,7 +27,7 @@ type Options = {
  * Runs a podcast's actions from its list row or its page (design 27a, 27b,
  * 27f): state changes at once with their toast, Archivovat… through its
  * confirmation, Smazat… through the delete dialog, or with episodes, why it
- * cannot be deleted.
+ * cannot be deleted; what blocks a submission or a publish (27i).
  *
  * @param options.fetcherKey - The fetcher the actions and the dialogs share.
  * @param options.deleteRedirects - Whether a delete leaves for the list, as
@@ -48,11 +48,11 @@ export const usePodcastActions = ({
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
 
-  useContentActionResult(fetcher.data, {
-    // Only an empty episode draft open in an editor holds up a podcast (0036).
-    heldSubject: 'epizodu',
-    toasts: PODCAST_TOASTS,
-  })
+  // A refusal for an empty episode draft's editor names the episode (0036).
+  const { closeMissingList, missingList } = useContentActionResult(
+    fetcher.data,
+    { heldSubject: 'podcast', toasts: PODCAST_TOASTS },
+  )
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(
@@ -98,11 +98,13 @@ export const usePodcastActions = ({
   return {
     closeArchive: () => setIsArchiveOpen(false),
     closeDeleteBlocked: () => setIsDeleteBlockedOpen(false),
+    closeMissingList,
     deleteDialogRef,
     fetcherKey,
     isArchiveOpen,
     isDeleteBlockedOpen,
     isSubmitting,
+    missingList,
     podcast,
     podcastHref,
     runAction,

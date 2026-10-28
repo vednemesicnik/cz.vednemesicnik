@@ -78,7 +78,12 @@ export const createPodcast = async (
             title: episode.title,
           })),
         },
+        // A seeded podcast has content, so it is no empty draft (log 0020).
+        firstContentAt: data.publishedAt,
         publishedAt: data.publishedAt,
+        // Only publish writes the held address (log 0039); a seeded published
+        // or archived podcast holds it already.
+        publishedSlug: data.state === 'draft' ? null : data.slug,
         slug: data.slug,
         state: data.state,
         title: data.title,

@@ -17,7 +17,6 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
-import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
@@ -25,6 +24,7 @@ import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episo
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { buildEpisodePermissionWhere } from '../podcast/episodes/utils/build-episode-permission-where'
+import { buildPodcastPermissionWhere } from '../utils/build-podcast-permission-where'
 import { formatPodcastEpisodeLines } from '../utils/format-podcast-episode-lines'
 import { getPodcastActions } from '../utils/get-podcast-actions'
 import { getPodcastFactLine } from '../utils/get-podcast-fact-line'
@@ -79,15 +79,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const filters = parseAdminListFilters(request, TABLE_KEY)
 
-  const permissionWhere = {
-    OR: buildViewableStateFilters(
-      (['draft', 'published', 'archived'] as const).map((state) => ({
-        rights: context.can({ action: 'view', entity: 'podcast', state }),
-        state,
-      })),
-      { authorId: context.authorId },
-    ),
-  }
+  // An empty draft never shows nor counts (log 0020).
+  const permissionWhere = buildPodcastPermissionWhere(context)
 
   // The query matches the title or the slug — public URLs expose the slug.
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics

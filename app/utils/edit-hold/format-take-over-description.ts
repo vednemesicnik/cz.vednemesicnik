@@ -10,6 +10,7 @@ const SUBJECT: Record<EditHoldContent, string> = {
   // Who edits it, in the accusative (copy ahizoh4o).
   episode: 'Epizodu',
   issue: 'Číslo',
+  podcast: 'Podcast',
 }
 
 /**

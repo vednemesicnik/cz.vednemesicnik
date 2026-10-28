@@ -42,6 +42,8 @@ export async function createPodcast({
           },
         },
         description,
+        // The form sends a whole podcast, so it is no empty draft (log 0020).
+        firstContentAt: new Date(),
         slug,
         title,
       },

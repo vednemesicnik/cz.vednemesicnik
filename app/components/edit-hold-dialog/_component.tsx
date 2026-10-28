@@ -17,6 +17,7 @@ const OTHER_TAB_TITLE: Record<EditHoldContent, string> = {
   article: 'Článek máte otevřený v jiné záložce',
   episode: 'Epizodu máte otevřenou v jiné záložce',
   issue: 'Číslo máte otevřené v jiné záložce',
+  podcast: 'Podcast máte otevřený v jiné záložce',
 }
 
 type Props = {

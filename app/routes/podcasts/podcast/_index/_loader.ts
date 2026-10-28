@@ -10,6 +10,7 @@ import {
   getWebContentVisibility,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { findWebPodcast } from '~/utils/podcast/find-web-podcast.server'
 import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 
 import type { Route } from './+types/route'
@@ -20,6 +21,13 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     'podcast',
     'podcast_episode',
   ])
+
+  // Only a published address is unique (log 0039).
+  const webPodcast = await findWebPodcast(podcastSlug, visibility)
+
+  if (webPodcast === null) {
+    throw data(null, { status: 404 })
+  }
 
   const podcast = await prisma.podcast.findUnique({
     select: {
@@ -58,10 +66,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       slug: true,
       title: true,
     },
-    where: {
-      slug: podcastSlug,
-      ...visibility.where('podcast', ownByAuthor, ['draft', 'archived']),
-    },
+    where: { id: webPodcast.id },
   })
 
   if (podcast === null) {

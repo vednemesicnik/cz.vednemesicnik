@@ -26,6 +26,31 @@ describe('readEditHeldRefusal', () => {
     ).toEqual({ heldByName: 'Jakub Novák', isOwnOtherTab: true })
   })
 
+  test('reads what the holding editor edits, when another content holds it', () => {
+    expect(
+      readEditHeldRefusal(
+        createEditHeldRefusal({
+          content: 'episode',
+          heldByName: 'Jakub Novák',
+          isOwnOtherTab: false,
+        }),
+      ),
+    ).toEqual({
+      content: 'episode',
+      heldByName: 'Jakub Novák',
+      isOwnOtherTab: false,
+    })
+    expect(
+      readEditHeldRefusal(
+        createEditHeldRefusal({
+          content: 'unknown' as 'episode',
+          heldByName: 'Jakub Novák',
+          isOwnOtherTab: false,
+        }),
+      ),
+    ).toEqual({ heldByName: 'Jakub Novák', isOwnOtherTab: false })
+  })
+
   test('ignores what is not a held refusal', () => {
     expect(readEditHeldRefusal(new Error('x'))).toBeNull()
     expect(

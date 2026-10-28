@@ -37,7 +37,8 @@ export const loader = async () => {
           cover: {
             select: imageSourceSelect,
           },
-          slug: true,
+          // The address the podcast holds since its publish (log 0039).
+          publishedSlug: true,
         },
       },
       // The address the episode holds in its podcast since its publish (log 0039).
@@ -46,7 +47,7 @@ export const loader = async () => {
     // An episode of a draft or archived podcast is not taken: its page 404s
     // (16b, 5hl7vx3a).
     where: {
-      podcast: { state: 'published' },
+      podcast: { publishedSlug: { not: null }, state: 'published' },
       publishedSlug: { not: null },
       state: 'published',
     },

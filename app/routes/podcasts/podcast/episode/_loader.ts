@@ -5,6 +5,7 @@ import type { NotFoundEpisodeData } from '~/components/boundary-error'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { getWebContentVisibility } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { findWebPodcast } from '~/utils/podcast/find-web-podcast.server'
 import { buildWebVisibleEpisodeWhere } from '~/utils/podcast-episode/build-web-visible-episode-where'
 
 import type { Route } from './+types/route'
@@ -17,7 +18,15 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   ])
 
   const visible = buildWebVisibleEpisodeWhere(visibility)
-  const podcastWhere = { slug: podcastSlug, ...visible.podcast }
+  // Only a published podcast address is unique (log 0039): the episode is
+  // looked up under the podcast the address names for this visitor.
+  const webPodcast = await findWebPodcast(podcastSlug, visibility)
+
+  if (webPodcast === null) {
+    throw data(null, { status: 404 })
+  }
+
+  const podcastWhere = { id: webPodcast.id }
 
   const select = {
     cover: {
@@ -78,20 +87,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     }))
 
   if (podcastEpisode === null) {
-    // Design 30f offers `Na podcast` only when the podcast itself can be shown.
-    const podcast = await prisma.podcast.findUnique({
-      select: { slug: true },
-      where: podcastWhere,
-    })
-
-    if (podcast === null) {
-      throw data(null, { status: 404 })
-    }
-
+    // Design 30f offers `Na podcast` only when the podcast itself can be
+    // shown, as it can here: the address found it.
     const notFoundData: NotFoundEpisodeData = {
-      podcastHref: href('/podcasts/:podcastSlug', {
-        podcastSlug: podcast.slug,
-      }),
+      podcastHref: href('/podcasts/:podcastSlug', { podcastSlug }),
     }
 
     throw data(notFoundData, { status: 404 })
