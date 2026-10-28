@@ -338,6 +338,31 @@ address; only a fully empty row is not saved. With a title the episode always ha
 
 ---
 
+## Podcast address
+
+A podcast's address is unique once published (#836, log
+[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)). A draft saves any
+slug, an empty one included. Only publishing writes it to `publishedSlug`, which is unique, and
+retract, archive and restore keep it. The podcast page and its episode pages look the podcast up
+by the address it holds as published, else by the typed slug among the drafts and archived
+podcasts the viewer may see. Published podcasts are not edited, so their typed slug is the one
+they hold, and the public lists show it.
+
+*Odeslat ke schválení*, *Schválit* and *Publikovat* refuse an incomplete podcast and write
+nothing (27i). The dialog says, in this order:
+
+- what is missing of the title, the address, the description and the cover, in one sentence
+  (*Chybí název, adresa, popis a obálka.*); the cover is required, since episodes without
+  their own take it over (27e);
+- *Adresa je obsazená.* for an address another podcast holds.
+
+None of the transitions runs while someone else holds the podcast's edit hold, and a delete
+waits for one's own other tab too (log 0036), as it waits for an editor of one of its empty
+episode drafts. An empty podcast draft (no `firstContentAt`, log 0020) is in no list, count or
+preview, and its detail opens its editor.
+
+---
+
 ## Decided for the redesign (not implemented yet)
 
 Decided on 28 Sep 2026 in the design project (`07 Stavy a akce obsahu`, questions `dj753f0j`
