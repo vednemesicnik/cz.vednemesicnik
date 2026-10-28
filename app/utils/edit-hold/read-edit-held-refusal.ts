@@ -43,12 +43,13 @@ export const readEditHeldRefusal = (error: unknown): EditHeldRefusal | null => {
   }
 }
 
-const EDIT_HOLD_CONTENTS: readonly unknown[] = [
-  'article',
-  'episode',
-  'issue',
-  'podcast',
-] satisfies EditHoldContent[]
+// Keyed by every content, so a new one cannot be left out.
+const EDIT_HOLD_CONTENTS: Record<EditHoldContent, true> = {
+  article: true,
+  episode: true,
+  issue: true,
+  podcast: true,
+}
 
 const isEditHoldContent = (value: unknown): value is EditHoldContent =>
-  EDIT_HOLD_CONTENTS.includes(value)
+  typeof value === 'string' && Object.hasOwn(EDIT_HOLD_CONTENTS, value)

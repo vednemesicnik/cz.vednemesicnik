@@ -25,6 +25,15 @@ const RELEASED_HOLD = {
   heldUntil: null,
 }
 
+// The hold and its holder, as a podcast or an episode draft stores them.
+const HOLD_SELECT = {
+  heldByAuthor: { select: { name: true } },
+  heldByAuthorId: true,
+  heldByTabId: true,
+  heldSince: true,
+  heldUntil: true,
+} as const
+
 /**
  * Podcast state-transition handlers: single author, cover image cleanup on
  * delete, which takes the podcast's empty episode drafts along, a publish only
@@ -129,6 +138,25 @@ export const podcastContentStateHandlers = createContentStateHandlers({
                 podcastId: id,
                 state: 'draft' as const,
               }
+              const viewer = {
+                authorId: context.authorId,
+                countsOwnOtherTab: true,
+                now,
+              }
+
+              // The podcast's own editor is said first (log 0036).
+              const podcastHold = await transaction.podcast.findUnique({
+                select: HOLD_SELECT,
+                where: { id },
+              })
+              const podcastRefusal =
+                podcastHold === null
+                  ? null
+                  : getEditHeldRefusal(podcastHold, viewer)
+
+              if (podcastRefusal !== null) {
+                throw createEditHeldRefusal(podcastRefusal)
+              }
 
               // An empty episode draft is nothing to keep, and it would block
               // the delete (log 0020).
@@ -140,30 +168,20 @@ export const podcastContentStateHandlers = createContentStateHandlers({
               // it, one's own other tab included (log 0036). The refusal names
               // the episode's editor, not the podcast's.
               const heldDraft = await transaction.podcastEpisode.findFirst({
-                select: {
-                  heldByAuthor: { select: { name: true } },
-                  heldByAuthorId: true,
-                  heldByTabId: true,
-                  heldSince: true,
-                  heldUntil: true,
-                },
+                select: HOLD_SELECT,
                 where: emptyDraftWhere,
               })
               const refusal =
                 heldDraft === null
                   ? null
-                  : getEditHeldRefusal(heldDraft, {
-                      authorId: context.authorId,
-                      countsOwnOtherTab: true,
-                      now,
-                    })
+                  : getEditHeldRefusal(heldDraft, viewer)
 
               if (refusal !== null) {
                 throw createEditHeldRefusal({ ...refusal, content: 'episode' })
               }
 
-              // Not while any editor holds the podcast itself, one's own in
-              // another tab too (log 0036).
+              // The write repeats that no editor holds the podcast, for a
+              // hold taken since the check (log 0036).
               await transaction.podcast.delete({
                 where: { AND: [buildFreeHoldWhere(now)], id },
               })

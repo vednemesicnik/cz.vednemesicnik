@@ -44,8 +44,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   // Sequential on purpose: each delete runs its own permission check and
   // image-cleanup transaction. Not atomic across items — the UI only offers
-  // deletable rows; the per-item check is defense in depth. A podcast whose
-  // empty episode draft an editor holds stays (log 0036) and is not counted.
+  // deletable rows; the per-item check is defense in depth. A podcast an
+  // editor holds, or whose empty episode draft one holds, stays (log 0036) and
+  // is not counted.
   let deletedCount = 0
   for (const podcast of podcasts) {
     try {

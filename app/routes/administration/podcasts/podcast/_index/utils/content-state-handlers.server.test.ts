@@ -321,8 +321,47 @@ describe('podcastContentStateHandlers — delete', () => {
       ...publishState,
       submittedAt: null,
     })
-    podcastDeleteMock.mockRejectedValueOnce(notFoundError())
     podcastFindUniqueMock.mockResolvedValue({ cover: null, ...heldByMarie() })
+
+    await expect(
+      podcastContentStateHandlers.delete(request, {
+        id: 'p1',
+        target: draftTarget,
+      }),
+    ).rejects.toMatchObject({
+      data: { heldByName: 'Marie Horáková', isOwnOtherTab: false },
+    })
+    expect(podcastDeleteMock).not.toHaveBeenCalled()
+  })
+
+  test('names the podcast’s editor before an episode draft’s', async () => {
+    podcastFindUniqueOrThrowMock.mockResolvedValue({
+      ...publishState,
+      submittedAt: null,
+    })
+    podcastFindUniqueMock.mockResolvedValue({ cover: null, ...heldByMarie() })
+    episodeFindFirstMock.mockResolvedValue(heldByMarie())
+
+    const refusal = await podcastContentStateHandlers
+      .delete(request, { id: 'p1', target: draftTarget })
+      .catch((error: { data: unknown }) => error.data)
+
+    expect(refusal).toEqual({
+      heldByName: 'Marie Horáková',
+      isOwnOtherTab: false,
+    })
+  })
+
+  test('a hold taken since the check stops the delete in its own write', async () => {
+    podcastFindUniqueOrThrowMock.mockResolvedValue({
+      ...publishState,
+      submittedAt: null,
+    })
+    podcastDeleteMock.mockRejectedValueOnce(notFoundError())
+    podcastFindUniqueMock
+      .mockResolvedValueOnce({ cover: null })
+      .mockResolvedValueOnce({ cover: null })
+      .mockResolvedValue({ cover: null, ...heldByMarie() })
 
     await expect(
       podcastContentStateHandlers.delete(request, {

@@ -18,15 +18,6 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   ])
 
   const visible = buildWebVisibleEpisodeWhere(visibility)
-  // Only a published podcast address is unique (log 0039): the episode is
-  // looked up under the podcast the address names for this visitor.
-  const webPodcast = await findWebPodcast(podcastSlug, visibility)
-
-  if (webPodcast === null) {
-    throw data(null, { status: 404 })
-  }
-
-  const podcastWhere = { id: webPodcast.id }
 
   const select = {
     cover: {
@@ -58,20 +49,45 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   } satisfies Prisma.PodcastEpisodeSelect
 
   const previewId = new URL(request.url).searchParams.get('id')
-  // An empty draft never shows, not even as a preview (log 0020).
-  const visibleWhere = { podcast: podcastWhere, ...visible.episode }
 
-  // Only a published address is unique, and only within its podcast (log
-  // 0039, 27f): the administration's preview names the episode by its id, a
-  // reader gets the published one, and a draft or an archived episode shows
-  // to whoever may see it.
-  const podcastEpisode =
-    (previewId === null
+  // Only a published address is unique, the podcast's and the episode's
+  // within it (logs 0039, 0047): the administration's preview names the
+  // episode by its id, under the podcast's typed address, which a draft
+  // podcast may share with a published one.
+  const previewEpisode =
+    previewId === null
       ? null
       : await prisma.podcastEpisode.findFirst({
           select,
-          where: { ...visibleWhere, id: previewId, slug: episodeSlug },
-        })) ??
+          where: {
+            ...visible.episode,
+            id: previewId,
+            podcast: { slug: podcastSlug, ...visible.podcast },
+            slug: episodeSlug,
+          },
+        })
+
+  if (previewEpisode !== null) {
+    return {
+      podcastEpisode: {
+        ...previewEpisode,
+        publishedAt: createFormattedDate(previewEpisode.publishedAt),
+      },
+    }
+  }
+
+  // Otherwise the episode is looked up under the podcast the address names
+  // for this visitor: a reader gets the published one, and a draft or an
+  // archived episode shows to whoever may see it.
+  const webPodcast = await findWebPodcast(podcastSlug, visibility)
+
+  if (webPodcast === null) {
+    throw data(null, { status: 404 })
+  }
+
+  const podcastWhere = { id: webPodcast.id }
+
+  const podcastEpisode =
     (await prisma.podcastEpisode.findFirst({
       select,
       where: {
@@ -83,7 +99,8 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     (await prisma.podcastEpisode.findFirst({
       orderBy: { updatedAt: 'desc' },
       select,
-      where: { ...visibleWhere, slug: episodeSlug },
+      // An empty draft never shows, not even as a preview (log 0020).
+      where: { podcast: podcastWhere, ...visible.episode, slug: episodeSlug },
     }))
 
   if (podcastEpisode === null) {
