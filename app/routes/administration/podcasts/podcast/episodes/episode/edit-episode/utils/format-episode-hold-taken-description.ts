@@ -10,13 +10,13 @@ type Options = {
 
 /**
  * The text of *Úpravu přebírá …* in the episode editor (design 24h; copy
- * ahizoh4o), as its paragraphs: whether the changes made it, with what did
- * not right after; then this editor's last save and that it only reads now.
- * The advice follows separately ({@link formatUnsavedEpisodeAdvice}).
+ * ahizoh4o, utgh1hb7), as its paragraphs: whether the changes made it, with
+ * what did not right after; then this editor's last save and that it only
+ * reads now. The advice follows separately ({@link formatUnsavedEpisodeAdvice}).
  *
  * @returns `['Všechny změny jsou uložené. Poslední uložení z tohoto editoru
  *   dnes v 14:31. Epizodu teď můžete jen číst.']`, or with unsent fields
- *   `['Některé změny se nestihly uložit. Neuložené změny: Popis.', 'Poslední
+ *   `['Některé změny nejsou uložené. Neuložené změny: Popis.', 'Poslední
  *   uložení … Epizodu teď můžete jen číst.']`.
  */
 export const formatEpisodeHoldTakenDescription = ({
@@ -30,7 +30,7 @@ export const formatEpisodeHoldTakenDescription = ({
   return unsentLabels.length === 0
     ? [`Všechny změny jsou uložené. ${lastSave} ${readOnly}`]
     : [
-        `Některé změny se nestihly uložit. Neuložené změny: ${unsentLabels.join(', ')}.`,
+        `Některé změny nejsou uložené. Neuložené změny: ${unsentLabels.join(', ')}.`,
         `${lastSave} ${readOnly}`,
       ]
 }

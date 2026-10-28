@@ -7,7 +7,8 @@ type Options = {
 
 /**
  * The sentence over someone else's episode in the editor (design 24c, copy
- * ahizoh4o): that the edit goes into the history under the editor's name.
+ * ahizoh4o, utgh1hb7): that the edit goes into the history under the
+ * editor's name.
  *
  * @returns The sentence, or `null` over one's own episode.
  */
@@ -19,5 +20,5 @@ export const getEpisodeEditorSentence = ({
 
   return isSubmitted
     ? 'Upravujete epizodu odeslanou ke schválení. Úprava se zapíše do historie pod vaším jménem.'
-    : 'Upravujete koncept, který ještě nebyl odeslán ke schválení.'
+    : 'Upravujete koncept, který není odeslaný ke schválení.'
 }
