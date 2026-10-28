@@ -25,6 +25,7 @@ export const Playground: Story = {
     hint: 'nebo ji sem přetáhněte · obrázek do 5 MB',
     label: 'Vybrat obálku',
     onPick: () => {},
+    shape: 'square',
   },
   render: (args) => (
     <div style={{ width: '220px' }}>
@@ -37,7 +38,7 @@ export const Playground: Story = {
 export const Page: Story = {
   args: {
     ...Playground.args,
-    isPage: true,
+    shape: 'page',
   },
   render: Playground.render,
 }

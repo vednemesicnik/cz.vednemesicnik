@@ -37,12 +37,15 @@ export const createDraftEpisode = async (
   })
 
   const podcast = await prisma.podcast.findUnique({
-    select: { authorId: true, state: true },
+    select: { authorId: true, firstContentAt: true, state: true },
     where: { id: podcastId },
   })
-  // A podcast the author may not see is a 404, like a missing one (30e).
+  // A podcast the author may not see is a 404, like a missing one (30e). So is
+  // an empty podcast draft: it has no page yet (log 0020), and an episode
+  // would keep its sweep from deleting it.
   if (
     podcast === null ||
+    podcast.firstContentAt === null ||
     !context.can({
       action: 'view',
       entity: 'podcast',

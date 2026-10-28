@@ -4,8 +4,10 @@ import { href, useFetcher, useNavigate } from 'react-router'
 
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
+import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import { useContentActionResult } from '~/hooks/use-content-action-result'
+import { getOwnOtherTabDeleteRefusal } from '~/utils/edit-hold/get-own-other-tab-delete-refusal'
 
 import { TAXONOMY_DIRECT_INTENTS } from '../../articles/utils/taxonomy-actions'
 import { PODCAST_TOASTS, type PodcastAction } from './podcast-actions'
@@ -21,6 +23,8 @@ type Options = {
   }
   fetcherKey: string
   deleteRedirects: boolean
+  /** One's own editor holds it in another tab: the delete waits (0036). */
+  isHeldInOwnOtherTab?: boolean
 }
 
 /**
@@ -39,6 +43,7 @@ export const usePodcastActions = ({
   podcast,
   fetcherKey,
   deleteRedirects,
+  isHeldInOwnOtherTab = false,
 }: Options) => {
   const podcastHref = href('/administration/podcasts/:podcastId', {
     podcastId: podcast.id,
@@ -47,6 +52,7 @@ export const usePodcastActions = ({
   const isSubmitting = fetcher.state !== 'idle'
   const authenticityToken = useAuthenticityToken()
   const navigate = useNavigate()
+  const showToast = useToast()
 
   // A refusal for an empty episode draft's editor names the episode (0036).
   const { closeMissingList, missingList } = useContentActionResult(
@@ -66,11 +72,15 @@ export const usePodcastActions = ({
     switch (action) {
       case 'archive':
         return setIsArchiveOpen(true)
-      // Its episodes hold it: why, in place of the confirmation (27f).
+      // Its episodes hold it: why, in place of the confirmation (27f). One's
+      // own editor in another tab: the delete waits, without asking first
+      // (0036); the server refuses it again in its write.
       case 'delete':
-        return podcast.episodeCount > 0
-          ? setIsDeleteBlockedOpen(true)
-          : openDeleteDialog()
+        if (podcast.episodeCount > 0) return setIsDeleteBlockedOpen(true)
+        if (isHeldInOwnOtherTab) {
+          return showToast(getOwnOtherTabDeleteRefusal('podcast'))
+        }
+        return openDeleteDialog()
       case 'edit':
         return navigate(
           href('/administration/podcasts/:podcastId/edit-podcast', {

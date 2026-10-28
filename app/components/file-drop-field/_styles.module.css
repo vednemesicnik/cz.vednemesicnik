@@ -20,10 +20,18 @@
   }
 }
 
-/* The cover's: a printed page's proportions, so the slot keeps its place. */
+/* An issue's cover: a printed page's proportions, so the slot keeps its
+   place (26c). */
 .page {
   @layer variant {
     aspect-ratio: 210 / 297;
+  }
+}
+
+/* A podcast's cover: a square, as the platforms want it (27e). */
+.square {
+  @layer variant {
+    aspect-ratio: 1;
   }
 }
 

@@ -1196,9 +1196,9 @@ export default function RouteComponent({
                           }
                           hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
                           isDisabled={isLocked || coverUpload.isCancelling}
-                          isPage
                           label={'Vybrat obálku'}
                           onPick={coverUpload.pick}
+                          shape={'page'}
                         />
                         {renderFileProblem('cover', '')}
                       </>

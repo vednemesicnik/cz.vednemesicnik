@@ -23,6 +23,8 @@ type Answer =
 export type CoverUploadFailure = {
   /** What *Zkusit znovu* repeats. */
   change: 'upload' | 'remove'
+  /** The picked file's name, which the failed field shows (26d); none for a removal. */
+  fileName: string | null
   sentence: string
   /** The same change again: not for an image over the pixel budget. */
   canRetry: boolean
@@ -174,6 +176,7 @@ export const useCoverUpload = ({
     setFailure({
       canRetry: !isOverPixelBudget,
       change: 'upload',
+      fileName: file.name,
       sentence: isOverPixelBudget
         ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
         : FAILED_UPLOAD_SENTENCE,
@@ -221,6 +224,7 @@ export const useCoverUpload = ({
       setFailure({
         canRetry: true,
         change: 'remove',
+        fileName: null,
         sentence: FAILED_REMOVAL_SENTENCE,
       })
     }

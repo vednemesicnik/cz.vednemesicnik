@@ -31,6 +31,8 @@ type Props = {
   canEdit: boolean
   canCreateEpisode: boolean
   isSubmitting: boolean
+  /** Who else edits the podcast right now, said beside the buttons (07g). */
+  heldByName: string | null
   onMenuItem: (item: PodcastMenuItem) => void
 }
 
@@ -48,6 +50,7 @@ export const PodcastHeader = ({
   canEdit,
   canCreateEpisode,
   isSubmitting,
+  heldByName,
   onMenuItem,
 }: Props) => {
   const publicPath = href('/podcasts/:podcastSlug', {
@@ -58,7 +61,8 @@ export const PodcastHeader = ({
     podcast.publishedDate === null
       ? null
       : `publikováno ${podcast.publishedDate}`,
-    publicPath,
+    // A draft may have no address yet (27i).
+    podcast.slug === '' ? null : publicPath,
   ].filter((part) => part !== null)
 
   return (
@@ -81,6 +85,13 @@ export const PodcastHeader = ({
       </div>
 
       <div className={styles.actions}>
+        {/* Someone else edits it: who, beside what still works (07g); its
+            state actions wait. */}
+        {heldByName !== null && (
+          <p className={styles.heldSentence}>
+            Podcast právě upravuje {heldByName}.
+          </p>
+        )}
         <ActionMenu
           items={menu.map((item) => ({
             danger: item === 'delete',
