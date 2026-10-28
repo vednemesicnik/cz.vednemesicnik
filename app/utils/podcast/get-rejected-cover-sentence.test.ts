@@ -1,18 +1,18 @@
 import { describe, expect, test } from 'vitest'
 
-import { EPISODE_COVER_CONFIG } from '~/config/episode-cover-config'
+import { PODCAST_COVER_CONFIG } from '~/config/podcast-cover-config'
 
-import { getRejectedEpisodeCoverSentence } from './get-rejected-episode-cover-sentence'
+import { getRejectedCoverSentence } from './get-rejected-cover-sentence'
 
 const fileOfSize = (bytes: number, name: string, type: string) =>
   new File([new Uint8Array(bytes)], name, { type })
 
-describe('getRejectedEpisodeCoverSentence', () => {
+describe('getRejectedCoverSentence', () => {
   test('lets an image within 5 MB go', () => {
     expect(
-      getRejectedEpisodeCoverSentence(
+      getRejectedCoverSentence(
         fileOfSize(
-          EPISODE_COVER_CONFIG.maxFileBytes,
+          PODCAST_COVER_CONFIG.maxFileBytes,
           'obalka.jpg',
           'image/jpeg',
         ),
@@ -22,17 +22,15 @@ describe('getRejectedEpisodeCoverSentence', () => {
 
   test('refuses a file that is not an image', () => {
     expect(
-      getRejectedEpisodeCoverSentence(
-        fileOfSize(10, 'obalka.pdf', 'application/pdf'),
-      ),
+      getRejectedCoverSentence(fileOfSize(10, 'obalka.pdf', 'application/pdf')),
     ).toBe('Vyberte obrázek — obalka.pdf není obrázek.')
   })
 
   test('refuses an image over 5 MB, rounding its size up', () => {
     expect(
-      getRejectedEpisodeCoverSentence(
+      getRejectedCoverSentence(
         fileOfSize(
-          EPISODE_COVER_CONFIG.maxFileBytes + 1,
+          PODCAST_COVER_CONFIG.maxFileBytes + 1,
           'obalka.jpg',
           'image/jpeg',
         ),

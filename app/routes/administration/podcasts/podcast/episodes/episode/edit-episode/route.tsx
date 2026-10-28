@@ -49,6 +49,7 @@ import { TextField } from '~/components/text-field'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
+import { useCoverUpload } from '~/hooks/use-cover-upload'
 import { useEditHold } from '~/hooks/use-edit-hold'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
@@ -76,7 +77,6 @@ import {
 } from './utils/format-unsaved-episode-advice'
 import { getEpisodeEditorSentence } from './utils/get-episode-editor-sentence'
 import { getEpisodeSaveLineText } from './utils/get-episode-save-line-text'
-import { useEpisodeCoverUpload } from './utils/use-episode-cover-upload'
 
 export { handle } from './_handle'
 export { loader } from './_loader'
@@ -428,8 +428,11 @@ export default function RouteComponent({
 
   // The own cover saves on its own as it is picked (27d, as 26c). Refused
   // for the hold: as the whole-form save does (24h, 24i).
-  const coverUpload = useEpisodeCoverUpload({
-    episodeId,
+  const coverUpload = useCoverUpload({
+    action: href(
+      '/administration/podcasts/:podcastId/episodes/:episodeId/cover',
+      { episodeId, podcastId },
+    ),
     onDeleted: editHold.recheck,
     onNotHeld: async (heldByName) => {
       if (heldByName === null) return editHold.retake()
@@ -437,7 +440,6 @@ export default function RouteComponent({
       return false
     },
     onSaved: acknowledgeSaved,
-    podcastId,
     storedKey: episode.cover?.sources.src ?? null,
     tabId: editHold.tabId,
   })
