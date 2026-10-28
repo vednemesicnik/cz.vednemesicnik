@@ -33,6 +33,7 @@ describe('getPodcastHeaderActions', () => {
       menu: ['history', 'delete'],
       outline: 'edit',
       primary: 'submit',
+      sentence: null,
     })
   })
 
@@ -51,6 +52,24 @@ describe('getPodcastHeaderActions', () => {
       menu: ['history', 'delete'],
       outline: 'edit',
       primary: 'publish',
+      sentence: null,
+    })
+  })
+
+  test("a Creator's draft not submitted: Publikovat in „⋯“ and the sentence beside (27k)", () => {
+    expect(
+      getPodcastHeaderActions({
+        ...nothingAllowed,
+        canDelete: true,
+        canEdit: true,
+        canPublish: true,
+        state: 'draft',
+      }),
+    ).toEqual({
+      menu: ['history', 'publish', 'delete'],
+      outline: 'edit',
+      primary: null,
+      sentence: 'not-submitted',
     })
   })
 
@@ -69,8 +88,25 @@ describe('getPodcastHeaderActions', () => {
       menu: ['history', 'return', 'edit'],
       outline: 'approve',
       primary: 'approve-and-publish',
+      sentence: null,
     })
   })
+
+  test.each([
+    ['pending', 'who-approves'],
+    ['approved', 'who-publishes'],
+  ] as const)(
+    "a Creator over someone else's %s draft reads who acts (27k)",
+    (submission, sentence) => {
+      expect(
+        getPodcastHeaderActions({
+          ...nothingAllowed,
+          state: 'draft',
+          submission,
+        }),
+      ).toEqual({ menu: ['history'], outline: null, primary: null, sentence })
+    },
+  )
 
   test('its author takes a waiting draft back (07c)', () => {
     expect(
@@ -81,7 +117,12 @@ describe('getPodcastHeaderActions', () => {
         state: 'draft',
         submission: 'pending',
       }),
-    ).toEqual({ menu: ['history'], outline: 'withdraw', primary: null })
+    ).toEqual({
+      menu: ['history'],
+      outline: 'withdraw',
+      primary: null,
+      sentence: null,
+    })
   })
 
   test('a published podcast: Zobrazit na webu, and its state actions in „⋯“ (27b)', () => {
@@ -96,6 +137,7 @@ describe('getPodcastHeaderActions', () => {
       menu: ['history', 'retract', 'archive'],
       outline: 'view-on-web',
       primary: null,
+      sentence: null,
     })
   })
 
@@ -111,6 +153,22 @@ describe('getPodcastHeaderActions', () => {
       menu: ['history', 'delete'],
       outline: 'restore',
       primary: null,
+      sentence: null,
+    })
+  })
+
+  test('its author reads who restores an archived podcast (27k)', () => {
+    expect(
+      getPodcastHeaderActions({
+        ...nothingAllowed,
+        isOwnContent: true,
+        state: 'archived',
+      }),
+    ).toEqual({
+      menu: ['history'],
+      outline: null,
+      primary: null,
+      sentence: 'who-restores',
     })
   })
 
@@ -128,6 +186,7 @@ describe('getPodcastHeaderActions', () => {
       menu: ['history'],
       outline: 'edit',
       primary: null,
+      sentence: null,
     })
   })
 
@@ -137,7 +196,12 @@ describe('getPodcastHeaderActions', () => {
         ...heldForCoordinator,
         submission: 'pending',
       }),
-    ).toEqual({ menu: ['history'], outline: 'edit', primary: null })
+    ).toEqual({
+      menu: ['history'],
+      outline: 'edit',
+      primary: null,
+      sentence: null,
+    })
   })
 
   test('a draft someone else edits leaves the others nothing but Historie (07g)', () => {
@@ -147,12 +211,22 @@ describe('getPodcastHeaderActions', () => {
         isHeldByOther: true,
         state: 'draft',
       }),
-    ).toEqual({ menu: ['history'], outline: null, primary: null })
+    ).toEqual({
+      menu: ['history'],
+      outline: null,
+      primary: null,
+      sentence: null,
+    })
   })
 
-  test('Historie stands even when the role may do nothing else (27j)', () => {
+  test('Historie stands even when the role may do nothing else, beside who edits (27j, 27k)', () => {
     expect(
       getPodcastHeaderActions({ ...nothingAllowed, state: 'draft' }),
-    ).toEqual({ menu: ['history'], outline: null, primary: null })
+    ).toEqual({
+      menu: ['history'],
+      outline: null,
+      primary: null,
+      sentence: 'who-edits',
+    })
   })
 })

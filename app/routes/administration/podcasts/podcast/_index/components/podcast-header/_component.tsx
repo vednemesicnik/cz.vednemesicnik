@@ -9,8 +9,10 @@ import { PageTitle } from '~/components/page-title'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
+import type { HeaderSentence } from '../../../../../articles/utils/article-actions'
 import {
   PODCAST_ACTION_LABELS,
+  PODCAST_HEADER_SENTENCES,
   type PodcastAction,
   type PodcastMenuItem,
 } from '../../../../utils/podcast-actions'
@@ -35,6 +37,7 @@ type Props = {
     primary: PodcastAction | null
     outline: PodcastAction | null
     menu: PodcastMenuItem[]
+    sentence: HeaderSentence | null
   }
   canCreateEpisode: boolean
   isSubmitting: boolean
@@ -143,6 +146,13 @@ export const PodcastHeader = ({
         {heldByName !== null && (
           <p className={styles.heldSentence}>
             Podcast právě upravuje {heldByName}.
+          </p>
+        )}
+        {/* Where the role may do nothing, who can; beside „⋯“ that it isn't
+            submitted (27k, 23d). */}
+        {headerActions.sentence !== null && (
+          <p className={styles.sentence}>
+            {PODCAST_HEADER_SENTENCES[headerActions.sentence]}
           </p>
         )}
         <ActionMenu
