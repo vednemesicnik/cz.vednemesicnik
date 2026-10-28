@@ -364,7 +364,11 @@ preview, and its detail opens its editor.
 *Nový podcast* creates a draft and opens the editor, which saves as it goes under the edit hold
 (27e, log [0049](./work-log/0049-a-podcast-is-a-draft-created-on-click-with-its-cover-saved-on-its-own.md)).
 The first save with a title or a description, or a cover upload, ends the empty draft. The
-cover saves on its own as it is picked and is replaced, never removed. A taken address saves and
+cover saves on its own as it is picked and is replaced, never removed by the editor. Like the
+issue's files, it uploads with one *Nahrává se · Zrušit* row and can be cancelled until it saves
+(#712, log 0029). A cancelled first cover is sent the cover route's `remove` too, which exists
+only for that, and leaving the editor during an upload asks. The episode's own cover does the
+same, its removal being *Použít obálku podcastu*. A taken address saves and
 is said at its field with *Použít …*; an empty one stays empty until submit asks for it. Only
 the Coordinator chooses the author.
 

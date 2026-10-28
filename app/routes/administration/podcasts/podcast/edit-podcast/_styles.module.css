@@ -120,8 +120,10 @@
 }
 
 /* Vyměnit; Zkusit znovu and Vybrat jiný soubor after a failure (26d). */
+/* As tall as the upload row that takes its place (26c). */
 .coverActions {
   @layer route {
+    min-block-size: 28px;
     display: flex;
     flex-wrap: wrap;
     gap: 12px;

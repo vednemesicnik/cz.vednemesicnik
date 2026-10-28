@@ -17,7 +17,17 @@ const FAILED_REMOVAL_SENTENCE = 'Nepodařilo se uložit.'
 type Answer =
   | { status: 'saved'; updatedAt: string }
   | { status: 'failed'; reason?: 'over-pixel-budget' }
-  | { status: 'unsaved' }
+  | { status: 'cancelled' | 'unsaved' }
+
+/** The cover uploading now. */
+export type CoverUpload = {
+  /** The picked cover, shown dimmed while it uploads. */
+  previewUrl: string
+  /** Whether a stored cover was there when it was picked. */
+  replaces: boolean
+  /** The stored cover when it was picked, which a crossed save changes. */
+  keyAtPick: string | null
+}
 
 /** The last change that failed, until another pick or a retry. */
 export type CoverUploadFailure = {
@@ -28,6 +38,8 @@ export type CoverUploadFailure = {
   sentence: string
   /** The same change again: not for an image over the pixel budget. */
   canRetry: boolean
+  /** A stored cover was there and stayed (26d). */
+  replaces: boolean
 }
 
 type Options = {
@@ -37,6 +49,10 @@ type Options = {
   tabId: string | null
   /** The cover as loaded, which changes with every upload. */
   storedKey: string | null
+  /** For a screen reader, once the content loaded again after a cancel. */
+  cancelledAnnouncement: string
+  /** For a screen reader, a cancel whose replacement had already saved. */
+  crossedAnnouncement: string
   /** Refused for the hold: `true` when the editor took it back and may retry. */
   onNotHeld: (heldByName: string | null) => Promise<boolean>
   /** The content is gone (0036): the editor rechecks its hold. */
@@ -48,20 +64,27 @@ type Options = {
 /**
  * A podcast's cover or an episode's own (design 27e, 27d): a picked image
  * goes on `fetch` at once, alone, as the issue's cover does (26c, log 0029),
- * and the episode's *Použít obálku podcastu* removes its own. A failed upload
- * keeps its file for *Zkusit znovu*. The browser asks before the tab closes
- * during an upload. Cancelling an upload is #712.
+ * and can be cancelled until it saves. A cancelled new cover is always sent a
+ * removal too, because the abort loses an answer already on its way; a
+ * replacement whose answer crossed the cancel stays, and the screen reader
+ * hears so. The episode's *Použít obálku podcastu* removes its own. A failed
+ * upload keeps its file for *Zkusit znovu*. The browser asks before the tab
+ * closes during an upload.
  *
- * @param options - The cover route, the tab, the stored cover, and what the
- *   editor does with a refusal for the hold, deleted content and a save.
- * @returns The picked cover's preview while it uploads, whether a change is
- *   under way, the last failure, the sentence of a refused pick, and `pick`,
- *   `retry` and `remove`.
+ * @param options - The cover route, the tab, the stored cover, what a screen
+ *   reader hears after a cancel, and what the editor does with a refusal for
+ *   the hold, deleted content and a save.
+ * @returns The upload under way, whether a change is under way, the last
+ *   failure, how many uploads failed, the sentence of a refused pick, whether
+ *   a cancel still settles, the announcement, and `pick`, `retry`, `remove`,
+ *   `cancel` and `abandon`.
  */
 export const useCoverUpload = ({
   action,
   tabId,
   storedKey,
+  cancelledAnnouncement,
+  crossedAnnouncement,
   onNotHeld,
   onDeleted,
   onSaved,
@@ -72,29 +95,58 @@ export const useCoverUpload = ({
   optionsRef.current = { onDeleted, onNotHeld, onSaved, tabId }
   const storedKeyRef = useRef(storedKey)
   storedKeyRef.current = storedKey
+  // Read once a cancel has settled, which may be renders later.
+  const announcementsRef = useRef({
+    cancelledAnnouncement,
+    crossedAnnouncement,
+  })
+  announcementsRef.current = { cancelledAnnouncement, crossedAnnouncement }
   const waitForStoredCover = useWaitForChange(storedKey)
 
   // One change at a time.
   const isBusyRef = useRef(false)
   const [isBusy, setIsBusy] = useState(false)
+  const controllerRef = useRef<AbortController | null>(null)
+  const uploadRef = useRef<CoverUpload | null>(null)
+  const [upload, setUpload] = useState<CoverUpload | null>(null)
   const fileRef = useRef<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [failure, setFailure] = useState<CoverUploadFailure | null>(null)
+  const [failureCount, setFailureCount] = useState(0)
   const [rejection, setRejection] = useState<string | null>(null)
+  const [announcement, setAnnouncement] = useState('')
+  // Until a cancel has sent its removal and the content loaded again, so a
+  // new pick cannot race it.
+  const isCancellingRef = useRef(false)
+  const [isCancelling, setIsCancelling] = useState(false)
 
   const setBusy = (next: boolean) => {
     isBusyRef.current = next
     setIsBusy(next)
   }
 
+  const showUpload = (next: CoverUpload | null) => {
+    uploadRef.current = next
+    setUpload(next)
+  }
+
+  const endUpload = () => {
+    const current = uploadRef.current
+    if (current !== null) URL.revokeObjectURL(current.previewUrl)
+    controllerRef.current = null
+    showUpload(null)
+    setBusy(false)
+  }
+
   // One change; a refusal for the hold goes once more after the editor takes
   // it back, like the whole-form save.
   const post = async (
     fields: Record<string, string | Blob>,
+    signal?: AbortSignal,
     isRetry = false,
   ): Promise<Answer> => {
     const { tabId: currentTabId } = optionsRef.current
     if (currentTabId === null) return { status: 'unsaved' }
+    if (signal?.aborted) return { status: 'cancelled' }
 
     const body = new FormData()
     body.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
@@ -103,9 +155,9 @@ export const useCoverUpload = ({
 
     let response: Response
     try {
-      response = await fetch(action, { body, method: 'POST' })
+      response = await fetch(action, { body, method: 'POST', signal })
     } catch {
-      return { status: 'unsaved' }
+      return { status: signal?.aborted ? 'cancelled' : 'unsaved' }
     }
 
     // An expired session redirects to the sign-in page.
@@ -118,7 +170,7 @@ export const useCoverUpload = ({
     try {
       answer = await response.json()
     } catch {
-      return { status: 'unsaved' }
+      return { status: signal?.aborted ? 'cancelled' : 'unsaved' }
     }
 
     // Deleted meanwhile (0036): the hold learns it and the editor only reads.
@@ -129,7 +181,9 @@ export const useCoverUpload = ({
 
     if (answer.status === 'not-held') {
       const mayRetry = await optionsRef.current.onNotHeld(answer.heldByName)
-      return mayRetry && !isRetry ? post(fields, true) : { status: 'unsaved' }
+      return mayRetry && !isRetry
+        ? post(fields, signal, true)
+        : { status: 'unsaved' }
     }
 
     if (answer.status === 'saved') {
@@ -151,20 +205,23 @@ export const useCoverUpload = ({
   }
 
   const send = async (file: File) => {
+    const controller = new AbortController()
+    controllerRef.current = controller
+    const keyAtPick = storedKeyRef.current
+    const replaces = keyAtPick !== null
     setBusy(true)
     fileRef.current = file
     setFailure(null)
     setRejection(null)
-    const url = URL.createObjectURL(file)
-    setPreviewUrl(url)
+    setAnnouncement('')
+    showUpload({ keyAtPick, previewUrl: URL.createObjectURL(file), replaces })
+    const answer = await post({ file, intent: 'upload' }, controller.signal)
+    if (!controller.signal.aborted) await settle(answer, keyAtPick)
 
-    const keyAtPick = storedKeyRef.current
-    const answer = await post({ file, intent: 'upload' })
-    await settle(answer, keyAtPick)
+    // A cancel settled it already, and its answer is lost.
+    if (controller.signal.aborted || answer.status === 'cancelled') return
 
-    URL.revokeObjectURL(url)
-    setPreviewUrl(null)
-    setBusy(false)
+    endUpload()
 
     if (answer.status === 'saved') {
       fileRef.current = null
@@ -173,10 +230,12 @@ export const useCoverUpload = ({
 
     const isOverPixelBudget =
       answer.status === 'failed' && answer.reason === 'over-pixel-budget'
+    setFailureCount((count) => count + 1)
     setFailure({
       canRetry: !isOverPixelBudget,
       change: 'upload',
       fileName: file.name,
+      replaces,
       sentence: isOverPixelBudget
         ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
         : FAILED_UPLOAD_SENTENCE,
@@ -185,7 +244,7 @@ export const useCoverUpload = ({
 
   /** Uploads a picked file, unless it is refused at selection. */
   const pick = (file: File) => {
-    if (isBusyRef.current) return
+    if (isBusyRef.current || isCancellingRef.current) return
     const sentence = getRejectedCoverSentence(file)
     if (sentence !== null) {
       setFailure(null)
@@ -202,17 +261,18 @@ export const useCoverUpload = ({
       return
     }
     const file = fileRef.current
-    if (file === null || isBusyRef.current) return
+    if (file === null || isBusyRef.current || isCancellingRef.current) return
     void send(file)
   }
 
   /** *Použít obálku podcastu*: the own cover goes. */
   const remove = async () => {
-    if (isBusyRef.current) return
+    if (isBusyRef.current || isCancellingRef.current) return
     setBusy(true)
     fileRef.current = null
     setFailure(null)
     setRejection(null)
+    setAnnouncement('')
 
     const keyAtStart = storedKeyRef.current
     const answer = await post({ intent: 'remove' })
@@ -225,14 +285,69 @@ export const useCoverUpload = ({
         canRetry: true,
         change: 'remove',
         fileName: null,
+        replaces: true,
         sentence: FAILED_REMOVAL_SENTENCE,
       })
     }
   }
 
+  /**
+   * Stops the upload at any point until it saves; the stored cover, or none,
+   * stays. Settles once the server has heard of it.
+   */
+  const cancel = async () => {
+    const controller = controllerRef.current
+    const current = uploadRef.current
+    if (controller === null || current === null) return
+
+    controller.abort()
+    endUpload()
+    fileRef.current = null
+    isCancellingRef.current = true
+    setIsCancelling(true)
+
+    if (!current.replaces) await post({ intent: 'remove' })
+    await revalidator.revalidate()
+    // The content has loaded again: say what stayed. A replacement whose
+    // answer crossed the cancel shows once its cover has rendered, which a
+    // revalidation does not wait for.
+    if (current.replaces) await waitForStoredCover(current.keyAtPick)
+    const { cancelledAnnouncement: cancelled, crossedAnnouncement: crossed } =
+      announcementsRef.current
+    setAnnouncement(
+      current.replaces && storedKeyRef.current !== current.keyAtPick
+        ? crossed
+        : cancelled,
+    )
+    isCancellingRef.current = false
+    setIsCancelling(false)
+  }
+
+  /**
+   * Stops the upload for content that is gone (log 0036): there is nothing
+   * to remove and nothing to load again.
+   */
+  const abandon = () => {
+    const controller = controllerRef.current
+    if (controller === null) return
+
+    controller.abort()
+    endUpload()
+    fileRef.current = null
+  }
+
+  // A new cover whose answer never came may have landed after all: once the
+  // content loads with it, the stored cover stands instead of the failure.
+  useEffect(() => {
+    if (storedKey === null) return
+    setFailure((current) =>
+      current?.change === 'upload' && !current.replaces ? null : current,
+    )
+  }, [storedKey])
+
   // An upload on its way is lost with the page; the browser asks.
   const handleBeforeUnload = useEffectEvent((event: BeforeUnloadEvent) => {
-    if (previewUrl === null) return
+    if (controllerRef.current === null) return
     event.preventDefault()
     event.returnValue = ''
   })
@@ -243,14 +358,32 @@ export const useCoverUpload = ({
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [])
 
+  // Gone with an upload under way (the dialog let it go): it is cancelled
+  // like any other, a new cover with its removal.
+  const handleUnmount = useEffectEvent(() => {
+    const current = uploadRef.current
+    if (current !== null) URL.revokeObjectURL(current.previewUrl)
+    if (controllerRef.current === null || current === null) return
+    controllerRef.current.abort()
+    controllerRef.current = null
+    if (!current.replaces) void post({ intent: 'remove' })
+  })
+  useEffect(() => () => handleUnmount(), [])
+
   return {
+    abandon,
+    announcement,
+    cancel,
     failure,
+    failureCount,
     isBusy,
-    isUploading: previewUrl !== null,
+    isCancelling,
+    isUploading: upload !== null,
     pick,
-    previewUrl,
+    previewUrl: upload?.previewUrl ?? null,
     rejection,
     remove,
     retry,
+    upload,
   }
 }
