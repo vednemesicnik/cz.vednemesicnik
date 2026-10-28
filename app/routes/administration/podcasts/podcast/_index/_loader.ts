@@ -17,8 +17,7 @@ import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { getPodcastDisplayTitle } from '~/utils/podcast/get-podcast-display-title'
 import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 
-import { getPodcastActions } from '../../utils/get-podcast-actions'
-import { getPodcastHeaderMenu } from '../../utils/get-podcast-header-menu'
+import { getPodcastHeaderActions } from '../../utils/get-podcast-header-actions'
 import type { Route } from './+types/route'
 import { loadEpisodeTable } from './utils/load-episode-table.server'
 
@@ -127,11 +126,6 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
   }
 
   const submission = flags.submission?.state ?? null
-  const actions = getPodcastActions({
-    ...flags,
-    state: podcast.state,
-    submission,
-  })
 
   // Read only here: an earlier redirect must not use up the toast (as 27c).
   const notice = await readAdminNotice(request)
@@ -166,9 +160,13 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
         state: 'draft',
         targetAuthorIds: [context.authorId],
       }).hasPermission,
-      // Upravit is a button beside Nová epizoda, on a draft only (27b).
-      canEdit: actions.includes('edit'),
       episodeTable,
+      // One primary, one outline beside Nová epizoda, the rest in „⋯“ (27b, 27i).
+      headerActions: getPodcastHeaderActions({
+        ...flags,
+        state: podcast.state,
+        submission,
+      }),
       // „Podcast právě upravuje …“ in place of the buttons (07g), and when the
       // page looks again: an expiry sends no event.
       heldByName: isHeldByOther ? hold.heldByName : null,
@@ -176,7 +174,6 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
       isApprover,
       // One's own editor in another tab: Smazat… waits and says so (0036).
       isHeldInOwnOtherTab: hold?.isOwn === true,
-      menu: getPodcastHeaderMenu(actions),
       podcast: {
         authorName: podcast.author.name,
         cover:

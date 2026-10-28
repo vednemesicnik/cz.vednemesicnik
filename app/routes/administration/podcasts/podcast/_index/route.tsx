@@ -60,13 +60,12 @@ export { meta } from './_meta'
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
     canCreateEpisode,
-    canEdit,
     episodeTable,
     heldByName,
     heldUntil,
     isApprover,
     isHeldInOwnOtherTab,
-    menu,
+    headerActions,
     podcast,
     submission,
   } = loaderData
@@ -151,10 +150,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <AdminPage>
       <PodcastHeader
         canCreateEpisode={canCreateEpisode}
-        canEdit={canEdit}
+        headerActions={headerActions}
         heldByName={heldByName}
         isSubmitting={actions.isSubmitting}
-        menu={menu}
         onMenuItem={(item) =>
           item === 'history' ? setIsHistoryOpen(true) : actions.runAction(item)
         }
@@ -289,7 +287,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <PodcastActionDialogs
         actions={actions}
-        canDelete={menu.includes('delete')}
+        canDelete={headerActions.menu.includes('delete')}
         isApprover={isApprover}
         linksEpisodes={false}
       />

@@ -2,6 +2,7 @@ import type { ContentState } from '@generated/prisma/enums'
 import { href } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { Button } from '~/components/button'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
@@ -10,6 +11,7 @@ import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
 import {
   PODCAST_ACTION_LABELS,
+  type PodcastAction,
   type PodcastMenuItem,
 } from '../../../../utils/podcast-actions'
 import { NewEpisodeButton } from '../new-episode-button'
@@ -29,8 +31,11 @@ type Props = {
     cover: ImageSources | null
   }
   tagState: StatusTagState
-  menu: PodcastMenuItem[]
-  canEdit: boolean
+  headerActions: {
+    primary: PodcastAction | null
+    outline: PodcastAction | null
+    menu: PodcastMenuItem[]
+  }
   canCreateEpisode: boolean
   isSubmitting: boolean
   /** Who else edits the podcast right now, said beside the buttons (07g). */
@@ -39,18 +44,17 @@ type Props = {
 }
 
 /**
- * The podcast's header over its episode table (design 27b): the cover, the
- * title with its state, the author · publish date or who edits it · address,
- * the description,
- * and „⋯“ (Historie first), *Zobrazit na webu* on a published podcast,
- * *Upravit* on a draft and *Nová epizoda*, which on a phone waits in the
- * page's `ListActionBar` instead (32d).
+ * The podcast's header over its episode table (design 27b, 27i): the cover,
+ * the title with its state, the author · publish date or who edits it ·
+ * address, the description, and „⋯“ (Historie first), the outline action,
+ * *Nová epizoda* and the primary action. *Nová epizoda* is the primary where
+ * the state has none, and on a phone waits in the page's `ListActionBar`
+ * instead (32d).
  */
 export const PodcastHeader = ({
   podcast,
   tagState,
-  menu,
-  canEdit,
+  headerActions,
   canCreateEpisode,
   isSubmitting,
   heldByName,
@@ -59,6 +63,50 @@ export const PodcastHeader = ({
   const publicPath = href('/podcasts/:podcastSlug', {
     podcastSlug: podcast.slug,
   })
+  const renderAction = (
+    action: PodcastAction,
+    variant: 'primary' | 'outline',
+  ) => {
+    switch (action) {
+      case 'edit':
+        return (
+          <LinkButton
+            disabled={isSubmitting}
+            to={href('/administration/podcasts/:podcastId/edit-podcast', {
+              podcastId: podcast.id,
+            })}
+            variant={variant}
+          >
+            {PODCAST_ACTION_LABELS.edit}
+          </LinkButton>
+        )
+
+      case 'view-on-web':
+        return (
+          <LinkButton
+            rel={'noopener'}
+            target={'_blank'}
+            to={publicPath}
+            variant={variant}
+          >
+            {PODCAST_ACTION_LABELS['view-on-web']}
+          </LinkButton>
+        )
+
+      default:
+        return (
+          <Button
+            disabled={isSubmitting}
+            onClick={() => onMenuItem(action)}
+            type={'button'}
+            variant={variant}
+          >
+            {PODCAST_ACTION_LABELS[action]}
+          </Button>
+        )
+    }
+  }
+
   const meta = [
     podcast.authorName,
     // Only a draft is held, and it has no publish date to show (07g).
@@ -98,40 +146,24 @@ export const PodcastHeader = ({
           </p>
         )}
         <ActionMenu
-          items={menu.map((item) => ({
+          items={headerActions.menu.map((item) => ({
             danger: item === 'delete',
             label: PODCAST_ACTION_LABELS[item],
             onSelect: () => onMenuItem(item),
           }))}
           label={`Další akce s podcastem ${podcast.title}`}
         />
-        {podcast.state === 'published' && (
-          <LinkButton
-            rel={'noopener'}
-            target={'_blank'}
-            to={publicPath}
-            variant={'outline'}
-          >
-            {PODCAST_ACTION_LABELS['view-on-web']}
-          </LinkButton>
-        )}
-        {canEdit && (
-          <LinkButton
-            disabled={isSubmitting}
-            to={href('/administration/podcasts/:podcastId/edit-podcast', {
-              podcastId: podcast.id,
-            })}
-            variant={'outline'}
-          >
-            {PODCAST_ACTION_LABELS.edit}
-          </LinkButton>
-        )}
+        {headerActions.outline !== null &&
+          renderAction(headerActions.outline, 'outline')}
         {canCreateEpisode && (
           <NewEpisodeButton
             className={styles.newEpisode}
             podcastId={podcast.id}
+            variant={headerActions.primary === null ? 'primary' : 'outline'}
           />
         )}
+        {headerActions.primary !== null &&
+          renderAction(headerActions.primary, 'primary')}
       </div>
     </header>
   )
