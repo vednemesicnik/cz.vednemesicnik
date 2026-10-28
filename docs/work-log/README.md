@@ -80,3 +80,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0046](0046-every-administration-list-folds-on-a-phone.md) | Every administration list folds on a phone; folding is no longer an option | 2026-10-26 |  |
 | [0047](0047-an-episode-address-is-unique-within-its-podcast-once-published.md) | An episode's address is unique within its podcast once published, ahead of its editor | 2026-10-26 | [0048](0048-an-episode-is-a-draft-with-the-next-number-unique-only-once-published.md) |
 | [0048](0048-an-episode-is-a-draft-with-the-next-number-unique-only-once-published.md) | An episode is a draft with the next number, unique only once published, and its links save as typed | 2026-10-27 |  |
+| [0049](0049-a-podcast-is-a-draft-created-on-click-with-its-cover-saved-on-its-own.md) | A podcast is a draft created on click, its cover saves on its own, and an empty address stays empty | 2026-10-28 |  |

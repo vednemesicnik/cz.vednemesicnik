@@ -23,6 +23,8 @@ type Props = {
     state: ContentState
     authorName: string
     publishedDate: string | null
+    /** Who edits it while held: „upravuje Jakub Novák od 14:02“ (23g). */
+    holdLine: string | null
     description: string
     cover: ImageSources | null
   }
@@ -31,12 +33,15 @@ type Props = {
   canEdit: boolean
   canCreateEpisode: boolean
   isSubmitting: boolean
+  /** Who else edits the podcast right now, said beside the buttons (07g). */
+  heldByName: string | null
   onMenuItem: (item: PodcastMenuItem) => void
 }
 
 /**
  * The podcast's header over its episode table (design 27b): the cover, the
- * title with its state, the author · publish date · address, the description,
+ * title with its state, the author · publish date or who edits it · address,
+ * the description,
  * and „⋯“ (Historie first), *Zobrazit na webu* on a published podcast,
  * *Upravit* on a draft and *Nová epizoda*, which on a phone waits in the
  * page's `ListActionBar` instead (32d).
@@ -48,6 +53,7 @@ export const PodcastHeader = ({
   canEdit,
   canCreateEpisode,
   isSubmitting,
+  heldByName,
   onMenuItem,
 }: Props) => {
   const publicPath = href('/podcasts/:podcastSlug', {
@@ -55,10 +61,13 @@ export const PodcastHeader = ({
   })
   const meta = [
     podcast.authorName,
-    podcast.publishedDate === null
-      ? null
-      : `publikováno ${podcast.publishedDate}`,
-    publicPath,
+    // Only a draft is held, and it has no publish date to show (07g).
+    podcast.holdLine ??
+      (podcast.publishedDate === null
+        ? null
+        : `publikováno ${podcast.publishedDate}`),
+    // A draft may have no address yet (27i).
+    podcast.slug === '' ? null : publicPath,
   ].filter((part) => part !== null)
 
   return (
@@ -81,6 +90,13 @@ export const PodcastHeader = ({
       </div>
 
       <div className={styles.actions}>
+        {/* Someone else edits it: who, beside what still works (07g); its
+            state actions wait. */}
+        {heldByName !== null && (
+          <p className={styles.heldSentence}>
+            Podcast právě upravuje {heldByName}.
+          </p>
+        )}
         <ActionMenu
           items={menu.map((item) => ({
             danger: item === 'delete',

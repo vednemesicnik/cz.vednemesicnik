@@ -1,6 +1,7 @@
 import { href } from 'react-router'
 
 import type { Breadcrumb, BreadcrumbMatch } from '~/types/breadcrumb'
+import { getPodcastDisplayTitle } from '~/utils/podcast/get-podcast-display-title'
 
 import type { Route } from './+types/route'
 
@@ -13,7 +14,13 @@ export const handle = {
   breadcrumb: (match: Match): Breadcrumb => {
     const { podcastId } = match.params
 
-    const label = match.loaderData?.podcast.title ?? 'Neznámý podcast'
+    const podcast = match.loaderData?.podcast
+    const label =
+      podcast === undefined
+        ? 'Neznámý podcast'
+        : podcast.isEmptyDraft
+          ? 'Nový podcast'
+          : getPodcastDisplayTitle(podcast.title)
     const path = href(`/administration/podcasts/:podcastId`, { podcastId })
 
     return { label, path }

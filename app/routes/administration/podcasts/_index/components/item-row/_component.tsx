@@ -95,11 +95,14 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
         >
           {podcast.title}
         </TableRowLink>
-        <TableNameAddress>
-          {podcast.cover === null
-            ? 'obálka zatím chybí'
-            : href('/podcasts/:podcastSlug', { podcastSlug: podcast.slug })}
-        </TableNameAddress>
+        {/* A draft may have no address yet (27i): then no line. */}
+        {(podcast.cover === null || podcast.slug !== '') && (
+          <TableNameAddress>
+            {podcast.cover === null
+              ? 'obálka zatím chybí'
+              : href('/podcasts/:podcastSlug', { podcastSlug: podcast.slug })}
+          </TableNameAddress>
+        )}
       </TableNameCell>
       <TableCell>
         <span className={styles.episodes}>

@@ -30,7 +30,9 @@ import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { EPISODE_NOUN } from '~/config/list-noun-config'
+import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useContentEvents } from '~/hooks/use-content-events'
+import { useRevalidateAt } from '~/hooks/use-revalidate-at'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -60,7 +62,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     canCreateEpisode,
     canEdit,
     episodeTable,
+    heldByName,
+    heldUntil,
     isApprover,
+    isHeldInOwnOtherTab,
     menu,
     podcast,
     submission,
@@ -87,10 +92,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     filter: (event) =>
       event.entity === 'podcast' && event.entityId === podcast.id,
   })
+  // An edit hold's expiry sends no event; the page looks again then (07g).
+  useRevalidateAt([heldUntil])
+  // „Podcast právě upravuje …“ after a direct address of its editor.
+  useAdminNoticeToast(loaderData)
 
   const actions = usePodcastActions({
     deleteRedirects: true,
     fetcherKey: `podcast-${podcast.id}`,
+    isHeldInOwnOtherTab,
     podcast,
   })
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
@@ -142,6 +152,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <PodcastHeader
         canCreateEpisode={canCreateEpisode}
         canEdit={canEdit}
+        heldByName={heldByName}
         isSubmitting={actions.isSubmitting}
         menu={menu}
         onMenuItem={(item) =>

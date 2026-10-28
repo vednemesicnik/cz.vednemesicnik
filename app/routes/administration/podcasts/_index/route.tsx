@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
+import { Form, href } from 'react-router'
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
@@ -11,6 +11,8 @@ import {
   TableSelectionHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
 import { FilterBar } from '~/components/filter-bar'
@@ -19,7 +21,6 @@ import { FilterBarGroup } from '~/components/filter-bar-group'
 import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
-import { LinkButton } from '~/components/link-button'
 import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
@@ -96,10 +97,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     states,
   })
 
+  // Nový podcast creates the draft and opens it (log 0020, 27e), so it posts.
   const newPodcastButton = canCreate && (
-    <LinkButton to={href('/administration/podcasts/add-podcast')}>
-      Nový podcast
-    </LinkButton>
+    <Form action={href('/administration/podcasts/add-podcast')} method={'post'}>
+      <AuthenticityTokenInput />
+      <Button type={'submit'}>Nový podcast</Button>
+    </Form>
   )
 
   return (
@@ -156,11 +159,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
           )}
-          {emptyMessage.action === 'create' && canCreate && (
-            <LinkButton to={href('/administration/podcasts/add-podcast')}>
-              Nový podcast
-            </LinkButton>
-          )}
+          {emptyMessage.action === 'create' && newPodcastButton}
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
         </ListEmptyCard>
       ) : (

@@ -361,6 +361,13 @@ waits for one's own other tab too (log 0036), as it waits for an editor of one o
 episode drafts. An empty podcast draft (no `firstContentAt`, log 0020) is in no list, count or
 preview, and its detail opens its editor.
 
+*Nový podcast* creates a draft and opens the editor, which saves as it goes under the edit hold
+(27e, log [0049](./work-log/0049-a-podcast-is-a-draft-created-on-click-with-its-cover-saved-on-its-own.md)).
+The first save with a title or a description, or a cover upload, ends the empty draft. The
+cover saves on its own as it is picked and is replaced, never removed. A taken address saves and
+is said at its field with *Použít …*; an empty one stays empty until submit asks for it. Only
+the Coordinator chooses the author.
+
 ---
 
 ## Decided for the redesign (not implemented yet)

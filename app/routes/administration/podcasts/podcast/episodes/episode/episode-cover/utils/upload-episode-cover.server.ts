@@ -1,7 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { data } from 'react-router'
 
-import { EPISODE_COVER_CONFIG } from '~/config/episode-cover-config'
+import { PODCAST_COVER_CONFIG } from '~/config/podcast-cover-config'
 import { prisma } from '~/utils/db.server'
 import { isImageOverPixelBudget } from '~/utils/image-store/is-image-over-pixel-budget.server'
 import {
@@ -44,7 +44,7 @@ export async function uploadEpisodeCover(
 ): Promise<CoverChangeResult> {
   if (
     file.size === 0 ||
-    file.size > EPISODE_COVER_CONFIG.maxFileBytes ||
+    file.size > PODCAST_COVER_CONFIG.maxFileBytes ||
     !file.type.startsWith('image/')
   ) {
     throw data(null, { status: 400 })

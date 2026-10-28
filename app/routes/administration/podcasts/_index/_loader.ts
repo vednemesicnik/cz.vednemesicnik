@@ -20,6 +20,7 @@ import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { getPodcastDisplayTitle } from '~/utils/podcast/get-podcast-display-title'
 import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
@@ -249,7 +250,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         slug: podcast.slug,
         state: podcast.state,
         submission,
-        title: podcast.title,
+        // A draft saved without a title goes by a name (copy utgh1hb7).
+        title: getPodcastDisplayTitle(podcast.title),
       }
     })
     // The latest published episode first; a podcast without one goes last (27a).

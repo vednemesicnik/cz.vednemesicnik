@@ -13,6 +13,7 @@ import { getAuthorsByPermission } from '~/utils/permissions/author/queries/get-a
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { getPodcastDisplayTitle } from '~/utils/podcast/get-podcast-display-title'
 import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
 import { findPublishedEpisodeConflict } from '../../utils/find-published-episode-conflict.server'
 import type { Route } from './+types/route'
@@ -190,7 +191,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
               sources: createImageSources('podcast-cover', podcast.cover),
             },
       slug: podcast.slug,
-      title: podcast.title,
+      // A podcast saved without a title goes by a name (copy utgh1hb7).
+      title: getPodcastDisplayTitle(podcast.title),
     },
   }
 }

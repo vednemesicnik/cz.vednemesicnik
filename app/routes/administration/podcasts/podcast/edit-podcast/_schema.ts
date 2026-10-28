@@ -2,30 +2,19 @@ import { z } from 'zod'
 
 import { slugify } from '~/utils/slugify'
 
-const MAX_COVER_UPLOAD_SIZE = 1024 * 1024 * 5 // 5 MB (design 27e)
+// A draft saves incomplete (design 27e, 27i): what is missing is said at
+// submit, so no field is refused here.
+const optionalText = z
+  .string()
+  .optional()
+  .transform((value) => value?.trim() ?? '')
 
 export const schema = z.object({
-  authorId: z.string(),
-  cover: z
-    .instanceof(File)
-    .optional()
-    .refine(
-      (file) => !file || file.type.startsWith('image/'),
-      'Format of the cover image is not supported',
-    )
-    .refine(
-      (file) => !file || file.size <= MAX_COVER_UPLOAD_SIZE,
-      'Cover image should have a 5 MB maximum size',
-    ),
-  coverId: z.string(),
-  description: z.string({ message: 'Description is required' }),
-  id: z.string(),
-  slug: z
-    .string({ message: 'Slug is required' })
-    .regex(/^\S/, 'Slug cannot start with a space')
-    .regex(/^[^-]/, 'Slug cannot start with a hyphen')
-    .transform(slugify),
-  title: z
-    .string({ message: 'Title is required' })
-    .regex(/^\S/, 'Title cannot start with a space'),
+  // Sent only by the Coordinator, who chooses the author (design 27e, as 25c).
+  authorId: z.string().min(1).optional(),
+  description: optionalText,
+  // The editor's tab, which holds the edit hold (design 24g).
+  editTabId: z.string().min(1),
+  slug: optionalText.transform(slugify),
+  title: optionalText,
 })

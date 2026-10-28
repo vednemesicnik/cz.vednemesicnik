@@ -49,6 +49,7 @@ beforeEach(() => {
   context.can.mockReturnValue({ hasPermission: true })
   mocks.podcastFindUnique.mockResolvedValue({
     authorId: 'author-2',
+    firstContentAt: new Date('2026-10-01T10:00:00Z'),
     state: 'published',
   })
   mocks.getNextFreeEpisodeNumber.mockResolvedValue(14)
@@ -99,6 +100,19 @@ describe('createDraftEpisode', () => {
 
   test('creates nothing in a podcast that is gone', async () => {
     mocks.podcastFindUnique.mockResolvedValue(null)
+
+    await expect(
+      createDraftEpisode(request, 'podcast-1'),
+    ).rejects.toMatchObject({ init: { status: 404 } })
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  test('creates nothing in an empty podcast draft (log 0020)', async () => {
+    mocks.podcastFindUnique.mockResolvedValue({
+      authorId: 'author-1',
+      firstContentAt: null,
+      state: 'draft',
+    })
 
     await expect(
       createDraftEpisode(request, 'podcast-1'),

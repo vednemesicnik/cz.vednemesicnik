@@ -1,151 +1,24 @@
 // noinspection JSUnusedGlobalSymbols
-import {
-  getFormProps,
-  getInputProps,
-  getSelectProps,
-  useForm,
-} from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { useState } from 'react'
-import { href, useNavigation } from 'react-router'
-import { AdminPage } from '~/components/admin/admin-page'
-import { AdminTextarea } from '~/components/admin/admin-textarea'
-import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Button } from '~/components/button'
-import { Fieldset } from '~/components/fieldset'
-import { FileInput } from '~/components/file-input'
-import { Form } from '~/components/form'
-import { FormActions } from '~/components/form-actions'
-import { LinkButton } from '~/components/link-button'
-import { PageTitle } from '~/components/page-title'
-import { Select } from '~/components/select'
-import { TextField } from '~/components/text-field'
-import { useAutoSlug } from '~/utils/use-auto-slug'
-import { schema } from './_schema'
+
+import { href, redirect } from 'react-router'
+import { requireCSRF } from '~/utils/csrf.server'
+
 import type { Route } from './+types/route'
+import { createDraftPodcast } from './utils/create-draft-podcast.server'
 
-export { action } from './_action'
-export { handle } from './_handle'
-export { loader } from './_loader'
-export { meta } from './_meta'
+// *Nový podcast* is an action, not a page (log 0020, design 27e, r1lh527v):
+// the old address leads to the list, and a POST creates the draft and opens
+// it.
 
-export default function RouteComponent({
-  loaderData,
-  actionData,
-}: Route.ComponentProps) {
-  const { state } = useNavigation()
+export const loader = () => redirect(href('/administration/podcasts'))
 
-  const [form, fields] = useForm({
-    constraint: getZodConstraint(schema),
-    defaultValue: {
-      authorId: loaderData.selfAuthorId,
-    },
-    id: 'add-podcast',
-    lastResult: actionData?.submissionResult,
-    onValidate: ({ formData }) => parseWithZod(formData, { schema }),
-    shouldDirtyConsider: (field) => {
-      return !field.startsWith('csrf')
-    },
-    shouldRevalidate: 'onBlur',
-    shouldValidate: 'onSubmit',
-  })
+export const action = async ({ request }: Route.ActionArgs) => {
+  const formData = await request.formData()
+  await requireCSRF(formData, request)
 
-  const [title, setTitle] = useState('')
-  const { handleBlur, handleFocus } = useAutoSlug({
-    fieldName: fields.slug.name,
-    sourceValue: title,
-    updateFieldValue: form.update,
-  })
+  const { podcastId } = await createDraftPodcast(request)
 
-  const handleFileChange = (name: string, dirty: boolean) => () => {
-    if (dirty) {
-      form.validate({ name })
-    }
-  }
-
-  const isLoadingOrSubmitting = state !== 'idle'
-  const isSubmitting = state === 'submitting'
-  const canSubmit = !isLoadingOrSubmitting && form.valid
-
-  return (
-    <AdminPage measure={'form'}>
-      <PageTitle>Nový podcast</PageTitle>
-
-      <Form
-        encType={'multipart/form-data'}
-        method={'post'}
-        {...getFormProps(form)}
-        errors={form.errors}
-      >
-        <Fieldset disabled={isLoadingOrSubmitting} legend={'Detaily'}>
-          <TextField
-            errors={fields.title.errors}
-            label={'Název'}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder={'Název podcastu'}
-            value={title}
-            {...getInputProps(fields.title, { type: 'text' })}
-          />
-
-          <TextField
-            errors={fields.slug.errors}
-            label={'Slug'}
-            onBlur={handleBlur}
-            onFocus={handleFocus}
-            placeholder={'nazev-podcastu'}
-            {...getInputProps(fields.slug, { type: 'text' })}
-          />
-
-          <AdminTextarea
-            field={fields.description}
-            label={'Popis'}
-            textareaProps={{
-              placeholder: 'Popis podcastu',
-              rows: 10,
-            }}
-          />
-
-          <FileInput
-            errors={fields.cover.errors}
-            label={'Obálka'}
-            onChange={handleFileChange(fields.cover.name, fields.cover.dirty)}
-            {...getInputProps(fields.cover, { type: 'file' })}
-            accept={'image'}
-          />
-        </Fieldset>
-
-        <Fieldset
-          disabled={isLoadingOrSubmitting}
-          legend={'Informace o autorovi'}
-        >
-          <Select
-            errors={fields.authorId.errors}
-            label={'Autor'}
-            {...getSelectProps(fields.authorId)}
-          >
-            {loaderData.authors.map((author) => (
-              <option key={author.id} value={author.id}>
-                {author.name}
-              </option>
-            ))}
-          </Select>
-        </Fieldset>
-
-        <AuthenticityTokenInput />
-
-        <FormActions>
-          <Button disabled={!canSubmit} type={'submit'}>
-            {isSubmitting ? 'Přidává se...' : 'Přidat'}
-          </Button>
-          <LinkButton
-            disabled={isLoadingOrSubmitting}
-            to={href('/administration/podcasts')}
-            variant={'outline'}
-          >
-            Zrušit
-          </LinkButton>
-        </FormActions>
-      </Form>
-    </AdminPage>
+  return redirect(
+    href('/administration/podcasts/:podcastId/edit-podcast', { podcastId }),
   )
 }

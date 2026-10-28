@@ -18,8 +18,12 @@ type Props = {
    * look and the sentence describes it.
    */
   errorId?: string
-  /** The cover's field has a printed page's proportions (26c). */
-  isPage?: boolean
+  /**
+   * The slot a cover's field keeps: a printed page's proportions for an
+   * issue's (26c), a square for a podcast's (27e). Without it the field is as
+   * tall as its text, as the PDF's.
+   */
+  shape?: 'page' | 'square'
 }
 
 /**
@@ -36,7 +40,7 @@ export const FileDropField = ({
   onPick,
   isDisabled = false,
   errorId,
-  isPage = false,
+  shape,
 }: Props) => {
   const inputId = useId()
   const hintId = useId()
@@ -69,7 +73,8 @@ export const FileDropField = ({
     <div
       className={clsx(
         styles.field,
-        isPage && styles.page,
+        shape === 'page' && styles.page,
+        shape === 'square' && styles.square,
         errorId !== undefined && styles.invalid,
         isDragOver && styles.dragOver,
       )}

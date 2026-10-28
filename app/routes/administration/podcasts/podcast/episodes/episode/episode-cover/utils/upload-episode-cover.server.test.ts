@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { EPISODE_COVER_CONFIG } from '~/config/episode-cover-config'
+import { PODCAST_COVER_CONFIG } from '~/config/podcast-cover-config'
 
 import type { CoverChangeEpisode } from './save-episode-cover-change.server'
 import { uploadEpisodeCover } from './upload-episode-cover.server'
@@ -93,7 +93,7 @@ describe('uploadEpisodeCover — the input', () => {
     [
       'a file over 5 MB',
       new File(
-        [new Uint8Array(EPISODE_COVER_CONFIG.maxFileBytes + 1)],
+        [new Uint8Array(PODCAST_COVER_CONFIG.maxFileBytes + 1)],
         'big.jpg',
         { type: 'image/jpeg' },
       ),

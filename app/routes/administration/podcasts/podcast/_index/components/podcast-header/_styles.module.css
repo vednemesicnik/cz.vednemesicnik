@@ -98,3 +98,15 @@
     gap: 8px;
   }
 }
+
+/* Who else edits it, as the episode's detail says it (27c, 07g). */
+.heldSentence {
+  @layer route {
+    flex-basis: 100%;
+    max-width: 40ch;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}

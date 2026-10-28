@@ -1,6 +1,6 @@
 /* The dashed field of 26c, as the gallery's tile in 24b: a centred column. */
 .field {
-  @layer route {
+  @layer component {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -20,16 +20,24 @@
   }
 }
 
-/* The cover's: a printed page's proportions, so the slot keeps its place. */
+/* An issue's cover: a printed page's proportions, so the slot keeps its
+   place (26c). */
 .page {
-  @layer route {
+  @layer variant {
     aspect-ratio: 210 / 297;
+  }
+}
+
+/* A podcast's cover: a square, as the platforms want it (27e). */
+.square {
+  @layer variant {
+    aspect-ratio: 1;
   }
 }
 
 /* Visually hidden; the label is what is read and clicked. */
 .input {
-  @layer route {
+  @layer component {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -41,14 +49,14 @@
 
 /* A refused pick (26d). */
 .invalid {
-  @layer route {
+  @layer variant {
     border-color: var(--error);
   }
 }
 
 /* A file held over the field, as the gallery's tile (24b). */
 .dragOver {
-  @layer route {
+  @layer variant {
     background-color: var(--bg-tertiary);
     border-color: var(--border-accent);
   }
@@ -56,7 +64,7 @@
 
 /* The whole field picks: the label's box covers it (as 24b). */
 .label {
-  @layer route {
+  @layer component {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     color: var(--link-strong);
@@ -72,14 +80,14 @@
 
 /* Outside the edit hold nothing uploads. */
 .disabled {
-  @layer route {
+  @layer variant {
     color: var(--text-secondary);
     cursor: not-allowed;
   }
 }
 
 .hint {
-  @layer route {
+  @layer component {
     font-size: var(--font-size-xs);
     color: var(--text-tertiary);
   }

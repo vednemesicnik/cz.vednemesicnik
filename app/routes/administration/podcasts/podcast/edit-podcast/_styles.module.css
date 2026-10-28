@@ -1,0 +1,251 @@
+/* The heading with its tag, the save line under it, Zavřít on the right
+   (27e, as 26c). */
+.header {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    inline-size: 100%;
+  }
+}
+
+.title {
+  @layer route {
+    display: grid;
+    gap: 8px;
+    min-inline-size: 0;
+  }
+}
+
+.titleLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+}
+
+/* The line under the heading, the only sign of saving (24e). */
+.saveLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+}
+
+/* Only a failure has a colour: someone has to act (24e). */
+.saveFailure {
+  @layer route {
+    color: var(--error-text);
+  }
+}
+
+/* One sentence over someone else's podcast, not a banner (24c). */
+.sentence {
+  @layer route {
+    max-inline-size: 40rem;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+}
+
+/* The cover in a column of its own, the details beside it (27e): 220 px and
+   at most 560 px, 40 px apart. They stack once the editor is narrower than
+   the cover and the narrowest details (440 px) side by side. */
+.layout {
+  @layer route {
+    container-type: inline-size;
+    inline-size: 100%;
+  }
+}
+
+.columns {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 220px) minmax(0, 560px);
+    align-items: start;
+    gap: 32px 40px;
+
+    @container (inline-size < 700px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+/* The cover, its actions and its notes under it. */
+.coverColumn {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-inline-size: 220px;
+    margin: 0;
+  }
+}
+
+/* Square, as on the web, which crops a cover that is not (27e). */
+.coverImage {
+  @layer route {
+    inline-size: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+
+    /* Image's own unlayered `height: auto` would keep the natural ratio. */
+    & img {
+      min-block-size: 100%;
+      max-block-size: 100%;
+      object-fit: cover;
+    }
+  }
+}
+
+/* The picked cover, dimmed until it saves (as 26c). */
+.coverUploading {
+  @layer route {
+    object-fit: cover;
+    opacity: 0.6;
+  }
+}
+
+/* Vyměnit; Zkusit znovu and Vybrat jiný soubor after a failure (26d). */
+.coverActions {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+.coverNote {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+}
+
+.details {
+  @layer route {
+    display: grid;
+    gap: 18px;
+    min-inline-size: 0;
+  }
+}
+
+/* A fieldset only to lock its fields without the hold (07g): no frame. */
+.lock {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}
+
+.descriptionInput {
+  @layer route {
+    field-sizing: content;
+    min-height: 4lh;
+    line-height: 1.55;
+    resize: none;
+  }
+}
+
+/* A field and the offer under it, closer than the other fields (27e). */
+.fieldGroup {
+  @layer route {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+
+    & > :first-child {
+      justify-self: stretch;
+    }
+  }
+}
+
+.offer {
+  @layer route {
+    font-size: 13px;
+  }
+}
+
+/* Na webu jako under a line: the title, then the address (27e). */
+.webPreview {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding-block-start: 14px;
+    font-size: 13px;
+    border-block-start: 1px solid var(--border);
+
+    & dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
+.webPreviewLabel {
+  @layer route {
+    color: var(--text-secondary);
+  }
+}
+
+.tertiary {
+  @layer route {
+    color: var(--text-tertiary);
+  }
+}
+
+/* Deleted: what the editor still shows is the only copy (24k). */
+.deletedWarning {
+  @layer route {
+    margin-block: 0;
+  }
+}
+
+/* Inside the callout, next to its icon (rmridl1f). */
+.deletedContent {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+.deletedTitle {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}
+
+.deletedAdvice {
+  @layer route {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}

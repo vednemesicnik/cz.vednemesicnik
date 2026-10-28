@@ -34,6 +34,8 @@ import { ContentChangedDialog } from '~/components/content-changed-dialog'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
+import { FailedFile } from '~/components/failed-file'
+import { FileDropField } from '~/components/file-drop-field'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { Image } from '~/components/image'
@@ -63,8 +65,6 @@ import { formatEditHoldLine } from '../../../articles/utils/format-edit-hold-lin
 import { ISSUE_NUMBER_FIELDS, schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
-import { FailedFile } from './components/failed-file'
-import { FileDropField } from './components/file-drop-field'
 import { createEditorSchema } from './utils/create-editor-schema'
 import { formatIssueChangedDescription } from './utils/format-issue-changed-description'
 import {
@@ -1196,9 +1196,9 @@ export default function RouteComponent({
                           }
                           hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
                           isDisabled={isLocked || coverUpload.isCancelling}
-                          isPage
                           label={'Vybrat obálku'}
                           onPick={coverUpload.pick}
+                          shape={'page'}
                         />
                         {renderFileProblem('cover', '')}
                       </>

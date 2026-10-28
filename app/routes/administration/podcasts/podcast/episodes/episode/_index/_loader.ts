@@ -11,6 +11,7 @@ import { getAuthorPermissionContext } from '~/utils/permissions/author/context/g
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { getWebContentVisibility } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { getPodcastDisplayTitle } from '~/utils/podcast/get-podcast-display-title'
 import { buildWebVisibleEpisodeWhere } from '~/utils/podcast-episode/build-web-visible-episode-where'
 
 import { formatEditHoldLine } from '../../../../../articles/utils/format-edit-hold-line'
@@ -234,7 +235,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         podcast: {
           id: episode.podcast.id,
           slug: episode.podcast.slug,
-          title: episode.podcast.title,
+          // A podcast saved without a title goes by a name (copy utgh1hb7).
+          title: getPodcastDisplayTitle(episode.podcast.title),
         },
         publishedAt: episode.publishedAt?.toISOString() ?? null,
         slug: episode.slug,

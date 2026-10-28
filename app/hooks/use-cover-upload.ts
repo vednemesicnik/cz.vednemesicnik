@@ -1,12 +1,11 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
-import { href, useRevalidator } from 'react-router'
+import { useRevalidator } from 'react-router'
 
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { FORM_CONFIG } from '~/config/form-config'
 import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { useWaitForChange } from '~/hooks/use-wait-for-change'
-
-import { getRejectedEpisodeCoverSentence } from './get-rejected-episode-cover-sentence'
+import { getRejectedCoverSentence } from '~/utils/podcast/get-rejected-cover-sentence'
 
 // Said under the field once an upload failed (copy yzyd9p1l).
 const FAILED_UPLOAD_SENTENCE =
@@ -21,45 +20,46 @@ type Answer =
   | { status: 'unsaved' }
 
 /** The last change that failed, until another pick or a retry. */
-export type EpisodeCoverFailure = {
+export type CoverUploadFailure = {
   /** What *Zkusit znovu* repeats. */
   change: 'upload' | 'remove'
+  /** The picked file's name, which the failed field shows (26d); none for a removal. */
+  fileName: string | null
   sentence: string
   /** The same change again: not for an image over the pixel budget. */
   canRetry: boolean
 }
 
 type Options = {
-  podcastId: string
-  episodeId: string
+  /** The cover route of the content, which saves one change at a time. */
+  action: string
   /** The editor's tab, `null` until it holds the edit. */
   tabId: string | null
-  /** The own cover as loaded, which changes with every upload. */
+  /** The cover as loaded, which changes with every upload. */
   storedKey: string | null
   /** Refused for the hold: `true` when the editor took it back and may retry. */
   onNotHeld: (heldByName: string | null) => Promise<boolean>
-  /** The episode is gone (0036): the editor rechecks its hold. */
+  /** The content is gone (0036): the editor rechecks its hold. */
   onDeleted: () => Promise<void>
-  /** The episode's new `updatedAt` after a saved change. */
+  /** The content's new `updatedAt` after a saved change. */
   onSaved: (updatedAt: string) => void
 }
 
 /**
- * The episode's own cover (design 27d): a picked image goes on `fetch` at
- * once, alone, as the issue's cover does (26c, log 0029), and *Použít obálku
- * podcastu* removes it. A failed upload keeps its file for *Zkusit znovu*.
- * The browser asks before the tab closes during an upload. Cancelling an
- * upload is #712.
+ * A podcast's cover or an episode's own (design 27e, 27d): a picked image
+ * goes on `fetch` at once, alone, as the issue's cover does (26c, log 0029),
+ * and the episode's *Použít obálku podcastu* removes its own. A failed upload
+ * keeps its file for *Zkusit znovu*. The browser asks before the tab closes
+ * during an upload. Cancelling an upload is #712.
  *
- * @param options - The episode, the tab, the stored cover, and what the
- *   editor does with a refusal for the hold, a deleted episode and a save.
+ * @param options - The cover route, the tab, the stored cover, and what the
+ *   editor does with a refusal for the hold, deleted content and a save.
  * @returns The picked cover's preview while it uploads, whether a change is
  *   under way, the last failure, the sentence of a refused pick, and `pick`,
  *   `retry` and `remove`.
  */
-export const useEpisodeCoverUpload = ({
-  podcastId,
-  episodeId,
+export const useCoverUpload = ({
+  action,
   tabId,
   storedKey,
   onNotHeld,
@@ -73,17 +73,13 @@ export const useEpisodeCoverUpload = ({
   const storedKeyRef = useRef(storedKey)
   storedKeyRef.current = storedKey
   const waitForStoredCover = useWaitForChange(storedKey)
-  const action = href(
-    '/administration/podcasts/:podcastId/episodes/:episodeId/cover',
-    { episodeId, podcastId },
-  )
 
   // One change at a time.
   const isBusyRef = useRef(false)
   const [isBusy, setIsBusy] = useState(false)
   const fileRef = useRef<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [failure, setFailure] = useState<EpisodeCoverFailure | null>(null)
+  const [failure, setFailure] = useState<CoverUploadFailure | null>(null)
   const [rejection, setRejection] = useState<string | null>(null)
 
   const setBusy = (next: boolean) => {
@@ -180,6 +176,7 @@ export const useEpisodeCoverUpload = ({
     setFailure({
       canRetry: !isOverPixelBudget,
       change: 'upload',
+      fileName: file.name,
       sentence: isOverPixelBudget
         ? IMAGE_OVER_PIXEL_BUDGET_MESSAGE
         : FAILED_UPLOAD_SENTENCE,
@@ -189,7 +186,7 @@ export const useEpisodeCoverUpload = ({
   /** Uploads a picked file, unless it is refused at selection. */
   const pick = (file: File) => {
     if (isBusyRef.current) return
-    const sentence = getRejectedEpisodeCoverSentence(file)
+    const sentence = getRejectedCoverSentence(file)
     if (sentence !== null) {
       setFailure(null)
       setRejection(sentence)
@@ -227,6 +224,7 @@ export const useEpisodeCoverUpload = ({
       setFailure({
         canRetry: true,
         change: 'remove',
+        fileName: null,
         sentence: FAILED_REMOVAL_SENTENCE,
       })
     }
