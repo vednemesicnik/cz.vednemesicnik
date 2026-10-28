@@ -15,7 +15,7 @@ describe('getEditorSentence', () => {
 
   it('names someone else’s unsent draft (24c)', () => {
     expect(getEditorSentence({ isOwn: false, isSubmitted: false })).toBe(
-      'Upravujete koncept, který ještě nebyl odeslán ke schválení.',
+      'Upravujete koncept, který není odeslaný ke schválení.',
     )
   })
 })

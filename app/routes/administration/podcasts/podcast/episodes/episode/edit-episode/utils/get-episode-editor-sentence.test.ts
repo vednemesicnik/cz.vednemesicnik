@@ -17,7 +17,7 @@ describe('getEpisodeEditorSentence', () => {
 
   test('over someone else’s draft', () => {
     expect(getEpisodeEditorSentence({ isOwn: false, isSubmitted: false })).toBe(
-      'Upravujete koncept, který ještě nebyl odeslán ke schválení.',
+      'Upravujete koncept, který není odeslaný ke schválení.',
     )
   })
 })

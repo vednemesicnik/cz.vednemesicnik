@@ -22,7 +22,7 @@ describe('formatEpisodeHoldTakenDescription', () => {
         unsentLabels: ['Popis', 'Odkazy na epizodu'],
       }),
     ).toEqual([
-      'Některé změny se nestihly uložit. Neuložené změny: Popis, Odkazy na epizodu.',
+      'Některé změny nejsou uložené. Neuložené změny: Popis, Odkazy na epizodu.',
       'Z tohoto editoru zatím nebylo nic uloženo. Epizodu teď můžete jen číst.',
     ])
   })

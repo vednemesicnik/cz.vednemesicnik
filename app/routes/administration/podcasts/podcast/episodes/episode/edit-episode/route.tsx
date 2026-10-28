@@ -891,7 +891,7 @@ export default function RouteComponent({
           )}
           {deletion.unsentLabels.length > 0 && (
             <AdminModalDescription>
-              {`Některé změny se nestihly uložit. Neuložené změny: ${deletion.unsentLabels.join(', ')}.`}
+              {`Některé změny nejsou uložené. Neuložené změny: ${deletion.unsentLabels.join(', ')}.`}
             </AdminModalDescription>
           )}
           <AdminModalDescription>
