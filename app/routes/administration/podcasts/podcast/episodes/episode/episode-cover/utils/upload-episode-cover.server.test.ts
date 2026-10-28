@@ -7,6 +7,7 @@ import { uploadEpisodeCover } from './upload-episode-cover.server'
 
 const mocks = vi.hoisted(() => ({
   coverCreate: vi.fn(),
+  coverDelete: vi.fn(),
   coverFindUnique: vi.fn(),
   coverUpdate: vi.fn(),
   createId: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock('~/utils/db.server', () => ({
   prisma: {
     podcastEpisodeCover: {
       create: mocks.coverCreate,
+      delete: mocks.coverDelete,
       findUnique: mocks.coverFindUnique,
       update: mocks.coverUpdate,
     },
@@ -84,7 +86,13 @@ beforeEach(() => {
   mocks.deleteImageVersion.mockResolvedValue(undefined)
   mocks.coverCreate.mockReturnValue('create-cover')
   mocks.coverUpdate.mockReturnValue('update-cover')
-  mocks.coverFindUnique.mockResolvedValue({ id: 'cover-1', version: 'v1' })
+  mocks.coverFindUnique.mockResolvedValue({
+    id: 'cover-1',
+    intrinsicHeight: 1000,
+    intrinsicWidth: 1000,
+    placeholderDataUrl: 'data:image/jpeg;base64,BBBB',
+    version: 'v1',
+  })
 })
 
 describe('uploadEpisodeCover — the input', () => {
@@ -116,6 +124,15 @@ describe('uploadEpisodeCover — the input', () => {
     expect(mocks.saveEpisodeCoverChange).toHaveBeenCalledWith(
       request,
       expect.objectContaining({ ...target, landsWithoutHold: true }),
+    )
+  })
+
+  test('can be cancelled until it saves (bxy8xxqs)', async () => {
+    await run()
+
+    expect(mocks.saveEpisodeCoverChange).toHaveBeenCalledWith(
+      request,
+      expect.objectContaining({ isCancellable: true }),
     )
   })
 
@@ -168,6 +185,18 @@ describe('uploadEpisodeCover — a new cover', () => {
     expect(await run()).toEqual({ status: 'failed' })
     expect(mocks.deleteImage).toHaveBeenCalledWith('cover-new')
   })
+
+  test('a cancel after the commit deletes the row and its files', async () => {
+    const prepared = await run()
+
+    await prepared.onCancelled()
+
+    expect(mocks.coverDelete).toHaveBeenCalledWith({
+      select: { id: true },
+      where: { id: 'cover-new' },
+    })
+    expect(mocks.deleteImage).toHaveBeenCalledWith('cover-new')
+  })
 })
 
 describe('uploadEpisodeCover — a replacement', () => {
@@ -206,5 +235,24 @@ describe('uploadEpisodeCover — a replacement', () => {
       status: 'failed',
     })
     expect(mocks.deleteImage).not.toHaveBeenCalled()
+  })
+
+  test('a cancel after the commit puts the previous version back and drops the new one', async () => {
+    const prepared = await run({ cover: { id: 'cover-1' } })
+
+    await prepared.onCancelled()
+
+    expect(mocks.coverUpdate).toHaveBeenLastCalledWith({
+      data: {
+        intrinsicHeight: 1000,
+        intrinsicWidth: 1000,
+        placeholderDataUrl: 'data:image/jpeg;base64,BBBB',
+        version: 'v1',
+      },
+      select: { id: true },
+      where: { id: 'cover-1' },
+    })
+    expect(mocks.deleteImageVersion).toHaveBeenCalledWith('cover-1', 'v2')
+    expect(mocks.deleteImageVersion).not.toHaveBeenCalledWith('cover-1', 'v1')
   })
 })

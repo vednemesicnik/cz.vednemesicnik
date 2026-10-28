@@ -5,6 +5,7 @@ import { saveEpisodeCoverChange } from './save-episode-cover-change.server'
 
 const mocks = vi.hoisted(() => ({
   episodeFindUnique: vi.fn(),
+  episodeFindUniqueOrThrow: vi.fn(),
   episodeUpdate: vi.fn(),
   episodeUpdateMany: vi.fn(),
   permissionContext: vi.fn(),
@@ -37,6 +38,7 @@ vi.mock('~/utils/db.server', () => ({
     $transaction: mocks.transaction,
     podcastEpisode: {
       findUnique: mocks.episodeFindUnique,
+      findUniqueOrThrow: mocks.episodeFindUniqueOrThrow,
       update: mocks.episodeUpdate,
       updateMany: mocks.episodeUpdateMany,
     },
@@ -74,6 +76,7 @@ const storedEpisode = {
 }
 
 const savedAt = new Date('2026-10-27T12:00:00Z')
+const previousSavedAt = new Date('2026-10-27T11:00:00Z')
 
 type Prepare = Parameters<typeof saveEpisodeCoverChange>[1]['prepare']
 
@@ -101,9 +104,11 @@ const answerTransaction = (firstContentCount: number) =>
     writes.map((write) =>
       write === 'update-episode'
         ? { updatedAt: savedAt }
-        : write === 'mark-first-content'
-          ? { count: firstContentCount }
-          : {},
+        : write === 'read-previous'
+          ? { updatedAt: previousSavedAt }
+          : write === 'mark-first-content'
+            ? { count: firstContentCount }
+            : {},
     ),
   )
 
@@ -123,6 +128,7 @@ beforeEach(() => {
   mocks.episodeFindUnique.mockResolvedValue(storedEpisode)
   mocks.episodeUpdate.mockReturnValue('update-episode')
   mocks.episodeUpdateMany.mockReturnValue('mark-first-content')
+  mocks.episodeFindUniqueOrThrow.mockReturnValue('read-previous')
   answerTransaction(0)
 })
 
@@ -405,5 +411,100 @@ describe('saveEpisodeCoverChange — the save and the history', () => {
 
     expect(mocks.recordEditLog).not.toHaveBeenCalled()
     expect(mocks.publishContentEvent).not.toHaveBeenCalled()
+  })
+})
+
+describe('saveEpisodeCoverChange — a cancellable change (bxy8xxqs)', () => {
+  const buildCancellable = () => {
+    const controller = new AbortController()
+    const cancellableRequest = new Request('https://test.local/', {
+      signal: controller.signal,
+    })
+    return { cancel: () => controller.abort(), cancellableRequest }
+  }
+
+  test('a cancel before the files are stored runs nothing', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    cancel()
+    const prepare = buildPrepare()
+
+    const result = await saveEpisodeCoverChange(cancellableRequest, {
+      ...options,
+      isCancellable: true,
+      prepare,
+    })
+
+    expect(result).toEqual({ status: 'cancelled' })
+    expect(prepare).not.toHaveBeenCalled()
+  })
+
+  test('an aborted request is no cancel for a change that is not cancellable', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    cancel()
+
+    const result = await saveEpisodeCoverChange(cancellableRequest, {
+      ...options,
+      prepare: buildPrepare(),
+    })
+
+    expect(result).toEqual({ status: 'saved', updatedAt: savedAt })
+  })
+
+  test('a cancel while the files are stored drops them and commits nothing', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    const onRefused = vi.fn(async () => undefined)
+    const prepare = vi.fn<Prepare>(async () => {
+      cancel()
+      return { isUpload: true, onRefused, writes: ['cover-write'] } as never
+    })
+
+    const result = await saveEpisodeCoverChange(cancellableRequest, {
+      ...options,
+      isCancellable: true,
+      prepare,
+    })
+
+    expect(result).toEqual({ status: 'cancelled' })
+    expect(onRefused).toHaveBeenCalledOnce()
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('a cancel during the commit puts things back and logs nothing', async () => {
+    const { cancel, cancellableRequest } = buildCancellable()
+    mocks.episodeFindUnique.mockResolvedValue({
+      ...storedEpisode,
+      firstContentAt: null,
+    })
+    answerTransaction(1)
+    const answer = mocks.transaction.getMockImplementation()
+    mocks.transaction.mockImplementation(async (writes: unknown[]) => {
+      cancel()
+      return answer?.(writes)
+    })
+    const onCancelled = vi.fn(async () => undefined)
+    const onCommitted = vi.fn(async () => undefined)
+
+    const result = await saveEpisodeCoverChange(cancellableRequest, {
+      ...options,
+      isCancellable: true,
+      prepare: buildPrepare({ addsContent: true, onCancelled, onCommitted }),
+    })
+
+    expect(result).toEqual({ status: 'cancelled' })
+    expect(mocks.transaction.mock.lastCall?.[0]).toEqual([
+      'read-previous',
+      'mark-first-content',
+      'cover-write',
+      'update-episode',
+    ])
+    expect(onCancelled).toHaveBeenCalledOnce()
+    expect(onCommitted).not.toHaveBeenCalled()
+    // The empty draft stays empty, and the editor's updatedAt holds again.
+    expect(mocks.episodeUpdateMany).toHaveBeenLastCalledWith({
+      data: { firstContentAt: null, updatedAt: previousSavedAt },
+      where: { id: 'episode-1', updatedAt: savedAt },
+    })
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+    expect(mocks.recordEditLog).not.toHaveBeenCalled()
   })
 })

@@ -130,6 +130,7 @@ describe('episode-cover action — the changes', () => {
     [{ heldByName: 'Ondřej Beneš', status: 'not-held' }, 409],
     [{ status: 'deleted' }, 410],
     [{ reason: 'over-pixel-budget', status: 'failed' }, 422],
+    [{ status: 'cancelled' }, 499],
   ])('answers %o with %i', async (result, status) => {
     mocks.uploadEpisodeCover.mockResolvedValue(result)
 
@@ -143,5 +144,35 @@ describe('episode-cover action — the changes', () => {
 
     expect(response.status).toBe(status)
     expect(await response.json()).toEqual(result)
+  })
+})
+
+describe('episode-cover action — a cancelled body (bxy8xxqs)', () => {
+  const buildBrokenRequest = (isAborted: boolean) => {
+    const controller = new AbortController()
+    const body = new ReadableStream({
+      start: (streamController) => streamController.error(new Error('gone')),
+    })
+    const request = new Request(URL, {
+      body,
+      duplex: 'half',
+      headers: { 'Content-Type': 'multipart/form-data; boundary=boundary' },
+      method: 'POST',
+      signal: controller.signal,
+    } as RequestInit)
+    if (isAborted) controller.abort()
+    return request
+  }
+
+  test('answers 499 and runs nothing when the editor cancelled mid-body', async () => {
+    const response = await callAction(buildBrokenRequest(true))
+
+    expect(response.status).toBe(499)
+    expect(mocks.requireCSRF).not.toHaveBeenCalled()
+    expect(mocks.uploadEpisodeCover).not.toHaveBeenCalled()
+  })
+
+  test('lets a body that broke for another reason through', async () => {
+    await expect(callAction(buildBrokenRequest(false))).rejects.toThrow()
   })
 })

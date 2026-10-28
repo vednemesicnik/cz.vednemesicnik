@@ -50,12 +50,12 @@ beforeEach(() => {
 })
 
 describe('removeEpisodeCover', () => {
-  test('needs the hold: a removal is never on its way after Zavřít', async () => {
+  test('lands without the hold, as a cancelled upload’s removal after Zavřít (0029)', async () => {
     await run()
 
     const options = mocks.saveEpisodeCoverChange.mock.lastCall?.[1]
-    expect(options).toMatchObject(target)
-    expect(options.landsWithoutHold).toBeUndefined()
+    expect(options).toMatchObject({ ...target, landsWithoutHold: true })
+    expect(options.isCancellable).toBeUndefined()
   })
 
   test('deletes the row, and its files only once it committed', async () => {

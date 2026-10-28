@@ -7,6 +7,8 @@ import { uploadPodcastCover } from './upload-podcast-cover.server'
 
 const mocks = vi.hoisted(() => ({
   coverCreate: vi.fn(),
+  coverDelete: vi.fn(),
+  coverFindUnique: vi.fn(),
   coverUpdate: vi.fn(),
   createId: vi.fn(),
   deleteImage: vi.fn(),
@@ -14,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   isImageOverPixelBudget: vi.fn(),
   permissionContext: vi.fn(),
   podcastFindUnique: vi.fn(),
+  podcastFindUniqueOrThrow: vi.fn(),
   podcastUpdate: vi.fn(),
   podcastUpdateMany: vi.fn(),
   publishContentEvent: vi.fn(),
@@ -30,10 +33,16 @@ vi.mock('~/utils/db.server', () => ({
     $transaction: mocks.transaction,
     podcast: {
       findUnique: mocks.podcastFindUnique,
+      findUniqueOrThrow: mocks.podcastFindUniqueOrThrow,
       update: mocks.podcastUpdate,
       updateMany: mocks.podcastUpdateMany,
     },
-    podcastCover: { create: mocks.coverCreate, update: mocks.coverUpdate },
+    podcastCover: {
+      create: mocks.coverCreate,
+      delete: mocks.coverDelete,
+      findUnique: mocks.coverFindUnique,
+      update: mocks.coverUpdate,
+    },
   },
 }))
 
@@ -96,6 +105,14 @@ const heldPodcast = {
 }
 
 const updatedAt = new Date('2026-10-28T09:00:00Z')
+const previousUpdatedAt = new Date('2026-10-28T08:30:00Z')
+
+const previousMeta = {
+  intrinsicHeight: 1000,
+  intrinsicWidth: 1000,
+  placeholderDataUrl: 'data:image/jpeg;base64,BBBB',
+  version: 'v1',
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -113,6 +130,9 @@ beforeEach(() => {
   mocks.coverUpdate.mockReturnValue('update-cover')
   mocks.podcastUpdateMany.mockReturnValue('first-content')
   mocks.podcastUpdate.mockReturnValue('touch-podcast')
+  mocks.podcastFindUniqueOrThrow.mockReturnValue('read-previous')
+  mocks.coverFindUnique.mockResolvedValue({ id: 'cover-1', ...previousMeta })
+  mocks.coverDelete.mockReturnValue('delete-cover')
   // Each write resolves to its own result; the first content counts one row.
   mocks.transaction.mockImplementation(async (writes: unknown[]) =>
     writes.map((write) =>
@@ -120,7 +140,9 @@ beforeEach(() => {
         ? { count: 1 }
         : write === 'touch-podcast'
           ? { updatedAt }
-          : { id: 'cover' },
+          : write === 'read-previous'
+            ? { updatedAt: previousUpdatedAt }
+            : { id: 'cover' },
     ),
   )
 })
@@ -296,5 +318,66 @@ describe('uploadPodcastCover — a replacement', () => {
     ).toEqual({ status: 'failed' })
     expect(mocks.deleteImage).not.toHaveBeenCalled()
     expect(mocks.coverUpdate).not.toHaveBeenCalled()
+  })
+})
+
+describe('uploadPodcastCover — a cancel (bxy8xxqs)', () => {
+  const uploadCancelled = (cancelAt: 'before' | 'commit') => {
+    const controller = new AbortController()
+    const cancellableRequest = new Request('https://test.local/', {
+      signal: controller.signal,
+    })
+    if (cancelAt === 'before') controller.abort()
+    else {
+      const answer = mocks.transaction.getMockImplementation()
+      mocks.transaction.mockImplementation(async (writes: unknown[]) => {
+        controller.abort()
+        return answer?.(writes)
+      })
+    }
+    return uploadPodcastCover(cancellableRequest, { ...target, file: image() })
+  }
+
+  test('a cancel before the files are stored stores nothing', async () => {
+    expect(await uploadCancelled('before')).toEqual({ status: 'cancelled' })
+    expect(mocks.storeImageVariants).not.toHaveBeenCalled()
+  })
+
+  test('a first cover cancelled during the commit goes, and the empty draft stays empty', async () => {
+    mocks.podcastFindUnique.mockResolvedValue({
+      ...heldPodcast,
+      firstContentAt: null,
+    })
+
+    expect(await uploadCancelled('commit')).toEqual({ status: 'cancelled' })
+
+    expect(mocks.coverDelete).toHaveBeenCalledWith({
+      select: { id: true },
+      where: { id: 'cover-new' },
+    })
+    expect(mocks.deleteImage).toHaveBeenCalledWith('cover-new')
+    expect(mocks.podcastUpdateMany).toHaveBeenLastCalledWith({
+      data: { firstContentAt: null, updatedAt: previousUpdatedAt },
+      where: { id: 'podcast-1', updatedAt },
+    })
+    expect(mocks.recordContentLog).not.toHaveBeenCalled()
+    expect(mocks.recordEditLog).not.toHaveBeenCalled()
+  })
+
+  test('a replacement cancelled during the commit gets its previous version back', async () => {
+    mocks.podcastFindUnique.mockResolvedValue({
+      ...heldPodcast,
+      cover: { id: 'cover-1' },
+    })
+
+    expect(await uploadCancelled('commit')).toEqual({ status: 'cancelled' })
+
+    expect(mocks.coverUpdate).toHaveBeenLastCalledWith({
+      data: previousMeta,
+      select: { id: true },
+      where: { id: 'cover-1' },
+    })
+    expect(mocks.deleteImageVersion).toHaveBeenCalledWith('cover-1', 'v2')
+    expect(mocks.deleteImageVersion).not.toHaveBeenCalledWith('cover-1', 'v1')
   })
 })
