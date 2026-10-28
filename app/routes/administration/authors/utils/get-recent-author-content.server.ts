@@ -9,6 +9,7 @@ import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title
 
 import { buildIssuePermissionWhere } from '../../archive/utils/build-issue-permission-where'
 import { buildArticlePermissionWhere } from '../../articles/utils/build-article-permission-where'
+import { getArticleDisplayTitle } from '../../articles/utils/get-article-display-title'
 import { buildEpisodePermissionWhere } from '../../podcasts/podcast/episodes/utils/build-episode-permission-where'
 
 type Context = Pick<AuthorPermissionContext, 'authorId' | 'can'>
@@ -99,7 +100,7 @@ export const getRecentAuthorContent = async (
       }),
       id: article.id,
       state: getState(article),
-      title: article.title,
+      title: getArticleDisplayTitle(article.title),
       type: 'article' as const,
       updatedAt: article.updatedAt,
     })),

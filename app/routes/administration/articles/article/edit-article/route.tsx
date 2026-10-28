@@ -735,9 +735,6 @@ export default function RouteComponent({
     updateFieldValue: form.update,
   })
 
-  // The heading says *Nový článek* for the draft that opened empty (24a).
-  const [isNewArticle] = useState(article.isEmptyDraft)
-
   // The categories and tags as the editor opened: one in another state stays
   // in the list after it is unticked, so a mistake can be undone (24a).
   const [categoryOptions] = useState(loaderData.categories)
@@ -1121,9 +1118,8 @@ export default function RouteComponent({
       <header className={styles.header} inert={isDetailOpen}>
         <div className={styles.title}>
           <div className={styles.titleLine}>
-            <PageTitle>
-              {isNewArticle ? 'Nový článek' : 'Úprava článku'}
-            </PageTitle>
+            {/* The page's name, the just-created draft included (24a, jri2vk3h). */}
+            <PageTitle>Úprava článku</PageTitle>
             {/* A deleted article has no state (24k). */}
             {!isDeleted && (
               <StatusTag state={article.submission?.state ?? 'draft'} />

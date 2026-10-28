@@ -633,14 +633,9 @@ export default function RouteComponent({
 
   const title = shownValues.title.trim()
   const webSlug = slugify(shownValues.slug)
-  // The heading is the podcast's name; a new draft goes by the button that
-  // made it (27e; copy utgh1hb7).
-  const heading =
-    title !== ''
-      ? title
-      : podcast.isEmptyDraft
-        ? 'Nový podcast'
-        : getPodcastDisplayTitle('')
+  // The heading is the podcast's name, Podcast bez názvu without one, the
+  // empty draft included (27e, jri2vk3h; copy a9r24iou).
+  const heading = getPodcastDisplayTitle(title)
 
   const saveLine = getPodcastSaveLineText({
     hasCover: podcast.cover !== null || coverUpload.isUploading,

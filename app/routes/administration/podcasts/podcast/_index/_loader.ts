@@ -175,6 +175,8 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
       isApprover,
       // One's own editor in another tab: Smazat… waits and says so (0036).
       isHeldInOwnOtherTab: hold?.isOwn === true,
+      // Its author reads under the header what a submission means (27k).
+      isOwnContent: flags.isOwnContent,
       podcast: {
         authorName: podcast.author.name,
         cover:

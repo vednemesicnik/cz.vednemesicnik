@@ -15,16 +15,14 @@ export const handle = {
     const { podcastId, episodeId } = match.params
 
     // The number, as the web shows it before the title (27c); a draft
-    // without one goes by its title (27h).
+    // without one goes by its title (27h), or Epizoda bez názvu (jri2vk3h).
     const episode = match.loaderData?.episode
     const label =
       episode === undefined
         ? 'Neznámá epizoda'
-        : episode.isEmptyDraft
-          ? 'Nová epizoda'
-          : episode.number !== null
-            ? `#${episode.number}`
-            : getEpisodeDisplayTitle(episode.title)
+        : episode.number !== null
+          ? `#${episode.number}`
+          : getEpisodeDisplayTitle(episode.title)
     const path = href(
       `/administration/podcasts/:podcastId/episodes/:episodeId`,
       { episodeId, podcastId },

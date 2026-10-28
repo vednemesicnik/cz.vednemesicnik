@@ -6,6 +6,7 @@ import { prisma } from '~/utils/db.server'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
 
 import { buildArticlePermissionWhere } from './build-article-permission-where'
+import { getArticleDisplayTitle } from './get-article-display-title'
 
 type Context = Parameters<typeof buildArticlePermissionWhere>[0]
 
@@ -62,7 +63,7 @@ export const getTaxonomyArticleSummary = async (
     recentArticles: recentArticles.map((article) => ({
       id: article.id,
       state: getSubmissionState(article)?.state ?? article.state,
-      title: article.title,
+      title: getArticleDisplayTitle(article.title),
     })),
     stateCounts,
   }

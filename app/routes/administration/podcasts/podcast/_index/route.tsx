@@ -5,6 +5,7 @@ import { href } from 'react-router'
 
 import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
+import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import {
   AdminTable,
   TableBody,
@@ -40,6 +41,7 @@ import { getStateFilter } from '~/utils/get-state-filter'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 
 import { PodcastActionDialogs } from '../../components/podcast-action-dialogs'
+import { PODCAST_SUBMISSION_NOTES } from '../../utils/podcast-actions'
 import { usePodcastActions } from '../../utils/use-podcast-actions'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -65,6 +67,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     heldUntil,
     isApprover,
     isHeldInOwnOtherTab,
+    isOwnContent,
     headerActions,
     podcast,
     submission,
@@ -159,6 +162,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         podcast={podcast}
         tagState={submission ?? podcast.state}
       />
+
+      {isOwnContent && submission !== null && (
+        <AdminParagraph>{PODCAST_SUBMISSION_NOTES[submission]}</AdminParagraph>
+      )}
 
       <section aria-labelledby={'episodes-heading'} className={styles.episodes}>
         <div className={styles.toolbar}>

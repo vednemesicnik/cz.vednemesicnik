@@ -961,9 +961,9 @@ export default function RouteComponent({
   return (
     <AdminPage measure={'form'}>
       {/* The heading is the title's field (27d, as 24a); the page's name
-          is for a screen reader. */}
+          is for a screen reader, Epizoda bez názvu without a title (jri2vk3h). */}
       <PageTitle className={'screen-reader-only'}>
-        {webTitle ?? 'Nová epizoda'}
+        {formatEpisodeTitle({ number, title })}
       </PageTitle>
 
       <header className={styles.header}>
