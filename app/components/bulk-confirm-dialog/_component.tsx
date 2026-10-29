@@ -7,9 +7,10 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import { DialogBody } from '~/components/dialog-body'
+import type { BulkNoun } from '~/config/bulk-noun-config'
+import type { ConfirmedBulkAction } from '~/utils/bulk-action/get-bulk-confirm-copy'
+import { getBulkConfirmCopy } from '~/utils/bulk-action/get-bulk-confirm-copy'
 import { useModalDialog } from '~/utils/use-modal-dialog'
-
-import { getBulkConfirmCopy } from '../../utils/get-bulk-confirm-copy'
 
 import styles from './_styles.module.css'
 
@@ -17,35 +18,46 @@ import styles from './_styles.module.css'
 const MAX_LISTED_TITLES = 5
 
 type Props = {
-  action: 'archive' | 'delete'
-  articles: { id: string; title: string }[]
+  action: ConfirmedBulkAction
+  records: { id: string; title: string }[]
+  noun: BulkNoun
   onlyDrafts: boolean
+  isCreator: boolean
   skipped: string | null
   onConfirm: () => void
   onClose: () => void
 }
 
 /**
- * Confirms a bulk archive or delete (design 22c). Up to five articles it lists
- * their titles. Archiving confirms on Enter; deleting does not — the focus
- * starts on Zrušit and the button is the danger one.
+ * Confirms a bulk retract, archive, restore or delete (design 22c, ji6n8th3).
+ * Up to five records it lists their titles. The reversible actions confirm on
+ * Enter; deleting does not — the focus starts on Zrušit and the button is the
+ * danger one.
  *
- * @param props.articles - The articles the action changes.
- * @param props.onlyDrafts - Every one is a draft: deleting says koncepty.
+ * @param props.records - The records the action changes.
+ * @param props.noun - The list's bulk noun, for the heading and the sentences.
+ * @param props.onlyDrafts - Every one is a draft: deleting says koncepty where
+ *   the list does.
+ * @param props.isCreator - A Creator confirms: retracting says who publishes
+ *   again.
  * @param props.skipped - What the action skips and why (22f), or `null`.
  */
 export const BulkConfirmDialog = ({
   action,
-  articles,
+  records,
+  noun,
   onlyDrafts,
+  isCreator,
   skipped,
   onConfirm,
   onClose,
 }: Props) => {
   const ref = useModalDialog(onClose)
-  const { confirmLabel, description, title } = getBulkConfirmCopy({
+  const { confirmLabel, descriptions, title } = getBulkConfirmCopy({
     action,
-    count: articles.length,
+    count: records.length,
+    isCreator,
+    noun,
     onlyDrafts,
   })
   const isDelete = action === 'delete'
@@ -53,7 +65,7 @@ export const BulkConfirmDialog = ({
   const confirmRef = useRef<HTMLButtonElement>(null)
 
   // After showModal (the effect above), which focuses the first button: Enter
-  // confirms an archive, never a delete (22c).
+  // confirms a reversible action, never a delete (22c).
   useEffect(() => {
     ;(isDelete ? cancelRef : confirmRef).current?.focus()
   }, [isDelete])
@@ -67,21 +79,28 @@ export const BulkConfirmDialog = ({
     <AdminDialog ref={ref}>
       <AdminModalContent>
         <AdminModalTitle>{title}</AdminModalTitle>
-        {articles.length <= MAX_LISTED_TITLES && (
+        {records.length <= MAX_LISTED_TITLES && (
           <ul className={styles.titles}>
-            {articles.map((article) => (
-              <li key={article.id}>{article.title}</li>
+            {records.map((record) => (
+              <li key={record.id}>{record.title}</li>
             ))}
           </ul>
         )}
+        {/* What happens, then what is skipped (22c, 26f). */}
         <DialogBody>
+          {descriptions.map((description) =>
+            isDelete ? (
+              <p className={styles.warning} key={description}>
+                {description}
+              </p>
+            ) : (
+              <AdminModalDescription key={description}>
+                {description}
+              </AdminModalDescription>
+            ),
+          )}
           {skipped !== null && (
             <AdminModalDescription>{skipped}</AdminModalDescription>
-          )}
-          {isDelete ? (
-            <p className={styles.warning}>{description}</p>
-          ) : (
-            <AdminModalDescription>{description}</AdminModalDescription>
           )}
         </DialogBody>
         <AdminModalActions>

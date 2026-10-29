@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
+import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
+
 import { getBulkPublishNotes } from './get-bulk-publish-notes'
 
 describe('getBulkPublishNotes', () => {
@@ -8,6 +10,7 @@ describe('getBulkPublishNotes', () => {
       getBulkPublishNotes({
         incompleteCount: 0,
         notSubmittedCount: 0,
+        noun: ARTICLE_BULK_NOUN,
         pendingCount: 0,
       }),
     ).toEqual({ notes: null, skipped: null })
@@ -18,6 +21,7 @@ describe('getBulkPublishNotes', () => {
       getBulkPublishNotes({
         incompleteCount: 0,
         notSubmittedCount: 1,
+        noun: ARTICLE_BULK_NOUN,
         pendingCount: 1,
       }).notes,
     ).toBe(
@@ -33,6 +37,7 @@ describe('getBulkPublishNotes', () => {
       getBulkPublishNotes({
         incompleteCount: 0,
         notSubmittedCount: 0,
+        noun: ARTICLE_BULK_NOUN,
         pendingCount,
       }).notes,
     ).toBe(expected)
@@ -46,6 +51,7 @@ describe('getBulkPublishNotes', () => {
       getBulkPublishNotes({
         incompleteCount: 0,
         notSubmittedCount,
+        noun: ARTICLE_BULK_NOUN,
         pendingCount: 0,
       }).notes,
     ).toBe(expected)
@@ -60,6 +66,7 @@ describe('getBulkPublishNotes', () => {
       getBulkPublishNotes({
         incompleteCount,
         notSubmittedCount: 0,
+        noun: ARTICLE_BULK_NOUN,
         pendingCount: 0,
       }).skipped,
     ).toBe(expected)

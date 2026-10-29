@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
+import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
+
 import { formatBulkActionToast } from './format-bulk-action-toast'
 
 describe('formatBulkActionToast', () => {
@@ -7,6 +9,7 @@ describe('formatBulkActionToast', () => {
     expect(
       formatBulkActionToast({
         action: 'publish',
+        noun: ARTICLE_BULK_NOUN,
         onlyDrafts: false,
         processedCount: 3,
         skippedCount: 0,
@@ -18,6 +21,7 @@ describe('formatBulkActionToast', () => {
     expect(
       formatBulkActionToast({
         action: 'publish',
+        noun: ARTICLE_BULK_NOUN,
         onlyDrafts: false,
         processedCount: 2,
         skippedCount: 1,
@@ -29,6 +33,7 @@ describe('formatBulkActionToast', () => {
     expect(
       formatBulkActionToast({
         action: 'publish',
+        noun: ARTICLE_BULK_NOUN,
         onlyDrafts: false,
         processedCount: 0,
         skippedCount: 3,
@@ -40,6 +45,7 @@ describe('formatBulkActionToast', () => {
     expect(
       formatBulkActionToast({
         action: 'archive',
+        noun: ARTICLE_BULK_NOUN,
         onlyDrafts: false,
         processedCount: 7,
         skippedCount: 0,
@@ -51,6 +57,7 @@ describe('formatBulkActionToast', () => {
     expect(
       formatBulkActionToast({
         action: 'delete',
+        noun: ARTICLE_BULK_NOUN,
         onlyDrafts: true,
         processedCount: 3,
         skippedCount: 0,
@@ -62,10 +69,47 @@ describe('formatBulkActionToast', () => {
     expect(
       formatBulkActionToast({
         action: 'delete',
+        noun: ARTICLE_BULK_NOUN,
         onlyDrafts: false,
         processedCount: 2,
         skippedCount: 1,
       }),
     ).toBe('Smazáno: 2 články. Přeskočeno: 1 článek.')
+  })
+
+  test('retracts articles (22c)', () => {
+    expect(
+      formatBulkActionToast({
+        action: 'retract',
+        noun: ARTICLE_BULK_NOUN,
+        onlyDrafts: false,
+        processedCount: 5,
+        skippedCount: 0,
+      }),
+    ).toBe('Staženo z publikace: 5 článků')
+  })
+
+  test('restores articles as drafts (y0xq33k8)', () => {
+    expect(
+      formatBulkActionToast({
+        action: 'restore',
+        noun: ARTICLE_BULK_NOUN,
+        onlyDrafts: false,
+        processedCount: 2,
+        skippedCount: 0,
+      }),
+    ).toBe('Obnoveno jako koncept: 2 články')
+  })
+
+  test('says nothing was restored', () => {
+    expect(
+      formatBulkActionToast({
+        action: 'restore',
+        noun: ARTICLE_BULK_NOUN,
+        onlyDrafts: false,
+        processedCount: 0,
+        skippedCount: 1,
+      }),
+    ).toBe('Nic nebylo obnoveno jako koncept. Přeskočeno: 1 článek.')
   })
 })

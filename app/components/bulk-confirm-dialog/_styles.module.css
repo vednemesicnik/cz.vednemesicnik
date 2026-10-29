@@ -1,5 +1,5 @@
 .titles {
-  @layer route {
+  @layer component {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -13,7 +13,7 @@
 
 /* Smazání je nevratné. in full ink (22c). */
 .warning {
-  @layer route {
+  @layer component {
     margin: 0;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);

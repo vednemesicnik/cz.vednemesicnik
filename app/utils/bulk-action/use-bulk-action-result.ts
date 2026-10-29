@@ -2,10 +2,15 @@ import { useEffect, useRef } from 'react'
 import { useFetcher } from 'react-router'
 
 import { useToast } from '~/components/toast-provider'
-
-import type { action as listAction } from '../_action'
-import { BULK_ACTION_FETCHER_KEY } from './bulk-action-fetcher-key'
+import type { BulkNoun } from '~/config/bulk-noun-config'
+import type { BulkActionResult } from './bulk-action-result'
 import { formatBulkActionToast } from './format-bulk-action-toast'
+
+type Options = {
+  fetcherKey: string
+  noun: BulkNoun
+  onClear: () => void
+}
 
 /**
  * Answers a bulk action once it has finished (design 22c): the toast with the
@@ -13,12 +18,11 @@ import { formatBulkActionToast } from './format-bulk-action-toast'
  * deleted rows leave the selection on revalidation, and the bar is gone before
  * the result arrives.
  *
- * @param onClear - Clears the selection.
+ * @param options - The keyed fetcher the bar submits through, the list's bulk
+ *   noun, and what clears the selection.
  */
-export const useBulkActionResult = (onClear: () => void) => {
-  const fetcher = useFetcher<typeof listAction>({
-    key: BULK_ACTION_FETCHER_KEY,
-  })
+export const useBulkActionResult = ({ fetcherKey, noun, onClear }: Options) => {
+  const fetcher = useFetcher<BulkActionResult>({ key: fetcherKey })
   const showToast = useToast()
   // A keyed fetcher keeps its data across remounts; answer only a new result.
   const handledResultRef = useRef(fetcher.data)
@@ -34,7 +38,7 @@ export const useBulkActionResult = (onClear: () => void) => {
     }
     handledResultRef.current = result
 
-    showToast(formatBulkActionToast(result))
+    showToast(formatBulkActionToast({ ...result, noun }))
     onClear()
-  }, [fetcher.data, fetcher.state, onClear, showToast])
+  }, [fetcher.data, fetcher.state, noun, onClear, showToast])
 }

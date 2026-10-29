@@ -30,8 +30,10 @@ import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
+import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
 import { ARTICLE_NOUN } from '~/config/list-noun-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
+import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -43,7 +45,7 @@ import type { Route } from './+types/route'
 import { ArticleSelectionBar } from './components/article-selection-bar'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
-import { useBulkActionResult } from './utils/use-bulk-action-result'
+import { BULK_ACTION_FETCHER_KEY } from './utils/bulk-action-fetcher-key'
 import { useLiveArticleRows } from './utils/use-live-article-rows'
 
 export { action } from './_action'
@@ -141,7 +143,11 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     .filter((article) => article.bulkActions.length > 0)
     .map((article) => article.id)
   const selection = useAdminTableSelection(selectableIds)
-  useBulkActionResult(selection.clear)
+  useBulkActionResult({
+    fetcherKey: BULK_ACTION_FETCHER_KEY,
+    noun: ARTICLE_BULK_NOUN,
+    onClear: selection.clear,
+  })
   const selectedArticles = selection.selectedIds.flatMap((id) =>
     articles.filter((article) => article.id === id),
   )
@@ -166,6 +172,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             action={href('/administration/articles')}
             articles={selectedArticles}
             className={styles.selectionBar}
+            isCreator={!isApprover && !isContributor}
             onClear={selection.clear}
           />
         )}

@@ -402,6 +402,52 @@ describe('createContentStateHandlers — publish date', () => {
     await expect(rejection).rejects.toHaveProperty('status', 403)
     expect(config.applyState).not.toHaveBeenCalled()
   })
+
+  test('takes the bulk order’s moment without a backdating grant (27a)', async () => {
+    const orderedAt = new Date('2026-10-29T09:59:59.000Z')
+    const config = createConfig({
+      loadPublishState: vi.fn().mockResolvedValue({
+        authors: [{ role: { level: APPROVER } }],
+        publishedAt: null,
+        reviews: [],
+      }),
+    })
+    const handlers = createContentStateHandlers(config)
+    runAs(APPROVER)
+
+    await handlers.publish(request, { id: 'a1', orderedAt, target })
+
+    expect(config.applyState).toHaveBeenCalledWith(
+      'a1',
+      { publishedAt: orderedAt, state: 'published' },
+      'author-1',
+    )
+  })
+
+  test('the bulk order’s moment never replaces a stored date (fge4es3p)', async () => {
+    const existing = new Date('2024-01-01T00:00:00.000Z')
+    const config = createConfig({
+      loadPublishState: vi.fn().mockResolvedValue({
+        authors: [{ role: { level: APPROVER } }],
+        publishedAt: existing,
+        reviews: [],
+      }),
+    })
+    const handlers = createContentStateHandlers(config)
+    runAs(APPROVER)
+
+    await handlers.publish(request, {
+      id: 'a1',
+      orderedAt: new Date('2026-10-29T10:00:00.000Z'),
+      target,
+    })
+
+    expect(config.applyState).toHaveBeenCalledWith(
+      'a1',
+      { publishedAt: existing, state: 'published' },
+      'author-1',
+    )
+  })
 })
 
 describe('createContentStateHandlers — transition matrix', () => {
