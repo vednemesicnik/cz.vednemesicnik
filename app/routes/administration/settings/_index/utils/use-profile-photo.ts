@@ -14,7 +14,7 @@ import {
 // Said once the profile has loaded again after a cancel (axz8tav5).
 const CANCELLED_ANNOUNCEMENT = 'Nahrávání zrušeno.'
 const CROSSED_ANNOUNCEMENT =
-  'Fotka už je uložená. Nahrávání se nepodařilo zrušit.'
+  'Obrázek už je uložený. Nahrávání se nepodařilo zrušit.'
 
 type Answer =
   | { status: 'saved' | 'removed' | 'cancelled' | 'unsaved' }

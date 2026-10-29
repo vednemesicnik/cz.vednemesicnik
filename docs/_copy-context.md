@@ -65,6 +65,9 @@ rozpojí.
   v archivu` (rozhodnuto 2. 10. 2026).
 - **autor** vs. **uživatel** — *uživatel* je účet, kterým se přihlašuje do administrace; *autor*
   je jméno, pod kterým se obsah publikuje. Každý uživatel má autora, ale role mají zvlášť.
+- **profilový obrázek** — nepovinný obrázek uživatele, ukazuje se jen v administraci, na webu
+  ne. V dialogu *Upravit profil* zkráceně *obrázek*. Ne *fotka*: nahrát jde jakýkoli obrázek,
+  i kresba nebo logo (rozhodnuto 29. 10. 2026).
 - **redakce** — lidé, kteří časopis dělají (stránka *Redakce* na webu).
 - **spolek** — Vedneměsíčník, z. s., právnická osoba za časopisem. Spolek **nejsou studenti**:
   jsou to lidé, kteří studenty jsou nebo byli a studenty podporují. Časopis tvoří **nezávislá

@@ -197,7 +197,7 @@ describe('photo action — the status codes', () => {
 
     expect(response.status).toBe(422)
     await expect(response.json()).resolves.toEqual({
-      imageError: 'Zkuste fotku nahrát znovu — nahrání se nezdařilo.',
+      imageError: 'Zkuste obrázek nahrát znovu — nahrání se nezdařilo.',
       status: 'failed',
     })
   })
