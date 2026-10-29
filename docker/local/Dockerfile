@@ -11,14 +11,14 @@ RUN apt-get update && apt-get install -y openssl sqlite3
 # base stage, so the runtime image has pnpm available offline — the entrypoint
 # runs pnpm at startup. Keep the version in sync with the "packageManager" field
 # in package.json (the project's declared pnpm version).
-RUN npm install -g pnpm@11.9.0
+RUN npm install -g pnpm@12.16.1
 
 # Install all node_modules, including dev dependencies
 FROM base AS deps
 
 WORKDIR /app
 
-ADD package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+ADD package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # Setup production node_modules
@@ -26,7 +26,7 @@ FROM base AS production-deps
 
 WORKDIR /app
 
-ADD package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+ADD package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 
 # Build the app
@@ -78,7 +78,7 @@ RUN chmod +x /usr/local/bin/object-store
 WORKDIR /app
 
 COPY --from=production-deps /app/node_modules /app/node_modules
-# pnpm-workspace.yaml carries verifyDepsBeforeRun: false, which stops pnpm 11
+# pnpm-workspace.yaml carries verifyDepsBeforeRun: false, which stops pnpm
 # from reinstalling the full (dev) dependency tree over the network when the
 # entrypoint runs `pnpm prisma:migrate:deploy` at startup.
 COPY --from=build /app/pnpm-workspace.yaml /app/pnpm-workspace.yaml
