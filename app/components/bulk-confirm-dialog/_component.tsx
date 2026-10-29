@@ -8,7 +8,7 @@ import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import { DialogBody } from '~/components/dialog-body'
 import type { BulkNoun } from '~/config/bulk-noun-config'
-import type { ConfirmedBulkAction } from '~/utils/bulk-action/get-bulk-confirm-copy'
+import type { BulkAction } from '~/utils/bulk-action/get-bulk-actions'
 import { getBulkConfirmCopy } from '~/utils/bulk-action/get-bulk-confirm-copy'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
@@ -18,21 +18,23 @@ import styles from './_styles.module.css'
 const MAX_LISTED_TITLES = 5
 
 type Props = {
-  action: ConfirmedBulkAction
+  action: BulkAction
   records: { id: string; title: string }[]
   noun: BulkNoun
   onlyDrafts: boolean
   isCreator: boolean
+  notes?: string[]
   skipped: string | null
   onConfirm: () => void
   onClose: () => void
 }
 
 /**
- * Confirms a bulk retract, archive, restore or delete (design 22c, ji6n8th3).
- * Up to five records it lists their titles. The reversible actions confirm on
- * Enter; deleting does not — the focus starts on Zrušit and the button is the
- * danger one.
+ * Confirms a bulk action (design 22c, ji6n8th3), publishing too where a list
+ * publishes without an order or a date (26f). Up to five records it lists
+ * their titles. The reversible actions and publishing confirm on Enter;
+ * deleting does not — the focus starts on Zrušit and the button is the danger
+ * one.
  *
  * @param props.records - The records the action changes.
  * @param props.noun - The list's bulk noun, for the heading and the sentences.
@@ -40,6 +42,8 @@ type Props = {
  *   the list does.
  * @param props.isCreator - A Creator confirms: retracting says who publishes
  *   again.
+ * @param props.notes - Publishing, the waiting, not-submitted and incomplete
+ *   sentences in full ink, each only when the selection holds such a record.
  * @param props.skipped - What the action skips and why (22f), or `null`.
  */
 export const BulkConfirmDialog = ({
@@ -48,6 +52,7 @@ export const BulkConfirmDialog = ({
   noun,
   onlyDrafts,
   isCreator,
+  notes = [],
   skipped,
   onConfirm,
   onClose,
@@ -86,11 +91,11 @@ export const BulkConfirmDialog = ({
             ))}
           </ul>
         )}
-        {/* What happens, then what is skipped (22c, 26f). */}
+        {/* What happens, then its exceptions (22c, 26f). */}
         <DialogBody>
           {descriptions.map((description) =>
-            isDelete ? (
-              <p className={styles.warning} key={description}>
+            isDelete && noun.deleteInFullInk ? (
+              <p className={styles.note} key={description}>
                 {description}
               </p>
             ) : (
@@ -99,6 +104,11 @@ export const BulkConfirmDialog = ({
               </AdminModalDescription>
             ),
           )}
+          {notes.map((note) => (
+            <p className={styles.note} key={note}>
+              {note}
+            </p>
+          ))}
           {skipped !== null && (
             <AdminModalDescription>{skipped}</AdminModalDescription>
           )}

@@ -3,28 +3,28 @@ import { formatListCount } from '~/utils/format-list-count'
 
 import type { BulkAction } from './get-bulk-actions'
 
-/** A bulk action confirmed by the plain dialog; publishing has its own. */
-export type ConfirmedBulkAction = Exclude<BulkAction, 'publish'>
-
 type Options = {
-  action: ConfirmedBulkAction
+  action: BulkAction
   count: number
   onlyDrafts: boolean
   isCreator: boolean
   noun: BulkNoun
 }
 
-const VERBS: Record<ConfirmedBulkAction, string> = {
+const VERBS: Record<BulkAction, string> = {
   archive: 'Archivovat',
   delete: 'Smazat',
+  publish: 'Publikovat',
   restore: 'Obnovit jako koncept',
   retract: 'Stáhnout z publikace',
 }
 
 /**
- * The texts of a bulk confirmation (design 22c, y0xq33k8): the heading names
- * the verb and the count, the button the same without the question mark.
+ * The texts of a bulk confirmation (design 22c, 26f, y0xq33k8): the heading
+ * names the verb and the count, the button the same without the question mark.
  * Retracting tells a Creator that only the Coordinator publishes again (23e).
+ * Publishing says where the records appear, for a list that publishes without
+ * an order (26f); the articles' ordered dialog has its own words.
  *
  * @param options - The action, how many records it changes, whether all of
  *   them are drafts (deleting then says koncepty where the list does), whether
@@ -46,12 +46,13 @@ export const getBulkConfirmCopy = ({
   const byCount = (sentences: { one: string; many: string }) =>
     count === 1 ? sentences.one : sentences.many
 
+  const description = noun.descriptions[action]
   const descriptions =
-    action === 'delete'
-      ? [noun.descriptions.delete]
+    description === null
+      ? []
       : action === 'retract' && isCreator
-        ? [byCount(noun.descriptions.retract), byCount(noun.creatorRetract)]
-        : [byCount(noun.descriptions[action])]
+        ? [byCount(description), byCount(noun.creatorRetract)]
+        : [byCount(description)]
 
   return { confirmLabel: label, descriptions, title: `${label}?` }
 }

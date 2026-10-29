@@ -141,7 +141,7 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
     <TableRow muted={issue.state === 'archived'}>
       <TableSelectionCell
         checked={selected}
-        disabled={!issue.canDelete}
+        disabled={issue.bulkActions.length === 0}
         label={`Vybrat číslo ${issue.title}`}
         onChange={onSelect}
       />

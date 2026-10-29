@@ -7,12 +7,12 @@ import { BulkConfirmDialog } from '~/components/bulk-confirm-dialog'
 import { Button } from '~/components/button'
 import { STATUS_TAG_LABELS } from '~/components/status-tag'
 import { BULK_ACTION_INTENTS } from '~/config/bulk-action-intents'
+import { BULK_ACTION_LABELS } from '~/config/bulk-action-labels'
 import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { BulkActionResult } from '~/utils/bulk-action/bulk-action-result'
 import { formatHeldSkipNote } from '~/utils/bulk-action/format-held-skip-note'
 import type { BulkAction } from '~/utils/bulk-action/get-bulk-actions'
-import type { ConfirmedBulkAction } from '~/utils/bulk-action/get-bulk-confirm-copy'
 import { getBulkPublishNotes } from '~/utils/bulk-action/get-bulk-publish-notes'
 import { getSelectionBarContent } from '~/utils/bulk-action/get-selection-bar-content'
 
@@ -28,15 +28,6 @@ type Props = {
   isCreator: boolean
   onClear: () => void
   className?: string
-}
-
-// Three dots: a dialog always follows (22c, ji6n8th3).
-const BULK_ACTION_LABELS: Record<BulkAction, string> = {
-  archive: 'Archivovat…',
-  delete: 'Smazat…',
-  publish: 'Publikovat…',
-  restore: 'Obnovit jako koncept…',
-  retract: 'Stáhnout z publikace…',
 }
 
 /**
@@ -81,7 +72,7 @@ export const ArticleSelectionBar = ({
 
   const open = (bulkAction: BulkAction) => setOpenAction(bulkAction)
 
-  const submit = (bulkAction: ConfirmedBulkAction, ids: string[]) => {
+  const submit = (bulkAction: BulkAction, ids: string[]) => {
     const formData = new FormData()
     formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
     formData.append(FORM_CONFIG.intent.name, BULK_ACTION_INTENTS[bulkAction])

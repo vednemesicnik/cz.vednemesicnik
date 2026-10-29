@@ -1,7 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { Form, href } from 'react-router'
-import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -17,6 +16,7 @@ import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
+import { ContentSelectionBar } from '~/components/content-selection-bar'
 import { FilterBar } from '~/components/filter-bar'
 import { FilterBarFilters } from '~/components/filter-bar-filters'
 import { FilterBarGroup } from '~/components/filter-bar-group'
@@ -32,10 +32,11 @@ import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
+import { ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
 import { ISSUE_NOUN } from '~/config/list-noun-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useRevalidateAt } from '~/hooks/use-revalidate-at'
-import { formatBulkDeleteToast } from '~/utils/format-bulk-delete-toast'
+import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -45,11 +46,13 @@ import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
-import { getIssueBulkDeleteConfirmation } from './utils/get-issue-bulk-delete-confirmation'
 import { groupIssuesByYear } from './utils/group-issues-by-year'
 
 // Selection, cover, Číslo, Pořadí, Stav, Akce (26a).
 const COLUMN_COUNT = 6
+
+// The keyed fetcher the selection bar submits through and the list reads (26f).
+const BULK_ACTION_FETCHER_KEY = 'archive-bulk-action'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -81,13 +84,21 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   const pending = useAdminListPending()
 
-  const deletableIds = issues
-    .filter((issue) => issue.canDelete)
+  // A row joins the selection when the bar could apply something to it (26f).
+  const selectableIds = issues
+    .filter((issue) => issue.bulkActions.length > 0)
     .map((issue) => issue.id)
-  const selection = useAdminTableSelection(deletableIds)
+  const selection = useAdminTableSelection(selectableIds)
+  useBulkActionResult({
+    fetcherKey: BULK_ACTION_FETCHER_KEY,
+    noun: ISSUE_BULK_NOUN,
+    onClear: selection.clear,
+  })
+  // In the list's order, as the dialog lists them (26f).
   const selectedIssues = issues.filter((issue) =>
     selection.selectedIds.includes(issue.id),
   )
+  const hasSelection = selectedIssues.length > 0
 
   const states = filters.state ?? []
   const hasOtherFilters = query !== '' || filters.year !== undefined
@@ -138,16 +149,22 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         {renderNewIssueButton()}
       </ListHeader>
       <FilterCell>
-        <AdminBulkActionsBar
-          action={href('/administration/archive')}
-          confirmation={getIssueBulkDeleteConfirmation(selectedIssues)}
-          formatToast={(deletedCount) =>
-            formatBulkDeleteToast(deletedCount, ISSUE_NOUN.countForms)
-          }
-          onDone={selection.clear}
-          selectedIds={selection.selectedIds}
-        />
-        <FilterBar replaced={selection.selectedIds.length > 0}>
+        {/* The selection bar takes the filter row's place in the same cell,
+            so the table does not move (22c, cioukqn6); not on a phone (22g). */}
+        {hasSelection && (
+          <ContentSelectionBar
+            action={href('/administration/archive')}
+            fetcherKey={BULK_ACTION_FETCHER_KEY}
+            isCreator={!isApprover && !isContributor}
+            noun={ISSUE_BULK_NOUN}
+            onClear={selection.clear}
+            records={selectedIssues.map((issue) => ({
+              ...issue,
+              state: issue.submission ?? issue.state,
+            }))}
+          />
+        )}
+        <FilterBar replaced={hasSelection}>
           <FilterBarGroup>
             <FilterBarSearch
               defaultValue={query}
@@ -207,7 +224,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
-              disabled={deletableIds.length === 0}
+              disabled={selectableIds.length === 0}
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />

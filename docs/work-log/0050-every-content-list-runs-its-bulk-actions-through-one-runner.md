@@ -48,8 +48,11 @@ retract, archive, restore and delete in its `content-state-handlers.server.ts`.
   (25g, 27a) and the podcast retract toast's second sentence are additions to the noun or the
   dialog, not to the runner.
 - The publish dialog is a different root per shape, not a variant: articles keep their ordered
-  dialog route-local, the other lists get a plain one, and the episodes one that orders by
-  number.
+  dialog route-local, and the episodes get one that orders by number. A list that publishes
+  without an order or a date (issues, categories, tags, podcasts) needs no dialog of its own:
+  its publish is the shared `BulkConfirmDialog` with the noun's `publish` sentence and the
+  exceptions as `notes`, the same shape 26f draws. `ContentSelectionBar` is that list's bar
+  (decided with the issues, #772 PR 2).
 - The lifecycle is described in [_content-creation-lifecycle.md](../_content-creation-lifecycle.md).
 
 ## Turned down
