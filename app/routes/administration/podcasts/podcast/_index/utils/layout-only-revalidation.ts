@@ -1,19 +1,24 @@
 const createLayoutOnlyRevalidation = () => {
-  let isRequested = false
+  let isRunning = false
 
   return {
+    /** Whether the running revalidation leaves the podcast's page out. */
+    isRunning: () => isRunning,
+
     /**
-     * Whether a revalidation was asked to leave the page out; the request is
-     * used up either way.
+     * Revalidates the page with the page itself left out, until it ends: React
+     * Router asks the route's `shouldRevalidate` more than once per
+     * revalidation.
+     *
+     * @param revalidate - The page's revalidation.
      */
-    consume: () => {
-      const wasRequested = isRequested
-      isRequested = false
-      return wasRequested
-    },
-    /** Asks that the next revalidation leave the podcast's page out. */
-    request: () => {
-      isRequested = true
+    run: async (revalidate: () => Promise<void>) => {
+      isRunning = true
+      try {
+        await revalidate()
+      } finally {
+        isRunning = false
+      }
     },
   }
 }

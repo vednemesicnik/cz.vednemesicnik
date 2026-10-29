@@ -74,7 +74,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   formMethod,
   defaultShouldRevalidate,
 }) =>
-  layoutOnlyRevalidation.consume() &&
+  layoutOnlyRevalidation.isRunning() &&
   formMethod === undefined &&
   currentUrl.href === nextUrl.href
     ? false
@@ -143,10 +143,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     filter: (event) =>
       event.entity === 'podcast' && event.entityId === podcastId,
     revalidator: {
-      revalidate: () => {
-        layoutOnlyRevalidation.request()
-        return pageRevalidator.revalidate()
-      },
+      revalidate: () => layoutOnlyRevalidation.run(pageRevalidator.revalidate),
       state: pageRevalidator.state,
     },
   })
