@@ -14,6 +14,7 @@ import {
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { PINNED_ROWS_PARAM } from '~/utils/pinned-rows/pinned-rows-param'
 import { getPodcastDisplayTitle } from '~/utils/podcast/get-podcast-display-title'
 import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 
@@ -127,8 +128,11 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
 
   const submission = flags.submission?.state ?? null
 
-  // Read only here: an earlier redirect must not use up the toast (as 27c).
-  const notice = await readAdminNotice(request)
+  // Read only here: an earlier redirect must not use up the toast (as 27c). A
+  // live load of the episode rows leaves it to the page it is for (22f).
+  const notice = url.searchParams.has(PINNED_ROWS_PARAM)
+    ? { setCookie: '', toast: null }
+    : await readAdminNotice(request)
 
   // First: the table's default or stale filter redirects before the rest
   // of the page is loaded.
@@ -154,6 +158,8 @@ export const loader = async ({ request, params, url }: Route.LoaderArgs) => {
 
   return data(
     {
+      // Whose live changes are not someone else's (22f).
+      authorId: context.authorId,
       canCreateEpisode: context.can({
         action: 'create',
         entity: 'podcast_episode',

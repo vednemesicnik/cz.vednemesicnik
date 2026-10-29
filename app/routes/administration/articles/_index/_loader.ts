@@ -273,8 +273,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     tagNames: orderFilteredFirst(article.tags, filters.tag),
   }))
 
-  // Read only here: an earlier redirect must not use up the toast (23f).
-  const notice = await readAdminNotice(request)
+  // Read only here: an earlier redirect must not use up the toast (23f). A
+  // live load leaves it to the page it is for.
+  const notice = isPinned
+    ? { setCookie: '', toast: null }
+    : await readAdminNotice(request)
 
   return data(
     {
