@@ -10,14 +10,17 @@ import {
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams } from '~/utils/admin-list-params'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
+import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
+import { getOrderedPage } from '~/utils/get-ordered-page'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
@@ -38,6 +41,9 @@ import {
 } from '../utils/summarize-podcast-episodes'
 import type { Route } from './+types/route'
 import { SORT_KEYS } from './sort'
+
+// The bulk cap's size: a selection never outgrows the page (readBulkActionForm).
+const PAGE_SIZE = 20
 
 const TABLE_KEY = 'podcasts'
 
@@ -75,7 +81,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   })
 
   // One order (27a); an old ?sort=title or ?sort=createdAt falls back to it.
-  const { query } = parseAdminListParams(request, {
+  const { page, query } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'latestEpisode',
     sortKeys: SORT_KEYS,
@@ -170,6 +176,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ),
   ])
 
+  const totalCount = rawPodcasts.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+  // Deleting the last row on the last page revalidates a URL past the end.
+  if (isPagePastLast(page, totalPages)) {
+    throw redirect(buildLastPageRedirect(url, totalPages))
+  }
+
   const podcastIds = rawPodcasts.map((podcast) => podcast.id)
   const episodePermissionWhere = buildEpisodePermissionWhere(context)
 
@@ -178,46 +192,29 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // each marked so the summary counts only those.
   const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
 
-  const [episodes, holders] = await Promise.all([
-    prisma.podcastEpisode.findMany({
-      select: {
-        authorId: true,
-        podcastId: true,
-        publishedAt: true,
-        reviews: {
-          select: {
-            createdAt: true,
-            reviewer: { select: { role: { select: { level: true } } } },
-          },
+  const episodes = await prisma.podcastEpisode.findMany({
+    select: {
+      authorId: true,
+      podcastId: true,
+      publishedAt: true,
+      reviews: {
+        select: {
+          createdAt: true,
+          reviewer: { select: { role: { select: { level: true } } } },
         },
-        state: true,
-        submittedAt: true,
       },
-      // The summary counts no archived episode, so none is loaded.
-      where: {
-        OR: [
-          { state: 'published' },
-          { AND: [episodePermissionWhere, { state: 'draft' }] },
-        ],
-        podcastId: { in: podcastIds },
-      },
-    }),
-    // Who holds each listed address as published (log 0039): a draft with an
-    // address another podcast holds is skipped by bulk publishing too (27i).
-    // Only the Coordinator publishes, so only they need it, as in 26a.
-    isApprover
-      ? prisma.podcast.findMany({
-          select: { id: true, publishedSlug: true },
-          where: {
-            publishedSlug: {
-              in: rawPodcasts.flatMap(({ slug }) =>
-                slug === '' ? [] : [slug],
-              ),
-            },
-          },
-        })
-      : [],
-  ])
+      state: true,
+      submittedAt: true,
+    },
+    // The summary counts no archived episode, so none is loaded.
+    where: {
+      OR: [
+        { state: 'published' },
+        { AND: [episodePermissionWhere, { state: 'draft' }] },
+      ],
+      podcastId: { in: podcastIds },
+    },
+  })
 
   const summaries = summarizePodcastEpisodes(
     podcastIds,
@@ -232,98 +229,121 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     })),
   )
 
+  const getLatestPublishedTime = (podcastId: string) =>
+    summaries.get(podcastId)?.latestPublishedAt?.getTime() ?? -1
+
+  // The latest published episode first; a podcast without one goes last (27a).
+  // The whole match is ordered before the page is cut, so page 2 goes on
+  // where page 1 ends.
+  const { pageIds } = getOrderedPage(
+    rawPodcasts,
+    (first, second) =>
+      getLatestPublishedTime(second.id) - getLatestPublishedTime(first.id) ||
+      second.createdAt.getTime() - first.createdAt.getTime(),
+    { page, pageSize: PAGE_SIZE },
+  )
+  const podcastById = new Map(
+    rawPodcasts.map((podcast) => [podcast.id, podcast]),
+  )
+  const pagePodcasts = pageIds.flatMap((id) => podcastById.get(id) ?? [])
+
+  // Who holds each listed address as published (log 0039): a draft with an
+  // address another podcast holds is skipped by bulk publishing too (27i).
+  // Only the Coordinator publishes, so only they need it, as in 26a.
+  const holders = isApprover
+    ? await prisma.podcast.findMany({
+        select: { id: true, publishedSlug: true },
+        where: {
+          publishedSlug: {
+            in: pagePodcasts.flatMap(({ slug }) => (slug === '' ? [] : [slug])),
+          },
+        },
+      })
+    : []
+
   const holderIdBySlug = new Map(
     holders.map(({ id, publishedSlug }) => [publishedSlug, id]),
   )
 
   const now = new Date()
 
-  const podcasts = rawPodcasts
-    .map((podcast) => {
-      const flags = getContentActionFlags(context, 'podcast', {
-        authors: [podcast.author],
-        reviews: podcast.reviews,
-        state: podcast.state,
-        submittedAt: podcast.submittedAt,
-      })
-      const summary = summaries.get(podcast.id) ?? NO_EPISODES
-      const submission = flags.submission?.state ?? null
-
-      const actions = getPodcastActions({
-        ...flags,
-        state: podcast.state,
-        submission,
-      })
-
-      return {
-        actions,
-        // What the selection bar may apply to this row (22c, 27a); a podcast
-        // with episodes is never deleted (27f), and a held one is skipped and
-        // said apart, not left out of the bar's actions.
-        bulkActions: getBulkActions({
-          isApprover,
-          menu: actions.filter(
-            (action) => action !== 'delete' || podcast._count.episodes === 0,
-          ),
-          row: null,
-        }),
-        cover:
-          podcast.cover === null
-            ? null
-            : createImageSources('podcast-cover', podcast.cover),
-        createdAt: podcast.createdAt,
-        episodeCount: podcast._count.episodes,
-        episodeLines: formatPodcastEpisodeLines({
-          isContributor,
-          podcastState: podcast.state,
-          summary,
-        }),
-        // The row's tag says what the detail's does (07a), with one fact (27a).
-        factLine: getPodcastFactLine({
-          authorName: podcast.author.name,
-          state: podcast.state,
-          submission: flags.submission,
-          submittedByName: podcast.submittedBy?.name ?? null,
-          updatedAt: podcast.updatedAt,
-        }),
-        id: podcast.id,
-        isHeldByOther:
-          getEditHoldStatus(podcast, { authorId: context.authorId, now }) ===
-          'other',
-        // Bulk publishing skips it and says so up front (27i, 27a).
-        isIncomplete:
-          isApprover &&
-          getMissingPodcastContent({
-            description: podcast.description,
-            hasCover: podcast.cover !== null,
-            isSlugTaken:
-              podcast.slug !== '' &&
-              (holderIdBySlug.get(podcast.slug) ?? podcast.id) !== podcast.id,
-            slug: podcast.slug,
-            title: podcast.title,
-          }).length > 0,
-        // Publishing it, the dialog says it isn't submitted (27a, as 22c).
-        isNotSubmitted:
-          podcast.state === 'draft' &&
-          flags.submission === null &&
-          flags.isSubmittable &&
-          !flags.isOwnContent,
-        latestPublishedAt: summary.latestPublishedAt,
-        publishedEpisodeCount: summary.publishedCount,
-        slug: podcast.slug,
-        state: podcast.state,
-        submission,
-        // A draft saved without a title goes by a name (copy utgh1hb7).
-        title: getPodcastDisplayTitle(podcast.title),
-      }
+  const podcasts = pagePodcasts.map((podcast) => {
+    const flags = getContentActionFlags(context, 'podcast', {
+      authors: [podcast.author],
+      reviews: podcast.reviews,
+      state: podcast.state,
+      submittedAt: podcast.submittedAt,
     })
-    // The latest published episode first; a podcast without one goes last (27a).
-    .sort(
-      (first, second) =>
-        (second.latestPublishedAt?.getTime() ?? -1) -
-          (first.latestPublishedAt?.getTime() ?? -1) ||
-        second.createdAt.getTime() - first.createdAt.getTime(),
-    )
+    const summary = summaries.get(podcast.id) ?? NO_EPISODES
+    const submission = flags.submission?.state ?? null
+
+    const actions = getPodcastActions({
+      ...flags,
+      state: podcast.state,
+      submission,
+    })
+
+    return {
+      actions,
+      // What the selection bar may apply to this row (22c, 27a); a podcast
+      // with episodes is never deleted (27f), and a held one is skipped and
+      // said apart, not left out of the bar's actions.
+      bulkActions: getBulkActions({
+        isApprover,
+        menu: actions.filter(
+          (action) => action !== 'delete' || podcast._count.episodes === 0,
+        ),
+        row: null,
+      }),
+      cover:
+        podcast.cover === null
+          ? null
+          : createImageSources('podcast-cover', podcast.cover),
+      episodeCount: podcast._count.episodes,
+      episodeLines: formatPodcastEpisodeLines({
+        isContributor,
+        podcastState: podcast.state,
+        summary,
+      }),
+      // The row's tag says what the detail's does (07a), with one fact (27a).
+      factLine: getPodcastFactLine({
+        authorName: podcast.author.name,
+        state: podcast.state,
+        submission: flags.submission,
+        submittedByName: podcast.submittedBy?.name ?? null,
+        updatedAt: podcast.updatedAt,
+      }),
+      id: podcast.id,
+      isHeldByOther:
+        getEditHoldStatus(podcast, { authorId: context.authorId, now }) ===
+        'other',
+      // Bulk publishing skips it and says so up front (27i, 27a).
+      isIncomplete:
+        isApprover &&
+        getMissingPodcastContent({
+          description: podcast.description,
+          hasCover: podcast.cover !== null,
+          isSlugTaken:
+            podcast.slug !== '' &&
+            (holderIdBySlug.get(podcast.slug) ?? podcast.id) !== podcast.id,
+          slug: podcast.slug,
+          title: podcast.title,
+        }).length > 0,
+      // Publishing it, the dialog says it isn't submitted (27a, as 22c).
+      isNotSubmitted:
+        podcast.state === 'draft' &&
+        flags.submission === null &&
+        flags.isSubmittable &&
+        !flags.isOwnContent,
+      latestPublishedAt: summary.latestPublishedAt,
+      publishedEpisodeCount: summary.publishedCount,
+      slug: podcast.slug,
+      state: podcast.state,
+      submission,
+      // A draft saved without a title goes by a name (copy utgh1hb7).
+      title: getPodcastDisplayTitle(podcast.title),
+    }
+  })
 
   return {
     ...savedFilters,
@@ -333,11 +353,15 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       state: 'draft',
       targetAuthorIds: [context.authorId],
     }).hasPermission,
+    currentPage: page,
     filters,
     isApprover,
     isContributor,
+    pageSize: PAGE_SIZE,
     podcasts,
     query,
     queueCounts,
+    totalCount,
+    totalPages,
   }
 }

@@ -53,15 +53,19 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
     canCreate,
     currentFilterQuery,
+    currentPage,
     filters,
     isApprover,
     isContributor,
     matchingFilterId,
     ownFilters,
+    pageSize,
     podcasts,
     query,
     queueCounts,
     sharedFilters,
+    totalCount,
+    totalPages,
   } = loaderData
 
   const pending = useAdminListPending()
@@ -227,19 +231,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         </AdminTable>
       )}
       <Pagination
-        currentPage={1}
+        currentPage={currentPage}
         layout={'inline'}
         noun={PODCAST_NOUN.countForms}
-        pageSize={podcasts.length}
+        pageSize={pageSize}
         size={'sm'}
-        totalCount={podcasts.length}
-        totalPages={1}
+        totalCount={totalCount}
+        totalPages={totalPages}
       />
       {/* Unless the empty list already offers it (22e). */}
-      {canCreate &&
-        (podcasts.length > 0 || emptyMessage.action !== 'create') && (
-          <ListActionBar>{newPodcastButton}</ListActionBar>
-        )}
+      {canCreate && (totalCount > 0 || emptyMessage.action !== 'create') && (
+        <ListActionBar>{newPodcastButton}</ListActionBar>
+      )}
     </AdminPage>
   )
 }
