@@ -31,6 +31,8 @@ export type NumberSentences = {
  * - `descriptions` — what an action does to the records the dialog counts;
  *   `publish` is `null` where the list publishes in a dialog of its own (the
  *   articles' ordered one).
+ * - `deleteInFullInk` — the delete sentence stands in full ink, as 22c draws
+ *   „Smazání je nevratné.“; 26f draws the issues' in the description's grey.
  */
 export type BulkNoun = {
   countForms: CountForms
@@ -49,6 +51,7 @@ export type BulkNoun = {
     restore: NumberSentences
     delete: NumberSentences
   }
+  deleteInFullInk: boolean
 }
 
 /** „koncept“ by count, for deleting only drafts (22c). */
@@ -75,6 +78,7 @@ export const ARTICLE_BULK_NOUN: BulkNoun = {
     many: 'Znovu je publikovat může Koordinátor.',
     one: 'Znovu ho publikovat může Koordinátor.',
   },
+  deleteInFullInk: true,
   descriptions: {
     archive: {
       many: 'Čtenáři články na webu neuvidí. V administraci zůstanou mezi archivovanými.',
@@ -110,7 +114,7 @@ export const ARTICLE_BULK_NOUN: BulkNoun = {
   },
 }
 
-// The 22c sentences with číslo (26f; copy p256liqr, 0farrwua, qjv38ti4).
+/** The 22c sentences with číslo (26f; copy p256liqr, 0farrwua; delete yzyd9p1l). */
 export const ISSUE_BULK_NOUN: BulkNoun = {
   allHeld: {
     many: 'Všechna vybraná čísla se právě upravují.',
@@ -125,6 +129,7 @@ export const ISSUE_BULK_NOUN: BulkNoun = {
     many: 'Znovu je publikovat může Koordinátor.',
     one: 'Znovu ho publikovat může Koordinátor.',
   },
+  deleteInFullInk: false,
   descriptions: {
     archive: {
       many: 'Čtenáři čísla na webu neuvidí. V administraci zůstanou mezi archivovanými.',

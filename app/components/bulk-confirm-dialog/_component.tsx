@@ -94,7 +94,7 @@ export const BulkConfirmDialog = ({
         {/* What happens, then its exceptions (22c, 26f). */}
         <DialogBody>
           {descriptions.map((description) =>
-            isDelete ? (
+            isDelete && noun.deleteInFullInk ? (
               <p className={styles.note} key={description}>
                 {description}
               </p>

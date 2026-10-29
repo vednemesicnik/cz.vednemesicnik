@@ -1,0 +1,15 @@
+/* The filter row's height, so the two share the filter cell without a jump
+   (22c, cioukqn6); the bulk actions here are sm buttons. A phone has no
+   selection (design 32, 22g). */
+.bar {
+  @layer variant {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: 42px;
+    padding-block: 2px;
+
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}

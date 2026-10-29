@@ -291,8 +291,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         flags.submission === null &&
         flags.isSubmittable &&
         !flags.isOwnContent,
-      // Publishing an incomplete issue opens the 26e sentence instead of the
-      // confirmation; only the Coordinator publishes, and the server checks again.
       missingBeforePublish,
       orderLabel: getIssueOrderLabel(issue),
       // The name the reader downloads it under; before publish it has none,

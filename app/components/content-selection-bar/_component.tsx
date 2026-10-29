@@ -1,4 +1,5 @@
 import type { ContentState } from '@generated/prisma/enums'
+import { clsx } from 'clsx'
 import { useState } from 'react'
 import { useFetcher } from 'react-router'
 
@@ -15,6 +16,8 @@ import { formatHeldSkipNote } from '~/utils/bulk-action/format-held-skip-note'
 import type { BulkAction } from '~/utils/bulk-action/get-bulk-actions'
 import { getBulkPublishNotes } from '~/utils/bulk-action/get-bulk-publish-notes'
 import { getSelectionBarContent } from '~/utils/bulk-action/get-selection-bar-content'
+
+import styles from './_styles.module.css'
 
 /** A selected record as the bar reads it; `title` is how the dialog lists it. */
 export type SelectedContent = {
@@ -87,6 +90,16 @@ export const ContentSelectionBar = ({
       .length,
   })
 
+  // Publishing, the exceptions stand in one paragraph in full ink (26f).
+  const publishSentence = [
+    publishNotes.notes,
+    publishNotes.skipped,
+    heldSkipNote,
+  ]
+    .filter((sentence) => sentence !== null)
+    .join(' ')
+  const publishExceptions = publishSentence === '' ? [] : [publishSentence]
+
   const isPublishing = openAction === 'publish'
   const confirmedRecords = isPublishing ? completeRecords : unheldRecords
 
@@ -101,7 +114,7 @@ export const ContentSelectionBar = ({
   return (
     <>
       <AdminSelectionBar
-        className={className}
+        className={clsx(styles.bar, className)}
         count={records.length}
         message={message}
         onClear={onClear}
@@ -124,13 +137,7 @@ export const ContentSelectionBar = ({
         <BulkConfirmDialog
           action={openAction}
           isCreator={isCreator}
-          notes={
-            isPublishing
-              ? [publishNotes.notes, publishNotes.skipped, heldSkipNote].filter(
-                  (sentence) => sentence !== null,
-                )
-              : []
-          }
+          notes={isPublishing ? publishExceptions : []}
           noun={noun}
           onClose={() => setOpenAction(null)}
           onConfirm={() => submit(openAction)}

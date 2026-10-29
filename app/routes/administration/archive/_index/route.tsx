@@ -154,7 +154,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         {hasSelection && (
           <ContentSelectionBar
             action={href('/administration/archive')}
-            className={styles.selectionBar}
             fetcherKey={BULK_ACTION_FETCHER_KEY}
             isCreator={!isApprover && !isContributor}
             noun={ISSUE_BULK_NOUN}
