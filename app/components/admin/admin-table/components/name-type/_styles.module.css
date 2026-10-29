@@ -1,0 +1,15 @@
+.type {
+  @layer component {
+    display: none;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-regular);
+    color: var(--text-tertiary);
+
+    /* Over the name, as the folded row's first line (21c, 22g). */
+    @media (width < 768px) {
+      :where([data-folds-on-phone]) & {
+        display: block;
+      }
+    }
+  }
+}

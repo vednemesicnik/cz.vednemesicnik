@@ -1,0 +1,13 @@
+.line {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: var(--font-size-sm);
+  }
+}

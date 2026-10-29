@@ -1,28 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useFetcher, useLocation } from 'react-router'
 
 import { useContentEvents } from '~/hooks/use-content-events'
+import { useLiveChanges } from '~/hooks/use-live-changes'
 import { useRevalidateAt } from '~/hooks/use-revalidate-at'
 
 import type { loader } from '../_loader'
 import type { Route } from '../+types/route'
 import { PINNED_ROWS_PARAM } from '../pinned-rows'
 import { orderPinnedRows } from './order-pinned-rows'
-import { startPendingTints } from './start-pending-tints'
 
 type LoaderData = Route.ComponentProps['loaderData']
-
-/** A row someone else changed while the list is open (22f). */
-export type LiveChange = {
-  name: string
-  occurredAt: Date
-  /** Counts the changes, so a second one restarts the tint. */
-  sequence: number
-  /** The tab's time (`performance.now()`) the tint started, `null` while it waits for a hidden tab. */
-  tintStartedAt: number | null
-  /** An edit hold came after it: the line is the row's fact again, the tint runs on (22f). */
-  isLineSuperseded?: boolean
-}
 
 /**
  * Keeps the article list live without moving its rows (design 22f). A change
@@ -47,9 +35,11 @@ export const useLiveArticleRows = (loaderData: LoaderData) => {
   const fetcher = useFetcher<typeof loader>({
     key: `article-list-live-${generation.count}`,
   })
-  const [liveChanges, setLiveChanges] = useState<
-    ReadonlyMap<string, LiveChange>
-  >(new Map())
+  const { liveChanges, onEvent } = useLiveChanges({
+    authorId: loaderData.authorId,
+    // Only the article's own change tints its row.
+    keyOf: (event) => (event.entity === 'article' ? event.entityId : null),
+  })
 
   const pinnedIds = loaderData.articles.map((article) => article.id)
 
@@ -73,71 +63,9 @@ export const useLiveArticleRows = (loaderData: LoaderData) => {
       event.entity === 'article' ||
       event.entity === 'article_category' ||
       event.entity === 'article_tag',
-    onEvent: (event) => {
-      if (event.entity !== 'article') {
-        return
-      }
-
-      // Taking or releasing the edit hold is no change to react to (no tint),
-      // but a running tint finishes; the line goes back to the row's fact,
-      // which is newer than the change the hold covered (22f, 2txmjnaq).
-      if (event.change === 'hold') {
-        setLiveChanges((current) => {
-          const liveChange = current.get(event.entityId)
-          if (liveChange === undefined) {
-            return current
-          }
-          return new Map(current).set(event.entityId, {
-            ...liveChange,
-            isLineSuperseded: true,
-          })
-        })
-        return
-      }
-
-      // One's own change isn't announced, and the line no longer names the
-      // latest change: the row returns to its 22b fact.
-      if (event.actor.authorId === loaderData.authorId) {
-        setLiveChanges((current) => {
-          if (!current.has(event.entityId)) {
-            return current
-          }
-          const next = new Map(current)
-          next.delete(event.entityId)
-          return next
-        })
-        return
-      }
-
-      setLiveChanges((current) =>
-        new Map(current).set(event.entityId, {
-          name: event.actor.name,
-          occurredAt: new Date(event.occurredAt),
-          sequence: (current.get(event.entityId)?.sequence ?? 0) + 1,
-          // The tint is meant to be seen, so a hidden tab holds it back.
-          tintStartedAt:
-            document.visibilityState === 'visible' ? performance.now() : null,
-        }),
-      )
-    },
+    onEvent,
     revalidator: rowsRevalidator,
   })
-
-  // Back in the tab, the held-back tints start, as the deferred reload does.
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        setLiveChanges((current) =>
-          startPendingTints(current, performance.now()),
-        )
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
 
   const live = fetcher.data
   const articles =

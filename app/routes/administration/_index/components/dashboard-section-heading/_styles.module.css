@@ -1,0 +1,20 @@
+.heading {
+  @layer route {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-lg);
+    color: var(--text-primary);
+  }
+}
+
+/* As the list's Ke schválení pill (21a, 22a). */
+.count {
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--state-attention-text);
+  }
+}
