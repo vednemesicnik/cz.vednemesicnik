@@ -22,8 +22,10 @@ the gallery empty.
   (in5bl1cq).
 - **Of uploads side by side, the first to commit wins.** The claim is a conditional write in the
   upload's own transaction (`featuredImageId` is null and the article's only image is this one),
-  so exactly one upload gets it. It is the first stored image, which keeps the main image first
-  ([0028](0028-the-main-image-stands-first-in-the-gallery.md)).
+  so exactly one upload gets it. Uploads that read the empty gallery together may share a
+  position. The loaders still list the main image first
+  ([0028](0028-the-main-image-stands-first-in-the-gallery.md)), and the editor's next order change
+  writes it there.
 - **The sharing preview follows only a claim that took.** It is written after the commit, not in
   it. Publishing writes it again from the main image anyway.
 - **The answer says so** (`becameFeatured`). The editor marks the tile *Hlavní* and moves it

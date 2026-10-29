@@ -29,7 +29,8 @@ export type PreparedImageChange<Answer extends object> = {
   /**
    * Runs once the writes committed and were not cancelled, before
    * `onCommitted`, with the results of `writes`: settles what only the commit
-   * decided, and returns it for the answer.
+   * decided, and returns it for the answer. It must not throw: the change is
+   * saved by then.
    */
   onSettled?: (writeResults: unknown[]) => Promise<Partial<Answer>>
   /** Runs once the writes committed: drops files the change made obsolete. */

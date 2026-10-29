@@ -284,10 +284,12 @@ export const useArticleGallery = ({
       if (controller.signal.aborted || result.status === 'cancelled') return
 
       if (result.status === 'saved') {
-        // The server puts a new image last.
+        // The server puts a new image last, and a new main image first.
         if (!isStored(id)) {
           storedIdsRef.current.add(id)
-          if (getStoredOrder().at(-1) !== id) isOrderStaleRef.current = true
+          if (!result.becameFeatured && getStoredOrder().at(-1) !== id) {
+            isOrderStaleRef.current = true
+          }
         }
         // The main image stands first (0028), before the tiles still
         // uploading, so the others land after it.

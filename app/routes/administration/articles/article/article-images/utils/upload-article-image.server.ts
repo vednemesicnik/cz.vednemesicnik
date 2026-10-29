@@ -27,6 +27,14 @@ type Options = {
   description: string
 }
 
+/** What a saved upload tells the editor. */
+type UploadAnswer = {
+  /** The upload made it the main image, which the editor then shows. */
+  becameFeatured: boolean
+  fileName: string
+  previewUrl: string | null
+}
+
 /**
  * Stores one picked image as soon as it is chosen (design 24b, log 0027).
  * A new id becomes the gallery's last image, and the main one when the
@@ -62,7 +70,7 @@ export async function uploadArticleImage(
     throw data(null, { status: 400 })
   }
 
-  return saveArticleImageChange(request, {
+  return saveArticleImageChange<UploadAnswer>(request, {
     articleId,
     isCancellable: true,
     landsWithoutHold: true,
@@ -125,8 +133,7 @@ export async function uploadArticleImage(
           })
         : []
 
-      const answer = {
-        /** The upload made it the main image, which the editor then shows. */
+      const answer: UploadAnswer = {
         becameFeatured: false,
         fileName: file.name,
         previewUrl:
@@ -158,6 +165,23 @@ export async function uploadArticleImage(
               }),
             ]
           : []
+        const writes = [
+          prisma.articleImage.create({
+            data: {
+              ...meta,
+              altText,
+              articleId,
+              description: description || null,
+              fileName: file.name,
+              id: imageId,
+              position: (lastImage.position ?? -1) + 1,
+            },
+            select: { id: true },
+          }),
+          ...claimWrites,
+          ...seoWrites,
+        ]
+        const claimIndex = claimsFeatured ? writes.indexOf(claimWrites[0]) : -1
 
         return {
           addsContent: true,
@@ -176,8 +200,10 @@ export async function uploadArticleImage(
           // the commit, another upload's preview could overwrite it. Publish
           // writes it again from the main image, so a failure only logs.
           onSettled: async (writeResults) => {
-            const claim = writeResults[1] as Prisma.BatchPayload | undefined
-            if (!claimsFeatured || claim?.count !== 1) return {}
+            const claim = writeResults[claimIndex] as
+              | Prisma.BatchPayload
+              | undefined
+            if (claimIndex === -1 || claim?.count !== 1) return {}
 
             try {
               await prisma.$transaction(
@@ -191,22 +217,7 @@ export async function uploadArticleImage(
             }
             return { becameFeatured: true }
           },
-          writes: [
-            prisma.articleImage.create({
-              data: {
-                ...meta,
-                altText,
-                articleId,
-                description: description || null,
-                fileName: file.name,
-                id: imageId,
-                position: (lastImage.position ?? -1) + 1,
-              },
-              select: { id: true },
-            }),
-            ...claimWrites,
-            ...seoWrites,
-          ],
+          writes,
         }
       }
 

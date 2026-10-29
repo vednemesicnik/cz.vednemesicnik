@@ -100,18 +100,25 @@ const createArticle = () =>
     select: { id: true },
   })
 
-const upload = (
+const upload = async (
   articleId: string,
   request = new Request('https://test.local/'),
-) =>
-  uploadArticleImage(request, {
+) => {
+  const imageId = createId()
+  const result = await uploadArticleImage(request, {
     altText: 'Alt',
     articleId,
     description: '',
     file: new File(['bytes'], 'photo.jpg', { type: 'image/jpeg' }),
-    imageId: createId(),
+    imageId,
     tabId: 'tab-1',
   })
+  return { imageId, result }
+}
+
+const isFeaturedAnswer = (
+  result: Awaited<ReturnType<typeof upload>>['result'],
+) => result.status === 'saved' && result.becameFeatured
 
 const readFeaturedImageId = async (articleId: string) =>
   (
@@ -149,21 +156,20 @@ describe('uploadArticleImage on SQLite — the first image becomes the main one'
   test('the first image of an empty gallery becomes the main one', async () => {
     const { id } = await createArticle()
 
-    const result = await upload(id)
+    const { imageId, result } = await upload(id)
 
     expect(result).toMatchObject({ becameFeatured: true, status: 'saved' })
-    expect(await readFeaturedImageId(id)).not.toBeNull()
+    expect(await readFeaturedImageId(id)).toBe(imageId)
   })
 
   test('an image after the first one is not the main one', async () => {
     const { id } = await createArticle()
-    await upload(id)
-    const featuredImageId = await readFeaturedImageId(id)
+    const first = await upload(id)
 
-    const result = await upload(id)
+    const { result } = await upload(id)
 
     expect(result).toMatchObject({ becameFeatured: false, status: 'saved' })
-    expect(await readFeaturedImageId(id)).toBe(featuredImageId)
+    expect(await readFeaturedImageId(id)).toBe(first.imageId)
   })
 
   test('a main image cleared on purpose stays cleared', async () => {
@@ -174,7 +180,7 @@ describe('uploadArticleImage on SQLite — the first image becomes the main one'
       where: { id },
     })
 
-    const result = await upload(id)
+    const { result } = await upload(id)
 
     expect(result).toMatchObject({ becameFeatured: false, status: 'saved' })
     expect(await readFeaturedImageId(id)).toBeNull()
@@ -182,7 +188,7 @@ describe('uploadArticleImage on SQLite — the first image becomes the main one'
 
   test('of images uploaded together, exactly one becomes the main one', async () => {
     const { id } = await createArticle()
-    let results: Awaited<ReturnType<typeof upload>>[] = []
+    let uploads: Awaited<ReturnType<typeof upload>>[] = []
 
     // Every upload has read the empty gallery before the first commits.
     let waiting = 3
@@ -198,29 +204,64 @@ describe('uploadArticleImage on SQLite — the first image becomes the main one'
         return commit(writes)
       },
       async () => {
-        results = await Promise.all([upload(id), upload(id), upload(id)])
+        uploads = await Promise.all([upload(id), upload(id), upload(id)])
       },
     )
 
-    expect(results.map(({ status }) => status)).toEqual([
+    expect(uploads.map(({ result }) => result.status)).toEqual([
       'saved',
       'saved',
       'saved',
     ])
-    const featured = results.filter(
-      (result) => 'becameFeatured' in result && result.becameFeatured,
-    )
+    const featured = uploads.filter(({ result }) => isFeaturedAnswer(result))
     expect(featured).toHaveLength(1)
+    expect(await readFeaturedImageId(id)).toBe(featured[0].imageId)
+  })
 
-    const featuredImageId = await readFeaturedImageId(id)
-    const images = await prisma().articleImage.findMany({
-      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
-      select: { id: true },
-      where: { articleId: id },
+  test('an upload that read the empty gallery claims nothing once another image is stored', async () => {
+    const { id } = await createArticle()
+    const realPrisma = prisma()
+    let reachedCommit = () => {}
+    const atCommit = new Promise<void>((resolve) => {
+      reachedCommit = resolve
     })
-    expect(images).toHaveLength(3)
-    // The main image stands first (0028).
-    expect(images[0].id).toBe(featuredImageId)
+    let releaseCommit = () => {}
+    const imageStored = new Promise<void>((resolve) => {
+      releaseCommit = resolve
+    })
+    let late: Awaited<ReturnType<typeof upload>> | undefined
+
+    // The upload waits at its commit while another image lands.
+    await withTransaction(
+      (commit) => async (writes) => {
+        reachedCommit()
+        await imageStored
+        return commit(writes)
+      },
+      async () => {
+        const pending = upload(id)
+        await atCommit
+        await realPrisma.articleImage.create({
+          data: {
+            altText: 'Alt',
+            articleId: id,
+            intrinsicHeight: 600,
+            intrinsicWidth: 900,
+            placeholderDataUrl: 'data:image/jpeg;base64,AAAA',
+            version: 'v1',
+          },
+          select: { id: true },
+        })
+        releaseCommit()
+        late = await pending
+      },
+    )
+
+    expect(late?.result).toMatchObject({
+      becameFeatured: false,
+      status: 'saved',
+    })
+    expect(await readFeaturedImageId(id)).toBeNull()
   })
 
   test('a cancel during the commit leaves the article without a main image', async () => {
@@ -235,7 +276,7 @@ describe('uploadArticleImage on SQLite — the first image becomes the main one'
         return committed
       },
       async () => {
-        const result = await upload(
+        const { result } = await upload(
           id,
           new Request('https://test.local/', { signal: controller.signal }),
         )
