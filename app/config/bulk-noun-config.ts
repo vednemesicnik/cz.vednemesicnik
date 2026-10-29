@@ -412,10 +412,11 @@ export const PODCAST_BULK_NOUN: BulkNoun = {
   deleteInFullInk: true,
   descriptions: {
     archive: {
-      // Without published episodes, as 25g (gzumlpu2).
+      // Without published episodes, as 25g (gzumlpu2; copy grg2whyh, as
+      // the approved single archive, fzqkfmeg).
       withoutRelated: {
-        many: 'Podcasty zmizí z webu. Na web se dostanou až po obnovení jako konceptu a publikaci.',
-        one: 'Podcast zmizí z webu. Na web se dostane až po obnovení jako konceptu a publikaci.',
+        many: 'Podcasty zmizí z webu. Znovu se zobrazí po obnovení jako konceptu a publikaci.',
+        one: 'Podcast zmizí z webu. Znovu se zobrazí po obnovení jako konceptu a publikaci.',
       },
       withRelated: {
         many: 'Podcasty i jejich publikované epizody zmizí z webu. Stav epizod se nezmění. Epizody se znovu zobrazí až po obnovení příslušného podcastu jako konceptu a jeho publikaci.',

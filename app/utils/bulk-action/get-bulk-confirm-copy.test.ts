@@ -297,7 +297,7 @@ describe('getBulkConfirmCopy — podcasts (27a, gzumlpu2)', () => {
       podcastCopy({ action: 'archive', count: 1, hasRelated: false })
         .descriptions,
     ).toEqual([
-      'Podcast zmizí z webu. Na web se dostane až po obnovení jako konceptu a publikaci.',
+      'Podcast zmizí z webu. Znovu se zobrazí po obnovení jako konceptu a publikaci.',
     ])
   })
 
