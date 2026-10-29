@@ -108,7 +108,8 @@ is gitignored and never touches the main checkout's branch.
 ### 🛑 Gate — Follow-ups are offered, not filed
 
 If the issue surfaced work worth doing later, **list it and ask**, one line each, with the
-title you would give it. File only what the user picks. Work the user chooses not to file is
+title you would give it — a capitalised sentence with the kind of work in the label, never
+a Conventional Commit (`pull-request-workflow`). File only what the user picks. Work the user chooses not to file is
 still open: it stays on the list in Phase 3.
 
 ### Phase 3 — The next step is the open work

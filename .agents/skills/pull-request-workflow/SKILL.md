@@ -23,6 +23,13 @@ The steps below assume the change is committed on a branch and the
 `self-review-before-pr` rule has already been run. Author every PR/issue title and
 body in **English**; write review-thread replies in the **language of the thread**.
 
+**Issue titles are not Conventional Commits.** Only a PR title is (the squash puts it on
+`dev`). An issue title starts with a capital letter and says briefly what the issue is
+about, optionally after an area and a colon: `Epic: live administration — every list and
+detail page listens to server-sent events`, `Article editor: gallery — each image uploads,
+saves and orders on its own (24b)`. The kind of work goes in the label, not in the title:
+`enhancement` for a feature or a refactor, `bug` for a fix, `dependencies` for an upgrade.
+
 ## 1. Branch & commit
 
 - Branch off `dev`, kebab-case, **with the issue number**: `feat/290-format-dates`. A small
