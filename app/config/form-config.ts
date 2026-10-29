@@ -9,6 +9,8 @@ export const FORM_CONFIG = {
       bulkArchive: 'bulk-archive',
       bulkDelete: 'bulk-delete',
       bulkPublish: 'bulk-publish',
+      bulkRestore: 'bulk-restore',
+      bulkRetract: 'bulk-retract',
       changePublishedAt: 'change-published-at',
       createFilter: 'create-filter',
       delete: 'delete',

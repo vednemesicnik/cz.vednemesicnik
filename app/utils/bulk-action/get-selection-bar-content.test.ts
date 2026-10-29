@@ -1,11 +1,16 @@
 import { describe, expect, test } from 'vitest'
 
+import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
+
 import { getSelectionBarContent } from './get-selection-bar-content'
+
+const content = (selected: Parameters<typeof getSelectionBarContent>[0]) =>
+  getSelectionBarContent(selected, ARTICLE_BULK_NOUN)
 
 describe('getSelectionBarContent', () => {
   test('offers the actions every selected article has', () => {
     expect(
-      getSelectionBarContent([
+      content([
         {
           bulkActions: ['publish', 'delete'],
           isHeldByOther: false,
@@ -22,7 +27,7 @@ describe('getSelectionBarContent', () => {
 
   test('says no action is common when none is left', () => {
     expect(
-      getSelectionBarContent([
+      content([
         {
           bulkActions: ['publish', 'delete'],
           isHeldByOther: false,
@@ -35,7 +40,7 @@ describe('getSelectionBarContent', () => {
 
   test('drops publishing when every selected article is incomplete', () => {
     expect(
-      getSelectionBarContent([
+      content([
         {
           bulkActions: ['publish', 'delete'],
           isHeldByOther: false,
@@ -55,7 +60,7 @@ describe('getSelectionBarContent', () => {
     [2, 'Vybrané články nelze publikovat — jsou neúplné.'],
   ])('says why when publishing was the only action (%i)', (count, message) => {
     expect(
-      getSelectionBarContent(
+      content(
         Array.from({ length: count }, () => ({
           bulkActions: ['publish' as const],
           isHeldByOther: false,
@@ -67,7 +72,7 @@ describe('getSelectionBarContent', () => {
 
   test('offers an action that skips a held article (22f)', () => {
     expect(
-      getSelectionBarContent([
+      content([
         {
           bulkActions: ['publish', 'delete'],
           isHeldByOther: false,
@@ -82,9 +87,9 @@ describe('getSelectionBarContent', () => {
     ).toEqual({ actions: ['publish', 'delete'], message: null })
   })
 
-  test('offers nothing when every selected article is held (22c)', () => {
+  test('says so when every selected article is held (22c)', () => {
     expect(
-      getSelectionBarContent([
+      content([
         {
           bulkActions: ['publish', 'delete'],
           isHeldByOther: true,
@@ -96,12 +101,61 @@ describe('getSelectionBarContent', () => {
           isIncomplete: false,
         },
       ]),
+    ).toEqual({
+      actions: [],
+      message: 'Všechny vybrané články se právě upravují.',
+    })
+  })
+
+  test('says so when the one selected article is held (22c)', () => {
+    expect(
+      content([
+        {
+          bulkActions: ['retract', 'archive'],
+          isHeldByOther: true,
+          isIncomplete: false,
+        },
+      ]),
+    ).toEqual({ actions: [], message: 'Vybraný článek se právě upravuje.' })
+  })
+
+  test('a held selection with no common action says that instead', () => {
+    expect(
+      content([
+        {
+          bulkActions: ['publish', 'delete'],
+          isHeldByOther: true,
+          isIncomplete: false,
+        },
+        {
+          bulkActions: ['retract', 'archive'],
+          isHeldByOther: true,
+          isIncomplete: false,
+        },
+      ]),
     ).toEqual({ actions: [], message: 'Pro tento výběr není společná akce.' })
+  })
+
+  test('offers retract and archive for published articles (ji6n8th3)', () => {
+    expect(
+      content([
+        {
+          bulkActions: ['retract', 'archive'],
+          isHeldByOther: false,
+          isIncomplete: false,
+        },
+        {
+          bulkActions: ['retract', 'archive'],
+          isHeldByOther: false,
+          isIncomplete: false,
+        },
+      ]),
+    ).toEqual({ actions: ['retract', 'archive'], message: null })
   })
 
   test('drops publishing when every selected article is incomplete or held', () => {
     expect(
-      getSelectionBarContent([
+      content([
         {
           bulkActions: ['publish', 'delete'],
           isHeldByOther: true,

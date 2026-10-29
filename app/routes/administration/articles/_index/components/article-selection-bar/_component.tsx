@@ -3,18 +3,21 @@ import { useFetcher } from 'react-router'
 
 import { AdminSelectionBar } from '~/components/admin/admin-selection-bar'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
+import { BulkConfirmDialog } from '~/components/bulk-confirm-dialog'
 import { Button } from '~/components/button'
 import { STATUS_TAG_LABELS } from '~/components/status-tag'
+import { BULK_ACTION_INTENTS } from '~/config/bulk-action-intents'
+import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
 import { FORM_CONFIG } from '~/config/form-config'
+import type { BulkActionResult } from '~/utils/bulk-action/bulk-action-result'
+import { formatHeldSkipNote } from '~/utils/bulk-action/format-held-skip-note'
+import type { BulkAction } from '~/utils/bulk-action/get-bulk-actions'
+import type { ConfirmedBulkAction } from '~/utils/bulk-action/get-bulk-confirm-copy'
+import { getBulkPublishNotes } from '~/utils/bulk-action/get-bulk-publish-notes'
+import { getSelectionBarContent } from '~/utils/bulk-action/get-selection-bar-content'
 
-import type { action as listAction } from '../../_action'
 import type { Route } from '../../+types/route'
 import { BULK_ACTION_FETCHER_KEY } from '../../utils/bulk-action-fetcher-key'
-import { formatHeldSkipNote } from '../../utils/format-held-skip-note'
-import type { BulkAction } from '../../utils/get-bulk-actions'
-import { getBulkPublishNotes } from '../../utils/get-bulk-publish-notes'
-import { getSelectionBarContent } from '../../utils/get-selection-bar-content'
-import { BulkConfirmDialog } from '../bulk-confirm-dialog'
 import { BulkPublishDialog } from '../bulk-publish-dialog'
 
 type Article = Route.ComponentProps['loaderData']['articles'][number]
@@ -22,19 +25,18 @@ type Article = Route.ComponentProps['loaderData']['articles'][number]
 type Props = {
   action: string
   articles: Article[]
+  isCreator: boolean
   onClear: () => void
   className?: string
 }
 
+// Three dots: a dialog always follows (22c, ji6n8th3).
 const BULK_ACTION_LABELS: Record<BulkAction, string> = {
   archive: 'Archivovat…',
   delete: 'Smazat…',
   publish: 'Publikovat…',
-}
-
-const BULK_INTENTS: Record<'archive' | 'delete', string> = {
-  archive: FORM_CONFIG.intent.value.bulkArchive,
-  delete: FORM_CONFIG.intent.value.bulkDelete,
+  restore: 'Obnovit jako koncept…',
+  retract: 'Stáhnout z publikace…',
 }
 
 /**
@@ -43,15 +45,18 @@ const BULK_INTENTS: Record<'archive' | 'delete', string> = {
  * result (`useBulkActionResult`).
  *
  * @param props.articles - The selected articles, in the order they were checked.
+ * @param props.isCreator - A Creator selects: retracting says who publishes
+ *   again.
  * @param props.onClear - Clears the selection.
  */
 export const ArticleSelectionBar = ({
   action,
   articles,
+  isCreator,
   onClear,
   className,
 }: Props) => {
-  const fetcher = useFetcher<typeof listAction>({
+  const fetcher = useFetcher<BulkActionResult>({
     key: BULK_ACTION_FETCHER_KEY,
   })
   const authenticityToken = useAuthenticityToken()
@@ -59,12 +64,16 @@ export const ArticleSelectionBar = ({
 
   const isSubmitting = fetcher.state !== 'idle'
 
-  const { actions, message } = getSelectionBarContent(articles)
+  const { actions, message } = getSelectionBarContent(
+    articles,
+    ARTICLE_BULK_NOUN,
+  )
 
   // An article someone else edits is skipped and said apart (22f).
   const unheldArticles = articles.filter((article) => !article.isHeldByOther)
   const heldSkipNote = formatHeldSkipNote(
     articles.length - unheldArticles.length,
+    ARTICLE_BULK_NOUN,
   )
   const onlyDrafts = unheldArticles.every(
     (article) => article.state === 'draft',
@@ -72,10 +81,10 @@ export const ArticleSelectionBar = ({
 
   const open = (bulkAction: BulkAction) => setOpenAction(bulkAction)
 
-  const submit = (bulkAction: 'archive' | 'delete', ids: string[]) => {
+  const submit = (bulkAction: ConfirmedBulkAction, ids: string[]) => {
     const formData = new FormData()
     formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
-    formData.append(FORM_CONFIG.intent.name, BULK_INTENTS[bulkAction])
+    formData.append(FORM_CONFIG.intent.name, BULK_ACTION_INTENTS[bulkAction])
     for (const id of ids) formData.append('ids', id)
     void fetcher.submit(formData, { action, method: 'POST' })
   }
@@ -91,6 +100,7 @@ export const ArticleSelectionBar = ({
     notSubmittedCount: completeArticles.filter(
       (article) => article.isNotSubmitted,
     ).length,
+    noun: ARTICLE_BULK_NOUN,
     pendingCount: completeArticles.filter(
       (article) => article.state === 'pending',
     ).length,
@@ -143,10 +153,11 @@ export const ArticleSelectionBar = ({
           skipped={publishSkipped === '' ? null : publishSkipped}
         />
       )}
-      {(openAction === 'archive' || openAction === 'delete') && (
+      {openAction !== null && openAction !== 'publish' && (
         <BulkConfirmDialog
           action={openAction}
-          articles={unheldArticles}
+          isCreator={isCreator}
+          noun={ARTICLE_BULK_NOUN}
           onClose={close}
           onConfirm={() =>
             submit(
@@ -155,6 +166,7 @@ export const ArticleSelectionBar = ({
             )
           }
           onlyDrafts={onlyDrafts}
+          records={unheldArticles}
           skipped={heldSkipNote}
         />
       )}
