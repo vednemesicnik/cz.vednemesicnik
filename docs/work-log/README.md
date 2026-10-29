@@ -84,3 +84,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0050](0050-every-content-list-runs-its-bulk-actions-through-one-runner.md) | Every content list runs its bulk actions through one runner over the state handlers | 2026-10-29 |  |
 | [0051](0051-the-dashboard-is-the-lists-rows-in-one-queue-and-only-the-coordinator-has-it.md) | The dashboard is the lists' rows in one queue, and only the Coordinator has a queue | 2026-10-29 |  |
 | [0052](0052-every-content-list-reloads-only-the-rows-on-screen.md) | Every content list reloads only the rows on screen, so a live change never moves a row | 2026-10-29 |  |
+| [0053](0053-the-first-image-of-an-empty-gallery-becomes-the-main-one.md) | The first image of an empty gallery becomes the main one, and of uploads side by side the first to commit | 2026-10-29 |  |

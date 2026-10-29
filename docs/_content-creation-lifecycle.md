@@ -192,7 +192,9 @@ first and deletes at once; *Nahradit soubor* keeps the old file until the new on
 The main image and the order save at once; a tile moves by dragging its preview (a long press
 on a phone) or by *Posunout dopředu*, *Posunout dozadu*. Every stored image shows its number,
 its place on the web. The main image stands first, as on the web: setting one moves it there,
-and it is neither moved nor passed (yj2t50dd). Each change
+and it is neither moved nor passed (yj2t50dd). The first image uploaded into an empty gallery
+becomes the main one; of several uploaded together, the first to save (log
+[0053](./work-log/0053-the-first-image-of-an-empty-gallery-becomes-the-main-one.md)). Each change
 checks the hold in its own write and moves `updatedAt`. An upload under way still lands after the hold was released, on a draft nobody holds and
 not submitted since; never over someone else's hold. An upload and a failure show only in
 the open editor.

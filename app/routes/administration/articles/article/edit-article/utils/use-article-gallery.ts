@@ -47,6 +47,8 @@ type ChangeAnswer =
       updatedAt: string
       previewUrl?: string | null
       fileName?: string
+      /** The upload was the empty gallery's first image (log 0053). */
+      becameFeatured?: boolean
     }
   | { status: 'not-held'; heldByName: string | null }
   | ChangeFailure
@@ -286,6 +288,15 @@ export const useArticleGallery = ({
         if (!isStored(id)) {
           storedIdsRef.current.add(id)
           if (getStoredOrder().at(-1) !== id) isOrderStaleRef.current = true
+        }
+        // The main image stands first (0028), before the tiles still
+        // uploading, so the others land after it.
+        if (result.becameFeatured) {
+          featuredImageIdRef.current = id
+          setFeaturedImageId(id)
+          const { list } = optionsRef.current
+          const from = list.getIds().indexOf(id)
+          if (from > 0) list.move(from, 0)
         }
         revokeObjectUrl(id)
         updateTile(id, {
