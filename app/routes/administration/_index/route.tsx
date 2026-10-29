@@ -1,214 +1,207 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
+import { Form, href } from 'react-router'
 
 import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
-import { AdminNavigationCard } from '~/components/admin/admin-navigation-card'
-import { AdminNavigationGrid } from '~/components/admin/admin-navigation-grid'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminPendingItem } from '~/components/admin/admin-pending-item'
-import { AdminStatCard } from '~/components/admin/admin-stat-card'
+import {
+  AdminTable,
+  TableBody,
+  TableHeader,
+  TableHeaderCell,
+} from '~/components/admin/admin-table'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
+import { Link } from '~/components/link'
+import { LinkButton } from '~/components/link-button'
+import { ListActionBar } from '~/components/list-action-bar'
+import { ListEmptyCard } from '~/components/list-empty-card'
+import { ListEmptyCardText } from '~/components/list-empty-card-text'
+import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
+import { ListHeader } from '~/components/list-header'
 import { PageTitle } from '~/components/page-title'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
-import { useContentEvents } from '~/hooks/use-content-events'
+import { PUBLISH_APPROVED_STATE } from '../articles/_index/publish-approved-state'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { DashboardApprovedLine } from './components/dashboard-approved-line'
+import { DashboardItemRow } from './components/dashboard-item-row'
+import { DashboardSection } from './components/dashboard-section'
+import { DashboardSectionEmpty } from './components/dashboard-section-empty'
+import { DashboardSectionHeading } from './components/dashboard-section-heading'
+import { DashboardSectionNote } from './components/dashboard-section-note'
+import type { DashboardItem } from './dashboard-item'
+import type { DashboardSectionKind } from './dashboard-section-kind'
+import { formatApprovedLine } from './utils/format-approved-line'
+import { useLiveDashboard } from './utils/use-live-dashboard'
 
+/**
+ * The administration's first screen (design 21): a queue of what waits on the
+ * signed-in person, not a noticeboard. The Coordinator gets what waits for
+ * approval, what waits for its order and their own drafts (21a); an author
+ * follows their own content from draft to the web (21b).
+ */
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { pendingReviewItems, statistics, permissions } = loaderData
-
-  // Any change can move the pending list or the statistics.
-  useContentEvents()
   useAdminNoticeToast(loaderData)
+  const { queue, pendingCount, approved, drafts, submitted, liveChanges } =
+    useLiveDashboard(loaderData)
+  const { isApprover, canCreateArticle, authorId, hasOwnArticles } = loaderData
+  const now = new Date()
 
-  const {
-    canViewUsers,
-    canViewAuthors,
-    canViewArticles,
-    canViewPodcasts,
-    canViewIssues,
-  } = permissions
+  const renderNewArticleButton = () =>
+    canCreateArticle && (
+      <Form
+        action={href('/administration/articles/add-article')}
+        method={'post'}
+      >
+        <AuthenticityTokenInput />
+        <Button type={'submit'}>Nový článek</Button>
+      </Form>
+    )
 
-  const hasDisplayedPendingItems =
-    pendingReviewItems.articles.length > 0 ||
-    pendingReviewItems.podcasts.length > 0 ||
-    pendingReviewItems.podcastEpisodes.length > 0 ||
-    pendingReviewItems.issues.length > 0 ||
-    pendingReviewItems.articleCategories.length > 0 ||
-    pendingReviewItems.articleTags.length > 0
+  const renderRows = (
+    items: DashboardItem[],
+    section: DashboardSectionKind,
+  ) => (
+    <AdminTable>
+      {/* 21a draws no header; a screen reader still names the columns. */}
+      <TableHeader className={'screen-reader-only'}>
+        <TableHeaderCell>Typ</TableHeaderCell>
+        <TableHeaderCell>Název</TableHeaderCell>
+        <TableHeaderCell>Stav</TableHeaderCell>
+        <TableHeaderCell>Akce</TableHeaderCell>
+      </TableHeader>
+      <TableBody>
+        {items.map((item) => (
+          <DashboardItemRow
+            isApprover={isApprover}
+            item={item}
+            key={item.key}
+            liveChange={liveChanges.get(item.key)}
+            now={now}
+            section={section}
+          />
+        ))}
+      </TableBody>
+    </AdminTable>
+  )
+
+  // Whoever has nothing yet gets one card in place of both sections (21c).
+  const isEmptyForAuthor =
+    !isApprover && drafts.length === 0 && submitted.length === 0
 
   return (
     <AdminPage>
-      <PageTitle>Přehled</PageTitle>
+      <ListHeader>
+        <PageTitle>Přehled</PageTitle>
+        {renderNewArticleButton()}
+      </ListHeader>
 
-      {/* Statistics Section */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Statistiky</h2>
-        <div className={styles.statsGrid}>
-          <AdminStatCard
-            icon="📝"
-            label="Články"
-            subtext={`${statistics.articles.published} publikováno`}
-            value={statistics.articles.total}
-          />
-          <AdminStatCard
-            icon="🎙️"
-            label="Podcasty"
-            subtext={`${statistics.podcasts.published} publikováno`}
-            value={statistics.podcasts.total}
-          />
-          <AdminStatCard
-            icon="🎧"
-            label="Epizody"
-            subtext={`${statistics.podcastEpisodes.published} publikováno`}
-            value={statistics.podcastEpisodes.total}
-          />
-          <AdminStatCard
-            icon="📰"
-            label="Vydání"
-            subtext={`${statistics.issues.published} publikováno`}
-            value={statistics.issues.total}
-          />
-          <AdminStatCard
-            icon="⏳"
-            label="Čeká na schválení"
-            subtext="konceptů"
-            value={pendingReviewItems.totalCount}
-          />
-        </div>
-      </section>
+      <div className={styles.sections}>
+        {isApprover && (
+          <DashboardSection>
+            {/* No count at 0, as on the list's Stav (21c, 22d). */}
+            <DashboardSectionHeading
+              count={pendingCount > 0 ? pendingCount : undefined}
+            >
+              Čeká na schválení
+            </DashboardSectionHeading>
+            {/* An empty queue says so: the Coordinator would not tell it
+                from one that failed to load (21c). */}
+            {queue.length === 0 ? (
+              <DashboardSectionEmpty>
+                Nic nečeká na schválení.
+              </DashboardSectionEmpty>
+            ) : (
+              renderRows(queue, 'queue')
+            )}
+          </DashboardSection>
+        )}
 
-      {/* Pending Review Section */}
-      {hasDisplayedPendingItems && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Čeká na schválení</h2>
-          <div className={styles.pendingList}>
-            {pendingReviewItems.articles.map((article) => (
-              <AdminPendingItem
-                author={article.authors.map((a) => a.name).join(', ')}
-                date={article.submittedAt}
-                key={article.id}
-                title={article.title}
-                to={href('/administration/articles/:articleId', {
-                  articleId: article.id,
-                })}
-                type="Článek"
-              />
-            ))}
-            {pendingReviewItems.podcasts.map((podcast) => (
-              <AdminPendingItem
-                author={podcast.author.name}
-                date={podcast.submittedAt}
-                key={podcast.id}
-                title={podcast.title}
-                to={href('/administration/podcasts/:podcastId', {
-                  podcastId: podcast.id,
-                })}
-                type="Podcast"
-              />
-            ))}
-            {pendingReviewItems.podcastEpisodes.map((episode) => (
-              <AdminPendingItem
-                author={episode.author.name}
-                date={episode.submittedAt}
-                key={episode.id}
-                title={`${episode.podcast.title} - ${episode.title}`}
-                to={href(
-                  '/administration/podcasts/:podcastId/episodes/:episodeId',
-                  {
-                    episodeId: episode.id,
-                    podcastId: episode.podcast.id,
-                  },
+        {approved.length > 0 && (
+          <DashboardSection>
+            <DashboardSectionHeading>K publikaci</DashboardSectionHeading>
+            {approved.map((summary) => (
+              <DashboardApprovedLine key={summary.type}>
+                <span>
+                  {formatApprovedLine({
+                    count: summary.count,
+                    earliestApprovedAt: new Date(summary.earliestApprovedAt),
+                    type: summary.type,
+                  })}
+                </span>
+                {summary.type === 'article' && (
+                  // Opens the list with every approved article selected and
+                  // the 22c dialog that orders them (21a).
+                  <LinkButton
+                    className={styles.wideOnly}
+                    size={'sm'}
+                    state={PUBLISH_APPROVED_STATE}
+                    to={summary.listHref}
+                    variant={'outline'}
+                  >
+                    Publikovat v pořadí…
+                  </LinkButton>
                 )}
-                type="Epizoda"
-              />
+                <LinkButton
+                  className={
+                    summary.type === 'article' ? styles.phoneOnly : undefined
+                  }
+                  size={'sm'}
+                  to={summary.listHref}
+                  variant={'ghost'}
+                >
+                  Zobrazit schválené
+                </LinkButton>
+              </DashboardApprovedLine>
             ))}
-            {pendingReviewItems.issues.map((issue) => (
-              <AdminPendingItem
-                author={issue.author.name}
-                date={issue.submittedAt}
-                key={issue.id}
-                title={issue.title}
-                to={href('/administration/archive/:issueId', {
-                  issueId: issue.id,
-                })}
-                type="Vydání"
-              />
-            ))}
-            {pendingReviewItems.articleCategories.map((category) => (
-              <AdminPendingItem
-                author={category.author.name}
-                date={category.submittedAt}
-                key={category.id}
-                title={category.name}
-                to={href('/administration/articles/categories/:categoryId', {
-                  categoryId: category.id,
-                })}
-                type="Kategorie"
-              />
-            ))}
-            {pendingReviewItems.articleTags.map((tag) => (
-              <AdminPendingItem
-                author={tag.author.name}
-                date={tag.submittedAt}
-                key={tag.id}
-                title={tag.name}
-                to={href('/administration/articles/tags/:tagId', {
-                  tagId: tag.id,
-                })}
-                type="Štítek"
-              />
-            ))}
-          </div>
-        </section>
-      )}
+          </DashboardSection>
+        )}
 
-      {/* Navigation Section */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Správa obsahu</h2>
-        <AdminNavigationGrid>
-          {canViewUsers && (
-            <AdminNavigationCard
-              description="Správa uživatelských účtů"
-              icon="👥"
-              title="Uživatelé"
-              to={href('/administration/users')}
-            />
-          )}
-          {canViewAuthors && (
-            <AdminNavigationCard
-              description="Správa autorů obsahu"
-              icon="✍️"
-              title="Autoři"
-              to={href('/administration/authors')}
-            />
-          )}
-          {canViewArticles && (
-            <AdminNavigationCard
-              description="Správa článků a blogových příspěvků"
-              icon="📝"
-              title="Články"
-              to={href('/administration/articles')}
-            />
-          )}
-          {canViewPodcasts && (
-            <AdminNavigationCard
-              description="Správa podcastů a epizod"
-              icon="🎙️"
-              title="Podcasty"
-              to={href('/administration/podcasts')}
-            />
-          )}
-          {canViewIssues && (
-            <AdminNavigationCard
-              description="Správa vydání časopisu"
-              icon="📰"
-              title="Archiv"
-              to={href('/administration/archive')}
-            />
-          )}
-        </AdminNavigationGrid>
-      </section>
+        {drafts.length > 0 && (
+          <DashboardSection>
+            <DashboardSectionHeading>Rozepsané</DashboardSectionHeading>
+            {renderRows(drafts, 'drafts')}
+            {isApprover && hasOwnArticles && (
+              <Link
+                className={styles.allMyArticles}
+                to={`${href('/administration/articles')}?${new URLSearchParams({ author: authorId })}`}
+              >
+                Všechny moje články
+              </Link>
+            )}
+          </DashboardSection>
+        )}
+
+        {submitted.length > 0 && (
+          <DashboardSection>
+            <DashboardSectionHeading>Odeslané</DashboardSectionHeading>
+            {renderRows(submitted, 'submitted')}
+            {/* Under the rows it explains, and only when one is there (21b). */}
+            {submitted.some((item) => item.row.state === 'published') && (
+              <DashboardSectionNote>
+                Publikované se zobrazují 14 dní po publikaci.
+              </DashboardSectionNote>
+            )}
+          </DashboardSection>
+        )}
+
+        {isEmptyForAuthor && (
+          <ListEmptyCard>
+            <ListEmptyCardTitle>Zatím tu nic nemáte</ListEmptyCardTitle>
+            <ListEmptyCardText>
+              Tady můžete sledovat svůj obsah od konceptu po publikaci.
+            </ListEmptyCardText>
+            {renderNewArticleButton()}
+          </ListEmptyCard>
+        )}
+      </div>
+
+      {/* On a phone Nový článek waits at the bottom, in reach of the thumb
+          (22g), unless the empty card already offers it. */}
+      {canCreateArticle && !isEmptyForAuthor && (
+        <ListActionBar>{renderNewArticleButton()}</ListActionBar>
+      )}
     </AdminPage>
   )
 }

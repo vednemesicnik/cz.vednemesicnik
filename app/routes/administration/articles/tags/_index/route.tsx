@@ -33,6 +33,7 @@ import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { TAG_BULK_NOUN } from '~/config/bulk-noun-config'
 import { TAG_NOUN } from '~/config/list-noun-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
+import { useLiveRows } from '~/hooks/use-live-rows'
 import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
@@ -67,12 +68,28 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     ownFilters,
     pageSize,
     query,
-    queueCounts,
     sharedFilters,
-    tags,
     totalCount,
     totalPages,
   } = loaderData
+
+  // Live, but the rows stay put until the next load (22f, xkg6rdz4).
+  const {
+    live,
+    liveChanges,
+    rows: tags,
+  } = useLiveRows({
+    authorId: loaderData.authorId,
+    fetcherKey: 'tag-list-live',
+    // An article's change reloads the published articles counted, without
+    // a tint: the tag itself did not change.
+    filter: (event) =>
+      event.entity === 'article_tag' || event.entity === 'article',
+    keyOf: (event) => (event.entity === 'article_tag' ? event.entityId : null),
+    loaderData,
+    rowsOf: (data) => data.tags,
+  })
+  const { queueCounts } = live
 
   const { search } = useLocation()
   useAdminNoticeToast(loaderData)
@@ -243,6 +260,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   tagId: tag.id,
                 })}
                 key={tag.id}
+                liveChange={liveChanges.get(tag.id)}
                 onSelect={() => selection.toggle(tag.id)}
                 publishedArticlesHref={`${href('/administration/articles')}?${new URLSearchParams({ state: 'published', tag: tag.slug })}`}
                 record={tag}

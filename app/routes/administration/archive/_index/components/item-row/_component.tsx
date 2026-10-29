@@ -1,11 +1,4 @@
-import { useRef, useState } from 'react'
-import { href, useFetcher, useNavigate } from 'react-router'
-
 import { ActionMenu } from '~/components/action-menu'
-import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
 import {
   TableActionsCell,
   TableCell,
@@ -21,24 +14,20 @@ import {
   TableSelectionCell,
   TableStateCell,
 } from '~/components/admin/admin-table'
-import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
-import { FORM_CONFIG } from '~/config/form-config'
-import { useContentActionResult } from '~/hooks/use-content-action-result'
+import type { LiveChange } from '~/hooks/use-live-changes'
+import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
+import { getRowTint } from '~/utils/live-change/get-row-tint'
 
-import { IssueMissingDialog } from '../../../components/issue-missing-dialog'
-import { IssueStateDialog } from '../../../components/issue-state-dialog'
-import type { action as issueAction } from '../../../issue/_index/_action'
+import { IssueActionDialogs } from '../../../components/issue-action-dialogs'
 import {
   ISSUE_ACTION_LABELS,
-  ISSUE_DIRECT_INTENTS,
-  ISSUE_HEADER_SENTENCES,
   type IssueAction,
-  type IssueStateAction,
 } from '../../../utils/issue-actions'
+import { useIssueActions } from '../../../utils/use-issue-actions'
 import type { Route } from '../../+types/route'
 import styles from './_styles.module.css'
 
@@ -49,6 +38,7 @@ type Props = {
   isApprover: boolean
   selected: boolean
   onSelect: () => void
+  liveChange?: LiveChange
 }
 
 /**
@@ -56,71 +46,24 @@ type Props = {
  * detail over the PDF as the reader downloads it, the order, the state tag with
  * one fact, and one action with the rest in „⋯“, as the article's row (22a). A
  * supplement is its own row under its issue, tagged *Doplněk*. While someone
- * else edits it, the row says who (26i). Below 768 px it folds into the
- * cover beside the name, the state and the order, with „⋯“ holding the row
+ * else edits it, the row says who (26i); one someone else changed while the
+ * list is open is tinted for a moment and says who changed it (22f). Below
+ * 768 px it folds into the cover beside the name, the state and the order,
+ * with „⋯“ holding the row
  * action first (32b).
  */
-export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
-  const { id } = issue
-  const detailHref = href('/administration/archive/:issueId', { issueId: id })
-  const editHref = href('/administration/archive/:issueId/edit-issue', {
-    issueId: id,
+export const ItemRow = ({
+  issue,
+  isApprover,
+  selected,
+  onSelect,
+  liveChange,
+}: Props) => {
+  const actions = useIssueActions({
+    fetcherKey: `issue-row-${issue.id}`,
+    issue,
   })
-  // The issue has no page of its own: the web shows it in the archive (26b).
-  const archivePath = href('/archive')
-
-  const fetcherKey = `issue-row-${id}`
-  const fetcher = useFetcher<typeof issueAction>({ key: fetcherKey })
-  const isSubmitting = fetcher.state !== 'idle'
-  const authenticityToken = useAuthenticityToken()
-  const navigate = useNavigate()
-  // A submit the server finds incomplete lists what is missing (26e); an
-  // action the edit hold refused says who edits the issue (26i).
-  const { closeMissingList, missingList, showMissingList } =
-    useContentActionResult(fetcher.data, { heldSubject: 'číslo' })
-
-  const [stateDialog, setStateDialog] = useState<IssueStateAction | null>(null)
-
-  const deleteDialogRef = useRef<HTMLDialogElement>(null)
-  const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(
-    deleteDialogRef,
-    { action: detailHref, key: fetcherKey },
-  )
-
-  const runAction = (issueRowAction: IssueAction) => {
-    const intent = ISSUE_DIRECT_INTENTS[issueRowAction]
-
-    if (intent !== undefined) {
-      const formData = new FormData()
-      formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
-      formData.append(FORM_CONFIG.intent.name, intent)
-      void fetcher.submit(formData, { action: detailHref, method: 'POST' })
-      return
-    }
-
-    switch (issueRowAction) {
-      case 'approve-and-publish':
-      case 'publish':
-        // An incomplete issue says what it lacks instead (26e).
-        if (issue.missingBeforePublish.length > 0) {
-          return showMissingList({
-            intent: FORM_CONFIG.intent.value.publish,
-            items: issue.missingBeforePublish,
-          })
-        }
-        return setStateDialog(issueRowAction)
-      case 'retract':
-      case 'archive':
-        return setStateDialog(issueRowAction)
-      case 'delete':
-        return openDeleteDialog()
-      case 'edit':
-      case 'take-over':
-        return navigate(editHref)
-      case 'view-on-web':
-        return window.open(archivePath, '_blank', 'noopener')
-    }
-  }
+  const { detailHref, editHref, isSubmitting, runAction } = actions
 
   const rowAction = issue.row
   const toMenuItem = (menuAction: IssueAction) => ({
@@ -138,7 +81,7 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
   ].filter((part) => part !== null)
 
   return (
-    <TableRow muted={issue.state === 'archived'}>
+    <TableRow muted={issue.state === 'archived'} tint={getRowTint(liveChange)}>
       <TableSelectionCell
         checked={selected}
         disabled={issue.bulkActions.length === 0}
@@ -180,7 +123,12 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
       <TableStateCell>
         <StatusTag
           // Who edits it comes first: it changes what the row allows (26i).
-          detail={issue.holdLine ?? issue.factLine ?? undefined}
+          detail={getLiveStateDetail({
+            factLine: issue.factLine,
+            holdLine: issue.holdLine,
+            liveChange,
+            now: new Date(),
+          })}
           state={issue.submission ?? issue.state}
         />
       </TableStateCell>
@@ -232,41 +180,12 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
-          {issue.menu.includes('delete') && (
-            <AdminDeleteConfirmationDialog
-              description={'Smažou se i jeho nahrané soubory. Vrátit to nejde.'}
-              ref={deleteDialogRef}
-              subject={issue.title}
-              title={
-                issue.state === 'archived'
-                  ? 'Smazat archivované číslo?'
-                  : 'Smazat koncept?'
-              }
-            />
-          )}
-          {stateDialog !== null && (
-            <IssueStateDialog
-              action={detailHref}
-              fetcherKey={fetcherKey}
-              isApprover={isApprover}
-              issueTitle={issue.title}
-              kind={stateDialog}
-              // Publishing a draft not submitted, the dialog says so (26h).
-              note={
-                stateDialog === 'publish' && issue.isNotSubmitted
-                  ? ISSUE_HEADER_SENTENCES['not-submitted']
-                  : null
-              }
-              onClose={() => setStateDialog(null)}
-            />
-          )}
-          {missingList !== null && (
-            <IssueMissingDialog
-              editHref={editHref}
-              missingList={missingList}
-              onClose={closeMissingList}
-            />
-          )}
+          <IssueActionDialogs
+            actions={actions}
+            canDelete={issue.menu.includes('delete')}
+            isApprover={isApprover}
+            issue={issue}
+          />
         </div>
       </TableActionsCell>
     </TableRow>

@@ -32,6 +32,7 @@ import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { PODCAST_BULK_NOUN } from '~/config/bulk-noun-config'
 import { PODCAST_NOUN } from '~/config/list-noun-config'
+import { useLiveRows } from '~/hooks/use-live-rows'
 import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
@@ -60,13 +61,31 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     matchingFilterId,
     ownFilters,
     pageSize,
-    podcasts,
     query,
-    queueCounts,
     sharedFilters,
     totalCount,
     totalPages,
   } = loaderData
+
+  // Live, but the rows stay put until the next load (22f, xkg6rdz4).
+  const {
+    live,
+    liveChanges,
+    rows: podcasts,
+  } = useLiveRows({
+    authorId: loaderData.authorId,
+    fetcherKey: 'podcast-list-live',
+    // An episode's change reloads its podcast's Epizody column, without a
+    // tint: the podcast itself did not change.
+    filter: (event) =>
+      event.entity === 'podcast' || event.entity === 'podcast_episode',
+    // A hold's expiry sends no event; the list looks again then (27a).
+    heldUntilOf: (data) => data.podcasts.map((podcast) => podcast.heldUntil),
+    keyOf: (event) => (event.entity === 'podcast' ? event.entityId : null),
+    loaderData,
+    rowsOf: (data) => data.podcasts,
+  })
+  const { queueCounts } = live
 
   const pending = useAdminListPending()
 
@@ -186,7 +205,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           />
         </FilterBar>
       </FilterCell>
-      {podcasts.length === 0 ? (
+      {loaderData.podcasts.length === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <ListEmptyCard>
           <ListEmptyCardTitle>{emptyMessage.title}</ListEmptyCardTitle>
@@ -222,6 +241,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               <ItemRow
                 isApprover={isApprover}
                 key={podcast.id}
+                liveChange={liveChanges.get(podcast.id)}
                 onSelect={() => selection.toggle(podcast.id)}
                 podcast={podcast}
                 selected={selection.isSelected(podcast.id)}

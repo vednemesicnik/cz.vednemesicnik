@@ -26,6 +26,13 @@ export type PreparedImageChange<Answer extends object> = {
   articleData?: Prisma.ArticleUncheckedUpdateInput
   /** The change adds an image: the empty draft's first content (0020). */
   addsContent?: boolean
+  /**
+   * Runs once the writes committed and were not cancelled, before
+   * `onCommitted`, with the results of `writes`: settles what only the commit
+   * decided, and returns it for the answer. It must not throw: the change is
+   * saved by then.
+   */
+  onSettled?: (writeResults: unknown[]) => Promise<Partial<Answer>>
   /** Runs once the writes committed: drops files the change made obsolete. */
   onCommitted?: () => Promise<void>
   /** Runs when the writes did not commit: drops files the change stored. */
@@ -304,6 +311,10 @@ export async function saveArticleImageChange<Answer extends object>(
         return { status: 'cancelled' }
       }
 
+      const settled = await prepared.onSettled?.(
+        results.slice(previousRead.length + firstContentWrite.length, -1),
+      )
+
       // The change is saved; files it left behind are only litter.
       try {
         await prepared.onCommitted?.()
@@ -321,7 +332,7 @@ export async function saveArticleImageChange<Answer extends object>(
         })
       }
 
-      return { ...prepared.answer, status: 'saved', updatedAt }
+      return { ...prepared.answer, ...settled, status: 'saved', updatedAt }
     },
     target: {
       authorIds: storedArticle.authors.map((author) => author.id),

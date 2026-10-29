@@ -1,3 +1,4 @@
+import type { Prisma } from '@generated/prisma/client'
 import type { ContentState } from '@generated/prisma/enums'
 import { redirect } from 'react-router'
 
@@ -12,21 +13,19 @@ import {
 import { parseAdminListParams } from '~/utils/admin-list-params'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
-import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
-import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { buildPinnedRowsWhere } from '~/utils/pinned-rows/build-pinned-rows-where'
+import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { buildEpisodePermissionWhere } from '../../episodes/utils/build-episode-permission-where'
-import { getEpisodeFactLine } from '../../episodes/utils/get-episode-fact-line'
-import { getEpisodeRowActions } from '../../episodes/utils/get-episode-row-actions'
-import { getMissingEpisodeContent } from '../../episodes/utils/get-missing-episode-content'
+import { EPISODE_ROW_SELECT } from '../../episodes/utils/episode-row-select'
+import { getEpisodeRow } from '../../episodes/utils/get-episode-row.server'
 import { SORT_KEYS } from '../sort'
 
 const PAGE_SIZE = 20
@@ -54,7 +53,8 @@ type Options = {
  * @param options.podcast - The podcast; until it is published, its episodes
  *   are neither submitted nor published (27f).
  * @returns The table's data, with the saved filters; throws the redirect of a
- *   default filter, a stale filter or a page past the last.
+ *   default filter, a stale filter or a page past the last. A live load
+ *   (`parsePinnedRowIds`) gets the rows on screen and never redirects.
  */
 export const loadEpisodeTable = async ({
   request,
@@ -62,13 +62,21 @@ export const loadEpisodeTable = async ({
   context,
   podcast,
 }: Options) => {
+  // A live load of the rows on screen (22f): fresh data for exactly those
+  // rows, whatever the order, filters or page now say. A fetcher load, so it
+  // never redirects.
+  const pinnedIds = parsePinnedRowIds(url, PAGE_SIZE)
+  const isPinned = pinnedIds !== undefined
+
   // Before any query: a bare visit with a default preset never renders this
   // table, it redirects to the preset's own URL.
-  await resolveDefaultFilter({
-    tableKey: TABLE_KEY,
-    url,
-    userId: context.userId,
-  })
+  if (!isPinned) {
+    await resolveDefaultFilter({
+      tableKey: TABLE_KEY,
+      url,
+      userId: context.userId,
+    })
+  }
 
   const { order, page, query } = parseAdminListParams(request, {
     defaultOrder: 'desc',
@@ -117,51 +125,32 @@ export const loadEpisodeTable = async ({
     ).map((queue) => ({ value: queue })),
   })
 
-  if (staleFilterRedirect !== null) {
+  if (staleFilterRedirect !== null && !isPinned) {
     throw redirect(staleFilterRedirect)
   }
+
+  // The page of the table, or the rows on screen for a live load (22f), of
+  // this podcast only.
+  const rowsQuery: Pick<
+    Prisma.PodcastEpisodeFindManyArgs,
+    'skip' | 'take' | 'where'
+  > = isPinned
+    ? {
+        where: {
+          AND: [
+            buildPinnedRowsWhere(permissionWhere, pinnedIds),
+            { podcastId: podcast.id },
+          ],
+        },
+      }
+    : { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, where }
 
   const [rawEpisodes, totalCount, savedFilters, queueCounts, episodeCount] =
     await Promise.all([
       prisma.podcastEpisode.findMany({
         orderBy: [{ number: order }, { createdAt: 'desc' }],
-        select: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              role: { select: { level: true } },
-            },
-          },
-          description: true,
-          heldByAuthorId: true,
-          heldByTabId: true,
-          heldSince: true,
-          heldUntil: true,
-          id: true,
-          links: {
-            orderBy: { order: 'asc' },
-            select: { label: true, url: true },
-          },
-          number: true,
-          publishedAt: true,
-          reviews: {
-            select: {
-              createdAt: true,
-              reviewer: {
-                select: { id: true, role: { select: { level: true } } },
-              },
-            },
-          },
-          slug: true,
-          state: true,
-          submittedAt: true,
-          title: true,
-          updatedAt: true,
-        },
-        skip: (page - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
-        where,
+        select: EPISODE_ROW_SELECT,
+        ...rowsQuery,
       }),
       prisma.podcastEpisode.count({ where }),
       loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
@@ -187,7 +176,7 @@ export const loadEpisodeTable = async ({
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   // Deleting the last row on the last page revalidates a URL past the end.
-  if (isPagePastLast(page, totalPages)) {
+  if (isPagePastLast(page, totalPages) && !isPinned) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
@@ -225,92 +214,25 @@ export const loadEpisodeTable = async ({
       : []
   const now = new Date()
 
-  const episodes = rawEpisodes.map((episode) => {
-    const flags = getContentActionFlags(context, 'podcast_episode', {
-      authors: [episode.author],
-      reviews: episode.reviews,
-      state: episode.state,
-      submittedAt: episode.submittedAt,
-    })
-    const submission = flags.submission?.state ?? null
-    const rowActions = getEpisodeRowActions({
-      ...flags,
+  const episodes = rawEpisodes.map((episode) =>
+    getEpisodeRow(episode, {
+      context,
+      isNumberTaken: holders.some(
+        (holder) =>
+          holder.id !== episode.id &&
+          episode.number !== null &&
+          holder.publishedNumber === episode.number,
+      ),
       isPodcastPublished,
-      state: episode.state,
-      submission,
-    })
-    const bulkActions = getBulkActions({ ...rowActions, isApprover })
-
-    return {
-      ...rowActions,
-      authorName: episode.author.name,
-      // What the selection bar may apply to this row (22c, 27b): nothing is
-      // published while the podcast isn't (27f); a held one is skipped and
-      // said apart, not left out of the bar's actions.
-      bulkActions,
-      // The row's tag says what the detail's does (07a), with one fact (27b).
-      factLine: getEpisodeFactLine({
-        authorName: episode.author.name,
-        state: episode.state,
-        submission: flags.submission,
-        updatedAt: episode.updatedAt,
-      }),
-      id: episode.id,
-      isHeldByOther:
-        getEditHoldStatus(episode, { authorId: context.authorId, now }) ===
-        'other',
-      // Bulk publishing skips it and says so up front (27h, 27b).
-      isIncomplete:
-        isApprover &&
-        getMissingEpisodeContent({
-          description: episode.description,
-          isNumberTaken: holders.some(
-            (holder) =>
-              holder.id !== episode.id &&
-              episode.number !== null &&
-              holder.publishedNumber === episode.number,
-          ),
-          isSlugTaken: holders.some(
-            (holder) =>
-              holder.id !== episode.id &&
-              episode.slug !== '' &&
-              holder.publishedSlug === episode.slug,
-          ),
-          links: episode.links,
-          number: episode.number,
-          title: episode.title,
-        }).length > 0,
-      // Publishing it, the dialog says it isn't submitted (23f).
-      isNotSubmitted:
-        episode.state === 'draft' &&
-        flags.submission === null &&
-        flags.isSubmittable &&
-        !flags.isOwnContent,
-      // On an unpublished podcast a waiting or approved episode has no bulk
-      // action, yet the Coordinator selects it to hear why it can't be
-      // published (27b, 27f).
-      isSelectable:
-        bulkActions.length > 0 ||
-        (isApprover &&
-          !isPodcastPublished &&
-          getBulkActions({
-            ...getEpisodeRowActions({
-              ...flags,
-              isPodcastPublished: true,
-              state: episode.state,
-              submission,
-            }),
-            isApprover,
-          }).includes('publish')),
-      linkLabels: episode.links.map((link) => link.label),
-      number: episode.number,
-      publishedAt: episode.publishedAt?.toISOString() ?? null,
-      slug: episode.slug,
-      state: episode.state,
-      submission,
-      title: episode.title,
-    }
-  })
+      isSlugTaken: holders.some(
+        (holder) =>
+          holder.id !== episode.id &&
+          episode.slug !== '' &&
+          holder.publishedSlug === episode.slug,
+      ),
+      now,
+    }),
+  )
 
   return {
     ...savedFilters,

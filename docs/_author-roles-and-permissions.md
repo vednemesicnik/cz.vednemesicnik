@@ -136,7 +136,9 @@ Built for articles in #590 and for tags, categories, issues, podcasts and episod
   approver level. An article is checked for completeness first (design 23h, the perex
   included); the other types' forms still require every field.
 - **Čeká na schválení** — submitted, no approving review. Only these drafts are the
-  dashboard's queue. **Schváleno** — submitted with a Coordinator review.
+  dashboard's queue, which only the Coordinator has (design 21a, log 0051); an author's
+  dashboard shows their own drafts and submissions instead. **Schváleno** — submitted with a
+  Coordinator review.
 - While submitted, the content is **locked for its authors**: no editing or deleting until
   they take it back. The Coordinator may correct it, and the approval stays.
 - **Vzít zpět do konceptu** (an author) and **Vrátit k úpravám** (the Coordinator) clear the

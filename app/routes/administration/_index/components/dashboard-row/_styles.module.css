@@ -1,0 +1,19 @@
+/* The type in place of the list's author (21a). */
+.type {
+  @layer route {
+    width: 80px;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+/* A draft without a title goes by its name, quieter than a title (22f). */
+.untitled {
+  @layer route {
+    color: var(--text-tertiary);
+
+    &:hover {
+      color: var(--link-strong);
+    }
+  }
+}

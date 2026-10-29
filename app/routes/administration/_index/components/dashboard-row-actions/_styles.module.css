@@ -1,0 +1,7 @@
+.dialogs {
+  @layer route {
+    display: contents;
+    text-align: start;
+    white-space: normal;
+  }
+}

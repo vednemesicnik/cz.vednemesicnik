@@ -12,27 +12,21 @@ import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
-import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
-import { formatNumericDate } from '~/utils/format-numeric-date'
 import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { buildPinnedRowsWhere } from '~/utils/pinned-rows/build-pinned-rows-where'
+import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
+import { ARTICLE_ROW_SELECT } from '../utils/article-row-select'
 import { buildArticlePermissionWhere } from '../utils/build-article-permission-where'
-import { formatEditHoldLine } from '../utils/format-edit-hold-line'
-import { getArticleDisplayTitle } from '../utils/get-article-display-title'
-import { getArticleFactLine } from '../utils/get-article-fact-line'
-import { getArticleHold } from '../utils/get-article-hold'
-import { getHeldActionFlags } from '../utils/get-held-action-flags'
-import { getRowActions } from '../utils/get-row-actions'
+import { getArticleRow } from '../utils/get-article-row.server'
 import type { Route } from './+types/route'
-import { PINNED_ROWS_PARAM } from './pinned-rows'
 import { SORT_KEYS, type SortKey } from './sort'
 import { orderFilteredFirst } from './utils/order-filtered-first'
 
@@ -70,11 +64,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // A live load of the rows on screen (22f): fresh data for exactly those rows,
   // whatever the order, filters or page now say. A fetcher load, so it never
   // redirects.
-  const pinnedIds = url.searchParams
-    .get(PINNED_ROWS_PARAM)
-    ?.split(',')
-    .filter((id) => id !== '')
-    .slice(0, PAGE_SIZE)
+  const pinnedIds = parsePinnedRowIds(url, PAGE_SIZE)
   const isPinned = pinnedIds !== undefined
 
   // Before any query: a bare visit with a default preset never renders this list,
@@ -155,7 +145,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // The page of the list, or the rows on screen for a live load (22f).
   const rowsQuery: Pick<Prisma.ArticleFindManyArgs, 'skip' | 'take' | 'where'> =
     isPinned
-      ? { where: { AND: [permissionWhere, { id: { in: pinnedIds } }] } }
+      ? { where: buildPinnedRowsWhere(permissionWhere, pinnedIds) }
       : { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, where }
 
   const [
@@ -170,43 +160,20 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     prisma.article.findMany({
       orderBy: ORDER_BY[sort](order),
       select: {
-        authors: {
-          select: { id: true, name: true, role: { select: { level: true } } },
-        },
+        ...ARTICLE_ROW_SELECT,
         categories: {
           orderBy: { name: 'asc' },
           select: { name: true, slug: true },
         },
         // Completeness before bulk publishing (23h, 22c).
         content: true,
-        // „upravuje …“ while someone edits it (22f).
-        heldByAuthor: { select: { name: true } },
-        heldByAuthorId: true,
-        heldByTabId: true,
-        heldSince: true,
-        heldUntil: true,
-        id: true,
         images: { select: { altText: true } },
         perex: true,
-        publishedAt: true,
-        reviews: {
-          select: {
-            createdAt: true,
-            reviewer: {
-              select: { id: true, role: { select: { level: true } } },
-            },
-          },
-        },
-        slug: true,
-        state: true,
-        submittedAt: true,
         // Their own column on a wide table (31a).
         tags: {
           orderBy: { name: 'asc' },
           select: { name: true, slug: true },
         },
-        title: true,
-        updatedAt: true,
       },
       ...rowsQuery,
     }),
@@ -272,8 +239,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const now = new Date()
 
-  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
-
   // Who holds each listed address as published (log 0039): a draft with an
   // address another article holds is skipped by bulk publishing too.
   const holders = await prisma.article.findMany({
@@ -288,95 +253,32 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     holders.map(({ id, publishedSlug }) => [publishedSlug, id]),
   )
 
-  const articles = rawArticles.map((article) => {
-    const unheldFlags = getContentActionFlags(context, 'article', article)
-    const hold = getArticleHold(article, { authorId: context.authorId, now })
-    const isHeldByOther = hold !== null && !hold.isOwn
-    // While someone else edits it, its edit and state actions wait (07g); the
-    // Coordinator's Upravit opens the takeover (22f, 24g).
-    const flags = getHeldActionFlags(unheldFlags, {
-      isApprover,
-      isHeldByOther,
-    })
-
+  const articles = rawArticles.map((article) => ({
+    ...getArticleRow(article, { context, now }),
     // A filtered category or tag first, so the row shows why it is there;
     // else alphabetical (22a, 31a).
-    const categoryNames = orderFilteredFirst(
-      article.categories,
-      filters.category,
-    )
-    const tagNames = orderFilteredFirst(article.tags, filters.tag)
+    categoryNames: orderFilteredFirst(article.categories, filters.category),
+    // Bulk publishing skips it and says so up front (23h, 22c).
+    isIncomplete:
+      getMissingArticleContent({
+        authorCount: article.authors.length,
+        content: article.content,
+        images: article.images,
+        isSlugTaken:
+          article.slug !== null &&
+          (holderIdBySlug.get(article.slug) ?? article.id) !== article.id,
+        perex: article.perex,
+        slug: article.slug,
+        title: article.title,
+      }).length > 0,
+    tagNames: orderFilteredFirst(article.tags, filters.tag),
+  }))
 
-    const submission = flags.submission?.state ?? null
-    const rowActions = getRowActions({
-      ...flags,
-      canEdit: flags.canEdit || flags.canTakeOver,
-      state: article.state,
-      submission,
-    })
-
-    return {
-      ...rowActions,
-      authorNames: article.authors.map((author) => author.name),
-      // What the selection bar may apply to this row (22c); a held one is
-      // skipped and said apart (22f), not left out of the bar's actions.
-      bulkActions: getBulkActions({
-        ...getRowActions({ ...unheldFlags, state: article.state, submission }),
-        isApprover,
-      }),
-      categoryNames,
-      factLine: getArticleFactLine({
-        now,
-        publishedAt: article.publishedAt,
-        state: article.state,
-        submission: flags.submission,
-        updatedAt: article.updatedAt,
-      }),
-      heldUntil: hold?.heldUntil.toISOString() ?? null,
-      // Who edits it, ahead of the fact and of a live change (22f, 2txmjnaq);
-      // the list looks again when it should expire.
-      holdLine:
-        hold === null
-          ? null
-          : formatEditHoldLine({
-              holderName: hold.heldByName,
-              isOwn: hold.isOwn,
-              now,
-            }),
-      id: article.id,
-      isHeldByOther,
-      // Bulk publishing skips it and says so up front (23h, 22c).
-      isIncomplete:
-        getMissingArticleContent({
-          authorCount: article.authors.length,
-          content: article.content,
-          images: article.images,
-          isSlugTaken:
-            article.slug !== null &&
-            (holderIdBySlug.get(article.slug) ?? article.id) !== article.id,
-          perex: article.perex,
-          slug: article.slug,
-          title: article.title,
-        }).length > 0,
-      // Publishing it, the dialog says it isn't submitted (23f).
-      isNotSubmitted:
-        article.state === 'draft' &&
-        flags.submission === null &&
-        flags.isSubmittable &&
-        !flags.isOwnContent,
-      // A draft without a title goes by its name, said quieter (22f).
-      isUntitled: article.title.trim() === '',
-      publishedAt: article.publishedAt?.toISOString() ?? null,
-      slug: article.slug,
-      state: flags.submission?.state ?? article.state,
-      tagNames,
-      title: getArticleDisplayTitle(article.title),
-      updatedAt: formatNumericDate(article.updatedAt),
-    }
-  })
-
-  // Read only here: an earlier redirect must not use up the toast (23f).
-  const notice = await readAdminNotice(request)
+  // Read only here: an earlier redirect must not use up the toast (23f). A
+  // live load leaves it to the page it is for.
+  const notice = isPinned
+    ? { setCookie: '', toast: null }
+    : await readAdminNotice(request)
 
   return data(
     {

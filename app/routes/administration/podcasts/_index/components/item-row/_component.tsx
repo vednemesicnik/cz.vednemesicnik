@@ -19,6 +19,9 @@ import {
 } from '~/components/admin/admin-table'
 import { Image } from '~/components/image'
 import { StatusTag } from '~/components/status-tag'
+import type { LiveChange } from '~/hooks/use-live-changes'
+import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
+import { getRowTint } from '~/utils/live-change/get-row-tint'
 
 import { PodcastActionDialogs } from '../../../components/podcast-action-dialogs'
 import { PODCAST_ACTION_LABELS } from '../../../utils/podcast-actions'
@@ -33,6 +36,7 @@ type Props = {
   isApprover: boolean
   selected: boolean
   onSelect: () => void
+  liveChange?: LiveChange
 }
 
 /**
@@ -40,10 +44,18 @@ type Props = {
  * the podcast's page over its address, the episodes on the web with what is
  * in progress or the latest one's date, the state tag with one fact, and
  * every action in „⋯“ — the row has no main action, Nová epizoda belongs on
- * the podcast's page. Below 768 px it folds into the cover beside the name,
- * the state and the episodes, with a missing cover said last (32c).
+ * the podcast's page. While someone else edits it, the row says who; one
+ * someone else changed while the list is open is tinted for a moment and says
+ * who changed it (22f, xkg6rdz4). Below 768 px it folds into the cover beside
+ * the name, the state and the episodes, with a missing cover said last (32c).
  */
-export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
+export const ItemRow = ({
+  podcast,
+  isApprover,
+  selected,
+  onSelect,
+  liveChange,
+}: Props) => {
   const actions = usePodcastActions({
     deleteRedirects: false,
     fetcherKey: `podcast-row-${podcast.id}`,
@@ -64,7 +76,10 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
   ))
 
   return (
-    <TableRow muted={podcast.state === 'archived'}>
+    <TableRow
+      muted={podcast.state === 'archived'}
+      tint={getRowTint(liveChange)}
+    >
       <TableSelectionCell
         checked={selected}
         disabled={podcast.bulkActions.length === 0}
@@ -114,7 +129,13 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
       </TableCell>
       <TableStateCell>
         <StatusTag
-          detail={podcast.factLine ?? undefined}
+          // Who edits it comes first: it changes what the row allows (27a).
+          detail={getLiveStateDetail({
+            factLine: podcast.factLine,
+            holdLine: podcast.holdLine,
+            liveChange,
+            now: new Date(),
+          })}
           state={podcast.submission ?? podcast.state}
         />
       </TableStateCell>

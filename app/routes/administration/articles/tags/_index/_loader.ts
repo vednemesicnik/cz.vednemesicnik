@@ -12,20 +12,20 @@ import { parseAdminListParams } from '~/utils/admin-list-params'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
-import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
-import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { buildPinnedRowsWhere } from '~/utils/pinned-rows/build-pinned-rows-where'
+import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
+import { buildTaxonomyPermissionWhere } from '../../utils/build-taxonomy-permission-where'
 import { getNameOrderedPage } from '../../utils/get-name-ordered-page'
-import { getTaxonomyFactLine } from '../../utils/get-taxonomy-fact-line'
-import { getTaxonomyRowActions } from '../../utils/get-taxonomy-row-actions'
+import { getTaxonomyRow } from '../../utils/get-taxonomy-row.server'
+import { TAXONOMY_ROW_SELECT } from '../../utils/taxonomy-row-select'
 import type { Route } from './+types/route'
 import { SORT_KEYS } from './sort'
 
@@ -49,30 +49,21 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     entities: ['article_tag'],
   })
 
+  // A live load of the rows on screen (22f): fresh data for exactly those rows,
+  // whatever the order, filters or page now say. A fetcher load, so it never
+  // redirects.
+  const pinnedIds = parsePinnedRowIds(url, PAGE_SIZE)
+  const isPinned = pinnedIds !== undefined
+
   // Before any query: a bare visit with a default preset never renders this list,
   // it redirects to the preset's own URL.
-  await resolveDefaultFilter({
-    tableKey: TABLE_KEY,
-    url,
-    userId: context.userId,
-  })
-
-  // Check view permissions for each state
-  const draftPerms = context.can({
-    action: 'view',
-    entity: 'article_tag',
-    state: 'draft',
-  })
-  const publishedPerms = context.can({
-    action: 'view',
-    entity: 'article_tag',
-    state: 'published',
-  })
-  const archivedPerms = context.can({
-    action: 'view',
-    entity: 'article_tag',
-    state: 'archived',
-  })
+  if (!isPinned) {
+    await resolveDefaultFilter({
+      tableKey: TABLE_KEY,
+      url,
+      userId: context.userId,
+    })
+  }
 
   // Looked up, not processed: by name, ascending (25a, 25e).
   const { order, page, query } = parseAdminListParams(request, {
@@ -83,16 +74,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const filters = parseAdminListFilters(request, TABLE_KEY)
 
-  const permissionWhere = {
-    OR: buildViewableStateFilters(
-      [
-        { rights: draftPerms, state: 'draft' },
-        { rights: publishedPerms, state: 'published' },
-        { rights: archivedPerms, state: 'archived' },
-      ],
-      { authorId: context.authorId },
-    ),
-  }
+  const permissionWhere = buildTaxonomyPermissionWhere(context, 'article_tag')
 
   // The query matches the name or the slug — public URLs expose the slug.
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
@@ -123,7 +105,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const [matchingTags, savedFilters, queueCounts] = await Promise.all([
     // Every match by name: the order is Czech, not SQLite's (25a, 11c).
-    prisma.articleTag.findMany({ select: { id: true, name: true }, where }),
+    // A live load asks for the rows on screen, still within what the role may
+    // view: the ids come from the browser (22f).
+    prisma.articleTag.findMany({
+      select: { id: true, name: true },
+      where: isPinned
+        ? buildPinnedRowsWhere(permissionWhere, pinnedIds)
+        : where,
+    }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
     // The Stav menu counts work within what the role may view, whatever else
     // is searched or filtered (22d).
@@ -134,11 +123,16 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ),
   ])
 
-  const { pageIds, totalCount } = getNameOrderedPage(matchingTags, {
+  const orderedPage = getNameOrderedPage(matchingTags, {
     order,
     page,
     pageSize: PAGE_SIZE,
   })
+  const { totalCount } = orderedPage
+  // The second query has no permission clause: its ids passed the first one.
+  const pageIds = isPinned
+    ? matchingTags.map((record) => record.id)
+    : orderedPage.pageIds
 
   // A state the role's menu does not offer (a Coordinator's link opened by a
   // Contributor) drops, or it would filter unseen.
@@ -149,43 +143,20 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ).map((queue) => ({ value: queue })),
   })
 
-  if (staleFilterRedirect !== null) {
+  if (staleFilterRedirect !== null && !isPinned) {
     throw redirect(staleFilterRedirect)
   }
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   // Deleting the last row on the last page revalidates a URL past the end.
-  if (isPagePastLast(page, totalPages)) {
+  if (isPagePastLast(page, totalPages) && !isPinned) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
   const [pageTags, pageArticleCounts] = await Promise.all([
     prisma.articleTag.findMany({
-      select: {
-        // What a reader sees on the tag's page (25a, 25e).
-        _count: {
-          select: { articles: { where: { state: 'published' } } },
-        },
-        author: {
-          select: { id: true, name: true, role: { select: { level: true } } },
-        },
-        id: true,
-        name: true,
-        reviews: {
-          select: {
-            createdAt: true,
-            reviewer: {
-              select: { id: true, role: { select: { level: true } } },
-            },
-          },
-        },
-        slug: true,
-        state: true,
-        submittedAt: true,
-        submittedBy: { select: { name: true } },
-        updatedAt: true,
-      },
+      select: TAXONOMY_ROW_SELECT,
       where: { id: { in: pageIds } },
     }),
     // Deleting takes the tag off every article it has, in any state (25d,
@@ -211,55 +182,26 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       return []
     }
 
-    const flags = getContentActionFlags(context, 'article_tag', {
-      authors: [tag.author],
-      reviews: tag.reviews,
-      state: tag.state,
-      submittedAt: tag.submittedAt,
-    })
-
-    const submission = flags.submission?.state ?? null
-    const rowActions = getTaxonomyRowActions({
-      ...flags,
-      state: tag.state,
-      submission,
-    })
-
     return [
-      {
+      getTaxonomyRow(tag, {
         articleCount: articleCounts.get(tag.id) ?? 0,
-        // What the selection bar may apply to this row (22c, 25g).
-        bulkActions: getBulkActions({ ...rowActions, isApprover }),
-        // The row's tag says what the detail's does (07a), with one fact (25e).
-        factLine: getTaxonomyFactLine({
-          authorName: tag.author.name,
-          state: tag.state,
-          submission: flags.submission,
-          submittedByName: tag.submittedBy?.name ?? null,
-          updatedAt: tag.updatedAt,
-        }),
-        id: tag.id,
-        // Publishing it, the dialog says it isn't submitted (25g, as 22c).
-        isNotSubmitted:
-          tag.state === 'draft' &&
-          flags.submission === null &&
-          flags.isSubmittable &&
-          !flags.isOwnContent,
-        name: tag.name,
-        publishedArticleCount: tag._count.articles,
-        slug: tag.slug,
-        state: submission ?? tag.state,
-        ...rowActions,
-      },
+        context,
+        entity: 'article_tag',
+      }),
     ]
   })
 
-  // Read only here: an earlier redirect must not use up the toast (23f).
-  const notice = await readAdminNotice(request)
+  // Read only here: an earlier redirect must not use up the toast (23f). A
+  // live load leaves it to the page it is for.
+  const notice = isPinned
+    ? { setCookie: '', toast: null }
+    : await readAdminNotice(request)
 
   return data(
     {
       ...savedFilters,
+      // Whose live changes are not someone else's (22f).
+      authorId: context.authorId,
       canCreate: context.can({
         action: 'create',
         entity: 'article_tag',

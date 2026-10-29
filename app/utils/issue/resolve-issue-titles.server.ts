@@ -4,14 +4,6 @@ import { prisma } from '~/utils/db.server'
 
 import { getIssueTitle, type IssueTitleFields } from './get-issue-title'
 
-/** The fields {@link resolveIssueTitles} needs; spread into an issue's `select`. */
-export const issueTitleSelect = {
-  name: true,
-  order: true,
-  supplement: true,
-  year: true,
-} as const satisfies Prisma.IssueSelect
-
 /**
  * Adds each issue's `title`. A supplement is named after its main issue, so the
  * main issues of the supplements among them are loaded in one query, limited to
@@ -19,7 +11,7 @@ export const issueTitleSelect = {
  * know of; it names it by the order instead (design 26a, wo02u3xq). Of drafts
  * sharing the number, the issue that holds it as published names it (log 0039).
  *
- * @param issues - Issues selected with {@link issueTitleSelect}.
+ * @param issues - Issues selected with `issueTitleSelect`.
  * @param visibleWhere - The issues the viewer may see.
  * @returns The issues, each with its `title`.
  */

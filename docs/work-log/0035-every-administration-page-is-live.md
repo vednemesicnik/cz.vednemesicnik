@@ -1,6 +1,7 @@
 # 0035. Every administration page is live, and the article list's live row is the default on every list
 
 - Date: 2026-10-22
+- Later: 0052
 - Issues: #747, #748, #749, #750, #751, #752, #606
 
 ## Context

@@ -1,43 +1,33 @@
-.section {
+.sections {
   @layer route {
-    /* Layout */
+    justify-self: stretch;
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    width: 100%;
-
-    /* Spacing */
-    margin-bottom: 48px;
+    gap: 36px;
   }
 }
 
-.sectionTitle {
+.allMyArticles {
   @layer route {
-    /* Reset */
-    margin: 0;
-
-    /* Typography */
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-2xl);
-    color: var(--text-primary);
+    align-self: flex-start;
+    font-size: var(--font-size-sm);
   }
 }
 
-.statsGrid {
+/* The ordered publish needs the list's selection, which a phone hasn't
+   (22g); there the line shows the approved instead (gl703egt). */
+.wideOnly {
   @layer route {
-    /* Layout */
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 20px;
+    @media (width < 768px) {
+      display: none;
+    }
   }
 }
 
-.pendingList {
+.phoneOnly {
   @layer route {
-    /* Layout */
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
+    @media (width >= 768px) {
+      display: none;
+    }
   }
 }

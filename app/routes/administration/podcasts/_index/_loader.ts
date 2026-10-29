@@ -11,30 +11,22 @@ import {
 import { parseAdminListParams } from '~/utils/admin-list-params'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
-import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
-import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import { getOrderedPage } from '~/utils/get-ordered-page'
-import {
-  createImageSources,
-  imageSourceSelect,
-} from '~/utils/image-store/create-image-sources'
 import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
-import { getPodcastDisplayTitle } from '~/utils/podcast/get-podcast-display-title'
-import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
+import { buildPinnedRowsWhere } from '~/utils/pinned-rows/build-pinned-rows-where'
+import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { buildEpisodePermissionWhere } from '../podcast/episodes/utils/build-episode-permission-where'
 import { buildPodcastPermissionWhere } from '../utils/build-podcast-permission-where'
 import { formatPodcastEpisodeLines } from '../utils/format-podcast-episode-lines'
-import { getMissingPodcastContent } from '../utils/get-missing-podcast-content'
-import { getPodcastActions } from '../utils/get-podcast-actions'
-import { getPodcastFactLine } from '../utils/get-podcast-fact-line'
+import { getPodcastRow } from '../utils/get-podcast-row.server'
+import { PODCAST_ROW_SELECT } from '../utils/podcast-row-select'
 import {
   type PodcastEpisodeSummary,
   summarizePodcastEpisodes,
@@ -72,13 +64,21 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     entities: ['podcast', 'podcast_episode'],
   })
 
+  // A live load of the rows on screen (22f): fresh data for exactly those rows,
+  // whatever the order, filters or page now say. A fetcher load, so it never
+  // redirects.
+  const pinnedIds = parsePinnedRowIds(url, PAGE_SIZE)
+  const isPinned = pinnedIds !== undefined
+
   // Before any query: a bare visit with a default preset never renders this list,
   // it redirects to the preset's own URL.
-  await resolveDefaultFilter({
-    tableKey: TABLE_KEY,
-    url,
-    userId: context.userId,
-  })
+  if (!isPinned) {
+    await resolveDefaultFilter({
+      tableKey: TABLE_KEY,
+      url,
+      userId: context.userId,
+    })
+  }
 
   // One order (27a); an old ?sort=title or ?sort=createdAt falls back to it.
   const { page, query } = parseAdminListParams(request, {
@@ -128,43 +128,18 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ).map((queue) => ({ value: queue })),
   })
 
-  if (staleFilterRedirect !== null) {
+  if (staleFilterRedirect !== null && !isPinned) {
     throw redirect(staleFilterRedirect)
   }
 
   const [rawPodcasts, savedFilters, queueCounts] = await Promise.all([
     prisma.podcast.findMany({
       orderBy: [{ createdAt: 'desc' }],
-      select: {
-        // An empty draft never counts, nor blocks the delete (log 0020).
-        _count: { select: { episodes: { where: NON_EMPTY_EPISODE_WHERE } } },
-        author: {
-          select: { id: true, name: true, role: { select: { level: true } } },
-        },
-        cover: { select: imageSourceSelect },
-        createdAt: true,
-        description: true,
-        heldByAuthorId: true,
-        heldByTabId: true,
-        heldSince: true,
-        heldUntil: true,
-        id: true,
-        reviews: {
-          select: {
-            createdAt: true,
-            reviewer: {
-              select: { id: true, role: { select: { level: true } } },
-            },
-          },
-        },
-        slug: true,
-        state: true,
-        submittedAt: true,
-        submittedBy: { select: { name: true } },
-        title: true,
-        updatedAt: true,
-      },
-      where,
+      select: { ...PODCAST_ROW_SELECT, createdAt: true },
+      // Every match, or the rows on screen for a live load (22f).
+      where: isPinned
+        ? buildPinnedRowsWhere(permissionWhere, pinnedIds)
+        : where,
     }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
     // The Stav menu counts work within what the role may view, whatever else
@@ -180,7 +155,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   // Deleting the last row on the last page revalidates a URL past the end.
-  if (isPagePastLast(page, totalPages)) {
+  if (isPagePastLast(page, totalPages) && !isPinned) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
@@ -245,7 +220,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const podcastById = new Map(
     rawPodcasts.map((podcast) => [podcast.id, podcast]),
   )
-  const pagePodcasts = pageIds.flatMap((id) => podcastById.get(id) ?? [])
+  // A live load keeps the order on screen, so its rows need no page.
+  const pagePodcasts = isPinned
+    ? rawPodcasts
+    : pageIds.flatMap((id) => podcastById.get(id) ?? [])
 
   // Who holds each listed address as published (log 0039): a draft with an
   // address another podcast holds is skipped by bulk publishing too (27i).
@@ -268,85 +246,30 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const now = new Date()
 
   const podcasts = pagePodcasts.map((podcast) => {
-    const flags = getContentActionFlags(context, 'podcast', {
-      authors: [podcast.author],
-      reviews: podcast.reviews,
-      state: podcast.state,
-      submittedAt: podcast.submittedAt,
-    })
     const summary = summaries.get(podcast.id) ?? NO_EPISODES
-    const submission = flags.submission?.state ?? null
-
-    const actions = getPodcastActions({
-      ...flags,
-      state: podcast.state,
-      submission,
-    })
 
     return {
-      actions,
-      // What the selection bar may apply to this row (22c, 27a); a podcast
-      // with episodes is never deleted (27f), and a held one is skipped and
-      // said apart, not left out of the bar's actions.
-      bulkActions: getBulkActions({
-        isApprover,
-        menu: actions.filter(
-          (action) => action !== 'delete' || podcast._count.episodes === 0,
-        ),
-        row: null,
+      ...getPodcastRow(podcast, {
+        context,
+        isSlugTaken:
+          podcast.slug !== '' &&
+          (holderIdBySlug.get(podcast.slug) ?? podcast.id) !== podcast.id,
+        now,
+        publishedEpisodeCount: summary.publishedCount,
       }),
-      cover:
-        podcast.cover === null
-          ? null
-          : createImageSources('podcast-cover', podcast.cover),
-      episodeCount: podcast._count.episodes,
       episodeLines: formatPodcastEpisodeLines({
         isContributor,
         podcastState: podcast.state,
         summary,
       }),
-      // The row's tag says what the detail's does (07a), with one fact (27a).
-      factLine: getPodcastFactLine({
-        authorName: podcast.author.name,
-        state: podcast.state,
-        submission: flags.submission,
-        submittedByName: podcast.submittedBy?.name ?? null,
-        updatedAt: podcast.updatedAt,
-      }),
-      id: podcast.id,
-      isHeldByOther:
-        getEditHoldStatus(podcast, { authorId: context.authorId, now }) ===
-        'other',
-      // Bulk publishing skips it and says so up front (27i, 27a).
-      isIncomplete:
-        isApprover &&
-        getMissingPodcastContent({
-          description: podcast.description,
-          hasCover: podcast.cover !== null,
-          isSlugTaken:
-            podcast.slug !== '' &&
-            (holderIdBySlug.get(podcast.slug) ?? podcast.id) !== podcast.id,
-          slug: podcast.slug,
-          title: podcast.title,
-        }).length > 0,
-      // Publishing it, the dialog says it isn't submitted (27a, as 22c).
-      isNotSubmitted:
-        podcast.state === 'draft' &&
-        flags.submission === null &&
-        flags.isSubmittable &&
-        !flags.isOwnContent,
       latestPublishedAt: summary.latestPublishedAt,
-      publishedEpisodeCount: summary.publishedCount,
-      slug: podcast.slug,
-      state: podcast.state,
-      submission,
-      // A draft saved without a title goes by a name (copy utgh1hb7).
-      title: getPodcastDisplayTitle(podcast.title),
     }
   })
 
   return {
     ...savedFilters,
+    // Whose live changes are not someone else's (22f).
+    authorId: context.authorId,
     canCreate: context.can({
       action: 'create',
       entity: 'podcast',

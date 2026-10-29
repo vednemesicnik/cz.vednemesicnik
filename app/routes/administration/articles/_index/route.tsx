@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Form, href } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Form, href, useLocation, useNavigate } from 'react-router'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -44,6 +45,7 @@ import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ArticleSelectionBar } from './components/article-selection-bar'
 import { ItemRow } from './components/item-row'
+import type { PUBLISH_APPROVED_STATE } from './publish-approved-state'
 import { SORT_KEYS } from './sort'
 import { BULK_ACTION_FETCHER_KEY } from './utils/bulk-action-fetcher-key'
 import { useLiveArticleRows } from './utils/use-live-article-rows'
@@ -73,6 +75,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   } = loaderData
 
   useAdminNoticeToast(loaderData)
+  const location = useLocation()
+  const navigate = useNavigate()
 
   // Live, but the rows stay put until the next load (22f).
   const { articles, liveChanges, queueCounts } = useLiveArticleRows(loaderData)
@@ -142,7 +146,40 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const selectableIds = articles
     .filter((article) => article.bulkActions.length > 0)
     .map((article) => article.id)
-  const selection = useAdminTableSelection(selectableIds)
+  // Opened from the dashboard's Publikovat v pořadí… (21a): every approved
+  // article selected and the 22c dialog open. The list runs oldest first, so
+  // the selection is reversed: the dialog puts the newest on top, and what
+  // waited longest goes out first, at the bottom.
+  const [publishesApproved, setPublishesApproved] = useState(
+    () =>
+      (location.state as Partial<typeof PUBLISH_APPROVED_STATE> | null)
+        ?.publishApproved === true,
+  )
+  const selection = useAdminTableSelection(selectableIds, {
+    initialSelectedIds: publishesApproved
+      ? articles
+          .filter(
+            (article) =>
+              article.state === 'approved' &&
+              article.bulkActions.includes('publish'),
+          )
+          .map((article) => article.id)
+          .reverse()
+      : [],
+  })
+  // Once: the bar has opened its dialog by now, so a later selection opens
+  // none, and the state goes from the history entry, so going back or
+  // reloading doesn't either.
+  useEffect(() => {
+    if (!publishesApproved) return
+
+    setPublishesApproved(false)
+    void navigate(`${location.pathname}${location.search}`, {
+      preventScrollReset: true,
+      replace: true,
+      state: null,
+    })
+  }, [publishesApproved, navigate, location.pathname, location.search])
   useBulkActionResult({
     fetcherKey: BULK_ACTION_FETCHER_KEY,
     noun: ARTICLE_BULK_NOUN,
@@ -172,6 +209,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             action={href('/administration/articles')}
             articles={selectedArticles}
             className={styles.selectionBar}
+            initialAction={publishesApproved ? 'publish' : undefined}
             isCreator={!isApprover && !isContributor}
             onClear={selection.clear}
           />

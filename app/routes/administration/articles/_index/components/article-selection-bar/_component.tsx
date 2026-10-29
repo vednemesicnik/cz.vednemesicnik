@@ -27,6 +27,8 @@ type Props = {
   articles: Article[]
   isCreator: boolean
   onClear: () => void
+  /** Opens with this action's dialog, as from the dashboard (21a). */
+  initialAction?: BulkAction
   className?: string
 }
 
@@ -39,19 +41,24 @@ type Props = {
  * @param props.isCreator - A Creator selects: retracting says who publishes
  *   again.
  * @param props.onClear - Clears the selection.
+ * @param props.initialAction - The dialog the bar opens with: Publikovat… for
+ *   the dashboard's ordered publish (21a).
  */
 export const ArticleSelectionBar = ({
   action,
   articles,
   isCreator,
   onClear,
+  initialAction,
   className,
 }: Props) => {
   const fetcher = useFetcher<BulkActionResult>({
     key: BULK_ACTION_FETCHER_KEY,
   })
   const authenticityToken = useAuthenticityToken()
-  const [openAction, setOpenAction] = useState<BulkAction | null>(null)
+  const [openAction, setOpenAction] = useState<BulkAction | null>(
+    initialAction ?? null,
+  )
 
   const isSubmitting = fetcher.state !== 'idle'
 
