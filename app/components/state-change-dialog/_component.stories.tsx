@@ -26,11 +26,13 @@ const meta: Meta<typeof StateChangeDialog> = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-// `useFetcher` needs a data router, the form an authenticity token.
+// `useFetcher` needs a data router, the form an authenticity token and a
+// route that takes the post.
 const withRouter = (children: ReactElement) => {
   const router = createMemoryRouter(
     [
       {
+        action: () => null,
         element: (
           <AuthenticityTokenProvider token={'story-token'}>
             {children}
@@ -48,7 +50,7 @@ const withRouter = (children: ReactElement) => {
 /** Archiving one article: the record under the title (23e). */
 export const Playground: Story = {
   args: {
-    action: '/administration/articles/article-id',
+    action: '/administration/articles',
     children: (
       <>
         <AdminModalTitle>Archivovat článek?</AdminModalTitle>
