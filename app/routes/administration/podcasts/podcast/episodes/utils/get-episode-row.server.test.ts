@@ -69,4 +69,38 @@ describe('getEpisodeRow', () => {
     expect(row.bulkActions).not.toContain('publish')
     expect(row.isSelectable).toBe(true)
   })
+
+  test('a complete episode whose number or address another holds is incomplete', () => {
+    const complete = episode({
+      description: 'O maturitních otázkách.',
+      links: [{ label: 'Spotify', url: 'https://example.local/12' }],
+    })
+    const options = {
+      context: coordinator,
+      isPodcastPublished: true,
+      now,
+    }
+
+    expect(
+      getEpisodeRow(complete, {
+        ...options,
+        isNumberTaken: false,
+        isSlugTaken: false,
+      }).isIncomplete,
+    ).toBe(false)
+    expect(
+      getEpisodeRow(complete, {
+        ...options,
+        isNumberTaken: true,
+        isSlugTaken: false,
+      }).isIncomplete,
+    ).toBe(true)
+    expect(
+      getEpisodeRow(complete, {
+        ...options,
+        isNumberTaken: false,
+        isSlugTaken: true,
+      }).isIncomplete,
+    ).toBe(true)
+  })
 })

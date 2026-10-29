@@ -1,7 +1,7 @@
 import type { Prisma } from '@generated/prisma/client'
 
 import { imageSourceSelect } from '~/utils/image-store/create-image-sources'
-import { issueTitleSelect } from '~/utils/issue/resolve-issue-titles.server'
+import { issueTitleSelect } from '~/utils/issue/issue-title-select'
 
 /**
  * What an issue row's cover, order, state, fact and actions are read from,

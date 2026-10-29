@@ -65,4 +65,31 @@ describe('getPodcastRow', () => {
     expect(row.bulkActions).not.toContain('delete')
     expect(row).toMatchObject({ episodeCount: 2, publishedEpisodeCount: 1 })
   })
+
+  test('a complete podcast whose address another holds is incomplete', () => {
+    const complete = podcast({
+      cover: {
+        altText: '',
+        id: 'cover',
+        intrinsicHeight: 600,
+        intrinsicWidth: 600,
+        placeholderDataUrl: '',
+        version: 'v1',
+      },
+      description: 'Rozhovory z kabinetu.',
+      submittedAt: new Date('2026-09-26T10:00:00Z'),
+    })
+    const options = {
+      context: createContext('coordinator', 1),
+      now,
+      publishedEpisodeCount: 0,
+    }
+
+    expect(
+      getPodcastRow(complete, { ...options, isSlugTaken: false }).isIncomplete,
+    ).toBe(false)
+    expect(
+      getPodcastRow(complete, { ...options, isSlugTaken: true }).isIncomplete,
+    ).toBe(true)
+  })
 })

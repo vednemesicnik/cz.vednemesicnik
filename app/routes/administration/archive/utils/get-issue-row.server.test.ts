@@ -70,4 +70,44 @@ describe('getIssueRow', () => {
     expect(row.missingBeforePublish).toEqual([])
     expect(row.row).toBe('edit')
   })
+
+  test('a complete issue whose number another holds is incomplete and says so', () => {
+    const row = getIssueRow(
+      issue({
+        cover: {
+          altText: '',
+          id: 'cover',
+          intrinsicHeight: 400,
+          intrinsicWidth: 300,
+          placeholderDataUrl: '',
+          version: 'v1',
+        },
+        pdf: { fileName: null, originalFileName: 'zari.pdf' },
+        submittedAt: new Date('2026-09-26T10:00:00Z'),
+      }),
+      { context: createContext('coordinator', 1), isNumberTaken: true, now },
+    )
+
+    expect(row.isIncomplete).toBe(true)
+    expect(row.missingBeforePublish).toHaveLength(1)
+    expect(row.missingBeforePublish[0]).toContain('3/2026')
+  })
+
+  test('while someone else edits it, the Coordinator takes it over instead of approving', () => {
+    const row = getIssueRow(
+      issue({
+        heldByAuthor: { name: 'Jakub' },
+        heldByAuthorId: 'contributor',
+        heldByTabId: 'tab',
+        heldSince: new Date('2026-10-29T11:55:00Z'),
+        heldUntil: new Date('2026-10-29T12:05:00Z'),
+        submittedAt: new Date('2026-09-26T10:00:00Z'),
+      }),
+      { context: createContext('coordinator', 1), isNumberTaken: false, now },
+    )
+
+    expect(row.isHeldByOther).toBe(true)
+    expect(row.row).not.toBe('approve')
+    expect(row.holdLine).not.toBeNull()
+  })
 })

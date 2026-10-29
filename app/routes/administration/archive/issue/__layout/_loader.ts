@@ -2,10 +2,8 @@ import { data } from 'react-router'
 
 import { prisma } from '~/utils/db.server'
 import { getIssueTitle } from '~/utils/issue/get-issue-title'
-import {
-  issueTitleSelect,
-  resolveIssueTitles,
-} from '~/utils/issue/resolve-issue-titles.server'
+import { issueTitleSelect } from '~/utils/issue/issue-title-select'
+import { resolveIssueTitles } from '~/utils/issue/resolve-issue-titles.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 
 import { buildIssuePermissionWhere } from '../../utils/build-issue-permission-where'

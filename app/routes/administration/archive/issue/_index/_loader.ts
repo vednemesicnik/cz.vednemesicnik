@@ -12,10 +12,8 @@ import {
 import { getIssueOrderLabel } from '~/utils/issue/get-issue-order-label'
 import { getIssuePdfFileName } from '~/utils/issue/get-issue-pdf-file-name'
 import { getIssuePublishedNumber } from '~/utils/issue/get-issue-published-number'
-import {
-  issueTitleSelect,
-  resolveIssueTitles,
-} from '~/utils/issue/resolve-issue-titles.server'
+import { issueTitleSelect } from '~/utils/issue/issue-title-select'
+import { resolveIssueTitles } from '~/utils/issue/resolve-issue-titles.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'

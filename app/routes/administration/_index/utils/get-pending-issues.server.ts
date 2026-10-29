@@ -1,9 +1,7 @@
 import type { Prisma } from '@generated/prisma/client'
 import { prisma } from '~/utils/db.server'
-import {
-  issueTitleSelect,
-  resolveIssueTitles,
-} from '~/utils/issue/resolve-issue-titles.server'
+import { issueTitleSelect } from '~/utils/issue/issue-title-select'
+import { resolveIssueTitles } from '~/utils/issue/resolve-issue-titles.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
 type GetPendingIssuesOptions = {

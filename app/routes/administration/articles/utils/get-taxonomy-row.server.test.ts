@@ -15,7 +15,7 @@ const createContext = (authorId: string, roleLevel: number) => ({
   roleLevel,
 })
 
-const category = (
+const taxonomyRecord = (
   overrides: Partial<TaxonomyRowRecord>,
 ): TaxonomyRowRecord => ({
   _count: { articles: 0 },
@@ -34,7 +34,7 @@ const category = (
 describe('getTaxonomyRow', () => {
   test('the Coordinator approves a waiting category from its row', () => {
     const row = getTaxonomyRow(
-      category({ submittedAt: new Date('2026-09-26T10:00:00Z') }),
+      taxonomyRecord({ submittedAt: new Date('2026-09-26T10:00:00Z') }),
       {
         articleCount: 4,
         context: createContext('coordinator', 1),
@@ -53,7 +53,7 @@ describe('getTaxonomyRow', () => {
 
   test('a published tag counts the articles a reader sees on its page', () => {
     const row = getTaxonomyRow(
-      category({ _count: { articles: 18 }, state: 'published' }),
+      taxonomyRecord({ _count: { articles: 18 }, state: 'published' }),
       {
         articleCount: 20,
         context: createContext('coordinator', 1),
