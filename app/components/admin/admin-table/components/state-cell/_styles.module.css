@@ -1,4 +1,12 @@
 .cell {
+  @layer component {
+    /* Room for the tag and one line, so a line coming live never grows the
+       row (22f, xkg6rdz4): the 22 px tag, the 4 px gap, the line's box. */
+    & > :first-child {
+      min-block-size: calc(22px + 4px + var(--font-size-xs) * 1.4);
+    }
+  }
+
   @layer variant {
     @media (width < 768px) {
       :where([data-folds-on-phone]) & {
@@ -11,6 +19,7 @@
           flex-wrap: wrap;
           align-items: center;
           gap: 4px 8px;
+          min-block-size: auto;
         }
       }
     }
