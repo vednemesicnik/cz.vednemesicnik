@@ -1,0 +1,7 @@
+.section {
+  @layer route {
+    /* A grid item of the page shrinks to its content below 768 px; the section
+       spans the column like the tiles and the list (design 13a). */
+    width: 100%;
+  }
+}

@@ -43,7 +43,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
     <Page>
       <HeadlineGroup>
-        <Headline>Naše čísla pohromadě</Headline>
+        <Headline>Naše tištěná čísla pohromadě</Headline>
       </HeadlineGroup>
 
       <TileGrid>
