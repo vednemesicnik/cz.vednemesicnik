@@ -29,6 +29,8 @@ export type IssueFileUpload = {
   previewUrl: string | null
   /** Whether a stored file was there when it was picked. */
   replaces: boolean
+  /** The stored file as loaded when it was picked: a cancel tells by it what stayed. */
+  keyAtPick: string | null
 }
 
 /** The last upload that failed, until another pick or a retry. */
@@ -100,10 +102,6 @@ export const useIssueFileUpload = ({
   // pick cannot race it.
   const isCancellingRef = useRef(false)
   const [isCancelling, setIsCancelling] = useState(false)
-  // A cancelled upload, until the issue has loaded again.
-  const [cancelledFrom, setCancelledFrom] = useState<{
-    storedKey: string | null
-  } | null>(null)
 
   const showUpload = (next: IssueFileUpload | null) => {
     uploadRef.current = next
@@ -177,13 +175,14 @@ export const useIssueFileUpload = ({
     setFailure(null)
     setRejection(null)
     setAnnouncement('')
+    const keyAtPick = storedKeyRef.current
     showUpload({
       fileName: file.name,
+      keyAtPick,
       previewUrl: kind === 'cover' ? URL.createObjectURL(file) : null,
       replaces,
     })
 
-    const keyAtPick = storedKeyRef.current
     const answer = await post({ file, intent: 'upload' }, controller.signal)
 
     // The upload lasts until the stored file has rendered: the revalidation
@@ -261,7 +260,24 @@ export const useIssueFileUpload = ({
     await revalidator.revalidate()
     isCancellingRef.current = false
     setIsCancelling(false)
-    setCancelledFrom({ storedKey })
+    void announceCancel(current)
+  }
+
+  // The issue has loaded again: say what stayed. A cancelled new file is
+  // always removed; a replacement whose answer crossed the cancel shows once
+  // its file has rendered, which a revalidation does not wait for, and the
+  // editor does not wait for the announcement either (as the cover, #852).
+  const announceCancel = async (current: IssueFileUpload) => {
+    if (!current.replaces) {
+      setAnnouncement(CANCELLED_ANNOUNCEMENT)
+      return
+    }
+    await waitForStoredFile(current.keyAtPick)
+    setAnnouncement(
+      storedKeyRef.current === current.keyAtPick
+        ? CANCELLED_ANNOUNCEMENT
+        : CANCEL_CROSSED_ANNOUNCEMENT[kind],
+    )
   }
 
   /**
@@ -283,17 +299,6 @@ export const useIssueFileUpload = ({
     if (storedKey === null) return
     setFailure((current) => (current?.replaces === false ? null : current))
   }, [storedKey])
-
-  // The issue has loaded again: say what stayed.
-  useEffect(() => {
-    if (cancelledFrom === null) return
-    setAnnouncement(
-      storedKey === cancelledFrom.storedKey
-        ? CANCELLED_ANNOUNCEMENT
-        : CANCEL_CROSSED_ANNOUNCEMENT[kind],
-    )
-    setCancelledFrom(null)
-  }, [cancelledFrom, storedKey, kind])
 
   // An upload on its way is lost with the page; the browser asks.
   const handleBeforeUnload = useEffectEvent((event: BeforeUnloadEvent) => {
