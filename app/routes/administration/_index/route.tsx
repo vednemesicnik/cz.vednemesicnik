@@ -4,7 +4,12 @@ import { Form, href } from 'react-router'
 
 import { AdminBoundaryError } from '~/components/admin/admin-boundary-error'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminTable, TableBody } from '~/components/admin/admin-table'
+import {
+  AdminTable,
+  TableBody,
+  TableHeader,
+  TableHeaderCell,
+} from '~/components/admin/admin-table'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { Link } from '~/components/link'
@@ -40,7 +45,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   useAdminNoticeToast(loaderData)
   const { queue, pendingCount, approved, drafts, submitted, liveChanges } =
     useLiveDashboard(loaderData)
-  const { isApprover, canCreateArticle, authorId } = loaderData
+  const { isApprover, canCreateArticle, authorId, hasOwnArticles } = loaderData
   const now = new Date()
 
   const renderNewArticleButton = () =>
@@ -59,6 +64,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     section: DashboardSectionKind,
   ) => (
     <AdminTable>
+      {/* 21a draws no header; a screen reader still names the columns. */}
+      <TableHeader className={'screen-reader-only'}>
+        <TableHeaderCell>Typ</TableHeaderCell>
+        <TableHeaderCell>Název</TableHeaderCell>
+        <TableHeaderCell>Stav</TableHeaderCell>
+        <TableHeaderCell>Akce</TableHeaderCell>
+      </TableHeader>
       <TableBody>
         {items.map((item) => (
           <DashboardItemRow
@@ -147,7 +159,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <DashboardSection>
             <DashboardSectionHeading>Rozepsané</DashboardSectionHeading>
             {renderRows(drafts, 'drafts')}
-            {isApprover && (
+            {isApprover && hasOwnArticles && (
               <Link
                 className={styles.allMyArticles}
                 to={`${href('/administration/articles')}?${new URLSearchParams({ author: authorId })}`}

@@ -1,4 +1,4 @@
-import type { LiveChange } from '~/routes/administration/articles/_index/utils/use-live-article-rows'
+import type { LiveChange } from '~/hooks/use-live-changes'
 
 import type { DashboardItem } from '../../dashboard-item'
 import type { DashboardSectionKind } from '../../dashboard-section-kind'

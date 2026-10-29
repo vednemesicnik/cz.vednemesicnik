@@ -15,6 +15,9 @@ type Options = {
  * for their order, and since when. The date is the approval's, not the
  * content's age.
  *
+ * @param options.type - The type of content.
+ * @param options.count - How many of it are approved.
+ * @param options.earliestApprovedAt - The earliest approval among them.
  * @returns „3 články · nejdřívější schválení 24. 9. 2026“; for one piece
  *   „1 epizoda, schválená 27. 9. 2026“, the adjective in the noun's gender.
  */

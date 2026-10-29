@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
-
+import type { LiveChange } from '~/hooks/use-live-changes'
 import { startPendingTints } from './start-pending-tints'
-import type { LiveChange } from './use-live-article-rows'
 
 const createChange = (tintStartedAt: number | null): LiveChange => ({
   name: 'Marie Horáková',

@@ -18,6 +18,7 @@ import { TableHeaderCell } from './components/header-cell'
 import { TableImageCell } from './components/image-cell'
 import { TableNameAddress } from './components/name-address'
 import { TableNameCell } from './components/name-cell'
+import { TableNameType } from './components/name-type'
 import { TableRow } from './components/row'
 import { TableRowLink } from './components/row-link'
 import { TableRowMenu } from './components/row-menu'
@@ -306,6 +307,9 @@ export const FoldsOnPhone: Story = {
             />
           </TableImageCell>
           <TableNameCell>
+            {/* Where one table holds several types, the type over the name
+                (21c); a wider table gives it a column. */}
+            <TableNameType>Číslo</TableNameType>
             <TableRowLink to={'/'}>září 2026</TableRowLink>
             <TableNameAddress>vdm-2026-3.pdf</TableNameAddress>
           </TableNameCell>

@@ -3,13 +3,9 @@ type Keyed = {
 }
 
 type Options<Item extends Keyed> = {
-  /** The rows on screen, in their order. */
   shown: readonly Item[]
-  /** The section as the live load has it. */
   fresh: readonly Item[]
-  /** The rows on screen as the live load has them, wherever they are now. */
   pinned: readonly Item[]
-  /** Whether a row new to the section joins at its end (the queue does). */
   appendsNew: boolean
 }
 
@@ -19,6 +15,12 @@ type Options<Item extends Keyed> = {
  * section; a row deleted meanwhile goes. In the queue, a newly submitted row
  * joins at the end, where the oldest-first order puts it anyway.
  *
+ * @param options.shown - The rows on screen, in their order.
+ * @param options.fresh - The section as the live load has it.
+ * @param options.pinned - The rows on screen as the live load has them,
+ *   wherever they are now.
+ * @param options.appendsNew - Whether a row new to the section joins at its
+ *   end (the queue does).
  * @returns The section's rows to show.
  */
 export const composeLiveSection = <Item extends Keyed>({

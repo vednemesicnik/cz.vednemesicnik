@@ -11,6 +11,7 @@ import type { AuthorPermissionContext } from '~/utils/permissions/author/context
 import { canPublishWithoutReview } from '~/utils/permissions/author/review-policy'
 
 import { DASHBOARD_TYPES, type DashboardType } from '../dashboard-types'
+import { getApprovedEpisodesHref } from './get-approved-episodes-href'
 
 /** One type's approved content, as *K publikaci* says it (design 21a). */
 export type ApprovedSummary = {
@@ -41,8 +42,7 @@ const approvedQuery = `?${new URLSearchParams({ state: 'approved' })}`
  * The approved content of each type, for the Coordinator's *K publikaci*
  * (design 21a): how many, since when, and where they are published. Articles
  * go to their list oldest first, as the ordered publish selects (gl703egt).
- * Episodes have no list of their own: their podcast's page when they are all
- * one podcast's, the podcast list otherwise.
+ * Episodes have no list of their own (`getApprovedEpisodesHref`).
  *
  * @param context - The author permission context, loaded with `view` on all
  *   six entities.
@@ -89,11 +89,6 @@ export const loadApprovedSummaries = async (
       }),
     ])
 
-  const episodePodcastIds = new Set(
-    episodes.map((episode) => episode.podcastId),
-  )
-  const [onlyPodcastId] = episodePodcastIds
-
   const listHrefs: Record<DashboardType, string> = {
     article: `${href('/administration/articles')}?${new URLSearchParams({
       order: 'asc',
@@ -101,10 +96,9 @@ export const loadApprovedSummaries = async (
       state: 'approved',
     })}`,
     category: `${href('/administration/articles/categories')}${approvedQuery}`,
-    episode:
-      episodePodcastIds.size === 1 && onlyPodcastId !== undefined
-        ? `${href('/administration/podcasts/:podcastId', { podcastId: onlyPodcastId })}${approvedQuery}`
-        : href('/administration/podcasts'),
+    episode: getApprovedEpisodesHref(
+      new Set(episodes.map((episode) => episode.podcastId)),
+    ),
     issue: `${href('/administration/archive')}${approvedQuery}`,
     podcast: `${href('/administration/podcasts')}${approvedQuery}`,
     tag: `${href('/administration/articles/tags')}${approvedQuery}`,

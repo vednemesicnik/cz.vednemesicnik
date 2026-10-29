@@ -1,6 +1,5 @@
 import { href } from 'react-router'
 
-import type { ContentQueue } from '~/config/content-queue-config'
 import { buildIssuePermissionWhere } from '~/routes/administration/archive/utils/build-issue-permission-where'
 import { findTakenIssueIds } from '~/routes/administration/archive/utils/find-taken-issue-ids.server'
 import { getIssueRow } from '~/routes/administration/archive/utils/get-issue-row.server'
@@ -17,7 +16,6 @@ import { getEpisodeRow } from '~/routes/administration/podcasts/podcast/episodes
 import { buildPodcastPermissionWhere } from '~/routes/administration/podcasts/utils/build-podcast-permission-where'
 import { getPodcastRow } from '~/routes/administration/podcasts/utils/get-podcast-row.server'
 import { PODCAST_ROW_SELECT } from '~/routes/administration/podcasts/utils/podcast-row-select'
-import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { prisma } from '~/utils/db.server'
 import { resolveIssueTitles } from '~/utils/issue/resolve-issue-titles.server'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
@@ -26,6 +24,10 @@ import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title
 
 import type { DashboardItem } from '../dashboard-item'
 import type { DashboardType } from '../dashboard-types'
+import {
+  buildDashboardSectionWhere,
+  type DashboardSelection,
+} from './build-dashboard-section-where'
 import { mergeDashboardItems } from './merge-dashboard-items'
 
 type Order = {
@@ -33,15 +35,10 @@ type Order = {
   direction: 'asc' | 'desc'
 }
 
-/** Which content a section shows; `keys` reloads rows already on screen (22f). */
-type Selection =
-  | { queues: ContentQueue[]; publishedSince?: Date; ownOnly: boolean }
-  | { keys: string[] }
-
 type Options = {
   context: AuthorPermissionContext
   now: Date
-  selection: Selection
+  selection: DashboardSelection
   order: Order
   take?: number
 }
@@ -75,41 +72,8 @@ export const loadDashboardItems = async ({
 }: Options): Promise<DashboardItem[]> => {
   const authorId = context.authorId
 
-  const idsOf = (type: DashboardType) =>
-    'keys' in selection
-      ? selection.keys.flatMap((key) => {
-          const [keyType, id] = key.split(':')
-          return keyType === type && id !== undefined ? [id] : []
-        })
-      : null
-
-  // The section's condition for a type, or null when it shows none of it.
-  const sectionWhere = (type: DashboardType, own: object) => {
-    const ids = idsOf(type)
-    if (ids !== null) {
-      return ids.length === 0 ? null : { id: { in: ids } }
-    }
-    if ('keys' in selection) return null
-
-    return {
-      AND: [
-        selection.ownOnly ? own : {},
-        {
-          OR: [
-            ...selection.queues.map(buildContentQueueWhere),
-            ...(selection.publishedSince === undefined
-              ? []
-              : [
-                  {
-                    publishedAt: { gte: selection.publishedSince },
-                    state: 'published' as const,
-                  },
-                ]),
-          ],
-        },
-      ],
-    }
-  }
+  const sectionWhere = (type: DashboardType, own: object) =>
+    buildDashboardSectionWhere(selection, type, own)
 
   const orderBy = [{ [order.field]: order.direction }, { id: 'asc' as const }]
   const query = { orderBy, take }

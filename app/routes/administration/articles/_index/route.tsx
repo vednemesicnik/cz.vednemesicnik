@@ -150,7 +150,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   // article selected and the 22c dialog open. The list runs oldest first, so
   // the selection is reversed: the dialog puts the newest on top, and what
   // waited longest goes out first, at the bottom.
-  const [publishesApproved] = useState(
+  const [publishesApproved, setPublishesApproved] = useState(
     () =>
       (location.state as Partial<typeof PUBLISH_APPROVED_STATE> | null)
         ?.publishApproved === true,
@@ -167,15 +167,18 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           .reverse()
       : [],
   })
-  // Once, so going back or reloading doesn't open the dialog again.
+  // Once: the bar has opened its dialog by now, so a later selection opens
+  // none, and the state goes from the history entry, so going back or
+  // reloading doesn't either.
   useEffect(() => {
-    if (publishesApproved) {
-      void navigate(`${location.pathname}${location.search}`, {
-        preventScrollReset: true,
-        replace: true,
-        state: null,
-      })
-    }
+    if (!publishesApproved) return
+
+    setPublishesApproved(false)
+    void navigate(`${location.pathname}${location.search}`, {
+      preventScrollReset: true,
+      replace: true,
+      state: null,
+    })
   }, [publishesApproved, navigate, location.pathname, location.search])
   useBulkActionResult({
     fetcherKey: BULK_ACTION_FETCHER_KEY,

@@ -1,5 +1,5 @@
 import type { TableRowTint } from '~/components/admin/admin-table'
-import type { LiveChange } from '~/routes/administration/articles/_index/utils/use-live-article-rows'
+import type { LiveChange } from '~/hooks/use-live-changes'
 
 /**
  * The 22f tint of a row someone else changed; a tint held back for a hidden

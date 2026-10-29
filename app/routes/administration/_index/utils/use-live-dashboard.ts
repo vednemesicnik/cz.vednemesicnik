@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { href, useFetcher } from 'react-router'
 
 import { useContentEvents } from '~/hooks/use-content-events'
+import { useLiveChanges } from '~/hooks/use-live-changes'
 import { useRevalidateAt } from '~/hooks/use-revalidate-at'
-import { startPendingTints } from '~/routes/administration/articles/_index/utils/start-pending-tints'
-import type { LiveChange } from '~/routes/administration/articles/_index/utils/use-live-article-rows'
 import type { ContentEventEntity } from '~/utils/sse/content-event'
 
 import type { loader } from '../_loader'
@@ -49,9 +48,13 @@ export const useLiveDashboard = (loaderData: LoaderData) => {
   const fetcher = useFetcher<typeof loader>({
     key: `dashboard-live-${generation.count}`,
   })
-  const [liveChanges, setLiveChanges] = useState<
-    ReadonlyMap<string, LiveChange>
-  >(new Map())
+  const { liveChanges, onEvent } = useLiveChanges({
+    authorId: loaderData.authorId,
+    keyOf: (event) => {
+      const type = TYPE_BY_ENTITY[event.entity]
+      return type === undefined ? null : `${type}:${event.entityId}`
+    },
+  })
 
   // What is on screen: each live load is laid over the rows shown before it,
   // so a row that joined the queue live stays put when it leaves again.
@@ -113,69 +116,9 @@ export const useLiveDashboard = (loaderData: LoaderData) => {
 
   useContentEvents({
     filter: (event) => TYPE_BY_ENTITY[event.entity] !== undefined,
-    onEvent: (event) => {
-      const key = `${TYPE_BY_ENTITY[event.entity]}:${event.entityId}`
-
-      // Taking or releasing the edit hold is no change to react to (no tint),
-      // but a running tint finishes; the line goes back to the row's fact
-      // (22f, 2txmjnaq).
-      if (event.change === 'hold') {
-        setLiveChanges((current) => {
-          const liveChange = current.get(key)
-          if (liveChange === undefined) {
-            return current
-          }
-          return new Map(current).set(key, {
-            ...liveChange,
-            isLineSuperseded: true,
-          })
-        })
-        return
-      }
-
-      // One's own change isn't announced, and the line no longer names the
-      // latest change.
-      if (event.actor.authorId === loaderData.authorId) {
-        setLiveChanges((current) => {
-          if (!current.has(key)) {
-            return current
-          }
-          const next = new Map(current)
-          next.delete(key)
-          return next
-        })
-        return
-      }
-
-      setLiveChanges((current) =>
-        new Map(current).set(key, {
-          name: event.actor.name,
-          occurredAt: new Date(event.occurredAt),
-          sequence: (current.get(key)?.sequence ?? 0) + 1,
-          // The tint is meant to be seen, so a hidden tab holds it back.
-          tintStartedAt:
-            document.visibilityState === 'visible' ? performance.now() : null,
-        }),
-      )
-    },
+    onEvent,
     revalidator: rowsRevalidator,
   })
-
-  // Back in the tab, the held-back tints start, as the deferred reload does.
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        setLiveChanges((current) =>
-          startPendingTints(current, performance.now()),
-        )
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
 
   // An edit hold's expiry sends no event; the rows look again then (22f).
   useRevalidateAt(

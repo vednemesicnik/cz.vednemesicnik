@@ -1,6 +1,7 @@
 import { data } from 'react-router'
 
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
+import { prisma } from '~/utils/db.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
@@ -12,6 +13,7 @@ import { loadDashboardItems } from './utils/load-dashboard-items.server'
 // What *Odeslané* keeps after publishing (21b, x24ele6l).
 const RECENTLY_PUBLISHED_DAYS = 14
 const DRAFTS_SHOWN = 5
+const MAX_PINNED_ROWS = 200
 
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
@@ -48,53 +50,70 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     .get(PINNED_DASHBOARD_ROWS_PARAM)
     ?.split(',')
     .filter((key) => key !== '')
+    // No more than a dashboard shows: the queue, five drafts and Odeslané.
+    .slice(0, MAX_PINNED_ROWS)
 
-  const [queue, approved, drafts, submitted, recentlyPublished, pinnedItems] =
-    await Promise.all([
-      isApprover
-        ? loadDashboardItems({
-            ...base,
-            // The front of the queue first: it has waited longest (21a).
-            order: { direction: 'asc', field: 'submittedAt' },
-            selection: { ownOnly: false, queues: ['pending'] },
-          })
-        : [],
-      isApprover ? loadApprovedSummaries(context) : [],
-      // One's own drafts not yet sent, of every type (21a, gl703egt).
-      loadDashboardItems({
-        ...base,
-        order: { direction: 'desc', field: 'updatedAt' },
-        selection: { ownOnly: true, queues: ['draft'] },
-        take: DRAFTS_SHOWN,
-      }),
-      isApprover
-        ? []
-        : loadDashboardItems({
-            ...base,
-            order: { direction: 'desc', field: 'submittedAt' },
-            selection: { ownOnly: true, queues: ['submitted'] },
-          }),
-      isApprover
-        ? []
-        : loadDashboardItems({
-            ...base,
-            order: { direction: 'desc', field: 'publishedAt' },
-            selection: {
-              ownOnly: true,
-              publishedSince: new Date(
-                now.getTime() - RECENTLY_PUBLISHED_DAYS * 24 * 60 * 60 * 1000,
-              ),
-              queues: [],
-            },
-          }),
-      pinnedKeys === undefined
-        ? []
-        : loadDashboardItems({
-            ...base,
-            order: { direction: 'asc', field: 'updatedAt' },
-            selection: { keys: pinnedKeys },
-          }),
-    ])
+  const [
+    queue,
+    approved,
+    drafts,
+    submitted,
+    recentlyPublished,
+    pinnedItems,
+    ownArticle,
+  ] = await Promise.all([
+    isApprover
+      ? loadDashboardItems({
+          ...base,
+          // The front of the queue first: it has waited longest (21a).
+          order: { direction: 'asc', field: 'submittedAt' },
+          selection: { ownOnly: false, queues: ['pending'] },
+        })
+      : [],
+    isApprover ? loadApprovedSummaries(context) : [],
+    // One's own drafts not yet sent, of every type (21a, gl703egt).
+    loadDashboardItems({
+      ...base,
+      order: { direction: 'desc', field: 'updatedAt' },
+      selection: { ownOnly: true, queues: ['draft'] },
+      take: DRAFTS_SHOWN,
+    }),
+    isApprover
+      ? []
+      : loadDashboardItems({
+          ...base,
+          order: { direction: 'desc', field: 'submittedAt' },
+          selection: { ownOnly: true, queues: ['submitted'] },
+        }),
+    isApprover
+      ? []
+      : loadDashboardItems({
+          ...base,
+          order: { direction: 'desc', field: 'publishedAt' },
+          selection: {
+            ownOnly: true,
+            publishedSince: new Date(
+              now.getTime() - RECENTLY_PUBLISHED_DAYS * 24 * 60 * 60 * 1000,
+            ),
+            queues: [],
+          },
+        }),
+    pinnedKeys === undefined
+      ? []
+      : loadDashboardItems({
+          ...base,
+          order: { direction: 'asc', field: 'updatedAt' },
+          selection: { keys: pinnedKeys },
+        }),
+    // Všechny moje články filters the list by the author, which it offers
+    // only for an author with an article (21a).
+    isApprover
+      ? prisma.article.findFirst({
+          select: { id: true },
+          where: { authors: { some: { id: context.authorId } } },
+        })
+      : null,
+  ])
 
   // „Uživatel uložen“ after removing one's own administration (28g).
   const notice = await readAdminNotice(request)
@@ -111,6 +130,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         targetAuthorIds: [context.authorId],
       }).hasPermission,
       drafts,
+      hasOwnArticles: ownArticle !== null,
       isApprover,
       pinnedItems,
       queue,

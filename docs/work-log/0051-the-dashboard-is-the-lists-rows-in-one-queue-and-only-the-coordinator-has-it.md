@@ -48,8 +48,10 @@ inline in six list loaders. The actions ran inline in three list rows.
 
 - A new content type joins the dashboard with its row select and mapper, its action hook, and an
   entry in `DASHBOARD_TYPES`.
-- #752 (the 22f row on every list) can take the dashboard's live composition
-  (`compose-live-section.ts`) as its pattern.
+- **The 22f announcement is one hook,** `useLiveChanges` (`app/hooks/`): the tint, „změna …“,
+  the hold and one's own change. The article list and the dashboard both call it, as log 0035
+  asks. #752 (the 22f row on every list) can use it, with the dashboard's live composition
+  (`compose-live-section.ts`) as the pattern for rows that leave a section.
 
 ## Turned down
 

@@ -17,6 +17,7 @@ import {
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
+import type { LiveChange } from '~/hooks/use-live-changes'
 import { ArticleActionDialogs } from '../../../components/article-action-dialogs'
 import {
   ARTICLE_ACTION_LABELS,
@@ -26,7 +27,6 @@ import { useArticleActions } from '../../../utils/use-article-actions'
 import type { Route } from '../../+types/route'
 import { formatArticleRowMeta } from '../../utils/format-article-row-meta'
 import { formatLiveChangeLine } from '../../utils/format-live-change-line'
-import type { LiveChange } from '../../utils/use-live-article-rows'
 import styles from './_styles.module.css'
 
 type Article = Route.ComponentProps['loaderData']['articles'][number]
