@@ -1,0 +1,39 @@
+.card {
+  @layer component {
+    display: grid;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: box-shadow var(--transition-base);
+
+    &:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* The Image fills the frame. Its unlayered `height: auto` on the img beats
+       any layered `height`, so min- and max-height pin the img instead. */
+    & > * {
+      height: 100%;
+    }
+
+    & img {
+      min-height: 100%;
+      max-height: 100%;
+      object-fit: cover;
+    }
+  }
+}
+
+.square {
+  @layer variant {
+    aspect-ratio: 1;
+  }
+}
+
+.cover {
+  @layer variant {
+    aspect-ratio: 3 / 4;
+  }
+}

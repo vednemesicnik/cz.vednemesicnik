@@ -15,6 +15,8 @@ import { Image } from '~/components/image'
 import { MediaContentLink } from '~/components/media-content-link'
 import { Page } from '~/components/page'
 import { Tile } from '~/components/tile'
+import { TileCaption } from '~/components/tile-caption'
+import { TileCard } from '~/components/tile-card'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
 import { sizeConfig } from '~/config/size-config'
@@ -38,12 +40,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               return (
                 <TileGridItem key={podcast.id}>
                   <BaseLink to={`/podcasts/${podcast.slug}`}>
-                    <Tile label={podcast.title}>
-                      <Image
-                        {...podcast.cover.sources}
-                        alt={podcast.cover.altText}
-                        sizes={`${sizeConfig.podcastCover.width}px`}
-                      />
+                    <Tile>
+                      <TileCard>
+                        <Image
+                          {...podcast.cover.sources}
+                          alt={podcast.cover.altText}
+                          sizes={`${sizeConfig.podcastCover.width}px`}
+                        />
+                      </TileCard>
+                      <TileCaption>{podcast.title}</TileCaption>
                     </Tile>
                   </BaseLink>
                 </TileGridItem>
