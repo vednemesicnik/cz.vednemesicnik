@@ -26,14 +26,6 @@ export type TaxonomyRecordCopy = {
   deleteDescription: (articleCount: number) => string
   retractTitle: (name: string) => string
   retractDescription: (publishedArticleCount: number) => string
-  /** The bulk delete from the list's selection bar (25g). */
-  bulkDelete: {
-    /** The count in the title and the button, in the accusative. */
-    count: (count: number) => string
-    /** The sentence, in the singular for one record. */
-    description: (options: { count: number; hasArticles: boolean }) => string
-    toast: (deletedCount: number) => string
-  }
   toasts: {
     approved: string
     approvedAndPublished: string

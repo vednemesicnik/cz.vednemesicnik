@@ -48,8 +48,12 @@ export const getSelectionBarContent = (
 
   if (actions.length > 0) return { actions, message: null }
 
-  const byCount = (sentences: NumberSentences) =>
-    selected.length === 1 ? sentences.one : sentences.many
+  const byCount = (sentences: NumberSentences | null) =>
+    sentences === null
+      ? NO_COMMON_ACTION
+      : selected.length === 1
+        ? sentences.one
+        : sentences.many
 
   const message =
     isAllHeld && common.length > 0

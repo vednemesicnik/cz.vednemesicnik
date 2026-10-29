@@ -12,6 +12,7 @@ import { parseAdminListParams } from '~/utils/admin-list-params'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
+import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import { isPagePastLast } from '~/utils/is-page-past-last'
@@ -208,6 +209,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ]),
   )
 
+  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+
   const categories = pageIds.flatMap((id) => {
     const category = categoriesById.get(id)
 
@@ -223,10 +226,18 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       submittedAt: category.submittedAt,
     })
 
+    const submission = flags.submission?.state ?? null
+    const rowActions = getTaxonomyRowActions({
+      ...flags,
+      state: category.state,
+      submission,
+    })
+
     return [
       {
         articleCount: articleCounts.get(category.id) ?? 0,
-        canDelete: flags.canDelete,
+        // What the selection bar may apply to this row (22c, 25g).
+        bulkActions: getBulkActions({ ...rowActions, isApprover }),
         // The row's tag says what the detail's does (07a), with one fact (25a).
         factLine: getTaxonomyFactLine({
           authorName: category.author.name,
@@ -236,15 +247,17 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           updatedAt: category.updatedAt,
         }),
         id: category.id,
+        // Publishing it, the dialog says it isn't submitted (25g, as 22c).
+        isNotSubmitted:
+          category.state === 'draft' &&
+          flags.submission === null &&
+          flags.isSubmittable &&
+          !flags.isOwnContent,
         name: category.name,
         publishedArticleCount: category._count.articles,
         slug: category.slug,
-        state: flags.submission?.state ?? category.state,
-        ...getTaxonomyRowActions({
-          ...flags,
-          state: category.state,
-          submission: flags.submission?.state ?? null,
-        }),
+        state: submission ?? category.state,
+        ...rowActions,
       },
     ]
   })
@@ -264,7 +277,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       categories,
       currentPage: page,
       filters,
-      isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+      isApprover,
       isContributor,
       pageSize: PAGE_SIZE,
       query,

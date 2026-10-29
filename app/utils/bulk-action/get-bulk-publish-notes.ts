@@ -40,7 +40,8 @@ export const getBulkPublishNotes = ({
     ...sentence(pendingCount, noun.pending),
     ...sentence(notSubmittedCount, noun.notSubmitted),
   ]
-  const [skipped = null] = sentence(incompleteCount, noun.incomplete)
+  const [skipped = null] =
+    noun.incomplete === null ? [] : sentence(incompleteCount, noun.incomplete)
 
   return {
     notes: sentences.length === 0 ? null : sentences.join(' '),

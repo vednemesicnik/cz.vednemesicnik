@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest'
 
-import { ARTICLE_BULK_NOUN, ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
+import {
+  ARTICLE_BULK_NOUN,
+  CATEGORY_BULK_NOUN,
+  ISSUE_BULK_NOUN,
+  TAG_BULK_NOUN,
+} from '~/config/bulk-noun-config'
 
 import { getBulkConfirmCopy } from './get-bulk-confirm-copy'
 
@@ -127,5 +132,74 @@ describe('getBulkConfirmCopy — issues (26f)', () => {
     expect(
       copy({ action: 'publish', count: 3, onlyDrafts: false }).descriptions,
     ).toEqual([])
+  })
+})
+
+describe('getBulkConfirmCopy — categories and tags (25g)', () => {
+  const taxonomyCopy = (
+    options: Partial<Parameters<typeof getBulkConfirmCopy>[0]> &
+      Pick<Parameters<typeof getBulkConfirmCopy>[0], 'action' | 'count'>,
+  ) =>
+    getBulkConfirmCopy({
+      hasRelated: true,
+      isCreator: false,
+      noun: CATEGORY_BULK_NOUN,
+      onlyDrafts: true,
+      ...options,
+    })
+
+  test('retracts categories with published articles', () => {
+    expect(taxonomyCopy({ action: 'retract', count: 3 })).toEqual({
+      confirmLabel: 'Stáhnout z publikace 3 rubriky',
+      descriptions: [
+        'Rubriky se vrátí do konceptu. Zmizí z webu i z nabídky v editoru článku. Článkům zůstanou přiřazené, ale na webu se u nich nezobrazí.',
+      ],
+      title: 'Stáhnout z publikace 3 rubriky?',
+    })
+  })
+
+  test('a Creator’s sentence follows the first one (y0xq33k8)', () => {
+    expect(
+      taxonomyCopy({ action: 'retract', count: 1, isCreator: true })
+        .descriptions,
+    ).toEqual([
+      'Rubrika se vrátí do konceptu. Znovu ji publikovat může Koordinátor. Zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazená, ale na webu se u nich nezobrazí.',
+    ])
+  })
+
+  test('without published articles the last sentence goes', () => {
+    expect(
+      taxonomyCopy({
+        action: 'archive',
+        count: 8,
+        hasRelated: false,
+        noun: TAG_BULK_NOUN,
+      }),
+    ).toEqual({
+      confirmLabel: 'Archivovat 8 štítků',
+      descriptions: ['Štítky zmizí z webu i z nabídky v editoru článku.'],
+      title: 'Archivovat 8 štítků?',
+    })
+  })
+
+  test('deletes one category in the accusative, its articles kept', () => {
+    expect(taxonomyCopy({ action: 'delete', count: 1 })).toEqual({
+      confirmLabel: 'Smazat 1 rubriku',
+      descriptions: [
+        'Rubrika se trvale smaže a odebere z přiřazených článků. Články se nesmažou.',
+      ],
+      title: 'Smazat 1 rubriku?',
+    })
+    expect(
+      taxonomyCopy({ action: 'delete', count: 3, hasRelated: false })
+        .descriptions,
+    ).toEqual(['Rubriky se trvale smažou.'])
+  })
+
+  test('publishes tags without a date or an order', () => {
+    expect(
+      taxonomyCopy({ action: 'publish', count: 2, noun: TAG_BULK_NOUN })
+        .descriptions,
+    ).toEqual(['Štítky budou na webu.'])
   })
 })

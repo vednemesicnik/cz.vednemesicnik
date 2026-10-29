@@ -1,7 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href, useLocation } from 'react-router'
-import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -14,6 +13,7 @@ import {
 } from '~/components/admin/admin-table'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
+import { ContentSelectionBar } from '~/components/content-selection-bar'
 import { FilterBar } from '~/components/filter-bar'
 import { FilterBarFilters } from '~/components/filter-bar-filters'
 import { FilterBarGroup } from '~/components/filter-bar-group'
@@ -30,8 +30,10 @@ import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
+import { CATEGORY_BULK_NOUN } from '~/config/bulk-noun-config'
 import { CATEGORY_NOUN } from '~/config/list-noun-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
+import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -41,7 +43,6 @@ import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../../components/articles-tabs'
 import { TaxonomyItemRow } from '../../components/taxonomy-item-row'
-import { getTaxonomyBulkDeleteConfirmation } from '../../utils/get-taxonomy-bulk-delete-confirmation'
 import { CATEGORY_RECORD_COPY } from '../category-record-copy'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -50,6 +51,9 @@ import { SORT_KEYS } from './sort'
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
+
+// The keyed fetcher the selection bar submits through and the list reads (25g).
+const BULK_ACTION_FETCHER_KEY = 'categories-bulk-action'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
@@ -74,13 +78,20 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   useAdminNoticeToast(loaderData)
   const pending = useAdminListPending()
 
-  const deletableIds = categories
-    .filter((category) => category.canDelete)
+  // A row joins the selection when the bar could apply something to it (25g).
+  const selectableIds = categories
+    .filter((category) => category.bulkActions.length > 0)
     .map((category) => category.id)
-  const selection = useAdminTableSelection(deletableIds)
+  const selection = useAdminTableSelection(selectableIds)
+  useBulkActionResult({
+    fetcherKey: BULK_ACTION_FETCHER_KEY,
+    noun: CATEGORY_BULK_NOUN,
+    onClear: selection.clear,
+  })
   const selectedCategories = categories.filter((category) =>
     selection.selectedIds.includes(category.id),
   )
+  const hasSelection = selectedCategories.length > 0
 
   const states = filters.state ?? []
   const hasOtherFilters = query !== ''
@@ -131,17 +142,28 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         {newCategoryButton}
       </ListHeader>
       <FilterCell>
-        <AdminBulkActionsBar
-          action={href('/administration/articles/categories')}
-          confirmation={getTaxonomyBulkDeleteConfirmation(
-            selectedCategories,
-            CATEGORY_RECORD_COPY,
-          )}
-          formatToast={CATEGORY_RECORD_COPY.bulkDelete.toast}
-          onDone={selection.clear}
-          selectedIds={selection.selectedIds}
-        />
-        <FilterBar replaced={selection.selectedIds.length > 0}>
+        {/* The selection bar takes the filter row's place in the same cell,
+            so the table does not move (22c, cioukqn6); not on a phone (22g). */}
+        {hasSelection && (
+          <ContentSelectionBar
+            action={href('/administration/articles/categories')}
+            fetcherKey={BULK_ACTION_FETCHER_KEY}
+            isCreator={!isApprover && !isContributor}
+            noun={CATEGORY_BULK_NOUN}
+            onClear={selection.clear}
+            records={selectedCategories.map((category) => ({
+              ...category,
+              isHeldByOther: false,
+              isIncomplete: false,
+              related: {
+                count: category.articleCount,
+                publishedCount: category.publishedArticleCount,
+              },
+              title: category.name,
+            }))}
+          />
+        )}
+        <FilterBar replaced={hasSelection}>
           <FilterBarGroup>
             <FilterBarSearch
               defaultValue={query}
@@ -194,7 +216,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
-              disabled={deletableIds.length === 0}
+              disabled={selectableIds.length === 0}
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />

@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest'
 
-import { ARTICLE_BULK_NOUN, ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
+import {
+  ARTICLE_BULK_NOUN,
+  CATEGORY_BULK_NOUN,
+  ISSUE_BULK_NOUN,
+} from '~/config/bulk-noun-config'
 
 import { getSelectionBarContent } from './get-selection-bar-content'
 
@@ -209,5 +213,22 @@ describe('getSelectionBarContent — issues (26f)', () => {
       actions: [],
       message: 'Vybraná čísla nelze publikovat — jsou neúplná.',
     })
+  })
+})
+
+describe('getSelectionBarContent — categories (25g)', () => {
+  test('content with no edit hold falls back to no common action', () => {
+    expect(
+      getSelectionBarContent(
+        [
+          {
+            bulkActions: ['retract', 'archive'],
+            isHeldByOther: true,
+            isIncomplete: false,
+          },
+        ],
+        CATEGORY_BULK_NOUN,
+      ),
+    ).toEqual({ actions: [], message: 'Pro tento výběr není společná akce.' })
   })
 })

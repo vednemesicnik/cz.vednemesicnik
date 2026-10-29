@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest'
 
-import { ARTICLE_BULK_NOUN, ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
+import {
+  ARTICLE_BULK_NOUN,
+  CATEGORY_BULK_NOUN,
+  ISSUE_BULK_NOUN,
+} from '~/config/bulk-noun-config'
 
 import { getBulkPublishNotes } from './get-bulk-publish-notes'
 
@@ -94,6 +98,23 @@ describe('getBulkPublishNotes — issues (26f, 0farrwua)', () => {
     expect(getBulkPublishNotes({ ...counts, noun: ISSUE_BULK_NOUN })).toEqual({
       notes,
       skipped,
+    })
+  })
+})
+
+describe('getBulkPublishNotes — categories (25g)', () => {
+  test('a category waits with ji, nothing is ever incomplete', () => {
+    expect(
+      getBulkPublishNotes({
+        incompleteCount: 2,
+        notSubmittedCount: 1,
+        noun: CATEGORY_BULK_NOUN,
+        pendingCount: 1,
+      }),
+    ).toEqual({
+      notes:
+        '1 rubrika čeká na schválení. Publikováním ji schválíte. 1 rubrika není odeslaná ke schválení.',
+      skipped: null,
     })
   })
 })

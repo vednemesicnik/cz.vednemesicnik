@@ -1,7 +1,3 @@
-import { TAG_NOUN } from '~/config/list-noun-config'
-import { formatBulkDeleteToast } from '~/utils/format-bulk-delete-toast'
-import { formatListCount } from '~/utils/format-list-count'
-
 import type { TaxonomyRecordCopy } from '../utils/taxonomy-record-copy'
 
 /**
@@ -16,21 +12,6 @@ export const TAG_RECORD_COPY: TaxonomyRecordCopy = {
     'Štítek zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazený, ale na webu se u nich nezobrazí.',
   archiveTitle: (name) => `Archivovat štítek „${name}“?`,
   articlesTitle: 'Články se štítkem',
-  bulkDelete: {
-    // „štítek“ is inanimate: the accusative is the nominative.
-    count: (count) => formatListCount(count, TAG_NOUN.countForms),
-    description: ({ count, hasArticles }) => {
-      const deleted =
-        count === 1 ? 'Štítek se trvale smaže' : 'Štítky se trvale smažou'
-      const removed = count === 1 ? 'odebere' : 'odeberou'
-
-      return hasArticles
-        ? `${deleted} a ${removed} z přiřazených článků. Články se nesmažou.`
-        : `${deleted}.`
-    },
-    toast: (deletedCount) =>
-      formatBulkDeleteToast(deletedCount, TAG_NOUN.countForms),
-  },
   deleteDescription: (articleCount) =>
     articleCount === 0
       ? 'Štítek se trvale smaže.'

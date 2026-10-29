@@ -23,6 +23,7 @@ type Props = {
   noun: BulkNoun
   onlyDrafts: boolean
   isCreator: boolean
+  hasRelated?: boolean
   notes?: string[]
   skipped: string | null
   onConfirm: () => void
@@ -42,6 +43,8 @@ type Props = {
  *   the list does.
  * @param props.isCreator - A Creator confirms: retracting says who publishes
  *   again.
+ * @param props.hasRelated - A record has related content the action reaches
+ *   (a category's articles): the sentence says what happens to it (25g).
  * @param props.notes - Publishing, the waiting, not-submitted and incomplete
  *   sentences in full ink, each only when the selection holds such a record.
  * @param props.skipped - What the action skips and why (22f), or `null`.
@@ -52,6 +55,7 @@ export const BulkConfirmDialog = ({
   noun,
   onlyDrafts,
   isCreator,
+  hasRelated = false,
   notes = [],
   skipped,
   onConfirm,
@@ -61,6 +65,7 @@ export const BulkConfirmDialog = ({
   const { confirmLabel, descriptions, title } = getBulkConfirmCopy({
     action,
     count: records.length,
+    hasRelated,
     isCreator,
     noun,
     onlyDrafts,
