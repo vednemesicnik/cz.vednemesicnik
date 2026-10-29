@@ -90,7 +90,8 @@ You are the **planning stage** of the issue pipeline:
    - `prisma migrate dev`/`reset` is consent-guarded for agents — plan it as a step the user
      confirms;
    - Conventional Commits — **the PR title included**: a multi-commit squash puts the PR
-     title on `dev`; issue and PR text in English.
+     title on `dev`; an issue title is not one (`pull-request-workflow`); issue and PR
+     text in English.
 
 8. **Present the plan for approval** with `ExitPlanMode`. Write no file before this — plan
    mode blocks writes, and an earlier write skips the approval step.
