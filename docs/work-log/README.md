@@ -66,7 +66,7 @@ Code comments cite an entry by its number (`log 0022`).
 | [0032](0032-a-new-archive-issue-is-a-draft-with-the-next-free-number.md) | A new archive issue is a draft with the next free number, and its number saves as one | 2026-10-20 | [0034](0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md) |
 | [0033](0033-an-issue-pdf-has-no-file-name-until-its-number-is-complete.md) | An issue's PDF has no file name until its year and order are both there | 2026-10-20 | [0039](0039-a-public-address-is-unique-only-once-published.md) |
 | [0034](0034-a-new-archive-issue-starts-without-a-number-and-the-editor-offers-the-next-free-one.md) | A new archive issue starts without a number, and the editor offers the next free one | 2026-10-21 | [0039](0039-a-public-address-is-unique-only-once-published.md) |
-| [0035](0035-every-administration-page-is-live.md) | Every administration page is live, and the article list's live row is the default on every list | 2026-10-22 |  |
+| [0035](0035-every-administration-page-is-live.md) | Every administration page is live, and the article list's live row is the default on every list | 2026-10-22 | [0052](0052-every-content-list-reloads-only-the-rows-on-screen.md) |
 | [0036](0036-a-delete-waits-for-every-open-editor.md) | A delete waits for every open editor, one's own included, and an editor whose content was deleted says so | 2026-10-22 |  |
 | [0037](0037-apps-script-web-apps-are-split-by-privilege.md) | Apps Script web apps are split by privilege | 2026-10-22 |  |
 | [0038](0038-decisions-are-kept-as-a-work-log.md) | Decisions are kept as a work log, not as binding records | 2026-10-23 |  |
@@ -83,3 +83,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0049](0049-a-podcast-is-a-draft-created-on-click-with-its-cover-saved-on-its-own.md) | A podcast is a draft created on click, its cover saves on its own, and an empty address stays empty | 2026-10-28 |  |
 | [0050](0050-every-content-list-runs-its-bulk-actions-through-one-runner.md) | Every content list runs its bulk actions through one runner over the state handlers | 2026-10-29 |  |
 | [0051](0051-the-dashboard-is-the-lists-rows-in-one-queue-and-only-the-coordinator-has-it.md) | The dashboard is the lists' rows in one queue, and only the Coordinator has a queue | 2026-10-29 |  |
+| [0052](0052-every-content-list-reloads-only-the-rows-on-screen.md) | Every content list reloads only the rows on screen, so a live change never moves a row | 2026-10-29 |  |
