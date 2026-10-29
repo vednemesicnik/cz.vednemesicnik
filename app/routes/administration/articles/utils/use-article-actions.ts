@@ -21,8 +21,8 @@ type Options = {
 /**
  * Runs an article's actions from its row (design 22a, 22b, 07c): a state
  * change at once, Publikovat…, Stáhnout z publikace…, Archivovat…, Změnit
- * datum… and Smazat… through their dialogs, and what an incomplete article
- * lacks (23h).
+ * datum… and Smazat… through their dialogs; an incomplete article says what
+ * it lacks (23h), and an action the edit hold refused says who edits it.
  *
  * @param options.article - The article's id and its address.
  * @param options.fetcherKey - The fetcher the actions and the dialogs share.
