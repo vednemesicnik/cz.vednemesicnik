@@ -29,8 +29,8 @@ export const getBulkPublishNotes = ({
   incompleteCount,
   noun,
 }: Options) => {
-  const sentence = (count: number, predicates: PluralSentences) =>
-    count === 0
+  const sentence = (count: number, predicates: PluralSentences | null) =>
+    count === 0 || predicates === null
       ? []
       : [
           `${formatListCount(count, noun.countForms)} ${pickPluralSentence(count, predicates)}`,
@@ -40,8 +40,7 @@ export const getBulkPublishNotes = ({
     ...sentence(pendingCount, noun.pending),
     ...sentence(notSubmittedCount, noun.notSubmitted),
   ]
-  const [skipped = null] =
-    noun.incomplete === null ? [] : sentence(incompleteCount, noun.incomplete)
+  const [skipped = null] = sentence(incompleteCount, noun.incomplete)
 
   return {
     notes: sentences.length === 0 ? null : sentences.join(' '),

@@ -23,11 +23,12 @@ import styles from './_styles.module.css'
 /**
  * A selected record as the bar reads it: `title` is how the dialog lists it,
  * `related` the content counted beside it where the list has any (25g, 27a).
+ * A record with no lifecycle (an author, 28g) has no `state`.
  */
 export type SelectedContent = {
   id: string
   title: string
-  state: ContentState | 'pending' | 'approved'
+  state?: ContentState | 'pending' | 'approved'
   bulkActions: BulkAction[]
   isHeldByOther: boolean
   isIncomplete: boolean
@@ -50,7 +51,8 @@ type Props = {
  * (design 22c, 25g, 26f, 27a): the bulk actions valid for every selected
  * record, each confirmed in one dialog. A record someone else edits is skipped
  * and said apart (22f); publishing skips an incomplete one too (23h, 26e). The
- * list answers the result (`useBulkActionResult`).
+ * authors list, which only deletes, uses it too (28g). The list answers the
+ * result (`useBulkActionResult`).
  *
  * @param props.action - The list's action the bar posts to.
  * @param props.fetcherKey - The keyed fetcher the list answers through.

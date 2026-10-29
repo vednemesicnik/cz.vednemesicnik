@@ -32,7 +32,8 @@ type Options = {
  *   list's bulk noun.
  * @returns „Publikováno: 3 články“, „Publikováno: 2 články. Přeskočeno: 1
  *   článek.“, „Staženo z publikace: 2 podcasty. Z webu zmizely i jejich
- *   publikované epizody.“, or „Nic nebylo publikováno. Přeskočeno: 3 články.“
+ *   publikované epizody.“, „Nic nebylo publikováno. Přeskočeno: 3 články.“,
+ *   or „Nic nebylo smazáno“.
  */
 export const formatBulkActionToast = ({
   action,
@@ -51,8 +52,11 @@ export const formatBulkActionToast = ({
   const skipped =
     skippedCount === 0 ? '' : ` Přeskočeno: ${formatCount(skippedCount)}.`
 
+  // One sentence goes without a period, as the result does (28g).
   if (processedCount === 0) {
-    return `Nic nebylo ${participle}.${skipped}`
+    return skipped === ''
+      ? `Nic nebylo ${participle}`
+      : `Nic nebylo ${participle}.${skipped}`
   }
 
   const result = `${participle.charAt(0).toUpperCase()}${participle.slice(1)}: ${formatCount(processedCount)}`
