@@ -1,3 +1,22 @@
+/* The label above the row, spaced like a field's (29b). */
+.photoField {
+  @layer route {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+  }
+}
+
+/* The design system's field label, on a section rather than a control. */
+.photoLabel {
+  @layer route {
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-sm);
+  }
+}
+
 .photo {
   @layer route {
     display: flex;

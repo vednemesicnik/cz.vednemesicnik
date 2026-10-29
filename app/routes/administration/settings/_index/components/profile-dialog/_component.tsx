@@ -1,6 +1,6 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { type ChangeEvent, useEffect, useRef, useState } from 'react'
+import { type ChangeEvent, useEffect, useId, useRef, useState } from 'react'
 import { useBlocker, useFetcher } from 'react-router'
 import type { z } from 'zod'
 
@@ -106,6 +106,7 @@ export const ProfileDialog = ({
   const formRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoRef = useRef<HTMLElement>(null)
+  const photoLabelId = useId()
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
   const saveButtonRef = useRef<HTMLButtonElement>(null)
   // Where focus was in the profile when a leave was blocked.
@@ -166,7 +167,7 @@ export const ProfileDialog = ({
     }
   }, [isSaved, ref])
 
-  // Focus goes to the row's Zrušit on the pick, and back to *Vybrat fotku*
+  // Focus goes to the row's Zrušit on the pick, and back to *Vybrat obrázek*
   // once the upload ended, unless it is somewhere else by then (a confirm).
   const wasUploadingRef = useRef(false)
   useEffect(() => {
@@ -259,7 +260,7 @@ export const ProfileDialog = ({
   // The sentence about name and bio only when they were changed (axz8tav5).
   const outcomeSentence =
     photo.lastOutcome === 'failed'
-      ? 'Fotku se nepodařilo nahrát.'
+      ? 'Obrázek se nepodařilo nahrát.'
       : 'Nahrávání je dokončeno.'
   const discardSentence = 'Změny jména a bia se neuloží.'
   // Against the stored values; the form's own `dirty` counts its hidden inputs.
@@ -272,68 +273,79 @@ export const ProfileDialog = ({
         <AdminModalContent>
           <AdminModalTitle>Upravit profil</AdminModalTitle>
 
-          <section aria-label={'Fotka'} className={styles.photo} ref={photoRef}>
-            <AdminAvatar
-              alt={imageAlt}
-              className={photo.upload !== null ? styles.uploading : undefined}
-              image={
-                photo.upload !== null
-                  ? toPreviewSources(photo.upload.previewUrl)
-                  : image
-              }
-              name={name}
-              size={'small'}
-            />
-            <div className={styles.photoControls}>
-              <p className={styles.hint}>
-                Nepovinná. Nejvýš 5 MB. Zobrazuje se v kruhu.
-              </p>
-              {/* The row stands in place of the links (29b). */}
-              {photo.isUploading ? (
-                <UploadStatus
-                  cancelLabel={'Zrušit nahrávání fotky'}
-                  onCancel={() => void photo.cancel()}
-                />
-              ) : (
-                <div className={styles.photoActions}>
-                  <Button
-                    data-pick-photo={true}
-                    disabled={photo.isRemoving || photo.isCancelling}
-                    onClick={() => fileInputRef.current?.click()}
-                    type={'button'}
-                    variant={'outline'}
-                  >
-                    Vybrat fotku
-                  </Button>
-                  {hasImage && (
-                    <TextButton
-                      disabled={photo.isRemoving || photo.isCancelling}
-                      onClick={() => void photo.remove()}
-                    >
-                      Odebrat
-                    </TextButton>
-                  )}
-                </div>
-              )}
-              <input
-                accept={'image/*'}
-                hidden
-                onChange={handleFileChange}
-                ref={fileInputRef}
-                type={'file'}
+          {/* Labelled like Jméno and Bio, and the label names the section (bqj3ueme). */}
+          <section
+            aria-labelledby={photoLabelId}
+            className={styles.photoField}
+            ref={photoRef}
+          >
+            <span className={styles.photoLabel} id={photoLabelId}>
+              Profilový obrázek{' '}
+              <span className={styles.optional}>nepovinný</span>
+            </span>
+            <div className={styles.photo}>
+              <AdminAvatar
+                alt={imageAlt}
+                className={photo.upload !== null ? styles.uploading : undefined}
+                image={
+                  photo.upload !== null
+                    ? toPreviewSources(photo.upload.previewUrl)
+                    : image
+                }
+                name={name}
+                size={'small'}
               />
-              {photo.imageError !== null && (
-                <ErrorMessageGroup>
-                  <ErrorMessage>{photo.imageError}</ErrorMessage>
-                </ErrorMessageGroup>
-              )}
-              <p className={styles.hint}>
-                Nová fotka se uloží po nahrání, odebrání platí hned. Zavřením
-                dialogu se uložená změna fotky nevrátí.
-              </p>
-              <span className={'screen-reader-only'} role={'status'}>
-                {photo.announcement}
-              </span>
+              <div className={styles.photoControls}>
+                <p className={styles.hint}>
+                  Nejvýš 5 MB. Zobrazuje se v kruhu.
+                </p>
+                {/* The row stands in place of the links (29b). */}
+                {photo.isUploading ? (
+                  <UploadStatus
+                    cancelLabel={'Zrušit nahrávání obrázku'}
+                    onCancel={() => void photo.cancel()}
+                  />
+                ) : (
+                  <div className={styles.photoActions}>
+                    <Button
+                      data-pick-photo={true}
+                      disabled={photo.isRemoving || photo.isCancelling}
+                      onClick={() => fileInputRef.current?.click()}
+                      type={'button'}
+                      variant={'outline'}
+                    >
+                      Vybrat obrázek
+                    </Button>
+                    {hasImage && (
+                      <TextButton
+                        disabled={photo.isRemoving || photo.isCancelling}
+                        onClick={() => void photo.remove()}
+                      >
+                        Odebrat
+                      </TextButton>
+                    )}
+                  </div>
+                )}
+                <input
+                  accept={'image/*'}
+                  hidden
+                  onChange={handleFileChange}
+                  ref={fileInputRef}
+                  type={'file'}
+                />
+                {photo.imageError !== null && (
+                  <ErrorMessageGroup>
+                    <ErrorMessage>{photo.imageError}</ErrorMessage>
+                  </ErrorMessageGroup>
+                )}
+                <p className={styles.hint}>
+                  Obrázek se uloží po nahrání, odebrání platí hned. Zavřením
+                  dialogu se uložená změna nevrátí.
+                </p>
+                <span className={'screen-reader-only'} role={'status'}>
+                  {photo.announcement}
+                </span>
+              </div>
             </div>
           </section>
 
@@ -423,7 +435,7 @@ export const ProfileDialog = ({
           {photo.isUploading ? (
             <>
               <AdminModalDescription>
-                Fotka se ještě nahrává. Po zavření se její nahrávání zruší.
+                Obrázek se ještě nahrává. Po zavření se nahrávání zruší.
               </AdminModalDescription>
               {isProfileChanged && (
                 <AdminModalDescription>{discardSentence}</AdminModalDescription>
@@ -461,7 +473,7 @@ export const ProfileDialog = ({
         >
           <AdminModalDescription>
             {photo.isUploading
-              ? 'Fotka se ještě nahrává. Po potvrzení se její nahrávání zruší, jméno a bio se uloží a profil se zavře.'
+              ? 'Obrázek se ještě nahrává. Po potvrzení se nahrávání zruší, jméno a bio se uloží a profil se zavře.'
               : `${outcomeSentence} Po potvrzení se jméno a bio uloží a profil se zavře.`}
           </AdminModalDescription>
         </UploadConfirmDialog>
@@ -488,7 +500,7 @@ export const ProfileDialog = ({
           {photo.isUploading ? (
             <>
               <AdminModalDescription>
-                Fotka se ještě nahrává. Po odchodu se její nahrávání zruší.
+                Obrázek se ještě nahrává. Po odchodu se nahrávání zruší.
               </AdminModalDescription>
               {isProfileChanged && (
                 <AdminModalDescription>{discardSentence}</AdminModalDescription>
