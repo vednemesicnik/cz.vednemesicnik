@@ -10,6 +10,7 @@ import {
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams } from '~/utils/admin-list-params'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
+import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
 import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
@@ -18,6 +19,7 @@ import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
@@ -38,6 +40,9 @@ import {
 } from '../utils/summarize-podcast-episodes'
 import type { Route } from './+types/route'
 import { SORT_KEYS } from './sort'
+
+// The bulk cap's size: a selection never outgrows the page (readBulkActionForm).
+const PAGE_SIZE = 20
 
 const TABLE_KEY = 'podcasts'
 
@@ -75,7 +80,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   })
 
   // One order (27a); an old ?sort=title or ?sort=createdAt falls back to it.
-  const { query } = parseAdminListParams(request, {
+  const { page, query } = parseAdminListParams(request, {
     defaultOrder: 'desc',
     defaultSort: 'latestEpisode',
     sortKeys: SORT_KEYS,
@@ -169,6 +174,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       }),
     ),
   ])
+
+  const totalCount = rawPodcasts.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+  // Deleting the last row on the last page revalidates a URL past the end.
+  if (isPagePastLast(page, totalPages)) {
+    throw redirect(buildLastPageRedirect(url, totalPages))
+  }
 
   const podcastIds = rawPodcasts.map((podcast) => podcast.id)
   const episodePermissionWhere = buildEpisodePermissionWhere(context)
@@ -318,12 +331,15 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       }
     })
     // The latest published episode first; a podcast without one goes last (27a).
+    // The whole match is ordered before the page is cut, so page 2 goes on
+    // where page 1 ends.
     .sort(
       (first, second) =>
         (second.latestPublishedAt?.getTime() ?? -1) -
           (first.latestPublishedAt?.getTime() ?? -1) ||
         second.createdAt.getTime() - first.createdAt.getTime(),
     )
+    .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return {
     ...savedFilters,
@@ -333,11 +349,15 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       state: 'draft',
       targetAuthorIds: [context.authorId],
     }).hasPermission,
+    currentPage: page,
     filters,
     isApprover,
     isContributor,
+    pageSize: PAGE_SIZE,
     podcasts,
     query,
     queueCounts,
+    totalCount,
+    totalPages,
   }
 }
