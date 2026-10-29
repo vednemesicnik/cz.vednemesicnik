@@ -1,15 +1,12 @@
 import type { Prisma } from '@generated/prisma/client'
 
-import { prisma } from '~/utils/db.server'
-
 import { getIssueTitle, type IssueTitleFields } from './get-issue-title'
+import { loadMainIssueNames } from './load-main-issue-names.server'
 
 /**
- * Adds each issue's `title`. A supplement is named after its main issue, so the
- * main issues of the supplements among them are loaded in one query, limited to
- * those the viewer may see: a supplement never names a draft its reader doesn't
- * know of; it names it by the order instead (design 26a, wo02u3xq). Of drafts
- * sharing the number, the issue that holds it as published names it (log 0039).
+ * Adds each issue's `title`. A supplement is named after its main issue, which
+ * `loadMainIssueNames` loads for the viewer; it names it by the order when the
+ * viewer can't see it (design 26a, wo02u3xq).
  *
  * @param issues - Issues selected with `issueTitleSelect`.
  * @param visibleWhere - The issues the viewer may see.
@@ -19,36 +16,7 @@ export const resolveIssueTitles = async <Issue extends IssueTitleFields>(
   issues: Issue[],
   visibleWhere: Prisma.IssueWhereInput,
 ): Promise<(Issue & { title: string })[]> => {
-  // A supplement without its number belongs to no main issue yet.
-  const supplements = issues.flatMap(({ supplement, year, order }) =>
-    supplement && year !== null && order !== null ? [{ order, year }] : [],
-  )
-
-  const mainIssues =
-    supplements.length === 0
-      ? []
-      : await prisma.issue.findMany({
-          // The holder first, then a named draft: SQLite sorts nulls last
-          // when descending.
-          orderBy: [{ publishedNumber: 'desc' }, { name: 'desc' }],
-          select: { name: true, order: true, year: true },
-          where: {
-            AND: [
-              visibleWhere,
-              {
-                // Without a name too: a nameless holder names nothing.
-                OR: supplements,
-                supplementSlug: '',
-              },
-            ],
-          },
-        })
-
-  const mainIssueNames = new Map<string, string | null>()
-  for (const { year, order, name } of mainIssues) {
-    const number = `${year}/${order}`
-    if (!mainIssueNames.has(number)) mainIssueNames.set(number, name)
-  }
+  const mainIssueNames = await loadMainIssueNames(issues, visibleWhere)
 
   return issues.map((issue) => ({
     ...issue,

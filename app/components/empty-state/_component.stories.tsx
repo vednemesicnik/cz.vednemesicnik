@@ -30,3 +30,10 @@ export const Playground: Story = {
     link: { label: 'Všechny články', to: '/articles' },
   },
 }
+
+/** The sentence alone, e.g. an empty archive (14c). */
+export const WithoutLink: Story = {
+  args: {
+    children: 'V archivu zatím žádné číslo není.',
+  },
+}

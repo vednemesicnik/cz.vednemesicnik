@@ -2,7 +2,7 @@ const DIGITS_ONLY = /^\d+$/
 
 /**
  * Reads a search param that must be a positive whole number, such as a page
- * number or a load-more limit.
+ * number or a page size.
  *
  * @param searchParams - The URL's search params.
  * @param name - The param to read.

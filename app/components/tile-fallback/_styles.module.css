@@ -1,0 +1,21 @@
+.fallback {
+  @layer component {
+    display: flex;
+    align-items: flex-end;
+    box-sizing: border-box;
+    padding: 14px;
+    background-image: var(--gradient-signature);
+    text-align: start;
+  }
+}
+
+/* White on the gradient only at a heading size (14c). */
+.text {
+  @layer component {
+    color: var(--text-on-accent);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+    text-wrap: pretty;
+  }
+}

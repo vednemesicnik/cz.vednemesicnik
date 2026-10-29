@@ -1,22 +1,23 @@
 import type { ContentState } from '@generated/prisma/enums'
 import { href } from 'react-router'
 
-import { LIMIT_PARAM, LIMIT_STEP } from '~/config/load-more-config'
 import { prisma } from '~/utils/db.server'
 import {
   createImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
+import { getIssueLinkLabel } from '~/utils/issue/get-issue-link-label'
 import { getIssuePdfFileName } from '~/utils/issue/get-issue-pdf-file-name'
+import { getIssueTileLabels } from '~/utils/issue/get-issue-tile-labels'
 import { issueTitleSelect } from '~/utils/issue/issue-title-select'
+import { loadMainIssueNames } from '~/utils/issue/load-main-issue-names.server'
 import { NON_EMPTY_ISSUE_WHERE } from '~/utils/issue/non-empty-issue-where'
-import { resolveIssueTitles } from '~/utils/issue/resolve-issue-titles.server'
-import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 import {
   getWebContentVisibility,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import type { Route } from './+types/route'
+import { groupIssuesByYear } from './utils/group-issues-by-year'
 
 type IssuePdfPathFields = {
   id: string
@@ -53,20 +54,14 @@ const getPdfPath = ({
 }
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const url = new URL(request.url)
-  const limit = parsePositiveIntegerParam(
-    url.searchParams,
-    LIMIT_PARAM,
-    LIMIT_STEP,
-  )
-
   const visibility = await getWebContentVisibility(request, ['issue'])
   // An empty draft never shows, not even as a preview (log 0020).
   const visibleIssues = {
     AND: [visibility.where('issue', ownByAuthor), NON_EMPTY_ISSUE_WHERE],
   }
 
-  const issuesPromise = prisma.issue.findMany({
+  // Every issue on one page; the year row handles the length (14a, fr24hvgc).
+  const issues = await prisma.issue.findMany({
     // A supplement stands right after its issue (design 26a).
     orderBy: [{ year: 'desc' }, { order: 'desc' }, { supplementSlug: 'asc' }],
     select: {
@@ -84,33 +79,38 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       state: true,
       supplementSlug: true,
     },
-    take: limit,
     where: visibleIssues,
   })
 
-  const issuesCountPromise = prisma.issue.count({
-    where: visibleIssues,
+  const mainIssueNames = await loadMainIssueNames(issues, visibleIssues)
+
+  // A tile without its PDF has nowhere to lead; one without a cover shows the
+  // gradient instead (14c).
+  const tiles = issues.flatMap(({ cover, year, order, ...issue }) => {
+    const pdfPath = getPdfPath({ ...issue, order, year })
+    if (pdfPath === null || year === null || order === null) return []
+
+    const numberedIssue = { ...issue, order, year }
+    const mainIssueName = issue.supplement
+      ? (mainIssueNames.get(`${year}/${order}`) ?? null)
+      : null
+
+    return [
+      {
+        ...getIssueTileLabels(numberedIssue, mainIssueName),
+        cover: cover
+          ? {
+              altText: cover.altText,
+              sources: createImageSources('issue-cover', cover),
+            }
+          : null,
+        id: issue.id,
+        linkLabel: getIssueLinkLabel(numberedIssue, mainIssueName),
+        pdfPath,
+        year,
+      },
+    ]
   })
 
-  const [issues, issuesCount] = await Promise.all([
-    issuesPromise,
-    issuesCountPromise,
-  ])
-
-  const titledIssues = await resolveIssueTitles(issues, visibleIssues)
-
-  const issuesWithSources = titledIssues.map(
-    ({ pdf, state, supplementSlug, ...issue }) => ({
-      ...issue,
-      cover: issue.cover
-        ? {
-            altText: issue.cover.altText,
-            sources: createImageSources('issue-cover', issue.cover),
-          }
-        : null,
-      pdfPath: getPdfPath({ ...issue, pdf, state, supplementSlug }),
-    }),
-  )
-
-  return { issues: issuesWithSources, issuesCount }
+  return { years: groupIssuesByYear(tiles) }
 }

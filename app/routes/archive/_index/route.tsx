@@ -1,87 +1,108 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { Link, useSearchParams } from 'react-router'
+import { Link } from 'react-router'
+import { EmptyState } from '~/components/empty-state'
+import { Heading } from '~/components/heading'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
-import { LoadMoreContent } from '~/components/load-more-content'
+import { NavRow } from '~/components/nav-row'
 import { Page } from '~/components/page'
 import { Tile } from '~/components/tile'
+import { TileCaption } from '~/components/tile-caption'
+import { TileCard } from '~/components/tile-card'
+import { TileFallback } from '~/components/tile-fallback'
 import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
-import { LIMIT_PARAM, LIMIT_STEP } from '~/config/load-more-config'
+import { TileSublabel } from '~/components/tile-sublabel'
 import { sizeConfig } from '~/config/size-config'
 import { getRevealProps } from '~/utils/get-reveal-props'
-import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
-import { useRevealBatchStart } from '~/utils/use-reveal-batch-start'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-type Issue = Route.ComponentProps['loaderData']['issues'][number]
-type RenderableIssue = Issue & {
-  cover: NonNullable<Issue['cover']>
-  pdfPath: string
-}
-
-// Without both files, or the PDF's address, there is nothing to open.
-const isRenderable = (issue: Issue): issue is RenderableIssue =>
-  issue.cover !== null && issue.pdfPath !== null
-
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  const { issues, issuesCount } = loaderData
+  const { years } = loaderData
 
-  const [searchParams] = useSearchParams()
-  const limit = parsePositiveIntegerParam(searchParams, LIMIT_PARAM, LIMIT_STEP)
-  const revealBatchStart = useRevealBatchStart(limit)
-
-  // Filtered up front: the reveal chain and the cover priority below are keyed
-  // to the position in the grid, which an issue skipped mid-map would shift.
-  const renderableIssues = issues.filter(isRenderable)
+  // The reveal chain and the cover priority follow the tile's place on the
+  // whole page, not within its year.
+  let pageIndex = -1
 
   return (
     <Page>
       <HeadlineGroup>
-        <Headline>Naše čísla pohromadě</Headline>
+        <Headline>Naše tištěná čísla pohromadě</Headline>
+        {years.length > 0 && (
+          <NavRow
+            accessibleLabel={'Roky v archivu'}
+            items={years.map(({ year }) => ({
+              label: String(year),
+              to: `#${year}`,
+            }))}
+            label={'Roky'}
+          />
+        )}
       </HeadlineGroup>
 
-      <TileGrid>
-        {renderableIssues.map((issue, index) => {
-          const { id, cover, pdfPath, title } = issue
-
-          const isLcpCandidate = index === 0
-          const coverAlt = cover.altText
-
-          return (
-            <TileGridItem
-              key={id}
-              {...getRevealProps(index - revealBatchStart)}
-            >
-              <Link reloadDocument={true} title={title} to={pdfPath}>
-                <Tile label={title}>
-                  <Image
-                    {...cover.sources}
-                    alt={coverAlt}
-                    // All covers render at the same size, so the first one is
-                    // the LCP candidate: it must not be lazy, and it is the
-                    // only image worth boosting — more `high` would dilute it.
-                    // The rest stay at the browser's own priority; `low` is for
-                    // above-the-fold images that are not visible.
-                    fetchPriority={isLcpCandidate ? 'high' : 'auto'}
-                    loading={isLcpCandidate ? 'eager' : 'lazy'}
-                    sizes={`${sizeConfig.archivedIssueCover.width}px`}
-                  />
-                </Tile>
-              </Link>
-            </TileGridItem>
-          )
-        })}
-      </TileGrid>
-
-      {issuesCount <= limit ? null : (
-        <LoadMoreContent action={'/archive'} limit={limit + LIMIT_STEP} />
+      {years.length === 0 && (
+        <EmptyState>V archivu zatím žádné číslo není.</EmptyState>
       )}
+
+      {years.map(({ year, issues }) => (
+        <section className={styles.year} key={year}>
+          <Heading className={styles.yearHeading} id={String(year)} level={2}>
+            {year}
+          </Heading>
+
+          <TileGrid className={styles.grid}>
+            {issues.map((issue) => {
+              const { id, cover, label, linkLabel, pdfPath, sublabel } = issue
+
+              pageIndex += 1
+              const isLcpCandidate = pageIndex === 0
+
+              return (
+                <TileGridItem key={id} {...getRevealProps(pageIndex)}>
+                  <Link
+                    aria-label={linkLabel}
+                    reloadDocument={true}
+                    to={pdfPath}
+                  >
+                    <Tile>
+                      <TileCard ratio={'cover'}>
+                        {cover ? (
+                          <Image
+                            {...cover.sources}
+                            alt={cover.altText}
+                            // All covers render at the same size, so the first
+                            // one is the LCP candidate: it must not be lazy, and
+                            // it is the only image worth boosting — more `high`
+                            // would dilute it. The rest stay at the browser's
+                            // own priority.
+                            fetchPriority={isLcpCandidate ? 'high' : 'auto'}
+                            loading={isLcpCandidate ? 'eager' : 'lazy'}
+                            sizes={`${sizeConfig.archivedIssueCover.width}px`}
+                          />
+                        ) : (
+                          <TileFallback>{label}</TileFallback>
+                        )}
+                      </TileCard>
+                      <TileCaption>
+                        {label}
+                        {sublabel !== null && (
+                          <TileSublabel>{sublabel}</TileSublabel>
+                        )}
+                      </TileCaption>
+                    </Tile>
+                  </Link>
+                </TileGridItem>
+              )
+            })}
+          </TileGrid>
+        </section>
+      ))}
     </Page>
   )
 }

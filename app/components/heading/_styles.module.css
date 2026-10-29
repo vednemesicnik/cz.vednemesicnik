@@ -7,9 +7,11 @@
   }
 }
 
+/* A section heading, well below the page headline (design 10a, 13a). */
 .heading2 {
   @layer component {
-    font-size: var(--font-size-4xl);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
   }
 }
 

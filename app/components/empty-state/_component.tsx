@@ -7,7 +7,7 @@ import styles from './_styles.module.css'
 type Props = {
   children: ReactNode
   className?: string
-  link: {
+  link?: {
     label: string
     to: ComponentProps<typeof Link>['to']
   }
@@ -18,17 +18,20 @@ type Props = {
  * "Tady zatím žádný článek není." + "Všechny články →".
  *
  * @param children - The sentence
- * @param link - Where to go instead; its arrow is hidden from screen readers
+ * @param link - Where to go instead; its arrow is hidden from screen readers.
+ *   Without one the sentence stands alone, e.g. an empty archive (14c).
  * @returns The empty state
  */
 export const EmptyState = ({ children, className, link }: Props) => {
   return (
     <div className={clsx(styles.emptyState, className)}>
       <p className={styles.text}>{children}</p>
-      <Link className={styles.link} to={link.to}>
-        {link.label}
-        <LinkArrow />
-      </Link>
+      {link && (
+        <Link className={styles.link} to={link.to}>
+          {link.label}
+          <LinkArrow />
+        </Link>
+      )}
     </div>
   )
 }

@@ -14,7 +14,7 @@ export default function RouteComponent() {
   return (
     <Page>
       <HeadlineGroup>
-        <Headline>Jsme tu pro vás</Headline>
+        <Headline>Pomozte nám vylepšit web</Headline>
       </HeadlineGroup>
       <Paragraph>Našli jste chybu nebo máte nápad na vylepšení?</Paragraph>
       <Paragraph>
