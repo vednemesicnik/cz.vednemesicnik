@@ -4,7 +4,7 @@ import type { Route } from './+types/route'
 
 export const meta: Route.MetaFunction = ({ location }) => {
   return createPageSEO({
-    description: 'Archiv čísel Vedneměsíčníku',
+    description: 'Tištěná čísla Vedneměsíčníku v PDF.',
     // The default image until covers get a share crop.
     ogImage: resolveOgImageUrl(null, ENV.BASE_URL),
     title: 'Archiv',
