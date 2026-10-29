@@ -1,14 +1,13 @@
 import { ArticleActionDialogs } from '~/routes/administration/articles/components/article-action-dialogs'
 import { ARTICLE_ACTION_LABELS } from '~/routes/administration/articles/utils/article-actions'
 import { useArticleActions } from '~/routes/administration/articles/utils/use-article-actions'
-
+import { getRowTint } from '~/utils/live-change/get-row-tint'
 import { SECTION_ROW_ACTION } from '../../dashboard-section-kind'
 import { DASHBOARD_TYPE_COPY } from '../../dashboard-types'
 import { getDashboardRowActions } from '../../utils/get-dashboard-row-actions'
 import { getDashboardRowLines } from '../../utils/get-dashboard-row-lines'
 import { DashboardRow } from '../dashboard-row'
 import type { DashboardRowProps } from '../dashboard-row/dashboard-row-props'
-import { getRowTint } from '../dashboard-row/get-row-tint'
 import { DashboardRowActions } from '../dashboard-row-actions'
 
 /**

@@ -18,6 +18,7 @@ import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
@@ -25,7 +26,6 @@ import { ARTICLE_ROW_SELECT } from '../utils/article-row-select'
 import { buildArticlePermissionWhere } from '../utils/build-article-permission-where'
 import { getArticleRow } from '../utils/get-article-row.server'
 import type { Route } from './+types/route'
-import { PINNED_ROWS_PARAM } from './pinned-rows'
 import { SORT_KEYS, type SortKey } from './sort'
 import { orderFilteredFirst } from './utils/order-filtered-first'
 
@@ -63,11 +63,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // A live load of the rows on screen (22f): fresh data for exactly those rows,
   // whatever the order, filters or page now say. A fetcher load, so it never
   // redirects.
-  const pinnedIds = url.searchParams
-    .get(PINNED_ROWS_PARAM)
-    ?.split(',')
-    .filter((id) => id !== '')
-    .slice(0, PAGE_SIZE)
+  const pinnedIds = parsePinnedRowIds(url, PAGE_SIZE)
   const isPinned = pinnedIds !== undefined
 
   // Before any query: a bare visit with a default preset never renders this list,

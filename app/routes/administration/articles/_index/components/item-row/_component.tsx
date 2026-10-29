@@ -18,6 +18,8 @@ import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
 import type { LiveChange } from '~/hooks/use-live-changes'
+import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
+import { getRowTint } from '~/utils/live-change/get-row-tint'
 import { ArticleActionDialogs } from '../../../components/article-action-dialogs'
 import {
   ARTICLE_ACTION_LABELS,
@@ -26,7 +28,6 @@ import {
 import { useArticleActions } from '../../../utils/use-article-actions'
 import type { Route } from '../../+types/route'
 import { formatArticleRowMeta } from '../../utils/format-article-row-meta'
-import { formatLiveChangeLine } from '../../utils/format-live-change-line'
 import styles from './_styles.module.css'
 
 type Article = Route.ComponentProps['loaderData']['articles'][number]
@@ -85,15 +86,7 @@ export const ItemRow = ({
   return (
     <TableRow
       muted={article.state === 'archived'}
-      // A tint held back for a hidden tab has none yet.
-      tint={
-        liveChange?.tintStartedAt == null
-          ? undefined
-          : {
-              sequence: liveChange.sequence,
-              startedAt: liveChange.tintStartedAt,
-            }
-      }
+      tint={getRowTint(liveChange)}
     >
       <TableSelectionCell
         checked={selected}
@@ -136,16 +129,12 @@ export const ItemRow = ({
       <TableStateCell>
         <StatusTag
           // Who edits it comes first: it changes what the row allows (22f).
-          detail={
-            article.holdLine ??
-            (liveChange === undefined || liveChange.isLineSuperseded === true
-              ? article.factLine
-              : formatLiveChangeLine({
-                  name: liveChange.name,
-                  now: new Date(),
-                  occurredAt: liveChange.occurredAt,
-                }))
-          }
+          detail={getLiveStateDetail({
+            factLine: article.factLine,
+            holdLine: article.holdLine,
+            liveChange,
+            now: new Date(),
+          })}
           state={article.state}
         />
       </TableStateCell>
