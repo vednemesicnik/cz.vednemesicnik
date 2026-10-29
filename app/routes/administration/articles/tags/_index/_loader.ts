@@ -12,20 +12,17 @@ import { parseAdminListParams } from '~/utils/admin-list-params'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
-import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
-import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
-
+import { buildTaxonomyPermissionWhere } from '../../utils/build-taxonomy-permission-where'
 import { getNameOrderedPage } from '../../utils/get-name-ordered-page'
-import { getTaxonomyFactLine } from '../../utils/get-taxonomy-fact-line'
-import { getTaxonomyRowActions } from '../../utils/get-taxonomy-row-actions'
+import { getTaxonomyRow } from '../../utils/get-taxonomy-row.server'
+import { TAXONOMY_ROW_SELECT } from '../../utils/taxonomy-row-select'
 import type { Route } from './+types/route'
 import { SORT_KEYS } from './sort'
 
@@ -57,23 +54,6 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     userId: context.userId,
   })
 
-  // Check view permissions for each state
-  const draftPerms = context.can({
-    action: 'view',
-    entity: 'article_tag',
-    state: 'draft',
-  })
-  const publishedPerms = context.can({
-    action: 'view',
-    entity: 'article_tag',
-    state: 'published',
-  })
-  const archivedPerms = context.can({
-    action: 'view',
-    entity: 'article_tag',
-    state: 'archived',
-  })
-
   // Looked up, not processed: by name, ascending (25a, 25e).
   const { order, page, query } = parseAdminListParams(request, {
     defaultOrder: 'asc',
@@ -83,16 +63,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const filters = parseAdminListFilters(request, TABLE_KEY)
 
-  const permissionWhere = {
-    OR: buildViewableStateFilters(
-      [
-        { rights: draftPerms, state: 'draft' },
-        { rights: publishedPerms, state: 'published' },
-        { rights: archivedPerms, state: 'archived' },
-      ],
-      { authorId: context.authorId },
-    ),
-  }
+  const permissionWhere = buildTaxonomyPermissionWhere(context, 'article_tag')
 
   // The query matches the name or the slug — public URLs expose the slug.
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
@@ -162,30 +133,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const [pageTags, pageArticleCounts] = await Promise.all([
     prisma.articleTag.findMany({
-      select: {
-        // What a reader sees on the tag's page (25a, 25e).
-        _count: {
-          select: { articles: { where: { state: 'published' } } },
-        },
-        author: {
-          select: { id: true, name: true, role: { select: { level: true } } },
-        },
-        id: true,
-        name: true,
-        reviews: {
-          select: {
-            createdAt: true,
-            reviewer: {
-              select: { id: true, role: { select: { level: true } } },
-            },
-          },
-        },
-        slug: true,
-        state: true,
-        submittedAt: true,
-        submittedBy: { select: { name: true } },
-        updatedAt: true,
-      },
+      select: TAXONOMY_ROW_SELECT,
       where: { id: { in: pageIds } },
     }),
     // Deleting takes the tag off every article it has, in any state (25d,
@@ -211,46 +159,12 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       return []
     }
 
-    const flags = getContentActionFlags(context, 'article_tag', {
-      authors: [tag.author],
-      reviews: tag.reviews,
-      state: tag.state,
-      submittedAt: tag.submittedAt,
-    })
-
-    const submission = flags.submission?.state ?? null
-    const rowActions = getTaxonomyRowActions({
-      ...flags,
-      state: tag.state,
-      submission,
-    })
-
     return [
-      {
+      getTaxonomyRow(tag, {
         articleCount: articleCounts.get(tag.id) ?? 0,
-        // What the selection bar may apply to this row (22c, 25g).
-        bulkActions: getBulkActions({ ...rowActions, isApprover }),
-        // The row's tag says what the detail's does (07a), with one fact (25e).
-        factLine: getTaxonomyFactLine({
-          authorName: tag.author.name,
-          state: tag.state,
-          submission: flags.submission,
-          submittedByName: tag.submittedBy?.name ?? null,
-          updatedAt: tag.updatedAt,
-        }),
-        id: tag.id,
-        // Publishing it, the dialog says it isn't submitted (25g, as 22c).
-        isNotSubmitted:
-          tag.state === 'draft' &&
-          flags.submission === null &&
-          flags.isSubmittable &&
-          !flags.isOwnContent,
-        name: tag.name,
-        publishedArticleCount: tag._count.articles,
-        slug: tag.slug,
-        state: submission ?? tag.state,
-        ...rowActions,
-      },
+        context,
+        entity: 'article_tag',
+      }),
     ]
   })
 
