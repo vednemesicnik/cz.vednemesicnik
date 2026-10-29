@@ -10,9 +10,15 @@ import {
 // may be selected on the current page (e.g. only rows the user can delete).
 // Selection is pruned automatically: `selectedIds` is derived on render as the
 // intersection with `selectableIds`, so ids that disappear after pagination,
-// search, or a revalidation drop out without any effect.
-export const useAdminTableSelection = (selectableIds: string[]) => {
-  const [selected, setSelected] = useState<Set<string>>(new Set())
+// search, or a revalidation drop out without any effect. `initialSelectedIds`
+// opens the table with rows already selected, in that order (design 21a).
+export const useAdminTableSelection = (
+  selectableIds: string[],
+  options?: { initialSelectedIds?: string[] },
+) => {
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(options?.initialSelectedIds),
+  )
 
   const selectedIds = getSelectedIds(selected, selectableIds)
   const selectedIdSet = new Set(selectedIds)

@@ -1,214 +1,121 @@
-import { data, type LoaderFunctionArgs } from 'react-router'
+import { data } from 'react-router'
 
-import { NON_EMPTY_ARTICLE_WHERE } from '~/routes/administration/articles/utils/non-empty-article-where'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
-import { prisma } from '~/utils/db.server'
-import { createFormattedDate } from '~/utils/format-date'
-import { NON_EMPTY_ISSUE_WHERE } from '~/utils/issue/non-empty-issue-where'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { getUserPermissionContext } from '~/utils/permissions/user/context/get-user-permission-context.server'
-import { NON_EMPTY_PODCAST_WHERE } from '~/utils/podcast/non-empty-podcast-where'
-import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
-import { buildIssuePermissionWhere } from '../archive/utils/build-issue-permission-where'
-import { getPendingArticleCategories } from './utils/get-pending-article-categories.server'
-import { getPendingArticleTags } from './utils/get-pending-article-tags.server'
-import { getPendingArticles } from './utils/get-pending-articles.server'
-import { getPendingIssues } from './utils/get-pending-issues.server'
-import { getPendingPodcastEpisodes } from './utils/get-pending-podcast-episodes.server'
-import { getPendingPodcasts } from './utils/get-pending-podcasts.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // Get permission contexts
-  const [authorContext, userContext] = await Promise.all([
-    getAuthorPermissionContext(request, {
-      actions: ['view'],
-      entities: [
-        'article',
-        'article_category',
-        'article_tag',
-        'podcast',
-        'podcast_episode',
-        'issue',
-      ],
-    }),
-    getUserPermissionContext(request, {
-      actions: ['view'],
-      entities: ['user', 'author'],
-    }),
-  ])
+import type { Route } from './+types/route'
+import { PINNED_DASHBOARD_ROWS_PARAM } from './pinned-dashboard-rows'
+import { loadApprovedSummaries } from './utils/load-approved-summaries.server'
+import { loadDashboardItems } from './utils/load-dashboard-items.server'
 
-  const currentAuthorId = authorContext.authorId
-  const currentRoleLevel = authorContext.roleLevel
+// What *Odeslané* keeps after publishing (21b, x24ele6l).
+const RECENTLY_PUBLISHED_DAYS = 14
+const DRAFTS_SHOWN = 5
 
-  // Check permissions for viewing draft content from other authors
-  const canViewArticleDrafts = authorContext.can({
-    action: 'view',
-    entity: 'article',
-    state: 'draft',
-  }).hasAny
-
-  const canViewPodcastDrafts = authorContext.can({
-    action: 'view',
-    entity: 'podcast',
-    state: 'draft',
-  }).hasAny
-
-  const canViewPodcastEpisodeDrafts = authorContext.can({
-    action: 'view',
-    entity: 'podcast_episode',
-    state: 'draft',
-  }).hasAny
-
-  const canViewIssueDrafts = authorContext.can({
-    action: 'view',
-    entity: 'issue',
-    state: 'draft',
-  }).hasAny
-
-  const canViewArticleCategoryDrafts = authorContext.can({
-    action: 'view',
-    entity: 'article_category',
-    state: 'draft',
-  }).hasAny
-
-  const canViewArticleTagDrafts = authorContext.can({
-    action: 'view',
-    entity: 'article_tag',
-    state: 'draft',
-  }).hasAny
-
-  // Fetch draft content created by other authors (for review)
-  const pendingOptions = { currentAuthorId, currentRoleLevel }
-
-  const emptyResult = { count: 0, items: [] }
-
-  const [
-    draftArticles,
-    draftPodcasts,
-    draftPodcastEpisodes,
-    draftIssues,
-    draftArticleCategories,
-    draftArticleTags,
-  ] = await Promise.all([
-    canViewArticleDrafts
-      ? getPendingArticles(pendingOptions)
-      : Promise.resolve(emptyResult),
-    canViewPodcastDrafts
-      ? getPendingPodcasts(pendingOptions)
-      : Promise.resolve(emptyResult),
-    canViewPodcastEpisodeDrafts
-      ? getPendingPodcastEpisodes(pendingOptions)
-      : Promise.resolve(emptyResult),
-    canViewIssueDrafts
-      ? getPendingIssues({
-          ...pendingOptions,
-          visibleWhere: buildIssuePermissionWhere(authorContext),
-        })
-      : Promise.resolve(emptyResult),
-    canViewArticleCategoryDrafts
-      ? getPendingArticleCategories(pendingOptions)
-      : Promise.resolve(emptyResult),
-    canViewArticleTagDrafts
-      ? getPendingArticleTags(pendingOptions)
-      : Promise.resolve(emptyResult),
-  ])
-
-  // Fetch statistics
-  const [
-    totalArticles,
-    publishedArticles,
-    totalPodcasts,
-    publishedPodcasts,
-    totalPodcastEpisodes,
-    publishedPodcastEpisodes,
-    totalIssues,
-    publishedIssues,
-  ] = await Promise.all([
-    prisma.article.count({ where: NON_EMPTY_ARTICLE_WHERE }),
-    prisma.article.count({ where: { state: 'published' } }),
-    prisma.podcast.count({ where: NON_EMPTY_PODCAST_WHERE }),
-    prisma.podcast.count({ where: { state: 'published' } }),
-    prisma.podcastEpisode.count({ where: NON_EMPTY_EPISODE_WHERE }),
-    prisma.podcastEpisode.count({ where: { state: 'published' } }),
-    prisma.issue.count({ where: NON_EMPTY_ISSUE_WHERE }),
-    prisma.issue.count({ where: { state: 'published' } }),
-  ])
-
-  const totalPendingCount =
-    draftArticles.count +
-    draftPodcasts.count +
-    draftPodcastEpisodes.count +
-    draftIssues.count +
-    draftArticleCategories.count +
-    draftArticleTags.count
-
-  // Pending items cross the loader boundary with the date they were submitted,
-  // from which they wait (design 07d), as a FormattedDate.
-  const withFormattedSubmittedAt = <Item extends { submittedAt: Date | null }>(
-    item: Item,
-  ) => ({
-    ...item,
-    submittedAt: createFormattedDate(item.submittedAt),
+export const loader = async ({ request, url }: Route.LoaderArgs) => {
+  const context = await getAuthorPermissionContext(request, {
+    actions: [
+      'view',
+      'create',
+      'update',
+      'delete',
+      'publish',
+      'retract',
+      'archive',
+      'restore',
+      'review',
+    ],
+    entities: [
+      'article',
+      'article_category',
+      'article_tag',
+      'podcast',
+      'podcast_episode',
+      'issue',
+    ],
   })
 
-  const pendingReviewItems = {
-    articleCategories: draftArticleCategories.items.map(
-      withFormattedSubmittedAt,
-    ),
-    articles: draftArticles.items.map(withFormattedSubmittedAt),
-    articleTags: draftArticleTags.items.map(withFormattedSubmittedAt),
-    issues: draftIssues.items.map(withFormattedSubmittedAt),
-    podcastEpisodes: draftPodcastEpisodes.items.map(withFormattedSubmittedAt),
-    podcasts: draftPodcasts.items.map(withFormattedSubmittedAt),
-    totalCount: totalPendingCount,
-  }
+  const now = new Date()
+  // Only the Coordinator approves, so only the Coordinator has a queue
+  // (gbsczekj, 21b).
+  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+  const base = { context, now }
 
-  const statistics = {
-    articles: { published: publishedArticles, total: totalArticles },
-    issues: { published: publishedIssues, total: totalIssues },
-    podcastEpisodes: {
-      published: publishedPodcastEpisodes,
-      total: totalPodcastEpisodes,
-    },
-    podcasts: { published: publishedPodcasts, total: totalPodcasts },
-  }
+  // A live load of the rows on screen (22f, gl703egt): fresh data for exactly
+  // those rows, even the ones that left their section.
+  const pinnedKeys = url.searchParams
+    .get(PINNED_DASHBOARD_ROWS_PARAM)
+    ?.split(',')
+    .filter((key) => key !== '')
 
-  // Check permissions for navigation cards
-  const permissions = {
-    canViewArticleCategories: authorContext.can({
-      action: 'view',
-      entity: 'article_category',
-    }).hasPermission,
-    canViewArticles: authorContext.can({ action: 'view', entity: 'article' })
-      .hasPermission,
-    canViewArticleTags: authorContext.can({
-      action: 'view',
-      entity: 'article_tag',
-    }).hasPermission,
-    canViewAuthors: userContext.can({
-      action: 'view',
-      entity: 'author',
-      targetUserId: userContext.userId,
-    }).hasPermission,
-    canViewIssues: authorContext.can({ action: 'view', entity: 'issue' })
-      .hasPermission,
-    canViewPodcasts: authorContext.can({ action: 'view', entity: 'podcast' })
-      .hasPermission,
-    canViewUsers: userContext.can({
-      action: 'view',
-      entity: 'user',
-      targetUserId: userContext.userId,
-    }).hasPermission,
-  }
+  const [queue, approved, drafts, submitted, recentlyPublished, pinnedItems] =
+    await Promise.all([
+      isApprover
+        ? loadDashboardItems({
+            ...base,
+            // The front of the queue first: it has waited longest (21a).
+            order: { direction: 'asc', field: 'submittedAt' },
+            selection: { ownOnly: false, queues: ['pending'] },
+          })
+        : [],
+      isApprover ? loadApprovedSummaries(context) : [],
+      // One's own drafts not yet sent, of every type (21a, gl703egt).
+      loadDashboardItems({
+        ...base,
+        order: { direction: 'desc', field: 'updatedAt' },
+        selection: { ownOnly: true, queues: ['draft'] },
+        take: DRAFTS_SHOWN,
+      }),
+      isApprover
+        ? []
+        : loadDashboardItems({
+            ...base,
+            order: { direction: 'desc', field: 'submittedAt' },
+            selection: { ownOnly: true, queues: ['submitted'] },
+          }),
+      isApprover
+        ? []
+        : loadDashboardItems({
+            ...base,
+            order: { direction: 'desc', field: 'publishedAt' },
+            selection: {
+              ownOnly: true,
+              publishedSince: new Date(
+                now.getTime() - RECENTLY_PUBLISHED_DAYS * 24 * 60 * 60 * 1000,
+              ),
+              queues: [],
+            },
+          }),
+      pinnedKeys === undefined
+        ? []
+        : loadDashboardItems({
+            ...base,
+            order: { direction: 'asc', field: 'updatedAt' },
+            selection: { keys: pinnedKeys },
+          }),
+    ])
 
   // „Uživatel uložen“ after removing one's own administration (28g).
   const notice = await readAdminNotice(request)
 
   return data(
     {
-      pendingReviewItems,
-      permissions,
-      statistics,
+      approved,
+      // Whose live changes are not someone else's (22f).
+      authorId: context.authorId,
+      canCreateArticle: context.can({
+        action: 'create',
+        entity: 'article',
+        state: 'draft',
+        targetAuthorIds: [context.authorId],
+      }).hasPermission,
+      drafts,
+      isApprover,
+      pinnedItems,
+      queue,
+      // Waiting and approved first, then what was published lately (21b).
+      submitted: [...submitted, ...recentlyPublished],
       toast: notice.toast,
     },
     notice.toast === null
