@@ -1,12 +1,6 @@
 import { clsx } from 'clsx'
-import { useRef, useState } from 'react'
-import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
-import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
 import {
   TableActionsCell,
   TableCell,
@@ -20,26 +14,15 @@ import {
   TableSelectionCell,
   TableStateCell,
 } from '~/components/admin/admin-table'
-import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
-import { FORM_CONFIG } from '~/config/form-config'
-import { useContentActionResult } from '~/hooks/use-content-action-result'
-import type { action as articleAction } from '../../../article/_index/_action'
-import { ArticleChangeDateDialog } from '../../../components/article-change-date-dialog'
-import { ArticleMissingDialog } from '../../../components/article-missing-dialog'
-import { ArticlePublishDialog } from '../../../components/article-publish-dialog'
-import {
-  ArticleStateDialog,
-  type ArticleStateDialogKind,
-} from '../../../components/article-state-dialog'
+import { ArticleActionDialogs } from '../../../components/article-action-dialogs'
 import {
   ARTICLE_ACTION_LABELS,
-  ARTICLE_DIRECT_INTENTS,
   type ArticleAction,
-  NOT_SUBMITTED_NOTE,
 } from '../../../utils/article-actions'
+import { useArticleActions } from '../../../utils/use-article-actions'
 import type { Route } from '../../+types/route'
 import { formatArticleRowMeta } from '../../utils/format-article-row-meta'
 import { formatLiveChangeLine } from '../../utils/format-live-change-line'
@@ -76,70 +59,11 @@ export const ItemRow = ({
   onSelect,
   liveChange,
 }: Props) => {
-  const { id } = article
-  const action = href('/administration/articles/:articleId', { articleId: id })
-  const editHref = href('/administration/articles/:articleId/edit-article', {
-    articleId: id,
+  const actions = useArticleActions({
+    article,
+    fetcherKey: `article-row-${article.id}`,
   })
-
-  const fetcherKey = `article-row-${id}`
-  const fetcher = useFetcher<typeof articleAction>({ key: fetcherKey })
-  const isSubmitting = fetcher.state !== 'idle'
-  const authenticityToken = useAuthenticityToken()
-  const navigate = useNavigate()
-
-  const { closeMissingList, missingList } = useContentActionResult(fetcher.data)
-  const [stateDialog, setStateDialog] = useState<ArticleStateDialogKind | null>(
-    null,
-  )
-  const [publishDialog, setPublishDialog] = useState<{
-    isApproval: boolean
-  } | null>(null)
-
-  const deleteDialogRef = useRef<HTMLDialogElement>(null)
-  const [isChangeDateOpen, setIsChangeDateOpen] = useState(false)
-  const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(
-    deleteDialogRef,
-    { action, key: fetcherKey },
-  )
-
-  const runAction = (articleAction: ArticleAction) => {
-    const intent = ARTICLE_DIRECT_INTENTS[articleAction]
-
-    if (intent !== undefined) {
-      const formData = new FormData()
-      formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
-      formData.append(FORM_CONFIG.intent.name, intent)
-      void fetcher.submit(formData, { action, method: 'POST' })
-      return
-    }
-
-    // An incomplete article answers the publish with the 23h list.
-    switch (articleAction) {
-      case 'approve-and-publish':
-        return setPublishDialog({ isApproval: true })
-      case 'publish':
-        return setPublishDialog({ isApproval: false })
-      case 'retract':
-      case 'archive':
-        return setStateDialog(articleAction)
-      case 'change-date':
-        return setIsChangeDateOpen(true)
-      case 'delete':
-        return openDeleteDialog()
-      case 'edit':
-        return navigate(editHref)
-      case 'view-on-web':
-        if (article.slug === null) return
-        // Only a published address is unique: the id says which draft to
-        // show (log 0039).
-        return window.open(
-          `${href('/articles/:articleSlug', { articleSlug: article.slug })}?id=${article.id}`,
-          '_blank',
-          'noopener',
-        )
-    }
-  }
+  const { detailHref, editHref, isSubmitting, runAction } = actions
 
   const rowAction = article.row
   const [firstCategory, ...otherCategories] = article.categoryNames
@@ -180,7 +104,7 @@ export const ItemRow = ({
       <TableNameCell>
         <TableRowLink
           className={clsx(article.isUntitled && styles.untitled)}
-          to={action}
+          to={detailHref}
         >
           {article.title}
         </TableRowLink>
@@ -269,56 +193,12 @@ export const ItemRow = ({
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
-          {article.menu.includes('delete') && (
-            <AdminDeleteConfirmationDialog
-              description={'Smazání je nevratné.'}
-              ref={deleteDialogRef}
-              subject={article.title}
-              title={
-                article.state === 'archived'
-                  ? 'Smazat archivovaný článek?'
-                  : 'Smazat koncept?'
-              }
-            />
-          )}
-          {isChangeDateOpen && (
-            <ArticleChangeDateDialog
-              action={action}
-              fetcherKey={fetcherKey}
-              onClose={() => setIsChangeDateOpen(false)}
-              publishedAt={article.publishedAt}
-              title={article.title}
-            />
-          )}
-          {stateDialog !== null && (
-            <ArticleStateDialog
-              action={action}
-              articleTitle={article.title}
-              fetcherKey={fetcherKey}
-              isApprover={isApprover}
-              kind={stateDialog}
-              onClose={() => setStateDialog(null)}
-            />
-          )}
-          {publishDialog !== null && (
-            <ArticlePublishDialog
-              action={action}
-              articleTitle={article.title}
-              authorNames={article.authorNames}
-              fetcherKey={fetcherKey}
-              isApproval={publishDialog.isApproval}
-              note={article.isNotSubmitted ? NOT_SUBMITTED_NOTE : null}
-              onClose={() => setPublishDialog(null)}
-              originalPublishedAt={article.publishedAt}
-            />
-          )}
-          {missingList !== null && (
-            <ArticleMissingDialog
-              editHref={editHref}
-              missingList={missingList}
-              onClose={closeMissingList}
-            />
-          )}
+          <ArticleActionDialogs
+            actions={actions}
+            article={article}
+            canDelete={article.menu.includes('delete')}
+            isApprover={isApprover}
+          />
         </div>
       </TableActionsCell>
     </TableRow>
