@@ -1,7 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { useState } from 'react'
-import { href } from 'react-router'
+import {
+  href,
+  type ShouldRevalidateFunction,
+  useRevalidator,
+} from 'react-router'
 
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
@@ -33,7 +37,7 @@ import { EPISODE_BULK_NOUN } from '~/config/bulk-noun-config'
 import { EPISODE_NOUN } from '~/config/list-noun-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useContentEvents } from '~/hooks/use-content-events'
-import { useRevalidateAt } from '~/hooks/use-revalidate-at'
+import { useLiveRows } from '~/hooks/use-live-rows'
 import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
@@ -53,6 +57,7 @@ import { NewEpisodeButton } from './components/new-episode-button'
 import { PodcastHeader } from './components/podcast-header'
 import { PodcastHistoryDialog } from './components/podcast-history-dialog'
 import { SORT_KEYS } from './sort'
+import { layoutOnlyRevalidation } from './utils/layout-only-revalidation'
 
 export { action } from './_action'
 export { loader } from './_loader'
@@ -61,27 +66,65 @@ export { meta } from './_meta'
 // The keyed fetcher the episode table's bar submits through (27b).
 const EPISODES_BULK_ACTION_FETCHER_KEY = 'episodes-bulk-action'
 
+// The podcast's own change elsewhere reloads the breadcrumb's layout only; the
+// page follows through its live load (22f).
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  currentUrl,
+  nextUrl,
+  formMethod,
+  defaultShouldRevalidate,
+}) =>
+  layoutOnlyRevalidation.consume() &&
+  formMethod === undefined &&
+  currentUrl.href === nextUrl.href
+    ? false
+    : defaultShouldRevalidate
+
 /**
  * A podcast and its episodes on one page (design 27b): the podcast's header,
  * then its episode table with the 22a filter block.
  */
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
+  const podcastId = loaderData.podcast.id
+
+  // Live, but the episode rows stay put until the next load (22f, xkg6rdz4);
+  // the header follows in the same load.
+  const {
+    live,
+    liveChanges,
+    rows: episodes,
+  } = useLiveRows({
+    authorId: loaderData.authorId,
+    fetcherKey: 'podcast-page-live',
+    // An episode event names no podcast, so any of them looks again; only
+    // this podcast's episodes come back.
+    filter: (event) =>
+      event.entity === 'podcast_episode' ||
+      (event.entity === 'podcast' && event.entityId === podcastId),
+    // An edit hold's expiry sends no event; the page looks again then (07g).
+    heldUntilOf: (data) => [
+      data.heldUntil,
+      ...data.episodeTable.episodes.map((episode) => episode.heldUntil),
+    ],
+    keyOf: (event) =>
+      event.entity === 'podcast_episode' ? event.entityId : null,
+    loaderData,
+    rowsOf: (data) => data.episodeTable.episodes,
+  })
   const {
     canCreateEpisode,
-    episodeTable,
     heldByName,
-    heldUntil,
     isApprover,
     isHeldInOwnOtherTab,
     isOwnContent,
     headerActions,
     podcast,
     submission,
-  } = loaderData
+  } = live
+  const { queueCounts } = live.episodeTable
   const {
     currentFilterQuery,
     currentPage,
-    episodes,
     filters,
     hasNoEpisodes,
     isContributor,
@@ -89,19 +132,24 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     ownFilters,
     pageSize,
     query,
-    queueCounts,
     sharedFilters,
     totalCount,
     totalPages,
-  } = episodeTable
+  } = loaderData.episodeTable
 
-  // The header follows its podcast; the episode rows going live is #748.
+  // The breadcrumb follows a rename too, from the podcast layout.
+  const pageRevalidator = useRevalidator()
   useContentEvents({
     filter: (event) =>
-      event.entity === 'podcast' && event.entityId === podcast.id,
+      event.entity === 'podcast' && event.entityId === podcastId,
+    revalidator: {
+      revalidate: () => {
+        layoutOnlyRevalidation.request()
+        return pageRevalidator.revalidate()
+      },
+      state: pageRevalidator.state,
+    },
   })
-  // An edit hold's expiry sends no event; the page looks again then (07g).
-  useRevalidateAt([heldUntil])
   // „Podcast právě upravuje …“ after a direct address of its editor.
   useAdminNoticeToast(loaderData)
 
@@ -246,7 +294,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           )}
         </div>
 
-        {episodes.length === 0 ? (
+        {loaderData.episodeTable.episodes.length === 0 ? (
           // The table's head goes too; one sentence stands in its body (22e, 27g).
           <ListEmptyCard>
             <ListEmptyCardTitle>{emptyMessage.title}</ListEmptyCardTitle>
@@ -290,6 +338,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   episode={episode}
                   isApprover={isApprover}
                   key={episode.id}
+                  liveChange={liveChanges.get(episode.id)}
                   onSelect={() => selection.toggle(episode.id)}
                   podcastId={podcast.id}
                   podcastSlug={podcast.slug}
@@ -314,7 +363,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       {/* On a phone Nová epizoda waits at the bottom, unless the empty list
           already offers it (32d, 22e). */}
       {canCreateEpisode &&
-        (episodes.length > 0 || emptyMessage.action !== 'create') && (
+        (loaderData.episodeTable.episodes.length > 0 ||
+          emptyMessage.action !== 'create') && (
           <ListActionBar>
             <NewEpisodeButton podcastId={podcast.id} />
           </ListActionBar>

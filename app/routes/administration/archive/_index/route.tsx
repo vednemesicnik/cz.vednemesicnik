@@ -35,7 +35,7 @@ import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
 import { ISSUE_NOUN } from '~/config/list-noun-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
-import { useRevalidateAt } from '~/hooks/use-revalidate-at'
+import { useLiveRows } from '~/hooks/use-live-rows'
 import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
@@ -66,12 +66,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     filters,
     isApprover,
     isContributor,
-    issues,
     matchingFilterId,
     ownFilters,
     pageSize,
     query,
-    queueCounts,
     sharedFilters,
     totalCount,
     totalPages,
@@ -79,8 +77,27 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   } = loaderData
   // „Číslo právě upravuje …“ after the editor of a held new draft (26i).
   useAdminNoticeToast(loaderData)
-  // A hold's expiry sends no event; the list looks again then (26i).
-  useRevalidateAt(issues.map((issue) => issue.heldUntil))
+  // Live, but the rows stay put until the next load (22f, xkg6rdz4).
+  const {
+    live,
+    liveChanges,
+    rows: issues,
+  } = useLiveRows({
+    authorId: loaderData.authorId,
+    fetcherKey: 'issue-list-live',
+    filter: (event) => event.entity === 'issue',
+    // A hold's expiry sends no event; the list looks again then (26i).
+    heldUntilOf: (data) => data.issues.map((issue) => issue.heldUntil),
+    keyOf: (event) => (event.entity === 'issue' ? event.entityId : null),
+    loaderData,
+    rowsOf: (data) => data.issues,
+  })
+  const { queueCounts } = live
+  // A row whose year changed elsewhere stays under the year it was shown
+  // under until the next load (xkg6rdz4).
+  const shownYears = new Map(
+    loaderData.issues.map((issue) => [issue.id, issue.year]),
+  )
 
   const pending = useAdminListPending()
 
@@ -205,7 +222,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           />
         </FilterBar>
       </FilterCell>
-      {issues.length === 0 ? (
+      {loaderData.issues.length === 0 ? (
         // The table's head goes too; one sentence stands in its body (22e).
         <ListEmptyCard>
           <ListEmptyCardTitle>{emptyMessage.title}</ListEmptyCardTitle>
@@ -244,7 +261,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>
           {/* A heading over each year, again at the top of a page (26a). */}
-          {groupIssuesByYear(issues).map((group) => (
+          {groupIssuesByYear(
+            issues.map((issue) => ({
+              ...issue,
+              year: shownYears.get(issue.id) ?? issue.year,
+            })),
+          ).map((group) => (
             <TableBody key={group.year ?? 'none'}>
               {group.year !== null && (
                 <TableGroupHeading colSpan={COLUMN_COUNT}>
@@ -256,6 +278,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   isApprover={isApprover}
                   issue={issue}
                   key={issue.id}
+                  liveChange={liveChanges.get(issue.id)}
                   onSelect={() => selection.toggle(issue.id)}
                   selected={selection.isSelected(issue.id)}
                 />
