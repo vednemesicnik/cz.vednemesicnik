@@ -4,32 +4,28 @@
   }
 }
 
-/* The sidebar beside the content, a footer under the content only (design 22a,
-   tyxr2jqk). The content row takes the rest of the window, so on a short page the
-   footer sits at the bottom of it. */
+/* The sidebar beside the content, no footer: the website link is in the sidebar
+   (design 22a, s21ljh49). */
 .layout {
   @layer layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "sidebar content"
-      "sidebar footer";
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "sidebar content";
     align-items: start;
     margin: 0;
     /* The content is white; only the sidebar is grey, on its own (22a). */
     background-color: var(--bg-primary);
     min-height: 100dvh;
 
-    /* Below 768 px one column: the top bar, the content, the footer; the
-       sidebar is behind Menu (design 22g, tbi5qpq9). */
+    /* Below 768 px one column: the top bar and the content; the sidebar is
+       behind Menu (design 22g, tbi5qpq9). */
     @media (width < 768px) {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto minmax(0, 1fr);
       grid-template-areas:
         "topbar"
-        "content"
-        "footer";
+        "content";
     }
   }
 }

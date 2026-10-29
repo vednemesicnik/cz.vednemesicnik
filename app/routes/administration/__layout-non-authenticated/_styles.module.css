@@ -1,6 +1,21 @@
+/* The card and the website link under it, centred on the page (design 20a,
+   s21ljh49). */
 .page {
   @layer layout {
-    align-content: stretch;
+    box-sizing: border-box;
+    align-content: center;
+    justify-items: center;
+    gap: 12px;
+    padding: 24px;
+
+    /* A phone has no card: the content stands on the white page, from the top,
+       the link right under the content's own 24 px (20e). */
+    @media (width < 768px) {
+      align-content: start;
+      justify-items: stretch;
+      gap: 0;
+      background-color: var(--bg-primary);
+    }
   }
 }
 
@@ -11,5 +26,31 @@
     margin: 0;
     background-color: var(--bg-secondary);
     min-height: 100%;
+  }
+}
+
+/* Přejít na web: quiet, so it does not outweigh the card's own action; a 44 px
+   row for touch (20a, 20e). */
+.siteLink {
+  @layer layout {
+    display: inline-flex;
+    align-items: center;
+    justify-self: center;
+    min-block-size: 44px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 150ms ease-out;
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--focus-shadow);
+    }
   }
 }

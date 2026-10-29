@@ -17,7 +17,8 @@ type Props = {
  * The design system's `AdminSignInCard` (0zgyl1ao), the card of every sign-in
  * screen (design 20): the logo and the title centred, then the content 16 px
  * apart, on a 400 px card. Under 768 px there is no card: the content stands
- * on the white page (20e).
+ * on the white page (20e). The sign-in layout centres it on the page, with the
+ * website link under it (s21ljh49).
  *
  * @param props.title - The card's heading, the page's `h1`.
  * @param props.wordmark - The turning name between the logo and a smaller
@@ -37,23 +38,21 @@ export const AdminSignInCard = ({
   )
 
   return (
-    <div className={styles.page}>
-      <section className={clsx(styles.card, className)}>
-        <div className={styles.heading}>
-          <VdmLogo className={styles.logo} />
-          {wordmark ? (
-            <div className={styles.names}>
-              <p className={styles.name}>
-                <VdmWordmark animate tone={'text'} />
-              </p>
-              {heading}
-            </div>
-          ) : (
-            heading
-          )}
-        </div>
-        {children}
-      </section>
-    </div>
+    <section className={clsx(styles.card, className)}>
+      <div className={styles.heading}>
+        <VdmLogo className={styles.logo} />
+        {wordmark ? (
+          <div className={styles.names}>
+            <p className={styles.name}>
+              <VdmWordmark animate tone={'text'} />
+            </p>
+            {heading}
+          </div>
+        ) : (
+          heading
+        )}
+      </div>
+      {children}
+    </section>
   )
 }
