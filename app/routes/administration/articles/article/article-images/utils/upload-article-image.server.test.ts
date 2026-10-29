@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   articleImageDelete: vi.fn(),
   articleImageFindUnique: vi.fn(),
   articleImageUpdate: vi.fn(),
+  articleUpdateMany: vi.fn(),
   buildArticlePageSeoImageWrites: vi.fn(),
   createImageSources: vi.fn(),
   deleteImage: vi.fn(),
@@ -32,6 +33,7 @@ vi.mock(
 vi.mock('~/utils/db.server', () => ({
   prisma: {
     $transaction: mocks.transaction,
+    article: { updateMany: mocks.articleUpdateMany },
     articleImage: {
       aggregate: mocks.articleImageAggregate,
       create: mocks.articleImageCreate,
@@ -104,6 +106,7 @@ beforeEach(() => {
   mocks.articleImageAggregate.mockResolvedValue({ _max: { position: 2 } })
   mocks.articleImageCreate.mockReturnValue('create-image')
   mocks.articleImageUpdate.mockReturnValue('update-image')
+  mocks.articleUpdateMany.mockReturnValue('claim-featured')
   mocks.buildArticlePageSeoImageWrites.mockResolvedValue(['seo-write'])
   mocks.deleteImage.mockResolvedValue(undefined)
   mocks.deleteImageVersion.mockResolvedValue(undefined)
@@ -216,6 +219,7 @@ describe('uploadArticleImage — a new image', () => {
     expect(prepared.writes).toEqual(['create-image'])
     expect(prepared.addsContent).toBe(true)
     expect(prepared.answer).toEqual({
+      becameFeatured: false,
       fileName: 'photo.jpg',
       previewUrl: '/preview.jpg',
     })
@@ -340,6 +344,87 @@ describe('uploadArticleImage — a new image', () => {
   })
 })
 
+describe('uploadArticleImage — the first image becomes the main one (0053)', () => {
+  const emptyGallery = () =>
+    mocks.articleImageAggregate.mockResolvedValue({ _max: { position: null } })
+
+  test('claims the main image in the commit for an empty gallery', async () => {
+    emptyGallery()
+
+    const prepared = await run()
+
+    expect(mocks.articleUpdateMany).toHaveBeenCalledWith({
+      data: { featuredImageId: imageId },
+      where: {
+        featuredImageId: null,
+        id: 'article-1',
+        images: { every: { id: imageId } },
+      },
+    })
+    expect(prepared.writes).toEqual(['create-image', 'claim-featured'])
+    // The sharing preview waits for the claim to take.
+    expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
+  })
+
+  test('claims nothing when the gallery has images, the main one cleared', async () => {
+    const prepared = await run()
+
+    expect(mocks.articleUpdateMany).not.toHaveBeenCalled()
+    expect(prepared.writes).toEqual(['create-image'])
+    expect(await prepared.onSettled(['image'])).toEqual({})
+  })
+
+  test('claims nothing when the article has a main image', async () => {
+    emptyGallery()
+
+    const prepared = await run(
+      {},
+      { featuredImageId: 'other', publishedSlug: 'article' },
+    )
+
+    expect(mocks.articleUpdateMany).not.toHaveBeenCalled()
+    expect(prepared.writes).toEqual(['create-image'])
+  })
+
+  test('a claim that took points the sharing preview and answers it', async () => {
+    emptyGallery()
+    const prepared = await run()
+
+    const settled = await prepared.onSettled(['image', { count: 1 }])
+
+    expect(settled).toEqual({ becameFeatured: true })
+    expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
+      featuredImage: { id: imageId, ...meta },
+      publishedSlug: 'article',
+    })
+    expect(mocks.transaction).toHaveBeenCalledWith(['seo-write'])
+  })
+
+  test('a claim another upload took first changes nothing', async () => {
+    emptyGallery()
+    const prepared = await run()
+
+    const settled = await prepared.onSettled(['image', { count: 0 }])
+
+    expect(settled).toEqual({})
+    expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
+  test('a failed sharing preview still answers the main image, and logs', async () => {
+    emptyGallery()
+    mocks.transaction.mockRejectedValueOnce(new Error('database down'))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const prepared = await run()
+
+    const settled = await prepared.onSettled(['image', { count: 1 }])
+
+    expect(settled).toEqual({ becameFeatured: true })
+    expect(consoleError).toHaveBeenCalledOnce()
+    consoleError.mockRestore()
+  })
+})
+
 describe('uploadArticleImage — a stored image', () => {
   const previousMeta = {
     intrinsicHeight: 400,
@@ -405,6 +490,7 @@ describe('uploadArticleImage — a stored image', () => {
     expect(prepared.writes).toEqual(['update-image'])
     expect(prepared.addsContent).toBeUndefined()
     expect(prepared.answer).toEqual({
+      becameFeatured: false,
       fileName: 'photo.jpg',
       previewUrl: '/preview.jpg',
     })

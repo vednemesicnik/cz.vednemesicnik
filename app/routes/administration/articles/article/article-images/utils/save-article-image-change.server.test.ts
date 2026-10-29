@@ -467,6 +467,44 @@ describe('saveArticleImageChange — the transaction', () => {
     expect(onRefused).not.toHaveBeenCalled()
   })
 
+  test('onSettled reads the results of the writes and adds to the answer', async () => {
+    mocks.transaction.mockImplementation(async () => [
+      { count: 1 },
+      { id: 'image-1' },
+      { count: 1 },
+      { updatedAt: savedAt },
+    ])
+    mocks.articleFindUnique.mockResolvedValue({
+      ...storedArticle,
+      firstContentAt: null,
+    })
+    const order: string[] = []
+    const onSettled = vi.fn(async () => {
+      order.push('settled')
+      return { previewUrl: 'settled' }
+    })
+
+    const result = await saveArticleImageChange(request, {
+      ...options,
+      prepare: buildPrepare({
+        addsContent: true,
+        onCommitted: async () => {
+          order.push('committed')
+        },
+        onSettled,
+        writes: ['write-1', 'write-2'],
+      }),
+    })
+
+    expect(onSettled).toHaveBeenCalledWith([{ id: 'image-1' }, { count: 1 }])
+    expect(order).toEqual(['settled', 'committed'])
+    expect(result).toEqual({
+      previewUrl: 'settled',
+      status: 'saved',
+      updatedAt: savedAt,
+    })
+  })
+
   test('runs onCommitted after the transaction', async () => {
     const order: string[] = []
     mocks.transaction.mockImplementation(async () => {
@@ -786,16 +824,18 @@ describe('saveArticleImageChange — a cancellable change (bxy8xxqs)', () => {
     })
     const onCancelled = vi.fn(async () => undefined)
     const onCommitted = vi.fn(async () => undefined)
+    const onSettled = vi.fn(async () => ({}))
 
     const result = await saveArticleImageChange(cancellableRequest, {
       ...options,
       isCancellable: true,
-      prepare: buildPrepare({ onCancelled, onCommitted }),
+      prepare: buildPrepare({ onCancelled, onCommitted, onSettled }),
     })
 
     expect(result).toEqual({ status: 'cancelled' })
     expect(onCancelled).toHaveBeenCalledOnce()
     expect(onCommitted).not.toHaveBeenCalled()
+    expect(onSettled).not.toHaveBeenCalled()
     expect(mocks.recordEditLog).not.toHaveBeenCalled()
   })
 

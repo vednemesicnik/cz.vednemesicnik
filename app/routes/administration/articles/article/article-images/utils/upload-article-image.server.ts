@@ -1,3 +1,4 @@
+import type { Prisma } from '@generated/prisma/client'
 import { isCuid } from '@paralleldrive/cuid2'
 import { data } from 'react-router'
 
@@ -26,9 +27,18 @@ type Options = {
   description: string
 }
 
+/** What a saved upload tells the editor. */
+type UploadAnswer = {
+  /** The upload made it the main image, which the editor then shows. */
+  becameFeatured: boolean
+  fileName: string
+  previewUrl: string | null
+}
+
 /**
  * Stores one picked image as soon as it is chosen (design 24b, log 0027).
- * A new id becomes the gallery's last image; an id the article already
+ * A new id becomes the gallery's last image, and the main one when the
+ * gallery was empty; an id the article already
  * has gets the new file, and the old version's files go only after the row
  * commits, so a failed replacement keeps the old image. The row exists only
  * once the file is processed. An upload under way lands after *Zavřít*
@@ -39,7 +49,8 @@ type Options = {
  * @param request - The action's request.
  * @param options - The article, the tab, the image id, the file, and the alt
  *   text and caption typed while it was processed.
- * @returns `saved` with the stored preview's URL, `not-held`, `failed` when
+ * @returns `saved` with the stored preview's URL and whether the image
+ *   became the main one, `not-held`, `failed` when
  *   the file could not be processed (with the reason `over-pixel-budget` for
  *   an image over `MAX_IMAGE_PIXELS`, refused before it is stored), or
  *   `cancelled`.
@@ -59,7 +70,7 @@ export async function uploadArticleImage(
     throw data(null, { status: 400 })
   }
 
-  return saveArticleImageChange(request, {
+  return saveArticleImageChange<UploadAnswer>(request, {
     articleId,
     isCancellable: true,
     landsWithoutHold: true,
@@ -122,7 +133,8 @@ export async function uploadArticleImage(
           })
         : []
 
-      const answer = {
+      const answer: UploadAnswer = {
+        becameFeatured: false,
         fileName: file.name,
         previewUrl:
           createImageSources('article-image', { id: imageId, ...meta }).src ??
@@ -136,10 +148,46 @@ export async function uploadArticleImage(
           where: { articleId },
         })
 
+        // The first image of an empty gallery becomes the main one (log
+        // 0053). The claim is checked in the commit itself, so of uploads
+        // side by side only the first to commit gets it.
+        const claimsFeatured =
+          article.featuredImageId === null && lastImage.position === null
+        const claimWrites = claimsFeatured
+          ? [
+              prisma.article.updateMany({
+                data: { featuredImageId: imageId },
+                where: {
+                  featuredImageId: null,
+                  id: articleId,
+                  images: { every: { id: imageId } },
+                },
+              }),
+            ]
+          : []
+        const writes = [
+          prisma.articleImage.create({
+            data: {
+              ...meta,
+              altText,
+              articleId,
+              description: description || null,
+              fileName: file.name,
+              id: imageId,
+              position: (lastImage.position ?? -1) + 1,
+            },
+            select: { id: true },
+          }),
+          ...claimWrites,
+          ...seoWrites,
+        ]
+        const claimIndex = claimsFeatured ? writes.indexOf(claimWrites[0]) : -1
+
         return {
           addsContent: true,
           answer,
-          // A new image is never the main one: only the row and its files.
+          // Only the row and its files; a main image falls back to none with
+          // the row.
           onCancelled: async () => {
             await prisma.articleImage.delete({
               select: { id: true },
@@ -148,21 +196,28 @@ export async function uploadArticleImage(
             await deleteImage(imageId)
           },
           onRefused: () => dropUnusedFiles(meta.version),
-          writes: [
-            prisma.articleImage.create({
-              data: {
-                ...meta,
-                altText,
-                articleId,
-                description: description || null,
-                fileName: file.name,
-                id: imageId,
-                position: (lastImage.position ?? -1) + 1,
-              },
-              select: { id: true },
-            }),
-            ...seoWrites,
-          ],
+          // The sharing preview follows only a claim that took: written in
+          // the commit, another upload's preview could overwrite it. Publish
+          // writes it again from the main image, so a failure only logs.
+          onSettled: async (writeResults) => {
+            const claim = writeResults[claimIndex] as
+              | Prisma.BatchPayload
+              | undefined
+            if (claimIndex === -1 || claim?.count !== 1) return {}
+
+            try {
+              await prisma.$transaction(
+                await buildArticlePageSeoImageWrites({
+                  featuredImage: { id: imageId, ...meta },
+                  publishedSlug: article.publishedSlug,
+                }),
+              )
+            } catch (error) {
+              console.error('Article sharing preview left unset', error)
+            }
+            return { becameFeatured: true }
+          },
+          writes,
         }
       }
 
