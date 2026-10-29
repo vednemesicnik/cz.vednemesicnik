@@ -7,25 +7,3 @@
     row-gap: 0.75rem;
   }
 }
-
-.card {
-  @layer component {
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    transition: box-shadow var(--transition-base);
-
-    &:hover {
-      box-shadow: var(--shadow-lg);
-    }
-  }
-}
-
-.label {
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: var(--font-weight-medium);
-  text-align: center;
-}

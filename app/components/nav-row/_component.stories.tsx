@@ -43,6 +43,18 @@ export const OneItem: Story = {
   args: { ...Playground.args, items: [categoryLink('Kultura')] },
 }
 
+/** The archive's years, named for a screen reader „Roky v archivu“ (14a). */
+export const Years: Story = {
+  args: {
+    accessibleLabel: 'Roky v archivu',
+    items: ['2026', '2025', '2024', '2023'].map((year) => ({
+      label: year,
+      to: `#${year}`,
+    })),
+    label: 'Roky',
+  },
+}
+
 /** Below 768 px: one sideways-scrolling row of 44 px pills (design 11d). */
 export const Mobile: Story = {
   args: Playground.args,

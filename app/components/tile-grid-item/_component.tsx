@@ -8,10 +8,10 @@ import styles from './_styles.module.css'
  * chain, `"scroll"` waits until it scrolls into view, and `"none"` is for tiles
  * an earlier render already revealed.
  *
- * `staggerIndex` overrides the tile's position in the chain — pass it for
- * appended items so their chain starts over instead of continuing from the
- * items already on the page. It only means anything while chaining, so the
- * other two modes reject it.
+ * `staggerIndex` overrides the tile's position in the chain — pass it when one
+ * chain spans several grids, e.g. the archive's years, so it continues across
+ * them instead of starting over in each. It only means anything while
+ * chaining, so the other two modes reject it.
  */
 type RevealProps =
   | { reveal?: 'stagger'; staggerIndex?: number }
