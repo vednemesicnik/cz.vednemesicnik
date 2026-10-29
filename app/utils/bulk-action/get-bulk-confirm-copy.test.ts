@@ -203,3 +203,67 @@ describe('getBulkConfirmCopy — categories and tags (25g)', () => {
     ).toEqual(['Štítky budou na webu.'])
   })
 })
+
+describe('getBulkConfirmCopy — the Creator’s sentence after the first one (25g)', () => {
+  test.each([
+    [
+      CATEGORY_BULK_NOUN,
+      1,
+      true,
+      'Rubrika se vrátí do konceptu. Znovu ji publikovat může Koordinátor. Zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazená, ale na webu se u nich nezobrazí.',
+    ],
+    [
+      CATEGORY_BULK_NOUN,
+      1,
+      false,
+      'Rubrika se vrátí do konceptu. Znovu ji publikovat může Koordinátor. Zmizí z webu i z nabídky v editoru článku.',
+    ],
+    [
+      CATEGORY_BULK_NOUN,
+      3,
+      true,
+      'Rubriky se vrátí do konceptu. Znovu je publikovat může Koordinátor. Zmizí z webu i z nabídky v editoru článku. Článkům zůstanou přiřazené, ale na webu se u nich nezobrazí.',
+    ],
+    [
+      CATEGORY_BULK_NOUN,
+      3,
+      false,
+      'Rubriky se vrátí do konceptu. Znovu je publikovat může Koordinátor. Zmizí z webu i z nabídky v editoru článku.',
+    ],
+    [
+      TAG_BULK_NOUN,
+      1,
+      true,
+      'Štítek se vrátí do konceptu. Znovu ho publikovat může Koordinátor. Zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazený, ale na webu se u nich nezobrazí.',
+    ],
+    [
+      TAG_BULK_NOUN,
+      1,
+      false,
+      'Štítek se vrátí do konceptu. Znovu ho publikovat může Koordinátor. Zmizí z webu i z nabídky v editoru článku.',
+    ],
+    [
+      TAG_BULK_NOUN,
+      3,
+      true,
+      'Štítky se vrátí do konceptu. Znovu je publikovat může Koordinátor. Zmizí z webu i z nabídky v editoru článku. Článkům zůstanou přiřazené, ale na webu se u nich nezobrazí.',
+    ],
+    [
+      TAG_BULK_NOUN,
+      3,
+      false,
+      'Štítky se vrátí do konceptu. Znovu je publikovat může Koordinátor. Zmizí z webu i z nabídky v editoru článku.',
+    ],
+  ])('%#', (noun, count, hasRelated, expected) => {
+    expect(
+      getBulkConfirmCopy({
+        action: 'retract',
+        count,
+        hasRelated,
+        isCreator: true,
+        noun,
+        onlyDrafts: false,
+      }).descriptions,
+    ).toEqual([expected])
+  })
+})

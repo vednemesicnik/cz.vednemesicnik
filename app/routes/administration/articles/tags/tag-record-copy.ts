@@ -1,8 +1,8 @@
 import type { TaxonomyRecordCopy } from '../utils/taxonomy-record-copy'
 
 /**
- * A tag's words (design 25b, 25d, 25e, 25g; copy 3htjei2x, 69iin4rd, dfsrpeuk,
- * 3vnah8ji, inhy7os8). The header sentences follow the copywriter's conversion of 23d
+ * A tag's words (design 25b, 25d, 25e; copy 3htjei2x, 69iin4rd, dfsrpeuk,
+ * 3vnah8ji). The header sentences follow the copywriter's conversion of 23d
  * for a record with one author (copy thread 26 archiv čísel, 2 Oct 2026).
  */
 export const TAG_RECORD_COPY: TaxonomyRecordCopy = {

@@ -1,8 +1,7 @@
 import type { TaxonomyRecordCopy } from '../utils/taxonomy-record-copy'
 
 /**
- * A category's words (design 25a–25d, 25g; copy 3htjei2x, dfsrpeuk, 3vnah8ji,
- * inhy7os8). The
+ * A category's words (design 25a–25d; copy 3htjei2x, dfsrpeuk, 3vnah8ji). The
  * header sentences follow the copywriter's conversion of 23d for a record with
  * one author (copy thread 26 archiv čísel, 2 Oct 2026).
  */

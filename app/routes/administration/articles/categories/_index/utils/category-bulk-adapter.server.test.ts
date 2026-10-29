@@ -90,4 +90,34 @@ describe('categoryBulkAdapter (25g)', () => {
     expect(handlerMocks.delete).not.toHaveBeenCalled()
     expect(deleted).toMatchObject({ processedCount: 0, skippedCount: 1 })
   })
+
+  test('a Creator retracts their own, never publishes (07c)', async () => {
+    getAuthorPermissionContextMock.mockResolvedValue({
+      authorId: 'creator',
+      can: ({ action }: { action: string }) => ({
+        hasAny: false,
+        hasOwn: action !== 'publish',
+        hasPermission: action !== 'publish',
+      }),
+      roleLevel: 2,
+    })
+    findManyMock.mockResolvedValue([category('own', 'published')])
+
+    const retracted = await runForCategories({
+      action: 'retract',
+      ids: ['own'],
+    })
+
+    expect(retracted).toMatchObject({ processedCount: 1, skippedCount: 0 })
+
+    findManyMock.mockResolvedValue([category('draft', 'draft')])
+
+    const published = await runForCategories({
+      action: 'publish',
+      ids: ['draft'],
+    })
+
+    expect(handlerMocks.publish).not.toHaveBeenCalled()
+    expect(published).toMatchObject({ processedCount: 0, skippedCount: 1 })
+  })
 })
