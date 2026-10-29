@@ -249,10 +249,15 @@ Nemá já ani my, neomlouvá se. Chybová věta říká, co udělat; důvod pat�
   autor článku není role.
 - **Slova z návrhu do rozhraní nepatří**: *dlaždice*, *fronta*, *krok 2 ze 3*.
 
-**Veřejný web** má hlas redakce: mluví za *my* a čtenáři **vyká** (`Jsme tu pro vás`,
+**Veřejný web** má hlas redakce: mluví za *my* a čtenáři **vyká** (`Tohle si poslechněte`,
 `Máte nějaký nápad nebo nám chcete něco sdělit?`). Vyká **všude**, bez výjimky (rozhodnuto
 28. 9. 2026). Dnešní heslo úvodu `Čti, poslouchej a objevuj` je jediné tykání a odchází: úvod
 nového návrhu nese jen jméno a pod ním `Studentské nekritické noviny`.
+
+Nadpisy vstupních stránek sekcí jsou **rodina hlasem redakce**, ne věcná jména sekcí: věcné
+jméno nese menu a titulek záložky (`Čtení, které vás chytne`, `Tohle si poslechněte`, `Naše
+tištěná čísla pohromadě`, `Tak to je naše redakce`, `Pomozte nám vylepšit web`; rozhodnuto
+29. 10. 2026). Darování je landing page, jiný druh stránky, a do rodiny nepatří.
 
 Výjimkou je stránka **O spolku**: text o spolku je ve **třetí osobě** (*Spolek Vedneměsíčník
 vydává…*), za *my* mluví jen výzvy pod ním (`Napište nám`, `Podpořte nás`). Text napsala redakce
