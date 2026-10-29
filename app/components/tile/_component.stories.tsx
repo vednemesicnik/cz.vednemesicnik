@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { Image } from '~/components/image'
 import { TileCaption } from '~/components/tile-caption'
 import { TileCard } from '~/components/tile-card'
 import { TileFallback } from '~/components/tile-fallback'
@@ -33,7 +34,13 @@ export const Playground: Story = {
     children: (
       <>
         <TileCard>
-          <TileFallback>Kabinet</TileFallback>
+          <Image
+            alt={'Obálka podcastu Kabinet'}
+            height={117}
+            sizes={'220px'}
+            src={'/images/podcast-cover.jpeg'}
+            width={110}
+          />
         </TileCard>
         <TileCaption>Kabinet</TileCaption>
       </>
@@ -47,11 +54,34 @@ export const Cover: Story = {
     children: (
       <>
         <TileCard ratio={'cover'}>
-          <TileFallback>podzim 2026</TileFallback>
+          <Image
+            alt={'Obálka čísla podzim 2026'}
+            height={154}
+            sizes={'220px'}
+            src={'/images/issue-cover.jpeg'}
+            width={110}
+          />
         </TileCard>
         <TileCaption>
           podzim 2026
           <TileSublabel>3/2026</TileSublabel>
+        </TileCaption>
+      </>
+    ),
+  },
+}
+
+/** A published issue without a cover: the gradient with its name (14c). */
+export const WithoutCover: Story = {
+  args: {
+    children: (
+      <>
+        <TileCard ratio={'cover'}>
+          <TileFallback>červen 2026</TileFallback>
+        </TileCard>
+        <TileCaption>
+          červen 2026
+          <TileSublabel>2/2026</TileSublabel>
         </TileCaption>
       </>
     ),
@@ -64,7 +94,13 @@ export const Supplement: Story = {
     children: (
       <>
         <TileCard ratio={'cover'}>
-          <TileFallback>Maturitní ples</TileFallback>
+          <Image
+            alt={'Obálka doplňku Maturitní ples'}
+            height={154}
+            sizes={'220px'}
+            src={'/images/issue-cover.jpeg'}
+            width={110}
+          />
         </TileCard>
         <TileCaption>
           Maturitní ples
