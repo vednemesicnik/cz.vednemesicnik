@@ -79,8 +79,16 @@ export default function RouteComponent({
   const { articleId } = params
 
   useContentEvents({
+    // Also a renamed or deleted category or tag the article shows;
+    // adding or removing one is an update of the article itself.
     filter: (event) =>
-      event.entity === 'article' && event.entityId === articleId,
+      (event.entity === 'article' && event.entityId === articleId) ||
+      (event.entity === 'article_category' &&
+        article.categories.some(
+          (category) => category.id === event.entityId,
+        )) ||
+      (event.entity === 'article_tag' &&
+        article.tags.some((tag) => tag.id === event.entityId)),
   })
   // An edit hold's expiry sends no event; the page looks again then (23g).
   useRevalidateAt([heldUntil])
