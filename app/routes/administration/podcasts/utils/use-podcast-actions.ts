@@ -1,5 +1,5 @@
 import type { ContentState } from '@generated/prisma/enums'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
@@ -10,7 +10,8 @@ import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { getOwnOtherTabDeleteRefusal } from '~/utils/edit-hold/get-own-other-tab-delete-refusal'
 
 import { TAXONOMY_DIRECT_INTENTS } from '../../articles/utils/taxonomy-actions'
-import { PODCAST_TOASTS, type PodcastAction } from './podcast-actions'
+import { getPodcastToasts } from './get-podcast-toasts'
+import type { PodcastAction } from './podcast-actions'
 
 type Options = {
   podcast: {
@@ -54,10 +55,14 @@ export const usePodcastActions = ({
   const navigate = useNavigate()
   const showToast = useToast()
 
+  const toasts = useMemo(
+    () => getPodcastToasts(podcast.publishedEpisodeCount),
+    [podcast.publishedEpisodeCount],
+  )
   // A refusal for an empty episode draft's editor names the episode (0036).
   const { closeMissingList, missingList } = useContentActionResult(
     fetcher.data,
-    { heldSubject: 'podcast', toasts: PODCAST_TOASTS },
+    { heldSubject: 'podcast', toasts },
   )
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)

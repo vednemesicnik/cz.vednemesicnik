@@ -1,5 +1,3 @@
-import { FORM_CONFIG } from '~/config/form-config'
-
 import type { HeaderSentence } from '../../articles/utils/article-actions'
 import {
   TAXONOMY_ACTION_LABELS,
@@ -40,10 +38,3 @@ export const PODCAST_SUBMISSION_NOTES = {
   pending:
     'Podcast čeká na schválení Koordinátorem. Před úpravou ho vezměte zpět do konceptu a po úpravě znovu odešlete ke schválení.',
 } as const
-
-// Toasts that name the podcast, by intent (27b, tly4a163); the others stay
-// generic.
-export const PODCAST_TOASTS: Record<string, string> = {
-  [FORM_CONFIG.intent.value.retract]:
-    'Podcast stažen z publikace. Jeho epizody už nejsou na webu.',
-}

@@ -45,8 +45,10 @@ retract, archive, restore and delete in its `content-state-handlers.server.ts`.
 - Each remaining list is one PR: its loader gives every row `bulkActions` (replacing
   `deletableIds`), its action reads the form with `readBulkActionForm` and runs its adapter, and
   its noun is added to `bulk-noun-config.ts`. Per-row counts in the taxonomy and podcast dialogs
-  (25g, 27a) and the podcast retract toast's second sentence are additions to the noun or the
-  dialog, not to the runner.
+  (25g, 27a) are additions to the noun or the dialog, not to the runner. The podcast retract
+  toast's second sentence is the one exception: only the server knows which rows actually
+  changed, so an adapter may name the related content a row takes off the web
+  (`hasPublishedRelated`) and the runner answers `hasRelated` (#772 PR 4, gzumlpu2).
 - The publish dialog is a different root per shape, not a variant: articles keep their ordered
   dialog route-local, and the episodes get one that orders by number. A list that publishes
   without an order or a date (issues, categories, tags, podcasts) needs no dialog of its own:

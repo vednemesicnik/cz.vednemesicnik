@@ -412,8 +412,15 @@ export const PODCAST_BULK_NOUN: BulkNoun = {
   deleteInFullInk: true,
   descriptions: {
     archive: {
-      many: 'Podcasty i jejich publikované epizody zmizí z webu. Stav epizod se nezmění. Epizody se znovu zobrazí až po obnovení příslušného podcastu jako konceptu a jeho publikaci.',
-      one: 'Podcast i jeho publikované epizody zmizí z webu. Stav epizod se nezmění. Epizody se znovu zobrazí až po obnovení podcastu jako konceptu a jeho publikaci.',
+      // Without published episodes, as 25g (gzumlpu2).
+      withoutRelated: {
+        many: 'Podcasty zmizí z webu. Na web se dostanou až po obnovení jako konceptu a publikaci.',
+        one: 'Podcast zmizí z webu. Na web se dostane až po obnovení jako konceptu a publikaci.',
+      },
+      withRelated: {
+        many: 'Podcasty i jejich publikované epizody zmizí z webu. Stav epizod se nezmění. Epizody se znovu zobrazí až po obnovení příslušného podcastu jako konceptu a jeho publikaci.',
+        one: 'Podcast i jeho publikované epizody zmizí z webu. Stav epizod se nezmění. Epizody se znovu zobrazí až po obnovení podcastu jako konceptu a jeho publikaci.',
+      },
     },
     delete: { many: 'Smazání je nevratné.', one: 'Smazání je nevratné.' },
     publish: {
@@ -425,8 +432,14 @@ export const PODCAST_BULK_NOUN: BulkNoun = {
       one: 'Podcast se vrátí do konceptu. Na web se dostane až novou publikací.',
     },
     retract: {
-      many: 'Podcasty se vrátí do konceptu. Z webu zmizí i jejich publikované epizody. Stav epizod se nezmění. Po nové publikaci příslušného podcastu se jeho publikované epizody znovu zobrazí.',
-      one: 'Podcast se vrátí do konceptu. Z webu zmizí i jeho publikované epizody. Stav epizod se nezmění. Po nové publikaci podcastu se jeho publikované epizody znovu zobrazí.',
+      withoutRelated: {
+        many: 'Podcasty se vrátí do konceptu.',
+        one: 'Podcast se vrátí do konceptu.',
+      },
+      withRelated: {
+        many: 'Podcasty se vrátí do konceptu. Z webu zmizí i jejich publikované epizody. Stav epizod se nezmění. Po nové publikaci příslušného podcastu se jeho publikované epizody znovu zobrazí.',
+        one: 'Podcast se vrátí do konceptu. Z webu zmizí i jeho publikované epizody. Stav epizod se nezmění. Po nové publikaci podcastu se jeho publikované epizody znovu zobrazí.',
+      },
     },
   },
   draftCountForms: null,

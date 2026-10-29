@@ -176,29 +176,48 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // The Epizody column for the whole list in one query (27a): every published
   // episode, as the web shows them all, and the drafts the role may view,
   // each marked so the summary counts only those.
-  const episodes = await prisma.podcastEpisode.findMany({
-    select: {
-      authorId: true,
-      podcastId: true,
-      publishedAt: true,
-      reviews: {
-        select: {
-          createdAt: true,
-          reviewer: { select: { role: { select: { level: true } } } },
+  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+
+  const [episodes, holders] = await Promise.all([
+    prisma.podcastEpisode.findMany({
+      select: {
+        authorId: true,
+        podcastId: true,
+        publishedAt: true,
+        reviews: {
+          select: {
+            createdAt: true,
+            reviewer: { select: { role: { select: { level: true } } } },
+          },
         },
+        state: true,
+        submittedAt: true,
       },
-      state: true,
-      submittedAt: true,
-    },
-    // The summary counts no archived episode, so none is loaded.
-    where: {
-      OR: [
-        { state: 'published' },
-        { AND: [episodePermissionWhere, { state: 'draft' }] },
-      ],
-      podcastId: { in: podcastIds },
-    },
-  })
+      // The summary counts no archived episode, so none is loaded.
+      where: {
+        OR: [
+          { state: 'published' },
+          { AND: [episodePermissionWhere, { state: 'draft' }] },
+        ],
+        podcastId: { in: podcastIds },
+      },
+    }),
+    // Who holds each listed address as published (log 0039): a draft with an
+    // address another podcast holds is skipped by bulk publishing too (27i).
+    // Only the Coordinator publishes, so only they need it, as in 26a.
+    isApprover
+      ? prisma.podcast.findMany({
+          select: { id: true, publishedSlug: true },
+          where: {
+            publishedSlug: {
+              in: rawPodcasts.flatMap(({ slug }) =>
+                slug === '' ? [] : [slug],
+              ),
+            },
+          },
+        })
+      : [],
+  ])
 
   const summaries = summarizePodcastEpisodes(
     podcastIds,
@@ -213,22 +232,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     })),
   )
 
-  // Who holds each listed address as published (log 0039): a draft with an
-  // address another podcast holds is skipped by bulk publishing too (27i).
-  const holders = await prisma.podcast.findMany({
-    select: { id: true, publishedSlug: true },
-    where: {
-      publishedSlug: {
-        in: rawPodcasts.flatMap(({ slug }) => (slug === '' ? [] : [slug])),
-      },
-    },
-  })
   const holderIdBySlug = new Map(
     holders.map(({ id, publishedSlug }) => [publishedSlug, id]),
   )
 
   const now = new Date()
-  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
 
   const podcasts = rawPodcasts
     .map((podcast) => {
@@ -284,6 +292,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           'other',
         // Bulk publishing skips it and says so up front (27i, 27a).
         isIncomplete:
+          isApprover &&
           getMissingPodcastContent({
             description: podcast.description,
             hasCover: podcast.cover !== null,
