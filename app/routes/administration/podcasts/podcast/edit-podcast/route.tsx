@@ -47,12 +47,15 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useCoverUpload } from '~/hooks/use-cover-upload'
 import { useEditHold } from '~/hooks/use-edit-hold'
+import { useFocusAtFix } from '~/hooks/use-focus-at-fix'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
+import { getPodcastFixTarget } from '~/routes/administration/podcasts/utils/get-podcast-fix-target'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
+import { getFirstFileControl } from '~/utils/get-first-file-control'
 import {
   CANCEL_COVER_UPLOAD_LABEL,
   COVER_CANCEL_CROSSED_ANNOUNCEMENT,
@@ -698,6 +701,30 @@ export default function RouteComponent({
     const input = formRef.current?.elements.namedItem(name)
     if (input instanceof HTMLInputElement) input.focus()
   }
+
+  // Opened from the missing-content dialog, the editor opens at the first
+  // thing its sentence names (27i, as 23h and 27h).
+  useFocusAtFix(isHolding, () => {
+    const target = getPodcastFixTarget({
+      description: podcast.description,
+      hasCover: podcast.cover !== null,
+      isSlugTaken: podcast.takenSlug !== null,
+      slug: podcast.slug,
+      title: podcast.title,
+    })
+    if (target === null) return
+
+    if (target === 'cover') {
+      if (coverRef.current !== null) {
+        getFirstFileControl(coverRef.current)?.focus()
+      }
+      return
+    }
+
+    // Popis is a text area.
+    const input = formRef.current?.elements.namedItem(fields[target].name)
+    if (input instanceof HTMLElement) input.focus()
+  })
 
   // A free address for a taken one: filled in and saved (27e, as 24d).
   const applySlugSuggestion = (value: string) => {

@@ -53,6 +53,7 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useCoverUpload } from '~/hooks/use-cover-upload'
 import { useEditHold } from '~/hooks/use-edit-hold'
+import { useFocusAtFix } from '~/hooks/use-focus-at-fix'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
@@ -75,6 +76,7 @@ import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title
 import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 
+import { getEpisodeFixTarget } from '../../utils/get-episode-fix-target'
 import { isValidEpisodeLinkUrl } from '../../utils/is-valid-episode-link-url'
 import { schema } from './_schema'
 import styles from './_styles.module.css'
@@ -844,6 +846,31 @@ export default function RouteComponent({
     const input = formRef.current?.elements.namedItem(name)
     if (input instanceof HTMLInputElement) input.focus()
   }
+
+  // Opened from the missing-content dialog, the editor opens at the field of
+  // its first sentence (27h): a link at its row's empty name or its address.
+  useFocusAtFix(isHolding, () => {
+    const target = getEpisodeFixTarget({
+      description: episode.description,
+      isNumberTaken: episode.takenNumber !== null,
+      isSlugTaken: episode.takenSlug !== null,
+      links: episode.links,
+      number: episode.number,
+      title: episode.title,
+    })
+    if (target === null) return
+
+    if (target.field === 'linkLabel' || target.field === 'linkUrl') {
+      const link = fields.links.getFieldList()[target.index]?.getFieldset()
+      if (link === undefined) return
+      focusField(target.field === 'linkLabel' ? link.label.name : link.url.name)
+      return
+    }
+
+    // Název and Popis are text areas.
+    const input = formRef.current?.elements.namedItem(fields[target.field].name)
+    if (input instanceof HTMLElement) input.focus()
+  })
 
   // A free value for a taken one: filled in and saved (27f, as 24d).
   const applyFreeNumber = (value: number) => {

@@ -1,5 +1,7 @@
 import { type RefObject, useEffect, useRef } from 'react'
 
+import { getFirstFileControl } from '~/utils/get-first-file-control'
+
 /**
  * Keeps the focus with a file while it uploads (design 26c, as the profile
  * photo in 29b and the podcast and episode covers in 27e, 27d): on the pick
@@ -36,9 +38,7 @@ export const useUploadFocus = (
       focused === document.body ||
       container.contains(focused)
     ) {
-      container
-        .querySelector<HTMLElement>('button, input[type="file"]:not([hidden])')
-        ?.focus()
+      getFirstFileControl(container)?.focus()
     }
   }, [isUploading, containerRef])
 }
