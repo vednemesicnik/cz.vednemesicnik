@@ -395,16 +395,19 @@ describes today's code; this is the target.
 - **Taking back wipes the approval.** The author's **Vzít zpět** and the Coordinator's
   **Vrátit k úpravám** return the item to an unsubmitted draft and delete its reviews.
   A Coordinator's own small fix of an approved text keeps the approval.
-- **Bulk publish gives every item its own time**, in the order the confirmation dialog shows
-  (top = newest): the top item gets the moment of confirmation, each next one second earlier.
-  An item published before keeps its stored date and stays out of the order. Built for
-  articles (#600).
-- **Bulk actions follow the row** (22c, ji6n8th3): *Publikovat…* (Coordinator only, approving a
-  waiting item), *Stáhnout z publikace…*, *Archivovat…*, *Obnovit jako koncept…* and *Smazat…*,
-  each only where the row would allow it, and the bar offers only what every selected item
-  allows. Every one is confirmed; an item held by someone else, changed meanwhile or, publishing,
-  incomplete is skipped and counted. One runner serves every list (log 0050). Built for articles
-  (#772); the other content lists follow in #772.
+- **Bulk publish gives every item its own time** where the web sorts by it: the top item gets the
+  moment of confirmation (or the chosen day), each next one second earlier. Articles go in the
+  order the confirmation dialog shows (top = newest, #600), episodes by number (highest = newest,
+  27b), podcasts in the list's order (27a). Categories, tags and issues publish without a date
+  or an order. An item published before keeps its stored date and stays out of the order.
+- **Bulk actions follow the row** on every content list (22c, 25g, 26f, 27a, 27b; ji6n8th3):
+  *Publikovat…* (Coordinator only, approving a waiting item), *Stáhnout z publikace…*,
+  *Archivovat…*, *Obnovit jako koncept…* and *Smazat…*, each only where the row would allow it,
+  and the bar offers only what every selected item allows, at most two. Every one is confirmed;
+  an item held by someone else, changed meanwhile or, publishing, incomplete is skipped and
+  counted. Published content is never deleted, a podcast with episodes not in bulk either (27f),
+  and an episode of an unpublished podcast is not published. One runner serves every list
+  (log 0050). Built (#772).
 - **Changing the publish date takes a time as well** (Coordinator only, never in the future),
   so a forgotten article can be placed between two already published ones.
 - **Creators neither approve nor publish** — not even their own content. Their `review`

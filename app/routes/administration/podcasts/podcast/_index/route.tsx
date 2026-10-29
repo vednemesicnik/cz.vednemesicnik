@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { href } from 'react-router'
 
-import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import {
@@ -30,14 +29,17 @@ import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
 import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
+import { EPISODE_BULK_NOUN } from '~/config/bulk-noun-config'
 import { EPISODE_NOUN } from '~/config/list-noun-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
 import { useContentEvents } from '~/hooks/use-content-events'
 import { useRevalidateAt } from '~/hooks/use-revalidate-at'
+import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
 import { getStateFilter } from '~/utils/get-state-filter'
+import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 
 import { PodcastActionDialogs } from '../../components/podcast-action-dialogs'
@@ -46,6 +48,7 @@ import { usePodcastActions } from '../../utils/use-podcast-actions'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { EpisodeRow } from './components/episode-row'
+import { EpisodeSelectionBar } from './components/episode-selection-bar'
 import { NewEpisodeButton } from './components/new-episode-button'
 import { PodcastHeader } from './components/podcast-header'
 import { PodcastHistoryDialog } from './components/podcast-history-dialog'
@@ -54,6 +57,9 @@ import { SORT_KEYS } from './sort'
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
+
+// The keyed fetcher the episode table's bar submits through (27b).
+const EPISODES_BULK_ACTION_FETCHER_KEY = 'episodes-bulk-action'
 
 /**
  * A podcast and its episodes on one page (design 27b): the podcast's header,
@@ -109,10 +115,21 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   const pending = useAdminListPending()
 
-  const deletableIds = episodes
-    .filter((episode) => episode.canDelete)
+  // A row joins the selection when the bar could apply something to it, or
+  // say why it can't publish it (27b).
+  const selectableIds = episodes
+    .filter((episode) => episode.isSelectable)
     .map((episode) => episode.id)
-  const selection = useAdminTableSelection(deletableIds)
+  const selection = useAdminTableSelection(selectableIds)
+  useBulkActionResult({
+    fetcherKey: EPISODES_BULK_ACTION_FETCHER_KEY,
+    noun: EPISODE_BULK_NOUN,
+    onClear: selection.clear,
+  })
+  const selectedEpisodes = episodes.filter((episode) =>
+    selection.selectedIds.includes(episode.id),
+  )
+  const hasSelection = selectedEpisodes.length > 0
 
   const states = filters.state ?? []
   const hasOtherFilters = query !== ''
@@ -174,14 +191,25 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           </h2>
           {!hasNoEpisodes && (
             <FilterCell className={styles.filters}>
-              <AdminBulkActionsBar
-                action={href('/administration/podcasts/:podcastId/episodes', {
-                  podcastId: podcast.id,
-                })}
-                onDone={selection.clear}
-                selectedIds={selection.selectedIds}
-              />
-              <FilterBar replaced={selection.selectedIds.length > 0}>
+              {/* The selection bar takes the filter row's place in the same
+                  cell, so the table does not move (22c, cioukqn6). */}
+              {hasSelection && (
+                <EpisodeSelectionBar
+                  action={href('/administration/podcasts/:podcastId/episodes', {
+                    podcastId: podcast.id,
+                  })}
+                  episodes={selectedEpisodes.map((episode) => ({
+                    ...episode,
+                    state: episode.submission ?? episode.state,
+                    title: formatEpisodeTitle(episode),
+                  }))}
+                  fetcherKey={EPISODES_BULK_ACTION_FETCHER_KEY}
+                  isCreator={!isApprover && !isContributor}
+                  isPodcastPublished={podcast.state === 'published'}
+                  onClear={selection.clear}
+                />
+              )}
+              <FilterBar replaced={hasSelection}>
                 <FilterBarGroup>
                   <FilterBarSearch
                     defaultValue={query}
@@ -239,7 +267,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             <TableHeader>
               <TableSelectionHeaderCell
                 checked={selection.allSelected}
-                disabled={deletableIds.length === 0}
+                disabled={selectableIds.length === 0}
                 indeterminate={selection.someSelected}
                 onChange={selection.toggleAll}
               />

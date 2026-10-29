@@ -145,8 +145,16 @@ tohle (rozhodnuto 27.–28. 9. 2026):
 - **`Stáhnout z publikace`** vrátí článek jako koncept neodeslaný a neschválený. Koordinátor ho
   smí publikovat rovnou, bez nového schválení; věta „vrátí se až po novém schválení“ je nepravda.
 - **Tlačítko je `Publikovat`, ne `Zveřejnit`** — sjednocuje se se stavem `Publikováno`.
-- **Hromadné publikování má pořadí**, které jde před potvrzením změnit; jak ho dialog ukazuje
-  shora dolů, tak budou texty stát na webu.
+- **Hromadné publikování článků má pořadí**, které jde před potvrzením změnit; jak ho dialog
+  ukazuje shora dolů, tak budou texty stát na webu. Epizody se řadí podle čísla (nejvyšší číslo
+  bude nejnovější) a datum publikace si volí jako článek. Rubriky, štítky, čísla a podcasty se
+  hromadně publikují bez řazení a bez volby data (rozhodnuto 22. 10. 2026).
+- **Hromadné akce jsou ve všech tabulkách obsahu**: `Publikovat…` (jen Koordinátor),
+  `Stáhnout z publikace…`, `Archivovat…`, `Obnovit jako koncept…` a `Smazat…`, každá jen tam, kde
+  by ji role a stav dovolily i na řádku. Lišta nabízí jen akce společné všem vybraným, nejvýš
+  dvě. Každá se potvrzuje dialogem. Položku, kterou právě upravuje někdo jiný, akce přeskočí,
+  publikování přeskočí i neúplnou. Publikovaný obsah se ani hromadně nemaže a podcast
+  s epizodami se hromadně nesmaže.
 - **Datum publikace**, ne *datum vydání* (*vydání* je tištěné číslo). Umí i čas (jen Koordinátor,
   nikdy do budoucnosti) — kvůli zařazení zapomenutého článku mezi dva vydané.
 - **Článek může mít víc autorů** a každý z nich ho má za vlastní: upraví ho, odešle i vezme zpět.

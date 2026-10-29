@@ -1,17 +1,11 @@
 import { invariantResponse } from '@epic-web/invariant'
 
-import { FORM_CONFIG } from '~/config/form-config'
+import { readBulkActionForm } from '~/utils/bulk-action/read-bulk-action-form'
+import { readBulkPublishBase } from '~/utils/bulk-action/read-bulk-publish-base'
+import { runBulkContentAction } from '~/utils/bulk-action/run-bulk-content-action.server'
 import { requireCSRF } from '~/utils/csrf.server'
-import { prisma } from '~/utils/db.server'
-import { readEditHeldRefusal } from '~/utils/edit-hold/read-edit-held-refusal'
-import { episodeContentStateHandlers } from '../episode/_index/utils/content-state-handlers.server'
 import type { Route } from './+types/route'
-
-const INTENT_NAME = FORM_CONFIG.intent.name
-const INTENT_VALUE = FORM_CONFIG.intent.value
-
-// Matches the bulk-actions bar cap — selection is offered per page.
-const MAX_SELECTION = 20
+import { createEpisodeBulkAdapter } from './utils/create-episode-bulk-adapter.server'
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const { podcastId } = params
@@ -22,52 +16,13 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   const formData = await request.formData()
   await requireCSRF(formData, request)
 
-  const intent = formData.get(INTENT_NAME)
-  invariantResponse(intent === INTENT_VALUE.bulkDelete, 'Invalid intent')
+  const { action, ids } = readBulkActionForm(formData)
 
-  // Trim, drop empty values, and de-duplicate before the size guard so forged
-  // `ids=` fields and repeated ids can't slip past validation or cause no-op /
-  // repeated deletes.
-  const ids = [
-    ...new Set(
-      formData
-        .getAll('ids')
-        .filter((id): id is string => typeof id === 'string')
-        .map((id) => id.trim())
-        .filter((id) => id !== ''),
-    ),
-  ]
-  invariantResponse(
-    ids.length > 0 && ids.length <= MAX_SELECTION,
-    'Invalid selection size',
-  )
-
-  // Scope to this podcast so forged ids from another podcast can't be deleted.
-  const episodes = await prisma.podcastEpisode.findMany({
-    select: { authorId: true, id: true, state: true },
-    where: { id: { in: ids }, podcastId },
+  return runBulkContentAction(request, {
+    action,
+    adapter: createEpisodeBulkAdapter(podcastId),
+    ids,
+    publishBase:
+      action === 'publish' ? readBulkPublishBase(formData) : undefined,
   })
-
-  // Sequential on purpose: each delete runs its own permission check and
-  // image-cleanup transaction. Not atomic across items — the UI only offers
-  // deletable rows; the per-item check is defense in depth. An episode any
-  // editor holds, one's own other tab included, stays (logs 0019, 0036) and
-  // is not counted.
-  let deletedCount = 0
-  for (const episode of episodes) {
-    try {
-      await episodeContentStateHandlers.delete(request, {
-        id: episode.id,
-        target: { authorIds: [episode.authorId], state: episode.state },
-      })
-      deletedCount += 1
-    } catch (error) {
-      if (readEditHeldRefusal(error) === null) throw error
-    }
-  }
-
-  // App convention: the bulk-delete hook clears the selection only on an
-  // explicit success. A denied item throws inside deleteEpisode before we get
-  // here, so the selection stays for retry.
-  return { deletedCount, status: 'success' as const }
 }

@@ -12,17 +12,21 @@ import {
 import { parseAdminListParams } from '~/utils/admin-list-params'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
+import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
+import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
+import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { buildEpisodePermissionWhere } from '../../episodes/utils/build-episode-permission-where'
 import { getEpisodeFactLine } from '../../episodes/utils/get-episode-fact-line'
 import { getEpisodeRowActions } from '../../episodes/utils/get-episode-row-actions'
+import { getMissingEpisodeContent } from '../../episodes/utils/get-missing-episode-content'
 import { SORT_KEYS } from '../sort'
 
 const PAGE_SIZE = 20
@@ -129,8 +133,16 @@ export const loadEpisodeTable = async ({
               role: { select: { level: true } },
             },
           },
+          description: true,
+          heldByAuthorId: true,
+          heldByTabId: true,
+          heldSince: true,
+          heldUntil: true,
           id: true,
-          links: { orderBy: { order: 'asc' }, select: { label: true } },
+          links: {
+            orderBy: { order: 'asc' },
+            select: { label: true, url: true },
+          },
           number: true,
           publishedAt: true,
           reviews: {
@@ -180,6 +192,38 @@ export const loadEpisodeTable = async ({
   }
 
   const isPodcastPublished = podcast.state === 'published'
+  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+
+  // The numbers and addresses other episodes of the podcast hold as published
+  // (logs 0039, 0047): a draft with one of them is skipped by bulk publishing
+  // too (27h). Only the Coordinator publishes, and nothing on an unpublished
+  // podcast (27f), so only then is it needed.
+  const holders =
+    isApprover && isPodcastPublished
+      ? await prisma.podcastEpisode.findMany({
+          select: { id: true, publishedNumber: true, publishedSlug: true },
+          where: {
+            OR: [
+              {
+                publishedNumber: {
+                  in: rawEpisodes.flatMap(({ number }) =>
+                    number === null ? [] : [number],
+                  ),
+                },
+              },
+              {
+                publishedSlug: {
+                  in: rawEpisodes.flatMap(({ slug }) =>
+                    slug === '' ? [] : [slug],
+                  ),
+                },
+              },
+            ],
+            podcastId: podcast.id,
+          },
+        })
+      : []
+  const now = new Date()
 
   const episodes = rawEpisodes.map((episode) => {
     const flags = getContentActionFlags(context, 'podcast_episode', {
@@ -189,16 +233,21 @@ export const loadEpisodeTable = async ({
       submittedAt: episode.submittedAt,
     })
     const submission = flags.submission?.state ?? null
+    const rowActions = getEpisodeRowActions({
+      ...flags,
+      isPodcastPublished,
+      state: episode.state,
+      submission,
+    })
+    const bulkActions = getBulkActions({ ...rowActions, isApprover })
 
     return {
-      ...getEpisodeRowActions({
-        ...flags,
-        isPodcastPublished,
-        state: episode.state,
-        submission,
-      }),
+      ...rowActions,
       authorName: episode.author.name,
-      canDelete: flags.canDelete,
+      // What the selection bar may apply to this row (22c, 27b): nothing is
+      // published while the podcast isn't (27f); a held one is skipped and
+      // said apart, not left out of the bar's actions.
+      bulkActions,
       // The row's tag says what the detail's does (07a), with one fact (27b).
       factLine: getEpisodeFactLine({
         authorName: episode.author.name,
@@ -207,12 +256,52 @@ export const loadEpisodeTable = async ({
         updatedAt: episode.updatedAt,
       }),
       id: episode.id,
+      isHeldByOther:
+        getEditHoldStatus(episode, { authorId: context.authorId, now }) ===
+        'other',
+      // Bulk publishing skips it and says so up front (27h, 27b).
+      isIncomplete:
+        isApprover &&
+        getMissingEpisodeContent({
+          description: episode.description,
+          isNumberTaken: holders.some(
+            (holder) =>
+              holder.id !== episode.id &&
+              episode.number !== null &&
+              holder.publishedNumber === episode.number,
+          ),
+          isSlugTaken: holders.some(
+            (holder) =>
+              holder.id !== episode.id &&
+              episode.slug !== '' &&
+              holder.publishedSlug === episode.slug,
+          ),
+          links: episode.links,
+          number: episode.number,
+          title: episode.title,
+        }).length > 0,
       // Publishing it, the dialog says it isn't submitted (23f).
       isNotSubmitted:
         episode.state === 'draft' &&
         flags.submission === null &&
         flags.isSubmittable &&
         !flags.isOwnContent,
+      // On an unpublished podcast a waiting or approved episode has no bulk
+      // action, yet the Coordinator selects it to hear why it can't be
+      // published (27b, 27f).
+      isSelectable:
+        bulkActions.length > 0 ||
+        (isApprover &&
+          !isPodcastPublished &&
+          getBulkActions({
+            ...getEpisodeRowActions({
+              ...flags,
+              isPodcastPublished: true,
+              state: episode.state,
+              submission,
+            }),
+            isApprover,
+          }).includes('publish')),
       linkLabels: episode.links.map((link) => link.label),
       number: episode.number,
       publishedAt: episode.publishedAt?.toISOString() ?? null,
