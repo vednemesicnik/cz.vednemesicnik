@@ -1,13 +1,3 @@
-/* Centres the card on the sign-in page (design 20). */
-.page {
-  @layer component {
-    display: grid;
-    place-items: center;
-    min-height: 100%;
-    padding: 24px;
-  }
-}
-
 /* The design system's AdminSignInCard (components/admin/AdminSignInCard). */
 .card {
   @layer component {
@@ -98,13 +88,6 @@
 /* A phone has no card: the content stands on the white page, from the top
    (20e). */
 @media (width < 768px) {
-  .page {
-    @layer component {
-      place-items: start stretch;
-      background-color: var(--bg-primary);
-    }
-  }
-
   .card {
     @layer component {
       max-width: none;

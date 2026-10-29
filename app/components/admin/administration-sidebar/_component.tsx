@@ -5,6 +5,7 @@ import { Form, href, useLocation } from 'react-router'
 import { AdminAvatar } from '~/components/admin/admin-avatar'
 import { useSidebarHighlight } from '~/components/admin/sidebar-highlight-provider'
 import { Button } from '~/components/button'
+import { Hyperlink } from '~/components/hyperlink'
 import { VdmLogo } from '~/components/vdm-logo'
 import { VdmWordmark } from '~/components/vdm-wordmark'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
@@ -39,7 +40,8 @@ type Props = {
 
 /**
  * The administration sidebar (design 22a, design system `AdminSidebar`): the brand on
- * top, content sections, people below a rule and the signed-in user at the bottom,
+ * top with the website link under it (s21ljh49), content sections, people below a
+ * rule and the signed-in user at the bottom,
  * with Nastavení (the account's own settings, 29a) and sign-out under the name.
  * Callers pass only the items the user may see.
  *
@@ -78,26 +80,32 @@ export const AdministrationSidebar = ({
 
   return (
     <aside className={clsx(styles.sidebar, isMenu && styles.menu, className)}>
-      {/* Not a link: Přehled is the first item below (design 22a, tyxr2jqk). */}
-      <div className={styles.brand}>
-        <VdmLogo className={styles.logo} />
-        <span className={styles.brandText}>
-          <VdmWordmark className={styles.name} tone={'text'} />
-          <span className={styles.product}>Administrace</span>
-        </span>
-        {isMenu && (
-          // Zavřít stands where Menu was in the top bar (tbi5qpq9).
-          <Button
-            className={styles.closeButton}
-            onClick={onClose}
-            ref={closeButtonRef}
-            size={'sm'}
-            type={'button'}
-            variant={'ghost'}
-          >
-            {closeLabel}
-          </Button>
-        )}
+      <div className={styles.head}>
+        {/* Not a link: Přehled is the first item below (design 22a, tyxr2jqk). */}
+        <div className={styles.brand}>
+          <VdmLogo className={styles.logo} />
+          <span className={styles.brandText}>
+            <VdmWordmark className={styles.name} tone={'text'} />
+            <span className={styles.product}>Administrace</span>
+          </span>
+          {isMenu && (
+            // Zavřít stands where Menu was in the top bar (tbi5qpq9).
+            <Button
+              className={styles.closeButton}
+              onClick={onClose}
+              ref={closeButtonRef}
+              size={'sm'}
+              type={'button'}
+              variant={'ghost'}
+            >
+              {closeLabel}
+            </Button>
+          )}
+        </div>
+        {/* The website in a new tab, at hand on every page (s21ljh49). */}
+        <Hyperlink className={styles.siteLink} href={'/'}>
+          Zobrazit web
+        </Hyperlink>
       </div>
 
       <nav aria-label={'Administrace'} className={styles.nav}>

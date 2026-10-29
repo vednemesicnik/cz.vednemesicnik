@@ -17,6 +17,15 @@
   }
 }
 
+/* The brand and the website link under it, one block (s21ljh49). */
+.head {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
 .brand {
   @layer component {
     display: flex;
@@ -24,6 +33,38 @@
     gap: 10px;
     padding-inline: 8px;
     color: var(--text-primary);
+  }
+}
+
+/* Zobrazit web: Hyperlink in the box and hover of Nastavení, its text on the
+   logo's left edge (s21ljh49). */
+.siteLink {
+  @layer variant {
+    align-self: flex-start;
+    padding: 7px 8px;
+    border-radius: var(--radius-lg);
+    font-size: 13px;
+    font-weight: var(--font-weight-regular);
+    line-height: 20px;
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out;
+
+    &,
+    &:visited {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    &:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
   }
 }
 
@@ -220,7 +261,8 @@
       height: 28px;
     }
 
-    /* Items, Nastavení and Odhlásit se are 44 px rows for touch. */
+    /* Zobrazit web, items, Nastavení and Odhlásit se are 44 px rows for touch. */
+    & .siteLink,
     & .list a,
     & .accountLink,
     & .footLink {
@@ -228,6 +270,10 @@
       align-items: center;
       box-sizing: border-box;
       min-block-size: 44px;
+    }
+
+    & .siteLink {
+      align-self: stretch;
     }
   }
 }

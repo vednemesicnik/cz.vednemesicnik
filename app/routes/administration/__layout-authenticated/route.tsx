@@ -10,7 +10,6 @@ import {
   useLocation,
 } from 'react-router'
 import { AdministrationContent } from '~/components/admin/administration-content'
-import { AdministrationPageFooter } from '~/components/admin/administration-page-footer'
 import {
   AdministrationSidebar,
   type NavigationItem,
@@ -134,7 +133,6 @@ export default function RouteComponent({
             <AdministrationContent className={styles.page}>
               <Outlet />
             </AdministrationContent>
-            <AdministrationPageFooter />
           </div>
         </ToastProvider>
       </SidebarHighlightProvider>
