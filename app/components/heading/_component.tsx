@@ -7,9 +7,10 @@ type Props = {
   children: ReactNode
   level: 2 | 3
   className?: string
+  id?: string
 }
 
-export function Heading({ children, level, className }: Props) {
+export function Heading({ children, level, className, id }: Props) {
   const ElementTag = `h${level}` as const
 
   return (
@@ -20,6 +21,7 @@ export function Heading({ children, level, className }: Props) {
         level === 3 && styles.heading3,
         className,
       )}
+      id={id}
     >
       {children}
     </ElementTag>
