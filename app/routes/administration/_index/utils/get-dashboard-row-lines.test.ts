@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { getDashboardRowLines } from './get-dashboard-row-lines'
 
-const now = new Date('2026-10-29T14:30:00')
+const now = new Date('2026-10-29T13:30:00Z')
 
 const base = {
   authorLine: 'Anna Dvořáková',
@@ -30,7 +30,8 @@ describe('getDashboardRowLines', () => {
   test('who edits it comes before a live change, which comes before the fact', () => {
     const liveChange = {
       name: 'Jakub Novák',
-      occurredAt: new Date('2026-10-29T14:02:00'),
+      // 14:02 in Prague (CET), whatever the machine's zone.
+      occurredAt: new Date('2026-10-29T13:02:00Z'),
       sequence: 1,
       tintStartedAt: 0,
     }
