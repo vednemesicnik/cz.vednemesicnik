@@ -6,6 +6,8 @@ import { ErrorMessageGroup } from '~/components/error-message-group'
 import { Label } from '~/components/label'
 import styles from './_styles.module.css'
 
+type CounterTone = 'neutral' | 'attention'
+
 type Props<FieldType extends string | undefined = string> = {
   label: ReactNode
   className?: string
@@ -13,6 +15,7 @@ type Props<FieldType extends string | undefined = string> = {
   field: FieldMetadata<FieldType>
   hint?: ReactNode
   counter?: ReactNode
+  counterTone?: CounterTone
   /** Something around the field already names it; the label stays for readers. */
   isLabelHidden?: boolean
 }
@@ -24,6 +27,8 @@ type Props<FieldType extends string | undefined = string> = {
  * @param props.hint - Helper text under the input, added to its description.
  * @param props.counter - The length against its limit, e.g. „512 / 500“; it
  *   turns to the error colour with the field's errors.
+ * @param props.counterTone - `attention` turns the counter amber for a limit
+ *   that only advises, as the perex's 160 (24a); the field's errors still win.
  */
 
 export const AdminTextarea = <FieldType extends string | undefined = string>({
@@ -33,6 +38,7 @@ export const AdminTextarea = <FieldType extends string | undefined = string>({
   field,
   hint,
   counter,
+  counterTone = 'neutral',
   isLabelHidden = false,
 }: Props<FieldType>) => {
   const hasErrors = field.errors !== undefined && field.errors.length > 0
@@ -80,7 +86,12 @@ export const AdminTextarea = <FieldType extends string | undefined = string>({
           </div>
           {counter !== undefined && (
             <span
-              className={clsx(styles.counter, hasErrors && styles.counterError)}
+              className={clsx(
+                styles.counter,
+                hasErrors
+                  ? styles.counterError
+                  : counterTone === 'attention' && styles.counterAttention,
+              )}
               id={counterId}
             >
               {counter}

@@ -222,20 +222,6 @@
   }
 }
 
-.perexCount {
-  @layer route {
-    flex: none;
-    font-variant-numeric: tabular-nums;
-  }
-}
-
-/* Over 160 the count turns amber; nothing is blocked (24a). */
-.perexCountOver {
-  @layer route {
-    color: var(--state-attention-text);
-  }
-}
-
 /* The whole address under its field, as the reader will see it (24a). */
 .path {
   @layer route {
