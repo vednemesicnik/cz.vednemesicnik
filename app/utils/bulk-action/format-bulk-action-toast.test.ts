@@ -169,6 +169,7 @@ describe('formatBulkActionToast — podcasts (27a, 0farrwua)', () => {
   })
 
   test.each([
+    [1, 'Smazáno: 1 autor'],
     [3, 'Smazáno: 3 autoři'],
     [7, 'Smazáno: 7 autorů'],
     [0, 'Nic nebylo smazáno'],

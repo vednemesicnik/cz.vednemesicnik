@@ -51,7 +51,8 @@ type Props = {
  * (design 22c, 25g, 26f, 27a): the bulk actions valid for every selected
  * record, each confirmed in one dialog. A record someone else edits is skipped
  * and said apart (22f); publishing skips an incomplete one too (23h, 26e). The
- * list answers the result (`useBulkActionResult`).
+ * authors list, which only deletes, uses it too (28g). The list answers the
+ * result (`useBulkActionResult`).
  *
  * @param props.action - The list's action the bar posts to.
  * @param props.fetcherKey - The keyed fetcher the list answers through.
