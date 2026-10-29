@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import {
   ARTICLE_BULK_NOUN,
+  AUTHOR_BULK_NOUN,
   CATEGORY_BULK_NOUN,
   ISSUE_BULK_NOUN,
   PODCAST_BULK_NOUN,
@@ -312,5 +313,25 @@ describe('getBulkConfirmCopy — podcasts (27a, gzumlpu2)', () => {
     ).toEqual([
       'Podcasty se vrátí do konceptu. Znovu je publikovat může Koordinátor.',
     ])
+  })
+
+  test.each([
+    [1, 'Smazat 1 autora', 'Autor se trvale smaže.'],
+    [3, 'Smazat 3 autory', 'Autoři se trvale smažou.'],
+    [8, 'Smazat 8 autorů', 'Autoři se trvale smažou.'],
+  ])('deletes %i authors in the 28g words', (count, label, description) => {
+    expect(
+      getBulkConfirmCopy({
+        action: 'delete',
+        count,
+        isCreator: false,
+        noun: AUTHOR_BULK_NOUN,
+        onlyDrafts: false,
+      }),
+    ).toEqual({
+      confirmLabel: label,
+      descriptions: [description],
+      title: `${label}?`,
+    })
   })
 })

@@ -1,7 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href } from 'react-router'
-import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -14,6 +13,7 @@ import {
 } from '~/components/admin/admin-table'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
+import { ContentSelectionBar } from '~/components/content-selection-bar'
 import { FilterBar } from '~/components/filter-bar'
 import { FilterBarFilters } from '~/components/filter-bar-filters'
 import { FilterBarGroup } from '~/components/filter-bar-group'
@@ -31,6 +31,7 @@ import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { VisuallyHidden } from '~/components/visually-hidden'
+import { AUTHOR_BULK_NOUN } from '~/config/bulk-noun-config'
 import { AUTHOR_COUNT_FORMS } from '~/config/list-noun-config'
 import { useAccountEvents } from '~/hooks/use-account-events'
 import { useContentEvents } from '~/hooks/use-content-events'
@@ -38,21 +39,23 @@ import {
   ACCOUNT_OPTIONS,
   AUTHOR_ROLE_OPTIONS,
 } from '~/utils/admin-filter-options'
+import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
 import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { getAuthorRoleLabel } from '~/utils/role-labels'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
-import { AUTHOR_RECORD_COPY } from '../author-record-copy'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
 import { SORT_KEYS } from './sort'
-import { getAuthorBulkDeleteConfirmation } from './utils/get-author-bulk-delete-confirmation'
 
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
+
+// The keyed fetcher the selection bar submits through and the list reads (28g).
+const BULK_ACTION_FETCHER_KEY = 'authors-bulk-action'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
@@ -87,9 +90,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     .filter((author) => author.canDelete)
     .map((author) => author.id)
   const selection = useAdminTableSelection(deletableIds)
+  useBulkActionResult({
+    fetcherKey: BULK_ACTION_FETCHER_KEY,
+    noun: AUTHOR_BULK_NOUN,
+    onClear: selection.clear,
+  })
   const selectedAuthors = authors.filter((author) =>
     selection.selectedIds.includes(author.id),
   )
+  const hasSelection = selectedAuthors.length > 0
 
   const isDefault =
     query === '' && filters.role === undefined && filters.account === undefined
@@ -129,14 +138,27 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         {newAuthorButton}
       </ListHeader>
       <FilterCell>
-        <AdminBulkActionsBar
-          action={href('/administration/authors')}
-          confirmation={getAuthorBulkDeleteConfirmation(selectedAuthors)}
-          formatToast={AUTHOR_RECORD_COPY.bulkDelete.toast}
-          onDone={selection.clear}
-          selectedIds={selection.selectedIds}
-        />
-        <FilterBar replaced={selection.selectedIds.length > 0}>
+        {/* The selection bar takes the filter row's place in the same cell,
+            so the table does not move (22c, cioukqn6); not on a phone (22g).
+            Only a deletable author is selectable, and deleting is all (28g). */}
+        {hasSelection && (
+          <ContentSelectionBar
+            action={href('/administration/authors')}
+            fetcherKey={BULK_ACTION_FETCHER_KEY}
+            isCreator={false}
+            noun={AUTHOR_BULK_NOUN}
+            onClear={selection.clear}
+            records={selectedAuthors.map((author) => ({
+              bulkActions: ['delete'],
+              id: author.id,
+              isHeldByOther: false,
+              isIncomplete: false,
+              isNotSubmitted: false,
+              title: author.name,
+            }))}
+          />
+        )}
+        <FilterBar replaced={hasSelection}>
           <FilterBarGroup>
             <FilterBarSearch defaultValue={query} placeholder={'Jméno'} />
             <FilterBarFilters>

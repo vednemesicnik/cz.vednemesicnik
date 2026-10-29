@@ -78,7 +78,7 @@ export const getBulkConfirmCopy = ({
       : sentences,
   )
 
-  if (action !== 'retract' || !isCreator) {
+  if (action !== 'retract' || !isCreator || noun.creatorRetract === null) {
     return {
       confirmLabel: label,
       descriptions: [description],

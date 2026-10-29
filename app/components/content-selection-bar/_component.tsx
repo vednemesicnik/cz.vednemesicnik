@@ -23,11 +23,12 @@ import styles from './_styles.module.css'
 /**
  * A selected record as the bar reads it: `title` is how the dialog lists it,
  * `related` the content counted beside it where the list has any (25g, 27a).
+ * A record with no lifecycle (an author, 28g) has no `state`.
  */
 export type SelectedContent = {
   id: string
   title: string
-  state: ContentState | 'pending' | 'approved'
+  state?: ContentState | 'pending' | 'approved'
   bulkActions: BulkAction[]
   isHeldByOther: boolean
   isIncomplete: boolean

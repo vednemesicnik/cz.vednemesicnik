@@ -1,6 +1,7 @@
 import type { CountForms } from '~/config/list-noun-config'
 import {
   ARTICLE_NOUN,
+  AUTHOR_COUNT_FORMS,
   CATEGORY_NOUN,
   EPISODE_NOUN,
   ISSUE_NOUN,
@@ -73,6 +74,10 @@ export type BulkRelated = {
  *   published related content (27a, 0farrwua), by action; empty for none.
  * - `unpublishedParent` — the bar's sentence when drafts can't be published
  *   because what holds them isn't (an episode's podcast, 27b, 27f), or `null`.
+ *
+ * A list with no lifecycle (authors) only deletes: its `pending`,
+ * `notSubmitted`, `creatorRetract` and the descriptions of every other action
+ * are `null`.
  */
 export type BulkNoun = {
   countForms: CountForms
@@ -81,15 +86,15 @@ export type BulkNoun = {
   allHeld: NumberSentences | null
   allIncomplete: NumberSentences | null
   incomplete: PluralSentences | null
-  pending: PluralSentences
-  notSubmitted: PluralSentences
-  creatorRetract: NumberSentences
+  pending: PluralSentences | null
+  notSubmitted: PluralSentences | null
+  creatorRetract: NumberSentences | null
   creatorAfterFirstSentence: boolean
   descriptions: {
     publish: NumberSentences | null
-    archive: NumberSentences | RelatedSentences
-    retract: NumberSentences | RelatedSentences
-    restore: NumberSentences
+    archive: NumberSentences | RelatedSentences | null
+    retract: NumberSentences | RelatedSentences | null
+    restore: NumberSentences | null
     delete: NumberSentences | RelatedSentences
   }
   deleteInFullInk: boolean
@@ -541,4 +546,37 @@ export const EPISODE_BULK_NOUN: BulkNoun = {
     many: 'Epizody nelze publikovat — podcast není publikovaný.',
     one: 'Epizodu nelze publikovat — podcast není publikovaný.',
   },
+}
+
+/**
+ * The 28g sentences with autor (h2twqjee; copy 0t7rbimg). An author has no
+ * lifecycle and no edit hold: the list only deletes, and only an author
+ * nothing holds is selectable.
+ */
+export const AUTHOR_BULK_NOUN: BulkNoun = {
+  allHeld: null,
+  allIncomplete: null,
+  countForms: AUTHOR_COUNT_FORMS,
+  creatorAfterFirstSentence: false,
+  creatorRetract: null,
+  deleteInFullInk: false,
+  descriptions: {
+    archive: null,
+    delete: {
+      many: 'Autoři se trvale smažou.',
+      one: 'Autor se trvale smaže.',
+    },
+    publish: null,
+    restore: null,
+    retract: null,
+  },
+  draftCountForms: null,
+  incomplete: null,
+  notSubmitted: null,
+  // „Smazat 1 autora / 3 autory“: the accusative differs from the nominative.
+  objectForms: { ...AUTHOR_COUNT_FORMS, few: 'autory', one: 'autora' },
+  pending: null,
+  related: null,
+  relatedToast: {},
+  unpublishedParent: null,
 }

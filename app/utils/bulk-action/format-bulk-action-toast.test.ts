@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest'
 
-import { ARTICLE_BULK_NOUN, PODCAST_BULK_NOUN } from '~/config/bulk-noun-config'
+import {
+  ARTICLE_BULK_NOUN,
+  AUTHOR_BULK_NOUN,
+  PODCAST_BULK_NOUN,
+} from '~/config/bulk-noun-config'
 
 import { formatBulkActionToast } from './format-bulk-action-toast'
 
@@ -163,4 +167,23 @@ describe('formatBulkActionToast — podcasts (27a, 0farrwua)', () => {
       }),
     ).toBe('Archivováno: 2 podcasty')
   })
+
+  test.each([
+    [3, 'Smazáno: 3 autoři'],
+    [7, 'Smazáno: 7 autorů'],
+    [0, 'Nic nebylo smazáno'],
+  ])(
+    'answers %i deleted authors as 28g draws it',
+    (processedCount, expected) => {
+      expect(
+        formatBulkActionToast({
+          action: 'delete',
+          noun: AUTHOR_BULK_NOUN,
+          onlyDrafts: false,
+          processedCount,
+          skippedCount: 0,
+        }),
+      ).toBe(expected)
+    },
+  )
 })
