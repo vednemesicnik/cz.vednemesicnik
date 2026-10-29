@@ -19,8 +19,11 @@ export default function RouteComponent({
   const { tagId } = params
 
   useContentEvents({
+    // An article event names no tag, so any of them looks again; a hold
+    // changes nothing this page shows.
     filter: (event) =>
-      event.entity === 'article_tag' && event.entityId === tagId,
+      (event.entity === 'article' && event.change !== 'hold') ||
+      (event.entity === 'article_tag' && event.entityId === tagId),
   })
 
   return (

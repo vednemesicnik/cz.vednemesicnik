@@ -19,8 +19,11 @@ export default function RouteComponent({
   const { categoryId } = params
 
   useContentEvents({
+    // An article event names no category, so any of them looks again; a hold
+    // changes nothing this page shows.
     filter: (event) =>
-      event.entity === 'article_category' && event.entityId === categoryId,
+      (event.entity === 'article' && event.change !== 'hold') ||
+      (event.entity === 'article_category' && event.entityId === categoryId),
   })
 
   return (
