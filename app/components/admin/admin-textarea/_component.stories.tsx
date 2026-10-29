@@ -94,6 +94,20 @@ export const WithCounterError: Story = {
 }
 
 /**
+ * Over a limit that only advises: the counter turns amber, the field keeps
+ * its look and nothing is blocked (design 24a, the perex).
+ */
+export const WithCounterAttention: Story = {
+  args: {
+    counter: '172 / 160',
+    counterTone: 'attention',
+    field: createMockField({ id: 'perex', name: 'perex' }),
+    hint: 'Shrnutí pro vyhledávače a náhled při sdílení. Na webu se nezobrazuje. Doporučeno do 160 znaků.',
+    label: 'Perex',
+  },
+}
+
+/**
  * Textarea with error messages displayed below.
  * Shows validation errors to the user.
  */

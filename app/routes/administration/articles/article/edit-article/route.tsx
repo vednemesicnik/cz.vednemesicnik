@@ -1408,23 +1408,15 @@ export default function RouteComponent({
                 {/* For search engines and sharing, not shown on the web; the
                     count only advises (24a, mto4s7s7). */}
                 <AdminTextarea
+                  counter={`${perexLength} / ${PEREX_RECOMMENDED_LENGTH}`}
+                  counterTone={
+                    perexLength > PEREX_RECOMMENDED_LENGTH
+                      ? 'attention'
+                      : 'neutral'
+                  }
                   field={fields.perex}
                   hint={
-                    <>
-                      <span>
-                        Shrnutí pro vyhledávače a náhled při sdílení. Na webu se
-                        nezobrazuje. Doporučeno do 160 znaků.
-                      </span>
-                      <span
-                        className={clsx(
-                          styles.perexCount,
-                          perexLength > PEREX_RECOMMENDED_LENGTH &&
-                            styles.perexCountOver,
-                        )}
-                      >
-                        {perexLength} / {PEREX_RECOMMENDED_LENGTH}
-                      </span>
-                    </>
+                    'Shrnutí pro vyhledávače a náhled při sdílení. Na webu se nezobrazuje. Doporučeno do 160 znaků.'
                   }
                   label={'Perex'}
                   textareaProps={{ className: styles.perexInput }}
