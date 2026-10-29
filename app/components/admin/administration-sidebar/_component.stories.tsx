@@ -53,7 +53,7 @@ const peopleItems = [
 
 // A Coordinator who may see other people's records: both groups, under a rule.
 // Nastavení sits under the name for every role (design 29a). The brand on top is
-// not a link; the website link is in the page footer.
+// not a link; the website link „Zobrazit web“ is right under it (s21ljh49).
 export const Playground: Story = {
   args: {
     contentItems,
