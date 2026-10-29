@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
+import { ARTICLE_BULK_NOUN, ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
 
 import { getBulkConfirmCopy } from './get-bulk-confirm-copy'
 
@@ -75,5 +75,57 @@ describe('getBulkConfirmCopy', () => {
       ],
       title: 'Obnovit jako koncept 2 články?',
     })
+  })
+})
+
+describe('getBulkConfirmCopy — issues (26f)', () => {
+  const issueCopy = (
+    action: Parameters<typeof getBulkConfirmCopy>[0]['action'],
+    count: number,
+  ) =>
+    getBulkConfirmCopy({
+      action,
+      count,
+      isCreator: false,
+      noun: ISSUE_BULK_NOUN,
+      onlyDrafts: true,
+    })
+
+  test('publishes and says where the issues appear', () => {
+    expect(issueCopy('publish', 2)).toEqual({
+      confirmLabel: 'Publikovat 2 čísla',
+      descriptions: ['Čísla budou publikována v archivu na webu.'],
+      title: 'Publikovat 2 čísla?',
+    })
+    expect(issueCopy('publish', 1).descriptions).toEqual([
+      'Číslo bude publikováno v archivu na webu.',
+    ])
+  })
+
+  test('deletes drafts as čísla, with their files', () => {
+    expect(issueCopy('delete', 2)).toEqual({
+      confirmLabel: 'Smazat 2 čísla',
+      descriptions: ['Smažou se i jejich nahrané soubory. Vrátit to nejde.'],
+      title: 'Smazat 2 čísla?',
+    })
+    expect(issueCopy('delete', 1).descriptions).toEqual([
+      'Smažou se i jeho nahrané soubory. Vrátit to nejde.',
+    ])
+  })
+
+  test('restores one issue', () => {
+    expect(issueCopy('restore', 1)).toEqual({
+      confirmLabel: 'Obnovit jako koncept 1 číslo',
+      descriptions: [
+        'Číslo se vrátí do konceptu. Na web se dostane až novou publikací.',
+      ],
+      title: 'Obnovit jako koncept 1 číslo?',
+    })
+  })
+
+  test('the articles publish in a dialog of their own', () => {
+    expect(
+      copy({ action: 'publish', count: 3, onlyDrafts: false }).descriptions,
+    ).toEqual([])
   })
 })

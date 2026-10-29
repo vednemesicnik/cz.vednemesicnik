@@ -1,3 +1,23 @@
+/* The filter row's height, so the two share the cell without a jump; the
+   bulk actions here are sm buttons (22c, cioukqn6). */
+.selectionBar {
+  @layer route {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: 42px;
+    padding-block: 2px;
+  }
+}
+
+/* A phone has no selection (22g, 32b). */
+@media (width < 768px) {
+  .selectionBar {
+    @layer route {
+      display: none;
+    }
+  }
+}
+
 /*
  * The wide table's columns (26a, 31a), read by AdminTable from a
  * 1280 px table: Číslo 3 and Pořadí 1 (min. 110); the checkbox, cover,

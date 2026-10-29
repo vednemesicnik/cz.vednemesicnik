@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
+import { ARTICLE_BULK_NOUN, ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
 
 import { getSelectionBarContent } from './get-selection-bar-content'
 
@@ -168,5 +168,46 @@ describe('getSelectionBarContent', () => {
         },
       ]),
     ).toEqual({ actions: ['delete'], message: null })
+  })
+})
+
+describe('getSelectionBarContent — issues (26f)', () => {
+  test.each([
+    [1, 'Vybrané číslo se právě upravuje.'],
+    [2, 'Všechna vybraná čísla se právě upravují.'],
+  ])('every selected issue held (%i)', (count, message) => {
+    expect(
+      getSelectionBarContent(
+        Array.from({ length: count }, () => ({
+          bulkActions: ['retract' as const, 'archive' as const],
+          isHeldByOther: true,
+          isIncomplete: false,
+        })),
+        ISSUE_BULK_NOUN,
+      ),
+    ).toEqual({ actions: [], message })
+  })
+
+  test('two incomplete issues with publishing alone (26f)', () => {
+    expect(
+      getSelectionBarContent(
+        [
+          {
+            bulkActions: ['publish'],
+            isHeldByOther: false,
+            isIncomplete: true,
+          },
+          {
+            bulkActions: ['publish'],
+            isHeldByOther: false,
+            isIncomplete: true,
+          },
+        ],
+        ISSUE_BULK_NOUN,
+      ),
+    ).toEqual({
+      actions: [],
+      message: 'Vybraná čísla nelze publikovat — jsou neúplná.',
+    })
   })
 })

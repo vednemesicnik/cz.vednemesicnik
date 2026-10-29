@@ -11,8 +11,8 @@
   }
 }
 
-/* Smazání je nevratné. in full ink (22c). */
-.warning {
+/* In full ink (22c): Smazání je nevratné. and the publish dialog's exceptions. */
+.note {
   @layer component {
     margin: 0;
     font-size: var(--font-size-sm);

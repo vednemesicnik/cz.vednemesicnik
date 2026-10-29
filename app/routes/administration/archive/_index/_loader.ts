@@ -13,6 +13,7 @@ import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
+import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import {
@@ -217,18 +218,28 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const issues = titledIssues.map((issue) => {
     const hold = getArticleHold(issue, { authorId: context.authorId, now })
     const isHeldByOther = hold !== null && !hold.isOwn
+    const unheldFlags = getContentActionFlags(context, 'issue', {
+      authors: [issue.author],
+      reviews: issue.reviews,
+      state: issue.state,
+      submittedAt: issue.submittedAt,
+    })
     // While someone else edits it, its edit and state actions wait; the
     // Coordinator's Upravit opens the takeover (26i, 26k).
-    const flags = getHeldActionFlags(
-      getContentActionFlags(context, 'issue', {
-        authors: [issue.author],
-        reviews: issue.reviews,
-        state: issue.state,
-        submittedAt: issue.submittedAt,
-      }),
-      { isApprover, isHeldByOther },
-    )
+    const flags = getHeldActionFlags(unheldFlags, { isApprover, isHeldByOther })
     const submission = flags.submission?.state ?? null
+    // Publishing an incomplete issue opens the 26e sentence instead of the
+    // confirmation; only the Coordinator publishes, and the server checks again.
+    const missingBeforePublish = isApprover
+      ? getMissingIssueContent({
+          hasCover: issue.cover !== null,
+          hasPdf: issue.pdf !== null,
+          isNumberTaken: takenIds.has(issue.id),
+          order: issue.order,
+          supplement: issue.supplement,
+          year: issue.year,
+        })
+      : []
 
     return {
       ...getIssueRowActions({
@@ -237,7 +248,16 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         state: issue.state,
         submission,
       }),
-      canDelete: flags.canDelete,
+      // What the selection bar may apply to this row (22c, 26f); a held one
+      // is skipped and said apart (26i), not left out of the bar's actions.
+      bulkActions: getBulkActions({
+        ...getIssueRowActions({
+          ...unheldFlags,
+          state: issue.state,
+          submission,
+        }),
+        isApprover,
+      }),
       cover:
         issue.cover === null
           ? null
@@ -262,6 +282,9 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
               now,
             }),
       id: issue.id,
+      isHeldByOther,
+      // Bulk publishing skips it and says so up front (26e, 26f).
+      isIncomplete: missingBeforePublish.length > 0,
       // Publishing it, the dialog says it isn't submitted (26h).
       isNotSubmitted:
         issue.state === 'draft' &&
@@ -270,16 +293,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         !flags.isOwnContent,
       // Publishing an incomplete issue opens the 26e sentence instead of the
       // confirmation; only the Coordinator publishes, and the server checks again.
-      missingBeforePublish: isApprover
-        ? getMissingIssueContent({
-            hasCover: issue.cover !== null,
-            hasPdf: issue.pdf !== null,
-            isNumberTaken: takenIds.has(issue.id),
-            order: issue.order,
-            supplement: issue.supplement,
-            year: issue.year,
-          })
-        : [],
+      missingBeforePublish,
       orderLabel: getIssueOrderLabel(issue),
       // The name the reader downloads it under; before publish it has none,
       // so the uploaded one, as on the detail (26b, log 0039).

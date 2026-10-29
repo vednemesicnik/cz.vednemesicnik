@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
+import { ARTICLE_BULK_NOUN, ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
 
 import { getBulkPublishNotes } from './get-bulk-publish-notes'
 
@@ -70,5 +70,30 @@ describe('getBulkPublishNotes', () => {
         pendingCount: 0,
       }).skipped,
     ).toBe(expected)
+  })
+})
+
+describe('getBulkPublishNotes — issues (26f, 0farrwua)', () => {
+  test.each([
+    [
+      { incompleteCount: 0, notSubmittedCount: 0, pendingCount: 1 },
+      '1 číslo čeká na schválení. Publikováním ho schválíte.',
+      null,
+    ],
+    [
+      { incompleteCount: 2, notSubmittedCount: 2, pendingCount: 0 },
+      '2 čísla nejsou odeslaná ke schválení.',
+      '2 čísla jsou neúplná. Přeskočí se.',
+    ],
+    [
+      { incompleteCount: 5, notSubmittedCount: 1, pendingCount: 0 },
+      '1 číslo není odeslané ke schválení.',
+      '5 čísel je neúplných. Přeskočí se.',
+    ],
+  ])('%o', (counts, notes, skipped) => {
+    expect(getBulkPublishNotes({ ...counts, noun: ISSUE_BULK_NOUN })).toEqual({
+      notes,
+      skipped,
+    })
   })
 })

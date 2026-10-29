@@ -1,5 +1,5 @@
 import type { CountForms } from '~/config/list-noun-config'
-import { ARTICLE_NOUN } from '~/config/list-noun-config'
+import { ARTICLE_NOUN, ISSUE_NOUN } from '~/config/list-noun-config'
 
 /** A sentence by Czech plural rule of its count: `1` · `2–4` · `5+`. */
 export type PluralSentences = {
@@ -28,7 +28,9 @@ export type NumberSentences = {
  * - `incomplete`, `pending`, `notSubmitted` — the predicate after the count in
  *   the publish dialog: „1 článek | je neúplný. Přeskočí se.“
  * - `creatorRetract` — the Creator's sentence after a retract's first one.
- * - `descriptions` — what an action does to the records the dialog counts.
+ * - `descriptions` — what an action does to the records the dialog counts;
+ *   `publish` is `null` where the list publishes in a dialog of its own (the
+ *   articles' ordered one).
  */
 export type BulkNoun = {
   countForms: CountForms
@@ -41,10 +43,11 @@ export type BulkNoun = {
   notSubmitted: PluralSentences
   creatorRetract: NumberSentences
   descriptions: {
+    publish: NumberSentences | null
     archive: NumberSentences
     retract: NumberSentences
     restore: NumberSentences
-    delete: string
+    delete: NumberSentences
   }
 }
 
@@ -77,7 +80,8 @@ export const ARTICLE_BULK_NOUN: BulkNoun = {
       many: 'Čtenáři články na webu neuvidí. V administraci zůstanou mezi archivovanými.',
       one: 'Čtenáři článek na webu neuvidí. V administraci zůstane mezi archivovanými.',
     },
-    delete: 'Smazání je nevratné.',
+    delete: { many: 'Smazání je nevratné.', one: 'Smazání je nevratné.' },
+    publish: null,
     restore: {
       many: 'Články se vrátí do konceptu. Na web se dostanou až novou publikací.',
       one: 'Článek se vrátí do konceptu. Na web se dostane až novou publikací.',
@@ -99,6 +103,63 @@ export const ARTICLE_BULK_NOUN: BulkNoun = {
     other: 'není odeslaných ke schválení.',
   },
   objectForms: ARTICLE_NOUN.countForms,
+  pending: {
+    few: 'čekají na schválení. Publikováním je schválíte.',
+    one: 'čeká na schválení. Publikováním ho schválíte.',
+    other: 'čeká na schválení. Publikováním je schválíte.',
+  },
+}
+
+// The 22c sentences with číslo (26f; copy p256liqr, 0farrwua, qjv38ti4).
+export const ISSUE_BULK_NOUN: BulkNoun = {
+  allHeld: {
+    many: 'Všechna vybraná čísla se právě upravují.',
+    one: 'Vybrané číslo se právě upravuje.',
+  },
+  allIncomplete: {
+    many: 'Vybraná čísla nelze publikovat — jsou neúplná.',
+    one: 'Vybrané číslo nelze publikovat — je neúplné.',
+  },
+  countForms: ISSUE_NOUN.countForms,
+  creatorRetract: {
+    many: 'Znovu je publikovat může Koordinátor.',
+    one: 'Znovu ho publikovat může Koordinátor.',
+  },
+  descriptions: {
+    archive: {
+      many: 'Čtenáři čísla na webu neuvidí. V administraci zůstanou mezi archivovanými.',
+      one: 'Čtenáři číslo na webu neuvidí. V administraci zůstane mezi archivovanými.',
+    },
+    // A draft may have neither a cover nor a PDF, so no file is named.
+    delete: {
+      many: 'Smažou se i jejich nahrané soubory. Vrátit to nejde.',
+      one: 'Smažou se i jeho nahrané soubory. Vrátit to nejde.',
+    },
+    publish: {
+      many: 'Čísla budou publikována v archivu na webu.',
+      one: 'Číslo bude publikováno v archivu na webu.',
+    },
+    restore: {
+      many: 'Čísla se vrátí do konceptu. Na web se dostanou až novou publikací.',
+      one: 'Číslo se vrátí do konceptu. Na web se dostane až novou publikací.',
+    },
+    retract: {
+      many: 'Čísla se vrátí do konceptu. Čtenáři je na webu neuvidí.',
+      one: 'Číslo se vrátí do konceptu. Čtenáři ho na webu neuvidí.',
+    },
+  },
+  draftCountForms: null,
+  incomplete: {
+    few: 'jsou neúplná.',
+    one: 'je neúplné.',
+    other: 'je neúplných.',
+  },
+  notSubmitted: {
+    few: 'nejsou odeslaná ke schválení.',
+    one: 'není odeslané ke schválení.',
+    other: 'není odeslaných ke schválení.',
+  },
+  objectForms: ISSUE_NOUN.countForms,
   pending: {
     few: 'čekají na schválení. Publikováním je schválíte.',
     one: 'čeká na schválení. Publikováním ho schválíte.',
