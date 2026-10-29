@@ -44,6 +44,8 @@ export type BulkContentRow = {
  *   record (podcasts); `none`: the handler's now (categories, tags, issues).
  * - `hasPublishedRelated` — whether a record has published related content
  *   its change takes off the web too (a podcast's episodes, 27a).
+ * - `sortRows` — the order the records are changed and dated in, where it is
+ *   the content's own rather than the selection's (episodes by number, 27b).
  */
 export type BulkContentAdapter<Row extends BulkContentRow> = {
   entity: ContentLogEntity
@@ -55,6 +57,7 @@ export type BulkContentAdapter<Row extends BulkContentRow> = {
   ) => { row: ArticleAction | null; menu: readonly ArticleAction[] }
   publishDate: 'chosen' | 'ordered' | 'none'
   hasPublishedRelated?: (row: Row) => boolean
+  sortRows?: (rows: Row[]) => Row[]
 }
 
 type Options<Row extends BulkContentRow> = {
@@ -102,9 +105,19 @@ export const runBulkContentAction = async <Row extends BulkContentRow>(
 
   const rows = await adapter.loadRows(ids)
   const rowsById = new Map(rows.map((row) => [row.id, row]))
+  // A record gone since the list loaded stays in the count, at the end.
+  const orderedInput =
+    adapter.sortRows === undefined
+      ? ids
+      : [
+          ...adapter.sortRows(rows).map((row) => row.id),
+          ...ids.filter((id) => !rowsById.has(id)),
+        ]
 
   // Only records never published take a place in the order.
-  const orderedIds = ids.filter((id) => rowsById.get(id)?.publishedAt === null)
+  const orderedIds = orderedInput.filter(
+    (id) => rowsById.get(id)?.publishedAt === null,
+  )
   const orderBase =
     adapter.publishDate === 'chosen'
       ? publishBase
@@ -131,7 +144,7 @@ export const runBulkContentAction = async <Row extends BulkContentRow>(
 
   // Sequential on purpose: each transition runs its own permission check and,
   // deleting, its own file cleanup.
-  for (const id of ids) {
+  for (const id of orderedInput) {
     const row = rowsById.get(id)
 
     if (row === undefined) {

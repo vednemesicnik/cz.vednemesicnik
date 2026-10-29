@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest'
 import {
   ARTICLE_BULK_NOUN,
   CATEGORY_BULK_NOUN,
+  EPISODE_BULK_NOUN,
   ISSUE_BULK_NOUN,
 } from '~/config/bulk-noun-config'
 
@@ -228,6 +229,66 @@ describe('getSelectionBarContent — categories (25g)', () => {
           },
         ],
         CATEGORY_BULK_NOUN,
+      ),
+    ).toEqual({ actions: [], message: 'Pro tento výběr není společná akce.' })
+  })
+})
+
+describe('getSelectionBarContent — episodes of an unpublished podcast (27b)', () => {
+  test.each([
+    [1, 'Epizodu nelze publikovat — podcast není publikovaný.'],
+    [2, 'Epizody nelze publikovat — podcast není publikovaný.'],
+  ])('waiting episodes, nothing left (%i)', (count, message) => {
+    expect(
+      getSelectionBarContent(
+        Array.from({ length: count }, () => ({
+          bulkActions: [],
+          isHeldByOther: false,
+          isIncomplete: false,
+          state: 'pending',
+        })),
+        EPISODE_BULK_NOUN,
+        { isParentUnpublished: true },
+      ),
+    ).toEqual({ actions: [], message })
+  })
+
+  test('a draft still offers its delete, without the sentence', () => {
+    expect(
+      getSelectionBarContent(
+        [
+          {
+            bulkActions: ['delete'],
+            isHeldByOther: false,
+            isIncomplete: false,
+            state: 'draft',
+          },
+        ],
+        EPISODE_BULK_NOUN,
+        { isParentUnpublished: true },
+      ),
+    ).toEqual({ actions: ['delete'], message: null })
+  })
+
+  test('a published episode in the mix is no common action', () => {
+    expect(
+      getSelectionBarContent(
+        [
+          {
+            bulkActions: [],
+            isHeldByOther: false,
+            isIncomplete: false,
+            state: 'pending',
+          },
+          {
+            bulkActions: ['retract', 'archive'],
+            isHeldByOther: false,
+            isIncomplete: false,
+            state: 'published',
+          },
+        ],
+        EPISODE_BULK_NOUN,
+        { isParentUnpublished: true },
       ),
     ).toEqual({ actions: [], message: 'Pro tento výběr není společná akce.' })
   })

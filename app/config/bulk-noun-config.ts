@@ -71,6 +71,8 @@ export type BulkRelated = {
  * - `related` — the content counted beside each title, or `null`.
  * - `relatedToast` — the toast's second sentence when a changed record had
  *   published related content (27a, 0farrwua), by action; empty for none.
+ * - `unpublishedParent` — the bar's sentence when drafts can't be published
+ *   because what holds them isn't (an episode's podcast, 27b, 27f), or `null`.
  */
 export type BulkNoun = {
   countForms: CountForms
@@ -93,6 +95,7 @@ export type BulkNoun = {
   deleteInFullInk: boolean
   related: BulkRelated | null
   relatedToast: Partial<Record<'retract', NumberSentences>>
+  unpublishedParent: NumberSentences | null
 }
 
 /** „koncept“ by count, for deleting only drafts (22c). */
@@ -156,6 +159,7 @@ export const ARTICLE_BULK_NOUN: BulkNoun = {
   },
   related: null,
   relatedToast: {},
+  unpublishedParent: null,
 }
 
 /** The 22c sentences with číslo (26f; copy p256liqr, 0farrwua; delete yzyd9p1l). */
@@ -217,6 +221,7 @@ export const ISSUE_BULK_NOUN: BulkNoun = {
   },
   related: null,
   relatedToast: {},
+  unpublishedParent: null,
 }
 
 /** „publikovaný článek“ by count, beside a category's or a tag's name (25g, 32a). */
@@ -306,6 +311,7 @@ export const CATEGORY_BULK_NOUN: BulkNoun = {
   },
   related: TAXONOMY_RELATED,
   relatedToast: {},
+  unpublishedParent: null,
 }
 
 /**
@@ -377,6 +383,7 @@ export const TAG_BULK_NOUN: BulkNoun = {
   },
   related: TAXONOMY_RELATED,
   relatedToast: {},
+  unpublishedParent: null,
 }
 
 /** „publikovaná epizoda“ by count, beside a podcast's title (27a, djni9qbc). */
@@ -470,5 +477,68 @@ export const PODCAST_BULK_NOUN: BulkNoun = {
       many: 'Z webu zmizely i jejich publikované epizody.',
       one: 'Z webu zmizely i jeho publikované epizody.',
     },
+  },
+  unpublishedParent: null,
+}
+
+/**
+ * The 22c sentences with epizoda (27b; copy p256liqr, 0farrwua). An episode
+ * publishes in its own dialog, ordered by number, so `publish` is `null`.
+ */
+export const EPISODE_BULK_NOUN: BulkNoun = {
+  allHeld: {
+    many: 'Všechny vybrané epizody se právě upravují.',
+    one: 'Vybraná epizoda se právě upravuje.',
+  },
+  allIncomplete: {
+    many: 'Vybrané epizody nelze publikovat — jsou neúplné.',
+    one: 'Vybranou epizodu nelze publikovat — je neúplná.',
+  },
+  countForms: EPISODE_NOUN.countForms,
+  creatorAfterFirstSentence: false,
+  creatorRetract: {
+    many: 'Znovu je publikovat může Koordinátor.',
+    one: 'Znovu ji publikovat může Koordinátor.',
+  },
+  deleteInFullInk: true,
+  descriptions: {
+    archive: {
+      many: 'Čtenáři epizody na webu neuvidí. V administraci zůstanou mezi archivovanými.',
+      one: 'Čtenáři epizodu na webu neuvidí. V administraci zůstane mezi archivovanými.',
+    },
+    delete: { many: 'Smazání je nevratné.', one: 'Smazání je nevratné.' },
+    publish: null,
+    restore: {
+      many: 'Epizody se vrátí do konceptu. Na web se dostanou až novou publikací.',
+      one: 'Epizoda se vrátí do konceptu. Na web se dostane až novou publikací.',
+    },
+    retract: {
+      many: 'Epizody se vrátí do konceptu. Čtenáři je na webu neuvidí.',
+      one: 'Epizoda se vrátí do konceptu. Čtenáři ji na webu neuvidí.',
+    },
+  },
+  draftCountForms: null,
+  incomplete: {
+    few: 'jsou neúplné.',
+    one: 'je neúplná.',
+    other: 'je neúplných.',
+  },
+  notSubmitted: {
+    few: 'nejsou odeslané ke schválení.',
+    one: 'není odeslaná ke schválení.',
+    other: 'není odeslaných ke schválení.',
+  },
+  objectForms: { ...EPISODE_NOUN.countForms, one: 'epizodu' },
+  pending: {
+    few: 'čekají na schválení. Publikováním je schválíte.',
+    one: 'čeká na schválení. Publikováním ji schválíte.',
+    other: 'čeká na schválení. Publikováním je schválíte.',
+  },
+  related: null,
+  relatedToast: {},
+  // Copy p256liqr G, 0farrwua; the server refuses it too (27f).
+  unpublishedParent: {
+    many: 'Epizody nelze publikovat — podcast není publikovaný.',
+    one: 'Epizodu nelze publikovat — podcast není publikovaný.',
   },
 }

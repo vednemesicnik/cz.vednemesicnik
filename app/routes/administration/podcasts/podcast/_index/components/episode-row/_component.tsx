@@ -171,7 +171,7 @@ export const EpisodeRow = ({
     <TableRow muted={episode.state === 'archived'}>
       <TableSelectionCell
         checked={selected}
-        disabled={!episode.canDelete}
+        disabled={episode.bulkActions.length === 0}
         label={`Vybrat epizodu ${title}`}
         onChange={onSelect}
       />
