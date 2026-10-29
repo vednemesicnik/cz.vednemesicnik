@@ -4,12 +4,7 @@ import { REVEAL_CHAIN_LENGTH } from '~/config/reveal-config'
 import { getRevealProps } from './get-reveal-props'
 
 describe('getRevealProps', () => {
-  it('skips the animation for items an earlier render already revealed', () => {
-    expect(getRevealProps(-1)).toEqual({ reveal: 'none' })
-    expect(getRevealProps(-REVEAL_CHAIN_LENGTH)).toEqual({ reveal: 'none' })
-  })
-
-  it('chains the items of the batch, restarting the delay at the first one', () => {
+  it('chains the first tiles of the page', () => {
     expect(getRevealProps(0)).toEqual({ reveal: 'stagger', staggerIndex: 0 })
     expect(getRevealProps(REVEAL_CHAIN_LENGTH - 1)).toEqual({
       reveal: 'stagger',

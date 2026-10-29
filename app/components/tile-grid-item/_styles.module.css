@@ -27,10 +27,10 @@
   }
 }
 
-/* For a list that appends items: the chain position comes from the caller, so
-   each appended batch starts over instead of continuing from the items already
-   on the page. `sibling-index()` cannot be used here — it is invalid inside a
-   custom property, so the index has to come in as one. */
+/* For a chain that spans several grids, e.g. the archive's years: the position
+   comes from the caller, as `sibling-index()` starts over in each grid. It
+   cannot be used here anyway — it is invalid inside a custom property, so the
+   index has to come in as one. */
 .staggerFromIndex {
   @layer variant {
     animation-delay: min(
