@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
+import type { ArticleAction } from '~/routes/administration/articles/utils/article-actions'
+
 import { getBulkActions } from './get-bulk-actions'
 
 describe('getBulkActions', () => {
@@ -76,7 +78,7 @@ describe('getBulkActions', () => {
   })
 
   test('no state offers more than two bulk actions (ji6n8th3)', () => {
-    const rows = [
+    const rows: { menu: ArticleAction[]; row: ArticleAction | null }[] = [
       { menu: ['submit', 'publish', 'delete'], row: 'edit' },
       { menu: ['approve-and-publish', 'return', 'edit'], row: 'approve' },
       { menu: ['return', 'edit'], row: 'publish' },

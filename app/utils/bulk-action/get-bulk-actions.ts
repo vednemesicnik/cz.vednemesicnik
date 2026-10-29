@@ -1,3 +1,5 @@
+import type { ArticleAction } from '~/routes/administration/articles/utils/article-actions'
+
 /**
  * An action the selection bar applies to every selected record (design 22c,
  * ji6n8th3), in the bar's order (07c).
@@ -9,14 +11,20 @@ export type BulkAction =
   | 'restore'
   | 'delete'
 
+// Every list's row actions are the article's or a subset of them (07c).
 type Options = {
-  row: string | null
-  menu: readonly string[]
+  row: ArticleAction | null
+  menu: readonly ArticleAction[]
   isApprover: boolean
 }
 
 // The row actions that are a bulk action of the same name (07c).
-const SAME_NAMED: BulkAction[] = ['retract', 'archive', 'restore', 'delete']
+const SAME_NAMED: (BulkAction & ArticleAction)[] = [
+  'retract',
+  'archive',
+  'restore',
+  'delete',
+]
 
 /**
  * The bulk actions a row joins (design 22c, ji6n8th3): each only where the role

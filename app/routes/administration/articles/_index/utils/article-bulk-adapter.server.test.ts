@@ -92,7 +92,6 @@ beforeEach(() => {
 })
 
 const runForArticles = (
-  _request: Request,
   options: Omit<Parameters<typeof runBulkContentAction>[1], 'adapter'>,
 ) => runBulkContentAction(request, { ...options, adapter: articleBulkAdapter })
 
@@ -106,7 +105,7 @@ describe('articleBulkAdapter — publish', () => {
     ])
     const publishBase = new Date('2026-10-13T10:00:00.000Z')
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'publish',
       ids: ['first', 'returning', 'second'],
       publishBase,
@@ -141,7 +140,7 @@ describe('articleBulkAdapter — publish', () => {
       }),
     )
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'publish',
       ids: ['complete', 'incomplete'],
       publishBase: new Date(),
@@ -157,7 +156,7 @@ describe('articleBulkAdapter — publish', () => {
       article({ id: 'published-meanwhile', state: 'published' }),
     ])
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'publish',
       ids: ['draft', 'published-meanwhile', 'deleted-meanwhile'],
       publishBase: new Date(),
@@ -182,7 +181,7 @@ describe('articleBulkAdapter — publish', () => {
     })
     findManyMock.mockResolvedValue([article({ id: 'draft', state: 'draft' })])
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'publish',
       ids: ['draft'],
       publishBase: new Date(),
@@ -199,7 +198,7 @@ describe('articleBulkAdapter — retract, archive, restore and delete', () => {
       article({ id: 'published', state: 'published' }),
     ])
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'archive',
       ids: ['published'],
     })
@@ -224,7 +223,7 @@ describe('articleBulkAdapter — retract, archive, restore and delete', () => {
       article({ id: 'draft', state: 'draft' }),
     ])
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'retract',
       ids: ['published', 'draft'],
     })
@@ -240,7 +239,7 @@ describe('articleBulkAdapter — retract, archive, restore and delete', () => {
       article({ id: 'archived', state: 'archived' }),
     ])
 
-    const restored = await runForArticles(request, {
+    const restored = await runForArticles({
       action: 'restore',
       ids: ['archived'],
     })
@@ -258,7 +257,7 @@ describe('articleBulkAdapter — retract, archive, restore and delete', () => {
       roleLevel: 2,
     })
 
-    const refused = await runForArticles(request, {
+    const refused = await runForArticles({
       action: 'restore',
       ids: ['archived'],
     })
@@ -272,7 +271,7 @@ describe('articleBulkAdapter — retract, archive, restore and delete', () => {
       article({ id: 'held', isHeld: true, state: 'published' }),
     ])
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'retract',
       ids: ['held'],
     })
@@ -287,7 +286,7 @@ describe('articleBulkAdapter — retract, archive, restore and delete', () => {
       article({ id: 'submitted', state: 'draft', submittedAt: new Date() }),
     ])
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'delete',
       ids: ['draft', 'submitted'],
     })
@@ -311,7 +310,7 @@ describe('articleBulkAdapter — the edit hold (07g, 22f)', () => {
       article({ id: 'held', isHeld: true, state: 'draft' }),
     ])
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'delete',
       ids: ['free', 'held'],
     })
@@ -332,7 +331,7 @@ describe('articleBulkAdapter — the edit hold (07g, 22f)', () => {
       article({ id: 'own-held', isHeld: true, state: 'draft' }),
     ])
 
-    const deleted = await runForArticles(request, {
+    const deleted = await runForArticles({
       action: 'delete',
       ids: ['own-held'],
     })
@@ -344,7 +343,7 @@ describe('articleBulkAdapter — the edit hold (07g, 22f)', () => {
       article({ id: 'own-held', isHeld: true, state: 'published' }),
     ])
 
-    const archived = await runForArticles(request, {
+    const archived = await runForArticles({
       action: 'archive',
       ids: ['own-held'],
     })
@@ -364,7 +363,7 @@ describe('articleBulkAdapter — the edit hold (07g, 22f)', () => {
       }),
     )
 
-    const result = await runForArticles(request, {
+    const result = await runForArticles({
       action: 'delete',
       ids: ['taken-meanwhile'],
     })

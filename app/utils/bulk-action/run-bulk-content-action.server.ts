@@ -1,5 +1,6 @@
 import type { ContentLogEntity, ContentState } from '@generated/prisma/enums'
 
+import type { ArticleAction } from '~/routes/administration/articles/utils/article-actions'
 import type { ContentStateHandlers } from '~/utils/content-state/create-content-state-handlers.server'
 import type { EditHoldColumns } from '~/utils/edit-hold/edit-hold-columns'
 import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
@@ -49,7 +50,7 @@ export type BulkContentAdapter<Row extends BulkContentRow> = {
   getRowActions: (
     row: Row,
     flags: ContentActionFlags,
-  ) => { row: string | null; menu: readonly string[] }
+  ) => { row: ArticleAction | null; menu: readonly ArticleAction[] }
   publishDate: 'chosen' | 'ordered' | 'none'
 }
 

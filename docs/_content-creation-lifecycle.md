@@ -399,6 +399,12 @@ describes today's code; this is the target.
   (top = newest): the top item gets the moment of confirmation, each next one second earlier.
   An item published before keeps its stored date and stays out of the order. Built for
   articles (#600).
+- **Bulk actions follow the row** (22c, ji6n8th3): *Publikovat…* (Coordinator only, approving a
+  waiting item), *Stáhnout z publikace…*, *Archivovat…*, *Obnovit jako koncept…* and *Smazat…*,
+  each only where the row would allow it, and the bar offers only what every selected item
+  allows. Every one is confirmed; an item held by someone else, changed meanwhile or, publishing,
+  incomplete is skipped and counted. One runner serves every list (log 0050). Built for articles
+  (#772); the other content lists follow in #772.
 - **Changing the publish date takes a time as well** (Coordinator only, never in the future),
   so a forgotten article can be placed between two already published ones.
 - **Creators neither approve nor publish** — not even their own content. Their `review`
