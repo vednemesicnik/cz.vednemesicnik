@@ -5,6 +5,7 @@ import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
+import { OPENS_AT_FIX_STATE } from '~/utils/opens-at-fix-state'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
 type Props = {
@@ -17,8 +18,10 @@ type Props = {
 
 /**
  * What is missing before content can be submitted or published, with the way
- * to the editor (design 23h, 26e). The content says what it lacks in its own
- * words: the article as a list, the issue in one sentence. Opens as it mounts.
+ * to the editor (design 23h, 26e, 27h, 27i). The content says what it lacks
+ * in its own words: the article as a list, the issue in one sentence. Opens as
+ * it mounts.
+ * *Upravit v editoru* opens the editor at the first thing to fix (6dlnv2de).
  */
 export const MissingContentDialog = ({
   editHref,
@@ -40,7 +43,7 @@ export const MissingContentDialog = ({
           >
             Zavřít
           </Button>
-          <LinkButton size={'sm'} to={editHref}>
+          <LinkButton size={'sm'} state={OPENS_AT_FIX_STATE} to={editHref}>
             Upravit v editoru
           </LinkButton>
         </AdminModalActions>

@@ -162,6 +162,35 @@ describe('runContentStateAction — a held refusal (0019, 0036)', () => {
       missing: [],
     })
   })
+
+  test('answers what the holding editor edits, when it is another content', async () => {
+    const handlers = createHandlers()
+    vi.mocked(handlers.delete).mockRejectedValue(
+      createEditHeldRefusal({
+        content: 'episode',
+        heldByName: 'Jakub Novák',
+        isOwnOtherTab: false,
+      }),
+    )
+
+    await expect(
+      runContentStateAction(
+        buildRequest({ [INTENT_NAME]: INTENT_VALUE.delete }),
+        {
+          deleteRedirectTo: '/administration/podcasts',
+          handlers,
+          id: 'p1',
+          loadTarget: vi.fn().mockResolvedValue(target),
+        },
+      ),
+    ).resolves.toEqual({
+      heldByName: 'Jakub Novák',
+      heldContent: 'episode',
+      intent: INTENT_VALUE.delete,
+      isHeldInOwnOtherTab: false,
+      missing: [],
+    })
+  })
 })
 
 describe('runContentStateAction — changePublishedAt gating', () => {

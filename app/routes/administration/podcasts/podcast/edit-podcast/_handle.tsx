@@ -10,6 +10,7 @@ type Match = BreadcrumbMatch<
 >
 
 export const handle = {
+  // „Podcasty / Podcast bez názvu / Úprava“ for the empty draft too (27e, jri2vk3h).
   breadcrumb: (match: Match): Breadcrumb => {
     const { podcastId } = match.params
 
@@ -21,4 +22,6 @@ export const handle = {
       }),
     }
   },
+  // The edit hold keeps the editor current; a reload could lose unsent text (log 0042).
+  skipsOwnAccountReload: true,
 }

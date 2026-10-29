@@ -7,7 +7,10 @@ import { publishContentEvent } from '~/utils/sse/publish-content-event.server'
 
 type Options = {
   /** A content type with an editor that saves as it goes (log 0022). */
-  entity: Extract<ContentLogEntity, 'article' | 'issue'>
+  entity: Extract<
+    ContentLogEntity,
+    'article' | 'issue' | 'podcast' | 'podcast_episode'
+  >
   entityId: string
   /** The save made the empty draft's first content: its creation (0020). */
   isCreation: boolean
@@ -32,7 +35,7 @@ const isLastEntryOwnEdit = async (
 }
 
 /**
- * Logs one saved edit of an article or an issue and tells the open lists
+ * Logs one saved edit of an article, an issue, a podcast or an episode and tells the open lists
  * (design 07f, 24e): the creation once, then one *Upraveno* per hold, however
  * often the editor saves.
  *

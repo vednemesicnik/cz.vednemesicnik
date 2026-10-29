@@ -100,7 +100,7 @@ const meta: Meta<typeof AdminTable> = {
     docs: {
       description: {
         component:
-          'Shared administration table (design 22a): no box, small sentence-case header labels, one line under the header and one between rows. Wraps content in a horizontal-scroll container with optional sticky header and pending overlay; composes with TableHeader/TableRow/TableCell (an empty list is a ListEmptyCard in place of the table, 22e). Tabular numbers and right-aligned action columns come for free.',
+          'Shared administration table (design 22a): no box, small sentence-case header labels, one line under the header and one between rows. Wraps content in a horizontal-scroll container with optional sticky header and pending overlay; composes with TableHeader/TableRow/TableCell (an empty list is a ListEmptyCard in place of the table, 22e). Tabular numbers and right-aligned action columns come for free. Below 768 px it folds each row into its parts (TableNameCell, TableStateCell, …) and hides every other cell, so the stories built from plain cells show a desktop viewport; FoldsOnPhone shows the phone (design 32).',
       },
     },
     layout: 'padded',
@@ -274,7 +274,7 @@ export const FoldsOnPhone: Story = {
   globals: { viewport: { isRotated: false, value: 'mobile1' } },
   parameters: { controls: { disable: true } },
   render: () => (
-    <AdminTable foldsOnPhone={true}>
+    <AdminTable>
       <TableHeader>
         <TableSelectionHeaderCell
           checked={false}

@@ -1,7 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href, useLocation } from 'react-router'
-import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -14,6 +13,7 @@ import {
 } from '~/components/admin/admin-table'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
+import { ContentSelectionBar } from '~/components/content-selection-bar'
 import { FilterBar } from '~/components/filter-bar'
 import { FilterBarFilters } from '~/components/filter-bar-filters'
 import { FilterBarGroup } from '~/components/filter-bar-group'
@@ -30,8 +30,10 @@ import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
+import { TAG_BULK_NOUN } from '~/config/bulk-noun-config'
 import { TAG_NOUN } from '~/config/list-noun-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
+import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -41,7 +43,6 @@ import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import { ArticlesTabs } from '../../components/articles-tabs'
 import { TaxonomyItemRow } from '../../components/taxonomy-item-row'
-import { getTaxonomyBulkDeleteConfirmation } from '../../utils/get-taxonomy-bulk-delete-confirmation'
 import { TAG_RECORD_COPY } from '../tag-record-copy'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -50,6 +51,9 @@ import { SORT_KEYS } from './sort'
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
+
+// The keyed fetcher the selection bar submits through and the list reads (25g).
+const BULK_ACTION_FETCHER_KEY = 'tags-bulk-action'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
@@ -74,11 +78,20 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   useAdminNoticeToast(loaderData)
   const pending = useAdminListPending()
 
-  const deletableIds = tags.filter((tag) => tag.canDelete).map((tag) => tag.id)
-  const selection = useAdminTableSelection(deletableIds)
+  // A row joins the selection when the bar could apply something to it (25g).
+  const selectableIds = tags
+    .filter((tag) => tag.bulkActions.length > 0)
+    .map((tag) => tag.id)
+  const selection = useAdminTableSelection(selectableIds)
+  useBulkActionResult({
+    fetcherKey: BULK_ACTION_FETCHER_KEY,
+    noun: TAG_BULK_NOUN,
+    onClear: selection.clear,
+  })
   const selectedTags = tags.filter((tag) =>
     selection.selectedIds.includes(tag.id),
   )
+  const hasSelection = selectedTags.length > 0
 
   const states = filters.state ?? []
   const hasOtherFilters = query !== ''
@@ -124,23 +137,33 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     <AdminPage>
       <ArticlesTabs />
       {/* On a phone Nový štítek waits at the bottom (32a). */}
-      <ListHeader foldsOnPhone={true}>
+      <ListHeader>
         <PageTitle>Štítky</PageTitle>
         {newTagButton}
       </ListHeader>
       <FilterCell>
-        <AdminBulkActionsBar
-          action={href('/administration/articles/tags')}
-          confirmation={getTaxonomyBulkDeleteConfirmation(
-            selectedTags,
-            TAG_RECORD_COPY,
-          )}
-          foldsOnPhone={true}
-          formatToast={TAG_RECORD_COPY.bulkDelete.toast}
-          onDone={selection.clear}
-          selectedIds={selection.selectedIds}
-        />
-        <FilterBar replaced={selection.selectedIds.length > 0}>
+        {/* The selection bar takes the filter row's place in the same cell,
+            so the table does not move (22c, cioukqn6); not on a phone (22g). */}
+        {hasSelection && (
+          <ContentSelectionBar
+            action={href('/administration/articles/tags')}
+            fetcherKey={BULK_ACTION_FETCHER_KEY}
+            isCreator={!isApprover && !isContributor}
+            noun={TAG_BULK_NOUN}
+            onClear={selection.clear}
+            records={selectedTags.map((tag) => ({
+              ...tag,
+              isHeldByOther: false,
+              isIncomplete: false,
+              related: {
+                count: tag.articleCount,
+                publishedCount: tag.publishedArticleCount,
+              },
+              title: tag.name,
+            }))}
+          />
+        )}
+        <FilterBar replaced={hasSelection}>
           <FilterBarGroup>
             <FilterBarSearch
               defaultValue={query}
@@ -187,14 +210,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       ) : (
         <AdminTable
           columnsClassName={styles.columns}
-          foldsOnPhone={true}
           pending={pending}
           stickyHeader={true}
         >
           <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
-              disabled={deletableIds.length === 0}
+              disabled={selectableIds.length === 0}
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />

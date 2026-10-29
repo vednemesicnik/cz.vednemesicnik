@@ -1,0 +1,35 @@
+/* The rows lay out by the section's width, not the window's. */
+.links {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    container-type: inline-size;
+  }
+}
+
+/* The rows stand on the page, 8 px apart, not as the dialog's cards (27d);
+   only a lifted row has a ground, to pass over its neighbours. */
+.list {
+  @layer route {
+    gap: 8px;
+  }
+}
+
+.row {
+  @layer route {
+    background-color: transparent;
+
+    &[data-lifted] {
+      background-color: var(--card-bg);
+    }
+  }
+}
+
+.add {
+  @layer route {
+    align-self: flex-start;
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+  }
+}

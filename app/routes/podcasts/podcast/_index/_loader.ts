@@ -10,6 +10,8 @@ import {
   getWebContentVisibility,
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { findWebPodcast } from '~/utils/podcast/find-web-podcast.server'
+import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 
 import type { Route } from './+types/route'
 
@@ -20,6 +22,13 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     'podcast_episode',
   ])
 
+  // Only a published address is unique (log 0039).
+  const webPodcast = await findWebPodcast(podcastSlug, visibility)
+
+  if (webPodcast === null) {
+    throw data(null, { status: 404 })
+  }
+
   const podcast = await prisma.podcast.findUnique({
     select: {
       cover: {
@@ -27,6 +36,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       },
       description: true,
       episodes: {
+        // By number, the newest first: the number is how listeners know an
+        // episode (27b).
+        orderBy: [{ number: 'desc' }],
         select: {
           description: true,
           id: true,
@@ -39,19 +51,22 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
           },
           number: true,
           publishedAt: true,
+          // The typed address: a signed-in author sees drafts here too, and a
+          // published episode's is the one it holds (log 0039).
           slug: true,
           title: true,
         },
-        where: visibility.where('podcast_episode', ownByAuthor),
+        // An empty draft never shows, not even as a preview (log 0020).
+        where: {
+          AND: [visibility.where('podcast_episode', ownByAuthor)],
+          ...NON_EMPTY_EPISODE_WHERE,
+        },
       },
       id: true,
       slug: true,
       title: true,
     },
-    where: {
-      slug: podcastSlug,
-      ...visibility.where('podcast', ownByAuthor, ['draft', 'archived']),
-    },
+    where: { id: webPodcast.id },
   })
 
   if (podcast === null) {

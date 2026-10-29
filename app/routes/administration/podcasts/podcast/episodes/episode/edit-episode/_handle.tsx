@@ -10,6 +10,7 @@ type Match = BreadcrumbMatch<
 >
 
 export const handle = {
+  // The trail ends in Úprava for the empty draft too (27d, jri2vk3h).
   breadcrumb: (match: Match): Breadcrumb => {
     const { podcastId, episodeId } = match.params
 
@@ -17,12 +18,11 @@ export const handle = {
       // The last crumb names the page, the record stands before it (copy 5yrb681l).
       label: 'Úprava',
       path: href(
-        `/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode`,
-        {
-          episodeId,
-          podcastId,
-        },
+        '/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode',
+        { episodeId, podcastId },
       ),
     }
   },
+  // The edit hold keeps the editor current; a reload could lose unsent text (log 0042).
+  skipsOwnAccountReload: true,
 }

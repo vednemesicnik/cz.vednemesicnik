@@ -11,6 +11,7 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
     select: {
       id: true,
       number: true,
+      title: true,
     },
     where: { id: episodeId },
   })
@@ -19,5 +20,11 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  return { episode }
+  return {
+    episode: {
+      id: episode.id,
+      number: episode.number,
+      title: episode.title,
+    },
+  }
 }

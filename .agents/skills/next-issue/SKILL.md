@@ -1,6 +1,6 @@
 ---
 name: next-issue
-description: After the PR is merged — land the aftermath, bank what survives the issue, and hand off to a fresh context window for the next one. Use once a PR is merged and the work moves on to the next issue.
+description: After the PR is merged — land the aftermath, bank what survives the issue, and hand off to a fresh context window with the open work first (design answers, the area's leftovers), a new issue only when nothing is open. Use once a PR is merged and the work moves on.
 argument-hint: [next-issue-number]
 allowed-tools: Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git fetch:*), Bash(ls:*)
 ---
@@ -107,26 +107,39 @@ is gitignored and never touches the main checkout's branch.
 
 ### 🛑 Gate — Follow-ups are offered, not filed
 
-If the issue surfaced work worth doing later, **list it and ask** — one line each, with the
-title you would give it. File only what the user picks.
+If the issue surfaced work worth doing later, **list it and ask**, one line each, with the
+title you would give it — a capitalised sentence with the kind of work in the label, never
+a Conventional Commit (`pull-request-workflow`). File only what the user picks. Work the user chooses not to file is
+still open: it stays on the list in Phase 3.
 
-### Phase 3 — Pick the next issue
+### Phase 3 — The next step is the open work
 
-Use `$ARGUMENTS` if given. Otherwise read the "Open issues" list (fetched with `--limit 60`
-because the default 20 hides part of the backlog) and recommend one in a sentence, with the
-reason — unblocked, adjacent to what just shipped, or blocking something else. Say plainly when
-the top candidates are all blocked (on a design answer, on the `donate-page` branch). **The pick
-is the user's**; do not read its body into this window.
+Use `$ARGUMENTS` if given. Otherwise the next step comes from **what is still open**, in this
+order, and a new issue is recommended only when the first three are empty:
+
+1. **Open loops of what just shipped:** a design or copy answer that is back and unchecked
+   (look at `questions/` in the design project, step 1.8), a question still out, a reply
+   owed, a deviation the PR left for design.
+2. **Leftovers of the same area:** the unbuilt screens of the drawings this issue worked from,
+   and follow-ups the PR or this window named, filed or not. With no issue yet, the step is
+   `/discover-idea` on that area, or a no-issue PR for something small.
+3. **The next item in the focus area** the user set, or the next unfinished item of a list
+   given earlier in the session.
+4. **Only then a new issue** from the "Open issues" list (fetched with `--limit 60`, because
+   the default 20 hides part of the backlog), with the reason in a sentence. Say that 1–3 are
+   empty.
+
+Starting something new while 1–3 are open leaves work half done. Say plainly when the open
+work waits on someone else (a design answer still out, the `donate-page` branch), and what
+can be done meanwhile. **The pick is the user's**; do not read a new issue's body into this
+window.
 
 ### Phase 4 — Hand over to a clean window
 
-`/clear` is the user's to type. End with a short report and the two lines to paste:
-
-```
-/clear
-/plan-issue <next>
-```
+`/clear` is the user's to type. End with a short report and the lines to paste for the first
+open step: `/clear` and its command (`/ask-design check <code>`, `/discover-idea <area>`,
+`/plan-issue <n>`, …).
 
 The report: what landed (PR, issue, commit on `dev`), what Phase 1 cleaned up, what was banked,
-and **what is still open as a short numbered list, most important first**, with the recommended
-next issue as one item on it. Keep it to a screen — its job is to make `/clear` safe to press.
+and **what is still open as a short numbered list, in the Phase 3 order**. Keep it to a
+screen — its job is to make `/clear` safe to press.

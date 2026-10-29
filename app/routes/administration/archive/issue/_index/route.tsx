@@ -394,7 +394,7 @@ export default function RouteComponent({
           isApprover={isApprover}
           issueTitle={issue.title}
           kind={stateDialog}
-          // A draft nobody submitted is published from „⋯“ (26g); the dialog says so.
+          // A draft not submitted is published from „⋯“ (26g); the dialog says so.
           note={
             stateDialog === 'publish' && headerActions.menu.includes('publish')
               ? ISSUE_HEADER_SENTENCES['not-submitted']

@@ -1,0 +1,120 @@
+import { describe, expect, test } from 'vitest'
+
+import {
+  ARTICLE_BULK_NOUN,
+  CATEGORY_BULK_NOUN,
+  ISSUE_BULK_NOUN,
+} from '~/config/bulk-noun-config'
+
+import { getBulkPublishNotes } from './get-bulk-publish-notes'
+
+describe('getBulkPublishNotes', () => {
+  test('says nothing when nothing waits, everything was submitted and complete', () => {
+    expect(
+      getBulkPublishNotes({
+        incompleteCount: 0,
+        notSubmittedCount: 0,
+        noun: ARTICLE_BULK_NOUN,
+        pendingCount: 0,
+      }),
+    ).toEqual({ notes: null, skipped: null })
+  })
+
+  test('joins the waiting and not-submitted sentences', () => {
+    expect(
+      getBulkPublishNotes({
+        incompleteCount: 0,
+        notSubmittedCount: 1,
+        noun: ARTICLE_BULK_NOUN,
+        pendingCount: 1,
+      }).notes,
+    ).toBe(
+      '1 článek čeká na schválení. Publikováním ho schválíte. 1 článek není odeslaný ke schválení.',
+    )
+  })
+
+  test.each([
+    [2, '2 články čekají na schválení. Publikováním je schválíte.'],
+    [5, '5 článků čeká na schválení. Publikováním je schválíte.'],
+  ])('waiting: %i', (pendingCount, expected) => {
+    expect(
+      getBulkPublishNotes({
+        incompleteCount: 0,
+        notSubmittedCount: 0,
+        noun: ARTICLE_BULK_NOUN,
+        pendingCount,
+      }).notes,
+    ).toBe(expected)
+  })
+
+  test.each([
+    [2, '2 články nejsou odeslané ke schválení.'],
+    [5, '5 článků není odeslaných ke schválení.'],
+  ])('not submitted: %i', (notSubmittedCount, expected) => {
+    expect(
+      getBulkPublishNotes({
+        incompleteCount: 0,
+        notSubmittedCount,
+        noun: ARTICLE_BULK_NOUN,
+        pendingCount: 0,
+      }).notes,
+    ).toBe(expected)
+  })
+
+  test.each([
+    [1, '1 článek je neúplný. Přeskočí se.'],
+    [3, '3 články jsou neúplné. Přeskočí se.'],
+    [6, '6 článků je neúplných. Přeskočí se.'],
+  ])('incomplete: %i', (incompleteCount, expected) => {
+    expect(
+      getBulkPublishNotes({
+        incompleteCount,
+        notSubmittedCount: 0,
+        noun: ARTICLE_BULK_NOUN,
+        pendingCount: 0,
+      }).skipped,
+    ).toBe(expected)
+  })
+})
+
+describe('getBulkPublishNotes — issues (26f, 0farrwua)', () => {
+  test.each([
+    [
+      { incompleteCount: 0, notSubmittedCount: 0, pendingCount: 1 },
+      '1 číslo čeká na schválení. Publikováním ho schválíte.',
+      null,
+    ],
+    [
+      { incompleteCount: 2, notSubmittedCount: 2, pendingCount: 0 },
+      '2 čísla nejsou odeslaná ke schválení.',
+      '2 čísla jsou neúplná. Přeskočí se.',
+    ],
+    [
+      { incompleteCount: 5, notSubmittedCount: 1, pendingCount: 0 },
+      '1 číslo není odeslané ke schválení.',
+      '5 čísel je neúplných. Přeskočí se.',
+    ],
+  ])('%o', (counts, notes, skipped) => {
+    expect(getBulkPublishNotes({ ...counts, noun: ISSUE_BULK_NOUN })).toEqual({
+      notes,
+      skipped,
+    })
+  })
+})
+
+describe('getBulkPublishNotes — categories (25g)', () => {
+  test('a category waits with ji, nothing is ever incomplete', () => {
+    expect(
+      getBulkPublishNotes({
+        incompleteCount: 2,
+        notSubmittedCount: 1,
+        noun: CATEGORY_BULK_NOUN,
+        pendingCount: 1,
+      }),
+    ).toEqual({
+      notes:
+        '1 rubrika čeká na schválení. Publikováním ji schválíte. 1 rubrika není odeslaná ke schválení.',
+      skipped: null,
+    })
+  })
+})

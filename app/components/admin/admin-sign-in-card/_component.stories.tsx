@@ -12,14 +12,18 @@ import { AdminSignInCard } from './_component'
 const meta: Meta<typeof AdminSignInCard> = {
   component: AdminSignInCard,
   decorators: [
+    // The sign-in layout centres the card on the page (s21ljh49); the card
+    // takes the full width up to its 400 px.
     (Story) => (
       <MemoryRouter>
-        <Story />
+        <div style={{ inlineSize: '400px', maxInlineSize: '100%' }}>
+          <Story />
+        </div>
       </MemoryRouter>
     ),
   ],
   parameters: {
-    layout: 'fullscreen',
+    layout: 'centered',
   },
   tags: ['autodocs'],
   title: 'Administration/AdminSignInCard',

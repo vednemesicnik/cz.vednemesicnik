@@ -19,5 +19,10 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  return { podcast }
+  return {
+    podcast: {
+      id: podcast.id,
+      title: podcast.title,
+    },
+  }
 }

@@ -189,6 +189,36 @@ export default [
           'archive/:issueId/files',
           'routes/administration/archive/issue/issue-files/route.ts',
         ),
+        // The podcast editor's edit hold and autosave (design 27e), as the
+        // issue's.
+        route(
+          'podcasts/:podcastId/edit-hold',
+          'routes/administration/podcasts/podcast/edit-hold/route.ts',
+        ),
+        route(
+          'podcasts/:podcastId/save',
+          'routes/administration/podcasts/podcast/save-podcast/route.ts',
+        ),
+        // Its cover, saved on its own as it is picked (27e).
+        route(
+          'podcasts/:podcastId/cover',
+          'routes/administration/podcasts/podcast/podcast-cover/route.ts',
+        ),
+        // The episode editor's edit hold and autosave (design 27d), as the
+        // issue's.
+        route(
+          'podcasts/:podcastId/episodes/:episodeId/edit-hold',
+          'routes/administration/podcasts/podcast/episodes/episode/edit-hold/route.ts',
+        ),
+        route(
+          'podcasts/:podcastId/episodes/:episodeId/save',
+          'routes/administration/podcasts/podcast/episodes/episode/save-episode/route.ts',
+        ),
+        // Its own cover, saved on its own as it is picked (27d).
+        route(
+          'podcasts/:podcastId/episodes/:episodeId/cover',
+          'routes/administration/podcasts/podcast/episodes/episode/episode-cover/route.ts',
+        ),
 
         // Sections
         layout('routes/administration/__layout-section/route.tsx', [

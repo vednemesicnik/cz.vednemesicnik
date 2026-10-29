@@ -5,9 +5,11 @@ import { prisma } from '~/utils/db.server'
 import { getIssueTitle } from '~/utils/issue/get-issue-title'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
+import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
 
 import { buildIssuePermissionWhere } from '../../archive/utils/build-issue-permission-where'
 import { buildArticlePermissionWhere } from '../../articles/utils/build-article-permission-where'
+import { getArticleDisplayTitle } from '../../articles/utils/get-article-display-title'
 import { buildEpisodePermissionWhere } from '../../podcasts/podcast/episodes/utils/build-episode-permission-where'
 
 type Context = Pick<AuthorPermissionContext, 'authorId' | 'can'>
@@ -98,7 +100,7 @@ export const getRecentAuthorContent = async (
       }),
       id: article.id,
       state: getState(article),
-      title: article.title,
+      title: getArticleDisplayTitle(article.title),
       type: 'article' as const,
       updatedAt: article.updatedAt,
     })),
@@ -109,7 +111,7 @@ export const getRecentAuthorContent = async (
       }),
       id: episode.id,
       state: getState(episode),
-      title: `#${episode.number} ${episode.title}`,
+      title: formatEpisodeTitle(episode),
       type: 'episode' as const,
       updatedAt: episode.updatedAt,
     })),

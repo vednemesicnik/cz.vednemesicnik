@@ -47,17 +47,27 @@ rozpojí.
 - **štítek** — volnější označení článku; článek jich má obvykle víc.
 - **podcast** / **epizoda** — podcast je pořad, epizoda jeden díl. V rozhraní jen *podcast*,
   ne *pořad*.
+- **název platformy** — jméno odkazu epizody, jak ho čtenář vidí na webu (`Spotify`,
+  `YouTube`). U známé adresy ho aplikace doplní sama, jinak ho redaktor napíše. Nese ho pole
+  i věty o neúplných odkazech (`2 odkazy nemají název platformy.`); ne *název odkazu* ani
+  *text odkazu* (rozhodnuto 26.–27. 10. 2026).
 - **číslo** — **tištěné** číslo časopisu v PDF, v sekci **Archiv**. Obsahem jsou tytéž články
   jako na webu, aplikace je ale s číslem nepropojuje: není to skupina článků na webu a články
   k číslům nepatří. V aplikaci se dnes pro totéž píše i **vydání** (*Datum
   vydání*, *Správa vydání časopisu*) — to je nesjednocené, ne dva různé pojmy. Nový návrh
   *vydání* u článku ani epizody nepoužívá: jejich datum je **datum publikace**.
+  U epizody je *číslo* její číselný údaj v podcastu (popisek pole `Číslo`, v nadpisu `#13`), ne
+  tištěné číslo; rozliší je obrazovka a tvar hodnoty (`#13` proti `3/2026`). Jiné slovo pro něj
+  nehledej (rozhodnuto 26. 10. 2026).
 - **Archiv** (sekce) vs. **archivováno** (stav) — dvě různé věci. *Archiv* jsou tištěná čísla;
   *archivovaný* je obsah stažený z oběhu. Věta, která je smíchá, je nepravda.
   Velké *A* jen jako jméno v menu a v nadpisu; v běžném textu malé: `tištěná čísla jsou
   v archivu` (rozhodnuto 2. 10. 2026).
 - **autor** vs. **uživatel** — *uživatel* je účet, kterým se přihlašuje do administrace; *autor*
   je jméno, pod kterým se obsah publikuje. Každý uživatel má autora, ale role mají zvlášť.
+- **profilový obrázek** — nepovinný obrázek uživatele, ukazuje se jen v administraci, na webu
+  ne. V dialogu *Upravit profil* zkráceně *obrázek*. Ne *fotka*: nahrát jde jakýkoli obrázek,
+  i kresba nebo logo (rozhodnuto 29. 10. 2026).
 - **redakce** — lidé, kteří časopis dělají (stránka *Redakce* na webu).
 - **spolek** — Vedneměsíčník, z. s., právnická osoba za časopisem. Spolek **nejsou studenti**:
   jsou to lidé, kteří studenty jsou nebo byli a studenty podporují. Časopis tvoří **nezávislá
@@ -71,18 +81,16 @@ přejmenování termínu je změna aplikace na všech místech naráz.
 Každý obsah (článek, rubrika, štítek, podcast, epizoda, číslo) je v právě jednom stavu. Štítky
 stavů jsou `Koncept` · `Publikováno` · `Archivováno`.
 
-Akce, jak je dnes nese administrace: `Schválit` · `Zveřejnit` (a `Zveřejnit zpětně` s dřívějším
-datem) · `Stáhnout z publikace` (vrátí do konceptu) · `Archivovat` · `Obnovit` (z archivu zpět
-do konceptu, jen Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinátor). U článku
-navíc `Odeslat ke schválení` a `Vzít zpět do konceptu` (autor) · `Vrátit k úpravám`
-(Koordinátor); odeslaný článek má štítek `Čeká na schválení`, schválený `Schváleno`.
+Akce, jak je dnes nese administrace: `Odeslat ke schválení` a `Vzít zpět do konceptu` (autor) ·
+`Schválit` · `Vrátit k úpravám` (Koordinátor) · `Publikovat…` · `Stáhnout z publikace` (vrátí
+do konceptu) · `Archivovat` · `Obnovit jako koncept` (z archivu zpět do konceptu, jen
+Koordinátor) · `Smazat` (koncept; archivovaný jen Koordinátor). Odeslaný obsah má štítek
+`Čeká na schválení`, schválený `Schváleno`.
 
-Článek už má akce nového návrhu: `Publikovat…` a `Schválit a publikovat…` otevřou dialog s
-datem publikace (`Dnes` · `Jiný den`, u dříve publikovaného navíc `Původní datum`), zpětné
-datum se volí tam, ne zvláštním tlačítkem.
-
-Pozor na dvojici **Zveřejnit / Publikováno**: u ostatního obsahu tlačítko a stav dnes používají
-jiné slovo pro tentýž čin. Je to známá nesrovnalost, ne dva různé kroky.
+U článku a epizody otevřou `Publikovat…` a `Schválit a publikovat…` dialog s datem publikace
+(`Dnes` · `Jiný den`, u dříve publikovaného navíc `Původní datum`); zpětné datum se volí tam,
+ne zvláštním tlačítkem. Publikovaný článek a epizoda mají v „⋯“ `Změnit datum publikace…`.
+Tlačítko `Zveřejnit` aplikace už nemá: čin i stav se jmenují *publikovat* / `Publikováno`.
 
 ## Role
 
@@ -118,10 +126,10 @@ nedělá**. Poznají se jen podle modelu:
   a vlastní archivovaný, Koordinátor všechno. Nepřihlášený čtenář vidí jen publikované.
 - **Číslo nenese články.** Viz termíny.
 
-## Nový návrh administrace (rozhodnuto, zatím nepostaveno)
+## Nový návrh administrace (rozhodnuto, postaveno)
 
-Administrace se překresluje. Otázka vždycky řekne, jestli jde o texty dnešní aplikace, nebo
-o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše tohle (rozhodnuto 27.–28. 9. 2026):
+Administrace je překreslená podle nového návrhu. Kde se s ním části výše rozcházejí, platí
+tohle (rozhodnuto 27.–28. 9. 2026):
 
 - **Odeslat ke schválení existuje.** Autor hotový koncept odešle. Štítky jsou pak `Koncept` ·
   `Čeká na schválení` · `Schváleno` · `Publikováno` · `Archivováno`. V datech zůstávají tři stavy,
@@ -137,8 +145,16 @@ o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše to
 - **`Stáhnout z publikace`** vrátí článek jako koncept neodeslaný a neschválený. Koordinátor ho
   smí publikovat rovnou, bez nového schválení; věta „vrátí se až po novém schválení“ je nepravda.
 - **Tlačítko je `Publikovat`, ne `Zveřejnit`** — sjednocuje se se stavem `Publikováno`.
-- **Hromadné publikování má pořadí**, které jde před potvrzením změnit; jak ho dialog ukazuje
-  shora dolů, tak budou texty stát na webu.
+- **Hromadné publikování článků má pořadí**, které jde před potvrzením změnit; jak ho dialog
+  ukazuje shora dolů, tak budou texty stát na webu. Epizody se řadí podle čísla (nejvyšší číslo
+  bude nejnovější) a datum publikace si volí jako článek. Rubriky, štítky, čísla a podcasty se
+  hromadně publikují bez řazení a bez volby data (rozhodnuto 22. 10. 2026).
+- **Hromadné akce jsou ve všech tabulkách obsahu**: `Publikovat…` (jen Koordinátor),
+  `Stáhnout z publikace…`, `Archivovat…`, `Obnovit jako koncept…` a `Smazat…`, každá jen tam, kde
+  by ji role a stav dovolily i na řádku. Lišta nabízí jen akce společné všem vybraným, nejvýš
+  dvě. Každá se potvrzuje dialogem. Položku, kterou právě upravuje někdo jiný, akce přeskočí,
+  publikování přeskočí i neúplnou. Publikovaný obsah se ani hromadně nemaže a podcast
+  s epizodami se hromadně nesmaže.
 - **Datum publikace**, ne *datum vydání* (*vydání* je tištěné číslo). Umí i čas (jen Koordinátor,
   nikdy do budoucnosti) — kvůli zařazení zapomenutého článku mezi dva vydané.
 - **Článek může mít víc autorů** a každý z nich ho má za vlastní: upraví ho, odešle i vezme zpět.
@@ -154,7 +170,7 @@ o obrazovku z nového návrhu. Pro nový návrh platí místo částí výše to
   (`zima` → zobrazeně `zima 2026`) a vzácně doplněk: samostatně vytištěná část, která se do
   čísla nevešla (ne dotisk).
 
-Týká se to i veřejného webu:
+Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
 
 - **Náhled konceptu na webu zůstává, ale je vidět, že je to koncept.** Vidí ho jen ten, kdo daný
   obsah vidí v administraci: Přispěvatel jen vlastní koncepty, Tvůrce a Koordinátor jakékoli. Pro

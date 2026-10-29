@@ -141,7 +141,7 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
     <TableRow muted={issue.state === 'archived'}>
       <TableSelectionCell
         checked={selected}
-        disabled={!issue.canDelete}
+        disabled={issue.bulkActions.length === 0}
         label={`Vybrat číslo ${issue.title}`}
         onChange={onSelect}
       />
@@ -251,7 +251,7 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
               isApprover={isApprover}
               issueTitle={issue.title}
               kind={stateDialog}
-              // Publishing a draft nobody submitted, the dialog says so (26h).
+              // Publishing a draft not submitted, the dialog says so (26h).
               note={
                 stateDialog === 'publish' && issue.isNotSubmitted
                   ? ISSUE_HEADER_SENTENCES['not-submitted']

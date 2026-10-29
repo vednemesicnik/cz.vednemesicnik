@@ -1,4 +1,5 @@
 import type { EditHeldRefusal } from './edit-held-refusal'
+import type { EditHoldContent } from './edit-hold-content'
 
 /**
  * Tells the refusal of {@link createEditHeldRefusal} apart from anything else a
@@ -36,5 +37,19 @@ export const readEditHeldRefusal = (error: unknown): EditHeldRefusal | null => {
   return {
     heldByName: data.heldByName,
     isOwnOtherTab: 'isOwnOtherTab' in data && data.isOwnOtherTab === true,
+    ...('content' in data && isEditHoldContent(data.content)
+      ? { content: data.content }
+      : {}),
   }
 }
+
+// Keyed by every content, so a new one cannot be left out.
+const EDIT_HOLD_CONTENTS: Record<EditHoldContent, true> = {
+  article: true,
+  episode: true,
+  issue: true,
+  podcast: true,
+}
+
+const isEditHoldContent = (value: unknown): value is EditHoldContent =>
+  typeof value === 'string' && Object.hasOwn(EDIT_HOLD_CONTENTS, value)

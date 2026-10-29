@@ -1,9 +1,11 @@
 import type { EditHoldContent } from './edit-hold-content'
 
-// The editor, by what it edits (copy rvp9ojsm).
+// The editor, by what it edits (copy rvp9ojsm, ahizoh4o).
 const EDITOR: Record<EditHoldContent, string> = {
   article: 'editor článku',
+  episode: 'editor epizody',
   issue: 'editor čísla',
+  podcast: 'editor podcastu',
 }
 
 /**

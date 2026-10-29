@@ -1,4 +1,3 @@
-import type { Prisma } from '@generated/prisma/client'
 import { redirect } from 'react-router'
 
 import {
@@ -9,37 +8,68 @@ import {
   buildStaleFilterRedirect,
   parseAdminListFilters,
 } from '~/utils/admin-list-filters'
-import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
+import { parseAdminListParams } from '~/utils/admin-list-params'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
+import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
+import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
+import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
+import { getOrderedPage } from '~/utils/get-ordered-page'
+import {
+  createImageSources,
+  imageSourceSelect,
+} from '~/utils/image-store/create-image-sources'
+import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
-import { buildViewableStateFilters } from '~/utils/permissions/author/build-viewable-state-filters'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
+import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
-import { getSubmissionState } from '~/utils/permissions/author/submission/get-submission-state'
-import { isLockedBySubmission } from '~/utils/permissions/author/submission/is-locked-by-submission'
+import { getPodcastDisplayTitle } from '~/utils/podcast/get-podcast-display-title'
+import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
+import { buildEpisodePermissionWhere } from '../podcast/episodes/utils/build-episode-permission-where'
+import { buildPodcastPermissionWhere } from '../utils/build-podcast-permission-where'
+import { formatPodcastEpisodeLines } from '../utils/format-podcast-episode-lines'
+import { getMissingPodcastContent } from '../utils/get-missing-podcast-content'
+import { getPodcastActions } from '../utils/get-podcast-actions'
+import { getPodcastFactLine } from '../utils/get-podcast-fact-line'
+import {
+  type PodcastEpisodeSummary,
+  summarizePodcastEpisodes,
+} from '../utils/summarize-podcast-episodes'
 import type { Route } from './+types/route'
-import { SORT_KEYS, type SortKey } from './sort'
+import { SORT_KEYS } from './sort'
+
+// The bulk cap's size: a selection never outgrows the page (readBulkActionForm).
+const PAGE_SIZE = 20
 
 const TABLE_KEY = 'podcasts'
 
-// Non-createdAt sorts append `createdAt desc` as a tie-breaker so rows with
-// equal values keep a deterministic order across reloads.
-const ORDER_BY: Record<
-  SortKey,
-  (order: SortOrder) => Prisma.PodcastOrderByWithRelationInput[]
-> = {
-  createdAt: (order) => [{ createdAt: order }],
-  title: (order) => [{ title: order }, { createdAt: 'desc' }],
+// Every listed podcast has a summary; this only satisfies the map's lookup.
+const NO_EPISODES: PodcastEpisodeSummary = {
+  approvedCount: 0,
+  draftCount: 0,
+  latestPublishedAt: null,
+  pendingCount: 0,
+  publishedCount: 0,
 }
 
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const context = await getAuthorPermissionContext(request, {
-    actions: ['view', 'create', 'update', 'delete'],
-    entities: ['podcast'],
+    actions: [
+      'view',
+      'create',
+      'update',
+      'delete',
+      'publish',
+      'retract',
+      'archive',
+      'restore',
+      'review',
+    ],
+    entities: ['podcast', 'podcast_episode'],
   })
 
   // Before any query: a bare visit with a default preset never renders this list,
@@ -50,41 +80,17 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     userId: context.userId,
   })
 
-  // Check view permissions for each state
-  const draftPerms = context.can({
-    action: 'view',
-    entity: 'podcast',
-    state: 'draft',
-  })
-  const publishedPerms = context.can({
-    action: 'view',
-    entity: 'podcast',
-    state: 'published',
-  })
-  const archivedPerms = context.can({
-    action: 'view',
-    entity: 'podcast',
-    state: 'archived',
-  })
-
-  const { order, query, sort } = parseAdminListParams(request, {
+  // One order (27a); an old ?sort=title or ?sort=createdAt falls back to it.
+  const { page, query } = parseAdminListParams(request, {
     defaultOrder: 'desc',
-    defaultSort: 'createdAt',
+    defaultSort: 'latestEpisode',
     sortKeys: SORT_KEYS,
   })
 
   const filters = parseAdminListFilters(request, TABLE_KEY)
 
-  const permissionWhere = {
-    OR: buildViewableStateFilters(
-      [
-        { rights: draftPerms, state: 'draft' },
-        { rights: publishedPerms, state: 'published' },
-        { rights: archivedPerms, state: 'archived' },
-      ],
-      { authorId: context.authorId },
-    ),
-  }
+  // An empty draft never shows nor counts (log 0020).
+  const permissionWhere = buildPodcastPermissionWhere(context)
 
   // The query matches the title or the slug — public URLs expose the slug.
   // SQLite `contains` is case-insensitive for ASCII only; Czech diacritics
@@ -128,20 +134,35 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const [rawPodcasts, savedFilters, queueCounts] = await Promise.all([
     prisma.podcast.findMany({
-      orderBy: ORDER_BY[sort](order),
+      orderBy: [{ createdAt: 'desc' }],
       select: {
-        authorId: true,
+        // An empty draft never counts, nor blocks the delete (log 0020).
+        _count: { select: { episodes: { where: NON_EMPTY_EPISODE_WHERE } } },
+        author: {
+          select: { id: true, name: true, role: { select: { level: true } } },
+        },
+        cover: { select: imageSourceSelect },
         createdAt: true,
+        description: true,
+        heldByAuthorId: true,
+        heldByTabId: true,
+        heldSince: true,
+        heldUntil: true,
         id: true,
         reviews: {
           select: {
             createdAt: true,
-            reviewer: { select: { role: { select: { level: true } } } },
+            reviewer: {
+              select: { id: true, role: { select: { level: true } } },
+            },
           },
         },
+        slug: true,
         state: true,
         submittedAt: true,
+        submittedBy: { select: { name: true } },
         title: true,
+        updatedAt: true,
       },
       where,
     }),
@@ -155,37 +176,172 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ),
   ])
 
-  // Compute permissions for each podcast
-  const podcasts = rawPodcasts.map(({ reviews, ...podcast }) => {
-    return {
-      ...podcast,
-      // A submitted draft is neither deleted nor edited by its author (07d).
-      canDelete:
-        context.can({
-          action: 'delete',
-          entity: 'podcast',
-          state: podcast.state,
-          targetAuthorIds: [podcast.authorId],
-        }).hasPermission && podcast.submittedAt === null,
-      canEdit:
-        context.can({
-          action: 'update',
-          entity: 'podcast',
-          state: podcast.state,
-          targetAuthorIds: [podcast.authorId],
-        }).hasPermission &&
-        !isLockedBySubmission({
-          roleLevel: context.roleLevel,
-          submittedAt: podcast.submittedAt,
-        }),
-      canView: context.can({
+  const totalCount = rawPodcasts.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+  // Deleting the last row on the last page revalidates a URL past the end.
+  if (isPagePastLast(page, totalPages)) {
+    throw redirect(buildLastPageRedirect(url, totalPages))
+  }
+
+  const podcastIds = rawPodcasts.map((podcast) => podcast.id)
+  const episodePermissionWhere = buildEpisodePermissionWhere(context)
+
+  // The Epizody column for the whole list in one query (27a): every published
+  // episode, as the web shows them all, and the drafts the role may view,
+  // each marked so the summary counts only those.
+  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+
+  const episodes = await prisma.podcastEpisode.findMany({
+    select: {
+      authorId: true,
+      podcastId: true,
+      publishedAt: true,
+      reviews: {
+        select: {
+          createdAt: true,
+          reviewer: { select: { role: { select: { level: true } } } },
+        },
+      },
+      state: true,
+      submittedAt: true,
+    },
+    // The summary counts no archived episode, so none is loaded.
+    where: {
+      OR: [
+        { state: 'published' },
+        { AND: [episodePermissionWhere, { state: 'draft' }] },
+      ],
+      podcastId: { in: podcastIds },
+    },
+  })
+
+  const summaries = summarizePodcastEpisodes(
+    podcastIds,
+    episodes.map((episode) => ({
+      ...episode,
+      isViewable: context.can({
         action: 'view',
-        entity: 'podcast',
-        state: podcast.state,
-        targetAuthorIds: [podcast.authorId],
+        entity: 'podcast_episode',
+        state: episode.state,
+        targetAuthorIds: [episode.authorId],
       }).hasPermission,
-      // The row's tag says what the detail's does (07a).
-      submission: getSubmissionState({ ...podcast, reviews })?.state ?? null,
+    })),
+  )
+
+  const getLatestPublishedTime = (podcastId: string) =>
+    summaries.get(podcastId)?.latestPublishedAt?.getTime() ?? -1
+
+  // The latest published episode first; a podcast without one goes last (27a).
+  // The whole match is ordered before the page is cut, so page 2 goes on
+  // where page 1 ends.
+  const { pageIds } = getOrderedPage(
+    rawPodcasts,
+    (first, second) =>
+      getLatestPublishedTime(second.id) - getLatestPublishedTime(first.id) ||
+      second.createdAt.getTime() - first.createdAt.getTime(),
+    { page, pageSize: PAGE_SIZE },
+  )
+  const podcastById = new Map(
+    rawPodcasts.map((podcast) => [podcast.id, podcast]),
+  )
+  const pagePodcasts = pageIds.flatMap((id) => podcastById.get(id) ?? [])
+
+  // Who holds each listed address as published (log 0039): a draft with an
+  // address another podcast holds is skipped by bulk publishing too (27i).
+  // Only the Coordinator publishes, so only they need it, as in 26a.
+  const holders = isApprover
+    ? await prisma.podcast.findMany({
+        select: { id: true, publishedSlug: true },
+        where: {
+          publishedSlug: {
+            in: pagePodcasts.flatMap(({ slug }) => (slug === '' ? [] : [slug])),
+          },
+        },
+      })
+    : []
+
+  const holderIdBySlug = new Map(
+    holders.map(({ id, publishedSlug }) => [publishedSlug, id]),
+  )
+
+  const now = new Date()
+
+  const podcasts = pagePodcasts.map((podcast) => {
+    const flags = getContentActionFlags(context, 'podcast', {
+      authors: [podcast.author],
+      reviews: podcast.reviews,
+      state: podcast.state,
+      submittedAt: podcast.submittedAt,
+    })
+    const summary = summaries.get(podcast.id) ?? NO_EPISODES
+    const submission = flags.submission?.state ?? null
+
+    const actions = getPodcastActions({
+      ...flags,
+      state: podcast.state,
+      submission,
+    })
+
+    return {
+      actions,
+      // What the selection bar may apply to this row (22c, 27a); a podcast
+      // with episodes is never deleted (27f), and a held one is skipped and
+      // said apart, not left out of the bar's actions.
+      bulkActions: getBulkActions({
+        isApprover,
+        menu: actions.filter(
+          (action) => action !== 'delete' || podcast._count.episodes === 0,
+        ),
+        row: null,
+      }),
+      cover:
+        podcast.cover === null
+          ? null
+          : createImageSources('podcast-cover', podcast.cover),
+      episodeCount: podcast._count.episodes,
+      episodeLines: formatPodcastEpisodeLines({
+        isContributor,
+        podcastState: podcast.state,
+        summary,
+      }),
+      // The row's tag says what the detail's does (07a), with one fact (27a).
+      factLine: getPodcastFactLine({
+        authorName: podcast.author.name,
+        state: podcast.state,
+        submission: flags.submission,
+        submittedByName: podcast.submittedBy?.name ?? null,
+        updatedAt: podcast.updatedAt,
+      }),
+      id: podcast.id,
+      isHeldByOther:
+        getEditHoldStatus(podcast, { authorId: context.authorId, now }) ===
+        'other',
+      // Bulk publishing skips it and says so up front (27i, 27a).
+      isIncomplete:
+        isApprover &&
+        getMissingPodcastContent({
+          description: podcast.description,
+          hasCover: podcast.cover !== null,
+          isSlugTaken:
+            podcast.slug !== '' &&
+            (holderIdBySlug.get(podcast.slug) ?? podcast.id) !== podcast.id,
+          slug: podcast.slug,
+          title: podcast.title,
+        }).length > 0,
+      // Publishing it, the dialog says it isn't submitted (27a, as 22c).
+      isNotSubmitted:
+        podcast.state === 'draft' &&
+        flags.submission === null &&
+        flags.isSubmittable &&
+        !flags.isOwnContent,
+      latestPublishedAt: summary.latestPublishedAt,
+      publishedEpisodeCount: summary.publishedCount,
+      slug: podcast.slug,
+      state: podcast.state,
+      submission,
+      // A draft saved without a title goes by a name (copy utgh1hb7).
+      title: getPodcastDisplayTitle(podcast.title),
     }
   })
 
@@ -197,11 +353,15 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       state: 'draft',
       targetAuthorIds: [context.authorId],
     }).hasPermission,
+    currentPage: page,
     filters,
-    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+    isApprover,
     isContributor,
+    pageSize: PAGE_SIZE,
     podcasts,
     query,
     queueCounts,
+    totalCount,
+    totalPages,
   }
 }

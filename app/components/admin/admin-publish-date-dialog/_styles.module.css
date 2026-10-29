@@ -1,7 +1,0 @@
-.form {
-  @layer component {
-    display: grid;
-    gap: 16px;
-    width: 100%;
-  }
-}

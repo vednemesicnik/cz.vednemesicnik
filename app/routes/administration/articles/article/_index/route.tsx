@@ -380,7 +380,7 @@ export default function RouteComponent({
           authorNames={authorNames}
           fetcherKey={fetcherKey}
           isApproval={publishDialog.isApproval}
-          // A draft nobody submitted is published from „⋯“ (23d); the dialog says so.
+          // A draft not submitted is published from „⋯“ (23d); the dialog says so.
           note={
             headerActions.menu.includes('publish') ? NOT_SUBMITTED_NOTE : null
           }
@@ -392,10 +392,10 @@ export default function RouteComponent({
       {isChangeDateOpen && (
         <ArticleChangeDateDialog
           action={href('/administration/articles/:articleId', { articleId })}
-          articleTitle={article.title}
           fetcherKey={fetcherKey}
           onClose={() => setIsChangeDateOpen(false)}
           publishedAt={article.publishedAt.iso}
+          title={article.title}
         />
       )}
     </AdminPage>

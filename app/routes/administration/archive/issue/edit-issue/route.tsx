@@ -34,6 +34,8 @@ import { ContentChangedDialog } from '~/components/content-changed-dialog'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
+import { FailedFile } from '~/components/failed-file'
+import { FileDropField } from '~/components/file-drop-field'
 import { Form } from '~/components/form'
 import { HoldTakenDialog } from '~/components/hold-taken-dialog'
 import { Image } from '~/components/image'
@@ -47,10 +49,13 @@ import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
+import { useFocusAtFix } from '~/hooks/use-focus-at-fix'
 import { useTakenValues } from '~/hooks/use-taken-values'
+import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
+import { getFirstFileControl } from '~/utils/get-first-file-control'
 import {
   getIssueNumberSuggestion,
   type IssueNumberSuggestion,
@@ -60,11 +65,10 @@ import { getIssueTitle } from '~/utils/issue/get-issue-title'
 import { getNextFreeIssueOrder } from '~/utils/issue/get-next-free-issue-order'
 import { slugify } from '~/utils/slugify'
 import { formatEditHoldLine } from '../../../articles/utils/format-edit-hold-line'
+import { getIssueFixTarget } from '../_index/utils/get-issue-fix-target'
 import { ISSUE_NUMBER_FIELDS, schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
-import { FailedFile } from './components/failed-file'
-import { FileDropField } from './components/file-drop-field'
 import { createEditorSchema } from './utils/create-editor-schema'
 import { formatIssueChangedDescription } from './utils/format-issue-changed-description'
 import {
@@ -85,7 +89,6 @@ import {
   UPLOADING_SENTENCE,
 } from './utils/issue-file-sentences'
 import { useIssueFileUpload } from './utils/use-issue-file-upload'
-import { useUploadFocus } from './utils/use-upload-focus'
 
 export { handle } from './_handle'
 export { loader } from './_loader'
@@ -110,8 +113,7 @@ const SNAPSHOT_IGNORED_FIELDS = new Set<string>([
   EDIT_HOLD_CONFIG.tabIdName,
 ])
 
-// The details in the form's order, by the labels a list of unsent ones uses
-// (copy ey73zhul).
+// The labels a list of unsent details uses (copy ey73zhul).
 const FIELD_LABELS = {
   authorId: 'Autor',
   name: 'Název',
@@ -122,6 +124,15 @@ const FIELD_LABELS = {
 
 type FieldName = keyof typeof FIELD_LABELS
 type FieldValues = Record<FieldName, string>
+
+// The details in the form's order, as a list of unsent ones names them.
+const FIELD_ORDER: FieldName[] = [
+  'year',
+  'order',
+  'name',
+  'supplement',
+  'authorId',
+]
 
 // The closing sentence names the field changed last, after a value that
 // can't be read (log 0034, copy zuq3hyhf).
@@ -143,7 +154,7 @@ type HoldLoss = {
 const readValues = (formData: FormData | null): Partial<FieldValues> => {
   if (formData === null) return {}
   const values: Partial<FieldValues> = {}
-  for (const field of Object.keys(FIELD_LABELS) as FieldName[]) {
+  for (const field of FIELD_ORDER) {
     const value = formData.get(field)
     if (typeof value === 'string') values[field] = value.trim()
   }
@@ -439,14 +450,12 @@ export default function RouteComponent({
   // The labels of the details that differ from this editor's last save; the
   // author only where the editor chooses it.
   const getUnsentLabels = () =>
-    (Object.keys(FIELD_LABELS) as FieldName[])
-      .filter(
-        (field) =>
-          (field !== 'authorId' || authors !== null) &&
-          shownValuesRef.current[field].trim() !==
-            (savedValuesRef.current[field] ?? ''),
-      )
-      .map((field) => FIELD_LABELS[field])
+    FIELD_ORDER.filter(
+      (field) =>
+        (field !== 'authorId' || authors !== null) &&
+        shownValuesRef.current[field].trim() !==
+          (savedValuesRef.current[field] ?? ''),
+    ).map((field) => FIELD_LABELS[field])
 
   // The hold went elsewhere: nothing more goes out, and the editor says
   // which details stayed unsent (24h, 24i).
@@ -800,10 +809,32 @@ export default function RouteComponent({
 
   // The button goes once its value is in, so the focus moves to the field
   // that got the value last, not to the top of the page (26c).
-  const focusNumberField = (field: 'year' | 'order') => {
+  const focusNumberField = (field: IssueNumberField) => {
     const input = formRef.current?.elements.namedItem(fields[field].name)
     if (input instanceof HTMLInputElement) input.focus()
   }
+
+  // Opened from the missing-content dialog, the editor opens at its first
+  // sentence (26e, 6dlnv2de); a taken number's error stands at Pořadí v
+  // roce, or Doplněk for a supplement, as the field changed last says.
+  useFocusAtFix(isHolding, () => {
+    const target = getIssueFixTarget({
+      hasCover: issue.cover !== null,
+      hasPdf: issue.pdf !== null,
+      isNumberTaken: issue.takenNumber !== null,
+      order: issue.order,
+      supplement: issue.supplement === '' ? null : issue.supplement,
+      year: issue.year,
+    })
+    if (target === null) return
+
+    if (target === 'cover' || target === 'pdf') {
+      const container = (target === 'cover' ? coverRef : pdfRef).current
+      if (container !== null) getFirstFileControl(container)?.focus()
+    } else {
+      focusNumberField(target)
+    }
+  })
 
   // A free order for a taken one: filled in and saved (26d, as 24d).
   const applyFreeOrder = (value: number) => {
@@ -1190,9 +1221,9 @@ export default function RouteComponent({
                           }
                           hint={'nebo ji sem přetáhněte · obrázek do 5 MB'}
                           isDisabled={isLocked || coverUpload.isCancelling}
-                          isPage
                           label={'Vybrat obálku'}
                           onPick={coverUpload.pick}
+                          shape={'page'}
                         />
                         {renderFileProblem('cover', '')}
                       </>

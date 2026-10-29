@@ -1,12 +1,12 @@
+import type { Prisma } from '@generated/prisma/client'
 import { data, href } from 'react-router'
 
 import type { NotFoundEpisodeData } from '~/components/boundary-error'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
-import {
-  getWebContentVisibility,
-  ownByAuthor,
-} from '~/utils/permissions/author/get-web-content-visibility.server'
+import { getWebContentVisibility } from '~/utils/permissions/author/get-web-content-visibility.server'
+import { findWebPodcast } from '~/utils/podcast/find-web-podcast.server'
+import { buildWebVisibleEpisodeWhere } from '~/utils/podcast-episode/build-web-visible-episode-where'
 
 import type { Route } from './+types/route'
 
@@ -17,65 +17,97 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     'podcast_episode',
   ])
 
-  const podcastWhere = {
-    slug: podcastSlug,
-    ...visibility.where('podcast', ownByAuthor, ['draft', 'archived']),
+  const visible = buildWebVisibleEpisodeWhere(visibility)
+
+  const select = {
+    cover: {
+      select: {
+        altText: true,
+        id: true,
+      },
+    },
+    description: true,
+    id: true,
+    links: {
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        label: true,
+        url: true,
+      },
+    },
+    number: true,
+    podcast: {
+      select: {
+        id: true,
+        title: true,
+      },
+    },
+    publishedAt: true,
+    slug: true,
+    title: true,
+  } satisfies Prisma.PodcastEpisodeSelect
+
+  const previewId = new URL(request.url).searchParams.get('id')
+
+  // Only a published address is unique, the podcast's and the episode's
+  // within it (logs 0039, 0047): the administration's preview names the
+  // episode by its id, under the podcast's typed address, which a draft
+  // podcast may share with a published one.
+  const previewEpisode =
+    previewId === null
+      ? null
+      : await prisma.podcastEpisode.findFirst({
+          select,
+          where: {
+            ...visible.episode,
+            id: previewId,
+            podcast: { slug: podcastSlug, ...visible.podcast },
+            slug: episodeSlug,
+          },
+        })
+
+  if (previewEpisode !== null) {
+    return {
+      podcastEpisode: {
+        ...previewEpisode,
+        publishedAt: createFormattedDate(previewEpisode.publishedAt),
+      },
+    }
   }
 
-  const podcastEpisode = await prisma.podcastEpisode.findUnique({
-    select: {
-      cover: {
-        select: {
-          altText: true,
-          id: true,
-        },
+  // Otherwise the episode is looked up under the podcast the address names
+  // for this visitor: a reader gets the published one, and a draft or an
+  // archived episode shows to whoever may see it.
+  const webPodcast = await findWebPodcast(podcastSlug, visibility)
+
+  if (webPodcast === null) {
+    throw data(null, { status: 404 })
+  }
+
+  const podcastWhere = { id: webPodcast.id }
+
+  const podcastEpisode =
+    (await prisma.podcastEpisode.findFirst({
+      select,
+      where: {
+        podcast: podcastWhere,
+        publishedSlug: episodeSlug,
+        state: 'published',
       },
-      description: true,
-      id: true,
-      links: {
-        orderBy: { order: 'asc' },
-        select: {
-          id: true,
-          label: true,
-          url: true,
-        },
-      },
-      number: true,
-      podcast: {
-        select: {
-          id: true,
-          title: true,
-        },
-      },
-      publishedAt: true,
-      slug: true,
-      title: true,
-    },
-    where: {
-      podcast: podcastWhere,
-      slug: episodeSlug,
-      ...visibility.where('podcast_episode', ownByAuthor, [
-        'draft',
-        'archived',
-      ]),
-    },
-  })
+    })) ??
+    (await prisma.podcastEpisode.findFirst({
+      orderBy: { updatedAt: 'desc' },
+      select,
+      // An empty draft never shows, not even as a preview (log 0020).
+      where: { podcast: podcastWhere, ...visible.episode, slug: episodeSlug },
+    }))
 
   if (podcastEpisode === null) {
-    // Design 30f offers `Na podcast` only when the podcast itself can be shown.
-    const podcast = await prisma.podcast.findUnique({
-      select: { slug: true },
-      where: podcastWhere,
-    })
-
-    if (podcast === null) {
-      throw data(null, { status: 404 })
-    }
-
+    // Design 30f offers `Na podcast` only when the podcast itself can be
+    // shown, as it can here: the address found it.
     const notFoundData: NotFoundEpisodeData = {
-      podcastHref: href('/podcasts/:podcastSlug', {
-        podcastSlug: podcast.slug,
-      }),
+      podcastHref: href('/podcasts/:podcastSlug', { podcastSlug }),
     }
 
     throw data(notFoundData, { status: 404 })

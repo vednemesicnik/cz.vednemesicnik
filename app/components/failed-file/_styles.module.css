@@ -1,0 +1,21 @@
+/* The rose card of 26d: the file, the reason and the actions under it. */
+.failedFile {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background-color: var(--error-bg);
+    border: 1px solid var(--error);
+    border-radius: var(--radius-lg);
+  }
+}
+
+.fileName {
+  @layer component {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    overflow-wrap: anywhere;
+  }
+}

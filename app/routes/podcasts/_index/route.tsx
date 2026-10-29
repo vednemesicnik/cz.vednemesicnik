@@ -48,8 +48,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <ContentList>
         {episodes.map((episode) => {
-          const coverAlt = episode.podcast.cover.altText
-          const coverSources = episode.podcast.cover.sources
+          const coverAlt = episode.cover.altText
+          const coverSources = episode.cover.sources
 
           return (
             <ContentListItem key={episode.id}>
@@ -57,7 +57,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
               >
                 <ContentLinkCover alt={coverAlt} image={coverSources} />
-                <ContentLinkTitle number={episode.number}>
+                <ContentLinkTitle number={episode.number ?? undefined}>
                   {episode.title}
                 </ContentLinkTitle>
                 <ContentLinkFooter>

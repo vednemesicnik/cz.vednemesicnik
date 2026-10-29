@@ -1,0 +1,70 @@
+/* The episodes under a hairline (27b), spaced as the page's own rows. */
+.episodes {
+  @layer route {
+    display: grid;
+    gap: var(--admin-page-row-gap);
+    inline-size: 100%;
+    border-block-start: 1px solid var(--border);
+    padding-block-start: 20px;
+  }
+}
+
+/* The filter block beside the heading; before .toolbar, which reaches
+   into it on a phone. */
+.filters {
+  @layer route {
+    flex: 1 1 30rem;
+    min-inline-size: 0;
+  }
+}
+
+/* The Epizody heading on the 22a filter block's line; the filters wrap
+   under it when the line is short (27b). */
+.toolbar {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px 20px;
+
+    /* On a phone the folded list starts 6 px under the filters, as on the
+       other lists (32d; FilterCell does it where it is the table's sibling).
+       An empty list's card keeps the usual space. */
+    @media (width < 768px) {
+      &:has(+ [data-folds-on-phone]) {
+        margin-block-end: calc(6px - var(--admin-page-row-gap));
+
+        & > .filters {
+          margin-block-end: 0;
+        }
+      }
+    }
+  }
+}
+
+/* Its line centred on the search field's. */
+.heading {
+  @layer route {
+    flex: none;
+    margin: 0;
+    padding-block-start: 7px;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/*
+ * The wide table's columns (27b, 31a), read by AdminTable from a
+ * 1280 px table: Epizoda takes the rest; the checkbox, Číslo,
+ * Publikováno, Stav and Akce fixed. Akce holds the row action and „⋯“,
+ * as the article's (22a).
+ * Each track is the drawn width plus the cell's 12 px padding (14 px
+ * at the row's ends).
+ */
+.columns {
+  @layer route {
+    grid-template-columns:
+      46px 60px minmax(0, 1fr) 132px 212px
+      164px;
+  }
+}

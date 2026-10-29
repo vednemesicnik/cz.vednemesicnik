@@ -110,7 +110,7 @@ export type ContentStateHandlersConfig = {
   /**
    * What the content still lacks before it can be published (design 23h,
    * 26e); a non-empty list blocks the publish and the approval without
-   * writing. The article and the archive issue.
+   * writing. The article, the archive issue and the episode.
    */
   getMissingBeforePublish?: (id: string) => Promise<string[]>
 }
@@ -120,8 +120,15 @@ type TransitionOptions = {
   target: PermissionTarget
 }
 
+/**
+ * `publishedAt` is a moment the user chose, honoured only where the entity
+ * allows backdating. `orderedAt` is one the server chose to keep a bulk
+ * publish in order (22c, 27a): it needs no backdating grant and, like now,
+ * applies only to content never published.
+ */
 type PublishOptions = TransitionOptions & {
   publishedAt?: Date
+  orderedAt?: Date
 }
 
 type ChangePublishedAtOptions = TransitionOptions & {
@@ -236,9 +243,13 @@ export const createContentStateHandlers = (
           }
 
           // Preserve the stored "first published" date on re-publish; fall back to
-          // now on the first publish (no stored date yet).
+          // the bulk order's moment, else now, on the first publish (no stored
+          // date yet).
           const publishedAt =
-            requestedPublishedAt ?? publishState.publishedAt ?? new Date()
+            requestedPublishedAt ??
+            publishState.publishedAt ??
+            options.orderedAt ??
+            new Date()
 
           // A value another record took since the check above blocks it the
           // same way (log 0039).

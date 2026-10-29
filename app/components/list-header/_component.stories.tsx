@@ -35,10 +35,8 @@ export const Playground: Story = {
   args: {
     children: (
       <>
-        <PageTitle>Podcasty</PageTitle>
-        <LinkButton to={'/administration/podcasts/add-podcast'}>
-          Nový podcast
-        </LinkButton>
+        <PageTitle>Uživatelé</PageTitle>
+        <LinkButton to={'/administration/users/new'}>Nový uživatel</LinkButton>
       </>
     ),
   },
@@ -49,6 +47,6 @@ export const Playground: Story = {
  */
 export const WithoutAction: Story = {
   args: {
-    children: <PageTitle>Uživatelé</PageTitle>,
+    children: <PageTitle>Autoři</PageTitle>,
   },
 }

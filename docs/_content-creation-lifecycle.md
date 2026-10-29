@@ -299,6 +299,81 @@ because the editor writes no reviews. Its author takes it back to a draft instea
 
 ---
 
+## Episode number and address
+
+An episode's number and address are unique within its podcast once published (#830, #837, log
+[0047](./work-log/0047-an-episode-address-is-unique-within-its-podcast-once-published.md), after
+[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)). The editor saves
+any number and slug. Only publishing writes them to `publishedNumber` and `publishedSlug`, each
+unique together with the podcast, and retract, archive and restore keep them. The episode page
+shows the episode published at the address, else one its viewer may see by the typed slug, and a
+draft's preview by its id (`?id=`). Published episodes are not edited, so their typed number and
+slug are the ones they hold, and the public lists show them.
+
+*Odeslat ke schválení*, *Schválit* and *Publikovat…* refuse an incomplete episode and write
+nothing (27h). The dialog says, one sentence each and in the editor's order:
+
+- *Podcast … není publikovaný.* when the podcast is off the web (27f);
+- what is missing of the number, the title, the description and a link, in one sentence
+  (*Chybí číslo, název, popis a odkaz na epizodu.*), the link only when none is saved;
+- how many links lack a platform name or a valid `http://`/`https://` address (*1 odkaz nemá
+  název platformy.*); a published episode never drops one;
+- *Číslo 13 je obsazené.* and *Adresa je obsazená.* for a value another episode of the podcast
+  holds.
+
+Every published episode has a link, so the web needs no empty *Kde poslouchat* (13d). The cover
+is not required.
+
+None of the transitions runs while someone else holds the episode's edit hold, and a delete
+waits for one's own other tab too (log 0036). An empty episode draft (no `firstContentAt`,
+log 0020) is in no list, count or preview, and a podcast's delete takes its free empty drafts
+along.
+
+*Nová epizoda* creates a draft with the podcast's next number, the highest plus one (27d, log
+[0048](./work-log/0048-an-episode-is-a-draft-with-the-next-number-unique-only-once-published.md)),
+and opens the editor, which saves as it goes under the edit hold. The first save with a title, a
+description or a link ends the empty draft. A taken number or address saves and is said at its
+field with *Použít …* (27f). A link saves as typed, without its platform name or with an invalid
+address; only a fully empty row is not saved. With a title the episode always has an address.
+
+---
+
+## Podcast address
+
+A podcast's address is unique once published (#836, log
+[0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)). A draft saves any
+slug, an empty one included. Only publishing writes it to `publishedSlug`, which is unique, and
+retract, archive and restore keep it. The podcast page and its episode pages look the podcast up
+by the address it holds as published, else by the typed slug among the drafts and archived
+podcasts the viewer may see. Published podcasts are not edited, so their typed slug is the one
+they hold, and the public lists show it.
+
+*Odeslat ke schválení*, *Schválit* and *Publikovat* refuse an incomplete podcast and write
+nothing (27i). The dialog says, in this order:
+
+- what is missing of the title, the address, the description and the cover, in one sentence
+  (*Chybí název, adresa, popis a obálka.*); the cover is required, since episodes without
+  their own take it over (27e);
+- *Adresa je obsazená.* for an address another podcast holds.
+
+None of the transitions runs while someone else holds the podcast's edit hold, and a delete
+waits for one's own other tab too (log 0036), as it waits for an editor of one of its empty
+episode drafts. An empty podcast draft (no `firstContentAt`, log 0020) is in no list, count or
+preview, and its detail opens its editor.
+
+*Nový podcast* creates a draft and opens the editor, which saves as it goes under the edit hold
+(27e, log [0049](./work-log/0049-a-podcast-is-a-draft-created-on-click-with-its-cover-saved-on-its-own.md)).
+The first save with a title or a description, or a cover upload, ends the empty draft. The
+cover saves on its own as it is picked and is replaced, never removed by the editor. Like the
+issue's files, it uploads with one *Nahrává se · Zrušit* row and can be cancelled until it saves
+(#712, log 0029). A cancelled first cover is sent the cover route's `remove` too, which exists
+only for that, and leaving the editor during an upload asks. The episode's own cover does the
+same, its removal being *Použít obálku podcastu*. A taken address saves and
+is said at its field with *Použít …*; an empty one stays empty until submit asks for it. Only
+the Coordinator chooses the author.
+
+---
+
 ## Decided for the redesign (not implemented yet)
 
 Decided on 28 Sep 2026 in the design project (`07 Stavy a akce obsahu`, questions `dj753f0j`
@@ -320,10 +395,19 @@ describes today's code; this is the target.
 - **Taking back wipes the approval.** The author's **Vzít zpět** and the Coordinator's
   **Vrátit k úpravám** return the item to an unsubmitted draft and delete its reviews.
   A Coordinator's own small fix of an approved text keeps the approval.
-- **Bulk publish gives every item its own time**, in the order the confirmation dialog shows
-  (top = newest): the top item gets the moment of confirmation, each next one second earlier.
-  An item published before keeps its stored date and stays out of the order. Built for
-  articles (#600).
+- **Bulk publish gives every item its own time** where the web sorts by it: the top item gets the
+  moment of confirmation (or the chosen day), each next one second earlier. Articles go in the
+  order the confirmation dialog shows (top = newest, #600), episodes by number (highest = newest,
+  27b), podcasts in the list's order (27a). Categories, tags and issues publish without a date
+  or an order. An item published before keeps its stored date and stays out of the order.
+- **Bulk actions follow the row** on every content list (22c, 25g, 26f, 27a, 27b; ji6n8th3):
+  *Publikovat…* (Coordinator only, approving a waiting item), *Stáhnout z publikace…*,
+  *Archivovat…*, *Obnovit jako koncept…* and *Smazat…*, each only where the row would allow it,
+  and the bar offers only what every selected item allows, at most two. Every one is confirmed;
+  an item held by someone else, changed meanwhile or, publishing, incomplete is skipped and
+  counted. Published content is never deleted, a podcast with episodes not in bulk either (27f),
+  and an episode of an unpublished podcast is not published. One runner serves every list
+  (log 0050). Built (#772).
 - **Changing the publish date takes a time as well** (Coordinator only, never in the future),
   so a forgotten article can be placed between two already published ones.
 - **Creators neither approve nor publish** — not even their own content. Their `review`

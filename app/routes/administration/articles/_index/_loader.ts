@@ -12,6 +12,7 @@ import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
+import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
 import { formatNumericDate } from '~/utils/format-numeric-date'
@@ -25,6 +26,7 @@ import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 import { getMissingArticleContent } from '../article/_index/utils/get-missing-article-content'
 import { buildArticlePermissionWhere } from '../utils/build-article-permission-where'
 import { formatEditHoldLine } from '../utils/format-edit-hold-line'
+import { getArticleDisplayTitle } from '../utils/get-article-display-title'
 import { getArticleFactLine } from '../utils/get-article-fact-line'
 import { getArticleHold } from '../utils/get-article-hold'
 import { getHeldActionFlags } from '../utils/get-held-action-flags'
@@ -32,7 +34,6 @@ import { getRowActions } from '../utils/get-row-actions'
 import type { Route } from './+types/route'
 import { PINNED_ROWS_PARAM } from './pinned-rows'
 import { SORT_KEYS, type SortKey } from './sort'
-import { getBulkActions } from './utils/get-bulk-actions'
 import { orderFilteredFirst } from './utils/order-filtered-first'
 
 const PAGE_SIZE = 20
@@ -357,17 +358,19 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           slug: article.slug,
           title: article.title,
         }).length > 0,
-      // Publishing it, the dialog says nobody submitted it (23f).
+      // Publishing it, the dialog says it isn't submitted (23f).
       isNotSubmitted:
         article.state === 'draft' &&
         flags.submission === null &&
         flags.isSubmittable &&
         !flags.isOwnContent,
+      // A draft without a title goes by its name, said quieter (22f).
+      isUntitled: article.title.trim() === '',
       publishedAt: article.publishedAt?.toISOString() ?? null,
       slug: article.slug,
       state: flags.submission?.state ?? article.state,
       tagNames,
-      title: article.title,
+      title: getArticleDisplayTitle(article.title),
       updatedAt: formatNumericDate(article.updatedAt),
     }
   })

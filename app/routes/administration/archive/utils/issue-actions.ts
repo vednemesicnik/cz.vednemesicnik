@@ -28,9 +28,9 @@ export const ISSUE_ACTION_LABELS: Record<IssueAction, string> = {
 export const ISSUE_DIRECT_INTENTS: Partial<Record<IssueAction, string>> =
   ARTICLE_DIRECT_INTENTS
 
-// The article's sentences said of an issue, which has one author (26g, qjv38ti4).
+// The article's sentences said of an issue, which has one author (26g, qjv38ti4, s9xbwd3w).
 export const ISSUE_HEADER_SENTENCES: Record<HeaderSentence, string> = {
-  'not-submitted': 'Číslo nebylo odesláno ke schválení.',
+  'not-submitted': 'Číslo není odeslané ke schválení.',
   'who-approves': 'Schválit může Koordinátor.',
   'who-edits': 'Upravovat mohou autor čísla a Koordinátor.',
   'who-publishes': 'Publikovat může Koordinátor.',

@@ -7,7 +7,10 @@ import type { EditHoldContent } from './edit-hold-content'
 
 const SUBJECT: Record<EditHoldContent, string> = {
   article: 'Článek',
+  // Who edits it, in the accusative (copy ahizoh4o).
+  episode: 'Epizodu',
   issue: 'Číslo',
+  podcast: 'Podcast',
 }
 
 /**

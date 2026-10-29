@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useToast } from '~/components/toast-provider'
 import { FORM_CONFIG } from '~/config/form-config'
+import type { EditHoldContent } from '~/utils/edit-hold/edit-hold-content'
 import { getOwnOtherTabDeleteRefusal } from '~/utils/edit-hold/get-own-other-tab-delete-refusal'
 
 const INTENT_VALUE = FORM_CONFIG.intent.value
@@ -32,6 +33,8 @@ type ActionResult =
       missing: string[]
       heldByName?: string
       isHeldInOwnOtherTab?: boolean
+      /** What the holding editor edits, when it is not the content acted on. */
+      heldContent?: EditHoldContent
     }
   | undefined
 
@@ -42,8 +45,23 @@ type Options = {
    */
   toasts?: Record<string, string>
   /** What the content is called in a refused action's toast, `článek` by default. */
-  heldSubject?: 'článek' | 'číslo'
+  heldSubject?: HeldSubject
 }
+
+// The refused action's toast names the content in the accusative (copy
+// hgb3jeqj, ey73zhul, ahizoh4o).
+const HELD_CONTENT = {
+  epizodu: 'episode',
+  podcast: 'podcast',
+  článek: 'article',
+  číslo: 'issue',
+} as const satisfies Record<string, EditHoldContent>
+
+type HeldSubject = keyof typeof HELD_CONTENT
+
+const HELD_SUBJECT = Object.fromEntries(
+  Object.entries(HELD_CONTENT).map(([subject, content]) => [content, subject]),
+) as Record<EditHoldContent, HeldSubject>
 
 /**
  * Answers a content action's result once (design 23h): a toast, or the list of
@@ -75,13 +93,16 @@ export const useContentActionResult = (
     }
     handledResultRef.current = actionResult
 
+    // The holding editor's content, which may be another than the one acted
+    // on (an empty episode draft holds up its podcast's delete).
+    const subject =
+      actionResult.heldContent === undefined
+        ? heldSubject
+        : HELD_SUBJECT[actionResult.heldContent]
+
     // One's own editor in another tab holds it; the delete waits (0036).
     if (actionResult.isHeldInOwnOtherTab === true) {
-      showToast(
-        getOwnOtherTabDeleteRefusal(
-          heldSubject === 'číslo' ? 'issue' : 'article',
-        ),
-      )
+      showToast(getOwnOtherTabDeleteRefusal(HELD_CONTENT[subject]))
       return
     }
 
@@ -89,7 +110,7 @@ export const useContentActionResult = (
     // hgb3jeqj, ey73zhul).
     if (actionResult.heldByName !== undefined) {
       showToast(
-        `Zkuste akci později — ${heldSubject} právě upravuje ${actionResult.heldByName}. Akce se neprovedla.`,
+        `Zkuste akci později — ${subject} právě upravuje ${actionResult.heldByName}. Akce se neprovedla.`,
       )
       return
     }

@@ -1,0 +1,36 @@
+/* The episode on its own line, its author under it (23f). */
+.episode {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.author {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}
+
+/* That it isn't submitted, in full ink before the date (23f). */
+.note {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    color: var(--text-primary);
+  }
+}
+
+.form {
+  @layer route {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+  }
+}

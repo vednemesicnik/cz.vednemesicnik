@@ -1,7 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { href } from 'react-router'
-import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
+import { Form, href } from 'react-router'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -9,18 +8,20 @@ import {
   TableHeader,
   TableHeaderCell,
   TableSelectionHeaderCell,
-  TableSortableHeaderCell,
   useAdminTableSelection,
 } from '~/components/admin/admin-table'
+import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
+import { Button } from '~/components/button'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
+import { ContentSelectionBar } from '~/components/content-selection-bar'
 import { FilterBar } from '~/components/filter-bar'
 import { FilterBarFilters } from '~/components/filter-bar-filters'
 import { FilterBarGroup } from '~/components/filter-bar-group'
 import { FilterBarSearch } from '~/components/filter-bar-search'
 import { FilterCell } from '~/components/filter-cell'
 import { FilterMenu } from '~/components/filter-menu'
-import { LinkButton } from '~/components/link-button'
+import { ListActionBar } from '~/components/list-action-bar'
 import { ListEmptyCard } from '~/components/list-empty-card'
 import { ListEmptyCardText } from '~/components/list-empty-card-text'
 import { ListEmptyCardTitle } from '~/components/list-empty-card-title'
@@ -29,7 +30,9 @@ import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
+import { PODCAST_BULK_NOUN } from '~/config/bulk-noun-config'
 import { PODCAST_NOUN } from '~/config/list-noun-config'
+import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -38,33 +41,50 @@ import { useAdminListPending } from '~/utils/use-admin-list-pending'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ItemRow } from './components/item-row'
-import { SORT_KEYS } from './sort'
 
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
+// The keyed fetcher the selection bar submits through and the list reads (27a).
+const BULK_ACTION_FETCHER_KEY = 'podcasts-bulk-action'
+
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
     canCreate,
     currentFilterQuery,
+    currentPage,
     filters,
     isApprover,
     isContributor,
     matchingFilterId,
     ownFilters,
+    pageSize,
     podcasts,
     query,
     queueCounts,
     sharedFilters,
+    totalCount,
+    totalPages,
   } = loaderData
 
   const pending = useAdminListPending()
 
-  const deletableIds = podcasts
-    .filter((podcast) => podcast.canDelete)
+  // A row joins the selection when the bar could apply something to it (27a).
+  const selectableIds = podcasts
+    .filter((podcast) => podcast.bulkActions.length > 0)
     .map((podcast) => podcast.id)
-  const selection = useAdminTableSelection(deletableIds)
+  const selection = useAdminTableSelection(selectableIds)
+  useBulkActionResult({
+    fetcherKey: BULK_ACTION_FETCHER_KEY,
+    noun: PODCAST_BULK_NOUN,
+    onClear: selection.clear,
+  })
+  // In the list's order: publishing spaces them by it (27a).
+  const selectedPodcasts = podcasts.filter((podcast) =>
+    selection.selectedIds.includes(podcast.id),
+  )
+  const hasSelection = selectedPodcasts.length > 0
 
   const states = filters.state ?? []
   const hasOtherFilters = query !== ''
@@ -97,23 +117,42 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     states,
   })
 
+  // Nový podcast creates the draft and opens it (log 0020, 27e), so it posts.
+  const newPodcastButton = canCreate && (
+    <Form action={href('/administration/podcasts/add-podcast')} method={'post'}>
+      <AuthenticityTokenInput />
+      <Button type={'submit'}>Nový podcast</Button>
+    </Form>
+  )
+
   return (
     <AdminPage>
+      {/* On a phone Nový podcast waits at the bottom (32c). */}
       <ListHeader>
         <PageTitle>Podcasty</PageTitle>
-        {canCreate && (
-          <LinkButton to={href('/administration/podcasts/add-podcast')}>
-            Nový podcast
-          </LinkButton>
-        )}
+        {newPodcastButton}
       </ListHeader>
       <FilterCell>
-        <AdminBulkActionsBar
-          action={href('/administration/podcasts')}
-          onDone={selection.clear}
-          selectedIds={selection.selectedIds}
-        />
-        <FilterBar replaced={selection.selectedIds.length > 0}>
+        {/* The selection bar takes the filter row's place in the same cell,
+            so the table does not move (22c, cioukqn6); not on a phone (22g). */}
+        {hasSelection && (
+          <ContentSelectionBar
+            action={href('/administration/podcasts')}
+            fetcherKey={BULK_ACTION_FETCHER_KEY}
+            isCreator={!isApprover && !isContributor}
+            noun={PODCAST_BULK_NOUN}
+            onClear={selection.clear}
+            records={selectedPodcasts.map((podcast) => ({
+              ...podcast,
+              related: {
+                count: podcast.episodeCount,
+                publishedCount: podcast.publishedEpisodeCount,
+              },
+              state: podcast.submission ?? podcast.state,
+            }))}
+          />
+        )}
+        <FilterBar replaced={hasSelection}>
           <FilterBarGroup>
             <FilterBarSearch
               defaultValue={query}
@@ -154,11 +193,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           {emptyMessage.text !== null && (
             <ListEmptyCardText>{emptyMessage.text}</ListEmptyCardText>
           )}
-          {emptyMessage.action === 'create' && canCreate && (
-            <LinkButton to={href('/administration/podcasts/add-podcast')}>
-              Nový podcast
-            </LinkButton>
-          )}
+          {emptyMessage.action === 'create' && newPodcastButton}
           {emptyMessage.action === 'clearFilters' && <ClearFiltersButton />}
         </ListEmptyCard>
       ) : (
@@ -170,56 +205,44 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
-              disabled={deletableIds.length === 0}
+              disabled={selectableIds.length === 0}
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'title'}
-              sortKeys={SORT_KEYS}
-            >
-              Název
-            </TableSortableHeaderCell>
-            <TableSortableHeaderCell
-              defaultOrder={'desc'}
-              defaultSort={'createdAt'}
-              sortKey={'createdAt'}
-              sortKeys={SORT_KEYS}
-            >
-              Vytvořeno
-            </TableSortableHeaderCell>
+            <TableHeaderCell>
+              <span className={'screen-reader-only'}>Obálka</span>
+            </TableHeaderCell>
+            <TableHeaderCell>Podcast</TableHeaderCell>
+            <TableHeaderCell>Epizody</TableHeaderCell>
             <TableHeaderCell>Stav</TableHeaderCell>
             <TableHeaderCell variant={'actions'}>Akce</TableHeaderCell>
           </TableHeader>
           <TableBody>
             {podcasts.map((podcast) => (
               <ItemRow
-                canDelete={podcast.canDelete}
-                canEdit={podcast.canEdit}
-                canView={podcast.canView}
-                createdAt={podcast.createdAt}
-                id={podcast.id}
+                isApprover={isApprover}
                 key={podcast.id}
                 onSelect={() => selection.toggle(podcast.id)}
+                podcast={podcast}
                 selected={selection.isSelected(podcast.id)}
-                state={podcast.submission ?? podcast.state}
-                title={podcast.title}
               />
             ))}
           </TableBody>
         </AdminTable>
       )}
       <Pagination
-        currentPage={1}
+        currentPage={currentPage}
         layout={'inline'}
         noun={PODCAST_NOUN.countForms}
-        pageSize={podcasts.length}
+        pageSize={pageSize}
         size={'sm'}
-        totalCount={podcasts.length}
-        totalPages={1}
+        totalCount={totalCount}
+        totalPages={totalPages}
       />
+      {/* Unless the empty list already offers it (22e). */}
+      {canCreate && (totalCount > 0 || emptyMessage.action !== 'create') && (
+        <ListActionBar>{newPodcastButton}</ListActionBar>
+      )}
     </AdminPage>
   )
 }

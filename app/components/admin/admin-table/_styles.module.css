@@ -27,12 +27,12 @@
 }
 
 /*
- * Below 768 px a folding table is rows across the whole width, past the
- * page's gutter (design 32, 22g): no header, no selection, and each row
- * a grid of its parts — the image, then the name, the state and the details
- * one under another, then „⋯“. A cell that is no part (`data-phone-part`)
- * leaves: the checkbox, a date, every column the details repeat. The parts
- * read `data-folds-on-phone`, so outside a folding table they stay cells.
+ * Below 768 px the table is rows across the whole width, past the page's
+ * gutter (design 32, 22g): no header, no selection, and each row a grid of
+ * its parts — the image, then the name, the state and the details one under
+ * another, then „⋯“. A cell that is no part (`data-phone-part`) leaves: the
+ * checkbox, a date, every column the details repeat. The parts read
+ * `data-folds-on-phone`, so outside `AdminTable` they stay cells.
  */
 .foldsOnPhone {
   @layer variant {

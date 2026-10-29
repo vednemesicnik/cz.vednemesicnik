@@ -1,21 +1,339 @@
-.removeIcon {
+/* The tag and the save line on the left, Zavřít on the right (27d). */
+.header {
   @layer route {
-    width: 16px;
-    height: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 24px;
+    inline-size: 100%;
   }
 }
 
-.linkRow {
+.status {
   @layer route {
     display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    /* Zavřít's height, so the tag and the line stand on its middle. */
+    min-block-size: 44px;
+    min-inline-size: 0;
+  }
+}
 
-    /* The fields grow; the button lines up with the inputs, as no row is
-       reserved for errors. */
-    & > :not(button) {
-      flex: 1;
+/* Beside the tag, the only sign of saving (24e). */
+.saveLine {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+}
+
+/* Only a failure has a colour: someone has to act (24e). */
+.saveFailure {
+  @layer route {
+    color: var(--error-text);
+  }
+}
+
+/* One sentence over someone else's episode, not a banner (24c). */
+.sentence {
+  @layer route {
+    max-inline-size: 40rem;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+}
+
+/* A fieldset only to lock its fields without the hold (07g): no frame. */
+.lock {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}
+
+/* The grey number after the title's label, at its size (27d, 1iqapiz2). */
+.number {
+  @layer route {
+    margin-inline-start: 8px;
+    font-weight: var(--font-weight-regular);
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* The title as the detail's heading will set it, in the field's frame as
+   the article's (24a). */
+.titleInput {
+  @layer route {
+    field-sizing: content;
+    min-height: 0;
+    font-size: var(--page-title-font-size);
+    font-weight: var(--page-title-font-weight);
+    line-height: var(--page-title-line-height);
+    letter-spacing: var(--page-title-letter-spacing);
+    text-wrap: pretty;
+    resize: none;
+  }
+}
+
+.descriptionInput {
+  @layer route {
+    field-sizing: content;
+    min-height: 4lh;
+    line-height: 1.55;
+    resize: none;
+  }
+}
+
+.links {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}
+
+/* As a field's label (27d). */
+.linksLegend {
+  @layer route {
+    margin-block-end: 8px;
+    padding: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}
+
+/* Podcast and Obálka, read-only facts above the fields (27d). */
+.facts {
+  @layer route {
+    display: grid;
+    gap: 18px;
+    margin: 0 0 18px;
+  }
+}
+
+.fact {
+  @layer route {
+    display: grid;
+    gap: 6px;
+    font-size: var(--font-size-sm);
+
+    & dd {
+      margin: 0;
     }
+  }
+}
+
+.factLabel {
+  @layer route {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}
+
+/* The cover's field: the image and its actions, the hint under them (27d). */
+.coverField {
+  @layer route {
+    display: grid;
+    gap: 6px;
+  }
+}
+
+.cover {
+  @layer route {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+/* Square, as on the web, which crops a cover that is not (27d). */
+.coverImage {
+  @layer route {
+    inline-size: 72px;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    overflow: hidden;
+
+    /* Image's own unlayered `height: auto` would keep the natural ratio. */
+    & img {
+      min-block-size: 100%;
+      max-block-size: 100%;
+      object-fit: cover;
+    }
+  }
+}
+
+/* The podcast's cover: the episode goes out with it (27d). */
+.coverMuted {
+  @layer route {
+    opacity: 0.5;
+  }
+}
+
+/* A podcast without a cover keeps the slot. */
+.coverEmpty {
+  @layer route {
+    display: block;
+    background-color: var(--bg-tertiary);
+  }
+}
+
+/* The picked cover, dimmed until it saves (as 26c). */
+.coverUploading {
+  @layer route {
+    object-fit: cover;
+    opacity: 0.6;
+  }
+}
+
+.coverText {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* The row fills the text column while the picked cover uploads (26c). */
+.coverUploadStatus {
+  @layer route {
+    align-self: stretch;
+  }
+}
+
+/* While a change saves, the actions only say they wait. */
+.coverAction {
+  @layer route {
+    &[aria-disabled="true"] {
+      cursor: progress;
+      opacity: 0.5;
+    }
+  }
+}
+
+.coverHint {
+  @layer route {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+.coverProblem {
+  @layer route {
+    display: grid;
+    gap: 4px;
+    justify-items: start;
+  }
+}
+
+.secondary {
+  @layer route {
+    color: var(--text-secondary);
+  }
+}
+
+/* A field and the offer under it, closer than the other fields (27f). */
+.fieldGroup {
+  @layer route {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+
+    & > :first-child {
+      justify-self: stretch;
+    }
+  }
+}
+
+.offer {
+  @layer route {
+    font-size: 13px;
+  }
+}
+
+/* Na webu jako under a line: the title, then the address (27d). */
+.webPreview {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 18px 0 0;
+    padding-block-start: 14px;
+    font-size: 13px;
+    border-block-start: 1px solid var(--border);
+
+    & dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
+.webPreviewLabel {
+  @layer route {
+    color: var(--text-secondary);
+  }
+}
+
+.tertiary {
+  @layer route {
+    color: var(--text-tertiary);
+  }
+}
+
+/* Deleted: what the editor still shows is the only copy (24k). */
+.deletedWarning {
+  @layer route {
+    margin-block: 0;
+  }
+}
+
+/* Inside the callout, next to its icon (rmridl1f). */
+.deletedContent {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+.deletedTitle {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+}
+
+.deletedAdvice {
+  @layer route {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
   }
 }
