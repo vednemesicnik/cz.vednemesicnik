@@ -1,11 +1,13 @@
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
+import { StateChangeDialog } from '~/components/state-change-dialog'
 
 import {
   TAXONOMY_ACTION_LABELS,
   TAXONOMY_DIRECT_INTENTS,
 } from '../../utils/taxonomy-actions'
 import type { useTaxonomyActions } from '../../utils/use-taxonomy-actions'
-import { TaxonomyConfirmDialog } from '../taxonomy-confirm-dialog'
 
 type Props = {
   actions: ReturnType<typeof useTaxonomyActions>
@@ -44,15 +46,19 @@ export const TaxonomyActionDialogs = ({ actions, canDelete }: Props) => {
         />
       )}
       {confirmAction !== null && (
-        <TaxonomyConfirmDialog
+        <StateChangeDialog
           action={actions.detailHref}
           confirmLabel={TAXONOMY_ACTION_LABELS[confirmAction]}
-          description={confirmCopy[confirmAction].description}
           fetcherKey={actions.fetcherKey}
           intent={TAXONOMY_DIRECT_INTENTS[confirmAction]}
           onClose={closeConfirm}
-          title={confirmCopy[confirmAction].title}
-        />
+        >
+          {/* The record's name is in the question: no record line (25d). */}
+          <AdminModalTitle>{confirmCopy[confirmAction].title}</AdminModalTitle>
+          <AdminModalDescription>
+            {confirmCopy[confirmAction].description}
+          </AdminModalDescription>
+        </StateChangeDialog>
       )}
     </>
   )

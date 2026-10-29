@@ -1,16 +1,9 @@
-import { useFetcher } from 'react-router'
-
-import { AdminDialog } from '~/components/admin/admin-modal'
-import { AdminModalActions } from '~/components/admin/admin-modal-actions'
-import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
-import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
-import { Button } from '~/components/button'
 import { DialogBody } from '~/components/dialog-body'
+import { StateChangeDialog } from '~/components/state-change-dialog'
 import { FORM_CONFIG } from '~/config/form-config'
-import { useModalDialog } from '~/utils/use-modal-dialog'
 
 import type { IssueStateAction } from '../../utils/issue-actions'
 import styles from './_styles.module.css'
@@ -76,52 +69,27 @@ export const IssueStateDialog = ({
   note,
   onClose,
 }: Props) => {
-  const fetcher = useFetcher({ key: fetcherKey })
-  const ref = useModalDialog(onClose)
   const copy = COPY[kind]
 
   return (
-    <AdminDialog ref={ref}>
-      <AdminModalContent>
-        <AdminModalTitle>{copy.title}</AdminModalTitle>
-        <AdminModalSubject>{issueTitle}</AdminModalSubject>
-        <DialogBody>
-          <AdminModalDescription>{copy.description}</AdminModalDescription>
-          {kind === 'retract' && !isApprover && (
-            <AdminModalDescription>
-              Znovu ho publikovat může Koordinátor.
-            </AdminModalDescription>
-          )}
-          {note !== null && <p className={styles.note}>{note}</p>}
-        </DialogBody>
-
-        <fetcher.Form
-          action={action}
-          method={'post'}
-          onSubmit={() => ref.current?.close()}
-        >
-          <AuthenticityTokenInput />
-          <input
-            name={FORM_CONFIG.intent.name}
-            type={'hidden'}
-            value={copy.intent}
-          />
-
-          <AdminModalActions>
-            <Button
-              onClick={() => ref.current?.close()}
-              size={'sm'}
-              type={'button'}
-              variant={'ghost'}
-            >
-              Zrušit
-            </Button>
-            <Button size={'sm'} type={'submit'}>
-              {copy.confirmLabel}
-            </Button>
-          </AdminModalActions>
-        </fetcher.Form>
-      </AdminModalContent>
-    </AdminDialog>
+    <StateChangeDialog
+      action={action}
+      confirmLabel={copy.confirmLabel}
+      fetcherKey={fetcherKey}
+      intent={copy.intent}
+      onClose={onClose}
+    >
+      <AdminModalTitle>{copy.title}</AdminModalTitle>
+      <AdminModalSubject>{issueTitle}</AdminModalSubject>
+      <DialogBody>
+        <AdminModalDescription>{copy.description}</AdminModalDescription>
+        {kind === 'retract' && !isApprover && (
+          <AdminModalDescription>
+            Znovu ho publikovat může Koordinátor.
+          </AdminModalDescription>
+        )}
+        {note !== null && <p className={styles.note}>{note}</p>}
+      </DialogBody>
+    </StateChangeDialog>
   )
 }

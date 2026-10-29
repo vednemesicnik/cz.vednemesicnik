@@ -1,10 +1,9 @@
+import type { ReactNode } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
-import { AdminModalDescription } from '~/components/admin/admin-modal-description'
-import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -15,26 +14,28 @@ type Props = {
   fetcherKey: string
   intent: string
   confirmLabel: string
-  title: string
-  description: string
   onClose: () => void
+  children: ReactNode
 }
 
 /**
- * Confirms *Archivovat…* or *Stáhnout z publikace…* of a category or tag that
- * has published articles (design 25d, 3vnah8ji): what readers lose.
+ * Confirms a state change of one record — publish, retract, archive (designs
+ * 23e, 25d, 26b, 27a, 27b). The caller composes the heading and the sentences
+ * from the modal parts; the dialog submits the intent through the fetcher and
+ * closes. Opens as it mounts.
  *
+ * @param props.action - The route the intent posts to.
+ * @param props.fetcherKey - The fetcher the caller reads the result from.
  * @param props.intent - The state change the confirmation submits.
- * @param props.title - The question with the record's name.
+ * @param props.children - The title, the record and what the change does.
  */
-export const TaxonomyConfirmDialog = ({
+export const StateChangeDialog = ({
   action,
   fetcherKey,
   intent,
   confirmLabel,
-  title,
-  description,
   onClose,
+  children,
 }: Props) => {
   const fetcher = useFetcher({ key: fetcherKey })
   const ref = useModalDialog(onClose)
@@ -42,8 +43,7 @@ export const TaxonomyConfirmDialog = ({
   return (
     <AdminDialog ref={ref}>
       <AdminModalContent>
-        <AdminModalTitle>{title}</AdminModalTitle>
-        <AdminModalDescription>{description}</AdminModalDescription>
+        {children}
 
         <fetcher.Form
           action={action}
