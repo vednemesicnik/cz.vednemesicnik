@@ -49,11 +49,13 @@ import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
+import { useFocusAtFix } from '~/hooks/use-focus-at-fix'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
 import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
+import { getFirstFileControl } from '~/utils/get-first-file-control'
 import {
   getIssueNumberSuggestion,
   type IssueNumberSuggestion,
@@ -63,6 +65,7 @@ import { getIssueTitle } from '~/utils/issue/get-issue-title'
 import { getNextFreeIssueOrder } from '~/utils/issue/get-next-free-issue-order'
 import { slugify } from '~/utils/slugify'
 import { formatEditHoldLine } from '../../../articles/utils/format-edit-hold-line'
+import { getIssueFixTarget } from '../_index/utils/get-issue-fix-target'
 import { ISSUE_NUMBER_FIELDS, schema } from './_schema'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -806,10 +809,32 @@ export default function RouteComponent({
 
   // The button goes once its value is in, so the focus moves to the field
   // that got the value last, not to the top of the page (26c).
-  const focusNumberField = (field: 'year' | 'order') => {
+  const focusNumberField = (field: IssueNumberField) => {
     const input = formRef.current?.elements.namedItem(fields[field].name)
     if (input instanceof HTMLInputElement) input.focus()
   }
+
+  // Opened from the missing-content dialog, the editor opens at its first
+  // sentence (26e, 6dlnv2de); a taken number's error stands at Pořadí v
+  // roce, or Doplněk for a supplement, as the field changed last says.
+  useFocusAtFix(isHolding, () => {
+    const target = getIssueFixTarget({
+      hasCover: issue.cover !== null,
+      hasPdf: issue.pdf !== null,
+      isNumberTaken: issue.takenNumber !== null,
+      order: issue.order,
+      supplement: issue.supplement === '' ? null : issue.supplement,
+      year: issue.year,
+    })
+    if (target === null) return
+
+    if (target === 'cover' || target === 'pdf') {
+      const container = (target === 'cover' ? coverRef : pdfRef).current
+      if (container !== null) getFirstFileControl(container)?.focus()
+    } else {
+      focusNumberField(target)
+    }
+  })
 
   // A free order for a taken one: filled in and saved (26d, as 24d).
   const applyFreeOrder = (value: number) => {
