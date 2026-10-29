@@ -37,8 +37,10 @@ type Options<Data, Row extends { id: string }> = {
  * @param options.keyOf - The row an event tints, or `null` for none.
  * @param options.heldUntilOf - When the edit holds shown should expire: an
  *   expiry sends no event, so the rows look again then.
- * @returns `live`, the latest data; `rows`, in the order on screen; and the
- *   rows changed by someone else since the list was opened.
+ * @returns `live`, the latest data for what the rows stand beside (counts, a
+ *   page's header) — not totals or paging, which a live load counts over the
+ *   pinned rows only and stay with `loaderData`; `rows`, in the order on
+ *   screen; and the rows changed by someone else since the list was opened.
  */
 export const useLiveRows = <Data, Row extends { id: string }>({
   loaderData,

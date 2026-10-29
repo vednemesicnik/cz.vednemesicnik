@@ -2,11 +2,12 @@ import { describe, expect, test } from 'vitest'
 
 import { getLiveStateDetail } from './get-live-state-detail'
 
-const now = new Date('2026-10-29T15:00:00')
+// Instants, so the line reads Prague time wherever the tests run (CI is UTC).
+const now = new Date('2026-10-29T14:00:00Z')
 
 const liveChange = {
   name: 'Jakub Novák',
-  occurredAt: new Date('2026-10-29T14:02:00'),
+  occurredAt: new Date('2026-10-29T13:02:00Z'),
   sequence: 1,
   tintStartedAt: 0,
 }
