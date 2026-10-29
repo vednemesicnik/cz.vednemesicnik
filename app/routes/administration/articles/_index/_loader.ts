@@ -18,6 +18,7 @@ import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { buildPinnedRowsWhere } from '~/utils/pinned-rows/build-pinned-rows-where'
 import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
@@ -144,7 +145,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // The page of the list, or the rows on screen for a live load (22f).
   const rowsQuery: Pick<Prisma.ArticleFindManyArgs, 'skip' | 'take' | 'where'> =
     isPinned
-      ? { where: { AND: [permissionWhere, { id: { in: pinnedIds } }] } }
+      ? { where: buildPinnedRowsWhere(permissionWhere, pinnedIds) }
       : { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, where }
 
   const [
