@@ -1,5 +1,5 @@
 import type { LiveChange } from '~/hooks/use-live-changes'
-import { formatLiveChangeLine } from '~/routes/administration/articles/_index/utils/format-live-change-line'
+import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
 
 import type { DashboardSectionKind } from '../dashboard-section-kind'
 
@@ -45,17 +45,8 @@ export const getDashboardRowLines = ({
     section === 'queue' && authorLine !== '' ? authorLine : null,
   ].filter((part) => part !== null)
 
-  const liveLine =
-    liveChange === undefined || liveChange.isLineSuperseded === true
-      ? null
-      : formatLiveChangeLine({
-          name: liveChange.name,
-          now,
-          occurredAt: liveChange.occurredAt,
-        })
-
   return {
-    detail: holdLine ?? liveLine ?? factLine ?? undefined,
+    detail: getLiveStateDetail({ factLine, holdLine, liveChange, now }),
     note: noteParts.length === 0 ? null : noteParts.join(' · '),
   }
 }

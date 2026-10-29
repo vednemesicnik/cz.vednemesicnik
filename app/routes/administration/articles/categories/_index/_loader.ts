@@ -18,6 +18,8 @@ import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { buildPinnedRowsWhere } from '~/utils/pinned-rows/build-pinned-rows-where'
+import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { buildTaxonomyPermissionWhere } from '../../utils/build-taxonomy-permission-where'
@@ -47,13 +49,21 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     entities: ['article_category'],
   })
 
+  // A live load of the rows on screen (22f): fresh data for exactly those rows,
+  // whatever the order, filters or page now say. A fetcher load, so it never
+  // redirects.
+  const pinnedIds = parsePinnedRowIds(url, PAGE_SIZE)
+  const isPinned = pinnedIds !== undefined
+
   // Before any query: a bare visit with a default preset never renders this list,
   // it redirects to the preset's own URL.
-  await resolveDefaultFilter({
-    tableKey: TABLE_KEY,
-    url,
-    userId: context.userId,
-  })
+  if (!isPinned) {
+    await resolveDefaultFilter({
+      tableKey: TABLE_KEY,
+      url,
+      userId: context.userId,
+    })
+  }
 
   // Looked up, not processed: by name, ascending (25a).
   const { order, page, query } = parseAdminListParams(request, {
@@ -98,9 +108,13 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   const [matchingCategories, savedFilters, queueCounts] = await Promise.all([
     // Every match by name: the order is Czech, not SQLite's (25a, 11c).
+    // A live load asks for the rows on screen, still within what the role may
+    // view: the ids come from the browser (22f).
     prisma.articleCategory.findMany({
       select: { id: true, name: true },
-      where,
+      where: isPinned
+        ? buildPinnedRowsWhere(permissionWhere, pinnedIds)
+        : where,
     }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
     // The Stav menu counts work within what the role may view, whatever else
@@ -112,11 +126,16 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ),
   ])
 
-  const { pageIds, totalCount } = getNameOrderedPage(matchingCategories, {
+  const orderedPage = getNameOrderedPage(matchingCategories, {
     order,
     page,
     pageSize: PAGE_SIZE,
   })
+  const { totalCount } = orderedPage
+  // The second query has no permission clause: its ids passed the first one.
+  const pageIds = isPinned
+    ? matchingCategories.map((record) => record.id)
+    : orderedPage.pageIds
 
   // A state the role's menu does not offer (a Coordinator's link opened by a
   // Contributor) drops, or it would filter unseen.
@@ -127,14 +146,14 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ).map((queue) => ({ value: queue })),
   })
 
-  if (staleFilterRedirect !== null) {
+  if (staleFilterRedirect !== null && !isPinned) {
     throw redirect(staleFilterRedirect)
   }
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   // Deleting the last row on the last page revalidates a URL past the end.
-  if (isPagePastLast(page, totalPages)) {
+  if (isPagePastLast(page, totalPages) && !isPinned) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
@@ -180,12 +199,17 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ]
   })
 
-  // Read only here: an earlier redirect must not use up the toast (23f).
-  const notice = await readAdminNotice(request)
+  // Read only here: an earlier redirect must not use up the toast (23f). A
+  // live load leaves it to the page it is for.
+  const notice = isPinned
+    ? { setCookie: '', toast: null }
+    : await readAdminNotice(request)
 
   return data(
     {
       ...savedFilters,
+      // Whose live changes are not someone else's (22f).
+      authorId: context.authorId,
       canCreate: context.can({
         action: 'create',
         entity: 'article_category',

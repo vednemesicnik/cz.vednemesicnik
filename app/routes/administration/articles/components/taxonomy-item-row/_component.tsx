@@ -18,8 +18,11 @@ import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
+import type { LiveChange } from '~/hooks/use-live-changes'
 import type { BulkAction } from '~/utils/bulk-action/get-bulk-actions'
 
+import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
+import { getRowTint } from '~/utils/live-change/get-row-tint'
 import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { formatPublishedArticleCount } from '../../utils/format-published-article-count'
 import {
@@ -54,6 +57,7 @@ type Props = {
   selected: boolean
   onSelect: () => void
   tint?: TableRowTint
+  liveChange?: LiveChange
 }
 
 /**
@@ -62,12 +66,15 @@ type Props = {
  * linking to the article list; the state tag with one fact; and one action
  * with the rest in „⋯“, as the article's row (22a). Below 768 px it folds
  * into the name, the state and the published articles in words, beside one
- * „⋯“ with the row action first (32a).
+ * „⋯“ with the row action first (32a). A row someone else changed while the
+ * list is open is tinted for a moment and says who changed it (22f, xkg6rdz4).
  *
  * @param props.publishedArticlesHref - The article list filtered to the record
  *   and `state=published`, the set the count counts.
  * @param props.showSlug - The address under the name; a tag's almost always
  *   repeats its name (25e).
+ * @param props.tint - One's own save, back from the editor (30c); someone
+ *   else's change tints the row instead.
  */
 export const TaxonomyItemRow = ({
   record,
@@ -79,6 +86,7 @@ export const TaxonomyItemRow = ({
   selected,
   onSelect,
   tint,
+  liveChange,
 }: Props) => {
   const actions = useTaxonomyActions({
     copy,
@@ -101,7 +109,10 @@ export const TaxonomyItemRow = ({
     rowAction === null ? record.menu : [rowAction, ...record.menu]
 
   return (
-    <TableRow muted={record.state === 'archived'} tint={tint}>
+    <TableRow
+      muted={record.state === 'archived'}
+      tint={getRowTint(liveChange) ?? tint}
+    >
       <TableSelectionCell
         checked={selected}
         disabled={record.bulkActions.length === 0}
@@ -123,7 +134,14 @@ export const TaxonomyItemRow = ({
         )}
       </TableCell>
       <TableStateCell>
-        <StatusTag detail={record.factLine ?? undefined} state={record.state} />
+        <StatusTag
+          detail={getLiveStateDetail({
+            factLine: record.factLine,
+            liveChange,
+            now: new Date(),
+          })}
+          state={record.state}
+        />
       </TableStateCell>
       <TableDetailsCell>
         <TableDetailsLine>

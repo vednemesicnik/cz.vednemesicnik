@@ -16,7 +16,10 @@ import {
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
+import type { LiveChange } from '~/hooks/use-live-changes'
 import { formatNumericDate } from '~/utils/format-numeric-date'
+import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
+import { getRowTint } from '~/utils/live-change/get-row-tint'
 import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
 import { getEpisodeDisplayTitle } from '~/utils/podcast-episode/get-episode-display-title'
 
@@ -39,6 +42,7 @@ type Props = {
   isApprover: boolean
   selected: boolean
   onSelect: () => void
+  liveChange?: LiveChange
 }
 
 /**
@@ -47,7 +51,9 @@ type Props = {
  * publish date, the state tag with its author and one fact, and one action
  * with the rest in „⋯“, as the article's row (22a). Below 768 px it folds
  * into the number before the title, the state and the platforms, with „⋯“
- * holding the row action first and no publish date (32d).
+ * holding the row action first and no publish date (32d). While someone else
+ * edits it, the row says who; one someone else changed while the page is open
+ * is tinted for a moment and says who changed it (22f, xkg6rdz4).
  */
 export const EpisodeRow = ({
   episode,
@@ -56,6 +62,7 @@ export const EpisodeRow = ({
   isApprover,
   selected,
   onSelect,
+  liveChange,
 }: Props) => {
   const title = formatEpisodeTitle(episode)
   const actions = useEpisodeActions({
@@ -81,7 +88,10 @@ export const EpisodeRow = ({
       : episode.linkLabels.join(' · ')
 
   return (
-    <TableRow muted={episode.state === 'archived'}>
+    <TableRow
+      muted={episode.state === 'archived'}
+      tint={getRowTint(liveChange)}
+    >
       <TableSelectionCell
         checked={selected}
         disabled={!episode.isSelectable}
@@ -113,7 +123,13 @@ export const EpisodeRow = ({
       </TableCell>
       <TableStateCell>
         <StatusTag
-          detail={episode.factLine ?? undefined}
+          // Who edits it comes first: it changes what the row allows (27b).
+          detail={getLiveStateDetail({
+            factLine: episode.factLine,
+            holdLine: episode.holdLine,
+            liveChange,
+            now: new Date(),
+          })}
           state={episode.submission ?? episode.state}
         />
       </TableStateCell>

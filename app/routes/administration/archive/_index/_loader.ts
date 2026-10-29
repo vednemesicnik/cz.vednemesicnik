@@ -21,6 +21,8 @@ import { resolveIssueTitles } from '~/utils/issue/resolve-issue-titles.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { buildPinnedRowsWhere } from '~/utils/pinned-rows/build-pinned-rows-where'
+import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { buildIssuePermissionWhere } from '../utils/build-issue-permission-where'
@@ -66,13 +68,21 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     entities: ['issue'],
   })
 
+  // A live load of the rows on screen (22f): fresh data for exactly those rows,
+  // whatever the order, filters or page now say. A fetcher load, so it never
+  // redirects.
+  const pinnedIds = parsePinnedRowIds(url, PAGE_SIZE)
+  const isPinned = pinnedIds !== undefined
+
   // Before any query: a bare visit with a default preset never renders this list,
   // it redirects to the preset's own URL.
-  await resolveDefaultFilter({
-    tableKey: TABLE_KEY,
-    url,
-    userId: context.userId,
-  })
+  if (!isPinned) {
+    await resolveDefaultFilter({
+      tableKey: TABLE_KEY,
+      url,
+      userId: context.userId,
+    })
+  }
 
   const { order, page, query, sort } = parseAdminListParams(request, {
     defaultOrder: 'desc',
@@ -136,7 +146,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     year: yearOptions,
   })
 
-  if (staleFilterRedirect !== null) {
+  if (staleFilterRedirect !== null && !isPinned) {
     throw redirect(staleFilterRedirect)
   }
 
@@ -144,9 +154,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     prisma.issue.findMany({
       orderBy: ORDER_BY[sort](order),
       select: ISSUE_ROW_SELECT,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      where,
+      // The page of the list, or the rows on screen for a live load (22f).
+      ...(isPinned
+        ? { where: buildPinnedRowsWhere(permissionWhere, pinnedIds) }
+        : { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, where }),
     }),
     prisma.issue.count({ where }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
@@ -162,7 +173,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   // Deleting the last row on the last page revalidates a URL past the end.
-  if (isPagePastLast(page, totalPages)) {
+  if (isPagePastLast(page, totalPages) && !isPinned) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
@@ -179,12 +190,17 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     getIssueRow(issue, { context, isNumberTaken: takenIds.has(issue.id), now }),
   )
 
-  // Read only here: an earlier redirect must not use up the toast (26i).
-  const notice = await readAdminNotice(request)
+  // Read only here: an earlier redirect must not use up the toast (26i). A
+  // live load leaves it to the page it is for.
+  const notice = isPinned
+    ? { setCookie: '', toast: null }
+    : await readAdminNotice(request)
 
   return data(
     {
       ...savedFilters,
+      // Whose live changes are not someone else's (22f).
+      authorId: context.authorId,
       canCreate: context.can({
         action: 'create',
         entity: 'issue',

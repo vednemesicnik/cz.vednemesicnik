@@ -22,6 +22,7 @@ const podcast = (overrides: Partial<PodcastRowRecord>): PodcastRowRecord => ({
   author: { id: 'contributor', name: 'Anna', role: { level: 3 } },
   cover: null,
   description: '',
+  heldByAuthor: null,
   heldByAuthorId: null,
   heldByTabId: null,
   heldSince: null,
@@ -91,5 +92,35 @@ describe('getPodcastRow', () => {
     expect(
       getPodcastRow(complete, { ...options, isSlugTaken: true }).isIncomplete,
     ).toBe(true)
+  })
+
+  test('while someone else edits it, the Coordinator takes it over and changes no state', () => {
+    const row = getPodcastRow(
+      podcast({
+        heldByAuthor: { name: 'Jakub' },
+        heldByAuthorId: 'contributor',
+        heldByTabId: 'tab',
+        heldSince: new Date('2026-10-29T11:55:00Z'),
+        heldUntil: new Date('2026-10-29T12:05:00Z'),
+        submittedAt: new Date('2026-09-26T10:00:00Z'),
+      }),
+      {
+        context: createContext('coordinator', 1),
+        isSlugTaken: false,
+        now,
+        publishedEpisodeCount: 0,
+      },
+    )
+
+    expect(row).toMatchObject({
+      heldUntil: '2026-10-29T12:05:00.000Z',
+      holdLine: 'upravuje Jakub',
+      isHeldByOther: true,
+    })
+    expect(row.actions).toContain('edit')
+    expect(row.actions).not.toContain('approve')
+    expect(row.actions).not.toContain('delete')
+    // The bar still offers it, and says apart why it is skipped.
+    expect(row.bulkActions).toContain('publish')
   })
 })

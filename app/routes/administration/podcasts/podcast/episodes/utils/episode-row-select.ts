@@ -13,6 +13,7 @@ export const EPISODE_ROW_SELECT = {
     },
   },
   description: true,
+  heldByAuthor: { select: { name: true } },
   heldByAuthorId: true,
   heldByTabId: true,
   heldSince: true,

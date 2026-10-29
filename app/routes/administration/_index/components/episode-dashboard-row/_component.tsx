@@ -1,14 +1,13 @@
 import { EpisodeActionDialogs } from '~/routes/administration/podcasts/podcast/episodes/components/episode-action-dialogs'
 import { EPISODE_ACTION_LABELS } from '~/routes/administration/podcasts/podcast/episodes/utils/episode-actions'
 import { useEpisodeActions } from '~/routes/administration/podcasts/podcast/episodes/utils/use-episode-actions'
-
+import { getRowTint } from '~/utils/live-change/get-row-tint'
 import { SECTION_ROW_ACTION } from '../../dashboard-section-kind'
 import { DASHBOARD_TYPE_COPY } from '../../dashboard-types'
 import { getDashboardRowActions } from '../../utils/get-dashboard-row-actions'
 import { getDashboardRowLines } from '../../utils/get-dashboard-row-lines'
 import { DashboardRow } from '../dashboard-row'
 import type { DashboardRowProps } from '../dashboard-row/dashboard-row-props'
-import { getRowTint } from '../dashboard-row/get-row-tint'
 import { DashboardRowActions } from '../dashboard-row-actions'
 
 /**
@@ -37,7 +36,7 @@ export const EpisodeDashboardRow = ({
     authorLine: item.authorLine,
     contextLine: item.contextLine,
     factLine: row.factLine,
-    holdLine: null,
+    holdLine: row.holdLine,
     liveChange,
     now,
     section,

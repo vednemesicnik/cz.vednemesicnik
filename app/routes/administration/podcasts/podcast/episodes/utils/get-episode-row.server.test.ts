@@ -20,6 +20,7 @@ const now = new Date('2026-10-29T12:00:00Z')
 const episode = (overrides: Partial<EpisodeRowRecord>): EpisodeRowRecord => ({
   author: { id: 'contributor', name: 'Anna', role: { level: 3 } },
   description: '',
+  heldByAuthor: null,
   heldByAuthorId: null,
   heldByTabId: null,
   heldSince: null,
@@ -102,5 +103,59 @@ describe('getEpisodeRow', () => {
         isSlugTaken: true,
       }).isIncomplete,
     ).toBe(true)
+  })
+
+  test('while someone else edits it, the Coordinator takes it over and changes no state', () => {
+    const row = getEpisodeRow(
+      episode({
+        heldByAuthor: { name: 'Jakub' },
+        heldByAuthorId: 'contributor',
+        heldByTabId: 'tab',
+        heldSince: new Date('2026-10-29T11:55:00Z'),
+        heldUntil: new Date('2026-10-29T12:05:00Z'),
+      }),
+      {
+        context: coordinator,
+        isNumberTaken: false,
+        isPodcastPublished: true,
+        isSlugTaken: false,
+        now,
+      },
+    )
+
+    expect(row).toMatchObject({
+      heldUntil: '2026-10-29T12:05:00.000Z',
+      holdLine: 'upravuje Jakub',
+      isHeldByOther: true,
+      isSelectable: true,
+      menu: ['edit'],
+      row: null,
+    })
+    expect(row.bulkActions).toContain('publish')
+  })
+
+  test('one’s own hold in another tab changes nothing but the line', () => {
+    const row = getEpisodeRow(
+      episode({
+        heldByAuthor: { name: 'Jakub' },
+        heldByAuthorId: 'coordinator',
+        heldByTabId: 'tab',
+        heldSince: new Date('2026-10-29T11:55:00Z'),
+        heldUntil: new Date('2026-10-29T12:05:00Z'),
+      }),
+      {
+        context: coordinator,
+        isNumberTaken: false,
+        isPodcastPublished: true,
+        isSlugTaken: false,
+        now,
+      },
+    )
+
+    expect(row).toMatchObject({
+      holdLine: 'upravujete vy',
+      isHeldByOther: false,
+      row: 'approve',
+    })
   })
 })

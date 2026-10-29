@@ -33,6 +33,7 @@ import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
 import { CATEGORY_BULK_NOUN } from '~/config/bulk-noun-config'
 import { CATEGORY_NOUN } from '~/config/list-noun-config'
 import { useAdminNoticeToast } from '~/hooks/use-admin-notice-toast'
+import { useLiveRows } from '~/hooks/use-live-rows'
 import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
@@ -58,7 +59,6 @@ const BULK_ACTION_FETCHER_KEY = 'categories-bulk-action'
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
     canCreate,
-    categories,
     currentFilterQuery,
     currentPage,
     filters,
@@ -68,11 +68,29 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
     ownFilters,
     pageSize,
     query,
-    queueCounts,
     sharedFilters,
     totalCount,
     totalPages,
   } = loaderData
+
+  // Live, but the rows stay put until the next load (22f, xkg6rdz4).
+  const {
+    live,
+    liveChanges,
+    rows: categories,
+  } = useLiveRows({
+    authorId: loaderData.authorId,
+    fetcherKey: 'category-list-live',
+    // An article's change reloads the published articles counted, without
+    // a tint: the category itself did not change.
+    filter: (event) =>
+      event.entity === 'article_category' || event.entity === 'article',
+    keyOf: (event) =>
+      event.entity === 'article_category' ? event.entityId : null,
+    loaderData,
+    rowsOf: (data) => data.categories,
+  })
+  const { queueCounts } = live
 
   const { search } = useLocation()
   useAdminNoticeToast(loaderData)
@@ -245,6 +263,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   { categoryId: category.id },
                 )}
                 key={category.id}
+                liveChange={liveChanges.get(category.id)}
                 onSelect={() => selection.toggle(category.id)}
                 publishedArticlesHref={`${href('/administration/articles')}?${new URLSearchParams({ category: category.slug, state: 'published' })}`}
                 record={category}

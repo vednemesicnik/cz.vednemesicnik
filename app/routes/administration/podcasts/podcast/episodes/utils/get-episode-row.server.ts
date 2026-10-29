@@ -1,9 +1,11 @@
 import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
-import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 
+import { formatEditHoldLine } from '../../../../articles/utils/format-edit-hold-line'
+import { getArticleHold } from '../../../../articles/utils/get-article-hold'
+import { getHeldActionFlags } from '../../../../articles/utils/get-held-action-flags'
 import type { EpisodeRowRecord } from './episode-row-select'
 import { getEpisodeFactLine } from './get-episode-fact-line'
 import { getEpisodeRowActions } from './get-episode-row-actions'
@@ -19,7 +21,8 @@ type Options = {
 
 /**
  * An episode row, wherever the row stands (design 27b, 27f, 27h, 07c): what
- * the role may do, with the one action on the row and the rest in „⋯“.
+ * the role may do, held back while someone else edits it, with the one action
+ * on the row and the rest in „⋯“.
  *
  * @param episode - The row's columns (`EPISODE_ROW_SELECT`).
  * @param options.context - The author permission context, loaded with the
@@ -34,27 +37,41 @@ type Options = {
  * @param options.isSlugTaken - Another episode of the podcast holds its
  *   address as published (log 0039).
  * @returns The row's actions, the bulk actions it joins, its tag state and
- *   fact, and what its dialogs say.
+ *   fact, who holds it, and what its dialogs say.
  */
 export const getEpisodeRow = (
   episode: EpisodeRowRecord,
   { context, now, isPodcastPublished, isNumberTaken, isSlugTaken }: Options,
 ) => {
   const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
-  const flags = getContentActionFlags(context, 'podcast_episode', {
+  const hold = getArticleHold(episode, { authorId: context.authorId, now })
+  const isHeldByOther = hold !== null && !hold.isOwn
+  const unheldFlags = getContentActionFlags(context, 'podcast_episode', {
     authors: [episode.author],
     reviews: episode.reviews,
     state: episode.state,
     submittedAt: episode.submittedAt,
   })
+  // While someone else edits it, its edit and state actions wait; the
+  // Coordinator's Upravit opens the takeover (27b, as 26i).
+  const flags = getHeldActionFlags(unheldFlags, { isApprover, isHeldByOther })
   const submission = flags.submission?.state ?? null
   const rowActions = getEpisodeRowActions({
     ...flags,
+    canEdit: flags.canEdit || flags.canTakeOver,
     isPodcastPublished,
     state: episode.state,
     submission,
   })
-  const bulkActions = getBulkActions({ ...rowActions, isApprover })
+  const bulkActions = getBulkActions({
+    ...getEpisodeRowActions({
+      ...unheldFlags,
+      isPodcastPublished,
+      state: episode.state,
+      submission,
+    }),
+    isApprover,
+  })
 
   return {
     ...rowActions,
@@ -70,10 +87,19 @@ export const getEpisodeRow = (
       submission: flags.submission,
       updatedAt: episode.updatedAt,
     }),
+    heldUntil: hold?.heldUntil.toISOString() ?? null,
+    // Who edits it, ahead of the author and the fact (27b, as 26i); the list
+    // looks again when it should expire.
+    holdLine:
+      hold === null
+        ? null
+        : formatEditHoldLine({
+            holderName: hold.heldByName,
+            isOwn: hold.isOwn,
+            now,
+          }),
     id: episode.id,
-    isHeldByOther:
-      getEditHoldStatus(episode, { authorId: context.authorId, now }) ===
-      'other',
+    isHeldByOther,
     // Bulk publishing skips it and says so up front (27h, 27b).
     isIncomplete:
       isApprover &&
@@ -100,7 +126,7 @@ export const getEpisodeRow = (
         !isPodcastPublished &&
         getBulkActions({
           ...getEpisodeRowActions({
-            ...flags,
+            ...unheldFlags,
             isPodcastPublished: true,
             state: episode.state,
             submission,

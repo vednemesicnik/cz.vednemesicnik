@@ -18,6 +18,8 @@ import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { buildPinnedRowsWhere } from '~/utils/pinned-rows/build-pinned-rows-where'
+import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { buildEpisodePermissionWhere } from '../podcast/episodes/utils/build-episode-permission-where'
@@ -62,13 +64,21 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     entities: ['podcast', 'podcast_episode'],
   })
 
+  // A live load of the rows on screen (22f): fresh data for exactly those rows,
+  // whatever the order, filters or page now say. A fetcher load, so it never
+  // redirects.
+  const pinnedIds = parsePinnedRowIds(url, PAGE_SIZE)
+  const isPinned = pinnedIds !== undefined
+
   // Before any query: a bare visit with a default preset never renders this list,
   // it redirects to the preset's own URL.
-  await resolveDefaultFilter({
-    tableKey: TABLE_KEY,
-    url,
-    userId: context.userId,
-  })
+  if (!isPinned) {
+    await resolveDefaultFilter({
+      tableKey: TABLE_KEY,
+      url,
+      userId: context.userId,
+    })
+  }
 
   // One order (27a); an old ?sort=title or ?sort=createdAt falls back to it.
   const { page, query } = parseAdminListParams(request, {
@@ -118,7 +128,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     ).map((queue) => ({ value: queue })),
   })
 
-  if (staleFilterRedirect !== null) {
+  if (staleFilterRedirect !== null && !isPinned) {
     throw redirect(staleFilterRedirect)
   }
 
@@ -126,7 +136,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     prisma.podcast.findMany({
       orderBy: [{ createdAt: 'desc' }],
       select: { ...PODCAST_ROW_SELECT, createdAt: true },
-      where,
+      // Every match, or the rows on screen for a live load (22f).
+      where: isPinned
+        ? buildPinnedRowsWhere(permissionWhere, pinnedIds)
+        : where,
     }),
     loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
     // The Stav menu counts work within what the role may view, whatever else
@@ -142,7 +155,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   // Deleting the last row on the last page revalidates a URL past the end.
-  if (isPagePastLast(page, totalPages)) {
+  if (isPagePastLast(page, totalPages) && !isPinned) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 
@@ -207,7 +220,10 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const podcastById = new Map(
     rawPodcasts.map((podcast) => [podcast.id, podcast]),
   )
-  const pagePodcasts = pageIds.flatMap((id) => podcastById.get(id) ?? [])
+  // A live load keeps the order on screen, so its rows need no page.
+  const pagePodcasts = isPinned
+    ? rawPodcasts
+    : pageIds.flatMap((id) => podcastById.get(id) ?? [])
 
   // Who holds each listed address as published (log 0039): a draft with an
   // address another podcast holds is skipped by bulk publishing too (27i).
@@ -252,6 +268,8 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
 
   return {
     ...savedFilters,
+    // Whose live changes are not someone else's (22f).
+    authorId: context.authorId,
     canCreate: context.can({
       action: 'create',
       entity: 'podcast',

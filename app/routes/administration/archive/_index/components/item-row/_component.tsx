@@ -18,6 +18,9 @@ import { Button } from '~/components/button'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
+import type { LiveChange } from '~/hooks/use-live-changes'
+import { getLiveStateDetail } from '~/utils/live-change/get-live-state-detail'
+import { getRowTint } from '~/utils/live-change/get-row-tint'
 
 import { IssueActionDialogs } from '../../../components/issue-action-dialogs'
 import {
@@ -35,6 +38,7 @@ type Props = {
   isApprover: boolean
   selected: boolean
   onSelect: () => void
+  liveChange?: LiveChange
 }
 
 /**
@@ -42,11 +46,19 @@ type Props = {
  * detail over the PDF as the reader downloads it, the order, the state tag with
  * one fact, and one action with the rest in „⋯“, as the article's row (22a). A
  * supplement is its own row under its issue, tagged *Doplněk*. While someone
- * else edits it, the row says who (26i). Below 768 px it folds into the
- * cover beside the name, the state and the order, with „⋯“ holding the row
+ * else edits it, the row says who (26i); one someone else changed while the
+ * list is open is tinted for a moment and says who changed it (22f). Below
+ * 768 px it folds into the cover beside the name, the state and the order,
+ * with „⋯“ holding the row
  * action first (32b).
  */
-export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
+export const ItemRow = ({
+  issue,
+  isApprover,
+  selected,
+  onSelect,
+  liveChange,
+}: Props) => {
   const actions = useIssueActions({
     fetcherKey: `issue-row-${issue.id}`,
     issue,
@@ -69,7 +81,7 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
   ].filter((part) => part !== null)
 
   return (
-    <TableRow muted={issue.state === 'archived'}>
+    <TableRow muted={issue.state === 'archived'} tint={getRowTint(liveChange)}>
       <TableSelectionCell
         checked={selected}
         disabled={issue.bulkActions.length === 0}
@@ -111,7 +123,12 @@ export const ItemRow = ({ issue, isApprover, selected, onSelect }: Props) => {
       <TableStateCell>
         <StatusTag
           // Who edits it comes first: it changes what the row allows (26i).
-          detail={issue.holdLine ?? issue.factLine ?? undefined}
+          detail={getLiveStateDetail({
+            factLine: issue.factLine,
+            holdLine: issue.holdLine,
+            liveChange,
+            now: new Date(),
+          })}
           state={issue.submission ?? issue.state}
         />
       </TableStateCell>

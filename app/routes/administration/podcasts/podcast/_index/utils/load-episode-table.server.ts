@@ -1,3 +1,4 @@
+import type { Prisma } from '@generated/prisma/client'
 import type { ContentState } from '@generated/prisma/enums'
 import { redirect } from 'react-router'
 
@@ -18,6 +19,8 @@ import { isPagePastLast } from '~/utils/is-page-past-last'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import type { AuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
+import { buildPinnedRowsWhere } from '~/utils/pinned-rows/build-pinned-rows-where'
+import { parsePinnedRowIds } from '~/utils/pinned-rows/parse-pinned-row-ids'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
 import { buildEpisodePermissionWhere } from '../../episodes/utils/build-episode-permission-where'
@@ -50,7 +53,8 @@ type Options = {
  * @param options.podcast - The podcast; until it is published, its episodes
  *   are neither submitted nor published (27f).
  * @returns The table's data, with the saved filters; throws the redirect of a
- *   default filter, a stale filter or a page past the last.
+ *   default filter, a stale filter or a page past the last. A live load
+ *   (`parsePinnedRowIds`) gets the rows on screen and never redirects.
  */
 export const loadEpisodeTable = async ({
   request,
@@ -58,13 +62,21 @@ export const loadEpisodeTable = async ({
   context,
   podcast,
 }: Options) => {
+  // A live load of the rows on screen (22f): fresh data for exactly those
+  // rows, whatever the order, filters or page now say. A fetcher load, so it
+  // never redirects.
+  const pinnedIds = parsePinnedRowIds(url, PAGE_SIZE)
+  const isPinned = pinnedIds !== undefined
+
   // Before any query: a bare visit with a default preset never renders this
   // table, it redirects to the preset's own URL.
-  await resolveDefaultFilter({
-    tableKey: TABLE_KEY,
-    url,
-    userId: context.userId,
-  })
+  if (!isPinned) {
+    await resolveDefaultFilter({
+      tableKey: TABLE_KEY,
+      url,
+      userId: context.userId,
+    })
+  }
 
   const { order, page, query } = parseAdminListParams(request, {
     defaultOrder: 'desc',
@@ -113,18 +125,32 @@ export const loadEpisodeTable = async ({
     ).map((queue) => ({ value: queue })),
   })
 
-  if (staleFilterRedirect !== null) {
+  if (staleFilterRedirect !== null && !isPinned) {
     throw redirect(staleFilterRedirect)
   }
+
+  // The page of the table, or the rows on screen for a live load (22f), of
+  // this podcast only.
+  const rowsQuery: Pick<
+    Prisma.PodcastEpisodeFindManyArgs,
+    'skip' | 'take' | 'where'
+  > = isPinned
+    ? {
+        where: {
+          AND: [
+            buildPinnedRowsWhere(permissionWhere, pinnedIds),
+            { podcastId: podcast.id },
+          ],
+        },
+      }
+    : { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, where }
 
   const [rawEpisodes, totalCount, savedFilters, queueCounts, episodeCount] =
     await Promise.all([
       prisma.podcastEpisode.findMany({
         orderBy: [{ number: order }, { createdAt: 'desc' }],
         select: EPISODE_ROW_SELECT,
-        skip: (page - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
-        where,
+        ...rowsQuery,
       }),
       prisma.podcastEpisode.count({ where }),
       loadSavedFilters({ tableKey: TABLE_KEY, url, userId: context.userId }),
@@ -150,7 +176,7 @@ export const loadEpisodeTable = async ({
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   // Deleting the last row on the last page revalidates a URL past the end.
-  if (isPagePastLast(page, totalPages)) {
+  if (isPagePastLast(page, totalPages) && !isPinned) {
     throw redirect(buildLastPageRedirect(url, totalPages))
   }
 

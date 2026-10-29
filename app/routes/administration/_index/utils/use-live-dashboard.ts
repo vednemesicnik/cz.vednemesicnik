@@ -123,10 +123,8 @@ export const useLiveDashboard = (loaderData: LoaderData) => {
   // An edit hold's expiry sends no event; the rows look again then (22f).
   useRevalidateAt(
     [...sections.queue, ...sections.drafts, ...sections.submitted].map(
-      (item) =>
-        item.type === 'article' || item.type === 'issue'
-          ? item.row.heldUntil
-          : null,
+      // Categories and tags have no edit hold.
+      (item) => ('heldUntil' in item.row ? item.row.heldUntil : null),
     ),
     rowsRevalidator,
   )
