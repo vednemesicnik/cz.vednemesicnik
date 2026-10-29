@@ -100,7 +100,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <div className={styles.sections}>
         {isApprover && (
           <DashboardSection>
-            <DashboardSectionHeading count={pendingCount}>
+            {/* No count at 0, as on the list's Stav (21c, 22d). */}
+            <DashboardSectionHeading
+              count={pendingCount > 0 ? pendingCount : undefined}
+            >
               Čeká na schválení
             </DashboardSectionHeading>
             {/* An empty queue says so: the Coordinator would not tell it
