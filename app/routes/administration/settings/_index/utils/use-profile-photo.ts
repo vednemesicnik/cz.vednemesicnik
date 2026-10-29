@@ -51,6 +51,8 @@ export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
   const authenticityToken = useAuthenticityToken()
   const revalidator = useRevalidator()
   const waitForStoredPhoto = useWaitForChange(imageSource)
+  const imageSourceRef = useRef(imageSource)
+  imageSourceRef.current = imageSource
   const controllerRef = useRef<AbortController | null>(null)
   const uploadRef = useRef<Upload | null>(null)
   const [upload, setUpload] = useState<Upload | null>(null)
@@ -63,9 +65,6 @@ export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
   // new pick cannot race it.
   const [isCancelling, setIsCancelling] = useState(false)
   const [announcement, setAnnouncement] = useState('')
-  const [cancelledFrom, setCancelledFrom] = useState<{
-    previousSource: string | undefined
-  } | null>(null)
 
   const showUpload = (next: Upload | null) => {
     uploadRef.current = next
@@ -173,19 +172,25 @@ export const useProfilePhoto = ({ hasImage, imageSource }: Options) => {
     if (!current.replaces) await post({ intent: 'remove' })
     await revalidator.revalidate()
     setIsCancelling(false)
-    setCancelledFrom({ previousSource: current.previousSource })
+    void announceCancel(current)
   }
 
-  // The profile has loaded again: say what stayed.
-  useEffect(() => {
-    if (cancelledFrom === null) return
+  // The profile has loaded again: say what stayed. A cancelled first photo is
+  // always removed; a replacement whose answer crossed the cancel shows once
+  // its photo has rendered, which a revalidation does not wait for (as the
+  // cover, #852).
+  const announceCancel = async (current: Upload) => {
+    if (!current.replaces) {
+      setAnnouncement(CANCELLED_ANNOUNCEMENT)
+      return
+    }
+    await waitForStoredPhoto(current.previousSource)
     setAnnouncement(
-      imageSource === cancelledFrom.previousSource
+      imageSourceRef.current === current.previousSource
         ? CANCELLED_ANNOUNCEMENT
         : CROSSED_ANNOUNCEMENT,
     )
-    setCancelledFrom(null)
-  }, [cancelledFrom, imageSource])
+  }
 
   const remove = async () => {
     setImageError(null)
