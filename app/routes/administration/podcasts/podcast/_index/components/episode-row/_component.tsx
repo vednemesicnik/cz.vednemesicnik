@@ -1,11 +1,4 @@
-import { useRef, useState } from 'react'
-import { href, useFetcher, useNavigate } from 'react-router'
-
 import { ActionMenu } from '~/components/action-menu'
-import {
-  AdminDeleteConfirmationDialog,
-  useAdminDeleteConfirmationDialog,
-} from '~/components/admin/admin-delete-confirmation-dialog'
 import {
   TableActionsCell,
   TableCell,
@@ -20,30 +13,19 @@ import {
   TableSelectionCell,
   TableStateCell,
 } from '~/components/admin/admin-table'
-import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag } from '~/components/status-tag'
-import { FORM_CONFIG } from '~/config/form-config'
-import { useContentActionResult } from '~/hooks/use-content-action-result'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { formatEpisodeTitle } from '~/utils/podcast-episode/format-episode-title'
 import { getEpisodeDisplayTitle } from '~/utils/podcast-episode/get-episode-display-title'
 
-import { ArticleChangeDateDialog } from '../../../../../articles/components/article-change-date-dialog'
-import { EpisodeMissingDialog } from '../../../episodes/components/episode-missing-dialog'
-import { EpisodePublishDialog } from '../../../episodes/components/episode-publish-dialog'
-import {
-  EpisodeStateDialog,
-  type EpisodeStateDialogKind,
-} from '../../../episodes/components/episode-state-dialog'
+import { EpisodeActionDialogs } from '../../../episodes/components/episode-action-dialogs'
 import {
   EPISODE_ACTION_LABELS,
-  EPISODE_CHANGE_DATE_DESCRIPTION,
-  EPISODE_DIRECT_INTENTS,
-  EPISODE_HEADER_SENTENCES,
   type EpisodeAction,
 } from '../../../episodes/utils/episode-actions'
+import { useEpisodeActions } from '../../../episodes/utils/use-episode-actions'
 import type { Route } from '../../+types/route'
 import styles from './_styles.module.css'
 
@@ -75,82 +57,13 @@ export const EpisodeRow = ({
   selected,
   onSelect,
 }: Props) => {
-  const { id } = episode
-  const action = href(
-    '/administration/podcasts/:podcastId/episodes/:episodeId',
-    {
-      episodeId: id,
-      podcastId,
-    },
-  )
-  const editHref = href(
-    '/administration/podcasts/:podcastId/episodes/:episodeId/edit-episode',
-    { episodeId: id, podcastId },
-  )
   const title = formatEpisodeTitle(episode)
-
-  const fetcherKey = `episode-row-${id}`
-  const fetcher = useFetcher({ key: fetcherKey })
-  const isSubmitting = fetcher.state !== 'idle'
-  const authenticityToken = useAuthenticityToken()
-  const navigate = useNavigate()
-  const { closeMissingList, missingList } = useContentActionResult(
-    fetcher.data,
-    { heldSubject: 'epizodu' },
-  )
-
-  const [stateDialog, setStateDialog] = useState<EpisodeStateDialogKind | null>(
-    null,
-  )
-  const [publishDialog, setPublishDialog] = useState<{
-    isApproval: boolean
-  } | null>(null)
-  const [isChangeDateOpen, setIsChangeDateOpen] = useState(false)
-
-  const deleteDialogRef = useRef<HTMLDialogElement>(null)
-  const { openDialog: openDeleteDialog } = useAdminDeleteConfirmationDialog(
-    deleteDialogRef,
-    { action, key: fetcherKey },
-  )
-
-  const runAction = (episodeAction: EpisodeAction) => {
-    const intent = EPISODE_DIRECT_INTENTS[episodeAction]
-
-    if (intent !== undefined) {
-      const formData = new FormData()
-      formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
-      formData.append(FORM_CONFIG.intent.name, intent)
-      void fetcher.submit(formData, { action, method: 'POST' })
-      return
-    }
-
-    switch (episodeAction) {
-      case 'approve-and-publish':
-        return setPublishDialog({ isApproval: true })
-      case 'publish':
-        return setPublishDialog({ isApproval: false })
-      case 'retract':
-      case 'archive':
-        return setStateDialog(episodeAction)
-      case 'change-date':
-        return setIsChangeDateOpen(true)
-      case 'delete':
-        return openDeleteDialog()
-      case 'edit':
-        return navigate(editHref)
-      case 'view-on-web':
-        // Only a published address is unique: the id says which draft to
-        // show (log 0039).
-        return window.open(
-          `${href('/podcasts/:podcastSlug/:episodeSlug', {
-            episodeSlug: episode.slug,
-            podcastSlug,
-          })}?id=${id}`,
-          '_blank',
-          'noopener',
-        )
-    }
-  }
+  const actions = useEpisodeActions({
+    episode,
+    fetcherKey: `episode-row-${episode.id}`,
+    podcast: { id: podcastId, slug: podcastSlug },
+  })
+  const { detailHref, editHref, isSubmitting, runAction } = actions
 
   const rowAction = episode.row
   const toMenuItem = (menuAction: EpisodeAction) => ({
@@ -181,7 +94,7 @@ export const EpisodeRow = ({
         )}
       </TableCell>
       <TableNameCell>
-        <TableRowLink className={styles.link} to={action}>
+        <TableRowLink className={styles.link} to={detailHref}>
           {/* A phone has no Číslo column: the number leads the title (32d). */}
           {episode.number !== null && (
             <span className={styles.phoneNumber}>#{episode.number} </span>
@@ -250,61 +163,12 @@ export const EpisodeRow = ({
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}
         <div className={styles.dialogs}>
-          {episode.menu.includes('delete') && (
-            <AdminDeleteConfirmationDialog
-              description={'Smazání je nevratné.'}
-              ref={deleteDialogRef}
-              subject={title}
-              title={
-                episode.state === 'archived'
-                  ? 'Smazat archivovanou epizodu?'
-                  : 'Smazat koncept?'
-              }
-            />
-          )}
-          {stateDialog !== null && (
-            <EpisodeStateDialog
-              action={action}
-              episodeTitle={title}
-              fetcherKey={fetcherKey}
-              isApprover={isApprover}
-              kind={stateDialog}
-              onClose={() => setStateDialog(null)}
-            />
-          )}
-          {missingList !== null && (
-            <EpisodeMissingDialog
-              editHref={editHref}
-              missingList={missingList}
-              onClose={closeMissingList}
-            />
-          )}
-          {publishDialog !== null && (
-            <EpisodePublishDialog
-              action={action}
-              authorName={episode.authorName}
-              episodeTitle={title}
-              fetcherKey={fetcherKey}
-              isApproval={publishDialog.isApproval}
-              note={
-                episode.isNotSubmitted
-                  ? EPISODE_HEADER_SENTENCES['not-submitted']
-                  : null
-              }
-              onClose={() => setPublishDialog(null)}
-              originalPublishedAt={episode.publishedAt}
-            />
-          )}
-          {isChangeDateOpen && (
-            <ArticleChangeDateDialog
-              action={action}
-              description={EPISODE_CHANGE_DATE_DESCRIPTION}
-              fetcherKey={fetcherKey}
-              onClose={() => setIsChangeDateOpen(false)}
-              publishedAt={episode.publishedAt}
-              title={title}
-            />
-          )}
+          <EpisodeActionDialogs
+            actions={actions}
+            canDelete={episode.menu.includes('delete')}
+            episode={{ ...episode, title }}
+            isApprover={isApprover}
+          />
         </div>
       </TableActionsCell>
     </TableRow>
