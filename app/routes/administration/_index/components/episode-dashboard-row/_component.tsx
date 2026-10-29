@@ -36,7 +36,7 @@ export const EpisodeDashboardRow = ({
     authorLine: item.authorLine,
     contextLine: item.contextLine,
     factLine: row.factLine,
-    holdLine: null,
+    holdLine: row.holdLine,
     liveChange,
     now,
     section,

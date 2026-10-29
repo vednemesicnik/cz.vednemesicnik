@@ -15,6 +15,7 @@ export const PODCAST_ROW_SELECT = {
   },
   cover: { select: imageSourceSelect },
   description: true,
+  heldByAuthor: { select: { name: true } },
   heldByAuthorId: true,
   heldByTabId: true,
   heldSince: true,
