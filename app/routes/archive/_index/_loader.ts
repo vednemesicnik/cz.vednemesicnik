@@ -8,11 +8,9 @@ import {
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getIssuePdfFileName } from '~/utils/issue/get-issue-pdf-file-name'
+import { issueTitleSelect } from '~/utils/issue/issue-title-select'
 import { NON_EMPTY_ISSUE_WHERE } from '~/utils/issue/non-empty-issue-where'
-import {
-  issueTitleSelect,
-  resolveIssueTitles,
-} from '~/utils/issue/resolve-issue-titles.server'
+import { resolveIssueTitles } from '~/utils/issue/resolve-issue-titles.server'
 import { parsePositiveIntegerParam } from '~/utils/parse-positive-integer-param'
 import {
   getWebContentVisibility,

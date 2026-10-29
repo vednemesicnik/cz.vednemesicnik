@@ -13,34 +13,20 @@ import { parseAdminListParams, type SortOrder } from '~/utils/admin-list-params'
 import { readAdminNotice } from '~/utils/admin-notice/read-admin-notice.server'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
 import { buildLastPageRedirect } from '~/utils/build-last-page-redirect'
-import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
-import {
-  createImageSources,
-  imageSourceSelect,
-} from '~/utils/image-store/create-image-sources'
 import { isPagePastLast } from '~/utils/is-page-past-last'
-import { getIssueOrderLabel } from '~/utils/issue/get-issue-order-label'
 import { NON_EMPTY_ISSUE_WHERE } from '~/utils/issue/non-empty-issue-where'
-import {
-  issueTitleSelect,
-  resolveIssueTitles,
-} from '~/utils/issue/resolve-issue-titles.server'
+import { resolveIssueTitles } from '~/utils/issue/resolve-issue-titles.server'
 import { loadSavedFilters } from '~/utils/load-saved-filters.server'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
-import { getContentActionFlags } from '~/utils/permissions/author/get-content-action-flags.server'
 import { APPROVER_ROLE_LEVEL } from '~/utils/permissions/author/review-policy'
 import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 
-import { formatEditHoldLine } from '../../articles/utils/format-edit-hold-line'
-import { getArticleHold } from '../../articles/utils/get-article-hold'
-import { getHeldActionFlags } from '../../articles/utils/get-held-action-flags'
-import { getMissingIssueContent } from '../issue/_index/utils/get-missing-issue-content'
 import { buildIssuePermissionWhere } from '../utils/build-issue-permission-where'
 import { findTakenIssueIds } from '../utils/find-taken-issue-ids.server'
-import { getIssueFactLine } from '../utils/get-issue-fact-line'
-import { getIssueRowActions } from '../utils/get-issue-row-actions'
+import { getIssueRow } from '../utils/get-issue-row.server'
+import { ISSUE_ROW_SELECT } from '../utils/issue-row-select'
 import type { Route } from './+types/route'
 import { SORT_KEYS, type SortKey } from './sort'
 
@@ -157,33 +143,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const [rawIssues, totalCount, savedFilters, queueCounts] = await Promise.all([
     prisma.issue.findMany({
       orderBy: ORDER_BY[sort](order),
-      select: {
-        author: {
-          select: { id: true, name: true, role: { select: { level: true } } },
-        },
-        cover: { select: imageSourceSelect },
-        heldByAuthor: { select: { name: true } },
-        heldByAuthorId: true,
-        heldByTabId: true,
-        heldSince: true,
-        heldUntil: true,
-        id: true,
-        ...issueTitleSelect,
-        pdf: { select: { fileName: true, originalFileName: true } },
-        reviews: {
-          select: {
-            createdAt: true,
-            reviewer: {
-              select: { id: true, role: { select: { level: true } } },
-            },
-          },
-        },
-        state: true,
-        submittedAt: true,
-        submittedBy: { select: { name: true } },
-        supplementSlug: true,
-        updatedAt: true,
-      },
+      select: ISSUE_ROW_SELECT,
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
       where,
@@ -215,94 +175,9 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const now = new Date()
   const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
 
-  const issues = titledIssues.map((issue) => {
-    const hold = getArticleHold(issue, { authorId: context.authorId, now })
-    const isHeldByOther = hold !== null && !hold.isOwn
-    const unheldFlags = getContentActionFlags(context, 'issue', {
-      authors: [issue.author],
-      reviews: issue.reviews,
-      state: issue.state,
-      submittedAt: issue.submittedAt,
-    })
-    // While someone else edits it, its edit and state actions wait; the
-    // Coordinator's Upravit opens the takeover (26i, 26k).
-    const flags = getHeldActionFlags(unheldFlags, { isApprover, isHeldByOther })
-    const submission = flags.submission?.state ?? null
-    // Publishing an incomplete issue opens the 26e sentence instead of the
-    // confirmation; only the Coordinator publishes, and the server checks again.
-    const missingBeforePublish = isApprover
-      ? getMissingIssueContent({
-          hasCover: issue.cover !== null,
-          hasPdf: issue.pdf !== null,
-          isNumberTaken: takenIds.has(issue.id),
-          order: issue.order,
-          supplement: issue.supplement,
-          year: issue.year,
-        })
-      : []
-
-    return {
-      ...getIssueRowActions({
-        ...flags,
-        canEdit: flags.canEdit || flags.canTakeOver,
-        state: issue.state,
-        submission,
-      }),
-      // What the selection bar may apply to this row (22c, 26f); a held one
-      // is skipped and said apart (26i), not left out of the bar's actions.
-      bulkActions: getBulkActions({
-        ...getIssueRowActions({
-          ...unheldFlags,
-          state: issue.state,
-          submission,
-        }),
-        isApprover,
-      }),
-      cover:
-        issue.cover === null
-          ? null
-          : createImageSources('issue-cover', issue.cover),
-      // The row's tag says what the detail's does (07a), with one fact (26a).
-      factLine: getIssueFactLine({
-        authorName: issue.author.name,
-        state: issue.state,
-        submission: flags.submission,
-        submittedByName: issue.submittedBy?.name ?? null,
-        updatedAt: issue.updatedAt,
-      }),
-      heldUntil: hold?.heldUntil.toISOString() ?? null,
-      // Who edits it, ahead of the fact (26i, as 22f); the list looks again
-      // when it should expire.
-      holdLine:
-        hold === null
-          ? null
-          : formatEditHoldLine({
-              holderName: hold.heldByName,
-              isOwn: hold.isOwn,
-              now,
-            }),
-      id: issue.id,
-      isHeldByOther,
-      // Bulk publishing skips it and says so up front (26e, 26f).
-      isIncomplete: missingBeforePublish.length > 0,
-      // Publishing it, the dialog says it isn't submitted (26h).
-      isNotSubmitted:
-        issue.state === 'draft' &&
-        flags.submission === null &&
-        flags.isSubmittable &&
-        !flags.isOwnContent,
-      missingBeforePublish,
-      orderLabel: getIssueOrderLabel(issue),
-      // The name the reader downloads it under; before publish it has none,
-      // so the uploaded one, as on the detail (26b, log 0039).
-      pdfFileName: issue.pdf?.fileName ?? issue.pdf?.originalFileName ?? null,
-      state: issue.state,
-      submission,
-      supplement: issue.supplement || null,
-      title: issue.title,
-      year: issue.year,
-    }
-  })
+  const issues = titledIssues.map((issue) =>
+    getIssueRow(issue, { context, isNumberTaken: takenIds.has(issue.id), now }),
+  )
 
   // Read only here: an earlier redirect must not use up the toast (26i).
   const notice = await readAdminNotice(request)
