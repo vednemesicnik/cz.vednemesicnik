@@ -1,5 +1,10 @@
 import type { CountForms } from '~/config/list-noun-config'
-import { ARTICLE_NOUN, ISSUE_NOUN } from '~/config/list-noun-config'
+import {
+  ARTICLE_NOUN,
+  CATEGORY_NOUN,
+  ISSUE_NOUN,
+  TAG_NOUN,
+} from '~/config/list-noun-config'
 
 /** A sentence by Czech plural rule of its count: `1` · `2–4` · `5+`. */
 export type PluralSentences = {
@@ -15,6 +20,30 @@ export type NumberSentences = {
 }
 
 /**
+ * What an action does, said one way when a selected record has related
+ * content the action reaches (a category's articles) and another when none
+ * has (25g).
+ */
+export type RelatedSentences = {
+  withRelated: NumberSentences
+  withoutRelated: NumberSentences
+}
+
+/**
+ * The content each selected record carries, counted beside its title in the
+ * dialog (25g, 27a): „Kultura (18 publikovaných článků)“, no brackets at zero.
+ * `listedFor` says which count an action lists: everything it holds (deleting
+ * takes it off all of them) or only the published (what readers lose).
+ */
+export type BulkRelated = {
+  countForms: CountForms
+  publishedCountForms: CountForms
+  listedFor: Partial<
+    Record<'retract' | 'archive' | 'delete', 'all' | 'published'>
+  >
+}
+
+/**
  * What the selection bar, its dialogs and its toast say about a list's records
  * (design 22c, 25g, 26f, 27a, 27b; copy p256liqr, 0farrwua). Each list swaps
  * the noun; the sentences keep one shape across the lists.
@@ -24,34 +53,41 @@ export type NumberSentences = {
  *   upravuje.“
  * - `draftCountForms` — deleting only drafts counts koncepty, or `null` when
  *   the list says its own noun.
- * - `allHeld`, `allIncomplete` — the bar's sentence in place of its actions.
+ * - `allHeld`, `allIncomplete` — the bar's sentence in place of its actions;
+ *   `null` for content with no edit hold or no completeness check (categories,
+ *   tags).
  * - `incomplete`, `pending`, `notSubmitted` — the predicate after the count in
  *   the publish dialog: „1 článek | je neúplný. Přeskočí se.“
- * - `creatorRetract` — the Creator's sentence after a retract's first one.
+ * - `creatorRetract` — the Creator's sentence on retracting: its own paragraph
+ *   (22c), or right after the first sentence where `creatorAfterFirstSentence`
+ *   (25g, 27a).
  * - `descriptions` — what an action does to the records the dialog counts;
  *   `publish` is `null` where the list publishes in a dialog of its own (the
  *   articles' ordered one).
  * - `deleteInFullInk` — the delete sentence stands in full ink, as 22c draws
- *   „Smazání je nevratné.“; 26f draws the issues' in the description's grey.
+ *   „Smazání je nevratné.“; 25g and 26f draw theirs in the description's grey.
+ * - `related` — the content counted beside each title, or `null`.
  */
 export type BulkNoun = {
   countForms: CountForms
   objectForms: CountForms
   draftCountForms: CountForms | null
-  allHeld: NumberSentences
-  allIncomplete: NumberSentences
-  incomplete: PluralSentences
+  allHeld: NumberSentences | null
+  allIncomplete: NumberSentences | null
+  incomplete: PluralSentences | null
   pending: PluralSentences
   notSubmitted: PluralSentences
   creatorRetract: NumberSentences
+  creatorAfterFirstSentence: boolean
   descriptions: {
     publish: NumberSentences | null
-    archive: NumberSentences
-    retract: NumberSentences
+    archive: NumberSentences | RelatedSentences
+    retract: NumberSentences | RelatedSentences
     restore: NumberSentences
-    delete: NumberSentences
+    delete: NumberSentences | RelatedSentences
   }
   deleteInFullInk: boolean
+  related: BulkRelated | null
 }
 
 /** „koncept“ by count, for deleting only drafts (22c). */
@@ -74,6 +110,7 @@ export const ARTICLE_BULK_NOUN: BulkNoun = {
     one: 'Vybraný článek nelze publikovat — je neúplný.',
   },
   countForms: ARTICLE_NOUN.countForms,
+  creatorAfterFirstSentence: false,
   creatorRetract: {
     many: 'Znovu je publikovat může Koordinátor.',
     one: 'Znovu ho publikovat může Koordinátor.',
@@ -112,6 +149,7 @@ export const ARTICLE_BULK_NOUN: BulkNoun = {
     one: 'čeká na schválení. Publikováním ho schválíte.',
     other: 'čeká na schválení. Publikováním je schválíte.',
   },
+  related: null,
 }
 
 /** The 22c sentences with číslo (26f; copy p256liqr, 0farrwua; delete yzyd9p1l). */
@@ -125,6 +163,7 @@ export const ISSUE_BULK_NOUN: BulkNoun = {
     one: 'Vybrané číslo nelze publikovat — je neúplné.',
   },
   countForms: ISSUE_NOUN.countForms,
+  creatorAfterFirstSentence: false,
   creatorRetract: {
     many: 'Znovu je publikovat může Koordinátor.',
     one: 'Znovu ho publikovat může Koordinátor.',
@@ -170,4 +209,163 @@ export const ISSUE_BULK_NOUN: BulkNoun = {
     one: 'čeká na schválení. Publikováním ho schválíte.',
     other: 'čeká na schválení. Publikováním je schválíte.',
   },
+  related: null,
+}
+
+/** „publikovaný článek“ by count, beside a category's or a tag's name (25g, 32a). */
+export const PUBLISHED_ARTICLE_COUNT_FORMS: CountForms = {
+  few: 'publikované články',
+  many: 'publikovaného článku',
+  one: 'publikovaný článek',
+  other: 'publikovaných článků',
+  two: 'publikovaných článků',
+  zero: 'publikovaných článků',
+}
+
+// Deleting counts every assigned article (25d), retracting and archiving only
+// the published, which readers lose (25g, sjbpskpf).
+const TAXONOMY_RELATED: BulkRelated = {
+  countForms: ARTICLE_NOUN.countForms,
+  listedFor: { archive: 'published', delete: 'all', retract: 'published' },
+  publishedCountForms: PUBLISHED_ARTICLE_COUNT_FORMS,
+}
+
+/**
+ * The 22c sentences with rubrika (25g; copy p256liqr, 0farrwua, y0xq33k8;
+ * delete inhy7os8). A category has no edit hold and no completeness check.
+ */
+export const CATEGORY_BULK_NOUN: BulkNoun = {
+  allHeld: null,
+  allIncomplete: null,
+  countForms: CATEGORY_NOUN.countForms,
+  creatorAfterFirstSentence: true,
+  creatorRetract: {
+    many: 'Znovu je publikovat může Koordinátor.',
+    one: 'Znovu ji publikovat může Koordinátor.',
+  },
+  deleteInFullInk: false,
+  descriptions: {
+    archive: {
+      withoutRelated: {
+        many: 'Rubriky zmizí z webu i z nabídky v editoru článku.',
+        one: 'Rubrika zmizí z webu i z nabídky v editoru článku.',
+      },
+      withRelated: {
+        many: 'Rubriky zmizí z webu i z nabídky v editoru článku. Článkům zůstanou přiřazené, ale na webu se u nich nezobrazí.',
+        one: 'Rubrika zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazená, ale na webu se u nich nezobrazí.',
+      },
+    },
+    delete: {
+      withoutRelated: {
+        many: 'Rubriky se trvale smažou.',
+        one: 'Rubrika se trvale smaže.',
+      },
+      withRelated: {
+        many: 'Rubriky se trvale smažou a odeberou z přiřazených článků. Články se nesmažou.',
+        one: 'Rubrika se trvale smaže a odebere z přiřazených článků. Články se nesmažou.',
+      },
+    },
+    publish: {
+      many: 'Rubriky budou na webu.',
+      one: 'Rubrika bude na webu.',
+    },
+    restore: {
+      many: 'Rubriky se vrátí do konceptu. Na web se dostanou až novou publikací.',
+      one: 'Rubrika se vrátí do konceptu. Na web se dostane až novou publikací.',
+    },
+    retract: {
+      withoutRelated: {
+        many: 'Rubriky se vrátí do konceptu. Zmizí z webu i z nabídky v editoru článku.',
+        one: 'Rubrika se vrátí do konceptu. Zmizí z webu i z nabídky v editoru článku.',
+      },
+      withRelated: {
+        many: 'Rubriky se vrátí do konceptu. Zmizí z webu i z nabídky v editoru článku. Článkům zůstanou přiřazené, ale na webu se u nich nezobrazí.',
+        one: 'Rubrika se vrátí do konceptu. Zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazená, ale na webu se u nich nezobrazí.',
+      },
+    },
+  },
+  draftCountForms: null,
+  incomplete: null,
+  notSubmitted: {
+    few: 'nejsou odeslané ke schválení.',
+    one: 'není odeslaná ke schválení.',
+    other: 'není odeslaných ke schválení.',
+  },
+  objectForms: { ...CATEGORY_NOUN.countForms, one: 'rubriku' },
+  pending: {
+    few: 'čekají na schválení. Publikováním je schválíte.',
+    one: 'čeká na schválení. Publikováním ji schválíte.',
+    other: 'čeká na schválení. Publikováním je schválíte.',
+  },
+  related: TAXONOMY_RELATED,
+}
+
+/**
+ * The 22c sentences with štítek (25g; copy p256liqr, 0farrwua, y0xq33k8;
+ * delete inhy7os8). „štítek“ is inanimate: the object is the subject.
+ */
+export const TAG_BULK_NOUN: BulkNoun = {
+  allHeld: null,
+  allIncomplete: null,
+  countForms: TAG_NOUN.countForms,
+  creatorAfterFirstSentence: true,
+  creatorRetract: {
+    many: 'Znovu je publikovat může Koordinátor.',
+    one: 'Znovu ho publikovat může Koordinátor.',
+  },
+  deleteInFullInk: false,
+  descriptions: {
+    archive: {
+      withoutRelated: {
+        many: 'Štítky zmizí z webu i z nabídky v editoru článku.',
+        one: 'Štítek zmizí z webu i z nabídky v editoru článku.',
+      },
+      withRelated: {
+        many: 'Štítky zmizí z webu i z nabídky v editoru článku. Článkům zůstanou přiřazené, ale na webu se u nich nezobrazí.',
+        one: 'Štítek zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazený, ale na webu se u nich nezobrazí.',
+      },
+    },
+    delete: {
+      withoutRelated: {
+        many: 'Štítky se trvale smažou.',
+        one: 'Štítek se trvale smaže.',
+      },
+      withRelated: {
+        many: 'Štítky se trvale smažou a odeberou z přiřazených článků. Články se nesmažou.',
+        one: 'Štítek se trvale smaže a odebere z přiřazených článků. Články se nesmažou.',
+      },
+    },
+    publish: {
+      many: 'Štítky budou na webu.',
+      one: 'Štítek bude na webu.',
+    },
+    restore: {
+      many: 'Štítky se vrátí do konceptu. Na web se dostanou až novou publikací.',
+      one: 'Štítek se vrátí do konceptu. Na web se dostane až novou publikací.',
+    },
+    retract: {
+      withoutRelated: {
+        many: 'Štítky se vrátí do konceptu. Zmizí z webu i z nabídky v editoru článku.',
+        one: 'Štítek se vrátí do konceptu. Zmizí z webu i z nabídky v editoru článku.',
+      },
+      withRelated: {
+        many: 'Štítky se vrátí do konceptu. Zmizí z webu i z nabídky v editoru článku. Článkům zůstanou přiřazené, ale na webu se u nich nezobrazí.',
+        one: 'Štítek se vrátí do konceptu. Zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazený, ale na webu se u nich nezobrazí.',
+      },
+    },
+  },
+  draftCountForms: null,
+  incomplete: null,
+  notSubmitted: {
+    few: 'nejsou odeslané ke schválení.',
+    one: 'není odeslaný ke schválení.',
+    other: 'není odeslaných ke schválení.',
+  },
+  objectForms: TAG_NOUN.countForms,
+  pending: {
+    few: 'čekají na schválení. Publikováním je schválíte.',
+    one: 'čeká na schválení. Publikováním ho schválíte.',
+    other: 'čeká na schválení. Publikováním je schválíte.',
+  },
+  related: TAXONOMY_RELATED,
 }

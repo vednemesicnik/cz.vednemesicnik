@@ -1,15 +1,7 @@
-import { CATEGORY_NOUN } from '~/config/list-noun-config'
-import { formatBulkDeleteToast } from '~/utils/format-bulk-delete-toast'
-import { formatListCount } from '~/utils/format-list-count'
-
 import type { TaxonomyRecordCopy } from '../utils/taxonomy-record-copy'
 
-// „Smazat 1 rubriku“: the accusative differs from the nominative only here.
-const ACCUSATIVE_COUNT_FORMS = { ...CATEGORY_NOUN.countForms, one: 'rubriku' }
-
 /**
- * A category's words (design 25a–25d, 25g; copy 3htjei2x, dfsrpeuk, 3vnah8ji,
- * inhy7os8). The
+ * A category's words (design 25a–25d; copy 3htjei2x, dfsrpeuk, 3vnah8ji). The
  * header sentences follow the copywriter's conversion of 23d for a record with
  * one author (copy thread 26 archiv čísel, 2 Oct 2026).
  */
@@ -20,20 +12,6 @@ export const CATEGORY_RECORD_COPY: TaxonomyRecordCopy = {
     'Rubrika zmizí z webu i z nabídky v editoru článku. Článkům zůstane přiřazená, ale na webu se u nich nezobrazí.',
   archiveTitle: (name) => `Archivovat rubriku „${name}“?`,
   articlesTitle: 'Články v rubrice',
-  bulkDelete: {
-    count: (count) => formatListCount(count, ACCUSATIVE_COUNT_FORMS),
-    description: ({ count, hasArticles }) => {
-      const deleted =
-        count === 1 ? 'Rubrika se trvale smaže' : 'Rubriky se trvale smažou'
-      const removed = count === 1 ? 'odebere' : 'odeberou'
-
-      return hasArticles
-        ? `${deleted} a ${removed} z přiřazených článků. Články se nesmažou.`
-        : `${deleted}.`
-    },
-    toast: (deletedCount) =>
-      formatBulkDeleteToast(deletedCount, CATEGORY_NOUN.countForms),
-  },
   deleteDescription: (articleCount) =>
     articleCount === 0
       ? 'Rubrika se trvale smaže.'

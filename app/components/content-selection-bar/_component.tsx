@@ -14,12 +14,16 @@ import { FORM_CONFIG } from '~/config/form-config'
 import type { BulkActionResult } from '~/utils/bulk-action/bulk-action-result'
 import { formatHeldSkipNote } from '~/utils/bulk-action/format-held-skip-note'
 import type { BulkAction } from '~/utils/bulk-action/get-bulk-actions'
+import { getBulkDialogRecords } from '~/utils/bulk-action/get-bulk-dialog-records'
 import { getBulkPublishNotes } from '~/utils/bulk-action/get-bulk-publish-notes'
 import { getSelectionBarContent } from '~/utils/bulk-action/get-selection-bar-content'
 
 import styles from './_styles.module.css'
 
-/** A selected record as the bar reads it; `title` is how the dialog lists it. */
+/**
+ * A selected record as the bar reads it: `title` is how the dialog lists it,
+ * `related` the content counted beside it where the list has any (25g, 27a).
+ */
 export type SelectedContent = {
   id: string
   title: string
@@ -28,6 +32,7 @@ export type SelectedContent = {
   isHeldByOther: boolean
   isIncomplete: boolean
   isNotSubmitted: boolean
+  related?: { count: number; publishedCount: number }
 }
 
 type Props = {
@@ -103,6 +108,11 @@ export const ContentSelectionBar = ({
   const isPublishing = openAction === 'publish'
   const confirmedRecords = isPublishing ? completeRecords : unheldRecords
 
+  const dialog =
+    openAction === null
+      ? null
+      : getBulkDialogRecords(confirmedRecords, openAction, noun)
+
   const submit = (bulkAction: BulkAction) => {
     const formData = new FormData()
     formData.append(FORM_CONFIG.authenticityToken.name, authenticityToken)
@@ -133,16 +143,17 @@ export const ContentSelectionBar = ({
         ))}
       </AdminSelectionBar>
 
-      {openAction !== null && (
+      {dialog !== null && openAction !== null && (
         <BulkConfirmDialog
           action={openAction}
+          hasRelated={dialog.hasRelated}
           isCreator={isCreator}
           notes={isPublishing ? publishExceptions : []}
           noun={noun}
           onClose={() => setOpenAction(null)}
           onConfirm={() => submit(openAction)}
           onlyDrafts={onlyDrafts}
-          records={confirmedRecords}
+          records={dialog.records}
           skipped={isPublishing ? null : heldSkipNote}
         />
       )}

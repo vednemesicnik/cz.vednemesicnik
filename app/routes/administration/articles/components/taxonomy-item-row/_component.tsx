@@ -18,6 +18,7 @@ import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
 import { LinkButton } from '~/components/link-button'
 import { StatusTag, type StatusTagState } from '~/components/status-tag'
+import type { BulkAction } from '~/utils/bulk-action/get-bulk-actions'
 
 import { RETURN_TO_OPENER_STATE } from '~/utils/return-to-opener-state'
 import { formatPublishedArticleCount } from '../../utils/format-published-article-count'
@@ -40,7 +41,7 @@ type TaxonomyRecord = {
   articleCount: number
   row: TaxonomyAction | null
   menu: TaxonomyAction[]
-  canDelete: boolean
+  bulkActions: BulkAction[]
 }
 
 type Props = {
@@ -103,7 +104,7 @@ export const TaxonomyItemRow = ({
     <TableRow muted={record.state === 'archived'} tint={tint}>
       <TableSelectionCell
         checked={selected}
-        disabled={!record.canDelete}
+        disabled={record.bulkActions.length === 0}
         label={copy.selectLabel(record.name)}
         onChange={onSelect}
       />
