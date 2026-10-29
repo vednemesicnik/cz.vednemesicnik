@@ -67,7 +67,7 @@ export const ItemRow = ({ podcast, isApprover, selected, onSelect }: Props) => {
     <TableRow muted={podcast.state === 'archived'}>
       <TableSelectionCell
         checked={selected}
-        disabled={!podcast.canSelect}
+        disabled={podcast.bulkActions.length === 0}
         label={`Vybrat podcast ${podcast.title}`}
         onChange={onSelect}
       />

@@ -42,6 +42,8 @@ export type BulkContentRow = {
  * - `publishDate` — `chosen`: the dialog's day, backdated per record
  *   (articles, episodes); `ordered`: the server's moment, spaced a second per
  *   record (podcasts); `none`: the handler's now (categories, tags, issues).
+ * - `hasPublishedRelated` — whether a record has published related content
+ *   its change takes off the web too (a podcast's episodes, 27a).
  */
 export type BulkContentAdapter<Row extends BulkContentRow> = {
   entity: ContentLogEntity
@@ -52,6 +54,7 @@ export type BulkContentAdapter<Row extends BulkContentRow> = {
     flags: ContentActionFlags,
   ) => { row: ArticleAction | null; menu: readonly ArticleAction[] }
   publishDate: 'chosen' | 'ordered' | 'none'
+  hasPublishedRelated?: (row: Row) => boolean
 }
 
 type Options<Row extends BulkContentRow> = {
@@ -74,8 +77,9 @@ type Options<Row extends BulkContentRow> = {
  * @param request - The action's request, for the permission checks.
  * @param options - The list's adapter, the action, the record ids in order,
  *   and the dialog's base moment.
- * @returns How many records the action changed and how many it skipped, and
- *   whether all of them were drafts (the toast then counts koncepty).
+ * @returns How many records the action changed and how many it skipped,
+ *   whether all of them were drafts (the toast then counts koncepty), and
+ *   whether a changed one had published related content.
  */
 export const runBulkContentAction = async <Row extends BulkContentRow>(
   request: Request,
@@ -123,6 +127,7 @@ export const runBulkContentAction = async <Row extends BulkContentRow>(
 
   let processedCount = 0
   let skippedCount = 0
+  let hasRelated = false
 
   // Sequential on purpose: each transition runs its own permission check and,
   // deleting, its own file cleanup.
@@ -188,10 +193,12 @@ export const runBulkContentAction = async <Row extends BulkContentRow>(
     }
 
     processedCount += 1
+    hasRelated ||= adapter.hasPublishedRelated?.(row) ?? false
   }
 
   return {
     action,
+    hasRelated,
     onlyDrafts: rows.every((row) => row.state === 'draft'),
     processedCount,
     skippedCount,

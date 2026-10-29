@@ -2,7 +2,9 @@ import type { CountForms } from '~/config/list-noun-config'
 import {
   ARTICLE_NOUN,
   CATEGORY_NOUN,
+  EPISODE_NOUN,
   ISSUE_NOUN,
+  PODCAST_NOUN,
   TAG_NOUN,
 } from '~/config/list-noun-config'
 
@@ -67,6 +69,8 @@ export type BulkRelated = {
  * - `deleteInFullInk` — the delete sentence stands in full ink, as 22c draws
  *   „Smazání je nevratné.“; 25g and 26f draw theirs in the description's grey.
  * - `related` — the content counted beside each title, or `null`.
+ * - `relatedToast` — the toast's second sentence when a changed record had
+ *   published related content (27a, 0farrwua), by action; empty for none.
  */
 export type BulkNoun = {
   countForms: CountForms
@@ -88,6 +92,7 @@ export type BulkNoun = {
   }
   deleteInFullInk: boolean
   related: BulkRelated | null
+  relatedToast: Partial<Record<'retract', NumberSentences>>
 }
 
 /** „koncept“ by count, for deleting only drafts (22c). */
@@ -150,6 +155,7 @@ export const ARTICLE_BULK_NOUN: BulkNoun = {
     other: 'čeká na schválení. Publikováním je schválíte.',
   },
   related: null,
+  relatedToast: {},
 }
 
 /** The 22c sentences with číslo (26f; copy p256liqr, 0farrwua; delete yzyd9p1l). */
@@ -210,6 +216,7 @@ export const ISSUE_BULK_NOUN: BulkNoun = {
     other: 'čeká na schválení. Publikováním je schválíte.',
   },
   related: null,
+  relatedToast: {},
 }
 
 /** „publikovaný článek“ by count, beside a category's or a tag's name (25g, 32a). */
@@ -298,6 +305,7 @@ export const CATEGORY_BULK_NOUN: BulkNoun = {
     other: 'čeká na schválení. Publikováním je schválíte.',
   },
   related: TAXONOMY_RELATED,
+  relatedToast: {},
 }
 
 /**
@@ -368,4 +376,85 @@ export const TAG_BULK_NOUN: BulkNoun = {
     other: 'čeká na schválení. Publikováním je schválíte.',
   },
   related: TAXONOMY_RELATED,
+  relatedToast: {},
+}
+
+/** „publikovaná epizoda“ by count, beside a podcast's title (27a, djni9qbc). */
+export const PUBLISHED_EPISODE_COUNT_FORMS: CountForms = {
+  few: 'publikované epizody',
+  many: 'publikované epizody',
+  one: 'publikovaná epizoda',
+  other: 'publikovaných epizod',
+  two: 'publikovaných epizod',
+  zero: 'publikovaných epizod',
+}
+
+/**
+ * The 22c sentences with podcast (27a; copy p256liqr, 0farrwua; the toast's
+ * second sentence 0farrwua G). A podcast with episodes is never deleted in
+ * bulk (27f), so its list counts only the published episodes readers lose.
+ */
+export const PODCAST_BULK_NOUN: BulkNoun = {
+  allHeld: {
+    many: 'Všechny vybrané podcasty se právě upravují.',
+    one: 'Vybraný podcast se právě upravuje.',
+  },
+  allIncomplete: {
+    many: 'Vybrané podcasty nelze publikovat — jsou neúplné.',
+    one: 'Vybraný podcast nelze publikovat — je neúplný.',
+  },
+  countForms: PODCAST_NOUN.countForms,
+  creatorAfterFirstSentence: true,
+  creatorRetract: {
+    many: 'Znovu je publikovat může Koordinátor.',
+    one: 'Znovu ho publikovat může Koordinátor.',
+  },
+  deleteInFullInk: true,
+  descriptions: {
+    archive: {
+      many: 'Podcasty i jejich publikované epizody zmizí z webu. Stav epizod se nezmění. Epizody se znovu zobrazí až po obnovení příslušného podcastu jako konceptu a jeho publikaci.',
+      one: 'Podcast i jeho publikované epizody zmizí z webu. Stav epizod se nezmění. Epizody se znovu zobrazí až po obnovení podcastu jako konceptu a jeho publikaci.',
+    },
+    delete: { many: 'Smazání je nevratné.', one: 'Smazání je nevratné.' },
+    publish: {
+      many: 'Podcasty budou na webu.',
+      one: 'Podcast bude na webu.',
+    },
+    restore: {
+      many: 'Podcasty se vrátí do konceptu. Na web se dostanou až novou publikací.',
+      one: 'Podcast se vrátí do konceptu. Na web se dostane až novou publikací.',
+    },
+    retract: {
+      many: 'Podcasty se vrátí do konceptu. Z webu zmizí i jejich publikované epizody. Stav epizod se nezmění. Po nové publikaci příslušného podcastu se jeho publikované epizody znovu zobrazí.',
+      one: 'Podcast se vrátí do konceptu. Z webu zmizí i jeho publikované epizody. Stav epizod se nezmění. Po nové publikaci podcastu se jeho publikované epizody znovu zobrazí.',
+    },
+  },
+  draftCountForms: null,
+  incomplete: {
+    few: 'jsou neúplné.',
+    one: 'je neúplný.',
+    other: 'je neúplných.',
+  },
+  notSubmitted: {
+    few: 'nejsou odeslané ke schválení.',
+    one: 'není odeslaný ke schválení.',
+    other: 'není odeslaných ke schválení.',
+  },
+  objectForms: PODCAST_NOUN.countForms,
+  pending: {
+    few: 'čekají na schválení. Publikováním je schválíte.',
+    one: 'čeká na schválení. Publikováním ho schválíte.',
+    other: 'čeká na schválení. Publikováním je schválíte.',
+  },
+  related: {
+    countForms: EPISODE_NOUN.countForms,
+    listedFor: { archive: 'published', retract: 'published' },
+    publishedCountForms: PUBLISHED_EPISODE_COUNT_FORMS,
+  },
+  relatedToast: {
+    retract: {
+      many: 'Z webu zmizely i jejich publikované epizody.',
+      one: 'Z webu zmizely i jeho publikované epizody.',
+    },
+  },
 }

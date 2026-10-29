@@ -116,6 +116,7 @@ describe('runBulkContentAction — content without an edit hold', () => {
     expect(handlers.delete).toHaveBeenCalledOnce()
     expect(result).toEqual({
       action: 'delete',
+      hasRelated: false,
       onlyDrafts: true,
       processedCount: 1,
       skippedCount: 0,

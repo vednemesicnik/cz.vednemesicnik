@@ -17,24 +17,29 @@ type Options = {
   processedCount: number
   skippedCount: number
   onlyDrafts: boolean
+  hasRelated?: boolean
   noun: BulkNoun
 }
 
 /**
  * The toast after a bulk action (design 22c, 2txmjnaq): *Sloveso: počet*, the
- * real result rather than the selection's size, and what was skipped.
+ * real result rather than the selection's size, what went off the web with it
+ * where the list says so (27a, 0farrwua), and what was skipped.
  *
  * @param options - The action, how many records it changed and skipped,
  *   whether all of them were drafts (deleting then counts koncepty where the
- *   list does), and the list's bulk noun.
+ *   list does), whether a changed one had published related content, and the
+ *   list's bulk noun.
  * @returns „Publikováno: 3 články“, „Publikováno: 2 články. Přeskočeno: 1
- *   článek.“, or „Nic nebylo publikováno. Přeskočeno: 3 články.“
+ *   článek.“, „Staženo z publikace: 2 podcasty. Z webu zmizely i jejich
+ *   publikované epizody.“, or „Nic nebylo publikováno. Přeskočeno: 3 články.“
  */
 export const formatBulkActionToast = ({
   action,
   processedCount,
   skippedCount,
   onlyDrafts,
+  hasRelated = false,
   noun,
 }: Options) => {
   const countForms =
@@ -51,6 +56,14 @@ export const formatBulkActionToast = ({
   }
 
   const result = `${participle.charAt(0).toUpperCase()}${participle.slice(1)}: ${formatCount(processedCount)}`
+  const relatedSentences =
+    action === 'retract' && hasRelated ? noun.relatedToast.retract : undefined
+  const related =
+    relatedSentences === undefined
+      ? ''
+      : ` ${processedCount === 1 ? relatedSentences.one : relatedSentences.many}`
 
-  return skippedCount === 0 ? result : `${result}.${skipped}`
+  return skippedCount === 0 && related === ''
+    ? result
+    : `${result}.${related}${skipped}`
 }
