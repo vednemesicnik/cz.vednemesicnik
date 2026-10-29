@@ -88,12 +88,14 @@ export const getBulkConfirmCopy = ({
 
   const creatorSentence = byCount(noun.creatorRetract)
   const firstEnd = description.indexOf(FIRST_SENTENCE_END)
-  const descriptions =
-    noun.creatorAfterFirstSentence && firstEnd !== -1
-      ? [
+  // A one-sentence description takes it at its end (gzumlpu2).
+  const descriptions = !noun.creatorAfterFirstSentence
+    ? [description, creatorSentence]
+    : firstEnd === -1
+      ? [`${description} ${creatorSentence}`]
+      : [
           `${description.slice(0, firstEnd + 1)} ${creatorSentence} ${description.slice(firstEnd + FIRST_SENTENCE_END.length)}`,
         ]
-      : [description, creatorSentence]
 
   return { confirmLabel: label, descriptions, title: `${label}?` }
 }

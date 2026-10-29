@@ -4,6 +4,7 @@ import {
   ARTICLE_BULK_NOUN,
   CATEGORY_BULK_NOUN,
   ISSUE_BULK_NOUN,
+  PODCAST_BULK_NOUN,
   TAG_BULK_NOUN,
 } from '~/config/bulk-noun-config'
 
@@ -265,5 +266,51 @@ describe('getBulkConfirmCopy — the Creator’s sentence after the first one (2
         onlyDrafts: false,
       }).descriptions,
     ).toEqual([expected])
+  })
+})
+
+describe('getBulkConfirmCopy — podcasts (27a, gzumlpu2)', () => {
+  const podcastCopy = (
+    options: Partial<Parameters<typeof getBulkConfirmCopy>[0]> &
+      Pick<Parameters<typeof getBulkConfirmCopy>[0], 'action' | 'count'>,
+  ) =>
+    getBulkConfirmCopy({
+      hasRelated: true,
+      isCreator: false,
+      noun: PODCAST_BULK_NOUN,
+      onlyDrafts: false,
+      ...options,
+    })
+
+  test('retracting podcasts with published episodes says they leave too', () => {
+    expect(podcastCopy({ action: 'retract', count: 2 }).descriptions).toEqual([
+      'Podcasty se vrátí do konceptu. Z webu zmizí i jejich publikované epizody. Stav epizod se nezmění. Po nové publikaci příslušného podcastu se jeho publikované epizody znovu zobrazí.',
+    ])
+  })
+
+  test('without published episodes the sentences about them go (gzumlpu2)', () => {
+    expect(
+      podcastCopy({ action: 'retract', count: 2, hasRelated: false })
+        .descriptions,
+    ).toEqual(['Podcasty se vrátí do konceptu.'])
+    expect(
+      podcastCopy({ action: 'archive', count: 1, hasRelated: false })
+        .descriptions,
+    ).toEqual([
+      'Podcast zmizí z webu. Znovu se zobrazí po obnovení jako konceptu a publikaci.',
+    ])
+  })
+
+  test('a Creator’s sentence ends a one-sentence retract', () => {
+    expect(
+      podcastCopy({
+        action: 'retract',
+        count: 2,
+        hasRelated: false,
+        isCreator: true,
+      }).descriptions,
+    ).toEqual([
+      'Podcasty se vrátí do konceptu. Znovu je publikovat může Koordinátor.',
+    ])
   })
 })

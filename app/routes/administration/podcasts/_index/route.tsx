@@ -1,7 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { Form, href } from 'react-router'
-import { AdminBulkActionsBar } from '~/components/admin/admin-bulk-actions-bar'
 import { AdminPage } from '~/components/admin/admin-page'
 import {
   AdminTable,
@@ -15,6 +14,7 @@ import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { ClearFiltersButton } from '~/components/clear-filters-button'
 import { ClearFiltersLink } from '~/components/clear-filters-link'
+import { ContentSelectionBar } from '~/components/content-selection-bar'
 import { FilterBar } from '~/components/filter-bar'
 import { FilterBarFilters } from '~/components/filter-bar-filters'
 import { FilterBarGroup } from '~/components/filter-bar-group'
@@ -30,7 +30,9 @@ import { PageTitle } from '~/components/page-title'
 import { Pagination } from '~/components/pagination'
 import { SavedFiltersMenu } from '~/components/saved-filters-menu'
 import { SavedFiltersTrigger } from '~/components/saved-filters-trigger'
+import { PODCAST_BULK_NOUN } from '~/config/bulk-noun-config'
 import { PODCAST_NOUN } from '~/config/list-noun-config'
+import { useBulkActionResult } from '~/utils/bulk-action/use-bulk-action-result'
 import { getListEmptyMessage } from '~/utils/get-list-empty-message'
 import { getOptionLabels } from '~/utils/get-option-labels'
 import { getSavedFilterSummary } from '~/utils/get-saved-filter-summary'
@@ -43,6 +45,9 @@ import { ItemRow } from './components/item-row'
 export { action } from './_action'
 export { loader } from './_loader'
 export { meta } from './_meta'
+
+// The keyed fetcher the selection bar submits through and the list reads (27a).
+const BULK_ACTION_FETCHER_KEY = 'podcasts-bulk-action'
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const {
@@ -61,10 +66,21 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   const pending = useAdminListPending()
 
-  const deletableIds = podcasts
-    .filter((podcast) => podcast.canSelect)
+  // A row joins the selection when the bar could apply something to it (27a).
+  const selectableIds = podcasts
+    .filter((podcast) => podcast.bulkActions.length > 0)
     .map((podcast) => podcast.id)
-  const selection = useAdminTableSelection(deletableIds)
+  const selection = useAdminTableSelection(selectableIds)
+  useBulkActionResult({
+    fetcherKey: BULK_ACTION_FETCHER_KEY,
+    noun: PODCAST_BULK_NOUN,
+    onClear: selection.clear,
+  })
+  // In the list's order: publishing spaces them by it (27a).
+  const selectedPodcasts = podcasts.filter((podcast) =>
+    selection.selectedIds.includes(podcast.id),
+  )
+  const hasSelection = selectedPodcasts.length > 0
 
   const states = filters.state ?? []
   const hasOtherFilters = query !== ''
@@ -113,12 +129,26 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
         {newPodcastButton}
       </ListHeader>
       <FilterCell>
-        <AdminBulkActionsBar
-          action={href('/administration/podcasts')}
-          onDone={selection.clear}
-          selectedIds={selection.selectedIds}
-        />
-        <FilterBar replaced={selection.selectedIds.length > 0}>
+        {/* The selection bar takes the filter row's place in the same cell,
+            so the table does not move (22c, cioukqn6); not on a phone (22g). */}
+        {hasSelection && (
+          <ContentSelectionBar
+            action={href('/administration/podcasts')}
+            fetcherKey={BULK_ACTION_FETCHER_KEY}
+            isCreator={!isApprover && !isContributor}
+            noun={PODCAST_BULK_NOUN}
+            onClear={selection.clear}
+            records={selectedPodcasts.map((podcast) => ({
+              ...podcast,
+              related: {
+                count: podcast.episodeCount,
+                publishedCount: podcast.publishedEpisodeCount,
+              },
+              state: podcast.submission ?? podcast.state,
+            }))}
+          />
+        )}
+        <FilterBar replaced={hasSelection}>
           <FilterBarGroup>
             <FilterBarSearch
               defaultValue={query}
@@ -171,7 +201,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <TableHeader>
             <TableSelectionHeaderCell
               checked={selection.allSelected}
-              disabled={deletableIds.length === 0}
+              disabled={selectableIds.length === 0}
               indeterminate={selection.someSelected}
               onChange={selection.toggleAll}
             />

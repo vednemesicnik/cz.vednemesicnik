@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { ARTICLE_BULK_NOUN } from '~/config/bulk-noun-config'
+import { ARTICLE_BULK_NOUN, PODCAST_BULK_NOUN } from '~/config/bulk-noun-config'
 
 import { formatBulkActionToast } from './format-bulk-action-toast'
 
@@ -111,5 +111,56 @@ describe('formatBulkActionToast', () => {
         skippedCount: 1,
       }),
     ).toBe('Nic nebylo obnoveno jako koncept. Přeskočeno: 1 článek.')
+  })
+})
+
+describe('formatBulkActionToast — podcasts (27a, 0farrwua)', () => {
+  test.each([
+    [
+      2,
+      0,
+      true,
+      'Staženo z publikace: 2 podcasty. Z webu zmizely i jejich publikované epizody.',
+    ],
+    [
+      1,
+      0,
+      true,
+      'Staženo z publikace: 1 podcast. Z webu zmizely i jeho publikované epizody.',
+    ],
+    [
+      1,
+      1,
+      true,
+      'Staženo z publikace: 1 podcast. Z webu zmizely i jeho publikované epizody. Přeskočeno: 1 podcast.',
+    ],
+    [2, 0, false, 'Staženo z publikace: 2 podcasty'],
+  ])(
+    '%i retracted, %i skipped, published episodes %s',
+    (processedCount, skippedCount, hasRelated, expected) => {
+      expect(
+        formatBulkActionToast({
+          action: 'retract',
+          hasRelated,
+          noun: PODCAST_BULK_NOUN,
+          onlyDrafts: false,
+          processedCount,
+          skippedCount,
+        }),
+      ).toBe(expected)
+    },
+  )
+
+  test('archiving says nothing more (27a)', () => {
+    expect(
+      formatBulkActionToast({
+        action: 'archive',
+        hasRelated: true,
+        noun: PODCAST_BULK_NOUN,
+        onlyDrafts: false,
+        processedCount: 2,
+        skippedCount: 0,
+      }),
+    ).toBe('Archivováno: 2 podcasty')
   })
 })

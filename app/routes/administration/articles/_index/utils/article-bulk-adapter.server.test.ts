@@ -123,6 +123,7 @@ describe('articleBulkAdapter — publish', () => {
     ])
     expect(result).toEqual({
       action: 'publish',
+      hasRelated: false,
       onlyDrafts: true,
       processedCount: 3,
       skippedCount: 0,
@@ -167,6 +168,7 @@ describe('articleBulkAdapter — publish', () => {
     ])
     expect(result).toEqual({
       action: 'publish',
+      hasRelated: false,
       onlyDrafts: false,
       processedCount: 1,
       skippedCount: 2,
@@ -206,6 +208,7 @@ describe('articleBulkAdapter — retract, archive, restore and delete', () => {
     expect(archiveMock).toHaveBeenCalledOnce()
     expect(result).toEqual({
       action: 'archive',
+      hasRelated: false,
       onlyDrafts: false,
       processedCount: 1,
       skippedCount: 0,
@@ -296,6 +299,7 @@ describe('articleBulkAdapter — retract, archive, restore and delete', () => {
     ])
     expect(result).toEqual({
       action: 'delete',
+      hasRelated: false,
       onlyDrafts: true,
       processedCount: 1,
       skippedCount: 1,

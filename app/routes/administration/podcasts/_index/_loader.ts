@@ -10,8 +10,10 @@ import {
 } from '~/utils/admin-list-filters'
 import { parseAdminListParams } from '~/utils/admin-list-params'
 import { buildContentQueueWhere } from '~/utils/build-content-queue-where'
+import { getBulkActions } from '~/utils/bulk-action/get-bulk-actions'
 import { countContentQueues } from '~/utils/count-content-queues.server'
 import { prisma } from '~/utils/db.server'
+import { getEditHoldStatus } from '~/utils/edit-hold/get-edit-hold-status'
 import {
   createImageSources,
   imageSourceSelect,
@@ -27,6 +29,7 @@ import { resolveDefaultFilter } from '~/utils/resolve-default-filter.server'
 import { buildEpisodePermissionWhere } from '../podcast/episodes/utils/build-episode-permission-where'
 import { buildPodcastPermissionWhere } from '../utils/build-podcast-permission-where'
 import { formatPodcastEpisodeLines } from '../utils/format-podcast-episode-lines'
+import { getMissingPodcastContent } from '../utils/get-missing-podcast-content'
 import { getPodcastActions } from '../utils/get-podcast-actions'
 import { getPodcastFactLine } from '../utils/get-podcast-fact-line'
 import {
@@ -134,6 +137,11 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
         },
         cover: { select: imageSourceSelect },
         createdAt: true,
+        description: true,
+        heldByAuthorId: true,
+        heldByTabId: true,
+        heldSince: true,
+        heldUntil: true,
         id: true,
         reviews: {
           select: {
@@ -168,29 +176,48 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
   // The Epizody column for the whole list in one query (27a): every published
   // episode, as the web shows them all, and the drafts the role may view,
   // each marked so the summary counts only those.
-  const episodes = await prisma.podcastEpisode.findMany({
-    select: {
-      authorId: true,
-      podcastId: true,
-      publishedAt: true,
-      reviews: {
-        select: {
-          createdAt: true,
-          reviewer: { select: { role: { select: { level: true } } } },
+  const isApprover = context.roleLevel <= APPROVER_ROLE_LEVEL
+
+  const [episodes, holders] = await Promise.all([
+    prisma.podcastEpisode.findMany({
+      select: {
+        authorId: true,
+        podcastId: true,
+        publishedAt: true,
+        reviews: {
+          select: {
+            createdAt: true,
+            reviewer: { select: { role: { select: { level: true } } } },
+          },
         },
+        state: true,
+        submittedAt: true,
       },
-      state: true,
-      submittedAt: true,
-    },
-    // The summary counts no archived episode, so none is loaded.
-    where: {
-      OR: [
-        { state: 'published' },
-        { AND: [episodePermissionWhere, { state: 'draft' }] },
-      ],
-      podcastId: { in: podcastIds },
-    },
-  })
+      // The summary counts no archived episode, so none is loaded.
+      where: {
+        OR: [
+          { state: 'published' },
+          { AND: [episodePermissionWhere, { state: 'draft' }] },
+        ],
+        podcastId: { in: podcastIds },
+      },
+    }),
+    // Who holds each listed address as published (log 0039): a draft with an
+    // address another podcast holds is skipped by bulk publishing too (27i).
+    // Only the Coordinator publishes, so only they need it, as in 26a.
+    isApprover
+      ? prisma.podcast.findMany({
+          select: { id: true, publishedSlug: true },
+          where: {
+            publishedSlug: {
+              in: rawPodcasts.flatMap(({ slug }) =>
+                slug === '' ? [] : [slug],
+              ),
+            },
+          },
+        })
+      : [],
+  ])
 
   const summaries = summarizePodcastEpisodes(
     podcastIds,
@@ -205,6 +232,12 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
     })),
   )
 
+  const holderIdBySlug = new Map(
+    holders.map(({ id, publishedSlug }) => [publishedSlug, id]),
+  )
+
+  const now = new Date()
+
   const podcasts = rawPodcasts
     .map((podcast) => {
       const flags = getContentActionFlags(context, 'podcast', {
@@ -216,15 +249,24 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       const summary = summaries.get(podcast.id) ?? NO_EPISODES
       const submission = flags.submission?.state ?? null
 
+      const actions = getPodcastActions({
+        ...flags,
+        state: podcast.state,
+        submission,
+      })
+
       return {
-        actions: getPodcastActions({
-          ...flags,
-          state: podcast.state,
-          submission,
+        actions,
+        // What the selection bar may apply to this row (22c, 27a); a podcast
+        // with episodes is never deleted (27f), and a held one is skipped and
+        // said apart, not left out of the bar's actions.
+        bulkActions: getBulkActions({
+          isApprover,
+          menu: actions.filter(
+            (action) => action !== 'delete' || podcast._count.episodes === 0,
+          ),
+          row: null,
         }),
-        // Its episodes hold it (27f), so the bar, which only deletes until
-        // #772, can't take it.
-        canSelect: flags.canDelete && podcast._count.episodes === 0,
         cover:
           podcast.cover === null
             ? null
@@ -245,6 +287,27 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
           updatedAt: podcast.updatedAt,
         }),
         id: podcast.id,
+        isHeldByOther:
+          getEditHoldStatus(podcast, { authorId: context.authorId, now }) ===
+          'other',
+        // Bulk publishing skips it and says so up front (27i, 27a).
+        isIncomplete:
+          isApprover &&
+          getMissingPodcastContent({
+            description: podcast.description,
+            hasCover: podcast.cover !== null,
+            isSlugTaken:
+              podcast.slug !== '' &&
+              (holderIdBySlug.get(podcast.slug) ?? podcast.id) !== podcast.id,
+            slug: podcast.slug,
+            title: podcast.title,
+          }).length > 0,
+        // Publishing it, the dialog says it isn't submitted (27a, as 22c).
+        isNotSubmitted:
+          podcast.state === 'draft' &&
+          flags.submission === null &&
+          flags.isSubmittable &&
+          !flags.isOwnContent,
         latestPublishedAt: summary.latestPublishedAt,
         publishedEpisodeCount: summary.publishedCount,
         slug: podcast.slug,
@@ -271,7 +334,7 @@ export const loader = async ({ request, url }: Route.LoaderArgs) => {
       targetAuthorIds: [context.authorId],
     }).hasPermission,
     filters,
-    isApprover: context.roleLevel <= APPROVER_ROLE_LEVEL,
+    isApprover,
     isContributor,
     podcasts,
     query,
