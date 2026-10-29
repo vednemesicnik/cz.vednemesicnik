@@ -14,6 +14,7 @@ import { formatHeldSkipNote } from '~/utils/bulk-action/format-held-skip-note'
 import type { BulkAction } from '~/utils/bulk-action/get-bulk-actions'
 import { getBulkPublishNotes } from '~/utils/bulk-action/get-bulk-publish-notes'
 import { getSelectionBarContent } from '~/utils/bulk-action/get-selection-bar-content'
+import { compareEpisodesByNumber } from '~/utils/podcast-episode/compare-episodes-by-number'
 
 import { EpisodeBulkPublishDialog } from '../episode-bulk-publish-dialog'
 
@@ -85,14 +86,10 @@ export const EpisodeSelectionBar = ({
   )
 
   // Publishing leaves out the incomplete ones too and says so (27h), and goes
-  // by number: the highest first, one without a number last.
+  // by number; ties keep the table's order, as the server's do.
   const completeEpisodes = unheldEpisodes
     .filter((episode) => !episode.isIncomplete)
-    .sort(
-      (first, second) =>
-        (second.number ?? Number.NEGATIVE_INFINITY) -
-        (first.number ?? Number.NEGATIVE_INFINITY),
-    )
+    .sort(compareEpisodesByNumber)
   const publishNotes = getBulkPublishNotes({
     incompleteCount: unheldEpisodes.length - completeEpisodes.length,
     notSubmittedCount: completeEpisodes.filter(

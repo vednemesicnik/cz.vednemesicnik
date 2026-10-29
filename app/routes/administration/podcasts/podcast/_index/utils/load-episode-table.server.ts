@@ -196,31 +196,33 @@ export const loadEpisodeTable = async ({
 
   // The numbers and addresses other episodes of the podcast hold as published
   // (logs 0039, 0047): a draft with one of them is skipped by bulk publishing
-  // too (27h). Only the Coordinator publishes, so only they need it.
-  const holders = isApprover
-    ? await prisma.podcastEpisode.findMany({
-        select: { id: true, publishedNumber: true, publishedSlug: true },
-        where: {
-          OR: [
-            {
-              publishedNumber: {
-                in: rawEpisodes.flatMap(({ number }) =>
-                  number === null ? [] : [number],
-                ),
+  // too (27h). Only the Coordinator publishes, and nothing on an unpublished
+  // podcast (27f), so only then is it needed.
+  const holders =
+    isApprover && isPodcastPublished
+      ? await prisma.podcastEpisode.findMany({
+          select: { id: true, publishedNumber: true, publishedSlug: true },
+          where: {
+            OR: [
+              {
+                publishedNumber: {
+                  in: rawEpisodes.flatMap(({ number }) =>
+                    number === null ? [] : [number],
+                  ),
+                },
               },
-            },
-            {
-              publishedSlug: {
-                in: rawEpisodes.flatMap(({ slug }) =>
-                  slug === '' ? [] : [slug],
-                ),
+              {
+                publishedSlug: {
+                  in: rawEpisodes.flatMap(({ slug }) =>
+                    slug === '' ? [] : [slug],
+                  ),
+                },
               },
-            },
-          ],
-          podcastId: podcast.id,
-        },
-      })
-    : []
+            ],
+            podcastId: podcast.id,
+          },
+        })
+      : []
   const now = new Date()
 
   const episodes = rawEpisodes.map((episode) => {
@@ -237,6 +239,7 @@ export const loadEpisodeTable = async ({
       state: episode.state,
       submission,
     })
+    const bulkActions = getBulkActions({ ...rowActions, isApprover })
 
     return {
       ...rowActions,
@@ -244,7 +247,7 @@ export const loadEpisodeTable = async ({
       // What the selection bar may apply to this row (22c, 27b): nothing is
       // published while the podcast isn't (27f); a held one is skipped and
       // said apart, not left out of the bar's actions.
-      bulkActions: getBulkActions({ ...rowActions, isApprover }),
+      bulkActions,
       // The row's tag says what the detail's does (07a), with one fact (27b).
       factLine: getEpisodeFactLine({
         authorName: episode.author.name,
@@ -283,6 +286,22 @@ export const loadEpisodeTable = async ({
         flags.submission === null &&
         flags.isSubmittable &&
         !flags.isOwnContent,
+      // On an unpublished podcast a waiting or approved episode has no bulk
+      // action, yet the Coordinator selects it to hear why it can't be
+      // published (27b, 27f).
+      isSelectable:
+        bulkActions.length > 0 ||
+        (isApprover &&
+          !isPodcastPublished &&
+          getBulkActions({
+            ...getEpisodeRowActions({
+              ...flags,
+              isPodcastPublished: true,
+              state: episode.state,
+              submission,
+            }),
+            isApprover,
+          }).includes('publish')),
       linkLabels: episode.links.map((link) => link.label),
       number: episode.number,
       publishedAt: episode.publishedAt?.toISOString() ?? null,

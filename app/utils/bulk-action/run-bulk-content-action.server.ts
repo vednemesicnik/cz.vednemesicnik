@@ -69,7 +69,8 @@ type Options<Row extends BulkContentRow> = {
 }
 
 /**
- * Applies one bulk action to the selected records, in their order (design
+ * Applies one bulk action to the selected records, in their order or the
+ * adapter's (`sortRows`) (design
  * 22c). Each record is checked again as its row would be: one that changed
  * since the list was loaded — or, publishing, turned out incomplete (23h), or
  * that someone else edits (22f) — is skipped and counted, never partly

@@ -41,9 +41,11 @@ const episode = (
     state = 'draft' as 'draft' | 'published' | 'archived',
     publishedAt = null as Date | null,
     podcastState = 'published' as 'draft' | 'published' | 'archived',
+    createdAt = new Date('2026-10-01T00:00:00.000Z'),
   } = {},
 ) => ({
   author: { id: 'creator', role: { level: 2 } },
+  createdAt,
   heldByAuthorId: null,
   heldByTabId: null,
   heldSince: null,
@@ -137,5 +139,50 @@ describe('createEpisodeBulkAdapter (27b)', () => {
 
     expect(handlerMocks.retract).toHaveBeenCalledOnce()
     expect(handlerMocks.archive).toHaveBeenCalledOnce()
+  })
+
+  test('a shared number goes newest first, as the table shows it', async () => {
+    findManyMock.mockResolvedValue([
+      episode('older', 7, { createdAt: new Date('2026-09-01T00:00:00.000Z') }),
+      episode('newer', 7, { createdAt: new Date('2026-10-01T00:00:00.000Z') }),
+    ])
+
+    await runForEpisodes({
+      action: 'publish',
+      ids: ['older', 'newer'],
+      publishBase: new Date('2026-10-22T10:00:00.000Z'),
+    })
+
+    expect(
+      handlerMocks.publish.mock.calls.map(([, options]) => options.id),
+    ).toEqual(['newer', 'older'])
+  })
+
+  test('a Creator retracts their own episode, never publishes (07c)', async () => {
+    getAuthorPermissionContextMock.mockResolvedValue({
+      authorId: 'creator',
+      can: ({ action }: { action: string }) => ({
+        hasAny: false,
+        hasOwn: action !== 'publish',
+        hasPermission: action !== 'publish',
+      }),
+      roleLevel: 2,
+    })
+    findManyMock.mockResolvedValue([episode('own', 3, { state: 'published' })])
+
+    const retracted = await runForEpisodes({ action: 'retract', ids: ['own'] })
+
+    expect(retracted).toMatchObject({ processedCount: 1, skippedCount: 0 })
+
+    findManyMock.mockResolvedValue([episode('draft', 4)])
+
+    const published = await runForEpisodes({
+      action: 'publish',
+      ids: ['draft'],
+      publishBase: new Date(),
+    })
+
+    expect(handlerMocks.publish).not.toHaveBeenCalled()
+    expect(published).toMatchObject({ processedCount: 0, skippedCount: 1 })
   })
 })

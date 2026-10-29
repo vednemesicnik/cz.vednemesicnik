@@ -3,11 +3,13 @@ import type {
   BulkContentRow,
 } from '~/utils/bulk-action/run-bulk-content-action.server'
 import { prisma } from '~/utils/db.server'
+import { compareEpisodesByNumber } from '~/utils/podcast-episode/compare-episodes-by-number'
 
 import { episodeContentStateHandlers } from '../../episode/_index/utils/content-state-handlers.server'
 import { getEpisodeRowActions } from '../../utils/get-episode-row-actions'
 
 type EpisodeRow = BulkContentRow & {
+  createdAt: Date
   number: number | null
   isPodcastPublished: boolean
 }
@@ -39,6 +41,7 @@ export const createEpisodeBulkAdapter = (
     const episodes = await prisma.podcastEpisode.findMany({
       select: {
         author: { select: { id: true, role: { select: { level: true } } } },
+        createdAt: true,
         heldByAuthorId: true,
         heldByTabId: true,
         heldSince: true,
@@ -79,11 +82,12 @@ export const createEpisodeBulkAdapter = (
     )
   },
   publishDate: 'chosen',
-  // The highest number first; one without a number last (27h).
+  // The highest number first, one without a number last (27h); a shared
+  // number (drafts may share one) goes newest first, as the table shows it.
   sortRows: (rows) =>
     [...rows].sort(
       (first, second) =>
-        (second.number ?? Number.NEGATIVE_INFINITY) -
-        (first.number ?? Number.NEGATIVE_INFINITY),
+        compareEpisodesByNumber(first, second) ||
+        second.createdAt.getTime() - first.createdAt.getTime(),
     ),
 })

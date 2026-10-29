@@ -115,9 +115,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   const pending = useAdminListPending()
 
-  // A row joins the selection when the bar could apply something to it (27b).
+  // A row joins the selection when the bar could apply something to it, or
+  // say why it can't publish it (27b).
   const selectableIds = episodes
-    .filter((episode) => episode.bulkActions.length > 0)
+    .filter((episode) => episode.isSelectable)
     .map((episode) => episode.id)
   const selection = useAdminTableSelection(selectableIds)
   useBulkActionResult({

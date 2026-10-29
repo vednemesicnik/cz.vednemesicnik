@@ -48,7 +48,9 @@ retract, archive, restore and delete in its `content-state-handlers.server.ts`.
   (25g, 27a) are additions to the noun or the dialog, not to the runner. The podcast retract
   toast's second sentence is the one exception: only the server knows which rows actually
   changed, so an adapter may name the related content a row takes off the web
-  (`hasPublishedRelated`) and the runner answers `hasRelated` (#772 PR 4, gzumlpu2).
+  (`hasPublishedRelated`) and the runner answers `hasRelated` (#772 PR 4, gzumlpu2). The second
+  is the order: episodes are dated by number, not by the selection, so an adapter may sort
+  the rows it loaded (`sortRows`, #772 PR 5).
 - The publish dialog is a different root per shape, not a variant: articles keep their ordered
   dialog route-local, and the episodes get one that orders by number. A list that publishes
   without an order or a date (issues, categories, tags, podcasts) needs no dialog of its own:
