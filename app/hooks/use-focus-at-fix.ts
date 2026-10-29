@@ -5,7 +5,7 @@ import { OPENS_AT_FIX_STATE } from '~/utils/opens-at-fix-state'
 
 /**
  * Opens an editor at the first thing to fix when the missing-content dialog
- * opened it (design 23h, 26e, 27h, 6dlnv2de): once, as soon as the editor
+ * opened it (design 23h, 26e, 27h, 27i, 6dlnv2de): once, as soon as the editor
  * holds the edit, since a locked fieldset can't take the focus. A plain
  * *Upravit* leaves the focus alone.
  *
