@@ -67,6 +67,7 @@ import { FORM_CONFIG } from '~/config/form-config'
 import { IMAGE_OVER_PIXEL_BUDGET_MESSAGE } from '~/config/image-variants-config'
 import { type AutosaveSendResult, useAutosave } from '~/hooks/use-autosave'
 import { useEditHold } from '~/hooks/use-edit-hold'
+import { useFocusAtFix } from '~/hooks/use-focus-at-fix'
 import { useReplaceFrame } from '~/hooks/use-replace-frame'
 import { useTakenValues } from '~/hooks/use-taken-values'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
@@ -79,6 +80,7 @@ import { slugify } from '~/utils/slugify'
 import { useAutoSlug } from '~/utils/use-auto-slug'
 import { formatEditHoldLine } from '../../utils/format-edit-hold-line'
 import { formatSubmissionFact } from '../../utils/format-submission-fact'
+import { getArticleFixTarget } from '../_index/utils/get-article-fix-target'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { AddImagesTile } from './components/add-images-tile'
@@ -939,6 +941,55 @@ export default function RouteComponent({
     columnQuery.addEventListener('change', handleWidthChange)
     return () => columnQuery.removeEventListener('change', handleWidthChange)
   }, [])
+
+  // Opened from the missing-content dialog, the editor opens at its first
+  // item (23h, 6dlnv2de). On a phone Adresa and Autoři open their detail
+  // first; the focus goes in after the panel's own focus on its name.
+  const [detailFocus, setDetailFocus] = useState<'address' | 'authors' | null>(
+    null,
+  )
+  const focusDetailField = (detail: 'address' | 'authors') => {
+    const input =
+      detail === 'address'
+        ? formRef.current?.elements.namedItem(fields.slug.name)
+        : authorSearchRef.current
+    if (input instanceof HTMLInputElement) input.focus()
+  }
+  useEffect(() => {
+    if (detailFocus === null) return
+    focusDetailField(detailFocus)
+    setDetailFocus(null)
+  })
+  useFocusAtFix(isHolding, () => {
+    const target = getArticleFixTarget({
+      authorCount: article.authorIds.length,
+      content: article.content,
+      images: article.images,
+      isSlugTaken: article.takenSlug !== null,
+      perex: article.perex,
+      slug: article.slug,
+      title: article.title,
+    })
+    if (target === null) return
+
+    if (target.field === 'imageAlt') {
+      setOpenDetail('images')
+      setNewImageFocusId(target.imageId)
+    } else if (target.field === 'slug' || target.field === 'authors') {
+      const detail = target.field === 'slug' ? 'address' : 'authors'
+      if (window.matchMedia(DETAIL_COLUMN_QUERY).matches) {
+        focusDetailField(detail)
+      } else {
+        setOpenDetail(detail)
+        setDetailFocus(detail)
+      }
+    } else {
+      const input = formRef.current?.elements.namedItem(
+        fields[target.field].name,
+      )
+      if (input instanceof HTMLElement) input.focus()
+    }
+  })
 
   // Enter in the title saves instead of breaking it; a pasted break goes.
   const handleTitleKeyDown = (
