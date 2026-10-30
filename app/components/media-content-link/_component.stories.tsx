@@ -146,3 +146,24 @@ export const Mobile: Story = {
   parameters: { controls: { disable: true } },
   render: () => cards,
 }
+
+/** An archived episode: outlined, its grey tag after the date (10d). */
+export const Preview: Story = {
+  args: {
+    children: (
+      <>
+        <ContentLinkCover alt={'Obálka pořadu Kabinet'} image={squareCover} />
+        <ContentLinkTitle number={12}>Prázdniny ve sborovně</ContentLinkTitle>
+        <ContentLinkFooter>
+          <ContentLinkAuthor>Kabinet</ContentLinkAuthor>
+          <ContentLinkPublishDate
+            date={publishDate}
+            previewState={'archived'}
+          />
+        </ContentLinkFooter>
+      </>
+    ),
+    isPreview: true,
+    to: '/podcasts/kabinet/prazdniny-ve-sborovne',
+  },
+}

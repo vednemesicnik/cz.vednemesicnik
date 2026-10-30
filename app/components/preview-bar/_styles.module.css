@@ -1,0 +1,23 @@
+/* One line of a fixed height (--preview-bar-height in sizes.css), aligned with
+   the header's content column; the message gives way first (10d). */
+.bar {
+  @layer component {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-sizing: border-box;
+    block-size: var(--preview-bar-height);
+    padding-inline: max(
+      var(--page-side-padding),
+      (100% - var(--page-max-width)) /
+      2
+    );
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-hover);
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+}

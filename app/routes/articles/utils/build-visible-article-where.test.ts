@@ -11,7 +11,7 @@ vi.mock('~/utils/permissions/author/get-web-content-visibility.server', () => ({
 
 const createVisibility = (
   where: WebContentVisibility['where'],
-): WebContentVisibility => ({ where })
+): WebContentVisibility => ({ previewMode: null, where })
 
 describe('buildVisibleArticleWhere', () => {
   test('a visitor sees published articles with an address', () => {
@@ -25,14 +25,14 @@ describe('buildVisibleArticleWhere', () => {
     })
   })
 
-  test('a previewing author sees drafts only once they have an address (0020)', () => {
+  test('a previewing author sees drafts and archived articles, drafts only once they have an address (0020, 10d)', () => {
     const where = vi.fn(() => ({
       OR: [{ state: 'published' as const }, { state: 'draft' as const }],
     }))
 
-    expect(
-      buildVisibleArticleWhere(createVisibility(where), ['draft', 'archived']),
-    ).toMatchObject({ slug: { not: null } })
+    expect(buildVisibleArticleWhere(createVisibility(where))).toMatchObject({
+      slug: { not: null },
+    })
     expect(where).toHaveBeenCalledWith('article', expect.any(Function), [
       'draft',
       'archived',

@@ -70,3 +70,11 @@
     }
   }
 }
+
+/* The dashed outline of what the reader doesn't see; an outline moves nothing (10d). */
+.preview {
+  @layer variant {
+    outline: 2px dashed var(--preview-outline);
+    outline-offset: 4px;
+  }
+}

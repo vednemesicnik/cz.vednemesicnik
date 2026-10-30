@@ -4,21 +4,11 @@
     display: grid;
     position: sticky;
     top: 0;
-    grid-template-columns: minmax(auto, var(--page-max-width));
-    grid-auto-flow: row;
-    justify-content: center;
-    justify-items: center;
+    grid-template-columns: minmax(0, 1fr);
     block-size: var(--app-header-height);
-    padding: 12px var(--page-side-padding);
-    row-gap: 16px;
     background-color: var(--bg-primary);
-    border-bottom: 1px solid var(--border);
     z-index: var(--z-header);
     backdrop-filter: blur(8px);
-
-    @media (width >= 768px) {
-      padding-block: 24px;
-    }
 
     /* Hides while scrolling down and returns on the way up, by the shift set
        on the body below. */
@@ -49,6 +39,8 @@
   }
 }
 
+/* The header's row: the logo and the navigation in the page's column, its rule
+   running edge to edge; a preview bar follows it (10d). */
 .content {
   @layer component {
     display: grid;
@@ -56,8 +48,15 @@
     grid-template-columns: max-content 1fr;
     grid-template-areas: "home-link navigation";
     column-gap: 48px;
-    width: 100%;
-    height: 100%;
+    box-sizing: border-box;
+    block-size: var(--app-header-content-height);
+    padding: 12px
+      max(var(--page-side-padding), (100% - var(--page-max-width)) / 2);
+    border-bottom: 1px solid var(--border);
     align-items: center;
+
+    @media (width >= 768px) {
+      padding-block: 24px;
+    }
   }
 }

@@ -15,6 +15,7 @@ import { MediaContentLink } from '~/components/media-content-link'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 import { ParentLink } from '~/components/parent-link'
+import { StatusTag } from '~/components/status-tag'
 import { Subheadline } from '~/components/subheadline'
 import { EPISODE_NOUN } from '~/config/list-noun-config'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
@@ -42,10 +43,13 @@ export default function PodcastPage({
         <CoverHeaderBody>
           <Headline>{podcast.title}</Headline>
           {/* Without a published episode, no count (13d). */}
-          <Subheadline>
+          <Subheadline className={styles.subheadline}>
             {podcast.publishedEpisodeCount === 0
               ? 'Podcast'
               : `Podcast · ${formatListCount(podcast.publishedEpisodeCount, EPISODE_NOUN.countForms)}`}
+            {podcast.previewState !== null && (
+              <StatusTag muted state={podcast.previewState} />
+            )}
           </Subheadline>
           {podcast.description !== '' && (
             <Paragraph className={styles.description}>
@@ -67,13 +71,17 @@ export default function PodcastPage({
             return (
               <ContentListItem key={episode.id}>
                 <MediaContentLink
+                  isPreview={episode.previewState !== null}
                   to={`/podcasts/${podcast.slug}/${episode.slug}`}
                 >
                   <ContentLinkTitle number={episode.number ?? undefined}>
                     {episode.title}
                   </ContentLinkTitle>
                   <ContentLinkFooter>
-                    <ContentLinkPublishDate date={episode.publishedAt} />
+                    <ContentLinkPublishDate
+                      date={episode.publishedAt}
+                      previewState={episode.previewState}
+                    />
                   </ContentLinkFooter>
                 </MediaContentLink>
               </ContentListItem>

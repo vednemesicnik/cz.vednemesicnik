@@ -15,6 +15,7 @@ import { Page } from '~/components/page'
 import { Pagination } from '~/components/pagination'
 import { ParentLink } from '~/components/parent-link'
 import { PostContentLink } from '~/components/post-content-link'
+import type { StatusTagState } from '~/components/status-tag'
 import { Subheadline } from '~/components/subheadline'
 import type { Breadcrumb } from '~/types/breadcrumb'
 import { formatArticleCount } from '~/utils/format-article-count'
@@ -26,6 +27,7 @@ type TaxonomyArticle = {
   categories: { name: string; slug: string }[]
   featuredImage: { altText: string; sources: ImageSources } | null
   id: string
+  previewState: StatusTagState | null
   publishedAt: FormattedDate
   slug: string
   title: string
@@ -88,6 +90,7 @@ export const TaxonomyPage = ({
           {articles.map((article) => (
             <ContentListItem key={article.id}>
               <PostContentLink
+                isPreview={article.previewState !== null}
                 to={href('/articles/:articleSlug', {
                   articleSlug: article.slug,
                 })}
@@ -108,7 +111,10 @@ export const TaxonomyPage = ({
                   <ContentLinkAuthor>
                     {article.authors.map((author) => author.name).join(', ')}
                   </ContentLinkAuthor>
-                  <ContentLinkPublishDate date={article.publishedAt} />
+                  <ContentLinkPublishDate
+                    date={article.publishedAt}
+                    previewState={article.previewState}
+                  />
                 </ContentLinkFooter>
               </PostContentLink>
             </ContentListItem>

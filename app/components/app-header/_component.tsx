@@ -9,10 +9,13 @@ type Props = {
   children?: ReactNode
 }
 
+/**
+ * The public site's header: the logo and the navigation, then whatever the
+ * layout passes under them, such as the preview bar (10d).
+ */
 export const AppHeader = ({ children }: Props) => {
   return (
     <header className={styles.container}>
-      {children}
       <section className={styles.content}>
         <HomeLink />
         <Navigation>
@@ -22,6 +25,7 @@ export const AppHeader = ({ children }: Props) => {
           <NavigationItem to={href('/editorial-board')}>Redakce</NavigationItem>
         </Navigation>
       </section>
+      {children}
     </header>
   )
 }

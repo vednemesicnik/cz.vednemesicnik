@@ -61,6 +61,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           return (
             <ContentListItem key={article.id}>
               <PostContentLink
+                isPreview={article.previewState !== null}
                 to={href('/articles/:articleSlug', {
                   articleSlug: article.slug,
                 })}
@@ -81,7 +82,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   <ContentLinkAuthor>
                     {article.authors.map((author) => author.name).join(', ')}
                   </ContentLinkAuthor>
-                  <ContentLinkPublishDate date={article.publishedAt} />
+                  <ContentLinkPublishDate
+                    date={article.publishedAt}
+                    previewState={article.previewState}
+                  />
                 </ContentLinkFooter>
               </PostContentLink>
             </ContentListItem>

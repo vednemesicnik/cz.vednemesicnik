@@ -1,0 +1,7 @@
+.wide {
+  @layer component {
+    @media (width < 768px) {
+      display: none;
+    }
+  }
+}

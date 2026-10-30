@@ -1,5 +1,8 @@
 import type { Prisma } from '@generated/prisma/client'
-import { data } from 'react-router'
+import { data, href } from 'react-router'
+import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
+import type { PagePreview } from '~/utils/content-preview/page-preview'
+import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -24,6 +27,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   ])
 
   const select = {
+    ...WEB_PREVIEW_STATE_SELECT,
     authors: {
       select: {
         name: true,
@@ -45,6 +49,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         description: true,
       },
     },
+    id: true,
     images: {
       orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
       select: {
@@ -122,9 +127,24 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     sources: createImageSources('article-image', image),
   }))
 
+  const { reviews, state, submittedAt, ...rest } = article
+  const previewState = getWebPreviewState({ reviews, state, submittedAt })
+
+  // The page of an unpublished article is the preview itself (10d).
+  const preview: PagePreview | null =
+    previewState === null
+      ? null
+      : {
+          administrationPath: href('/administration/articles/:articleId', {
+            articleId: article.id,
+          }),
+          entity: 'article',
+          kind: 'item',
+        }
+
   return {
     article: {
-      ...article,
+      ...rest,
       featuredImage,
       images,
       // The admin derives the OG crop whenever it saves a featured image.
@@ -135,7 +155,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
             article.featuredImage.version,
           )
         : null,
+      previewState,
       publishedAt: createFormattedDate(article.publishedAt),
     },
+    preview,
   }
 }

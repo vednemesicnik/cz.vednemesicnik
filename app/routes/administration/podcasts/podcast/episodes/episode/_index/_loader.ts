@@ -151,9 +151,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const submission = flags.submission?.state ?? null
 
   // The link to the web only where the public page would open the episode
-  // (tly4a163); a draft without an address has no page yet.
+  // (tly4a163); a draft without an address has no page yet. The reader view
+  // (10d) doesn't hide the link.
   const visibleWhere = buildWebVisibleEpisodeWhere(
-    await getWebContentVisibility(request, ['podcast', 'podcast_episode']),
+    await getWebContentVisibility(request, ['podcast', 'podcast_episode'], {
+      ignoreReaderView: true,
+    }),
   )
 
   const [history, visibleCount, missingBeforePublish] = await Promise.all([

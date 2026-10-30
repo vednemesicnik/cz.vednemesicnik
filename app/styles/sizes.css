@@ -1,8 +1,13 @@
 :root {
-  /* The public header, its own height and the `top` of what sticks under it
-     (10a, d104jrnd): 24 px, the 40 px logo, 24 px, the 1 px rule; on a phone
-     12 px, the 44 px Menu button, 12 px and the rule. */
-  --app-header-height: 89px;
+  /* The public header's row (10a, d104jrnd): 24 px, the 40 px logo, 24 px,
+     the 1 px rule; on a phone 12 px, the 44 px Menu button, 12 px and the
+     rule. The whole header adds the preview bar when a page has one (10d);
+     its height is the `top` of what sticks under it. */
+  --app-header-content-height: 89px;
+  --app-header-height: calc(
+    var(--app-header-content-height) +
+    var(--preview-bar-height, 0px)
+  );
   --app-navigation-height: 40px;
   --page-max-width: 940px;
   --page-side-padding: 24px;
@@ -31,9 +36,14 @@
   --admin-page-row-gap: 24px;
 }
 
+/* The preview bar's one line: 10 px, 13 px text at 1.45, 10 px, the 1 px rule (10d). */
+:root:has([data-preview-bar]) {
+  --preview-bar-height: 40px;
+}
+
 @media (width < 768px) {
   :root {
-    --app-header-height: 69px;
+    --app-header-content-height: 69px;
     --admin-page-side-padding: 16px;
   }
 }

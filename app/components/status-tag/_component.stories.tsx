@@ -47,3 +47,16 @@ export const Overview: Story = {
     </div>
   ),
 }
+
+/** Grey in every state on the public web's preview (10d). */
+export const Muted: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
+      <StatusTag muted state={'draft'} />
+      <StatusTag muted state={'pending'} />
+      <StatusTag muted state={'approved'} />
+      <StatusTag muted state={'archived'} />
+    </div>
+  ),
+}

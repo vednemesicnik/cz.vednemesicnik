@@ -121,9 +121,10 @@ nedělá**. Poznají se jen podle modelu:
 - **Publikovaný obsah nejde upravit na místě** — nejdřív se stáhne z publikace do konceptu.
 - **Datum publikace nastaví jen Koordinátor, a nikdy do budoucnosti.** Nic se neplánuje: publikovaný
   článek je na webu hned. Věta, která slibuje „naplánované zveřejnění“, je nepravda.
-- **Na webu vidí koncept a archivovaný článek jen ten, kdo ho vidí v administraci** — jako
-  náhled, dnes nijak odlišený od publikovaného. Přispěvatel jen vlastní, Tvůrce jakýkoli koncept
-  a vlastní archivovaný, Koordinátor všechno. Nepřihlášený čtenář vidí jen publikované.
+- **Na webu vidí koncept a archivovaný obsah jen ten, kdo ho vidí v administraci** — jako
+  náhled s lištou pod hlavičkou, čárkovaným rámečkem a šedým štítkem stavu (10d). Přispěvatel
+  jen vlastní, Tvůrce jakýkoli koncept a vlastní archivovaný, Koordinátor všechno. *Zobrazit
+  jako čtenář* náhled vypne do zavření prohlížeče. Nepřihlášený čtenář vidí jen publikované.
 - **Číslo nenese články.** Viz termíny.
 
 ## Nový návrh administrace (rozhodnuto, postaveno)
@@ -172,9 +173,10 @@ tohle (rozhodnuto 27.–28. 9. 2026):
 
 Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
 
-- **Náhled konceptu na webu zůstává, ale je vidět, že je to koncept.** Vidí ho jen ten, kdo daný
-  obsah vidí v administraci: Přispěvatel jen vlastní koncepty, Tvůrce a Koordinátor jakékoli. Pro
-  ostatní je cizí koncept, jako pro čtenáře, stránka, která neexistuje.
+- **Náhled konceptu na webu zůstává, ale je vidět, že je to koncept** (postaveno 30. 10. 2026).
+  Vidí ho jen ten, kdo daný obsah vidí v administraci: Přispěvatel jen vlastní koncepty, Tvůrce
+  a Koordinátor jakékoli. Pro ostatní je cizí koncept, jako pro čtenáře, stránka, která
+  neexistuje.
 - **Přejmenovaný publikovaný obsah se přesměruje** ze staré adresy na novou. Věta na chybové
   stránce, že se obsah „možná přejmenoval“, je proto nepravda.
 

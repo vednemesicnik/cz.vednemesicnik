@@ -10,8 +10,10 @@ import { Headline } from '~/components/headline'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 import { ParentLink } from '~/components/parent-link'
+import { StatusTag } from '~/components/status-tag'
 import { Subheadline } from '~/components/subheadline'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
+import { showsPublishDate } from '~/utils/content-preview/shows-publish-date'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 import { ListenLinkCard } from './components/listen-link-card'
@@ -47,13 +49,17 @@ export default function RouteComponent({
             )}
             {podcastEpisode.title}
           </Headline>
-          <Subheadline>
-            {podcastEpisode.publishedAt.iso ? (
-              <time dateTime={podcastEpisode.publishedAt.iso}>
-                {podcastEpisode.publishedAt.formatted}
-              </time>
-            ) : (
-              podcastEpisode.publishedAt.formatted
+          <Subheadline className={styles.subheadline}>
+            {showsPublishDate(podcastEpisode.previewState) &&
+              (podcastEpisode.publishedAt.iso ? (
+                <time dateTime={podcastEpisode.publishedAt.iso}>
+                  {podcastEpisode.publishedAt.formatted}
+                </time>
+              ) : (
+                podcastEpisode.publishedAt.formatted
+              ))}
+            {podcastEpisode.previewState !== null && (
+              <StatusTag muted state={podcastEpisode.previewState} />
             )}
           </Subheadline>
         </CoverHeaderBody>

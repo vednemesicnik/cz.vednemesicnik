@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { href } from 'react-router'
 import { BaseLink } from '~/components/base-link'
 import { EmptyState } from '~/components/empty-state'
@@ -6,7 +7,9 @@ import { HeadlineGroup } from '~/components/headline-group'
 import { LinkStrip } from '~/components/link-strip'
 import { Page } from '~/components/page'
 import { ParentLink } from '~/components/parent-link'
+import { StatusTag } from '~/components/status-tag'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
+import { showsPublishDate } from '~/utils/content-preview/shows-publish-date'
 import { formatArticleCount } from '~/utils/format-article-count'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -49,7 +52,13 @@ export default function RouteComponent({
               </div>
               <ul className={styles.latest}>
                 {category.latestArticles.map((article) => (
-                  <li className={styles.latestItem} key={article.id}>
+                  <li
+                    className={clsx(
+                      styles.latestItem,
+                      article.previewState !== null && styles.preview,
+                    )}
+                    key={article.id}
+                  >
                     <BaseLink
                       className={styles.latestTitle}
                       to={href('/articles/:articleSlug', {
@@ -58,18 +67,24 @@ export default function RouteComponent({
                     >
                       {article.title}
                     </BaseLink>
-                    {article.publishedAt.iso ? (
-                      <time
-                        className={styles.latestDate}
-                        dateTime={article.publishedAt.iso}
-                      >
-                        {article.publishedAt.formatted}
-                      </time>
-                    ) : (
-                      <span className={styles.latestDate}>
-                        {article.publishedAt.formatted}
-                      </span>
-                    )}
+                    <span className={styles.latestMeta}>
+                      {showsPublishDate(article.previewState) &&
+                        (article.publishedAt.iso ? (
+                          <time
+                            className={styles.latestDate}
+                            dateTime={article.publishedAt.iso}
+                          >
+                            {article.publishedAt.formatted}
+                          </time>
+                        ) : (
+                          <span className={styles.latestDate}>
+                            {article.publishedAt.formatted}
+                          </span>
+                        ))}
+                      {article.previewState !== null && (
+                        <StatusTag muted state={article.previewState} />
+                      )}
+                    </span>
                   </li>
                 ))}
               </ul>

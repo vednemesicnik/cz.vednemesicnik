@@ -62,3 +62,14 @@
     margin-block-end: 0;
   }
 }
+
+/* The state tag after the authors and the date, or in the date's place (10d),
+   as on the episode and podcast pages. */
+.subheadline {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+}

@@ -1,4 +1,8 @@
 import { buildVisibleArticleWhere } from '~/routes/articles/utils/build-visible-article-where'
+import { getListPreview } from '~/utils/content-preview/get-list-preview'
+import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
+import { takeDraftsFirst } from '~/utils/content-preview/take-drafts-first'
+import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { hasSlug } from '~/utils/has-slug'
@@ -14,6 +18,14 @@ import type { Route } from './+types/route'
 const LATEST_ARTICLES_PER_CATEGORY = 2
 const TAG_STRIP_SIZE = 3
 
+const latestArticleSelect = {
+  ...WEB_PREVIEW_STATE_SELECT,
+  id: true,
+  publishedAt: true,
+  slug: true,
+  title: true,
+} as const
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const visibility = await getWebContentVisibility(request, [
     'article',
@@ -22,7 +34,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   ])
   const visibleArticles = buildVisibleArticleWhere(visibility)
 
-  const [categories, tags] = await Promise.all([
+  // A category's latest articles put its drafts on top (10d). The drafts are
+  // few, so they come in one query and are grouped here.
+  const [categories, drafts, tags] = await Promise.all([
     prisma.articleCategory.findMany({
       select: {
         _count: {
@@ -32,20 +46,20 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         },
         articles: {
           orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
-          select: {
-            id: true,
-            publishedAt: true,
-            slug: true,
-            title: true,
-          },
+          select: latestArticleSelect,
           take: LATEST_ARTICLES_PER_CATEGORY,
-          where: visibleArticles,
+          where: { AND: [visibleArticles, { state: { not: 'draft' } }] },
         },
         id: true,
         name: true,
         slug: true,
       },
       where: visibility.where('article_category', ownByAuthor),
+    }),
+    prisma.article.findMany({
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      select: { ...latestArticleSelect, categories: { select: { id: true } } },
+      where: { AND: [visibleArticles, { state: 'draft' }] },
     }),
     findTagsWithArticleCounts(visibility),
   ])
@@ -57,10 +71,23 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     .map((category) => ({
       articleCount: category._count.articles,
       id: category.id,
-      latestArticles: category.articles.filter(hasSlug).map((article) => ({
-        ...article,
-        publishedAt: createFormattedDate(article.publishedAt),
-      })),
+      latestArticles: takeDraftsFirst(
+        drafts.filter((draft) =>
+          draft.categories.some(({ id }) => id === category.id),
+        ),
+        category.articles,
+        LATEST_ARTICLES_PER_CATEGORY,
+      )
+        .filter(hasSlug)
+        .map(
+          ({ id, publishedAt, reviews, slug, state, submittedAt, title }) => ({
+            id,
+            previewState: getWebPreviewState({ reviews, state, submittedAt }),
+            publishedAt: createFormattedDate(publishedAt),
+            slug,
+            title,
+          }),
+        ),
       name: category.name,
       slug: category.slug,
     }))
@@ -70,5 +97,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     slug: tag.slug,
   }))
 
-  return { categories: categoriesWithArticles, tagLinks }
+  return {
+    categories: categoriesWithArticles,
+    preview: getListPreview(
+      categoriesWithArticles.flatMap((category) => category.latestArticles),
+    ),
+    tagLinks,
+  }
 }
