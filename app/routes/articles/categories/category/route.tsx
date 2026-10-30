@@ -22,6 +22,7 @@ export default function RouteComponent({
       name={category.name}
       pageSize={pageSize}
       parent={parent}
+      previewState={category.previewState}
       totalCount={totalCount}
       totalPages={totalPages}
     />

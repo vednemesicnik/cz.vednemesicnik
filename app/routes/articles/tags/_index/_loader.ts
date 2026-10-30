@@ -1,3 +1,4 @@
+import { getListPreview } from '~/utils/content-preview/get-list-preview'
 import { getWebContentVisibility } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { findCategoriesWithArticleCounts } from '../../utils/find-categories-with-article-counts.server'
 import { findTagsWithArticleCounts } from '../../utils/find-tags-with-article-counts.server'
@@ -18,6 +19,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return {
     hasCategories: categories.length > 0,
+    preview: getListPreview(tags),
     tagGroups: groupTagsByLetter(tags),
   }
 }

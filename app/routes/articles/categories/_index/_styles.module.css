@@ -74,8 +74,20 @@
   }
 }
 
+/* A category the reader doesn't see: the card's outline, like an article card's (11e). */
+.cardPreview {
+  @layer route {
+    outline: 2px dashed var(--preview-outline);
+    outline-offset: 4px;
+  }
+}
+
+/* The count is the category's fact; a preview's grey tag stands after it (11e). */
 .cardCount {
   @layer route {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     flex: none;
     font-size: var(--font-size-sm);
     color: var(--text-secondary);

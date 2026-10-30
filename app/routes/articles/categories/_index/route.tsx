@@ -34,7 +34,13 @@ export default function RouteComponent({
       {categories.length > 0 ? (
         <ul className={styles.cards}>
           {categories.map((category) => (
-            <li className={styles.card} key={category.id}>
+            <li
+              className={clsx(
+                styles.card,
+                category.previewState !== null && styles.cardPreview,
+              )}
+              key={category.id}
+            >
               <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>
                   <BaseLink
@@ -48,6 +54,9 @@ export default function RouteComponent({
                 </h2>
                 <span className={styles.cardCount}>
                   {formatArticleCount(category.articleCount)}
+                  {category.previewState !== null && (
+                    <StatusTag muted state={category.previewState} />
+                  )}
                 </span>
               </div>
               <ul className={styles.latest}>
@@ -100,6 +109,7 @@ export default function RouteComponent({
       {tagLinks.length > 0 && (
         <LinkStrip
           links={tagLinks.map((tag) => ({
+            isPreview: tag.previewState !== null,
             label: tag.name,
             to: href('/articles/tags/:slug', { slug: tag.slug }),
           }))}

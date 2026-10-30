@@ -1,3 +1,5 @@
+import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
+import { withWebPreviewState } from '~/utils/content-preview/with-web-preview-state'
 import { prisma } from '~/utils/db.server'
 import { nameCollator } from '~/utils/name-collator'
 import {
@@ -11,13 +13,14 @@ import { buildVisibleArticleWhere } from './build-visible-article-where'
  * see, with that article count.
  *
  * @param visibility - The request's web visibility, built for `article` and `article_tag`.
- * @returns Tags ordered by name (Czech collation), each with `articleCount > 0`.
+ * @returns Tags ordered by name (Czech collation), each with `articleCount > 0` and its `previewState` (11e).
  */
 export const findTagsWithArticleCounts = async (
   visibility: WebContentVisibility,
 ) => {
   const tags = await prisma.articleTag.findMany({
     select: {
+      ...WEB_PREVIEW_STATE_SELECT,
       _count: {
         select: {
           articles: { where: buildVisibleArticleWhere(visibility) },
@@ -31,11 +34,9 @@ export const findTagsWithArticleCounts = async (
   })
 
   return tags
-    .map((tag) => ({
-      articleCount: tag._count.articles,
-      id: tag.id,
-      name: tag.name,
-      slug: tag.slug,
+    .map(({ _count, ...tag }) => ({
+      ...withWebPreviewState(tag),
+      articleCount: _count.articles,
     }))
     .filter((tag) => tag.articleCount > 0)
     .sort((first, second) => nameCollator.compare(first.name, second.name))

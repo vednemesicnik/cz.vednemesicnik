@@ -45,3 +45,21 @@ export const Overview: Story = {
     </div>
   ),
 }
+
+export const Preview: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+      <Badge isPreview={true} to={'/articles/categories/glosy'}>
+        Glosy
+      </Badge>
+      <Badge
+        isPreview={true}
+        to={'/articles/tags/maturitni-ples'}
+        variant={'outlined'}
+      >
+        maturitní ples
+      </Badge>
+    </div>
+  ),
+}

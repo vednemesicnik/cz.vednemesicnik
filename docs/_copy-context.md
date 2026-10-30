@@ -125,6 +125,8 @@ nedělá**. Poznají se jen podle modelu:
   náhled s lištou pod hlavičkou, čárkovaným rámečkem a šedým štítkem stavu (10d). Přispěvatel
   jen vlastní, Tvůrce jakýkoli koncept a vlastní archivovaný, Koordinátor všechno. *Zobrazit
   jako čtenář* náhled vypne do zavření prohlížeče. Nepřihlášený čtenář vidí jen publikované.
+  Výjimka: **archivovanou rubriku ani štítek na webu neotevře nikdo**, ani Koordinátor; náhled
+  mají jen rubrika a štítek v konceptu (rozhodnuto 30. 10. 2026).
 - **Číslo nenese články.** Viz termíny.
 
 ## Nový návrh administrace (rozhodnuto, postaveno)

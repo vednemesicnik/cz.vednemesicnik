@@ -35,3 +35,11 @@
     }
   }
 }
+
+/* What the reader doesn't see: the dashed line takes the pill's own edge, so the row's scroller can't clip it (11e). */
+.preview {
+  @layer variant {
+    outline: 2px dashed var(--preview-outline);
+    outline-offset: -2px;
+  }
+}

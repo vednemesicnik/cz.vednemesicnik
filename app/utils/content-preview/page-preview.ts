@@ -1,5 +1,10 @@
 /** Content whose own page the web can preview (10d). */
-export type PreviewEntity = 'article' | 'podcast' | 'podcast_episode'
+export type PreviewEntity =
+  | 'article'
+  | 'article_category'
+  | 'article_tag'
+  | 'podcast'
+  | 'podcast_episode'
 
 /**
  * What a public page shows the reader doesn't see (10d): a list with
