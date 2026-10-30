@@ -1,8 +1,10 @@
 import type { Prisma } from '@generated/prisma/client'
 import { data, href } from 'react-router'
+import { getListPreview } from '~/utils/content-preview/get-list-preview'
 import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
 import type { PagePreview } from '~/utils/content-preview/page-preview'
 import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
+import { withWebPreviewState } from '~/utils/content-preview/with-web-preview-state'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -36,6 +38,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     // Only taxonomy whose own page opens for this reader (design 25d).
     categories: {
       select: {
+        ...WEB_PREVIEW_STATE_SELECT,
         name: true,
         slug: true,
       },
@@ -61,6 +64,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     publishedAt: true,
     tags: {
       select: {
+        ...WEB_PREVIEW_STATE_SELECT,
         name: true,
         slug: true,
       },
@@ -129,11 +133,14 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const { reviews, state, submittedAt, ...rest } = article
   const previewState = getWebPreviewState({ reviews, state, submittedAt })
+  const categories = rest.categories.map(withWebPreviewState)
+  const tags = rest.tags.map(withWebPreviewState)
 
-  // The page of an unpublished article is the preview itself (10d).
+  // The page of an unpublished article is the preview itself; a published one
+  // marks the categories and tags the reader doesn't see (10d, 11e).
   const preview: PagePreview | null =
     previewState === null
-      ? null
+      ? getListPreview([...categories, ...tags])
       : {
           administrationPath: href('/administration/articles/:articleId', {
             articleId: article.id,
@@ -145,6 +152,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   return {
     article: {
       ...rest,
+      categories,
       featuredImage,
       images,
       // The admin derives the OG crop whenever it saves a featured image.
@@ -157,6 +165,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         : null,
       previewState,
       publishedAt: createFormattedDate(article.publishedAt),
+      tags,
     },
     preview,
   }

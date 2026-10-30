@@ -6,6 +6,7 @@ import { findArticlesDraftsFirst } from '~/routes/articles/utils/find-articles-d
 import { getListPreview } from '~/utils/content-preview/get-list-preview'
 import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
 import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
+import { withWebPreviewState } from '~/utils/content-preview/with-web-preview-state'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { hasSlug } from '~/utils/has-slug'
@@ -47,6 +48,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         },
         categories: {
           select: {
+            ...WEB_PREVIEW_STATE_SELECT,
             name: true,
             slug: true,
           },
@@ -74,7 +76,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const categoryLinks = pickTopByArticleCount(
     categories,
     CATEGORY_ROW_SIZE,
-  ).map((category) => ({ name: category.name, slug: category.slug }))
+  ).map((category) => ({
+    name: category.name,
+    previewState: category.previewState,
+    slug: category.slug,
+  }))
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
@@ -87,6 +93,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     .filter(hasSlug)
     .map(({ reviews, state, submittedAt, ...article }) => ({
       ...article,
+      categories: article.categories.map(withWebPreviewState),
       featuredImage: article.featuredImage
         ? {
             altText: article.featuredImage.altText,
@@ -102,7 +109,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     categoryLinks,
     currentPage,
     pageSize: PAGE_SIZE,
-    preview: getListPreview(articlesWithSources),
+    preview: getListPreview([
+      ...articlesWithSources,
+      ...articlesWithSources.flatMap((article) => article.categories),
+      ...categoryLinks,
+    ]),
     totalCount,
     totalPages,
   }
