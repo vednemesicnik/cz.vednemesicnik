@@ -1,0 +1,8 @@
+.message {
+  @layer component {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

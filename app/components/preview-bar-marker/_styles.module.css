@@ -1,0 +1,12 @@
+.marker {
+  @layer component {
+    display: inline-block;
+    vertical-align: -1px;
+    margin-inline-end: 10px;
+    box-sizing: border-box;
+    width: 16px;
+    height: 11px;
+    border: 2px dashed var(--preview-outline);
+    border-radius: 3px;
+  }
+}
