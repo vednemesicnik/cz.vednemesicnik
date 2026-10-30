@@ -112,6 +112,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
               }
             : null,
           id: issue.id,
+          isSupplement: issue.supplement !== null,
           linkLabel: getIssueLinkLabel(numberedIssue, mainIssueName),
           pdfPath,
           previewState: getWebPreviewState({

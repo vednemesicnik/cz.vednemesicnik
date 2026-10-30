@@ -119,3 +119,21 @@ export const Overview: Story = {
     </ContentList>
   ),
 }
+
+/** An article the reader doesn't see: outlined, its grey tag in the date's place (10d). */
+export const Preview: Story = {
+  args: {
+    children: (
+      <>
+        <ContentLinkImage alt={'Ilustrační fotografie'} image={photo} />
+        <ContentLinkTitle>Jak se píše recenze, která neurazí</ContentLinkTitle>
+        <ContentLinkFooter>
+          <ContentLinkAuthor>Marie Horáková</ContentLinkAuthor>
+          <ContentLinkPublishDate date={publishDate} previewState={'draft'} />
+        </ContentLinkFooter>
+      </>
+    ),
+    isPreview: true,
+    to: '/articles/jak-se-pise-recenze',
+  },
+}

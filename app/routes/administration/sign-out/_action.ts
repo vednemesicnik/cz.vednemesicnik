@@ -7,6 +7,7 @@ import {
 } from '~/utils/auth.server'
 import { recordAuthLog } from '~/utils/auth-log.server'
 import { prisma } from '~/utils/db.server'
+import { clearReaderViewCookie } from '~/utils/reader-view/clear-reader-view-cookie.server'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import { deleteSession } from './utils/delete-session.server'
@@ -43,17 +44,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // confirmation keeps its `no-referrer` policy for the whole session.
   const redirectTo = formData.get('redirectTo')
 
+  // The reader view (10d) ends with the sign-in, so the next author in this
+  // browser starts in the editorial preview.
+  const headers = new Headers()
+  headers.append(
+    'Set-Cookie',
+    await deleteSessionAuthCookieSession(sessionAuthCookieSession),
+  )
+  headers.append('Set-Cookie', await clearReaderViewCookie())
+
   return redirect(
     withRedirectTo(
       href('/administration/sign-in'),
       typeof redirectTo === 'string' ? redirectTo : '',
     ),
-    {
-      headers: {
-        'Set-Cookie': await deleteSessionAuthCookieSession(
-          sessionAuthCookieSession,
-        ),
-      },
-    },
+    { headers },
   )
 }

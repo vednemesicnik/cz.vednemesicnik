@@ -38,6 +38,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     skip: 0,
     take: 6,
     where: buildVisibleArticleWhere(visibility),
+    withDrafts: visibility.previewMode === 'staff',
   })
 
   const articlesWithSources = articles

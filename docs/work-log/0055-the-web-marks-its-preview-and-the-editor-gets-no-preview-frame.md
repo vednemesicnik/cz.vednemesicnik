@@ -28,24 +28,27 @@ tab, and it would only show in windows of about 1700 px and up.
   unpublished content with its administration path, or `null`. The layout reads the deepest
   match's (`findPagePreview`) and draws the bar.
 - **The reader view is a session cookie**, `vdm_reader_view` without an expiry, flipped by a
-  JS-free POST to `/resources/reader-view`. It has no CSRF token: the cookie is SameSite=Lax,
-  so a cross-site post carries no sign-in, and a forged flip only changes the visitor's own
-  view. In the reader view the bar stands on every public page, 404 included, because a page
-  that stopped previewing can't know what it hides, and the switch back has to be reachable
-  from anywhere.
+  JS-free POST to `/resources/reader-view` and cleared by sign-out. It has no CSRF token: the
+  action reads no session and stores nothing, so a forged post can at most switch a visitor's
+  own view. In the reader view the bar stands on every public page, 404 included, because a
+  page that stopped previewing can't know what it hides, and the switch back has to be
+  reachable from anywhere. The administration's link to the web (tly4a163) ignores it.
 - **Drafts first takes two queries** (`findDraftsFirstPage`). A never-published draft has no
   `publishedAt`, and a retracted one keeps its old date, so no single `orderBy` puts drafts on
   top. The page is split into a window over the drafts (by `updatedAt`) and one over the rest
   (by `publishedAt`), so pagination stays continuous.
-- **Lists preview archived content too.** `buildVisibleArticleWhere` defaults to drafts and
+- **Lists preview archived content too.** `buildVisibleArticleWhere` previews drafts and
   archived articles, and the podcast, episode and archive lists ask for both.
 
 ## What follows
 
 - A new public list adds `WEB_PREVIEW_STATE_SELECT` to its select, maps `getWebPreviewState`,
   returns `preview` and passes `isPreview` and the state to its items.
-- An episode the reader can't see because only its podcast is unpublished carries the
-  podcast's tag.
+- An episode the reader can't see only because its podcast is unpublished is outlined and
+  its page has the bar, but it keeps its own date and carries no tag: the tag is the
+  episode's own state.
+- Categories and tags as content of their own are out of 10d's marks for now: their lists
+  and badges preview drafts unmarked, as before, and archived ones not at all.
 - The issue and episode editors still have no preview. 31c called that a question for later;
   it stays unasked.
 

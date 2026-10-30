@@ -11,6 +11,7 @@ import { prisma } from '~/utils/db.server'
  * @param options.where - The list's articles, visibility included.
  * @param options.skip - The articles before this page.
  * @param options.take - The page size.
+ * @param options.withDrafts - Whether the viewer previews drafts at all.
  * @returns The page's articles, drafts first.
  */
 export const findArticlesDraftsFirst = <Select extends Prisma.ArticleSelect>({
@@ -18,11 +19,13 @@ export const findArticlesDraftsFirst = <Select extends Prisma.ArticleSelect>({
   where,
   skip,
   take,
+  withDrafts,
 }: {
   select: Select
   where: Prisma.ArticleWhereInput
   skip: number
   take: number
+  withDrafts: boolean
 }) => {
   const draftWhere = { AND: [where, { state: 'draft' as const }] }
   const restWhere = { AND: [where, { state: { not: 'draft' as const } }] }
@@ -45,5 +48,6 @@ export const findArticlesDraftsFirst = <Select extends Prisma.ArticleSelect>({
       }),
     skip,
     take,
+    withDrafts,
   })
 }

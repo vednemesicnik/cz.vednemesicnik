@@ -109,6 +109,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       }),
     skip: 0,
     take: LATEST_EPISODE_COUNT,
+    withDrafts: visibility.previewMode === 'staff',
   })
 
   const [podcasts, episodes] = await Promise.all([
@@ -124,18 +125,22 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const restPodcasts = podcasts.filter((podcast) => podcast.state !== 'draft')
 
   const episodeItems = episodes.map(
-    ({ cover, podcast, reviews, state, submittedAt, ...episode }) => ({
-      ...episode,
-      // The episode's own cover, otherwise the podcast's (13a).
-      cover: resolveEpisodeCover({ cover, podcastCover: podcast.cover }),
-      podcast: { id: podcast.id, slug: podcast.slug, title: podcast.title },
-      // A published episode under an unpublished podcast is hidden from the
-      // reader too, and says why with the podcast's tag.
-      previewState:
-        getWebPreviewState({ reviews, state, submittedAt }) ??
-        getWebPreviewState(podcast),
-      publishedAt: createFormattedDate(episode.publishedAt),
-    }),
+    ({ cover, podcast, reviews, state, submittedAt, ...episode }) => {
+      const previewState = getWebPreviewState({ reviews, state, submittedAt })
+
+      return {
+        ...episode,
+        // The episode's own cover, otherwise the podcast's (13a).
+        cover: resolveEpisodeCover({ cover, podcastCover: podcast.cover }),
+        // A published episode under an unpublished podcast is hidden from the
+        // reader too: outlined, with its own date and no tag of its own (10d).
+        isPreview:
+          previewState !== null || getWebPreviewState(podcast) !== null,
+        podcast: { id: podcast.id, slug: podcast.slug, title: podcast.title },
+        previewState,
+        publishedAt: createFormattedDate(episode.publishedAt),
+      }
+    },
   )
 
   const podcastItems = takeDraftsFirst(
@@ -160,6 +165,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return {
     episodes: episodeItems,
     podcasts: podcastItems,
-    preview: getListPreview([...podcastItems, ...episodeItems]),
+    preview: getListPreview(podcastItems) ?? getListPreview(episodeItems),
   }
 }

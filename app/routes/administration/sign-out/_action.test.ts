@@ -41,6 +41,15 @@ describe('sign-out action', () => {
     expect(response.headers.get('Set-Cookie')).toContain('vdm_auth=')
   })
 
+  test('ends the reader view with the sign-in (10d)', async () => {
+    const response = await signOut({})
+
+    expect(response.headers.getSetCookie()).toEqual([
+      'vdm_auth=; Max-Age=0',
+      expect.stringContaining('vdm_reader_view=; Max-Age=0'),
+    ])
+  })
+
   test('goes to plain sign-in without a page', async () => {
     const response = await signOut({}, 'https://test.local/administration/x')
 

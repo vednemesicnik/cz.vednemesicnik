@@ -16,21 +16,25 @@ import { getAuthorPermissionContext } from './context/get-author-permission-cont
  *
  * @param request - The incoming request.
  * @param entities - Every entity the loader will filter.
+ * @param options.ignoreReaderView - Answer what the author could preview even
+ *   in the reader view, for the administration's link to the web (tly4a163).
  * @returns `previewMode` (`staff` previews, `reader` chose the reader view, `null` signed out) and `where(entity, ownFilter, previewStates)` building the clause for one entity; `previewStates` defaults to drafts.
  */
 export const getWebContentVisibility = async (
   request: Request,
   entities: AuthorPermissionEntity[],
+  { ignoreReaderView = false }: { ignoreReaderView?: boolean } = {},
 ) => {
   const previewMode = await getPreviewMode(request)
+  const isPreviewing =
+    previewMode === 'staff' || (ignoreReaderView && previewMode === 'reader')
 
-  const context =
-    previewMode === 'staff'
-      ? await getAuthorPermissionContext(request, {
-          actions: ['view'],
-          entities,
-        })
-      : null
+  const context = isPreviewing
+    ? await getAuthorPermissionContext(request, {
+        actions: ['view'],
+        entities,
+      })
+    : null
 
   return {
     previewMode,

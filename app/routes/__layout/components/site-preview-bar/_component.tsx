@@ -1,8 +1,8 @@
 import { Form, useLocation, useMatches } from 'react-router'
 
+import { ButtonLink } from '~/components/button-link'
+import { Link } from '~/components/link'
 import { PreviewBar } from '~/components/preview-bar'
-import { PreviewBarButton } from '~/components/preview-bar-button'
-import { PreviewBarLink } from '~/components/preview-bar-link'
 import { PreviewBarMarker } from '~/components/preview-bar-marker'
 import { PreviewBarMessage } from '~/components/preview-bar-message'
 import { PreviewBarNarrow } from '~/components/preview-bar-narrow'
@@ -11,6 +11,8 @@ import { PreviewBarWide } from '~/components/preview-bar-wide'
 import { findPagePreview } from '~/utils/content-preview/find-page-preview'
 import type { PreviewEntity } from '~/utils/content-preview/page-preview'
 import type { PreviewMode } from '~/utils/reader-view/get-preview-mode.server'
+
+import styles from './_styles.module.css'
 
 // The page of unpublished content says which (10d, kqyzagfd).
 const ITEM_SENTENCES: Record<PreviewEntity, string> = {
@@ -42,10 +44,16 @@ export const SitePreviewBar = ({ previewMode }: Props) => {
         <PreviewBarMessage>
           <PreviewBarTitle>Pohled čtenáře</PreviewBarTitle>
         </PreviewBarMessage>
-        <Form action={'/resources/reader-view'} method={'post'}>
+        <Form
+          action={'/resources/reader-view'}
+          className={styles.form}
+          method={'post'}
+        >
           <input name={'redirectTo'} type={'hidden'} value={redirectTo} />
           <input name={'readerView'} type={'hidden'} value={'off'} />
-          <PreviewBarButton>Zapnout náhled redakce</PreviewBarButton>
+          <ButtonLink className={styles.action} type={'submit'}>
+            Zapnout náhled redakce
+          </ButtonLink>
         </Form>
       </PreviewBar>
     )
@@ -62,9 +70,13 @@ export const SitePreviewBar = ({ previewMode }: Props) => {
           </PreviewBarTitle>
           <PreviewBarWide> {ITEM_SENTENCES[preview.entity]}</PreviewBarWide>
         </PreviewBarMessage>
-        <PreviewBarLink to={preview.administrationPath}>
+        <Link
+          className={styles.action}
+          prefetch={'none'}
+          to={preview.administrationPath}
+        >
           Zobrazit v administraci
-        </PreviewBarLink>
+        </Link>
       </PreviewBar>
     )
   }
@@ -81,13 +93,17 @@ export const SitePreviewBar = ({ previewMode }: Props) => {
           Obsah s čárkovaným rámečkem čtenáři nevidí.
         </PreviewBarWide>
       </PreviewBarMessage>
-      <Form action={'/resources/reader-view'} method={'post'}>
+      <Form
+        action={'/resources/reader-view'}
+        className={styles.form}
+        method={'post'}
+      >
         <input name={'redirectTo'} type={'hidden'} value={redirectTo} />
         <input name={'readerView'} type={'hidden'} value={'on'} />
-        <PreviewBarButton>
+        <ButtonLink className={styles.action} type={'submit'}>
           <PreviewBarWide>Zobrazit jako čtenář</PreviewBarWide>
           <PreviewBarNarrow>Jako čtenář</PreviewBarNarrow>
-        </PreviewBarButton>
+        </ButtonLink>
       </Form>
     </PreviewBar>
   )

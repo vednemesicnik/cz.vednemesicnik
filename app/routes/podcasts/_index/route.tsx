@@ -77,7 +77,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               return (
                 <ContentListItem key={episode.id}>
                   <MediaContentLink
-                    isPreview={episode.previewState !== null}
+                    isPreview={episode.isPreview}
                     to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
                   >
                     <ContentLinkCover alt={coverAlt} image={coverSources} />

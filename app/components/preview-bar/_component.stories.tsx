@@ -3,8 +3,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
-import { PreviewBarButton } from '~/components/preview-bar-button'
-import { PreviewBarLink } from '~/components/preview-bar-link'
+import { ButtonLink } from '~/components/button-link'
+import { Link } from '~/components/link'
 import { PreviewBarMarker } from '~/components/preview-bar-marker'
 import { PreviewBarMessage } from '~/components/preview-bar-message'
 import { PreviewBarNarrow } from '~/components/preview-bar-narrow'
@@ -45,10 +45,10 @@ export const Playground: Story = {
             Obsah s čárkovaným rámečkem čtenáři nevidí.
           </PreviewBarWide>
         </PreviewBarMessage>
-        <PreviewBarButton>
+        <ButtonLink>
           <PreviewBarWide>Zobrazit jako čtenář</PreviewBarWide>
           <PreviewBarNarrow>Jako čtenář</PreviewBarNarrow>
-        </PreviewBarButton>
+        </ButtonLink>
       </>
     ),
   },
@@ -69,10 +69,10 @@ export const Overview: Story = {
             Obsah s čárkovaným rámečkem čtenáři nevidí.
           </PreviewBarWide>
         </PreviewBarMessage>
-        <PreviewBarButton>
+        <ButtonLink>
           <PreviewBarWide>Zobrazit jako čtenář</PreviewBarWide>
           <PreviewBarNarrow>Jako čtenář</PreviewBarNarrow>
-        </PreviewBarButton>
+        </ButtonLink>
       </PreviewBar>
       <PreviewBar>
         <PreviewBarMessage>
@@ -81,15 +81,15 @@ export const Overview: Story = {
           </PreviewBarTitle>
           <PreviewBarWide> Tento článek čtenáři nevidí.</PreviewBarWide>
         </PreviewBarMessage>
-        <PreviewBarLink to={'/administration/articles/clanek'}>
+        <Link to={'/administration/articles/clanek'}>
           Zobrazit v administraci
-        </PreviewBarLink>
+        </Link>
       </PreviewBar>
       <PreviewBar>
         <PreviewBarMessage>
           <PreviewBarTitle>Pohled čtenáře</PreviewBarTitle>
         </PreviewBarMessage>
-        <PreviewBarButton>Zapnout náhled redakce</PreviewBarButton>
+        <ButtonLink>Zapnout náhled redakce</ButtonLink>
       </PreviewBar>
     </div>
   ),

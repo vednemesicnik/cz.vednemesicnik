@@ -64,10 +64,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     ...episode
   }: Prisma.PodcastEpisodeGetPayload<{ select: typeof select }>) => {
     // A published episode under an unpublished podcast is hidden from the
-    // reader too, and says why with the podcast's tag (10d).
-    const previewState =
-      getWebPreviewState({ reviews, state, submittedAt }) ??
-      getWebPreviewState(podcast)
+    // reader too: the page is a preview, with the episode's own date (10d).
+    const previewState = getWebPreviewState({ reviews, state, submittedAt })
+    const isPreview =
+      previewState !== null || getWebPreviewState(podcast) !== null
 
     return {
       podcastEpisode: {
@@ -78,17 +78,16 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         previewState,
         publishedAt: createFormattedDate(publishedAt),
       },
-      preview:
-        previewState === null
-          ? null
-          : {
-              administrationPath: href(
-                '/administration/podcasts/:podcastId/episodes/:episodeId',
-                { episodeId: episode.id, podcastId: podcast.id },
-              ),
-              entity: 'podcast_episode' as const,
-              kind: 'item' as const,
-            },
+      preview: isPreview
+        ? {
+            administrationPath: href(
+              '/administration/podcasts/:podcastId/episodes/:episodeId',
+              { episodeId: episode.id, podcastId: podcast.id },
+            ),
+            entity: 'podcast_episode' as const,
+            kind: 'item' as const,
+          }
+        : null,
     }
   }
 

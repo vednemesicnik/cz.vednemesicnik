@@ -13,6 +13,8 @@ type PageWindow = { skip: number; take: number }
  * @param options.findRest - Loads a window of the rest, newest publication first.
  * @param options.skip - The items before this page in the whole list.
  * @param options.take - The page size.
+ * @param options.withDrafts - Whether the viewer previews drafts at all; a
+ *   reader's page is the rest alone, without the drafts' queries.
  * @returns The page's items, drafts first.
  */
 export const findDraftsFirstPage = async <Item>({
@@ -21,13 +23,17 @@ export const findDraftsFirstPage = async <Item>({
   findRest,
   skip,
   take,
+  withDrafts,
 }: {
   countDrafts: () => Promise<number>
   findDrafts: (window: PageWindow) => Promise<Item[]>
   findRest: (window: PageWindow) => Promise<Item[]>
   skip: number
   take: number
+  withDrafts: boolean
 }): Promise<Item[]> => {
+  if (!withDrafts) return findRest({ skip, take })
+
   const draftCount = await countDrafts()
   const window = computeDraftsFirstWindow({ draftCount, skip, take })
 

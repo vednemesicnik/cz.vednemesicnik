@@ -63,6 +63,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       skip: (currentPage - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
       where: visibleArticles,
+      withDrafts: visibility.previewMode === 'staff',
     }),
     prisma.article.count({
       where: visibleArticles,

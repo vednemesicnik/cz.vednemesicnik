@@ -1,0 +1,15 @@
+/* The bar's action keeps its place and its line; the message gives way (10d). */
+.form {
+  @layer route {
+    display: contents;
+  }
+}
+
+/* The design system's PreviewBar sets its link 3 px under the text. */
+.action {
+  @layer route {
+    flex: none;
+    white-space: nowrap;
+    text-underline-offset: 3px;
+  }
+}

@@ -2,6 +2,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Image } from '~/components/image'
+import { StatusTag } from '~/components/status-tag'
 import { TileCaption } from '~/components/tile-caption'
 import { TileCard } from '~/components/tile-card'
 import { TileFallback } from '~/components/tile-fallback'
@@ -108,5 +109,29 @@ export const Supplement: Story = {
         </TileCaption>
       </>
     ),
+  },
+}
+
+/** A podcast the reader doesn't see: outlined, its grey tag under the label (10d). */
+export const Preview: Story = {
+  args: {
+    children: (
+      <>
+        <TileCard>
+          <Image
+            alt={'Obálka podcastu Kabinet'}
+            height={117}
+            sizes={'220px'}
+            src={'/images/podcast-cover.jpeg'}
+            width={110}
+          />
+        </TileCard>
+        <TileCaption>
+          Kabinet
+          <StatusTag muted state={'draft'} />
+        </TileCaption>
+      </>
+    ),
+    isPreview: true,
   },
 }

@@ -52,25 +52,24 @@ export default function ArticleRoute({
 
       <HeadlineGroup>
         <Headline>{article.title}</Headline>
-        <Subheadline>
-          {article.authors.map((author) => author.name).join(', ')}
-          {showsPublishDate(article.previewState) && (
-            <>
-              {' · '}
-              {article.publishedAt.iso ? (
-                <time dateTime={article.publishedAt.iso}>
-                  {article.publishedAt.formatted}
-                </time>
-              ) : (
-                article.publishedAt.formatted
-              )}
-            </>
-          )}
+        <Subheadline className={styles.subheadline}>
+          <span>
+            {article.authors.map((author) => author.name).join(', ')}
+            {showsPublishDate(article.previewState) && (
+              <>
+                {' · '}
+                {article.publishedAt.iso ? (
+                  <time dateTime={article.publishedAt.iso}>
+                    {article.publishedAt.formatted}
+                  </time>
+                ) : (
+                  article.publishedAt.formatted
+                )}
+              </>
+            )}
+          </span>
           {article.previewState !== null && (
-            <>
-              {' '}
-              <StatusTag muted state={article.previewState} />
-            </>
+            <StatusTag muted state={article.previewState} />
           )}
         </Subheadline>
       </HeadlineGroup>

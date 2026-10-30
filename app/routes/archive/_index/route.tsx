@@ -10,7 +10,7 @@ import { Image } from '~/components/image'
 import { NavRow } from '~/components/nav-row'
 import { NavRowItem } from '~/components/nav-row-item'
 import { Page } from '~/components/page'
-import { StatusTag } from '~/components/status-tag'
+import { STATUS_TAG_LABELS, StatusTag } from '~/components/status-tag'
 import { Tile } from '~/components/tile'
 import { TileCaption } from '~/components/tile-caption'
 import { TileCard } from '~/components/tile-card'
@@ -79,6 +79,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                 id,
                 cover,
                 label,
+                isSupplement,
                 linkLabel,
                 pdfPath,
                 previewState,
@@ -91,7 +92,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               return (
                 <TileGridItem key={id} {...getRevealProps(pageIndex)}>
                   <Link
-                    aria-label={linkLabel}
+                    // The link's name stands in for its content, so it
+                    // carries the preview's state tag too (10d).
+                    aria-label={
+                      previewState === null
+                        ? linkLabel
+                        : `${linkLabel}, ${STATUS_TAG_LABELS[previewState]}`
+                    }
                     reloadDocument={true}
                     to={pdfPath}
                   >
@@ -117,9 +124,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                       <TileCaption>
                         {label}
                         {/* A draft's tag takes the second line's place, the
-                            name stays (10d, copy of 29 Sep 2026). */}
+                            name stays (10d, copy of 29 Sep 2026); a
+                            supplement keeps the issue it belongs to. */}
                         {sublabel !== null &&
-                          showsPublishDate(previewState) && (
+                          (isSupplement || showsPublishDate(previewState)) && (
                             <TileSublabel>{sublabel}</TileSublabel>
                           )}
                         {previewState !== null && (
