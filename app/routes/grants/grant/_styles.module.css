@@ -18,6 +18,10 @@
         "main sponsor";
       column-gap: 40px;
       align-items: start;
+      /* Page starts aligning to the start only above 768 px; the two columns
+         start at 768 px, so they set it themselves. */
+      justify-items: start;
+      text-align: start;
     }
   }
 }
