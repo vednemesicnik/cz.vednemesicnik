@@ -1,5 +1,5 @@
 /* The sponsor box beside the text from 768 px, level with the headline;
-   below the text on a phone (15g). Items keep the page's alignment. */
+   below the text on a phone (15g). */
 .layout {
   @layer route {
     display: grid;
@@ -9,7 +9,7 @@
       "parent"
       "main"
       "sponsor";
-    justify-items: inherit;
+    justify-items: start;
 
     @media (width >= 768px) {
       grid-template-columns: minmax(0, 1fr) 320px;
@@ -18,10 +18,6 @@
         "main sponsor";
       column-gap: 40px;
       align-items: start;
-      /* Page starts aligning to the start only above 768 px; the two columns
-         start at 768 px, so they set it themselves. */
-      justify-items: start;
-      text-align: start;
     }
   }
 }
@@ -52,7 +48,6 @@
     padding: 20px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    text-align: start;
 
     @media (width >= 768px) {
       margin-block-start: 0;

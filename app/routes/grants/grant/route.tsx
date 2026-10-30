@@ -22,7 +22,8 @@ export default function RouteComponent({
   const parent = getParentBreadcrumb(matches)
 
   return (
-    <Page>
+    // Start-aligned at every width: running text, like the article (12b).
+    <Page alignment={'start'}>
       <div className={styles.layout}>
         {parent && (
           <ParentLink className={styles.parentLink} to={parent.path}>
