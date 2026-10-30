@@ -7,6 +7,7 @@ import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
 import { NavRow } from '~/components/nav-row'
+import { NavRowItem } from '~/components/nav-row-item'
 import { Page } from '~/components/page'
 import { Tile } from '~/components/tile'
 import { TileCaption } from '~/components/tile-caption'
@@ -35,14 +36,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <HeadlineGroup>
         <Headline>Naše tištěná čísla pohromadě</Headline>
         {years.length > 0 && (
-          <NavRow
-            accessibleLabel={'Roky v archivu'}
-            items={years.map(({ year }) => ({
-              label: String(year),
-              to: `#${year}`,
-            }))}
-            label={'Roky'}
-          />
+          <NavRow accessibleLabel={'Roky v archivu'} label={'Roky'}>
+            {years.map(({ year }) => (
+              <NavRowItem key={year} to={`#${year}`}>
+                {String(year)}
+              </NavRowItem>
+            ))}
+          </NavRow>
         )}
       </HeadlineGroup>
 
