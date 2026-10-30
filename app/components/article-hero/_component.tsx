@@ -1,7 +1,9 @@
+import { clsx } from 'clsx'
+import type { ReactNode } from 'react'
+
 import { BaseLink } from '~/components/base-link'
 import { Image } from '~/components/image'
 import { LinkArrow } from '~/components/link-arrow'
-import type { FormattedDate } from '~/utils/format-date'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
 import styles from './_styles.module.css'
@@ -11,25 +13,34 @@ type Author = {
 }
 
 type Props = {
+  children: ReactNode
   title: string
   to: string
   authors: Author[]
-  publishDate: FormattedDate
   image?: ImageSources
   imageAlt?: string
+  isPreview?: boolean
 }
 
+/**
+ * The home page's main article (design 10a).
+ *
+ * @param props.children - The date line after the authors, a
+ *   `ContentLinkPublishDate`.
+ * @param props.isPreview - Outlined, for an article the reader doesn't see (10d).
+ */
 export const ArticleHero = ({
+  children,
   title,
   to,
   authors,
-  publishDate,
   image,
   imageAlt,
+  isPreview,
 }: Props) => {
   return (
     <BaseLink className={styles.link} to={to}>
-      <article className={styles.container}>
+      <article className={clsx(styles.container, isPreview && styles.preview)}>
         {/* No image, no image area: the same as the article page (design 0q3rezo1). */}
         {image?.src && (
           <figure className={styles.figure}>
@@ -53,13 +64,7 @@ export const ArticleHero = ({
                 </li>
               ))}
             </ul>
-            <p className={styles.date}>
-              {publishDate.iso ? (
-                <time dateTime={publishDate.iso}>{publishDate.formatted}</time>
-              ) : (
-                publishDate.formatted
-              )}
-            </p>
+            {children}
           </div>
           <span className={styles.cta}>
             Přečíst článek

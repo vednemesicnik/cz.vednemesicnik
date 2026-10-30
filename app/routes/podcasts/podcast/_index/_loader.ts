@@ -1,5 +1,8 @@
-import { data } from 'react-router'
-
+import { data, href } from 'react-router'
+import { getListPreview } from '~/utils/content-preview/get-list-preview'
+import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
+import type { PagePreview } from '~/utils/content-preview/page-preview'
+import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import {
@@ -31,6 +34,12 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const podcast = await prisma.podcast.findUnique({
     select: {
+      ...WEB_PREVIEW_STATE_SELECT,
+      // The line under the headline counts only published episodes (13b),
+      // whatever else a signed-in author sees in the list.
+      _count: {
+        select: { episodes: { where: { state: 'published' } } },
+      },
       cover: {
         select: imageSourceSelect,
       },
@@ -40,15 +49,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         // episode (27b).
         orderBy: [{ number: 'desc' }],
         select: {
+          ...WEB_PREVIEW_STATE_SELECT,
           description: true,
           id: true,
-          links: {
-            select: {
-              id: true,
-              label: true,
-              url: true,
-            },
-          },
           number: true,
           publishedAt: true,
           // The typed address: a signed-in author sees drafts here too, and a
@@ -58,7 +61,12 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         },
         // An empty draft never shows, not even as a preview (log 0020).
         where: {
-          AND: [visibility.where('podcast_episode', ownByAuthor)],
+          AND: [
+            visibility.where('podcast_episode', ownByAuthor, [
+              'draft',
+              'archived',
+            ]),
+          ],
           ...NON_EMPTY_EPISODE_WHERE,
         },
       },
@@ -73,19 +81,45 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  const cover = {
-    altText: podcast.cover?.altText ?? '',
-    sources: createImageSources('podcast-cover', podcast.cover),
-  }
+  const { _count, cover, reviews, state, submittedAt, ...rest } = podcast
+  const previewState = getWebPreviewState({ reviews, state, submittedAt })
+
+  const episodes = rest.episodes.map(
+    ({ reviews, state, submittedAt, ...episode }) => ({
+      ...episode,
+      previewState: getWebPreviewState({ reviews, state, submittedAt }),
+      publishedAt: createFormattedDate(episode.publishedAt),
+    }),
+  )
+
+  // An unpublished podcast is the preview itself; a published one marks its
+  // unpublished episodes (10d).
+  const preview: PagePreview | null =
+    previewState === null
+      ? getListPreview(episodes)
+      : {
+          administrationPath: href('/administration/podcasts/:podcastId', {
+            podcastId: podcast.id,
+          }),
+          entity: 'podcast',
+          kind: 'item',
+        }
 
   return {
     podcast: {
-      ...podcast,
-      cover,
-      episodes: podcast.episodes.map((episode) => ({
-        ...episode,
-        publishedAt: createFormattedDate(episode.publishedAt),
-      })),
+      ...rest,
+      // No cover, no alt text: the page then shows none (0q3rezo1).
+      cover:
+        cover === null
+          ? null
+          : {
+              altText: cover.altText,
+              sources: createImageSources('podcast-cover', cover),
+            },
+      episodes,
+      previewState,
+      publishedEpisodeCount: _count.episodes,
     },
+    preview,
   }
 }

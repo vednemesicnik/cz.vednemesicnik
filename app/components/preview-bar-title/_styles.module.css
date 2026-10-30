@@ -1,0 +1,5 @@
+.title {
+  @layer component {
+    font-weight: var(--font-weight-semibold);
+  }
+}

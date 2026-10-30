@@ -13,6 +13,8 @@ import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Hyperlink } from '~/components/hyperlink'
 import { NavRow } from '~/components/nav-row'
+import { NavRowItem } from '~/components/nav-row-item'
+import { NavRowMore } from '~/components/nav-row-more'
 import { Page } from '~/components/page'
 import { Pagination } from '~/components/pagination'
 import { PostContentLink } from '~/components/post-content-link'
@@ -36,17 +38,21 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <HeadlineGroup>
         <Headline>Čtení, které vás chytne</Headline>
         {categoryLinks.length > 0 && (
-          <NavRow
-            items={categoryLinks.map((category) => ({
-              label: category.name,
-              to: href('/articles/categories/:slug', { slug: category.slug }),
-            }))}
-            label={'Rubriky'}
-            more={{
-              label: 'Všechny rubriky',
-              to: href('/articles/categories'),
-            }}
-          />
+          <NavRow label={'Rubriky'}>
+            {categoryLinks.map((category) => (
+              <NavRowItem
+                key={category.slug}
+                to={href('/articles/categories/:slug', {
+                  slug: category.slug,
+                })}
+              >
+                {category.name}
+              </NavRowItem>
+            ))}
+            <NavRowMore to={href('/articles/categories')}>
+              Všechny rubriky
+            </NavRowMore>
+          </NavRow>
         )}
       </HeadlineGroup>
 
@@ -55,6 +61,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           return (
             <ContentListItem key={article.id}>
               <PostContentLink
+                isPreview={article.previewState !== null}
                 to={href('/articles/:articleSlug', {
                   articleSlug: article.slug,
                 })}
@@ -75,7 +82,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   <ContentLinkAuthor>
                     {article.authors.map((author) => author.name).join(', ')}
                   </ContentLinkAuthor>
-                  <ContentLinkPublishDate date={article.publishedAt} />
+                  <ContentLinkPublishDate
+                    date={article.publishedAt}
+                    previewState={article.previewState}
+                  />
                 </ContentLinkFooter>
               </PostContentLink>
             </ContentListItem>

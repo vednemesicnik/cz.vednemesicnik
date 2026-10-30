@@ -29,6 +29,7 @@ const article = (index: number) => ({
   categories: [{ name: 'Rozhovor', slug: 'rozhovor' }],
   featuredImage: null,
   id: `article-${index}`,
+  previewState: null,
   publishedAt: {
     formatted: `${index}. září 2026`,
     iso: `2026-09-${String(index).padStart(2, '0')}T08:00:00.000Z`,
@@ -47,6 +48,20 @@ export const Playground: Story = {
     parent: { label: 'Rubriky', path: '/articles/categories' },
     totalCount: 18,
     totalPages: 2,
+  },
+}
+
+export const WithPreview: Story = {
+  args: {
+    ...Playground.args,
+    articles: [
+      { ...article(1), previewState: 'draft' as const },
+      { ...article(2), previewState: 'pending' as const },
+      article(3),
+      { ...article(4), previewState: 'archived' as const },
+    ],
+    totalCount: 4,
+    totalPages: 1,
   },
 }
 

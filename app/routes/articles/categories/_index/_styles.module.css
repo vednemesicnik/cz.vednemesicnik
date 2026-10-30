@@ -128,9 +128,28 @@
   }
 }
 
+.latestMeta {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
 .latestDate {
   @layer route {
     font-size: var(--font-size-sm);
     color: var(--text-tertiary);
+  }
+}
+
+/* The dashed outline of an article the reader doesn't see; an outline moves
+   nothing (10d). */
+.preview {
+  @layer route {
+    outline: 2px dashed var(--preview-outline);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
   }
 }

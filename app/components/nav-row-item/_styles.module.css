@@ -1,0 +1,37 @@
+.entry {
+  @layer component {
+    display: flex;
+    flex: none;
+  }
+}
+
+.item {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    color: var(--link-strong);
+    text-decoration: none;
+    transition:
+      background-color var(--transition-fast),
+      border-color var(--transition-fast);
+
+    &:hover {
+      border-color: var(--border-hover);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+
+    &[aria-current],
+    &[aria-current]:hover {
+      border-color: var(--primary-light);
+      background-color: var(--primary-light);
+    }
+  }
+}

@@ -1,0 +1,5 @@
+.more {
+  @layer variant {
+    color: var(--text-secondary);
+  }
+}

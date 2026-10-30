@@ -1,5 +1,9 @@
 .paragraph {
   @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
     color: var(--text-tertiary);
     font-size: var(--font-size-sm);
     margin: 0;

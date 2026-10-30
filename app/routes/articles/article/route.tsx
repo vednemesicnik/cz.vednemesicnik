@@ -11,8 +11,10 @@ import { HeadlineGroup } from '~/components/headline-group'
 import { ImageGallery } from '~/components/image-gallery'
 import { Page } from '~/components/page'
 import { ParentLink } from '~/components/parent-link'
+import { StatusTag } from '~/components/status-tag'
 import { Subheadline } from '~/components/subheadline'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
+import { showsPublishDate } from '~/utils/content-preview/shows-publish-date'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
 
@@ -50,14 +52,24 @@ export default function ArticleRoute({
 
       <HeadlineGroup>
         <Headline>{article.title}</Headline>
-        <Subheadline>
-          {article.authors.map((author) => author.name).join(', ')} ·{' '}
-          {article.publishedAt.iso ? (
-            <time dateTime={article.publishedAt.iso}>
-              {article.publishedAt.formatted}
-            </time>
-          ) : (
-            article.publishedAt.formatted
+        <Subheadline className={styles.subheadline}>
+          <span>
+            {article.authors.map((author) => author.name).join(', ')}
+            {showsPublishDate(article.previewState) && (
+              <>
+                {' · '}
+                {article.publishedAt.iso ? (
+                  <time dateTime={article.publishedAt.iso}>
+                    {article.publishedAt.formatted}
+                  </time>
+                ) : (
+                  article.publishedAt.formatted
+                )}
+              </>
+            )}
+          </span>
+          {article.previewState !== null && (
+            <StatusTag muted state={article.previewState} />
           )}
         </Subheadline>
       </HeadlineGroup>

@@ -2,11 +2,15 @@ import type { Prisma } from '@generated/prisma/client'
 import { data, href } from 'react-router'
 
 import type { NotFoundEpisodeData } from '~/components/boundary-error'
+import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
+import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
+import { imageSourceSelect } from '~/utils/image-store/create-image-sources'
 import { getWebContentVisibility } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { findWebPodcast } from '~/utils/podcast/find-web-podcast.server'
 import { buildWebVisibleEpisodeWhere } from '~/utils/podcast-episode/build-web-visible-episode-where'
+import { resolveEpisodeCover } from '~/utils/podcast-episode/resolve-episode-cover'
 
 import type { Route } from './+types/route'
 
@@ -20,11 +24,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const visible = buildWebVisibleEpisodeWhere(visibility)
 
   const select = {
+    ...WEB_PREVIEW_STATE_SELECT,
     cover: {
-      select: {
-        altText: true,
-        id: true,
-      },
+      select: imageSourceSelect,
     },
     description: true,
     id: true,
@@ -39,6 +41,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     number: true,
     podcast: {
       select: {
+        ...WEB_PREVIEW_STATE_SELECT,
+        cover: {
+          select: imageSourceSelect,
+        },
         id: true,
         title: true,
       },
@@ -47,6 +53,43 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     slug: true,
     title: true,
   } satisfies Prisma.PodcastEpisodeSelect
+
+  const toLoaderData = ({
+    cover,
+    podcast,
+    publishedAt,
+    reviews,
+    state,
+    submittedAt,
+    ...episode
+  }: Prisma.PodcastEpisodeGetPayload<{ select: typeof select }>) => {
+    // A published episode under an unpublished podcast is hidden from the
+    // reader too: the page is a preview, with the episode's own date (10d).
+    const previewState = getWebPreviewState({ reviews, state, submittedAt })
+    const isPreview =
+      previewState !== null || getWebPreviewState(podcast) !== null
+
+    return {
+      podcastEpisode: {
+        ...episode,
+        // The episode's own cover, otherwise the podcast's (13c).
+        cover: resolveEpisodeCover({ cover, podcastCover: podcast.cover }),
+        podcast: { id: podcast.id, title: podcast.title },
+        previewState,
+        publishedAt: createFormattedDate(publishedAt),
+      },
+      preview: isPreview
+        ? {
+            administrationPath: href(
+              '/administration/podcasts/:podcastId/episodes/:episodeId',
+              { episodeId: episode.id, podcastId: podcast.id },
+            ),
+            entity: 'podcast_episode' as const,
+            kind: 'item' as const,
+          }
+        : null,
+    }
+  }
 
   const previewId = new URL(request.url).searchParams.get('id')
 
@@ -68,12 +111,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         })
 
   if (previewEpisode !== null) {
-    return {
-      podcastEpisode: {
-        ...previewEpisode,
-        publishedAt: createFormattedDate(previewEpisode.publishedAt),
-      },
-    }
+    return toLoaderData(previewEpisode)
   }
 
   // Otherwise the episode is looked up under the podcast the address names
@@ -113,10 +151,5 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     throw data(notFoundData, { status: 404 })
   }
 
-  return {
-    podcastEpisode: {
-      ...podcastEpisode,
-      publishedAt: createFormattedDate(podcastEpisode.publishedAt),
-    },
-  }
+  return toLoaderData(podcastEpisode)
 }

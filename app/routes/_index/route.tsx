@@ -42,12 +42,17 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           authors={latestArticle.authors}
           image={latestArticle.featuredImage?.sources}
           imageAlt={latestArticle.featuredImage?.altText}
-          publishDate={latestArticle.publishedAt}
+          isPreview={latestArticle.previewState !== null}
           title={latestArticle.title}
           to={href('/articles/:articleSlug', {
             articleSlug: latestArticle.slug,
           })}
-        />
+        >
+          <ContentLinkPublishDate
+            date={latestArticle.publishedAt}
+            previewState={latestArticle.previewState}
+          />
+        </ArticleHero>
       )}
 
       {moreArticles.length > 0 && (
@@ -59,6 +64,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             {moreArticles.map((article) => (
               <ContentListItem key={article.id}>
                 <PostContentLink
+                  isPreview={article.previewState !== null}
                   to={href('/articles/:articleSlug', {
                     articleSlug: article.slug,
                   })}
@@ -72,7 +78,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     <ContentLinkAuthor>
                       {article.authors.map((author) => author.name).join(', ')}
                     </ContentLinkAuthor>
-                    <ContentLinkPublishDate date={article.publishedAt} />
+                    <ContentLinkPublishDate
+                      date={article.publishedAt}
+                      previewState={article.previewState}
+                    />
                   </ContentLinkFooter>
                 </PostContentLink>
               </ContentListItem>

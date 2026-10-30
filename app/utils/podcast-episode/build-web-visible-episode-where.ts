@@ -12,7 +12,7 @@ import { NON_EMPTY_EPISODE_WHERE } from './non-empty-episode-where'
  * archived ones of either only as far as the signed-in author may view them
  * in administration. An empty draft of either never shows (log 0020). The
  * administration offers a link to the web only where this finds the episode
- * (tly4a163). The public lists preview drafts only; they don't use it.
+ * (tly4a163). The public lists build their own clauses; they don't use it.
  *
  * @param visibility - What the web may show, from `getWebContentVisibility`
  *   for `podcast` and `podcast_episode`.

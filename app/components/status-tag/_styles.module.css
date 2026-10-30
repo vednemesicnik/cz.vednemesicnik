@@ -75,3 +75,13 @@
     color: var(--text-tertiary);
   }
 }
+
+/* Every state grey on the public web, where the tag only says the reader
+   doesn't see it (10d); after the states, so it wins at equal specificity. */
+.muted > .tag {
+  @layer variant {
+    background-color: var(--state-draft-bg);
+    color: var(--state-draft-text);
+    border-color: var(--state-draft-border);
+  }
+}

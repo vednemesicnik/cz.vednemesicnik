@@ -1,6 +1,9 @@
 import type { ContentState } from '@generated/prisma/enums'
 import { href } from 'react-router'
 
+import { getListPreview } from '~/utils/content-preview/get-list-preview'
+import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
+import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
 import { prisma } from '~/utils/db.server'
 import {
   createImageSources,
@@ -57,7 +60,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const visibility = await getWebContentVisibility(request, ['issue'])
   // An empty draft never shows, not even as a preview (log 0020).
   const visibleIssues = {
-    AND: [visibility.where('issue', ownByAuthor), NON_EMPTY_ISSUE_WHERE],
+    AND: [
+      visibility.where('issue', ownByAuthor, ['draft', 'archived']),
+      NON_EMPTY_ISSUE_WHERE,
+    ],
   }
 
   // Every issue on one page; the year row handles the length (14a, fr24hvgc).
@@ -65,6 +71,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     // A supplement stands right after its issue (design 26a).
     orderBy: [{ year: 'desc' }, { order: 'desc' }, { supplementSlug: 'asc' }],
     select: {
+      ...WEB_PREVIEW_STATE_SELECT,
       ...issueTitleSelect,
       cover: {
         select: imageSourceSelect,
@@ -76,7 +83,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
           id: true,
         },
       },
-      state: true,
       supplementSlug: true,
     },
     where: visibleIssues,
@@ -86,31 +92,39 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   // A tile without its PDF has nowhere to lead; one without a cover shows the
   // gradient instead (14c).
-  const tiles = issues.flatMap(({ cover, year, order, ...issue }) => {
-    const pdfPath = getPdfPath({ ...issue, order, year })
-    if (pdfPath === null || year === null || order === null) return []
+  const tiles = issues.flatMap(
+    ({ cover, year, order, reviews, submittedAt, ...issue }) => {
+      const pdfPath = getPdfPath({ ...issue, order, year })
+      if (pdfPath === null || year === null || order === null) return []
 
-    const numberedIssue = { ...issue, order, year }
-    const mainIssueName = issue.supplement
-      ? (mainIssueNames.get(`${year}/${order}`) ?? null)
-      : null
+      const numberedIssue = { ...issue, order, year }
+      const mainIssueName = issue.supplement
+        ? (mainIssueNames.get(`${year}/${order}`) ?? null)
+        : null
 
-    return [
-      {
-        ...getIssueTileLabels(numberedIssue, mainIssueName),
-        cover: cover
-          ? {
-              altText: cover.altText,
-              sources: createImageSources('issue-cover', cover),
-            }
-          : null,
-        id: issue.id,
-        linkLabel: getIssueLinkLabel(numberedIssue, mainIssueName),
-        pdfPath,
-        year,
-      },
-    ]
-  })
+      return [
+        {
+          ...getIssueTileLabels(numberedIssue, mainIssueName),
+          cover: cover
+            ? {
+                altText: cover.altText,
+                sources: createImageSources('issue-cover', cover),
+              }
+            : null,
+          id: issue.id,
+          isSupplement: issue.supplement !== null,
+          linkLabel: getIssueLinkLabel(numberedIssue, mainIssueName),
+          pdfPath,
+          previewState: getWebPreviewState({
+            reviews,
+            state: issue.state,
+            submittedAt,
+          }),
+          year,
+        },
+      ]
+    },
+  )
 
-  return { years: groupIssuesByYear(tiles) }
+  return { preview: getListPreview(tiles), years: groupIssuesByYear(tiles) }
 }
