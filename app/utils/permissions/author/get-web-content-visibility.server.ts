@@ -3,7 +3,7 @@ import type {
   ContentState,
 } from '@generated/prisma/enums'
 
-import { getAuthentication } from '~/utils/auth.server'
+import { getPreviewMode } from '~/utils/reader-view/get-preview-mode.server'
 
 import { buildWebVisibleWhere } from './build-web-visible-where'
 import { getAuthorPermissionContext } from './context/get-author-permission-context.server'
@@ -11,23 +11,29 @@ import { getAuthorPermissionContext } from './context/get-author-permission-cont
 /**
  * Resolves what the public web may show to this request. Anonymous visitors
  * see published content; a signed-in author also previews the drafts they may
- * view in administration, never more.
+ * view in administration, never more, unless they chose to view the web as a
+ * reader (10d).
  *
  * @param request - The incoming request.
  * @param entities - Every entity the loader will filter.
- * @returns `where(entity, ownFilter, previewStates)` building the clause for one entity; `previewStates` defaults to drafts.
+ * @returns `previewMode` (`staff` previews, `reader` chose the reader view, `null` signed out) and `where(entity, ownFilter, previewStates)` building the clause for one entity; `previewStates` defaults to drafts.
  */
 export const getWebContentVisibility = async (
   request: Request,
   entities: AuthorPermissionEntity[],
 ) => {
-  const { isAuthenticated } = await getAuthentication(request)
+  const previewMode = await getPreviewMode(request)
 
-  const context = isAuthenticated
-    ? await getAuthorPermissionContext(request, { actions: ['view'], entities })
-    : null
+  const context =
+    previewMode === 'staff'
+      ? await getAuthorPermissionContext(request, {
+          actions: ['view'],
+          entities,
+        })
+      : null
 
   return {
+    previewMode,
     where: <OwnFilter extends Record<string, unknown>>(
       entity: AuthorPermissionEntity,
       ownFilter: (authorId: string) => OwnFilter,

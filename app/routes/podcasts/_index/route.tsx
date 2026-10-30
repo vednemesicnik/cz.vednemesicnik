@@ -14,6 +14,7 @@ import { HeadlineGroup } from '~/components/headline-group'
 import { Image } from '~/components/image'
 import { MediaContentLink } from '~/components/media-content-link'
 import { Page } from '~/components/page'
+import { StatusTag } from '~/components/status-tag'
 import { Tile } from '~/components/tile'
 import { TileCaption } from '~/components/tile-caption'
 import { TileCard } from '~/components/tile-card'
@@ -40,7 +41,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               return (
                 <TileGridItem key={podcast.id}>
                   <BaseLink to={`/podcasts/${podcast.slug}`}>
-                    <Tile>
+                    <Tile isPreview={podcast.previewState !== null}>
                       <TileCard>
                         {podcast.cover !== null && (
                           <Image
@@ -50,7 +51,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                           />
                         )}
                       </TileCard>
-                      <TileCaption>{podcast.title}</TileCaption>
+                      <TileCaption>
+                        {podcast.title}
+                        {podcast.previewState !== null && (
+                          <StatusTag muted state={podcast.previewState} />
+                        )}
+                      </TileCaption>
                     </Tile>
                   </BaseLink>
                 </TileGridItem>
@@ -71,6 +77,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               return (
                 <ContentListItem key={episode.id}>
                   <MediaContentLink
+                    isPreview={episode.previewState !== null}
                     to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
                   >
                     <ContentLinkCover alt={coverAlt} image={coverSources} />
@@ -84,7 +91,10 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                       <ContentLinkAuthor>
                         {episode.podcast.title}
                       </ContentLinkAuthor>
-                      <ContentLinkPublishDate date={episode.publishedAt} />
+                      <ContentLinkPublishDate
+                        date={episode.publishedAt}
+                        previewState={episode.previewState}
+                      />
                     </ContentLinkFooter>
                   </MediaContentLink>
                 </ContentListItem>

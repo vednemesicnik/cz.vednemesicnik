@@ -2,6 +2,8 @@ import type { Prisma } from '@generated/prisma/client'
 import { data, href } from 'react-router'
 
 import type { NotFoundEpisodeData } from '~/components/boundary-error'
+import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
+import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { imageSourceSelect } from '~/utils/image-store/create-image-sources'
@@ -22,6 +24,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const visible = buildWebVisibleEpisodeWhere(visibility)
 
   const select = {
+    ...WEB_PREVIEW_STATE_SELECT,
     cover: {
       select: imageSourceSelect,
     },
@@ -38,6 +41,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     number: true,
     podcast: {
       select: {
+        ...WEB_PREVIEW_STATE_SELECT,
         cover: {
           select: imageSourceSelect,
         },
@@ -54,16 +58,39 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     cover,
     podcast,
     publishedAt,
+    reviews,
+    state,
+    submittedAt,
     ...episode
-  }: Prisma.PodcastEpisodeGetPayload<{ select: typeof select }>) => ({
-    podcastEpisode: {
-      ...episode,
-      // The episode's own cover, otherwise the podcast's (13c).
-      cover: resolveEpisodeCover({ cover, podcastCover: podcast.cover }),
-      podcast: { id: podcast.id, title: podcast.title },
-      publishedAt: createFormattedDate(publishedAt),
-    },
-  })
+  }: Prisma.PodcastEpisodeGetPayload<{ select: typeof select }>) => {
+    // A published episode under an unpublished podcast is hidden from the
+    // reader too, and says why with the podcast's tag (10d).
+    const previewState =
+      getWebPreviewState({ reviews, state, submittedAt }) ??
+      getWebPreviewState(podcast)
+
+    return {
+      podcastEpisode: {
+        ...episode,
+        // The episode's own cover, otherwise the podcast's (13c).
+        cover: resolveEpisodeCover({ cover, podcastCover: podcast.cover }),
+        podcast: { id: podcast.id, title: podcast.title },
+        previewState,
+        publishedAt: createFormattedDate(publishedAt),
+      },
+      preview:
+        previewState === null
+          ? null
+          : {
+              administrationPath: href(
+                '/administration/podcasts/:podcastId/episodes/:episodeId',
+                { episodeId: episode.id, podcastId: podcast.id },
+              ),
+              entity: 'podcast_episode' as const,
+              kind: 'item' as const,
+            },
+    }
+  }
 
   const previewId = new URL(request.url).searchParams.get('id')
 

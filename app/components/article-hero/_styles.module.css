@@ -134,14 +134,6 @@
   }
 }
 
-.date {
-  @layer component {
-    color: var(--text-tertiary);
-    font-size: var(--font-size-sm);
-    margin: 0;
-  }
-}
-
 .cta {
   @layer component {
     color: var(--primary);
@@ -155,5 +147,13 @@
       justify-self: end;
       align-self: end;
     }
+  }
+}
+
+/* The dashed outline of what the reader doesn't see; an outline moves nothing (10d). */
+.preview {
+  @layer variant {
+    outline: 2px dashed var(--preview-outline);
+    outline-offset: 4px;
   }
 }

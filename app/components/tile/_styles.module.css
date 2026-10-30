@@ -7,3 +7,20 @@
     row-gap: 0.75rem;
   }
 }
+
+/* The dashed outline of what the reader doesn't see, around card and caption;
+   an outline moves nothing (10d). */
+.preview {
+  @layer variant {
+    outline: 2px dashed var(--preview-outline);
+    outline-offset: 6px;
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* Room for the state tag under the label (10d). */
+.preview > figcaption {
+  @layer variant {
+    gap: 6px;
+  }
+}

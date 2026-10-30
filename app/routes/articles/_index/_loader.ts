@@ -2,6 +2,10 @@ import { data } from 'react-router'
 import type { NotFoundPageData } from '~/components/boundary-error'
 import { PAGE_PARAM } from '~/components/pagination'
 import { buildVisibleArticleWhere } from '~/routes/articles/utils/build-visible-article-where'
+import { findArticlesDraftsFirst } from '~/routes/articles/utils/find-articles-drafts-first.server'
+import { getListPreview } from '~/utils/content-preview/get-list-preview'
+import { getWebPreviewState } from '~/utils/content-preview/get-web-preview-state'
+import { WEB_PREVIEW_STATE_SELECT } from '~/utils/content-preview/web-preview-state-select'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
 import { hasSlug } from '~/utils/has-slug'
@@ -33,9 +37,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const currentPage = parsePositiveIntegerParam(url.searchParams, PAGE_PARAM, 1)
 
   const [articles, totalCount, categories] = await Promise.all([
-    prisma.article.findMany({
-      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+    findArticlesDraftsFirst({
       select: {
+        ...WEB_PREVIEW_STATE_SELECT,
         authors: {
           select: {
             name: true,
@@ -78,22 +82,26 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     throw data(notFoundData, { status: 404 })
   }
 
-  const articlesWithSources = articles.filter(hasSlug).map((article) => ({
-    ...article,
-    featuredImage: article.featuredImage
-      ? {
-          altText: article.featuredImage.altText,
-          sources: createImageSources('article-image', article.featuredImage),
-        }
-      : null,
-    publishedAt: createFormattedDate(article.publishedAt),
-  }))
+  const articlesWithSources = articles
+    .filter(hasSlug)
+    .map(({ reviews, state, submittedAt, ...article }) => ({
+      ...article,
+      featuredImage: article.featuredImage
+        ? {
+            altText: article.featuredImage.altText,
+            sources: createImageSources('article-image', article.featuredImage),
+          }
+        : null,
+      previewState: getWebPreviewState({ reviews, state, submittedAt }),
+      publishedAt: createFormattedDate(article.publishedAt),
+    }))
 
   return {
     articles: articlesWithSources,
     categoryLinks,
     currentPage,
     pageSize: PAGE_SIZE,
+    preview: getListPreview(articlesWithSources),
     totalCount,
     totalPages,
   }

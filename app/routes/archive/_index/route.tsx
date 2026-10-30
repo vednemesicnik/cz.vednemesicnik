@@ -10,6 +10,7 @@ import { Image } from '~/components/image'
 import { NavRow } from '~/components/nav-row'
 import { NavRowItem } from '~/components/nav-row-item'
 import { Page } from '~/components/page'
+import { StatusTag } from '~/components/status-tag'
 import { Tile } from '~/components/tile'
 import { TileCaption } from '~/components/tile-caption'
 import { TileCard } from '~/components/tile-card'
@@ -18,6 +19,7 @@ import { TileGrid } from '~/components/tile-grid'
 import { TileGridItem } from '~/components/tile-grid-item'
 import { TileSublabel } from '~/components/tile-sublabel'
 import { sizeConfig } from '~/config/size-config'
+import { showsPublishDate } from '~/utils/content-preview/shows-publish-date'
 import { getRevealProps } from '~/utils/get-reveal-props'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -73,7 +75,15 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
           <TileGrid className={styles.grid}>
             {issues.map((issue) => {
-              const { id, cover, label, linkLabel, pdfPath, sublabel } = issue
+              const {
+                id,
+                cover,
+                label,
+                linkLabel,
+                pdfPath,
+                previewState,
+                sublabel,
+              } = issue
 
               pageIndex += 1
               const isLcpCandidate = pageIndex === 0
@@ -85,7 +95,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     reloadDocument={true}
                     to={pdfPath}
                   >
-                    <Tile>
+                    <Tile isPreview={previewState !== null}>
                       <TileCard ratio={'cover'}>
                         {cover ? (
                           <Image
@@ -106,8 +116,14 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                       </TileCard>
                       <TileCaption>
                         {label}
-                        {sublabel !== null && (
-                          <TileSublabel>{sublabel}</TileSublabel>
+                        {/* A draft's tag takes the second line's place, the
+                            name stays (10d, copy of 29 Sep 2026). */}
+                        {sublabel !== null &&
+                          showsPublishDate(previewState) && (
+                            <TileSublabel>{sublabel}</TileSublabel>
+                          )}
+                        {previewState !== null && (
+                          <StatusTag muted state={previewState} />
                         )}
                       </TileCaption>
                     </Tile>

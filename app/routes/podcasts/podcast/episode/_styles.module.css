@@ -33,3 +33,13 @@
     list-style: none;
   }
 }
+
+/* The state tag in place of the date, or after it when archived (10d). */
+.subheadline {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+}
