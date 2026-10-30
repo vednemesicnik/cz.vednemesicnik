@@ -26,7 +26,7 @@ type Story = StoryObj<typeof meta>
 
 const article = (index: number) => ({
   authors: [{ name: 'Anna Dvořáková' }],
-  categories: [{ name: 'Rozhovor', slug: 'rozhovor' }],
+  categories: [{ name: 'Rozhovor', previewState: null, slug: 'rozhovor' }],
   featuredImage: null,
   id: `article-${index}`,
   previewState: null,
@@ -46,6 +46,7 @@ export const Playground: Story = {
     name: 'Kultura',
     pageSize: 9,
     parent: { label: 'Rubriky', path: '/articles/categories' },
+    previewState: null,
     totalCount: 18,
     totalPages: 2,
   },
@@ -73,6 +74,30 @@ export const Tag: Story = {
     name: 'maturita',
     parent: { label: 'Štítky', path: '/articles/tags' },
     totalCount: 1,
+    totalPages: 1,
+  },
+}
+
+/**
+ * A category the reader doesn't see, in the editorial preview: the grey tag
+ * after the kind line, its draft article outlined, and a draft badge (11e).
+ */
+export const UnpublishedCategory: Story = {
+  args: {
+    ...Playground.args,
+    articles: [
+      { ...article(1), previewState: 'draft' as const },
+      {
+        ...article(2),
+        categories: [
+          { name: 'Rozhovor', previewState: null, slug: 'rozhovor' },
+          { name: 'Recenze', previewState: 'draft' as const, slug: 'recenze' },
+        ],
+      },
+    ],
+    name: 'Glosy',
+    previewState: 'draft',
+    totalCount: 2,
     totalPages: 1,
   },
 }

@@ -5,6 +5,8 @@ import { LinkArrow } from '~/components/link-arrow'
 import styles from './_styles.module.css'
 
 type LinkStripItem = {
+  /** Something the reader doesn't see: a frame on the link's own edge (11e). */
+  isPreview?: boolean
   label: string
   to: ComponentProps<typeof Link>['to']
 }
@@ -32,7 +34,11 @@ export const LinkStrip = ({ children, className, links, more }: Props) => {
       {links && links.length > 0 && (
         <span className={styles.links}>
           {links.map((link) => (
-            <Link key={link.label} to={link.to}>
+            <Link
+              className={clsx(link.isPreview && styles.preview)}
+              key={link.label}
+              to={link.to}
+            >
               {link.label}
             </Link>
           ))}

@@ -35,6 +35,19 @@ export const Playground: Story = {
   },
 }
 
+/** In the editorial preview, a tag the reader doesn't see (11e). */
+export const Preview: Story = {
+  args: {
+    children: 'Články mají i štítky, třeba',
+    links: ['volný čas', 'maturitní ples', 'knihy'].map((label) => ({
+      isPreview: label === 'maturitní ples',
+      label,
+      to: `/articles/tags/${label}`,
+    })),
+    more: { label: 'Všechny štítky', to: '/articles/tags' },
+  },
+}
+
 export const WithoutLinks: Story = {
   args: {
     children: 'Články třídíme i do rubrik.',

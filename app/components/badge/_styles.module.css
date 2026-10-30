@@ -42,3 +42,14 @@
     }
   }
 }
+
+/* What the reader doesn't see: the dashed line takes the badge's own edge, so nothing moves (11e). */
+.preview {
+  @layer variant {
+    /* The focus ring keeps its own outline. */
+    &:not(:focus-visible) {
+      outline: 2px dashed var(--preview-outline);
+      outline-offset: -2px;
+    }
+  }
+}

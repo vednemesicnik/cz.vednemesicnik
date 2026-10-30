@@ -15,7 +15,7 @@ import { Page } from '~/components/page'
 import { Pagination } from '~/components/pagination'
 import { ParentLink } from '~/components/parent-link'
 import { PostContentLink } from '~/components/post-content-link'
-import type { StatusTagState } from '~/components/status-tag'
+import { StatusTag, type StatusTagState } from '~/components/status-tag'
 import { Subheadline } from '~/components/subheadline'
 import type { Breadcrumb } from '~/types/breadcrumb'
 import { formatArticleCount } from '~/utils/format-article-count'
@@ -24,7 +24,11 @@ import type { ImageSources } from '~/utils/image-store/create-image-sources'
 
 type TaxonomyArticle = {
   authors: { name: string }[]
-  categories: { name: string; slug: string }[]
+  categories: {
+    name: string
+    previewState: StatusTagState | null
+    slug: string
+  }[]
   featuredImage: { altText: string; sources: ImageSources } | null
   id: string
   previewState: StatusTagState | null
@@ -40,6 +44,7 @@ type Props = {
   name: string
   pageSize: number
   parent: Breadcrumb | undefined
+  previewState: StatusTagState | null
   totalCount: number
   totalPages: number
 }
@@ -54,6 +59,8 @@ type Props = {
  *
  * @param kindLabel - The word under the headline: "Rubrika" or "Štítek"
  * @param parent - The index one level up ("‹ Rubriky", "‹ Štítky")
+ * @param previewState - The category's or tag's own state when the reader
+ *   doesn't see it: a grey tag after the kind line (11e)
  * @param totalCount - The articles the visitor can see, which the count states
  * @returns The taxonomy page
  */
@@ -64,6 +71,7 @@ export const TaxonomyPage = ({
   name,
   pageSize,
   parent,
+  previewState,
   totalCount,
   totalPages,
 }: Props) => {
@@ -78,6 +86,12 @@ export const TaxonomyPage = ({
           {isEmpty
             ? kindLabel
             : `${kindLabel} · ${formatArticleCount(totalCount)}`}
+          {previewState !== null && (
+            <>
+              {' '}
+              <StatusTag muted state={previewState} />
+            </>
+          )}
         </Subheadline>
       </HeadlineGroup>
 
@@ -104,7 +118,12 @@ export const TaxonomyPage = ({
                   {article.categories.length > 0 && (
                     <ContentLinkCategories>
                       {article.categories.map((category) => (
-                        <Badge key={category.slug}>{category.name}</Badge>
+                        <Badge
+                          isPreview={category.previewState !== null}
+                          key={category.slug}
+                        >
+                          {category.name}
+                        </Badge>
                       ))}
                     </ContentLinkCategories>
                   )}

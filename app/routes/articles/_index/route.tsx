@@ -41,6 +41,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <NavRow label={'Rubriky'}>
             {categoryLinks.map((category) => (
               <NavRowItem
+                isPreview={category.previewState !== null}
                 key={category.slug}
                 to={href('/articles/categories/:slug', {
                   slug: category.slug,
@@ -75,7 +76,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   {article.categories.length > 0 && (
                     <ContentLinkCategories>
                       {article.categories.map((category) => (
-                        <Badge key={category.slug}>{category.name}</Badge>
+                        <Badge
+                          isPreview={category.previewState !== null}
+                          key={category.slug}
+                        >
+                          {category.name}
+                        </Badge>
                       ))}
                     </ContentLinkCategories>
                   )}

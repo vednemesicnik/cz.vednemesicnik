@@ -50,6 +50,29 @@ export const Playground: Story = {
   },
 }
 
+/** In the editorial preview, a category the reader doesn't see (11e). */
+export const Preview: Story = {
+  args: {
+    children: (
+      <>
+        {[...CATEGORIES, 'Glosy']
+          .sort((first, second) => first.localeCompare(second, 'cs'))
+          .map((category) => (
+            <NavRowItem
+              isPreview={category === 'Glosy'}
+              key={category}
+              to={`/articles/categories/${category.toLowerCase()}`}
+            >
+              {category}
+            </NavRowItem>
+          ))}
+        <NavRowMore to={'/articles/categories'}>Všechny rubriky</NavRowMore>
+      </>
+    ),
+    label: 'Rubriky',
+  },
+}
+
 /**
  * The archive's years, named for a screen reader „Roky v archivu“ (14a). They
  * don't fit: the row scrolls, its far edge fades, and with a mouse the step

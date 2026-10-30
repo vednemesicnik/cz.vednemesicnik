@@ -39,6 +39,7 @@ export default function ArticleRoute({
         <BadgeList>
           {article.categories.map((category) => (
             <Badge
+              isPreview={category.previewState !== null}
               key={category.slug}
               to={href('/articles/categories/:slug', {
                 slug: category.slug,
@@ -113,6 +114,7 @@ export default function ArticleRoute({
           <BadgeList className={styles.tagList}>
             {article.tags.map((tag) => (
               <Badge
+                isPreview={tag.previewState !== null}
                 key={tag.slug}
                 to={href('/articles/tags/:slug', { slug: tag.slug })}
                 variant={'outlined'}

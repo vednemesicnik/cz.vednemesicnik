@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { href } from 'react-router'
 import { EmptyState } from '~/components/empty-state'
 import { Headline } from '~/components/headline'
@@ -35,7 +36,13 @@ export default function RouteComponent({
               <span className={styles.letter}>{group.letter}</span>
               <ul className={styles.tags}>
                 {group.tags.map((tag) => (
-                  <li className={styles.tag} key={tag.id}>
+                  <li
+                    className={clsx(
+                      styles.tag,
+                      tag.previewState !== null && styles.preview,
+                    )}
+                    key={tag.id}
+                  >
                     <Link to={href('/articles/tags/:slug', { slug: tag.slug })}>
                       {tag.name}
                     </Link>
