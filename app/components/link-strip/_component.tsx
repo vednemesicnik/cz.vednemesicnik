@@ -4,18 +4,20 @@ import { Link } from '~/components/link'
 import { LinkArrow } from '~/components/link-arrow'
 import styles from './_styles.module.css'
 
-type LinkStripItem = {
-  /** Something the reader doesn't see: a frame on the link's own edge (11e). */
-  isPreview?: boolean
+type LinkStripMore = {
   label: string
   to: ComponentProps<typeof Link>['to']
+}
+
+type LinkStripItem = LinkStripMore & {
+  isPreview?: boolean
 }
 
 type Props = {
   children: ReactNode
   className?: string
   links?: LinkStripItem[]
-  more: LinkStripItem
+  more: LinkStripMore
 }
 
 /**
@@ -23,7 +25,8 @@ type Props = {
  * sentence, optional example links and a trailing "… →" link (design 11c).
  *
  * @param children - The sentence ("Články mají i štítky, třeba")
- * @param links - Example links shown after the sentence
+ * @param links - Example links shown after the sentence; one with `isPreview`
+ *   is something the reader doesn't see, framed on its own edge (11e)
  * @param more - The trailing link to the other index; its arrow is hidden from screen readers
  * @returns The strip
  */
