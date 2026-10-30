@@ -7,8 +7,6 @@ type Props = {
   alt: string
   className?: string
   image: ImageSources
-  /** The `sizes` for the cover's width, as the page sets it. */
-  sizes?: string
 }
 
 /**
@@ -18,12 +16,7 @@ type Props = {
  *
  * @returns The cover frame
  */
-export const CoverHeaderCover = ({
-  alt,
-  className,
-  image,
-  sizes = '(width < 640px) 160px, 200px',
-}: Props) => {
+export const CoverHeaderCover = ({ alt, className, image }: Props) => {
   // `data-cover-header-cover` places it in the header's grid.
   return (
     <div className={clsx(styles.frame, className)} data-cover-header-cover>
@@ -33,7 +26,7 @@ export const CoverHeaderCover = ({
         className={styles.image}
         fetchPriority={'high'}
         loading={'eager'}
-        sizes={sizes}
+        sizes={'(width < 640px) 160px, 200px'}
       />
     </div>
   )

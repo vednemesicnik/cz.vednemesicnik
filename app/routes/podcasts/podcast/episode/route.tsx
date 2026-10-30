@@ -36,7 +36,6 @@ export default function RouteComponent({
           <CoverHeaderCover
             alt={podcastEpisode.cover.altText}
             image={podcastEpisode.cover.sources}
-            sizes={'(width < 640px) 160px, 180px'}
           />
         )}
         <CoverHeaderBody>

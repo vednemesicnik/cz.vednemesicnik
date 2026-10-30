@@ -61,14 +61,21 @@
   }
 }
 
+/* The icon alone on a phone is 20 px; after the domain it takes the domain's
+   size, 2 px after its last letter (13c, lund4ssk). */
 .trailing {
   @layer route {
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
-    gap: 6px;
-    font-size: var(--font-size-md);
+    gap: 2px;
+    font-size: 1.25rem;
     color: var(--link-strong);
+    white-space: nowrap;
+
+    @media (width >= 640px) {
+      font-size: var(--font-size-sm);
+    }
   }
 }
 
@@ -79,7 +86,6 @@
 
     @media (width >= 640px) {
       display: inline;
-      font-size: var(--font-size-sm);
     }
   }
 }

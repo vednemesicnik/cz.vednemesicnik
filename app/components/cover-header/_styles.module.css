@@ -8,7 +8,6 @@
       "parent"
       "cover"
       "body";
-    row-gap: 24px;
     column-gap: 32px;
     align-items: start;
     justify-items: start;
@@ -16,21 +15,32 @@
     margin-block-end: 1.5rem;
     text-align: start;
 
-    /* The parent link: above the cover on a phone, above the body beside it. */
+    /* The parent link stands on its own row above the header at every width,
+       its own margins giving the gap below it as on a category (11b,
+       lund4ssk). */
     & > :not([data-cover-header-cover], [data-cover-header-body]) {
       grid-area: parent;
     }
 
+    /* On a phone the headline sits 16 px under the cover (13b, 13c). */
+    &:has(> [data-cover-header-cover]) > [data-cover-header-body] {
+      margin-block-start: 16px;
+    }
+
+    /* Beside each other, the cover's top edge lines up with the headline's
+       box, without an optical shift (lund4ssk). */
     @media (width >= 640px) {
       --cover-header-cover-size: 200px;
 
       grid-template-columns: var(--cover-header-cover-size) minmax(0, 1fr);
-      grid-template-rows: auto 1fr;
       grid-template-areas:
-        "cover parent"
+        "parent parent"
         "cover body";
-      row-gap: 10px;
       margin-block-end: 2.5rem;
+
+      &:has(> [data-cover-header-cover]) > [data-cover-header-body] {
+        margin-block-start: 0;
+      }
     }
 
     /* Without a cover there is no cover column (as 0q3rezo1 for the cards). */

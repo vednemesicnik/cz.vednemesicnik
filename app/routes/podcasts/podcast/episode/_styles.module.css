@@ -1,10 +1,7 @@
-/* The episode's cover is drawn smaller than the podcast's (13c). */
+/* The description follows the header closer than a list does (13c). */
 .header {
   @layer route {
     @media (width >= 640px) {
-      --cover-header-cover-size: 180px;
-
-      column-gap: 28px;
       margin-block-end: 2rem;
     }
   }
