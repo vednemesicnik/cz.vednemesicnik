@@ -86,4 +86,5 @@ Code comments cite an entry by its number (`log 0022`).
 | [0052](0052-every-content-list-reloads-only-the-rows-on-screen.md) | Every content list reloads only the rows on screen, so a live change never moves a row | 2026-10-29 |  |
 | [0053](0053-the-first-image-of-an-empty-gallery-becomes-the-main-one.md) | The first image of an empty gallery becomes the main one, and of uploads side by side the first to commit | 2026-10-29 |  |
 | [0054](0054-what-sticks-under-the-header-rides-its-shift-through-one-variable.md) | What sticks under the header rides its shift through one variable, in CSS alone | 2026-10-30 |  |
-| [0055](0055-the-web-marks-its-preview-and-the-editor-gets-no-preview-frame.md) | The web marks its own preview, and the editor gets no preview frame | 2026-10-30 |  |
+| [0055](0055-the-web-marks-its-preview-and-the-editor-gets-no-preview-frame.md) | The web marks its own preview, and the editor gets no preview frame | 2026-10-30 | [0056](0056-categories-and-tags-preview-as-content-and-archived-ones-never-open.md) |
+| [0056](0056-categories-and-tags-preview-as-content-and-archived-ones-never-open.md) | Categories and tags preview as content of their own, and archived ones never open | 2026-10-30 |  |
