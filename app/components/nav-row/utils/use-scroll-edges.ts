@@ -41,8 +41,11 @@ export const useScrollEdges = (
 
     update()
     element.addEventListener('scroll', update, { passive: true })
+    // The element fills the space it is given, so its own size misses items
+    // that grow, e.g. when a web font arrives; the items are watched too.
     const resizeObserver = new ResizeObserver(update)
     resizeObserver.observe(element)
+    for (const child of element.children) resizeObserver.observe(child)
 
     return () => {
       element.removeEventListener('scroll', update)

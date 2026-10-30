@@ -37,7 +37,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
   return (
     <Page>
-      <HeadlineGroup className={styles.headlineGroup}>
+      <HeadlineGroup
+        className={years.length > 0 ? styles.headlineGroup : undefined}
+      >
         <Headline>Naše tištěná čísla pohromadě</Headline>
       </HeadlineGroup>
 

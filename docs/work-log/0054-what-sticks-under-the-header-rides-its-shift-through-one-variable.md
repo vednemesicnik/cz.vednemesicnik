@@ -46,6 +46,11 @@ shape at every width.
   the highlight needs it. At the page's end the last year is current: its heading may never
   reach the bar when its covers are shorter than the window. Design's answer is silent on the
   page's end.
+- Whether a row overflows is known only after it is measured, so on a page whose row overflows
+  the step buttons appear after hydration, with a mouse, and move the pills along by one button.
+  Reserving their place would leave empty slots beside a row that fits (the categories on a
+  desktop), and laying them over the faded ends would change the drawing; the one-time shift
+  inside the row is accepted.
 - Reasons to revisit: `scroll-state` landing in Safari and Firefox (nothing to change, only to
   check), or a header whose height changes with its content, which a fixed token would cut off.
 
