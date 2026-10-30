@@ -11,7 +11,7 @@
 
 /* A detail or an editor (AdminPage with a measure) is one block with its
    breadcrumbs: main column, gap and right column, centred in the area; the
-   free space splits on both sides (31b, 31c, 8kd9crag). */
+   free space splits on both sides (31b, 8kd9crag). */
 .page:has(> [data-measure]) {
   @layer variant {
     --detail-block-main-width: var(--detail-main-width);
