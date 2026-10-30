@@ -1,0 +1,91 @@
+.item {
+  @layer route {
+    display: block;
+  }
+}
+
+/* 52 px on a phone, 56 px above (13c); lifts on hover as the content cards. */
+.card {
+  @layer route {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-sizing: border-box;
+    min-height: 52px;
+    padding-inline: 16px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+    text-decoration: none;
+    overflow-wrap: normal;
+    transition:
+      box-shadow var(--transition-base),
+      transform var(--transition-base),
+      border-color var(--transition-base);
+
+    &:visited,
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: var(--border-hover);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-shadow);
+    }
+
+    @media (width >= 640px) {
+      gap: 16px;
+      min-height: 56px;
+      padding-inline: 20px;
+    }
+  }
+}
+
+.label {
+  @layer route {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/* The icon alone on a phone is 20 px; after the domain it takes the domain's
+   size, 2 px after its last letter (13c, lund4ssk). */
+.trailing {
+  @layer route {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 2px;
+    font-size: 1.25rem;
+    color: var(--link-strong);
+    white-space: nowrap;
+
+    @media (width >= 640px) {
+      font-size: var(--font-size-sm);
+    }
+  }
+}
+
+/* Only the icon on a phone (13c). */
+.host {
+  @layer route {
+    display: none;
+
+    @media (width >= 640px) {
+      display: inline;
+    }
+  }
+}

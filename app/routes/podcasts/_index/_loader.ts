@@ -10,6 +10,7 @@ import {
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { NON_EMPTY_PODCAST_WHERE } from '~/utils/podcast/non-empty-podcast-where'
 import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
+import { resolveEpisodeCover } from '~/utils/podcast-episode/resolve-episode-cover'
 
 import type { Route } from './+types/route'
 
@@ -87,25 +88,20 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     episodes: episodes.map(({ cover, podcast, ...episode }) => ({
       ...episode,
       // The episode's own cover, otherwise the podcast's (13a).
-      cover:
-        cover === null
-          ? {
-              altText: podcast.cover?.altText ?? '',
-              sources: createImageSources('podcast-cover', podcast.cover),
-            }
-          : {
-              altText: cover.altText,
-              sources: createImageSources('podcast-episode-cover', cover),
-            },
+      cover: resolveEpisodeCover({ cover, podcastCover: podcast.cover }),
       podcast: { id: podcast.id, slug: podcast.slug, title: podcast.title },
       publishedAt: createFormattedDate(episode.publishedAt),
     })),
-    podcasts: podcasts.map((podcast) => ({
+    podcasts: podcasts.map(({ cover, ...podcast }) => ({
       ...podcast,
-      cover: {
-        altText: podcast.cover?.altText ?? '',
-        sources: createImageSources('podcast-cover', podcast.cover),
-      },
+      // No cover, no alt text: the tile then stays empty.
+      cover:
+        cover === null
+          ? null
+          : {
+              altText: cover.altText,
+              sources: createImageSources('podcast-cover', cover),
+            },
     })),
   }
 }

@@ -1,0 +1,10 @@
+.body {
+  @layer component {
+    grid-area: body;
+    display: grid;
+    grid-auto-rows: min-content;
+    row-gap: 0.75rem;
+    min-width: 0;
+    width: 100%;
+  }
+}

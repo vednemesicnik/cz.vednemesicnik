@@ -1,0 +1,7 @@
+/* About 65 characters per line beside the cover (13b). */
+.description {
+  @layer route {
+    max-width: 38.75rem;
+    margin-block-start: 0.25rem;
+  }
+}

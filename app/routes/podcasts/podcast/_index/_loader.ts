@@ -31,6 +31,11 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const podcast = await prisma.podcast.findUnique({
     select: {
+      // The line under the headline counts only published episodes (13b),
+      // whatever else a signed-in author sees in the list.
+      _count: {
+        select: { episodes: { where: { state: 'published' } } },
+      },
       cover: {
         select: imageSourceSelect,
       },
@@ -42,13 +47,6 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         select: {
           description: true,
           id: true,
-          links: {
-            select: {
-              id: true,
-              label: true,
-              url: true,
-            },
-          },
           number: true,
           publishedAt: true,
           // The typed address: a signed-in author sees drafts here too, and a
@@ -73,19 +71,24 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     throw data(null, { status: 404 })
   }
 
-  const cover = {
-    altText: podcast.cover?.altText ?? '',
-    sources: createImageSources('podcast-cover', podcast.cover),
-  }
+  const { _count, cover, ...rest } = podcast
 
   return {
     podcast: {
-      ...podcast,
-      cover,
-      episodes: podcast.episodes.map((episode) => ({
+      ...rest,
+      // No cover, no alt text: the page then shows none (0q3rezo1).
+      cover:
+        cover === null
+          ? null
+          : {
+              altText: cover.altText,
+              sources: createImageSources('podcast-cover', cover),
+            },
+      episodes: rest.episodes.map((episode) => ({
         ...episode,
         publishedAt: createFormattedDate(episode.publishedAt),
       })),
+      publishedEpisodeCount: _count.episodes,
     },
   }
 }

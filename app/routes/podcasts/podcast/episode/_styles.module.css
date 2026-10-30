@@ -1,0 +1,35 @@
+/* The description follows the header closer than a list does (13c). */
+.header {
+  @layer route {
+    @media (width >= 640px) {
+      margin-block-end: 2rem;
+    }
+  }
+}
+
+/* About 65 characters per line (13c). */
+.description,
+.listen {
+  @layer route {
+    max-width: 38.75rem;
+  }
+}
+
+.listen {
+  @layer route {
+    display: grid;
+    row-gap: 0.75rem;
+    width: 100%;
+    margin-block-start: 2rem;
+  }
+}
+
+.links {
+  @layer route {
+    display: grid;
+    row-gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}

@@ -10,9 +10,3 @@
     transition: color var(--transition-base);
   }
 }
-
-.number {
-  @layer component {
-    color: var(--text-tertiary);
-  }
-}
