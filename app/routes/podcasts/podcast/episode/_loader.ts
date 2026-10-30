@@ -4,9 +4,11 @@ import { data, href } from 'react-router'
 import type { NotFoundEpisodeData } from '~/components/boundary-error'
 import { prisma } from '~/utils/db.server'
 import { createFormattedDate } from '~/utils/format-date'
+import { imageSourceSelect } from '~/utils/image-store/create-image-sources'
 import { getWebContentVisibility } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { findWebPodcast } from '~/utils/podcast/find-web-podcast.server'
 import { buildWebVisibleEpisodeWhere } from '~/utils/podcast-episode/build-web-visible-episode-where'
+import { resolveEpisodeCover } from '~/utils/podcast-episode/resolve-episode-cover'
 
 import type { Route } from './+types/route'
 
@@ -21,10 +23,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const select = {
     cover: {
-      select: {
-        altText: true,
-        id: true,
-      },
+      select: imageSourceSelect,
     },
     description: true,
     id: true,
@@ -39,6 +38,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     number: true,
     podcast: {
       select: {
+        cover: {
+          select: imageSourceSelect,
+        },
         id: true,
         title: true,
       },
@@ -47,6 +49,21 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     slug: true,
     title: true,
   } satisfies Prisma.PodcastEpisodeSelect
+
+  const toLoaderData = ({
+    cover,
+    podcast,
+    publishedAt,
+    ...episode
+  }: Prisma.PodcastEpisodeGetPayload<{ select: typeof select }>) => ({
+    podcastEpisode: {
+      ...episode,
+      // The episode's own cover, otherwise the podcast's (13c).
+      cover: resolveEpisodeCover({ cover, podcastCover: podcast.cover }),
+      podcast: { id: podcast.id, title: podcast.title },
+      publishedAt: createFormattedDate(publishedAt),
+    },
+  })
 
   const previewId = new URL(request.url).searchParams.get('id')
 
@@ -68,12 +85,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         })
 
   if (previewEpisode !== null) {
-    return {
-      podcastEpisode: {
-        ...previewEpisode,
-        publishedAt: createFormattedDate(previewEpisode.publishedAt),
-      },
-    }
+    return toLoaderData(previewEpisode)
   }
 
   // Otherwise the episode is looked up under the podcast the address names
@@ -113,10 +125,5 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     throw data(notFoundData, { status: 404 })
   }
 
-  return {
-    podcastEpisode: {
-      ...podcastEpisode,
-      publishedAt: createFormattedDate(podcastEpisode.publishedAt),
-    },
-  }
+  return toLoaderData(podcastEpisode)
 }

@@ -1,16 +1,20 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { BulletedList } from '~/components/bulleted-list'
+import { useId } from 'react'
+import { CoverHeader } from '~/components/cover-header'
+import { CoverHeaderBody } from '~/components/cover-header-body'
+import { CoverHeaderCover } from '~/components/cover-header-cover'
+import { EpisodeNumber } from '~/components/episode-number'
+import { Heading } from '~/components/heading'
 import { Headline } from '~/components/headline'
-import { HeadlineGroup } from '~/components/headline-group'
-import { Hyperlink } from '~/components/hyperlink'
-import { ListItem } from '~/components/list-item'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 import { ParentLink } from '~/components/parent-link'
 import { Subheadline } from '~/components/subheadline'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
+import styles from './_styles.module.css'
 import type { Route } from './+types/route'
+import { ListenLinkCard } from './components/listen-link-card'
 
 export { handle } from './_handle'
 export { loader } from './_loader'
@@ -22,30 +26,60 @@ export default function RouteComponent({
 }: Route.ComponentProps) {
   const { podcastEpisode } = loaderData
   const parent = getParentBreadcrumb(matches)
+  const listenHeadingId = useId()
 
   return (
-    <Page>
-      {parent && <ParentLink to={parent.path}>{parent.label}</ParentLink>}
-      <HeadlineGroup>
-        <Headline>{podcastEpisode.title}</Headline>
-        <Subheadline>
-          {podcastEpisode.publishedAt.iso ? (
-            <time dateTime={podcastEpisode.publishedAt.iso}>
-              {podcastEpisode.publishedAt.formatted}
-            </time>
-          ) : (
-            podcastEpisode.publishedAt.formatted
-          )}
-        </Subheadline>
-      </HeadlineGroup>
-      <Paragraph>{podcastEpisode.description}</Paragraph>
-      <BulletedList>
-        {podcastEpisode.links.map((link) => (
-          <ListItem key={link.id}>
-            <Hyperlink href={link.url}>{link.label}</Hyperlink>
-          </ListItem>
-        ))}
-      </BulletedList>
+    <Page alignment={'start'}>
+      <CoverHeader className={styles.header}>
+        {parent && <ParentLink to={parent.path}>{parent.label}</ParentLink>}
+        {podcastEpisode.cover !== null && (
+          <CoverHeaderCover
+            alt={podcastEpisode.cover.altText}
+            image={podcastEpisode.cover.sources}
+            sizes={'(width < 640px) 160px, 180px'}
+          />
+        )}
+        <CoverHeaderBody>
+          <Headline>
+            {podcastEpisode.number !== null && (
+              <>
+                <EpisodeNumber>{podcastEpisode.number}</EpisodeNumber>{' '}
+              </>
+            )}
+            {podcastEpisode.title}
+          </Headline>
+          <Subheadline>
+            {podcastEpisode.publishedAt.iso ? (
+              <time dateTime={podcastEpisode.publishedAt.iso}>
+                {podcastEpisode.publishedAt.formatted}
+              </time>
+            ) : (
+              podcastEpisode.publishedAt.formatted
+            )}
+          </Subheadline>
+        </CoverHeaderBody>
+      </CoverHeader>
+
+      <Paragraph className={styles.description}>
+        {podcastEpisode.description}
+      </Paragraph>
+
+      {podcastEpisode.links.length > 0 && (
+        <section aria-labelledby={listenHeadingId} className={styles.listen}>
+          <Heading id={listenHeadingId} level={2}>
+            Kde poslouchat
+          </Heading>
+          <ul className={styles.links}>
+            {podcastEpisode.links.map((link) => (
+              <ListenLinkCard
+                href={link.url}
+                key={link.id}
+                label={link.label}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
     </Page>
   )
 }

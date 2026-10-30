@@ -14,7 +14,7 @@ export const meta: Route.MetaFunction = ({ loaderData, matches, location }) => {
     description: podcastEpisode.description,
     // The default image until covers get a share crop.
     ogImage: resolveOgImageUrl(null, ENV.BASE_URL),
-    title: `Podcasty - ${podcastTitle}: ${episodeTitle}`,
+    title: `${podcastTitle}: ${episodeTitle}`,
     url: new URL(location.pathname, ENV.BASE_URL).href,
   })
   const breadcrumbs = getBreadcrumbs(matches)
