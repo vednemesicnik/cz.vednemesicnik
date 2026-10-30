@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { EpisodeNumber } from '~/components/episode-number'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -21,10 +22,7 @@ export function ContentLinkTitle({ children, level = 2, number }: Props) {
     <ElementTag className={styles.title}>
       {number !== undefined && (
         <>
-          <span className={styles.number}>
-            <span aria-hidden>#{number}</span>
-            <span className={'screen-reader-only'}>Epizoda {number}</span>
-          </span>{' '}
+          <EpisodeNumber>{number}</EpisodeNumber>{' '}
         </>
       )}
       {children}

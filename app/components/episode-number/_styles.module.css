@@ -1,0 +1,7 @@
+/* Its own colour and fill paint over a headline's text-clipped gradient (13c). */
+.number {
+  @layer component {
+    color: var(--text-tertiary);
+    -webkit-text-fill-color: var(--text-tertiary);
+  }
+}
