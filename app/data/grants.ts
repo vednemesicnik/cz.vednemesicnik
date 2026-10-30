@@ -1,8 +1,16 @@
+/** A logo file in `public/` with its intrinsic size, for its aspect ratio. */
+export type GrantSponsorLogo = {
+  src: string
+  width: number
+  height: number
+}
+
 export type Grant = {
   slug: string
   name: string
   year: number
   sponsor: string
+  sponsorLogo: GrantSponsorLogo
   fundingStatement: string
   summary: string
   description: string[]
@@ -23,6 +31,11 @@ export const grants: Grant[] = [
     name: 'Vedneměsíčník 2026',
     slug: 'vednemesicnik-2026',
     sponsor: 'Statutární město České Budějovice',
+    sponsorLogo: {
+      height: 100,
+      src: '/images/partners/statutarni-mesto-ceske-budejovice.svg',
+      width: 236,
+    },
     summary:
       'Zajištění celoroční činnosti studentského kulturního časopisu Vedneměsíčník v roce 2026 včetně vydání tištěných čísel, provozu webu a aktivit na sociálních sítích.',
     year: 2026,

@@ -1,0 +1,26 @@
+/* The plate is always 96 px high, so plates in a wrapping row line up (gm5nuxml). */
+.plate {
+  @layer component {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: top;
+    max-width: 100%;
+    height: calc(var(--partner-logo-height) + 2 * var(--partner-logo-padding));
+    padding: var(--partner-logo-padding);
+    border-radius: var(--radius-md);
+    background-color: var(--partner-logo-bg);
+  }
+}
+
+.image {
+  @layer component {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    width: auto;
+    height: var(--partner-logo-height);
+    object-fit: contain;
+    object-position: left center;
+  }
+}

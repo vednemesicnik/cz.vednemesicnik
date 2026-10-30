@@ -1,0 +1,32 @@
+/* A grid item of the page shrinks to its content and is centred on a phone;
+   the content spans the column and starts at the left (15b). */
+.content {
+  @layer route {
+    width: 100%;
+    text-align: start;
+  }
+}
+
+/* Positions apart, so a label never sticks to the names above it; a line of
+   names stays under 90 characters (15a, 15b). */
+.board {
+  @layer route {
+    display: grid;
+    row-gap: 28px;
+    max-width: 48.75rem;
+
+    @media (width >= 768px) {
+      row-gap: 36px;
+    }
+  }
+}
+
+.positionHeading {
+  @layer route {
+    margin-block: 0 8px;
+
+    @media (width >= 768px) {
+      margin-block-end: 10px;
+    }
+  }
+}
