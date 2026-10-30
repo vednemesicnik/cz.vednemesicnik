@@ -42,11 +42,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                   <BaseLink to={`/podcasts/${podcast.slug}`}>
                     <Tile>
                       <TileCard>
-                        <Image
-                          {...podcast.cover.sources}
-                          alt={podcast.cover.altText}
-                          sizes={`${sizeConfig.podcastCover.width}px`}
-                        />
+                        {podcast.cover !== null && (
+                          <Image
+                            {...podcast.cover.sources}
+                            alt={podcast.cover.altText}
+                            sizes={`${sizeConfig.podcastCover.width}px`}
+                          />
+                        )}
                       </TileCard>
                       <TileCaption>{podcast.title}</TileCaption>
                     </Tile>
@@ -63,8 +65,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           <Heading level={2}>Nejnovější epizody</Heading>
           <ContentList>
             {episodes.map((episode) => {
-              const coverAlt = episode.cover.altText
-              const coverSources = episode.cover.sources
+              const coverAlt = episode.cover?.altText
+              const coverSources = episode.cover?.sources
 
               return (
                 <ContentListItem key={episode.id}>
