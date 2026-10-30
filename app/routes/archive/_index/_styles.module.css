@@ -1,3 +1,36 @@
+/* The year bar follows the headline at the distance the headline group keeps
+   between its rows (14a). */
+.headlineGroup {
+  @layer route {
+    margin-block-end: 12px;
+  }
+}
+
+/* The year row in a bar across the whole window that sticks under the header
+   and rides with it (14a, 14b, d104jrnd). It looks the same at the top and
+   stuck, so it needs no `stuck` query: 8 px, the 44 px row, 8 px and the 1 px
+   rule, 61 px. The border image paints the background and the rule past the
+   column to the window's edges without widening the page. */
+.yearBar {
+  @layer route {
+    position: sticky;
+    top: calc(var(--app-header-height) + var(--app-header-shift, 0px));
+    z-index: calc(var(--z-header) - 1);
+    justify-self: stretch;
+    /* The row scrolls within the column instead of widening it. */
+    min-width: 0;
+    margin-block-end: 16px;
+    padding-block: 8px 9px;
+    border-image:
+      linear-gradient(to top, var(--border) 1px, var(--bg-primary) 1px) fill
+      0 / 0 / 0 100vmax;
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition: top 0.3s ease;
+    }
+  }
+}
+
 .year {
   @layer route {
     /* A grid item of the page shrinks to its content; the year spans the
@@ -7,14 +40,15 @@
 }
 
 /* The year's heading with a rule under it, at the start on a phone too (14b);
-   a jump to `/archive#2012` stops it clear of the sticky header (14a, fr24hvgc). */
+   a jump to `/archive#2012` stops it 16 px under the year bar while the header
+   stands, with more room when it hides (14a, d104jrnd). */
 .yearHeading {
   @layer route {
     margin-block: 0 20px;
     text-align: start;
     padding-block-end: 10px;
     border-block-end: 1px solid var(--border);
-    scroll-margin-top: 96px;
+    scroll-margin-top: calc(var(--app-header-height) + 61px + 16px);
 
     @media (width < 640px) {
       margin-block-end: 16px;
