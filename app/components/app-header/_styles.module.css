@@ -8,6 +8,7 @@
     grid-auto-flow: row;
     justify-content: center;
     justify-items: center;
+    block-size: var(--app-header-height);
     padding: 12px var(--page-side-padding);
     row-gap: 16px;
     background-color: var(--bg-primary);
@@ -19,17 +20,30 @@
       padding-block: 24px;
     }
 
-    /* Hides while scrolling down and returns on the way up; stays put with reduced
-       motion (design 10a). Browsers without scroll-state queries keep it in place. */
+    /* Hides while scrolling down and returns on the way up, by the shift set
+       on the body below. */
+    translate: 0 var(--app-header-shift, 0);
+
     @media (prefers-reduced-motion: no-preference) {
       transition: translate 0.3s ease;
+    }
+  }
+}
 
+/* The header's shift as one variable, so what sticks under it rides along in
+   the same transition (10a, d104jrnd): minus its height while scrolling down,
+   0 on the way up. It stays put with reduced motion; browsers without
+   scroll-state queries keep it in place. The body sits below the `html`
+   scroll-state container and holds the header and the content. */
+:global(body) {
+  @layer component {
+    @media (prefers-reduced-motion: no-preference) {
       @container scroll-state((scrolled: bottom) and (scrollable: top)) {
-        translate: 0 -100%;
+        --app-header-shift: calc(-1 * var(--app-header-height));
       }
 
       @container scroll-state(scrolled: top) {
-        translate: 0 0;
+        --app-header-shift: 0px;
       }
     }
   }

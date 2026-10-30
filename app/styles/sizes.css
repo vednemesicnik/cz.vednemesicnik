@@ -1,5 +1,8 @@
 :root {
-  /*--app-header-height: 64px;*/
+  /* The public header, its own height and the `top` of what sticks under it
+     (10a, d104jrnd): 24 px, the 40 px logo, 24 px, the 1 px rule; on a phone
+     12 px, the 44 px Menu button, 12 px and the rule. */
+  --app-header-height: 89px;
   --app-navigation-height: 40px;
   --page-max-width: 940px;
   --page-side-padding: 24px;
@@ -30,6 +33,7 @@
 
 @media (width < 768px) {
   :root {
+    --app-header-height: 69px;
     --admin-page-side-padding: 16px;
   }
 }
