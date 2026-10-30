@@ -71,11 +71,9 @@ export default function RouteComponent({
           </Heading>
           <ul className={styles.links}>
             {podcastEpisode.links.map((link) => (
-              <ListenLinkCard
-                href={link.url}
-                key={link.id}
-                label={link.label}
-              />
+              <ListenLinkCard href={link.url} key={link.id}>
+                {link.label}
+              </ListenLinkCard>
             ))}
           </ul>
         </section>
