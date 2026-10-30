@@ -34,6 +34,9 @@
   --admin-page-side-padding: 32px;
   /* The space between the administration page's blocks (22a). */
   --admin-page-row-gap: 24px;
+  /* A foreign logo's height at every width and its plate's clear space (gm5nuxml). */
+  --partner-logo-height: 64px;
+  --partner-logo-padding: 16px;
 }
 
 /* The preview bar's one line: 10 px, 13 px text at 1.45, 10 px, the 1 px rule (10d). */

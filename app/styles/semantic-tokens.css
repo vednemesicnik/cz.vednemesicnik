@@ -38,6 +38,9 @@
       var(--color-charcoal-100),
       var(--color-charcoal-800)
     );
+    /* A foreign logo's plate: white in both schemes, so the logo stays in its
+       original colours (gm5nuxml). */
+    --partner-logo-bg: light-dark(var(--color-white), var(--color-white));
 
     /* ========================================
        Borders
