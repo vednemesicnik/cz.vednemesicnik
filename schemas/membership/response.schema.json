@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Declaration": {
+      "additionalProperties": false,
+      "description": "The signed declaration as uploaded: a scan or photo, PDF, JPEG or PNG, at most 8388608 bytes once decoded. The type is checked against the file's first bytes.",
+      "properties": {
+        "data": {
+          "description": "The file's bytes, base64-encoded.",
+          "type": "string"
+        },
+        "mimeType": {
+          "enum": ["application/pdf", "image/jpeg", "image/png"],
+          "type": "string"
+        }
+      },
+      "required": ["mimeType", "data"],
+      "type": "object"
+    },
+    "Envelope": {
+      "additionalProperties": false,
+      "description": "How a request travels. `payload` is the request serialised to a string and signed as that exact string. OWN_SECRET is the signing key and never leaves either end.",
+      "properties": {
+        "payload": {
+          "description": "JSON of a SubmitApplicationRequest.",
+          "type": "string"
+        },
+        "signature": {
+          "description": "Lower-case hex HMAC-SHA256(OWN_SECRET, `${timestamp}.${payload}`).",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "timestamp": {
+          "description": "Unix seconds. Inside the signature, so it cannot be adjusted.",
+          "type": "integer"
+        }
+      },
+      "required": ["timestamp", "payload", "signature"],
+      "type": "object"
+    },
+    "MembershipResponse": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "duplicate": {
+              "description": "Present and true when the code was already in the sheet: nothing was stored or sent this time.",
+              "type": "boolean"
+            },
+            "mailerError": {
+              "description": "Present when the application was stored but the acknowledgement to the applicant could not be sent.",
+              "enum": [
+                "unauthorized",
+                "stale_timestamp",
+                "invalid_request",
+                "missing_fields",
+                "invalid_recipient",
+                "too_many_recipients",
+                "attachment_too_large",
+                "server_error",
+                "unreachable",
+                "bad_response",
+                "render_failed"
+              ],
+              "type": "string"
+            },
+            "ok": {
+              "const": true
+            }
+          },
+          "required": ["ok", "code"],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "error": {
+              "enum": [
+                "server_misconfigured",
+                "invalid_request",
+                "unauthorized",
+                "stale_timestamp",
+                "missing_fields",
+                "invalid_email",
+                "invalid_declaration",
+                "busy",
+                "server_error"
+              ],
+              "type": "string"
+            },
+            "ok": {
+              "const": false
+            }
+          },
+          "required": ["ok", "error"],
+          "type": "object"
+        }
+      ]
+    },
+    "SubmitApplicationRequest": {
+      "additionalProperties": false,
+      "description": "One membership application. `code` identifies it: a second request with a code that is already in the sheet stores nothing and sends nothing, and answers with duplicate: true.",
+      "properties": {
+        "action": {
+          "const": "submit"
+        },
+        "address": {
+          "description": "Permanent address, one line.",
+          "maxLength": 300,
+          "minLength": 1,
+          "type": "string"
+        },
+        "code": {
+          "description": "The application code the app generated, e.g. VDM-7K3Q-2P.",
+          "pattern": "^VDM-[0-9A-Z]{4}-[0-9A-Z]{2}$",
+          "type": "string"
+        },
+        "dateOfBirth": {
+          "description": "YYYY-MM-DD.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string"
+        },
+        "declaration": {
+          "$ref": "#/definitions/Declaration"
+        },
+        "email": {
+          "description": "The applicant's address.",
+          "type": "string"
+        },
+        "firstName": {
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string"
+        },
+        "isMinor": {
+          "description": "Under 18 on the day of submission, computed by the app.",
+          "type": "boolean"
+        },
+        "lastName": {
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string"
+        },
+        "phone": {
+          "pattern": "^\\+?[0-9 ]{9,20}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "code",
+        "firstName",
+        "lastName",
+        "dateOfBirth",
+        "address",
+        "email",
+        "phone",
+        "isMinor",
+        "declaration"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "Contract for the Vedneměsíčník membership-applications web app. POST a signed Envelope whose payload is a SubmitApplicationRequest; the response is a MembershipResponse. The application is stored (a row in the sheet, the signed declaration on the shared drive) before any e-mail goes out; a failed e-mail does not fail the request and is reported in mailerError.",
+  "title": "Membership"
+}

@@ -179,6 +179,17 @@ every issued link. Procedure:
    with the issuer's name. After signing in, Settings suggests a passkey — the
    way out of the next outage.
 
+## Membership applications (Google Apps Script)
+
+A membership application is stored by the web app bound to the applications sheet on
+the shared drive "Spolek – členství" (see the `SCRIPT__Membership__Applications` repo,
+#394). Optional until the form (#396) ships. `GAS_MEMBERSHIP_SECRET` must equal the
+script's `OWN_SECRET` property.
+
+```shell
+fly secrets set GAS_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
+```
+
 ## Image store
 
 Pre-generated image variants are served as static files from `/data/images` on the
