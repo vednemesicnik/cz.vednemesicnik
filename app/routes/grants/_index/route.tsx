@@ -1,7 +1,9 @@
 // noinspection JSUnusedGlobalSymbols
 
 import { href } from 'react-router'
+import { ContentLinkAuthor } from '~/components/content-link-author'
 import { ContentLinkFooter } from '~/components/content-link-footer'
+import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
 import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
@@ -32,9 +34,16 @@ export default function RouteComponent() {
               to={href('/grants/:grantSlug', { grantSlug: grant.slug })}
             >
               <ContentLinkTitle>{grant.name}</ContentLinkTitle>
+              {/* The sponsor before the year, like an article's author before
+                  its date (15g). */}
               <ContentLinkFooter>
-                <span>{grant.year}</span>
-                <span>{grant.sponsor}</span>
+                <ContentLinkAuthor>{grant.sponsor}</ContentLinkAuthor>
+                <ContentLinkPublishDate
+                  date={{
+                    formatted: String(grant.year),
+                    iso: String(grant.year),
+                  }}
+                />
               </ContentLinkFooter>
             </PostContentLink>
           </ContentListItem>

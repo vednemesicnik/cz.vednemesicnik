@@ -1,0 +1,9 @@
+/* The headline stays centred on a phone, the paragraphs start at the left
+   and keep a line under 90 characters (15c). */
+.content {
+  @layer route {
+    width: 100%;
+    max-width: 48.75rem;
+    text-align: start;
+  }
+}

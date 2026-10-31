@@ -55,6 +55,17 @@
   }
 }
 
+/* A tag the reader doesn't see: a frame on the name and count's own edge, 6px to the sides, so nothing moves (11e). */
+.preview {
+  @layer route {
+    margin-inline: -6px;
+    padding-inline: 6px;
+    border-radius: var(--radius-sm);
+    outline: 2px dashed var(--preview-outline);
+    outline-offset: 0;
+  }
+}
+
 .count {
   @layer route {
     font-size: var(--font-size-sm);

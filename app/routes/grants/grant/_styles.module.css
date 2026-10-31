@@ -1,29 +1,75 @@
+/* The sponsor box beside the text from 768 px, level with the headline;
+   below the text on a phone (15g). */
+.layout {
+  @layer route {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "parent"
+      "main"
+      "sponsor";
+    justify-items: start;
+
+    @media (width >= 768px) {
+      grid-template-columns: minmax(0, 1fr) 320px;
+      grid-template-areas:
+        "parent ."
+        "main sponsor";
+      column-gap: 40px;
+      align-items: start;
+    }
+  }
+}
+
+.parentLink {
+  @layer route {
+    grid-area: parent;
+  }
+}
+
+.main {
+  @layer route {
+    grid-area: main;
+    width: 100%;
+  }
+}
+
 .sponsorSection {
-  display: grid;
-  grid-auto-flow: row;
-  row-gap: 12px;
-  padding: 1.5rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-block: 1rem;
+  @layer route {
+    grid-area: sponsor;
+    display: grid;
+    grid-auto-flow: row;
+    row-gap: 12px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 320px;
+    margin-block-start: 40px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    @media (width >= 768px) {
+      margin-block-start: 0;
+    }
+  }
 }
 
 .sponsorLabel {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0;
-}
-
-.sponsorLogo {
-  height: 40px;
-  width: auto;
+  @layer route {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0;
+  }
 }
 
 .fundingStatement {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  margin: 0;
+  @layer route {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin: 0;
+  }
 }

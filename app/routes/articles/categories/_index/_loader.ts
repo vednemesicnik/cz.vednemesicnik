@@ -39,6 +39,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const [categories, drafts, tags] = await Promise.all([
     prisma.articleCategory.findMany({
       select: {
+        ...WEB_PREVIEW_STATE_SELECT,
         _count: {
           select: {
             articles: { where: visibleArticles },
@@ -89,19 +90,23 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
           }),
         ),
       name: category.name,
+      previewState: getWebPreviewState(category),
       slug: category.slug,
     }))
 
   const tagLinks = pickTopByArticleCount(tags, TAG_STRIP_SIZE).map((tag) => ({
     name: tag.name,
+    previewState: tag.previewState,
     slug: tag.slug,
   }))
 
   return {
     categories: categoriesWithArticles,
-    preview: getListPreview(
-      categoriesWithArticles.flatMap((category) => category.latestArticles),
-    ),
+    preview: getListPreview([
+      ...categoriesWithArticles,
+      ...categoriesWithArticles.flatMap((category) => category.latestArticles),
+      ...tagLinks,
+    ]),
     tagLinks,
   }
 }

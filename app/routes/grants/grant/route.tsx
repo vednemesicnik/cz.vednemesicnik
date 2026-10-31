@@ -2,10 +2,11 @@
 
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
-import { CbLogo } from '~/components/logos/cb-logo'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 import { ParentLink } from '~/components/parent-link'
+import { PartnerLogo } from '~/components/partner-logo'
+import { PartnerLogoGroup } from '~/components/partner-logo-group'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
 import styles from './_styles.module.css'
 import type { Route } from './+types/route'
@@ -22,21 +23,38 @@ export default function RouteComponent({
   const parent = getParentBreadcrumb(matches)
 
   return (
-    <Page>
-      {parent && <ParentLink to={parent.path}>{parent.label}</ParentLink>}
-      <HeadlineGroup>
-        <Headline>{grant.name}</Headline>
-      </HeadlineGroup>
+    // Start-aligned at every width: running text, like the article (12b).
+    <Page alignment={'start'}>
+      <div className={styles.layout}>
+        {parent && (
+          <ParentLink className={styles.parentLink} to={parent.path}>
+            {parent.label}
+          </ParentLink>
+        )}
 
-      <section className={styles.sponsorSection}>
-        <p className={styles.sponsorLabel}>Spolufinancováno</p>
-        <CbLogo className={styles.sponsorLogo} />
-        <p className={styles.fundingStatement}>{grant.fundingStatement}</p>
-      </section>
+        <div className={styles.main}>
+          <HeadlineGroup>
+            <Headline>{grant.name}</Headline>
+          </HeadlineGroup>
 
-      {grant.description.map((paragraph, index) => (
-        <Paragraph key={index}>{paragraph}</Paragraph>
-      ))}
+          {grant.description.map((paragraph, index) => (
+            <Paragraph key={index}>{paragraph}</Paragraph>
+          ))}
+        </div>
+
+        <aside className={styles.sponsorSection}>
+          <p className={styles.sponsorLabel}>Spolufinancováno</p>
+          <PartnerLogoGroup>
+            <PartnerLogo
+              alt={grant.sponsor}
+              height={grant.sponsorLogo.height}
+              src={grant.sponsorLogo.src}
+              width={grant.sponsorLogo.width}
+            />
+          </PartnerLogoGroup>
+          <p className={styles.fundingStatement}>{grant.fundingStatement}</p>
+        </aside>
+      </div>
     </Page>
   )
 }

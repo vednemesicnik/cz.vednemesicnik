@@ -30,6 +30,17 @@
   }
 }
 
+/* A link the reader doesn't see: a frame on its own edge, 6px to the sides, so nothing moves (11e). */
+.preview {
+  @layer variant {
+    margin-inline: -6px;
+    padding-inline: 6px;
+    border-radius: var(--radius-sm);
+    outline: 2px dashed var(--preview-outline);
+    outline-offset: 0;
+  }
+}
+
 .more {
   @layer variant {
     margin-inline-start: auto;

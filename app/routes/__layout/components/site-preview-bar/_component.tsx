@@ -14,9 +14,11 @@ import type { PreviewMode } from '~/utils/reader-view/get-preview-mode.server'
 
 import styles from './_styles.module.css'
 
-// The page of unpublished content says which (10d, kqyzagfd).
+// The page of unpublished content says which (10d, 11e; kqyzagfd, fufeg0hy).
 const ITEM_SENTENCES: Record<PreviewEntity, string> = {
   article: 'Tento článek čtenáři nevidí.',
+  article_category: 'Tuto rubriku čtenáři nevidí.',
+  article_tag: 'Tento štítek čtenáři nevidí.',
   podcast: 'Tento podcast čtenáři nevidí.',
   podcast_episode: 'Tuto epizodu čtenáři nevidí.',
 }
