@@ -127,6 +127,17 @@ fails at boot without it. `GAS_USERS_NOTICE_SECRET` must equal the script's
 fly secrets set GAS_USERS_NOTICE_URL="https://script.google.com/macros/s/.../exec" GAS_USERS_NOTICE_SECRET="…" --app cz-vednemesicnik
 ```
 
+### Membership applications (Google Apps Script)
+
+A membership application is stored by the web app bound to the applications sheet on
+the shared drive "Spolek – členství" (see the `SCRIPT__Membership__Applications` repo,
+#394). Optional until the form (#396) ships. `GAS_MEMBERSHIP_SECRET` must equal the
+script's `OWN_SECRET` property.
+
+```shell
+fly secrets set GAS_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
+```
+
 ### Passkeys / WebAuthn (`RELYING_PARTY_*`)
 
 Passkey sign-in needs the relying-party settings. They are **required in
