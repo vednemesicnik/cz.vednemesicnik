@@ -32,30 +32,41 @@ import { signGasRequest } from '~/utils/sign-gas-request.server'
 // Drive before it answers.
 const SUBMIT_TIMEOUT_MILLISECONDS = 60_000
 
+type MembershipError = Extract<MembershipResponse, { ok: false }>['error']
+
 export type MembershipApplicationResult =
   | {
       ok: true
       code: string
-      /** False when the application is stored but its acknowledgement e-mail failed. */
-      acknowledgementSent: boolean
+      /**
+       * Whether the acknowledgement e-mail went out. `null` when the code was
+       * already stored by an earlier attempt: this answer does not say how that
+       * attempt's e-mail went.
+       */
+      acknowledgementSent: boolean | null
     }
   | {
       ok: false
       /**
-       * `unavailable` — not reached, timed out or failed on the far side; trying
-       * again later may work. `rejected` — the script refused the request as it is.
+       * `invalid_declaration` — the applicant's file is not a PDF, JPEG or PNG
+       * within the limit; they can upload another. `rejected` — the script
+       * refused the details as they are. `unavailable` — not reached, timed out,
+       * or failed on our side (including a wrong secret or clock); trying again
+       * later may work.
        */
-      reason: 'unavailable' | 'rejected'
+      reason: 'invalid_declaration' | 'rejected' | 'unavailable'
     }
 
-const REJECTED_ERRORS = new Set([
-  'invalid_request',
-  'missing_fields',
-  'invalid_email',
-  'invalid_declaration',
-  'unauthorized',
-  'stale_timestamp',
-])
+// What the applicant's own input caused. Everything else — a wrong secret, a
+// stale clock, a busy or misconfigured script — is ours, so it is `unavailable`.
+const REASON_BY_ERROR: Partial<
+  Record<MembershipError, 'invalid_declaration' | 'rejected'>
+> = {
+  invalid_declaration: 'invalid_declaration',
+  invalid_email: 'rejected',
+  invalid_request: 'rejected',
+  missing_fields: 'rejected',
+}
 
 /**
  * @param request - One application; `code` is its idempotency key.
@@ -107,7 +118,9 @@ export const submitMembershipApplication = async (
         }
       }
       return {
-        acknowledgementSent: data.mailerError === undefined,
+        acknowledgementSent: data.duplicate
+          ? null
+          : data.mailerError === undefined,
         code: data.code,
         ok: true,
       }
@@ -130,7 +143,7 @@ export const submitMembershipApplication = async (
 
     return {
       ok: false,
-      reason: error && REJECTED_ERRORS.has(error) ? 'rejected' : 'unavailable',
+      reason: (error && REASON_BY_ERROR[error]) ?? 'unavailable',
     }
   } catch (error) {
     console.error('[membership] GAS request threw —', error)

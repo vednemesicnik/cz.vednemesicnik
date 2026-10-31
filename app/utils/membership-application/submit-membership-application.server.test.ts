@@ -17,7 +17,7 @@ const jsonResponse = (json: unknown, status = 200) => ({
 
 const application = {
   action: 'submit' as const,
-  address: 'Lannova 12, 370 01 České Budějovice',
+  address: 'Vymyšlená 1, 370 01 České Budějovice',
   code: 'VDM-7K3Q-2P',
   dateOfBirth: '2009-05-14',
   declaration: { data: 'JVBERi0=', mimeType: 'application/pdf' as const },
@@ -25,7 +25,7 @@ const application = {
   firstName: 'Tereza',
   isMinor: true,
   lastName: 'Malá',
-  phone: '604 123 456',
+  phone: '600 000 000',
 }
 
 const keys = [
@@ -77,15 +77,15 @@ describe('submitMembershipApplication', () => {
       code: application.code,
       ok: true,
     })
-    const [, init] = fetchMock.mock.lastCall ?? []
-    const envelope = JSON.parse(init.body)
+    const [, requestInit] = fetchMock.mock.lastCall ?? []
+    const envelope = JSON.parse(requestInit.body)
     expect(JSON.parse(envelope.payload)).toEqual(application)
     expect(envelope.signature).toBe(
       createHmac('sha256', 'test-secret')
         .update(`${envelope.timestamp}.${envelope.payload}`)
         .digest('hex'),
     )
-    expect(init.body).not.toContain('test-secret')
+    expect(requestInit.body).not.toContain('test-secret')
   })
 
   test('waits up to 60 s, because the request carries the scan', async () => {
@@ -124,24 +124,39 @@ describe('submitMembershipApplication', () => {
     })
   })
 
-  test('a refused request is rejected, a far-side failure is unavailable', async () => {
+  test('a code stored by an earlier attempt does not claim the e-mail went out', async () => {
     vi.stubGlobal(
       'fetch',
       vi
         .fn()
-        .mockResolvedValueOnce(
-          jsonResponse({ error: 'invalid_declaration', ok: false }),
-        )
-        .mockResolvedValueOnce(jsonResponse({ error: 'busy', ok: false })),
+        .mockResolvedValue(
+          jsonResponse({ code: application.code, duplicate: true, ok: true }),
+        ),
+    )
+
+    expect(await submitMembershipApplication(application)).toEqual({
+      acknowledgementSent: null,
+      code: application.code,
+      ok: true,
+    })
+  })
+
+  test.each([
+    ['invalid_declaration', 'invalid_declaration'],
+    ['invalid_email', 'rejected'],
+    ['missing_fields', 'rejected'],
+    ['unauthorized', 'unavailable'],
+    ['stale_timestamp', 'unavailable'],
+    ['busy', 'unavailable'],
+  ])('error %s is %s', async (error, reason) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse({ error, ok: false })),
     )
 
     expect(await submitMembershipApplication(application)).toEqual({
       ok: false,
-      reason: 'rejected',
-    })
-    expect(await submitMembershipApplication(application)).toEqual({
-      ok: false,
-      reason: 'unavailable',
+      reason,
     })
   })
 

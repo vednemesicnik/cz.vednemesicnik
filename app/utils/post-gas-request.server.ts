@@ -3,8 +3,9 @@
  * (magic-link, editorial-board, …). Centralizes the POST, fail-fast timeout,
  * and body parsing so callers get a typed result without an inline cast.
  *
- * Best-effort: network errors and timeouts propagate to the caller (which logs
- * and swallows them). A non-JSON body (e.g. a GAS HTML error page) yields
+ * Network errors and timeouts propagate to the caller, which decides what they
+ * mean: the e-mail senders log and swallow them, the membership application
+ * reports them. A non-JSON body (e.g. a GAS HTML error page) yields
  * `data: null` while still reporting the HTTP status.
  *
  * The response type is a caller-supplied assertion (`as TData`) — the parsed
@@ -12,8 +13,9 @@
  * from `@generated/<name>/response`.
  */
 
-// Fail fast if GAS hangs: delivery is best-effort and must not stall the
-// caller's (neutral) response.
+// The default, for the best-effort senders: fail fast if GAS hangs, so delivery
+// never stalls the caller's (neutral) response. A caller carrying a file passes
+// its own `timeoutMilliseconds`.
 const GAS_TIMEOUT_MS = 8000
 
 export type GasRequestResult<TData> = {
