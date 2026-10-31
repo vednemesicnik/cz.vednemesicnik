@@ -231,8 +231,13 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   tlačítkem, který musí obstát sám, a žádné zaškrtávací pole. Odkaz typu *Jak s údaji
   zacházíme* nemá kam vést. Dotazy k údajům jdou na jednu společnou adresu
   `udaje@vednemesicnik.cz` (rozhodnuto 2. 10. 2026).
-- **Přihláška do spolku**: členem se člověk stane až **schválením vedením spolku**, ne odesláním
-  ani e‑mailem. Neschválená přihláška se po 12 měsících od podání smaže, schválená zůstává.
+- **Přihláška do spolku**: členem se člověk stane až **přijetím**, ne odesláním ani e‑mailem.
+  O přijetí rozhoduje orgán, který určují stanovy: dnes valné shromáždění (schůze všech členů),
+  po chystané změně stanov Spolková rada. Web proto orgán nejmenuje: `O přijetí rozhodne spolek.`
+  „Vedení spolku“ o přijetí nerozhoduje; věta, která to tvrdí, je nepravda. Členem se může stát
+  student nebo absolvent českobudějovické střední školy; kdo v den podání není zletilý, tomu
+  přihlášku podepíše i zákonný zástupce. Přihláška bez zapsaného přijetí se 12 měsíců od podání
+  smaže, i když ještě nebyla projednaná; přijatá zůstává (rozhodnuto 31. 10. 2026).
 - **Přihláška do redakce**: nic nesmí slibovat, že se někdo ozve, ani lhůtu. O přijetí
   rozhoduje šéfredakce.
 - **Obě přihlášky jsou skryté.** Web na ně nikde neodkazuje a vyhledávače je neindexují. Do
