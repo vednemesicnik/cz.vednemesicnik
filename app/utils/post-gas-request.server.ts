@@ -22,15 +22,25 @@ export type GasRequestResult<TData> = {
   data: TData | null
 }
 
+export type GasRequestOptions = {
+  /**
+   * How long to wait before aborting. Defaults to 8 s, right for a sign-in link;
+   * a request that carries a file (a scanned declaration, ~10.7 MB once
+   * base64-encoded) needs far longer.
+   */
+  timeoutMilliseconds?: number
+}
+
 export const postGasRequest = async <TData>(
   url: string,
   body: unknown,
+  options: GasRequestOptions = {},
 ): Promise<GasRequestResult<TData>> => {
   const response = await fetch(url, {
     body: JSON.stringify(body),
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
-    signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
+    signal: AbortSignal.timeout(options.timeoutMilliseconds ?? GAS_TIMEOUT_MS),
   })
 
   const data = (await response.json().catch(() => null)) as TData | null
