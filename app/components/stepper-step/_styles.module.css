@@ -1,0 +1,98 @@
+/* The design system's Stepper (`.vdm-stepper__step`, components.css). */
+.step {
+  @layer component {
+    counter-increment: stepper-step;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-block-end: 10px;
+    box-shadow: inset 0 -1px 0 var(--border-hover);
+  }
+}
+
+.done {
+  @layer variant {
+    box-shadow: inset 0 -1px 0 var(--primary-hover);
+  }
+}
+
+.current {
+  @layer variant {
+    box-shadow: inset 0 -3px 0 var(--primary-hover);
+  }
+}
+
+.number {
+  @layer component {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 26px;
+    height: 26px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-full);
+
+    &::before {
+      content: counter(stepper-step);
+    }
+  }
+}
+
+.done > .number {
+  @layer variant {
+    color: var(--link-strong);
+    border-color: var(--primary-hover);
+  }
+}
+
+.current > .number {
+  @layer variant {
+    width: 28px;
+    height: 28px;
+    color: var(--text-on-accent);
+    font-weight: var(--font-weight-bold);
+    background: var(--primary-hover);
+    border: 0;
+  }
+}
+
+.text {
+  @layer component {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 15px;
+    line-height: 1.25;
+  }
+}
+
+.name {
+  @layer component {
+    color: var(--text-secondary);
+  }
+}
+
+.currentName {
+  @layer component {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+.link {
+  @layer variant {
+    line-height: inherit;
+  }
+}
+
+.note {
+  @layer component {
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+  }
+}

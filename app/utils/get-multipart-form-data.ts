@@ -34,11 +34,26 @@ function createMemoryUploadHandler(options: Options) {
   }
 }
 
-export const getMultipartFormData = async (request: Request) => {
+type MultipartOptions = {
+  maxFileSize?: number
+  maxFiles?: number
+}
+
+/**
+ * @param request - The multipart request.
+ * @param options.maxFileSize - Largest file, 10 MB unless a route needs less.
+ *   Past it the parser throws `MaxFileSizeExceededError`.
+ * @param options.maxFiles - Most files, the parser's default unless given. Past
+ *   it the parser throws `MaxFilesExceededError`.
+ */
+export const getMultipartFormData = async (
+  request: Request,
+  { maxFileSize = MAX_FILE_SIZE, maxFiles }: MultipartOptions = {},
+) => {
   const uploadHandler = createMemoryUploadHandler({
-    maxPartSize: MAX_FILE_SIZE,
+    maxPartSize: maxFileSize,
   })
 
   // The parser defaults to a 2 MB per-file limit; align it with ours.
-  return parseFormData(request, { maxFileSize: MAX_FILE_SIZE }, uploadHandler)
+  return parseFormData(request, { maxFileSize, maxFiles }, uploadHandler)
 }

@@ -1,0 +1,123 @@
+/* The sheet's whole stylesheet: it is its own document, so there are no layers,
+   no site tokens and nothing else to win against. Tokens from design 15d. */
+:root {
+  color-scheme: light;
+
+  --doc-margin: 20mm 20mm 20mm 25mm;
+  --doc-font-text: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --doc-font-label: InterVariable, Inter, Arial, sans-serif;
+  --doc-ink: #121418;
+  --doc-ink-muted: #4b5563;
+  --doc-paper: #ffffff;
+  --doc-space: 8mm;
+  --doc-label-width: 38mm;
+  --doc-row-gap: 2mm;
+  --doc-signature-space: 15mm;
+  --doc-rule: 0.75pt solid var(--doc-ink);
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--doc-paper);
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 210mm;
+  /* Short of the full height: a page that fills A4 exactly can spill an empty
+     second one from rounding. */
+  height: 296.9mm;
+  margin-inline: auto;
+  padding: var(--doc-margin);
+  overflow: hidden;
+  color: var(--doc-ink);
+  background: var(--doc-paper);
+  font-family: var(--doc-font-text);
+  font-size: 11pt;
+  line-height: 1.45;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.label {
+  margin: 0;
+  color: var(--doc-ink-muted);
+  font-family: var(--doc-font-label);
+  font-size: 9pt;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.title {
+  margin: var(--doc-space) 0 0;
+  font-family: var(--doc-font-label);
+  font-size: 18pt;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: var(--doc-label-width) minmax(0, 1fr);
+  row-gap: var(--doc-row-gap);
+  align-items: baseline;
+  margin: var(--doc-space) 0 0;
+  break-inside: avoid;
+}
+
+.fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.declaration {
+  margin: var(--doc-space) 0 0;
+  text-wrap: pretty;
+}
+
+.signatures {
+  display: flex;
+  flex-direction: column;
+  gap: 10mm;
+  margin-block-start: auto;
+}
+
+.signature {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12mm;
+  padding-block-start: var(--doc-signature-space);
+  break-inside: avoid;
+}
+
+.signature-line {
+  padding-block-start: 1.5mm;
+  color: var(--doc-ink-muted);
+  font-family: var(--doc-font-label);
+  font-size: 9pt;
+  line-height: 1.35;
+  border-block-start: var(--doc-rule);
+}
+
+.guardian {
+  display: flex;
+  flex-direction: column;
+  break-inside: avoid;
+}
+
+.section-title {
+  margin: 0;
+  font-family: var(--doc-font-label);
+  font-size: 11pt;
+  font-weight: 600;
+  line-height: 1.35;
+}
