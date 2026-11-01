@@ -103,7 +103,8 @@ const schema = z
     // Sign-in methods and the Apps Script integrations are always active in
     // production and have no runtime guard, so fail fast at boot rather than at the
     // first OAuth callback / magic-link email / invitation / WebAuthn ceremony with
-    // an empty credential.
+    // an empty credential. The Cloudflare secret does have a fallback, counting per
+    // edge, but nothing would report it, so its absence fails here as well.
     if (env.NODE_ENV === 'production') {
       requireKeys(
         [

@@ -204,11 +204,17 @@ audit logs all read that address. Required: the app fails at boot without the se
    ```shell
    fly secrets set --stage CLOUDFLARE_ORIGIN_SECRET="…" --app cz-vednemesicnik
    ```
-2. In Cloudflare: Rules → Transform Rules → Modify Request Header, for all incoming requests,
-   set the static header `X-Origin-Secret` to the same value.
+2. In Cloudflare: Rules → Transform Rules → Modify Request Header, set the static header
+   `X-Origin-Secret` to the same value, only for the hostnames Fly serves:
+   `http.host in {"vednemesicnik.cz" "www.vednemesicnik.cz"}`. On "all incoming requests" a
+   proxied record pointing elsewhere would hand the secret to that server.
+
+Keep Pseudo IPv4 on anything but "Overwrite Headers", and "Remove visitor IP headers" off: both
+change `CF-Connecting-IP`.
 
 If the rule and the secret differ, nothing breaks: limits and logs fall back to the edge's
-address. To rotate, change both; requests in between count per edge.
+address, and the limiter counts an IPv6 edge by its /64. To rotate, change both; requests in
+between count the same way.
 
 ## Image store
 

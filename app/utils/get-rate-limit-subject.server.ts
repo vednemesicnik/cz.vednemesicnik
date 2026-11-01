@@ -1,7 +1,9 @@
 import { isIP } from 'node:net'
 
-// What the limiter counts for an address. One household or phone holds a whole IPv6 /64
-// and can walk through it, so the limit counts the /64 and the logs keep the address.
+/**
+ * What the limiter counts for an address. One household or phone holds a whole IPv6 /64
+ * and can walk through it, so the limit counts the /64 and the logs keep the address.
+ */
 export function getRateLimitSubject(address: string): string {
   if (isIP(address) !== 6 || address.includes('.')) return address
 

@@ -8,7 +8,7 @@ import {
 } from './rate-limit.server'
 
 const EDGE = '162.158.0.1'
-const CLIENT = '84.42.1.1'
+const CLIENT = '198.51.100.1'
 const SECRET = 'origin-secret'
 
 const requestWith = (headers: Record<string, string>) =>
@@ -25,7 +25,7 @@ afterEach(() => {
 describe('getClientIp', () => {
   it.each([
     ['IPv4', CLIENT],
-    ['IPv6', '2a00:1028::1'],
+    ['IPv6', '2001:db8::1'],
   ])('takes an %s client from a request of our zone', (_, address) => {
     const request = requestWith({
       'CF-Connecting-IP': address,
@@ -186,11 +186,11 @@ describe('createRateLimitMiddleware', () => {
     }
 
     expect(await hitsFor(CLIENT)).toBe(`test:${CLIENT}`)
-    expect(await hitsFor('2a00:1028:83a0:1234::1')).toBe(
-      'test:2a00:1028:83a0:1234::/64',
+    expect(await hitsFor('2001:db8:83a0:1234::1')).toBe(
+      'test:2001:db8:83a0:1234::/64',
     )
-    expect(await hitsFor('2a00:1028:83a0:1234:ffff::2')).toBe(
-      'test:2a00:1028:83a0:1234::/64',
+    expect(await hitsFor('2001:db8:83a0:1234:ffff::2')).toBe(
+      'test:2001:db8:83a0:1234::/64',
     )
   })
 })
