@@ -18,15 +18,15 @@ export const SentStep = ({ code, email }: Props) => (
       vás přijmeme, pošleme vám potvrzení na {email}.
     </p>
 
-    <div className={styles.code}>
-      <span className={styles.codeLabel}>Kód přihlášky</span>
-      <span className={styles.codeValue}>
+    <dl className={styles.code}>
+      <dt className={styles.codeLabel}>Kód přihlášky</dt>
+      <dd className={styles.codeValue}>
         <CopyButton value={code}>{code}</CopyButton>
-      </span>
-      <span className={styles.codeHint}>
+      </dd>
+      <dd className={styles.codeHint}>
         Při případném dotazu nám kód pomůže najít vaši přihlášku.
-      </span>
-    </div>
+      </dd>
+    </dl>
 
     <LinkButton
       className={styles.back}

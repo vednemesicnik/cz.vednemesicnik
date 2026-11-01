@@ -82,4 +82,12 @@ describe('membershipDetailsSchema', () => {
       'Zadejte e-mail ve tvaru jmeno@priklad.cz.',
     ])
   })
+
+  it('refuses an e-mail too long to be one', () => {
+    const messages = messagesFor({
+      ...VALID,
+      email: `${'a'.repeat(250)}@local.dev`,
+    })
+    expect(messages).toContain('Zadejte e-mail ve tvaru jmeno@priklad.cz.')
+  })
 })

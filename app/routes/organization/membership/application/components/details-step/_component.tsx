@@ -34,7 +34,8 @@ export const DetailsStep = ({
 }: Props) => {
   const isHydrated = useHydrated()
   const navigation = useNavigation()
-  const isSubmitting = navigation.state !== 'idle'
+  // Set only by a submission, redirect included; a link leaves it undefined.
+  const isSubmitting = navigation.formMethod !== undefined
 
   const [form, fields] = useForm({
     defaultNoValidate: isHydrated,

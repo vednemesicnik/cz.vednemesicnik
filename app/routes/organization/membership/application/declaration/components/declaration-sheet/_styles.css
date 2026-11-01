@@ -3,9 +3,14 @@
 :root {
   color-scheme: light;
 
+  --doc-page-width: 210mm;
   --doc-margin: 20mm 20mm 20mm 25mm;
   --doc-font-text: "Source Serif 4", Georgia, "Times New Roman", serif;
   --doc-font-label: InterVariable, Inter, Arial, sans-serif;
+  --doc-title: 600 18pt / 1.2 var(--doc-font-label);
+  --doc-section: 600 11pt / 1.35 var(--doc-font-label);
+  --doc-text: 400 11pt / 1.45 var(--doc-font-text);
+  --doc-label: 400 9pt / 1.35 var(--doc-font-label);
   --doc-ink: #121418;
   --doc-ink-muted: #4b5563;
   --doc-paper: #ffffff;
@@ -13,7 +18,10 @@
   --doc-label-width: 38mm;
   --doc-row-gap: 2mm;
   --doc-signature-space: 15mm;
+  --doc-signature-columns: 12mm;
+  --doc-signature-blocks: 10mm;
   --doc-rule: 0.75pt solid var(--doc-ink);
+  --doc-rule-offset: 1.5mm;
 }
 
 @page {
@@ -32,7 +40,7 @@ body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  width: 210mm;
+  width: var(--doc-page-width);
   /* Short of the full height: a page that fills A4 exactly can spill an empty
      second one from rounding. */
   height: 296.9mm;
@@ -41,9 +49,7 @@ body {
   overflow: hidden;
   color: var(--doc-ink);
   background: var(--doc-paper);
-  font-family: var(--doc-font-text);
-  font-size: 11pt;
-  line-height: 1.45;
+  font: var(--doc-text);
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
 }
@@ -51,18 +57,12 @@ body {
 .label {
   margin: 0;
   color: var(--doc-ink-muted);
-  font-family: var(--doc-font-label);
-  font-size: 9pt;
-  font-weight: 400;
-  line-height: 1.35;
+  font: var(--doc-label);
 }
 
 .title {
   margin: var(--doc-space) 0 0;
-  font-family: var(--doc-font-label);
-  font-size: 18pt;
-  font-weight: 600;
-  line-height: 1.2;
+  font: var(--doc-title);
 }
 
 .fields {
@@ -87,24 +87,22 @@ body {
 .signatures {
   display: flex;
   flex-direction: column;
-  gap: 10mm;
+  gap: var(--doc-signature-blocks);
   margin-block-start: auto;
 }
 
 .signature {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12mm;
+  gap: var(--doc-signature-columns);
   padding-block-start: var(--doc-signature-space);
   break-inside: avoid;
 }
 
 .signature-line {
-  padding-block-start: 1.5mm;
+  padding-block-start: var(--doc-rule-offset);
   color: var(--doc-ink-muted);
-  font-family: var(--doc-font-label);
-  font-size: 9pt;
-  line-height: 1.35;
+  font: var(--doc-label);
   border-block-start: var(--doc-rule);
 }
 
@@ -116,8 +114,5 @@ body {
 
 .section-title {
   margin: 0;
-  font-family: var(--doc-font-label);
-  font-size: 11pt;
-  font-weight: 600;
-  line-height: 1.35;
+  font: var(--doc-section);
 }

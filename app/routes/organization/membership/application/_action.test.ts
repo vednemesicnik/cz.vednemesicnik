@@ -319,6 +319,7 @@ describe('membership application action', () => {
       expect(result.data.submissionResult.error['']).toEqual([
         expect.stringContaining('za 15 minut'),
       ])
+      expect(result.data.submissionResult.error.declaration).toBeUndefined()
       expect(submitMock).not.toHaveBeenCalled()
     })
 

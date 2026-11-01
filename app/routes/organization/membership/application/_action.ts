@@ -1,6 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { MaxFileSizeExceededError } from '@mjackson/form-data-parser'
 import { data, redirect } from 'react-router'
+import { z } from 'zod'
 
 import { MAX_DECLARATION_BYTES } from '~/config/membership-application-config'
 import { formatRetryAfter } from '~/utils/format-retry-after'
@@ -79,7 +80,7 @@ const submitApplication = async (
 
   // Answered before the body is read, and without the form's own validation.
   const emptySubmission = parseWithZod(new FormData(), {
-    schema: signatureSchema,
+    schema: z.object({}),
   })
 
   const limited = context.get(rateLimitContext)

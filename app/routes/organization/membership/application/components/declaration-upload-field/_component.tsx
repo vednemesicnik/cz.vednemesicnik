@@ -103,6 +103,12 @@ export const DeclarationUploadField = ({ id, errors, ...rest }: Props) => {
     setIsDragOver(true)
   }
 
+  // It also fires on the way onto the button and the text inside.
+  const handleDragLeave = (event: DragEvent) => {
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+    setIsDragOver(false)
+  }
+
   const handleDrop = (event: DragEvent) => {
     if (!event.dataTransfer.types.includes('Files')) return
     event.preventDefault()
@@ -136,7 +142,7 @@ export const DeclarationUploadField = ({ id, errors, ...rest }: Props) => {
       {/* biome-ignore lint/a11y/noStaticElementInteractions: the input and its label are what a keyboard and a reader use; dropping is the mouse's extra */}
       <div
         className={styles.target}
-        onDragLeave={() => setIsDragOver(false)}
+        onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >

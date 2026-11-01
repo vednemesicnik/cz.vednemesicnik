@@ -39,7 +39,8 @@ type Props = {
 export const SignatureStep = ({ isMinor, submissionResult }: Props) => {
   const isHydrated = useHydrated()
   const navigation = useNavigation()
-  const isSubmitting = navigation.state !== 'idle'
+  // Set only by a submission, redirect included; a link leaves it undefined.
+  const isSubmitting = navigation.formMethod !== undefined
   const frameRef = useRef<HTMLIFrameElement>(null)
 
   const [form, fields] = useForm({

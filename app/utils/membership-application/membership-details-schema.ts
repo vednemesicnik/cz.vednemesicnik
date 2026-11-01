@@ -4,10 +4,16 @@ import { getPragueDate } from '~/utils/get-prague-date'
 
 import { parseCzechDate } from './parse-czech-date'
 
-// The script's own limits (SCRIPT__Membership__Applications, config.gs).
+// The script's own limits (SCRIPT__Membership__Applications, config.gs). Its
+// refusal of links in a name or an address stays with it: no real one has any,
+// and its answer sends the applicant back to check the details.
 const MAX_NAME_LENGTH = 100
 const MAX_ADDRESS_LENGTH = 300
 const PHONE_PATTERN = /^\+?[0-9 ]{9,20}$/
+
+// Longer is no address, and would not fit the cookie.
+const MAX_EMAIL_LENGTH = 254
+const EMAIL_FORMAT = 'Zadejte e-mail ve tvaru jmeno@priklad.cz.'
 
 /**
  * What an applicant fills in on the first step (design 15d). All of it is
@@ -48,7 +54,8 @@ export const membershipDetailsSchema = z.object({
   email: z
     .string({ message: 'Vyplňte e-mail.' })
     .trim()
-    .email({ message: 'Zadejte e-mail ve tvaru jmeno@priklad.cz.' }),
+    .max(MAX_EMAIL_LENGTH, { message: EMAIL_FORMAT })
+    .email({ message: EMAIL_FORMAT }),
   firstName: z
     .string({ message: 'Vyplňte jméno.' })
     .trim()

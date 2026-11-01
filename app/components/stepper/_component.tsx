@@ -16,7 +16,12 @@ type Props = {
  * of a multi-page form as an ordered list, each as wide as the others.
  */
 export const Stepper = ({ label, children, className }: Props) => (
-  <ol aria-label={label} className={clsx(styles.stepper, className)}>
+  <ol
+    aria-label={label}
+    className={clsx(styles.stepper, className)}
+    // biome-ignore lint/a11y/noRedundantRoles: WebKit drops list semantics when list-style is none; the explicit role restores them for VoiceOver.
+    role={'list'}
+  >
     {children}
   </ol>
 )
