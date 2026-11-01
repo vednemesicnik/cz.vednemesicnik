@@ -1,3 +1,5 @@
+import { ORGANIZATION_REGISTRATION_NUMBER } from '~/config/site-config'
+
 import styles from './_complementary-information.module.css'
 
 export const ComplementaryInformation = () => {
@@ -7,7 +9,8 @@ export const ComplementaryInformation = () => {
       <section className={styles.operatorSection}>
         <h3 className={'screen-reader-only'}>Provozovatel</h3>
         <p className={styles.descriptionText}>
-          Web provozuje Vedneměsíčník,&nbsp;z.&nbsp;s. · IČO:&nbsp;22851356
+          Web provozuje Vedneměsíčník,&nbsp;z.&nbsp;s. · IČO:&nbsp;
+          {ORGANIZATION_REGISTRATION_NUMBER}
         </p>
       </section>
     </section>

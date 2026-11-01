@@ -146,8 +146,9 @@ export function createRateLimitMiddleware(
   } = options
 
   return async ({ request, context }, next) => {
-    // Only limit form submissions, not GET page loads / loaders.
-    if (request.method !== 'POST') return next()
+    // Only limit submissions, not page loads / loaders. Anything else reaches the
+    // action: React Router runs it for PUT, PATCH and DELETE as well as POST.
+    if (request.method === 'GET' || request.method === 'HEAD') return next()
 
     const ip = getClientIp(request)
     const result = await store.hit(`${key}:${ip}`, limit, windowMs)

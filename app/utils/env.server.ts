@@ -60,6 +60,11 @@ const schema = z
     // superRefine below).
     [ENV_KEYS.GAS_EDITORIAL_BOARD_URL]: z.string().optional(),
     [ENV_KEYS.GAS_EDITORIAL_BOARD_SECRET]: z.string().optional(),
+    // Google Apps Script web app that stores a membership application (see the
+    // SCRIPT__Membership__Applications repo). Optional locally (the client logs
+    // instead of posting), required in production (see the superRefine below).
+    [ENV_KEYS.GAS_MEMBERSHIP_URL]: z.string().optional(),
+    [ENV_KEYS.GAS_MEMBERSHIP_SECRET]: z.string().optional(),
     // WebAuthn relying-party settings for the passkey flow. Optional in the shape
     // so local development falls back gracefully, but required in production (see
     // the superRefine below) — an empty rpID/origin makes every passkey ceremony
@@ -110,6 +115,9 @@ const schema = z
           // Editorial-board contacts (Google Apps Script)
           ENV_KEYS.GAS_EDITORIAL_BOARD_URL,
           ENV_KEYS.GAS_EDITORIAL_BOARD_SECRET,
+          // Membership applications (Google Apps Script)
+          ENV_KEYS.GAS_MEMBERSHIP_URL,
+          ENV_KEYS.GAS_MEMBERSHIP_SECRET,
           // Passkey / WebAuthn relying party
           ENV_KEYS.RELYING_PARTY_ID,
           ENV_KEYS.RELYING_PARTY_NAME,

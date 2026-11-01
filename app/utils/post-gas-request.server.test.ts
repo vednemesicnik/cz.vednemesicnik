@@ -71,4 +71,22 @@ describe('postGasRequest', () => {
       postGasRequest('https://example.test/exec', {}),
     ).rejects.toThrow('boom')
   })
+
+  test('aborts after 8 s by default and after the given timeout otherwise', async () => {
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse({ ok: true })),
+    )
+
+    await postGasRequest('https://example.test/exec', {})
+    await postGasRequest(
+      'https://example.test/exec',
+      {},
+      { timeoutMilliseconds: 60_000 },
+    )
+
+    expect(timeoutSpy.mock.calls).toEqual([[8000], [60_000]])
+    timeoutSpy.mockRestore()
+  })
 })

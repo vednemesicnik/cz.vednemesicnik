@@ -1,0 +1,191 @@
+.step {
+  @layer route {
+    display: grid;
+    gap: 22px;
+    width: 100%;
+    text-align: start;
+
+    /* The sheet spans the rows beside it; what it leaves over goes to the last. */
+    @container page (width >= 940px) {
+      grid-template-columns: 540px minmax(0, 1fr);
+      grid-template-rows: auto auto auto 1fr;
+      column-gap: 48px;
+      row-gap: 0;
+    }
+  }
+}
+
+.lead {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    text-wrap: pretty;
+
+    @container page (width >= 940px) {
+      display: none;
+    }
+  }
+}
+
+.print {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    @container page (width >= 940px) {
+      display: contents;
+    }
+  }
+}
+
+.heading {
+  @layer route {
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+
+    @container page (width >= 940px) {
+      font-size: 25px;
+    }
+  }
+}
+
+.document {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    @container page (width >= 940px) {
+      grid-column: 1;
+      grid-row: 1 / span 4;
+    }
+  }
+}
+
+.openLink {
+  @layer route {
+    align-self: center;
+    padding-block: 8px;
+    font-size: 15px;
+
+    @container page (width >= 940px) {
+      align-self: flex-start;
+    }
+  }
+}
+
+.helpWide {
+  @layer route {
+    display: none;
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    text-wrap: pretty;
+
+    @container page (width >= 940px) {
+      display: block;
+      grid-column: 2;
+      margin-block-start: 12px;
+    }
+  }
+}
+
+.helpNarrow {
+  @layer route {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    text-wrap: pretty;
+
+    @container page (width >= 940px) {
+      display: none;
+    }
+  }
+}
+
+.actions {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+
+    @container page (width >= 940px) {
+      flex-direction: row;
+      gap: 20px;
+      grid-column: 2;
+      margin-block-start: 12px;
+    }
+  }
+}
+
+.printButton {
+  @layer route {
+    width: 100%;
+
+    @container page (width >= 940px) {
+      width: auto;
+    }
+  }
+}
+
+.fixLink {
+  @layer route {
+    padding-block: 8px;
+    font-size: 15px;
+  }
+}
+
+.upload {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+
+    @container page (width >= 940px) {
+      grid-column: 2;
+      margin-block-start: 28px;
+    }
+  }
+}
+
+.form {
+  @layer route {
+    gap: 22px;
+
+    @container page (width >= 940px) {
+      gap: 28px;
+    }
+  }
+}
+
+.callout {
+  @layer route {
+    margin-block: 0;
+  }
+}
+
+.dataNotice {
+  @layer route {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+}
+
+.submit {
+  @layer route {
+    width: 100%;
+
+    @container page (width >= 940px) {
+      width: auto;
+    }
+  }
+}
