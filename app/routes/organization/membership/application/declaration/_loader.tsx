@@ -30,7 +30,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return new Response(`<!doctype html>${markup}`, {
     headers: {
-      'Cache-Control': 'private, no-store',
+      // `no-transform` keeps Cloudflare from rewriting the e-mail address to
+      // `[email protected]`: the script that would restore it can't run here.
+      'Cache-Control': 'private, no-store, no-transform',
       'Content-Security-Policy':
         "default-src 'none'; style-src 'unsafe-inline' https://rsms.me; font-src 'self' https://rsms.me; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
       'Content-Type': 'text/html; charset=utf-8',
