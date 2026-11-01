@@ -5,12 +5,12 @@
 
   --doc-page-width: 210mm;
   --doc-margin: 20mm 20mm 20mm 25mm;
-  --doc-font-text: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --doc-font-label: InterVariable, Inter, Arial, sans-serif;
-  --doc-title: 600 18pt / 1.2 var(--doc-font-label);
-  --doc-section: 600 11pt / 1.35 var(--doc-font-label);
-  --doc-text: 400 11pt / 1.45 var(--doc-font-text);
-  --doc-label: 400 9pt / 1.35 var(--doc-font-label);
+  /* A system font: the sheet prints the same with no download. */
+  --doc-font: Arial, Helvetica, sans-serif;
+  --doc-title: 600 18pt / 1.2 var(--doc-font);
+  --doc-section: 600 11pt / 1.35 var(--doc-font);
+  --doc-text: 400 11pt / 1.5 var(--doc-font);
+  --doc-label: 400 9pt / 1.35 var(--doc-font);
   --doc-ink: #121418;
   --doc-ink-muted: #4b5563;
   --doc-paper: #ffffff;
