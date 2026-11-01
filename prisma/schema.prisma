@@ -791,8 +791,9 @@ enum AuditLogEvent {
 }
 
 // Administrative audit log (user management, role changes). Deliberately has no
-// relation to User so records survive account deletion. No retention pruning:
-// volume is tiny and the forensic value is permanent.
+// relation to User so records survive account deletion. Rows are not pruned: volume
+// is tiny and the forensic value is permanent. ipAddress is cleared after 90 days
+// (log 0058).
 model AuditLog {
   id        String        @id @default(cuid())
   createdAt DateTime      @default(now())
