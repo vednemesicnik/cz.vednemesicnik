@@ -53,8 +53,8 @@ export const SignatureStep = ({ isMinor, submissionResult }: Props) => {
     shouldValidate: 'onSubmit',
   })
 
-  const guardianSentence =
-    ' Pokud vám ještě není 18 let, prohlášení musí podepsat i zákonný zástupce.'
+  // Only for someone under 18, so it needs no condition of its own (l2tfx4sx).
+  const guardianSentence = ' Prohlášení musí podepsat i zákonný zástupce.'
 
   return (
     <div className={styles.step}>
