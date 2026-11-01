@@ -7,8 +7,8 @@
   --doc-margin: 20mm 20mm 20mm 25mm;
   /* A system font: the sheet prints the same with no download. */
   --doc-font: Arial, Helvetica, sans-serif;
-  --doc-title: 600 18pt / 1.2 var(--doc-font);
-  --doc-section: 600 11pt / 1.35 var(--doc-font);
+  --doc-title: 700 18pt / 1.2 var(--doc-font);
+  --doc-section: 700 11pt / 1.35 var(--doc-font);
   --doc-text: 400 11pt / 1.5 var(--doc-font);
   --doc-label: 400 9pt / 1.35 var(--doc-font);
   --doc-ink: #121418;
