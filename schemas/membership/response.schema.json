@@ -145,6 +145,7 @@
           "type": "string"
         },
         "phone": {
+          "description": "Optional.",
           "pattern": "^\\+?[0-9 ]{9,20}$",
           "type": "string"
         }
@@ -157,7 +158,6 @@
         "dateOfBirth",
         "address",
         "email",
-        "phone",
         "isMinor",
         "declaration"
       ],

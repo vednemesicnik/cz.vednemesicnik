@@ -1,0 +1,15 @@
+/* The design system's Stepper (`.vdm-stepper`, components.css). */
+.stepper {
+  @layer component {
+    counter-reset: stepper-step;
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 12px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    text-align: start;
+    list-style: none;
+  }
+}

@@ -69,6 +69,13 @@ export default [
     // Organization routes
     route('organization', 'routes/organization/route.tsx'),
 
+    // The membership application: details, signature, sent (design 15d). Hidden:
+    // nothing on the site links to it.
+    route(
+      'organization/membership/application/:stepName?',
+      'routes/organization/membership/application/route.tsx',
+    ),
+
     // Support routes
     route('support', 'routes/support/route.tsx'),
 
@@ -363,6 +370,16 @@ export default [
 
   // Links route
   route('links', 'routes/links/route.tsx'),
+
+  // The membership application's documents, without the website around them
+  route(
+    'organization/membership/application/declaration',
+    'routes/organization/membership/application/declaration/route.tsx',
+  ),
+  route(
+    'organization/membership/statutes.pdf',
+    'routes/organization/membership/statutes/route.ts',
+  ),
 
   // Resource routes
   // Image variants are keyed by row id + version + variant name (e.g. "960.avif"

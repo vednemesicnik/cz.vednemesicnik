@@ -106,6 +106,8 @@ COPY --from=production-deps /app/node_modules /app/node_modules
 COPY --from=build /app/pnpm-workspace.yaml /app/pnpm-workspace.yaml
 COPY --from=build /app/build /app/build
 COPY --from=build /app/generated /app/generated
+# The statutes the membership application links to.
+COPY --from=build /app/documents /app/documents
 COPY --from=build /app/package.json /app/package.json
 # Sentry instrument — app:start-with-sentry --imports it, so it must be in the image.
 COPY --from=build /app/instrument.server.ts /app/instrument.server.ts
