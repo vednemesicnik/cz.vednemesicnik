@@ -63,7 +63,8 @@ export const recordAuthLog = ({
 /**
  * Deletes auth logs older than the retention window, and the emergency sign-in
  * links as old: the attempts that name a link's issuer go with it, and old
- * token hashes don't pile up. Fire-and-forget; driven by startAuthLogRetention.
+ * token hashes don't pile up. Clears the address on audit logs as old.
+ * Fire-and-forget; driven by startAuthLogRetention.
  */
 export const cleanupOldAuthLogs = (): void => {
   const cutoff = new Date(
@@ -80,6 +81,16 @@ export const cleanupOldAuthLogs = (): void => {
     .deleteMany({ where: { createdAt: { lt: cutoff } } })
     .catch((error: unknown) => {
       console.error('Failed to clean up old emergency sign-in links', error)
+    })
+
+  // Audit rows stay for good; the address a person acted from does not (log 0058).
+  void prisma.auditLog
+    .updateMany({
+      data: { ipAddress: null },
+      where: { createdAt: { lt: cutoff }, ipAddress: { not: null } },
+    })
+    .catch((error: unknown) => {
+      console.error('Failed to clear old audit log addresses', error)
     })
 }
 
