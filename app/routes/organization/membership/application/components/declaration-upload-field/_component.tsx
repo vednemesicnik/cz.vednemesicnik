@@ -17,6 +17,7 @@ import { Label } from '~/components/label'
 import { MAX_DECLARATION_BYTES } from '~/config/membership-application-config'
 import { detectDeclarationType } from '~/utils/membership-application/detect-declaration-type'
 
+import { DECLARATION_NOT_RECOGNISED } from '../../_schema'
 import styles from './_styles.module.css'
 
 const BYTES_IN_MEGABYTE = 1024 * 1024
@@ -70,7 +71,7 @@ export const DeclarationUploadField = ({ id, errors, ...rest }: Props) => {
     const head = await picked.slice(0, SIGNATURE_LENGTH).arrayBuffer()
 
     return detectDeclarationType(new Uint8Array(head)) === null
-      ? 'Nahrajte prosím soubor PDF, JPEG nebo PNG.'
+      ? DECLARATION_NOT_RECOGNISED
       : null
   }
 

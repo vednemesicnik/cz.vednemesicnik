@@ -51,7 +51,7 @@ describe('membershipDetailsSchema', () => {
 
   it('refuses a date that is no day, and one in the future', () => {
     expect(messagesFor({ ...VALID, dateOfBirth: '31. 4. 2009' })).toEqual([
-      'Zadejte datum ve tvaru 14. 5. 2009.',
+      'Zadejte platné datum, například 14. 5. 2009.',
     ])
     expect(messagesFor({ ...VALID, dateOfBirth: '1. 1. 2999' })).toEqual([
       'Datum narození nemůže být v budoucnosti.',
@@ -60,13 +60,13 @@ describe('membershipDetailsSchema', () => {
 
   it('keeps to the limits of the script', () => {
     expect(messagesFor({ ...VALID, firstName: 'a'.repeat(101) })).toEqual([
-      'Jméno je příliš dlouhé.',
+      'Zkraťte jméno na nejvýš 100 znaků.',
     ])
     expect(messagesFor({ ...VALID, address: 'a'.repeat(301) })).toEqual([
-      'Adresa je příliš dlouhá.',
+      'Zkraťte adresu na nejvýš 300 znaků.',
     ])
     expect(messagesFor({ ...VALID, phone: '12345' })).toEqual([
-      'Zadejte telefon ve tvaru 604 123 456.',
+      'Zadejte telefon například ve tvaru 604 123 456 nebo +420 604 123 456.',
     ])
     expect(messagesFor({ ...VALID, phone: '+420 604 123 456' })).toEqual([])
   })

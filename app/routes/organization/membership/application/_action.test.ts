@@ -207,7 +207,8 @@ describe('membership application action', () => {
         await cookieHeader({ code: CODE, details, state: 'details' }),
       )
 
-      expect(submitMock.mock.lastCall?.[0]).not.toHaveProperty('phone')
+      // Undefined leaves it out of the JSON the request signs.
+      expect(submitMock.mock.lastCall?.[0].phone).toBeUndefined()
     })
 
     it('judges the age on the day of submission', async () => {
@@ -249,7 +250,7 @@ describe('membership application action', () => {
 
       expect(result.init.status).toBe(400)
       expect(result.data.submissionResult.error.declaration).toEqual([
-        'Nahrajte prosím soubor PDF, JPEG nebo PNG.',
+        'Soubor se nepodařilo rozpoznat jako PDF, JPEG ani PNG. Nahrajte ho prosím v jednom z těchto formátů.',
       ])
       expect(submitMock).not.toHaveBeenCalled()
     })

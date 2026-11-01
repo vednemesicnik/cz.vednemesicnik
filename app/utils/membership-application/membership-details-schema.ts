@@ -19,7 +19,9 @@ export const membershipDetailsSchema = z.object({
     .string({ message: 'Vyplňte adresu trvalého bydliště.' })
     .trim()
     .min(1, { message: 'Vyplňte adresu trvalého bydliště.' })
-    .max(MAX_ADDRESS_LENGTH, { message: 'Adresa je příliš dlouhá.' }),
+    .max(MAX_ADDRESS_LENGTH, {
+      message: `Zkraťte adresu na nejvýš ${MAX_ADDRESS_LENGTH} znaků.`,
+    }),
   dateOfBirth: z
     .string({ message: 'Vyplňte datum narození.' })
     .transform((value, context) => {
@@ -28,7 +30,7 @@ export const membershipDetailsSchema = z.object({
       if (date === null) {
         context.addIssue({
           code: 'custom',
-          message: 'Zadejte datum ve tvaru 14. 5. 2009.',
+          message: 'Zadejte platné datum, například 14. 5. 2009.',
         })
         return z.NEVER
       }
@@ -51,16 +53,23 @@ export const membershipDetailsSchema = z.object({
     .string({ message: 'Vyplňte jméno.' })
     .trim()
     .min(1, { message: 'Vyplňte jméno.' })
-    .max(MAX_NAME_LENGTH, { message: 'Jméno je příliš dlouhé.' }),
+    .max(MAX_NAME_LENGTH, {
+      message: `Zkraťte jméno na nejvýš ${MAX_NAME_LENGTH} znaků.`,
+    }),
   lastName: z
     .string({ message: 'Vyplňte příjmení.' })
     .trim()
     .min(1, { message: 'Vyplňte příjmení.' })
-    .max(MAX_NAME_LENGTH, { message: 'Příjmení je příliš dlouhé.' }),
+    .max(MAX_NAME_LENGTH, {
+      message: `Zkraťte příjmení na nejvýš ${MAX_NAME_LENGTH} znaků.`,
+    }),
   phone: z
     .string()
     .trim()
-    .regex(PHONE_PATTERN, { message: 'Zadejte telefon ve tvaru 604 123 456.' })
+    .regex(PHONE_PATTERN, {
+      message:
+        'Zadejte telefon například ve tvaru 604 123 456 nebo +420 604 123 456.',
+    })
     .optional(),
 })
 

@@ -141,7 +141,7 @@ export const SignatureStep = ({ isMinor, submissionResult }: Props) => {
             disabled={isSubmitting}
             type={'submit'}
           >
-            {isSubmitting ? 'Odesílám…' : 'Odeslat přihlášku'}
+            {isSubmitting ? 'Odesílání…' : 'Odeslat přihlášku'}
           </Button>
         </Form>
       </section>

@@ -14,15 +14,18 @@ import { submitMembershipApplication } from '~/utils/membership-application/subm
 import { writeMembershipApplicationCookie } from '~/utils/membership-application/write-membership-application-cookie.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
 
-import { detailsSchema, signatureSchema } from './_schema'
+import {
+  DECLARATION_NOT_RECOGNISED,
+  detailsSchema,
+  signatureSchema,
+} from './_schema'
 import { getStepPath, parseStepName } from './_step'
 import type { Route } from './+types/route'
 
 const FILE_TOO_LARGE =
   'Soubor je příliš velký. Nahrajte prosím menší, nejvýš 8 MB.'
-const FILE_WRONG_TYPE = 'Nahrajte prosím soubor PDF, JPEG nebo PNG.'
 const DETAILS_REJECTED =
-  'Přihlášku se nepodařilo odeslat. Zkontrolujte prosím své údaje a zkuste to znovu.'
+  'Přihlášku se nepodařilo odeslat. Přes odkaz Opravit údaje prosím zkontrolujte své údaje a zkuste to znovu.'
 const UNAVAILABLE =
   'Přihlášku se teď nepodařilo odeslat. Údaje zůstaly vyplněné, zkuste to prosím později.'
 
@@ -85,7 +88,7 @@ const submitApplication = async (
       {
         submissionResult: emptySubmission.reply({
           formErrors: [
-            `Přihlášku se teď nepodařilo odeslat, odeslali jste ji příliš mnohokrát. Zkuste to prosím ${formatRetryAfter(limited.retryAfter)}.`,
+            `Přihlášku teď nelze odeslat. Zkuste to prosím ${formatRetryAfter(limited.retryAfter)}.`,
           ],
         }),
       },
@@ -128,7 +131,7 @@ const submitApplication = async (
     return data(
       {
         submissionResult: submission.reply({
-          fieldErrors: { declaration: [FILE_WRONG_TYPE] },
+          fieldErrors: { declaration: [DECLARATION_NOT_RECOGNISED] },
         }),
       },
       { status: 400 },
@@ -171,7 +174,7 @@ const submitApplication = async (
       return data(
         {
           submissionResult: submission.reply({
-            fieldErrors: { declaration: [FILE_WRONG_TYPE] },
+            fieldErrors: { declaration: [DECLARATION_NOT_RECOGNISED] },
           }),
         },
         { status: 400 },

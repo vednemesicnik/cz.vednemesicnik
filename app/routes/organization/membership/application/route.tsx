@@ -37,7 +37,7 @@ export default function RouteComponent({
 
         {/* `sent` is no step (15d). */}
         {loaderData.step !== 'sent' && (
-          <Stepper className={styles.stepper} label={'Kroky'}>
+          <Stepper className={styles.stepper} label={'Kroky přihlášky'}>
             {loaderData.step === 'details' ? (
               <StepperStep state={'current'}>Údaje</StepperStep>
             ) : (
