@@ -33,14 +33,13 @@ describe('membershipDetailsSchema', () => {
     expect(result.email).toBe('tereza@local.dev')
   })
 
-  it('requires every field in Czech', () => {
+  it('requires every field but the phone, in Czech', () => {
     expect(messagesFor({})).toEqual([
       'Vyplňte adresu trvalého bydliště.',
       'Vyplňte datum narození.',
       'Vyplňte e-mail.',
       'Vyplňte jméno.',
       'Vyplňte příjmení.',
-      'Vyplňte telefon.',
     ])
   })
 
@@ -70,6 +69,12 @@ describe('membershipDetailsSchema', () => {
       'Zadejte telefon ve tvaru 604 123 456.',
     ])
     expect(messagesFor({ ...VALID, phone: '+420 604 123 456' })).toEqual([])
+  })
+
+  it('leaves the phone out when there is none', () => {
+    const { phone: _phone, ...withoutPhone } = VALID
+    const result = membershipDetailsSchema.parse(withoutPhone)
+    expect(result).not.toHaveProperty('phone')
   })
 
   it('refuses a malformed e-mail', () => {

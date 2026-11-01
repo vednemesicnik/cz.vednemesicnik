@@ -70,8 +70,12 @@ export const DeclarationSheet = ({ details, isMinor }: Props) => (
           <dd>{details.address}</dd>
           <dt className={'label'}>E-mail</dt>
           <dd>{details.email}</dd>
-          <dt className={'label'}>Telefon</dt>
-          <dd>{details.phone}</dd>
+          {details.phone !== undefined && (
+            <>
+              <dt className={'label'}>Telefon</dt>
+              <dd>{details.phone}</dd>
+            </>
+          )}
         </dl>
 
         <p className={'declaration'}>

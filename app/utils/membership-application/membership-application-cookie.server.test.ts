@@ -45,6 +45,13 @@ describe('membership application cookie', () => {
     expect(state).toEqual(DETAILS_STATE)
   })
 
+  it('round-trips details without a phone', async () => {
+    const { phone: _phone, ...details } = DETAILS_STATE.details
+    const setCookie = await write({ ...DETAILS_STATE, details })
+    const state = await read(requestWith(cookieValue(setCookie)))
+    expect(state).toEqual({ ...DETAILS_STATE, details })
+  })
+
   it('round-trips the sent state', async () => {
     const setCookie = await write(SENT_STATE)
     const state = await read(requestWith(cookieValue(setCookie)))

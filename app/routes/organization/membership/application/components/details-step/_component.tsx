@@ -26,7 +26,7 @@ type Props = {
   submissionResult: SubmissionResult<string[]> | undefined
 }
 
-/** The first step (design 15d): every field is required, so none says so. */
+/** The first step (design 15d): only the phone is optional, and only it says so. */
 export const DetailsStep = ({
   details,
   isExpired,
@@ -98,7 +98,7 @@ export const DetailsStep = ({
         <TextField
           autoComplete={'tel'}
           errors={fields.phone.errors}
-          label={'Telefon'}
+          label={'Telefon (nepovinné)'}
           {...getInputProps(fields.phone, { type: 'tel' })}
         />
 

@@ -11,8 +11,8 @@ const PHONE_PATTERN = /^\+?[0-9 ]{9,20}$/
 
 /**
  * What an applicant fills in on the first step (design 15d). All of it is
- * required. The date of birth comes in as written (`14. 5. 2009`) and leaves as
- * `YYYY-MM-DD`.
+ * required except the phone. The date of birth comes in as written
+ * (`14. 5. 2009`) and leaves as `YYYY-MM-DD`.
  */
 export const membershipDetailsSchema = z.object({
   address: z
@@ -58,9 +58,10 @@ export const membershipDetailsSchema = z.object({
     .min(1, { message: 'Vyplňte příjmení.' })
     .max(MAX_NAME_LENGTH, { message: 'Příjmení je příliš dlouhé.' }),
   phone: z
-    .string({ message: 'Vyplňte telefon.' })
+    .string()
     .trim()
-    .regex(PHONE_PATTERN, { message: 'Zadejte telefon ve tvaru 604 123 456.' }),
+    .regex(PHONE_PATTERN, { message: 'Zadejte telefon ve tvaru 604 123 456.' })
+    .optional(),
 })
 
 export type MembershipDetails = z.output<typeof membershipDetailsSchema>

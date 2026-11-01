@@ -193,6 +193,23 @@ describe('membership application action', () => {
       })
     })
 
+    it('sends no phone when the applicant gave none', async () => {
+      submitMock.mockResolvedValue({
+        acknowledgementSent: true,
+        code: CODE,
+        ok: true,
+      })
+      const { phone: _phone, ...details } = STORED_DETAILS
+
+      await runToResponse(
+        'signature',
+        formWithFile(pdf()),
+        await cookieHeader({ code: CODE, details, state: 'details' }),
+      )
+
+      expect(submitMock.mock.lastCall?.[0]).not.toHaveProperty('phone')
+    })
+
     it('judges the age on the day of submission', async () => {
       submitMock.mockResolvedValue({
         acknowledgementSent: true,
