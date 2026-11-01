@@ -1,4 +1,8 @@
+import { timingSafeEqual } from 'node:crypto'
+import { isIP } from 'node:net'
 import { createContext, data, type MiddlewareFunction } from 'react-router'
+
+import { getRateLimitSubject } from './get-rate-limit-subject.server'
 
 // --- Store ----------------------------------------------------------------
 
@@ -74,14 +78,41 @@ export const rateLimitStore: RateLimitStore =
 
 // --- IP -------------------------------------------------------------------
 
-// Fly.io sets the real client IP in Fly-Client-IP (set by the trusted edge, not
-// forwardable by clients). X-Forwarded-For is client-controlled and therefore
-// spoofable, so only fall back to it outside production (local dev, where there
-// is no Fly-Client-IP). In production a missing Fly-Client-IP collapses to a
-// single "unknown" bucket rather than a per-request spoofable one.
+// Whether our Cloudflare zone sent this request: a Transform Rule adds the secret.
+// Cloudflare's ranges would not prove it, since another account's Worker connects from
+// them and sets CF-Connecting-IP as it likes on a request to the origin (log 0058).
+const isFromOurCloudflareZone = (request: Request): boolean => {
+  const secret = process.env.CLOUDFLARE_ORIGIN_SECRET
+  const sent = request.headers.get('X-Origin-Secret')
+  if (!secret || !sent) return false
+
+  const secretBuffer = Buffer.from(secret)
+  const sentBuffer = Buffer.from(sent)
+
+  return (
+    secretBuffer.length === sentBuffer.length &&
+    timingSafeEqual(secretBuffer, sentBuffer)
+  )
+}
+
+// Fly-Client-IP is whoever connected to Fly (Fly overwrites it, so clients can't set
+// it): behind Cloudflare that is the edge, and the client is in CF-Connecting-IP. The
+// origin is reachable directly, so that header counts only on a request from our zone.
+// X-Forwarded-For is client-controlled and therefore spoofable, so only fall back to it
+// outside production (local dev, where there is no Fly-Client-IP). In production a
+// missing Fly-Client-IP collapses to a single "unknown" bucket rather than a per-request
+// spoofable one.
 export function getClientIp(request: Request): string {
   const flyClientIp = request.headers.get('Fly-Client-IP')
-  if (flyClientIp) return flyClientIp
+  if (flyClientIp) {
+    const cloudflareClientIp = request.headers.get('CF-Connecting-IP')
+    const isClientKnown =
+      cloudflareClientIp &&
+      isIP(cloudflareClientIp) !== 0 &&
+      isFromOurCloudflareZone(request)
+
+    return isClientKnown ? cloudflareClientIp : flyClientIp
+  }
 
   if (process.env.NODE_ENV !== 'production') {
     const forwardedFor = request.headers
@@ -150,8 +181,8 @@ export function createRateLimitMiddleware(
     // action: React Router runs it for PUT, PATCH and DELETE as well as POST.
     if (request.method === 'GET' || request.method === 'HEAD') return next()
 
-    const ip = getClientIp(request)
-    const result = await store.hit(`${key}:${ip}`, limit, windowMs)
+    const subject = getRateLimitSubject(getClientIp(request))
+    const result = await store.hit(`${key}:${subject}`, limit, windowMs)
     const resetSeconds = Math.max(
       0,
       Math.ceil((result.resetAt - Date.now()) / 1000),

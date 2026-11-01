@@ -72,6 +72,10 @@ const schema = z
     [ENV_KEYS.RELYING_PARTY_ID]: z.string().optional(),
     [ENV_KEYS.RELYING_PARTY_NAME]: z.string().optional(),
     [ENV_KEYS.RELYING_PARTY_ORIGIN]: z.string().optional(),
+    // Proves a request came through our Cloudflare zone, so CF-Connecting-IP can be
+    // believed (log 0058). Optional locally, required in production (see the
+    // superRefine below).
+    [ENV_KEYS.CLOUDFLARE_ORIGIN_SECRET]: z.string().optional(),
     // Sentry ingest DSN (public key). Optional — absent → SDK stays inert. Read on
     // the server by instrument.server.ts and exposed to the client via getEnv below.
     [ENV_KEYS.SENTRY_DSN]: z.string().optional(),
@@ -122,6 +126,8 @@ const schema = z
           ENV_KEYS.RELYING_PARTY_ID,
           ENV_KEYS.RELYING_PARTY_NAME,
           ENV_KEYS.RELYING_PARTY_ORIGIN,
+          // The client's address behind Cloudflare
+          ENV_KEYS.CLOUDFLARE_ORIGIN_SECRET,
         ],
         'in production',
       )

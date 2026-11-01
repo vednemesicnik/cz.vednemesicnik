@@ -191,6 +191,25 @@ that carries the form (#396). `GAS_MEMBERSHIP_SECRET` must equal the script's
 fly secrets set GAS_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
 ```
 
+## Client address behind Cloudflare
+
+Behind Cloudflare, `Fly-Client-IP` holds the edge's address and the client's is in
+`CF-Connecting-IP`. The origin `cz-vednemesicnik.fly.dev` is reachable directly, and anyone
+can send that header there, so the app believes it only when the request carries the shared
+secret that our Cloudflare zone adds (`getClientIp`, log 0058). Rate limits and the auth and
+audit logs all read that address. Required: the app fails at boot without the secret.
+
+1. Generate a value with `openssl rand -hex 32` and store it on Fly, staged so nothing
+   restarts. The next deploy picks it up.
+   ```shell
+   fly secrets set --stage CLOUDFLARE_ORIGIN_SECRET="…" --app cz-vednemesicnik
+   ```
+2. In Cloudflare: Rules → Transform Rules → Modify Request Header, for all incoming requests,
+   set the static header `X-Origin-Secret` to the same value.
+
+If the rule and the secret differ, nothing breaks: limits and logs fall back to the edge's
+address. To rotate, change both; requests in between count per edge.
+
 ## Image store
 
 Pre-generated image variants are served as static files from `/data/images` on the

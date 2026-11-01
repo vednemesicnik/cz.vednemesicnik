@@ -21,6 +21,8 @@ if (process.env.SENTRY_DSN) {
           delete headers.Cookie
           delete headers.authorization
           delete headers.Authorization
+          delete headers['x-origin-secret']
+          delete headers['X-Origin-Secret']
         }
       }
 
