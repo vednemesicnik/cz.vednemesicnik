@@ -1,29 +1,8 @@
-import latinExtendedFontUrl from '@fontsource-variable/source-serif-4/files/source-serif-4-latin-ext-opsz-normal.woff2?url'
-import latinFontUrl from '@fontsource-variable/source-serif-4/files/source-serif-4-latin-opsz-normal.woff2?url'
-
 import { ORGANIZATION_REGISTRATION_NUMBER } from '~/config/site-config'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import type { MembershipDetails } from '~/utils/membership-application/membership-details-schema'
 
 import sheetStyles from './_styles.css?raw'
-
-const FONT_FACES = `
-@font-face {
-  font-family: 'Source Serif 4';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 900;
-  src: url(${latinExtendedFontUrl}) format('woff2-variations');
-  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF;
-}
-@font-face {
-  font-family: 'Source Serif 4';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 900;
-  src: url(${latinFontUrl}) format('woff2-variations');
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
-}`
 
 type Props = {
   details: MembershipDetails
@@ -44,11 +23,10 @@ export const DeclarationSheet = ({ details, isMinor }: Props) => (
       <meta content={'light'} name={'color-scheme'} />
       <meta content={'noindex, nofollow'} name={'robots'} />
       <title>Přihláška do spolku</title>
-      <link href={'https://rsms.me/inter/inter.css'} rel={'stylesheet'} />
       <style
-        // Our own stylesheet and the build's font addresses; no applicant's value.
+        // Our own stylesheet; no applicant's value.
         // biome-ignore lint/security/noDangerouslySetInnerHtml: see above
-        dangerouslySetInnerHTML={{ __html: `${FONT_FACES}\n${sheetStyles}` }}
+        dangerouslySetInnerHTML={{ __html: sheetStyles }}
       />
     </head>
     <body>
