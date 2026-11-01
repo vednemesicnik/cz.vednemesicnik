@@ -183,8 +183,8 @@ every issued link. Procedure:
 
 A membership application is stored by the web app bound to the applications sheet on
 the shared drive "Spolek – členství" (see the `SCRIPT__Membership__Applications` repo,
-#394). Optional until the form (#396) ships. `GAS_MEMBERSHIP_SECRET` must equal the
-script's `OWN_SECRET` property.
+#394). Required: without them production refuses every application with an error on
+the form (#396). `GAS_MEMBERSHIP_SECRET` must equal the script's `OWN_SECRET` property.
 
 ```shell
 fly secrets set GAS_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
