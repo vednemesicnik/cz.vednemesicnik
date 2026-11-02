@@ -32,7 +32,8 @@ file, and the script's edit trigger still fires on their edits.
 
 - The membership script moved before the form's link went out, so changing its address cost nothing.
   The setup and the steps of the move are in that repository's README and CHANGELOG.
-- The old bound project cannot be detached from the sheet. It stays there, empty and without properties.
+- A bound project cannot be detached from its file, but it can be deleted from its Overview page. The
+  old one was, with its properties, once the new project had passed its manual tests.
 - The editorial-board enrolment (#385) starts as a standalone project.
 - `SCRIPT__Publication__Article_Approve` and `SCRIPT__Editorial_Board__Contacts` also read their active
   file, so they may be bound. Neither has the `drive` scope in its manifest or installs a trigger in
