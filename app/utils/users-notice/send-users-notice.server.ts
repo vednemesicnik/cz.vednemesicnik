@@ -62,6 +62,7 @@ export const sendUsersNotice = async (
       // `satisfies Envelope` ties the envelope this builds to the shape the script
       // publishes, so the two cannot drift apart without the build saying so.
       signGasRequest(secret, request) satisfies Envelope,
+      { endpoint: 'users-notice' },
     )
 
     if (!ok || data?.ok !== true) {
