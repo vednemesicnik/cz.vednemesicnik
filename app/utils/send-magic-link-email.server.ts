@@ -65,7 +65,13 @@ export const sendMagicLinkEmail = async (
     return true
   }
 
-  const { error, mailerError, status } = result
+  const { cause, error, mailerError, status } = result
+
+  if (cause !== undefined) {
+    console.error('[magic-link] GAS request threw —', cause)
+    if (process.env.SENTRY_DSN) Sentry.captureException(cause)
+    return false
+  }
 
   console.error(
     `[magic-link] GAS send failed — status ${status ?? '—'}, ` +

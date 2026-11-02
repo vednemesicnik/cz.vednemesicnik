@@ -49,13 +49,13 @@ export type GasRequestOptions = {
 const fetchHop = async (
   { endpoint, hop, label }: { endpoint: string; hop: 1 | 2; label: string },
   url: string | URL,
-  init: RequestInit,
+  requestInit: RequestInit,
 ): Promise<Response> => {
   const prefix = `[gas] ${endpoint} hop ${hop} ${label}`
   const startedAt = Date.now()
 
   try {
-    const response = await fetch(url, init)
+    const response = await fetch(url, requestInit)
     const line = `${prefix} → ${response.status} (${Date.now() - startedAt} ms)`
 
     if (response.status < 400) {

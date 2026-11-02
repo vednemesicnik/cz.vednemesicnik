@@ -197,6 +197,19 @@ describe('postSignedGasRequest', () => {
     })
   })
 
+  test('hands the caller the error a thrown attempt ended with', async () => {
+    const failure = new Error('boom')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(failure))
+
+    await expect(settle(post())).resolves.toMatchObject({ cause: failure })
+  })
+
+  test('has no cause when the script or Google answered', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(null, 404)))
+
+    await expect(settle(post())).resolves.not.toHaveProperty('cause')
+  })
+
   test('tries once without opting in', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error('boom'))
     vi.stubGlobal('fetch', fetchMock)

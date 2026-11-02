@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto'
 import type { Envelope } from '@generated/magic-link/response'
+import * as Sentry from '@sentry/react-router'
 import {
   afterEach,
   beforeEach,
@@ -68,6 +69,8 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
+  vi.mocked(Sentry.captureException).mockClear()
+  vi.mocked(Sentry.captureMessage).mockClear()
   restoreEnv('GAS_MAGIC_LINK_URL', originalUrl)
   restoreEnv('GAS_MAGIC_LINK_SECRET', originalSecret)
   restoreEnv('SENTRY_DSN', originalDsn)
@@ -168,9 +171,21 @@ describe('sendMagicLinkEmail', () => {
     await expect(send()).resolves.toBe(false)
 
     expect(console.error).toHaveBeenCalledOnce()
-    const [message] = vi.mocked(console.error).mock.calls[0]
-    expect(message).toContain('status —')
-    expect(message).toContain('error unreachable')
+    expect(console.error).toHaveBeenCalledWith(
+      '[magic-link] GAS request threw —',
+      expect.any(Error),
+    )
+  })
+
+  test('reports a thrown request to Sentry as the exception it was', async () => {
+    process.env.SENTRY_DSN = 'https://key@sentry.test/1'
+    const failure = new Error('boom')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(failure))
+
+    await send()
+
+    expect(Sentry.captureException).toHaveBeenCalledExactlyOnceWith(failure)
+    expect(Sentry.captureMessage).not.toHaveBeenCalled()
   })
 
   test('no-ops without logging a failure when GAS is not configured', async () => {

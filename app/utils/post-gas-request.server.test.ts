@@ -54,15 +54,15 @@ describe('postGasRequest', () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await postGasRequest(EXEC_URL, { email: 'a@b.cz' }, OPTIONS)
+    await postGasRequest(EXEC_URL, { email: 'a@local.dev' }, OPTIONS)
 
     expect(fetchMock).toHaveBeenCalledOnce()
-    const [url, init] = fetchMock.mock.calls[0]
+    const [url, requestInit] = fetchMock.mock.calls[0]
     expect(url).toBe(EXEC_URL)
-    expect(init.method).toBe('POST')
-    expect(init.redirect).toBe('manual')
-    expect(init.headers).toEqual({ 'Content-Type': 'application/json' })
-    expect(init.body).toBe(JSON.stringify({ email: 'a@b.cz' }))
+    expect(requestInit.method).toBe('POST')
+    expect(requestInit.redirect).toBe('manual')
+    expect(requestInit.headers).toEqual({ 'Content-Type': 'application/json' })
+    expect(requestInit.body).toBe(JSON.stringify({ email: 'a@local.dev' }))
   })
 
   test('walks the redirect: a GET without a body under the same signal', async () => {
@@ -80,16 +80,16 @@ describe('postGasRequest', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(firstResponse.body.cancel).toHaveBeenCalledOnce()
 
-    const [firstInit, secondCall] = [
+    const [firstRequestInit, secondCall] = [
       fetchMock.mock.calls[0][1],
       fetchMock.mock.calls[1],
     ]
-    const [secondUrl, secondInit] = secondCall
+    const [secondUrl, secondRequestInit] = secondCall
     expect(String(secondUrl)).toBe(SECOND_HOP_URL)
-    expect(secondInit.method).toBeUndefined()
-    expect(secondInit.body).toBeUndefined()
-    expect(secondInit.redirect).toBe('follow')
-    expect(secondInit.signal).toBe(firstInit.signal)
+    expect(secondRequestInit.method).toBeUndefined()
+    expect(secondRequestInit.body).toBeUndefined()
+    expect(secondRequestInit.redirect).toBe('follow')
+    expect(secondRequestInit.signal).toBe(firstRequestInit.signal)
   })
 
   test('reports the status of the second hop when that one fails', async () => {

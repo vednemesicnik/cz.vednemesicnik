@@ -21,6 +21,7 @@ export type GasFailure = {
   retryable: boolean
   status: number | null
   mailerError?: string
+  cause?: unknown
 }
 
 export type GasResult<TSuccess> = ({ ok: true } & TSuccess) | GasFailure
@@ -96,9 +97,10 @@ const attemptRequest = async <TSuccess>(
       status,
       typeof data.mailerError === 'string' ? data.mailerError : undefined,
     )
-  } catch {
-    // Timeout, DNS, connection refused. `postGasRequest` has logged which hop.
-    return createGasFailure('unreachable', null)
+  } catch (error) {
+    // Timeout, DNS, connection refused, or a bug on our side. The caller reports
+    // `cause`, so a code error does not read as a Google outage.
+    return { ...createGasFailure('unreachable', null), cause: error }
   }
 }
 
@@ -115,7 +117,8 @@ const attemptRequest = async <TSuccess>(
  * @param options - `idempotencyKeyField` names the field that identifies this unit
  *   of work and opts in to the retry; it needs a non-empty string there, or there
  *   is one attempt. `timeoutMilliseconds` applies to each attempt.
- * @returns The script's success body, or a failure saying whether it was retryable.
+ * @returns The script's success body, or a failure saying whether it was retryable;
+ *   `cause` holds the error when the last attempt threw.
  */
 export const postSignedGasRequest = async <TSuccess, TRequest extends object>(
   endpoint: SignedGasEndpoint,
