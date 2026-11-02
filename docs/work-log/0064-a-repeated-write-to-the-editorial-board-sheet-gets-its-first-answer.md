@@ -49,9 +49,10 @@ row with the same address and form date is the same application, and nothing is 
   first thing to check if a secret from one of these projects ever turns up elsewhere.
 - The text format does not stop a formula. `setNumberFormat('@')` followed by `setValue` or `setValues` runs
   `=1+1` and stores `2`, tried on Google on 2 Nov 2026 after a test here said otherwise, because the fake
-  services behaved as the code assumed. Anything written from a form goes through `writeTextCell_`, which adds a leading apostrophe:
-  of the ways tried, only that kept both `=1+1` and `+420 600 000 000` exactly. Rich text without the format
-  turned the phone number into a formula.
+  services behaved as the code assumed. In this project, text from a form goes through `writeTextCell_`, which
+  adds a leading apostrophe: of the ways tried, only that kept both `=1+1` and `+420 600 000 000` exactly. Rich
+  text without the format turned the phone number into a formula. `SCRIPT__Membership__Applications` writes the
+  way that failed, and that is not fixed here.
 - The writes were tried end to end on a throwaway copy of the project, with its own key and a scratch sheet
   of made-up people, not on the spreadsheet in use. So copy the project to try the next action.
 - `ambiguous` needs someone at the sheet, so it reaches Sentry. `not_found` and `not_active` are answers
@@ -66,7 +67,7 @@ row with the same address and form date is the same application, and nothing is 
   are the pages for `not_found`, `not_active` and `ambiguous`, and what the ladder does with a shared
   address, which would otherwise keep mailing and then remove both people.
 - #928 has to find the row with `splitEmailAddresses_`, keep a second address when it refreshes the
-  contact details, and write the name in the text format. Otherwise it adds a duplicate and a name
+  contact details, and write the name with `writeTextCell_`. Otherwise it adds a duplicate and a name
   starting with `=` becomes a formula on `Kontakty`.
 - #389's form has to apply the limits in the schema. A value the script refuses arrives only after the
   person confirmed by e-mail, as a settled `invalid_request`.
