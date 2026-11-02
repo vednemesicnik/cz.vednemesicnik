@@ -38,12 +38,14 @@ on record, so the backfill leaves it empty: a run date would claim a confirmatio
 - A standalone project takes `LockService.getScriptLock()`, because `getDocumentLock()` returns `null`
   there. No lock spans projects, which is one more reason for a single writer. The writes in #388 share
   the lock with the trigger.
-- The trigger takes no row number from the edit event and puts `Stav` right across the sheet on every
-  edit of `Kontakty`. It writes the date only when the edit's columns include `Aktivní`, and only on a
-  row that has just become `V redakci`. So a `Stav` changed by hand on a ticked row goes back with no
-  date, because a date there would keep the person out of a later re-confirmation for a confirmation
-  nobody made. The issue's rule that an edit wholly in `Aktivní` refreshes the date of its rows was
-  dropped: after a concurrent sort it could stamp somebody else's row. Quickly unticking and ticking a
+- The trigger takes no row number from the edit event. On an edit of `Aktivní`, `Jméno` or `Stav` it
+  puts `Stav` right across the sheet, and any other edit does nothing, because such a run could reach a
+  fresh tick first and take its date. It writes the date only when the edit's columns include `Aktivní`
+  or `Jméno`, and only on a row that has just become `V redakci`. So a `Stav` changed by hand on a ticked
+  row goes back with no date, because a date there would keep the person out of a later re-confirmation
+  for a confirmation nobody made. This departs from task 6 of #386, which dated every row put right on
+  any edit. An earlier version of the issue refreshed the date on an edit wholly in `Aktivní`; that went
+  too, since after a concurrent sort it could stamp somebody else's row. Quickly unticking and ticking a
   row can leave the date as it was, and nothing was confirmed by that.
 - The old trigger is deleted before the setup runs on the spreadsheet in use, because its sort could
   move rows under the backfill and no lock spans two projects.

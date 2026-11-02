@@ -106,13 +106,14 @@ Behaviour:
   rule combines its conditions with `*` rather than `AND(…,…)` and has no `TRUE`/`FALSE`:
   `whenFormulaSatisfied` doesn't localise the separator, so a comma breaks the rule in a
   Czech-locale sheet.)
-- `handleSpreadsheetEdit`, an installable trigger in the Membership project, runs on every edit of
-  `Kontakty`. A ticked named row whose `Stav` is not `V redakci` gets `V redakci`; an unticked one
-  with `V redakci` gets `Mimo redakci`. When the edit touches `Aktivní`, a row that has just become
-  `V redakci` also gets today's `Poslední potvrzení`, and the rows are sorted by `Aktivní` and `Jméno`.
-  So a `Stav` changed by hand on a ticked row goes back with no date. Section grouping and
-  per-section name ordering are done in the endpoint and the app, so a member with several role chips
-  needs no single sort position in the sheet.
+- `handleSpreadsheetEdit`, an installable trigger in the Membership project, acts on an edit of
+  `Aktivní`, `Jméno` or `Stav` on `Kontakty`. A ticked named row whose `Stav` is not `V redakci` gets
+  `V redakci`; an unticked one with `V redakci` gets `Mimo redakci`. When the edit touches `Aktivní` or
+  `Jméno`, a row that has just become `V redakci` also gets today's `Poslední potvrzení`; when it
+  touches `Aktivní`, the rows are sorted by `Aktivní` and `Jméno`. So a `Stav` changed by hand on a
+  ticked row goes back with no date. Section grouping and per-section name ordering are done in the
+  endpoint and the app, so a member with several role chips needs no single sort position in the
+  sheet.
 
 The steps below are for the read, in the Contacts project.
 
