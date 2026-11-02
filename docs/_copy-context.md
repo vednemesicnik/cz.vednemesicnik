@@ -298,9 +298,9 @@ V obou:
 `priklad.cz`. Výjimka jsou účty administrace: pozvat jde jen adresu `@vednemesicnik.cz`, takže
 ukázka účtu stojí na této doméně, s vymyšleným jménem. Skutečné jsou jen veřejné kontakty spolku,
 které web ukazuje nebo ukazovat bude: `podpora@`, `redakce@`, `dary@`, `udaje@` a `clenstvi@vednemesicnik.cz`. Jmenují
-schránky podle tématu, česky a bez diakritiky. Skutečná je i `notifications@vednemesicnik.cz`:
+schránky podle tématu, česky a bez diakritiky. Skutečná je i `oznameni@vednemesicnik.cz`:
 není to kontakt, ale schránka, ze které odcházejí všechny automatické e‑maily webu, se jménem
-odesílatele `Notifications Vedneměsíčník`. Když uvidíš něco jiného, co vypadá jako skutečný
+odesílatele `Oznámení Vedneměsíčník`. Když uvidíš něco jiného, co vypadá jako skutečný
 záznam, **je to nález** — řekni to.
 
 ## Jak má vypadat odpověď
