@@ -1,6 +1,7 @@
 # 0062. The sign-in request answers before it looks the address up
 
 - Date: 2026-11-02
+- Issues: PR #934
 
 ## Context
 
