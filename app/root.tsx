@@ -72,10 +72,11 @@ export function Layout({ children }: { children: ReactNode }) {
       <body>
         {children}
         <ScrollRestoration />
-        <Scripts />
 
-        {/* Environment variables body script - sets ENV for client */}
+        {/* Sets window.ENV. Before <Scripts /> on purpose: their module is async, and
+            this script keeps the parser from reaching it until it has run. */}
         <script src={href('/resources/env.js')} />
+        <Scripts />
       </body>
     </html>
   )
