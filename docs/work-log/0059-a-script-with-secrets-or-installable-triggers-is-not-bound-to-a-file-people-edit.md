@@ -39,6 +39,8 @@ file, and the script's edit trigger still fires on their edits.
   administrator, in a project the chief editors could edit. It runs as the web's app account now, which
   is an Editor of that sheet because the script sorts it, so the `drive` scope of the membership script
   reaches that one file too.
+- That project's Executions list the installable trigger's runs under Head, so a trigger does run the
+  latest saved code. Whether another editor's save changes this is still untested.
 - `SCRIPT__Publication__Article_Approve` also reads its active file, so it may be bound. It has no
   `drive` scope in its manifest and installs no trigger in code; its properties have not been looked at.
 - A bound script stays fine when it has no secrets and no authority beyond what its editors already have.

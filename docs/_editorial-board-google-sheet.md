@@ -1,7 +1,7 @@
 # Editorial board from a Google Sheet
 
-The editorial board (redakce) shown on `/redakce` has a **private Google Sheet** as its
-source of truth. The chief editors edit the sheet directly — no administration sign-in —
+The editorial board (redakce) shown on `/editorial-board` has a **private Google Sheet** as
+its source of truth. The chief editors edit the sheet directly — no administration sign-in —
 and the app reads the public subset (names + role labels of active members) through a
 **Google Apps Script web app protected by a shared secret**. This is the same pattern as
 the magic-link email (`SCRIPT__Auth__Magic_Link`): no Google Cloud project, no service
@@ -121,7 +121,7 @@ fly secrets set \
   GAS_EDITORIAL_BOARD_SECRET="…" --app cz-vednemesicnik
 ```
 
-When these are unset (local dev without a deployment), `/redakce` falls back gracefully
+When these are unset (local dev without a deployment), `/editorial-board` falls back gracefully
 instead of crashing.
 
 ## Endpoint contract
