@@ -14,7 +14,7 @@ bound sheet also edits its project (log 0059). Log 0060 says why there are two.
 | Project | What it does |
 | ------- | ------------ |
 | [`SCRIPT__Editorial_Board__Contacts`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Contacts) | Answers the read for `/editorial-board`. Never writes. |
-| [`SCRIPT__Editorial_Board__Membership`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Membership) | The only project that writes: the setup and the edit trigger. |
+| [`SCRIPT__Editorial_Board__Membership`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Membership) | The only project that writes: the setup, the edit trigger and the signed writes from the app. |
 
 Their READMEs have the steps for each project. [Apps Script web apps](_apps-script-web-apps.md)
 shows where both sit among the scripts the web uses.
@@ -74,7 +74,7 @@ labels, values and notes went through the copywriter; they live in the Membershi
 | -------------------- | ---------------- | ------------------------------------------------------------ |
 | `Jméno`              | text             | member's full name; a member is a row with a name            |
 | `Role`               | dropdown (chips) | validated against the `Role` sheet, rejects unknown values   |
-| `E-mail`             | text             | internal only — never returned by the endpoint               |
+| `E-mail`             | text             | internal only — never returned by the endpoint; one cell can hold several addresses, separated by commas, semicolons or spaces, and the row is found by any of them |
 | `Telefon`            | text             | internal only — never returned by the endpoint; added beside `E-mail`, filled from an accepted application |
 | `Poznámka`           | text             | internal only — never returned by the endpoint               |
 | `Stav`               | dropdown         | `V redakci` is published on the web; `Mimo redakci` and `Vyřazení bez odpovědi` are not |
