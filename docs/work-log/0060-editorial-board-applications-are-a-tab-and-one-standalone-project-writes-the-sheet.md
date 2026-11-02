@@ -50,8 +50,12 @@ empty: a run date would claim a confirmation nobody made.
   becomes `V redakci`.
 - A paste or a fill across rows writes no date, because Google gives no old value for a range. That costs at
   most one extra question in September; a date nobody earned would skip someone for a year.
-- When the trigger does not run, the web is still right. Google documents that users of a standalone script
-  need view access to the script file for triggers to run properly, so this must not rest on the trigger.
+- When the trigger does not run, the web is still right, so correctness does not rest on it. Google documents
+  that users of a standalone script need view access to the script file for triggers to run properly. New
+  projects here are readable by anyone in the domain with the link, and the sheet cannot be shared outside
+  the domain, so every editor has that access: on a copy, an edit from a domain account that had never opened
+  the project fired the trigger. So the project stays readable by the domain, not "shared with nobody" as log
+  0059 has it, and no secret goes in code. Script Properties did not show for a reader, on one look.
 - The move has an order, in that project's README: the old trigger goes before the setup, because its sort
   could move rows under the backfill. `Aktivní` is deleted by hand only after the read has moved and the
   response has matched, because until then it is the way back.
