@@ -4,31 +4,20 @@
 
 import * as Sentry from '@sentry/react-router'
 
+import { scrubSentryEvent } from './app/utils/sentry/scrub-sentry-event.ts'
+
 // Gate on the DSN: calling Sentry.init at all registers OpenTelemetry module
 // hooks (and emits a Node deprecation warning), so skip it entirely when unset to
 // keep the SDK fully inert with zero side effects for local development.
 if (process.env.SENTRY_DSN) {
   Sentry.init({
-    beforeSend(event) {
-      // Belt-and-suspenders: strip cookies and auth headers even if an
-      // integration attaches them.
-      if (event.request) {
-        delete event.request.cookies
-
-        const headers = event.request.headers
-        if (headers) {
-          delete headers.cookie
-          delete headers.Cookie
-          delete headers.authorization
-          delete headers.Authorization
-          delete headers['x-origin-secret']
-          delete headers['X-Origin-Secret']
-        }
-      }
-
-      return event
-    },
+    beforeSend: scrubSentryEvent,
     dsn: process.env.SENTRY_DSN,
+    // The SDK keeps incoming bodies for its events by default, whatever
+    // sendDefaultPii says; a sign-in POST carries the typed password.
+    integrations: [
+      Sentry.httpIntegration({ maxIncomingRequestBodySize: 'none' }),
+    ],
     sendDefaultPii: false, // no IP/cookies auto-attached (consistent with auth-log: never trust spoofable IPs)
     tracesSampleRate: 0, // error capture only, no performance tracing
   })

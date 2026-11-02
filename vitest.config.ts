@@ -16,7 +16,11 @@ export default defineConfig({
       all: true,
       include: ['app/**/*.{ts,tsx}'],
     },
-    include: ['./app/**/*.test.{ts,tsx}', './scripts/**/*.test.ts'],
+    include: [
+      './app/**/*.test.{ts,tsx}',
+      './scripts/**/*.test.ts',
+      './instrument.server.test.ts',
+    ],
     restoreMocks: true,
   },
 })
