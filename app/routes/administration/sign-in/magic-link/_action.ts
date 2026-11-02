@@ -6,17 +6,18 @@ import { redirect } from 'react-router'
 import { requireUnauthenticated } from '~/utils/auth.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
-import { createMagicLinkUrl } from '~/utils/magic-link/create-magic-link-url'
-import { createMagicLinkToken } from '~/utils/magic-link.server'
+import { issueSignInLink } from '~/utils/magic-link/issue-sign-in-link.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
 import { safeRedirect } from '~/utils/safe-redirect'
-import { sendMagicLinkEmail } from '~/utils/send-magic-link-email.server'
-import { findExistingUserByEmail } from '~/utils/sign-in.server'
 import { flashSignInNotice } from '~/utils/sign-in-notice/flash-sign-in-notice.server'
 import { withRedirectTo } from '~/utils/with-redirect-to'
 
 import { schema } from './_schema'
 import type { Route } from './+types/route'
+
+// Not started in the same tick: the database driver is synchronous, so a token
+// written before the answer leaves still delays it by a few milliseconds.
+const ISSUE_LINK_DELAY_MS = 50
 
 // Every answer redirects (post/redirect/get): the request page itself only
 // shows the sent state, and a direct visit goes back to the chooser (20a).
@@ -68,33 +69,16 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   const email = submission.value.email.trim().toLowerCase()
 
-  // Send only when the email matches an existing account. Every branch lands on
-  // the same neutral sent state below — never reveal whether the account
-  // exists (no account enumeration). The domain check repeats the schema's, so
-  // the user lookup never runs off the domain.
+  // A link goes only to an existing account. Every branch lands on the same
+  // neutral sent state below, and the work starts after that answer has left, so
+  // neither the answer nor the time it takes says whether the account exists (no
+  // account enumeration, log 0062). The domain check repeats the schema's, so the
+  // user lookup never runs off the domain.
   if (email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)) {
-    try {
-      const user = await findExistingUserByEmail(email)
-
-      if (user !== null) {
-        const token = await createMagicLinkToken(email)
-
-        // Carries where to land after the confirm click.
-        const link = createMagicLinkUrl({
-          baseUrl: process.env.BASE_URL,
-          email,
-          redirectTo,
-          token,
-        })
-
-        await sendMagicLinkEmail({ email, link })
-      }
-    } catch (error) {
-      // Swallow failures (e.g. a DB error from the user lookup / token write):
-      // they must not surface a non-neutral error only for existing accounts,
-      // which would leak account existence. Log and fall through to neutral.
-      console.error('[magic-link] failed to issue sign-in link —', error)
-    }
+    setTimeout(
+      () => void issueSignInLink({ email, redirectTo }),
+      ISSUE_LINK_DELAY_MS,
+    )
   }
 
   // The sent page repeats the address: a typo is the usual reason no link

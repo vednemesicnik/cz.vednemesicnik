@@ -13,9 +13,9 @@
  * from `@generated/<name>/response`.
  */
 
-// The default, for the best-effort senders: fail fast if GAS hangs, so delivery
-// never stalls the caller's (neutral) response. A caller carrying a file passes
-// its own `timeoutMilliseconds`.
+// The default, for the best-effort senders: fail fast if GAS hangs, so a caller
+// waiting on delivery does not stall for long. A caller carrying a file passes its
+// own `timeoutMilliseconds`.
 const GAS_TIMEOUT_MS = 8000
 
 export type GasRequestResult<TData> = {
