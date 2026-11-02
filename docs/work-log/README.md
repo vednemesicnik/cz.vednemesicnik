@@ -94,3 +94,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0060](0060-editorial-board-applications-are-a-tab-and-one-standalone-project-writes-the-sheet.md) | Editorial-board applications are a tab, one standalone project writes the sheet, and `Stav` is what the web shows | 2026-11-02 |  |
 | [0061](0061-a-retry-of-an-apps-script-call-is-opt-in-and-names-its-key.md) | A retry of an Apps Script call is opt-in and names its key | 2026-11-02 |  |
 | [0062](0062-the-sign-in-request-answers-before-it-looks-the-address-up.md) | The sign-in request answers before it looks the address up | 2026-11-02 |  |
+| [0063](0063-window-env-is-written-into-the-document.md) | `window.ENV` is written into the document | 2026-11-02 |  |

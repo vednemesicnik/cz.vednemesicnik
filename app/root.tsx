@@ -2,7 +2,6 @@
 
 import type { ReactNode } from 'react'
 import {
-  href,
   Links,
   type LinksFunction,
   Meta,
@@ -21,6 +20,7 @@ import '~/styles/sizes.css'
 // After the global styles, so global.css declares the cascade layer order first.
 import { RootBoundaryError } from '~/components/root-boundary-error'
 import { useColorScheme } from '~/hooks/use-color-scheme'
+import { createEnvScript } from '~/utils/create-env-script'
 import { getColorSchemeMetaContent } from '~/utils/get-color-scheme-meta-content'
 
 import type { Route } from './+types/root'
@@ -73,9 +73,14 @@ export function Layout({ children }: { children: ReactNode }) {
         {children}
         <ScrollRestoration />
 
-        {/* Sets window.ENV. Before <Scripts /> on purpose: their module is async, and
-            this script keeps the parser from reaching it until it has run. */}
-        <script src={href('/resources/env.js')} />
+        {/* Sets window.ENV, read by the meta functions and the Sentry init. Inline and
+            before <Scripts />, so it is set before their module runs and no request
+            can fail it (log 0063). ENV is the server's global, and in the browser what
+            this script has just set, so hydration sees the same text. */}
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: our own config, `<` escaped
+          dangerouslySetInnerHTML={{ __html: createEnvScript(ENV) }}
+        />
         <Scripts />
       </body>
     </html>

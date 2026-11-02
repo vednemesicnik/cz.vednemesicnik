@@ -15,8 +15,7 @@ revalidated before reuse. Revalidation is a cheap conditional request against th
 which the route loader builds from `fileName + updatedAt`
 (`app/routes/archive/issue-pdf/_loader.ts`); the `no-cache` header itself is
 `PDF_CACHE_CONTROL` in `app/utils/pdf-store/serve-pdf.server.ts`. So repeat downloads
-are `304`s when the PDF is unchanged, and pick up a re-upload immediately. Same strategy
-as the `env.js` resource.
+are `304`s when the PDF is unchanged, and pick up a re-upload immediately.
 
 ## The problem this rule fixes
 
