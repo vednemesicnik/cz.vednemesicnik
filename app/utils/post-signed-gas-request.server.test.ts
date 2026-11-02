@@ -197,17 +197,48 @@ describe('postSignedGasRequest', () => {
     })
   })
 
-  test('hands the caller the error a thrown attempt ended with', async () => {
-    const failure = new Error('boom')
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(failure))
+  test('hands the caller the error of the last attempt', async () => {
+    const lastFailure = new Error('second')
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockRejectedValueOnce(new Error('first'))
+        .mockRejectedValueOnce(lastFailure),
+    )
 
-    await expect(settle(post())).resolves.toMatchObject({ cause: failure })
+    const result = await settle(post())
+
+    expect(result).toMatchObject({ error: 'unreachable', status: null })
+    expect(result).toHaveProperty('cause', lastFailure)
   })
 
-  test('has no cause when the script or Google answered', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(null, 404)))
+  test('has a cause when only the retry threw', async () => {
+    const failure = new Error('boom')
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse(null, 404))
+        .mockRejectedValueOnce(failure),
+    )
 
-    await expect(settle(post())).resolves.not.toHaveProperty('cause')
+    await expect(settle(post())).resolves.toHaveProperty('cause', failure)
+  })
+
+  test('has no cause when the last attempt was answered', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValueOnce(jsonResponse(null, 404)),
+    )
+
+    const result = await settle(post())
+
+    expect(result).toMatchObject({ error: 'unreachable', status: 404 })
+    expect(result).not.toHaveProperty('cause')
   })
 
   test('tries once without opting in', async () => {

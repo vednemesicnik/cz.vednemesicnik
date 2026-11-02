@@ -117,6 +117,16 @@ describe('postGasRequest', () => {
     expect(result).toEqual({ data: null, ok: false, status: 302 })
   })
 
+  test('returns a redirect with an unreadable Location as it is', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(redirectResponse('http://['))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await postGasRequest(EXEC_URL, {}, OPTIONS)
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(result).toEqual({ data: null, ok: false, status: 302 })
+  })
+
   test('logs each hop with its status, and never the URLs', async () => {
     vi.stubGlobal(
       'fetch',

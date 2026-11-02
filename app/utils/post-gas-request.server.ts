@@ -106,13 +106,15 @@ export const postGasRequest = async <TData>(
       ? firstResponse.headers.get('location')
       : null
 
+  // `parse` rather than `new URL`: a thrown error would carry both addresses into
+  // whatever logs it. A `Location` it can't read is answered like a missing one.
+  const secondUrl = location === null ? null : URL.parse(location, url)
+
   let response = firstResponse
 
-  if (location !== null) {
+  if (secondUrl !== null) {
     // An unread body would hold the connection open.
     await firstResponse.body?.cancel()
-
-    const secondUrl = new URL(location, url)
 
     // A GET of the output: there is no body to lose and reading writes nothing, so
     // following any further redirects here is safe.

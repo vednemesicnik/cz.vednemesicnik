@@ -17,8 +17,7 @@ import type { SignedGasEnvelope } from './sign-gas-request.server'
 // shape the script publishes.
 expectTypeOf<SignedGasEnvelope>().toExtend<Envelope>()
 
-// Avoid any real Sentry side effects; SENTRY_DSN is unset below so these are
-// never called, but the module import must stay inert.
+// Avoid any real Sentry side effects: the module import must stay inert.
 vi.mock('@sentry/react-router', () => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
