@@ -7,41 +7,43 @@ and the app reads the public subset (names + role labels of active members) thro
 the magic-link email (`SCRIPT__Auth__Magic_Link`): no Google Cloud project, no service
 account, the sheet stays private.
 
-The script that powers the endpoint lives in its own **private** repo,
-[`vednemesicnik/SCRIPT__Editorial_Board__Contacts`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Contacts)
-— the link 404s without access. Its README has the steps for the project, which is
-standalone and is never bound to the sheet, because everyone who edits a bound sheet also
-edits its project (log 0059). This guide is the one-time setup for the spreadsheet.
+Two standalone Apps Script projects work with the one spreadsheet, each in its own **private**
+repo (the links 404 without access). Neither is bound to the sheet, because everyone who edits a
+bound sheet also edits its project (log 0059). Log 0060 says why there are two.
+
+| Project | What it does |
+| ------- | ------------ |
+| [`SCRIPT__Editorial_Board__Contacts`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Contacts) | Answers the read for `/editorial-board`. Never writes. |
+| [`SCRIPT__Editorial_Board__Membership`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Membership) | The only project that writes: the setup and the edit trigger. |
+
+Their READMEs have the steps for each project. [Apps Script web apps](_apps-script-web-apps.md)
+shows where both sit among the scripts the web uses.
 
 > **Note:** the spreadsheet doubles as the internal contact directory (e-mail, phone,
 > notes). The endpoint **never** reads those columns — it returns only names and role
-> labels of members whose `Aktivní` box is checked.
+> labels of members whose `Stav` is `V redakci`.
 
-## 1. Create the spreadsheet
+## 1. The spreadsheet
 
-Create a spreadsheet named **"Vedneměsíčník — Redakce"** and share it as Editor with the
-account that deploys the script, the web's app account. It needs two sheets, `Role` and
-`Kontakty` — the setup script below creates and formats them for you, so you don't
-have to add them by hand.
+There is one, **"Vedneměsíčník — Redakce"**, shared as Editor with the web's app account. It
+recovers from its version history, so nothing builds a new one from scratch.
 
-## 2. Run the setup script (recommended)
+## 2. The setup script
 
-In the script's project, select the `setupSpreadsheet` function and **Run**. Authorize
-when prompted (the script edits this spreadsheet). This is for a new spreadsheet only: the
-`Role` sheet of the one in use is protected for its owner, so the run fails there.
+In the Membership project, select `setupSpreadsheet` and **Run**. It is made for the populated
+sheet and is idempotent: it adds missing headers, deletes nothing and leaves the values in `Role`
+alone. It requires `Kontakty` and `Role` to exist. Name a version in the spreadsheet's history before
+its first run.
 
-`setupSpreadsheet()` builds the whole structure: both sheets with the canonical
-headers, frozen and formatted header rows, the `Role` dropdown on `Kontakty`, the
-`Aktivní` checkbox column, conditional formatting that colour-codes rows by state
-(pastel green when active, pastel red when inactive, with a solid colour on the
-`Aktivní` cell), protection on the `Role` sheet, and it removes the leftover default
-sheet and any excess columns. It never deletes member rows.
+It adds `Telefon` and the lifecycle columns to `Kontakty`, sets the row colours, creates `Přihlášky`,
+and on the first run gives each named row a `Stav` from the old `Aktivní` checkbox. That column is
+then removed by hand, once the read has moved to `Stav`.
 
-### Two manual steps the script can't do
+### Manual settings the script can't do
 
 The Sheets API exposes neither setting ([googleapis #2676](https://github.com/googleapis/google-api-python-client/issues/2676)),
-so do these once in the UI on `Kontakty!B` (`Role`) — **Data ▸ Data validation ▸** the
-rule:
+so they are set in the UI on the `Role` column of `Kontakty` — **Data ▸ Data validation ▸** the
+rule — and the script never applies that rule again, which would drop them:
 
 - **Multi-select** — switch the dropdown **Display style** to **Chip**, then enable
   **Allow multiple selections**. The toggle stays greyed out until the dropdown is
@@ -50,9 +52,10 @@ rule:
 
 ## 3. Reference: sheet design
 
-The setup script produces exactly this. Column headers are in Czech — the editors are
-the audience — and the app locates columns **by header label**, so they may be
-reordered (within each sheet) without breaking the endpoint.
+Column headers are in Czech — the editors are the audience — and both projects locate columns
+**by header label**, so they may be reordered (within each sheet) without breaking anything. The
+labels, values and notes went through the copywriter; they live in the Membership project's
+`config.gs`.
 
 **`Role` sheet** (protected — owner-only edits):
 
@@ -64,27 +67,54 @@ reordered (within each sheet) without breaking the endpoint.
 
 **`Kontakty` sheet**:
 
-| Column | Header         | Type              | Notes                                                        |
-| ------ | -------------- | ----------------- | ------------------------------------------------------------ |
-| A      | `Jméno`        | text              | member's full name                                           |
-| B      | `Role`         | dropdown (chips)  | validated against `Role!A2:A`, rejects unknown values        |
-| C      | `Aktivní`      | checkbox          | only checked members are published on the web                |
-| D      | `E-mail`       | text              | internal only — never returned by the endpoint               |
-| E      | `Telefon`      | text              | internal only — never returned by the endpoint               |
-| F      | `Poznámka`     | text              | internal only — never returned by the endpoint               |
+| Header               | Type             | Notes                                                        |
+| -------------------- | ---------------- | ------------------------------------------------------------ |
+| `Jméno`              | text             | member's full name; a member is a row with a name            |
+| `Role`               | dropdown (chips) | validated against the `Role` sheet, rejects unknown values   |
+| `E-mail`             | text             | internal only — never returned by the endpoint               |
+| `Telefon`            | text             | internal only — never returned by the endpoint; added beside `E-mail`, filled from an accepted application |
+| `Poznámka`           | text             | internal only — never returned by the endpoint               |
+| `Stav`               | dropdown         | `V redakci` is published on the web; `Mimo redakci` and `Vyřazení bez odpovědi` are not |
+| `Poslední potvrzení` | date             | empty means none on record, not that the person did not confirm |
+| `Dotaz odeslán`      | date             | start of the current round of the question, from #392        |
+| `Odchod či vyřazení` | date             | not filled when somebody changes `Stav` by hand              |
+| `Odeslání formuláře` | date             | copied from the application on acceptance, #928              |
 
-Behaviour built by the script:
+`Mimo redakci` means the person is not part of the editorial board right now: they left, stopped
+contributing or are on a pause. `Stav` claims no reason.
 
-- Conditional formatting colour-codes each named row by state — pastel green when active,
-  pastel red when inactive — with a solid green/red fill on the `Aktivní` cell. (The rules
-  combine their conditions with `*` rather than `AND(…,…)`: `whenFormulaSatisfied` doesn't
-  localise the argument separator, so a comma breaks the rule in a Czech-locale sheet.)
-- `sortContactsOnEdit`, an installable trigger that `setupTriggers()` creates, re-sorts on
-  any `Aktivní` change so active members float to the top. Section grouping and per-section
-  name ordering are done in the endpoint/app, so a member with several role chips needs no
+**`Přihlášky` sheet**: applications until the chief editors decide, apart from the directory of
+people who are in the editorial board. Rows start to arrive with #390, and accepting moves the person
+to `Kontakty` with #928.
+
+| Column | Header               | Type     | Notes                                                        |
+| ------ | -------------------- | -------- | ------------------------------------------------------------ |
+| A      | `Jméno`              | text     |                                                              |
+| B      | `E-mail`             | text     |                                                              |
+| C      | `Telefon`            | text     |                                                              |
+| D      | `Zájem o činnost`    | text     | optional answer from the form; moves to `Poznámka` on acceptance |
+| E      | `Odeslání formuláře` | date     |                                                              |
+| F      | `Ověření e-mailu`    | date     | verifies the address only; the row is deleted 12 months later |
+| G      | `Stav`               | dropdown | `Čeká na přijetí`, `Přijato`, `Nepřijato`; says what was decided, not where the person is today |
+| H      | `Role`               | dropdown | from the `Role` sheet, chosen before `Přijato`               |
+| I      | `Zápis do Kontaktů`  | date     | filled in by the script once the person is on `Kontakty`     |
+
+Behaviour:
+
+- Conditional formatting reads `Stav` and colours each named row of `Kontakty`, pastel green for
+  `V redakci` and pastel red otherwise, with a solid fill on the `Stav` cell. (Any such rule combines
+  its conditions with `*` rather than `AND(…,…)` and has no `TRUE`/`FALSE`: `whenFormulaSatisfied`
+  doesn't localise the separator, so a comma breaks the rule in a Czech-locale sheet.)
+- `handleSpreadsheetEdit`, an installable trigger in the Membership project, acts when one `Stav` cell
+  changes on a named row: it clears `Dotaz odeslán`, and for `V redakci` writes today's
+  `Poslední potvrzení` and clears `Odchod či vyřazení`. A paste across rows writes no date. It moves no
+  row: `Kontakty` is sorted by name only, by a nightly job and never on an edit. Section grouping and per-section
+  name ordering are done in the endpoint and the app, so a member with several role chips needs no
   single sort position in the sheet.
 
-## 4. Set the shared secret
+The steps below are for the read, in the Contacts project.
+
+## 4. Set the secret
 
 In Apps Script: **Project Settings ▸ Script Properties ▸ Add script property**
 
@@ -140,8 +170,9 @@ instead of crashing.
 - `positions` are sorted by `order`; `members` are returned in sheet row order and the
   app sorts them by name with Czech ICU collation (`Intl.Collator('cs')` — Node has full
   ICU, GAS doesn't). Roles with no active members are included with an empty `members`
-  array (the page renders "..." for them).
-- A bad secret or any internal failure returns `{ "ok": false }`. Apps Script's
+  array, and the page leaves them out.
+- A bad secret or any internal failure returns `{ "ok": false, "error": "…" }`, and so does a sheet
+  with people on it and nobody published, so the app keeps its last good snapshot. Apps Script's
   `ContentService` always answers HTTP 200, so `ok` is the only error signal.
 
 Smoke-test the deployment. Read the secret into a shell variable so it never lands in
@@ -150,7 +181,10 @@ shells):
 
 ```shell
  read -rs SECRET   # paste the secret, press Enter
-curl -sS -X POST -H 'Content-Type: application/json' \
+curl -sS -L -H 'Content-Type: application/json' \
   --data-binary "$(printf '{"secret":"%s"}' "$SECRET")" \
   "https://script.google.com/macros/s/…/exec"
 ```
+
+`-L` follows Apps Script's redirect, and `--data-binary` already makes it a POST. Adding `-X POST`
+repeats the POST on the redirect, which answers 405.
