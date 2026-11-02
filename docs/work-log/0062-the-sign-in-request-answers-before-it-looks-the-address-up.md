@@ -37,9 +37,9 @@ The delay is there because `better-sqlite3` is synchronous: a token written befo
 leaves still holds it back. `react-router-serve` has no hook for when a response has finished,
 and `setImmediate` would fire before the cookie is signed.
 
-While a link for an address is on its way, another request for that address does nothing. The
-page now appears at once, so "Poslat znovu" can be pressed during the send, and a new token
-would kill the link in a mail that may still arrive last. This relies on one machine.
+While a link for an address is on its way, another sign-in request for that address does
+nothing. The page now appears at once, so "Poslat znovu" can be pressed during the send, and a
+new token would kill the link in a mail that may still arrive last. This relies on one machine.
 
 ## What follows
 
@@ -55,7 +55,9 @@ deploy, so this is accepted. So is a dropped second request when the first send 
 failure is reported, and pressing the button again works.
 
 The identity check (`settings/verify-identity/magic-link/_action.ts`) keeps awaiting. The person
-is signed in and is told the result.
+is signed in and is told the result. It stays outside the guard above, so it can replace the
+token of a sign-in mail still being sent, and the other way round. That takes the same person
+in two places within seconds, so this is accepted too.
 
 Password sign-in has its own timing difference: `bcrypt.compare` runs only for an account with
 a password. It is off unless `ALLOW_PASSWORD_SIGN_IN` is set, so it is left as it is.
