@@ -42,6 +42,11 @@ row with the same address and form date is the same application, and nothing is 
 - Script writes can now change a `Stav` cell while the edit trigger waits for the lock, so the trigger
   re-reads the cell and skips an edit it no longer holds. A hand change can lose that race, and the person
   sees the script's value.
+- `OWN_SECRET` sits in a project every domain account can read and copy, because the edit trigger needs that
+  access (log 0060). Tried on 2 Nov 2026 on a throwaway project with a dummy value, from `admin@` as a Viewer:
+  the settings hide Script Properties, and a project copy has none (`getProperties()` logged `{}` there and
+  the value in the original). Google does not document this, so it rests on that one result, and it is the
+  first thing to check if a secret from one of these projects ever turns up elsewhere.
 - `ambiguous` needs someone at the sheet, so it reaches Sentry. `not_found` and `not_active` are answers
   about a person and do not.
 - `SETTLED_ERRORS` in `post-signed-gas-request.server.ts` gains `ambiguous`, `missing_fields`,
