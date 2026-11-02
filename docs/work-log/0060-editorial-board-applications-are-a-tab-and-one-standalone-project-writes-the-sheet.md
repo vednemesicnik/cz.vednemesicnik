@@ -1,4 +1,4 @@
-# 0060. Editorial-board applications are a tab, and one standalone project writes the sheet
+# 0060. Editorial-board applications are a tab, one standalone project writes the sheet, and `Stav` is what the web shows
 
 - Date: 2026-11-02
 - Issues: #385, #386
@@ -16,44 +16,56 @@ weighed again.
 
 ## Outcome
 
-Applications are a tab of the same spreadsheet, `Přihlášky`, and `Kontakty` gets a `Stav` beside
-`Aktivní`. `SCRIPT__Editorial_Board__Membership`, standalone under the web's app account, is the only
-project that writes to the spreadsheet, the edit trigger with the sort included.
-`SCRIPT__Editorial_Board__Contacts` answers only the read, with the same address and secret.
+Applications are a tab of the same spreadsheet, `Přihlášky`. On `Kontakty` a `Stav` column replaces the
+`Aktivní` checkbox: the web shows a person whose `Stav` is `V redakci`.
+`SCRIPT__Editorial_Board__Membership`, standalone under the web's app account, is the only project that
+writes to the spreadsheet. `SCRIPT__Editorial_Board__Contacts` answers only the read, with the same address
+and secret.
 
 The reasons for two projects are that writing code is released again and again while a public page
 depends on the read, that the read sends nothing while the writes send to outside addresses (log
 0037), and that one `doPost` would have to carry a plain secret and a signed envelope.
 
-`Stav` claims no reason, and the web goes by `Aktivní` alone. An empty `Poslední potvrzení` means none
-on record, so the backfill leaves it empty: a run date would claim a confirmation nobody made.
+The reason for one flag: a checkbox beside a `Stav` stores one fact twice. A trigger had to keep the two in
+step, and it healed towards publication, because a ticked box won. So a departure that died half-way could
+leave a person on the web, and a `Stav` picked by hand went back. With one column any mismatch hides the
+person, and a departure is one value.
+
+`Stav` claims no reason. An empty `Poslední potvrzení` means none on record, so the backfill leaves it
+empty: a run date would claim a confirmation nobody made.
 
 ## What follows
 
 - What the split does not do: the caller and the account are the same, and "the only project that
-  writes" is a convention in code that Google does not enforce. A bug that unticks everyone still
-  reaches the web, because the read answers `ok: true` with empty members and overwrites the snapshot.
-  So `setupSpreadsheet()` compares the number of ticked members before and after, and a version is
-  named before its first run.
+  writes" is a convention in code that Google does not enforce. So a version is named before the setup's
+  first run, and the read answers `server_error` when people are on the sheet and nobody is published. An
+  exact match fails closed, and a renamed value would otherwise overwrite the app's snapshot with an empty
+  board.
 - A standalone project takes `LockService.getScriptLock()`, because `getDocumentLock()` returns `null`
   there. No lock spans projects, which is one more reason for a single writer. The writes in #388 share
   the lock with the trigger.
-- The trigger takes no row number from the edit event. On an edit of `Aktivní`, `Jméno` or `Stav` it
-  puts `Stav` right across the sheet, and any other edit does nothing, because such a run could reach a
-  fresh tick first and take its date. It writes the date only when the edit's columns include `Aktivní`
-  or `Jméno`, and only on a row that has just become `V redakci`. So a `Stav` changed by hand on a ticked
-  row goes back with no date, because a date there would keep the person out of a later re-confirmation
-  for a confirmation nobody made. This departs from task 6 of #386, which dated every row put right on
-  any edit. An earlier version of the issue refreshed the date on an edit wholly in `Aktivní`; that went
-  too, since after a concurrent sort it could stamp somebody else's row. Quickly unticking and ticking a
-  row can leave the date as it was, and nothing was confirmed by that.
-- The old trigger is deleted before the setup runs on the spreadsheet in use, because its sort could
-  move rows under the backfill and no lock spans two projects.
+- Rows no longer move on an edit: `Kontakty` is sorted by name only, and not while someone edits, so a
+  nightly job and the acceptance flow do it (#391, #928). So the trigger can trust the event's row. It acts
+  on one changed `Stav` cell, writing the date when the cell becomes `V redakci`.
+- A paste or a fill across rows writes no date, because Google gives no old value for a range. That costs at
+  most one extra question in September; a date nobody earned would skip someone for a year.
+- When the trigger does not run, the web is still right. Google documents that users of a standalone script
+  need view access to the script file for triggers to run properly, so this must not rest on the trigger.
+- The move has an order, in that project's README: the old trigger goes before the setup, because its sort
+  could move rows under the backfill. `Aktivní` is deleted by hand only after the read has moved and the
+  response has matched, because until then it is the way back.
+- Any hand change of `Stav` clears `Dotaz odeslán`, so a person returned by hand is not removed again by the
+  daily job of #392.
 - The spreadsheet's structure is described in `docs/_editorial-board-google-sheet.md`, and the scripts
   around it in `docs/_apps-script-web-apps.md`.
 
 ## Turned down
 
+- **`Aktivní` as the published flag with a synchronised `Stav`.** This was built first and tried on a copy.
+  It kept the read unchanged and one click for the chief editors, but see the reason above. Nobody has
+  tried the dropdown with the chief editors, so that is the first thing to check if this comes back. A real
+  need for "in the editorial board, not on the web" would call for two independent columns, not this.
+- **A hidden helper column for sorting active people first.** Nobody needs that order.
 - **One project for the read and the writes.** Its cost is the reasons above. It would save a
   repository, a release path and a few repeated column labels.
 - **Everything in Contacts now, split at #388.** That only postpones moving the trigger and does it

@@ -244,9 +244,9 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   i přijatá nebo nepřijatá (rozhodnuto 2. 11. 2026, mazání zatím nepostaveno). Přijatý člověk zůstává
   na listu `Kontakty`. Tato lhůta i její počátek platí jen pro přihlášku do redakce, ne do spolku.
 - **Lidé v redakci** jsou v téže tabulce na listu `Kontakty`. Na stránce *Redakce* je jen ten, kdo má
-  zaškrtnuté `Aktivní`. Nezaškrtnuté znamená, že člověk teď není součástí redakce: odešel, přestal
-  přispívat nebo má pauzu. Hodnoty `Stav` jsou `V redakci` · `Mimo redakci` · `Vyřazení bez odpovědi`
-  a netvrdí důvod. Prázdné `Poslední potvrzení` znamená bez záznamu potvrzení, ne že člověk nepotvrdil.
+  `Stav` `V redakci`. `Mimo redakci` znamená, že člověk teď není součástí redakce: odešel, přestal
+  přispívat nebo má pauzu. Třetí hodnota je `Vyřazení bez odpovědi`. Hodnoty netvrdí důvod. Prázdné
+  `Poslední potvrzení` znamená bez záznamu potvrzení, ne že člověk nepotvrdil.
 - **Obě přihlášky jsou skryté.** Web na ně nikde neodkazuje a vyhledávače je neindexují. Do
   redakce vede QR kód z letáku, do spolku odkaz od vedení. Kdo by chtěl do spolku, napíše na
   `clenstvi@vednemesicnik.cz` (rozhodnuto 2. 10. 2026). Věta, která na webu zve

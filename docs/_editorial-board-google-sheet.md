@@ -21,7 +21,7 @@ shows where both sit among the scripts the web uses.
 
 > **Note:** the spreadsheet doubles as the internal contact directory (e-mail, phone,
 > notes). The endpoint **never** reads those columns — it returns only names and role
-> labels of members whose `Aktivní` box is checked.
+> labels of members whose `Stav` is `V redakci`.
 
 ## 1. The spreadsheet
 
@@ -31,12 +31,13 @@ recovers from its version history, so nothing builds a new one from scratch.
 ## 2. The setup script
 
 In the Membership project, select `setupSpreadsheet` and **Run**. It is made for the populated
-sheet and is idempotent: it appends missing headers, deletes nothing, leaves the values in `Aktivní`
-and `Role` alone and fails when the number of ticked members changes. It requires `Kontakty` and
-`Role` to exist. Name a version in the spreadsheet's history before its first run.
+sheet and is idempotent: it adds missing headers, deletes nothing and leaves the values in `Role`
+alone. It requires `Kontakty` and `Role` to exist. Name a version in the spreadsheet's history before
+its first run.
 
-It adds the lifecycle columns to `Kontakty`, stretches the row colours over them, creates
-`Přihlášky`, and on the first run gives each named row a `Stav`.
+It adds `Telefon` and the lifecycle columns to `Kontakty`, sets the row colours, creates `Přihlášky`,
+and on the first run gives each named row a `Stav` from the old `Aktivní` checkbox. That column is
+then removed by hand, once the read has moved to `Stav`.
 
 ### Manual settings the script can't do
 
@@ -53,8 +54,8 @@ rule — and the script never applies that rule again, which would drop them:
 
 Column headers are in Czech — the editors are the audience — and both projects locate columns
 **by header label**, so they may be reordered (within each sheet) without breaking anything. The
-letters below are the order on the sheet in use. The labels, values and notes went through the
-copywriter; they live in the Membership project's `config.gs`.
+labels, values and notes went through the copywriter; they live in the Membership project's
+`config.gs`.
 
 **`Role` sheet** (protected — owner-only edits):
 
@@ -66,22 +67,21 @@ copywriter; they live in the Membership project's `config.gs`.
 
 **`Kontakty` sheet**:
 
-| Column | Header         | Type              | Notes                                                        |
-| ------ | -------------- | ----------------- | ------------------------------------------------------------ |
-| A      | `Jméno`        | text              | member's full name                                           |
-| B      | `Role`         | dropdown (chips)  | validated against `Role!A2:A`, rejects unknown values        |
-| C      | `Aktivní`      | checkbox          | only checked members are published on the web                |
-| D      | `E-mail`       | text              | internal only — never returned by the endpoint               |
-| E      | `Telefon`      | text              | internal only — never returned by the endpoint               |
-| F      | `Poznámka`     | text              | internal only — never returned by the endpoint               |
-| G      | `Stav`         | dropdown          | `V redakci`, `Mimo redakci`, `Vyřazení bez odpovědi`; the web goes by `Aktivní` alone |
-| H      | `Poslední potvrzení` | date        | empty means none on record, not that the person did not confirm |
-| I      | `Dotaz odeslán` | date             | start of the current round of the question, from #392        |
-| J      | `Odchod či vyřazení` | date        | not filled when somebody unticks by hand                     |
-| K      | `Odeslání formuláře` | date        | copied from the application on acceptance, #928              |
+| Header               | Type             | Notes                                                        |
+| -------------------- | ---------------- | ------------------------------------------------------------ |
+| `Jméno`              | text             | member's full name; a member is a row with a name            |
+| `Role`               | dropdown (chips) | validated against the `Role` sheet, rejects unknown values   |
+| `E-mail`             | text             | internal only — never returned by the endpoint               |
+| `Telefon`            | text             | internal only — never returned by the endpoint; added beside `E-mail`, filled from an accepted application |
+| `Poznámka`           | text             | internal only — never returned by the endpoint               |
+| `Stav`               | dropdown         | `V redakci` is published on the web; `Mimo redakci` and `Vyřazení bez odpovědi` are not |
+| `Poslední potvrzení` | date             | empty means none on record, not that the person did not confirm |
+| `Dotaz odeslán`      | date             | start of the current round of the question, from #392        |
+| `Odchod či vyřazení` | date             | not filled when somebody changes `Stav` by hand              |
+| `Odeslání formuláře` | date             | copied from the application on acceptance, #928              |
 
-An unticked `Aktivní` means the person is not part of the editorial board right now: they left,
-stopped contributing or are on a pause. `Stav` claims no reason.
+`Mimo redakci` means the person is not part of the editorial board right now: they left, stopped
+contributing or are on a pause. `Stav` claims no reason.
 
 **`Přihlášky` sheet**: applications until the chief editors decide, apart from the directory of
 people who are in the editorial board. Rows start to arrive with #390, and accepting moves the person
@@ -101,19 +101,16 @@ to `Kontakty` with #928.
 
 Behaviour:
 
-- Conditional formatting colour-codes each named row of `Kontakty` by state — pastel green when
-  active, pastel red when inactive — with a solid green/red fill on the `Aktivní` cell. (Any such
-  rule combines its conditions with `*` rather than `AND(…,…)` and has no `TRUE`/`FALSE`:
-  `whenFormulaSatisfied` doesn't localise the separator, so a comma breaks the rule in a
-  Czech-locale sheet.)
-- `handleSpreadsheetEdit`, an installable trigger in the Membership project, acts on an edit of
-  `Aktivní`, `Jméno` or `Stav` on `Kontakty`. A ticked named row whose `Stav` is not `V redakci` gets
-  `V redakci`; an unticked one with `V redakci` gets `Mimo redakci`. When the edit touches `Aktivní` or
-  `Jméno`, a row that has just become `V redakci` also gets today's `Poslední potvrzení`; when it
-  touches `Aktivní`, the rows are sorted by `Aktivní` and `Jméno`. So a `Stav` changed by hand on a
-  ticked row goes back with no date. Section grouping and per-section name ordering are done in the
-  endpoint and the app, so a member with several role chips needs no single sort position in the
-  sheet.
+- Conditional formatting reads `Stav` and colours each named row of `Kontakty`, pastel green for
+  `V redakci` and pastel red otherwise, with a solid fill on the `Stav` cell. (Any such rule combines
+  its conditions with `*` rather than `AND(…,…)` and has no `TRUE`/`FALSE`: `whenFormulaSatisfied`
+  doesn't localise the separator, so a comma breaks the rule in a Czech-locale sheet.)
+- `handleSpreadsheetEdit`, an installable trigger in the Membership project, acts when one `Stav` cell
+  changes on a named row: it clears `Dotaz odeslán`, and for `V redakci` writes today's
+  `Poslední potvrzení` and clears `Odchod či vyřazení`. A paste across rows writes no date. It moves no
+  row: `Kontakty` is sorted by name only, and not while somebody edits. Section grouping and per-section
+  name ordering are done in the endpoint and the app, so a member with several role chips needs no
+  single sort position in the sheet.
 
 The steps below are for the read, in the Contacts project.
 
@@ -174,7 +171,8 @@ instead of crashing.
   app sorts them by name with Czech ICU collation (`Intl.Collator('cs')` — Node has full
   ICU, GAS doesn't). Roles with no active members are included with an empty `members`
   array, and the page leaves them out.
-- A bad secret or any internal failure returns `{ "ok": false, "error": "…" }`. Apps Script's
+- A bad secret or any internal failure returns `{ "ok": false, "error": "…" }`, and so does a sheet
+  with people on it and nobody published, so the app keeps its last good snapshot. Apps Script's
   `ContentService` always answers HTTP 200, so `ok` is the only error signal.
 
 Smoke-test the deployment. Read the secret into a shell variable so it never lands in
