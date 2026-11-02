@@ -19,8 +19,8 @@ import '~/styles/sizes.css'
 
 // After the global styles, so global.css declares the cascade layer order first.
 import { RootBoundaryError } from '~/components/root-boundary-error'
+import { ENV_META_NAME } from '~/config/env-meta-config'
 import { useColorScheme } from '~/hooks/use-color-scheme'
-import { createEnvScript } from '~/utils/create-env-script'
 import { getColorSchemeMetaContent } from '~/utils/get-color-scheme-meta-content'
 
 import type { Route } from './+types/root'
@@ -66,21 +66,16 @@ export function Layout({ children }: { children: ReactNode }) {
           content={getColorSchemeMetaContent(colorScheme)}
           name="color-scheme"
         />
+        {/* The browser's window.ENV, read from here by initEnvClient (log 0063). ENV is
+            the server's global, and in the browser what that set from this tag, so
+            hydration sees the same content. */}
+        <meta content={JSON.stringify(ENV)} name={ENV_META_NAME} />
         <Meta />
         <Links />
       </head>
       <body>
         {children}
         <ScrollRestoration />
-
-        {/* Sets window.ENV, read by the meta functions and the Sentry init. Inline and
-            before <Scripts />, so it is set before their module runs and no request
-            can fail it (log 0063). ENV is the server's global, and in the browser what
-            this script has just set, so hydration sees the same text. */}
-        <script
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: our own config, `<` escaped
-          dangerouslySetInnerHTML={{ __html: createEnvScript(ENV) }}
-        />
         <Scripts />
       </body>
     </html>
