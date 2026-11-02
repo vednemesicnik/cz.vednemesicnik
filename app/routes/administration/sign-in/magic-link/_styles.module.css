@@ -3,6 +3,7 @@
   @layer route {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
     gap: 8px 16px;
     padding-block-start: 4px;
