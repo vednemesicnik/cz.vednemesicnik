@@ -44,9 +44,10 @@ empty: a run date would claim a confirmation nobody made.
 - A standalone project takes `LockService.getScriptLock()`, because `getDocumentLock()` returns `null`
   there. No lock spans projects, which is one more reason for a single writer. The writes in #388 share
   the lock with the trigger.
-- Rows no longer move on an edit: `Kontakty` is sorted by name only, and not while someone edits, so a
-  nightly job and the acceptance flow do it (#391, #928). So the trigger can trust the event's row. It acts
-  on one changed `Stav` cell, writing the date when the cell becomes `V redakci`.
+- Rows no longer move on an edit: `Kontakty` is sorted by name only, by a nightly job (#391), and not by
+  the acceptance flow either, because an edit waiting for the lock would then write to the neighbour. So the
+  trigger can trust the event's row. It acts on one changed `Stav` cell, writing the date when the cell
+  becomes `V redakci`.
 - A paste or a fill across rows writes no date, because Google gives no old value for a range. That costs at
   most one extra question in September; a date nobody earned would skip someone for a year.
 - When the trigger does not run, the web is still right. Google documents that users of a standalone script
@@ -54,8 +55,8 @@ empty: a run date would claim a confirmation nobody made.
 - The move has an order, in that project's README: the old trigger goes before the setup, because its sort
   could move rows under the backfill. `Aktivní` is deleted by hand only after the read has moved and the
   response has matched, because until then it is the way back.
-- Any hand change of `Stav` clears `Dotaz odeslán`, so a person returned by hand is not removed again by the
-  daily job of #392.
+- A hand change of one `Stav` cell clears `Dotaz odeslán`, and the ladder of #392 acts only on `V redakci`,
+  so nobody set out by hand is mailed or removed.
 - The spreadsheet's structure is described in `docs/_editorial-board-google-sheet.md`, and the scripts
   around it in `docs/_apps-script-web-apps.md`.
 

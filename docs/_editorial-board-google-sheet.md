@@ -108,7 +108,7 @@ Behaviour:
 - `handleSpreadsheetEdit`, an installable trigger in the Membership project, acts when one `Stav` cell
   changes on a named row: it clears `Dotaz odeslán`, and for `V redakci` writes today's
   `Poslední potvrzení` and clears `Odchod či vyřazení`. A paste across rows writes no date. It moves no
-  row: `Kontakty` is sorted by name only, and not while somebody edits. Section grouping and per-section
+  row: `Kontakty` is sorted by name only, by a nightly job and never on an edit. Section grouping and per-section
   name ordering are done in the endpoint and the app, so a member with several role chips needs no
   single sort position in the sheet.
 
