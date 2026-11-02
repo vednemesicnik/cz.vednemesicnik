@@ -55,9 +55,9 @@ const schema = z
     [ENV_KEYS.GAS_USERS_NOTICE_URL]: z.string().optional(),
     [ENV_KEYS.GAS_USERS_NOTICE_SECRET]: z.string().optional(),
     // Google Apps Script web app that serves the editorial-board contacts (see
-    // the SCRIPT__Editorial_Board__Contacts repo). Optional locally (the /redakce
-    // page renders a fallback message), required in production (see the
-    // superRefine below).
+    // the SCRIPT__Editorial_Board__Contacts repo). Optional locally (the
+    // /editorial-board page renders a fallback message), required in production
+    // (see the superRefine below).
     [ENV_KEYS.GAS_EDITORIAL_BOARD_URL]: z.string().optional(),
     [ENV_KEYS.GAS_EDITORIAL_BOARD_SECRET]: z.string().optional(),
     // Google Apps Script web app that stores a membership application (see the

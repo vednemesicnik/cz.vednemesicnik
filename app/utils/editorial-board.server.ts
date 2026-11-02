@@ -2,7 +2,7 @@
  * Reads the editorial-board contacts from the Google Apps Script web app (see
  * the SCRIPT__Editorial_Board__Contacts repo). Mirrors the magic-link helper:
  * a secret-protected POST that never throws into the loader — every failure
- * mode resolves to `null`, and the /redakce page renders a fallback message.
+ * mode resolves to `null`, and the /editorial-board page renders a fallback message.
  *
  * Stale-while-revalidate: a fresh in-memory cache (TTL ~10 min) is served
  * directly; a stale cache or a last-good JSON snapshot on disk (survives
@@ -305,7 +305,7 @@ export const createEditorialBoardSource = () => {
         )
       } else {
         console.info(
-          '[editorial-board] GAS not configured — /redakce will show the fallback message.',
+          '[editorial-board] GAS not configured — /editorial-board will show the fallback message.',
         )
       }
       return { current: null, refreshed: null }

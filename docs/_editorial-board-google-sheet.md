@@ -1,22 +1,17 @@
 # Editorial board from a Google Sheet
 
-The editorial board (redakce) shown on `/redakce` is moving to a **private Google
-Sheet** as its source of truth, replacing the database. The chief editors edit the
-sheet directly — no administration sign-in — and the app reads the public subset
-(names + role labels of active members) through a **Google Apps Script web app
-protected by a shared secret**. This is the same pattern as the magic-link email
-(`SCRIPT__Auth__Magic_Link`): no Google Cloud project, no service account, the sheet
-stays private.
-
-> **Status:** this describes the setup once wired up. The `/redakce` loader still
-> reads from the database today; it switches to the endpoint in a later step
-> ([#198](https://github.com/vednemesicnik/cz.vednemesicnik/issues/198)), and the DB
-> models are removed after that ([#199](https://github.com/vednemesicnik/cz.vednemesicnik/issues/199)).
+The editorial board (redakce) shown on `/editorial-board` has a **private Google Sheet** as
+its source of truth. The chief editors edit the sheet directly — no administration sign-in —
+and the app reads the public subset (names + role labels of active members) through a
+**Google Apps Script web app protected by a shared secret**. This is the same pattern as
+the magic-link email (`SCRIPT__Auth__Magic_Link`): no Google Cloud project, no service
+account, the sheet stays private.
 
 The script that powers the endpoint lives in its own **private** repo,
 [`vednemesicnik/SCRIPT__Editorial_Board__Contacts`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Contacts)
-(`Config.gs`, `Api.gs`, `Sort.gs`, `Setup.gs`) — the link 404s without access. This
-guide is the one-time setup for the spreadsheet and its bound script.
+— the link 404s without access. Its README has the steps for the project, which is
+standalone and is never bound to the sheet, because everyone who edits a bound sheet also
+edits its project (log 0059). This guide is the one-time setup for the spreadsheet.
 
 > **Note:** the spreadsheet doubles as the internal contact directory (e-mail, phone,
 > notes). The endpoint **never** reads those columns — it returns only names and role
@@ -24,26 +19,23 @@ guide is the one-time setup for the spreadsheet and its bound script.
 
 ## 1. Create the spreadsheet
 
-Create a spreadsheet named **"Vedneměsíčník — Redakce"** in the redakce's Google
-account (the account that will own the deployment). It needs two sheets, `Role` and
+Create a spreadsheet named **"Vedneměsíčník — Redakce"** and share it as Editor with the
+account that deploys the script, the web's app account. It needs two sheets, `Role` and
 `Kontakty` — the setup script below creates and formats them for you, so you don't
 have to add them by hand.
 
-## 2. Add and run the setup script (recommended)
+## 2. Run the setup script (recommended)
 
-1. In the spreadsheet: **Extensions ▸ Apps Script**.
-2. Create four script files and paste in the contents of `Config.gs`, `Api.gs`,
-   `Sort.gs`, and `Setup.gs` from the
-   [script repo](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Contacts).
-3. Select the `setupSpreadsheet` function and **Run**. Authorize when prompted (the
-   script edits this spreadsheet).
+In the script's project, select the `setupSpreadsheet` function and **Run**. Authorize
+when prompted (the script edits this spreadsheet). This is for a new spreadsheet only: the
+`Role` sheet of the one in use is protected for its owner, so the run fails there.
 
 `setupSpreadsheet()` builds the whole structure: both sheets with the canonical
 headers, frozen and formatted header rows, the `Role` dropdown on `Kontakty`, the
 `Aktivní` checkbox column, conditional formatting that colour-codes rows by state
 (pastel green when active, pastel red when inactive, with a solid colour on the
 `Aktivní` cell), protection on the `Role` sheet, and it removes the leftover default
-sheet and any excess columns. It is safe to re-run and never deletes member rows.
+sheet and any excess columns. It never deletes member rows.
 
 ### Two manual steps the script can't do
 
@@ -87,31 +79,32 @@ Behaviour built by the script:
   pastel red when inactive — with a solid green/red fill on the `Aktivní` cell. (The rules
   combine their conditions with `*` rather than `AND(…,…)`: `whenFormulaSatisfied` doesn't
   localise the argument separator, so a comma breaks the rule in a Czech-locale sheet.)
-- `Sort.gs` (`onEdit`) re-sorts on any `Aktivní` change so active members float to the
-  top. Section grouping and per-section name ordering are done in the endpoint/app, so a
-  member with several role chips needs no single sort position in the sheet.
+- `sortContactsOnEdit`, an installable trigger that `setupTriggers()` creates, re-sorts on
+  any `Aktivní` change so active members float to the top. Section grouping and per-section
+  name ordering are done in the endpoint/app, so a member with several role chips needs no
+  single sort position in the sheet.
 
 ## 4. Set the shared secret
 
 In Apps Script: **Project Settings ▸ Script Properties ▸ Add script property**
 
-- Property: `SHARED_SECRET`
+- Property: `OWN_SECRET`
 - Value: a long random string (e.g. `openssl rand -hex 32`)
 
 Keep this value — it must equal the app's `GAS_EDITORIAL_BOARD_SECRET`. **Never commit
-it.**
+it.** Next to it, `SPREADSHEET_ID` holds the id of the spreadsheet.
 
 ## 5. Deploy the web app
 
 **Deploy ▸ New deployment ▸ Web app**
 
-- Execute as: **the spreadsheet owner** (the redakce account)
+- Execute as: **me** (the web's app account)
 - Who has access: **Anyone**
 
 Copy the `.../exec` URL — it becomes the app's `GAS_EDITORIAL_BOARD_URL`.
 
-> On later code changes, **edit the existing deployment** (Manage deployments ▸ edit ▸
-> New version) so the URL stays the same. Do **not** create a new deployment.
+> Later code changes deploy through CI as a new version of this deployment, so the URL stays
+> the same. Do **not** create a new deployment.
 
 ## 6. Configure the app
 
@@ -119,7 +112,7 @@ Set the two variables the app reads (locally in `.env`, in production as Fly sec
 
 ```shell
 GAS_EDITORIAL_BOARD_URL="https://script.google.com/macros/s/…/exec"
-GAS_EDITORIAL_BOARD_SECRET="…"   # must equal the script's SHARED_SECRET
+GAS_EDITORIAL_BOARD_SECRET="…"   # must equal the script's OWN_SECRET
 ```
 
 ```shell
@@ -128,7 +121,7 @@ fly secrets set \
   GAS_EDITORIAL_BOARD_SECRET="…" --app cz-vednemesicnik
 ```
 
-When these are unset (local dev without a deployment), `/redakce` falls back gracefully
+When these are unset (local dev without a deployment), `/editorial-board` falls back gracefully
 instead of crashing.
 
 ## Endpoint contract
