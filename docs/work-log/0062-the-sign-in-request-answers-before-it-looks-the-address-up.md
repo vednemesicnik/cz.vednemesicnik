@@ -56,9 +56,11 @@ deploy, so this is accepted. So is a dropped second request when the first send 
 failure is reported, and pressing the button again works.
 
 The identity check (`settings/verify-identity/magic-link/_action.ts`) keeps awaiting. The person
-is signed in and is told the result. It stays outside the guard above, so it can replace the
-token of a sign-in mail still being sent, and the other way round. That takes the same person
-in two places within seconds, so this is accepted too.
+is signed in and is told the result. It and the invitation
+(`users/new/utils/send-invitation.server.ts`) stay outside the guard above, so either can replace
+the token of a sign-in mail still being sent, and the other way round. Anyone can already replace
+a live link by requesting one for the address. It costs one dead link, and asking again replaces
+it, so this is accepted too.
 
 Password sign-in has its own timing difference: `bcrypt.compare` runs only for an account with
 a password. It is off unless `ALLOW_PASSWORD_SIGN_IN` is set, so it is left as it is.

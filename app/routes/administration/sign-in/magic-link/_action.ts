@@ -71,9 +71,9 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   // A link goes only to an existing account. Every branch lands on the same
   // neutral sent state below, and the work starts on a timer, in practice after
-  // that answer has left, so the time it takes no longer says whether the account
-  // exists (no account enumeration, log 0062). The domain check repeats the
-  // schema's, so the user lookup never runs off the domain.
+  // that answer has left, so the time the answer takes does not say whether the
+  // account exists (no account enumeration, log 0062). The domain check repeats
+  // the schema's, so the user lookup never runs off the domain.
   if (email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)) {
     setTimeout(
       () => void issueSignInLink({ email, redirectTo }),

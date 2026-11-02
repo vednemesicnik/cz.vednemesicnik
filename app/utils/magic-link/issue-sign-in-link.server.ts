@@ -17,9 +17,9 @@ const emailsInFlight = new Set<string>()
 /**
  * Sends the sign-in link when the address has an account: the lookup, the token
  * write and the send, everything that depends on the account. The sign-in request
- * starts this without waiting, so the time its answer takes no longer tells
- * (log 0062). Nobody awaits the result, so this never rejects: failures are logged
- * and reported to Sentry.
+ * starts this without waiting, so the time its answer takes does not say whether
+ * the account exists (log 0062). Nobody awaits the result, so this never rejects:
+ * failures are logged and reported to Sentry.
  */
 export const issueSignInLink = async ({
   email,
