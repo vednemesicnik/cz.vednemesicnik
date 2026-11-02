@@ -79,9 +79,10 @@ Behaviour built by the script:
   pastel red when inactive — with a solid green/red fill on the `Aktivní` cell. (The rules
   combine their conditions with `*` rather than `AND(…,…)`: `whenFormulaSatisfied` doesn't
   localise the argument separator, so a comma breaks the rule in a Czech-locale sheet.)
-- `sortContactsOnEdit`, an installable trigger that `setupTriggers()` creates, re-sorts on any
-  `Aktivní` change so active members float to the top. Section grouping and per-section name ordering are done in the endpoint/app, so a
-  member with several role chips needs no single sort position in the sheet.
+- `sortContactsOnEdit`, an installable trigger that `setupTriggers()` creates, re-sorts on
+  any `Aktivní` change so active members float to the top. Section grouping and per-section
+  name ordering are done in the endpoint/app, so a member with several role chips needs no
+  single sort position in the sheet.
 
 ## 4. Set the shared secret
 
