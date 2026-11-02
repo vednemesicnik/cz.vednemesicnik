@@ -35,9 +35,12 @@ file, and the script's edit trigger still fires on their edits.
 - A bound project cannot be detached from its file, but it can be deleted from its Overview page. The
   old one was, with its properties, once the new project had passed its manual tests.
 - The editorial-board enrolment (#385) starts as a standalone project.
-- `SCRIPT__Publication__Article_Approve` and `SCRIPT__Editorial_Board__Contacts` also read their active
-  file, so they may be bound. Neither has the `drive` scope in its manifest or installs a trigger in
-  code; their properties have not been looked at.
+- `SCRIPT__Editorial_Board__Contacts` moved the same day. It was bound and ran as the domain
+  administrator, in a project the chief editors could edit. It runs as the web's app account now, which
+  is an Editor of that sheet because the script sorts it, so the `drive` scope of the membership script
+  reaches that one file too.
+- `SCRIPT__Publication__Article_Approve` also reads its active file, so it may be bound. It has no
+  `drive` scope in its manifest and installs no trigger in code; its properties have not been looked at.
 - A bound script stays fine when it has no secrets and no authority beyond what its editors already have.
 
 ## Turned down
