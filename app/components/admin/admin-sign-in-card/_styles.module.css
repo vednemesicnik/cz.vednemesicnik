@@ -102,6 +102,14 @@
       & :is(button, input) {
         min-height: 44px;
       }
+
+      /* So is a standalone link; one inside a sentence stays text height
+         (np5evn40). */
+      & a:not(:is(p, span) a) {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+      }
     }
   }
 }
