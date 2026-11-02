@@ -1,7 +1,7 @@
 # 0063. `window.ENV` is written into the document
 
 - Date: 2026-11-02
-- Issues: PR #937
+- Issues: PR #937, PR #938
 
 ## Context
 
