@@ -47,6 +47,13 @@ row with the same address and form date is the same application, and nothing is 
   the settings hide Script Properties, and a project copy has none (`getProperties()` logged `{}` there and
   the value in the original). Google does not document this, so it rests on that one result, and it is the
   first thing to check if a secret from one of these projects ever turns up elsewhere.
+- The text format does not stop a formula. `setNumberFormat('@')` followed by `setValue` or `setValues` runs
+  `=1+1` and stores `2`, tried on Google on 2 Nov 2026 after a test here said otherwise, because the fake
+  services behaved as the code assumed. Anything written from a form goes through `writeTextCell_`, which adds a leading apostrophe:
+  of the ways tried, only that kept both `=1+1` and `+420 600 000 000` exactly. Rich text without the format
+  turned the phone number into a formula.
+- The writes were tried end to end on a throwaway copy of the project, with its own key and a scratch sheet
+  of made-up people, not on the spreadsheet in use. So copy the project to try the next action.
 - `ambiguous` needs someone at the sheet, so it reaches Sentry. `not_found` and `not_active` are answers
   about a person and do not.
 - `SETTLED_ERRORS` in `post-signed-gas-request.server.ts` gains `ambiguous`, `missing_fields`,
