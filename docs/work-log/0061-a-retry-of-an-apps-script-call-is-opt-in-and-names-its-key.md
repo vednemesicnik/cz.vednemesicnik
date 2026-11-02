@@ -43,8 +43,9 @@ would report a successful write as failed. `SCRIPT__Drive__Invoice_Pdf` dropped 
 for this reason (its `idempotency.gs`), and #388 has to settle the same question before its writes
 opt in.
 
-The worst wait on a sign-in link goes from 8 to about 17 seconds when Google hangs. The 404s seen
-so far were quick. After a timeout the first attempt may still be running, and the Mailer's check is
+The sign-in request no longer waits for the send (log 0062), so the wait falls on the identity check
+in Settings: from 8 to about 17 seconds when Google hangs. The 404s seen so far were quick. After a
+timeout the first attempt may still be running, and the Mailer's check is
 not under a lock, so two copies of one link can go out. That is a nuisance, not damage.
 
 Revisit if the Sentry warning never fires, which would mean the retry buys nothing here, or if it
