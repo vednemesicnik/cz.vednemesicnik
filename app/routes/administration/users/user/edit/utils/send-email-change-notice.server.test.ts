@@ -19,13 +19,13 @@ describe('sendEmailChangeNotice', () => {
       sendEmailChangeNotice({
         changedByName: 'Petr Dvořák',
         newEmail: 'test@vednemesicnik.cz',
-        oldEmail: 'notifications@vednemesicnik.cz',
+        oldEmail: 'oznameni@vednemesicnik.cz',
       }),
     ).resolves.toBe(true)
 
     expect(sendUsersNotice).toHaveBeenCalledWith({
       changedByName: 'Petr Dvořák',
-      email: 'notifications@vednemesicnik.cz',
+      email: 'oznameni@vednemesicnik.cz',
       kind: 'email-change-notice',
       newEmail: 'test@vednemesicnik.cz',
     })
