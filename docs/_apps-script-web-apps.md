@@ -23,7 +23,7 @@ flowchart LR
     contacts["SCRIPT__Editorial_Board__Contacts<br/>Reads the public subset"]
   end
 
-  mailer["SCRIPT__Mail__Send<br/>under notifications@<br/>Sends for the scripts beside it"]
+  mailer["SCRIPT__Mail__Send<br/>under oznameni@<br/>Sends for the scripts beside it"]
   membershipStore[("Přihlášky do spolku<br/>sheet and declarations on Drive")]
   editorialSheet[("Vedneměsíčník — Redakce<br/>Kontakty, Přihlášky, Role")]
   chiefEditors(["Chief editors"])
