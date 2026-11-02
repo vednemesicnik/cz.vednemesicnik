@@ -23,7 +23,7 @@ flowchart LR
     contacts["SCRIPT__Editorial_Board__Contacts<br/>Reads the public subset"]
   end
 
-  mailer["SCRIPT__Mail__Send<br/>under notifications@<br/>The only one that sends"]
+  mailer["SCRIPT__Mail__Send<br/>under notifications@<br/>Sends for the scripts beside it"]
   membershipStore[("Přihlášky do spolku<br/>sheet and declarations on Drive")]
   editorialSheet[("Vedneměsíčník — Redakce<br/>Kontakty, Přihlášky, Role")]
   chiefEditors(["Chief editors"])
@@ -67,8 +67,9 @@ and hands it to the Mailer.
 - `SCRIPT__Editorial_Board__Membership` is not called by the web yet. It adds the columns and the tab
   and runs the edit trigger; see [Editorial board from a Google Sheet](_editorial-board-google-sheet.md).
   Its endpoint arrives with #388.
-- `SCRIPT__Mail__Send` is called only by other scripts. It is one codebase deployed once per sending
-  mailbox, because a web app sends as the account that deployed it.
+- `SCRIPT__Mail__Send` is called by the scripts in the diagram, never by the web. It is one codebase
+  deployed once per sending mailbox, because a web app sends as the account that deployed it. The
+  billing app calls its own copy under `fakturace@`.
 - `SCRIPT__Toolkit` is a library, not a web app. The scripts share its primitives, pinned by version
   in each manifest.
 
@@ -78,7 +79,7 @@ The web does not call these. They are here so a name found in `apps-script-ops` 
 
 | Area | Scripts | What for |
 | ---- | ------- | -------- |
-| Billing, for `cz.vednemesicnik.billing` | `SCRIPT__Auth__Group_Membership`, `SCRIPT__Drive__Invoice_Pdf`, `SCRIPT__Drive__Database_Backup`, `SCRIPT__Sheets__Accounting_Export`, `SCRIPT__Mail__Bounces` | Sign-in by group, the invoice PDF on Drive, the nightly backup, the accountant's sheet, delivery failures |
+| Billing, for `cz.vednemesicnik.billing` | `SCRIPT__Auth__Group_Membership`, `SCRIPT__Drive__Invoice_Pdf`, `SCRIPT__Drive__Database_Backup`, `SCRIPT__Sheets__Accounting_Export`, `SCRIPT__Mail__Bounces`, `SCRIPT__Mail__Send` | Sign-in by group, the invoice PDF on Drive, the nightly backup, the accountant's sheet, delivery failures, sending an invoice |
 | Invoices | `SCRIPT__Billing__Invoices` | A web app of its own: a form, a sheet and the PDF on Drive |
 | Donations | `SCRIPT__Donate__Request_Confirmation` | Stores a request for a tax confirmation. Its README names a form at `/donate/request-confirmation`, which `app/routes.ts` does not have today, and the app has no endpoint for it |
 | Publication, under `publikace@` | `SCRIPT__Publication__Issue_Create`, `…__Article_Create`, `…__Article_Approve`, `…__Approval_Send`, `…__Artwork_Upload`, `…__Artwork_Group_Create`, `…__Comment_Digest`, `…__Designer_Handoff` | Preparing a printed issue in Google Docs and Drive, from creating it to the designer's folder |

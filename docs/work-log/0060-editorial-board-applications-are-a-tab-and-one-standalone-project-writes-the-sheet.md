@@ -38,10 +38,15 @@ on record, so the backfill leaves it empty: a run date would claim a confirmatio
 - A standalone project takes `LockService.getScriptLock()`, because `getDocumentLock()` returns `null`
   there. No lock spans projects, which is one more reason for a single writer. The writes in #388 share
   the lock with the trigger.
-- The trigger takes no row number from the edit event and puts the states right across the sheet on
-  every edit of `Kontakty`. So the issue's rule that an edit wholly in `Aktivní` refreshes the date was
+- The trigger takes no row number from the edit event and puts `Stav` right across the sheet on every
+  edit of `Kontakty`. It writes the date only when the edit's columns include `Aktivní`, and only on a
+  row that has just become `V redakci`. So a `Stav` changed by hand on a ticked row goes back with no
+  date, because a date there would keep the person out of a later re-confirmation for a confirmation
+  nobody made. The issue's rule that an edit wholly in `Aktivní` refreshes the date of its rows was
   dropped: after a concurrent sort it could stamp somebody else's row. Quickly unticking and ticking a
   row can leave the date as it was, and nothing was confirmed by that.
+- The old trigger is deleted before the setup runs on the spreadsheet in use, because its sort could
+  move rows under the backfill and no lock spans two projects.
 - The spreadsheet's structure is described in `docs/_editorial-board-google-sheet.md`, and the scripts
   around it in `docs/_apps-script-web-apps.md`.
 

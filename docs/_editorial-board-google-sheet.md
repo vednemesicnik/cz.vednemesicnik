@@ -84,8 +84,8 @@ An unticked `Aktivní` means the person is not part of the editorial board right
 stopped contributing or are on a pause. `Stav` claims no reason.
 
 **`Přihlášky` sheet**: applications until the chief editors decide, apart from the directory of
-people who are in the editorial board. The form starts filling it with #388, and accepting moves the
-person to `Kontakty` with #928.
+people who are in the editorial board. Rows start to arrive with #390, and accepting moves the person
+to `Kontakty` with #928.
 
 | Column | Header               | Type     | Notes                                                        |
 | ------ | -------------------- | -------- | ------------------------------------------------------------ |
@@ -107,11 +107,12 @@ Behaviour:
   `whenFormulaSatisfied` doesn't localise the separator, so a comma breaks the rule in a
   Czech-locale sheet.)
 - `handleSpreadsheetEdit`, an installable trigger in the Membership project, runs on every edit of
-  `Kontakty`. A ticked named row whose `Stav` is not `V redakci` gets `V redakci` and today's
-  `Poslední potvrzení`; an unticked one with `V redakci` gets `Mimo redakci`. When the edit touches
-  `Aktivní`, it then sorts by `Aktivní` and `Jméno`. Section grouping and per-section name ordering
-  are done in the endpoint and the app, so a member with several role chips needs no single sort
-  position in the sheet.
+  `Kontakty`. A ticked named row whose `Stav` is not `V redakci` gets `V redakci`; an unticked one
+  with `V redakci` gets `Mimo redakci`. When the edit touches `Aktivní`, a row that has just become
+  `V redakci` also gets today's `Poslední potvrzení`, and the rows are sorted by `Aktivní` and `Jméno`.
+  So a `Stav` changed by hand on a ticked row goes back with no date. Section grouping and
+  per-section name ordering are done in the endpoint and the app, so a member with several role chips
+  needs no single sort position in the sheet.
 
 The steps below are for the read, in the Contacts project.
 
