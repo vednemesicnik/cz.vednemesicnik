@@ -181,11 +181,11 @@ every issued link. Procedure:
 
 ## Membership applications (Google Apps Script)
 
-A membership application is stored by the web app bound to the applications sheet on
+A membership application is stored by a standalone web app in the applications sheet on
 the shared drive "Spolek – členství" (see the `SCRIPT__Membership__Applications` repo,
-#394). Required: the app fails at boot without them, so set them before the release
-that carries the form (#396). `GAS_MEMBERSHIP_SECRET` must equal the script's
-`OWN_SECRET` property.
+#394, and log 0059). Required: the app fails at boot without them, so set them before
+the release that carries the form (#396). `GAS_MEMBERSHIP_SECRET` must equal the
+script's `OWN_SECRET` property.
 
 ```shell
 fly secrets set GAS_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
