@@ -132,6 +132,7 @@ describe('postEditorialBoardMembershipWrite', () => {
     'ambiguous',
     'invalid_request',
     'missing_fields',
+    'server_misconfigured',
     'stale_timestamp',
     'unauthorized',
   ] as const)('reports %s without retrying', async (error) => {
@@ -152,7 +153,7 @@ describe('postEditorialBoardMembershipWrite', () => {
     )
   })
 
-  test.each(['busy', 'server_error', 'server_misconfigured'] as const)(
+  test.each(['busy', 'server_error'] as const)(
     'reports %s after one retry, as retryable',
     async (error) => {
       const fetchMock = stubFetch(

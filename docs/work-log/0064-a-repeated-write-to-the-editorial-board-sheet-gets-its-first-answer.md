@@ -31,8 +31,9 @@ An `E-mail` cell may hold several addresses, and a row is found by any of them. 
 change. Rows with different names write nothing and answer `ambiguous`.
 
 `confirmActive` writes only for someone `V redakci` and otherwise answers `not_active`. `leave` keeps an
-existing departure date. `enrol` treats an address with the same form date as the same application, in
-any `Stav`.
+existing departure or removal date. `enrol` refreshes an undecided row, and an empty `Stav` counts as
+undecided, so the retry of a write that failed half-way repairs the row instead of hiding it. A decided
+row with the same address and form date is the same application, and nothing is written.
 
 ## What follows
 
@@ -43,10 +44,20 @@ any `Stav`.
   sees the script's value.
 - `ambiguous` needs someone at the sheet, so it reaches Sentry. `not_found` and `not_active` are answers
   about a person and do not.
-- `SETTLED_ERRORS` in `post-signed-gas-request.server.ts` gains `ambiguous`, `missing_fields` and
-  `not_active`, beyond the four in log 0061.
+- `SETTLED_ERRORS` in `post-signed-gas-request.server.ts` gains `ambiguous`, `missing_fields`,
+  `not_active` and `server_misconfigured`, beyond the four in log 0061. A second attempt a second later
+  changes none of them. `busy` stays transient.
+- The new environment variables stay optional in production until #390 calls the client, as the
+  membership client's did until its form shipped, so a release with this code needs no secret.
 - Reactivation from `Vyřazení bez odpovědi` needs an action of its own in #392, since `confirmActive`
-  refuses that person. Which of a person's addresses gets the September question is also #392's.
+  refuses that person. Which of a person's addresses gets the September question is also #392's, and so
+  are the pages for `not_found`, `not_active` and `ambiguous`, and what the ladder does with a shared
+  address, which would otherwise keep mailing and then remove both people.
+- #928 has to find the row with `splitEmailAddresses_`, keep a second address when it refreshes the
+  contact details, and write the name in the text format. Otherwise it adds a duplicate and a name
+  starting with `=` becomes a formula on `Kontakty`.
+- #389's form has to apply the limits in the schema. A value the script refuses arrives only after the
+  person confirmed by e-mail, as a settled `invalid_request`.
 - Revisit the shared-mailbox rule if `ambiguous` keeps firing on the same people.
 
 The current state is in [Apps Script web apps](../_apps-script-web-apps.md) and the project's README.

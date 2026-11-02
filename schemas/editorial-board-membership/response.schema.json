@@ -10,7 +10,7 @@
         },
         "email": {
           "maxLength": 254,
-          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+          "pattern": "^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]+$",
           "type": "string"
         },
         "idempotencyKey": {
@@ -75,7 +75,7 @@
         },
         "email": {
           "maxLength": 254,
-          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+          "pattern": "^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]+$",
           "type": "string"
         },
         "formSubmittedAt": {
@@ -143,7 +143,7 @@
         },
         "email": {
           "maxLength": 254,
-          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+          "pattern": "^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]+$",
           "type": "string"
         },
         "idempotencyKey": {

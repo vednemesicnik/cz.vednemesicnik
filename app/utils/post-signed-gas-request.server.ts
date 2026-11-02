@@ -50,6 +50,7 @@ const SETTLED_ERRORS = new Set([
   'missing_fields',
   'not_active',
   'not_found',
+  'server_misconfigured',
   'stale_timestamp',
   'unauthorized',
 ])
