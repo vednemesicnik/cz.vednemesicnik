@@ -147,7 +147,10 @@ describe('postSignedGasRequest', () => {
   })
 
   test.each([
+    'ambiguous',
     'invalid_request',
+    'missing_fields',
+    'not_active',
     'not_found',
     'stale_timestamp',
     'unauthorized',

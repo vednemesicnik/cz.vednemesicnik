@@ -191,6 +191,18 @@ script's `OWN_SECRET` property.
 fly secrets set GAS_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
 ```
 
+## Writes to the editorial-board spreadsheet (Google Apps Script)
+
+Enrolment and the answers to the re-confirmation are written by a standalone web app (see the
+`SCRIPT__Editorial_Board__Membership` repo, #388). Required: the app fails at boot without them,
+so set them before the release that carries the registration. `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET`
+must equal that script's `OWN_SECRET` property, which is not the one
+`SCRIPT__Editorial_Board__Contacts` holds for `GAS_EDITORIAL_BOARD_SECRET`.
+
+```shell
+fly secrets set GAS_EDITORIAL_BOARD_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
+```
+
 ## Client address behind Cloudflare
 
 Behind Cloudflare, `Fly-Client-IP` holds the edge's address and the client's is in
