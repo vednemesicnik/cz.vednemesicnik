@@ -68,7 +68,7 @@
     },
     "EnrolRequest": {
       "additionalProperties": false,
-      "description": "Adds an application to `Přihlášky` as `Čeká na přijetí`, keyed by the address. One still waiting is refreshed. `Ověření e-mailu` is the day this request arrives. `Kontakty` is not touched.",
+      "description": "Adds an application to `Přihlášky` as `Čeká na přijetí`, keyed by the address. One still waiting or with an empty `Stav` is refreshed. `Ověření e-mailu` is the day this request arrives. `Kontakty` is not touched.",
       "properties": {
         "action": {
           "const": "enrol"
