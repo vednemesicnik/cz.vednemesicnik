@@ -50,6 +50,9 @@ rule — and the script never applies that rule again, which would drop them:
   chip-style. A member can then hold several roles and appears in each section on the web.
 - **Chip colors** — pick a color per role option in the same dropdown editor.
 
+`Stav` on `Kontakty`, and `Stav` and `Role` on `Přihlášky`, show chips too, set the same way, with a
+color per `Stav` value. The script compares the `Stav` list and applies the rule again only when it differs.
+
 ## 3. Reference: sheet design
 
 Column headers are in Czech — the editors are the audience — and both projects locate columns
@@ -102,7 +105,7 @@ to `Kontakty` with #928.
 Behaviour:
 
 - Conditional formatting reads `Stav` and colours each named row of `Kontakty`, pastel green for
-  `V redakci` and pastel red otherwise, with a solid fill on the `Stav` cell. (Any such rule combines
+  `V redakci` and pastel red otherwise. (Any such rule combines
   its conditions with `*` rather than `AND(…,…)` and has no `TRUE`/`FALSE`: `whenFormulaSatisfied`
   doesn't localise the separator, so a comma breaks the rule in a Czech-locale sheet.)
 - `handleSpreadsheetEdit`, an installable trigger in the Membership project, acts when one `Stav` cell
