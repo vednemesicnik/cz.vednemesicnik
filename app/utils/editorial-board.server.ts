@@ -147,9 +147,11 @@ const fetchFromGas = async (
 ): Promise<EditorialBoardData | null> => {
   try {
     const { ok, status, data } =
-      await postGasRequest<EditorialBoardContactsResponse>(url, {
-        secret,
-      } satisfies EditorialBoardContactsRequest)
+      await postGasRequest<EditorialBoardContactsResponse>(
+        url,
+        { secret } satisfies EditorialBoardContactsRequest,
+        { endpoint: 'editorial-board' },
+      )
 
     const parsed = responseSchema.safeParse(data)
 
