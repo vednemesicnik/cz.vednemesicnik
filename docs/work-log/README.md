@@ -91,3 +91,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0057](0057-a-membership-application-lives-in-its-cookie-until-the-script-stores-it.md) | A membership application lives in its cookie until the script stores it | 2026-11-01 | [0058](0058-the-client-address-is-believed-only-with-our-zones-secret.md) |
 | [0058](0058-the-client-address-is-believed-only-with-our-zones-secret.md) | The client's address from Cloudflare is believed only with our zone's secret | 2026-11-01 |  |
 | [0059](0059-a-script-with-secrets-or-installable-triggers-is-not-bound-to-a-file-people-edit.md) | A script with secrets or installable triggers is not bound to a file people edit | 2026-11-02 |  |
+| [0060](0060-editorial-board-applications-are-a-tab-and-one-standalone-project-writes-the-sheet.md) | Editorial-board applications are a tab, and one standalone project writes the sheet | 2026-11-02 |  |
