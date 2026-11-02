@@ -14,6 +14,7 @@ This is the documentation for the project.
 - [Deploy to Fly.io](_deploy-to-fly.md)
 - [Manual Database Backup](_manual-database-backup.md)
 - [Manual Database Restore](_manual-database-restore.md)
+- [Apps Script Web Apps](_apps-script-web-apps.md)
 - [Editorial Board from a Google Sheet](_editorial-board-google-sheet.md)
 - [The Design Project](_design-project.md)
 - [Copy Context](_copy-context.md)

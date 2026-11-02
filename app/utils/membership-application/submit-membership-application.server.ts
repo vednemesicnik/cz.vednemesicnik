@@ -101,7 +101,10 @@ export const submitMembershipApplication = async (
       // `satisfies Envelope` ties the envelope this builds to the shape the script
       // publishes, so the two cannot drift apart without the build saying so.
       signGasRequest(secret, request) satisfies Envelope,
-      { timeoutMilliseconds: SUBMIT_TIMEOUT_MILLISECONDS },
+      {
+        endpoint: 'membership',
+        timeoutMilliseconds: SUBMIT_TIMEOUT_MILLISECONDS,
+      },
     )
 
     if (ok && data?.ok === true) {
