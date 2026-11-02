@@ -15,19 +15,22 @@
  * deploy and be reverted on its own; that matters here, because a mistake on this
  * path locks administrators out rather than merely failing a request.
  *
+ * A transport blip is tried once more, and the idempotency key is the `link`: it is
+ * minted per request, the script hashes it into the key it gives the Mailer
+ * (`build-idempotency-key.gs`), so a retry of one request is one e-mail. Its contract
+ * has no field for a separate key, and nothing there would read one (log 0061).
+ *
  * No-ops when GAS_MAGIC_LINK_URL / GAS_MAGIC_LINK_SECRET are unset (local
  * development), so the flow can be exercised without a live GAS deployment.
  */
 
 import type {
-  Envelope,
   SignInMagicLinkRequest,
   SignInMagicLinkResponse,
 } from '@generated/magic-link/response'
 import * as Sentry from '@sentry/react-router'
 
-import { postGasRequest } from './post-gas-request.server'
-import { signGasRequest } from './sign-gas-request.server'
+import { postSignedGasRequest } from './post-signed-gas-request.server'
 
 export const sendMagicLinkEmail = async (
   request: SignInMagicLinkRequest,
@@ -51,49 +54,36 @@ export const sendMagicLinkEmail = async (
     return true
   }
 
-  try {
-    const { ok, status, data } = await postGasRequest<SignInMagicLinkResponse>(
-      url,
-      // `satisfies Envelope` ties the envelope this builds to the shape the script
-      // publishes, so the two cannot drift apart without the build saying so.
-      signGasRequest(secret, request) satisfies Envelope,
-    )
+  const result = await postSignedGasRequest<
+    Extract<SignInMagicLinkResponse, { ok: true }>,
+    SignInMagicLinkRequest
+  >({ endpoint: 'magic-link', secret, url }, request, {
+    idempotencyKeyField: 'link',
+  })
 
-    if (!ok || data?.ok !== true) {
-      // data is null when the body isn't JSON (e.g. a GAS HTML error page);
-      // otherwise narrow to the failure branch for the error / mailerError.
-      const failure = data?.ok === false ? data : undefined
-      const message =
-        `[magic-link] GAS send failed — status ${status}, ` +
-        `ok ${data?.ok ?? '—'}, error ${failure?.error ?? '—'}, ` +
-        `mailerError ${failure?.mailerError ?? '—'}.`
-
-      console.error(message)
-
-      // Fly logs are short-lived (~5 min); report to Sentry so send failures
-      // stay diagnosable. Best-effort still: no throw, nothing surfaced.
-      // A stable message + fingerprint groups every failure into one issue, so
-      // a sustained outage is a single issue (with the varying detail in
-      // `extra`), not one per sign-in attempt.
-      if (process.env.SENTRY_DSN) {
-        Sentry.captureMessage('[magic-link] GAS send failed', {
-          extra: {
-            error: failure?.error,
-            mailerError: failure?.mailerError,
-            ok: data?.ok,
-            status,
-          },
-          fingerprint: ['magic-link', 'gas-send-failed'],
-          level: 'error',
-        })
-      }
-      return false
-    }
-
+  if (result.ok) {
     return true
-  } catch (error) {
-    console.error('[magic-link] GAS request threw —', error)
-    if (process.env.SENTRY_DSN) Sentry.captureException(error)
-    return false
   }
+
+  const { error, mailerError, status } = result
+
+  console.error(
+    `[magic-link] GAS send failed — status ${status ?? '—'}, ` +
+      `error ${error}, mailerError ${mailerError ?? '—'}.`,
+  )
+
+  // Fly logs are short-lived (~5 min); report to Sentry so send failures
+  // stay diagnosable. Best-effort still: no throw, nothing surfaced.
+  // A stable message + fingerprint groups every failure into one issue, so
+  // a sustained outage is a single issue (with the varying detail in
+  // `extra`), not one per sign-in attempt.
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureMessage('[magic-link] GAS send failed', {
+      extra: { error, mailerError, status },
+      fingerprint: ['magic-link', 'gas-send-failed'],
+      level: 'error',
+    })
+  }
+
+  return false
 }
