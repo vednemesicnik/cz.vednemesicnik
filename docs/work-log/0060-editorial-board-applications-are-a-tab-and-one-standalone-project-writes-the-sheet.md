@@ -55,7 +55,9 @@ empty: a run date would claim a confirmation nobody made.
   projects here are readable by anyone in the domain with the link, and the sheet cannot be shared outside
   the domain, so every editor has that access: on a copy, an edit from a domain account that had never opened
   the project fired the trigger. So the project stays readable by the domain, not "shared with nobody" as log
-  0059 has it, and no secret goes in code. Script Properties did not show for a reader, on one look.
+  0059 has it, and no secret goes in code. The same goes for `SCRIPT__Editorial_Board__Contacts`,
+  `SCRIPT__Membership__Applications`, `SCRIPT__Auth__Magic_Link` and `SCRIPT__Users__Notice_Send`. In all five, a
+  domain reader saw the settings page without any Script Properties.
 - The move has an order, in that project's README: the old trigger goes before the setup, because its sort
   could move rows under the backfill. `Aktivní` is deleted by hand only after the read has moved and the
   response has matched, because until then it is the way back.
