@@ -62,6 +62,15 @@ Schema, which `pnpm gas:schema:fetch <name>` saves under `schemas/<name>/`.
 The web never sends e-mail itself and holds no Mailer secret: a script behind it renders the message
 and hands it to the Mailer.
 
+`postGasRequest` walks the redirect from `/exec` itself and logs each hop as a `[gas]` line. Only
+`magic-link` tries a transport failure again, once, through `postSignedGasRequest` (log 0061):
+
+- `users-notice` must not: its e-mail change notice is keyed on the request signature, and a retry
+  has a new one.
+- `editorial-board` has no need to: the page serves its last good data and asks again after the TTL.
+- `membership` could, by its `code`, but two attempts of 60 s would outlast Cloudflare's 100 s. The
+  application stays in its cookie, so the person can send it again.
+
 ## Without an endpoint of its own
 
 - `SCRIPT__Editorial_Board__Membership` is not called by the web yet. It adds the columns and the tab
