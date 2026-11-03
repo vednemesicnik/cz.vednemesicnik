@@ -14,6 +14,9 @@ export const GAS_ENDPOINTS = {
   'editorial-board': {
     urlEnvironmentVariable: ENV_KEYS.GAS_EDITORIAL_BOARD_URL,
   },
+  'editorial-board-membership': {
+    urlEnvironmentVariable: ENV_KEYS.GAS_EDITORIAL_BOARD_MEMBERSHIP_URL,
+  },
   'magic-link': {
     urlEnvironmentVariable: ENV_KEYS.GAS_MAGIC_LINK_URL,
   },

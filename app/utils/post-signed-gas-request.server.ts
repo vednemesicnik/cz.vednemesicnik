@@ -45,8 +45,12 @@ type GasFailureBody = {
 
 // Answers from the scripts that will not change by being asked again.
 const SETTLED_ERRORS = new Set([
+  'ambiguous',
   'invalid_request',
+  'missing_fields',
+  'not_active',
   'not_found',
+  'server_misconfigured',
   'stale_timestamp',
   'unauthorized',
 ])
