@@ -1,7 +1,7 @@
 import { RouterContextProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { checkPublicCSRF } from '~/utils/csrf.server'
+import { checkPublicCSRF } from '~/utils/check-public-csrf.server'
 import { createEnrolmentToken } from '~/utils/editorial-board-enrolment/create-enrolment-token.server'
 import { readEnrolmentSentCookie } from '~/utils/editorial-board-enrolment/read-enrolment-sent-cookie.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
@@ -10,7 +10,9 @@ import { rateLimitContext } from '~/utils/rate-limit.server'
 import { action } from './_action'
 
 vi.mock('~/utils/honeypot.server', () => ({ checkHoneypot: vi.fn() }))
-vi.mock('~/utils/csrf.server', () => ({ checkPublicCSRF: vi.fn() }))
+vi.mock('~/utils/check-public-csrf.server', () => ({
+  checkPublicCSRF: vi.fn(),
+}))
 vi.mock(
   '~/utils/editorial-board-enrolment/create-enrolment-token.server',
   () => ({ createEnrolmentToken: vi.fn() }),

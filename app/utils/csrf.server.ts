@@ -125,7 +125,7 @@ async function validate(formData: FormData, headers: Headers) {
   }
 }
 
-const isValidCSRF = async (formData: FormData, headers: Headers) => {
+export const isValidCSRF = async (formData: FormData, headers: Headers) => {
   try {
     await validate(formData, headers)
     return true
@@ -135,7 +135,15 @@ const isValidCSRF = async (formData: FormData, headers: Headers) => {
   }
 }
 
-const createFormRefusal = (formData: FormData, message: string) => {
+/**
+ * The 403 for a form that stays on screen: the message on the form, the submitted
+ * values kept.
+ *
+ * @param formData - The submitted form data.
+ * @param message - What the form says.
+ * @returns The response the action returns.
+ */
+export const createFormRefusal = (formData: FormData, message: string) => {
   const submission = parseWithZod(formData, { schema: z.object({}) })
   // The refused token and any password don't travel back with the kept values.
   const hiddenFields = [...new Set(formData.keys())].filter(
@@ -193,24 +201,4 @@ export const checkCSRF = async (formData: FormData, request: Request) => {
   if (await isValidCSRF(formData, request.headers)) return null
 
   return createFormRefusal(formData, adminCsrfFormMessage)
-}
-
-/**
- * {@link checkCSRF} for a public form, whose sender has no session to check. The
- * route has to reissue the token itself: its `shouldRevalidate` runs its loader
- * after a 403.
- *
- * @param formData - The submitted form data.
- * @param request - The submitted request.
- * @param message - The form's own wording, as the administration's does not fit.
- * @returns `null` for a valid token, otherwise the response the action returns.
- */
-export const checkPublicCSRF = async (
-  formData: FormData,
-  request: Request,
-  message: string,
-) => {
-  if (await isValidCSRF(formData, request.headers)) return null
-
-  return createFormRefusal(formData, message)
 }

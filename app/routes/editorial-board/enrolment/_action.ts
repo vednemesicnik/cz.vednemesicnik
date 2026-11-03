@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/react-router'
 import { data, href, redirect } from 'react-router'
 import { z } from 'zod'
 
-import { checkPublicCSRF } from '~/utils/csrf.server'
+import { checkPublicCSRF } from '~/utils/check-public-csrf.server'
 import { createEnrolmentToken } from '~/utils/editorial-board-enrolment/create-enrolment-token.server'
 import { writeEnrolmentSentCookie } from '~/utils/editorial-board-enrolment/write-enrolment-sent-cookie.server'
 import { formatRetryAfter } from '~/utils/format-retry-after'
