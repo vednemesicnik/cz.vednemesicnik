@@ -11,7 +11,7 @@ flowchart LR
     signIn["Sign-in by link<br/>Identity check in Settings"]
     users["Administration: users<br/>Invitation, e-mail change"]
     application["/organization/membership/application"]
-    enrolment["Editorial-board enrolment<br/>(planned, #389 onward)"]
+    enrolment["/editorial-board/enrolment"]
     board["/editorial-board"]
   end
 
@@ -31,21 +31,18 @@ flowchart LR
   signIn --> magicLink
   users --> usersNotice
   application --> membershipApplications
-  enrolment -.-> boardMembership
+  enrolment --> boardMembership
   board --> contacts
 
   magicLink --> mailer
   usersNotice --> mailer
   membershipApplications --> mailer
   membershipApplications -->|writes| membershipStore
-  boardMembership -.-> mailer
+  boardMembership --> mailer
   boardMembership -->|"writes, edit trigger"| editorialSheet
   contacts -->|reads| editorialSheet
   chiefEditors -->|edit| editorialSheet
 ```
-
-A dashed line is planned. `SCRIPT__Editorial_Board__Membership` has its setup, its edit trigger and
-its signed writes today, and it sends no mail yet.
 
 ## What the web calls
 
@@ -57,7 +54,7 @@ Schema, which `pnpm gas:schema:fetch <name>` saves under `schemas/<name>/`.
 | `magic-link` | `SCRIPT__Auth__Magic_Link` | `app/utils/send-magic-link-email.server.ts`: sign-in by link, the identity check in Settings | signed request, `GAS_MAGIC_LINK_SECRET` |
 | `users-notice` | `SCRIPT__Users__Notice_Send` | `app/utils/users-notice/send-users-notice.server.ts`: the invitation, the e-mail change notice | signed request, `GAS_USERS_NOTICE_SECRET` |
 | `editorial-board` | `SCRIPT__Editorial_Board__Contacts` | `app/utils/editorial-board.server.ts`: the `/editorial-board` loader | secret in the body, `GAS_EDITORIAL_BOARD_SECRET` |
-| `editorial-board-membership` | `SCRIPT__Editorial_Board__Membership` | `app/utils/editorial-board-membership.server.ts`: no route calls it yet (#390, #392) | signed request, `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET` |
+| `editorial-board-membership` | `SCRIPT__Editorial_Board__Membership` | `app/utils/editorial-board-enrolment/send-enrolment-email.server.ts`: the enrolment form. `app/utils/editorial-board-membership.server.ts`: its confirmation | signed request, `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET` |
 | `membership` | `SCRIPT__Membership__Applications` | `app/utils/membership-application/submit-membership-application.server.ts`: the membership application | signed request, `GAS_MEMBERSHIP_SECRET` |
 
 The web never sends e-mail itself and holds no Mailer secret: a script behind it renders the message

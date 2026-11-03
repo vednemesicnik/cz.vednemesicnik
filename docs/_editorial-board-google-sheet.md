@@ -87,8 +87,8 @@ labels, values and notes went through the copywriter; they live in the Membershi
 contributing or are on a pause. `Stav` claims no reason.
 
 **`Přihlášky` sheet**: applications until the chief editors decide, apart from the directory of
-people who are in the editorial board. Rows start to arrive with #390, and accepting moves the person
-to `Kontakty` with #928.
+people who are in the editorial board. A row arrives when someone presses the button on the
+confirmation page, and accepting moves the person to `Kontakty` with #928.
 
 | Column | Header               | Type     | Notes                                                        |
 | ------ | -------------------- | -------- | ------------------------------------------------------------ |
