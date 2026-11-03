@@ -26,7 +26,7 @@
     "bcryptjs": "3.0.3",
     "clsx": "2.1.1",
     "crypto-js": "4.2.0",
-    "dotenv": "17.4.2",
+    "dotenv": "18.0.9",
     "google-auth-library": "10.9.0",
     "isbot": "5.2.2",
     "prisma": "7.10.0",
