@@ -55,11 +55,17 @@ const schema = z
     [ENV_KEYS.GAS_USERS_NOTICE_URL]: z.string().optional(),
     [ENV_KEYS.GAS_USERS_NOTICE_SECRET]: z.string().optional(),
     // Google Apps Script web app that serves the editorial-board contacts (see
-    // the SCRIPT__Editorial_Board__Contacts repo). Optional locally (the /redakce
-    // page renders a fallback message), required in production (see the
-    // superRefine below).
+    // the SCRIPT__Editorial_Board__Contacts repo). Optional locally (the
+    // /editorial-board page renders a fallback message), required in production
+    // (see the superRefine below).
     [ENV_KEYS.GAS_EDITORIAL_BOARD_URL]: z.string().optional(),
     [ENV_KEYS.GAS_EDITORIAL_BOARD_SECRET]: z.string().optional(),
+    // Google Apps Script web app that writes to the editorial-board spreadsheet
+    // (see the SCRIPT__Editorial_Board__Membership repo). Optional locally (the
+    // client logs instead of posting), and in production until a route calls it
+    // (#390 moves them into the superRefine below).
+    [ENV_KEYS.GAS_EDITORIAL_BOARD_MEMBERSHIP_URL]: z.string().optional(),
+    [ENV_KEYS.GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET]: z.string().optional(),
     // Google Apps Script web app that stores a membership application (see the
     // SCRIPT__Membership__Applications repo). Optional locally (the client logs
     // instead of posting), required in production (see the superRefine below).
@@ -72,6 +78,10 @@ const schema = z
     [ENV_KEYS.RELYING_PARTY_ID]: z.string().optional(),
     [ENV_KEYS.RELYING_PARTY_NAME]: z.string().optional(),
     [ENV_KEYS.RELYING_PARTY_ORIGIN]: z.string().optional(),
+    // Proves a request came through our Cloudflare zone, so CF-Connecting-IP can be
+    // believed (log 0058). Optional locally, required in production (see the
+    // superRefine below).
+    [ENV_KEYS.CLOUDFLARE_ORIGIN_SECRET]: z.string().optional(),
     // Sentry ingest DSN (public key). Optional — absent → SDK stays inert. Read on
     // the server by instrument.server.ts and exposed to the client via getEnv below.
     [ENV_KEYS.SENTRY_DSN]: z.string().optional(),
@@ -99,7 +109,8 @@ const schema = z
     // Sign-in methods and the Apps Script integrations are always active in
     // production and have no runtime guard, so fail fast at boot rather than at the
     // first OAuth callback / magic-link email / invitation / WebAuthn ceremony with
-    // an empty credential.
+    // an empty credential. The Cloudflare secret does have a fallback, counting per
+    // edge, but nothing would report it, so its absence fails here as well.
     if (env.NODE_ENV === 'production') {
       requireKeys(
         [
@@ -122,6 +133,8 @@ const schema = z
           ENV_KEYS.RELYING_PARTY_ID,
           ENV_KEYS.RELYING_PARTY_NAME,
           ENV_KEYS.RELYING_PARTY_ORIGIN,
+          // The client's address behind Cloudflare
+          ENV_KEYS.CLOUDFLARE_ORIGIN_SECRET,
         ],
         'in production',
       )

@@ -181,15 +181,52 @@ every issued link. Procedure:
 
 ## Membership applications (Google Apps Script)
 
-A membership application is stored by the web app bound to the applications sheet on
+A membership application is stored by a standalone web app in the applications sheet on
 the shared drive "Spolek – členství" (see the `SCRIPT__Membership__Applications` repo,
-#394). Required: the app fails at boot without them, so set them before the release
-that carries the form (#396). `GAS_MEMBERSHIP_SECRET` must equal the script's
-`OWN_SECRET` property.
+#394, and log 0059). Required: the app fails at boot without them, so set them before
+the release that carries the form (#396). `GAS_MEMBERSHIP_SECRET` must equal the
+script's `OWN_SECRET` property.
 
 ```shell
 fly secrets set GAS_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
 ```
+
+## Writes to the editorial-board spreadsheet (Google Apps Script)
+
+Enrolment and the answers to the re-confirmation are written by a standalone web app (see the
+`SCRIPT__Editorial_Board__Membership` repo, #388). Optional until a route calls them: #390 makes them
+required, and the app then fails at boot without them, so set them before the release that carries
+the enrolment. `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET` must equal that script's `OWN_SECRET` property,
+which is not the one `SCRIPT__Editorial_Board__Contacts` holds for `GAS_EDITORIAL_BOARD_SECRET`.
+
+```shell
+fly secrets set GAS_EDITORIAL_BOARD_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
+```
+
+## Client address behind Cloudflare
+
+Behind Cloudflare, `Fly-Client-IP` holds the edge's address and the client's is in
+`CF-Connecting-IP`. The origin `cz-vednemesicnik.fly.dev` is reachable directly, and anyone
+can send that header there, so the app believes it only when the request carries the shared
+secret that our Cloudflare zone adds (`getClientIp`, log 0058). Rate limits and the auth and
+audit logs all read that address. Required: the app fails at boot without the secret.
+
+1. Generate a value with `openssl rand -hex 32` and store it on Fly, staged so nothing
+   restarts. The next deploy picks it up.
+   ```shell
+   fly secrets set --stage CLOUDFLARE_ORIGIN_SECRET="…" --app cz-vednemesicnik
+   ```
+2. In Cloudflare: Rules → Transform Rules → Modify Request Header, set the static header
+   `X-Origin-Secret` to the same value, only for the hostnames Fly serves:
+   `http.host in {"vednemesicnik.cz" "www.vednemesicnik.cz"}`. On "all incoming requests" a
+   proxied record pointing elsewhere would hand the secret to that server.
+
+Keep Pseudo IPv4 on anything but "Overwrite Headers", and "Remove visitor IP headers" off: both
+change `CF-Connecting-IP`.
+
+If the rule and the secret differ, nothing breaks: limits and logs fall back to the edge's
+address, and the limiter counts an IPv6 edge by its /64. To rotate, change both; requests in
+between count the same way.
 
 ## Image store
 

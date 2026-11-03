@@ -8,7 +8,7 @@
  *
  * The request is **signed** with GAS_USERS_NOTICE_SECRET (see
  * `sign-gas-request.server.ts`), which never travels. The script sends through
- * the notifications mailbox's Mailer; `SCRIPT__Auth__Magic_Link` sends only the
+ * the oznameni mailbox's Mailer; `SCRIPT__Auth__Magic_Link` sends only the
  * sign-in link (log 0037).
  *
  * No-ops when GAS_USERS_NOTICE_URL / GAS_USERS_NOTICE_SECRET are unset (local
@@ -62,6 +62,7 @@ export const sendUsersNotice = async (
       // `satisfies Envelope` ties the envelope this builds to the shape the script
       // publishes, so the two cannot drift apart without the build saying so.
       signGasRequest(secret, request) satisfies Envelope,
+      { endpoint: 'users-notice' },
     )
 
     if (!ok || data?.ok !== true) {

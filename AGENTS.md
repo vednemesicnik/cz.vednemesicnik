@@ -306,6 +306,7 @@ Comprehensive project documentation is in the `docs/` directory:
 - `docs/_manual-database-backup.md` - Database backup procedures
 - `docs/_manual-database-restore.md` - Database restore procedures
 - `docs/_prisma-studio-on-production.md` - Running Prisma Studio against the production database over a Fly tunnel
+- `docs/_apps-script-web-apps.md` - Which Google Apps Script does what for the web, with a diagram
 - `docs/_design-project.md` - The Claude Design project and design system (ids, documents, `questions/`), and reading a screen with `pnpm design:screen`
 - `docs/_copy-context.md` - Context the copywriter gets in every `/ask-copy` thread: terms, content states, roles, voice (Czech)
 - `docs/work-log/` - Numbered work log: what the work settled on, when and why, and what was turned down; context, not rules (index and format in `README.md`, template in `_template.md`)

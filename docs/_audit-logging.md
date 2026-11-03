@@ -21,8 +21,9 @@ account deletion.
 ## `AuditLog` — administrative mutations
 
 - **Volume:** tiny — admin mutations only.
-- **Retention:** kept indefinitely. **No pruning loop** — the forensic value is
-  permanent and the size is negligible.
+- **Retention:** rows are kept indefinitely — the forensic value is permanent and
+  the size is negligible. Their `ipAddress` is personal data and is cleared after
+  the same 90 days, by `cleanupOldAuthLogs` (log 0058).
 - **Written by:** `recordAuditLog(...)` in `app/utils/audit-log.server.ts` — also
   fire-and-forget; recorded only after the mutation succeeds. The actor comes from
   the permission context.

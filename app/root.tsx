@@ -2,7 +2,6 @@
 
 import type { ReactNode } from 'react'
 import {
-  href,
   Links,
   type LinksFunction,
   Meta,
@@ -20,6 +19,7 @@ import '~/styles/sizes.css'
 
 // After the global styles, so global.css declares the cascade layer order first.
 import { RootBoundaryError } from '~/components/root-boundary-error'
+import { ENV_META_NAME } from '~/config/env-meta-config'
 import { useColorScheme } from '~/hooks/use-color-scheme'
 import { getColorSchemeMetaContent } from '~/utils/get-color-scheme-meta-content'
 
@@ -66,6 +66,10 @@ export function Layout({ children }: { children: ReactNode }) {
           content={getColorSchemeMetaContent(colorScheme)}
           name="color-scheme"
         />
+        {/* The browser's window.ENV, read from here by initEnvClient (log 0063). ENV is
+            the server's global, and in the browser what that set from this tag, so
+            hydration sees the same content. */}
+        <meta content={JSON.stringify(ENV)} name={ENV_META_NAME} />
         <Meta />
         <Links />
       </head>
@@ -73,9 +77,6 @@ export function Layout({ children }: { children: ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
-
-        {/* Environment variables body script - sets ENV for client */}
-        <script src={href('/resources/env.js')} />
       </body>
     </html>
   )

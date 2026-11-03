@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
@@ -28,6 +29,7 @@
     "prisma/**/*",
     "scripts/**/*",
     "instrument.server.ts",
+    "instrument.server.test.ts",
     ".react-router/types/**/*"
   ]
 }

@@ -1,10 +1,23 @@
 import { createHmac } from 'node:crypto'
-
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import type { Envelope } from '@generated/magic-link/response'
+import * as Sentry from '@sentry/react-router'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  test,
+  vi,
+} from 'vitest'
 import { sendMagicLinkEmail } from './send-magic-link-email.server'
+import type { SignedGasEnvelope } from './sign-gas-request.server'
 
-// Avoid any real Sentry side effects; SENTRY_DSN is unset below so these are
-// never called, but the module import must stay inert.
+// The envelope is built inside the transport now, so this is what ties it to the
+// shape the script publishes.
+expectTypeOf<SignedGasEnvelope>().toExtend<Envelope>()
+
+// Avoid any real Sentry side effects: the module import must stay inert.
 vi.mock('@sentry/react-router', () => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
@@ -21,6 +34,13 @@ const recipient = { email: 'a@vednemesicnik.cz', link: 'https://x.test/verify' }
 let originalUrl: string | undefined
 let originalSecret: string | undefined
 let originalDsn: string | undefined
+
+// A failed send waits out the retry delay; these tests have nothing to learn from it.
+const send = async (request = recipient): Promise<boolean> => {
+  const pending = sendMagicLinkEmail(request)
+  await vi.runAllTimersAsync()
+  return pending
+}
 
 const restoreEnv = (key: string, value: string | undefined): void => {
   if (value === undefined) {
@@ -39,13 +59,17 @@ beforeEach(() => {
   process.env.GAS_MAGIC_LINK_SECRET = 'test-secret'
   delete process.env.SENTRY_DSN
 
+  vi.useFakeTimers()
   vi.spyOn(console, 'error').mockImplementation(() => {})
   vi.spyOn(console, 'info').mockImplementation(() => {})
   vi.spyOn(console, 'warn').mockImplementation(() => {})
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllGlobals()
+  vi.mocked(Sentry.captureException).mockClear()
+  vi.mocked(Sentry.captureMessage).mockClear()
   restoreEnv('GAS_MAGIC_LINK_URL', originalUrl)
   restoreEnv('GAS_MAGIC_LINK_SECRET', originalSecret)
   restoreEnv('SENTRY_DSN', originalDsn)
@@ -64,7 +88,7 @@ describe('sendMagicLinkEmail', () => {
       ),
     )
 
-    await expect(sendMagicLinkEmail(recipient)).resolves.toBe(false)
+    await expect(send()).resolves.toBe(false)
 
     expect(console.error).toHaveBeenCalledOnce()
     const [message] = vi.mocked(console.error).mock.calls[0]
@@ -78,12 +102,49 @@ describe('sendMagicLinkEmail', () => {
       vi.fn().mockResolvedValue(jsonResponse({ ok: true })),
     )
 
-    await expect(sendMagicLinkEmail(recipient)).resolves.toBe(true)
+    await expect(send()).resolves.toBe(true)
 
     expect(console.error).not.toHaveBeenCalled()
   })
 
-  test('logs placeholders when the body is not JSON (GAS HTML error page)', async () => {
+  test('tries a blip once more, and the retry can deliver', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(null, 404))
+      .mockResolvedValueOnce(jsonResponse({ ok: true }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(send()).resolves.toBe(true)
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(console.error).not.toHaveBeenCalled()
+  })
+
+  test('swallows a blip that does not pass, after two attempts', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(null, 404))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(send()).resolves.toBe(false)
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(console.error).toHaveBeenCalledOnce()
+    const [message] = vi.mocked(console.error).mock.calls[0]
+    expect(message).toContain('status 404')
+    expect(message).toContain('error unreachable')
+  })
+
+  test('does not retry a settled refusal', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ error: 'unauthorized', ok: false }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(send()).resolves.toBe(false)
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
+  test('logs unreachable when the body is not JSON (GAS HTML error page)', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -95,22 +156,35 @@ describe('sendMagicLinkEmail', () => {
       }),
     )
 
-    await sendMagicLinkEmail(recipient)
+    await send()
 
     expect(console.error).toHaveBeenCalledOnce()
     const [message] = vi.mocked(console.error).mock.calls[0]
-    expect(message).toContain('error —')
+    expect(message).toContain('error unreachable')
     expect(message).toContain('mailerError —')
   })
 
   test('swallows and logs when the request throws (network / timeout)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('boom')))
 
-    await expect(sendMagicLinkEmail(recipient)).resolves.toBe(false)
+    await expect(send()).resolves.toBe(false)
+
+    expect(console.error).toHaveBeenCalledOnce()
     expect(console.error).toHaveBeenCalledWith(
       '[magic-link] GAS request threw —',
       expect.any(Error),
     )
+  })
+
+  test('reports a thrown request to Sentry as the exception it was', async () => {
+    process.env.SENTRY_DSN = 'https://key@sentry.test/1'
+    const failure = new Error('boom')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(failure))
+
+    await send()
+
+    expect(Sentry.captureException).toHaveBeenCalledExactlyOnceWith(failure)
+    expect(Sentry.captureMessage).not.toHaveBeenCalled()
   })
 
   test('no-ops without logging a failure when GAS is not configured', async () => {
@@ -118,7 +192,7 @@ describe('sendMagicLinkEmail', () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
 
-    await sendMagicLinkEmail(recipient)
+    await send()
 
     expect(fetchMock).not.toHaveBeenCalled()
     expect(console.error).not.toHaveBeenCalled()
@@ -128,7 +202,7 @@ describe('sendMagicLinkEmail', () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await sendMagicLinkEmail(recipient)
+    await send()
 
     const [, requestInit] = fetchMock.mock.calls[0]
     const sentBody = requestInit.body as string

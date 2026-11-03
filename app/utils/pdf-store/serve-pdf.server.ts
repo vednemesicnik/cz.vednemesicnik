@@ -4,8 +4,7 @@
 // The download URL is stable — the filename does not change when a PDF is
 // re-uploaded to the same issue — so `immutable`/long max-age would let a replaced
 // PDF go stale. `no-cache` = may be stored (browser + edge) but must revalidate via
-// the ETag before use, so repeat downloads are cheap 304s yet never stale. Same
-// strategy as the env.js resource (see routes/resources/env-script).
+// the ETag before use, so repeat downloads are cheap 304s yet never stale.
 export const PDF_CACHE_CONTROL = 'public, no-cache'
 
 type PdfResponseMeta = {

@@ -28,8 +28,8 @@ type RecordAuditLogArgs =
 /**
  * Writes an administrative audit log entry. Fire-and-forget: a logging failure
  * must never break the underlying mutation, so the Prisma call is not awaited and
- * any error is only console.error-ed. No retention loop — audit records are kept
- * indefinitely.
+ * any error is only console.error-ed. Audit records are kept indefinitely; only
+ * their address is cleared, by cleanupOldAuthLogs.
  */
 export const recordAuditLog = ({
   request,

@@ -239,7 +239,14 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   přihlášku podepíše i zákonný zástupce. Přihláška bez zapsaného přijetí se 12 měsíců od podání
   smaže, i když ještě nebyla projednaná; přijatá zůstává (rozhodnuto 31. 10. 2026).
 - **Přihláška do redakce**: nic nesmí slibovat, že se někdo ozve, ani lhůtu. O přijetí
-  rozhoduje šéfredakce.
+  rozhoduje šéfredakce. Přihláška leží v soukromé tabulce Redakce na listu `Přihlášky`, s hodnotami
+  `Stav` `Čeká na přijetí` · `Přijato` · `Nepřijato`, a 12 měsíců po `Ověření e-mailu` se smaže,
+  i přijatá nebo nepřijatá (rozhodnuto 2. 11. 2026, mazání zatím nepostaveno). Přijatý člověk zůstává
+  na listu `Kontakty`. Tato lhůta i její počátek platí jen pro přihlášku do redakce, ne do spolku.
+- **Lidé v redakci** jsou v téže tabulce na listu `Kontakty`. Na stránce *Redakce* je jen ten, kdo má
+  `Stav` `V redakci`. `Mimo redakci` znamená, že člověk teď není součástí redakce: odešel, přestal
+  přispívat nebo má pauzu. Třetí hodnota je `Vyřazení bez odpovědi`. Hodnoty netvrdí důvod. Prázdné
+  `Poslední potvrzení` znamená bez záznamu potvrzení, ne že člověk nepotvrdil.
 - **Obě přihlášky jsou skryté.** Web na ně nikde neodkazuje a vyhledávače je neindexují. Do
   redakce vede QR kód z letáku, do spolku odkaz od vedení. Kdo by chtěl do spolku, napíše na
   `clenstvi@vednemesicnik.cz` (rozhodnuto 2. 10. 2026). Věta, která na webu zve
@@ -298,9 +305,9 @@ V obou:
 `priklad.cz`. Výjimka jsou účty administrace: pozvat jde jen adresu `@vednemesicnik.cz`, takže
 ukázka účtu stojí na této doméně, s vymyšleným jménem. Skutečné jsou jen veřejné kontakty spolku,
 které web ukazuje nebo ukazovat bude: `podpora@`, `redakce@`, `dary@`, `udaje@` a `clenstvi@vednemesicnik.cz`. Jmenují
-schránky podle tématu, česky a bez diakritiky. Skutečná je i `notifications@vednemesicnik.cz`:
+schránky podle tématu, česky a bez diakritiky. Skutečná je i `oznameni@vednemesicnik.cz`:
 není to kontakt, ale schránka, ze které odcházejí všechny automatické e‑maily webu, se jménem
-odesílatele `Notifications Vedneměsíčník`. Když uvidíš něco jiného, co vypadá jako skutečný
+odesílatele `Oznámení Vedneměsíčník`. Když uvidíš něco jiného, co vypadá jako skutečný
 záznam, **je to nález** — řekni to.
 
 ## Jak má vypadat odpověď
