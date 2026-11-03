@@ -51,8 +51,11 @@ row with the same address and form date is the same application, and nothing is 
   `=1+1` and stores `2`, tried on Google on 2 Nov 2026 after a test here said otherwise, because the fake
   services behaved as the code assumed. In this project, text from a form goes through `writeTextCell_`, which
   adds a leading apostrophe: of the ways tried, only that kept both `=1+1` and `+420 600 000 000` exactly. Rich
-  text without the format turned the phone number into a formula. `SCRIPT__Membership__Applications` writes the
-  way that failed, and that is not fixed here.
+  text without the format turned the phone number into a formula. `SCRIPT__Membership__Applications` wrote the
+  way that failed, and `SCRIPT__Donate__Request_Confirmation` writes through `appendRow`, which also runs a formula
+  and turned the IČO `01234567` into a number. Both add the apostrophe through their `literalText_`, in PRs of
+  their own, tried on 3 Nov 2026. It holds through `setValues` on a row in the text format and through `appendRow`
+  without a format, and an empty value has to stay empty.
 - The writes were tried end to end on a throwaway copy of the project, with its own key and a scratch sheet
   of made-up people, not on the spreadsheet in use. So copy the project to try the next action.
 - `ambiguous` needs someone at the sheet, so it reaches Sentry. `not_found` and `not_active` are answers
