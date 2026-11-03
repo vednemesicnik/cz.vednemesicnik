@@ -31,7 +31,7 @@ type Props<FieldType extends string | undefined = string> = {
  *   that only advises, as the perex's 160 (24a); the field's errors still win.
  */
 
-export const AdminTextarea = <FieldType extends string | undefined = string>({
+export const TextareaField = <FieldType extends string | undefined = string>({
   label,
   className,
   textareaProps: { className: textareaClassName, ...restTextareaProps },

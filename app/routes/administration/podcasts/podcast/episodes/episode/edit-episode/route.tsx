@@ -30,7 +30,6 @@ import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
-import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
@@ -47,6 +46,7 @@ import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { TextareaField } from '~/components/textarea-field'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -1167,7 +1167,7 @@ export default function RouteComponent({
               <fieldset className={styles.lock} disabled={isLocked}>
                 {/* The field as the article's, the grey number after its
                     label; the field Číslo names it (27d, 1iqapiz2). */}
-                <AdminTextarea
+                <TextareaField
                   field={fields.title}
                   label={
                     <>
@@ -1186,7 +1186,7 @@ export default function RouteComponent({
                     rows: 1,
                   }}
                 />
-                <AdminTextarea
+                <TextareaField
                   field={fields.description}
                   hint={
                     'Stručně popište epizodu. Na webu se popis zobrazí pod názvem.'

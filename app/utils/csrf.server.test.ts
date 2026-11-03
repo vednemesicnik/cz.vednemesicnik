@@ -13,7 +13,9 @@ vi.mock('~/utils/auth.server', () => ({
 
 vi.stubEnv('SESSION_SECRET', 'test-secret')
 
-const { checkCSRF, commitCSRF, requireCSRF } = await import('./csrf.server')
+const { checkCSRF, checkPublicCSRF, commitCSRF, requireCSRF } = await import(
+  './csrf.server'
+)
 
 const TOKEN_NAME = FORM_CONFIG.authenticityToken.name
 
@@ -146,4 +148,40 @@ describe('checkCSRF', () => {
       TOKEN_NAME,
     )
   })
+})
+
+describe('checkPublicCSRF', () => {
+  const MESSAGE = 'Přihlášku jsme neodeslali. Odešlete ji prosím znovu.'
+
+  test('returns null for a matching token, with no session to check', async () => {
+    const { cookie, token } = await issueToken()
+    const { formData, request } = buildSubmission(cookie, token)
+
+    await expect(
+      checkPublicCSRF(formData, request, MESSAGE),
+    ).resolves.toBeNull()
+    expect(requireActionSessionMock).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    ['no cookie', null, 'some.token'],
+    ['no token in the body', 'vdm_csrf=', undefined],
+  ])(
+    'refuses with its own message and the kept values: %s',
+    async (_case, cookie, bodyToken) => {
+      const { formData, request } = buildSubmission(cookie, bodyToken)
+
+      const result = await checkPublicCSRF(formData, request, MESSAGE)
+
+      expect(result?.init?.status).toBe(403)
+      expect(result?.data.submissionResult).toMatchObject({
+        error: { '': [MESSAGE] },
+        initialValue: { name: 'Kultura' },
+        status: 'error',
+      })
+      expect(result?.data.submissionResult.initialValue).not.toHaveProperty(
+        TOKEN_NAME,
+      )
+    },
+  )
 })

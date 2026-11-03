@@ -135,6 +135,25 @@ const isValidCSRF = async (formData: FormData, headers: Headers) => {
   }
 }
 
+const createFormRefusal = (formData: FormData, message: string) => {
+  const submission = parseWithZod(formData, { schema: z.object({}) })
+  // The refused token and any password don't travel back with the kept values.
+  const hiddenFields = [...new Set(formData.keys())].filter(
+    (name) =>
+      name === FORM_CONFIG.authenticityToken.name || /password/i.test(name),
+  )
+
+  return data(
+    {
+      submissionResult: submission.reply({
+        formErrors: [message],
+        hideFields: hiddenFields,
+      }),
+    },
+    { status: 403 },
+  )
+}
+
 /**
  * Guards an action whose result no form shows — an intent sent with one click, a
  * deletion — (design 30h). Checks the session first, then the token; an invalid token
@@ -173,20 +192,25 @@ export const checkCSRF = async (formData: FormData, request: Request) => {
 
   if (await isValidCSRF(formData, request.headers)) return null
 
-  const submission = parseWithZod(formData, { schema: z.object({}) })
-  // The refused token and any password don't travel back with the kept values.
-  const hiddenFields = [...new Set(formData.keys())].filter(
-    (name) =>
-      name === FORM_CONFIG.authenticityToken.name || /password/i.test(name),
-  )
+  return createFormRefusal(formData, adminCsrfFormMessage)
+}
 
-  return data(
-    {
-      submissionResult: submission.reply({
-        formErrors: [adminCsrfFormMessage],
-        hideFields: hiddenFields,
-      }),
-    },
-    { status: 403 },
-  )
+/**
+ * {@link checkCSRF} for a public form, whose sender has no session to check. The
+ * route has to reissue the token itself: its `shouldRevalidate` runs its loader
+ * after a 403.
+ *
+ * @param formData - The submitted form data.
+ * @param request - The submitted request.
+ * @param message - The form's own wording, as the administration's does not fit.
+ * @returns `null` for a valid token, otherwise the response the action returns.
+ */
+export const checkPublicCSRF = async (
+  formData: FormData,
+  request: Request,
+  message: string,
+) => {
+  if (await isValidCSRF(formData, request.headers)) return null
+
+  return createFormRefusal(formData, message)
 }
