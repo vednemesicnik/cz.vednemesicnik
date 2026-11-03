@@ -17,6 +17,10 @@ type Props = Omit<ComponentProps<'input'>, 'size'> & {
   isHintOnFocus?: boolean
   /** Something around the field already names it; the label stays for readers. */
   isLabelHidden?: boolean
+  /** „(nepovinné)“ after the label. */
+  optional?: boolean
+  /** Sign-in and single-field dialogs: the task says it, the input stays `required`. */
+  isRequiredMarkHidden?: boolean
 }
 
 /**
@@ -40,6 +44,8 @@ export const TextField = ({
   size = 'md',
   isHintOnFocus = false,
   isLabelHidden = false,
+  optional = false,
+  isRequiredMarkHidden = false,
   className,
   ...rest
 }: Props) => {
@@ -62,7 +68,8 @@ export const TextField = ({
       <Label
         className={clsx(styles.label, isLabelHidden && 'screen-reader-only')}
         htmlFor={id}
-        required={required}
+        optional={optional}
+        required={required && !isRequiredMarkHidden}
       >
         {label}
       </Label>

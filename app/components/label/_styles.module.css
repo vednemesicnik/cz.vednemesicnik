@@ -9,8 +9,9 @@
   }
 }
 
-.required {
+.optional {
   @layer component {
-    color: var(--error-text);
+    color: var(--text-tertiary);
+    font-weight: var(--font-weight-regular);
   }
 }

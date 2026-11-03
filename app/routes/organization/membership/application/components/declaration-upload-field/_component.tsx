@@ -137,7 +137,9 @@ export const DeclarationUploadField = ({ id, errors, ...rest }: Props) => {
 
   return (
     <div className={styles.field}>
-      <Label htmlFor={id}>Podepsané prohlášení</Label>
+      <Label htmlFor={id} required>
+        Podepsané prohlášení
+      </Label>
 
       {/* biome-ignore lint/a11y/noStaticElementInteractions: the input and its label are what a keyboard and a reader use; dropping is the mouse's extra */}
       <div
@@ -155,6 +157,7 @@ export const DeclarationUploadField = ({ id, errors, ...rest }: Props) => {
           id={id}
           onChange={handleChange}
           ref={inputRef}
+          required
           type={'file'}
         />
 

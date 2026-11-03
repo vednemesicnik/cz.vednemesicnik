@@ -254,6 +254,11 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   redakce vede QR kód z letáku, do spolku odkaz od vedení. Kdo by chtěl do spolku, napíše na
   `clenstvi@vednemesicnik.cz` (rozhodnuto 2. 10. 2026). Věta, která na webu zve
   k vyplnění přihlášky, je nepravda.
+- **Značky povinnosti.** Povinné pole má za popiskem hvězdičku, nepovinné `(nepovinné)`; popisek
+  sám to neříká. Před prvním polem formuláře stojí doslova `* označuje povinnou položku.`, v textu
+  se tedy píše *položka*, ne *pole*. Platí na webu i v administraci, kde formuláře přebírají
+  pravidlo postupně. Přihlášení a dialog s jediným polem jsou bez značek, povinnost tam plyne
+  z úkolu (rozhodnuto 3. 11. 2026).
 
 ## Hlas
 

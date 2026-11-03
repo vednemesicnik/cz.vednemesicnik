@@ -10,6 +10,7 @@ import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
+import { FormLegend } from '~/components/form-legend'
 import { TextField } from '~/components/text-field'
 import { FORM_CONFIG } from '~/config/form-config'
 import { toLocalDayValue } from '~/utils/to-local-day-value'
@@ -119,6 +120,8 @@ export const ArticleChangeDateDialog = ({
             value={FORM_CONFIG.intent.value.changePublishedAt}
           />
           <input name={'publishedAt'} ref={publishedAtRef} type={'hidden'} />
+
+          <FormLegend />
 
           <div className={styles.fields}>
             <TextField

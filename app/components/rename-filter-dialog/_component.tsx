@@ -63,6 +63,7 @@ export const RenameFilterDialog = ({ filter, onClose }: Props) => {
 
           <TextField
             errors={fields.name.errors}
+            isRequiredMarkHidden
             label={'Název'}
             {...getInputProps(fields.name, { type: 'text' })}
           />
