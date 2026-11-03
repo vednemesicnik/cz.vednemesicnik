@@ -10,6 +10,8 @@
   );
   --app-navigation-height: 40px;
   --page-max-width: 940px;
+  /* The public page's side and top padding: 24 and 40 px from 768 px, 20 and
+     32 px on a phone (34on3abs). */
   --page-side-padding: 24px;
   --page-top-padding: 40px;
   --page-bottom-padding: 80px;
@@ -47,6 +49,8 @@
 @media (width < 768px) {
   :root {
     --app-header-content-height: 69px;
+    --page-side-padding: 20px;
+    --page-top-padding: 32px;
     --admin-page-side-padding: 16px;
   }
 }
