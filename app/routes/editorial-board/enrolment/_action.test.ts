@@ -2,7 +2,7 @@ import { RouterContextProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { checkPublicCSRF } from '~/utils/check-public-csrf.server'
-import { createEnrolmentToken } from '~/utils/editorial-board-enrolment/create-enrolment-token.server'
+import { issueEnrolmentLink } from '~/utils/editorial-board-enrolment/issue-enrolment-link.server'
 import { readEnrolmentSentCookie } from '~/utils/editorial-board-enrolment/read-enrolment-sent-cookie.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
@@ -14,13 +14,13 @@ vi.mock('~/utils/check-public-csrf.server', () => ({
   checkPublicCSRF: vi.fn(),
 }))
 vi.mock(
-  '~/utils/editorial-board-enrolment/create-enrolment-token.server',
-  () => ({ createEnrolmentToken: vi.fn() }),
+  '~/utils/editorial-board-enrolment/issue-enrolment-link.server',
+  () => ({ issueEnrolmentLink: vi.fn() }),
 )
 
 const honeypotMock = vi.mocked(checkHoneypot)
 const csrfMock = vi.mocked(checkPublicCSRF)
-const tokenMock = vi.mocked(createEnrolmentToken)
+const issueMock = vi.mocked(issueEnrolmentLink)
 
 const URL_PATH = 'http://localhost/editorial-board/enrolment'
 const FIELDS = {
@@ -74,10 +74,10 @@ describe('editorial-board enrolment action', () => {
   beforeEach(() => {
     honeypotMock.mockReset()
     csrfMock.mockReset().mockResolvedValue(null)
-    tokenMock.mockReset().mockResolvedValue('token')
+    issueMock.mockReset().mockResolvedValue({ status: 'sent' })
   })
 
-  it('stores the enrolment under the lower-cased address and moves on', async () => {
+  it('issues the link for the lower-cased address and moves on', async () => {
     const before = Date.now()
 
     const response = await runToRedirect()
@@ -86,14 +86,14 @@ describe('editorial-board enrolment action', () => {
     expect(response.headers.get('Location')).toBe(
       '/editorial-board/enrolment/sent',
     )
-    expect(tokenMock).toHaveBeenCalledExactlyOnceWith('tereza@local.dev', {
+    expect(issueMock).toHaveBeenCalledExactlyOnceWith('tereza@local.dev', {
       formSubmittedAt: expect.any(String),
       interest: 'psaní, focení',
       name: 'Tereza Malá',
       phone: '604 123 456',
     })
 
-    const submittedAt = tokenMock.mock.lastCall?.[1].formSubmittedAt ?? ''
+    const submittedAt = issueMock.mock.lastCall?.[1].formSubmittedAt ?? ''
     expect(new Date(submittedAt).getTime()).toBeGreaterThanOrEqual(before)
     expect(submittedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$/)
   })
@@ -119,7 +119,7 @@ describe('editorial-board enrolment action', () => {
 
     expect(response.status).toBe(400)
     expect(csrfMock).not.toHaveBeenCalled()
-    expect(tokenMock).not.toHaveBeenCalled()
+    expect(issueMock).not.toHaveBeenCalled()
   })
 
   it('returns what the CSRF check refuses with, before the rate limit', async () => {
@@ -127,7 +127,7 @@ describe('editorial-board enrolment action', () => {
     csrfMock.mockResolvedValue(refusal as never)
 
     await expect(run(FIELDS, limitedContext())).resolves.toBe(refusal)
-    expect(tokenMock).not.toHaveBeenCalled()
+    expect(issueMock).not.toHaveBeenCalled()
   })
 
   it('says when to try again past the limit, and keeps the values', async () => {
@@ -138,7 +138,7 @@ describe('editorial-board enrolment action', () => {
       'Přihlášku teď nelze odeslat. Zkuste to prosím za 12 minut.',
     ])
     expect(result.data.submissionResult.initialValue).toMatchObject(FIELDS)
-    expect(tokenMock).not.toHaveBeenCalled()
+    expect(issueMock).not.toHaveBeenCalled()
   })
 
   it('checks the limit before the fields', async () => {
@@ -155,12 +155,33 @@ describe('editorial-board enrolment action', () => {
     expect(result.data.submissionResult.error?.email).toEqual([
       'Zadejte e-mail ve tvaru jmeno@priklad.cz.',
     ])
-    expect(tokenMock).not.toHaveBeenCalled()
+    expect(issueMock).not.toHaveBeenCalled()
   })
 
-  it('keeps the values and says so when the token cannot be stored', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {})
-    tokenMock.mockRejectedValue(new Error('database is locked'))
+  it('moves on when a link for the address is already on its way', async () => {
+    issueMock.mockResolvedValue({ status: 'in-flight' })
+
+    const response = await runToRedirect()
+
+    expect(response.headers.get('Location')).toBe(
+      '/editorial-board/enrolment/sent',
+    )
+  })
+
+  it('says when to try again past the limit on the address', async () => {
+    issueMock.mockResolvedValue({ retryAfter: 720, status: 'limited' })
+
+    const result = await runToData()
+
+    expect(result.init.status).toBe(429)
+    expect(result.data.submissionResult.error?.['']).toEqual([
+      'Přihlášku teď nelze odeslat. Zkuste to prosím za 12 minut.',
+    ])
+    expect(result.data.submissionResult.initialValue).toMatchObject(FIELDS)
+  })
+
+  it('keeps the values and says so when the link did not go out', async () => {
+    issueMock.mockResolvedValue({ status: 'failed' })
 
     const result = await runToData()
 

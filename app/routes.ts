@@ -76,6 +76,14 @@ export default [
       'editorial-board/enrolment/sent',
       'routes/editorial-board/enrolment/sent/route.tsx',
     ),
+    route(
+      'editorial-board/enrolment/confirm',
+      'routes/editorial-board/enrolment/confirm/route.tsx',
+    ),
+    route(
+      'editorial-board/enrolment/confirm/done',
+      'routes/editorial-board/enrolment/confirm/done/route.tsx',
+    ),
 
     // Organization routes
     route('organization', 'routes/organization/route.tsx'),
