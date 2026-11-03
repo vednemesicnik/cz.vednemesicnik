@@ -12,6 +12,10 @@ const meta: Meta<typeof Label> = {
       control: 'text',
       description: 'ID of the form element this label is for',
     },
+    optional: {
+      control: 'boolean',
+      description: 'Whether to show „(nepovinné)“ after the label',
+    },
     required: {
       control: 'boolean',
       description: 'Whether to show required indicator (*)',
@@ -37,14 +41,25 @@ export const Default: Story = {
 }
 
 /**
- * Required field label with asterisk indicator.
- * Shows users which fields are mandatory.
+ * Required field label with an asterisk in the label's own colour and weight:
+ * nothing is wrong yet, so it isn't the error colour.
  */
 export const Required: Story = {
   args: {
     children: 'Email Address',
     htmlFor: 'email',
     required: true,
+  },
+}
+
+/**
+ * Optional field label: „(nepovinné)“ in regular weight and the tertiary colour.
+ */
+export const Optional: Story = {
+  args: {
+    children: 'Phone',
+    htmlFor: 'phone',
+    optional: true,
   },
 }
 

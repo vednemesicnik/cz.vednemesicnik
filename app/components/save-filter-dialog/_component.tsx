@@ -93,6 +93,7 @@ export const SaveFilterDialog = ({
 
           <TextField
             errors={fields.name.errors}
+            isRequiredMarkHidden
             label={'Název'}
             {...getInputProps(fields.name, { type: 'text' })}
           />

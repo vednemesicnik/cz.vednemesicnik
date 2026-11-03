@@ -44,7 +44,7 @@ export const Default: Story = {
 }
 
 /**
- * Required textarea indicated with an asterisk (*).
+ * Required textarea indicated with an asterisk (*) in the label's colour.
  * Use for mandatory multi-line form fields.
  */
 export const Required: Story = {
@@ -57,6 +57,23 @@ export const Required: Story = {
     label: 'Article Content',
     textareaProps: {
       placeholder: 'Write your article content here...',
+    },
+  },
+}
+
+/**
+ * Optional textarea, with „(nepovinné)“ after the label.
+ */
+export const Optional: Story = {
+  args: {
+    field: createMockField({
+      id: 'interest',
+      name: 'interest',
+    }),
+    label: 'Interest',
+    optional: true,
+    textareaProps: {
+      rows: 3,
     },
   },
 }

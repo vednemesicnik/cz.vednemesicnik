@@ -11,6 +11,7 @@ import { href, useNavigation } from 'react-router'
 import { Button } from '~/components/button'
 import { Callout } from '~/components/callout'
 import { Form } from '~/components/form'
+import { FormLegend } from '~/components/form-legend'
 import { Heading } from '~/components/heading'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Hyperlink } from '~/components/hyperlink'
@@ -119,10 +120,13 @@ export const SignatureStep = ({ isMinor, submissionResult }: Props) => {
             </Callout>
           )}
 
-          <DeclarationUploadField
-            {...getInputProps(fields.declaration, { type: 'file' })}
-            errors={fields.declaration.errors}
-          />
+          <div className={styles.declaration}>
+            <FormLegend />
+            <DeclarationUploadField
+              {...getInputProps(fields.declaration, { type: 'file' })}
+              errors={fields.declaration.errors}
+            />
+          </div>
 
           <p className={styles.dataNotice}>
             Vaše údaje a podepsané prohlášení bude spolek

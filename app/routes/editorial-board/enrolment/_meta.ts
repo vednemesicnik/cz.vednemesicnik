@@ -8,6 +8,6 @@ export const meta: Route.MetaFunction = ({ location }) =>
   createPageSEO({
     ogImage: resolveOgImageUrl(null, ENV.BASE_URL),
     robots: 'noindex, nofollow',
-    title: 'Přidejte se k redakci',
+    title: 'Přihláška do redakce',
     url: new URL(location.pathname, ENV.BASE_URL).href,
   })

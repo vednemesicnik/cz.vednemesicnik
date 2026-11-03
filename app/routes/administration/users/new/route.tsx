@@ -7,6 +7,7 @@ import { href, useFetcher, useNavigation } from 'react-router'
 import { AdminPage } from '~/components/admin/admin-page'
 import { Button } from '~/components/button'
 import { Checkbox } from '~/components/checkbox'
+import { FormLegend } from '~/components/form-legend'
 import { PageTitle } from '~/components/page-title'
 import { Radio } from '~/components/radio'
 import { RadioGroup } from '~/components/radio-group'
@@ -84,6 +85,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       <PageTitle>{USER_RECORD_COPY.newTitle}</PageTitle>
 
       <RecordForm fetcher={fetcher} form={form}>
+        <FormLegend />
+
         <RadioGroup legend={USER_RECORD_COPY.author.legend}>
           <Radio {...authorModeProps('new')}>
             {USER_RECORD_COPY.author.new}

@@ -11,6 +11,7 @@ import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { Callout } from '~/components/callout'
 import { Form } from '~/components/form'
+import { FormLegend } from '~/components/form-legend'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { TextField } from '~/components/text-field'
 import { TextareaField } from '~/components/textarea-field'
@@ -35,6 +36,8 @@ export const EnrolmentForm = ({ submissionResult }: Props) => {
   // Set only by a submission, redirect included; a link leaves it undefined.
   const isSubmitting = navigation.formMethod !== undefined
 
+  // `required` by hand: a `constraint` would add `maxLength`, and the browser
+  // would cut a long name off before the form could say so.
   const [form, fields] = useForm({
     defaultNoValidate: isHydrated,
     id: 'editorial-board-enrolment',
@@ -58,33 +61,40 @@ export const EnrolmentForm = ({ submissionResult }: Props) => {
         <HoneypotInputs />
         <AuthenticityTokenInput />
 
+        <FormLegend />
+
         <TextField
           autoComplete={'given-name'}
           errors={fields.firstName.errors}
           label={'Jméno'}
+          required
           {...getInputProps(fields.firstName, { type: 'text' })}
         />
         <TextField
           autoComplete={'family-name'}
           errors={fields.lastName.errors}
           label={'Příjmení'}
+          required
           {...getInputProps(fields.lastName, { type: 'text' })}
         />
         <TextField
           autoComplete={'email'}
           errors={fields.email.errors}
           label={'E-mail'}
+          required
           {...getInputProps(fields.email, { type: 'email' })}
         />
         <TextField
           autoComplete={'tel'}
           errors={fields.phone.errors}
-          label={'Telefon (nepovinné)'}
+          label={'Telefon'}
+          optional
           {...getInputProps(fields.phone, { type: 'tel' })}
         />
         <TextareaField
           field={fields.interest}
-          label={'Čemu byste se chtěli věnovat? (nepovinné)'}
+          label={'Čemu byste se chtěli věnovat?'}
+          optional
           textareaProps={{
             placeholder: 'psaní, focení, korektury…',
             rows: 3,

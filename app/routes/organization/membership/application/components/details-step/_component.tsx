@@ -10,6 +10,7 @@ import { href, useNavigation } from 'react-router'
 import { Button } from '~/components/button'
 import { Callout } from '~/components/callout'
 import { Form } from '~/components/form'
+import { FormLegend } from '~/components/form-legend'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Hyperlink } from '~/components/hyperlink'
 import { TextField } from '~/components/text-field'
@@ -26,7 +27,7 @@ type Props = {
   submissionResult: SubmissionResult<string[]> | undefined
 }
 
-/** The first step (design 15d): only the phone is optional, and only it says so. */
+/** The first step (design 15d): only the phone is optional. */
 export const DetailsStep = ({
   details,
   isExpired,
@@ -37,6 +38,8 @@ export const DetailsStep = ({
   // Set only by a submission, redirect included; a link leaves it undefined.
   const isSubmitting = navigation.formMethod !== undefined
 
+  // `required` by hand: a `constraint` would add `maxLength`, and the browser
+  // would cut a long name off before the form could say so.
   const [form, fields] = useForm({
     defaultNoValidate: isHydrated,
     defaultValue: details,
@@ -65,16 +68,20 @@ export const DetailsStep = ({
       >
         <HoneypotInputs />
 
+        <FormLegend />
+
         <TextField
           autoComplete={'given-name'}
           errors={fields.firstName.errors}
           label={'Jméno'}
+          required
           {...getInputProps(fields.firstName, { type: 'text' })}
         />
         <TextField
           autoComplete={'family-name'}
           errors={fields.lastName.errors}
           label={'Příjmení'}
+          required
           {...getInputProps(fields.lastName, { type: 'text' })}
         />
         <TextField
@@ -82,24 +89,28 @@ export const DetailsStep = ({
           hint={'Mladším 18 let podepíše prohlášení i zákonný zástupce.'}
           label={'Datum narození'}
           placeholder={'14. 5. 2009'}
+          required
           {...getInputProps(fields.dateOfBirth, { type: 'text' })}
         />
         <TextField
           autoComplete={'street-address'}
           errors={fields.address.errors}
           label={'Adresa trvalého bydliště'}
+          required
           {...getInputProps(fields.address, { type: 'text' })}
         />
         <TextField
           autoComplete={'email'}
           errors={fields.email.errors}
           label={'E-mail'}
+          required
           {...getInputProps(fields.email, { type: 'email' })}
         />
         <TextField
           autoComplete={'tel'}
           errors={fields.phone.errors}
-          label={'Telefon (nepovinné)'}
+          label={'Telefon'}
+          optional
           {...getInputProps(fields.phone, { type: 'tel' })}
         />
 
