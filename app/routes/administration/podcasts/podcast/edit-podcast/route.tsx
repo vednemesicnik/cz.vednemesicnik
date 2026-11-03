@@ -22,7 +22,6 @@ import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
-import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
@@ -41,6 +40,7 @@ import { PageTitle } from '~/components/page-title'
 import { Select } from '~/components/select'
 import { StatusTag } from '~/components/status-tag'
 import { TextField } from '~/components/text-field'
+import { TextareaField } from '~/components/textarea-field'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -1193,7 +1193,7 @@ export default function RouteComponent({
                         </ButtonLink>
                       )}
                   </div>
-                  <AdminTextarea
+                  <TextareaField
                     field={fields.description}
                     hint={'Stručně popište, o čem podcast je.'}
                     label={'Popis'}

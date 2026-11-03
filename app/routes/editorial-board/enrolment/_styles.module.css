@@ -1,0 +1,9 @@
+.headlineGroup {
+  @layer route {
+    margin-block-end: 22px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 28px;
+    }
+  }
+}

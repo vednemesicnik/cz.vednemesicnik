@@ -10,12 +10,12 @@ import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
-import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { Button } from '~/components/button'
 import { ErrorMessage } from '~/components/error-message'
 import { ErrorMessageGroup } from '~/components/error-message-group'
 import { TextField } from '~/components/text-field'
+import { TextareaField } from '~/components/textarea-field'
 import { UploadStatus } from '~/components/upload-status'
 import { FORM_CONFIG } from '~/config/form-config'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
@@ -377,7 +377,7 @@ export const ProfileDialog = ({
               errors={fields.name.errors}
               hint={'Zobrazuje se u článků na webu a v panelu administrace.'}
             />
-            <AdminTextarea
+            <TextareaField
               counter={`${bioLength} / ${BIO_MAX_LENGTH}`}
               field={fields.bio}
               hint={'Zatím se na webu nezobrazuje.'}

@@ -96,3 +96,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0062](0062-the-sign-in-request-answers-before-it-looks-the-address-up.md) | The sign-in request answers before it looks the address up | 2026-11-02 |  |
 | [0063](0063-window-env-is-written-into-the-document.md) | `window.ENV` is written into the document | 2026-11-02 |  |
 | [0064](0064-a-repeated-write-to-the-editorial-board-sheet-gets-its-first-answer.md) | A repeated write to the editorial-board sheet gets its first answer | 2026-11-02 |  |
+| [0065](0065-a-pending-enrolment-waits-in-verification-and-a-room-may-send-it-together.md) | A pending enrolment waits in `Verification`, and a whole room may send the form together | 2026-11-03 |  |

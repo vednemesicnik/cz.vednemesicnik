@@ -28,7 +28,6 @@ import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
-import { AdminTextarea } from '~/components/admin/admin-textarea'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { AuthorRemoveButton } from '~/components/author-remove-button'
 import { AuthorRow } from '~/components/author-row'
@@ -61,6 +60,7 @@ import { PageTitle } from '~/components/page-title'
 import { StatusTag } from '~/components/status-tag'
 import { TextEditor } from '~/components/text-editor'
 import { TextField } from '~/components/text-field'
+import { TextareaField } from '~/components/textarea-field'
 import { UploadStatus } from '~/components/upload-status'
 import { EDIT_HOLD_CONFIG } from '~/config/edit-hold-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -1395,7 +1395,7 @@ export default function RouteComponent({
                 inert={isDetailOpen}
               >
                 {/* The title as the detail's heading will set it (kh6gf6k6). */}
-                <AdminTextarea
+                <TextareaField
                   field={fields.title}
                   label={'Název'}
                   textareaProps={{
@@ -1407,7 +1407,7 @@ export default function RouteComponent({
                 />
                 {/* For search engines and sharing, not shown on the web; the
                     count only advises (24a, mto4s7s7). */}
-                <AdminTextarea
+                <TextareaField
                   counter={`${perexLength} / ${PEREX_RECOMMENDED_LENGTH}`}
                   counterTone={
                     perexLength > PEREX_RECOMMENDED_LENGTH

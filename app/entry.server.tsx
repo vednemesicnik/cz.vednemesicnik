@@ -20,6 +20,7 @@ import {
 } from 'react-router'
 
 import { startAuthLogRetention } from '~/utils/auth-log.server'
+import { startEnrolmentRetention } from '~/utils/editorial-board-enrolment/start-enrolment-retention.server'
 import { getEnv, initEnv } from '~/utils/env.server'
 
 // Reject/cancel all pending promises after 10 seconds. Kept comfortably above
@@ -32,6 +33,9 @@ global.ENV = getEnv()
 
 // Prune auth events past the retention window, once at startup and daily after.
 startAuthLogRetention()
+
+// Delete pending editorial-board enrolments past their expiry, likewise.
+startEnrolmentRetention()
 
 // Report unhandled server errors to Sentry, keeping Fly logs as the fallback.
 export const handleError: HandleErrorFunction = (error, { request }) => {
