@@ -3,22 +3,15 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { rateLimitContext } from '~/utils/rate-limit.server'
 import { readSignInNotice } from '~/utils/sign-in-notice/read-sign-in-notice.server'
 
-const { createMagicLinkToken, findExistingUserByEmail, sendMagicLinkEmail } =
-  vi.hoisted(() => ({
-    createMagicLinkToken: vi.fn(),
-    findExistingUserByEmail: vi.fn(),
-    sendMagicLinkEmail: vi.fn(),
-  }))
+const { issueSignInLink } = vi.hoisted(() => ({ issueSignInLink: vi.fn() }))
 
 vi.mock('~/utils/auth.server', () => ({
   requireUnauthenticated: vi.fn(),
 }))
 vi.mock('~/utils/honeypot.server', () => ({ checkHoneypot: vi.fn() }))
-vi.mock('~/utils/magic-link.server', () => ({ createMagicLinkToken }))
-vi.mock('~/utils/send-magic-link-email.server', () => ({
-  sendMagicLinkEmail,
+vi.mock('~/utils/magic-link/issue-sign-in-link.server', () => ({
+  issueSignInLink,
 }))
-vi.mock('~/utils/sign-in.server', () => ({ findExistingUserByEmail }))
 
 import { action } from './_action'
 import type { Route } from './+types/route'
@@ -77,38 +70,31 @@ const readNotice = async (response: Response) => {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.stubEnv('BASE_URL', 'https://test.local')
-  createMagicLinkToken.mockResolvedValue('token')
-  findExistingUserByEmail.mockResolvedValue({ id: 'user-1' })
+  vi.useFakeTimers({ toFake: ['setTimeout'] })
 })
 
 afterEach(() => {
-  vi.unstubAllEnvs()
+  vi.useRealTimers()
 })
 
 describe('magic-link request', () => {
-  test('sends a link to an existing account and shows the sent state', async () => {
+  test('shows the sent state before any work that depends on the account', async () => {
     const response = await request({ email: 'Jakub.Novak@vednemesicnik.cz' })
 
     expect(response.status).toBe(303)
     expect(response.headers.get('Location')).toBe(SENT)
-    expect(sendMagicLinkEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'jakub.novak@vednemesicnik.cz' }),
-    )
     expect(await readNotice(response)).toEqual({
       email: 'jakub.novak@vednemesicnik.cz',
       kind: 'magic-link-sent',
     })
-  })
+    expect(issueSignInLink).not.toHaveBeenCalled()
 
-  test('answers an unknown account the same, without sending', async () => {
-    findExistingUserByEmail.mockResolvedValue(null)
+    vi.runAllTimers()
 
-    const response = await request({ email: 'nikdo@vednemesicnik.cz' })
-
-    expect(response.headers.get('Location')).toBe(SENT)
-    expect(sendMagicLinkEmail).not.toHaveBeenCalled()
-    expect((await readNotice(response))?.kind).toBe('magic-link-sent')
+    expect(issueSignInLink).toHaveBeenCalledExactlyOnceWith({
+      email: 'jakub.novak@vednemesicnik.cz',
+      redirectTo: '/administration',
+    })
   })
 
   test('keeps the landing page through the sent state', async () => {
@@ -120,14 +106,22 @@ describe('magic-link request', () => {
     expect(response.headers.get('Location')).toBe(
       `${SENT}?${new URLSearchParams({ redirectTo: '/administration/settings' })}`,
     )
+
+    vi.runAllTimers()
+
+    expect(issueSignInLink).toHaveBeenCalledWith(
+      expect.objectContaining({ redirectTo: '/administration/settings' }),
+    )
   })
 
   test('sends another domain back to the field, without sending', async () => {
     const response = await request({ email: 'jakub.novak@priklad.cz' })
 
     expect(response.headers.get('Location')).toBe(CHOOSER)
-    expect(findExistingUserByEmail).not.toHaveBeenCalled()
-    expect(sendMagicLinkEmail).not.toHaveBeenCalled()
+
+    vi.runAllTimers()
+
+    expect(issueSignInLink).not.toHaveBeenCalled()
 
     const notice = await readNotice(response)
     expect(
@@ -148,7 +142,10 @@ describe('magic-link request', () => {
     })
 
     expect(response.headers.get('Location')).toBe(CHOOSER)
-    expect(sendMagicLinkEmail).not.toHaveBeenCalled()
+
+    vi.runAllTimers()
+
+    expect(issueSignInLink).not.toHaveBeenCalled()
 
     const notice = await readNotice(response)
     expect(

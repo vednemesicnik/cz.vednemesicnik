@@ -89,6 +89,7 @@ COPY --from=build /app/documents /app/documents
 COPY --from=build /app/package.json /app/package.json
 # Sentry instrument — app:start-with-sentry --imports it, so it must be in the image.
 COPY --from=build /app/instrument.server.ts /app/instrument.server.ts
+COPY --from=build /app/app/utils/sentry/scrub-sentry-event.ts /app/app/utils/sentry/scrub-sentry-event.ts
 COPY --from=build /app/prisma.config.ts /app/prisma.config.ts
 COPY --from=build /app/constants/env.ts /app/constants/env.ts
 COPY --from=build /app/prisma/schema.prisma /app/prisma/schema.prisma

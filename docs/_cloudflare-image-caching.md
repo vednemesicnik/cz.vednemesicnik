@@ -26,7 +26,7 @@ In the Cloudflare dashboard: **Caching → Cache Rules → Create rule**.
   ```
   Scoped to the delivered variant extensions (`.avif`, `.jpeg`) so the rule matches
   only image variants — not other `/resources/*` endpoints such as
-  `/resources/env.js`, which is deliberately `no-cache` and must not be force-cached.
+  `/resources/admin-events`, a live event stream that must not be force-cached.
 - **Then:**
   - **Cache eligibility:** `Eligible for cache` (Cache Everything)
   - **Edge TTL:** `Use cache-control header if present, bypass cache if not`
@@ -43,7 +43,7 @@ flow — an edited image simply starts being requested under its new version.
 - Image-variant responses carry no cookies and depend only on the URL, so
   `Cache Everything` is safe (no risk of caching per-user content).
 - The rule is scoped by extension (`.avif`/`.jpeg`), so sibling `/resources/*`
-  endpoints are unaffected — e.g. `/resources/env.js` stays dynamic (`no-cache`),
+  endpoints are unaffected — e.g. `/resources/admin-events` stays dynamic,
   while the OG crop `og.jpeg` is a `.jpeg` variant and is included.
 - A `404` for a missing variant is cheap and also cacheable; it only happens for
   URLs that never had a file (e.g. a stale reference), not for valid variants.

@@ -34,7 +34,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       // `[email protected]`: the script that would restore it can't run here.
       'Cache-Control': 'private, no-store, no-transform',
       'Content-Security-Policy':
-        "default-src 'none'; style-src 'unsafe-inline' https://rsms.me; font-src 'self' https://rsms.me; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
+        "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
       'Content-Type': 'text/html; charset=utf-8',
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'SAMEORIGIN',

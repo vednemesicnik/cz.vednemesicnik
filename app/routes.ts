@@ -405,7 +405,6 @@ export default [
       'user-image/:imageId/:version/:variant',
       'routes/resources/user-image/route.ts',
     ),
-    route('env.js', 'routes/resources/env-script/route.ts'),
     route('admin-events', 'routes/resources/admin-events/route.ts'),
     route('reader-view', 'routes/resources/reader-view/route.ts'),
   ]),

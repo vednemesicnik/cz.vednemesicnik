@@ -8,11 +8,13 @@ import { StrictMode, startTransition } from 'react'
 import { hydrateRoot } from 'react-dom/client'
 import { HydratedRouter } from 'react-router/dom'
 
+import { initEnvClient } from '~/utils/init-env.client'
 import {
   initSentryClient,
   reportClientErrorToSentry,
 } from '~/utils/init-sentry.client'
 
+initEnvClient()
 initSentryClient()
 
 startTransition(() => {
