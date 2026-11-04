@@ -26,15 +26,18 @@ A refresh leaves the name and e-mail alone: the row was found by them, the name 
 editors keep, and a second address survives. A phone is written only when the application has one, and
 `Poznámka` only when empty. Of several rows with one name, only the first is written.
 
-A failure refuses too, and the execution still fails. `Zápis do Kontaktů` is stamped last and is what stops
-a second write.
+A failure refuses too, and the execution still fails. On a new row the name goes in last, because a name
+makes a row a member: a write that fails before it publishes nobody, and its retry rewrites the row.
+`Zápis do Kontaktů` is stamped after a flush and is what stops a second write.
 
 ## What follows
 
 - `setValue('A, B')` writes two chips to a multiple-selection cell, and an unknown role throws. Tried on
   Google on 4 Nov 2026, on a throwaway project and a scratch sheet of made-up people, with the chips set by
   hand. Picks and a fill-down went through the real trigger, and a pick from an account that only edits the
-  sheet ran as `web.app@`. A paste into one cell and a real lock timeout were not tried.
+  sheet ran as `web.app@`. A reused row, a renamed column on either tab and a role taken off the `Role` tab
+  were tried by calling the handler on real ranges. A paste into one cell and a real lock timeout were not
+  tried.
 - Several rows with one name run the other way from `confirmActive` and `leave`, which change them all,
   because a missed row there stays published. Here a missed row only stays as it was.
 - `Kontakty` has to keep its `Poznámka` column, which the setup does not add. Without it each acceptance is
@@ -55,3 +58,5 @@ README.
 - **A shadow column or a stored copy of the old values,** so a fill-down could go back. A lot of machinery
   for a rare case, when the wrong direction costs a line in a reminder.
 - **Leaving `Přijato` on a refused row.** It claims a decision that did not take effect.
+- **Writing the address first on a new row,** as `enrol` does, so its retry finds the row. A name written
+  before a role that then failed left a half member, and on a reused row the wrong person under old roles.
