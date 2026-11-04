@@ -19,11 +19,13 @@ only hours.
 
 One daily trigger between 4 and 5 a.m. calls `runScheduledJobs`, and #392 adds its job behind the same entry point.
 
-- **Each job stamps its own day in a Script Property, only when it finished.** A re-run retries what failed and
-  repeats nothing else, and one failure blocks no other job. The run still throws, so it shows under Executions. The
-  Mailer's key, namespaced by that Monday's date, is only a backstop.
+- **Each job stamps its own day in a Script Property, only when it finished.** A later run retries what failed and
+  repeats nothing else, and one failure blocks no other job. The run still throws, so it shows under Executions. A
+  run that starts during another does nothing, under a user lock. The Mailer's key, namespaced by the spreadsheet and
+  that Monday's date, is only a backstop.
 - **Unfinished work resumes on the next run.** The deletion takes at most 50 rows a run and stops at a 4-minute
-  budget, so a large backlog takes several nights.
+  budget, so a large backlog takes several nights. A job that never got its turn fails the run instead, because the
+  next run may be a day on which it is not due.
 - **A missed Monday is not made up.** The next Monday says the same, and a failed one can be re-run by hand that day.
 - **The deletion ignores `Stav`.** Someone left `Čeká na přijetí` for a year goes undecided, as the form's notice
   says. A row without a real date stays, because the script writes that date with every application and a guess
@@ -36,6 +38,11 @@ One daily trigger between 4 and 5 a.m. calls `runScheduledJobs`, and #392 adds i
 A failed run raises no alarm: it shows only under Executions, and Google's failure digest goes to `web.app@`. If a
 missed reminder turns out to matter, that is the reason to add one. #392's mail loop is the first job that will
 really lean on the time budget, and a reason to revisit resuming on the next night if a wave cannot wait that long.
+
+The deletion and the sort move rows, and an edit waiting for the lock holds its row number, so a pick in the same
+minute may find another person's row and do nothing. At 4 a.m. that is accepted, as log 0060 accepted it for the sort.
+
+This trigger belongs to the script, so the app still has no scheduler and the sweep in log 0020 stands.
 
 Current state: `docs/_editorial-board-google-sheet.md` and the README of `SCRIPT__Editorial_Board__Membership`.
 
