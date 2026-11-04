@@ -41,8 +41,8 @@ An agent starts empty where a chat kept its history. What it should know has to 
 A change to the design system through the agent has not been tried, and neither has rebuilding its bundle,
 which a chat on the source project used to do. The first real one is the proof.
 
-Nobody sees the drawing rendered unless the user opens it: the browser pane isn't signed in to claude.ai, so
-`check` says when only the markup was read.
+The browser pane can't open the artifact itself, so `check` says when only the markup was read. Serving the
+saved files locally has not been tried on artifacts.
 
 `/ask-copy` still hands over a join prompt, because the copywriter is a participant in the shared room. The
 same move could apply there later.

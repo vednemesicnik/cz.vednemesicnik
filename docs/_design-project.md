@@ -41,8 +41,8 @@ a dead end in the billing project.
 ## Reading a screen cheaply
 
 **Read in the main session or in `ux-designer`, never in another subagent:** the reviewing and
-exploring agents have no `Artifact` tool. `Artifact` with `action: "list"`, `scope: "files"` and the `url` lists the
-files; `action: "read"` with `path`, or `paths` for several in one call, saves each under
+exploring agents have no `Artifact` tool. `Artifact` with `action: "list"`, `scope: "files"` and
+the `url` lists the files; `action: "read"` with `path`, or `paths` for several in one call, saves each under
 `<scratchpad>/artifact-files/<id>/` at its published path and says where. Only a small text file
 also comes back in the result.
 
@@ -64,8 +64,8 @@ session.
 ## Writing
 
 The session that asks writes only under `questions/`, and `uploads/` for reference material the
-user asked to hand over. The rest is the designer's. For either of them, first a `read` of just the `url`, which prints the type's instructions and the
-version: a read with `path` does not count as having seen the artifact, and without this one the
+user asked to hand over. The rest is the designer's. For either of them, first a `read` of just the
+`url`, which prints the type's instructions and the version: a read with `path` does not count as having seen the artifact, and without this one the
 publish is refused even when nobody saved. Then read what you change and edit the saved copies.
 Keep that short, because a publish sends a file whole and `_index.json` has other writers. Then
 one `Artifact` publish, with `root` the saved folder and `files` holding only what changed, `null`
@@ -80,8 +80,8 @@ files:     { "project/questions/k7m2x9qa-question.md": "project/questions/k7m2x9
              "project/questions/gone-answer.md": null }
 ```
 
-In the design system, which holds the `questions/<code>-port.md` files, `file_path` is the file
-being written and `project/design-system.json` stays out of it. Neither artifact takes
+In the design system, whose `questions/<code>-port.md` files are older ones that nothing adds to
+any more, `file_path` is the file being written and `project/design-system.json` stays out of it. Neither artifact takes
 `index.html`, `SKILL.md` or `artifact-type/` at its root; those belong to the type. A publish
 refused because someone saved meanwhile: read the `url` and the files again and redo the edit,
 once.
@@ -90,7 +90,7 @@ once.
 
 `/ask-design`'s working folder. A question is named by an eight-character code:
 `questions/<code>-question.md`, the answer `questions/<code>-answer.md`, and an optional
-`questions/<code>-reply.md` when an answer needs a follow-up before work continues.
+`questions/<code>-reply.md` when an answer needs a follow-up from a later session.
 
 **`questions/_index.json`** holds, per code, what retiring a pair needs — for example:
 
