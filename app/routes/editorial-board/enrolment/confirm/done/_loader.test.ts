@@ -1,4 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// The cookie reads it on import. Without it the cookie is unsigned, and a forged value
+// would be refused for its shape instead of its signature.
+vi.hoisted(() => {
+  process.env.SESSION_SECRET = 'test-session-secret'
+})
 
 import { writeEnrolmentConfirmedCookie } from '~/utils/editorial-board-enrolment/write-enrolment-confirmed-cookie.server'
 
@@ -22,7 +28,10 @@ describe('enrolment confirmed loader', () => {
 
   it.each([
     ['no cookie', undefined],
-    ['a forged cookie', 'vdm_enrolment_confirmed=forged'],
+    [
+      'the right value without a signature',
+      `vdm_enrolment_confirmed=${btoa(JSON.stringify({ confirmed: true }))}`,
+    ],
   ])('sends back to the form with %s', async (_case, cookie) => {
     const response = await run(cookie).catch((thrown) => thrown)
 

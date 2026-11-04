@@ -10,7 +10,7 @@ const run = (next: Next) =>
   )({}, next)
 
 const expectTokenHeaders = (headers: Headers) => {
-  expect(headers.get('Cache-Control')).toBe('private, no-store')
+  expect(headers.get('Cache-Control')).toBe('private, no-store, no-transform')
   expect(headers.get('Referrer-Policy')).toBe('no-referrer')
   expect(headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
 }

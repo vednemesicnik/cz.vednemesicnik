@@ -24,8 +24,9 @@ so its timing says nothing about an address. After a timeout the script keeps ru
 may still arrive after the form showed an error.
 
 **While a send is running, the same address mints no new token.** A new one would kill the link in the
-mail on its way, and that mail may arrive last. The second request goes to the sent page. It relies on
-one machine, like log 0062.
+mail on its way, and that mail may arrive last. The second request waits and shares the first one's
+answer, so nobody reads that a link went out when the send then fails. Unlike sign-in (log 0062), the
+sent page has no way to send again. It relies on one machine, like log 0062.
 
 **The limit per address is 5 attempts an hour, and it shows,** with the wording already approved for
 the IP limit. It counts attempts rather than sends, because after a lost answer the e-mail may have
@@ -39,8 +40,10 @@ else. The button writes first and spends the token after: a failed write leaves 
 page does. Without one it redirects to the form, so nobody reads „Přihláška je potvrzená" without having
 confirmed.
 
-**The token stays out of caches and referrers through middleware,** not a `headers` export, which
-covers neither the action's `.data` answer nor the error page at the same address.
+**The token stays out of caches and referrers through middleware,** not a `headers` export forwarding
+the loader's, which sees nothing on the action's `.data` answer, and none reaches an error page rendered
+at a boundary above. `no-transform` is there because the page shows the address, and Cloudflare would
+hide it from anyone without JavaScript.
 
 **The token does reach the Fly log, knowingly.** The log is short-lived and only people who can see the
 data anyway can read it, and sign-in's link has the same exposure today.

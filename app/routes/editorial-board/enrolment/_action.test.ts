@@ -158,16 +158,6 @@ describe('editorial-board enrolment action', () => {
     expect(issueMock).not.toHaveBeenCalled()
   })
 
-  it('moves on when a link for the address is already on its way', async () => {
-    issueMock.mockResolvedValue({ status: 'in-flight' })
-
-    const response = await runToRedirect()
-
-    expect(response.headers.get('Location')).toBe(
-      '/editorial-board/enrolment/sent',
-    )
-  })
-
   it('says when to try again past the limit on the address', async () => {
     issueMock.mockResolvedValue({ retryAfter: 720, status: 'limited' })
 

@@ -10,7 +10,7 @@ import {
 import { sendEnrolmentEmail } from './send-enrolment-email.server'
 
 type IssueEnrolmentLinkResult =
-  | { status: 'failed' | 'in-flight' | 'sent' }
+  | { status: 'failed' | 'sent' }
   | { retryAfter: number; status: 'limited' }
 
 // Protects a mailbox from someone else's form, where the route's limit per IP protects
@@ -18,29 +18,16 @@ type IssueEnrolmentLinkResult =
 const EMAIL_LIMIT = 5
 const EMAIL_WINDOW_MILLISECONDS = 60 * 60 * 1000
 
-// Addresses with a link on its way. Another request for one adds nothing: its new token
-// would kill the link in the mail still being sent, and that mail may arrive last. It
-// relies on one machine, as sign-in does (log 0062).
-const emailsInFlight = new Set<string>()
+// Addresses with a link on its way. Another request for one mints no token of its own,
+// which would kill the link in the mail still being sent, and that mail may arrive last.
+// It waits for the answer instead, so nobody reads that a link went out when the send
+// then fails. It relies on one machine, as sign-in does (log 0062).
+const issuesInFlight = new Map<string, Promise<IssueEnrolmentLinkResult>>()
 
-/**
- * Stores the pending enrolment and mails its link: what the form's action waits for.
- *
- * @param email - The address, normalised by the caller.
- * @param payload - What the confirmation needs.
- * @returns `sent`; `in-flight` when a link for this address is on its way; `limited`
- *   with the seconds left past the limit; `failed` when the row could not be stored or
- *   the e-mail may not have gone out. Never throws; failures are logged and reported to
- *   Sentry.
- */
-export const issueEnrolmentLink = async (
+const issue = async (
   email: string,
   payload: EnrolmentPayload,
 ): Promise<IssueEnrolmentLinkResult> => {
-  if (emailsInFlight.has(email)) return { status: 'in-flight' }
-
-  emailsInFlight.add(email)
-
   try {
     const limit = await rateLimitStore.hit(
       `editorial-board-enrolment-email:${email}`,
@@ -68,7 +55,32 @@ export const issueEnrolmentLink = async (
     if (process.env.SENTRY_DSN) Sentry.captureException(error)
 
     return { status: 'failed' }
-  } finally {
-    emailsInFlight.delete(email)
   }
+}
+
+/**
+ * Stores the pending enrolment and mails its link: what the form's action waits for.
+ *
+ * @param email - The address, normalised by the caller.
+ * @param payload - What the confirmation needs. A request that finds a link for this
+ *   address on its way shares that send's answer, and its own payload is not used.
+ * @returns `sent`; `limited` with the seconds left past the limit; `failed` when the row
+ *   could not be stored or the e-mail may not have gone out. Never throws; failures are
+ *   logged and reported to Sentry.
+ */
+export const issueEnrolmentLink = (
+  email: string,
+  payload: EnrolmentPayload,
+): Promise<IssueEnrolmentLinkResult> => {
+  const running = issuesInFlight.get(email)
+
+  if (running !== undefined) return running
+
+  const issuing = issue(email, payload).finally(() => {
+    issuesInFlight.delete(email)
+  })
+
+  issuesInFlight.set(email, issuing)
+
+  return issuing
 }

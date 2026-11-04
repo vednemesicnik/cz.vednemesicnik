@@ -62,10 +62,10 @@ describe('issueEnrolmentLink', () => {
     expect(sendMock).not.toHaveBeenCalled()
   })
 
-  it('mints no second token while a link for the address is on its way', async () => {
+  it('mints no second token while a link is on its way, and shares its answer', async () => {
     const email = nextAddress()
     let finishSend = (_isSent: boolean) => {}
-    sendMock.mockReturnValue(
+    sendMock.mockReturnValueOnce(
       new Promise((resolve) => {
         finishSend = resolve
       }),
@@ -73,18 +73,23 @@ describe('issueEnrolmentLink', () => {
 
     const first = issueEnrolmentLink(email, PAYLOAD)
     await vi.waitFor(() => expect(sendMock).toHaveBeenCalledOnce())
+    const second = issueEnrolmentLink(email, PAYLOAD)
 
-    await expect(issueEnrolmentLink(email, PAYLOAD)).resolves.toEqual({
-      status: 'in-flight',
-    })
+    finishSend(false)
+
+    await expect(first).resolves.toEqual({ status: 'failed' })
+    await expect(second).resolves.toEqual({ status: 'failed' })
     expect(tokenMock).toHaveBeenCalledOnce()
+    expect(sendMock).toHaveBeenCalledOnce()
+  })
 
-    finishSend(true)
-    await expect(first).resolves.toEqual({ status: 'sent' })
+  it('takes the next request on its own once the send has answered', async () => {
+    const email = nextAddress()
 
-    await expect(issueEnrolmentLink(email, PAYLOAD)).resolves.toEqual({
-      status: 'sent',
-    })
+    await issueEnrolmentLink(email, PAYLOAD)
+    await issueEnrolmentLink(email, PAYLOAD)
+
+    expect(tokenMock).toHaveBeenCalledTimes(2)
   })
 
   it('refuses the sixth attempt in an hour, counting the failed ones', async () => {

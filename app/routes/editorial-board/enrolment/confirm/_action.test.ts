@@ -89,8 +89,11 @@ describe('enrolment confirmation action', () => {
 
   it('opens the confirmed page for this browser', async () => {
     const response = await runToRedirect()
-    const cookie = (response.headers.get('Set-Cookie') ?? '').split(';')[0]
+    const setCookie = response.headers.get('Set-Cookie') ?? ''
+    const cookie = setCookie.split(';')[0]
 
+    // Covers `…/done` and that page's `.data` request.
+    expect(setCookie).toContain(`Path=${CONFIRM_PATH};`)
     await expect(
       hasEnrolmentConfirmedCookie(
         new Request(`http://localhost${CONFIRM_PATH}/done`, {

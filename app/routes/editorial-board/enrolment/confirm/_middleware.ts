@@ -1,9 +1,11 @@
 import type { Route } from './+types/route'
 
-// The token is in the address. Here and not in a `headers` export, which covers neither
-// the `.data` answer of the action nor the error page, and both have the same address.
+// The token is in the address. Here and not in a `headers` export forwarding the loader's,
+// which sees nothing on the action's `.data` answer, and none reaches an error page rendered
+// at a boundary above. `no-transform` keeps Cloudflare from hiding the address the page
+// shows from anyone without JavaScript.
 const applyTokenHeaders = (headers: Headers) => {
-  headers.set('Cache-Control', 'private, no-store')
+  headers.set('Cache-Control', 'private, no-store, no-transform')
   headers.set('Referrer-Policy', 'no-referrer')
   headers.set('X-Robots-Tag', 'noindex, nofollow')
 }
