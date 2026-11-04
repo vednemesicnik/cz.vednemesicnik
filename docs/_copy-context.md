@@ -243,6 +243,9 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   `Stav` `Čeká na přijetí` · `Přijato` · `Nepřijato`, a 12 měsíců po `Ověření e-mailu` se smaže,
   i přijatá nebo nepřijatá (rozhodnuto 2. 11. 2026, mazání zatím nepostaveno). Přijatý člověk zůstává
   na listu `Kontakty`. Tato lhůta i její počátek platí jen pro přihlášku do redakce, ne do spolku.
+  Kontakty na listu `Kontakty` zůstávají bez časového omezení i po odchodu, abychom s člověkem zůstali
+  ve spojení; na žádost přes `udaje@vednemesicnik.cz` je smažeme ručně (rozhodnuto 3. 11. 2026).
+  Nepotvrzené přihlášky mažeme po vypršení potvrzovacího odkazu, který platí 72 hodin.
 - **Lidé v redakci** jsou v téže tabulce na listu `Kontakty`. Na stránce *Redakce* je jen ten, kdo má
   `Stav` `V redakci`. `Mimo redakci` znamená, že člověk teď není součástí redakce: odešel, přestal
   přispívat nebo má pauzu. Třetí hodnota je `Vyřazení bez odpovědi`. Hodnoty netvrdí důvod. Prázdné
@@ -251,6 +254,11 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   redakce vede QR kód z letáku, do spolku odkaz od vedení. Kdo by chtěl do spolku, napíše na
   `clenstvi@vednemesicnik.cz` (rozhodnuto 2. 10. 2026). Věta, která na webu zve
   k vyplnění přihlášky, je nepravda.
+- **Značky povinnosti.** Povinné pole má za popiskem hvězdičku, nepovinné `(nepovinné)`; popisek
+  sám to neříká. Před prvním polem formuláře stojí doslova `* označuje povinnou položku.`, v textu
+  se tedy píše *položka*, ne *pole*. Platí na webu i v administraci, kde formuláře přebírají
+  pravidlo postupně. Přihlášení a dialog s jediným polem jsou bez značek, povinnost tam plyne
+  z úkolu (rozhodnuto 3. 11. 2026).
 
 ## Hlas
 

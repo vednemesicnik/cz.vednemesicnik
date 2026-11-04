@@ -90,6 +90,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
         <TextField
           errors={fields.email.errors}
+          isRequiredMarkHidden
           label={'E-mail'}
           {...getInputProps(fields.email, { type: 'email' })}
           autoComplete={'email'}

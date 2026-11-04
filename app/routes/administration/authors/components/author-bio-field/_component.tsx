@@ -1,6 +1,6 @@
 import type { FieldMetadata } from '@conform-to/react'
 
-import { AdminTextarea } from '~/components/admin/admin-textarea'
+import { TextareaField } from '~/components/textarea-field'
 import { AUTHOR_CONFIG } from '~/config/author-config'
 import styles from './_styles.module.css'
 
@@ -13,7 +13,7 @@ type Props = {
  * placeholder, its length against the limit at the end of the row.
  */
 export const AuthorBioField = ({ field }: Props) => (
-  <AdminTextarea
+  <TextareaField
     counter={`${field.value?.length ?? 0} / ${AUTHOR_CONFIG.bioMaxLength}`}
     field={field}
     label={

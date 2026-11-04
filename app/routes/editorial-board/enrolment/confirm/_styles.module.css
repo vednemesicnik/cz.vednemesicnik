@@ -1,0 +1,62 @@
+.headlineGroup {
+  @layer route {
+    margin-block-end: 18px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 28px;
+    }
+  }
+}
+
+.content {
+  @layer route {
+    display: grid;
+    gap: 18px;
+    width: 100%;
+    text-align: start;
+
+    @container page (width >= 940px) {
+      max-inline-size: 540px;
+    }
+  }
+}
+
+.callout {
+  @layer route {
+    margin-block: 0;
+  }
+}
+
+.lead {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
+}
+
+.form {
+  @layer route {
+    display: grid;
+  }
+}
+
+.action {
+  @layer route {
+    @container page (width >= 940px) {
+      justify-self: start;
+    }
+  }
+}
+
+.note {
+  @layer route {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+}

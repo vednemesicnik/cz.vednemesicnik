@@ -125,7 +125,7 @@ async function validate(formData: FormData, headers: Headers) {
   }
 }
 
-const isValidCSRF = async (formData: FormData, headers: Headers) => {
+export const isValidCSRF = async (formData: FormData, headers: Headers) => {
   try {
     await validate(formData, headers)
     return true
@@ -133,6 +133,33 @@ const isValidCSRF = async (formData: FormData, headers: Headers) => {
     if (error instanceof CSRFError) return false
     throw error
   }
+}
+
+/**
+ * The 403 for a form that stays on screen: the message on the form, the submitted
+ * values kept.
+ *
+ * @param formData - The submitted form data.
+ * @param message - What the form says.
+ * @returns The response the action returns.
+ */
+export const createFormRefusal = (formData: FormData, message: string) => {
+  const submission = parseWithZod(formData, { schema: z.object({}) })
+  // The refused token and any password don't travel back with the kept values.
+  const hiddenFields = [...new Set(formData.keys())].filter(
+    (name) =>
+      name === FORM_CONFIG.authenticityToken.name || /password/i.test(name),
+  )
+
+  return data(
+    {
+      submissionResult: submission.reply({
+        formErrors: [message],
+        hideFields: hiddenFields,
+      }),
+    },
+    { status: 403 },
+  )
 }
 
 /**
@@ -173,20 +200,5 @@ export const checkCSRF = async (formData: FormData, request: Request) => {
 
   if (await isValidCSRF(formData, request.headers)) return null
 
-  const submission = parseWithZod(formData, { schema: z.object({}) })
-  // The refused token and any password don't travel back with the kept values.
-  const hiddenFields = [...new Set(formData.keys())].filter(
-    (name) =>
-      name === FORM_CONFIG.authenticityToken.name || /password/i.test(name),
-  )
-
-  return data(
-    {
-      submissionResult: submission.reply({
-        formErrors: [adminCsrfFormMessage],
-        hideFields: hiddenFields,
-      }),
-    },
-    { status: 403 },
-  )
+  return createFormRefusal(formData, adminCsrfFormMessage)
 }

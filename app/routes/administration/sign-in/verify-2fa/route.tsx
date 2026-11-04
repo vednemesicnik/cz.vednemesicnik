@@ -61,6 +61,7 @@ export default function RouteComponent({
         {isBackupCodeMethod ? (
           <TextField
             errors={fields.backupCode.errors}
+            isRequiredMarkHidden
             label={'Záložní kód'}
             {...getInputProps(fields.backupCode, { type: 'text' })}
             autoComplete={'one-time-code'}
@@ -69,6 +70,7 @@ export default function RouteComponent({
         ) : (
           <TextField
             errors={fields.code.errors}
+            isRequiredMarkHidden
             label={'Kód'}
             {...getInputProps(fields.code, { type: 'text' })}
             autoComplete={'one-time-code'}

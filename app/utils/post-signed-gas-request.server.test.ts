@@ -147,8 +147,13 @@ describe('postSignedGasRequest', () => {
   })
 
   test.each([
+    'ambiguous',
     'invalid_request',
+    'link_not_allowed',
+    'missing_fields',
+    'not_active',
     'not_found',
+    'server_misconfigured',
     'stale_timestamp',
     'unauthorized',
   ])('does not retry the settled error %s', async (error) => {

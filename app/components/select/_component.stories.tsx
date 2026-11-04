@@ -50,7 +50,7 @@ export const Default: Story = {
 }
 
 /**
- * Required select field indicated with an asterisk (*).
+ * Required select field indicated with an asterisk (*) in the label's colour.
  * Use for mandatory selection fields.
  */
 export const Required: Story = {

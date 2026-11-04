@@ -9,7 +9,9 @@ const meta: Meta<typeof TextField> = {
     disabled: { control: 'boolean' },
     errors: { control: 'object' },
     hint: { control: 'text' },
+    isRequiredMarkHidden: { control: 'boolean' },
     label: { control: 'text' },
+    optional: { control: 'boolean' },
     required: { control: 'boolean' },
     type: {
       control: 'select',
@@ -73,6 +75,25 @@ export const Required: Story = {
   args: {
     id: 'title',
     label: 'Název',
+    required: true,
+  },
+}
+
+export const Optional: Story = {
+  args: {
+    id: 'phone',
+    label: 'Telefon',
+    optional: true,
+    type: 'tel',
+  },
+}
+
+/** Sign-in and single-field dialogs: `required` on the input, no asterisk. */
+export const RequiredMarkHidden: Story = {
+  args: {
+    id: 'code',
+    isRequiredMarkHidden: true,
+    label: 'Kód',
     required: true,
   },
 }

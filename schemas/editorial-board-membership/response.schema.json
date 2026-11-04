@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "ConfirmActiveRequest": {
+      "additionalProperties": false,
+      "description": "Someone `V redakci` says they still are: resets `Poslední potvrzení` and clears `Dotaz odeslán`. Writes nothing for anyone else, and answers `not_active`.",
+      "properties": {
+        "action": {
+          "const": "confirmActive"
+        },
+        "email": {
+          "maxLength": 254,
+          "pattern": "^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]+$",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "description": "Identifies one POST across its attempts. A repeat answers with the first result instead of writing again. Random per POST: a new press of a button is a new key, and the sheet decides.",
+          "pattern": "^[A-Za-z0-9-]{16,64}$",
+          "type": "string"
+        }
+      },
+      "required": ["action", "idempotencyKey", "email"],
+      "type": "object"
+    },
+    "EditorialBoardMembershipResponse": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "idempotent": {
+              "const": true,
+              "description": "Present only on a repeat: an earlier call with this key did the work, and nothing was written now."
+            },
+            "ok": {
+              "const": true
+            }
+          },
+          "required": ["ok"],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "error": {
+              "description": "`not_found`: no named row on `Kontakty` has this address. `not_active`: the person is not `V redakci`. `ambiguous`: rows with different names share this address. `busy`: no lock in time, worth trying again. `link_not_allowed`: the link is not on the confirmation route. `mailer_send_failed`: the Mailer did not take the e-mail, see `mailerError`.",
+              "enum": [
+                "server_misconfigured",
+                "invalid_request",
+                "unauthorized",
+                "stale_timestamp",
+                "missing_fields",
+                "not_found",
+                "not_active",
+                "ambiguous",
+                "busy",
+                "link_not_allowed",
+                "mailer_send_failed",
+                "server_error"
+              ],
+              "type": "string"
+            },
+            "mailerError": {
+              "description": "Present only when error is \"mailer_send_failed\": the underlying reason.",
+              "type": "string"
+            },
+            "ok": {
+              "const": false
+            }
+          },
+          "required": ["ok", "error"],
+          "type": "object"
+        }
+      ]
+    },
+    "EnrolRequest": {
+      "additionalProperties": false,
+      "description": "Adds an application to `Přihlášky` as `Čeká na přijetí`, keyed by the address. One still waiting or with an empty `Stav` is refreshed. `Ověření e-mailu` is the day this request arrives. `Kontakty` is not touched.",
+      "properties": {
+        "action": {
+          "const": "enrol"
+        },
+        "email": {
+          "maxLength": 254,
+          "pattern": "^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]+$",
+          "type": "string"
+        },
+        "formSubmittedAt": {
+          "description": "When the form was sent; its day lands in `Odeslání formuláře`.",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "description": "Identifies one POST across its attempts. A repeat answers with the first result instead of writing again. Random per POST: a new press of a button is a new key, and the sheet decides.",
+          "pattern": "^[A-Za-z0-9-]{16,64}$",
+          "type": "string"
+        },
+        "interest": {
+          "description": "What the person would like to work on; lands in `Zájem o činnost`.",
+          "maxLength": 2000,
+          "type": "string"
+        },
+        "name": {
+          "description": "The full name on one line, without an address or a link.",
+          "maxLength": 100,
+          "type": "string"
+        },
+        "phone": {
+          "pattern": "^\\+?[0-9 ]{9,20}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "idempotencyKey",
+        "name",
+        "email",
+        "formSubmittedAt"
+      ],
+      "type": "object"
+    },
+    "Envelope": {
+      "additionalProperties": false,
+      "description": "How a request travels. `payload` is a request serialised to a string and signed as that exact string. OWN_SECRET is the signing key and never leaves either end.",
+      "properties": {
+        "payload": {
+          "description": "JSON of an EnrolRequest, a ConfirmActiveRequest, a LeaveRequest or a SendEnrolmentEmailRequest.",
+          "type": "string"
+        },
+        "signature": {
+          "description": "Lower-case hex HMAC-SHA256(OWN_SECRET, `${timestamp}.${payload}`).",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "timestamp": {
+          "description": "Unix seconds. Inside the signature, so it cannot be adjusted.",
+          "type": "integer"
+        }
+      },
+      "required": ["timestamp", "payload", "signature"],
+      "type": "object"
+    },
+    "LeaveRequest": {
+      "additionalProperties": false,
+      "description": "Sets `Stav` to `Mimo redakci` and `Odchod či vyřazení` to today, unless the person is already out with a date, and clears `Dotaz odeslán`. Never deletes a row.",
+      "properties": {
+        "action": {
+          "const": "leave"
+        },
+        "email": {
+          "maxLength": 254,
+          "pattern": "^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]+$",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "description": "Identifies one POST across its attempts. A repeat answers with the first result instead of writing again. Random per POST: a new press of a button is a new key, and the sheet decides.",
+          "pattern": "^[A-Za-z0-9-]{16,64}$",
+          "type": "string"
+        }
+      },
+      "required": ["action", "idempotencyKey", "email"],
+      "type": "object"
+    },
+    "SendEnrolmentEmailRequest": {
+      "additionalProperties": false,
+      "description": "Mails the link that confirms an enrolment, through the Mailer. Touches no sheet and takes no lock. Has no idempotencyKey: the Mailer recognises a repeat by a hash of `link`, which is minted per submission, so a retry of one request is one e-mail.",
+      "properties": {
+        "action": {
+          "const": "sendEnrolmentEmail"
+        },
+        "email": {
+          "maxLength": 254,
+          "pattern": "^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]+$",
+          "type": "string"
+        },
+        "link": {
+          "description": "An https link on the site, on the confirmation route. Anything else answers `link_not_allowed`.",
+          "format": "uri",
+          "maxLength": 2048,
+          "type": "string"
+        }
+      },
+      "required": ["action", "email", "link"],
+      "type": "object"
+    }
+  },
+  "description": "Contract for the writes to the Vedneměsíčník editorial-board spreadsheet and the e-mail that leads to one. POST a signed Envelope whose payload is an EnrolRequest, a ConfirmActiveRequest, a LeaveRequest or a SendEnrolmentEmailRequest; the response is an EditorialBoardMembershipResponse. Always replies HTTP 200, so `ok` is the only signal.",
+  "title": "EditorialBoardMembership"
+}

@@ -18,6 +18,8 @@ type Props<FieldType extends string | undefined = string> = {
   counterTone?: CounterTone
   /** Something around the field already names it; the label stays for readers. */
   isLabelHidden?: boolean
+  /** „(nepovinné)“ after the label. */
+  optional?: boolean
 }
 
 /**
@@ -31,7 +33,7 @@ type Props<FieldType extends string | undefined = string> = {
  *   that only advises, as the perex's 160 (24a); the field's errors still win.
  */
 
-export const AdminTextarea = <FieldType extends string | undefined = string>({
+export const TextareaField = <FieldType extends string | undefined = string>({
   label,
   className,
   textareaProps: { className: textareaClassName, ...restTextareaProps },
@@ -40,6 +42,7 @@ export const AdminTextarea = <FieldType extends string | undefined = string>({
   counter,
   counterTone = 'neutral',
   isLabelHidden = false,
+  optional = false,
 }: Props<FieldType>) => {
   const hasErrors = field.errors !== undefined && field.errors.length > 0
   const hintId = hint !== undefined ? `${field.id}-hint` : undefined
@@ -56,6 +59,7 @@ export const AdminTextarea = <FieldType extends string | undefined = string>({
       <Label
         className={isLabelHidden ? 'screen-reader-only' : undefined}
         htmlFor={field.id}
+        optional={optional}
         required={field.required}
       >
         {label}

@@ -1,7 +1,7 @@
 import type { FieldMetadata } from '@conform-to/react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { AdminTextarea } from './_component'
+import { TextareaField } from './_component'
 
 const createMockField = (
   overrides?: Partial<FieldMetadata<string>>,
@@ -14,20 +14,20 @@ const createMockField = (
     ...overrides,
   }) as FieldMetadata<string>
 
-const meta: Meta<typeof AdminTextarea> = {
+const meta: Meta<typeof TextareaField> = {
   argTypes: {
     label: {
       control: 'text',
       description: 'Label text for the textarea field',
     },
   },
-  component: AdminTextarea,
+  component: TextareaField,
   tags: ['autodocs'],
   title: 'Primitives/TextArea',
 }
 
 export default meta
-type Story = StoryObj<typeof AdminTextarea>
+type Story = StoryObj<typeof TextareaField>
 
 /**
  * Default textarea for multi-line text entry.
@@ -44,7 +44,7 @@ export const Default: Story = {
 }
 
 /**
- * Required textarea indicated with an asterisk (*).
+ * Required textarea indicated with an asterisk (*) in the label's colour.
  * Use for mandatory multi-line form fields.
  */
 export const Required: Story = {
@@ -57,6 +57,23 @@ export const Required: Story = {
     label: 'Article Content',
     textareaProps: {
       placeholder: 'Write your article content here...',
+    },
+  },
+}
+
+/**
+ * Optional textarea, with „(nepovinné)“ after the label.
+ */
+export const Optional: Story = {
+  args: {
+    field: createMockField({
+      id: 'interest',
+      name: 'interest',
+    }),
+    label: 'Interest',
+    optional: true,
+    textareaProps: {
+      rows: 3,
     },
   },
 }

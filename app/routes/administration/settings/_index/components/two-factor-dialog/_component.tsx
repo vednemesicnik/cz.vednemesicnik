@@ -175,6 +175,7 @@ export const TwoFactorDialog = ({ mode, onClose }: Props) => {
               )}
 
               <TextField
+                isRequiredMarkHidden
                 label={'Kód z aplikace'}
                 {...getInputProps(fields.code, { type: 'text' })}
                 autoComplete={'one-time-code'}

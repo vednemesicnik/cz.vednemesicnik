@@ -82,12 +82,14 @@ export default function RouteComponent({
 
         <TextField
           errors={fields.email.errors}
+          isRequiredMarkHidden
           label={'E-mail'}
           {...getInputProps(fields.email, { type: 'email' })}
         />
 
         <TextField
           errors={fields.password.errors}
+          isRequiredMarkHidden
           label={'Heslo'}
           ref={passwordInputRef}
           {...getInputProps(fields.password, { type: 'password' })}

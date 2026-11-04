@@ -170,6 +170,16 @@
   }
 }
 
+/* Heading, legend and field 12 px apart (15d), closer than the form's gap. */
+.declaration {
+  @layer route {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 .dataNotice {
   @layer route {
     margin: 0;

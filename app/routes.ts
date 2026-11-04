@@ -66,6 +66,25 @@ export default [
     // Editorial Board routes
     route('editorial-board', 'routes/editorial-board/route.tsx'),
 
+    // The editorial-board application from the leaflet (design 15e). Hidden:
+    // nothing on the site links to it, and it is not in robots.txt either.
+    route(
+      'editorial-board/enrolment',
+      'routes/editorial-board/enrolment/route.tsx',
+    ),
+    route(
+      'editorial-board/enrolment/sent',
+      'routes/editorial-board/enrolment/sent/route.tsx',
+    ),
+    route(
+      'editorial-board/enrolment/confirm',
+      'routes/editorial-board/enrolment/confirm/route.tsx',
+    ),
+    route(
+      'editorial-board/enrolment/confirm/done',
+      'routes/editorial-board/enrolment/confirm/done/route.tsx',
+    ),
+
     // Organization routes
     route('organization', 'routes/organization/route.tsx'),
 
