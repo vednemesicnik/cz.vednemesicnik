@@ -2,7 +2,7 @@
 name: discover-idea
 description: Sweep one area of the app for candidate ideas — what the design draws and the app does not do, what the app does and no drawing shows, a design answer that never became an issue, and two places answering the same question differently. Use when an area needs looking over for what is missing, when it is not settled what the next issue should be, or when asked what is left to do somewhere. It finds and evidences; it weighs nothing.
 argument-hint: <area — a screen, a flow or a surface; empty to be asked which>
-allowed-tools: Bash(gh issue list:*), Bash(gh issue view:*), Bash(git log:*), DesignSync
+allowed-tools: Bash(gh issue list:*), Bash(gh issue view:*), Bash(git log:*), Artifact
 ---
 
 ## The area
@@ -39,10 +39,9 @@ one.
 
 ### Phase 1 — Read before inventing
 
-**The design** lives in the app project `60d13daa-be98-47ec-95e1-e8913a86fef4` (absent from
-`list_projects`; pass the id to `list_files` and `get_file`) and the components in the design
-system `4b484003-4984-46c4-86cc-a96eee9e4b4a`. Read documents in this session, one screen at a
-time — `docs/_design-project.md`. Documents are numbered by area: `10`–`16` public website,
+**The design** lives in the app project and the components in the design system, two artifacts.
+Read documents in this session, one screen at a time — `docs/_design-project.md` has the links
+and how. Documents are numbered by area: `10`–`16` public website,
 `20`–`29` administration, `07` content states and actions, `30` routing and errors.
 `uploads/podklady/` holds screenshots of the app before the redesign — reference, not design.
 

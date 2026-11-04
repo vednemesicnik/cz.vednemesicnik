@@ -1,12 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import {
-  documentFrom,
-  findScreen,
-  notesOf,
-  screensIn,
-  textOf,
-} from './design-screen'
+import { findScreen, notesOf, screensIn, textOf } from './design-screen'
 
 // This app's markup, cut to what the script reads: an intro section without an
 // anchor, two screens whose drawings nest sections of their own, an intro
@@ -85,19 +79,6 @@ describe('design-screen', () => {
     expect(findScreen(screens, '22b')?.label).toBe('Buňka Stav')
     expect(findScreen(screens, 'seznam článků')?.id).toBe('22a')
     expect(findScreen(screens, '22z')).toBeUndefined()
-  })
-
-  // What the harness saves is the JSON `get_file` returned, not the document.
-  test('reads a saved get_file result as well as the document itself', () => {
-    const saved = JSON.stringify({
-      content: SECTION_DOCUMENT,
-      method: 'get_file',
-      path: '22 Seznam článků.dc.html',
-    })
-
-    expect(documentFrom(saved)).toBe(SECTION_DOCUMENT)
-    expect(documentFrom(SECTION_DOCUMENT)).toBe(SECTION_DOCUMENT)
-    expect(() => documentFrom('{"method":"list_files"}')).toThrow(/content/)
   })
 
   test('turns markup into reading text, one block to a line', () => {
