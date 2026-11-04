@@ -2,14 +2,13 @@
 import { readFile } from 'node:fs/promises'
 
 /**
- * Prints one screen out of a Claude Design document, by its anchor — `22a`, not
+ * Prints one screen out of a design document, by its anchor — `22a`, not
  * `22 Seznam článků.dc.html`.
  *
  * A `.dc.html` runs to tens of kilobytes and a question about the app needs one
- * screen of it. Read through `DesignSync get_file` in the main session, a result
- * that size is not put into the conversation: the harness saves it to a file and
- * shows a short preview. This reads that file — or a plain `.dc.html` — and
- * prints only what was asked for.
+ * screen of it. Reading one from its artifact saves it to a file without putting
+ * it into the conversation. This reads that file and prints only what was asked
+ * for.
  *
  * Usage:
  *   pnpm design:screen <file>                 the screens it holds, one per line
@@ -40,24 +39,6 @@ const LEAD_NOTE = /<p\b[^>]*>\s*<strong\b[\s\S]*?<\/p>/g
 const OPTION_LABEL =
   /class="dv-oid"[^>]*>[^<]*<\/a>\s*<span[^>]*>([\s\S]*?)<\/span>/
 const SECTION_OPEN = /<section\b|<\/section>/g
-
-/**
- * Takes the document out of whatever holds it.
- *
- * @param raw - A saved `get_file` result (JSON with the document as `content`)
- *   or the document itself.
- * @returns The document's HTML.
- */
-export const documentFrom = (raw: string): string => {
-  if (!raw.trimStart().startsWith('{')) return raw
-
-  const parsed: unknown = JSON.parse(raw)
-  if (typeof parsed === 'object' && parsed !== null && 'content' in parsed) {
-    const { content } = parsed as { content: unknown }
-    if (typeof content === 'string') return content
-  }
-  throw new Error('JSON without a string `content` — not a get_file result')
-}
 
 const escapeForPattern = (value: string): string =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -199,7 +180,7 @@ const main = async (): Promise<void> => {
     return
   }
   const identifiers = rest.filter((argument) => !argument.startsWith('--'))
-  const screens = screensIn(documentFrom(await readFile(file, 'utf8')))
+  const screens = screensIn(await readFile(file, 'utf8'))
 
   if (identifiers.length === 0) {
     for (const screen of screens) {

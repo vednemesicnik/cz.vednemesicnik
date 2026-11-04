@@ -1,6 +1,6 @@
 ---
 name: ask-design
-description: Put a question to the Claude Design project — research it, write it up, upload it, and hand over the prompt for the design chat. Use when a screen, a component or a token needs a decision the design project owns, when a design document comes back with open questions, when a departure from a design answer is being considered, or when a design answer has come back and needs reading in.
+description: Put a question to the design project — research it, write it up, upload it, and hand over the prompt for the design chat. Use when a screen, a component or a token needs a decision the design project owns, when a design document comes back with open questions, when a departure from a design answer is being considered, or when a design answer has come back and needs reading in.
 argument-hint: [what to ask about, "check [code]" to read the answer back, or "tidy [#issue]" to retire settled questions]
 ---
 
@@ -29,10 +29,9 @@ first lines of the question and in its index entry.
 
 ## 1. Read what is reachable before writing a word
 
-`DesignSync list_files` on the app project (`60d13daa-be98-47ec-95e1-e8913a86fef4`), then
-`get_file` on the documents the question touches — in this session, never in a subagent — and
-`pnpm design:screen <saved file> 22a` for one screen of them. For a component or a token, read the
-design system (`4b484003-4984-46c4-86cc-a96eee9e4b4a`): `components/`, `tokens/`, `guidelines/`.
+List the files of the app project, then read the documents the question touches — in this
+session, never in a subagent — and `pnpm design:screen "<saved file>" 22a` for one screen of them.
+For a component or a token, read the design system: `components/`, `tokens/`, `guidelines/`.
 
 Two rules about what comes back:
 
@@ -77,8 +76,8 @@ node -e 'let {randomBytes}=require("node:crypto");let a="abcdefghijklmnopqrstuvw
 
 The code must not be a key in `questions/_index.json` nor the start of any name under `questions/`.
 
-Then write it — Czech, because design reads it — into the session scratchpad as
-`questions/<code>-question.md`:
+Then write it — Czech, because design reads it — as `project/questions/<code>-question.md` under
+the folder the artifact's files are saved in:
 
 ```markdown
 # <kód> · <téma>
@@ -104,11 +103,9 @@ into the question, not just its number.
 
 ## 4. Upload it
 
-Into the app project, by id: `finalize_plan` with `writes` naming the question and
-`questions/_index.json`, `deletes: []`, and `localDir` set to the scratchpad folder that holds
-`questions/`; then `write_files` with `localPath`.
+Into the app project, in one publish as `docs/_design-project.md` § Writing gives it.
 
-**Add the pair to `questions/_index.json` in the same plan**: read it fresh (`get_file`), add
+**Add the pair to `questions/_index.json` in the same publish**: read it fresh, add
 `"<code>": { "topic": "<téma>", "asked": "<date>", "for": [<issues>], "answered": null }`.
 
 **Only ever write under `questions/`** (and `uploads/` for reference material the user asked to
@@ -120,9 +117,10 @@ our proposal in them is answering our own question in the system's voice.
 Compose the message for the design chat. **Its first line names the project to paste it into** —
 `[Vložit do: app projekt]` for a question, `[Vložit do: design system — zdroj]` for a port into
 the source — because the two chats look alike and a prompt in the wrong one does the wrong work.
-**The second line is the code and the path** — `Otázka k7m2x9qa: questions/k7m2x9qa-question.md`.
+**The second line is the link of that project's artifact, the third the code and the path** —
+`Otázka k7m2x9qa: project/questions/k7m2x9qa-question.md`.
 Then it says what decision is wanted, asks for
-the answer in `questions/<code>-answer.md` (or straight into the document when that is the
+the answer in `project/questions/<code>-answer.md` (or straight into the document when that is the
 natural place), and says what to continue with. If design wants to change a component, that is
 theirs to do in the design system in the same pass.
 
@@ -134,7 +132,8 @@ It says once that **the wording in the drawings is a draft**: the copywriter goe
 the screen settles (step 7), so design draws the words it needs and does not polish them.
 
 **It asks design to split a document before it gets too large to render.** Past roughly 100 kB
-as `get_file` returns it, a `.dc.html` stops drawing and shows its source instead. When the
+in the file listing, a `.dc.html` stopped drawing in Claude Design and showed its source instead.
+Nobody has tried that on an artifact yet, and the project's own notes still keep to it. When the
 document the answer will write into is past that, the prompt says how large it is and asks for
 the split in the same pass — by what the screens are about, every anchor keeping its code.
 
@@ -178,8 +177,8 @@ Then stop — the design chat is a separate conversation and this one does not w
 
 ## 7. `check` — read the answer back
 
-`list_files`, then `get_file` on the answer and on every document it says it wrote to. Read the
-files, not a summary pasted into the chat. Report:
+List the files, then read the answer and every document it says it wrote to. Read the files, not
+a summary pasted into the chat. Report:
 
 - what was asked and what came back, question by question, including anything left unanswered;
 - what actually changed in the design files, quoted (`pnpm design:screen`);
@@ -188,8 +187,8 @@ files, not a summary pasted into the chat. Report:
 
 Then complete the pair's index entry: `answered`, `names` (every `#n` it mentions), and
 `wroteTo` with a **witness** per screen — a short literal that stands there because of this
-decision, checked with `pnpm design:screen` against the **newest** saved copy. A witness the
-script cannot find is a finding: report it instead of indexing it.
+decision, checked with `pnpm design:screen` against a copy read just now. A witness the script
+cannot find is a finding: report it instead of indexing it.
 
 When the answer needs corrections or decisions before design continues, they go back as
 `questions/<code>-reply.md` through steps 3–5, not as a chat message.
@@ -204,7 +203,7 @@ a drawing adds or changes goes to the copywriter (`/ask-copy`) before it is impl
 - **A new screen or document** — once it has no open questions, all of its user-facing strings:
   labels, buttons, hints, empty states, errors, confirmations, toasts.
 - **An answer that rewrote screens** — only the strings it added or changed; quote them from the
-  newest copy, not from the answer.
+  copy read just now, not from the answer.
 - **An answer that changed no wording** — nothing; say so in the report.
 - **A screen still waiting on a `reply`** — not yet; its words may change again.
 
@@ -226,16 +225,16 @@ Start from `questions/_index.json`. A pair is retirable only when all three hold
 - **nothing live depends on it** — no open issue names the file, and none of the issues in its
   `names` is still open (`gh issue list --state open`);
 - **every citation of it has somewhere else to point** — `grep -rno 'questions/[0-9a-z-]*\.md' app
-  docs AGENTS.md .agents`, and a grep of every `.dc.html` (fetched in one parallel batch in this
-  session, newest copy of each) for the code. Rewrite a hit to the document that now carries the
-  decision before the file goes.
+  docs AGENTS.md .agents`, and a grep of every `.dc.html` (read just now, all in one call with
+  `paths`) for the code. Rewrite a hit to the document that now carries the decision before the
+  file goes.
 
-**Check the witness before deleting**: `pnpm design:screen <saved file> <screen> | grep -F
+**Check the witness before deleting**: `pnpm design:screen "<saved file>" <screen> | grep -F
 '<witness>'`. A witness that is gone is not a reason to delete — the decision may have been lost,
 and deleting the answer is how it stops existing. Say which.
 
-Then delete the pair and its index entry in one `finalize_plan`. There is no move in
-`DesignSync`, and a copied decision record that might have drifted is worse than none.
+Then delete the pair and its index entry in one publish. A copied decision record that might have
+drifted is worse than none, so nothing gets moved elsewhere first.
 
 Report what was retired and what stayed, with the reason for each. Never retire the pair this
 loop is currently waiting on.

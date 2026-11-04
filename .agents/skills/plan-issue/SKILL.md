@@ -56,10 +56,9 @@ You are the **planning stage** of the issue pipeline:
    the shape of the answer.
 
 5. **Read the design, not the issue's paraphrase of it.** When the issue touches a screen,
-   open the design project (`DesignSync`, app project `60d13daa-be98-47ec-95e1-e8913a86fef4`,
-   components in the design system `4b484003-4984-46c4-86cc-a96eee9e4b4a`). `get_file` a
+   open the design project (the app project, components in the design system). Read a
    document **in this session** and cut one screen out of it with
-   `pnpm design:screen <saved file> 22a` — see
+   `pnpm design:screen "<saved file>" 22a` — see
    [docs/\_design-project.md](../../../docs/_design-project.md). Where the design is silent or
    two screens disagree, say so in the plan and point at `/ask-design` rather than inventing
    the answer.

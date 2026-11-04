@@ -124,8 +124,8 @@ when the change warrants a second opinion, never launch them.
    open. Name the **direction** (feature/fix → `dev`, or onto its parent when stacked) and
    whether anything in "Open PRs, with their bases" is stacked on this branch.
 3. **If the issue has design questions in the index** (`questions/_index.json` entries whose
-   `for` holds this issue), recommend `/ask-design tidy #<n>` — do not run it; deletion in the
-   design project cannot be undone.
+   `for` holds this issue), recommend `/ask-design tidy #<n>` — do not run it; it deletes files
+   from the design project.
 
 ### 🛑 Gate 2 — Ask, then merge
 

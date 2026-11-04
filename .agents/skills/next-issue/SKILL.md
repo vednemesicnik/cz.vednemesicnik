@@ -82,7 +82,7 @@ Report what each step did or why it was a no-op.
 7. **Name the leftovers** outside git: test rows in the local database, a deployed Apps Script
    version, a Fly secret, files in the Tigris bucket. Clean up only unambiguous test debris;
    ask before anything in production.
-8. **Offer the design pairs this issue was waiting on.** `get_file questions/_index.json` in the
+8. **Offer the design pairs this issue was waiting on.** Read `questions/_index.json` in the
    design project (`docs/_design-project.md`) and list entries whose `for` or `names` holds the
    retired issue. Recommend `/ask-design tidy #<n>` by name; do not run it.
 
