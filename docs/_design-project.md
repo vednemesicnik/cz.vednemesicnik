@@ -2,7 +2,8 @@
 
 The design that decides this app — public website and administration alike — lives in two
 artifacts on claude.ai, reached through the `Artifact` tool (moved from Claude Design in
-November 2026). `/ask-design` is the loop that puts questions to it and reads the answers back.
+November 2026). `/ask-design` is the loop that puts questions to it and reads the answers back; the
+`ux-designer` agent answers them.
 
 | What              | Artifact                                             | Holds                                                                  |
 | ----------------- | ---------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -18,6 +19,17 @@ The app project loads the design system from its own copy,
 the app project's documents (decided 27 Sep 2026, `rd9daf6z`). A component a screen needs before
 the system has it is drawn in the screen as a *candidate* and moves into the system later.
 
+## The designer
+
+Artifacts have no chat of their own, so `.claude/agents/ux-designer.md` does the design work: it
+takes a brief, decides the UX, draws and publishes. Nobody pastes a prompt anywhere. The session
+that asked writes the brief under `questions/` and checks the result; the screens, components and
+tokens are the agent's. Log 0069 has the reasons.
+
+A chat kept its history and an agent starts empty, so what it should know stands in its file, in
+this document and in the design documents' dated notes. A change to the design system through the
+agent, including rebuilding its bundle, has not been tried yet.
+
 ## Documents
 
 Numbered by area, one document per screen or topic: `10`–`16` public website,
@@ -28,8 +40,8 @@ a dead end in the billing project.
 
 ## Reading a screen cheaply
 
-**Read in the main session, never in a subagent:** the reviewing and exploring agents have no
-`Artifact` tool. `Artifact` with `action: "list"`, `scope: "files"` and the `url` lists the
+**Read in the main session or in `ux-designer`, never in another subagent:** the reviewing and
+exploring agents have no `Artifact` tool. `Artifact` with `action: "list"`, `scope: "files"` and the `url` lists the
 files; `action: "read"` with `path`, or `paths` for several in one call, saves each under
 `<scratchpad>/artifact-files/<id>/` at its published path and says where. Only a small text file
 also comes back in the result.
@@ -51,8 +63,8 @@ session.
 
 ## Writing
 
-Only under `questions/`, and `uploads/` for reference material the user asked to hand over. The
-rest is design's. First a `read` of just the `url`, which prints the type's instructions and the
+The session that asks writes only under `questions/`, and `uploads/` for reference material the
+user asked to hand over. The rest is the designer's. For either of them, first a `read` of just the `url`, which prints the type's instructions and the
 version: a read with `path` does not count as having seen the artifact, and without this one the
 publish is refused even when nobody saved. Then read what you change and edit the saved copies.
 Keep that short, because a publish sends a file whole and `_index.json` has other writers. Then
@@ -103,11 +115,9 @@ once.
   that stands in that screen because of this decision. `tidy` greps for it instead of re-reading
   the answer.
 
-`/ask-design` keeps the index, and writes only under `questions/`. The design chat sometimes
-fills in an entry itself when it answers (`answered`, `wroteTo`) and sometimes forgets, and
-another session may have written too. Read it fresh before every write, and at `check` treat an
-entry design filled in as a draft: confirm each witness with `pnpm design:screen` before keeping
-it.
+`/ask-design` keeps the index, and writes only under `questions/`. Older entries were sometimes
+filled in by a design chat, and another session may have written too. Read it fresh before every
+write, and confirm each witness with `pnpm design:screen` before keeping it.
 
 ## Uploaded material
 
