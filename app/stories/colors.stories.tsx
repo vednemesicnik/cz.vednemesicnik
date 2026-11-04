@@ -273,7 +273,7 @@ function ColorPalette() {
     <div
       style={{
         background: 'var(--bg-primary)',
-        fontFamily: 'var(--font-family, Inter), sans-serif',
+        fontFamily: 'var(--font-family), sans-serif',
         minHeight: '100%',
         padding: '32px',
       }}

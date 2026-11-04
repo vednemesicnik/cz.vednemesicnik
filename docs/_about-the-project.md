@@ -60,7 +60,7 @@ The repository is organized as follows:
 - **`docker/`**: Docker configuration for containerization.
 - **`docs/`**: Project documentation.
 - **`prisma/`**: Database schema and migration files.
-- **`public/`**: Static assets like images and fonts.
+- **`public/`**: Static assets like images and the font licence text.
 - **`scripts/`**: Utility scripts for tasks like database management.
 
 Components are styled with CSS modules for encapsulation and reuse. Non-route-specific components are in `app/components`, while route-specific components are organized under `app/routes`.

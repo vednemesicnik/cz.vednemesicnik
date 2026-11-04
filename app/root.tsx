@@ -21,6 +21,7 @@ import '~/styles/sizes.css'
 import { RootBoundaryError } from '~/components/root-boundary-error'
 import { ENV_META_NAME } from '~/config/env-meta-config'
 import { useColorScheme } from '~/hooks/use-color-scheme'
+import interVariableFontUrl from '~/styles/fonts/inter-variable.woff2'
 import { getColorSchemeMetaContent } from '~/utils/get-color-scheme-meta-content'
 
 import type { Route } from './+types/root'
@@ -28,8 +29,13 @@ import type { Route } from './+types/root'
 export const links: LinksFunction = () => [
   { href: '/favicon.svg', rel: 'icon', type: 'image/svg+xml' },
   { href: '/favicon.ico', rel: 'alternate icon' },
-  { href: 'https://rsms.me/', rel: 'preconnect' },
-  { href: 'https://rsms.me/inter/inter.css', rel: 'stylesheet' },
+  {
+    as: 'font',
+    crossOrigin: 'anonymous',
+    href: interVariableFontUrl,
+    rel: 'preload',
+    type: 'font/woff2',
+  },
 ]
 
 export async function loader({ request }: Route.LoaderArgs) {

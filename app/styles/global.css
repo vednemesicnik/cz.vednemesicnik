@@ -1,3 +1,7 @@
+/*! Inter 4.1, Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter).
+    SIL Open Font License 1.1, full text at /licenses/inter-ofl.txt */
+/* Here, not in fonts.css: the minifier keeps such a comment only at the top of the stylesheet. */
+
 @layer base, component, variant, layout, route;
 
 * {
