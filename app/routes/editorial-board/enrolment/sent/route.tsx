@@ -15,8 +15,8 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 /**
- * The result of every submission (design 15e), so it says nothing about the address.
- * It leads on into the website: whoever came from the leaflet may not know it yet.
+ * The result of a submission whose link went out (design 15e), the same for a known and
+ * a new address, so it says nothing about either. It leads on into the website: whoever came from the leaflet may not know it yet.
  */
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (

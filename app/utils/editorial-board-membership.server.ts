@@ -10,7 +10,8 @@
  * The idempotency key is one per call, so the transport's retry is one write, and a new
  * press of a button is a new key that the state of the sheet decides. A key derived
  * from the link would answer from the script's cache for its whole lifetime, past a
- * change to the row (log 0064).
+ * change to the row (log 0064). The e-mail with the link is not a write, and goes through
+ * `editorial-board-enrolment/send-enrolment-email.server.ts`.
  *
  * No-ops when GAS_EDITORIAL_BOARD_MEMBERSHIP_URL / _SECRET are unset outside
  * production, so the flows can be exercised without a live deployment.
@@ -76,6 +77,8 @@ const KNOWN_GAS_ERROR_CODES: Record<ContractErrorCode, true> = {
   ambiguous: true,
   busy: true,
   invalid_request: true,
+  link_not_allowed: true,
+  mailer_send_failed: true,
   missing_fields: true,
   not_active: true,
   not_found: true,

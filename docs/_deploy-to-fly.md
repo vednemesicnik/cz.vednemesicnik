@@ -193,10 +193,10 @@ fly secrets set GAS_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec"
 
 ## Writes to the editorial-board spreadsheet (Google Apps Script)
 
-Enrolment and the answers to the re-confirmation are written by a standalone web app (see the
-`SCRIPT__Editorial_Board__Membership` repo, #388). Optional until a route calls them: #390 makes them
-required, and the app then fails at boot without them, so set them before the release that carries
-the enrolment. `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET` must equal that script's `OWN_SECRET` property,
+Enrolment and the answers to the re-confirmation are written by a standalone web app, which also mails
+the enrolment link (see the `SCRIPT__Editorial_Board__Membership` repo, #388, #390). Required: the app
+fails at boot without them, so set them before the release that carries the enrolment.
+`GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET` must equal that script's `OWN_SECRET` property,
 which is not the one `SCRIPT__Editorial_Board__Contacts` holds for `GAS_EDITORIAL_BOARD_SECRET`.
 
 ```shell

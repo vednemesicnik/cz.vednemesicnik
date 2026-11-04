@@ -47,6 +47,7 @@ type GasFailureBody = {
 const SETTLED_ERRORS = new Set([
   'ambiguous',
   'invalid_request',
+  'link_not_allowed',
   'missing_fields',
   'not_active',
   'not_found',
