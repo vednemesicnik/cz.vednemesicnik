@@ -35,6 +35,10 @@ gone out, and the limit is there for that mailbox.
 else. The button writes first and spends the token after: a failed write leaves the link usable, and
 `enrol` is idempotent on the address. The delete's count decides between two presses at once.
 
+**The confirmed page opens only after a confirmation,** through a signed cookie for an hour, as the sent
+page does. Without one it redirects to the form, so nobody reads „Přihláška je potvrzená" without having
+confirmed.
+
 **The token stays out of caches and referrers through middleware,** not a `headers` export, which
 covers neither the action's `.data` answer nor the error page at the same address.
 
@@ -61,3 +65,6 @@ machine would be a reason to move the in-flight guard and the limit out of proce
 - **An index on `Verification.secret`.** There are few such rows, and the sweep deletes them after 72
   hours.
 - **A custom server to keep the token out of the log.** Out of proportion to a short-lived log.
+- **The token on the confirmed page.** It would have to outlive the confirmation, and it would stay in
+  the address, the browser's history and the log with nothing left to protect.
+- **A 404 without the cookie.** Someone coming back after an hour would read it as something broken.

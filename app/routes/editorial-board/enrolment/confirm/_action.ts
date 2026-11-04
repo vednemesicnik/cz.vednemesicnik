@@ -3,6 +3,7 @@ import { data, href, redirect } from 'react-router'
 
 import { consumeEnrolmentToken } from '~/utils/editorial-board-enrolment/consume-enrolment-token.server'
 import { findEnrolmentByToken } from '~/utils/editorial-board-enrolment/find-enrolment-by-token.server'
+import { writeEnrolmentConfirmedCookie } from '~/utils/editorial-board-enrolment/write-enrolment-confirmed-cookie.server'
 import { postEditorialBoardMembershipWrite } from '~/utils/editorial-board-membership.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 
@@ -68,6 +69,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   if (!isConsumed) throw backToLink(token)
 
   throw redirect(href('/editorial-board/enrolment/confirm/done'), {
+    headers: { 'Set-Cookie': await writeEnrolmentConfirmedCookie() },
     status: 303,
   })
 }

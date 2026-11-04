@@ -10,12 +10,13 @@ import { Page } from '~/components/page'
 import styles from './_styles.module.css'
 
 export { headers } from './_headers'
+export { loader } from './_loader'
 export { meta } from './_meta'
 
 /**
  * After the button (design 15e-confirm): a thank-you, because a plain welcome would read
- * as being accepted, and the chief editors decide that. It reads nothing, so loading it
- * again writes nothing.
+ * as being accepted, and the chief editors decide that. Only the browser that just
+ * confirmed gets here, and loading it again writes nothing.
  */
 export default function RouteComponent() {
   return (

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { consumeEnrolmentToken } from '~/utils/editorial-board-enrolment/consume-enrolment-token.server'
 import { findEnrolmentByToken } from '~/utils/editorial-board-enrolment/find-enrolment-by-token.server'
+import { hasEnrolmentConfirmedCookie } from '~/utils/editorial-board-enrolment/has-enrolment-confirmed-cookie.server'
 import { postEditorialBoardMembershipWrite } from '~/utils/editorial-board-membership.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 
@@ -84,6 +85,27 @@ describe('enrolment confirmation action', () => {
     expect(writeMock.mock.invocationCallOrder[0]).toBeLessThan(
       consumeMock.mock.invocationCallOrder[0] as number,
     )
+  })
+
+  it('opens the confirmed page for this browser', async () => {
+    const response = await runToRedirect()
+    const cookie = (response.headers.get('Set-Cookie') ?? '').split(';')[0]
+
+    await expect(
+      hasEnrolmentConfirmedCookie(
+        new Request(`http://localhost${CONFIRM_PATH}/done`, {
+          headers: { Cookie: cookie },
+        }),
+      ),
+    ).resolves.toBe(true)
+  })
+
+  it('opens nothing for a press that lost the race', async () => {
+    consumeMock.mockResolvedValue(false)
+
+    const response = await runToRedirect()
+
+    expect(response.headers.get('Set-Cookie')).toBeNull()
   })
 
   it('leaves the token when the write fails, so the button can try again', async () => {
