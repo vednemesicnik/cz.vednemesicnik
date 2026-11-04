@@ -69,10 +69,10 @@ files:     { "project/questions/k7m2x9qa-question.md": "project/questions/k7m2x9
 ```
 
 In the design system, which holds the `questions/<code>-port.md` files, `file_path` is the file
-being written and `project/design-system.json` stays out of it. That comes from the artifact
-type's instructions; nobody has run it yet. Neither artifact takes `index.html`, `SKILL.md` or
-`artifact-type/` at its root; those belong to the type. A publish refused because someone saved
-meanwhile: read the `url` and the files again and redo the edit, once.
+being written and `project/design-system.json` stays out of it. Neither artifact takes
+`index.html`, `SKILL.md` or `artifact-type/` at its root; those belong to the type. A publish
+refused because someone saved meanwhile: read the `url` and the files again and redo the edit,
+once.
 
 ## `questions/`
 
