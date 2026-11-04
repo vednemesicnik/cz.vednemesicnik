@@ -100,3 +100,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0066](0066-the-enrolment-form-waits-for-its-e-mail-and-a-button-confirms-it.md) | The enrolment form waits for its e-mail, and a button confirms it | 2026-11-03 |  |
 | [0067](0067-inter-is-served-from-our-own-origin.md) | Inter is served from our own origin | 2026-11-04 |  |
 | [0068](0068-acceptance-refuses-a-different-name-and-a-refused-fill-down-goes-to-pending.md) | Acceptance refuses a different name, and a refused fill-down goes to pending | 2026-11-04 |  |
+| [0069](0069-a-design-question-goes-to-an-agent-as-a-brief-of-what-the-product-needs.md) | A design question goes to an agent, as a brief of what the product needs | 2026-11-04 |  |
