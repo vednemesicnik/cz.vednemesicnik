@@ -27,7 +27,8 @@ editors keep, and a second address survives. A phone is written only when the ap
 `Poznámka` only when empty. Of several rows with one name, only the first is written.
 
 A failure refuses too, and the execution still fails. On a new row the name goes in last, because a name
-makes a row a member: a write that fails before it publishes nobody, and its retry rewrites the row.
+makes a row a member: a write that fails before it publishes nobody, and the next one rewrites the first
+nameless row.
 `Zápis do Kontaktů` is stamped after a flush and is what stops a second write.
 
 ## What follows
@@ -58,5 +59,5 @@ README.
 - **A shadow column or a stored copy of the old values,** so a fill-down could go back. A lot of machinery
   for a rare case, when the wrong direction costs a line in a reminder.
 - **Leaving `Přijato` on a refused row.** It claims a decision that did not take effect.
-- **Writing the address first on a new row,** as `enrol` does, so its retry finds the row. A name written
-  before a role that then failed left a half member, and on a reused row the wrong person under old roles.
+- **Writing the name right after the address,** so a retry finds the row by them. A name written before a
+  role that then failed left a half member, and on a reused row the wrong person under old roles.
