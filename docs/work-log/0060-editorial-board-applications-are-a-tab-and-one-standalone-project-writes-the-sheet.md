@@ -1,6 +1,7 @@
 # 0060. Editorial-board applications are a tab, one standalone project writes the sheet, and `Stav` is what the web shows
 
 - Date: 2026-11-02
+- Later: 0070
 - Issues: #385, #386
 
 ## Context

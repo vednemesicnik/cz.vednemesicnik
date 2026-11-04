@@ -39,10 +39,15 @@ A failed run raises no alarm: it shows only under Executions, and Google's failu
 missed reminder turns out to matter, that is the reason to add one. #392's mail loop is the first job that will
 really lean on the time budget, and a reason to revisit resuming on the next night if a wave cannot wait that long.
 
-The deletion and the sort move rows, and an edit waiting for the lock holds its row number, so a pick in the same
-minute may find another person's row and do nothing. At 4 a.m. that is accepted, as log 0060 accepted it for the sort.
+Log 0060 says the edit trigger can trust the event's row. That now holds outside the nightly jobs only: the deletion
+and the sort move rows, and an event carries a row number and no person. An edit in those seconds can give another
+person a date nobody earned on `Kontakty`, or leave `Přijato` on `Přihlášky` with nothing behind it, silently. The quiet
+hour between 4 and 5 a.m. is the whole mitigation, and it is accepted here. A guard before and after the lock would not
+close it, because the rows can move before the trigger starts. A wrong row that someone finds is the reason to revisit
+it. A run by hand needs nobody editing.
 
-This trigger belongs to the script, so the app still has no scheduler and the sweep in log 0020 stands.
+This trigger belongs to the script, so it gives the app no scheduler to move the sweep in log 0020 to, and that sweep
+stands.
 
 Current state: `docs/_editorial-board-google-sheet.md` and the README of `SCRIPT__Editorial_Board__Membership`.
 
