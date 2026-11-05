@@ -39,7 +39,7 @@ flowchart LR
   membershipApplications --> mailer
   membershipApplications -->|writes| membershipStore
   boardMembership --> mailer
-  boardMembership -->|"writes, edit trigger"| editorialSheet
+  boardMembership -->|"writes, edit trigger, daily jobs"| editorialSheet
   contacts -->|reads| editorialSheet
   chiefEditors -->|edit| editorialSheet
 ```

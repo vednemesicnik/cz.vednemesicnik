@@ -14,7 +14,7 @@ bound sheet also edits its project (log 0059). Log 0060 says why there are two.
 | Project | What it does |
 | ------- | ------------ |
 | [`SCRIPT__Editorial_Board__Contacts`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Contacts) | Answers the read for `/editorial-board`. Never writes. |
-| [`SCRIPT__Editorial_Board__Membership`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Membership) | The only project that writes: the setup, the edit trigger and the signed writes from the app. |
+| [`SCRIPT__Editorial_Board__Membership`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Membership) | The only project that writes: the setup, the edit trigger, the signed writes from the app and the scheduled jobs. |
 
 Their READMEs have the steps for each project. [Apps Script web apps](_apps-script-web-apps.md)
 shows where both sit among the scripts the web uses.
@@ -122,6 +122,11 @@ Behaviour:
   row: `Kontakty` is sorted by name only, by a nightly job and never on an edit. Section grouping and per-section
   name ordering are done in the endpoint and the app, so a member with several role chips needs no
   single sort position in the sheet.
+- `runScheduledJobs`, a daily trigger in the same project between 4 and 5 a.m., deletes `Přihlášky` rows 12
+  months after `Ověření e-mailu` whatever their `Stav`, sorts `Kontakty` by `Jméno` with reserve rows last and,
+  on Mondays while someone is `Čeká na přijetí`, tells the chief editors' group how many wait and how long the
+  longest has waited. The message names nobody, and when nobody waits nothing goes out
+  ([log 0070](work-log/0070-scheduled-jobs-stamp-each-job-when-it-finishes-and-resume-on-the-next-night.md)).
 
 The steps below are for the read, in the Contacts project.
 
