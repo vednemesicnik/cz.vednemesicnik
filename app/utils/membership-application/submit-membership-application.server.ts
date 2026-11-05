@@ -26,7 +26,6 @@ import type {
 import * as Sentry from '@sentry/react-router'
 
 import { postGasRequest } from '~/utils/post-gas-request.server'
-import { readMailError } from '~/utils/read-mail-error'
 import { signGasRequest } from '~/utils/sign-gas-request.server'
 
 // An 8 MB scan is ~10.7 MB once base64-encoded, and the script files it on
@@ -109,22 +108,22 @@ export const submitMembershipApplication = async (
     )
 
     if (ok && data?.ok === true) {
-      const mailError = readMailError(data)
-
-      if (mailError) {
+      if (data.mailError) {
         console.error(
-          `[membership] ${data.code} stored, acknowledgement failed — mailError ${mailError}.`,
+          `[membership] ${data.code} stored, acknowledgement failed — mailError ${data.mailError}.`,
         )
         if (process.env.SENTRY_DSN) {
           Sentry.captureMessage('[membership] acknowledgement failed', {
-            extra: { mailError },
+            extra: { mailError: data.mailError },
             fingerprint: ['membership', 'acknowledgement-failed'],
             level: 'warning',
           })
         }
       }
       return {
-        acknowledgementSent: data.duplicate ? null : mailError === undefined,
+        acknowledgementSent: data.duplicate
+          ? null
+          : data.mailError === undefined,
         code: data.code,
         ok: true,
       }

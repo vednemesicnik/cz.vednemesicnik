@@ -83,8 +83,8 @@ describe('sendUsersNotice', () => {
       'fetch',
       vi.fn().mockResolvedValue(
         jsonResponse({
-          error: 'mailer_send_failed',
-          mailerError: 'unauthorized',
+          error: 'mail_send_failed',
+          mailError: 'unauthorized',
           ok: false,
         }),
       ),
@@ -94,7 +94,7 @@ describe('sendUsersNotice', () => {
 
     const [message] = vi.mocked(console.error).mock.calls[0]
     expect(message).toContain('invitation')
-    expect(message).toContain('error mailer_send_failed')
+    expect(message).toContain('error mail_send_failed')
     expect(message).toContain('mailError unauthorized')
     expect(Sentry.captureMessage).toHaveBeenCalledWith(
       '[users-notice] GAS send failed',

@@ -16,7 +16,7 @@
  * path locks administrators out rather than merely failing a request.
  *
  * A transport blip is tried once more, and the idempotency key is the `link`: it is
- * minted per request, the script hashes it into the key it gives the Mailer
+ * minted per request, the script hashes it into the key it gives the mail service
  * (`build-idempotency-key.gs`), so a retry of one request is one e-mail. Its contract
  * has no field for a separate key, and nothing there would read one (log 0061).
  *

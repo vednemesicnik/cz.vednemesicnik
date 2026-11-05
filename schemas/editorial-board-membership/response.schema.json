@@ -42,7 +42,7 @@
           "additionalProperties": false,
           "properties": {
             "error": {
-              "description": "`not_found`: no named row on `Kontakty` has this address. `not_active`: the person is not `V redakci`. `ambiguous`: rows with different names share this address. `busy`: no lock in time, worth trying again. `link_not_allowed`: the link is not on the confirmation route. `mailer_send_failed`: the Mailer did not take the e-mail, see `mailerError`.",
+              "description": "`not_found`: no named row on `Kontakty` has this address. `not_active`: the person is not `V redakci`. `ambiguous`: rows with different names share this address. `busy`: no lock in time, worth trying again. `link_not_allowed`: the link is not on the confirmation route. `mail_send_failed`: the mail service did not take the e-mail, see `mailError`.",
               "enum": [
                 "server_misconfigured",
                 "invalid_request",
@@ -54,13 +54,13 @@
                 "ambiguous",
                 "busy",
                 "link_not_allowed",
-                "mailer_send_failed",
+                "mail_send_failed",
                 "server_error"
               ],
               "type": "string"
             },
-            "mailerError": {
-              "description": "Present only when error is \"mailer_send_failed\": the underlying reason.",
+            "mailError": {
+              "description": "Present only when error is \"mail_send_failed\": the underlying reason.",
               "type": "string"
             },
             "ok": {
@@ -163,7 +163,7 @@
     },
     "SendEnrolmentEmailRequest": {
       "additionalProperties": false,
-      "description": "Mails the link that confirms an enrolment, through the Mailer. Touches no sheet and takes no lock. Has no idempotencyKey: the Mailer recognises a repeat by a hash of `link`, which is minted per submission, so a retry of one request is one e-mail.",
+      "description": "Mails the link that confirms an enrolment, through the mail service. Touches no sheet and takes no lock. Has no idempotencyKey: the mail service recognises a repeat by a hash of `link`, which is minted per submission, so a retry of one request is one e-mail.",
       "properties": {
         "action": {
           "const": "sendEnrolmentEmail"

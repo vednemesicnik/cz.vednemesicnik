@@ -72,18 +72,13 @@ const responseSchema = z.object({
 
 // Exhaustive at compile time: a code added to or removed from the contract fails
 // `pnpm app:typecheck` until this matches. Bounds the Sentry fingerprints to a fixed
-// set, so an unexpected value can't mint an issue per occurrence. `mail_send_failed`
-// replaces `mailer_send_failed` with the script's next release (log 0071).
-const KNOWN_GAS_ERROR_CODES: Record<
-  ContractErrorCode | 'mail_send_failed',
-  true
-> = {
+// set, so an unexpected value can't mint an issue per occurrence.
+const KNOWN_GAS_ERROR_CODES: Record<ContractErrorCode, true> = {
   ambiguous: true,
   busy: true,
   invalid_request: true,
   link_not_allowed: true,
   mail_send_failed: true,
-  mailer_send_failed: true,
   missing_fields: true,
   not_active: true,
   not_found: true,

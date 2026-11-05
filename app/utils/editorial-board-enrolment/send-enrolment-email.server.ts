@@ -13,7 +13,7 @@ const SEND_TIMEOUT_MILLISECONDS = 30_000
 /**
  * Asks the script to mail the confirmation link. A transport blip is tried once more,
  * keyed by `link`: it is minted per submission and the script hashes it into the
- * Mailer's key, so a retry of one request is one e-mail (log 0061).
+ * mail service's key, so a retry of one request is one e-mail (log 0061).
  *
  * Logs the link instead when the script is not configured outside production, so the
  * flow can be exercised without a live deployment.

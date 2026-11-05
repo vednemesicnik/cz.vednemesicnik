@@ -50,7 +50,7 @@
               "description": "Present and true when the code was already in the sheet: nothing was stored or sent this time.",
               "type": "boolean"
             },
-            "mailerError": {
+            "mailError": {
               "description": "Present when the application was stored but the acknowledgement to the applicant could not be sent.",
               "enum": [
                 "unauthorized",
@@ -164,6 +164,6 @@
       "type": "object"
     }
   },
-  "description": "Contract for the Vedneměsíčník membership-applications web app. POST a signed Envelope whose payload is a SubmitApplicationRequest; the response is a MembershipResponse. The application is stored (a row in the sheet, the signed declaration on the shared drive) before any e-mail goes out; a failed e-mail does not fail the request and is reported in mailerError.",
+  "description": "Contract for the Vedneměsíčník membership-applications web app. POST a signed Envelope whose payload is a SubmitApplicationRequest; the response is a MembershipResponse. The application is stored (a row in the sheet, the signed declaration on the shared drive) before any e-mail goes out; a failed e-mail does not fail the request and is reported in mailError.",
   "title": "Membership"
 }

@@ -191,24 +191,6 @@ describe('postSignedGasRequest', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
-  test('reads the reason from a script still on the old name', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        jsonResponse({
-          error: 'mailer_send_failed',
-          mailerError: 'unreachable',
-          ok: false,
-        }),
-      ),
-    )
-
-    await expect(settle(post())).resolves.toMatchObject({
-      error: 'mailer_send_failed',
-      mailError: 'unreachable',
-    })
-  })
-
   test('calls an answer without a code a server_error', async () => {
     vi.stubGlobal(
       'fetch',
