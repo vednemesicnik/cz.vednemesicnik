@@ -58,7 +58,7 @@ export const sendEnrolmentEmail = async (
     return true
   }
 
-  const { cause, error, mailerError, status } = result
+  const { cause, error, mailError, status } = result
 
   if (cause !== undefined) {
     console.error('[editorial-board-enrolment] GAS request threw —', cause)
@@ -68,12 +68,12 @@ export const sendEnrolmentEmail = async (
 
   console.error(
     `[editorial-board-enrolment] GAS send failed — status ${status ?? '—'}, ` +
-      `error ${error}, mailerError ${mailerError ?? '—'}.`,
+      `error ${error}, mailError ${mailError ?? '—'}.`,
   )
 
   if (process.env.SENTRY_DSN) {
     Sentry.captureMessage('[editorial-board-enrolment] GAS send failed', {
-      extra: { error, mailerError, status },
+      extra: { error, mailError, status },
       fingerprint: ['editorial-board-enrolment', 'gas-send-failed'],
       level: 'error',
     })

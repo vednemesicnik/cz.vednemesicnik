@@ -65,7 +65,7 @@ export const sendMagicLinkEmail = async (
     return true
   }
 
-  const { cause, error, mailerError, status } = result
+  const { cause, error, mailError, status } = result
 
   if (cause !== undefined) {
     console.error('[magic-link] GAS request threw —', cause)
@@ -75,7 +75,7 @@ export const sendMagicLinkEmail = async (
 
   console.error(
     `[magic-link] GAS send failed — status ${status ?? '—'}, ` +
-      `error ${error}, mailerError ${mailerError ?? '—'}.`,
+      `error ${error}, mailError ${mailError ?? '—'}.`,
   )
 
   // Fly logs are short-lived (~5 min); report to Sentry so send failures
@@ -85,7 +85,7 @@ export const sendMagicLinkEmail = async (
   // `extra`), not one per sign-in attempt.
   if (process.env.SENTRY_DSN) {
     Sentry.captureMessage('[magic-link] GAS send failed', {
-      extra: { error, mailerError, status },
+      extra: { error, mailError, status },
       fingerprint: ['magic-link', 'gas-send-failed'],
       level: 'error',
     })

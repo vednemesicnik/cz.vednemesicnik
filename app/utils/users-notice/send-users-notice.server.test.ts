@@ -77,7 +77,7 @@ describe('sendUsersNotice', () => {
     expect(envelope.signature).toBe(expected)
   })
 
-  test('logs the error and mailerError of a failed send and reports it', async () => {
+  test('logs the error and mailError of a failed send and reports it', async () => {
     process.env.SENTRY_DSN = 'https://dsn.test/1'
     vi.stubGlobal(
       'fetch',
@@ -95,7 +95,7 @@ describe('sendUsersNotice', () => {
     const [message] = vi.mocked(console.error).mock.calls[0]
     expect(message).toContain('invitation')
     expect(message).toContain('error mailer_send_failed')
-    expect(message).toContain('mailerError unauthorized')
+    expect(message).toContain('mailError unauthorized')
     expect(Sentry.captureMessage).toHaveBeenCalledWith(
       '[users-notice] GAS send failed',
       expect.objectContaining({

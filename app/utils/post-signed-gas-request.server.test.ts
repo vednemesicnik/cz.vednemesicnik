@@ -171,24 +171,42 @@ describe('postSignedGasRequest', () => {
     expect(fetchMock).toHaveBeenCalledOnce()
   })
 
-  test('treats an unknown code as retryable and keeps the mailerError', async () => {
+  test('treats an unknown code as retryable and keeps the mailError', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({
-        error: 'mailer_send_failed',
-        mailerError: 'unreachable',
+        error: 'mail_send_failed',
+        mailError: 'unreachable',
         ok: false,
       }),
     )
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(settle(post())).resolves.toEqual({
-      error: 'mailer_send_failed',
-      mailerError: 'unreachable',
+      error: 'mail_send_failed',
+      mailError: 'unreachable',
       ok: false,
       retryable: true,
       status: 200,
     })
     expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  test('reads the reason from a script still on the old name', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          error: 'mailer_send_failed',
+          mailerError: 'unreachable',
+          ok: false,
+        }),
+      ),
+    )
+
+    await expect(settle(post())).resolves.toMatchObject({
+      error: 'mailer_send_failed',
+      mailError: 'unreachable',
+    })
   })
 
   test('calls an answer without a code a server_error', async () => {
