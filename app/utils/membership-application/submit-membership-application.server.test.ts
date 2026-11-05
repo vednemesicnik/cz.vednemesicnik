@@ -103,29 +103,26 @@ describe('submitMembershipApplication', () => {
     timeoutSpy.mockRestore()
   })
 
-  test.each(['mailError', 'mailerError'])(
-    'a stored application whose acknowledgement failed is still ok (%s)',
-    async (field) => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue(
-          jsonResponse({
-            code: application.code,
-            [field]: 'unreachable',
-            ok: true,
-          }),
-        ),
-      )
+  test('a stored application whose acknowledgement failed is still ok', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          code: application.code,
+          mailError: 'unreachable',
+          ok: true,
+        }),
+      ),
+    )
 
-      const result = await submitMembershipApplication(application)
+    const result = await submitMembershipApplication(application)
 
-      expect(result).toEqual({
-        acknowledgementSent: false,
-        code: application.code,
-        ok: true,
-      })
-    },
-  )
+    expect(result).toEqual({
+      acknowledgementSent: false,
+      code: application.code,
+      ok: true,
+    })
+  })
 
   test('a code stored by an earlier attempt does not claim the e-mail went out', async () => {
     vi.stubGlobal(

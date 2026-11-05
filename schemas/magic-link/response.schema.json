@@ -61,13 +61,13 @@
                 "missing_fields",
                 "email_not_allowed",
                 "link_not_allowed",
-                "mailer_send_failed",
+                "mail_send_failed",
                 "server_error"
               ],
               "type": "string"
             },
-            "mailerError": {
-              "description": "Present only when error is \"mailer_send_failed\": the underlying reason the delegated send failed.",
+            "mailError": {
+              "description": "Present only when error is \"mail_send_failed\": the underlying reason the delegated send failed.",
               "enum": [
                 "unauthorized",
                 "stale_timestamp",
@@ -92,6 +92,6 @@
       ]
     }
   },
-  "description": "Contract for the Vedneměsíčník administration magic-link web app. POST a SignInMagicLinkRequest to send a sign-in link; the response is a SignInMagicLinkResponse. The send is delegated to the Mailer, whose reason is surfaced in mailerError when error is \"mailer_send_failed\".",
+  "description": "Contract for the Vedneměsíčník administration magic-link web app. POST a SignInMagicLinkRequest to send a sign-in link; the response is a SignInMagicLinkResponse. The send is delegated to the mail service, whose reason is surfaced in mailError when error is \"mail_send_failed\".",
   "title": "MagicLink"
 }
