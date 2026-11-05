@@ -55,8 +55,8 @@ describe('sendEnrolmentEmail', () => {
 
   it('reports a refused send and answers false', async () => {
     postMock.mockResolvedValue({
-      error: 'mailer_send_failed',
-      mailerError: 'unreachable',
+      error: 'mail_send_failed',
+      mailError: 'unreachable',
       ok: false,
       retryable: true,
       status: 200,
@@ -68,8 +68,8 @@ describe('sendEnrolmentEmail', () => {
       '[editorial-board-enrolment] GAS send failed',
       expect.objectContaining({
         extra: {
-          error: 'mailer_send_failed',
-          mailerError: 'unreachable',
+          error: 'mail_send_failed',
+          mailError: 'unreachable',
           status: 200,
         },
       }),

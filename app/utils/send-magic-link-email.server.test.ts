@@ -76,7 +76,7 @@ afterEach(() => {
 })
 
 describe('sendMagicLinkEmail', () => {
-  test('logs the specific error and mailerError on a delegated send failure', async () => {
+  test('logs the specific error and mailError on a delegated send failure', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
@@ -93,7 +93,7 @@ describe('sendMagicLinkEmail', () => {
     expect(console.error).toHaveBeenCalledOnce()
     const [message] = vi.mocked(console.error).mock.calls[0]
     expect(message).toContain('error mailer_send_failed')
-    expect(message).toContain('mailerError unauthorized')
+    expect(message).toContain('mailError unauthorized')
   })
 
   test('does not log on a successful send', async () => {
@@ -161,7 +161,7 @@ describe('sendMagicLinkEmail', () => {
     expect(console.error).toHaveBeenCalledOnce()
     const [message] = vi.mocked(console.error).mock.calls[0]
     expect(message).toContain('error unreachable')
-    expect(message).toContain('mailerError —')
+    expect(message).toContain('mailError —')
   })
 
   test('swallows and logs when the request throws (network / timeout)', async () => {

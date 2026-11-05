@@ -13,6 +13,7 @@ import type { GasEndpointName } from '@constants/gas-endpoints'
 import * as Sentry from '@sentry/react-router'
 
 import { postGasRequest } from './post-gas-request.server'
+import { readMailError } from './read-mail-error'
 import { signGasRequest } from './sign-gas-request.server'
 
 export type GasFailure = {
@@ -20,7 +21,7 @@ export type GasFailure = {
   error: string
   retryable: boolean
   status: number | null
-  mailerError?: string
+  mailError?: string
   cause?: unknown
 }
 
@@ -39,6 +40,7 @@ export type SignedGasRequestOptions<TRequest> = {
 
 type GasFailureBody = {
   error?: unknown
+  mailError?: unknown
   mailerError?: unknown
   ok?: unknown
 }
@@ -65,13 +67,13 @@ const RETRY_DELAY_MILLISECONDS = 1000
 const createGasFailure = (
   error: string,
   status: number | null,
-  mailerError?: string,
+  mailError?: string,
 ): GasFailure => ({
   error,
   ok: false,
   retryable: !SETTLED_ERRORS.has(error),
   status,
-  ...(mailerError === undefined ? {} : { mailerError }),
+  ...(mailError === undefined ? {} : { mailError }),
 })
 
 const attemptRequest = async <TSuccess>(
@@ -100,7 +102,7 @@ const attemptRequest = async <TSuccess>(
     return createGasFailure(
       typeof data.error === 'string' ? data.error : 'server_error',
       status,
-      typeof data.mailerError === 'string' ? data.mailerError : undefined,
+      readMailError(data),
     )
   } catch (error) {
     // Timeout, DNS, connection refused, or a bug on our side. The caller reports
