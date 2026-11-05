@@ -24,6 +24,7 @@ import type {
 import * as Sentry from '@sentry/react-router'
 
 import { postGasRequest } from '~/utils/post-gas-request.server'
+import { readMailError } from '~/utils/read-mail-error'
 import { signGasRequest } from '~/utils/sign-gas-request.server'
 
 /**
@@ -67,12 +68,13 @@ export const sendUsersNotice = async (
 
     if (!ok || data?.ok !== true) {
       // data is null when the body isn't JSON (e.g. a GAS HTML error page);
-      // otherwise narrow to the failure branch for the error / mailerError.
+      // otherwise narrow to the failure branch for the error / mailError.
       const failure = data?.ok === false ? data : undefined
+      const mailError = readMailError(failure)
       const message =
         `[users-notice] GAS send failed — ${request.kind}, status ${status}, ` +
         `ok ${data?.ok ?? '—'}, error ${failure?.error ?? '—'}, ` +
-        `mailerError ${failure?.mailerError ?? '—'}.`
+        `mailError ${mailError ?? '—'}.`
 
       console.error(message)
 
@@ -83,7 +85,7 @@ export const sendUsersNotice = async (
           extra: {
             error: failure?.error,
             kind: request.kind,
-            mailerError: failure?.mailerError,
+            mailError,
             ok: data?.ok,
             status,
           },

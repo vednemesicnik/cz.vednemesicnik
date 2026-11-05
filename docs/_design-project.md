@@ -1,21 +1,34 @@
 # The Design Project
 
-The design that decides this app — public website and administration alike — lives in
-Claude Design, reached through `DesignSync`. `/ask-design` is the loop that puts questions
-to it and reads the answers back.
+The design that decides this app — public website and administration alike — lives in two
+artifacts on claude.ai, reached through the `Artifact` tool (moved from Claude Design in
+November 2026). `/ask-design` is the loop that puts questions to it and reads the answers back; the
+`ux-designer` agent answers them.
 
-| What                  | Id                                     | Holds                                                                  |
-| --------------------- | -------------------------------------- | ---------------------------------------------------------------------- |
-| **App project**       | `60d13daa-be98-47ec-95e1-e8913a86fef4` | Screens (`22 Seznam článků.dc.html` first; `07 · Stavy a akce obsahu`, `30 · Adresy a routování` and the rest planned), `questions/`, `uploads/podklady/` |
-| **Design system**     | `4b484003-4984-46c4-86cc-a96eee9e4b4a` | Tokens and **components** (`components/`, `tokens/`, `guidelines/`)     |
+| What              | Artifact                                             | Holds                                                                  |
+| ----------------- | ---------------------------------------------------- | ---------------------------------------------------------------------- |
+| **App project**   | https://claude.ai/artifact/7KtBFBnBegdW3NePnmYCL2 | Screens (`22 Seznam článků.dc.html`, `07 Stavy a akce obsahu`, `30 Adresy a routování` and the rest), `questions/`, `uploads/podklady/` |
+| **Design system** | https://claude.ai/artifact/PqJtpBPrbbf3f9zEw3gMVD | Tokens and **components** (`components/`, `tokens/`, `guidelines/`)     |
 
-The app project loads the design system as `_ds/cz-vednemesicnik-design-system-4b484003-…/`.
-Components live in the design system, not in the app project's documents (decided
-27 Sep 2026, `rd9daf6z`). A component a screen needs before the system has it is drawn
-in the screen as a *candidate* and moves into the system later.
+Each artifact keeps its content under `project/`. Paths in this document and in the skills are
+relative to that folder unless they say otherwise; the tool wants the whole path
+(`project/questions/_index.json`).
 
-The app project is `PROJECT_TYPE_PROJECT`, so `list_projects` does not list it. `get_project`,
-`list_files`, `get_file` and the write methods all work when handed the id.
+The app project loads the design system from its own copy,
+`_ds/cz-vednemesicnik-design-system-4b484003-…/`. Components live in the design system, not in
+the app project's documents (decided 27 Sep 2026, `rd9daf6z`). A component a screen needs before
+the system has it is drawn in the screen as a *candidate* and moves into the system later.
+
+## The designer
+
+Artifacts have no chat of their own, so `.claude/agents/ux-designer.md` does the design work: it
+takes a brief, decides the UX, draws and publishes. Nobody pastes a prompt anywhere. The session
+that asked writes the brief under `questions/` and checks the result; the screens, components and
+tokens are the agent's. Log 0069 has the reasons.
+
+A chat kept its history and an agent starts empty, so what it should know stands in its file, in
+this document and in the design documents' dated notes. A change to the design system through the
+agent, including rebuilding its bundle, has not been tried yet.
 
 ## Documents
 
@@ -27,30 +40,57 @@ a dead end in the billing project.
 
 ## Reading a screen cheaply
 
-**`get_file` in the main session, never in a subagent.** A result over a few kilobytes is saved
-to a file (`Full output saved to: …/tool-results/<id>.txt`) with a short preview. A subagent pays
-the whole document into its own context.
+**Read in the main session or in `ux-designer`, never in another subagent:** the reviewing and
+exploring agents have no `Artifact` tool. `Artifact` with `action: "list"`, `scope: "files"` and
+the `url` lists the files; `action: "read"` with `path`, or `paths` for several in one call, saves each under
+`<scratchpad>/artifact-files/<id>/` at its published path and says where. Only a small text file
+also comes back in the result.
 
 ```sh
-pnpm design:screen <saved file>                  # the screens it holds: anchor, notes, label
-pnpm design:screen <saved file> 22a              # one screen as text, notes included
-pnpm design:screen <saved file> 22a 22b --notes  # only their notes
-pnpm design:screen <saved file> 22a --html       # the markup
+pnpm design:screen "<saved file>"                  # the screens it holds: anchor, notes, label
+pnpm design:screen "<saved file>" 22a              # one screen as text, notes included
+pnpm design:screen "<saved file>" 22a 22b --notes  # only their notes
+pnpm design:screen "<saved file>" 22a --html       # the markup
 ```
 
 A screen is `<section id="22a">` and runs to its own closing tag; its label is the `<span>`
 after the anchor badge, its notes the paragraphs that open with a `<strong>` lead. Documents
-without anchored sections (tokens, component cards) print nothing — extract them with
-`jq -r .content <saved file> > <scratchpad>/<name>.html` and grep.
+without anchored sections (tokens, component cards) print nothing — grep the saved file.
 
-**Fetch a document twice and two saved files exist; only the newest is live.** Key any sweep
-over saved results by the newest `mtime`, not by the path inside the file.
+**A saved file is as old as its last read.** Reading again overwrites it, and edits in the
+artifact's editor save on their own, so read again before relying on a copy from earlier in the
+session.
+
+## Writing
+
+The session that asks writes only under `questions/`, and `uploads/` for reference material the
+user asked to hand over. The rest is the designer's. For either of them, first a `read` of just the
+`url`, which prints the type's instructions and the version: a read with `path` does not count as having seen the artifact, and without this one the
+publish is refused even when nobody saved. Then read what you change and edit the saved copies.
+Keep that short, because a publish sends a file whole and `_index.json` has other writers. Then
+one `Artifact` publish, with `root` the saved folder and `files` holding only what changed, `null`
+to delete:
+
+```text
+url:       the artifact
+root:      <scratchpad>/artifact-files/<id>
+file_path: <root>/project/compat.json     app project: read it too, send it unchanged
+files:     { "project/questions/k7m2x9qa-question.md": "project/questions/k7m2x9qa-question.md",
+             "project/questions/_index.json": "project/questions/_index.json",
+             "project/questions/gone-answer.md": null }
+```
+
+In the design system, whose `questions/<code>-port.md` files are older ones that nothing adds to
+any more, `file_path` is the file being written and `project/design-system.json` stays out of it. Neither artifact takes
+`index.html`, `SKILL.md` or `artifact-type/` at its root; those belong to the type. A publish
+refused because someone saved meanwhile: read the `url` and the files again and redo the edit,
+once.
 
 ## `questions/`
 
 `/ask-design`'s working folder. A question is named by an eight-character code:
 `questions/<code>-question.md`, the answer `questions/<code>-answer.md`, and an optional
-`questions/<code>-reply.md` when an answer needs a follow-up before work continues.
+`questions/<code>-reply.md` when an answer needs a follow-up from a later session.
 
 **`questions/_index.json`** holds, per code, what retiring a pair needs — for example:
 
@@ -75,11 +115,9 @@ over saved results by the newest `mtime`, not by the path inside the file.
   that stands in that screen because of this decision. `tidy` greps for it instead of re-reading
   the answer.
 
-`/ask-design` keeps the index, and writes only under `questions/`. The design chat sometimes
-fills in an entry itself when it answers (`answered`, `wroteTo`) and sometimes forgets, and
-another session may have written too. Read it fresh before every write, and at `check` treat an
-entry design filled in as a draft: confirm each witness with `pnpm design:screen` before keeping
-it.
+`/ask-design` keeps the index, and writes only under `questions/`. Older entries were sometimes
+filled in by a design chat, and another session may have written too. Read it fresh before every
+write, and confirm each witness with `pnpm design:screen` before keeping it.
 
 ## Uploaded material
 

@@ -60,11 +60,13 @@ the main checkout's links.
 
 Project subagents are committed in `.claude/agents/` (the one tracked path under `.claude/`),
 so worktrees and cloud environments have them without a link step. A subagent cannot ask the
-user anything, so only self-contained, read-only work goes to one; the interactive pipeline
-skills stay in the main session.
+user anything, so only self-contained work that changes nothing in the repository goes to one; the
+interactive pipeline skills stay in the main session.
 
 - `implementation-reviewer` — the pre-PR review for `/review-implementation` and
   `/ship-issue`, in a fresh context.
+- `ux-designer` — answers a design question from a brief and draws it in the design artifacts, for
+  `/ask-design`.
 
 ### Branching & Pull Requests
 
@@ -307,7 +309,7 @@ Comprehensive project documentation is in the `docs/` directory:
 - `docs/_manual-database-restore.md` - Database restore procedures
 - `docs/_prisma-studio-on-production.md` - Running Prisma Studio against the production database over a Fly tunnel
 - `docs/_apps-script-web-apps.md` - Which Google Apps Script does what for the web, with a diagram
-- `docs/_design-project.md` - The Claude Design project and design system (ids, documents, `questions/`), and reading a screen with `pnpm design:screen`
+- `docs/_design-project.md` - The design project and design system, two artifacts (links, documents, `questions/`), reading and writing them, and reading a screen with `pnpm design:screen`
 - `docs/_copy-context.md` - Context the copywriter gets in every `/ask-copy` thread: terms, content states, roles, voice (Czech)
 - `docs/work-log/` - Numbered work log: what the work settled on, when and why, and what was turned down; context, not rules (index and format in `README.md`, template in `_template.md`)
 
@@ -399,9 +401,9 @@ What the work settles that later work should know gets an entry in `docs/work-lo
 
 ### Design and Copy
 
-Loops for decisions this repository does not own. Load when a screen, component or token needs a decision from the Claude Design project, when a design document comes back with open questions, or when user-facing Czech needs a copywriter.
+Loops for decisions this repository does not own. Load when a screen, component or token needs a decision from the design project, when a design document comes back with open questions, or when user-facing Czech needs a copywriter.
 
-- `.agents/skills/ask-design/SKILL.md` — put a question to the Claude Design project, read the answer back (`check`), retire settled questions (`tidy`). See `docs/_design-project.md`.
+- `.agents/skills/ask-design/SKILL.md` — brief the `ux-designer` agent, which answers and draws in the design project, read the answer back (`check`), retire settled questions (`tidy`). See `docs/_design-project.md`.
 - `.agents/skills/ask-copy/SKILL.md` — take strings through the copywriter in the shared room (`vdm-dev-exchange` in `.mcp.json`). Every thread opens with the whole of `docs/_copy-context.md`.
 
 ## Agent Rules

@@ -82,7 +82,7 @@ Report what each step did or why it was a no-op.
 7. **Name the leftovers** outside git: test rows in the local database, a deployed Apps Script
    version, a Fly secret, files in the Tigris bucket. Clean up only unambiguous test debris;
    ask before anything in production.
-8. **Offer the design pairs this issue was waiting on.** `get_file questions/_index.json` in the
+8. **Offer the design pairs this issue was waiting on.** Read `questions/_index.json` in the
    design project (`docs/_design-project.md`) and list entries whose `for` or `names` holds the
    retired issue. Recommend `/ask-design tidy #<n>` by name; do not run it.
 
@@ -118,8 +118,9 @@ Use `$ARGUMENTS` if given. Otherwise the next step comes from **what is still op
 order, and a new issue is recommended only when the first three are empty:
 
 1. **Open loops of what just shipped:** a design or copy answer that is back and unchecked
-   (look at `questions/` in the design project, step 1.8), a question still out, a reply
-   owed, a deviation the PR left for design.
+   (look at `questions/` in the design project, step 1.8), a copy question still out, a design
+   question with no answer (its agent never finished: `/ask-design check <code>` spawns it again),
+   a reply owed, a deviation the PR left for design.
 2. **Leftovers of the same area:** the unbuilt screens of the drawings this issue worked from,
    and follow-ups the PR or this window named, filed or not. With no issue yet, the step is
    `/discover-idea` on that area, or a no-issue PR for something small.
@@ -130,7 +131,7 @@ order, and a new issue is recommended only when the first three are empty:
    empty.
 
 Starting something new while 1–3 are open leaves work half done. Say plainly when the open
-work waits on someone else (a design answer still out, the `donate-page` branch), and what
+work waits on someone else (the copywriter's answer still out, the `donate-page` branch), and what
 can be done meanwhile. **The pick is the user's**; do not read a new issue's body into this
 window.
 

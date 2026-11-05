@@ -34,8 +34,8 @@ one sentence and name the surfaces it touches — public website, administration
 form. If it does not fit one sentence, that is the first finding.
 
 Read what exists before weighing: the work log in `docs/work-log/`, the design screens
-that cover it (`DesignSync`, app project `60d13daa-be98-47ec-95e1-e8913a86fef4`, one screen at a
-time per `docs/_design-project.md`), the code it would sit in, and the open issues — half of these
+that cover it (app project, one screen at a time per `docs/_design-project.md`), the code it would
+sit in, and the open issues — half of these
 proposals are already an issue under another name.
 
 ### Phase 1 — The three lenses

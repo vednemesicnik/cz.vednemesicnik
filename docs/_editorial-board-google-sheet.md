@@ -14,7 +14,7 @@ bound sheet also edits its project (log 0059). Log 0060 says why there are two.
 | Project | What it does |
 | ------- | ------------ |
 | [`SCRIPT__Editorial_Board__Contacts`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Contacts) | Answers the read for `/editorial-board`. Never writes. |
-| [`SCRIPT__Editorial_Board__Membership`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Membership) | The only project that writes: the setup, the edit trigger and the signed writes from the app. |
+| [`SCRIPT__Editorial_Board__Membership`](https://github.com/vednemesicnik/SCRIPT__Editorial_Board__Membership) | The only project that writes: the setup, the edit trigger, the signed writes from the app and the scheduled jobs. |
 
 Their READMEs have the steps for each project. [Apps Script web apps](_apps-script-web-apps.md)
 shows where both sit among the scripts the web uses.
@@ -81,21 +81,21 @@ labels, values and notes went through the copywriter; they live in the Membershi
 | `Poslední potvrzení` | date             | empty means none on record, not that the person did not confirm |
 | `Dotaz odeslán`      | date             | start of the current round of the question, from #392        |
 | `Odchod či vyřazení` | date             | not filled when somebody changes `Stav` by hand              |
-| `Odeslání formuláře` | date             | copied from the application on acceptance, #928              |
+| `Odeslání formuláře` | date             | copied from the application on acceptance                    |
 
 `Mimo redakci` means the person is not part of the editorial board right now: they left, stopped
 contributing or are on a pause. `Stav` claims no reason.
 
 **`Přihlášky` sheet**: applications until the chief editors decide, apart from the directory of
 people who are in the editorial board. A row arrives when someone presses the button on the
-confirmation page, and accepting moves the person to `Kontakty` with #928.
+confirmation page, and accepting moves the person to `Kontakty`.
 
 | Column | Header               | Type     | Notes                                                        |
 | ------ | -------------------- | -------- | ------------------------------------------------------------ |
 | A      | `Jméno`              | text     |                                                              |
 | B      | `E-mail`             | text     |                                                              |
 | C      | `Telefon`            | text     |                                                              |
-| D      | `Zájem o činnost`    | text     | optional answer from the form; moves to `Poznámka` on acceptance |
+| D      | `Zájem o činnost`    | text     | optional answer from the form; copied to an empty `Poznámka` on acceptance |
 | E      | `Odeslání formuláře` | date     |                                                              |
 | F      | `Ověření e-mailu`    | date     | verifies the address only; the row is deleted 12 months later |
 | G      | `Stav`               | dropdown | `Čeká na přijetí`, `Přijato`, `Nepřijato`; says what was decided, not where the person is today |
@@ -108,12 +108,25 @@ Behaviour:
   `V redakci` and pastel red otherwise. (Any such rule combines
   its conditions with `*` rather than `AND(…,…)` and has no `TRUE`/`FALSE`: `whenFormulaSatisfied`
   doesn't localise the separator, so a comma breaks the rule in a Czech-locale sheet.)
+- `Přijato` on `Přihlášky`, with a `Role` chosen first, writes the person to `Kontakty` through the same
+  trigger: a new row at the first empty name, or their existing row, found by any address in its `E-mail`
+  cell. Either way they end up `V redakci`, with the role added, today's `Poslední potvrzení` and empty
+  `Odchod či vyřazení` and `Dotaz odeslán`. `Zápis do Kontaktů` then keeps a retry or a fill-down from adding
+  anyone twice, and nobody gets an e-mail. No role, another name on the address or a failure refuses the
+  row: `Stav` goes back and a note on the cell says why. A fill-down has no old values, so its refused rows
+  go to `Čeká na přijetí` ([log 0068](work-log/0068-acceptance-refuses-a-different-name-and-a-refused-fill-down-goes-to-pending.md)).
+  `Nepřijato` moves nothing.
 - `handleSpreadsheetEdit`, an installable trigger in the Membership project, acts when one `Stav` cell
-  changes on a named row: it clears `Dotaz odeslán`, and for `V redakci` writes today's
+  changes on a named row of `Kontakty`: it clears `Dotaz odeslán`, and for `V redakci` writes today's
   `Poslední potvrzení` and clears `Odchod či vyřazení`. A paste across rows writes no date. It moves no
   row: `Kontakty` is sorted by name only, by a nightly job and never on an edit. Section grouping and per-section
   name ordering are done in the endpoint and the app, so a member with several role chips needs no
   single sort position in the sheet.
+- `runScheduledJobs`, a daily trigger in the same project between 4 and 5 a.m., deletes `Přihlášky` rows 12
+  months after `Ověření e-mailu` whatever their `Stav`, sorts `Kontakty` by `Jméno` with reserve rows last and,
+  on Mondays while someone is `Čeká na přijetí`, tells the chief editors' group how many wait and how long the
+  longest has waited. The message names nobody, and when nobody waits nothing goes out
+  ([log 0070](work-log/0070-scheduled-jobs-stamp-each-job-when-it-finishes-and-resume-on-the-next-night.md)).
 
 The steps below are for the read, in the Contacts project.
 

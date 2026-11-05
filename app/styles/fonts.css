@@ -1,15 +1,23 @@
+/* Unmodified upstream files. The version and the licence notice are at the top of global.css. */
+@font-face {
+  font-family: InterVariable;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./fonts/inter-variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: InterVariable;
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./fonts/inter-variable-italic.woff2") format("woff2");
+}
+
 @layer base {
   :root {
-    --font-family: Inter;
-  }
-
-  @supports (font-variation-settings: normal) {
-    :root {
-      --font-family: InterVariable;
-    }
-  }
-
-  :root {
+    --font-family: InterVariable;
     --font-size: 16px;
 
     --scale-ratio-major-second: 1.125;

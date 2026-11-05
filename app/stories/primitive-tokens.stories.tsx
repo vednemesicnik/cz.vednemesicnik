@@ -244,7 +244,7 @@ function PrimitiveTokens() {
   return (
     <div
       style={{
-        fontFamily: 'var(--font-family, Inter), sans-serif',
+        fontFamily: 'var(--font-family), sans-serif',
         maxWidth: '900px',
         padding: '32px',
       }}

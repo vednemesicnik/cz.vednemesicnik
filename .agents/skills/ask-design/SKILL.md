@@ -1,6 +1,6 @@
 ---
 name: ask-design
-description: Put a question to the Claude Design project — research it, write it up, upload it, and hand over the prompt for the design chat. Use when a screen, a component or a token needs a decision the design project owns, when a design document comes back with open questions, when a departure from a design answer is being considered, or when a design answer has come back and needs reading in.
+description: Put a question to the design project — research it, write the brief, upload it, have the ux-designer agent answer and draw it, and check the result. Use when a screen, a component or a token needs a decision the design project owns, when a design document comes back with open questions, when a departure from a design answer is being considered, or when a design answer has come back and needs reading in.
 argument-hint: [what to ask about, "check [code]" to read the answer back, or "tidy [#issue]" to retire settled questions]
 ---
 
@@ -9,11 +9,11 @@ answer verified against the design files rather than against a paraphrase of the
 
 The loop this automates: something in the app has no counterpart in the design, two places answer
 the same visual question differently, or a design document ends with open questions only the code
-can answer. That is a decision for design — but carrying it over by hand means writing the
-question, uploading it, composing a prompt, and remembering what was asked when the answer arrives.
+can answer. That is a decision for design. This session writes the brief and checks the answer,
+and the `ux-designer` agent decides and draws in between. Nobody pastes anything anywhere.
 
-$ARGUMENTS names the subject. `check` (or `--check`) means the answer is back: skip to step 7, and
-`check k7m2x9qa` names which one. `tidy` means no question at all — skip to step 8; `tidy #409`
+$ARGUMENTS names the subject. `check` (or `--check`) means read an answer back: skip to step 6, and
+`check k7m2x9qa` names which one. `tidy` means no question at all — skip to step 7; `tidy #409`
 narrows it to the pairs the index ties to that issue.
 
 **How to read the project cheaply, which project holds what, and what `questions/_index.json`
@@ -23,16 +23,15 @@ holds is in [docs/_design-project.md](../../../docs/_design-project.md).** Read 
 
 Every question gets a **code** — eight lowercase letters and digits — and its files are named by
 it: `questions/<code>-question.md`, `questions/<code>-answer.md`, and `questions/<code>-reply.md`
-when an answer needs a follow-up before design continues. The code is what gets pasted, what the
-design chat is told to open, and what `check` is handed back. The topic and the date live in the
-first lines of the question and in its index entry.
+when an answer needs a follow-up from a later session. The code is what the agent is told to open
+and what `check` is handed. The topic and the date live in the first lines of the question and in
+its index entry.
 
 ## 1. Read what is reachable before writing a word
 
-`DesignSync list_files` on the app project (`60d13daa-be98-47ec-95e1-e8913a86fef4`), then
-`get_file` on the documents the question touches — in this session, never in a subagent — and
-`pnpm design:screen <saved file> 22a` for one screen of them. For a component or a token, read the
-design system (`4b484003-4984-46c4-86cc-a96eee9e4b4a`): `components/`, `tokens/`, `guidelines/`.
+List the files of the app project, then read the documents the question touches — in this
+session — and `pnpm design:screen "<saved file>" 88a` for one screen of them.
+For a component or a token, read the design system: `components/`, `tokens/`, `guidelines/`.
 
 Two rules about what comes back:
 
@@ -43,28 +42,37 @@ Two rules about what comes back:
 
 **When a design document ends with open questions**, those are the question: answer each one from
 the code with `file:line`, and check the document's own claims about today's app while you are in
-it — design draws from screenshots, and a screenshot cannot show a permission, a data model or a
+it. Many were drawn from screenshots, and a screenshot cannot show a permission, a data model or a
 parameter name.
 
 ## 2. Work out what is actually being asked
 
-A question earns its place only if a different answer would change the code. Each one carries:
+A question earns its place only if a different answer would change the code. The brief tells the
+designer what the product needs and leaves the UX to them. It carries:
 
+- **What the product needs** — who reads the screen, when, and what they have to be able to do.
+- **What is decided** — the given decisions below, as facts.
+- **The data on offer** — everything the screen could show, with where it comes from. Which of it
+  appears is a UX call. Fix a field as required or forbidden only when you are certain the product
+  demands it.
 - **Dnes** — what the app does, with `file:line`. Not what it should do.
-- **Proč se ptám** — the thing that forced the question.
-- **Varianty** — the realistic answers and what each costs.
-- **Co bych čekal** — a recommendation, marked as mine.
 
-**Product decisions are yours to make, not design's and not a question to the user.** When the
-code and the drawing disagree on behaviour — a state that does not exist, an action that is
-removed, a permission, a data-model assumption — decide it per the `decide-and-inform` rule and
-tell the user what you decided. Then write it into the question as a given fact, without widening
-it into implications the decision does not carry.
+No variants and no recommendation: a guess in the brief anchors the answer and spends the fresh
+look the agent is there for. A question about a convention still gets its sources under `Dnes`,
+because the designer needs the same evidence you found.
+
+**Check every state in the brief against the code.** Asking for a drawing of a state that cannot
+happen costs a redraw, and the design then shows a case that does not exist.
+
+**Product, architecture and security are never asked.** Decide them first, per the
+`decide-and-inform` rule, and tell the user what you decided: a state that does not exist, an
+action that is removed, a permission, a data-model assumption, what is stored or sent. Then write
+it into the brief as a given fact, without widening it into implications the decision does not
+carry. Not even as a variant.
 
 **UX decisions are design's, not the user's.** Layout, which action is primary, dialog or toast,
-where a sentence sits, how a state is shown — answer those from the code's facts and leave the
-call to the design chat. Do not bring them to the user, and do not settle them in the question
-either.
+where a sentence sits, how a state is shown — give the facts and leave the call to the designer. Do
+not bring them to the user, and do not settle them in the brief either.
 
 ## 3. Write it up
 
@@ -77,122 +85,101 @@ node -e 'let {randomBytes}=require("node:crypto");let a="abcdefghijklmnopqrstuvw
 
 The code must not be a key in `questions/_index.json` nor the start of any name under `questions/`.
 
-Then write it — Czech, because design reads it — into the session scratchpad as
-`questions/<code>-question.md`:
+Then write it — Czech, because design reads it — as `project/questions/<code>-question.md` under
+the folder the artifact's files are saved in:
 
 ```markdown
 # <kód> · <téma>
 
 Položeno <datum>, k #<issue>.
 
-## Co se ptáme / Rozhodnutí za produkt / Odpovědi na otevřené otázky
+## Co produkt potřebuje
 
-1. <otázka> — **Dnes:** … **Proč se ptám:** … **Varianty:** … **Co bych čekal:** …
+<kdo to čte, kdy a co musí dokázat; případně odpovědi na otevřené otázky dokumentu>
+
+## Daná rozhodnutí
+
+- <fakt, který se neotevírá>
+
+## Data k dispozici
+
+- <údaj> — <odkud je a jak se chová, `file:line`>
+
+## Dnes
+
+- <co aplikace dělá, `file:line`; u otázky na konvenci i zdroje>
 
 ## Co už design říká
 
-- `22 Seznam článků` / `22c` — <co tam je, co tam není>
+- `88 Seznam faktur` / `88c` — <co tam je, co tam není>
 
 ## Co to změní v kódu
 
-- `app/routes/administration/articles/_index/_loader.ts:18` — <co se podle odpovědi přepíše>
+- `app/routes/invoices/_index/_loader.ts:18` — <co se podle odpovědi přepíše>
 ```
 
 The last section is the point of the exercise: a question nobody can act on does not belong in
-the design project. **Design cannot read GitHub** — when an issue matters, carry what it decides
-into the question, not just its number.
+the design project. **The designer starts each run with no memory and works from this file** — when
+an issue or an earlier decision matters, carry what it decides into the brief, not just its number.
 
 ## 4. Upload it
 
-Into the app project, by id: `finalize_plan` with `writes` naming the question and
-`questions/_index.json`, `deletes: []`, and `localDir` set to the scratchpad folder that holds
-`questions/`; then `write_files` with `localPath`.
+Into the app project, in one publish as `docs/_design-project.md` § Writing gives it.
 
-**Add the pair to `questions/_index.json` in the same plan**: read it fresh (`get_file`), add
+**Add the pair to `questions/_index.json` in the same publish**: read it fresh, add
 `"<code>": { "topic": "<téma>", "asked": "<date>", "for": [<issues>], "answered": null }`.
 
 **Only ever write under `questions/`** (and `uploads/` for reference material the user asked to
-hand over). The screens, the design system and its components are design's to change — putting
-our proposal in them is answering our own question in the system's voice.
+hand over). The screens, the design system and its components are the designer's to change —
+putting our proposal in them is answering our own question in the system's voice.
 
-## 5. Hand over the prompt
+## 5. Hand it to the designer
 
-Compose the message for the design chat. **Its first line names the project to paste it into** —
-`[Vložit do: app projekt]` for a question, `[Vložit do: design system — zdroj]` for a port into
-the source — because the two chats look alike and a prompt in the wrong one does the wrong work.
-**The second line is the code and the path** — `Otázka k7m2x9qa: questions/k7m2x9qa-question.md`.
-Then it says what decision is wanted, asks for
-the answer in `questions/<code>-answer.md` (or straight into the document when that is the
-natural place), and says what to continue with. If design wants to change a component, that is
-theirs to do in the design system in the same pass.
+Spawn the `ux-designer` agent (`.claude/agents/`) in the background. The prompt gives the path of
+the brief, and little else: everything it needs is in the brief, and what the prompt adds becomes
+one more thing to anchor on.
 
-It asks that a dated note the answer adds to a document cite the decision as
-`Rozhodnuto ⟨datum⟩ (<code>)` or `(#n)` — **without the path**, so `tidy` can retire the pair
-later without leaving a citation that points at nothing.
+**Choose the effort yourself and pass it,** per spawn, by what the answer has to do. The user gave
+that call to this session, so nobody is asked, and you say which one you picked in one line:
 
-It says once that **the wording in the drawings is a draft**: the copywriter goes through it after
-the screen settles (step 7), so design draws the words it needs and does not polish them.
+- **`medium`** — decisions only: confirm, choose, write a note.
+- **`high`** — it also draws or redraws a screen, changes a component or a token in the design
+  system, or splits a document.
 
-**It asks design to split a document before it gets too large to render.** Past roughly 100 kB
-as `get_file` returns it, a `.dc.html` stops drawing and shows its source instead. When the
-document the answer will write into is past that, the prompt says how large it is and asks for
-the split in the same pass — by what the screens are about, every anchor keeping its code.
+Work that shouldn't wait for it goes on in the meantime, and the turn may end while it runs. When
+it finishes, go to step 6 without being asked.
 
-Keep the rest short. Put it on the clipboard — this shell has no locale, so force UTF-8 on both
-ends and compare byte counts:
+## 6. `check` — read the answer back
 
-```sh
-LC_CTYPE=UTF-8 pbcopy < <prompt file>
-LC_CTYPE=UTF-8 pbpaste | head -1
-```
+No `<code>-answer.md` means the agent never finished: nobody else is working on it, so spawn it
+again through step 5.
 
-## 6. Report
-
-**The report opens with one line of its own, bold and in capitals, before anything else** — the
-target project and the effort:
-
-```markdown
-**CÍL: APP PROJEKT · EFFORT: MEDIUM**
-**CÍL: DESIGN SYSTEM — ZDROJ · EFFORT: HIGH**
-```
-
-The target and the effort named in bold inside a sentence do not count: the person pasting reads
-this line and nothing else before switching chats. The effort comes from what the answer has to do:
-
-- **MEDIUM** — the answer is decisions only: confirm, choose a variant, write a note.
-- **HIGH** — the answer also has to draw or redraw a screen, change a component or a token in the
-  design system, or split a document.
-
-Under the line: where the files landed, what is on the clipboard, one line per question, and a
-one-line reason for the effort.
-
-Then **ask the user to confirm the paste** with `AskUserQuestion`. Its question text starts with
-the same `CÍL: … · EFFORT: …` line, then the code and the topic — a plain report does not reach
-someone working on something else, a question does. A `reply` handed over the same way gets the
-same line and the same question.
-
-**Two prompts for different projects go one at a time**: the second waits until the first is
-confirmed, and its line ends with `· POZOR, JINÝ PROJEKT NEŽ MINULE`.
-
-Then stop — the design chat is a separate conversation and this one does not wait for it.
-
-## 7. `check` — read the answer back
-
-`list_files`, then `get_file` on the answer and on every document it says it wrote to. Read the
-files, not a summary pasted into the chat. Report:
+List the files, then read the answer and every document it says it wrote to. Read the files, not
+the agent's report. Report:
 
 - what was asked and what came back, question by question, including anything left unanswered;
 - what actually changed in the design files, quoted (`pnpm design:screen`);
-- **every claim about today's app checked against the code** — design works from screenshots;
-- which code the answer moves, with paths.
+- **every claim about today's app checked against the code** — the designer's are unverified until
+  then;
+- which code the answer moves, with paths;
+- whether anyone has seen it rendered. The browser pane can't open the artifact, so say when only
+  the markup was checked.
+
+Nothing waits on the user here, so no select is owed unless the answer needs a decision from them.
+Anything the agent flagged as a product call is yours to decide first, per the `decide-and-inform`
+rule.
 
 Then complete the pair's index entry: `answered`, `names` (every `#n` it mentions), and
 `wroteTo` with a **witness** per screen — a short literal that stands there because of this
-decision, checked with `pnpm design:screen` against the **newest** saved copy. A witness the
-script cannot find is a finding: report it instead of indexing it.
+decision, checked with `pnpm design:screen` against a copy read just now. A witness the script
+cannot find is a finding: report it instead of indexing it.
 
-When the answer needs corrections or decisions before design continues, they go back as
-`questions/<code>-reply.md` through steps 3–5, not as a chat message.
+When the answer needs corrections or a new decision, send them in this session to the same agent,
+which has the context, and read the result back through this step: its answer has to end up
+current, not as a history of corrections. From a later session, write `questions/<code>-reply.md`,
+upload it, and spawn a new agent on its path through step 5; the index entry stays as it is until
+this step runs again. The same rules hold as for a brief: state the need and the given decision,
+and leave the UX to the designer.
 
 ### What design drew goes through copy
 
@@ -204,20 +191,20 @@ a drawing adds or changes goes to the copywriter (`/ask-copy`) before it is impl
 - **A new screen or document** — once it has no open questions, all of its user-facing strings:
   labels, buttons, hints, empty states, errors, confirmations, toasts.
 - **An answer that rewrote screens** — only the strings it added or changed; quote them from the
-  newest copy, not from the answer.
+  copy read just now, not from the answer.
 - **An answer that changed no wording** — nothing; say so in the report.
-- **A screen still waiting on a `reply`** — not yet; its words may change again.
+- **A screen still waiting on a correction or a `reply`** — not yet; its words may change again.
 
 Give the copywriter the facts from this side — what the app will do, who sees the string, when —
 and say which points of `docs/_copy-context.md` the drawing no longer matches, since a redesign
-draws the future app. The wording copy settles goes back to design as a new question through
+draws the future app. The wording copy settles goes back to the designer as a new question through
 steps 3–5, so the drawing carries it; implementation takes the words from the drawing.
 
 The report of `check` ends with the strings now due for copy, or with why there are none.
 
 Implementing the answer is its own piece of work, on a branch with a PR.
 
-## 8. `tidy` — retire what is settled
+## 7. `tidy` — retire what is settled
 
 `questions/` is a working folder, not a record. The record is the design documents and the code.
 Start from `questions/_index.json`. A pair is retirable only when all three hold:
@@ -226,16 +213,16 @@ Start from `questions/_index.json`. A pair is retirable only when all three hold
 - **nothing live depends on it** — no open issue names the file, and none of the issues in its
   `names` is still open (`gh issue list --state open`);
 - **every citation of it has somewhere else to point** — `grep -rno 'questions/[0-9a-z-]*\.md' app
-  docs AGENTS.md .agents`, and a grep of every `.dc.html` (fetched in one parallel batch in this
-  session, newest copy of each) for the code. Rewrite a hit to the document that now carries the
-  decision before the file goes.
+  docs AGENTS.md .agents`, and a grep of every `.dc.html` (read just now, all in one call with
+  `paths`) for the code. Rewrite a hit to the document that now carries the decision before the
+  file goes.
 
-**Check the witness before deleting**: `pnpm design:screen <saved file> <screen> | grep -F
+**Check the witness before deleting**: `pnpm design:screen "<saved file>" <screen> | grep -F
 '<witness>'`. A witness that is gone is not a reason to delete — the decision may have been lost,
 and deleting the answer is how it stops existing. Say which.
 
-Then delete the pair and its index entry in one `finalize_plan`. There is no move in
-`DesignSync`, and a copied decision record that might have drifted is worse than none.
+Then delete the pair and its index entry in one publish. A copied decision record that might have
+drifted is worse than none, so nothing gets moved elsewhere first.
 
 Report what was retired and what stayed, with the reason for each. Never retire the pair this
 loop is currently waiting on.

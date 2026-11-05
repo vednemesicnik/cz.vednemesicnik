@@ -38,7 +38,7 @@ the review runs on the local diff. `/ship-issue` runs the same review as its Pha
    `gh issue view <number> --comments`, else ask. Do not guess.
 
 2. **Extract the design** where the issue touches a designed screen: read the screen by its
-   anchor as `docs/_design-project.md` describes — `get_file` here, never in a subagent — and
+   anchor as `docs/_design-project.md` describes — read here, never in a subagent — and
    save its text and notes to a scratchpad file. The screen decides, not the issue's summary
    of it.
 

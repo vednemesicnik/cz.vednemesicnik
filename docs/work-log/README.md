@@ -91,10 +91,15 @@ Code comments cite an entry by its number (`log 0022`).
 | [0057](0057-a-membership-application-lives-in-its-cookie-until-the-script-stores-it.md) | A membership application lives in its cookie until the script stores it | 2026-11-01 | [0058](0058-the-client-address-is-believed-only-with-our-zones-secret.md) |
 | [0058](0058-the-client-address-is-believed-only-with-our-zones-secret.md) | The client's address from Cloudflare is believed only with our zone's secret | 2026-11-01 |  |
 | [0059](0059-a-script-with-secrets-or-installable-triggers-is-not-bound-to-a-file-people-edit.md) | A script with secrets or installable triggers is not bound to a file people edit | 2026-11-02 | [0060](0060-editorial-board-applications-are-a-tab-and-one-standalone-project-writes-the-sheet.md) |
-| [0060](0060-editorial-board-applications-are-a-tab-and-one-standalone-project-writes-the-sheet.md) | Editorial-board applications are a tab, one standalone project writes the sheet, and `Stav` is what the web shows | 2026-11-02 |  |
+| [0060](0060-editorial-board-applications-are-a-tab-and-one-standalone-project-writes-the-sheet.md) | Editorial-board applications are a tab, one standalone project writes the sheet, and `Stav` is what the web shows | 2026-11-02 || [0070](0070-scheduled-jobs-stamp-each-job-when-it-finishes-and-resume-on-the-next-night.md) |
 | [0061](0061-a-retry-of-an-apps-script-call-is-opt-in-and-names-its-key.md) | A retry of an Apps Script call is opt-in and names its key | 2026-11-02 |  |
 | [0062](0062-the-sign-in-request-answers-before-it-looks-the-address-up.md) | The sign-in request answers before it looks the address up | 2026-11-02 |  |
 | [0063](0063-window-env-is-written-into-the-document.md) | `window.ENV` is written into the document | 2026-11-02 |  |
 | [0064](0064-a-repeated-write-to-the-editorial-board-sheet-gets-its-first-answer.md) | A repeated write to the editorial-board sheet gets its first answer | 2026-11-02 |  |
 | [0065](0065-a-pending-enrolment-waits-in-verification-and-a-room-may-send-it-together.md) | A pending enrolment waits in `Verification`, and a whole room may send the form together | 2026-11-03 |  |
 | [0066](0066-the-enrolment-form-waits-for-its-e-mail-and-a-button-confirms-it.md) | The enrolment form waits for its e-mail, and a button confirms it | 2026-11-03 |  |
+| [0067](0067-inter-is-served-from-our-own-origin.md) | Inter is served from our own origin | 2026-11-04 |  |
+| [0068](0068-acceptance-refuses-a-different-name-and-a-refused-fill-down-goes-to-pending.md) | Acceptance refuses a different name, and a refused fill-down goes to pending | 2026-11-04 |  |
+| [0069](0069-a-design-question-goes-to-an-agent-as-a-brief-of-what-the-product-needs.md) | A design question goes to an agent, as a brief of what the product needs | 2026-11-04 |  |
+| [0070](0070-scheduled-jobs-stamp-each-job-when-it-finishes-and-resume-on-the-next-night.md) | Scheduled jobs stamp each job when it finishes and resume on the next night | 2026-11-04 |  |
+| [0071](0071-under-the-publication-account-only-the-mailer-sends-and-only-one-script-reads.md) | Under the publication account, only the Mailer sends and only one script reads | 2026-11-05 |  |
