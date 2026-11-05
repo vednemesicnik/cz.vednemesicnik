@@ -41,9 +41,9 @@ too.
   rows below them. Items past the limit answer `failed` and retry on the next run.
 - A new scope is granted before the push: a temporary function in the editor, then the consent. Triggers
   run the pushed code at once, and a web app binds its grant to the version.
-- The other running scripts still use `MAILER_*` and `sendViaMailer`. They move one at a time, with the
-  web app answers `mail_send_failed` and `mailError`, the app accepting both names first and
-  `SCRIPT__Auth__Magic_Link` last. `sendViaMailer` goes after that.
+- The five other running scripts moved to these names the same day, one release at a time, with the web
+  app answers `mail_send_failed` and `mailError`. The app read both names until the last of them was out,
+  and `SCRIPT__Auth__Magic_Link` went last, proven by a real sign-in. `sendViaMailer` went after that.
 - The scripts and their accounts are in [`_apps-script-web-apps.md`](../_apps-script-web-apps.md).
 
 ## Turned down

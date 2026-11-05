@@ -57,8 +57,8 @@ Schema, which `pnpm gas:schema:fetch <name>` saves under `schemas/<name>/`.
 | `editorial-board-membership` | `SCRIPT__Editorial_Board__Membership` | `app/utils/editorial-board-enrolment/send-enrolment-email.server.ts`: the enrolment form. `app/utils/editorial-board-membership.server.ts`: its confirmation | signed request, `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET` |
 | `membership` | `SCRIPT__Membership__Applications` | `app/utils/membership-application/submit-membership-application.server.ts`: the membership application | signed request, `GAS_MEMBERSHIP_SECRET` |
 
-The web never sends e-mail itself and holds no Mailer secret: a script behind it renders the message
-and hands it to the Mailer.
+The web never sends e-mail itself and holds no mail service secret: a script behind it renders the
+message and hands it to `SCRIPT__Mail__Send`.
 
 `postGasRequest` walks the redirect from `/exec` itself and logs each hop as a `[gas]` line. Only
 `magic-link` and `editorial-board-membership` try a transport failure again, once, through
@@ -92,8 +92,8 @@ The web does not call these. They are here so a name found in `apps-script-ops` 
 | Donations | `SCRIPT__Donate__Request_Confirmation` | Stores a request for a tax confirmation. Its README names a form at `/donate/request-confirmation`, which `app/routes.ts` does not have today, and the app has no endpoint for it |
 | Publication, under `publikace@` | `SCRIPT__Publication__Issue_Create`, `…__Article_Create`, `…__Article_Approve`, `…__Approval_Send`, `…__Artwork_Upload`, `…__Artwork_Group_Create`, `…__Comment_Digest`, `…__Designer_Handoff` | Preparing a printed issue in Google Docs and Drive, from creating it to the designer's folder |
 
-Under `publikace@`, only the Mailer sends and only one script reads (log 0071). The scripts that mail
-someone hold no Gmail access:
+Under `publikace@`, only `SCRIPT__Mail__Send` sends and only one script reads (log 0071). The scripts
+that mail someone hold no Gmail access:
 
 ```mermaid
 flowchart LR
@@ -115,4 +115,5 @@ flowchart LR
   replyCheck -->|reads| mailbox
 ```
 
-Each calls them with its own `MAIL_SEND_*` and `MAIL_REPLY_CHECK_*` Script Properties.
+Each calls them with its own `MAIL_SEND_*` and `MAIL_REPLY_CHECK_*` Script Properties. A script
+elsewhere in the estate that mails someone reads `MAIL_SEND_*` the same way, through `Toolkit.sendMail`.

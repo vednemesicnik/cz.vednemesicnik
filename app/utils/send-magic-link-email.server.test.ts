@@ -81,8 +81,8 @@ describe('sendMagicLinkEmail', () => {
       'fetch',
       vi.fn().mockResolvedValue(
         jsonResponse({
-          error: 'mailer_send_failed',
-          mailerError: 'unauthorized',
+          error: 'mail_send_failed',
+          mailError: 'unauthorized',
           ok: false,
         }),
       ),
@@ -92,7 +92,7 @@ describe('sendMagicLinkEmail', () => {
 
     expect(console.error).toHaveBeenCalledOnce()
     const [message] = vi.mocked(console.error).mock.calls[0]
-    expect(message).toContain('error mailer_send_failed')
+    expect(message).toContain('error mail_send_failed')
     expect(message).toContain('mailError unauthorized')
   })
 
