@@ -73,9 +73,11 @@ others do not:
 
 ## Without an endpoint of its own
 
-- `SCRIPT__Mail__Send` is called by the scripts in the diagram, never by the web. It is one codebase
-  deployed once per sending mailbox, because a web app sends as the account that deployed it. The
-  billing app calls its own copy under `fakturace@`.
+- `SCRIPT__Mail__Send` is called by the scripts in the diagram and the Publication scripts below,
+  never by the web. It is one codebase deployed once per sending mailbox, because a web app sends as
+  the account that deployed it. The billing app calls its own copy under `fakturace@`.
+- `SCRIPT__Mail__Reply_Check` reads replies for the Publication scripts below, holding only
+  `gmail.readonly` (log 0071). It is deployed per mailbox too, and today only under `publikace@`.
 - `SCRIPT__Toolkit` is a library, not a web app. The scripts share its primitives, pinned by version
   in each manifest.
 
@@ -89,3 +91,28 @@ The web does not call these. They are here so a name found in `apps-script-ops` 
 | Invoices | `SCRIPT__Billing__Invoices` | A web app of its own: a form, a sheet and the PDF on Drive |
 | Donations | `SCRIPT__Donate__Request_Confirmation` | Stores a request for a tax confirmation. Its README names a form at `/donate/request-confirmation`, which `app/routes.ts` does not have today, and the app has no endpoint for it |
 | Publication, under `publikace@` | `SCRIPT__Publication__Issue_Create`, `…__Article_Create`, `…__Article_Approve`, `…__Approval_Send`, `…__Artwork_Upload`, `…__Artwork_Group_Create`, `…__Comment_Digest`, `…__Designer_Handoff` | Preparing a printed issue in Google Docs and Drive, from creating it to the designer's folder |
+
+Under `publikace@`, only the Mailer sends and only one script reads (log 0071). The scripts that mail
+someone hold no Gmail access:
+
+```mermaid
+flowchart LR
+  articleCreate["…__Article_Create<br/>Welcome e-mail"]
+  commentDigest["…__Comment_Digest<br/>New comments"]
+  approvalSend["…__Approval_Send<br/>Approval of an article"]
+  artworkUpload["…__Artwork_Upload<br/>Consent to use artwork"]
+  mailer["SCRIPT__Mail__Send<br/>Sends"]
+  replyCheck["SCRIPT__Mail__Reply_Check<br/>Reads replies"]
+  mailbox[("Mailbox of publikace@")]
+
+  articleCreate --> mailer
+  commentDigest --> mailer
+  approvalSend --> mailer
+  artworkUpload --> mailer
+  approvalSend --> replyCheck
+  artworkUpload --> replyCheck
+  mailer -->|sends| mailbox
+  replyCheck -->|reads| mailbox
+```
+
+Each calls them with its own `MAIL_SEND_*` and `MAIL_REPLY_CHECK_*` Script Properties.
