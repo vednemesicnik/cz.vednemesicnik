@@ -66,6 +66,9 @@ const schema = z
     // production (see the superRefine below).
     [ENV_KEYS.GAS_EDITORIAL_BOARD_MEMBERSHIP_URL]: z.string().optional(),
     [ENV_KEYS.GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET]: z.string().optional(),
+    // Verifies the links that script signs into the re-confirmation e-mails (its
+    // LINK_SECRET). Optional locally (every link is invalid), required in production.
+    [ENV_KEYS.GAS_EDITORIAL_BOARD_LINK_SECRET]: z.string().optional(),
     // Google Apps Script web app that stores a membership application (see the
     // SCRIPT__Membership__Applications repo). Optional locally (the client logs
     // instead of posting), required in production (see the superRefine below).
@@ -129,6 +132,7 @@ const schema = z
           // Editorial-board enrolment (Google Apps Script)
           ENV_KEYS.GAS_EDITORIAL_BOARD_MEMBERSHIP_URL,
           ENV_KEYS.GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET,
+          ENV_KEYS.GAS_EDITORIAL_BOARD_LINK_SECRET,
           // Membership applications (Google Apps Script)
           ENV_KEYS.GAS_MEMBERSHIP_URL,
           ENV_KEYS.GAS_MEMBERSHIP_SECRET,

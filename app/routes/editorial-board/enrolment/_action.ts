@@ -14,7 +14,7 @@ import type { Route } from './+types/route'
 
 const NOT_SENT = 'Přihlášku jsme neodeslali. Odešlete ji prosím znovu.'
 const UNAVAILABLE =
-  'Přihlášku se nepodařilo odeslat. Údaje zůstaly vyplněné, zkuste to znovu.'
+  'Přihlášku se nepodařilo odeslat. Údaje zůstaly vyplněné. Zkuste to prosím znovu.'
 
 export const action = async ({ context, request }: Route.ActionArgs) => {
   const formData = await request.formData()

@@ -54,7 +54,7 @@ Schema, which `pnpm gas:schema:fetch <name>` saves under `schemas/<name>/`.
 | `magic-link` | `SCRIPT__Auth__Magic_Link` | `app/utils/send-magic-link-email.server.ts`: sign-in by link, the identity check in Settings | signed request, `GAS_MAGIC_LINK_SECRET` |
 | `users-notice` | `SCRIPT__Users__Notice_Send` | `app/utils/users-notice/send-users-notice.server.ts`: the invitation, the e-mail change notice | signed request, `GAS_USERS_NOTICE_SECRET` |
 | `editorial-board` | `SCRIPT__Editorial_Board__Contacts` | `app/utils/editorial-board.server.ts`: the `/editorial-board` loader | secret in the body, `GAS_EDITORIAL_BOARD_SECRET` |
-| `editorial-board-membership` | `SCRIPT__Editorial_Board__Membership` | `app/utils/editorial-board-enrolment/send-enrolment-email.server.ts`: the enrolment form. `app/utils/editorial-board-membership.server.ts`: its confirmation | signed request, `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET` |
+| `editorial-board-membership` | `SCRIPT__Editorial_Board__Membership` | `app/utils/editorial-board-enrolment/send-enrolment-email.server.ts`: the enrolment form. `app/utils/editorial-board-membership.server.ts`: its confirmation, and the answers from the re-confirmation e-mails | signed request, `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET`; the e-mails' links are signed the other way, by the script with `LINK_SECRET` and checked against `GAS_EDITORIAL_BOARD_LINK_SECRET` |
 | `membership` | `SCRIPT__Membership__Applications` | `app/utils/membership-application/submit-membership-application.server.ts`: the membership application | signed request, `GAS_MEMBERSHIP_SECRET` |
 
 The web never sends e-mail itself and holds no mail service secret: a script behind it renders the

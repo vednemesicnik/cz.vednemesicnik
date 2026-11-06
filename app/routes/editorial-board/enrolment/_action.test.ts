@@ -177,7 +177,7 @@ describe('editorial-board enrolment action', () => {
 
     expect(result.init.status).toBe(503)
     expect(result.data.submissionResult.error?.['']).toEqual([
-      'Přihlášku se nepodařilo odeslat. Údaje zůstaly vyplněné, zkuste to znovu.',
+      'Přihlášku se nepodařilo odeslat. Údaje zůstaly vyplněné. Zkuste to prosím znovu.',
     ])
     expect(result.data.submissionResult.initialValue).toMatchObject(FIELDS)
   })

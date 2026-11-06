@@ -28,7 +28,7 @@ export default function RouteComponent() {
       <div className={styles.content}>
         <p className={styles.lead}>
           Přihláška je potvrzená. Jsme rádi, že chcete dělat Vedneměsíčník s
-          námi.
+          námi. O přijetí do redakce rozhodne šéfredakce.
         </p>
 
         <LinkButton
