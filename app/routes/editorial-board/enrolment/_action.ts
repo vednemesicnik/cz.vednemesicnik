@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { checkPublicCSRF } from '~/utils/check-public-csrf.server'
 import { issueEnrolmentLink } from '~/utils/editorial-board-enrolment/issue-enrolment-link.server'
 import { writeEnrolmentSentCookie } from '~/utils/editorial-board-enrolment/write-enrolment-sent-cookie.server'
+import { formatRetryAfter } from '~/utils/format-retry-after'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { rateLimitContext } from '~/utils/rate-limit.server'
 
@@ -14,8 +15,6 @@ import type { Route } from './+types/route'
 const NOT_SENT = 'Přihlášku jsme neodeslali. Odešlete ji prosím znovu.'
 const UNAVAILABLE =
   'Přihlášku se nepodařilo odeslat. Údaje zůstaly vyplněné. Zkuste to prosím znovu.'
-// No wait time: the public form carries no minute counts (copy thread `dw7ffilw`).
-const LIMITED = 'Přihlášku teď nelze odeslat. Zkuste to prosím později.'
 
 export const action = async ({ context, request }: Route.ActionArgs) => {
   const formData = await request.formData()
@@ -25,17 +24,22 @@ export const action = async ({ context, request }: Route.ActionArgs) => {
   const refusal = await checkPublicCSRF(formData, request, NOT_SENT)
   if (refusal !== null) return refusal
 
-  const refuseLimited = () =>
+  const refuseUntil = (retryAfter: number) =>
     data(
       {
         submissionResult: parseWithZod(formData, {
           schema: z.object({}),
-        }).reply({ formErrors: [LIMITED] }),
+        }).reply({
+          formErrors: [
+            `Přihlášku teď nelze odeslat. Zkuste to prosím ${formatRetryAfter(retryAfter)}.`,
+          ],
+        }),
       },
       { status: 429 },
     )
 
-  if (context.get(rateLimitContext)) return refuseLimited()
+  const limited = context.get(rateLimitContext)
+  if (limited) return refuseUntil(limited.retryAfter)
 
   const submission = parseWithZod(formData, { schema: enrolmentSchema })
 
@@ -54,7 +58,7 @@ export const action = async ({ context, request }: Route.ActionArgs) => {
     phone,
   })
 
-  if (result.status === 'limited') return refuseLimited()
+  if (result.status === 'limited') return refuseUntil(result.retryAfter)
 
   if (result.status === 'failed') {
     return data(
