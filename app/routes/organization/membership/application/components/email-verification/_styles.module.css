@@ -1,0 +1,141 @@
+/* Heading, sentence, field and actions 12 px apart, as the step's other parts (15k). */
+.part {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+}
+
+.heading {
+  @layer route {
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+
+    @container page (width >= 940px) {
+      font-size: 25px;
+    }
+  }
+}
+
+/* Focused after an error, so it is read and in view; the Callout shows it. */
+.notice {
+  @layer route {
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.text {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+}
+
+.value {
+  @layer route {
+    overflow-wrap: anywhere;
+  }
+}
+
+.codeField {
+  @layer route {
+    width: 100%;
+
+    & input {
+      text-transform: uppercase;
+    }
+  }
+}
+
+/* On a phone the main button spans the column and the links stand centred under
+   it; on a computer all three share a row (15k). */
+.actions {
+  @layer route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0 28px;
+
+    @container page (width >= 940px) {
+      justify-content: flex-start;
+      gap: 0 20px;
+    }
+  }
+}
+
+/* The form only carries *Poslat znovu*; its button sits in the row. */
+.sendForm {
+  @layer route {
+    display: contents;
+  }
+}
+
+.primary {
+  @layer route {
+    width: 100%;
+    margin-block-end: 4px;
+
+    @container page (width >= 940px) {
+      width: auto;
+      margin-block-end: 0;
+    }
+  }
+}
+
+.link {
+  @layer route {
+    padding-block: 8px;
+    font-size: 15px;
+  }
+}
+
+.replaces {
+  @layer route {
+    margin: -8px 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-align: center;
+
+    @container page (width >= 940px) {
+      margin-block-start: -4px;
+      text-align: start;
+    }
+  }
+}
+
+/* After the code, the whole part is this line, without a heading (15d). */
+.verified {
+  @layer route {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+  }
+}
+
+.verifiedIcon {
+  @layer route {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-block-start: 0.3em;
+    color: var(--text-success);
+  }
+}
+
+.verifiedText {
+  @layer route {
+    min-width: 0;
+  }
+}

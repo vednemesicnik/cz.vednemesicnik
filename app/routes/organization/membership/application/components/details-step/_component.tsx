@@ -5,6 +5,7 @@ import {
   useForm,
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
+import { useEffect, useRef } from 'react'
 import { href, useNavigation } from 'react-router'
 
 import { Button } from '~/components/button'
@@ -37,6 +38,7 @@ export const DetailsStep = ({
   const navigation = useNavigation()
   // Set only by a submission, redirect included; a link leaves it undefined.
   const isSubmitting = navigation.formMethod !== undefined
+  const formErrorRef = useRef<HTMLDivElement>(null)
 
   // `required` by hand: a `constraint` would add `maxLength`, and the browser
   // would cut a long name off before the form could say so.
@@ -52,20 +54,31 @@ export const DetailsStep = ({
     shouldValidate: 'onBlur',
   })
 
+  const formError = form.errors?.[0]
+
+  // The code did not go out: the message is the one thing to read (15k). Keyed
+  // by the result, so a second failure with the same words moves focus again.
+  useEffect(() => {
+    if (submissionResult?.error?.['']?.length) formErrorRef.current?.focus()
+  }, [submissionResult])
+
   return (
     <div className={styles.step}>
-      {isExpired && (
-        <Callout className={styles.callout}>
-          Vyplněné údaje už nejsou k dispozici. Vyplňte je prosím znovu.
-        </Callout>
+      {formError !== undefined ? (
+        <div className={styles.formError} ref={formErrorRef} tabIndex={-1}>
+          <Callout className={styles.callout} role={'alert'} tone={'error'}>
+            {formError}
+          </Callout>
+        </div>
+      ) : (
+        isExpired && (
+          <Callout className={styles.callout}>
+            Vyplněné údaje už nejsou k dispozici. Vyplňte je prosím znovu.
+          </Callout>
+        )
       )}
 
-      <Form
-        {...getFormProps(form)}
-        className={styles.form}
-        errors={form.errors}
-        method={'post'}
-      >
+      <Form {...getFormProps(form)} className={styles.form} method={'post'}>
         <HoneypotInputs />
 
         <FormLegend />
@@ -102,6 +115,7 @@ export const DetailsStep = ({
         <TextField
           autoComplete={'email'}
           errors={fields.email.errors}
+          hint={'E-mail ověříte kódem.'}
           label={'E-mail'}
           required
           {...getInputProps(fields.email, { type: 'email' })}
