@@ -26,11 +26,12 @@ and the mail service's idempotency cache lasts hours.
   token (log 0066), this one is readable JSON, so every opening of the page logs the member's address.
   The same people can read the log as the sheet, the log is short-lived, and an opaque token would need
   the database the script cannot reach.
-- **The rung sent is a Script Property per round,** keyed by a hash of the first address and the round's day, written
-  right after the send and pruned when the round ends.
+- **The rung sent is a Script Property per round,** keyed by a hash of the link's address and the round's day, written
+  right after the send with the round's day in its value, and pruned only once that round's removal day is past and
+  the round is gone from the sheet.
 - **Who is asked.** Named rows that share an address, directly or through another row, are one person, so no row
-  belongs to two people. Every valid address gets one e-mail, and the link carries an address that finds all the rows
-  again, so a removal leaves none of them published. People sharing an address under different names, and rows of one
+  belongs to two people. One e-mail goes to every valid address, and the link carries the alphabetically first address
+  that finds all the rows again, so a removal leaves none of them published and a sort changes nothing. People sharing an address under different names, and rows of one
   name that no single address finds whole, are never asked and never removed.
 - **Order.** The question is sent before `Dotaz odeslán` is stamped, and the removal notice before the removal is
   written, so a failed send never leaves someone in a round or removed without being told.
