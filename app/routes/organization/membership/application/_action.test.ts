@@ -1,8 +1,13 @@
 import { RouterContextProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { MAX_DECLARATION_BYTES } from '~/config/membership-application-config'
+import {
+  MAX_DECLARATION_BYTES,
+  VERIFICATION_CODE_LIFETIME_MILLISECONDS,
+} from '~/config/membership-application-config'
 import { checkHoneypot } from '~/utils/honeypot.server'
+import { createVerificationCode } from '~/utils/membership-application/create-verification-code.server'
+import { issueVerificationCode } from '~/utils/membership-application/issue-verification-code.server'
 import { readMembershipApplicationCookie } from '~/utils/membership-application/read-membership-application-cookie.server'
 import { submitMembershipApplication } from '~/utils/membership-application/submit-membership-application.server'
 import { writeMembershipApplicationCookie } from '~/utils/membership-application/write-membership-application-cookie.server'
@@ -15,8 +20,18 @@ vi.mock(
   '~/utils/membership-application/submit-membership-application.server',
   () => ({ submitMembershipApplication: vi.fn() }),
 )
+vi.mock(
+  '~/utils/membership-application/issue-verification-code.server',
+  () => ({ issueVerificationCode: vi.fn() }),
+)
 
 const submitMock = vi.mocked(submitMembershipApplication)
+const issueMock = vi.mocked(issueVerificationCode)
+
+const SECRET = 'verification-secret'
+// An hour ago: the code is live.
+const issuedAgo = (milliseconds: number) => Date.now() - milliseconds
+const ISSUED_AT = issuedAgo(60 * 60 * 1000)
 
 const BASE_URL = 'http://localhost/organization/membership/application'
 const CODE = 'VDM-7K3Q-2P'
@@ -32,32 +47,53 @@ const STORED_DETAILS = { ...FORM_DETAILS, dateOfBirth: '2009-05-14' }
 const PDF_BYTES = new TextEncoder().encode('%PDF-1.4 podepsano')
 
 type ActionResult = {
-  data: { submissionResult: { error: Record<string, string[]> } }
-  init: { status: number }
+  data: {
+    notice?: { message: string; source: string; tone: string }
+    submissionResult: { error: Record<string, string[]> }
+  }
+  init: { headers?: HeadersInit; status: number }
 }
 
 const cookieHeader = async (
   state: Parameters<typeof writeMembershipApplicationCookie>[0],
 ) => (await writeMembershipApplicationCookie(state)).split(';')[0]
 
+// The signature step's submit needs the address verified.
 const detailsCookie = () =>
-  cookieHeader({ code: CODE, details: STORED_DETAILS, state: 'details' })
+  cookieHeader({
+    code: CODE,
+    details: STORED_DETAILS,
+    state: 'details',
+    verifiedEmail: 'tereza@local.dev',
+  })
 
+const pendingCookie = (issuedAt = ISSUED_AT) =>
+  cookieHeader({
+    code: CODE,
+    details: STORED_DETAILS,
+    state: 'details',
+    verification: { issuedAt },
+  })
+
+// `signature?intent=verify-code`: the intent travels in the address.
 const run = (
-  stepName: string,
+  stepAndQuery: string,
   body: FormData,
   cookie?: string,
   context = new RouterContextProvider(),
 ) =>
   action({
     context,
-    params: { stepName },
-    request: new Request(`${BASE_URL}/${stepName}`, {
+    params: { stepName: stepAndQuery.split('?')[0] },
+    request: new Request(`${BASE_URL}/${stepAndQuery}`, {
       body,
       headers: cookie === undefined ? {} : { Cookie: cookie },
       method: 'POST',
     }),
   } as never)
+
+const setCookieOf = (result: ActionResult) =>
+  new Headers(result.init.headers).get('Set-Cookie')
 
 // A redirect is thrown; `data()` is returned.
 const runToResponse = async (...args: Parameters<typeof run>) => {
@@ -97,21 +133,115 @@ const formDataOf = (values: Record<string, string>) => {
 describe('membership application action', () => {
   beforeEach(() => {
     submitMock.mockReset()
+    issueMock.mockReset().mockResolvedValue({ issuedAt: 1234, status: 'sent' })
+    vi.stubEnv('MEMBERSHIP_VERIFICATION_SECRET', SECRET)
   })
 
   describe('details', () => {
-    it('stores valid details under a new code and moves on', async () => {
+    it('stores valid details under a new code, mails a verification code and moves on', async () => {
       const response = await runToResponse('details', formDataOf(FORM_DETAILS))
 
       expect(response.status).toBe(303)
       expect(response.headers.get('Location')).toBe(
         `${new URL(BASE_URL).pathname}/signature`,
       )
+      expect(issueMock).toHaveBeenCalledExactlyOnceWith(
+        'tereza@local.dev',
+        expect.any(Request),
+      )
       expect(await readSetCookie(response)).toEqual({
         code: expect.stringMatching(/^VDM-/),
         details: STORED_DETAILS,
         state: 'details',
+        verification: { issuedAt: 1234 },
       })
+    })
+
+    it('mails nothing for the same address while its code is live', async () => {
+      const response = await runToResponse(
+        'details',
+        formDataOf({ ...FORM_DETAILS, phone: '731 456 789' }),
+        await pendingCookie(),
+      )
+
+      expect(issueMock).not.toHaveBeenCalled()
+      expect(await readSetCookie(response)).toMatchObject({
+        verification: { issuedAt: ISSUED_AT },
+      })
+    })
+
+    it('keeps a verified address verified when other details change', async () => {
+      const response = await runToResponse(
+        'details',
+        formDataOf({ ...FORM_DETAILS, phone: '731 456 789' }),
+        await detailsCookie(),
+      )
+
+      expect(issueMock).not.toHaveBeenCalled()
+      expect(await readSetCookie(response)).toMatchObject({
+        verifiedEmail: 'tereza@local.dev',
+      })
+    })
+
+    it('reads the same address without case', async () => {
+      await runToResponse(
+        'details',
+        formDataOf({ ...FORM_DETAILS, email: 'Tereza@Local.dev' }),
+        await detailsCookie(),
+      )
+
+      expect(issueMock).not.toHaveBeenCalled()
+    })
+
+    it('asks a new address for a new code and forgets the verification', async () => {
+      const response = await runToResponse(
+        'details',
+        formDataOf({ ...FORM_DETAILS, email: 'jan@local.dev' }),
+        await detailsCookie(),
+      )
+
+      expect(issueMock).toHaveBeenCalledExactlyOnceWith(
+        'jan@local.dev',
+        expect.any(Request),
+      )
+      const state = await readSetCookie(response)
+      expect(state).toMatchObject({ verification: { issuedAt: 1234 } })
+      expect(state).not.toHaveProperty('verifiedEmail')
+    })
+
+    it('mails a new code once the old one has expired', async () => {
+      await runToResponse(
+        'details',
+        formDataOf(FORM_DETAILS),
+        await pendingCookie(
+          issuedAgo(VERIFICATION_CODE_LIFETIME_MILLISECONDS + 1000),
+        ),
+      )
+
+      expect(issueMock).toHaveBeenCalledOnce()
+    })
+
+    it('stays on the details when the code did not go out, cookie untouched', async () => {
+      issueMock.mockResolvedValue({ status: 'failed' })
+
+      const result = await runToData('details', formDataOf(FORM_DETAILS))
+
+      expect(result.init.status).toBe(503)
+      expect(result.data.submissionResult.error?.['']).toEqual([
+        expect.stringContaining('tlačítko Pokračovat'),
+      ])
+      expect(setCookieOf(result)).toBeNull()
+    })
+
+    it('says when it can send again past the limit', async () => {
+      issueMock.mockResolvedValue({ retryAfter: 720, status: 'limited' })
+
+      const result = await runToData('details', formDataOf(FORM_DETAILS))
+
+      expect(result.init.status).toBe(429)
+      expect(result.data.submissionResult.error?.['']).toEqual([
+        'Ověřovací kód teď nelze poslat. Zkuste to prosím za 12 minut.',
+      ])
     })
 
     it('keeps the code while the details stay the same', async () => {
@@ -204,7 +334,12 @@ describe('membership application action', () => {
       await runToResponse(
         'signature',
         formWithFile(pdf()),
-        await cookieHeader({ code: CODE, details, state: 'details' }),
+        await cookieHeader({
+          code: CODE,
+          details,
+          state: 'details',
+          verifiedEmail: 'tereza@local.dev',
+        }),
       )
 
       // Undefined leaves it out of the JSON the request signs.
@@ -349,6 +484,53 @@ describe('membership application action', () => {
       },
     )
 
+    it('refuses the submit before reading the body when the address is not verified', async () => {
+      const result = await runToData(
+        'signature',
+        formWithFile(pdf()),
+        await pendingCookie(),
+      )
+
+      expect(result.init.status).toBe(403)
+      expect(result.data.notice).toEqual({
+        message: expect.stringContaining('e-mail není ověřený'),
+        source: 'submit',
+        tone: 'error',
+      })
+      expect(submitMock).not.toHaveBeenCalled()
+    })
+
+    it('says the address is not verified even past the submit limit', async () => {
+      const context = new RouterContextProvider()
+      context.set(rateLimitContext, { retryAfter: 900 })
+
+      const result = await runToData(
+        'signature',
+        formWithFile(pdf()),
+        await pendingCookie(),
+        context,
+      )
+
+      expect(result.init.status).toBe(403)
+      expect(result.data.notice?.source).toBe('submit')
+    })
+
+    it('refuses the submit when another address was verified', async () => {
+      const result = await runToData(
+        'signature',
+        formWithFile(pdf()),
+        await cookieHeader({
+          code: CODE,
+          details: STORED_DETAILS,
+          state: 'details',
+          verifiedEmail: 'jan@local.dev',
+        }),
+      )
+
+      expect(result.init.status).toBe(403)
+      expect(submitMock).not.toHaveBeenCalled()
+    })
+
     it('goes on to the sent page when it was already sent', async () => {
       const response = await runToResponse(
         'signature',
@@ -364,6 +546,174 @@ describe('membership application action', () => {
         `${new URL(BASE_URL).pathname}/sent`,
       )
       expect(submitMock).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('verify-code', () => {
+    const verify = async (
+      code: string,
+      cookie: string,
+      context?: RouterContextProvider,
+    ) =>
+      run(
+        'signature?intent=verify-code',
+        formDataOf({ code }),
+        cookie,
+        context,
+      ).catch((thrown) => thrown)
+
+    it('verifies the address with the code from the e-mail, written as the e-mail shows it', async () => {
+      const code = createVerificationCode(SECRET, 'tereza@local.dev', ISSUED_AT)
+
+      const response = (await verify(
+        `${code.slice(0, 4)} ${code.slice(4)}`.toLowerCase(),
+        await pendingCookie(),
+      )) as Response
+
+      expect(response.status).toBe(303)
+      expect(response.headers.get('Location')).toBe(
+        `${new URL(BASE_URL).pathname}/signature`,
+      )
+      const state = await readSetCookie(response)
+      expect(state).toMatchObject({ verifiedEmail: 'tereza@local.dev' })
+      expect(state).not.toHaveProperty('verification')
+    })
+
+    it('refuses a wrong code under the field', async () => {
+      const result = (await verify(
+        '22222222',
+        await pendingCookie(),
+      )) as ActionResult
+
+      expect(result.init.status).toBe(400)
+      expect(result.data.submissionResult.error?.code).toEqual([
+        'Kód nesouhlasí. Zkontrolujte ho, nebo si pošlete nový.',
+      ])
+    })
+
+    it('asks for the code, and for its length', async () => {
+      const empty = (await verify('', await pendingCookie())) as ActionResult
+      const short = (await verify(
+        'K7M2',
+        await pendingCookie(),
+      )) as ActionResult
+
+      expect(empty.data.submissionResult.error?.code).toEqual([
+        'Zadejte kód z e-mailu.',
+      ])
+      expect(short.data.submissionResult.error?.code).toEqual([
+        'Kód má 8 znaků.',
+      ])
+    })
+
+    it('takes no code once it has expired', async () => {
+      const issuedAt = issuedAgo(VERIFICATION_CODE_LIFETIME_MILLISECONDS + 1000)
+      const code = createVerificationCode(SECRET, 'tereza@local.dev', issuedAt)
+
+      const result = (await verify(
+        code,
+        await pendingCookie(issuedAt),
+      )) as ActionResult
+
+      expect(result.init.status).toBe(400)
+      expect(setCookieOf(result)).toBeNull()
+    })
+
+    it('says when it can try again past the limit', async () => {
+      const context = new RouterContextProvider()
+      context.set(rateLimitContext, { retryAfter: 720 })
+
+      const result = (await verify(
+        '22222222',
+        await pendingCookie(),
+        context,
+      )) as ActionResult
+
+      expect(result.init.status).toBe(429)
+      expect(result.data.notice).toEqual({
+        message: 'Kód teď nelze ověřit. Zkuste to prosím za 12 minut.',
+        source: 'code',
+        tone: 'error',
+      })
+    })
+
+    it('checks the honeypot first, even past the limit', async () => {
+      vi.mocked(checkHoneypot).mockImplementationOnce(() => {
+        throw new Response('Invalid form.', { status: 400 })
+      })
+      const context = new RouterContextProvider()
+      context.set(rateLimitContext, { retryAfter: 720 })
+
+      const response = (await verify(
+        '22222222',
+        await pendingCookie(),
+        context,
+      )) as Response
+
+      expect(response.status).toBe(400)
+    })
+  })
+
+  describe('send-code', () => {
+    const sendAgain = async (cookie: string) =>
+      (await run(
+        'signature?intent=send-code',
+        new FormData(),
+        cookie,
+      )) as unknown as ActionResult
+
+    it('mails a new code and says the old one no longer works', async () => {
+      const result = await sendAgain(await pendingCookie())
+
+      expect(issueMock).toHaveBeenCalledExactlyOnceWith(
+        'tereza@local.dev',
+        expect.any(Request),
+      )
+      expect(result.data.notice).toEqual({
+        message: 'Poslali jsme nový kód. Předchozí už neplatí.',
+        source: 'code',
+        tone: 'success',
+      })
+      const state = await readMembershipApplicationCookie(
+        new Request(BASE_URL, {
+          headers: { Cookie: (setCookieOf(result) ?? '').split(';')[0] },
+        }),
+      )
+      expect(state).toMatchObject({ verification: { issuedAt: 1234 } })
+    })
+
+    it('keeps the live code when the new one did not go out', async () => {
+      issueMock.mockResolvedValue({ status: 'failed' })
+
+      const result = await sendAgain(await pendingCookie())
+
+      expect(result.data.notice?.message).toMatch(/^Použijte dosavadní kód\./)
+      expect(setCookieOf(result)).toBeNull()
+    })
+
+    it('sends to the button again when there is no live code', async () => {
+      issueMock.mockResolvedValue({ status: 'failed' })
+
+      const result = await sendAgain(
+        await cookieHeader({
+          code: CODE,
+          details: STORED_DETAILS,
+          state: 'details',
+        }),
+      )
+
+      expect(result.data.notice?.message).toMatch(/tlačítko Poslat nový kód\./)
+    })
+
+    it('says when it can send again past the limit', async () => {
+      issueMock.mockResolvedValue({ retryAfter: 720, status: 'limited' })
+
+      const result = await sendAgain(await pendingCookie())
+
+      expect(result.init.status).toBe(429)
+      expect(result.data.notice?.message).toBe(
+        'Ověřovací kód teď nelze poslat. Zkuste to prosím za 12 minut.',
+      )
     })
   })
 

@@ -18,7 +18,7 @@ flowchart LR
   subgraph scripts["Under web.app@"]
     magicLink["SCRIPT__Auth__Magic_Link<br/>Sends the sign-in link"]
     usersNotice["SCRIPT__Users__Notice_Send<br/>Notices about an account"]
-    membershipApplications["SCRIPT__Membership__Applications<br/>Stores an application, approval, retention"]
+    membershipApplications["SCRIPT__Membership__Applications<br/>Mails the verification code, stores an application, approval, retention"]
     boardMembership["SCRIPT__Editorial_Board__Membership<br/>The only one that writes the sheet"]
     contacts["SCRIPT__Editorial_Board__Contacts<br/>Reads the public subset"]
   end
@@ -55,20 +55,21 @@ Schema, which `pnpm gas:schema:fetch <name>` saves under `schemas/<name>/`.
 | `users-notice` | `SCRIPT__Users__Notice_Send` | `app/utils/users-notice/send-users-notice.server.ts`: the invitation, the e-mail change notice | signed request, `GAS_USERS_NOTICE_SECRET` |
 | `editorial-board` | `SCRIPT__Editorial_Board__Contacts` | `app/utils/editorial-board.server.ts`: the `/editorial-board` loader | secret in the body, `GAS_EDITORIAL_BOARD_SECRET` |
 | `editorial-board-membership` | `SCRIPT__Editorial_Board__Membership` | `app/utils/editorial-board-enrolment/send-enrolment-email.server.ts`: the enrolment form. `app/utils/editorial-board-membership.server.ts`: its confirmation, and the answers from the re-confirmation e-mails | signed request, `GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET`; the e-mails' links are signed the other way, by the script with `LINK_SECRET` and checked against `GAS_EDITORIAL_BOARD_LINK_SECRET` |
-| `membership` | `SCRIPT__Membership__Applications` | `app/utils/membership-application/submit-membership-application.server.ts`: the membership application | signed request, `GAS_MEMBERSHIP_SECRET` |
+| `membership` | `SCRIPT__Membership__Applications` | `app/utils/membership-application/send-verification-code-email.server.ts`: the code that confirms the applicant's address. `app/utils/membership-application/submit-membership-application.server.ts`: the membership application | signed request, `GAS_MEMBERSHIP_SECRET`; the code is made and checked by the app alone, with `MEMBERSHIP_VERIFICATION_SECRET` |
 
 The web never sends e-mail itself and holds no mail service secret: a script behind it renders the
 message and hands it to `SCRIPT__Mail__Send`.
 
 `postGasRequest` walks the redirect from `/exec` itself and logs each hop as a `[gas]` line. Only
-`magic-link` and `editorial-board-membership` try a transport failure again, once, through
-`postSignedGasRequest` (log 0061). The second answers a repeat with its first result (log 0064). The
-others do not:
+`magic-link`, `editorial-board-membership` and the verification code of `membership` try a
+transport failure again, once, through `postSignedGasRequest` (log 0061).
+`editorial-board-membership` answers a repeat with its first result (log 0064), and the code's
+e-mail is keyed by the code (log 0073). The others do not:
 
 - `users-notice` must not: its e-mail change notice is keyed on the request signature, and a retry
   has a new one.
 - `editorial-board` has no need to: the page serves its last good data and asks again after the TTL.
-- `membership` could, by its `code`, but two attempts of 60 s would outlast Cloudflare's 100 s. The
+- `membership`'s submit could, by its `code`, but two attempts of 60 s would outlast Cloudflare's 100 s. The
   application stays in its cookie, so the person can send it again.
 
 ## Without an endpoint of its own

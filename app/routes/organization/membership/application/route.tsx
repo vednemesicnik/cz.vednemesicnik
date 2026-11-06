@@ -1,5 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
+import type { ShouldRevalidateFunction } from 'react-router'
+
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { HoneypotProvider } from '~/components/honeypot-provider'
@@ -20,10 +22,28 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 export { middleware } from './_middleware'
 
+// React Router skips the loaders after an action answers 400 or above. Here the
+// answer often changes what the step shows — a refused submit or an expired code
+// takes the upload away (15k) — so the step always reloads after a POST.
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  actionStatus,
+  defaultShouldRevalidate,
+}) => actionStatus !== undefined || defaultShouldRevalidate
+
 export default function RouteComponent({
   actionData,
   loaderData,
 }: Route.ComponentProps) {
+  // A form's result, or a sentence for the code part of the signature step.
+  const submissionResult =
+    actionData !== undefined && 'submissionResult' in actionData
+      ? actionData.submissionResult
+      : undefined
+  const notice =
+    actionData !== undefined && 'notice' in actionData
+      ? actionData.notice
+      : undefined
+
   return (
     <HoneypotProvider {...loaderData.honeypotInputProps}>
       <Page>
@@ -57,13 +77,16 @@ export default function RouteComponent({
           <DetailsStep
             details={loaderData.details}
             isExpired={loaderData.isExpired}
-            submissionResult={actionData?.submissionResult}
+            submissionResult={submissionResult}
           />
         )}
         {loaderData.step === 'signature' && (
           <SignatureStep
+            email={loaderData.email}
             isMinor={loaderData.isMinor}
-            submissionResult={actionData?.submissionResult}
+            notice={notice}
+            submissionResult={submissionResult}
+            verification={loaderData.verification}
           />
         )}
         {loaderData.step === 'sent' && (

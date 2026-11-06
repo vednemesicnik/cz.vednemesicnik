@@ -17,6 +17,15 @@
   }
 }
 
+/* Focused when the code did not go out; the Callout shows it. */
+.formError {
+  @layer route {
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
 .form {
   @layer route {
     gap: 16px;

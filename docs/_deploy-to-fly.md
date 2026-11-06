@@ -191,6 +191,15 @@ script's `OWN_SECRET` property.
 fly secrets set GAS_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
 ```
 
+The code that confirms the applicant's address is made and checked by the app alone, with
+`MEMBERSHIP_VERIFICATION_SECRET`, a key used for nothing else and shared with no script
+(#972, log 0073). It is required as well, so set it before the release that carries the code
+(`scripts/generate-secret.sh`). Changing it makes every code on its way invalid, nothing more.
+
+```shell
+fly secrets set MEMBERSHIP_VERIFICATION_SECRET="…" --app cz-vednemesicnik
+```
+
 ## Writes to the editorial-board spreadsheet (Google Apps Script)
 
 Enrolment and the answers to the re-confirmation are written by a standalone web app, which also mails
