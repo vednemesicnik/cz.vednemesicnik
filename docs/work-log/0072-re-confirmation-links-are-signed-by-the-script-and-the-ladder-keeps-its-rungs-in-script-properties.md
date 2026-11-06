@@ -28,12 +28,15 @@ and the mail service's idempotency cache lasts hours.
   the database the script cannot reach.
 - **The rung sent is a Script Property per round,** keyed by a hash of the first address and the round's day, written
   right after the send and pruned when the round ends.
-- **Who is asked.** Every valid address of the person in one e-mail; the link carries the first, which finds the same
-  rows again. People sharing an address under different names are never asked and never removed.
+- **Who is asked.** Named rows that share an address, directly or through another row, are one person, so no row
+  belongs to two people. Every valid address gets one e-mail, and the link carries an address that finds all the rows
+  again, so a removal leaves none of them published. People sharing an address under different names, and rows of one
+  name that no single address finds whole, are never asked and never removed.
 - **Order.** The question is sent before `Dotaz odeslán` is stamped, and the removal notice before the removal is
   written, so a failed send never leaves someone in a round or removed without being told.
 - **After an outage only the highest due rung goes,** and the removal goes ahead without a missed final warning,
-  since a late warning's buttons would already be dead; the notice still gives 30 days to come back.
+  since a late warning's buttons would already be dead; the notice still gives 30 days to come back. A round with no
+  rung on record at all is not removed on one e-mail: it starts again with the question.
 - **A date typed into `Poslední potvrzení`** on or after the round's day ends the round. It is how the chief editors
   confirm someone still active who never answers (Libor, 6 Nov 2026).
 
@@ -41,7 +44,8 @@ and the mail service's idempotency cache lasts hours.
 
 The first wave is started by hand with `startActivityWave()` when Libor decides; the scheduled one runs each
 September. A wave larger than one run's budget resumes the next night, so a big first wave takes a few mornings.
-`docs/_editorial-board-google-sheet.md` describes the current state.
+`docs/_editorial-board-google-sheet.md` describes the current state. The note on `Poslední potvrzení` does not yet say
+that a typed date ends a round; its wording waits on the copywriter.
 
 ## Turned down
 
