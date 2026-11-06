@@ -24,6 +24,16 @@ export default function RouteComponent({
   actionData,
   loaderData,
 }: Route.ComponentProps) {
+  // A form's result, or a sentence for the code part of the signature step.
+  const submissionResult =
+    actionData !== undefined && 'submissionResult' in actionData
+      ? actionData.submissionResult
+      : undefined
+  const notice =
+    actionData !== undefined && 'notice' in actionData
+      ? actionData.notice
+      : undefined
+
   return (
     <HoneypotProvider {...loaderData.honeypotInputProps}>
       <Page>
@@ -57,13 +67,16 @@ export default function RouteComponent({
           <DetailsStep
             details={loaderData.details}
             isExpired={loaderData.isExpired}
-            submissionResult={actionData?.submissionResult}
+            submissionResult={submissionResult}
           />
         )}
         {loaderData.step === 'signature' && (
           <SignatureStep
+            email={loaderData.email}
             isMinor={loaderData.isMinor}
-            submissionResult={actionData?.submissionResult}
+            notice={notice}
+            submissionResult={submissionResult}
+            verification={loaderData.verification}
           />
         )}
         {loaderData.step === 'sent' && (

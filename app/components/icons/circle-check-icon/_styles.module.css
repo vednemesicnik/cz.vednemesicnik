@@ -1,0 +1,13 @@
+/* A Lucide stroke icon: 2 px at 24, in the text's colour. */
+.icon {
+  @layer component {
+    font-size: inherit;
+    width: 1em;
+    height: 1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}

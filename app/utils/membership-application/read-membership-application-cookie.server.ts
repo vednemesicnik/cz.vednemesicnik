@@ -8,6 +8,11 @@ const stateSchema = z.discriminatedUnion('state', [
     code: z.string(),
     details: membershipDetailsSchema,
     state: z.literal('details'),
+    // When the verification code for the details' address was sent; the code
+    // itself is made again from it and never stored (log 0073).
+    verification: z.object({ issuedAt: z.number().int() }).optional(),
+    // The address the code confirmed, lower-cased.
+    verifiedEmail: z.string().optional(),
   }),
   z.object({
     code: z.string(),

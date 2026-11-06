@@ -52,6 +52,23 @@ describe('membership application cookie', () => {
     expect(state).toEqual({ ...DETAILS_STATE, details })
   })
 
+  it('round-trips the verification, and reads a cookie from before it', async () => {
+    const verifiedState: MembershipApplicationState = {
+      ...DETAILS_STATE,
+      verification: { issuedAt: Date.UTC(2026, 10, 6, 17, 42) },
+      verifiedEmail: 'tereza@local.dev',
+    }
+
+    const setCookie = await write(verifiedState)
+    expect(await read(requestWith(cookieValue(setCookie)))).toEqual(
+      verifiedState,
+    )
+    // DETAILS_STATE has neither field, as a cookie written before #972.
+    expect(
+      await read(requestWith(cookieValue(await write(DETAILS_STATE)))),
+    ).toEqual(DETAILS_STATE)
+  })
+
   it('round-trips the sent state', async () => {
     const setCookie = await write(SENT_STATE)
     const state = await read(requestWith(cookieValue(setCookie)))

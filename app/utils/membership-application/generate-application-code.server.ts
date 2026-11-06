@@ -1,12 +1,11 @@
 import { randomInt } from 'node:crypto'
 
-// Without 0/O and 1/I/L, which get mixed up when a code is read out or retyped.
-const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
+import { CODE_ALPHABET } from '~/config/membership-application-config'
 
 const randomCharacters = (count: number) =>
   Array.from(
     { length: count },
-    () => ALPHABET[randomInt(ALPHABET.length)],
+    () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)],
   ).join('')
 
 /**

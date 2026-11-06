@@ -8,7 +8,7 @@
     /* The sheet spans the rows beside it; what it leaves over goes to the last. */
     @container page (width >= 940px) {
       grid-template-columns: 540px minmax(0, 1fr);
-      grid-template-rows: auto auto auto 1fr;
+      grid-template-rows: auto auto auto auto 1fr;
       column-gap: 48px;
       row-gap: 0;
     }
@@ -24,6 +24,18 @@
 
     @container page (width >= 940px) {
       display: none;
+    }
+  }
+}
+
+/* First in the right column on a computer, above printing (15k). */
+.verification {
+  @layer route {
+    min-width: 0;
+
+    @container page (width >= 940px) {
+      grid-column: 2;
+      margin-block-end: 28px;
     }
   }
 }
@@ -61,7 +73,7 @@
 
     @container page (width >= 940px) {
       grid-column: 1;
-      grid-row: 1 / span 4;
+      grid-row: 1 / span 5;
     }
   }
 }
@@ -167,6 +179,15 @@
 .callout {
   @layer route {
     margin-block: 0;
+  }
+}
+
+.uploadLater {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    text-wrap: pretty;
   }
 }
 
