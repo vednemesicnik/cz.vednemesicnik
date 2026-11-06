@@ -203,6 +203,14 @@ which is not the one `SCRIPT__Editorial_Board__Contacts` holds for `GAS_EDITORIA
 fly secrets set GAS_EDITORIAL_BOARD_MEMBERSHIP_URL="https://script.google.com/macros/s/.../exec" GAS_EDITORIAL_BOARD_MEMBERSHIP_SECRET="…" --app cz-vednemesicnik
 ```
 
+The links in the re-confirmation e-mails are signed by the same script with its `LINK_SECRET`, a
+key used for nothing else (#392). `GAS_EDITORIAL_BOARD_LINK_SECRET` must equal it, and is required
+as well:
+
+```shell
+fly secrets set GAS_EDITORIAL_BOARD_LINK_SECRET="…" --app cz-vednemesicnik
+```
+
 ## Client address behind Cloudflare
 
 Behind Cloudflare, `Fly-Client-IP` holds the edge's address and the client's is in
