@@ -2,7 +2,10 @@ import { data, href, redirect } from 'react-router'
 
 import { verifyActivityToken } from '~/utils/editorial-board-activity/verify-activity-token.server'
 import { writeActivityAnsweredCookie } from '~/utils/editorial-board-activity/write-activity-answered-cookie.server'
-import { postEditorialBoardMembershipWrite } from '~/utils/editorial-board-membership.server'
+import {
+  type EditorialBoardMembershipError,
+  postEditorialBoardMembershipWrite,
+} from '~/utils/editorial-board-membership.server'
 import { checkHoneypot } from '~/utils/honeypot.server'
 
 import type { Route } from './+types/route'
@@ -11,7 +14,7 @@ const CONFIRM_PATH = href('/editorial-board/activity/confirm')
 
 // The script's answers about the person: the address is not on the sheet, is shared, or
 // is no longer in the state the link was for. One page for all of them (design 15j).
-const UNUSABLE_ERRORS = new Set([
+const UNUSABLE_ERRORS = new Set<EditorialBoardMembershipError>([
   'ambiguous',
   'not_active',
   'not_found',

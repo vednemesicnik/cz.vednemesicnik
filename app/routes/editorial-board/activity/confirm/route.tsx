@@ -77,24 +77,6 @@ const EXPIRED_WAY_ON: Record<ActivityAction, string> = {
   reactivate: 'Pokud jste pořád v redakci, napište nám prosím na',
 }
 
-const Notice = ({
-  children,
-  headline,
-}: {
-  children: ReactNode
-  headline: string
-}) => (
-  <Page>
-    <HeadlineGroup className={styles.headlineGroup}>
-      <Headline>{headline}</Headline>
-    </HeadlineGroup>
-
-    <div className={styles.content}>
-      <p className={styles.lead}>{children}</p>
-    </div>
-  </Page>
-)
-
 /**
  * The link from the re-confirmation e-mails (design 15j). Opening it writes nothing, the
  * button does. A damaged link and the script's „no“ after the button look the same, and
@@ -109,19 +91,35 @@ export default function RouteComponent({
 
   if (loaderData.status === 'invalid' || actionData?.result === 'unusable') {
     return (
-      <Notice headline={'Tento odkaz nelze použít'}>
-        Pokud jste už odpověď na stránce potvrdili, nemusíte nic dělat. Jinak
-        nám prosím napište na {editorialOffice}.
-      </Notice>
+      <Page>
+        <HeadlineGroup className={styles.headlineGroup}>
+          <Headline>Tento odkaz nelze použít</Headline>
+        </HeadlineGroup>
+
+        <div className={styles.content}>
+          <p className={styles.lead}>
+            Pokud jste už odpověď na stránce potvrdili, nemusíte nic dělat.
+            Jinak nám prosím napište na {editorialOffice}.
+          </p>
+        </div>
+      </Page>
     )
   }
 
   if (loaderData.status === 'expired') {
     return (
-      <Notice headline={'Odkaz už neplatí'}>
-        Odkaz platil naposledy {loaderData.lastDay}.{' '}
-        {EXPIRED_WAY_ON[loaderData.action]} {editorialOffice}.
-      </Notice>
+      <Page>
+        <HeadlineGroup className={styles.headlineGroup}>
+          <Headline>Odkaz už neplatí</Headline>
+        </HeadlineGroup>
+
+        <div className={styles.content}>
+          <p className={styles.lead}>
+            Odkaz platil naposledy {loaderData.lastDay}.{' '}
+            {EXPIRED_WAY_ON[loaderData.action]} {editorialOffice}.
+          </p>
+        </div>
+      </Page>
     )
   }
 

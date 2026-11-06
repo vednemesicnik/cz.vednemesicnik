@@ -133,11 +133,11 @@ describe('verifyActivityToken', () => {
   it('verifies a token as the script builds it', () => {
     // From the Node run of the script's own code with LINK_SECRET "link-secret".
     const token =
-      'eyJlbWFpbCI6ImFubmFAeC5jeiIsImFjdGlvbiI6ImNvbmZpcm1BY3RpdmUiLCJleHAiOjE3OTU0NzQ4MDB9.95121bd53a61b15a3c1c9d9f54964c91e03ef123d2a59839c60cea2bcf1162e9'
+      'eyJlbWFpbCI6ImFubmFAbG9jYWwuZGV2IiwiYWN0aW9uIjoiY29uZmlybUFjdGl2ZSIsImV4cCI6MTc5NTQ3NDgwMH0.7b2b75411bce3f9f9283d5babccf577f1b2cbbb9cbaf7975f6422639700239c5'
 
     expect(verifyActivityToken(token, 'link-secret', NOW)).toEqual({
       action: 'confirmActive',
-      email: 'anna@x.cz',
+      email: 'anna@local.dev',
       expiresAt: new Date(1795474800 * 1000),
       status: 'valid',
     })

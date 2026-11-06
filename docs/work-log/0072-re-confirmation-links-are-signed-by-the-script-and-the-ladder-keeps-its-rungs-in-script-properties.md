@@ -22,6 +22,10 @@ and the mail service's idempotency cache lasts hours.
 - **Links expire with the round.** The question's and the reminders' at the start of the removal day, the removal
   notice's 30 days later; each e-mail prints the day before. An expired link points to redakce@, not to the next wave,
   which asks only `V redakci` and so would not ask someone already removed.
+- **The address reaches the Fly log and the browser history, knowingly.** Unlike the enrolment's opaque
+  token (log 0066), this one is readable JSON, so every opening of the page logs the member's address.
+  The same people can read the log as the sheet, the log is short-lived, and an opaque token would need
+  the database the script cannot reach.
 - **The rung sent is a Script Property per round,** keyed by a hash of the first address and the round's day, written
   right after the send and pruned when the round ends.
 - **Who is asked.** Every valid address of the person in one e-mail; the link carries the first, which finds the same
