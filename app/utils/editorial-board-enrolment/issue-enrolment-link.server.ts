@@ -9,9 +9,7 @@ import {
 } from './create-enrolment-token.server'
 import { sendEnrolmentEmail } from './send-enrolment-email.server'
 
-type IssueEnrolmentLinkResult =
-  | { status: 'failed' | 'sent' }
-  | { retryAfter: number; status: 'limited' }
+type IssueEnrolmentLinkResult = { status: 'failed' | 'limited' | 'sent' }
 
 // Protects a mailbox from someone else's form, where the route's limit per IP protects
 // the script. It counts attempts: after a lost answer the e-mail may have gone out.
@@ -35,12 +33,7 @@ const issue = async (
       EMAIL_WINDOW_MILLISECONDS,
     )
 
-    if (!limit.ok) {
-      return {
-        retryAfter: Math.max(0, Math.ceil((limit.resetAt - Date.now()) / 1000)),
-        status: 'limited',
-      }
-    }
+    if (!limit.ok) return { status: 'limited' }
 
     const token = await createEnrolmentToken(email, payload)
     const link = createEnrolmentLink({
@@ -64,7 +57,7 @@ const issue = async (
  * @param email - The address, normalised by the caller.
  * @param payload - What the confirmation needs. A request that finds a link for this
  *   address on its way shares that send's answer, and its own payload is not used.
- * @returns `sent`; `limited` with the seconds left past the limit; `failed` when the row
+ * @returns `sent`; `limited` past the limit on the address; `failed` when the row
  *   could not be stored or the e-mail may not have gone out. Never throws; failures are
  *   logged and reported to Sentry.
  */

@@ -32,7 +32,7 @@ export const EnrolmentDetails = ({ email, interest, name, phone }: Props) => (
 
     {interest !== undefined && (
       <div className={styles.detail}>
-        <dt className={styles.term}>Čemu se chcete věnovat</dt>
+        <dt className={styles.term}>Čemu byste se chtěli věnovat</dt>
         <dd className={styles.value}>{interest}</dd>
       </div>
     )}

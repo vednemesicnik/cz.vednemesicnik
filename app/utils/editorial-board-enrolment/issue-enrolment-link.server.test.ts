@@ -102,10 +102,7 @@ describe('issueEnrolmentLink', () => {
 
     const refused = await issueEnrolmentLink(email, PAYLOAD)
 
-    expect(refused).toEqual({
-      retryAfter: expect.any(Number),
-      status: 'limited',
-    })
+    expect(refused).toEqual({ status: 'limited' })
     expect(tokenMock).toHaveBeenCalledTimes(5)
   })
 })
