@@ -56,10 +56,11 @@ export const DetailsStep = ({
 
   const formError = form.errors?.[0]
 
-  // The code did not go out: the message is the one thing to read (15k).
+  // The code did not go out: the message is the one thing to read (15k). Keyed
+  // by the result, so a second failure with the same words moves focus again.
   useEffect(() => {
-    if (formError !== undefined) formErrorRef.current?.focus()
-  }, [formError])
+    if (submissionResult?.error?.['']?.length) formErrorRef.current?.focus()
+  }, [submissionResult])
 
   return (
     <div className={styles.step}>

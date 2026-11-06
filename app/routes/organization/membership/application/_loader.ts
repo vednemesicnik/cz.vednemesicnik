@@ -1,10 +1,11 @@
 import { redirect } from 'react-router'
 
-import { VERIFICATION_CODE_LIFETIME_MILLISECONDS } from '~/config/membership-application-config'
 import { formatDate } from '~/utils/format-date'
 import { formatNumericDate } from '~/utils/format-numeric-date'
 import { formatTime } from '~/utils/format-time'
 import { getHoneypotInputProps } from '~/utils/honeypot.server'
+import { getVerificationCodeExpiry } from '~/utils/membership-application/get-verification-code-expiry'
+import { isEmailVerified } from '~/utils/membership-application/is-email-verified'
 import { isMinorOnDate } from '~/utils/membership-application/is-minor-on-date'
 import {
   type MembershipApplicationState,
@@ -14,7 +15,8 @@ import {
 import { getStepPath, parseStepName } from './_step'
 import type { Route } from './+types/route'
 
-const NO_BREAK_SPACE = ' '
+// U+00A0, spelled out: in the source it would look like a plain space.
+const NO_BREAK_SPACE = String.fromCodePoint(0xa0)
 
 // A cookie from before the code (#972) has no `verification`, and is expired
 // like a code past its lifetime: the way on is a new code (design 15k).
@@ -22,21 +24,11 @@ const getVerificationState = (
   application: Extract<MembershipApplicationState, { state: 'details' }>,
   now: number,
 ) => {
-  if (application.verifiedEmail === application.details.email.toLowerCase()) {
-    return { state: 'verified' as const }
-  }
+  if (isEmailVerified(application)) return { state: 'verified' as const }
 
-  const expiresAt =
-    application.verification === undefined
-      ? null
-      : new Date(
-          application.verification.issuedAt +
-            VERIFICATION_CODE_LIFETIME_MILLISECONDS,
-        )
+  const expiresAt = getVerificationCodeExpiry(application, now)
 
-  if (expiresAt === null || now >= expiresAt.getTime()) {
-    return { state: 'expired' as const }
-  }
+  if (expiresAt === null) return { state: 'expired' as const }
 
   // `7. listopadu 2026 v 18:42`, in Prague time (copy thread zup07jj5), with no
   // break after the day and after the `v` (15k).

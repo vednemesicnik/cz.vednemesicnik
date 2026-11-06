@@ -48,7 +48,7 @@ const PDF_BYTES = new TextEncoder().encode('%PDF-1.4 podepsano')
 
 type ActionResult = {
   data: {
-    notice?: { message: string; tone: string }
+    notice?: { message: string; source: string; tone: string }
     submissionResult: { error: Record<string, string[]> }
   }
   init: { headers?: HeadersInit; status: number }
@@ -494,9 +494,25 @@ describe('membership application action', () => {
       expect(result.init.status).toBe(403)
       expect(result.data.notice).toEqual({
         message: expect.stringContaining('e-mail není ověřený'),
+        source: 'submit',
         tone: 'error',
       })
       expect(submitMock).not.toHaveBeenCalled()
+    })
+
+    it('says the address is not verified even past the submit limit', async () => {
+      const context = new RouterContextProvider()
+      context.set(rateLimitContext, { retryAfter: 900 })
+
+      const result = await runToData(
+        'signature',
+        formWithFile(pdf()),
+        await pendingCookie(),
+        context,
+      )
+
+      expect(result.init.status).toBe(403)
+      expect(result.data.notice?.source).toBe('submit')
     })
 
     it('refuses the submit when another address was verified', async () => {
@@ -616,8 +632,25 @@ describe('membership application action', () => {
       expect(result.init.status).toBe(429)
       expect(result.data.notice).toEqual({
         message: 'Kód teď nelze ověřit. Zkuste to prosím za 12 minut.',
+        source: 'code',
         tone: 'error',
       })
+    })
+
+    it('checks the honeypot first, even past the limit', async () => {
+      vi.mocked(checkHoneypot).mockImplementationOnce(() => {
+        throw new Response('Invalid form.', { status: 400 })
+      })
+      const context = new RouterContextProvider()
+      context.set(rateLimitContext, { retryAfter: 720 })
+
+      const response = (await verify(
+        '22222222',
+        await pendingCookie(),
+        context,
+      )) as Response
+
+      expect(response.status).toBe(400)
     })
   })
 
@@ -638,6 +671,7 @@ describe('membership application action', () => {
       )
       expect(result.data.notice).toEqual({
         message: 'Poslali jsme nový kód. Předchozí už neplatí.',
+        source: 'code',
         tone: 'success',
       })
       const state = await readMembershipApplicationCookie(

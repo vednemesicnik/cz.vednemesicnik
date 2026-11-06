@@ -186,7 +186,8 @@ export const EmailVerification = ({
         </Link>
       </div>
 
-      {isPending && (
+      {/* After a code action its sentence says which code counts (15k). */}
+      {isPending && notice?.source !== 'code' && (
         <p className={styles.replaces}>Nový kód nahradí předchozí.</p>
       )}
     </section>

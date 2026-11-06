@@ -3,16 +3,15 @@ import { MaxFileSizeExceededError } from '@mjackson/form-data-parser'
 import { data, redirect } from 'react-router'
 import { z } from 'zod'
 
-import {
-  MAX_DECLARATION_BYTES,
-  VERIFICATION_CODE_LIFETIME_MILLISECONDS,
-} from '~/config/membership-application-config'
+import { MAX_DECLARATION_BYTES } from '~/config/membership-application-config'
 import { formatRetryAfter } from '~/utils/format-retry-after'
 import { getMultipartFormData } from '~/utils/get-multipart-form-data'
 import { checkHoneypot } from '~/utils/honeypot.server'
 import { checkVerificationCode } from '~/utils/membership-application/check-verification-code.server'
 import { detectDeclarationType } from '~/utils/membership-application/detect-declaration-type'
 import { generateApplicationCode } from '~/utils/membership-application/generate-application-code.server'
+import { getVerificationCodeExpiry } from '~/utils/membership-application/get-verification-code-expiry'
+import { isEmailVerified } from '~/utils/membership-application/is-email-verified'
 import { isMinorOnDate } from '~/utils/membership-application/is-minor-on-date'
 import { issueVerificationCode } from '~/utils/membership-application/issue-verification-code.server'
 import {
@@ -58,16 +57,18 @@ const triesLimited = (retryAfter: number) =>
 
 type DetailsState = Extract<MembershipApplicationState, { state: 'details' }>
 
-/** A sentence above the code form, at most one (design 15k). */
-export type VerificationNotice = { message: string; tone: 'error' | 'success' }
+/**
+ * A sentence above the code form, at most one (design 15k). `source` says what
+ * answered: after a code action the note under the links gives way to it.
+ */
+export type VerificationNotice = {
+  message: string
+  source: 'code' | 'submit'
+  tone: 'error' | 'success'
+}
 
 const hasLiveCode = (application: DetailsState, now: number) =>
-  application.verification !== undefined &&
-  now <
-    application.verification.issuedAt + VERIFICATION_CODE_LIFETIME_MILLISECONDS
-
-const isVerified = (application: DetailsState) =>
-  application.verifiedEmail === application.details.email.toLowerCase()
+  getVerificationCodeExpiry(application, now) !== null
 
 // Answered before the body is read, and without a form's own validation.
 const emptySubmission = () =>
@@ -120,7 +121,7 @@ const saveDetails = async (request: Request) => {
       status: 303,
     })
 
-  if (previous !== null && isVerified(previous)) {
+  if (previous !== null && isEmailVerified(previous)) {
     throw await toSignature({ verifiedEmail: email })
   }
   if (previous !== null && hasLiveCode(previous, Date.now())) {
@@ -154,22 +155,24 @@ const verifyCode = async (
   context: Route.ActionArgs['context'],
   application: DetailsState,
 ) => {
-  if (isVerified(application)) {
+  if (isEmailVerified(application)) {
     throw redirect(getStepPath('signature'), { status: 303 })
   }
+
+  // Honeypot, then the limit, then the form: the body is a few bytes.
+  const formData = await request.formData()
+
+  checkHoneypot(formData)
 
   const limited = context.get(rateLimitContext)
   if (limited) {
     const notice: VerificationNotice = {
       message: triesLimited(limited.retryAfter),
+      source: 'code',
       tone: 'error',
     }
     return data({ notice }, { status: 429 })
   }
-
-  const formData = await request.formData()
-
-  checkHoneypot(formData)
 
   const submission = parseWithZod(formData, { schema: verificationCodeSchema })
 
@@ -220,7 +223,7 @@ const verifyCode = async (
 }
 
 const sendCode = async (request: Request, application: DetailsState) => {
-  if (isVerified(application)) {
+  if (isEmailVerified(application)) {
     throw redirect(getStepPath('signature'), { status: 303 })
   }
 
@@ -237,6 +240,7 @@ const sendCode = async (request: Request, application: DetailsState) => {
   if (issued.status === 'sent') {
     const notice: VerificationNotice = {
       message: NEW_CODE_SENT,
+      source: 'code',
       tone: 'success',
     }
     return data(
@@ -262,6 +266,7 @@ const sendCode = async (request: Request, application: DetailsState) => {
         : hadLiveCode
           ? NEW_CODE_NOT_SENT_KEEP_OLD
           : NEW_CODE_NOT_SENT,
+    source: 'code',
     tone: 'error',
   }
   return data({ notice }, { status: issued.status === 'limited' ? 429 : 503 })
@@ -272,6 +277,18 @@ const submitApplication = async (
   context: Route.ActionArgs['context'],
   application: DetailsState,
 ) => {
+  // The page offers no upload before the address is verified; this is a second
+  // tab where the address changed, or a request made by hand (design 15k). It
+  // goes first: past the limit, the upload's own message would have no form.
+  if (!isEmailVerified(application)) {
+    const notice: VerificationNotice = {
+      message: NOT_VERIFIED,
+      source: 'submit',
+      tone: 'error',
+    }
+    return data({ notice }, { status: 403 })
+  }
+
   const limited = context.get(rateLimitContext)
   if (limited) {
     return data(
@@ -284,13 +301,6 @@ const submitApplication = async (
       },
       { status: 429 },
     )
-  }
-
-  // The page offers no upload before the address is verified; this is a second
-  // tab where the address changed, or a request made by hand (design 15k).
-  if (!isVerified(application)) {
-    const notice: VerificationNotice = { message: NOT_VERIFIED, tone: 'error' }
-    return data({ notice }, { status: 403 })
   }
 
   let formData: FormData

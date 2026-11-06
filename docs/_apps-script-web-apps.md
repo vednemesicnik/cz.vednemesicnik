@@ -18,7 +18,7 @@ flowchart LR
   subgraph scripts["Under web.app@"]
     magicLink["SCRIPT__Auth__Magic_Link<br/>Sends the sign-in link"]
     usersNotice["SCRIPT__Users__Notice_Send<br/>Notices about an account"]
-    membershipApplications["SCRIPT__Membership__Applications<br/>Stores an application, approval, retention"]
+    membershipApplications["SCRIPT__Membership__Applications<br/>Mails the verification code, stores an application, approval, retention"]
     boardMembership["SCRIPT__Editorial_Board__Membership<br/>The only one that writes the sheet"]
     contacts["SCRIPT__Editorial_Board__Contacts<br/>Reads the public subset"]
   end

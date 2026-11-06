@@ -1,5 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
+import type { ShouldRevalidateFunction } from 'react-router'
+
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { HoneypotProvider } from '~/components/honeypot-provider'
@@ -19,6 +21,14 @@ export { headers } from './_headers'
 export { loader } from './_loader'
 export { meta } from './_meta'
 export { middleware } from './_middleware'
+
+// React Router skips the loaders after an action answers 400 or above. Here the
+// answer often changes what the step shows — a refused submit or an expired code
+// takes the upload away (15k) — so the step always reloads after a POST.
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  actionStatus,
+  defaultShouldRevalidate,
+}) => actionStatus !== undefined || defaultShouldRevalidate
 
 export default function RouteComponent({
   actionData,
