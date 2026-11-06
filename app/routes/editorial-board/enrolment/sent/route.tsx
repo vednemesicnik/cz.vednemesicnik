@@ -27,8 +27,8 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
       <div className={styles.content}>
         <p className={styles.lead}>
-          Na {loaderData.email} jsme poslali odkaz platný 72 hodin. Přes odkaz
-          přejděte na stránku a potvrďte přihlášku tlačítkem. O přijetí do
+          Na {loaderData.email} jsme poslali odkaz platný 72 hodin. Otevřete ho
+          a na následující stránce potvrďte přihlášku tlačítkem. O přijetí do
           redakce rozhodne šéfredakce.
         </p>
 
