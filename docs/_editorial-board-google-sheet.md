@@ -127,6 +127,15 @@ Behaviour:
   on Mondays while someone is `Čeká na přijetí`, tells the chief editors' group how many wait and how long the
   longest has waited. The message names nobody, and when nobody waits nothing goes out
   ([log 0070](work-log/0070-scheduled-jobs-stamp-each-job-when-it-finishes-and-resume-on-the-next-night.md)).
+- The same trigger asks whether people are still in the editorial board (#392). In September everyone
+  `V redakci` whose `Poslední potvrzení` is empty or at least three months old gets an e-mail with *Jsem pořád
+  v redakci* and *Odcházím z redakce*, and today's `Dotaz odeslán`. Reminders follow 4 and 8 weeks later, the
+  final warning at 11, and at 12 weeks a notice with a 30-day link back, then `Vyřazení bez odpovědi`, today's
+  `Odchod či vyřazení` and an empty `Dotaz odeslán`. Only rows still `V redakci` are mailed or removed; a date
+  typed into `Poslední potvrzení` on or after the round's day ends the round, and people sharing an address
+  under different names are never asked. The buttons lead to `/editorial-board/activity/confirm`, where opening
+  the link writes nothing and the press posts `confirmActive`, `leave` or `reactivate`
+  ([log 0072](work-log/0072-re-confirmation-links-are-signed-by-the-script-and-the-ladder-keeps-its-rungs-in-script-properties.md)).
 
 The steps below are for the read, in the Contacts project.
 

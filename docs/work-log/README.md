@@ -103,3 +103,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0069](0069-a-design-question-goes-to-an-agent-as-a-brief-of-what-the-product-needs.md) | A design question goes to an agent, as a brief of what the product needs | 2026-11-04 |  |
 | [0070](0070-scheduled-jobs-stamp-each-job-when-it-finishes-and-resume-on-the-next-night.md) | Scheduled jobs stamp each job when it finishes and resume on the next night | 2026-11-04 |  |
 | [0071](0071-under-the-publication-account-only-the-mailer-sends-and-only-one-script-reads.md) | Under the publication account, only the Mailer sends and only one script reads | 2026-11-05 |  |
+| [0072](0072-re-confirmation-links-are-signed-by-the-script-and-the-ladder-keeps-its-rungs-in-script-properties.md) | Re-confirmation links are signed by the script and the ladder keeps its rungs in Script Properties | 2026-11-06 |  |
