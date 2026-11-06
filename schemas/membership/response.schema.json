@@ -22,7 +22,7 @@
       "description": "How a request travels. `payload` is the request serialised to a string and signed as that exact string. OWN_SECRET is the signing key and never leaves either end.",
       "properties": {
         "payload": {
-          "description": "JSON of a SubmitApplicationRequest.",
+          "description": "JSON of a SubmitApplicationRequest or a SendVerificationCodeRequest.",
           "type": "string"
         },
         "signature": {
@@ -100,6 +100,82 @@
         }
       ]
     },
+    "SendVerificationCodeRequest": {
+      "additionalProperties": false,
+      "description": "Mails the code that confirms the applicant's address before the signature step. The app makes and checks the code; this stores nothing. One code for one address is one e-mail, however often the request is repeated.",
+      "properties": {
+        "action": {
+          "const": "sendVerificationCode"
+        },
+        "code": {
+          "description": "Eight characters, as the app made it; the e-mail shows two groups of four.",
+          "pattern": "^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$",
+          "type": "string"
+        },
+        "email": {
+          "description": "The address the applicant typed; the only recipient.",
+          "maxLength": 254,
+          "type": "string"
+        }
+      },
+      "required": ["action", "email", "code"],
+      "type": "object"
+    },
+    "SendVerificationCodeResponse": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ok": {
+              "const": true
+            }
+          },
+          "required": ["ok"],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "error": {
+              "description": "`mail_send_failed`: the mail service did not take the e-mail, see `mailError`.",
+              "enum": [
+                "server_misconfigured",
+                "invalid_request",
+                "unauthorized",
+                "stale_timestamp",
+                "missing_fields",
+                "invalid_email",
+                "mail_send_failed",
+                "server_error"
+              ],
+              "type": "string"
+            },
+            "mailError": {
+              "description": "Present only when error is \"mail_send_failed\": the underlying reason.",
+              "enum": [
+                "unauthorized",
+                "stale_timestamp",
+                "invalid_request",
+                "missing_fields",
+                "invalid_recipient",
+                "too_many_recipients",
+                "attachment_too_large",
+                "server_error",
+                "unreachable",
+                "bad_response",
+                "render_failed"
+              ],
+              "type": "string"
+            },
+            "ok": {
+              "const": false
+            }
+          },
+          "required": ["ok", "error"],
+          "type": "object"
+        }
+      ]
+    },
     "SubmitApplicationRequest": {
       "additionalProperties": false,
       "description": "One membership application. `code` identifies it: a second request with a code that is already in the sheet stores nothing and sends nothing, and answers with duplicate: true.",
@@ -164,6 +240,6 @@
       "type": "object"
     }
   },
-  "description": "Contract for the Vedneměsíčník membership-applications web app. POST a signed Envelope whose payload is a SubmitApplicationRequest; the response is a MembershipResponse. The application is stored (a row in the sheet, the signed declaration on the shared drive) before any e-mail goes out; a failed e-mail does not fail the request and is reported in mailError.",
+  "description": "Contract for the Vedneměsíčník membership-applications web app. POST a signed Envelope whose payload is a SubmitApplicationRequest, answered with a MembershipResponse, or a SendVerificationCodeRequest, answered with a SendVerificationCodeResponse. The application is stored (a row in the sheet, the signed declaration on the shared drive) before any e-mail goes out; a failed e-mail does not fail the request and is reported in mailError. The verification code is only mailed: nothing is stored.",
   "title": "Membership"
 }
