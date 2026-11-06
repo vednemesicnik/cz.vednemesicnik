@@ -130,12 +130,12 @@ describe('editorial-board enrolment action', () => {
     expect(issueMock).not.toHaveBeenCalled()
   })
 
-  it('says to try again later past the limit, and keeps the values', async () => {
+  it('says when to try again past the limit, and keeps the values', async () => {
     const result = await runToData(FIELDS, limitedContext())
 
     expect(result.init.status).toBe(429)
     expect(result.data.submissionResult.error?.['']).toEqual([
-      'Přihlášku teď nelze odeslat. Zkuste to prosím později.',
+      'Přihlášku teď nelze odeslat. Zkuste to prosím za 12 minut.',
     ])
     expect(result.data.submissionResult.initialValue).toMatchObject(FIELDS)
     expect(issueMock).not.toHaveBeenCalled()
@@ -158,14 +158,14 @@ describe('editorial-board enrolment action', () => {
     expect(issueMock).not.toHaveBeenCalled()
   })
 
-  it('says to try again later past the limit on the address', async () => {
-    issueMock.mockResolvedValue({ status: 'limited' })
+  it('says when to try again past the limit on the address', async () => {
+    issueMock.mockResolvedValue({ retryAfter: 720, status: 'limited' })
 
     const result = await runToData()
 
     expect(result.init.status).toBe(429)
     expect(result.data.submissionResult.error?.['']).toEqual([
-      'Přihlášku teď nelze odeslat. Zkuste to prosím později.',
+      'Přihlášku teď nelze odeslat. Zkuste to prosím za 12 minut.',
     ])
     expect(result.data.submissionResult.initialValue).toMatchObject(FIELDS)
   })
