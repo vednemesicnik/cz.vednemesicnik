@@ -1,7 +1,7 @@
 /**
  * Writes to the editorial-board spreadsheet through the Google Apps Script web app
  * (see the SCRIPT__Editorial_Board__Membership repo): an application on enrolment,
- * and someone's confirmation or departure.
+ * and someone's confirmation, departure or return after a removal without an answer.
  *
  * Unlike the read in `editorial-board.server.ts` this is not best-effort: the caller
  * has to know whether the write happened, because a lost write is an enrolment nobody
@@ -23,6 +23,7 @@ import type {
   EditorialBoardMembershipResponse,
   EnrolRequest,
   LeaveRequest,
+  ReactivateRequest,
 } from '@generated/editorial-board-membership/response'
 import * as Sentry from '@sentry/react-router'
 import { z } from 'zod'
@@ -33,7 +34,11 @@ import { postSignedGasRequest } from './post-signed-gas-request.server'
 // attempts stay under Cloudflare's 100 s.
 const WRITE_TIMEOUT_MILLISECONDS = 30_000
 
-type ContractRequest = ConfirmActiveRequest | EnrolRequest | LeaveRequest
+type ContractRequest =
+  | ConfirmActiveRequest
+  | EnrolRequest
+  | LeaveRequest
+  | ReactivateRequest
 
 type ContractSuccessResponse = Extract<
   EditorialBoardMembershipResponse,
@@ -49,6 +54,7 @@ export type EditorialBoardMembershipWrite =
   | Omit<ConfirmActiveRequest, 'idempotencyKey'>
   | Omit<EnrolRequest, 'idempotencyKey'>
   | Omit<LeaveRequest, 'idempotencyKey'>
+  | Omit<ReactivateRequest, 'idempotencyKey'>
 
 export type EditorialBoardMembershipError =
   | ContractErrorCode
@@ -82,6 +88,7 @@ const KNOWN_GAS_ERROR_CODES: Record<ContractErrorCode, true> = {
   missing_fields: true,
   not_active: true,
   not_found: true,
+  not_removed: true,
   server_error: true,
   server_misconfigured: true,
   stale_timestamp: true,
@@ -93,6 +100,7 @@ const KNOWN_GAS_ERROR_CODES: Record<ContractErrorCode, true> = {
 const EXPECTED_ERRORS = new Set<EditorialBoardMembershipError>([
   'not_active',
   'not_found',
+  'not_removed',
 ])
 
 const FINGERPRINT = ['editorial-board-membership', 'gas-write-failed']
@@ -129,8 +137,8 @@ const reportFailure = (
  *
  * @param write - The action and its fields; the idempotency key is added here.
  * @returns `idempotent` when an earlier attempt did the work. On failure, `error` says
- *   why, and `retryable` whether asking again could help: `not_found` and `not_active`
- *   are answers, `unreachable` means the write may or may not have happened and is safe
+ *   why, and `retryable` whether asking again could help: `not_found`, `not_active` and
+ *   `not_removed` are answers, `unreachable` means the write may or may not have happened and is safe
  *   to try again. Never throws.
  */
 export const postEditorialBoardMembershipWrite = async (

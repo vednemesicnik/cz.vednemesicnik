@@ -42,7 +42,7 @@
           "additionalProperties": false,
           "properties": {
             "error": {
-              "description": "`not_found`: no named row on `Kontakty` has this address. `not_active`: the person is not `V redakci`. `ambiguous`: rows with different names share this address. `busy`: no lock in time, worth trying again. `link_not_allowed`: the link is not on the confirmation route. `mail_send_failed`: the mail service did not take the e-mail, see `mailError`.",
+              "description": "`not_found`: no named row on `Kontakty` has this address. `not_active`: the person is not `V redakci`. `not_removed`: the person is not `Vyřazení bez odpovědi`. `ambiguous`: rows with different names share this address. `busy`: no lock in time, worth trying again. `link_not_allowed`: the link is not on the confirmation route. `mail_send_failed`: the mail service did not take the e-mail, see `mailError`.",
               "enum": [
                 "server_misconfigured",
                 "invalid_request",
@@ -51,6 +51,7 @@
                 "missing_fields",
                 "not_found",
                 "not_active",
+                "not_removed",
                 "ambiguous",
                 "busy",
                 "link_not_allowed",
@@ -124,7 +125,7 @@
       "description": "How a request travels. `payload` is a request serialised to a string and signed as that exact string. OWN_SECRET is the signing key and never leaves either end.",
       "properties": {
         "payload": {
-          "description": "JSON of an EnrolRequest, a ConfirmActiveRequest, a LeaveRequest or a SendEnrolmentEmailRequest.",
+          "description": "JSON of an EnrolRequest, a ConfirmActiveRequest, a LeaveRequest, a ReactivateRequest or a SendEnrolmentEmailRequest.",
           "type": "string"
         },
         "signature": {
@@ -146,6 +147,27 @@
       "properties": {
         "action": {
           "const": "leave"
+        },
+        "email": {
+          "maxLength": 254,
+          "pattern": "^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]+$",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "description": "Identifies one POST across its attempts. A repeat answers with the first result instead of writing again. Random per POST: a new press of a button is a new key, and the sheet decides.",
+          "pattern": "^[A-Za-z0-9-]{16,64}$",
+          "type": "string"
+        }
+      },
+      "required": ["action", "idempotencyKey", "email"],
+      "type": "object"
+    },
+    "ReactivateRequest": {
+      "additionalProperties": false,
+      "description": "Someone removed without an answer says they are still in: for rows in `Vyřazení bez odpovědi`, sets `Stav` to `V redakci` and `Poslední potvrzení` to today, and clears `Odchod či vyřazení` and `Dotaz odeslán`. Writes nothing for anyone else, and answers `not_removed`.",
+      "properties": {
+        "action": {
+          "const": "reactivate"
         },
         "email": {
           "maxLength": 254,
@@ -184,6 +206,6 @@
       "type": "object"
     }
   },
-  "description": "Contract for the writes to the Vedneměsíčník editorial-board spreadsheet and the e-mail that leads to one. POST a signed Envelope whose payload is an EnrolRequest, a ConfirmActiveRequest, a LeaveRequest or a SendEnrolmentEmailRequest; the response is an EditorialBoardMembershipResponse. Always replies HTTP 200, so `ok` is the only signal.",
+  "description": "Contract for the writes to the Vedneměsíčník editorial-board spreadsheet and the e-mail that leads to one. POST a signed Envelope whose payload is an EnrolRequest, a ConfirmActiveRequest, a LeaveRequest, a ReactivateRequest or a SendEnrolmentEmailRequest; the response is an EditorialBoardMembershipResponse. Always replies HTTP 200, so `ok` is the only signal.",
   "title": "EditorialBoardMembership"
 }
