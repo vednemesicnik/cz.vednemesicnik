@@ -33,22 +33,24 @@ export const action = async ({ request }: Route.ActionArgs) => {
   checkHoneypot(formData)
 
   const token = formData.get('token')
-
-  if (typeof token !== 'string') {
-    throw redirect(CONFIRM_PATH, { status: 303 })
-  }
-
   const verification = verifyActivityToken(
-    token,
+    typeof token === 'string' ? token : '',
     process.env.GAS_EDITORIAL_BOARD_LINK_SECRET ?? '',
     Date.now(),
   )
 
-  // The page of the same link, which says why it no longer works.
-  if (verification.status !== 'valid') {
-    throw redirect(`${CONFIRM_PATH}?${new URLSearchParams({ token })}`, {
-      status: 303,
-    })
+  // Back to the page, which says the link cannot be used. Without the token: an invalid
+  // one is whatever was posted, and the page says the same without it.
+  if (verification.status === 'invalid') {
+    throw redirect(CONFIRM_PATH, { status: 303 })
+  }
+
+  // The page of the same link, which names its last day. The token is a verified one.
+  if (verification.status === 'expired') {
+    throw redirect(
+      `${CONFIRM_PATH}?${new URLSearchParams({ token: String(token) })}`,
+      { status: 303 },
+    )
   }
 
   const write = await postEditorialBoardMembershipWrite({

@@ -121,29 +121,36 @@ describe('activity confirmation action', () => {
     },
   )
 
+  it('writes nothing for an expired link and goes back to its page', async () => {
+    const token = tokenFor('leave', Date.parse('2026-11-01T00:00:00Z') / 1000)
+    const response = await runToRedirect({ token })
+
+    expect(writeMock).not.toHaveBeenCalled()
+    expect(response.status).toBe(303)
+    expect(response.headers.get('Location')).toBe(
+      `${CONFIRM_PATH}?${new URLSearchParams({ token })}`,
+    )
+  })
+
   it.each([
     [
-      'tampered',
-      tokenFor('leave').replace(/.$/, (last) => (last === 'a' ? 'b' : 'a')),
+      'a tampered token',
+      {
+        token: tokenFor('leave').replace(/.$/, (last) =>
+          last === 'a' ? 'b' : 'a',
+        ),
+      },
     ],
-    ['expired', tokenFor('leave', Date.parse('2026-11-01T00:00:00Z') / 1000)],
+    ['an oversized token', { token: 'a'.repeat(5000) }],
+    ['no token', {}],
   ])(
-    'writes nothing for a %s link and goes back to its page',
-    async (_case, token) => {
-      const response = await runToRedirect({ token })
+    'writes nothing for %s and goes back without echoing it',
+    async (_case, values: Record<string, string>) => {
+      const response = await runToRedirect(values)
 
       expect(writeMock).not.toHaveBeenCalled()
       expect(response.status).toBe(303)
-      expect(response.headers.get('Location')).toBe(
-        `${CONFIRM_PATH}?${new URLSearchParams({ token })}`,
-      )
+      expect(response.headers.get('Location')).toBe(CONFIRM_PATH)
     },
   )
-
-  it('goes back to the page without a token', async () => {
-    const response = await runToRedirect({})
-
-    expect(writeMock).not.toHaveBeenCalled()
-    expect(response.headers.get('Location')).toBe(CONFIRM_PATH)
-  })
 })
