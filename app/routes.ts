@@ -85,6 +85,18 @@ export default [
       'routes/editorial-board/enrolment/confirm/done/route.tsx',
     ),
 
+    // Where the re-confirmation e-mails lead (design 15j). Hidden like the enrolment:
+    // only the e-mails link to it. The script builds the address
+    // (SCRIPT__Editorial_Board__Membership, CONFIG.activityCheck.confirmPath).
+    route(
+      'editorial-board/activity/confirm',
+      'routes/editorial-board/activity/confirm/route.tsx',
+    ),
+    route(
+      'editorial-board/activity/confirm/done',
+      'routes/editorial-board/activity/confirm/done/route.tsx',
+    ),
+
     // Organization routes
     route('organization', 'routes/organization/route.tsx'),
 

@@ -1,0 +1,39 @@
+.headlineGroup {
+  @layer route {
+    margin-block-end: 18px;
+
+    @container page (width >= 940px) {
+      margin-block-end: 28px;
+    }
+  }
+}
+
+.content {
+  @layer route {
+    display: grid;
+    gap: 18px;
+    width: 100%;
+    text-align: start;
+
+    @container page (width >= 940px) {
+      max-inline-size: 540px;
+    }
+  }
+}
+
+.lead {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+}
+
+.articles {
+  @layer route {
+    @container page (width >= 940px) {
+      justify-self: start;
+    }
+  }
+}
