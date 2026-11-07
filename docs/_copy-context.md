@@ -239,7 +239,8 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   přihlášku podepíše i zákonný zástupce. Přihláška bez zapsaného přijetí se 12 měsíců od podání
   smaže, i když ještě nebyla projednaná; přijatá zůstává (rozhodnuto 31. 10. 2026).
 - **Přihláška do redakce**: nic nesmí slibovat, že se někdo ozve, ani lhůtu. O přijetí
-  rozhoduje šéfredakce. Přihláška leží v soukromé tabulce Redakce na listu `Přihlášky`, s hodnotami
+  rozhoduje šéfredakce. Telefon je v ní povinný, v přihlášce do spolku ne (rozhodnuto
+  7. 11. 2026). Přihláška leží v soukromé tabulce Redakce na listu `Přihlášky`, s hodnotami
   `Stav` `Čeká na přijetí` · `Přijato` · `Nepřijato`, a 12 měsíců po `Ověření e-mailu` se smaže,
   i přijatá nebo nepřijatá (rozhodnuto 2. 11. 2026). Přijatý člověk zůstává
   na listu `Kontakty`. Tato lhůta i její počátek platí jen pro přihlášku do redakce, ne do spolku.
