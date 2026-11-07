@@ -7,3 +7,66 @@
     text-align: start;
   }
 }
+
+/* Two equal columns across the page, one on a phone (15c). Until the donate
+   page (#104) only the membership area stands in the first, and the second
+   stays empty, so Podpořte nás fills it later without moving anything
+   (7z3kxdk5). Not auto-fit: it would stretch the lone area across the page. */
+.areas {
+  @layer route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    width: 100%;
+    margin-block-start: 28px;
+    text-align: start;
+
+    @media all and (width > 768px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+      margin-block-start: 40px;
+    }
+  }
+}
+
+.area {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+
+    @media all and (width > 768px) {
+      gap: 12px;
+      padding: 24px;
+    }
+  }
+}
+
+.areaHeading {
+  @layer route {
+    margin-block: 0;
+  }
+}
+
+.areaText {
+  @layer route {
+    margin-block: 0;
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+}
+
+/* Never broken, with room above and below for a finger (1rs08xnl). */
+.areaAddress {
+  @layer route {
+    display: inline-block;
+    padding-block: 6px;
+    white-space: nowrap;
+  }
+}
