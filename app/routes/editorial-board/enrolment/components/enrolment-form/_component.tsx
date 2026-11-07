@@ -91,7 +91,7 @@ export const EnrolmentForm = ({ submissionResult }: Props) => {
           autoComplete={'tel'}
           errors={fields.phone.errors}
           label={'Telefon'}
-          optional
+          required
           {...getInputProps(fields.phone, { type: 'tel' })}
         />
         <TextareaField
