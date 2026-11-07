@@ -13,6 +13,7 @@ import { Callout } from '~/components/callout'
 import { Form } from '~/components/form'
 import { FormLegend } from '~/components/form-legend'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
+import { MailHyperlink } from '~/components/mail-hyperlink'
 import { TextField } from '~/components/text-field'
 import { TextareaField } from '~/components/textarea-field'
 import { ORGANIZATION_REGISTRATION_NUMBER } from '~/config/site-config'
@@ -20,6 +21,8 @@ import { useHydrated } from '~/utils/use-hydrated'
 
 import { enrolmentSchema } from '../../_schema'
 import styles from './_styles.module.css'
+
+const PERSONAL_DATA_ADDRESS = 'udaje@vednemesicnik.cz'
 
 type Props = {
   submissionResult: SubmissionResult<string[]> | undefined
@@ -102,15 +105,20 @@ export const EnrolmentForm = ({ submissionResult }: Props) => {
         />
 
         <p className={styles.notice}>
-          Odesláním potvrzujete, že vám je alespoň 15 let, a berete na vědomí,
-          že spolek Vedneměsíčník,&nbsp;z.&nbsp;s., IČO&nbsp;
-          {ORGANIZATION_REGISTRATION_NUMBER}, použije vaše údaje ke komunikaci v
-          rámci redakce. Pokud vás šéfredakce přijme, uchováme vaše kontaktní
-          údaje bez časového omezení i po vašem odchodu, abychom s vámi zůstali
-          ve spojení. Přihlášku smažeme po 12 měsících od jejího potvrzení.
-          Nepotvrzené přihlášky pravidelně mažeme po vypršení potvrzovacích
-          odkazů. Pokud chcete kontaktní údaje smazat nebo se na zpracování
-          údajů zeptat, napište nám na udaje@vednemesicnik.cz.
+          Odesláním přihlášky potvrzujete, že vám je alespoň 15&nbsp;let. Vaše
+          údaje používáme ke komunikaci v rámci redakce. Zpracovává je spolek
+          Vedneměsíčník,&nbsp;z.&nbsp;s., IČO&nbsp;
+          {ORGANIZATION_REGISTRATION_NUMBER}. Pokud přihlášku potvrdíte, smažeme
+          ji po 12&nbsp;měsících od potvrzení, ať vás šéfredakce přijme, nebo
+          ne. Pokud ji nepotvrdíte, smažeme ji nejpozději den po vypršení odkazu
+          k potvrzení. Odkaz platí 72&nbsp;hodin. Pokud vás šéfredakce přijme,
+          uchováme vaše kontaktní údaje zvlášť, bez časového omezení i po vašem
+          odchodu z redakce, abychom s vámi zůstali ve spojení. O jejich smazání
+          můžete požádat na{' '}
+          <MailHyperlink address={PERSONAL_DATA_ADDRESS}>
+            {PERSONAL_DATA_ADDRESS}
+          </MailHyperlink>
+          . Na stejnou adresu nám můžete napsat i s dotazy ke zpracování údajů.
         </p>
 
         <Button

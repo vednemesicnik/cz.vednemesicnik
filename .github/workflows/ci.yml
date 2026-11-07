@@ -25,6 +25,7 @@ jobs:
           node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm dedupe --check
       - run: pnpm biome:check
 
   typecheck:
