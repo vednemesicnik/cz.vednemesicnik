@@ -27,7 +27,11 @@ pnpm app:typecheck                 # Run TypeScript type checking and generate R
 pnpm app:routes:generate           # Generate React Router type definitions
 pnpm test                          # Run Vitest tests (non-watch mode)
 pnpm biome:check                   # Lint and format check (Biome)
+pnpm dedupe --check                # Fail on duplicate versions pnpm dedupe can collapse (CI)
 ```
+
+When the dedupe check fails, often on a Dependabot PR, run `pnpm dedupe` and commit the
+lockfile: two copies of a package such as ProseMirror break at runtime.
 
 The formatter is Biome: format with `pnpm exec biome check --write <files>`. Prettier is
 installed only as a transitive dependency; running it rewrites files into a style the
