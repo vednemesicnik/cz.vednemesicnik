@@ -22,6 +22,7 @@ import {
 import { startAuthLogRetention } from '~/utils/auth-log.server'
 import { startEnrolmentRetention } from '~/utils/editorial-board-enrolment/start-enrolment-retention.server'
 import { getEnv, initEnv } from '~/utils/env.server'
+import { isForeignOriginCheckError } from '~/utils/is-foreign-origin-check-error.server'
 
 // Reject/cancel all pending promises after 10 seconds. Kept comfortably above
 // the editorial-board GAS_TIMEOUT_MS (8s) so a streamed background refresh isn't
@@ -48,21 +49,11 @@ export const handleError: HandleErrorFunction = (error, { request }) => {
 
   // Report only when Sentry is configured (matches the instrument's gate); the SDK
   // is never initialized without a DSN, so this stays fully inert when unset.
-  if (process.env.SENTRY_DSN && !isBotOriginCheckError(error, request)) {
+  if (process.env.SENTRY_DSN && !isForeignOriginCheckError(error, request)) {
     Sentry.captureException(error)
   }
   console.error(error) // Fly logs remain the fallback
 }
-
-/**
- * Whether the error is RR's action origin check rejecting a bot (e.g. WordPress
- * scanners POSTing to `www`). Browsers still report it — it's the signal of a
- * proxy/origin misconfiguration (#406).
- */
-const isBotOriginCheckError = (error: unknown, request: Request) =>
-  error instanceof Error &&
-  error.message.includes('does not match `origin` header') &&
-  isbot(request.headers.get('user-agent') || '')
 
 export default function handleRequest(
   request: Request,
