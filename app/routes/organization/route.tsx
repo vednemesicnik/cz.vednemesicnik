@@ -1,10 +1,14 @@
 // noinspection JSUnusedGlobalSymbols
 
+import { Heading } from '~/components/heading'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
+import { MailHyperlink } from '~/components/mail-hyperlink'
 import { Page } from '~/components/page'
 import { Paragraph } from '~/components/paragraph'
 import styles from './_styles.module.css'
+
+const MEMBERSHIP_EMAIL_ADDRESS = 'clenstvi@vednemesicnik.cz'
 
 export default function RouteComponent() {
   return (
@@ -32,6 +36,23 @@ export default function RouteComponent() {
           čtenářů. Vedle vydávání časopisu spolek pořádá také kulturní a
           společenské akce pro studenty.
         </Paragraph>
+      </div>
+      <div className={styles.areas}>
+        <section className={styles.area}>
+          <Heading className={styles.areaHeading} level={2}>
+            Členství ve spolku
+          </Heading>
+          <Paragraph className={styles.areaText}>
+            Chcete se stát členem? Napište nám na{' '}
+            <MailHyperlink
+              address={MEMBERSHIP_EMAIL_ADDRESS}
+              className={styles.areaAddress}
+            >
+              {MEMBERSHIP_EMAIL_ADDRESS}
+            </MailHyperlink>
+            .
+          </Paragraph>
+        </section>
       </div>
     </Page>
   )

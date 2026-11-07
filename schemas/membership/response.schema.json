@@ -108,7 +108,7 @@
           "const": "sendVerificationCode"
         },
         "code": {
-          "description": "Eight characters, as the app made it; the e-mail shows two groups of four.",
+          "description": "Eight characters, as the app made it; the e-mail shows them as they are.",
           "pattern": "^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$",
           "type": "string"
         },
