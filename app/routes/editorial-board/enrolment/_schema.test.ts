@@ -6,6 +6,7 @@ const VALID = {
   email: 'tereza@local.dev',
   firstName: 'Tereza',
   lastName: 'Malá',
+  phone: '604 123 456',
 }
 
 const errorsOf = (values: Record<string, unknown>, field: string) => {
@@ -19,11 +20,11 @@ const errorsOf = (values: Record<string, unknown>, field: string) => {
 }
 
 describe('enrolmentSchema', () => {
-  it('takes the three required fields alone', () => {
+  it('takes the four required fields alone', () => {
     expect(enrolmentSchema.parse(VALID)).toEqual(VALID)
   })
 
-  it('takes the optional fields and trims them', () => {
+  it('takes the interest and trims it and the phone', () => {
     expect(
       enrolmentSchema.parse({
         ...VALID,
@@ -45,8 +46,13 @@ describe('enrolmentSchema', () => {
     ['firstName', 'Vyplňte jméno.'],
     ['lastName', 'Vyplňte příjmení.'],
     ['email', 'Vyplňte e-mail.'],
+    ['phone', 'Vyplňte telefon.'],
   ])('asks for %s', (field, message) => {
     expect(errorsOf({ [field]: undefined }, field)).toEqual([message])
+  })
+
+  it('asks for a phone made only of spaces', () => {
+    expect(errorsOf({ phone: '   ' }, 'phone')).toEqual(['Vyplňte telefon.'])
   })
 
   it.each([
@@ -89,7 +95,9 @@ describe('enrolmentSchema', () => {
   })
 
   it('refuses a phone outside the pattern of the contract', () => {
-    expect(errorsOf({ phone: '604-123-456' }, 'phone')).toHaveLength(1)
+    expect(errorsOf({ phone: '604-123-456' }, 'phone')).toEqual([
+      'Zadejte telefon například ve tvaru 604 123 456 nebo +420 604 123 456.',
+    ])
     expect(errorsOf({ phone: '604 123 456' }, 'phone')).toEqual([])
   })
 

@@ -24,7 +24,7 @@ const createNameSchema = (messages: {
 
 /** What someone leaves on the form from the leaflet (design 15e). */
 export const enrolmentSchema = membershipDetailsSchema
-  .pick({ email: true, phone: true })
+  .pick({ email: true })
   .extend({
     firstName: createNameSchema({
       empty: 'Vyplňte jméno.',
@@ -44,4 +44,11 @@ export const enrolmentSchema = membershipDetailsSchema
       notAName: 'Zadejte příjmení bez e-mailové adresy nebo odkazu.',
       tooLong: `Zkraťte příjmení na nejvýš ${MAX_NAME_LENGTH} znaků.`,
     }),
+    // Required here, optional in the membership application and in the script's
+    // contract; the format is the shared one.
+    phone: z
+      .string({ message: 'Vyplňte telefon.' })
+      .trim()
+      .min(1, { message: 'Vyplňte telefon.' })
+      .pipe(membershipDetailsSchema.shape.phone.unwrap()),
   })
