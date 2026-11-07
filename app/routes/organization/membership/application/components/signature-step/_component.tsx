@@ -16,6 +16,7 @@ import { Heading } from '~/components/heading'
 import { HoneypotInputs } from '~/components/honeypot-inputs'
 import { Hyperlink } from '~/components/hyperlink'
 import { Link } from '~/components/link'
+import { MailHyperlink } from '~/components/mail-hyperlink'
 import { ORGANIZATION_REGISTRATION_NUMBER } from '~/config/site-config'
 import { useHydrated } from '~/utils/use-hydrated'
 
@@ -27,6 +28,8 @@ import { DeclarationUploadField } from '../declaration-upload-field'
 import { EmailVerification, type Verification } from '../email-verification'
 import { PrintDeclarationButton } from '../print-declaration-button'
 import styles from './_styles.module.css'
+
+const PERSONAL_DATA_ADDRESS = 'udaje@vednemesicnik.cz'
 
 type Props = {
   /** The address from the details, as typed. */
@@ -166,16 +169,21 @@ export const SignatureStep = ({
             </div>
 
             <p className={styles.dataNotice}>
-              Vaše údaje a podepsané prohlášení bude spolek
+              Vaše údaje a podepsané prohlášení zpracovává spolek
               Vedneměsíčník,&nbsp;z.&nbsp;s., IČO&nbsp;
-              {ORGANIZATION_REGISTRATION_NUMBER}, zpracovávat pro vyřízení
-              přihlášky a po přijetí pro vedení členských záznamů. O přijetí
-              rozhodne spolek. Odesláním přihlášky členství nevzniká. Pokud vás
-              přijmeme, pošleme vám potvrzení e-mailem. Pokud do 12 měsíců od
-              podání přihlášky nezaznamenáme vaše přijetí, přihlášku i podepsané
-              prohlášení smažeme. Přihlášku i podepsané prohlášení se
-              zaznamenaným přijetím uchováváme bez časového omezení. S dotazy ke
-              zpracování údajů nám napište na udaje@vednemesicnik.cz.
+              {ORGANIZATION_REGISTRATION_NUMBER}. Používáme je k vyřízení
+              přihlášky a po přijetí k vedení členských záznamů. O přijetí
+              rozhodne spolek. Členství vzniká až přijetím, samotné odeslání
+              přihlášky nestačí. Po přijetí vám pošleme potvrzení e-mailem.
+              Přihlášku i podepsané prohlášení uchováváme bez časového omezení,
+              pokud je vaše přijetí zapsané. Jestliže ani po 12&nbsp;měsících od
+              odeslání přihlášky nebude přijetí zapsané, oba dokumenty smažeme,
+              i kdyby spolek přihlášku ještě neprojednal. S dotazy ke zpracování
+              údajů nám napište na{' '}
+              <MailHyperlink address={PERSONAL_DATA_ADDRESS}>
+                {PERSONAL_DATA_ADDRESS}
+              </MailHyperlink>
+              .
             </p>
 
             <Button

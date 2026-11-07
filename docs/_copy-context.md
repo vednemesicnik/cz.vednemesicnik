@@ -245,7 +245,8 @@ Týká se to i veřejného webu (rozhodnuto, zatím nepostaveno):
   na listu `Kontakty`. Tato lhůta i její počátek platí jen pro přihlášku do redakce, ne do spolku.
   Kontakty na listu `Kontakty` zůstávají bez časového omezení i po odchodu, abychom s člověkem zůstali
   ve spojení; na žádost přes `udaje@vednemesicnik.cz` je smažeme ručně (rozhodnuto 3. 11. 2026).
-  Nepotvrzené přihlášky mažeme po vypršení potvrzovacího odkazu, který platí 72 hodin.
+  Nepotvrzené přihlášky mažeme nejpozději den po vypršení potvrzovacího odkazu, který platí 72 hodin
+  (úklid běží jednou denně).
 - **Lidé v redakci** jsou v téže tabulce na listu `Kontakty`. Na stránce *Redakce* je jen ten, kdo má
   `Stav` `V redakci` a zároveň roli z listu `Role`; žádný text proto neslibuje, že člověka stránka
   ukáže. `Mimo redakci` znamená, že člověk teď není součástí redakce: odešel, přestal
