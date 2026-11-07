@@ -18,7 +18,7 @@ const NO_CODE = 'Zadejte kód z e-mailu.'
 export const WRONG_CODE =
   'Kód nesouhlasí. Zkontrolujte ho, nebo si pošlete nový.'
 
-// Copy thread zup07jj5. The length counts without the space of `K7M2 9XQP`.
+// Copy thread zup07jj5. The length counts without a space or hyphen typed in it.
 export const verificationCodeSchema = z.object({
   code: z
     .string({ message: NO_CODE })
