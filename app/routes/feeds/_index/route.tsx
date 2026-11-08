@@ -17,14 +17,15 @@ import { FeedCardTitle } from './components/feed-card-title'
 export { loader } from './_loader'
 export { meta } from './_meta'
 
-// What comes, then how, then what to choose from (17a, copy uvjknd7d, drf8a7ql).
+// What comes, then how, then what to choose from (17a, copy uvjknd7d, drf8a7ql,
+// r4teulu8).
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { archiveAddress, articlesAddress, podcastFeeds } = loaderData
 
   return (
     <Page>
       <HeadlineGroup>
-        <Headline>Odebírat</Headline>
+        <Headline>Nemusíte nás pořád vyhlížet</Headline>
         <Subheadline>
           Nové články, tištěná čísla i epizody můžete sledovat ve čtečce
           novinek.

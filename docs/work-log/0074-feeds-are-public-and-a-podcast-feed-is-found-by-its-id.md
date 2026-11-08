@@ -8,7 +8,7 @@
 The site had no feeds; readers had to come back to see what was new. #223 planned RSS and JSON Feed
 for articles and the archive in July, with podcasts left out because episodes have no hosted audio.
 The scope grew to one feed per podcast, and design `vswhqi52` answered where a reader finds the
-feeds: the `/feeds` page (17a, 17b), *Odebírat* in the footer (10a) and a link on the podcast page
+feeds: the `/feeds` page (17a, 17b), a footer link (10a) and a link on the podcast page
 (13b). Most readers don't know RSS, so the page explains it. A podcast's published address frees its
 old slug on a re-publish, and no redirect is kept (log 0039).
 
@@ -26,6 +26,9 @@ old slug on a re-publish, and no redirect is kept (log 0039).
   `<link rel="alternate">`, which the website layout writes on every website page for articles and the
   archive. A podcast page and its episodes add that podcast's feed, and `/feeds` lists every one. The
   administration offers none.
+- **The page belongs to the headline family.** The footer and the tab title say *Odběr novinek*,
+  the headline *Nemusíte nás pořád vyhlížet* (copy `r4teulu8`), as *Technická podpora*, reached only
+  from the footer, says *Pomozte nám vylepšit web*. *Odebírat* stays the verb for the action.
 - **No XSLT** to dress the XML for a browser: Chrome is removing it, and the page copies the address
   instead of opening it.
 

@@ -6,7 +6,7 @@ import type { Route } from './+types/route'
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const pageSEO = createPageSEO({
     ogImage: resolveOgImageUrl(null, ENV.BASE_URL),
-    title: 'Odebírat',
+    title: 'Odběr novinek',
     url: new URL(location.pathname, ENV.BASE_URL).href,
   })
 
