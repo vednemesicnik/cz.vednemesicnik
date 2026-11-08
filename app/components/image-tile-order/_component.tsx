@@ -6,7 +6,7 @@ import styles from './_styles.module.css'
 
 type Props = {
   /** The image's place among the stored ones, which is its place on the web. */
-  number: number
+  children: number
   /** The tile can be dragged: the grip follows the number. */
   hasGrip?: boolean
   className?: string
@@ -19,7 +19,7 @@ type Props = {
  * name, and the „⋯“ moves the tile without dragging.
  */
 export const ImageTileOrder = ({
-  number,
+  children,
   hasGrip = false,
   className,
 }: Props) => (
@@ -27,7 +27,7 @@ export const ImageTileOrder = ({
     aria-hidden={true}
     className={clsx(styles.imageTileOrder, hasGrip && styles.grip, className)}
   >
-    {number}
+    {children}
     {hasGrip && <GripVerticalIcon className={styles.icon} />}
   </span>
 )
