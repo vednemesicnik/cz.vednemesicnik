@@ -1,6 +1,7 @@
 import { clsx } from 'clsx'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 
+import { Button } from '~/components/button'
 import { CheckIcon } from '~/components/icons/check-icon'
 import { CopyIcon } from '~/components/icons/copy-icon'
 import { Tooltip } from '~/components/tooltip'
@@ -18,7 +19,7 @@ const FAILED_SENTENCES = {
   web: 'Kopírování se nepovedlo. Zkopírujte označený text pomocí Ctrl+C, na Macu ⌘C.',
 } as const
 
-// How long the check icon stays and „Zkopírováno“ is announced after a copy.
+// How long the check icon and „Zkopírováno“ stay after a copy.
 const COPIED_DURATION_MS = 2000
 
 type Status = 'idle' | 'copied' | 'failed'
@@ -31,28 +32,29 @@ type Props = {
 }
 
 /**
- * Inline copy-to-clipboard button of the design system: the value the reader
- * may want to copy, then a copy icon that turns into a check on a success fill
- * for two seconds (jhwfoyxs). The text never changes and has no `title`;
- * „Zkopírováno“ is announced from a status region beside the button, so it
- * never joins the button's name.
+ * Copy to the clipboard, as the design system draws it.
  *
- * With a visible value, the icon and the word „Kopírovat“ follow it inside the
- * button, so a reader sees what a click does before clicking, with no hover
- * (17c, 4c4ynjih); after a copy the word reads „Zkopírováno“ for two seconds in
- * the same width. The name stays the value and a hidden „Kopírovat“, so the
- * visible word is hidden from screen readers. With the icon alone, „Kopírovat“
- * is its `aria-label` and its `Tooltip`. The value can always be selected by
- * hand, and the tap target is at least 44 px (17b).
+ * With a visible value, the value is plain text and beside it stands a `Button`
+ * (outline, sm) with the copy icon and „Kopírovat“, so a reader sees what the
+ * click does before clicking, on touch too (17c, 4c4ynjih, the owner's decision
+ * of 8 Nov 2026). The button goes beside the value when it fits, otherwise under
+ * it. After a copy it shows a check and „Zkopírováno“ for two seconds in the same
+ * width, and a status region beside it announces „Zkopírováno“. Its name is
+ * „Kopírovat“ and the value, so each button on a page names what it copies.
+ * Its tap area is 44 px high without moving anything (17b).
+ *
+ * With the icon alone, „Kopírovat“ is its `aria-label` and its `Tooltip`
+ * (jhwfoyxs), and a copy turns the icon into a check on a success fill.
  *
  * When the clipboard refuses, a visible value is selected, the focus stays on
- * the button so Ctrl+C or ⌘C copies it, and a sentence under the row says so;
- * it goes on the next click or copy (17b). The sentence names keyboard shortcuts,
- * so it shows only with a fine pointer until a phone wording is approved; the
- * icon alone has nothing to select and stays as it is.
+ * the button so Ctrl+C or ⌘C copies it, and a sentence under the value says so;
+ * it goes on the next click or copy (17b). The sentence names keyboard
+ * shortcuts, so it shows only with a fine pointer until a phone wording is
+ * approved; the icon alone has nothing to select and stays as it is.
  *
  * @param props.value - What lands in the clipboard.
  * @param props.children - The visible value; without it only the icon shows.
+ * @param props.className - For the value's box, or the icon-only button.
  * @param props.surface - Whose voice the failure sentence speaks in: `web` for the
  *   website and its forms (default), `administration` for the administration.
  */
@@ -111,68 +113,78 @@ export const CopyButton = ({
     timeoutRef.current = setTimeout(() => setStatus('idle'), COPIED_DURATION_MS)
   }
 
-  const icons = (
-    <>
-      <CopyIcon className={clsx(styles.icon, isCopied && styles.hidden)} />
-      <CheckIcon className={clsx(styles.icon, !isCopied && styles.hidden)} />
-    </>
+  const statusRegion = (
+    <span
+      className={
+        status === 'failed' ? styles.failedSentence : styles.visuallyHidden
+      }
+      role={'status'}
+    >
+      {isCopied && COPIED_LABEL}
+      {status === 'failed' && FAILED_SENTENCES[surface]}
+    </span>
   )
 
-  const button = (
-    <button
-      aria-label={hasText ? undefined : LABEL}
-      className={clsx(
-        styles.copyButton,
-        hasText && styles.labelled,
-        isCopied && styles.copied,
-        className,
-      )}
-      onClick={handleClick}
-      ref={buttonRef}
-      type={'button'}
-    >
-      {hasText ? (
-        <>
-          <span className={styles.text} ref={textRef}>
-            {children}
-          </span>
-          <span className={styles.visuallyHidden}>{` ${LABEL}`}</span>
-          {/* What the click does, in a word after the value (17c). Both words
-              take one cell, so nothing moves when it changes. */}
-          <span aria-hidden={true} className={styles.action}>
-            <span className={styles.icons}>{icons}</span>
-            <span className={styles.words}>
+  if (!hasText) {
+    return (
+      <>
+        <Tooltip className={styles.tooltip} label={LABEL}>
+          <button
+            aria-label={LABEL}
+            className={clsx(
+              styles.iconButton,
+              isCopied && styles.copied,
+              className,
+            )}
+            onClick={handleClick}
+            ref={buttonRef}
+            type={'button'}
+          >
+            <CopyIcon
+              className={clsx(styles.icon, isCopied && styles.hidden)}
+            />
+            <CheckIcon
+              className={clsx(styles.icon, !isCopied && styles.hidden)}
+            />
+          </button>
+        </Tooltip>
+        {statusRegion}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <span className={clsx(styles.row, className)}>
+        <span className={styles.value} ref={textRef}>
+          {children}
+        </span>
+        <Button
+          className={styles.button}
+          onClick={handleClick}
+          ref={buttonRef}
+          size={'sm'}
+          type={'button'}
+          variant={'outline'}
+        >
+          <span className={styles.visuallyHidden}>{`${LABEL} ${value}`}</span>
+          {/* Both icons and both words take one cell each, so the button keeps
+              its width when they change. */}
+          <span aria-hidden={true} className={styles.content}>
+            <span className={styles.cell}>
+              <CopyIcon className={clsx(isCopied && styles.hidden)} />
+              <CheckIcon className={clsx(!isCopied && styles.hidden)} />
+            </span>
+            <span className={styles.cell}>
               <span className={clsx(isCopied && styles.hidden)}>{LABEL}</span>
               <span className={clsx(!isCopied && styles.hidden)}>
                 {COPIED_LABEL}
               </span>
             </span>
           </span>
-        </>
-      ) : (
-        icons
-      )}
-    </button>
-  )
-
-  return (
-    <>
-      {hasText ? (
-        button
-      ) : (
-        <Tooltip className={styles.tooltip} label={LABEL}>
-          {button}
-        </Tooltip>
-      )}
-      <span
-        className={
-          status === 'failed' ? styles.failedSentence : styles.visuallyHidden
-        }
-        role={'status'}
-      >
-        {isCopied && COPIED_LABEL}
-        {status === 'failed' && FAILED_SENTENCES[surface]}
+        </Button>
       </span>
+      {statusRegion}
     </>
   )
 }

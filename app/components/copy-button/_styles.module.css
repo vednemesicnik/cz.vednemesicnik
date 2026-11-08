@@ -1,24 +1,93 @@
 /* The design system's CopyButton (components/core/CopyButton). */
-.copyButton {
+
+/* A visible value and its Kopírovat button: beside each other when they fit,
+   the button under the value at its start when they don't (17c, 4c4ynjih). */
+.row {
+  @layer component {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    text-align: start;
+    vertical-align: middle;
+  }
+}
+
+/* Plain text, in the type of the caller's box (15 px on /feeds, 22 px bold in
+   15d), selectable by hand and by the button when the clipboard refuses. */
+.value {
+  @layer component {
+    min-width: 0;
+    user-select: text;
+  }
+}
+
+/* Button outline sm, as Zkopírovat celý text (24h). The tap area reaches 44 px
+   high without moving anything (17b); the 8 px gap keeps it off the value. */
+.button {
+  @layer variant {
+    position: relative;
+    flex: none;
+    font-family: var(--font-family), sans-serif;
+    font-variant-numeric: normal;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: normal;
+    word-break: normal;
+  }
+}
+
+.button::after {
+  @layer variant {
+    content: "";
+    position: absolute;
+    inset-block: min(0px, calc((100% - 44px) / 2));
+    inset-inline: 0;
+  }
+}
+
+.content {
+  @layer component {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+}
+
+/* Two states in one cell: the copy and the check icon, Kopírovat and
+   Zkopírováno. */
+.cell {
+  @layer component {
+    display: inline-grid;
+    justify-items: center;
+
+    & > * {
+      grid-area: 1 / 1;
+    }
+
+    & > svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+/* The icon alone: a transparent button after a value written out beside it,
+   with its Tooltip (jhwfoyxs). */
+.iconButton {
   @layer component {
     position: relative;
-    /* Keeps the value's z-index over ::after inside the button (17b). */
-    isolation: isolate;
     display: inline-grid;
-    grid-template-areas: "text icon";
-    grid-template-columns: auto min-content;
-    align-items: center;
-    gap: 4px;
+    place-items: center;
     padding: 2px 4px;
     font: inherit;
     color: var(--text-primary);
-    text-align: start;
     vertical-align: middle;
     background: transparent;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    user-select: none;
     transition:
       background-color 150ms ease-out,
       color 150ms ease-out,
@@ -42,9 +111,8 @@
   }
 }
 
-/* At least 44 × 44 px to tap, without moving anything: a transparent area that
-   grows past the button only where the button is smaller (17b, vswhqi52). */
-.copyButton::after {
+/* At least 44 × 44 px to tap, without moving anything (17b). */
+.iconButton::after {
   @layer component {
     content: "";
     position: absolute;
@@ -53,21 +121,10 @@
   }
 }
 
-.text {
-  @layer component {
-    grid-area: text;
-    min-width: 0;
-    /* Selectable by hand, and by the button when the clipboard refuses (17b).
-       Above the touch area of ::after, which would take the press otherwise. */
-    user-select: text;
-    z-index: 1;
-  }
-}
-
-/* Places the CopyIcon and CheckIcon it renders; their drawing is their own. */
+/* Places the CopyIcon and CheckIcon in one cell; their drawing is their own. */
 .icon {
   @layer variant {
-    grid-area: icon;
+    grid-area: 1 / 1;
     transition: opacity 200ms ease-out;
   }
 }
@@ -96,8 +153,7 @@
   }
 }
 
-/* Read, not shown: „Kopírovat“ after the value, „Zkopírováno“ beside the
-   button (jhwfoyxs). */
+/* Read, not shown: the button's name and „Zkopírováno“ beside it (jhwfoyxs). */
 .visuallyHidden {
   @layer component {
     position: absolute;
@@ -110,12 +166,12 @@
   }
 }
 
-/* Under the row when the clipboard refuses, from the value's first character:
-   grey, not an error, since the reader did nothing wrong (17b). */
+/* Under the value when the clipboard refuses: grey, not an error, since the
+   reader did nothing wrong (17b). */
 .failedSentence {
   @layer component {
     display: block;
-    padding-inline-start: 4px;
+    margin-block-start: 4px;
     color: var(--text-secondary);
     /* The same sentence wherever the value's box sets its own type (28e, 15d). */
     font-family: var(--font-family), sans-serif;
@@ -126,78 +182,5 @@
     line-height: 1.5;
     text-align: start;
     word-break: normal;
-  }
-}
-
-/* A visible value runs as text, with the icon and the word after its last
-   character; the group starts the next line when it doesn't fit (17c,
-   4c4ynjih). Hover and focus take --link-strong, as --primary on --bg-accent
-   falls below 4.5 : 1 for text. */
-.labelled {
-  @layer variant {
-    display: inline-block;
-
-    &:hover:not(:focus-visible),
-    &:focus-visible {
-      color: var(--link-strong);
-    }
-  }
-}
-
-.labelled .text {
-  @layer variant {
-    position: relative;
-  }
-}
-
-/* The icon and the word, in their own type wherever the value sets its own
-   (15d, 28e), never split across lines. */
-.action {
-  @layer component {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-inline-start: 8px;
-    color: var(--link-strong);
-    font-family: var(--font-family), sans-serif;
-    font-size: var(--font-size-sm);
-    font-variant-numeric: normal;
-    font-weight: var(--font-weight-medium);
-    letter-spacing: normal;
-    line-height: 1.4;
-    white-space: nowrap;
-    word-break: normal;
-  }
-}
-
-.copied .action {
-  @layer variant {
-    color: inherit;
-  }
-}
-
-/* The copy and the check icon in one cell, 1 em of the word. In the variant
-   layer, so it outranks the grid area `.icon` takes in the icon-only button. */
-.icons {
-  @layer component {
-    display: inline-grid;
-  }
-}
-
-.icons > svg {
-  @layer variant {
-    grid-area: 1 / 1;
-    width: 1em;
-    height: 1em;
-  }
-}
-
-.words {
-  @layer component {
-    display: inline-grid;
-
-    & > span {
-      grid-area: 1 / 1;
-    }
   }
 }
