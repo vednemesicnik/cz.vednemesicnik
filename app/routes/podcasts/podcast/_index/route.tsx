@@ -10,6 +10,7 @@ import { CoverHeader } from '~/components/cover-header'
 import { CoverHeaderBody } from '~/components/cover-header-body'
 import { CoverHeaderCover } from '~/components/cover-header-cover'
 import { EmptyState } from '~/components/empty-state'
+import { EpisodeNumber } from '~/components/episode-number'
 import { Headline } from '~/components/headline'
 import { MediaContentLink } from '~/components/media-content-link'
 import { Page } from '~/components/page'
@@ -74,7 +75,12 @@ export default function PodcastPage({
                   isPreview={episode.previewState !== null}
                   to={`/podcasts/${podcast.slug}/${episode.slug}`}
                 >
-                  <ContentLinkTitle number={episode.number ?? undefined}>
+                  <ContentLinkTitle>
+                    {episode.number !== null && (
+                      <>
+                        <EpisodeNumber>{episode.number}</EpisodeNumber>{' '}
+                      </>
+                    )}
                     {episode.title}
                   </ContentLinkTitle>
                   <ContentLinkFooter>
