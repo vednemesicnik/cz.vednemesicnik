@@ -31,7 +31,6 @@
     flex: none;
     font-family: var(--font-family), sans-serif;
     font-variant-numeric: normal;
-    font-weight: var(--font-weight-medium);
     letter-spacing: normal;
     word-break: normal;
   }
