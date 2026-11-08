@@ -69,6 +69,7 @@ export default function PodcastPage({
           {podcast.previewState === null && (
             <Link
               className={styles.subscribe}
+              prefetch={'none'}
               reloadDocument={true}
               to={`${href('/feeds')}#podcast-${params.podcastSlug}`}
             >

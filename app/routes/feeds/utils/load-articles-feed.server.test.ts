@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { loadArticlesFeed } from './load-articles-feed.server'
 
@@ -17,6 +17,10 @@ const ARTICLE = {
 }
 
 describe('loadArticlesFeed', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   beforeEach(() => {
     vi.stubEnv('BASE_URL', 'https://vednemesicnik.cz')
     findManyMock.mockReset()

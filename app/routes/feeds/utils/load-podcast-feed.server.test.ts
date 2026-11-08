@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { loadPodcastFeed } from './load-podcast-feed.server'
 
@@ -26,6 +26,10 @@ const PODCAST = {
 const FEED_PATH = '/feeds/podcasts/podcast-1.xml'
 
 describe('loadPodcastFeed', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   beforeEach(() => {
     vi.stubEnv('BASE_URL', 'https://vednemesicnik.cz')
     findFirstMock.mockReset()

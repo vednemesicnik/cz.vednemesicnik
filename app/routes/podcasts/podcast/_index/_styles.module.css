@@ -21,6 +21,7 @@
 .subscribe {
   @layer route {
     display: inline-flex;
+    justify-self: start;
     align-items: center;
     min-block-size: 44px;
     white-space: nowrap;
