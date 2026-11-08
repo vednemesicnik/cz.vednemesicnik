@@ -37,9 +37,13 @@ type Props = {
  * „Zkopírováno“ is announced from a status region beside the button, so it
  * never joins the button's name.
  *
- * With a visible value the name is the value and a hidden „Kopírovat“; with
- * the icon alone, „Kopírovat“ is its `aria-label` and its `Tooltip`. The value
- * can always be selected by hand, and the tap target is at least 44 px (17b).
+ * With a visible value, the icon and the word „Kopírovat“ follow it inside the
+ * button, so a reader sees what a click does before clicking, with no hover
+ * (17c, 4c4ynjih); after a copy the word reads „Zkopírováno“ for two seconds in
+ * the same width. The name stays the value and a hidden „Kopírovat“, so the
+ * visible word is hidden from screen readers. With the icon alone, „Kopírovat“
+ * is its `aria-label` and its `Tooltip`. The value can always be selected by
+ * hand, and the tap target is at least 44 px (17b).
  *
  * When the clipboard refuses, a visible value is selected, the focus stays on
  * the button so Ctrl+C or ⌘C copies it, and a sentence under the row says so;
@@ -107,24 +111,47 @@ export const CopyButton = ({
     timeoutRef.current = setTimeout(() => setStatus('idle'), COPIED_DURATION_MS)
   }
 
+  const icons = (
+    <>
+      <CopyIcon className={clsx(styles.icon, isCopied && styles.hidden)} />
+      <CheckIcon className={clsx(styles.icon, !isCopied && styles.hidden)} />
+    </>
+  )
+
   const button = (
     <button
       aria-label={hasText ? undefined : LABEL}
-      className={clsx(styles.copyButton, isCopied && styles.copied, className)}
+      className={clsx(
+        styles.copyButton,
+        hasText && styles.labelled,
+        isCopied && styles.copied,
+        className,
+      )}
       onClick={handleClick}
       ref={buttonRef}
       type={'button'}
     >
-      {hasText && (
+      {hasText ? (
         <>
           <span className={styles.text} ref={textRef}>
             {children}
           </span>
           <span className={styles.visuallyHidden}>{` ${LABEL}`}</span>
+          {/* What the click does, in a word after the value (17c). Both words
+              take one cell, so nothing moves when it changes. */}
+          <span aria-hidden={true} className={styles.action}>
+            <span className={styles.icons}>{icons}</span>
+            <span className={styles.words}>
+              <span className={clsx(isCopied && styles.hidden)}>{LABEL}</span>
+              <span className={clsx(!isCopied && styles.hidden)}>
+                {COPIED_LABEL}
+              </span>
+            </span>
+          </span>
         </>
+      ) : (
+        icons
       )}
-      <CopyIcon className={clsx(styles.icon, isCopied && styles.hidden)} />
-      <CheckIcon className={clsx(styles.icon, !isCopied && styles.hidden)} />
     </button>
   )
 
