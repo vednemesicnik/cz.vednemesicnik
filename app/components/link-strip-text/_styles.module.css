@@ -1,0 +1,5 @@
+.text {
+  @layer component {
+    color: var(--text-secondary);
+  }
+}

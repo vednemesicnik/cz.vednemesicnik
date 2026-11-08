@@ -9,6 +9,8 @@ import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
 import { EmptyState } from '~/components/empty-state'
+import { EmptyStateLink } from '~/components/empty-state-link'
+import { EmptyStateText } from '~/components/empty-state-text'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Page } from '~/components/page'
@@ -96,8 +98,9 @@ export const TaxonomyPage = ({
       </HeadlineGroup>
 
       {isEmpty ? (
-        <EmptyState link={{ label: 'Všechny články', to: href('/articles') }}>
-          Tady zatím žádný článek není.
+        <EmptyState>
+          <EmptyStateText>Tady zatím žádný článek není.</EmptyStateText>
+          <EmptyStateLink to={href('/articles')}>Všechny články</EmptyStateLink>
         </EmptyState>
       ) : (
         <ContentList>

@@ -2,9 +2,15 @@ import { clsx } from 'clsx'
 import { href } from 'react-router'
 import { BaseLink } from '~/components/base-link'
 import { EmptyState } from '~/components/empty-state'
+import { EmptyStateLink } from '~/components/empty-state-link'
+import { EmptyStateText } from '~/components/empty-state-text'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { LinkStrip } from '~/components/link-strip'
+import { LinkStripLink } from '~/components/link-strip-link'
+import { LinkStripLinks } from '~/components/link-strip-links'
+import { LinkStripMore } from '~/components/link-strip-more'
+import { LinkStripText } from '~/components/link-strip-text'
 import { Page } from '~/components/page'
 import { ParentLink } from '~/components/parent-link'
 import { StatusTag } from '~/components/status-tag'
@@ -101,21 +107,31 @@ export default function RouteComponent({
           ))}
         </ul>
       ) : (
-        <EmptyState link={{ label: 'Všechny články', to: href('/articles') }}>
-          Rubriky se tu zobrazí, až v nich bude něco ke čtení.
+        <EmptyState>
+          <EmptyStateText>
+            Rubriky se tu zobrazí, až v nich bude něco ke čtení.
+          </EmptyStateText>
+          <EmptyStateLink to={href('/articles')}>Všechny články</EmptyStateLink>
         </EmptyState>
       )}
 
       {tagLinks.length > 0 && (
-        <LinkStrip
-          links={tagLinks.map((tag) => ({
-            isPreview: tag.previewState !== null,
-            label: tag.name,
-            to: href('/articles/tags/:slug', { slug: tag.slug }),
-          }))}
-          more={{ label: 'Všechny štítky', to: href('/articles/tags') }}
-        >
-          Články mají i štítky, třeba
+        <LinkStrip>
+          <LinkStripText>Články mají i štítky, třeba</LinkStripText>
+          <LinkStripLinks>
+            {tagLinks.map((tag) => (
+              <LinkStripLink
+                isPreview={tag.previewState !== null}
+                key={tag.slug}
+                to={href('/articles/tags/:slug', { slug: tag.slug })}
+              >
+                {tag.name}
+              </LinkStripLink>
+            ))}
+          </LinkStripLinks>
+          <LinkStripMore to={href('/articles/tags')}>
+            Všechny štítky
+          </LinkStripMore>
         </LinkStrip>
       )}
     </Page>
