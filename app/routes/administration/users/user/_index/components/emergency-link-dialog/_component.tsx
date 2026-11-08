@@ -65,7 +65,9 @@ export const EmergencyLinkDialog = ({
           </AdminModalDescription>
 
           <div className={styles.link}>
-            <CopyButton value={result.url}>{result.url}</CopyButton>
+            <CopyButton surface={'administration'} value={result.url}>
+              {result.url}
+            </CopyButton>
           </div>
 
           <AdminModalActions>

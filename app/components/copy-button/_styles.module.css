@@ -40,10 +40,23 @@
   }
 }
 
+/* At least 44 × 44 px to tap, without moving anything: a transparent area that
+   grows past the button only where the button is smaller (17b, vswhqi52). */
+.copyButton::after {
+  @layer component {
+    content: "";
+    position: absolute;
+    inset-block: min(0px, calc((100% - 44px) / 2));
+    inset-inline: min(0px, calc((100% - 44px) / 2));
+  }
+}
+
 .text {
   @layer component {
     grid-area: text;
     min-width: 0;
+    /* Selectable by hand, and by the button when the clipboard refuses (17b). */
+    user-select: text;
   }
 }
 
@@ -90,5 +103,18 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+}
+
+/* Under the row when the clipboard refuses, from the value's first character:
+   grey, not an error, since the reader did nothing wrong (17b). */
+.failedSentence {
+  @layer component {
+    display: block;
+    padding-inline-start: 4px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    text-align: start;
   }
 }

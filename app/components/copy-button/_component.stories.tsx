@@ -58,3 +58,30 @@ export const LongValue: Story = {
     </div>
   ),
 }
+
+// Stands in for a browser whose clipboard refuses the write.
+const refuseClipboard = () => {
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText: () => Promise.reject(new Error('Refused')) },
+  })
+}
+
+/**
+ * The clipboard refuses (design 17b): click it. The value is selected, the focus
+ * stays on the button, and the sentence under it says to press Ctrl+C or ⌘C. It
+ * shows only with a fine pointer, so use a mouse.
+ */
+export const ClipboardRefused: Story = {
+  args: {
+    children: 'https://vednemesicnik.cz/feeds/articles.xml',
+    value: 'https://vednemesicnik.cz/feeds/articles.xml',
+  },
+  beforeEach: refuseClipboard,
+}
+
+/** The same in the administration, in its voice: the instruction first. */
+export const ClipboardRefusedInAdministration: Story = {
+  args: { ...ClipboardRefused.args, surface: 'administration' },
+  beforeEach: refuseClipboard,
+}
