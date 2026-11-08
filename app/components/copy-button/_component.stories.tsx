@@ -59,22 +59,17 @@ export const LongValue: Story = {
   ),
 }
 
-// Stands in for a browser whose clipboard refuses the write, and puts the real
-// clipboard back when the story is left.
+// Stands in for a browser whose clipboard refuses the write. The real clipboard
+// lives on Navigator.prototype, so dropping the stand-in brings it back, in
+// whatever order stories are left.
 const refuseClipboard = () => {
-  const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
     value: { writeText: () => Promise.reject(new Error('Refused')) },
   })
 
   return () => {
-    if (original) {
-      Object.defineProperty(navigator, 'clipboard', original)
-    } else {
-      // The real one lives on the prototype; dropping the stand-in shows it again.
-      Reflect.deleteProperty(navigator, 'clipboard')
-    }
+    Reflect.deleteProperty(navigator, 'clipboard')
   }
 }
 

@@ -2,6 +2,8 @@
 .copyButton {
   @layer component {
     position: relative;
+    /* Keeps the value's z-index over ::after inside the button (17b). */
+    isolation: isolate;
     display: inline-grid;
     grid-template-areas: "text icon";
     grid-template-columns: auto min-content;
@@ -116,7 +118,7 @@
     padding-inline-start: 4px;
     color: var(--text-secondary);
     /* The same sentence wherever the value's box sets its own type (28e, 15d). */
-    font-family: var(--font-family);
+    font-family: var(--font-family), sans-serif;
     font-size: var(--font-size-sm);
     font-variant-numeric: normal;
     font-weight: var(--font-weight-regular);
