@@ -1793,7 +1793,9 @@ export default function RouteComponent({
                                 {/* While it uploads, no number and no pill
                                     (bxy8xxqs). */}
                                 {tile?.status === 'stored' && !isUploading && (
-                                  <ImageTileOrder number={getImageNumber(id)} />
+                                  <ImageTileOrder>
+                                    {getImageNumber(id)}
+                                  </ImageTileOrder>
                                 )}
                                 {gallery.featuredImageId === id &&
                                   !isUploading && (
@@ -1945,10 +1947,9 @@ export default function RouteComponent({
                               {/* While it uploads, a replacement too, the tile
                                   has no number, pill or „⋯“ (bxy8xxqs). */}
                               {isStored && !isUploading && (
-                                <ImageTileOrder
-                                  hasGrip={canDragImage(id)}
-                                  number={getImageNumber(id)}
-                                />
+                                <ImageTileOrder hasGrip={canDragImage(id)}>
+                                  {getImageNumber(id)}
+                                </ImageTileOrder>
                               )}
                               {isFeatured && !isUploading && (
                                 <ImageTilePill>Hlavní</ImageTilePill>

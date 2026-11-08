@@ -1,0 +1,7 @@
+.links {
+  @layer component {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+}

@@ -1,0 +1,6 @@
+.text {
+  @layer component {
+    margin: 0;
+    color: var(--text-secondary);
+  }
+}
