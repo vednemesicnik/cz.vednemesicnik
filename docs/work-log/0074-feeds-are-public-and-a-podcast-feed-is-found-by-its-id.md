@@ -38,8 +38,10 @@ old slug on a re-publish, and no redirect is kept (log 0039).
   slug) would break every subscription.
 - The page names no feed reader, since the offer changes and nobody would keep the list current (copy
   `drf8a7ql`).
-- The `CopyButton` failure sentence names keyboard shortcuts, so it shows only with a fine pointer.
-  The phone wording waits for a check of whether the selected text can be copied by hand there.
+- A `CopyButton` with a visible value shows the value as plain text and a separate *Kopírovat*
+  button beside it, the owner's choice over the word inside the value (design `4c4ynjih`). When the
+  clipboard refuses, the sentence names the keyboard shortcut with a mouse and asks to select and copy
+  the whole text without one (copy `zs8dklyw`).
 
 ## Turned down
 

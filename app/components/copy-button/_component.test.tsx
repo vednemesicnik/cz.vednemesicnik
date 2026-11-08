@@ -96,7 +96,7 @@ describe('CopyButton', () => {
     expect(screen.getByRole('status').textContent).toBe('Zkopírováno')
   })
 
-  test('selects the value but names no shortcut without a fine pointer', async () => {
+  test('asks to select and copy by hand, with no shortcut, without a fine pointer', async () => {
     mockFinePointer(false)
     mockClipboard(() => Promise.reject(new Error('denied')))
     render(<CopyButton value={ADDRESS}>{ADDRESS}</CopyButton>)
@@ -104,6 +104,17 @@ describe('CopyButton', () => {
     await clickButton()
 
     expect(selectedText()).toBe(ADDRESS)
-    expect(screen.getByRole('status').textContent).toBe('')
+    expect(screen.getByRole('status').textContent).toBe(
+      'Kopírování se nepovedlo. Označte celý text a zkopírujte ho.',
+    )
+  })
+
+  test('names what it copies, so each button on a page is told apart', () => {
+    mockClipboard(() => Promise.resolve())
+    render(<CopyButton value={ADDRESS}>{ADDRESS}</CopyButton>)
+
+    expect(
+      screen.getByRole('button', { name: `Kopírovat ${ADDRESS}` }),
+    ).toBeTruthy()
   })
 })

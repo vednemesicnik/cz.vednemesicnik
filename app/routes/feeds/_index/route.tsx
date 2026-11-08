@@ -18,7 +18,7 @@ export { loader } from './_loader'
 export { meta } from './_meta'
 
 // What comes, then how, then what to choose from (17a, copy uvjknd7d, drf8a7ql,
-// r4teulu8).
+// r4teulu8, zs8dklyw).
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   const { archiveAddress, articlesAddress, podcastFeeds } = loaderData
 
@@ -42,8 +42,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
             nemáte, vyhledejte na webu „RSS čtečka“.
           </li>
           <li>
-            Použijte tlačítko s adresou toho, co chcete odebírat. Tím ji
-            zkopírujete.
+            U adresy toho, co chcete odebírat, použijte tlačítko Kopírovat.
           </li>
           <li>Ve čtečce zvolte přidání odběru a vložte zkopírovanou adresu.</li>
         </NumberedList>

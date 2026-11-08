@@ -11,18 +11,27 @@ import styles from './_styles.module.css'
 const LABEL = 'Kopírovat'
 const COPIED_LABEL = 'Zkopírováno'
 
-// What to do when the clipboard refuses, in each surface's voice (design 17b,
-// copy uvjknd7d).
+// What to do when the clipboard refuses, in each surface's voice: with a mouse
+// the keyboard shortcut, without one plain selecting, which no gesture promises
+// (design 17b, copy uvjknd7d, zs8dklyw).
 const FAILED_SENTENCES = {
-  administration:
-    'Zkopírujte označený text pomocí Ctrl+C, na Macu ⌘C — kopírování tlačítkem se nepodařilo.',
-  web: 'Kopírování se nepovedlo. Zkopírujte označený text pomocí Ctrl+C, na Macu ⌘C.',
+  administration: {
+    fine: 'Zkopírujte označený text pomocí Ctrl+C, na Macu ⌘C — kopírování tlačítkem se nepodařilo.',
+    touch:
+      'Označte celý text a zkopírujte ho — kopírování tlačítkem se nepodařilo.',
+  },
+  web: {
+    fine: 'Kopírování se nepovedlo. Zkopírujte označený text pomocí Ctrl+C, na Macu ⌘C.',
+    touch: 'Kopírování se nepovedlo. Označte celý text a zkopírujte ho.',
+  },
 } as const
+
+type Pointer = keyof (typeof FAILED_SENTENCES)['web']
 
 // How long the check icon and „Zkopírováno“ stay after a copy.
 const COPIED_DURATION_MS = 2000
 
-type Status = 'idle' | 'copied' | 'failed'
+type Status = 'idle' | 'copied' | { failed: Pointer }
 
 type Props = {
   value: string
@@ -48,9 +57,9 @@ type Props = {
  *
  * When the clipboard refuses, a visible value is selected, the focus stays on
  * the button so Ctrl+C or ⌘C copies it, and a sentence under the value says so;
- * it goes on the next click or copy (17b). The sentence names keyboard
- * shortcuts, so it shows only with a fine pointer until a phone wording is
- * approved; the icon alone has nothing to select and stays as it is.
+ * it goes on the next click or copy (17b). With a mouse the sentence names the
+ * keyboard shortcut, without one it asks to select the whole text and copy it;
+ * the icon alone has nothing to select and stays as it is.
  *
  * @param props.value - What lands in the clipboard.
  * @param props.children - The visible value; without it only the icon shows.
@@ -70,18 +79,19 @@ export const CopyButton = ({
   const textRef = useRef<HTMLSpanElement>(null)
   const hasText = children !== undefined
   const isCopied = status === 'copied'
+  const failedPointer = typeof status === 'object' ? status.failed : null
 
   useEffect(() => () => clearTimeout(timeoutRef.current), [])
 
   // Copying the selection by hand is what the sentence asked for.
   useEffect(() => {
-    if (status !== 'failed') return
+    if (failedPointer === null) return
 
     const handleCopy = () => setStatus('idle')
     document.addEventListener('copy', handleCopy)
 
     return () => document.removeEventListener('copy', handleCopy)
-  }, [status])
+  }, [failedPointer])
 
   const selectText = () => {
     const selection = window.getSelection()
@@ -105,7 +115,11 @@ export const CopyButton = ({
       if (!hasText) return
 
       selectText()
-      if (window.matchMedia('(any-pointer: fine)').matches) setStatus('failed')
+      setStatus({
+        failed: window.matchMedia('(any-pointer: fine)').matches
+          ? 'fine'
+          : 'touch',
+      })
       return
     }
 
@@ -116,12 +130,12 @@ export const CopyButton = ({
   const statusRegion = (
     <span
       className={
-        status === 'failed' ? styles.failedSentence : styles.visuallyHidden
+        failedPointer === null ? styles.visuallyHidden : styles.failedSentence
       }
       role={'status'}
     >
       {isCopied && COPIED_LABEL}
-      {status === 'failed' && FAILED_SENTENCES[surface]}
+      {failedPointer !== null && FAILED_SENTENCES[surface][failedPointer]}
     </span>
   )
 
