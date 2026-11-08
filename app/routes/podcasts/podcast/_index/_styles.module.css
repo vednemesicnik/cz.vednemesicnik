@@ -15,3 +15,14 @@
     gap: 8px;
   }
 }
+
+/* Under the description, or under the count without one (13b). The arrow never
+   wraps away from the label (jnd2p832); 44 px to tap on a phone. */
+.subscribe {
+  @layer route {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    white-space: nowrap;
+  }
+}

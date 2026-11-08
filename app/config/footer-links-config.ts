@@ -43,6 +43,8 @@ export const footerColumns: ReadonlyArray<FooterColumn> = [
     links: [
       { kind: 'external', ...socialSitesConfig.facebook },
       { kind: 'external', ...socialSitesConfig.instagram },
+      // Another way to follow us, so it stands with the networks (10a, vswhqi52).
+      { kind: 'internal', label: 'Odebírat', to: href('/feeds') },
     ],
     title: 'Sledujte nás',
   },

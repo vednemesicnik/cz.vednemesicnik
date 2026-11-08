@@ -5,6 +5,7 @@ import { AppBody } from '~/components/app-body'
 import { AppFooter } from '~/components/app-footer'
 import { AppHeader } from '~/components/app-header'
 import { BoundaryError } from '~/components/boundary-error'
+import { getSiteFeedLinks } from '~/utils/feeds/get-site-feed-links'
 import type { loader } from './_loader'
 import type { Route } from './+types/route'
 import { SitePreviewBar } from './components/site-preview-bar'
@@ -12,6 +13,10 @@ import './_styles.css'
 
 export { loader } from './_loader'
 export { meta } from './_meta'
+
+// Browsers and feed readers find the site's feeds from any website page; the
+// administration offers none.
+export const links: Route.LinksFunction = () => getSiteFeedLinks()
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
