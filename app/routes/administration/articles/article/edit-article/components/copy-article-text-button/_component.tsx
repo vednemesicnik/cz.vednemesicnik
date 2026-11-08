@@ -27,7 +27,7 @@ type Props = {
  * „Zkopírováno“ for two seconds in the same width and it is announced, as the
  * design system's `CopyButton` does it (29c; copy kjcijk1q). When the clipboard
  * refuses, a sentence under the button says to copy it from the editor; it goes
- * on the next click (17b).
+ * on the next click or copy (17b).
  *
  * @param props.getContent - Reads the text to copy at the click.
  * @param props.variant - `outline` in the editor and 24h, `ghost` among the
@@ -43,7 +43,19 @@ export const CopyArticleTextButton = ({
 
   useEffect(() => () => clearTimeout(timeoutRef.current), [])
 
+  // Copying from the editor by hand is what the sentence asked for.
+  useEffect(() => {
+    if (!hasFailed) return
+
+    const handleCopy = () => setHasFailed(false)
+    document.addEventListener('copy', handleCopy)
+
+    return () => document.removeEventListener('copy', handleCopy)
+  }, [hasFailed])
+
   const copy = async () => {
+    clearTimeout(timeoutRef.current)
+    setIsCopied(false)
     setHasFailed(false)
     const { html, text } = getArticleClipboardText(getContent())
 

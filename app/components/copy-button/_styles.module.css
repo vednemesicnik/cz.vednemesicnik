@@ -55,8 +55,10 @@
   @layer component {
     grid-area: text;
     min-width: 0;
-    /* Selectable by hand, and by the button when the clipboard refuses (17b). */
+    /* Selectable by hand, and by the button when the clipboard refuses (17b).
+       Above the touch area of ::after, which would take the press otherwise. */
     user-select: text;
+    z-index: 1;
   }
 }
 
@@ -113,8 +115,14 @@
     display: block;
     padding-inline-start: 4px;
     color: var(--text-secondary);
+    /* The same sentence wherever the value's box sets its own type (28e, 15d). */
+    font-family: var(--font-family);
     font-size: var(--font-size-sm);
+    font-variant-numeric: normal;
+    font-weight: var(--font-weight-regular);
+    letter-spacing: normal;
     line-height: 1.5;
     text-align: start;
+    word-break: normal;
   }
 }
