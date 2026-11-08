@@ -14,7 +14,7 @@ type Props = {
  * The trailing link of `LinkStrip` to the other index, e.g.
  * "Všechny štítky →" (11c). Its arrow is hidden from screen readers.
  *
- * @param children - The link's label
+ * @param props.children - The link's label
  * @returns The link
  */
 export const LinkStripMore = ({ children, className, to }: Props) => {

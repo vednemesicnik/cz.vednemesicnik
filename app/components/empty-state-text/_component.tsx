@@ -10,6 +10,7 @@ type Props = {
 /**
  * The sentence of `EmptyState`, e.g. "Tady zatím žádný článek není." (11b).
  *
+ * @param props.children - The sentence
  * @returns The paragraph
  */
 export const EmptyStateText = ({ children, className }: Props) => {

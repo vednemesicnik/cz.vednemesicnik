@@ -11,7 +11,7 @@ type Props = {
  * The example links of `LinkStrip`, after its sentence (11c). Leave it out
  * when there are none.
  *
- * @param children - The `LinkStripLink`s
+ * @param props.children - The `LinkStripLink`s
  * @returns The links
  */
 export const LinkStripLinks = ({ children, className }: Props) => {

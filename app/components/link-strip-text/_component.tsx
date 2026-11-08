@@ -10,6 +10,7 @@ type Props = {
 /**
  * The sentence of `LinkStrip`, e.g. "Články mají i štítky, třeba" (11c).
  *
+ * @param props.children - The sentence
  * @returns The sentence
  */
 export const LinkStripText = ({ children, className }: Props) => {

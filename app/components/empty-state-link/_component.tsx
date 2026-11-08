@@ -14,7 +14,7 @@ type Props = {
  * Where to go instead of the empty list in `EmptyState`, e.g.
  * "Všechny články →" (11c). Its arrow is hidden from screen readers.
  *
- * @param children - The link's label
+ * @param props.children - The link's label
  * @returns The link
  */
 export const EmptyStateLink = ({ children, className, to }: Props) => {
