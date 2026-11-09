@@ -14,6 +14,7 @@ import {
   ownByAuthor,
 } from '~/utils/permissions/author/get-web-content-visibility.server'
 import { NON_EMPTY_PODCAST_WHERE } from '~/utils/podcast/non-empty-podcast-where'
+import { sortByNewestEpisode } from '~/utils/podcast/sort-by-newest-episode'
 import { NON_EMPTY_EPISODE_WHERE } from '~/utils/podcast-episode/non-empty-episode-where'
 import { resolveEpisodeCover } from '~/utils/podcast-episode/resolve-episode-cover'
 
@@ -64,6 +65,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       ...WEB_PREVIEW_STATE_SELECT,
       cover: {
         select: imageSourceSelect,
+      },
+      // The newest published episode orders the tiles (13a).
+      episodes: {
+        orderBy: { publishedAt: 'desc' },
+        select: { publishedAt: true },
+        take: 1,
+        where: { state: 'published' },
       },
       id: true,
       // The typed address: a signed-in author sees drafts here too, and a
@@ -122,7 +130,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     .sort(
       (first, second) => second.updatedAt.getTime() - first.updatedAt.getTime(),
     )
-  const restPodcasts = podcasts.filter((podcast) => podcast.state !== 'draft')
+  const restPodcasts = sortByNewestEpisode(
+    podcasts.filter((podcast) => podcast.state !== 'draft'),
+  )
 
   const episodeItems = episodes.map(
     ({ cover, podcast, reviews, state, submittedAt, ...episode }) => {

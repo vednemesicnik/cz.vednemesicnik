@@ -1,6 +1,7 @@
 import { href } from 'react-router'
 import { prisma } from '~/utils/db.server'
 import { toAbsoluteUrl } from '~/utils/feeds/to-absolute-url.server'
+import { sortByNewestEpisode } from '~/utils/podcast/sort-by-newest-episode'
 
 /**
  * The feeds on offer. Feeds are public, so the page lists only published
@@ -22,16 +23,10 @@ export const loader = async () => {
     where: { state: 'published' },
   })
 
-  // As /podcasts in 13a: the newest published episode first, a podcast without
-  // one last, since its first episode still reaches the reader (17b).
-  const newestEpisodeTime = ({ episodes }: (typeof podcasts)[number]) =>
-    episodes[0]?.publishedAt?.getTime() ?? 0
-
-  const podcastFeeds = [...podcasts]
-    .sort(
-      (first, second) => newestEpisodeTime(second) - newestEpisodeTime(first),
-    )
-    .flatMap(({ id, publishedSlug, title }) =>
+  // As /podcasts in 13a. A podcast without an episode is listed too, since its
+  // first episode still reaches the reader (17b).
+  const podcastFeeds = sortByNewestEpisode(podcasts).flatMap(
+    ({ id, publishedSlug, title }) =>
       publishedSlug === null
         ? []
         : [
@@ -44,7 +39,7 @@ export const loader = async () => {
               title,
             },
           ],
-    )
+  )
 
   return {
     archiveAddress: toAbsoluteUrl(href('/feeds/archive.xml')),
