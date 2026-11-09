@@ -3,6 +3,7 @@ import {
   getBreadcrumbs,
 } from '~/utils/breadcrumbs'
 import { createPageSEO } from '~/utils/create-page-seo'
+import { getPodcastFeedMeta } from '~/utils/feeds/get-podcast-feed-meta'
 import { resolveOgImageUrl } from '~/utils/resolve-og-image-url'
 import { truncateAtWordBoundary } from '~/utils/truncate-at-word-boundary'
 import type { Route } from './+types/route'
@@ -25,5 +26,12 @@ export const meta: Route.MetaFunction = ({ loaderData, matches, location }) => {
     ENV.BASE_URL,
   )
 
-  return [...pageSEO, { 'script:ld+json': breadcrumbStructuredData }]
+  const { podcast } = podcastEpisode
+
+  return [
+    ...pageSEO,
+    { 'script:ld+json': breadcrumbStructuredData },
+    // The podcast's feed, from each of its episodes too.
+    ...(podcast.isPublished ? getPodcastFeedMeta(podcast) : []),
+  ]
 }

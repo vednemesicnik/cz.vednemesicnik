@@ -1,0 +1,21 @@
+.card {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px 24px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    /* Clear of the sticky header when the podcast page links here (17b). */
+    scroll-margin-top: calc(var(--app-header-height) + 16px);
+
+    /* The card the podcast page linked to keeps its frame until the reader
+       leaves; nothing blinks or fades (17b). */
+    &:target {
+      outline: 2px solid var(--primary);
+      outline-offset: -1px;
+    }
+  }
+}

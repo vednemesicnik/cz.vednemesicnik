@@ -47,6 +47,7 @@ export const loader = async () => {
     href('/organization'),
     href('/support'),
     href('/grants'),
+    href('/feeds'),
   ]
 
   const entries: SitemapEntry[] = [

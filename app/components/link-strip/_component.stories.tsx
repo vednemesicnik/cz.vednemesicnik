@@ -3,6 +3,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
+import { LinkStripLink } from '~/components/link-strip-link'
+import { LinkStripLinks } from '~/components/link-strip-links'
+import { LinkStripMore } from '~/components/link-strip-more'
+import { LinkStripText } from '~/components/link-strip-text'
+
 import { LinkStrip } from './_component'
 
 const meta: Meta<typeof LinkStrip> = {
@@ -26,31 +31,54 @@ type Story = StoryObj<typeof meta>
 
 export const Playground: Story = {
   args: {
-    children: 'Články mají i štítky, třeba',
-    links: ['volný čas', 'učitelé', 'knihy'].map((label) => ({
-      label,
-      to: `/articles/tags/${label}`,
-    })),
-    more: { label: 'Všechny štítky', to: '/articles/tags' },
+    children: (
+      <>
+        <LinkStripText>Články mají i štítky, třeba</LinkStripText>
+        <LinkStripLinks>
+          {['volný čas', 'učitelé', 'knihy'].map((label) => (
+            <LinkStripLink key={label} to={`/articles/tags/${label}`}>
+              {label}
+            </LinkStripLink>
+          ))}
+        </LinkStripLinks>
+        <LinkStripMore to={'/articles/tags'}>Všechny štítky</LinkStripMore>
+      </>
+    ),
   },
 }
 
 /** In the editorial preview, a tag the reader doesn't see (11e). */
 export const Preview: Story = {
   args: {
-    children: 'Články mají i štítky, třeba',
-    links: ['volný čas', 'maturitní ples', 'knihy'].map((label) => ({
-      isPreview: label === 'maturitní ples',
-      label,
-      to: `/articles/tags/${label}`,
-    })),
-    more: { label: 'Všechny štítky', to: '/articles/tags' },
+    children: (
+      <>
+        <LinkStripText>Články mají i štítky, třeba</LinkStripText>
+        <LinkStripLinks>
+          {['volný čas', 'maturitní ples', 'knihy'].map((label) => (
+            <LinkStripLink
+              isPreview={label === 'maturitní ples'}
+              key={label}
+              to={`/articles/tags/${label}`}
+            >
+              {label}
+            </LinkStripLink>
+          ))}
+        </LinkStripLinks>
+        <LinkStripMore to={'/articles/tags'}>Všechny štítky</LinkStripMore>
+      </>
+    ),
   },
 }
 
 export const WithoutLinks: Story = {
   args: {
-    children: 'Články třídíme i do rubrik.',
-    more: { label: 'Všechny rubriky', to: '/articles/categories' },
+    children: (
+      <>
+        <LinkStripText>Články třídíme i do rubrik.</LinkStripText>
+        <LinkStripMore to={'/articles/categories'}>
+          Všechny rubriky
+        </LinkStripMore>
+      </>
+    ),
   },
 }

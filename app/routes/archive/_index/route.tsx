@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { EmptyState } from '~/components/empty-state'
+import { EmptyStateText } from '~/components/empty-state-text'
 import { Heading } from '~/components/heading'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
@@ -64,7 +65,9 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
       )}
 
       {years.length === 0 && (
-        <EmptyState>V archivu zatím žádné číslo není.</EmptyState>
+        <EmptyState>
+          <EmptyStateText>V archivu zatím žádné číslo není.</EmptyStateText>
+        </EmptyState>
       )}
 
       {years.map(({ year, issues }) => (

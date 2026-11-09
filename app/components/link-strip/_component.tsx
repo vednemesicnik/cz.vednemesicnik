@@ -1,56 +1,20 @@
 import { clsx } from 'clsx'
-import type { ComponentProps, ReactNode } from 'react'
-import { Link } from '~/components/link'
-import { LinkArrow } from '~/components/link-arrow'
+import type { ReactNode } from 'react'
 import styles from './_styles.module.css'
-
-type LinkStripMore = {
-  label: string
-  to: ComponentProps<typeof Link>['to']
-}
-
-type LinkStripItem = LinkStripMore & {
-  isPreview?: boolean
-}
 
 type Props = {
   children: ReactNode
   className?: string
-  links?: LinkStripItem[]
-  more: LinkStripMore
 }
 
 /**
- * A tinted strip leading from one index to another, below its list: a short
- * sentence, optional example links and a trailing "… →" link (design 11c).
+ * A tinted strip leading from one index to another, below its list (design
+ * 11c): a short sentence, optional example links and a trailing "… →" link.
  *
- * @param children - The sentence ("Články mají i štítky, třeba")
- * @param links - Example links shown after the sentence; one with `isPreview`
- *   is something the reader doesn't see, framed on its own edge (11e)
- * @param more - The trailing link to the other index; its arrow is hidden from screen readers
+ * @param children - A `LinkStripText`, optionally `LinkStripLinks` with the
+ *   examples, then a `LinkStripMore` to the other index
  * @returns The strip
  */
-export const LinkStrip = ({ children, className, links, more }: Props) => {
-  return (
-    <aside className={clsx(styles.strip, className)}>
-      <span className={styles.text}>{children}</span>
-      {links && links.length > 0 && (
-        <span className={styles.links}>
-          {links.map((link) => (
-            <Link
-              className={clsx(link.isPreview && styles.preview)}
-              key={link.label}
-              to={link.to}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </span>
-      )}
-      <Link className={styles.more} to={more.to}>
-        {more.label}
-        <LinkArrow />
-      </Link>
-    </aside>
-  )
+export const LinkStrip = ({ children, className }: Props) => {
+  return <aside className={clsx(styles.strip, className)}>{children}</aside>
 }

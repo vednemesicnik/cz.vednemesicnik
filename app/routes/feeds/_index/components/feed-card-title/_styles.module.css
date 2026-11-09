@@ -1,0 +1,8 @@
+/* A card's name, well below the section headings (17a: 20 px, semibold). */
+.title {
+  @layer route {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+  }
+}

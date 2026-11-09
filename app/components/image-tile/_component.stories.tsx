@@ -49,7 +49,7 @@ export const Playground: Story = {
     <div style={tileWidth}>
       <ImageTile>
         <ImageTileMedia>
-          <ImageTileOrder number={1} />
+          <ImageTileOrder>{1}</ImageTileOrder>
           <ImageTilePill>Hlavní</ImageTilePill>
           <ImageTileMenu>
             <ActionMenu
@@ -109,7 +109,7 @@ export const Draggable: Story = {
         <div key={String(isLifted)} style={tileWidth}>
           <ImageTile isLifted={isLifted}>
             <ImageTileMedia>
-              <ImageTileOrder hasGrip number={2} />
+              <ImageTileOrder hasGrip>{2}</ImageTileOrder>
               <ImageTileMenu>
                 <ActionMenu
                   items={menuItems}
@@ -157,7 +157,7 @@ export const ReplaceFailed: Story = {
     <div style={tileWidth}>
       <ImageTile>
         <ImageTileMedia>
-          <ImageTileOrder hasGrip number={2} />
+          <ImageTileOrder hasGrip>{2}</ImageTileOrder>
           <ImageTileMenu>
             <ActionMenu
               items={menuItems}
@@ -197,7 +197,7 @@ export const Compact: Story = {
     >
       <CompactImageTile>
         <ImageTileMedia>
-          <ImageTileOrder number={1} />
+          <ImageTileOrder>{1}</ImageTileOrder>
           <ImageTilePill>Hlavní</ImageTilePill>
         </ImageTileMedia>
         <ImageTileAltLine>Studovna městské knihovny</ImageTileAltLine>
@@ -208,7 +208,7 @@ export const Compact: Story = {
       </CompactImageTile>
       <CompactImageTile>
         <ImageTileMedia>
-          <ImageTileOrder number={2} />
+          <ImageTileOrder>{2}</ImageTileOrder>
         </ImageTileMedia>
         <ImageTileAltLine isMissing>Bez alt textu</ImageTileAltLine>
       </CompactImageTile>

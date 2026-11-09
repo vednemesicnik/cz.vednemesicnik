@@ -8,6 +8,7 @@ import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
 import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
+import { EpisodeNumber } from '~/components/episode-number'
 import { Heading } from '~/components/heading'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
@@ -81,10 +82,12 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     to={`/podcasts/${episode.podcast.slug}/${episode.slug}`}
                   >
                     <ContentLinkCover alt={coverAlt} image={coverSources} />
-                    <ContentLinkTitle
-                      level={3}
-                      number={episode.number ?? undefined}
-                    >
+                    <ContentLinkTitle level={3}>
+                      {episode.number !== null && (
+                        <>
+                          <EpisodeNumber>{episode.number}</EpisodeNumber>{' '}
+                        </>
+                      )}
                       {episode.title}
                     </ContentLinkTitle>
                     <ContentLinkFooter>

@@ -74,7 +74,12 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         ...episode,
         // The episode's own cover, otherwise the podcast's (13c).
         cover: resolveEpisodeCover({ cover, podcastCover: podcast.cover }),
-        podcast: { id: podcast.id, title: podcast.title },
+        podcast: {
+          id: podcast.id,
+          // Only a published podcast has a feed to advertise (17a).
+          isPublished: podcast.state === 'published',
+          title: podcast.title,
+        },
         previewState,
         publishedAt: createFormattedDate(publishedAt),
       },

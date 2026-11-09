@@ -1,10 +1,14 @@
 import { clsx } from 'clsx'
 import { href } from 'react-router'
 import { EmptyState } from '~/components/empty-state'
+import { EmptyStateLink } from '~/components/empty-state-link'
+import { EmptyStateText } from '~/components/empty-state-text'
 import { Headline } from '~/components/headline'
 import { HeadlineGroup } from '~/components/headline-group'
 import { Link } from '~/components/link'
 import { LinkStrip } from '~/components/link-strip'
+import { LinkStripMore } from '~/components/link-strip-more'
+import { LinkStripText } from '~/components/link-strip-text'
 import { Page } from '~/components/page'
 import { ParentLink } from '~/components/parent-link'
 import { getParentBreadcrumb } from '~/utils/breadcrumbs'
@@ -59,16 +63,20 @@ export default function RouteComponent({
           ))}
         </ul>
       ) : (
-        <EmptyState link={{ label: 'Všechny články', to: href('/articles') }}>
-          Štítky se tu zobrazí, až pod nimi bude něco ke čtení.
+        <EmptyState>
+          <EmptyStateText>
+            Štítky se tu zobrazí, až pod nimi bude něco ke čtení.
+          </EmptyStateText>
+          <EmptyStateLink to={href('/articles')}>Všechny články</EmptyStateLink>
         </EmptyState>
       )}
 
       {hasCategories && (
-        <LinkStrip
-          more={{ label: 'Všechny rubriky', to: href('/articles/categories') }}
-        >
-          Články třídíme i do rubrik.
+        <LinkStrip>
+          <LinkStripText>Články třídíme i do rubrik.</LinkStripText>
+          <LinkStripMore to={href('/articles/categories')}>
+            Všechny rubriky
+          </LinkStripMore>
         </LinkStrip>
       )}
     </Page>

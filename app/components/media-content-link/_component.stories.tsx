@@ -10,6 +10,7 @@ import { ContentLinkPublishDate } from '~/components/content-link-publish-date'
 import { ContentLinkTitle } from '~/components/content-link-title'
 import { ContentList } from '~/components/content-list'
 import { ContentListItem } from '~/components/content-list-item'
+import { EpisodeNumber } from '~/components/episode-number'
 import type { ImageSources } from '~/utils/image-store/create-image-sources'
 import { MediaContentLink } from './_component'
 
@@ -66,8 +67,8 @@ export const Playground: Story = {
     children: (
       <>
         <ContentLinkCover alt={'Obálka pořadu Kabinet'} image={squareCover} />
-        <ContentLinkTitle number={13}>
-          O čem se mluví ve sborovně
+        <ContentLinkTitle>
+          <EpisodeNumber>{13}</EpisodeNumber> O čem se mluví ve sborovně
         </ContentLinkTitle>
         <ContentLinkFooter>
           <ContentLinkAuthor>Kabinet</ContentLinkAuthor>
@@ -84,8 +85,8 @@ const cards = (
     <ContentListItem>
       <MediaContentLink to={'/podcasts/kabinet/o-cem-se-mluvi-ve-sborovne'}>
         <ContentLinkCover alt={'Obálka pořadu Kabinet'} image={squareCover} />
-        <ContentLinkTitle number={13}>
-          O čem se mluví ve sborovně
+        <ContentLinkTitle>
+          <EpisodeNumber>{13}</EpisodeNumber> O čem se mluví ve sborovně
         </ContentLinkTitle>
         <ContentLinkFooter>
           <ContentLinkAuthor>Kabinet</ContentLinkAuthor>
@@ -96,9 +97,9 @@ const cards = (
     <ContentListItem>
       <MediaContentLink to={'/podcasts/kabinet/kdo-pise-maturitni-otazky'}>
         <ContentLinkCover alt={'Obálka pořadu Kabinet'} image={squareCover} />
-        <ContentLinkTitle number={12}>
-          Kdo píše maturitní otázky, a proč se na ně nikdo nemůže připravit
-          dopředu
+        <ContentLinkTitle>
+          <EpisodeNumber>{12}</EpisodeNumber> Kdo píše maturitní otázky, a proč
+          se na ně nikdo nemůže připravit dopředu
         </ContentLinkTitle>
         <ContentLinkFooter>
           <ContentLinkAuthor>Kabinet</ContentLinkAuthor>
@@ -112,8 +113,8 @@ const cards = (
           alt={'Obálka pořadu Vedneměsíčník nahlas'}
           image={wideCover}
         />
-        <ContentLinkTitle number={24}>
-          Podzimní číslo nahlas: rozhovory
+        <ContentLinkTitle>
+          <EpisodeNumber>{24}</EpisodeNumber> Podzimní číslo nahlas: rozhovory
         </ContentLinkTitle>
         <ContentLinkFooter>
           <ContentLinkAuthor>Vedneměsíčník nahlas</ContentLinkAuthor>
@@ -123,8 +124,8 @@ const cards = (
     </ContentListItem>
     <ContentListItem>
       <MediaContentLink to={'/podcasts/kabinet/jak-se-uci-fyzika'}>
-        <ContentLinkTitle number={11}>
-          Jak se učí fyzika bez laboratoře
+        <ContentLinkTitle>
+          <EpisodeNumber>{11}</EpisodeNumber> Jak se učí fyzika bez laboratoře
         </ContentLinkTitle>
         <ContentLinkFooter>
           <ContentLinkPublishDate date={publishDate} />
@@ -153,7 +154,9 @@ export const Preview: Story = {
     children: (
       <>
         <ContentLinkCover alt={'Obálka pořadu Kabinet'} image={squareCover} />
-        <ContentLinkTitle number={12}>Prázdniny ve sborovně</ContentLinkTitle>
+        <ContentLinkTitle>
+          <EpisodeNumber>{12}</EpisodeNumber> Prázdniny ve sborovně
+        </ContentLinkTitle>
         <ContentLinkFooter>
           <ContentLinkAuthor>Kabinet</ContentLinkAuthor>
           <ContentLinkPublishDate

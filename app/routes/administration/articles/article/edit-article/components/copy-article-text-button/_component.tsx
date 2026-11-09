@@ -9,6 +9,11 @@ import styles from './_styles.module.css'
 // How long „Zkopírováno“ stays announced after a copy.
 const COPIED_DURATION_MS = 2000
 
+// The text isn't on screen as one piece, so nothing is selected; the author
+// selects it in the editor (design 17b, copy uvjknd7d).
+const FAILED_SENTENCE =
+  'Označte celý text v editoru a zkopírujte ho — kopírování tlačítkem se nepodařilo.'
+
 type Props = {
   /** The text editor's value as the author sees it now (Tiptap JSON or `''`). */
   getContent: () => string
@@ -20,7 +25,9 @@ type Props = {
  * not, into the clipboard as HTML and as plain text, so the author can send it
  * to whoever edits it now. After a copy that got through, the label reads
  * „Zkopírováno“ for two seconds in the same width and it is announced, as the
- * design system's `CopyButton` does it (29c; copy kjcijk1q).
+ * design system's `CopyButton` does it (29c; copy kjcijk1q). When the clipboard
+ * refuses, a sentence under the button says to copy it from the editor; it goes
+ * on the next click or copy (17b).
  *
  * @param props.getContent - Reads the text to copy at the click.
  * @param props.variant - `outline` in the editor and 24h, `ghost` among the
@@ -31,11 +38,25 @@ export const CopyArticleTextButton = ({
   variant = 'outline',
 }: Props) => {
   const [isCopied, setIsCopied] = useState(false)
+  const [hasFailed, setHasFailed] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => () => clearTimeout(timeoutRef.current), [])
 
+  // Copying from the editor by hand is what the sentence asked for.
+  useEffect(() => {
+    if (!hasFailed) return
+
+    const handleCopy = () => setHasFailed(false)
+    document.addEventListener('copy', handleCopy)
+
+    return () => document.removeEventListener('copy', handleCopy)
+  }, [hasFailed])
+
   const copy = async () => {
+    clearTimeout(timeoutRef.current)
+    setIsCopied(false)
+    setHasFailed(false)
     const { html, text } = getArticleClipboardText(getContent())
 
     try {
@@ -50,6 +71,7 @@ export const CopyArticleTextButton = ({
       try {
         await navigator.clipboard.writeText(text)
       } catch {
+        setHasFailed(true)
         return
       }
     }
@@ -62,8 +84,9 @@ export const CopyArticleTextButton = ({
     )
   }
 
+  // One item with its sentence, so a row of dialog buttons keeps its order.
   return (
-    <>
+    <span className={styles.root}>
       <Button
         onClick={() => void copy()}
         size={'sm'}
@@ -80,9 +103,13 @@ export const CopyArticleTextButton = ({
           </span>
         </span>
       </Button>
-      <span aria-live={'polite'} className={styles.status}>
-        {isCopied ? 'Zkopírováno' : ''}
+      <span
+        aria-live={'polite'}
+        className={hasFailed ? styles.failedSentence : styles.status}
+      >
+        {isCopied && 'Zkopírováno'}
+        {hasFailed && FAILED_SENTENCE}
       </span>
-    </>
+    </span>
   )
 }

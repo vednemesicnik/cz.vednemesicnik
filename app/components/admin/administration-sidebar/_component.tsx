@@ -32,7 +32,6 @@ type Props = {
   peopleItems: NavigationItem[]
   user: SidebarUser
   layout?: 'column' | 'menu'
-  closeLabel?: string
   onClose?: () => void
   closeButtonRef?: Ref<HTMLButtonElement>
   className?: string
@@ -48,7 +47,6 @@ type Props = {
  * @param props.layout - `column` beside the content from 768 px, `menu` below it:
  * over the whole screen from Menu, with Zavřít in the brand row and 44 px rows
  * (tbi5qpq9). The caller puts the menu layout in a modal `<dialog>`.
- * @param props.closeLabel - The close button's label in the menu layout.
  * @param props.onClose - Called by the close button in the menu layout.
  * @param props.closeButtonRef - The close button, which gets focus on opening.
  */
@@ -57,7 +55,6 @@ export const AdministrationSidebar = ({
   peopleItems,
   user,
   layout = 'column',
-  closeLabel = 'Zavřít',
   onClose,
   closeButtonRef,
   className,
@@ -98,7 +95,7 @@ export const AdministrationSidebar = ({
               type={'button'}
               variant={'ghost'}
             >
-              {closeLabel}
+              Zavřít
             </Button>
           )}
         </div>
