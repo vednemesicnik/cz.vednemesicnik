@@ -19,6 +19,17 @@ export default [
   // Sitemap of public pages for crawlers (linked from public/robots.txt)
   route('sitemap.xml', 'routes/sitemap/route.ts'),
 
+  // Feeds for readers, RSS 2.0 and JSON Feed 1.1; a podcast's by its id, which
+  // outlives a change of its address (log 0039)
+  ...prefix('feeds', [
+    route('articles.xml', 'routes/feeds/articles-rss/route.ts'),
+    route('articles.json', 'routes/feeds/articles-json/route.ts'),
+    route('archive.xml', 'routes/feeds/archive-rss/route.ts'),
+    route('archive.json', 'routes/feeds/archive-json/route.ts'),
+    route('podcasts/:podcastId.xml', 'routes/feeds/podcast-rss/route.ts'),
+    route('podcasts/:podcastId.json', 'routes/feeds/podcast-json/route.ts'),
+  ]),
+
   // Website
   layout('routes/__layout/route.tsx', [
     // Home route
@@ -109,6 +120,9 @@ export default [
 
     // Support routes
     route('support', 'routes/support/route.tsx'),
+
+    // Where a reader subscribes to the feeds (design 17a)
+    route('feeds', 'routes/feeds/_index/route.tsx'),
 
     // Grants routes
     ...prefix('grants', [

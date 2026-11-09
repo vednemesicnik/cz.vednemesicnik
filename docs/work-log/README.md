@@ -105,3 +105,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0071](0071-under-the-publication-account-only-the-mailer-sends-and-only-one-script-reads.md) | Under the publication account, only the Mailer sends and only one script reads | 2026-11-05 |  |
 | [0072](0072-re-confirmation-links-are-signed-by-the-script-and-the-ladder-keeps-its-rungs-in-script-properties.md) | Re-confirmation links are signed by the script and the ladder keeps its rungs in Script Properties | 2026-11-06 |  |
 | [0073](0073-the-membership-address-is-confirmed-by-a-code-made-again-from-the-cookie.md) | The membership address is confirmed by a code made again from the cookie | 2026-11-06 |  |
+| [0074](0074-feeds-are-public-and-a-podcast-feed-is-found-by-its-id.md) | Feeds are public, and a podcast's feed is found by its id | 2026-11-08 |  |

@@ -1,3 +1,12 @@
+.root {
+  @layer route {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 4px;
+  }
+}
+
 .status {
   @layer route {
     position: absolute;
@@ -25,5 +34,16 @@
 .hidden {
   @layer route {
     visibility: hidden;
+  }
+}
+
+/* Under the button when the clipboard refuses: grey, not an error (17b). */
+.failedSentence {
+  @layer route {
+    max-inline-size: 22rem;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    text-align: start;
   }
 }

@@ -1,0 +1,25 @@
+.address {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-block-start: 8px;
+    /* 15 px address under a 13 px label (17a). */
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+}
+
+.label {
+  @layer route {
+    color: var(--text-tertiary);
+    font-size: 0.8125rem;
+  }
+}
+
+/* The podcast's id has nowhere to break (17a). */
+.value {
+  @layer route {
+    overflow-wrap: anywhere;
+  }
+}

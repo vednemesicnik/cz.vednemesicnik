@@ -1,0 +1,44 @@
+/* The headline group centres on a phone as on every page (10b, 11d); the content
+   stays at the start in the column of Kde poslouchat (13c, 17a). */
+.section {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-self: stretch;
+    max-width: var(--detail-main-width);
+    margin-block-end: 2.5rem;
+    text-align: start;
+  }
+}
+
+.heading {
+  @layer route {
+    margin: 0;
+  }
+}
+
+/* 8 px between the steps (17a). */
+.steps {
+  @layer route {
+    display: grid;
+    row-gap: 8px;
+    margin: 0;
+  }
+}
+
+.note {
+  @layer route {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+  }
+}
+
+.cards {
+  @layer route {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
