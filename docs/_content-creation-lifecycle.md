@@ -175,8 +175,8 @@ The line under the heading is the only sign: *Zatím prázdné*, *ukládá se* (
 again when the network is back) or *Nepodařilo se uložit.* with *Zkusit znovu*. The address
 saves as typed even when another article holds it as published (log
 [0039](./work-log/0039-a-public-address-is-unique-only-once-published.md)): only the address an
-article holds since its last publish (`publishedSlug`) is unique, and only publish writes it, with
-the article's PageSEO record. Retract and archive keep it. The field then says *Zadejte jinou
+article holds since its last publish (`publishedSlug`) is unique, and only publish writes it.
+Retract and archive keep it. The field then says *Zadejte jinou
 adresu — tato je obsazená.* through Conform and offers *Použít …* with a free address. Submit,
 approve and publish list *Adresa je obsazená.* in the 23h dialog. A draft's web preview names the
 article by its id (`?id=`). *Zavřít* and every other way out send what
