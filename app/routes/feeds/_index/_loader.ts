@@ -7,14 +7,12 @@ import { toAbsoluteUrl } from '~/utils/feeds/to-absolute-url.server'
  * podcasts, for a signed-in author too (17b: no editorial preview here).
  */
 export const loader = async () => {
+  // As /podcasts: the newest published podcast first (the owner's call of
+  // 9 Nov 2026 over 13a). A podcast without an episode is listed too, since its
+  // first episode still reaches the reader (17b).
   const podcasts = await prisma.podcast.findMany({
+    orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
     select: {
-      episodes: {
-        orderBy: { publishedAt: 'desc' },
-        select: { publishedAt: true },
-        take: 1,
-        where: { state: 'published' },
-      },
       id: true,
       publishedSlug: true,
       title: true,
@@ -22,29 +20,20 @@ export const loader = async () => {
     where: { state: 'published' },
   })
 
-  // As /podcasts in 13a: the newest published episode first, a podcast without
-  // one last, since its first episode still reaches the reader (17b).
-  const newestEpisodeTime = ({ episodes }: (typeof podcasts)[number]) =>
-    episodes[0]?.publishedAt?.getTime() ?? 0
-
-  const podcastFeeds = [...podcasts]
-    .sort(
-      (first, second) => newestEpisodeTime(second) - newestEpisodeTime(first),
-    )
-    .flatMap(({ id, publishedSlug, title }) =>
-      publishedSlug === null
-        ? []
-        : [
-            {
-              address: toAbsoluteUrl(
-                href('/feeds/podcasts/:podcastId.xml', { podcastId: id }),
-              ),
-              anchor: `podcast-${publishedSlug}`,
-              id,
-              title,
-            },
-          ],
-    )
+  const podcastFeeds = podcasts.flatMap(({ id, publishedSlug, title }) =>
+    publishedSlug === null
+      ? []
+      : [
+          {
+            address: toAbsoluteUrl(
+              href('/feeds/podcasts/:podcastId.xml', { podcastId: id }),
+            ),
+            anchor: `podcast-${publishedSlug}`,
+            id,
+            title,
+          },
+        ],
+  )
 
   return {
     archiveAddress: toAbsoluteUrl(href('/feeds/archive.xml')),
