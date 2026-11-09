@@ -3,7 +3,6 @@ import { isCuid } from '@paralleldrive/cuid2'
 import { data } from 'react-router'
 
 import { ARTICLE_IMAGE_CONFIG } from '~/config/article-image-config'
-import { buildArticlePageSeoImageWrites } from '~/routes/administration/articles/utils/build-article-page-seo-image-writes.server'
 import { prisma } from '~/utils/db.server'
 import { createImageSources } from '~/utils/image-store/create-image-sources'
 import { isImageIdOwnedElsewhere } from '~/utils/image-store/is-image-id-owned-elsewhere.server'
@@ -11,6 +10,7 @@ import { isImageOverPixelBudget } from '~/utils/image-store/is-image-over-pixel-
 import {
   deleteImage,
   deleteImageVersion,
+  ensureOgImage,
   type StoredImageMeta,
   storeImageVariants,
 } from '~/utils/image-store/store-image.server'
@@ -125,13 +125,12 @@ export async function uploadArticleImage(
         return { status: 'failed' }
       }
 
+      // The main image keeps its share crop (log 0076), made before the
+      // commit.
       const isFeatured = article.featuredImageId === imageId
-      const seoWrites = isFeatured
-        ? await buildArticlePageSeoImageWrites({
-            featuredImage: { id: imageId, ...meta },
-            publishedSlug: article.publishedSlug,
-          })
-        : []
+      if (isFeatured) {
+        await ensureOgImage(imageId, meta.version, meta.intrinsicWidth)
+      }
 
       const answer: UploadAnswer = {
         becameFeatured: false,
@@ -179,7 +178,6 @@ export async function uploadArticleImage(
             select: { id: true },
           }),
           ...claimWrites,
-          ...seoWrites,
         ]
         const claimIndex = claimsFeatured ? writes.indexOf(claimWrites[0]) : -1
 
@@ -196,9 +194,9 @@ export async function uploadArticleImage(
             await deleteImage(imageId)
           },
           onRefused: () => dropUnusedFiles(meta.version),
-          // The sharing preview follows only a claim that took: written in
-          // the commit, another upload's preview could overwrite it. Publish
-          // writes it again from the main image, so a failure only logs.
+          // The share crop follows only a claim that took (log 0076).
+          // Publish makes it again from the main image, so a failure only
+          // logs.
           onSettled: async (writeResults) => {
             const claim = writeResults[claimIndex] as
               | Prisma.BatchPayload
@@ -206,14 +204,9 @@ export async function uploadArticleImage(
             if (claimIndex === -1 || claim?.count !== 1) return {}
 
             try {
-              await prisma.$transaction(
-                await buildArticlePageSeoImageWrites({
-                  featuredImage: { id: imageId, ...meta },
-                  publishedSlug: article.publishedSlug,
-                }),
-              )
+              await ensureOgImage(imageId, meta.version, meta.intrinsicWidth)
             } catch (error) {
-              console.error('Article sharing preview left unset', error)
+              console.error('Article share crop left unmade', error)
             }
             return { becameFeatured: true }
           },
@@ -231,23 +224,14 @@ export async function uploadArticleImage(
 
       return {
         answer,
-        // The previous version's files are still there: the row points back
-        // at them, the sharing preview too, and the new version's go.
+        // The previous version's files are still there, its share crop
+        // too: the row points back at them, and the new version's go.
         onCancelled: async () => {
-          const previousSeoWrites = isFeatured
-            ? await buildArticlePageSeoImageWrites({
-                featuredImage: { id: imageId, ...previousMeta },
-                publishedSlug: article.publishedSlug,
-              })
-            : []
-          await prisma.$transaction([
-            prisma.articleImage.update({
-              data: { ...previousMeta, fileName: storedImage.fileName },
-              select: { id: true },
-              where: { id: imageId },
-            }),
-            ...previousSeoWrites,
-          ])
+          await prisma.articleImage.update({
+            data: { ...previousMeta, fileName: storedImage.fileName },
+            select: { id: true },
+            where: { id: imageId },
+          })
           if (previousVersion !== meta.version) {
             await deleteImageVersion(imageId, meta.version)
           }
@@ -264,7 +248,6 @@ export async function uploadArticleImage(
             select: { id: true },
             where: { id: imageId },
           }),
-          ...seoWrites,
         ],
       }
     },

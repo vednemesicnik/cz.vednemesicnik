@@ -278,7 +278,6 @@ model Author {
   issues                     Issue[]           @relation("IssueCreator")
   podcasts                   Podcast[]         @relation("PodcastCreator")
   podcastEpisodes            PodcastEpisode[]  @relation("PodcastEpisodeCreator")
-  pageSEOs                   PageSEO[]         @relation("PageSeoCreator")
   // Reviewed content
   reviews                    Review[]          @relation("ReviewsGiven")
   // Content submitted for review
@@ -346,7 +345,6 @@ enum AuthorPermissionEntity {
   podcast
   podcast_episode
   issue
-  page_seo
 }
 
 enum AuthorPermissionAccess {
@@ -678,30 +676,6 @@ model ArticleCategory {
   @@index([state, authorId])
 }
 
-model PageSEO {
-  id              String       @id @default(cuid())
-  pathname        String       @unique
-  title           String?
-  description     String?
-  robots          String       @default("index, follow")
-  ogImageUrl      String?
-  twitterImageUrl String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  publishedAt     DateTime?
-  state           ContentState @default(draft)
-  // Whoever first saved the page; nothing shows it, so deleting the author
-  // clears it rather than holding the author (#767).
-  authorId        String?
-  author          Author?      @relation("PageSeoCreator", fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  reviews         Review[]     @relation("PageSEOReviews")
-
-  // non-unique foreign key
-  @@index([authorId])
-  // content-state query path (own-access filtering)
-  @@index([state, authorId])
-}
-
 enum ContentState {
   draft
   published
@@ -728,8 +702,6 @@ model Review {
   articleTag        ArticleTag?      @relation("ArticleTagReviews", fields: [articleTagId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   articleCategoryId String?
   articleCategory   ArticleCategory? @relation("ArticleCategoryReviews", fields: [articleCategoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  pageSEOId         String?
-  pageSEO           PageSEO?         @relation("PageSEOReviews", fields: [pageSEOId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([reviewerId])
   @@index([issueId])
@@ -738,7 +710,6 @@ model Review {
   @@index([podcastEpisodeId])
   @@index([articleTagId])
   @@index([articleCategoryId])
-  @@index([pageSEOId])
 }
 
 enum ReviewState {

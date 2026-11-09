@@ -13,26 +13,17 @@ const mocks = vi.hoisted(() => ({
   articleImageFindUnique: vi.fn(),
   articleImageUpdate: vi.fn(),
   articleUpdateMany: vi.fn(),
-  buildArticlePageSeoImageWrites: vi.fn(),
   createImageSources: vi.fn(),
   deleteImage: vi.fn(),
   deleteImageVersion: vi.fn(),
+  ensureOgImage: vi.fn(),
   isImageIdOwnedElsewhere: vi.fn(),
   saveArticleImageChange: vi.fn(),
   storeImageVariants: vi.fn(),
-  transaction: vi.fn(),
 }))
-
-vi.mock(
-  '~/routes/administration/articles/utils/build-article-page-seo-image-writes.server',
-  () => ({
-    buildArticlePageSeoImageWrites: mocks.buildArticlePageSeoImageWrites,
-  }),
-)
 
 vi.mock('~/utils/db.server', () => ({
   prisma: {
-    $transaction: mocks.transaction,
     article: { updateMany: mocks.articleUpdateMany },
     articleImage: {
       aggregate: mocks.articleImageAggregate,
@@ -55,6 +46,7 @@ vi.mock('~/utils/image-store/is-image-id-owned-elsewhere.server', () => ({
 vi.mock('~/utils/image-store/store-image.server', () => ({
   deleteImage: mocks.deleteImage,
   deleteImageVersion: mocks.deleteImageVersion,
+  ensureOgImage: mocks.ensureOgImage,
   storeImageVariants: mocks.storeImageVariants,
 }))
 
@@ -85,10 +77,7 @@ const buildOptions = (overrides: Record<string, unknown> = {}) => ({
 
 const run = async (
   overrides: Record<string, unknown> = {},
-  article = {
-    featuredImageId: null as string | null,
-    publishedSlug: 'article',
-  },
+  article = { featuredImageId: null as string | null },
 ) => {
   await uploadArticleImage(request, buildOptions(overrides))
   const { prepare } = mocks.saveArticleImageChange.mock.lastCall?.[1] ?? {}
@@ -107,7 +96,7 @@ beforeEach(() => {
   mocks.articleImageCreate.mockReturnValue('create-image')
   mocks.articleImageUpdate.mockReturnValue('update-image')
   mocks.articleUpdateMany.mockReturnValue('claim-featured')
-  mocks.buildArticlePageSeoImageWrites.mockResolvedValue(['seo-write'])
+  mocks.ensureOgImage.mockResolvedValue(undefined)
   mocks.deleteImage.mockResolvedValue(undefined)
   mocks.deleteImageVersion.mockResolvedValue(undefined)
 })
@@ -320,27 +309,18 @@ describe('uploadArticleImage — a new image', () => {
     expect(mocks.deleteImage).toHaveBeenCalledWith(imageId)
   })
 
-  test('adds no sharing preview for an image that is not the main one', async () => {
-    const prepared = await run(
-      {},
-      { featuredImageId: 'other', publishedSlug: 'article' },
-    )
+  test('makes no share crop for an image that is not the main one', async () => {
+    const prepared = await run({}, { featuredImageId: 'other' })
 
-    expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
+    expect(mocks.ensureOgImage).not.toHaveBeenCalled()
     expect(prepared.writes).toEqual(['create-image'])
   })
 
-  test('points the sharing preview at the new version of the main image', async () => {
-    const prepared = await run(
-      {},
-      { featuredImageId: imageId, publishedSlug: 'article' },
-    )
+  test('makes the share crop of the main image before the commit', async () => {
+    const prepared = await run({}, { featuredImageId: imageId })
 
-    expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
-      featuredImage: { id: imageId, ...meta },
-      publishedSlug: 'article',
-    })
-    expect(prepared.writes).toEqual(['create-image', 'seo-write'])
+    expect(mocks.ensureOgImage).toHaveBeenCalledWith(imageId, 'v2', 900)
+    expect(prepared.writes).toEqual(['create-image'])
   })
 })
 
@@ -362,8 +342,8 @@ describe('uploadArticleImage — the first image becomes the main one (0053)', (
       },
     })
     expect(prepared.writes).toEqual(['create-image', 'claim-featured'])
-    // The sharing preview waits for the claim to take.
-    expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
+    // The share crop waits for the claim to take.
+    expect(mocks.ensureOgImage).not.toHaveBeenCalled()
   })
 
   test('claims nothing when the gallery has images, the main one cleared', async () => {
@@ -377,27 +357,20 @@ describe('uploadArticleImage — the first image becomes the main one (0053)', (
   test('claims nothing when the article has a main image', async () => {
     emptyGallery()
 
-    const prepared = await run(
-      {},
-      { featuredImageId: 'other', publishedSlug: 'article' },
-    )
+    const prepared = await run({}, { featuredImageId: 'other' })
 
     expect(mocks.articleUpdateMany).not.toHaveBeenCalled()
     expect(prepared.writes).toEqual(['create-image'])
   })
 
-  test('a claim that took points the sharing preview and answers it', async () => {
+  test('a claim that took makes the share crop and answers it', async () => {
     emptyGallery()
     const prepared = await run()
 
     const settled = await prepared.onSettled(['image', { count: 1 }])
 
     expect(settled).toEqual({ becameFeatured: true })
-    expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
-      featuredImage: { id: imageId, ...meta },
-      publishedSlug: 'article',
-    })
-    expect(mocks.transaction).toHaveBeenCalledWith(['seo-write'])
+    expect(mocks.ensureOgImage).toHaveBeenCalledWith(imageId, 'v2', 900)
   })
 
   test('a claim another upload took first changes nothing', async () => {
@@ -407,13 +380,12 @@ describe('uploadArticleImage — the first image becomes the main one (0053)', (
     const settled = await prepared.onSettled(['image', { count: 0 }])
 
     expect(settled).toEqual({})
-    expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
-    expect(mocks.transaction).not.toHaveBeenCalled()
+    expect(mocks.ensureOgImage).not.toHaveBeenCalled()
   })
 
-  test('a failed sharing preview still answers the main image, and logs', async () => {
+  test('a failed share crop still answers the main image, and logs', async () => {
     emptyGallery()
-    mocks.transaction.mockRejectedValueOnce(new Error('database down'))
+    mocks.ensureOgImage.mockRejectedValueOnce(new Error('store down'))
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const prepared = await run()
 
@@ -452,29 +424,8 @@ describe('uploadArticleImage — a stored image', () => {
       select: { id: true },
       where: { id: imageId },
     })
-    expect(mocks.transaction).toHaveBeenCalledWith(['restore-image'])
     expect(mocks.deleteImageVersion).toHaveBeenCalledWith(imageId, 'v2')
     expect(mocks.deleteImage).not.toHaveBeenCalled()
-  })
-
-  test('a cancelled main image points the sharing preview back', async () => {
-    const prepared = await run(
-      {},
-      { featuredImageId: imageId, publishedSlug: 'article' },
-    )
-    mocks.articleImageUpdate.mockReturnValue('restore-image')
-    mocks.buildArticlePageSeoImageWrites.mockResolvedValue(['previous-seo'])
-
-    await prepared.onCancelled()
-
-    expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenLastCalledWith({
-      featuredImage: { id: imageId, ...previousMeta },
-      publishedSlug: 'article',
-    })
-    expect(mocks.transaction).toHaveBeenCalledWith([
-      'restore-image',
-      'previous-seo',
-    ])
   })
 
   test('replaces the file and the metadata, keeping the position', async () => {
@@ -536,16 +487,10 @@ describe('uploadArticleImage — a stored image', () => {
     expect(mocks.articleImageUpdate).not.toHaveBeenCalled()
   })
 
-  test('points the sharing preview at the new version of the main image', async () => {
-    const prepared = await run(
-      {},
-      { featuredImageId: imageId, publishedSlug: 'article' },
-    )
+  test('makes the share crop of the main image’s new version', async () => {
+    const prepared = await run({}, { featuredImageId: imageId })
 
-    expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
-      featuredImage: { id: imageId, ...meta },
-      publishedSlug: 'article',
-    })
-    expect(prepared.writes).toEqual(['update-image', 'seo-write'])
+    expect(mocks.ensureOgImage).toHaveBeenCalledWith(imageId, 'v2', 900)
+    expect(prepared.writes).toEqual(['update-image'])
   })
 })

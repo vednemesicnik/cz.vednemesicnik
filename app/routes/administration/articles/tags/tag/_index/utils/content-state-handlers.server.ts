@@ -5,7 +5,7 @@ import {
 } from '~/utils/content-state/create-content-state-handlers.server'
 import { prisma } from '~/utils/db.server'
 
-/** Tag state-transition handlers: single author, no PageSEO, publish date is now. */
+/** Tag state-transition handlers: single author, publish date is now. */
 export const tagContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
     await prisma.articleTag.update({

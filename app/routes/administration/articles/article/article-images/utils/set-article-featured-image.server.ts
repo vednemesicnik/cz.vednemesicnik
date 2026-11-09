@@ -1,6 +1,6 @@
 import { data } from 'react-router'
 
-import { buildArticlePageSeoImageWrites } from '~/routes/administration/articles/utils/build-article-page-seo-image-writes.server'
+import { ensureArticleOgImage } from '~/routes/administration/articles/utils/ensure-article-og-image.server'
 import { prisma } from '~/utils/db.server'
 
 import { putFeaturedFirst } from './put-featured-first'
@@ -14,8 +14,8 @@ type Options = {
 }
 
 /**
- * Sets or clears the article's main image at once (design 24b), and points the
- * sharing preview at it. The main image stands first in the gallery, in the
+ * Sets or clears the article's main image at once (design 24b), and makes its
+ * share crop (log 0076). The main image stands first in the gallery, in the
  * editor as on the web (yj2t50dd): setting one moves it to the first place in
  * the same change, and clearing it leaves the last one first, as the editor
  * shows it.
@@ -49,6 +49,9 @@ export async function setArticleFeaturedImage(
         orderedIds = putFeaturedFirst(storedIds, firstId)
       }
 
+      // The main image keeps its share crop (log 0076).
+      await ensureArticleOgImage(imageId)
+
       return {
         answer: {},
         articleData: { featuredImageId: imageId },
@@ -60,10 +63,6 @@ export async function setArticleFeaturedImage(
               where: { id },
             }),
           ),
-          ...(await buildArticlePageSeoImageWrites({
-            featuredImage: imageId,
-            publishedSlug: article.publishedSlug,
-          })),
         ],
       }
     },

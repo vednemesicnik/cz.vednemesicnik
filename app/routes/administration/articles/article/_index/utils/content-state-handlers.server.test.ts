@@ -3,10 +3,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { articleContentStateHandlers } from './content-state-handlers.server'
 
-// Pass-through the permission wrapper and mock the two Prisma writes so this
-// exercises the article config's applyState: the entity row clears reviews on a
-// draft transition, but the mirrored PageSEO row must not (updateMany rejects
-// nested relation writes).
+// Pass-through the permission wrapper and mock the Prisma writes so this
+// exercises the article config's applyState.
 const {
   withAuthorPermissionMock,
   articleDeleteMock,
@@ -15,8 +13,7 @@ const {
   articleFindUniqueOrThrowMock,
   articleUpdateMock,
   deleteRowWithImagesMock,
-  pageSeoUpdateManyMock,
-  pageSeoUpsertMock,
+  ensureArticleOgImageMock,
   recordContentLogMock,
   reviewFindFirstMock,
   transactionFindUniqueOrThrowMock,
@@ -27,23 +24,20 @@ const {
   articleFindUniqueOrThrowMock: vi.fn(),
   articleUpdateMock: vi.fn(),
   deleteRowWithImagesMock: vi.fn(),
-  pageSeoUpdateManyMock: vi.fn(),
-  pageSeoUpsertMock: vi.fn(),
+  ensureArticleOgImageMock: vi.fn(),
   recordContentLogMock: vi.fn(),
   reviewFindFirstMock: vi.fn(),
   transactionFindUniqueOrThrowMock: vi.fn(),
   withAuthorPermissionMock: vi.fn(),
 }))
 
-// A delete runs inside a transaction that also removes the PageSEO row, and a
-// publish in one that writes the address it holds and its PageSEO row.
+// A publish runs in a transaction that reads the typed address and writes it
+// as the one the article holds.
 const transactionClient = {
   article: {
-    delete: articleDeleteMock,
     findUniqueOrThrow: transactionFindUniqueOrThrowMock,
     update: articleUpdateMock,
   },
-  pageSEO: { deleteMany: vi.fn(), upsert: pageSeoUpsertMock },
 }
 
 // The content log has its own tests; here it only must not reach Prisma.
@@ -71,12 +65,12 @@ vi.mock('~/utils/db.server', () => ({
       callback: (client: typeof transactionClient) => Promise<unknown>,
     ) => callback(transactionClient),
     article: {
+      delete: articleDeleteMock,
       findMany: articleFindManyMock,
       findUnique: articleFindUniqueMock,
       findUniqueOrThrow: articleFindUniqueOrThrowMock,
       update: articleUpdateMock,
     },
-    pageSEO: { updateMany: pageSeoUpdateManyMock },
     review: { findFirst: reviewFindFirstMock },
   },
 }))
@@ -86,12 +80,8 @@ vi.mock('~/utils/image-store/store-image.server', () => ({
 }))
 
 vi.mock(
-  '~/routes/administration/articles/utils/resolve-article-featured-image-seo.server',
-  () => ({
-    resolveArticleFeaturedImageSeo: vi
-      .fn()
-      .mockResolvedValue({ ogImageUrl: null, twitterImageUrl: null }),
-  }),
+  '~/routes/administration/articles/utils/ensure-article-og-image.server',
+  () => ({ ensureArticleOgImage: ensureArticleOgImageMock }),
 )
 
 const request = new Request('https://test.local/')
@@ -113,20 +103,12 @@ const completeArticle = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  articleUpdateMock.mockResolvedValue({
-    perex: 'Perex',
-    publishedSlug: 'clanek',
-    title: 'Článek',
-  })
+  articleUpdateMock.mockResolvedValue({ id: 'a1' })
   // No other article holds the address as published (log 0039).
   articleFindManyMock.mockResolvedValue([])
-  transactionFindUniqueOrThrowMock.mockResolvedValue({
-    publishedSlug: null,
-    slug: 'clanek',
-  })
+  transactionFindUniqueOrThrowMock.mockResolvedValue({ slug: 'clanek' })
   // Nobody holds it, unless a test says so.
   articleFindUniqueMock.mockResolvedValue(null)
-  pageSeoUpdateManyMock.mockResolvedValue(undefined)
   // The publishing Coordinator's approval already exists.
   reviewFindFirstMock.mockResolvedValue({ id: 'review-1' })
   withAuthorPermissionMock.mockImplementation(
@@ -138,7 +120,7 @@ beforeEach(() => {
 })
 
 describe('articleContentStateHandlers — retract review clearing', () => {
-  test('clears reviews on the article row but not on the PageSEO row', async () => {
+  test('clears the reviews', async () => {
     await articleContentStateHandlers.retract(request, { id: 'a1', target })
 
     expect(articleUpdateMock).toHaveBeenCalledWith({
@@ -148,22 +130,18 @@ describe('articleContentStateHandlers — retract review clearing', () => {
         submittedAt: null,
         submittedById: null,
       },
-      select: { publishedSlug: true },
+      select: { id: true },
       // Not while someone else edits it (log 0019).
       where: {
         AND: [{ OR: expect.arrayContaining([{ heldByAuthorId: 'author-1' }]) }],
         id: 'a1',
       },
     })
-
-    const pageSeoData = pageSeoUpdateManyMock.mock.calls[0][0].data
-    expect(pageSeoData).toEqual({ state: 'draft' })
-    expect(pageSeoData).not.toHaveProperty('reviews')
   })
 })
 
 describe('articleContentStateHandlers — submission', () => {
-  test('publishing ends the submission on the article row only', async () => {
+  test('publishing ends the submission', async () => {
     articleFindUniqueOrThrowMock.mockResolvedValue(completeArticle)
 
     await articleContentStateHandlers.publish(request, {
@@ -177,9 +155,6 @@ describe('articleContentStateHandlers — submission', () => {
       submittedAt: null,
       submittedById: null,
     })
-    expect(pageSeoUpsertMock.mock.lastCall?.[0].update).not.toHaveProperty(
-      'submittedAt',
-    )
   })
 
   test('an incomplete article is not published (23h)', async () => {
@@ -274,7 +249,6 @@ describe('articleContentStateHandlers — the edit hold (07g, log 0019)', () => 
       data: { heldByName: 'Jakub Novák' },
       init: { status: 409 },
     })
-    expect(pageSeoUpdateManyMock).not.toHaveBeenCalled()
     expect(recordContentLogMock).not.toHaveBeenCalled()
   })
 
@@ -326,7 +300,7 @@ describe('articleContentStateHandlers — the edit hold (07g, log 0019)', () => 
 describe('articleContentStateHandlers — the published address (log 0039)', () => {
   const draftTarget = { authorIds: ['author-2'], state: 'draft' as const }
 
-  test('publishing holds the typed address and writes its PageSEO row', async () => {
+  test('publishing holds the typed address', async () => {
     articleFindUniqueOrThrowMock.mockResolvedValue(completeArticle)
 
     await articleContentStateHandlers.publish(request, {
@@ -338,23 +312,12 @@ describe('articleContentStateHandlers — the published address (log 0039)', () 
       publishedSlug: 'clanek',
       state: 'published',
     })
-    expect(pageSeoUpsertMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        create: expect.objectContaining({
-          pathname: '/articles/clanek',
-          state: 'published',
-          title: 'Článek',
-        }),
-        where: { pathname: '/articles/clanek' },
-      }),
-    )
   })
 
-  test('publishing under another address drops the old PageSEO row', async () => {
-    articleFindUniqueOrThrowMock.mockResolvedValue(completeArticle)
-    transactionFindUniqueOrThrowMock.mockResolvedValue({
-      publishedSlug: 'stary-clanek',
-      slug: 'clanek',
+  test('publishing makes the share crop of the main image (log 0076)', async () => {
+    articleFindUniqueOrThrowMock.mockResolvedValue({
+      ...completeArticle,
+      featuredImageId: 'image-1',
     })
 
     await articleContentStateHandlers.publish(request, {
@@ -362,9 +325,7 @@ describe('articleContentStateHandlers — the published address (log 0039)', () 
       target: draftTarget,
     })
 
-    expect(transactionClient.pageSEO.deleteMany).toHaveBeenCalledWith({
-      where: { pathname: '/articles/stary-clanek' },
-    })
+    expect(ensureArticleOgImageMock).toHaveBeenCalledWith('image-1')
   })
 
   test('an address another article holds blocks the publish', async () => {
@@ -400,10 +361,7 @@ describe('articleContentStateHandlers — the published address (log 0039)', () 
 
   test('an address cleared since the check publishes nothing', async () => {
     articleFindUniqueOrThrowMock.mockResolvedValue(completeArticle)
-    transactionFindUniqueOrThrowMock.mockResolvedValue({
-      publishedSlug: 'stary-clanek',
-      slug: null,
-    })
+    transactionFindUniqueOrThrowMock.mockResolvedValue({ slug: null })
 
     const result = await articleContentStateHandlers.publish(request, {
       id: 'a1',
@@ -412,7 +370,6 @@ describe('articleContentStateHandlers — the published address (log 0039)', () 
 
     expect(result).toEqual({ missing: ['Chybí adresa.'] })
     expect(articleUpdateMock).not.toHaveBeenCalled()
-    expect(pageSeoUpsertMock).not.toHaveBeenCalled()
   })
 
   test('an address another article holds blocks the approval', async () => {

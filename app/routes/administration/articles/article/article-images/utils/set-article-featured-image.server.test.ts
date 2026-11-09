@@ -5,15 +5,13 @@ import { setArticleFeaturedImage } from './set-article-featured-image.server'
 const mocks = vi.hoisted(() => ({
   articleImageFindMany: vi.fn(),
   articleImageUpdate: vi.fn(),
-  buildArticlePageSeoImageWrites: vi.fn(),
+  ensureArticleOgImage: vi.fn(),
   saveArticleImageChange: vi.fn(),
 }))
 
 vi.mock(
-  '~/routes/administration/articles/utils/build-article-page-seo-image-writes.server',
-  () => ({
-    buildArticlePageSeoImageWrites: mocks.buildArticlePageSeoImageWrites,
-  }),
+  '~/routes/administration/articles/utils/ensure-article-og-image.server',
+  () => ({ ensureArticleOgImage: mocks.ensureArticleOgImage }),
 )
 
 vi.mock('~/utils/db.server', () => ({
@@ -31,7 +29,7 @@ vi.mock('./save-article-image-change.server', () => ({
 
 const request = new Request('https://test.local/')
 const context = { authorId: 'author-1', roleLevel: 1 }
-const article = { featuredImageId: null, publishedSlug: 'article' }
+const article = { featuredImageId: null }
 
 const run = async (imageId: string | null) => {
   await setArticleFeaturedImage(request, {
@@ -54,7 +52,6 @@ beforeEach(() => {
   mocks.articleImageUpdate.mockImplementation(
     ({ data: { position }, where: { id } }) => `${id}@${position}`,
   )
-  mocks.buildArticlePageSeoImageWrites.mockResolvedValue(['seo-write'])
 })
 
 describe('setArticleFeaturedImage', () => {
@@ -76,22 +73,19 @@ describe('setArticleFeaturedImage', () => {
     expect(mocks.articleImageFindMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { articleId: 'article-1' } }),
     )
-    expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
+    expect(mocks.ensureArticleOgImage).not.toHaveBeenCalled()
   })
 
-  test('sets the main image first and points the sharing preview at it', async () => {
+  test('sets the main image first and makes its share crop', async () => {
     const prepared = await run('image-1')
 
     // The others keep their order behind it (yj2t50dd).
     expect(prepared).toEqual({
       answer: {},
       articleData: { featuredImageId: 'image-1' },
-      writes: ['image-1@0', 'image-0@1', 'image-2@2', 'seo-write'],
+      writes: ['image-1@0', 'image-0@1', 'image-2@2'],
     })
-    expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
-      featuredImage: 'image-1',
-      publishedSlug: 'article',
-    })
+    expect(mocks.ensureArticleOgImage).toHaveBeenCalledWith('image-1')
   })
 
   test('clears the main image and leaves it first, as the editor shows it', async () => {
@@ -102,35 +96,17 @@ describe('setArticleFeaturedImage', () => {
     }).then(() =>
       mocks.saveArticleImageChange.mock.lastCall?.[1].prepare(context, {
         featuredImageId: 'image-2',
-        publishedSlug: 'article',
       }),
     )
 
     expect(prepared.articleData).toEqual({ featuredImageId: null })
-    expect(prepared.writes).toEqual([
-      'image-2@0',
-      'image-0@1',
-      'image-1@2',
-      'seo-write',
-    ])
-    expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
-      featuredImage: null,
-      publishedSlug: 'article',
-    })
+    expect(prepared.writes).toEqual(['image-2@0', 'image-0@1', 'image-1@2'])
   })
 
   test('clears no main image without touching the order', async () => {
     const prepared = await run(null)
 
     expect(mocks.articleImageFindMany).not.toHaveBeenCalled()
-    expect(prepared.writes).toEqual(['seo-write'])
-  })
-
-  test('writes no sharing preview for a draft without an address', async () => {
-    mocks.buildArticlePageSeoImageWrites.mockResolvedValue([])
-
-    const prepared = await run('image-1')
-
-    expect(prepared.writes).toEqual(['image-1@0', 'image-0@1', 'image-2@2'])
+    expect(prepared.writes).toEqual([])
   })
 })
