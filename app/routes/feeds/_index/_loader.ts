@@ -9,6 +9,8 @@ import { sortByNewestEpisode } from '~/utils/podcast/sort-by-newest-episode'
  */
 export const loader = async () => {
   const podcasts = await prisma.podcast.findMany({
+    // Ties keep this order, as on /podcasts.
+    orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
     select: {
       episodes: {
         orderBy: { publishedAt: 'desc' },

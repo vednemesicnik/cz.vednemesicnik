@@ -44,6 +44,7 @@ export const EPISODE_SUBMISSION_NOTES = {
 } as const
 
 // The episode's sentence in Změnit datum publikace?: the podcast's page orders
-// by number, only Nejnovější epizody by date (copy v0m112v3).
+// by number, Nejnovější epizody by date (copy v0m112v3). The newest date also
+// moves the podcast's tile on /podcasts (13a); the sentence leaves that out.
 export const EPISODE_CHANGE_DATE_DESCRIPTION =
   'Datum a čas publikace určují pořadí v sekci Nejnovější epizody.'
