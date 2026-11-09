@@ -49,8 +49,13 @@ export async function setArticleFeaturedImage(
         orderedIds = putFeaturedFirst(storedIds, firstId)
       }
 
-      // The main image keeps its share crop (log 0076).
-      await ensureArticleOgImage(imageId)
+      // The main image keeps its share crop (log 0076). Publish makes it
+      // again, so a failure only logs.
+      try {
+        await ensureArticleOgImage(imageId)
+      } catch (error) {
+        console.error('Article share crop left unmade', error)
+      }
 
       return {
         answer: {},

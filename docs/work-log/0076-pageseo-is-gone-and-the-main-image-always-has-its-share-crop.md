@@ -32,7 +32,8 @@ links, that pointed at them.
 The main image always has its share crop. It is made when an image becomes the main one, when the
 main image's file is replaced, and on publish (`ensureArticleOgImage`, and `ensureOgImage` in the
 upload). A draft gets its crop before publishing, which is also why publish still makes it: it
-covers drafts from before this change.
+covers drafts from before this change. A crop that fails in the gallery only logs and never
+refuses the editor's change; publish makes it again.
 
 ## What follows
 

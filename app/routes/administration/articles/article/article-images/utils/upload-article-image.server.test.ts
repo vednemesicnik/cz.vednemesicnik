@@ -315,13 +315,6 @@ describe('uploadArticleImage — a new image', () => {
     expect(mocks.ensureOgImage).not.toHaveBeenCalled()
     expect(prepared.writes).toEqual(['create-image'])
   })
-
-  test('makes the share crop of the main image before the commit', async () => {
-    const prepared = await run({}, { featuredImageId: imageId })
-
-    expect(mocks.ensureOgImage).toHaveBeenCalledWith(imageId, 'v2', 900)
-    expect(prepared.writes).toEqual(['create-image'])
-  })
 })
 
 describe('uploadArticleImage — the first image becomes the main one (0053)', () => {
@@ -491,6 +484,24 @@ describe('uploadArticleImage — a stored image', () => {
     const prepared = await run({}, { featuredImageId: imageId })
 
     expect(mocks.ensureOgImage).toHaveBeenCalledWith(imageId, 'v2', 900)
+    expect(prepared.writes).toEqual(['update-image'])
+  })
+
+  test('a failed share crop keeps the new version, and logs', async () => {
+    mocks.ensureOgImage.mockRejectedValueOnce(new Error('store down'))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const prepared = await run({}, { featuredImageId: imageId })
+
+    expect(prepared.writes).toEqual(['update-image'])
+    expect(consoleError).toHaveBeenCalledOnce()
+    consoleError.mockRestore()
+  })
+
+  test('makes no share crop for a replaced image that is not the main one', async () => {
+    const prepared = await run({}, { featuredImageId: 'other' })
+
+    expect(mocks.ensureOgImage).not.toHaveBeenCalled()
     expect(prepared.writes).toEqual(['update-image'])
   })
 })

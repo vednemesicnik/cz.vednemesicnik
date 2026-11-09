@@ -103,6 +103,17 @@ describe('setArticleFeaturedImage', () => {
     expect(prepared.writes).toEqual(['image-2@0', 'image-0@1', 'image-1@2'])
   })
 
+  test('a failed share crop still sets the main image, and logs', async () => {
+    mocks.ensureArticleOgImage.mockRejectedValueOnce(new Error('store down'))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const prepared = await run('image-1')
+
+    expect(prepared.articleData).toEqual({ featuredImageId: 'image-1' })
+    expect(consoleError).toHaveBeenCalledOnce()
+    consoleError.mockRestore()
+  })
+
   test('clears no main image without touching the order', async () => {
     const prepared = await run(null)
 

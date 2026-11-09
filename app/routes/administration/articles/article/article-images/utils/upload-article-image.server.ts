@@ -126,10 +126,14 @@ export async function uploadArticleImage(
       }
 
       // The main image keeps its share crop (log 0076), made before the
-      // commit.
+      // commit. Publish makes it again, so a failure only logs.
       const isFeatured = article.featuredImageId === imageId
       if (isFeatured) {
-        await ensureOgImage(imageId, meta.version, meta.intrinsicWidth)
+        try {
+          await ensureOgImage(imageId, meta.version, meta.intrinsicWidth)
+        } catch (error) {
+          console.error('Article share crop left unmade', error)
+        }
       }
 
       const answer: UploadAnswer = {
