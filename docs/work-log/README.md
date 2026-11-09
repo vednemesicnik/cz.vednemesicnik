@@ -58,7 +58,7 @@ Code comments cite an entry by its number (`log 0022`).
 | [0024](0024-dates-are-utc-instants-shown-in-prague-time-without-temporal.md) | Dates are UTC instants shown in Prague time, with `Date` and `Intl` until Temporal is Baseline | 2026-10-15 |  |
 | [0025](0025-a-save-removes-a-link-only-when-the-editor-sends-it-as-removed.md) | A save removes a category or tag link only when the editor sends it as removed | 2026-10-15 |  |
 | [0026](0026-the-association-is-the-owners-author-and-only-the-coordinator-adds-it.md) | The association is the Owner's author, and only the Coordinator adds it to an article | 2026-10-16 |  |
-| [0027](0027-each-article-image-saves-on-its-own.md) | Each article image saves on its own | 2026-10-16 |  |
+| [0027](0027-each-article-image-saves-on-its-own.md) | Each article image saves on its own | 2026-10-16 | [0076](0076-pageseo-is-gone-and-the-main-image-always-has-its-share-crop.md) |
 | [0028](0028-the-main-image-stands-first-in-the-gallery.md) | The main image stands first in the gallery, in the editor as on the web | 2026-10-19 |  |
 | [0029](0029-an-admin-upload-stays-on-fetch-and-can-be-cancelled-until-it-saves.md) | An admin upload stays on `fetch`, shows no progress, and can be cancelled until it saves | 2026-10-19 |  |
 | [0030](0030-an-archive-issue-is-year-order-and-supplement-and-its-title-is-computed.md) | An archive issue is its year, order and supplement, and its title is computed, never stored | 2026-10-20 | [0039](0039-a-public-address-is-unique-only-once-published.md) |
@@ -70,7 +70,7 @@ Code comments cite an entry by its number (`log 0022`).
 | [0036](0036-a-delete-waits-for-every-open-editor.md) | A delete waits for every open editor, one's own included, and an editor whose content was deleted says so | 2026-10-22 |  |
 | [0037](0037-apps-script-web-apps-are-split-by-privilege.md) | Apps Script web apps are split by privilege | 2026-10-22 |  |
 | [0038](0038-decisions-are-kept-as-a-work-log.md) | Decisions are kept as a work log, not as binding records | 2026-10-23 |  |
-| [0039](0039-a-public-address-is-unique-only-once-published.md) | A public address is unique only once it is published, and a Document keeps what was typed | 2026-10-23 | [0047](0047-an-episode-address-is-unique-within-its-podcast-once-published.md) |
+| [0039](0039-a-public-address-is-unique-only-once-published.md) | A public address is unique only once it is published, and a Document keeps what was typed | 2026-10-23 | [0047](0047-an-episode-address-is-unique-within-its-podcast-once-published.md), [0076](0076-pageseo-is-gone-and-the-main-image-always-has-its-share-crop.md) |
 | [0040](0040-a-missing-sign-in-record-means-never-only-inside-the-retention-window.md) | A missing sign-in record means "never" only inside the retention window | 2026-10-23 |  |
 | [0041](0041-a-role-edit-writes-the-role-only-while-it-is-the-one-the-form-loaded.md) | A role edit writes the role only while it is the one the form loaded | 2026-10-23 |  |
 | [0042](0042-an-account-event-is-a-bare-hint-and-a-session-reloads-on-its-own-account.md) | An account event is a bare hint, and every page reloads on its own account's event | 2026-10-24 |  |
@@ -107,3 +107,4 @@ Code comments cite an entry by its number (`log 0022`).
 | [0073](0073-the-membership-address-is-confirmed-by-a-code-made-again-from-the-cookie.md) | The membership address is confirmed by a code made again from the cookie | 2026-11-06 |  |
 | [0074](0074-feeds-are-public-and-a-podcast-feed-is-found-by-its-id.md) | Feeds are public, and a podcast's feed is found by its id | 2026-11-08 |  |
 | [0075](0075-webmcp-waits-for-an-agent-that-calls-it.md) | WebMCP waits for an agent that calls it, on the website and in the administration | 2026-11-09 |  |
+| [0076](0076-pageseo-is-gone-and-the-main-image-always-has-its-share-crop.md) | PageSEO is gone, and the main image always has its share crop | 2026-11-09 |  |

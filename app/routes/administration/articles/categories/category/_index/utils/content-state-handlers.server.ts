@@ -5,7 +5,7 @@ import {
 } from '~/utils/content-state/create-content-state-handlers.server'
 import { prisma } from '~/utils/db.server'
 
-/** Category state-transition handlers: single author, no PageSEO, publish date is now. */
+/** Category state-transition handlers: single author, publish date is now. */
 export const categoryContentStateHandlers = createContentStateHandlers({
   applyState: async (id, data) => {
     await prisma.articleCategory.update({

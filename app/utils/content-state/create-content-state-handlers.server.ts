@@ -41,8 +41,7 @@ type PublishState = {
 
 /**
  * The subset of columns a transition writes. Prisma ignores `undefined`, so each
- * transition passes only the fields it changes; the entity's `applyState` mirrors
- * the same object onto any dependent row (e.g. the article's PageSEO).
+ * transition passes only the fields it changes.
  */
 export type StateTransitionData = {
   state?: ContentState
@@ -53,9 +52,6 @@ export type StateTransitionData = {
  * Adds a full review wipe to any transition that moves an entity into `draft`
  * (retract or restore), so returning to draft always requires a fresh approver
  * review before the content can be published again.
- *
- * Apply this to the entity row's own `update` only — never to the mirrored
- * PageSEO `updateMany`, which rejects nested relation writes.
  */
 export const clearReviewsOnDraft = <Data extends StateTransitionData>(
   data: Data,
@@ -72,9 +68,9 @@ export type ContentStateHandlersConfig = {
   /** Load author role levels, reviews, and the current publish date. */
   loadPublishState: (id: string) => Promise<PublishState>
   /**
-   * Write a state transition to the entity row (and any mirrored rows). An
-   * entity with an edit hold repeats "not held by someone else than `authorId`"
-   * in that write and throws the held refusal when it fails (log 0019).
+   * Write a state transition to the entity row. An entity with an edit hold
+   * repeats "not held by someone else than `authorId`" in that write and
+   * throws the held refusal when it fails (log 0019).
    */
   applyState: (
     id: string,
@@ -87,7 +83,7 @@ export type ContentStateHandlersConfig = {
    */
   ensureApprovingReview: (id: string, reviewerId: string) => Promise<void>
   /**
-   * Delete the row and any entity-specific dependents (images, PDF, PageSEO).
+   * Delete the row and any entity-specific dependents (images, PDF).
    * The delete repeats "the hold is free" (`buildFreeHoldWhere`), one's own
    * other tab included (log 0036), and throws the held refusal when it
    * fails.
@@ -161,22 +157,13 @@ export const createContentStateHandlers = (
 ): ContentStateHandlers => {
   const { entity } = config
 
-  // PageSEO never runs through this factory and has no content event or history.
-  const contentEntity = entity === 'page_seo' ? undefined : entity
-
   // Writes the step into the content's history (07f) once its write resolved.
   const recordLog = (
     id: string,
     events: ContentLogEvent[],
     context: AuthorPermissionContext,
     detail?: string,
-  ) =>
-    contentEntity === undefined
-      ? Promise.resolve()
-      : recordContentLog(
-          { detail, entity: contentEntity, entityId: id, events },
-          context,
-        )
+  ) => recordContentLog({ detail, entity, entityId: id, events }, context)
 
   // Announces a transition once its write resolved, in the actor's name; a
   // rejected one (403, invariant) announces nothing.
@@ -193,11 +180,8 @@ export const createContentStateHandlers = (
       const { change, id, hasChanged = () => true } = announcement
       const result = await execute(context)
 
-      if (contentEntity !== undefined && hasChanged(result)) {
-        publishContentEvent(
-          { change, entity: contentEntity, entityId: id },
-          context,
-        )
+      if (hasChanged(result)) {
+        publishContentEvent({ change, entity, entityId: id }, context)
       }
 
       return result
@@ -396,12 +380,7 @@ export const createContentStateHandlers = (
           await config.deleteRow(options.id, context)
 
           // The history goes with its content; the deletion isn't logged (07f).
-          if (contentEntity !== undefined) {
-            await deleteContentLog({
-              entity: contentEntity,
-              entityId: options.id,
-            })
-          }
+          await deleteContentLog({ entity, entityId: options.id })
         },
       ),
       target: options.target,

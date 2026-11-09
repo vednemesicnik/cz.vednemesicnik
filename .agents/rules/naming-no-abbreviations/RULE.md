@@ -22,7 +22,7 @@ are harder to read and force the reader to expand them mentally.
 ```ts
 // bad
 prisma.$transaction(async (tx) => {
-  await tx.pageSEO.deleteMany({ where: { pathname } })
+  await tx.invoiceLine.deleteMany({ where: { invoiceId } })
 })
 
 const res = await fetchArticles()
@@ -31,7 +31,7 @@ const idx = items.findIndex((i) => i.id === id)
 
 // good
 prisma.$transaction(async (transaction) => {
-  await transaction.pageSEO.deleteMany({ where: { pathname } })
+  await transaction.invoiceLine.deleteMany({ where: { invoiceId } })
 })
 
 const response = await fetchArticles()

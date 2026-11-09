@@ -5,17 +5,9 @@ import { removeArticleImage } from './remove-article-image.server'
 const mocks = vi.hoisted(() => ({
   articleImageDelete: vi.fn(),
   articleImageFindUnique: vi.fn(),
-  buildArticlePageSeoImageWrites: vi.fn(),
   deleteImage: vi.fn(),
   saveArticleImageChange: vi.fn(),
 }))
-
-vi.mock(
-  '~/routes/administration/articles/utils/build-article-page-seo-image-writes.server',
-  () => ({
-    buildArticlePageSeoImageWrites: mocks.buildArticlePageSeoImageWrites,
-  }),
-)
 
 vi.mock('~/utils/db.server', () => ({
   prisma: {
@@ -39,10 +31,7 @@ const options = { articleId: 'article-1', imageId: 'image-1', tabId: 'tab-1' }
 const context = { authorId: 'author-1', roleLevel: 1 }
 
 const run = async (
-  article: { featuredImageId: string | null; publishedSlug: string } = {
-    featuredImageId: null,
-    publishedSlug: 'article',
-  },
+  article: { featuredImageId: string | null } = { featuredImageId: null },
 ) => {
   await removeArticleImage(request, options)
   const { prepare } = mocks.saveArticleImageChange.mock.lastCall?.[1] ?? {}
@@ -54,7 +43,6 @@ beforeEach(() => {
   mocks.saveArticleImageChange.mockResolvedValue({ status: 'saved' })
   mocks.articleImageFindUnique.mockResolvedValue({ articleId: 'article-1' })
   mocks.articleImageDelete.mockReturnValue('delete-image')
-  mocks.buildArticlePageSeoImageWrites.mockResolvedValue(['seo-write'])
   mocks.deleteImage.mockResolvedValue(undefined)
 })
 
@@ -108,27 +96,10 @@ describe('removeArticleImage', () => {
     expect(mocks.deleteImage).toHaveBeenCalledWith('image-1')
   })
 
-  test('leaves the sharing preview alone for an image that is not the main one', async () => {
-    const prepared = await run({
-      featuredImageId: 'image-2',
-      publishedSlug: 'article',
-    })
+  test('removing the main image writes only its delete', async () => {
+    const prepared = await run({ featuredImageId: 'image-1' })
 
-    expect(mocks.buildArticlePageSeoImageWrites).not.toHaveBeenCalled()
     expect(prepared.writes).toEqual(['delete-image'])
-  })
-
-  test('clears the sharing preview when it was the main image', async () => {
-    const prepared = await run({
-      featuredImageId: 'image-1',
-      publishedSlug: 'article',
-    })
-
-    expect(mocks.buildArticlePageSeoImageWrites).toHaveBeenCalledWith({
-      featuredImage: null,
-      publishedSlug: 'article',
-    })
-    expect(prepared.writes).toEqual(['delete-image', 'seo-write'])
   })
 
   test('returns what the change returns', async () => {

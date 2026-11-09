@@ -2,7 +2,7 @@
 
 - Date: 2026-10-23
 - Issues: #780
-- Later: 0047
+- Later: 0047, 0076
 
 ## Context
 

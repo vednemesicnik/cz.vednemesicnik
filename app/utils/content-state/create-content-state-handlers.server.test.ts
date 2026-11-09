@@ -832,18 +832,6 @@ describe('createContentStateHandlers — content log (07f)', () => {
 
     expect(recordContentLogMock).not.toHaveBeenCalled()
   })
-
-  test('page SEO keeps no history', async () => {
-    runAs(APPROVER)
-    recordContentLogMock.mockClear()
-    const handlers = createContentStateHandlers(
-      createConfig({ entity: 'page_seo' }),
-    )
-
-    await handlers.archive(request, { id: 'p1', target })
-
-    expect(recordContentLogMock).not.toHaveBeenCalled()
-  })
 })
 
 describe('clearReviewsOnDraft', () => {
