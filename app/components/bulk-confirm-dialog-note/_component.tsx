@@ -9,8 +9,9 @@ type Props = {
 }
 
 /**
- * An exception in a `BulkConfirmDialog`, in full ink: publishing, the records
- * that wait, were not submitted or are incomplete (26f).
+ * A sentence of a `BulkConfirmDialog` in full ink (22c, 26f): Smazání je
+ * nevratné. where the list says so, and publishing, the records that wait,
+ * were not submitted or are incomplete.
  *
  * @param props.children - The sentence
  * @returns The paragraph

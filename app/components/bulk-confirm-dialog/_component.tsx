@@ -5,6 +5,7 @@ import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
+import { BulkConfirmDialogNote } from '~/components/bulk-confirm-dialog-note'
 import { Button } from '~/components/button'
 import { DialogBody } from '~/components/dialog-body'
 import type { BulkNoun } from '~/config/bulk-noun-config'
@@ -99,9 +100,9 @@ export const BulkConfirmDialog = ({
         <DialogBody>
           {descriptions.map((description) =>
             isDelete && noun.deleteInFullInk ? (
-              <p className={styles.note} key={description}>
+              <BulkConfirmDialogNote key={description}>
                 {description}
-              </p>
+              </BulkConfirmDialogNote>
             ) : (
               <AdminModalDescription key={description}>
                 {description}
