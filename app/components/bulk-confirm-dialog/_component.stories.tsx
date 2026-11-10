@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn } from 'storybook/test'
 
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
-import { BulkConfirmDialogNote } from '~/components/bulk-confirm-dialog-note'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { ARTICLE_BULK_NOUN, ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
 
 import { BulkConfirmDialog } from './_component'
@@ -72,10 +72,10 @@ export const PublishIssues: Story = {
     ...Playground.args,
     action: 'publish',
     children: (
-      <BulkConfirmDialogNote>
+      <AdminModalNote>
         1 číslo čeká na schválení. Publikováním ho schválíte. 1 číslo je
         neúplné. Přeskočí se.
-      </BulkConfirmDialogNote>
+      </AdminModalNote>
     ),
     noun: ISSUE_BULK_NOUN,
     records: [
