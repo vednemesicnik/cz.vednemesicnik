@@ -170,20 +170,15 @@ export const SavedFiltersMenu = ({
           currentQuery={currentQuery}
           defaultHint={defaultHint}
           onClose={handleSaveDialogClose}
-          sharedHint={'Ostatní ho mohou použít, měnit ho můžete jen vy.'}
-          summary={
-            <>
-              <p className={styles.summaryIntro}>Uloží se:</p>
-              <ul className={styles.summaryList}>
-                {summaryLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            </>
-          }
           tableKey={tableKey}
-          title={'Uložit filtry'}
-        />
+        >
+          <p className={styles.summaryIntro}>Uloží se:</p>
+          <ul className={styles.summaryList}>
+            {summaryLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </SaveFilterDialog>
       )}
       {renameTarget !== null && (
         <RenameFilterDialog
