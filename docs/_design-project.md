@@ -27,8 +27,13 @@ that asked writes the brief under `questions/` and checks the result; the screen
 tokens are the agent's. Log 0069 has the reasons.
 
 A chat kept its history and an agent starts empty, so what it should know stands in its file, in
-this document and in the design documents' dated notes. A change to the design system through the
-agent, including rebuilding its bundle, has not been tried yet.
+this document and in the design documents' dated notes.
+
+The agent has changed the design system once, porting CopyButton (`4rk17v4o`, 10 Nov 2026), in the
+source and in the `_ds/` copy. In each `_ds_bundle.js` it replaced only that component's block and
+its hash in the `@ds-bundle` header: the first 12 hex characters of the source file's SHA-256.
+Running the bundle in node `vm` with the repo's React checks it: `__errors` stays empty. Nobody has
+rebuilt a whole bundle yet.
 
 ## Documents
 
