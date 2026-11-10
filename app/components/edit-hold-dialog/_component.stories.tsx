@@ -5,10 +5,15 @@ import { fn } from 'storybook/test'
 
 import { EditHoldDialog } from './_component'
 
-// Untyped: the props are a union by `kind`, which Storybook's args can't
-// take apart, so the stories render the dialog themselves.
-const meta: Meta = {
-  component: EditHoldDialog,
+// The props are a union by `kind`, which Storybook's args can't take apart:
+// the args carry only the callbacks, the stories render the dialog, and the
+// meta names no component, whose props the args aren't.
+type Callbacks = {
+  onCancel: () => void
+  onConfirm: () => void
+}
+
+const meta: Meta<Callbacks> = {
   parameters: {
     layout: 'fullscreen',
   },
@@ -17,39 +22,41 @@ const meta: Meta = {
 }
 
 export default meta
-type Story = StoryObj
+type Story = StoryObj<Callbacks>
 
-const startOfToday = new Date()
-startOfToday.setHours(14, 2, 0, 0)
+const holdSince = new Date()
+holdSince.setHours(14, 2, 0, 0)
 
 const lastSave = new Date()
 lastSave.setHours(14, 31, 0, 0)
 
 /** The Coordinator taking someone else's edit (24g). */
 export const Playground: Story = {
-  render: () => (
+  args: { onCancel: fn(), onConfirm: fn() },
+  render: (args) => (
     <EditHoldDialog
       content={'article'}
       holder={{
         lastSavedAt: lastSave.toISOString(),
         name: 'Jakub Novák',
-        since: startOfToday.toISOString(),
+        since: holdSince.toISOString(),
       }}
       kind={'take-over'}
-      onCancel={fn()}
-      onConfirm={fn()}
+      onCancel={args.onCancel}
+      onConfirm={args.onConfirm}
     />
   ),
 }
 
 /** One's own edit open in another tab: the copy is fixed (24g). */
 export const OtherTab: Story = {
-  render: () => (
+  args: { onCancel: fn(), onConfirm: fn() },
+  render: (args) => (
     <EditHoldDialog
       content={'issue'}
       kind={'other-tab'}
-      onCancel={fn()}
-      onConfirm={fn()}
+      onCancel={args.onCancel}
+      onConfirm={args.onConfirm}
     />
   ),
 }

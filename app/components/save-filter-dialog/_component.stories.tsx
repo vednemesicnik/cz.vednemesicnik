@@ -50,8 +50,16 @@ export const Playground: Story = {
   args: {
     children: (
       <>
-        <p>Uloží se:</p>
-        <ul>
+        {/* The look is the caller's: `SavedFiltersMenu` styles its summary. */}
+        <p style={{ margin: 0 }}>Uloží se:</p>
+        <ul
+          style={{
+            color: 'var(--text-primary)',
+            listStyle: 'none',
+            margin: '4px 0 0',
+            padding: 0,
+          }}
+        >
           <li>Stav: Koncept</li>
           <li>Rubrika: Rozhovory</li>
         </ul>
