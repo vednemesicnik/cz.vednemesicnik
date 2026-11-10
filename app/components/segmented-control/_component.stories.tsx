@@ -49,11 +49,23 @@ const StatefulSegmentedControl = ({
 }
 
 const meta: Meta<typeof SegmentedControl> = {
+  argTypes: {
+    children: { control: false },
+    name: { control: false },
+    onChange: { control: false },
+    value: {
+      control: 'inline-radio',
+      options: colorSchemeOptions.map((option) => option.value),
+    },
+  },
   component: SegmentedControl,
   parameters: {
-    controls: { disable: true },
     layout: 'centered',
   },
+  // The control sets the starting choice; a click moves it from there.
+  render: (args) => (
+    <StatefulSegmentedControl initialValue={args.value} key={args.value} />
+  ),
   tags: ['autodocs'],
   title: 'Components/SegmentedControl',
 }
@@ -62,9 +74,14 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Playground: Story = {
-  render: () => <StatefulSegmentedControl initialValue={'system'} />,
+  args: {
+    value: 'system',
+  },
 }
 
 export const WithoutHint: Story = {
-  render: () => <StatefulSegmentedControl initialValue={'dark'} />,
+  args: {
+    value: 'dark',
+  },
+  parameters: { controls: { disable: true } },
 }
