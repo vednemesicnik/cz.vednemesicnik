@@ -1,6 +1,7 @@
 import { href } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
@@ -158,13 +159,17 @@ export const TaxonomyDetail = ({
               {copy.headerSentences[headerActions.sentence]}
             </p>
           )}
-          <ActionMenu
-            items={headerActions.menu.map((action) => ({
-              danger: action === 'delete',
-              label: getLabel(action),
-              onSelect: () => runAction(action),
-            }))}
-          />
+          <ActionMenu>
+            {headerActions.menu.map((action) => (
+              <ActionMenuItem
+                danger={action === 'delete'}
+                key={action}
+                onSelect={() => runAction(action)}
+              >
+                {getLabel(action)}
+              </ActionMenuItem>
+            ))}
+          </ActionMenu>
           {headerActions.outline !== null &&
             renderButton(headerActions.outline, 'outline')}
           {headerActions.primary !== null &&

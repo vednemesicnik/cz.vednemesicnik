@@ -1,6 +1,7 @@
 import { clsx } from 'clsx'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   TableActionsCell,
   TableCell,
@@ -74,11 +75,15 @@ export const ItemRow = ({
     showAuthor,
   })
 
-  const toMenuItem = (menuAction: ArticleAction) => ({
-    danger: menuAction === 'delete',
-    label: ARTICLE_ACTION_LABELS[menuAction],
-    onSelect: () => runAction(menuAction),
-  })
+  const renderMenuItem = (menuAction: ArticleAction) => (
+    <ActionMenuItem
+      danger={menuAction === 'delete'}
+      key={menuAction}
+      onSelect={() => runAction(menuAction)}
+    >
+      {ARTICLE_ACTION_LABELS[menuAction]}
+    </ActionMenuItem>
+  )
   // On a phone „⋯“ stands alone, the row action first in it (22g).
   const phoneMenu =
     rowAction === null ? article.menu : [rowAction, ...article.menu]
@@ -146,10 +151,11 @@ export const ItemRow = ({
       <TableActionsCell>
         <TableRowMenu phoneOnly={true}>
           <ActionMenu
-            items={phoneMenu.map(toMenuItem)}
             label={`Další akce s článkem ${article.title}`}
             size={'sm'}
-          />
+          >
+            {phoneMenu.map(renderMenuItem)}
+          </ActionMenu>
         </TableRowMenu>
         <TableRowActions>
           {rowAction === 'edit' && (
@@ -174,10 +180,11 @@ export const ItemRow = ({
             </Button>
           )}
           <ActionMenu
-            items={article.menu.map(toMenuItem)}
             label={`Další akce s článkem ${article.title}`}
             size={'sm'}
-          />
+          >
+            {article.menu.map(renderMenuItem)}
+          </ActionMenu>
         </TableRowActions>
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}

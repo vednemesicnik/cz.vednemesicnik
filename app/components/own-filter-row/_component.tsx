@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { href, Link, useFetcher } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { useToast } from '~/components/toast-provider'
 import { Tooltip } from '~/components/tooltip'
@@ -73,35 +74,6 @@ export const OwnFilterRow = ({
     })
   }
 
-  const menuItems = [
-    filter.isDefault
-      ? {
-          label: 'Zrušit jako výchozí',
-          onSelect: () => submitIntent(INTENT_VALUE.unsetDefaultFilter),
-        }
-      : {
-          label: 'Nastavit jako výchozí',
-          onSelect: () => submitIntent(INTENT_VALUE.setDefaultFilter),
-        },
-    {
-      label: filter.isShared
-        ? 'Přestat sdílet s ostatními'
-        : 'Sdílet s ostatními',
-      onSelect: () => submitIntent(INTENT_VALUE.toggleSharedFilter),
-    },
-    // Nothing to copy into the filter in the default setting.
-    ...(currentQuery === ''
-      ? []
-      : [
-          {
-            label: 'Přepsat aktuálními filtry',
-            onSelect: () => submitIntent(INTENT_VALUE.overwriteFilter),
-          },
-        ]),
-    { label: 'Přejmenovat…', onSelect: () => onRename(filter) },
-    { danger: true, label: 'Smazat…', onSelect: () => onDelete(filter) },
-  ]
-
   return (
     <li className={styles.row}>
       <Tooltip
@@ -122,11 +94,42 @@ export const OwnFilterRow = ({
           {filter.isShared && <span className={styles.note}>sdílený</span>}
         </Link>
       </Tooltip>
-      <ActionMenu
-        items={menuItems}
-        label={`Další akce: ${filter.name}`}
-        size={'sm'}
-      />
+      <ActionMenu label={`Další akce: ${filter.name}`} size={'sm'}>
+        {filter.isDefault ? (
+          <ActionMenuItem
+            onSelect={() => submitIntent(INTENT_VALUE.unsetDefaultFilter)}
+          >
+            Zrušit jako výchozí
+          </ActionMenuItem>
+        ) : (
+          <ActionMenuItem
+            onSelect={() => submitIntent(INTENT_VALUE.setDefaultFilter)}
+          >
+            Nastavit jako výchozí
+          </ActionMenuItem>
+        )}
+        <ActionMenuItem
+          onSelect={() => submitIntent(INTENT_VALUE.toggleSharedFilter)}
+        >
+          {filter.isShared
+            ? 'Přestat sdílet s ostatními'
+            : 'Sdílet s ostatními'}
+        </ActionMenuItem>
+        {/* Nothing to copy into the filter in the default setting. */}
+        {currentQuery !== '' && (
+          <ActionMenuItem
+            onSelect={() => submitIntent(INTENT_VALUE.overwriteFilter)}
+          >
+            Přepsat aktuálními filtry
+          </ActionMenuItem>
+        )}
+        <ActionMenuItem onSelect={() => onRename(filter)}>
+          Přejmenovat…
+        </ActionMenuItem>
+        <ActionMenuItem danger={true} onSelect={() => onDelete(filter)}>
+          Smazat…
+        </ActionMenuItem>
+      </ActionMenu>
     </li>
   )
 }

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   TableActionsCell,
   TableRowActions,
@@ -40,22 +41,24 @@ export const DashboardRowActions = <Action extends string>({
   menuLabel,
   children,
 }: Props<Action>) => {
-  const toMenuItem = (action: Action) => ({
-    danger: action === 'delete',
-    label: getLabel(action),
-    onSelect: () => onRun(action),
-  })
+  const renderMenuItem = (action: Action) => (
+    <ActionMenuItem
+      danger={action === 'delete'}
+      key={action}
+      onSelect={() => onRun(action)}
+    >
+      {getLabel(action)}
+    </ActionMenuItem>
+  )
   const phoneMenu = row === null ? menu : [row, ...menu]
 
   return (
     <TableActionsCell>
       {phoneMenu.length > 0 && (
         <TableRowMenu phoneOnly={true}>
-          <ActionMenu
-            items={phoneMenu.map(toMenuItem)}
-            label={menuLabel}
-            size={'sm'}
-          />
+          <ActionMenu label={menuLabel} size={'sm'}>
+            {phoneMenu.map(renderMenuItem)}
+          </ActionMenu>
         </TableRowMenu>
       )}
       <TableRowActions>
@@ -81,11 +84,9 @@ export const DashboardRowActions = <Action extends string>({
           </Button>
         )}
         {menu.length > 0 && (
-          <ActionMenu
-            items={menu.map(toMenuItem)}
-            label={menuLabel}
-            size={'sm'}
-          />
+          <ActionMenu label={menuLabel} size={'sm'}>
+            {menu.map(renderMenuItem)}
+          </ActionMenu>
         )}
       </TableRowActions>
 

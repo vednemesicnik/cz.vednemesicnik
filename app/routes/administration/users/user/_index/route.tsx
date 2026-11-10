@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { href, useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
@@ -107,22 +108,20 @@ export default function RouteComponent({
 
         {/* No primary action; „⋯“ holds Smazat…, never on your own account or the Owner's (28e, 28g), and during a Google outage Vydat nouzový odkaz… above it. */}
         <div className={styles.actions}>
-          <ActionMenu
-            items={[
-              ...(canIssueEmergencyLink
-                ? [
-                    {
-                      label: 'Vydat nouzový odkaz…',
-                      onSelect: () => setIsEmergencyLinkDialogOpen(true),
-                    },
-                  ]
-                : []),
-              ...(canDelete
-                ? [{ danger: true, label: 'Smazat…', onSelect: openDialog }]
-                : []),
-            ]}
-            label={'Další akce s účtem'}
-          />
+          <ActionMenu label={'Další akce s účtem'}>
+            {canIssueEmergencyLink && (
+              <ActionMenuItem
+                onSelect={() => setIsEmergencyLinkDialogOpen(true)}
+              >
+                Vydat nouzový odkaz…
+              </ActionMenuItem>
+            )}
+            {canDelete && (
+              <ActionMenuItem danger={true} onSelect={openDialog}>
+                Smazat…
+              </ActionMenuItem>
+            )}
+          </ActionMenu>
           {canUpdate && (
             <LinkButton
               state={RETURN_TO_OPENER_STATE}

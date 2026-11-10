@@ -2,6 +2,7 @@ import { type FieldMetadata, getInputProps } from '@conform-to/react'
 import { type FormEvent, useRef } from 'react'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { ReorderableListHandle } from '~/components/reorderable-list-handle'
 import { TextField } from '~/components/text-field'
 import { getOrderMenuItems } from '~/utils/get-order-menu-items'
@@ -135,21 +136,26 @@ export const EpisodeLinkRow = ({
       {/* The moves of 22c, then Odebrat; read-only, no „⋯“ (copy 25ayrk1j). */}
       <ActionMenu
         className={styles.menu}
-        items={
-          isReadOnly
-            ? []
-            : [
-                ...getOrderMenuItems(index, count, onMove),
-                { danger: true, label: 'Odebrat', onSelect: onRemove },
-              ]
-        }
         label={
           name === ''
             ? 'Další akce odkazu bez názvu'
             : `Další akce odkazu: ${name}`
         }
         size={'sm'}
-      />
+      >
+        {!isReadOnly && (
+          <>
+            {getOrderMenuItems(index, count, onMove).map((item) => (
+              <ActionMenuItem key={item.label} onSelect={item.onSelect}>
+                {item.label}
+              </ActionMenuItem>
+            ))}
+            <ActionMenuItem danger={true} onSelect={onRemove}>
+              Odebrat
+            </ActionMenuItem>
+          </>
+        )}
+      </ActionMenu>
     </div>
   )
 }

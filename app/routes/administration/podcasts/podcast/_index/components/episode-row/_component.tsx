@@ -1,4 +1,5 @@
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   TableActionsCell,
   TableCell,
@@ -73,11 +74,15 @@ export const EpisodeRow = ({
   const { detailHref, editHref, isSubmitting, runAction } = actions
 
   const rowAction = episode.row
-  const toMenuItem = (menuAction: EpisodeAction) => ({
-    danger: menuAction === 'delete',
-    label: EPISODE_ACTION_LABELS[menuAction],
-    onSelect: () => runAction(menuAction),
-  })
+  const renderMenuItem = (menuAction: EpisodeAction) => (
+    <ActionMenuItem
+      danger={menuAction === 'delete'}
+      key={menuAction}
+      onSelect={() => runAction(menuAction)}
+    >
+      {EPISODE_ACTION_LABELS[menuAction]}
+    </ActionMenuItem>
+  )
   // On a phone „⋯“ stands alone, the row action first in it (32d).
   const phoneMenu =
     rowAction === null ? episode.menu : [rowAction, ...episode.menu]
@@ -139,11 +144,9 @@ export const EpisodeRow = ({
       <TableActionsCell>
         {phoneMenu.length > 0 && (
           <TableRowMenu phoneOnly={true}>
-            <ActionMenu
-              items={phoneMenu.map(toMenuItem)}
-              label={`Další akce s epizodou ${title}`}
-              size={'sm'}
-            />
+            <ActionMenu label={`Další akce s epizodou ${title}`} size={'sm'}>
+              {phoneMenu.map(renderMenuItem)}
+            </ActionMenu>
           </TableRowMenu>
         )}
         <TableRowActions>
@@ -169,11 +172,9 @@ export const EpisodeRow = ({
             </Button>
           )}
           {episode.menu.length > 0 && (
-            <ActionMenu
-              items={episode.menu.map(toMenuItem)}
-              label={`Další akce s epizodou ${title}`}
-              size={'sm'}
-            />
+            <ActionMenu label={`Další akce s epizodou ${title}`} size={'sm'}>
+              {episode.menu.map(renderMenuItem)}
+            </ActionMenu>
           )}
         </TableRowActions>
 

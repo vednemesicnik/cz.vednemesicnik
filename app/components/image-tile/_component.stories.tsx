@@ -3,6 +3,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { ButtonLink } from '~/components/button-link'
 import { CompactImageTile } from '~/components/compact-image-tile'
 import { CompactUploadStatus } from '~/components/compact-upload-status'
@@ -31,12 +32,16 @@ const meta: Meta<typeof ImageTile> = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-const menuItems = [
-  { label: 'Nastavit jako hlavní', onSelect: () => {} },
-  { label: 'Posunout dozadu', onSelect: () => {} },
-  { label: 'Nahradit soubor', onSelect: () => {} },
-  { danger: true, label: 'Odebrat', onSelect: () => {} },
-]
+const menuItems = (
+  <>
+    <ActionMenuItem onSelect={() => {}}>Nastavit jako hlavní</ActionMenuItem>
+    <ActionMenuItem onSelect={() => {}}>Posunout dozadu</ActionMenuItem>
+    <ActionMenuItem onSelect={() => {}}>Nahradit soubor</ActionMenuItem>
+    <ActionMenuItem danger={true} onSelect={() => {}}>
+      Odebrat
+    </ActionMenuItem>
+  </>
+)
 
 const tileWidth = { width: '300px' }
 
@@ -52,11 +57,9 @@ export const Playground: Story = {
           <ImageTileOrder>{1}</ImageTileOrder>
           <ImageTilePill>Hlavní</ImageTilePill>
           <ImageTileMenu>
-            <ActionMenu
-              items={menuItems}
-              label={'Další akce obrázku 1'}
-              variant={'chip'}
-            />
+            <ActionMenu label={'Další akce obrázku 1'} variant={'chip'}>
+              {menuItems}
+            </ActionMenu>
           </ImageTileMenu>
         </ImageTileMedia>
         <TextField
@@ -111,11 +114,9 @@ export const Draggable: Story = {
             <ImageTileMedia>
               <ImageTileOrder hasGrip>{2}</ImageTileOrder>
               <ImageTileMenu>
-                <ActionMenu
-                  items={menuItems}
-                  label={'Další akce obrázku 2'}
-                  variant={'chip'}
-                />
+                <ActionMenu label={'Další akce obrázku 2'} variant={'chip'}>
+                  {menuItems}
+                </ActionMenu>
               </ImageTileMenu>
             </ImageTileMedia>
             <TextField
@@ -159,11 +160,9 @@ export const ReplaceFailed: Story = {
         <ImageTileMedia>
           <ImageTileOrder hasGrip>{2}</ImageTileOrder>
           <ImageTileMenu>
-            <ActionMenu
-              items={menuItems}
-              label={'Další akce obrázku 2'}
-              variant={'chip'}
-            />
+            <ActionMenu label={'Další akce obrázku 2'} variant={'chip'}>
+              {menuItems}
+            </ActionMenu>
           </ImageTileMenu>
         </ImageTileMedia>
         <ImageTileMessage>

@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { StatusTag } from '~/components/status-tag'
 
 import { AdminTable } from './_component'
@@ -325,11 +326,9 @@ export const FoldsOnPhone: Story = {
           </TableDetailsCell>
           <TableActionsCell>
             <TableRowMenu>
-              <ActionMenu
-                items={[{ label: 'Schválit', onSelect: () => {} }]}
-                label={'Další akce s číslem září 2026'}
-                size={'sm'}
-              />
+              <ActionMenu label={'Další akce s číslem září 2026'} size={'sm'}>
+                <ActionMenuItem onSelect={() => {}}>Schválit</ActionMenuItem>
+              </ActionMenu>
             </TableRowMenu>
           </TableActionsCell>
         </TableRow>
@@ -354,10 +353,11 @@ export const FoldsOnPhone: Story = {
           <TableActionsCell>
             <TableRowMenu>
               <ActionMenu
-                items={[{ label: 'Upravit', onSelect: () => {} }]}
                 label={'Další akce s autorem Jakub Novák'}
                 size={'sm'}
-              />
+              >
+                <ActionMenuItem onSelect={() => {}}>Upravit</ActionMenuItem>
+              </ActionMenu>
             </TableRowMenu>
           </TableActionsCell>
         </TableRow>

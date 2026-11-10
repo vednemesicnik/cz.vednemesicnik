@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
@@ -159,10 +160,18 @@ export const BulkPublishDialog = ({
                     </span>
                     <span className={styles.orderMenu}>
                       <ActionMenu
-                        items={getOrderMenuItems(index, count, moveTo)}
                         label={`Změnit pořadí článku: ${article.title}`}
                         size={'sm'}
-                      />
+                      >
+                        {getOrderMenuItems(index, count, moveTo).map((item) => (
+                          <ActionMenuItem
+                            key={item.label}
+                            onSelect={item.onSelect}
+                          >
+                            {item.label}
+                          </ActionMenuItem>
+                        ))}
+                      </ActionMenu>
                     </span>
                   </>
                 )}

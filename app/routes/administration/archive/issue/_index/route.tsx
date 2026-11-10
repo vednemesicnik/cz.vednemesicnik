@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
@@ -209,13 +210,17 @@ export default function RouteComponent({
               {ISSUE_HEADER_SENTENCES[headerActions.sentence]}
             </p>
           )}
-          <ActionMenu
-            items={headerActions.menu.map((headerAction) => ({
-              danger: headerAction === 'delete',
-              label: ISSUE_ACTION_LABELS[headerAction],
-              onSelect: () => runAction(headerAction),
-            }))}
-          />
+          <ActionMenu>
+            {headerActions.menu.map((headerAction) => (
+              <ActionMenuItem
+                danger={headerAction === 'delete'}
+                key={headerAction}
+                onSelect={() => runAction(headerAction)}
+              >
+                {ISSUE_ACTION_LABELS[headerAction]}
+              </ActionMenuItem>
+            ))}
+          </ActionMenu>
           {headerActions.outline !== null &&
             renderButton(headerActions.outline, 'outline')}
           {headerActions.primary !== null &&

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import {
   TableActionsCell,
@@ -153,50 +154,45 @@ export const ItemRow = ({
       </TableDetailsCell>
       <TableActionsCell>
         <TableRowMenu>
-          <ActionMenu
-            items={[
-              ...(canUpdate
-                ? [
-                    {
-                      label: 'Upravit',
-                      onSelect: () =>
-                        navigate(
-                          href('/administration/authors/:authorId/edit', {
-                            authorId: id,
-                          }),
-                          { state: RETURN_TO_OPENER_STATE },
-                        ),
-                    },
-                  ]
-                : []),
-              ...(canCreateUser
-                ? [
-                    {
-                      label: 'Založit účet…',
-                      onSelect: () =>
-                        navigate(
-                          `${href('/administration/users/new')}?${new URLSearchParams({ author: id })}`,
-                          { state: RETURN_TO_OPENER_STATE },
-                        ),
-                    },
-                  ]
-                : []),
-              // A blocked author gets the 28g explanation in place of the confirmation.
-              ...(mayDelete && !isDeleting
-                ? [
-                    {
-                      danger: true,
-                      label: 'Smazat…',
-                      onSelect: canDelete
-                        ? openDialog
-                        : () => setIsBlockedDialogOpen(true),
-                    },
-                  ]
-                : []),
-            ]}
-            label={`Další akce s autorem ${name}`}
-            size={'sm'}
-          />
+          <ActionMenu label={`Další akce s autorem ${name}`} size={'sm'}>
+            {canUpdate && (
+              <ActionMenuItem
+                onSelect={() =>
+                  navigate(
+                    href('/administration/authors/:authorId/edit', {
+                      authorId: id,
+                    }),
+                    { state: RETURN_TO_OPENER_STATE },
+                  )
+                }
+              >
+                Upravit
+              </ActionMenuItem>
+            )}
+            {canCreateUser && (
+              <ActionMenuItem
+                onSelect={() =>
+                  navigate(
+                    `${href('/administration/users/new')}?${new URLSearchParams({ author: id })}`,
+                    { state: RETURN_TO_OPENER_STATE },
+                  )
+                }
+              >
+                Založit účet…
+              </ActionMenuItem>
+            )}
+            {/* A blocked author gets the 28g explanation in place of the confirmation. */}
+            {mayDelete && !isDeleting && (
+              <ActionMenuItem
+                danger={true}
+                onSelect={
+                  canDelete ? openDialog : () => setIsBlockedDialogOpen(true)
+                }
+              >
+                Smazat…
+              </ActionMenuItem>
+            )}
+          </ActionMenu>
         </TableRowMenu>
 
         {/* The cell aligns right and doesn't wrap; its dialogs shouldn't inherit that. */}

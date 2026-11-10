@@ -4,6 +4,7 @@ import { Fragment, useRef, useState } from 'react'
 import { href, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
@@ -101,34 +102,32 @@ export default function RouteComponent({
 
         {/* No primary action: an author has no state waiting on a step (28a, 28b). */}
         <div className={styles.actions}>
-          <ActionMenu
-            items={[
-              ...(canCreateUser
-                ? [
-                    {
-                      label: 'Založit účet…',
-                      onSelect: () =>
-                        navigate(
-                          `${href('/administration/users/new')}?${new URLSearchParams({ author: authorId })}`,
-                          { state: RETURN_TO_OPENER_STATE },
-                        ),
-                    },
-                  ]
-                : []),
-              ...(mayDelete
-                ? [
-                    {
-                      danger: true,
-                      label: 'Smazat…',
-                      onSelect: deleteBlock.deletable
-                        ? openDialog
-                        : () => setIsBlockedDialogOpen(true),
-                    },
-                  ]
-                : []),
-            ]}
-            label={'Další akce s autorem'}
-          />
+          <ActionMenu label={'Další akce s autorem'}>
+            {canCreateUser && (
+              <ActionMenuItem
+                onSelect={() =>
+                  navigate(
+                    `${href('/administration/users/new')}?${new URLSearchParams({ author: authorId })}`,
+                    { state: RETURN_TO_OPENER_STATE },
+                  )
+                }
+              >
+                Založit účet…
+              </ActionMenuItem>
+            )}
+            {mayDelete && (
+              <ActionMenuItem
+                danger={true}
+                onSelect={
+                  deleteBlock.deletable
+                    ? openDialog
+                    : () => setIsBlockedDialogOpen(true)
+                }
+              >
+                Smazat…
+              </ActionMenuItem>
+            )}
+          </ActionMenu>
           {canUpdate && (
             <LinkButton
               state={RETURN_TO_OPENER_STATE}
