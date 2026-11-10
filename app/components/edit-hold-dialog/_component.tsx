@@ -7,6 +7,8 @@ import { AdminModalDescription } from '~/components/admin/admin-modal-descriptio
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import type { EditHoldContent } from '~/utils/edit-hold/edit-hold-content'
+import type { EditHolder } from '~/utils/edit-hold/edit-hold-result'
+import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
 /** Whose hold the editor met: someone else's, or one's own in another tab (24g). */
@@ -22,13 +24,10 @@ const OTHER_TAB_TITLE: Record<EditHoldContent, string> = {
 
 type Props = {
   content: EditHoldContent
-  kind: EditHoldDialogKind
-  /** The takeover's who, since and last save; the other tab's text is fixed. */
-  description?: string
   onConfirm: () => void
   /** Leaves the editor (*Zavřít* goes to the detail, 24g). */
   onCancel: () => void
-}
+} & ({ kind: 'take-over'; holder: EditHolder } | { kind: 'other-tab' })
 
 const COPY = {
   'other-tab': {
@@ -40,7 +39,6 @@ const COPY = {
   'take-over': {
     cancelLabel: 'Zrušit',
     confirmLabel: 'Převzít úpravu',
-    description: '',
     title: 'Převzít úpravu?',
   },
 } as const
@@ -53,21 +51,21 @@ const COPY = {
  *
  * @param props.content - What the editor edits.
  * @param props.kind - Someone else's hold, or one's own in another tab.
- * @param props.description - The takeover's text (`formatTakeOverDescription`).
+ * @param props.holder - Whose hold a takeover takes: who, since when and the
+ *   last save, in the dialog's sentence (`formatTakeOverDescription`).
  */
-export const EditHoldDialog = ({
-  content,
-  kind,
-  description,
-  onConfirm,
-  onCancel,
-}: Props) => {
+export const EditHoldDialog = (props: Props) => {
+  const { content, kind, onConfirm, onCancel } = props
   // The native close comes after the confirm, maybe after a re-render.
   const isConfirmedRef = useRef(false)
   const ref = useModalDialog(() => {
     if (!isConfirmedRef.current) onCancel()
   })
   const copy = COPY[kind]
+  const description =
+    props.kind === 'take-over'
+      ? formatTakeOverDescription(props.holder, new Date(), content)
+      : COPY['other-tab'].description
 
   return (
     <AdminDialog ref={ref}>
@@ -77,9 +75,7 @@ export const EditHoldDialog = ({
             ? OTHER_TAB_TITLE[content]
             : COPY['take-over'].title}
         </AdminModalTitle>
-        <AdminModalDescription>
-          {description ?? copy.description}
-        </AdminModalDescription>
+        <AdminModalDescription>{description}</AdminModalDescription>
 
         <AdminModalActions>
           <Button

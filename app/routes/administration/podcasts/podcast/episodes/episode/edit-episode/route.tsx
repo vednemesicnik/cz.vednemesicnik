@@ -28,6 +28,7 @@ import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
@@ -35,6 +36,7 @@ import { ButtonLink } from '~/components/button-link'
 import { Callout } from '~/components/callout'
 import { CancelUploadDialog } from '~/components/cancel-upload-dialog'
 import { ContentChangedDialog } from '~/components/content-changed-dialog'
+import { ContentChangedDialogActions } from '~/components/content-changed-dialog-actions'
 import { ContentDeletedDialog } from '~/components/content-deleted-dialog'
 import { EditHoldDialog } from '~/components/edit-hold-dialog'
 import { ErrorMessage } from '~/components/error-message'
@@ -58,7 +60,6 @@ import { useTakenValues } from '~/hooks/use-taken-values'
 import { useUploadFocus } from '~/hooks/use-upload-focus'
 import { formatEditHoldLine } from '~/routes/administration/articles/utils/format-edit-hold-line'
 import { isSaveShortcut } from '~/utils/autosave/is-save-shortcut'
-import { formatTakeOverDescription } from '~/utils/edit-hold/format-take-over-description'
 import { getReadOnlyNotice } from '~/utils/edit-hold/get-read-only-notice'
 import {
   CANCEL_COVER_UPLOAD_LABEL,
@@ -1034,17 +1035,18 @@ export default function RouteComponent({
 
       {deletion?.isDialogOpen && (
         <ContentDeletedDialog
-          description={
-            'Epizodu už nelze upravovat. Zobrazený obsah zůstane jen do obnovení stránky, odchodu nebo zavření editoru.'
-          }
           onOpenList={() => navigate(listHref)}
           onStay={() =>
             setDeletion((current) =>
               current === null ? null : { ...current, isDialogOpen: false },
             )
           }
-          title={'Epizoda byla smazána'}
         >
+          <AdminModalTitle>Epizoda byla smazána</AdminModalTitle>
+          <AdminModalDescription>
+            Epizodu už nelze upravovat. Zobrazený obsah zůstane jen do obnovení
+            stránky, odchodu nebo zavření editoru.
+          </AdminModalDescription>
           {deletion.hadSavedLinks && (
             <AdminModalDescription>
               Odkazy na epizodu byly smazány.
@@ -1069,11 +1071,11 @@ export default function RouteComponent({
 
       {holdLoss?.dialog === 'taken' && !isDeleted && (
         <HoldTakenDialog
-          description={holdTakenLead}
           holderName={holdLoss.holderName}
           onOpenDetail={() => navigate(closeHref)}
           onStay={closeHoldLossDialog}
         >
+          <AdminModalDescription>{holdTakenLead}</AdminModalDescription>
           {[
             ...holdTakenRest,
             ...formatUnsavedEpisodeAdvice(
@@ -1091,16 +1093,18 @@ export default function RouteComponent({
         editHold.state.status === 'changed' && (
           <ContentChangedDialog
             canReload={canReloadChanged}
-            description={formatEpisodeChangedDescription({
-              awayMilliseconds: editHold.state.awayMilliseconds,
-              now: new Date(),
-              savedAt: hasSaved ? savedAt : null,
-            })}
             onClose={closeHoldLossDialog}
             onOpenDetail={() => navigate(closeHref)}
             onReload={reload}
-            title={'Epizoda se mezitím změnila'}
           >
+            <AdminModalTitle>Epizoda se mezitím změnila</AdminModalTitle>
+            <AdminModalDescription>
+              {formatEpisodeChangedDescription({
+                awayMilliseconds: editHold.state.awayMilliseconds,
+                now: new Date(),
+                savedAt: hasSaved ? savedAt : null,
+              })}
+            </AdminModalDescription>
             {[
               `Neuložené změny: ${holdLoss.unsentLabels.join(', ')}.`,
               ...formatUnsavedEpisodeAdvice(
@@ -1114,6 +1118,7 @@ export default function RouteComponent({
                 {paragraph}
               </AdminModalDescription>
             ))}
+            <ContentChangedDialogActions />
           </ContentChangedDialog>
         )}
 
@@ -1121,11 +1126,7 @@ export default function RouteComponent({
       {editHold.state.status === 'held-by-other' && isApprover && (
         <EditHoldDialog
           content={'episode'}
-          description={formatTakeOverDescription(
-            editHold.state.holder,
-            new Date(),
-            'episode',
-          )}
+          holder={editHold.state.holder}
           key={editHold.attempt}
           kind={'take-over'}
           onCancel={() => navigate(closeHref)}

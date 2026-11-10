@@ -3,17 +3,13 @@ import { type ReactNode, useRef } from 'react'
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
-import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import { useModalDialog } from '~/utils/use-modal-dialog'
 
 type Props = {
   holderName: string
-  /** Saved or not, the last save, read-only; the editor's own sentence. */
-  description: string
-  /** What the editor offers to rescue when changes stayed unsent. */
-  children?: ReactNode
+  children: ReactNode
   onOpenDetail: () => void
   /** *Zůstat a číst*, or the dialog closed any other way. */
   onStay: () => void
@@ -25,11 +21,12 @@ type Props = {
  * stop working unexplained. With changes that did not make it, the editor
  * offers what it can rescue before anything reloads the content.
  *
- * @param props.holderName - Who edits it now.
+ * @param props.holderName - Who edits it now, in the dialog's title.
+ * @param props.children - The editor's sentences: saved or not, the last save,
+ *   read-only, then what it offers to rescue when changes stayed unsent.
  */
 export const HoldTakenDialog = ({
   holderName,
-  description,
   children,
   onOpenDetail,
   onStay,
@@ -44,7 +41,6 @@ export const HoldTakenDialog = ({
     <AdminDialog ref={ref}>
       <AdminModalContent>
         <AdminModalTitle>Úpravu přebírá {holderName}</AdminModalTitle>
-        <AdminModalDescription>{description}</AdminModalDescription>
         {children}
 
         <AdminModalActions>
