@@ -3,6 +3,7 @@ import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { DialogBody } from '~/components/dialog-body'
 import { StateChangeDialog } from '~/components/state-change-dialog'
+import { StateChangeDialogActions } from '~/components/state-change-dialog-actions'
 import { FORM_CONFIG } from '~/config/form-config'
 
 import type { IssueStateAction } from '../../utils/issue-actions'
@@ -74,7 +75,6 @@ export const IssueStateDialog = ({
   return (
     <StateChangeDialog
       action={action}
-      confirmLabel={copy.confirmLabel}
       fetcherKey={fetcherKey}
       intent={copy.intent}
       onClose={onClose}
@@ -90,6 +90,7 @@ export const IssueStateDialog = ({
         )}
         {note !== null && <p className={styles.note}>{note}</p>}
       </DialogBody>
+      <StateChangeDialogActions>{copy.confirmLabel}</StateChangeDialogActions>
     </StateChangeDialog>
   )
 }

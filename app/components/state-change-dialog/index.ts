@@ -1,1 +1,1 @@
-export { StateChangeDialog } from './_component'
+export { StateChangeDialog, useStateChangeDialog } from './_component'

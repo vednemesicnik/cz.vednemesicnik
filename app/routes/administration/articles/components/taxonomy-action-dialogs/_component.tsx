@@ -2,6 +2,7 @@ import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-c
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { StateChangeDialog } from '~/components/state-change-dialog'
+import { StateChangeDialogActions } from '~/components/state-change-dialog-actions'
 
 import {
   TAXONOMY_ACTION_LABELS,
@@ -48,7 +49,6 @@ export const TaxonomyActionDialogs = ({ actions, canDelete }: Props) => {
       {confirmAction !== null && (
         <StateChangeDialog
           action={actions.detailHref}
-          confirmLabel={TAXONOMY_ACTION_LABELS[confirmAction]}
           fetcherKey={actions.fetcherKey}
           intent={TAXONOMY_DIRECT_INTENTS[confirmAction]}
           onClose={closeConfirm}
@@ -58,6 +58,9 @@ export const TaxonomyActionDialogs = ({ actions, canDelete }: Props) => {
           <AdminModalDescription>
             {confirmCopy[confirmAction].description}
           </AdminModalDescription>
+          <StateChangeDialogActions>
+            {TAXONOMY_ACTION_LABELS[confirmAction]}
+          </StateChangeDialogActions>
         </StateChangeDialog>
       )}
     </>

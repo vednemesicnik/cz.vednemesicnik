@@ -3,6 +3,7 @@ import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { DialogBody } from '~/components/dialog-body'
 import { StateChangeDialog } from '~/components/state-change-dialog'
+import { StateChangeDialogActions } from '~/components/state-change-dialog-actions'
 import { FORM_CONFIG } from '~/config/form-config'
 
 /** A state change that takes the episode off the web (design 27b). */
@@ -57,7 +58,6 @@ export const EpisodeStateDialog = ({
   return (
     <StateChangeDialog
       action={action}
-      confirmLabel={copy.confirmLabel}
       fetcherKey={fetcherKey}
       intent={copy.intent}
       onClose={onClose}
@@ -72,6 +72,7 @@ export const EpisodeStateDialog = ({
           </AdminModalDescription>
         )}
       </DialogBody>
+      <StateChangeDialogActions>{copy.confirmLabel}</StateChangeDialogActions>
     </StateChangeDialog>
   )
 }
