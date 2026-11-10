@@ -1,42 +1,36 @@
-import type { ReactNode } from 'react'
+import { createContext, type ReactNode, useContext } from 'react'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
-import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
-import { AdminModalDescription } from '~/components/admin/admin-modal-description'
-import { AdminModalTitle } from '~/components/admin/admin-modal-title'
-import { Button } from '~/components/button'
-
 import { useModalDialog } from '~/utils/use-modal-dialog'
-import styles from './_styles.module.css'
+
+type ConfirmDialogContextValue = {
+  cancel: () => void
+  confirm: () => void
+}
+
+const Context = createContext<ConfirmDialogContextValue | undefined>(undefined)
 
 type Props = {
-  title: string
-  // What is being confirmed, under the title (e.g. which passkey).
-  subject?: ReactNode
-  description: string
-  confirmLabel: string
   onConfirm: () => void
   onClose: () => void
+  children: ReactNode
 }
 
 /**
  * Confirms taking a sign-in method away — removing a passkey, turning off
  * two-factor (design 29d) — and says what it changes. Only the button in the
  * dialog is red.
+ *
+ * @param props.children - The title (`AdminModalTitle`, or a
+ *   `ConfirmDialogHeading` with what is confirmed under it), what it changes
+ *   (`AdminModalDescription`), then `ConfirmDialogActions`.
  */
-export const ConfirmDialog = ({
-  title,
-  subject,
-  description,
-  confirmLabel,
-  onConfirm,
-  onClose,
-}: Props) => {
+export const ConfirmDialog = ({ onConfirm, onClose, children }: Props) => {
   const ref = useModalDialog(onClose)
 
-  const handleCancel = () => ref.current?.close()
-  const handleConfirm = () => {
+  const cancel = () => ref.current?.close()
+  const confirm = () => {
     ref.current?.close()
     onConfirm()
   }
@@ -44,35 +38,25 @@ export const ConfirmDialog = ({
   return (
     <AdminDialog ref={ref}>
       <AdminModalContent>
-        {subject === undefined ? (
-          <AdminModalTitle>{title}</AdminModalTitle>
-        ) : (
-          // The subject belongs to the title, tight under it (design 29d).
-          <hgroup className={styles.heading}>
-            <AdminModalTitle>{title}</AdminModalTitle>
-            <p className={styles.subject}>{subject}</p>
-          </hgroup>
-        )}
-        <AdminModalDescription>{description}</AdminModalDescription>
-        <AdminModalActions>
-          <Button
-            onClick={handleCancel}
-            size={'sm'}
-            type={'button'}
-            variant={'ghost'}
-          >
-            Zrušit
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            size={'sm'}
-            type={'button'}
-            variant={'danger'}
-          >
-            {confirmLabel}
-          </Button>
-        </AdminModalActions>
+        <Context.Provider value={{ cancel, confirm }}>
+          {children}
+        </Context.Provider>
       </AdminModalContent>
     </AdminDialog>
   )
+}
+
+/**
+ * What the dialog shares with its actions: cancelling and confirming.
+ *
+ * @returns The confirm dialog's context
+ */
+export const useConfirmDialog = () => {
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error('useConfirmDialog must be used within a ConfirmDialog')
+  }
+
+  return context
 }
