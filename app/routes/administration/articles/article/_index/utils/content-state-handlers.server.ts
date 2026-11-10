@@ -13,13 +13,11 @@ import { refuseWhenHeld } from '~/utils/edit-hold/refuse-when-held.server'
 import { deleteRowWithImages } from '~/utils/image-store/store-image.server'
 import { isUniqueConstraintError } from '~/utils/is-unique-constraint-error.server'
 
+import { ensureArticleOgImage } from '../../../utils/ensure-article-og-image.server'
 import { findPublishedSlugConflict } from '../../../utils/find-published-slug-conflict.server'
-import { resolveArticleFeaturedImageSeo } from '../../../utils/resolve-article-featured-image-seo.server'
 import { findArticleHeldRefusal } from './find-article-held-refusal.server'
 import { getMissingArticleContent } from './get-missing-article-content'
 import { MISSING_SLUG_ITEM, TAKEN_SLUG_ITEM } from './slug-items'
-
-const buildPathname = (slug: string) => `/articles/${slug}`
 
 const RELEASED_HOLD = {
   heldByAuthorId: null,
@@ -30,9 +28,9 @@ const RELEASED_HOLD = {
 
 /**
  * Publishes the article's address (log 0039): in one transaction, the article
- * takes its typed address as the one it holds, and its PageSEO record moves
- * there with the sharing preview of the main image. An address another article
- * took since the check before it blocks the publish as missing content.
+ * takes its typed address as the one it holds. The main image's share crop is
+ * made first (log 0076). An address another article took since the check before
+ * it blocks the publish as missing content.
  */
 const publishAddress = async (
   id: string,
@@ -44,19 +42,16 @@ const publishAddress = async (
     select: { featuredImageId: true },
     where: { id },
   })
-  const { ogImageUrl, twitterImageUrl } = await resolveArticleFeaturedImageSeo(
-    stored.featuredImageId,
-  )
+  await ensureArticleOgImage(stored.featuredImageId)
 
   try {
     await refuseWhenHeld(
       () =>
         prisma.$transaction(async (transaction) => {
-          const { publishedSlug: previousSlug, slug } =
-            await transaction.article.findUniqueOrThrow({
-              select: { publishedSlug: true, slug: true },
-              where: { id },
-            })
+          const { slug } = await transaction.article.findUniqueOrThrow({
+            select: { slug: true },
+            where: { id },
+          })
 
           // Cleared since the check before it: publishing needs an address
           // (23h), and nothing is written.
@@ -64,41 +59,10 @@ const publishAddress = async (
             throw createMissingContentError([MISSING_SLUG_ITEM])
           }
 
-          const article = await transaction.article.update({
+          await transaction.article.update({
             data: { ...articleData, publishedSlug: slug },
-            select: { perex: true, title: true },
+            select: { id: true },
             where: notHeldWhere,
-          })
-
-          const pathname = buildPathname(slug)
-
-          // Published under another address, the old record goes.
-          if (previousSlug !== null && previousSlug !== slug) {
-            await transaction.pageSEO.deleteMany({
-              where: { pathname: buildPathname(previousSlug) },
-            })
-          }
-
-          await transaction.pageSEO.upsert({
-            create: {
-              authorId,
-              description: article.perex || null,
-              ogImageUrl,
-              pathname,
-              publishedAt: articleData.publishedAt,
-              state: 'published',
-              title: article.title,
-              twitterImageUrl,
-            },
-            update: {
-              description: article.perex || null,
-              ogImageUrl,
-              publishedAt: articleData.publishedAt,
-              state: 'published',
-              title: article.title,
-              twitterImageUrl,
-            },
-            where: { pathname },
           })
         }),
       () => findArticleHeldRefusal(id, authorId),
@@ -112,8 +76,7 @@ const publishAddress = async (
 }
 
 /**
- * Article state-transition handlers. The article is the only entity that mirrors
- * every transition onto its standalone PageSEO row, written at publish
+ * Article state-transition handlers. Publishing holds the article's address
  * (log 0039), it accepts an approver backdate on publish, the Coordinator
  * publishes it without a prior review, and an incomplete article is not
  * published (design 23h).
@@ -122,7 +85,7 @@ export const articleContentStateHandlers = createContentStateHandlers({
   allowBackdating: true,
   applyState: async (id, data, authorId) => {
     const articleData = {
-      // Retract/restore also wipe reviews; PageSEO has no reviews to clear.
+      // Retract/restore also wipe reviews.
       ...clearSubmissionOnStateChange(clearReviewsOnDraft(data)),
       // Published and archived content is never held (07g): one's own
       // hold ends with the draft.
@@ -141,24 +104,15 @@ export const articleContentStateHandlers = createContentStateHandlers({
       return
     }
 
-    const updatedArticle = await refuseWhenHeld(
+    await refuseWhenHeld(
       () =>
         prisma.article.update({
           data: articleData,
-          select: { publishedSlug: true },
+          select: { id: true },
           where: notHeldWhere,
         }),
       () => findArticleHeldRefusal(id, authorId),
     )
-
-    // Mirror the same columns onto the standalone PageSEO row of the address
-    // the article holds; one never published has none (log 0039).
-    if (updatedArticle.publishedSlug !== null) {
-      await prisma.pageSEO.updateMany({
-        data,
-        where: { pathname: buildPathname(updatedArticle.publishedSlug) },
-      })
-    }
   },
   approverPublishesWithoutReview: true,
 
@@ -174,28 +128,10 @@ export const articleContentStateHandlers = createContentStateHandlers({
       () =>
         refuseWhenHeld(
           () =>
-            // PageSEO is a standalone row keyed by pathname (no FK back to the
-            // article), so it must be removed explicitly — otherwise its unique
-            // pathname blocks publishing another article at that address. Read
-            // the address the article holds and delete both rows in one
-            // transaction so nothing can change between the read and the
-            // deletes.
-            prisma.$transaction(async (transaction) => {
-              const { publishedSlug } =
-                await transaction.article.findUniqueOrThrow({
-                  select: { publishedSlug: true },
-                  where: { id },
-                })
-              if (publishedSlug !== null) {
-                await transaction.pageSEO.deleteMany({
-                  where: { pathname: buildPathname(publishedSlug) },
-                })
-              }
-              // Not while any editor holds it, one's own in another tab too
-              // (log 0036); the PageSEO delete rolls back.
-              return transaction.article.delete({
-                where: { AND: [buildFreeHoldWhere(new Date())], id },
-              })
+            // Not while any editor holds it, one's own in another tab too
+            // (log 0036).
+            prisma.article.delete({
+              where: { AND: [buildFreeHoldWhere(new Date())], id },
             }),
           () =>
             findArticleHeldRefusal(id, context.authorId, {

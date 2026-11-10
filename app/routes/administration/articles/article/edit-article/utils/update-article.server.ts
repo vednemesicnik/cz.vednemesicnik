@@ -234,8 +234,7 @@ export async function updateArticle(
       // is its creation in the history (log 0020, design 07f).
       const hasContent = title !== '' || content !== '' || storedImageCount > 0
 
-      // 4. In one transaction: the alt texts and captions and the article. A
-      // draft has no PageSEO record; publish writes it (log 0039).
+      // 4. In one transaction: the alt texts and captions and the article.
       const saveInTransaction = async () => {
         const articleWrite = prisma.article.update({
           data: {

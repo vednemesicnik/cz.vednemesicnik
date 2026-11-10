@@ -1,6 +1,5 @@
 import { data } from 'react-router'
 
-import { buildArticlePageSeoImageWrites } from '~/routes/administration/articles/utils/build-article-page-seo-image-writes.server'
 import { prisma } from '~/utils/db.server'
 import { deleteImage } from '~/utils/image-store/store-image.server'
 
@@ -15,7 +14,7 @@ type Options = {
 /**
  * Removes one image of the gallery at once, with its alt text, caption and
  * files (design 24b); the editor asks first. The main image falls to none with
- * it, and so does the sharing preview. Files go only after the row is deleted.
+ * it. Files go only after the row is deleted.
  *
  * @param request - The action's request.
  * @param options - The article, the tab and the image.
@@ -29,7 +28,7 @@ export async function removeArticleImage(
 ) {
   return saveArticleImageChange(request, {
     articleId,
-    prepare: async (_context, article) => {
+    prepare: async () => {
       const image = await prisma.articleImage.findUnique({
         select: { articleId: true },
         where: { id: imageId },
@@ -44,14 +43,6 @@ export async function removeArticleImage(
       }
 
       // The row's `featuredImageId` is set to null by the relation.
-      const seoWrites =
-        article.featuredImageId === imageId
-          ? await buildArticlePageSeoImageWrites({
-              featuredImage: null,
-              publishedSlug: article.publishedSlug,
-            })
-          : []
-
       return {
         answer: {},
         onCommitted: () => deleteImage(imageId),
@@ -60,7 +51,6 @@ export async function removeArticleImage(
             select: { id: true },
             where: { id: imageId },
           }),
-          ...seoWrites,
         ],
       }
     },
