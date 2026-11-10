@@ -18,6 +18,7 @@ const ENROLMENT = {
   email: 'tereza@local.dev',
   formSubmittedAt: '2026-11-02T10:00:00.000Z',
   name: 'Tereza Malá',
+  phone: '+420 600 000 000',
 }
 
 const LEAVE = { action: 'leave' as const, email: 'tereza@local.dev' }

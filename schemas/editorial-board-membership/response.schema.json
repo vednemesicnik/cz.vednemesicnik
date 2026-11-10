@@ -116,6 +116,7 @@
         "idempotencyKey",
         "name",
         "email",
+        "phone",
         "formSubmittedAt"
       ],
       "type": "object"

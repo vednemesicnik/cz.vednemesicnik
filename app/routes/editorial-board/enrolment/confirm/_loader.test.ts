@@ -40,6 +40,7 @@ describe('enrolment confirmation loader', () => {
         formSubmittedAt: '2026-11-03T10:00:00.000Z',
         interest: 'psaní',
         name: 'Tereza Malá',
+        phone: '+420 600 000 000',
       },
     })
 
