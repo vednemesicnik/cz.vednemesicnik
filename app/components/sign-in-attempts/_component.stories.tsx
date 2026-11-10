@@ -2,14 +2,33 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { AdminDetailSection } from '../admin-detail-section'
-import { AdminSignInAttempts } from './_component'
+import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { SignInAttemptsDetail } from '~/components/sign-in-attempts-detail'
+import { SignInAttemptsItem } from '~/components/sign-in-attempts-item'
+import { SignInAttemptsMethod } from '~/components/sign-in-attempts-method'
+import { SignInAttemptsTime } from '~/components/sign-in-attempts-time'
+import type { SignInAttempt } from '~/utils/sign-in-attempts/to-sign-in-attempt'
 
-const meta: Meta<typeof AdminSignInAttempts> = {
-  argTypes: {
-    attempts: { control: 'object' },
-  },
-  component: AdminSignInAttempts,
+import { SignInAttempts } from './_component'
+
+// The rows as the routes render them from `getRecentSignInAttempts`.
+const renderAttempts = (attempts: SignInAttempt[]) =>
+  attempts.map((attempt) => (
+    <SignInAttemptsItem isFailure={attempt.isFailure} key={attempt.id}>
+      <SignInAttemptsTime dateTime={attempt.dateTime}>
+        {attempt.formattedDateTime}
+      </SignInAttemptsTime>
+      <SignInAttemptsMethod>
+        {attempt.label}
+        {attempt.detail !== null && (
+          <SignInAttemptsDetail>{attempt.detail}</SignInAttemptsDetail>
+        )}
+      </SignInAttemptsMethod>
+    </SignInAttemptsItem>
+  ))
+
+const meta: Meta<typeof SignInAttempts> = {
+  component: SignInAttempts,
   // The right column is 300 px (--detail-aside-width); `width` sets it.
   decorators: [
     (Story, { parameters }) => (
@@ -25,7 +44,7 @@ const meta: Meta<typeof AdminSignInAttempts> = {
     width: '300px',
   },
   tags: ['autodocs'],
-  title: 'Administration/AdminSignInAttempts',
+  title: 'Administration/SignInAttempts',
 }
 
 export default meta
@@ -34,7 +53,7 @@ type Story = StoryObj<typeof meta>
 // The rows of 29a: a 2FA sign-in after a failed code, a failed password.
 export const Playground: Story = {
   args: {
-    attempts: [
+    children: renderAttempts([
       {
         dateTime: '2026-09-25T17:14:00.000Z',
         detail: null,
@@ -75,7 +94,7 @@ export const Playground: Story = {
         isFailure: true,
         label: 'Heslo\u00a0— neúspěšný pokus',
       },
-    ],
+    ]),
   },
 }
 
@@ -89,7 +108,7 @@ export const Wide: Story = {
 // the method, on success and on failure.
 export const EmergencyLink: Story = {
   args: {
-    attempts: [
+    children: renderAttempts([
       {
         dateTime: '2026-10-12T12:24:00.000Z',
         detail: 'Odkaz od: Petr Dvořák',
@@ -114,6 +133,6 @@ export const EmergencyLink: Story = {
         isFailure: true,
         label: 'Odkaz v e-mailu — neúspěšný pokus',
       },
-    ],
+    ]),
   },
 }

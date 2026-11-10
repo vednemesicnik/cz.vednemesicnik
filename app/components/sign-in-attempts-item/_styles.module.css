@@ -1,0 +1,20 @@
+/* A 128 px column with the date and time, then the method (29a, 28e). */
+.item {
+  @layer component {
+    display: grid;
+    grid-template-columns: 128px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    padding-block: 8px;
+    border-block-end: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+}
+
+/* Both cells, and the label says it too (29a). */
+.failure {
+  @layer variant {
+    --sign-in-attempts-method-color: currentColor;
+    color: var(--error-text);
+  }
+}

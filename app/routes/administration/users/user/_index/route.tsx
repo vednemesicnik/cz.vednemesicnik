@@ -13,12 +13,16 @@ import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { Callout } from '~/components/callout'
 import { HistoryList } from '~/components/history-list'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
+import { SignInAttempts } from '~/components/sign-in-attempts'
+import { SignInAttemptsDetail } from '~/components/sign-in-attempts-detail'
+import { SignInAttemptsItem } from '~/components/sign-in-attempts-item'
+import { SignInAttemptsMethod } from '~/components/sign-in-attempts-method'
+import { SignInAttemptsTime } from '~/components/sign-in-attempts-time'
 import { useToast } from '~/components/toast-provider'
 import { INVITATION_CONFIG } from '~/config/invitation-config'
 import { useAccountEvents } from '~/hooks/use-account-events'
@@ -180,7 +184,26 @@ export default function RouteComponent({
 
           {signInAttempts.length > 0 && (
             <AdminDetailSection title={'Poslední pokusy o přihlášení'}>
-              <AdminSignInAttempts attempts={signInAttempts} />
+              <SignInAttempts>
+                {signInAttempts.map((attempt) => (
+                  <SignInAttemptsItem
+                    isFailure={attempt.isFailure}
+                    key={attempt.id}
+                  >
+                    <SignInAttemptsTime dateTime={attempt.dateTime}>
+                      {attempt.formattedDateTime}
+                    </SignInAttemptsTime>
+                    <SignInAttemptsMethod>
+                      {attempt.label}
+                      {attempt.detail !== null && (
+                        <SignInAttemptsDetail>
+                          {attempt.detail}
+                        </SignInAttemptsDetail>
+                      )}
+                    </SignInAttemptsMethod>
+                  </SignInAttemptsItem>
+                ))}
+              </SignInAttempts>
             </AdminDetailSection>
           )}
         </AdminDetailMain>

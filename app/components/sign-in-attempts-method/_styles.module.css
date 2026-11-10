@@ -1,0 +1,9 @@
+/* A failed attempt's item sets the custom property, so the method takes its colour. */
+.method {
+  @layer component {
+    display: grid;
+    gap: 2px;
+    color: var(--sign-in-attempts-method-color, var(--text-secondary));
+    text-wrap: pretty;
+  }
+}

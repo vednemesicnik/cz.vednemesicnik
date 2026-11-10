@@ -15,13 +15,17 @@ import { AdminDetailRow } from '~/components/admin/admin-detail-row'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
-import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { ListDetailRow } from '~/components/list-detail-row'
 import { PageTitle } from '~/components/page-title'
 import { SegmentedControl } from '~/components/segmented-control'
+import { SignInAttempts } from '~/components/sign-in-attempts'
+import { SignInAttemptsDetail } from '~/components/sign-in-attempts-detail'
+import { SignInAttemptsItem } from '~/components/sign-in-attempts-item'
+import { SignInAttemptsMethod } from '~/components/sign-in-attempts-method'
+import { SignInAttemptsTime } from '~/components/sign-in-attempts-time'
 import { useToast } from '~/components/toast-provider'
 import { COLOR_SCHEME_CONFIG } from '~/config/color-scheme-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -634,7 +638,26 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           )}
           {signInAttempts.length > 0 && (
             <AdminDetailSection title={'Poslední pokusy o přihlášení'}>
-              <AdminSignInAttempts attempts={signInAttempts} />
+              <SignInAttempts>
+                {signInAttempts.map((attempt) => (
+                  <SignInAttemptsItem
+                    isFailure={attempt.isFailure}
+                    key={attempt.id}
+                  >
+                    <SignInAttemptsTime dateTime={attempt.dateTime}>
+                      {attempt.formattedDateTime}
+                    </SignInAttemptsTime>
+                    <SignInAttemptsMethod>
+                      {attempt.label}
+                      {attempt.detail !== null && (
+                        <SignInAttemptsDetail>
+                          {attempt.detail}
+                        </SignInAttemptsDetail>
+                      )}
+                    </SignInAttemptsMethod>
+                  </SignInAttemptsItem>
+                ))}
+              </SignInAttempts>
               <AdminParagraph className={styles.note}>
                 {otherSessionsCount > 0
                   ? 'Nepoznáváte některý pokus o přihlášení? Ukončete všechna ostatní přihlášení a obraťte se na Administrátora.'
