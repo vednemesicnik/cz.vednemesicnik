@@ -4,6 +4,11 @@ import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { Button } from '~/components/button'
 import { HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import type { ContentHistory } from '~/utils/content-log/to-content-history'
 import { useBackdropClickClose } from '~/utils/use-backdrop-click-close'
 import { useModalDialog } from '~/utils/use-modal-dialog'
@@ -39,7 +44,22 @@ export const PodcastHistoryDialog = ({
           <HistoryList
             entries={history.entries}
             isIncomplete={history.isIncomplete}
-          />
+          >
+            {(entry) => (
+              <HistoryListEntry>
+                <HistoryListEvent>
+                  {entry.label}
+                  {entry.actorName !== null && (
+                    <HistoryListActor>{entry.actorName}</HistoryListActor>
+                  )}
+                </HistoryListEvent>
+                <HistoryListTime dateTime={entry.dateTime}>
+                  {entry.formattedDateTime}
+                </HistoryListTime>
+                {entry.note && <HistoryListNote>{entry.note}</HistoryListNote>}
+              </HistoryListEntry>
+            )}
+          </HistoryList>
         </div>
 
         <AdminModalActions>

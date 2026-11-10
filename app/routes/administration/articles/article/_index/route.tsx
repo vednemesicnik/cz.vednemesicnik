@@ -22,6 +22,11 @@ import { Button } from '~/components/button'
 import { ContentRenderer } from '~/components/content-renderer'
 import { FeaturedImage } from '~/components/featured-image'
 import { HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import { Hyperlink } from '~/components/hyperlink'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
@@ -351,7 +356,24 @@ export default function RouteComponent({
               // A reused route component starts every record collapsed.
               key={article.id}
               visibleCount={5}
-            />
+            >
+              {(entry) => (
+                <HistoryListEntry>
+                  <HistoryListEvent>
+                    {entry.label}
+                    {entry.actorName !== null && (
+                      <HistoryListActor>{entry.actorName}</HistoryListActor>
+                    )}
+                  </HistoryListEvent>
+                  <HistoryListTime dateTime={entry.dateTime}>
+                    {entry.formattedDateTime}
+                  </HistoryListTime>
+                  {entry.note && (
+                    <HistoryListNote>{entry.note}</HistoryListNote>
+                  )}
+                </HistoryListEntry>
+              )}
+            </HistoryList>
           </AdminDetailSection>
         </AdminDetailAside>
       </AdminDetailLayout>
