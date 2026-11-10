@@ -1,0 +1,25 @@
+/* A plain line above the record's title, not a bar (design 23a); the page
+   below adds its own 24 px. */
+.container {
+  @layer component {
+    display: grid;
+    grid-auto-flow: row;
+    width: 100%;
+    /* On the page's edge (31b). */
+    padding: 24px var(--admin-page-side-padding) 0;
+  }
+}
+
+.list {
+  @layer component {
+    display: flex;
+    position: relative;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    list-style: none;
+  }
+}
