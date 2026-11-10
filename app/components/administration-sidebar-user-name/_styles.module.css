@@ -1,0 +1,7 @@
+.name {
+  @layer component {
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+}

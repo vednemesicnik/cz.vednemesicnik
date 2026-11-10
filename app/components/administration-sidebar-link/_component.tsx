@@ -9,7 +9,14 @@ type Props = Omit<ComponentProps<typeof NavLink>, 'className'> & {
   highlightsActive?: boolean
 }
 
-export const SidebarLink = ({
+/**
+ * A link of the administration sidebar: a section's item, or Nastavení in its
+ * foot. It says it is the current page and fills while its section is active.
+ *
+ * @param props.highlightsActive - Whether the active section gets its fill
+ * @returns The `NavLink`
+ */
+export const AdministrationSidebarLink = ({
   children,
   className,
   to,
