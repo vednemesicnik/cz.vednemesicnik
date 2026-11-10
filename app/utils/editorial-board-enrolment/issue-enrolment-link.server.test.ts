@@ -17,6 +17,7 @@ const sendMock = vi.mocked(sendEnrolmentEmail)
 const PAYLOAD = {
   formSubmittedAt: '2026-11-03T10:00:00.000Z',
   name: 'Tereza Malá',
+  phone: '+420 600 000 000',
 }
 
 // The store is shared and lives as long as the process: every test takes its own address.
