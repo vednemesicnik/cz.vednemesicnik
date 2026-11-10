@@ -3,6 +3,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn } from 'storybook/test'
 
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { BulkConfirmDialogNote } from '~/components/bulk-confirm-dialog-note'
 import { ARTICLE_BULK_NOUN, ISSUE_BULK_NOUN } from '~/config/bulk-noun-config'
 
 import { BulkConfirmDialog } from './_component'
@@ -34,7 +36,6 @@ export const Playground: Story = {
     onConfirm: fn(),
     onlyDrafts: false,
     records: ARTICLES,
-    skipped: null,
   },
 }
 
@@ -57,7 +58,11 @@ export const DeleteDrafts: Story = {
 export const HeldSkipped: Story = {
   args: {
     ...Playground.args,
-    skipped: '1 článek právě někdo upravuje. Přeskočí se.',
+    children: (
+      <AdminModalDescription>
+        1 článek právě někdo upravuje. Přeskočí se.
+      </AdminModalDescription>
+    ),
   },
 }
 
@@ -66,9 +71,12 @@ export const PublishIssues: Story = {
   args: {
     ...Playground.args,
     action: 'publish',
-    notes: [
-      '1 číslo čeká na schválení. Publikováním ho schválíte. 1 číslo je neúplné. Přeskočí se.',
-    ],
+    children: (
+      <BulkConfirmDialogNote>
+        1 číslo čeká na schválení. Publikováním ho schválíte. 1 číslo je
+        neúplné. Přeskočí se.
+      </BulkConfirmDialogNote>
+    ),
     noun: ISSUE_BULK_NOUN,
     records: [
       { id: 'i1', title: 'září 2026' },
