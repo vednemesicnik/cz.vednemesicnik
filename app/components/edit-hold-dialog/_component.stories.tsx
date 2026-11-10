@@ -6,20 +6,20 @@ import { fn } from 'storybook/test'
 import { EditHoldDialog } from './_component'
 
 // The props are a union by `kind`, which Storybook's args can't take apart:
-// the args carry only the callbacks, the stories render the dialog, and the
-// meta names no component, whose props the args aren't.
+// the args carry only the callbacks and the stories render the dialog.
 type Callbacks = {
   onCancel: () => void
   onConfirm: () => void
 }
 
-const meta: Meta<Callbacks> = {
+const meta = {
+  component: EditHoldDialog,
   parameters: {
     layout: 'fullscreen',
   },
   tags: ['autodocs'],
   title: 'Components/EditHoldDialog',
-}
+} satisfies Meta
 
 export default meta
 type Story = StoryObj<Callbacks>
