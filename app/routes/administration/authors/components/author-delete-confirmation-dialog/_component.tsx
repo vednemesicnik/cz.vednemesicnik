@@ -1,6 +1,9 @@
 import type { RefObject } from 'react'
 
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 
 import { AUTHOR_RECORD_COPY } from '../../author-record-copy'
 
@@ -16,10 +19,13 @@ type Props = {
  * the name, so the dialog says only that the author goes.
  */
 export const AuthorDeleteConfirmationDialog = ({ ref, name }: Props) => (
-  <AdminDeleteConfirmationDialog
-    confirmLabel={AUTHOR_RECORD_COPY.deleteConfirmLabel}
-    description={AUTHOR_RECORD_COPY.deleteDescription}
-    ref={ref}
-    title={AUTHOR_RECORD_COPY.deleteTitle(name)}
-  />
+  <AdminDeleteConfirmationDialog ref={ref}>
+    <AdminModalTitle>{AUTHOR_RECORD_COPY.deleteTitle(name)}</AdminModalTitle>
+    <AdminModalDescription>
+      {AUTHOR_RECORD_COPY.deleteDescription}
+    </AdminModalDescription>
+    <AdminDeleteConfirmationDialogActions>
+      {AUTHOR_RECORD_COPY.deleteConfirmLabel}
+    </AdminDeleteConfirmationDialogActions>
+  </AdminDeleteConfirmationDialog>
 )

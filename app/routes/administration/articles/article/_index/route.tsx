@@ -9,12 +9,16 @@ import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
@@ -378,16 +382,18 @@ export default function RouteComponent({
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog
-        description={'Smazání je nevratné.'}
-        ref={deleteConfirmationDialogRef}
-        subject={article.title}
-        title={
-          article.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef}>
+        <AdminModalTitle>
+          {article.state === 'archived'
             ? 'Smazat archivovaný článek?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{article.title}</AdminModalSubject>
+        <AdminModalDescription>Smazání je nevratné.</AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
 
       {stateDialog !== null && (
         <ArticleStateDialog

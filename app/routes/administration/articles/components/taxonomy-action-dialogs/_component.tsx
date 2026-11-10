@@ -1,4 +1,5 @@
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { StateChangeDialog } from '~/components/state-change-dialog'
@@ -40,11 +41,15 @@ export const TaxonomyActionDialogs = ({ actions, canDelete }: Props) => {
   return (
     <>
       {canDelete && (
-        <AdminDeleteConfirmationDialog
-          description={copy.deleteDescription(record.articleCount)}
-          ref={actions.deleteDialogRef}
-          title={copy.deleteTitle(record.name)}
-        />
+        <AdminDeleteConfirmationDialog ref={actions.deleteDialogRef}>
+          <AdminModalTitle>{copy.deleteTitle(record.name)}</AdminModalTitle>
+          <AdminModalDescription>
+            {copy.deleteDescription(record.articleCount)}
+          </AdminModalDescription>
+          <AdminDeleteConfirmationDialogActions>
+            Smazat
+          </AdminDeleteConfirmationDialogActions>
+        </AdminDeleteConfirmationDialog>
       )}
       {confirmAction !== null && (
         <StateChangeDialog

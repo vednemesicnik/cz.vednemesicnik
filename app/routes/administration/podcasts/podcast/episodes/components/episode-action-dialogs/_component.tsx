@@ -1,6 +1,10 @@
 import type { ContentState } from '@generated/prisma/enums'
 
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 
 import { ArticleChangeDateDialog } from '../../../../../articles/components/article-change-date-dialog'
 import {
@@ -44,16 +48,18 @@ export const EpisodeActionDialogs = ({
 }: Props) => (
   <>
     {canDelete && (
-      <AdminDeleteConfirmationDialog
-        description={'Smazání je nevratné.'}
-        ref={actions.deleteDialogRef}
-        subject={episode.title}
-        title={
-          episode.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={actions.deleteDialogRef}>
+        <AdminModalTitle>
+          {episode.state === 'archived'
             ? 'Smazat archivovanou epizodu?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{episode.title}</AdminModalSubject>
+        <AdminModalDescription>Smazání je nevratné.</AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
     )}
     {actions.stateDialog !== null && (
       <EpisodeStateDialog

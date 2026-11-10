@@ -9,12 +9,16 @@ import {
   AdminDeleteConfirmationDialog,
   useAdminDeleteConfirmationDialog,
 } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
@@ -395,16 +399,20 @@ export default function RouteComponent({
         </AdminDetailAside>
       </AdminDetailLayout>
 
-      <AdminDeleteConfirmationDialog
-        description={'Smažou se i jeho nahrané soubory. Vrátit to nejde.'}
-        ref={deleteConfirmationDialogRef}
-        subject={issue.title}
-        title={
-          issue.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={deleteConfirmationDialogRef}>
+        <AdminModalTitle>
+          {issue.state === 'archived'
             ? 'Smazat archivované číslo?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{issue.title}</AdminModalSubject>
+        <AdminModalDescription>
+          Smažou se i jeho nahrané soubory. Vrátit to nejde.
+        </AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
 
       {missingList !== null && (
         <IssueMissingDialog

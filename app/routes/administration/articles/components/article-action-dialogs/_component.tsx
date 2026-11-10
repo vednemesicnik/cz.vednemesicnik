@@ -1,6 +1,10 @@
 import type { ContentState } from '@generated/prisma/enums'
 
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
+import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
+import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
+import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 
 import { NOT_SUBMITTED_NOTE } from '../../utils/article-actions'
 import type { useArticleActions } from '../../utils/use-article-actions'
@@ -40,16 +44,18 @@ export const ArticleActionDialogs = ({
 }: Props) => (
   <>
     {canDelete && (
-      <AdminDeleteConfirmationDialog
-        description={'Smazání je nevratné.'}
-        ref={actions.deleteDialogRef}
-        subject={article.title}
-        title={
-          article.state === 'archived'
+      <AdminDeleteConfirmationDialog ref={actions.deleteDialogRef}>
+        <AdminModalTitle>
+          {article.state === 'archived'
             ? 'Smazat archivovaný článek?'
-            : 'Smazat koncept?'
-        }
-      />
+            : 'Smazat koncept?'}
+        </AdminModalTitle>
+        <AdminModalSubject>{article.title}</AdminModalSubject>
+        <AdminModalDescription>Smazání je nevratné.</AdminModalDescription>
+        <AdminDeleteConfirmationDialogActions>
+          Smazat
+        </AdminDeleteConfirmationDialogActions>
+      </AdminDeleteConfirmationDialog>
     )}
     {actions.isChangeDateOpen && (
       <ArticleChangeDateDialog
