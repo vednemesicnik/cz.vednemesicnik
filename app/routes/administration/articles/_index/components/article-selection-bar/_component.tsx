@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { AdminSelectionBar } from '~/components/admin/admin-selection-bar'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { BulkConfirmDialog } from '~/components/bulk-confirm-dialog'
@@ -144,13 +145,18 @@ export const ArticleSelectionBar = ({
               ? []
               : [{ ...toListItem(article), publishedAt: article.publishedAt }],
           )}
-          notes={publishNotes.notes}
           onClose={close}
           orderedArticles={completeArticles
             .filter((article) => article.publishedAt === null)
             .map(toListItem)}
-          skipped={publishSkipped === '' ? null : publishSkipped}
-        />
+        >
+          {publishNotes.notes !== null && (
+            <AdminModalNote>{publishNotes.notes}</AdminModalNote>
+          )}
+          {publishSkipped !== '' && (
+            <AdminModalNote>{publishSkipped}</AdminModalNote>
+          )}
+        </BulkPublishDialog>
       )}
       {openAction !== null && openAction !== 'publish' && (
         <BulkConfirmDialog

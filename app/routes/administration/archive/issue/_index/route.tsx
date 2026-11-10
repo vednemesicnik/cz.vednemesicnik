@@ -17,6 +17,7 @@ import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 import { AdminPage } from '~/components/admin/admin-page'
@@ -429,14 +430,16 @@ export default function RouteComponent({
           isApprover={isApprover}
           issueTitle={issue.title}
           kind={stateDialog}
-          // A draft not submitted is published from „⋯“ (26g); the dialog says so.
-          note={
-            stateDialog === 'publish' && headerActions.menu.includes('publish')
-              ? ISSUE_HEADER_SENTENCES['not-submitted']
-              : null
-          }
           onClose={() => setStateDialog(null)}
-        />
+        >
+          {/* A draft not submitted is published from „⋯“ (26g); the dialog says so. */}
+          {stateDialog === 'publish' &&
+            headerActions.menu.includes('publish') && (
+              <AdminModalNote>
+                {ISSUE_HEADER_SENTENCES['not-submitted']}
+              </AdminModalNote>
+            )}
+        </IssueStateDialog>
       )}
     </AdminPage>
   )

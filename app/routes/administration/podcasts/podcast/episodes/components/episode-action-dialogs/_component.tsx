@@ -3,6 +3,7 @@ import type { ContentState } from '@generated/prisma/enums'
 import { AdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDeleteConfirmationDialogActions } from '~/components/admin/admin-delete-confirmation-dialog-actions'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
+import { AdminModalNote } from '~/components/admin/admin-modal-note'
 import { AdminModalSubject } from '~/components/admin/admin-modal-subject'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
 
@@ -85,24 +86,28 @@ export const EpisodeActionDialogs = ({
         episodeTitle={episode.title}
         fetcherKey={actions.fetcherKey}
         isApproval={actions.publishDialog.isApproval}
-        note={
-          episode.isNotSubmitted
-            ? EPISODE_HEADER_SENTENCES['not-submitted']
-            : null
-        }
         onClose={actions.closePublishDialog}
         originalPublishedAt={episode.publishedAt}
-      />
+      >
+        {episode.isNotSubmitted && (
+          <AdminModalNote>
+            {EPISODE_HEADER_SENTENCES['not-submitted']}
+          </AdminModalNote>
+        )}
+      </EpisodePublishDialog>
     )}
     {actions.isChangeDateOpen && (
       <ArticleChangeDateDialog
         action={actions.detailHref}
-        description={EPISODE_CHANGE_DATE_DESCRIPTION}
         fetcherKey={actions.fetcherKey}
         onClose={actions.closeChangeDate}
         publishedAt={episode.publishedAt}
-        title={episode.title}
-      />
+      >
+        <AdminModalSubject>{episode.title}</AdminModalSubject>
+        <AdminModalDescription>
+          {EPISODE_CHANGE_DATE_DESCRIPTION}
+        </AdminModalDescription>
+      </ArticleChangeDateDialog>
     )}
   </>
 )
