@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, type ReactNode, useState } from 'react'
 
 import { BaseButton } from '~/components/base-button'
 
@@ -17,21 +17,48 @@ type Props = {
   entries: HistoryEntry[]
   visibleCount?: number
   isIncomplete?: boolean
+  children: (entry: HistoryEntry) => ReactNode
 }
 
 /**
  * A detail's Historie (design 07f, 23a): newest first, each row *co · kdo*
- * with the date and time under it, and an optional note under that.
+ * with the date and time under it, and an optional note under that. The list
+ * decides which entries show; the caller renders each one.
  *
- * @param props.entries - The rows; an entry without an actor shows its label
- *   alone.
+ * @example
+ * ```tsx
+ * <HistoryList entries={history.entries} visibleCount={5}>
+ *   {(entry) => (
+ *     <HistoryListEntry>
+ *       <HistoryListEvent>
+ *         {entry.label}
+ *         {entry.actorName !== null && (
+ *           <HistoryListActor>{entry.actorName}</HistoryListActor>
+ *         )}
+ *       </HistoryListEvent>
+ *       <HistoryListTime dateTime={entry.dateTime}>
+ *         {entry.formattedDateTime}
+ *       </HistoryListTime>
+ *     </HistoryListEntry>
+ *   )}
+ * </HistoryList>
+ * ```
+ *
+ * @param props.entries - The rows, newest first
  * @param props.visibleCount - How many rows show before *Celá historie*,
  *   which expands the list in place; every row shows without it.
  * @param props.isIncomplete - Whether the log misses older events: the grey
  *   line „Starší události se nezaznamenávaly.“ then closes the list, once its
  *   end is visible (07f).
+ * @param props.children - Renders one visible entry as a `HistoryListEntry`
+ * @returns The list with its expand button or closing line
  */
-export const HistoryList = ({ entries, visibleCount, isIncomplete }: Props) => {
+export const HistoryList = ({
+  entries,
+  visibleCount,
+  isIncomplete,
+  children,
+}: Props) => {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const isCapped =
@@ -42,17 +69,7 @@ export const HistoryList = ({ entries, visibleCount, isIncomplete }: Props) => {
     <div className={styles.history}>
       <ol className={styles.list}>
         {visibleEntries.map((entry) => (
-          <li className={styles.entry} key={entry.id}>
-            <span>
-              {entry.actorName === null
-                ? entry.label
-                : `${entry.label} · ${entry.actorName}`}
-            </span>
-            <time className={styles.meta} dateTime={entry.dateTime}>
-              {entry.formattedDateTime}
-            </time>
-            {entry.note && <span className={styles.meta}>{entry.note}</span>}
-          </li>
+          <Fragment key={entry.id}>{children(entry)}</Fragment>
         ))}
       </ol>
 

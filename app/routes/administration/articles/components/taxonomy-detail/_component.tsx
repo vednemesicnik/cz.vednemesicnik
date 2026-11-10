@@ -1,6 +1,7 @@
 import { href } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
@@ -11,6 +12,11 @@ import { AdminPage } from '~/components/admin/admin-page'
 import { BaseLink } from '~/components/base-link'
 import { Button } from '~/components/button'
 import { type HistoryEntry, HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import { Hyperlink } from '~/components/hyperlink'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
@@ -158,13 +164,17 @@ export const TaxonomyDetail = ({
               {copy.headerSentences[headerActions.sentence]}
             </p>
           )}
-          <ActionMenu
-            items={headerActions.menu.map((action) => ({
-              danger: action === 'delete',
-              label: getLabel(action),
-              onSelect: () => runAction(action),
-            }))}
-          />
+          <ActionMenu>
+            {headerActions.menu.map((action) => (
+              <ActionMenuItem
+                danger={action === 'delete'}
+                key={action}
+                onSelect={() => runAction(action)}
+              >
+                {getLabel(action)}
+              </ActionMenuItem>
+            ))}
+          </ActionMenu>
           {headerActions.outline !== null &&
             renderButton(headerActions.outline, 'outline')}
           {headerActions.primary !== null &&
@@ -251,7 +261,24 @@ export const TaxonomyDetail = ({
               // A reused route component starts every record collapsed.
               key={record.id}
               visibleCount={5}
-            />
+            >
+              {(entry) => (
+                <HistoryListEntry>
+                  <HistoryListEvent>
+                    {entry.label}
+                    {entry.actorName !== null && (
+                      <HistoryListActor>{entry.actorName}</HistoryListActor>
+                    )}
+                  </HistoryListEvent>
+                  <HistoryListTime dateTime={entry.dateTime}>
+                    {entry.formattedDateTime}
+                  </HistoryListTime>
+                  {entry.note && (
+                    <HistoryListNote>{entry.note}</HistoryListNote>
+                  )}
+                </HistoryListEntry>
+              )}
+            </HistoryList>
           </AdminDetailSection>
         </AdminDetailAside>
       </AdminDetailLayout>

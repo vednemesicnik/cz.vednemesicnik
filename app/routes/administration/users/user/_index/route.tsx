@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { href, useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailItem } from '~/components/admin/admin-detail-item'
@@ -12,12 +13,21 @@ import { AdminDetailList } from '~/components/admin/admin-detail-list'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminPage } from '~/components/admin/admin-page'
-import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { Callout } from '~/components/callout'
 import { HistoryList } from '~/components/history-list'
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
 import { Link } from '~/components/link'
 import { LinkButton } from '~/components/link-button'
 import { PageTitle } from '~/components/page-title'
+import { SignInAttempts } from '~/components/sign-in-attempts'
+import { SignInAttemptsDetail } from '~/components/sign-in-attempts-detail'
+import { SignInAttemptsItem } from '~/components/sign-in-attempts-item'
+import { SignInAttemptsMethod } from '~/components/sign-in-attempts-method'
+import { SignInAttemptsTime } from '~/components/sign-in-attempts-time'
 import { useToast } from '~/components/toast-provider'
 import { INVITATION_CONFIG } from '~/config/invitation-config'
 import { useAccountEvents } from '~/hooks/use-account-events'
@@ -107,22 +117,20 @@ export default function RouteComponent({
 
         {/* No primary action; „⋯“ holds Smazat…, never on your own account or the Owner's (28e, 28g), and during a Google outage Vydat nouzový odkaz… above it. */}
         <div className={styles.actions}>
-          <ActionMenu
-            items={[
-              ...(canIssueEmergencyLink
-                ? [
-                    {
-                      label: 'Vydat nouzový odkaz…',
-                      onSelect: () => setIsEmergencyLinkDialogOpen(true),
-                    },
-                  ]
-                : []),
-              ...(canDelete
-                ? [{ danger: true, label: 'Smazat…', onSelect: openDialog }]
-                : []),
-            ]}
-            label={'Další akce s účtem'}
-          />
+          <ActionMenu label={'Další akce s účtem'}>
+            {canIssueEmergencyLink && (
+              <ActionMenuItem
+                onSelect={() => setIsEmergencyLinkDialogOpen(true)}
+              >
+                Vydat nouzový odkaz…
+              </ActionMenuItem>
+            )}
+            {canDelete && (
+              <ActionMenuItem danger={true} onSelect={openDialog}>
+                Smazat…
+              </ActionMenuItem>
+            )}
+          </ActionMenu>
           {canUpdate && (
             <LinkButton
               state={RETURN_TO_OPENER_STATE}
@@ -181,7 +189,26 @@ export default function RouteComponent({
 
           {signInAttempts.length > 0 && (
             <AdminDetailSection title={'Poslední pokusy o přihlášení'}>
-              <AdminSignInAttempts attempts={signInAttempts} />
+              <SignInAttempts>
+                {signInAttempts.map((attempt) => (
+                  <SignInAttemptsItem
+                    isFailure={attempt.isFailure}
+                    key={attempt.id}
+                  >
+                    <SignInAttemptsTime dateTime={attempt.dateTime}>
+                      {attempt.formattedDateTime}
+                    </SignInAttemptsTime>
+                    <SignInAttemptsMethod>
+                      {attempt.label}
+                      {attempt.detail !== null && (
+                        <SignInAttemptsDetail>
+                          {attempt.detail}
+                        </SignInAttemptsDetail>
+                      )}
+                    </SignInAttemptsMethod>
+                  </SignInAttemptsItem>
+                ))}
+              </SignInAttempts>
             </AdminDetailSection>
           )}
         </AdminDetailMain>
@@ -211,7 +238,24 @@ export default function RouteComponent({
           {/* An account older than the audit log has no Historie (by062t6n). */}
           {history.length > 0 && (
             <AdminDetailSection title={'Historie'}>
-              <HistoryList entries={history} />
+              <HistoryList entries={history}>
+                {(entry) => (
+                  <HistoryListEntry>
+                    <HistoryListEvent>
+                      {entry.label}
+                      {entry.actorName !== null && (
+                        <HistoryListActor>{entry.actorName}</HistoryListActor>
+                      )}
+                    </HistoryListEvent>
+                    <HistoryListTime dateTime={entry.dateTime}>
+                      {entry.formattedDateTime}
+                    </HistoryListTime>
+                    {entry.note && (
+                      <HistoryListNote>{entry.note}</HistoryListNote>
+                    )}
+                  </HistoryListEntry>
+                )}
+              </HistoryList>
             </AdminDetailSection>
           )}
         </AdminDetailAside>

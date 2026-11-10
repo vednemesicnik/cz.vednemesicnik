@@ -20,7 +20,7 @@ type Options = {
  *
  * @param options - The tile's place, whether it or another is the main image,
  *   and the actions.
- * @returns The `ActionMenu` items.
+ * @returns The items, in order, for the tile's `ActionMenuItem`s.
  */
 export const getImageMenuItems = ({
   index,

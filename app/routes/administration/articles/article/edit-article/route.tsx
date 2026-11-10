@@ -22,6 +22,7 @@ import {
 } from 'react'
 import { href, useBlocker, useNavigate, useRevalidator } from 'react-router'
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { AdminDetailAside } from '~/components/admin/admin-detail-aside'
 import { AdminDetailLayout } from '~/components/admin/admin-detail-layout'
 import { AdminDetailMain } from '~/components/admin/admin-detail-main'
@@ -1960,7 +1961,13 @@ export default function RouteComponent({
                                 !isReadOnly && (
                                   <ImageTileMenu>
                                     <ActionMenu
-                                      items={getImageMenuItems({
+                                      // The tile has no name of its own: its
+                                      // number tells it apart (copy hu5a658a,
+                                      // yj2t50dd).
+                                      label={`Další akce obrázku ${getImageNumber(id)}`}
+                                      variant={'chip'}
+                                    >
+                                      {getImageMenuItems({
                                         count: storedImageIds.length,
                                         hasFeatured:
                                           gallery.featuredImageId !== null,
@@ -1983,13 +1990,16 @@ export default function RouteComponent({
                                         onReplace: () => pickReplacement(id),
                                         onUnfeature: () =>
                                           void gallery.setFeatured(null),
-                                      })}
-                                      // The tile has no name of its own: its
-                                      // number tells it apart (copy hu5a658a,
-                                      // yj2t50dd).
-                                      label={`Další akce obrázku ${getImageNumber(id)}`}
-                                      variant={'chip'}
-                                    />
+                                      }).map((item) => (
+                                        <ActionMenuItem
+                                          danger={item.danger}
+                                          key={item.label}
+                                          onSelect={item.onSelect}
+                                        >
+                                          {item.label}
+                                        </ActionMenuItem>
+                                      ))}
+                                    </ActionMenu>
                                   </ImageTileMenu>
                                 )}
                             </ImageTileMedia>

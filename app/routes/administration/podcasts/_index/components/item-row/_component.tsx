@@ -3,6 +3,7 @@ import { Fragment } from 'react'
 import { href } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   TableActionsCell,
   TableCell,
@@ -152,14 +153,19 @@ export const ItemRow = ({
         <TableRowMenu>
           {podcast.actions.length > 0 && (
             <ActionMenu
-              items={podcast.actions.map((action) => ({
-                danger: action === 'delete',
-                label: PODCAST_ACTION_LABELS[action],
-                onSelect: () => actions.runAction(action),
-              }))}
               label={`Další akce s podcastem ${podcast.title}`}
               size={'sm'}
-            />
+            >
+              {podcast.actions.map((action) => (
+                <ActionMenuItem
+                  danger={action === 'delete'}
+                  key={action}
+                  onSelect={() => actions.runAction(action)}
+                >
+                  {PODCAST_ACTION_LABELS[action]}
+                </ActionMenuItem>
+              ))}
+            </ActionMenu>
           )}
         </TableRowMenu>
 

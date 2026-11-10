@@ -1,12 +1,12 @@
 import type { ColorScheme } from '@generated/prisma/enums'
 import { data } from 'react-router'
 
-import type { SidebarUser } from '~/components/admin/administration-sidebar'
 import { requireAuthentication } from '~/utils/auth.server'
 import { commitCSRF } from '~/utils/csrf.server'
 import { prisma } from '~/utils/db.server'
 import {
   createImageSources,
+  type ImageSources,
   imageSourceSelect,
 } from '~/utils/image-store/create-image-sources'
 import { getAuthorPermissionContext } from '~/utils/permissions/author/context/get-author-permission-context.server'
@@ -16,6 +16,13 @@ import type { OwnAccount } from '~/utils/sse/is-own-account-event'
 
 import type { Route } from './+types/route'
 import { canListPeople } from './utils/can-list-people'
+
+// The signed-in user in the sidebar's foot.
+type SidebarUser = {
+  name: string
+  roleLabel: string | undefined
+  image: ImageSources
+}
 
 export const loader = async ({ request, url }: Route.LoaderArgs) => {
   const [csrfToken, csrfCookie] = await commitCSRF(request)

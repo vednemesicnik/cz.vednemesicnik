@@ -1,0 +1,15 @@
+.item {
+  @layer component {
+    margin: 0;
+  }
+}
+
+/* A 44 px row for touch in the full-screen menu (tbi5qpq9). */
+.fullScreenLink {
+  @layer variant {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-block-size: 44px;
+  }
+}

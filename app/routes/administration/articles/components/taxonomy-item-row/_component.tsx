@@ -1,4 +1,5 @@
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   TableActionsCell,
   TableCell,
@@ -99,11 +100,15 @@ export const TaxonomyItemRow = ({
   const { getLabel, isSubmitting, runAction } = actions
 
   const rowAction = record.row
-  const toMenuItem = (menuAction: TaxonomyAction) => ({
-    danger: menuAction === 'delete',
-    label: getLabel(menuAction),
-    onSelect: () => runAction(menuAction),
-  })
+  const renderMenuItem = (menuAction: TaxonomyAction) => (
+    <ActionMenuItem
+      danger={menuAction === 'delete'}
+      key={menuAction}
+      onSelect={() => runAction(menuAction)}
+    >
+      {getLabel(menuAction)}
+    </ActionMenuItem>
+  )
   // On a phone „⋯“ stands alone, the row action first in it (32a).
   const phoneMenu =
     rowAction === null ? record.menu : [rowAction, ...record.menu]
@@ -151,11 +156,9 @@ export const TaxonomyItemRow = ({
       <TableActionsCell>
         {phoneMenu.length > 0 && (
           <TableRowMenu phoneOnly={true}>
-            <ActionMenu
-              items={phoneMenu.map(toMenuItem)}
-              label={copy.menuLabel(record.name)}
-              size={'sm'}
-            />
+            <ActionMenu label={copy.menuLabel(record.name)} size={'sm'}>
+              {phoneMenu.map(renderMenuItem)}
+            </ActionMenu>
           </TableRowMenu>
         )}
         <TableRowActions>
@@ -182,11 +185,9 @@ export const TaxonomyItemRow = ({
             </Button>
           )}
           {record.menu.length > 0 && (
-            <ActionMenu
-              items={record.menu.map(toMenuItem)}
-              label={copy.menuLabel(record.name)}
-              size={'sm'}
-            />
+            <ActionMenu label={copy.menuLabel(record.name)} size={'sm'}>
+              {record.menu.map(renderMenuItem)}
+            </ActionMenu>
           )}
         </TableRowActions>
 

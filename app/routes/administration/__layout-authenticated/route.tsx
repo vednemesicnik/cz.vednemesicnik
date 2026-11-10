@@ -9,14 +9,22 @@ import {
   type ShouldRevalidateFunction,
   useLocation,
 } from 'react-router'
+import { AdminAvatar } from '~/components/admin/admin-avatar'
 import { AdministrationContent } from '~/components/admin/administration-content'
-import {
-  AdministrationSidebar,
-  type NavigationItem,
-} from '~/components/admin/administration-sidebar'
 import { AdministrationTopBar } from '~/components/admin/administration-top-bar'
 import { SidebarHighlightProvider } from '~/components/admin/sidebar-highlight-provider'
+import { AdministrationSidebarFoot } from '~/components/administration-sidebar-foot'
+import { AdministrationSidebarItem } from '~/components/administration-sidebar-item'
+import { AdministrationSidebarList } from '~/components/administration-sidebar-list'
+import { AdministrationSidebarNav } from '~/components/administration-sidebar-nav'
+import { AdministrationSidebarSeparator } from '~/components/administration-sidebar-separator'
+import { AdministrationSidebarUser } from '~/components/administration-sidebar-user'
+import { AdministrationSidebarUserName } from '~/components/administration-sidebar-user-name'
+import { AdministrationSidebarUserRole } from '~/components/administration-sidebar-user-role'
+import { AdministrationSidebarUserText } from '~/components/administration-sidebar-user-text'
 import { AuthenticityTokenProvider } from '~/components/authenticity-token-provider'
+import { ColumnAdministrationSidebar } from '~/components/column-administration-sidebar'
+import { FullScreenAdministrationSidebar } from '~/components/full-screen-administration-sidebar'
 import { RootBoundaryError } from '~/components/root-boundary-error'
 import { ToastProvider } from '~/components/toast-provider'
 import { useAccountEvents } from '~/hooks/use-account-events'
@@ -32,6 +40,12 @@ export { loader } from './_loader'
 // From this width the sidebar stands in its column; below it, behind Menu
 // (design 22g, tbi5qpq9), the same breakpoint as the website menu (10b).
 const SIDEBAR_COLUMN_QUERY = '(width >= 768px)'
+
+type NavigationItem = {
+  to: string
+  label: string
+  end?: boolean
+}
 
 // A 403 action may be a refused form token (design 30h): reload the layout so its
 // loader reissues the token and the form's second press goes through.
@@ -93,6 +107,51 @@ export default function RouteComponent({
     matchPath({ end: item.end ?? false, path: item.to }, pathname),
   )
 
+  const renderItem = (item: NavigationItem) => (
+    <AdministrationSidebarItem end={item.end} key={item.to} to={item.to}>
+      {item.label}
+    </AdministrationSidebarItem>
+  )
+
+  // The same content in the column and in the menu (design 22a, tbi5qpq9).
+  const sidebarContent = (
+    <>
+      <AdministrationSidebarNav>
+        <AdministrationSidebarList>
+          {contentItems.map(renderItem)}
+        </AdministrationSidebarList>
+        {peopleItems.length > 0 && (
+          <>
+            <AdministrationSidebarSeparator />
+            <AdministrationSidebarList>
+              {peopleItems.map(renderItem)}
+            </AdministrationSidebarList>
+          </>
+        )}
+      </AdministrationSidebarNav>
+      <AdministrationSidebarFoot>
+        <AdministrationSidebarUser>
+          <AdminAvatar
+            alt={user.name}
+            image={user.image}
+            name={user.name}
+            size={'extra-small'}
+          />
+          <AdministrationSidebarUserText>
+            <AdministrationSidebarUserName>
+              {user.name}
+            </AdministrationSidebarUserName>
+            {user.roleLabel && (
+              <AdministrationSidebarUserRole>
+                {user.roleLabel}
+              </AdministrationSidebarUserRole>
+            )}
+          </AdministrationSidebarUserText>
+        </AdministrationSidebarUser>
+      </AdministrationSidebarFoot>
+    </>
+  )
+
   return (
     <AuthenticityTokenProvider token={loaderData.csrfToken}>
       <SidebarHighlightProvider>
@@ -109,26 +168,21 @@ export default function RouteComponent({
               onMenu={open}
               title={activeItem?.label}
             />
-            <AdministrationSidebar
-              className={styles.sidebar}
-              contentItems={contentItems}
-              peopleItems={peopleItems}
-              user={user}
-            />
+            <ColumnAdministrationSidebar className={styles.sidebar}>
+              {sidebarContent}
+            </ColumnAdministrationSidebar>
             <dialog
               aria-label={'Menu'}
               className={styles.menu}
               id={menuId}
               ref={menuRef}
             >
-              <AdministrationSidebar
+              <FullScreenAdministrationSidebar
                 closeButtonRef={closeButtonRef}
-                contentItems={contentItems}
-                layout={'menu'}
                 onClose={close}
-                peopleItems={peopleItems}
-                user={user}
-              />
+              >
+                {sidebarContent}
+              </FullScreenAdministrationSidebar>
             </dialog>
             <AdministrationContent className={styles.page}>
               <Outlet />

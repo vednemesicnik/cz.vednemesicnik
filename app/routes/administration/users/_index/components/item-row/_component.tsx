@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { href, useFetcher, useNavigate } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { useAdminDeleteConfirmationDialog } from '~/components/admin/admin-delete-confirmation-dialog'
 import {
   TableActionsCell,
@@ -125,29 +126,27 @@ export const ItemRow = ({
       </TableDetailsCell>
       <TableActionsCell>
         <TableRowMenu>
-          <ActionMenu
-            items={[
-              ...(canUpdate
-                ? [
-                    {
-                      label: 'Upravit',
-                      onSelect: () =>
-                        navigate(
-                          href('/administration/users/:userId/edit', {
-                            userId: id,
-                          }),
-                          { state: RETURN_TO_OPENER_STATE },
-                        ),
-                    },
-                  ]
-                : []),
-              ...(canDelete && !isDeleting
-                ? [{ danger: true, label: 'Smazat…', onSelect: openDialog }]
-                : []),
-            ]}
-            label={`Další akce s účtem ${name}`}
-            size={'sm'}
-          />
+          <ActionMenu label={`Další akce s účtem ${name}`} size={'sm'}>
+            {canUpdate && (
+              <ActionMenuItem
+                onSelect={() =>
+                  navigate(
+                    href('/administration/users/:userId/edit', {
+                      userId: id,
+                    }),
+                    { state: RETURN_TO_OPENER_STATE },
+                  )
+                }
+              >
+                Upravit
+              </ActionMenuItem>
+            )}
+            {canDelete && !isDeleting && (
+              <ActionMenuItem danger={true} onSelect={openDialog}>
+                Smazat…
+              </ActionMenuItem>
+            )}
+          </ActionMenu>
         </TableRowMenu>
 
         {/* The cell aligns right and doesn't wrap; its dialog shouldn't inherit that. */}

@@ -13,7 +13,7 @@ const RECENT_SIGN_IN_ATTEMPTS_COUNT = 5
  *
  * @param account.userId - The account's user id.
  * @param account.email - The account's e-mail address.
- * @returns At most five attempts, ready for `AdminSignInAttempts`.
+ * @returns At most five attempts, ready for `SignInAttempts`.
  */
 export const getRecentSignInAttempts = async ({
   userId,

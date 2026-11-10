@@ -1,0 +1,55 @@
+import { clsx } from 'clsx'
+import type { ReactNode, Ref } from 'react'
+
+import { AdministrationSidebarHead } from '~/components/administration-sidebar-head'
+import { AdministrationSidebarShapeProvider } from '~/components/administration-sidebar-shape-provider'
+import { Button } from '~/components/button'
+
+import styles from './_styles.module.css'
+
+type Props = {
+  children: ReactNode
+  onClose: () => void
+  closeButtonRef?: Ref<HTMLButtonElement>
+  className?: string
+}
+
+/**
+ * The administration sidebar below 768 px, over the whole screen from Menu
+ * (tbi5qpq9): Zavřít in the brand row and 44 px rows. The caller puts it in a
+ * modal `<dialog>`. `ColumnAdministrationSidebar` is the same sidebar beside
+ * the content.
+ *
+ * @param props.children - The `AdministrationSidebarNav` and the
+ *   `AdministrationSidebarFoot`
+ * @param props.onClose - Called by Zavřít
+ * @param props.closeButtonRef - Zavřít, which gets focus on opening
+ * @returns The sidebar's `<aside>`
+ */
+export const FullScreenAdministrationSidebar = ({
+  children,
+  onClose,
+  closeButtonRef,
+  className,
+}: Props) => {
+  return (
+    <AdministrationSidebarShapeProvider shape={'full-screen'}>
+      <aside className={clsx(styles.sidebar, className)}>
+        <AdministrationSidebarHead>
+          {/* Zavřít stands where Menu was in the top bar (tbi5qpq9). */}
+          <Button
+            className={styles.closeButton}
+            onClick={onClose}
+            ref={closeButtonRef}
+            size={'sm'}
+            type={'button'}
+            variant={'ghost'}
+          >
+            Zavřít
+          </Button>
+        </AdministrationSidebarHead>
+        {children}
+      </aside>
+    </AdministrationSidebarShapeProvider>
+  )
+}

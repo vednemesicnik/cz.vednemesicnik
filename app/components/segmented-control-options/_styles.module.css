@@ -1,0 +1,9 @@
+.track {
+  @layer component {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-tertiary);
+  }
+}

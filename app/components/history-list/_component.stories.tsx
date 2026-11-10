@@ -2,9 +2,37 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
+import { HistoryListActor } from '~/components/history-list-actor'
+import { HistoryListEntry } from '~/components/history-list-entry'
+import { HistoryListEvent } from '~/components/history-list-event'
+import { HistoryListNote } from '~/components/history-list-note'
+import { HistoryListTime } from '~/components/history-list-time'
+
 import { type HistoryEntry, HistoryList } from './_component'
 
+// Each row as the detail pages render it: *co · kdo*, the time, the note.
+const renderEntry = (entry: HistoryEntry) => (
+  <HistoryListEntry>
+    <HistoryListEvent>
+      {entry.label}
+      {entry.actorName !== null && (
+        <HistoryListActor>{entry.actorName}</HistoryListActor>
+      )}
+    </HistoryListEvent>
+    <HistoryListTime dateTime={entry.dateTime}>
+      {entry.formattedDateTime}
+    </HistoryListTime>
+    {entry.note && <HistoryListNote>{entry.note}</HistoryListNote>}
+  </HistoryListEntry>
+)
+
 const meta: Meta<typeof HistoryList> = {
+  args: {
+    children: renderEntry,
+  },
+  argTypes: {
+    children: { control: false },
+  },
   component: HistoryList,
   decorators: [
     (Story) => (

@@ -1,71 +1,94 @@
-import type { ChangeEvent } from 'react'
-import { useId } from 'react'
+import { clsx } from 'clsx'
+import {
+  type ChangeEvent,
+  createContext,
+  type ReactNode,
+  useContext,
+  useId,
+} from 'react'
 
 import styles from './_styles.module.css'
 
-type Option = {
-  label: string
+type SegmentedControlContextValue = {
+  name: string
   value: string
-  lang?: string
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void
+  hintId: string
 }
 
+const Context = createContext<SegmentedControlContextValue | undefined>(
+  undefined,
+)
+
 type Props = {
-  legend: string
+  children: ReactNode
   name: string
-  options: Option[]
   value: string
-  hint?: string
   onChange: (event: ChangeEvent<HTMLInputElement>) => void
+  className?: string
 }
 
 /**
  * One choice of a few, drawn as joined segments (design 29a, a candidate the
  * design system does not have yet). Native radio buttons, so the arrow keys
- * move the choice and a form submits it under `name`.
+ * move the choice and a form submits it under `name`. The group is described
+ * by its `SegmentedControlHint` whenever one is rendered.
  *
- * @param props.legend - The visible name of the choice (e.g. „Režim“).
- * @param props.hint - A note under the segments, read with the group.
+ * @example
+ * ```tsx
+ * <SegmentedControl name={'colorScheme'} onChange={…} value={'system'}>
+ *   <SegmentedControlLegend>Režim</SegmentedControlLegend>
+ *   <SegmentedControlOptions>
+ *     <SegmentedControlOption value={'system'}>Systém</SegmentedControlOption>
+ *     <SegmentedControlOption value={'light'}>Světlý</SegmentedControlOption>
+ *   </SegmentedControlOptions>
+ *   <SegmentedControlHint>Vzhled se řídí nastavením zařízení.</SegmentedControlHint>
+ * </SegmentedControl>
+ * ```
+ *
+ * @param props.children - The legend, the options and an optional hint
+ * @param props.name - The radio buttons' form field
+ * @param props.value - The chosen option's value
+ * @param props.onChange - Called when another option is chosen
+ * @returns The `<fieldset>`
  */
 export const SegmentedControl = ({
-  hint,
-  legend,
+  children,
   name,
-  onChange,
-  options,
   value,
+  onChange,
+  className,
 }: Props) => {
   const hintId = useId()
 
   return (
-    <fieldset
-      aria-describedby={hint === undefined ? undefined : hintId}
-      className={styles.fieldset}
-    >
-      <legend className={styles.legend}>{legend}</legend>
-      <div className={styles.track}>
-        {options.map((option) => (
-          <label
-            className={styles.segment}
-            key={option.value}
-            lang={option.lang}
-          >
-            <input
-              checked={option.value === value}
-              className={styles.input}
-              name={name}
-              onChange={onChange}
-              type={'radio'}
-              value={option.value}
-            />
-            {option.label}
-          </label>
-        ))}
-      </div>
-      {hint !== undefined && (
-        <p className={styles.hint} id={hintId}>
-          {hint}
-        </p>
-      )}
-    </fieldset>
+    <Context.Provider value={{ hintId, name, onChange, value }}>
+      {/* An id with no hint rendered is ignored by the accessible name and
+          description, so the group never waits on its hint to register. */}
+      <fieldset
+        aria-describedby={hintId}
+        className={clsx(styles.fieldset, className)}
+      >
+        {children}
+      </fieldset>
+    </Context.Provider>
   )
+}
+
+/**
+ * What the control shares with its parts: the field, the chosen value, the
+ * change handler and the hint's id.
+ *
+ * @returns The segmented control's context
+ */
+export const useSegmentedControl = () => {
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(
+      'useSegmentedControl must be used within a SegmentedControl',
+    )
+  }
+
+  return context
 }

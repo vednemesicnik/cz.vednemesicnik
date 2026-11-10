@@ -1,0 +1,6 @@
+.entry {
+  @layer component {
+    display: grid;
+    gap: 1px;
+  }
+}

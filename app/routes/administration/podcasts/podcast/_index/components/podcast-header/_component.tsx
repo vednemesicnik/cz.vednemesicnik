@@ -2,6 +2,7 @@ import type { ContentState } from '@generated/prisma/enums'
 import { href } from 'react-router'
 
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import { Button } from '~/components/button'
 import { Image } from '~/components/image'
 import { LinkButton } from '~/components/link-button'
@@ -155,14 +156,17 @@ export const PodcastHeader = ({
             {PODCAST_HEADER_SENTENCES[headerActions.sentence]}
           </p>
         )}
-        <ActionMenu
-          items={headerActions.menu.map((item) => ({
-            danger: item === 'delete',
-            label: PODCAST_ACTION_LABELS[item],
-            onSelect: () => onMenuItem(item),
-          }))}
-          label={`Další akce s podcastem ${podcast.title}`}
-        />
+        <ActionMenu label={`Další akce s podcastem ${podcast.title}`}>
+          {headerActions.menu.map((item) => (
+            <ActionMenuItem
+              danger={item === 'delete'}
+              key={item}
+              onSelect={() => onMenuItem(item)}
+            >
+              {PODCAST_ACTION_LABELS[item]}
+            </ActionMenuItem>
+          ))}
+        </ActionMenu>
         {headerActions.outline !== null &&
           renderAction(headerActions.outline, 'outline')}
         {canCreateEpisode && (

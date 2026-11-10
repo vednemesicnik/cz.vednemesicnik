@@ -1,4 +1,5 @@
 import { ActionMenu } from '~/components/action-menu'
+import { ActionMenuItem } from '~/components/action-menu-item'
 import {
   TableActionsCell,
   TableCell,
@@ -66,11 +67,15 @@ export const ItemRow = ({
   const { detailHref, editHref, isSubmitting, runAction } = actions
 
   const rowAction = issue.row
-  const toMenuItem = (menuAction: IssueAction) => ({
-    danger: menuAction === 'delete',
-    label: ISSUE_ACTION_LABELS[menuAction],
-    onSelect: () => runAction(menuAction),
-  })
+  const renderMenuItem = (menuAction: IssueAction) => (
+    <ActionMenuItem
+      danger={menuAction === 'delete'}
+      key={menuAction}
+      onSelect={() => runAction(menuAction)}
+    >
+      {ISSUE_ACTION_LABELS[menuAction]}
+    </ActionMenuItem>
+  )
   // On a phone „⋯“ stands alone, the row action first in it (32b).
   const phoneMenu = rowAction === null ? issue.menu : [rowAction, ...issue.menu]
   // The file's name is an address, which a phone leaves out; a missing file
@@ -141,10 +146,11 @@ export const ItemRow = ({
         {phoneMenu.length > 0 && (
           <TableRowMenu phoneOnly={true}>
             <ActionMenu
-              items={phoneMenu.map(toMenuItem)}
               label={`Další akce s číslem ${issue.title}`}
               size={'sm'}
-            />
+            >
+              {phoneMenu.map(renderMenuItem)}
+            </ActionMenu>
           </TableRowMenu>
         )}
         <TableRowActions>
@@ -171,10 +177,11 @@ export const ItemRow = ({
           )}
           {issue.menu.length > 0 && (
             <ActionMenu
-              items={issue.menu.map(toMenuItem)}
               label={`Další akce s číslem ${issue.title}`}
               size={'sm'}
-            />
+            >
+              {issue.menu.map(renderMenuItem)}
+            </ActionMenu>
           )}
         </TableRowActions>
 

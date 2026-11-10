@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 
 import { AdminDialog } from '~/components/admin/admin-modal'
 import { AdminModalActions } from '~/components/admin/admin-modal-actions'
 import { AdminModalContent } from '~/components/admin/admin-modal-content'
 import { AdminModalDescription } from '~/components/admin/admin-modal-description'
 import { AdminModalTitle } from '~/components/admin/admin-modal-title'
+import { BulkConfirmDialogNote } from '~/components/bulk-confirm-dialog-note'
 import { Button } from '~/components/button'
 import { DialogBody } from '~/components/dialog-body'
 import type { BulkNoun } from '~/config/bulk-noun-config'
@@ -24,8 +25,7 @@ type Props = {
   onlyDrafts: boolean
   isCreator: boolean
   hasRelated?: boolean
-  notes?: string[]
-  skipped: string | null
+  children?: ReactNode
   onConfirm: () => void
   onClose: () => void
 }
@@ -45,9 +45,10 @@ type Props = {
  *   again.
  * @param props.hasRelated - A record has related content the action reaches
  *   (a category's articles): the sentence says what happens to it (25g).
- * @param props.notes - Publishing, the waiting, not-submitted and incomplete
- *   sentences in full ink, each only when the selection holds such a record.
- * @param props.skipped - What the action skips and why (22f), or `null`.
+ * @param props.children - The exceptions under what happens: publishing, a
+ *   `BulkConfirmDialogNote` in full ink with the waiting, not-submitted and
+ *   incomplete records (26f); otherwise what the action skips and why (22f),
+ *   as an `AdminModalDescription`. Only when the selection holds such a record.
  */
 export const BulkConfirmDialog = ({
   action,
@@ -56,8 +57,7 @@ export const BulkConfirmDialog = ({
   onlyDrafts,
   isCreator,
   hasRelated = false,
-  notes = [],
-  skipped,
+  children,
   onConfirm,
   onClose,
 }: Props) => {
@@ -100,23 +100,16 @@ export const BulkConfirmDialog = ({
         <DialogBody>
           {descriptions.map((description) =>
             isDelete && noun.deleteInFullInk ? (
-              <p className={styles.note} key={description}>
+              <BulkConfirmDialogNote key={description}>
                 {description}
-              </p>
+              </BulkConfirmDialogNote>
             ) : (
               <AdminModalDescription key={description}>
                 {description}
               </AdminModalDescription>
             ),
           )}
-          {notes.map((note) => (
-            <p className={styles.note} key={note}>
-              {note}
-            </p>
-          ))}
-          {skipped !== null && (
-            <AdminModalDescription>{skipped}</AdminModalDescription>
-          )}
+          {children}
         </DialogBody>
         <AdminModalActions>
           <Button

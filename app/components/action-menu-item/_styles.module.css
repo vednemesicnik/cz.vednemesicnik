@@ -1,0 +1,46 @@
+.item {
+  @layer component {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding-block: 9px;
+    padding-inline: 12px;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      outline: none;
+      background: var(--bg-tertiary);
+    }
+  }
+}
+
+.danger {
+  @layer variant {
+    color: var(--error-text);
+  }
+}
+
+/* Destructive items go last, after one separator (design system): none
+   before the first item or between two destructive ones. */
+.separator {
+  @layer component {
+    height: 1px;
+    margin-block: 4px;
+    margin-inline: 6px;
+    background: var(--border);
+    border: 0;
+
+    &:first-child,
+    .danger + & {
+      display: none;
+    }
+  }
+}

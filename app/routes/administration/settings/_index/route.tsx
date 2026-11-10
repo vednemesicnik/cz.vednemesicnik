@@ -15,13 +15,21 @@ import { AdminDetailRow } from '~/components/admin/admin-detail-row'
 import { AdminDetailSection } from '~/components/admin/admin-detail-section'
 import { AdminPage } from '~/components/admin/admin-page'
 import { AdminParagraph } from '~/components/admin/admin-paragraph'
-import { AdminSignInAttempts } from '~/components/admin/admin-sign-in-attempts'
 import { AuthenticityTokenInput } from '~/components/authenticity-token-input'
 import { useAuthenticityToken } from '~/components/authenticity-token-provider'
 import { Button } from '~/components/button'
 import { ListDetailRow } from '~/components/list-detail-row'
 import { PageTitle } from '~/components/page-title'
 import { SegmentedControl } from '~/components/segmented-control'
+import { SegmentedControlHint } from '~/components/segmented-control-hint'
+import { SegmentedControlLegend } from '~/components/segmented-control-legend'
+import { SegmentedControlOption } from '~/components/segmented-control-option'
+import { SegmentedControlOptions } from '~/components/segmented-control-options'
+import { SignInAttempts } from '~/components/sign-in-attempts'
+import { SignInAttemptsDetail } from '~/components/sign-in-attempts-detail'
+import { SignInAttemptsItem } from '~/components/sign-in-attempts-item'
+import { SignInAttemptsMethod } from '~/components/sign-in-attempts-method'
+import { SignInAttemptsTime } from '~/components/sign-in-attempts-time'
 import { useToast } from '~/components/toast-provider'
 import { COLOR_SCHEME_CONFIG } from '~/config/color-scheme-config'
 import { FORM_CONFIG } from '~/config/form-config'
@@ -583,12 +591,6 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
               />
               {/* Applies on click, no Save (29a); the hint only under Systém (0d0khewy). */}
               <SegmentedControl
-                hint={
-                  colorScheme === 'system'
-                    ? 'Vzhled se řídí nastavením zařízení.'
-                    : undefined
-                }
-                legend={'Režim'}
                 name={COLOR_SCHEME_CONFIG.fieldName}
                 onChange={(event) => {
                   // Read now: React restores the controlled radio before the
@@ -606,9 +608,25 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
                     await waitForColorScheme(nextColorScheme)
                   })
                 }}
-                options={colorSchemeOptions}
                 value={colorScheme}
-              />
+              >
+                <SegmentedControlLegend>Režim</SegmentedControlLegend>
+                <SegmentedControlOptions>
+                  {colorSchemeOptions.map((option) => (
+                    <SegmentedControlOption
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </SegmentedControlOption>
+                  ))}
+                </SegmentedControlOptions>
+                {colorScheme === 'system' && (
+                  <SegmentedControlHint>
+                    Vzhled se řídí nastavením zařízení.
+                  </SegmentedControlHint>
+                )}
+              </SegmentedControl>
             </colorSchemeFetcher.Form>
           </AdminDetailSection>
           {otherSessionsCount > 0 && (
@@ -634,7 +652,26 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
           )}
           {signInAttempts.length > 0 && (
             <AdminDetailSection title={'Poslední pokusy o přihlášení'}>
-              <AdminSignInAttempts attempts={signInAttempts} />
+              <SignInAttempts>
+                {signInAttempts.map((attempt) => (
+                  <SignInAttemptsItem
+                    isFailure={attempt.isFailure}
+                    key={attempt.id}
+                  >
+                    <SignInAttemptsTime dateTime={attempt.dateTime}>
+                      {attempt.formattedDateTime}
+                    </SignInAttemptsTime>
+                    <SignInAttemptsMethod>
+                      {attempt.label}
+                      {attempt.detail !== null && (
+                        <SignInAttemptsDetail>
+                          {attempt.detail}
+                        </SignInAttemptsDetail>
+                      )}
+                    </SignInAttemptsMethod>
+                  </SignInAttemptsItem>
+                ))}
+              </SignInAttempts>
               <AdminParagraph className={styles.note}>
                 {otherSessionsCount > 0
                   ? 'Nepoznáváte některý pokus o přihlášení? Ukončete všechna ostatní přihlášení a obraťte se na Administrátora.'

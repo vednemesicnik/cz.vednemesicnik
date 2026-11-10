@@ -5,6 +5,13 @@
   }
 }
 
+/* No items, no „⋯“ (design system): a role that may do nothing. */
+.actionMenu:not(:has(> .menu > *)) {
+  @layer variant {
+    display: none;
+  }
+}
+
 /* A square outline Button md; a fixed width, so it never shrinks under the
    action beside it. */
 .actionMenu > .trigger {
@@ -96,45 +103,5 @@
     @layer variant {
       position-area: block-end span-inline-end;
     }
-  }
-}
-
-.item {
-  @layer component {
-    display: block;
-    box-sizing: border-box;
-    width: 100%;
-    padding-block: 9px;
-    padding-inline: 12px;
-    border: 0;
-    border-radius: var(--radius-md);
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    text-align: start;
-    white-space: nowrap;
-    cursor: pointer;
-
-    &:hover,
-    &:focus-visible {
-      outline: none;
-      background: var(--bg-tertiary);
-    }
-  }
-}
-
-.danger {
-  @layer variant {
-    color: var(--error-text);
-  }
-}
-
-.separator {
-  @layer component {
-    height: 1px;
-    margin-block: 4px;
-    margin-inline: 6px;
-    background: var(--border);
-    border: 0;
   }
 }
