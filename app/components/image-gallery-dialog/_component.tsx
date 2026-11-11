@@ -268,7 +268,7 @@ export const ImageGalleryDialog = ({
                   {...image.sources}
                   alt={image.alt}
                   className={styles.image}
-                  key={String(isOpen)}
+                  key={`photo-${isOpen}`}
                   loading={isOpen ? 'eager' : 'lazy'}
                   sizes={isZoomed ? '200vw' : '100vw'}
                 />
@@ -279,7 +279,7 @@ export const ImageGalleryDialog = ({
                     className={styles.tileImage}
                     data-tile-image={true}
                     decoding={'async'}
-                    key={String(isOpen)}
+                    key={`tile-${isOpen}`}
                     src={tileImageSource}
                   />
                 )}
