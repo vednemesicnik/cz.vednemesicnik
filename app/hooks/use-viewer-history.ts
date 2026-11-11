@@ -99,7 +99,7 @@ export const useViewerHistory = (ref: RefObject<HTMLDialogElement | null>) => {
     dialog.showModal()
     pageKeyRef.current = readState(window.history.state).key
     window.history.pushState(
-      { ...window.history.state, [ENTRY_MARKER]: true },
+      { ...readState(window.history.state), [ENTRY_MARKER]: true },
       '',
     )
   }, [ref])
