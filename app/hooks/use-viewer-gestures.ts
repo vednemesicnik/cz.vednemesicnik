@@ -97,7 +97,8 @@ const getCenter = (first: Point, second: Point) => ({
  * @param options.frameRef - The photo's frame, at its unscaled size.
  * @param options.canPage - Whether a swipe pages (more than one image).
  * @param options.onDismiss - Called when a drag down is let go to close; the
- *   photo is left down there for the close to carry on.
+ *   photo stays where it was let go, and the close flies it from there into
+ *   its tile (l18gjrxu).
  * @returns The handlers for the frame, the photo's `scale`, `offset` and
  *   `dragDistance`, `isActive` while a finger moves it, and `reset`, which
  *   brings back the whole photo (for the next image or the next opening).
@@ -331,10 +332,7 @@ export const useViewerGestures = ({
       const distance = Math.max(0, distanceY)
 
       if (shouldCloseOnRelease({ distance, velocity: gesture.velocity })) {
-        update({
-          dragDistance: stageRef.current?.clientHeight ?? distance,
-          isActive: false,
-        })
+        update({ isActive: false })
         onDismiss()
       } else {
         update({ dragDistance: 0, isActive: false })

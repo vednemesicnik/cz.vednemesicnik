@@ -1,11 +1,15 @@
 import { clsx } from 'clsx'
 import { useEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import {
   type GalleryImage,
   ImageGalleryDialog,
 } from '~/components/image-gallery-dialog'
 import { ImageGalleryPreview } from '~/components/image-gallery-preview'
 import { useViewerHistory } from '~/hooks/use-viewer-history'
+import { readTileImageSource } from '~/utils/image-viewer/read-tile-image-source'
+import { runViewerTransition } from '~/utils/image-viewer/run-viewer-transition'
+import { waitForTileImage } from '~/utils/image-viewer/wait-for-tile-image'
 import styles from './_styles.module.css'
 
 type Props = {
@@ -13,42 +17,107 @@ type Props = {
   className?: string
 }
 
+// The least scroll that shows a tile, clear of the header (its
+// scroll-margin); none when it is in view.
+const revealTile = (tile: HTMLElement | null | undefined) =>
+  tile?.scrollIntoView({ behavior: 'instant', block: 'nearest' })
+
 /**
  * The gallery under an article: small 3 : 2 tiles, four per row and three below
  * 640 px, and one dialog that opens at the clicked tile and pages through all of
  * them (design 12a/12b). A single image takes one tile in the first column.
- * Back closes the viewer, and the focus returns to the tile it opened from.
+ * The photo grows out of its tile and flies back into the tile of the image
+ * open at the close (l18gjrxu), which then has the focus. Back closes the
+ * viewer too.
  *
  * @param images - In gallery order; the article puts its featured image first.
  */
 export const ImageGallery = ({ images, className }: Props) => {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const tileRefs = useRef<Array<HTMLButtonElement | null>>([])
-  const openerIndexRef = useRef(0)
+  const currentIndexRef = useRef(0)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
-  const openViewer = useViewerHistory(dialogRef)
+  const [tileImageSource, setTileImageSource] = useState<string>()
+
+  // The tile's image, which the photo flies from and back into.
+  const getTileImage = (index: number) => {
+    const image = tileRefs.current[index]?.firstElementChild
+
+    return image instanceof HTMLElement ? image : null
+  }
+
+  const getFrame = () =>
+    dialogRef.current?.querySelector<HTMLElement>('[data-viewer-photo]') ?? null
+
+  const showImage = (index: number) => {
+    currentIndexRef.current = index
+    setCurrentIndex(index)
+    setTileImageSource(readTileImageSource(tileRefs.current[index]))
+  }
+
+  const closeViewer = ({ animate = true }: { animate?: boolean } = {}) => {
+    const dialog = dialogRef.current
+
+    if (dialog === null || !dialog.open) return
+
+    // Under the open viewer, so the reader doesn't see the page move.
+    revealTile(tileRefs.current[currentIndexRef.current])
+
+    if (!animate) {
+      dialog.close()
+      return
+    }
+
+    // A zoomed photo is whole again in the first frame (design 12b).
+    dialog.dataset.closing = ''
+
+    runViewerTransition({
+      from: getFrame(),
+      getTo: () => getTileImage(currentIndexRef.current),
+      kind: 'close',
+      update: () => dialog.close(),
+    })
+  }
+
+  const openViewer = useViewerHistory(dialogRef, (event) =>
+    // A back gesture the browser animated itself closes without a second one.
+    closeViewer({ animate: !event.hasUAVisualTransition }),
+  )
 
   const handleOpen = (index: number) => {
-    openerIndexRef.current = index
-    setCurrentIndex(index)
-    setIsOpen(true)
-    openViewer()
-    // The dialog, not the ×: Safari shows the focus ring and tooltip of a
-    // button focused on open, a tap included.
-    dialogRef.current?.focus({ preventScroll: true })
+    runViewerTransition({
+      from: getTileImage(index),
+      getTo: getFrame,
+      kind: 'open',
+      update: async () => {
+        flushSync(() => {
+          showImage(index)
+          setIsOpen(true)
+        })
+        openViewer()
+        // The dialog, not the ×: Safari shows the focus ring and tooltip of a
+        // button focused on open, a tap included.
+        dialogRef.current?.focus({ preventScroll: true })
+        await waitForTileImage(getFrame())
+      },
+    })
   }
 
   // Safari doesn't focus a button on click, so the dialog's own return of the
-  // focus can land on the page.
+  // focus can land on the page. The focus goes to the tile the photo went
+  // back into, shown first also when the browser closed the viewer itself.
   useEffect(() => {
     const dialog = dialogRef.current
 
     if (dialog === null) return
 
     const handleClose = () => {
+      delete dialog.dataset.closing
       setIsOpen(false)
-      tileRefs.current[openerIndexRef.current]?.focus()
+      const tile = tileRefs.current[currentIndexRef.current]
+      revealTile(tile)
+      tile?.focus({ preventScroll: true })
     }
 
     dialog.addEventListener('close', handleClose)
@@ -76,8 +145,10 @@ export const ImageGallery = ({ images, className }: Props) => {
         images={images}
         index={currentIndex}
         isOpen={isOpen}
-        onIndexChange={setCurrentIndex}
+        onCloseRequest={closeViewer}
+        onIndexChange={showImage}
         ref={dialogRef}
+        tileImageSource={tileImageSource}
       />
     </>
   )

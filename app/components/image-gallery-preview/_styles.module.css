@@ -11,6 +11,9 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+    /* The viewer's close scrolls a tile clear of the header and 16 px from the
+       window's edge before the photo flies back (12b, l18gjrxu). */
+    scroll-margin-block: calc(var(--app-header-height) + 16px) 16px;
     transition:
       box-shadow var(--transition-base),
       transform var(--transition-base),

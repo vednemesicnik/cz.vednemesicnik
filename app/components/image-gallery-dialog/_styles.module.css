@@ -11,6 +11,8 @@
     height: 100%;
     max-width: none;
     max-height: none;
+    /* Here, not under [open]: the close keeps the layout while it fades. */
+    grid-template-rows: calc(64px + env(safe-area-inset-top)) minmax(0, 1fr);
     margin: 0;
     padding: 0;
     border: none;
@@ -21,19 +23,26 @@
     background: transparent;
     color: var(--text-primary);
     opacity: 0;
-    transition-property: opacity, display, overlay;
-    transition-duration: 150ms;
-    transition-timing-function: ease-in-out;
-    transition-behavior: allow-discrete;
 
     &[open] {
       display: grid;
-      grid-template-rows: calc(64px + env(safe-area-inset-top)) minmax(0, 1fr);
       opacity: 1;
-      transition-duration: 200ms;
+    }
 
-      @starting-style {
-        opacity: 0;
+    /* With view transitions the page's cross-fade carries the viewer and the
+       photo flies (l18gjrxu); without them it fades by itself. */
+    @supports not (view-transition-name: none) {
+      transition-property: opacity, display, overlay;
+      transition-duration: 150ms;
+      transition-timing-function: ease-in-out;
+      transition-behavior: allow-discrete;
+
+      &[open] {
+        transition-duration: 200ms;
+
+        @starting-style {
+          opacity: 0;
+        }
       }
     }
 
@@ -53,10 +62,69 @@
   }
 }
 
-/* The page under the open viewer does not scroll, as under the menu. */
+/* The page under the open viewer does not scroll, as under the menu, and
+   keeps the scrollbar's room, so it neither jumps nor doubles in the fade. */
 :global(html):has(.dialog[open]) {
   @layer component {
     overflow: hidden;
+    scrollbar-gutter: stable;
+  }
+}
+
+/* The flight (12b, l18gjrxu): the photo 300 ms on a curve that brakes late,
+   its crop opening from the tile's 3 : 2 and its corners from 7 px to none;
+   the backdrop, band, arrows and caption one cross-fade of the page. */
+:global(html)[data-viewer-transition] {
+  @layer component {
+    &::view-transition-group(gallery-photo) {
+      animation-duration: 300ms;
+      animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &::view-transition-image-pair(gallery-photo) {
+      overflow: clip;
+      animation: tile-corners 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    &::view-transition-old(gallery-photo),
+    &::view-transition-new(gallery-photo) {
+      height: 100%;
+      object-fit: cover;
+      animation-duration: 300ms;
+      animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &::view-transition-old(root),
+    &::view-transition-new(root) {
+      animation-duration: 200ms;
+      animation-timing-function: ease-in-out;
+    }
+  }
+}
+
+:global(html)[data-viewer-transition="close"] {
+  @layer component {
+    &::view-transition-image-pair(gallery-photo) {
+      animation-direction: reverse;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &::view-transition-old(root),
+      &::view-transition-new(root) {
+        animation-duration: 150ms;
+      }
+    }
+  }
+}
+
+/* The tile's inner radius: --radius-lg inside its 1 px border. */
+@keyframes tile-corners {
+  from {
+    border-radius: 7px;
+  }
+
+  to {
+    border-radius: 0;
   }
 }
 
@@ -69,6 +137,23 @@
     padding-inline: calc(16px + env(safe-area-inset-left))
       calc(10px + env(safe-area-inset-right));
     opacity: calc(1 - var(--drag-progress));
+
+    /* The arrows in the band: 10 px on both sides, as the × has. */
+    @media (aspect-ratio < 10 / 7) {
+      .dialog[data-paging] & {
+        padding-inline-start: calc(10px + env(safe-area-inset-left));
+      }
+    }
+  }
+}
+
+/* Previous, counter, next; below 10 : 7 one row, from it the counter alone,
+   the arrows at the window's edges. */
+.paging {
+  @layer component {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 }
 
@@ -129,14 +214,24 @@
     min-height: 0;
     overflow: hidden;
     container-type: size;
+
+    /* From 10 : 7 the arrows stand beside the photo, 12 + 44 + 12 px. */
+    @media (aspect-ratio >= 10 / 7) {
+      .dialog[data-paging] & {
+        padding-inline: calc(68px + env(safe-area-inset-left))
+          calc(68px + env(safe-area-inset-right));
+      }
+    }
   }
 }
 
 /* The photo whole, as large as the stage allows and never wider than it is.
    Its ratio and width arrive as --image-ratio and --image-width; the gestures
-   move it by `transform`, the open and close by `scale`. */
+   move it by --frame-transform, the fallback open and close by `scale`. */
 .frame {
   @layer component {
+    position: relative;
+    transform: var(--frame-transform, none);
     width: min(
       100cqw,
       calc(var(--image-width) * 1px),
@@ -152,19 +247,47 @@
       transition: scale 200ms ease-in-out;
     }
 
-    @media (prefers-reduced-motion: no-preference) {
-      .dialog[open] & {
-        scale: 1;
+    /* A zoomed photo is whole in the close's first frame, so it doesn't fly
+       out past the stage. */
+    .dialog[data-closing] &[data-zoomed] {
+      transform: none;
+      transition: none;
+    }
 
-        @starting-style {
+    @supports not (view-transition-name: none) {
+      @media (prefers-reduced-motion: no-preference) {
+        .dialog[open] & {
+          scale: 1;
+
+          @starting-style {
+            scale: 0.96;
+          }
+        }
+
+        .dialog:not([open]) & {
           scale: 0.96;
+          transition-duration: 150ms;
         }
       }
+    }
+  }
+}
 
-      .dialog:not([open]) & {
-        scale: 0.96;
-        transition-duration: 150ms;
-      }
+/* The tile's own image, the same file, over the photo until it has loaded
+   (12b, l18gjrxu): the flight starts sharp, and the photo shows through in
+   150 ms once it is there. */
+.tileImage {
+  @layer component {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    transition: opacity 150ms ease-in-out;
+
+    .frame[data-photo-loaded] & {
+      opacity: 0;
     }
   }
 }
@@ -187,24 +310,31 @@
 
 /* At the window edge, vertically centred on the area below the band, so they
    never move while paging; a drag down fades them with the band. */
+/* From 10 : 7, at the window's edges, vertically centred on the area below
+   the band, so they never move while paging; they fade with the band. */
 .arrowAnchor {
   @layer variant {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: calc(1 - var(--drag-progress));
+    @media (aspect-ratio >= 10 / 7) {
+      position: absolute;
+      top: calc((100% + 64px + env(safe-area-inset-top)) / 2);
+      transform: translateY(-50%);
+    }
   }
 }
 
 .previous {
   @layer variant {
-    left: calc(12px + env(safe-area-inset-left));
+    @media (aspect-ratio >= 10 / 7) {
+      left: calc(12px + env(safe-area-inset-left));
+    }
   }
 }
 
 .next {
   @layer variant {
-    right: calc(12px + env(safe-area-inset-right));
+    @media (aspect-ratio >= 10 / 7) {
+      right: calc(12px + env(safe-area-inset-right));
+    }
   }
 }
 
